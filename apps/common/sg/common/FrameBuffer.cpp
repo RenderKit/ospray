@@ -26,11 +26,6 @@ namespace ospray {
       createFB();
     }
 
-    FrameBuffer::~FrameBuffer()
-    {
-      destroyFB();
-    }
-
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
       std::string displayWall = child("displayWall").valueAs<std::string>();
@@ -110,7 +105,7 @@ namespace ospray {
 
     void ospray::sg::FrameBuffer::destroyFB()
     {
-      ospFreeFrameBuffer(ospFrameBuffer);
+      ospRelease(ospFrameBuffer);
     }
 
     OSP_REGISTER_SG_NODE(FrameBuffer);
