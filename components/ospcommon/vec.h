@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <algorithm>
 #include "common.h"
 #include "constants.h"
 #include "math.h"
@@ -79,8 +78,8 @@ namespace ospcommon {
   template <typename T>
   struct vec_t<T, 3>
   {
-    typedef T scalar_t;
-    typedef T Scalar;
+    using scalar_t = T;
+    using Scalar   = T;
 
     inline vec_t() = default;
     inline vec_t(const vec_t<T, 3> &o) = default;
@@ -125,8 +124,8 @@ namespace ospcommon {
   template <typename T>
   struct vec_t<T, 3, 1>
   {
-    typedef T scalar_t;
-    typedef T Scalar;
+    using scalar_t = T;
+    using Scalar   = T;
 
     inline vec_t() = default;
     inline vec_t(const vec_t<T, 3, 1> &o) = default;
@@ -175,8 +174,8 @@ namespace ospcommon {
   template <typename T>
   struct vec_t<T, 4>
   {
-    typedef T scalar_t;
-    typedef T Scalar;
+    using scalar_t = T;
+    using Scalar   = T;
 
     inline vec_t() = default;
     inline vec_t(const vec_t<T, 4> &o) = default;
@@ -800,5 +799,5 @@ namespace std {
                 ((a.z < b.z) || ((a.z == b.z) && (a.w < b.w))))));
     }
   };
-}  // std
-/*! @} */
+
+}  // ::ospcommon
