@@ -86,10 +86,18 @@ namespace ospcommon {
       return ospcommon::vec2f(lower, upper);
     }
 
+    inline bool empty() const
+    {
+      return anyLessThan(upper, lower);
+    }
+
+    inline bool contains(const T &vec) const
+    {
+      return !anyLessThan(vec, lower) && !anyLessThan(upper, vec);
+    }
+
     T lower, upper;
   };
-
-  using range1f = range_t<float>;
 
   template <typename T>
   inline std::ostream &operator<<(std::ostream &o, const range_t<T> &r)
@@ -110,5 +118,9 @@ namespace ospcommon {
     int rc             = sscanf(s.c_str(), "%f %f", &ret.lower, &ret.upper);
     return (rc == 2) ? ret : defaultValue;
   }
+
+  // range_t aliases //////////////////////////////////////////////////////////
+
+  using range1f = range_t<float>;
 
 }  // ::ospcommon

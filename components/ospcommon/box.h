@@ -21,66 +21,12 @@
 
 namespace ospcommon {
 
-  #if 1
-  /*! over scalar type T and N dimensions */
+  // box declaration //////////////////////////////////////////////////////////
+
   template <typename T, int N, int ALIGN = 0>
-  struct box_t
-  {
-    using scalar_t = T;
-    using vec_t    = ospcommon::vec_t<T, N, ALIGN>;
+  using box_t = range_t<vec_t<T, N, ALIGN>>;
 
-    inline box_t()               = default;
-    inline box_t(const box_t &o) = default;
-    inline box_t &operator=(const box_t &o) = default;
-
-    inline box_t(EmptyTy) : lower(pos_inf), upper(neg_inf)
-    {
-    }
-
-    inline box_t(const vec_t &lower, const vec_t &upper)
-        : lower(lower), upper(upper)
-    {
-    }
-
-    inline vec_t size() const
-    {
-      return upper - lower;
-    }
-
-    inline void extend(const vec_t &v)
-    {
-      lower = min(lower, v);
-      upper = max(upper, v);
-    }
-
-    inline void extend(const box_t &b)
-    {
-      lower = min(lower, b.lower);
-      upper = max(upper, b.upper);
-    }
-
-    /*! returns the center of the box (not valid for empty boxes) */
-    inline vec_t center() const
-    {
-      return 0.5f * (lower + upper);
-    }
-
-    inline bool empty() const
-    {
-      return anyLessThan(upper, lower);
-    }
-
-    inline bool contains(const vec_t &vec) const
-    {
-      return !anyLessThan(vec, lower) && !anyLessThan(upper, vec);
-    }
-
-    vec_t lower{vec_t()}, upper{vec_t()};
-  };
-  #else
-  template <typename T, int N, int ALIGN = 0>
-  using box_t = range<vec_t<T, N, ALIGN>>;
-  #endif
+  // box free functions ///////////////////////////////////////////////////////
 
   template <typename scalar_t>
   inline scalar_t area(const box_t<scalar_t, 2> &b)
@@ -91,7 +37,7 @@ namespace ospcommon {
   template <typename scalar_t, int A>
   inline scalar_t area(const box_t<scalar_t, 3, A> &b)
   {
-    const typename box_t<scalar_t, 3, A>::vec_t size = b.size();
+    const auto size = b.size();
     return 2.f * (size.x * size.y + size.x * size.z + size.y * size.z);
   }
 
@@ -182,4 +128,5 @@ namespace ospcommon {
   // this is just a renaming - in some cases the code reads cleaner if
   // we're talking about 'regions' than about boxes
   using region2i = box2i;
-}  // ::ospcommon
+
+} // ::ospcommon
