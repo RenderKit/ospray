@@ -25,8 +25,6 @@
 namespace ospcommon {
   namespace array3D {
 
-    using ospcommon::vec3i;
-
     /*! ABSTRACTION for a 3D array of data */
     template <typename value_t>
     struct Array3D
