@@ -18,7 +18,7 @@
 #include "sg/volume/AMRVolume.h"
 #include "sg/volume/Volume.h"
 // hdf
-#include "ospcommon/array3D/Range.h"
+#include "ospcommon/range.h"
 #include "ospcommon/box.h"
 
 #include "hdf5.h"
@@ -315,7 +315,7 @@ namespace ospray {
     void importAMRChombo(std::shared_ptr<sg::Node> &world,
                          const FileName &fileName,
                          const std::string &desiredComponent,
-                         const Range<float> *clampRange)
+                         const range_t<float> *clampRange)
     {
       auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
       parseAMRChomboFile(node, fileName, desiredComponent, clampRange);
@@ -326,7 +326,7 @@ namespace ospray {
     void parseAMRChomboFile(std::shared_ptr<sg::AMRVolume> &node,
                             const FileName &fileName,
                             const std::string &desiredComponent,
-                            const Range<float> *clampRange,
+                            const range_t<float> *clampRange,
                             int maxLevel)
     {
       amr::AMR *amr = ospray::amr::AMR::parse(fileName.str(), maxLevel);

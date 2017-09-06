@@ -17,9 +17,11 @@
 #pragma once
 
 #include "vec.h"
+#include "range.h"
 
 namespace ospcommon {
 
+  #if 1
   /*! over scalar type T and N dimensions */
   template <typename T, int N, int ALIGN = 0>
   struct box_t
@@ -75,6 +77,10 @@ namespace ospcommon {
 
     vec_t lower{vec_t()}, upper{vec_t()};
   };
+  #else
+  template <typename T, int N, int ALIGN = 0>
+  using box_t = range<vec_t<T, N, ALIGN>>;
+  #endif
 
   template <typename scalar_t>
   inline scalar_t area(const box_t<scalar_t, 2> &b)

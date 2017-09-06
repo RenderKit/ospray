@@ -65,7 +65,7 @@ namespace ospray {
         /*! value range within this leaf. WARNING: this will only get
             set AFTER all the bricks are being generated (we need all
             bricks before we can even compute the values in a brick */
-        Range<float> valueRange;
+        range_t<float> valueRange;
       };
 
       /*! each node in the tree refers to either a pair ofo child

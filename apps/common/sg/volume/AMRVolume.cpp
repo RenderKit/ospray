@@ -124,7 +124,7 @@ namespace ospray {
                                const unsigned char *binBasePtr)
     {
       std::string fileName = node.getProp("fileName");
-      Range<float> clampRange;
+      range_t<float> clampRange;
       std::string clampRangeString = node.getProp("clamp");
       if (!clampRangeString.empty()) {
         sscanf(clampRangeString.c_str(),

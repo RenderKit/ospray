@@ -17,7 +17,7 @@
 // ospray/sg
 #include "Volume.h"
 // ospcommon
-#include "ospcommon/array3D/Range.h"
+#include "ospcommon/range.h"
 
 namespace ospray {
   namespace sg {
@@ -66,7 +66,7 @@ namespace ospray {
       // ID of the data component we want to render (each brick can
       // contain multiple components)
       int componentID{0};
-      Range<float> valueRange;
+      range_t<float> valueRange;
       std::vector<OSPData> brickData;
       std::vector<BrickInfo> brickInfo;
       std::vector<float *> brickPtrs;
@@ -78,7 +78,7 @@ namespace ospray {
     extern void parseAMRChomboFile(std::shared_ptr<sg::AMRVolume> &node,
                                    const FileName &fileName,
                                    const std::string &desiredComponent,
-                                   const Range<float> *clampRange,
+                                   const range_t<float> *clampRange,
                                    int maxLevel = 1 << 30);
 #endif
 

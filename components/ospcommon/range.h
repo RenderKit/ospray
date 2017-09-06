@@ -19,8 +19,8 @@
 // stl
 #include <algorithm>
 // common
-#include "../constants.h"
-#include "../vec.h"
+#include "constants.h"
+#include "vec.h"
 
 namespace ospcommon {
 
@@ -28,17 +28,17 @@ namespace ospcommon {
   using std::max;
 
   template <typename T>
-  struct Range
+  struct range_t
   {
-    Range() : lower(ospcommon::pos_inf), upper(ospcommon::neg_inf){}
-    Range(const ospcommon::EmptyTy &t)
+    range_t() : lower(ospcommon::pos_inf), upper(ospcommon::neg_inf){}
+    range_t(const ospcommon::EmptyTy &t)
         : lower(ospcommon::pos_inf), upper(ospcommon::neg_inf){}
-    Range(const ospcommon::ZeroTy &t)
+    range_t(const ospcommon::ZeroTy &t)
         : lower(ospcommon::zero), upper(ospcommon::zero){}
-    Range(const ospcommon::OneTy &t)
+    range_t(const ospcommon::OneTy &t)
         : lower(ospcommon::zero), upper(ospcommon::one){}
-    Range(const T &t) : lower(t), upper(t){}
-    Range(const T &lower, const T &upper) : lower(lower), upper(upper){}
+    range_t(const T &t) : lower(t), upper(t){}
+    range_t(const T &lower, const T &upper) : lower(lower), upper(upper){}
 
     inline T size() const
     {
@@ -56,7 +56,7 @@ namespace ospcommon {
       upper = max(upper, t);
     }
 
-    inline void extend(const Range<T> &t)
+    inline void extend(const range_t<T> &t)
     {
       lower = min(lower, t.lower);
       upper = max(upper, t.upper);
@@ -74,8 +74,8 @@ namespace ospcommon {
 
     /*! Try to parse given string into a range; and return if
       successful. if not, return defaultvalue */
-    static Range<T> fromString(const std::string &string,
-                               const Range<T> &defaultValue = ospcommon::empty);
+    static range_t<T> fromString(const std::string &string,
+                                 const range_t<T> &defaultValue = empty);
 
     /*! tuppers is actually unclean - a range is a range, not a 'vector'
       that 'happens' to have two coordinates - but since much of the
@@ -89,8 +89,10 @@ namespace ospcommon {
     T lower, upper;
   };
 
+  using range1f = range_t<float>;
+
   template <typename T>
-  inline std::ostream &operator<<(std::ostream &o, const Range<T> &r)
+  inline std::ostream &operator<<(std::ostream &o, const range_t<T> &r)
   {
     o << "[" << r.lower << "," << r.upper << "]";
     return o;
@@ -99,11 +101,13 @@ namespace ospcommon {
   /*! find properly with given name, and return as lowerng ('l')
     int. return undefined if prop does not exist */
   template <>
-  inline Range<float> Range<float>::fromString(const std::string &s,
-                                               const Range<float> &defaultValue)
+  inline range_t<float> range_t<float>::fromString(
+    const std::string &s,
+    const range_t<float> &defaultValue
+  )
   {
-    Range<float> ret = ospcommon::empty;
-    int rc           = sscanf(s.c_str(), "%f %f", &ret.lower, &ret.upper);
+    range_t<float> ret = ospcommon::empty;
+    int rc             = sscanf(s.c_str(), "%f %f", &ret.lower, &ret.upper);
     return (rc == 2) ? ret : defaultValue;
   }
 
