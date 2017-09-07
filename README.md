@@ -1411,7 +1411,7 @@ green towards the top of the texture image (see also the example image
 of a normal map). If this is not the case flip the normal map vertically
 or invert its green channel.
 
-<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." style="width:60.0%" />
+<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." width="60.0%" />
 
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with "`map_`". The fetched texels
@@ -1423,6 +1423,35 @@ encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
 linear format (and only the first component is used). The path tracer
 additionally supports [texture
 transformations](#texture-transformations) for all textures.
+
+<img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" />
+
+#### Metal
+
+The [path tracer](#path-tracer) offers a physical metal, supporting
+changing roughness and realistic color shifts at edges. To create a
+Metal material pass the type string "`Metal`" to `ospNewMaterial`. Its
+parameters are
+
+| Type  | Name      |  Default| Description                               |
+|:------|:----------|--------:|:------------------------------------------|
+| vec3f | eta       |   Alumi-| index of refraction, real part            |
+| vec3f | k         |     nium| index of refraction, imaginary part       |
+| float | roughness |      0.1| roughness in \[0–1\], 0 is perfect mirror |
+
+: Parameters of the Glass material.
+
+The main appearence (mostly the color) of the Metal material is
+controled by the physical parameters `eta` and `k`, the
+wavelength-dependent, complex index of refraction. These coefficients
+are quite counterintuitive but can be found in published measurements.
+The `roughness` parameter controls the variation of microfacets and thus
+how polished the metal will look. The roughness can be modified by a
+[texture](#texture) `map_roughness` ([texture
+transformations](#texture-transformations) are supported as well) to
+create interesting edging effects.
+
+<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
 
 #### Glass
 
@@ -1444,6 +1473,8 @@ coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
 
+<img src="https://ospray.github.io/images/material_Glass.jpg" alt="Rendering of a Glass material with orange attenuation." width="60.0%" />
+
 #### ThinGlass
 
 The [path tracer](#path-tracer) offers a thin glass material useful for
@@ -1464,8 +1495,6 @@ type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
 
 : Parameters of the ThinGlass material.
 
-<img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." style="width:60.0%" />
-
 For convenience the attenuation is controlled the same way as with the
 [Glass](#glass) material. Additionally, the color due to attenuation can
 be modulated with a [texture](#texture) `map_attenuationColor` ([texture
@@ -1476,7 +1505,9 @@ internally just the ratio between `attenuationDistance` and `thickness`
 is used to calculate the resulting attenuation and thus the material
 appearence.
 
-<img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." style="width:60.0%" />
+<img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
+
+<img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" />
 
 #### Luminous
 
@@ -1486,6 +1517,8 @@ turn any geometric object into a light source. It is created by passing
 the type string "`Luminous`" to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
+
+<img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" />
 
 ### Texture
 
@@ -1617,11 +1650,11 @@ plane and thus the plane of focus is oriented parallel to the front of
 buildings, the whole façade appears sharp, as can be seen in the example
 images below.
 
-<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." width="60.0%" />
 
-<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" />
 
-<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." style="width:90.0%" />
+<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." width="90.0%" />
 
 #### Orthographic Camera
 
@@ -1645,7 +1678,7 @@ the scene that is captured in the image, can be controlled with the
 and `imageEnd`, and both methods can be combined. In any case, the
 `aspect` ratio needs to be set accordingly to get an undistorted image.
 
-<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." width="60.0%" />
 
 #### Panoramic Camera
 
@@ -1656,7 +1689,7 @@ of 2:1. A panoramic camera is created by passing the type string
 "`panoramic`" to `ospNewCamera`. It is placed and oriented in the scene
 by using the [general parameters](#cameras) understood by all cameras.
 
-<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." style="width:90.0%" />
+<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." width="90.0%" />
 
 ### Picking
 
@@ -1997,7 +2030,7 @@ right clicking on "world" and creating an "Importer" node will add a new
 scene importer from a file. Changing the filename to an appropriate file
 will load the scene and propagate the resulting state.
 
-<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" style="width:80.0%" />
+<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" width="80.0%" />
 
 Distributed Viewer
 ------------------
