@@ -159,9 +159,9 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
       }
       auto &node = node_ref.get();
 
-      if (addNode)
-      {
-        std::stringstream vals(value);
+      std::stringstream vals(value);
+
+      if (addNode) {
         std::string name, type;
         vals >> name >> type;
         try {
@@ -170,49 +170,40 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
           std::cerr << "Warning: unknown sg::Node type '" << type
             << "', ignoring option '" << orgarg << "'." << std::endl;
         }
-        continue;
+      } else { // set node value
+
+        // TODO: more generic implementation
+        if (node.valueIsType<std::string>()) {
+          node.setValue(value);
+        } else if (node.valueIsType<float>()) {
+          float x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<int>()) {
+          int x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<bool>()) {
+          bool x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<ospcommon::vec3f>()) {
+          float x,y,z;
+          vals >> x >> y >> z;
+          node.setValue(ospcommon::vec3f(x,y,z));
+        } else if (node.valueIsType<ospcommon::vec2i>()) {
+          int x,y;
+          vals >> x >> y;
+          node.setValue(ospcommon::vec2i(x,y));
+        } else try {
+          auto &vec = dynamic_cast<sg::DataVector1f&>(node);
+          float f;
+          while (vals.good()) {
+            vals >> f;
+            vec.push_back(f);
+          }
+        } catch(...) {}
       }
-      //Carson: TODO: reimplement with a way of determining type of node value
-      //  currently relies on exception on value cast
-      try {
-        node.valueAs<std::string>();
-        node.setValue(value);
-      } catch(...) {}
-      try {
-        node.valueAs<float>();
-        std::stringstream vals(value);
-        float x;
-        vals >> x;
-        node.setValue(x);
-      } catch(...) {}
-      try {
-        node.valueAs<int>();
-        std::stringstream vals(value);
-        int x;
-        vals >> x;
-        node.setValue(x);
-      } catch(...) {}
-      try {
-        node.valueAs<bool>();
-        std::stringstream vals(value);
-        bool x;
-        vals >> x;
-        node.setValue(x);
-      } catch(...) {}
-      try {
-        node.valueAs<ospcommon::vec3f>();
-        std::stringstream vals(value);
-        float x,y,z;
-        vals >> x >> y >> z;
-        node.setValue(ospcommon::vec3f(x,y,z));
-      } catch(...) {}
-      try {
-        node.valueAs<ospcommon::vec2i>();
-        std::stringstream vals(value);
-        int x,y;
-        vals >> x >> y;
-        node.setValue(ospcommon::vec2i(x,y));
-      } catch(...) {}
     }
   }
 }
