@@ -196,7 +196,6 @@ namespace ospray {
         matNode["type"] = std::string("default");
 
         matNode["d"]  = 1.f;
-        matNode["Ka"] = vec3f(0.0f, 0.0f, 0.0f);
         matNode["Kd"] = vec3f(0.9f, 0.9f, 0.9f);
         matNode["Ks"] = vec3f(0.2f, 0.2f, 0.2f);
 

@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "common/Material.h"
+#include "texture/Texture2D.h"
 #include "Metal_ispc.h"
 
 namespace ospray {
@@ -35,20 +36,21 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        const vec3f& reflectance
-          = getParam3f("reflectance",getParam3f("color",vec3f(1.f)));
-        const vec3f& eta
-          = getParam3f("eta",vec3f(1.69700277f, 0.879832864f, 0.5301736f));
-        const vec3f& k
-          = getParam3f("k",vec3f(9.30200672f, 6.27604008f, 4.89433956f));
-        const float roughness
-          = getParamf("roughness",0.01f);
+        // default to Aluminium
+        const vec3f& eta = getParam3f("eta", vec3f(1.697f, 0.879f, 0.5302f));
+        const vec3f& k = getParam3f("k", vec3f(9.302f, 6.276f, 4.894f));
+        const float roughness = getParamf("roughness", 0.1f); 
 
-        ispc::PathTracer_Metal_set(getIE(),
-           (const ispc::vec3f&)reflectance,
-           (const ispc::vec3f&)eta,
-           (const ispc::vec3f&)k,
-           roughness);
+        Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
+        affine2f xform_roughness = getTextureTransform("map_roughness"); 
+
+        ispc::PathTracer_Metal_set(getIE()
+            , (const ispc::vec3f&)eta
+            , (const ispc::vec3f&)k
+            , roughness
+            , map_roughness ? map_roughness->getIE() : nullptr
+            , (const ispc::AffineSpace2f&)xform_roughness
+            );
       }
     };
 

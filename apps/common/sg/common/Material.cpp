@@ -30,10 +30,6 @@ namespace ospray {
                   NodeFlags::required |
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_color).setMinMax(0.f, 1.f);
-      createChild("Ka", "vec3f", vec3f(0),
-                  NodeFlags::required |
-                  NodeFlags::valid_min_max |
-                  NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("Kd", "vec3f", kd,
                   NodeFlags::required |
                   NodeFlags::valid_min_max |

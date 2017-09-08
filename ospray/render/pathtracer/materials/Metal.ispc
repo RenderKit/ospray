@@ -15,16 +15,18 @@
 // ======================================================================== //
 
 #include "Material.ih"
+#include "texture/TextureParam.ih"
 #include "../bsdfs/Conductor.ih"
 #include "../bsdfs/MicrofacetConductor.ih"
 
 struct Metal
 {
   PathTraceMaterial super;
-  vec3f reflectance;
-  vec3f eta;
-  vec3f k;
-  float roughness;
+
+  vec3f eta; // index of refraction (wavelength dependent -> RGB)
+  vec3f k; // index of refraction, imaginary part (wavelength dependent -> RGB)
+  float roughness; // in [0, 1]; 0==ideally smooth (mirror)
+  TextureParam map_roughness;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,30 +39,44 @@ const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* unifo
                                           const Medium& currentMedium)
 {
   const uniform Metal* uniform self = (const uniform Metal* uniform)super;
-  if (self->roughness == 0.0f)
-    return Conductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k);
+  varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
+
+  float roughness = self->roughness;
+  if (valid(self->map_roughness))
+    roughness *= get1f(self->map_roughness, dg.st);
+
+  if (roughness == 0.0f)
+    return Conductor_create(ctx, frame, self->eta, self->k);
   else
-    return MicrofacetConductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k, self->roughness);
+    return MicrofacetConductor_create(ctx, frame, self->eta, self->k, roughness);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform PathTracer_Metal_create()
+export void* uniform PathTracer_Metal_set(void* uniform _self
+    , const uniform vec3f& eta
+    , const uniform vec3f& k
+    , uniform float roughness
+    , void* uniform map_roughness
+    , const uniform affine2f &xform_roughness
+    )
 {
-  uniform Metal* uniform self = uniform new uniform Metal;
-  return self;
-}
-
-export void* uniform PathTracer_Metal_set(void* uniform _self, const uniform vec3f& reflectance,
-                                             const uniform vec3f& eta,
-                                             const uniform vec3f& k,
-                                             uniform float roughness)
-{
-  uniform Metal* uniform self = (uniform Metal* uniform)_self;
-  self->reflectance = reflectance;
+  Metal* uniform self = (Metal* uniform)_self;
   self->eta = eta;
   self->k = k;
   self->roughness = roughness;
-  PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
+  self->map_roughness =
+    make_TextureParam((uniform Texture2D*)map_roughness,
+        xform_roughness);
 }
+
+export void* uniform PathTracer_Metal_create()
+{
+  Metal* uniform self = uniform new Metal;
+  PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
+  PathTracer_Metal_set(self, make_vec3f(1.f), make_vec3f(1.f), 0.1f, 
+      NULL, make_AffineSpace2f_identity());
+  return self;
+}
+

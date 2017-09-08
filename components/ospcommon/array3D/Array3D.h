@@ -319,11 +319,10 @@ namespace ospcommon {
     {
       try {
         if (!value) {
-          const size_t numVoxels =
-              size_t(dims.x) * size_t(dims.y) * size_t(dims.z);
+          const size_t numVoxels = longProduct(dims);
           value = new T[numVoxels];
         }
-      } catch (std::bad_alloc e) {
+      } catch (const std::bad_alloc &e) {
         std::stringstream ss;
         ss << "could not allocate memory for Array3D of dimensions " << dims
            << " (in Array3D::Array3D())";
@@ -334,22 +333,13 @@ namespace ospcommon {
     template <typename T>
     inline void ActualArray3D<T>::set(const vec3i &where, const T &t)
     {
-      assert(value != nullptr);
-      assert(where.x < size().x);
-      assert(where.y < size().y);
-      assert(where.z < size().z);
-      size_t index =
-          where.x + size_t(dims.x) * (where.y + size_t(dims.y) * (where.z));
-      value[index] = t;
+      value[longIndex(where, size())] = t;
     }
 
     template <typename T>
     inline void ActualArray3D<T>::clear(const T &t)
     {
-      for (int iz = 0; iz < size().z; iz++)
-        for (int iy = 0; iy < size().y; iy++)
-          for (int ix = 0; ix < size().x; ix++)
-            set(vec3i(ix, iy, iz), t);
+      for_each(size(), [&](const vec3i &idx){ set(idx, t); });
     }
 
   }  // ::ospcommon::array3D

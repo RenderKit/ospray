@@ -37,8 +37,6 @@ namespace ospray {
       {
         const vec3f& shadeColor
           = getParam3f("shadeColor",vec3f(0.5,0.42,0.35)); //vec3f(0.19,0.45,1.5));
-        const vec3f& glitterColor
-          = getParam3f("glitterColor",vec3f(0.5,0.44,0.42)); //3.06,2.4,1.88));
 
         const float glitterSpread
           = getParamf("glitterSpread",0.f);
@@ -46,7 +44,7 @@ namespace ospray {
           = getParamf("eta",1.45f);
         
         ispc::PathTracer_MetallicPaint_set(getIE(),
-          (const ispc::vec3f&)shadeColor,(const ispc::vec3f&)glitterColor,
+          (const ispc::vec3f&)shadeColor,
            glitterSpread, eta);
       }
     };
