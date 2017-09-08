@@ -92,12 +92,14 @@ namespace ospray {
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
         auto &matNode   = *matNodePtr;
+        bool addOBJparams = true;
 
         for (auto &param : mat.unknown_parameter) {
           if (param.first == "type") {
             matNode["type"] = param.second;
             std::cout << "Creating material node of type " << param.second
                       << std::endl;
+            addOBJparams = false;
           } else {
             std::string paramType;
             ospcommon::utility::Any paramValue;
@@ -112,24 +114,27 @@ namespace ospray {
           }
         }
 
-        matNode["d"]  = mat.dissolve;
-        matNode["Kd"] = vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
-        matNode["Ks"] =
+        if (addOBJparams) {
+          matNode["d"]  = mat.dissolve;
+          matNode["Kd"] = vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+          matNode["Ks"] =
             vec3f(mat.specular[0], mat.specular[1], mat.specular[2]);
 
-        addTextureIfNeeded(
-            matNode, "map_Kd", mat.diffuse_texname, containingPath);
-        addTextureIfNeeded(
-            matNode, "map_Ks", mat.specular_texname, containingPath);
-        addTextureIfNeeded(matNode,
-                           "map_Ns",
-                           mat.specular_highlight_texname,
-                           containingPath,
-                           true);
-        addTextureIfNeeded(
-            matNode, "map_bump", mat.bump_texname, containingPath);
-        addTextureIfNeeded(
-            matNode, "map_d", mat.alpha_texname, containingPath, true);
+          addTextureIfNeeded(
+              matNode, "map_Kd", mat.diffuse_texname, containingPath);
+          addTextureIfNeeded(
+              matNode, "map_Ks", mat.specular_texname, containingPath);
+          addTextureIfNeeded(matNode,
+              "map_Ns",
+              mat.specular_highlight_texname,
+              containingPath,
+              true);
+          addTextureIfNeeded(
+              matNode, "map_bump", mat.bump_texname, containingPath);
+          addTextureIfNeeded(
+              matNode, "map_d", mat.alpha_texname, containingPath, true);
+        }
+
         sgMaterials.push_back(matNodePtr);
       }
 
