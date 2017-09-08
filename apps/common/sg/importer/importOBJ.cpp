@@ -113,13 +113,10 @@ namespace ospray {
         }
 
         matNode["d"]  = mat.dissolve;
-        matNode["Ka"] = vec3f(mat.ambient[0], mat.ambient[1], mat.ambient[2]);
         matNode["Kd"] = vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
         matNode["Ks"] =
             vec3f(mat.specular[0], mat.specular[1], mat.specular[2]);
 
-        addTextureIfNeeded(
-            matNode, "map_Ka", mat.ambient_texname, containingPath);
         addTextureIfNeeded(
             matNode, "map_Kd", mat.diffuse_texname, containingPath);
         addTextureIfNeeded(
