@@ -26,11 +26,6 @@ namespace ospray {
       createFB();
     }
 
-    FrameBuffer::~FrameBuffer()
-    {
-      destroyFB();
-    }
-
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
       std::string displayWall = child("displayWall").valueAs<std::string>();
@@ -38,7 +33,7 @@ namespace ospray {
 
       destroyFB();
       createFB();
-      
+
       if (displayWall != "") {
         ospLoadModule("displayWald");
         OSPPixelOp pixelOp = ospNewPixelOp("display_wald");
@@ -50,7 +45,7 @@ namespace ospray {
         std::cout << "this is the display wall frma ebuferr .. size is "
                   << size() << std::endl;
         std::cout << "added display wall pixel op ..." << std::endl;
-        
+
         std::cout << "created display wall pixelop, and assigned to frame buffer!"
                 << std::endl;
       }
@@ -83,13 +78,13 @@ namespace ospray {
     {
       return child("size").valueAs<vec2i>();
     }
-    
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
     {
       return "ospray::sg::FrameBuffer";
     }
-    
+
     OSPFrameBuffer FrameBuffer::handle() const
     {
       return ospFrameBuffer;
@@ -105,12 +100,12 @@ namespace ospray {
                                          OSP_FB_COLOR | OSP_FB_ACCUM |
                                          OSP_FB_VARIANCE);
       clearAccum();
-      setValue((OSPObject)ospFrameBuffer);
+      setValue(ospFrameBuffer);
     }
 
     void ospray::sg::FrameBuffer::destroyFB()
     {
-      ospFreeFrameBuffer(ospFrameBuffer);
+      ospRelease(ospFrameBuffer);
     }
 
     OSP_REGISTER_SG_NODE(FrameBuffer);

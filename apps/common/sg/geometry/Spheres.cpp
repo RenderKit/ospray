@@ -35,12 +35,27 @@ namespace ospray {
         auto spheres = child("spheres").nodeAs<DataBuffer>();
 
         auto *base = (byte_t*)spheres->base();
-        auto sphereBytes = child("bytes_per_sphere").valueAs<int>();
-        auto offset_center = child("offset_center").valueAs<int>();
-        auto offset_radius = child("offset_radius").valueAs<int>();
+
+        int sphereBytes = 16;
+        if (hasChild("bytes_per_sphere"))
+          sphereBytes = child("bytes_per_sphere").valueAs<int>();
+
+        int offset_center = 0;
+        if (hasChild("offset_center"))
+          offset_center = child("offset_center").valueAs<int>();
+
+        int offset_radius = -1;
+        if (hasChild("offset_radius"))
+          offset_radius = child("offset_radius").valueAs<int>();
+
+        float radius = 0.01f;
+        if (hasChild("radius"))
+          radius = child("radius").valueAs<float>();
+
         for (int i = 0; i < spheres->numBytes(); i += sphereBytes) {
           vec3f &center = *(vec3f*)(base + i + offset_center);
-          float &radius = *(float*)(base + i + offset_radius);
+          if (offset_radius >= 0)
+            radius = *(float*)(base + i + offset_radius);
           box3f sphereBounds(center - radius, center + radius);
           bounds.extend(sphereBounds);
         }

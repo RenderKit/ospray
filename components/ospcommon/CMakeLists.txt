@@ -37,6 +37,7 @@ ELSE()
     library.cpp
     thread.cpp
     vec.cpp
+
     array3D/Array3D.cpp
 
     containers/TransactionalBuffer.h
@@ -57,6 +58,7 @@ ELSE()
     utility/Any.h
     utility/CodeTimer.h
     utility/OnScopeExit.h
+    utility/Optional.h
     utility/PseudoURL.cpp
     utility/TransactionalValue.h
 
@@ -96,6 +98,7 @@ ELSE()
     math.h
     platform.h
     Quaternion.h
+    range.h
     RefCount.h
     sysinfo.h
     thread.h
@@ -103,6 +106,13 @@ ELSE()
     vec.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    array3D/Array3D.h
+    array3D/for_each.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/array3D
   )
 
   OSPRAY_INSTALL_SDK_HEADERS(
@@ -141,6 +151,7 @@ ELSE()
     utility/Any.h
     utility/CodeTimer.h
     utility/OnScopeExit.h
+    utility/Optional.h
     utility/PseudoURL.h
     utility/TransactionalValue.h
 
@@ -159,6 +170,16 @@ ELSE()
 
   ADD_TEST(NAME Any COMMAND test_Any)
 
+  # ArrayView
+
+  OSPRAY_CREATE_TEST(test_ArrayView
+    utility/tests/test_ArrayView.cpp
+  LINK
+    ospray_common
+  )
+
+  ADD_TEST(NAME ArrayView COMMAND test_ArrayView)
+
   # utility/OnScopeExit
 
   OSPRAY_CREATE_TEST(test_OnScopeExit
@@ -168,6 +189,16 @@ ELSE()
   )
 
   ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
+
+  # Optional
+
+  OSPRAY_CREATE_TEST(test_Optional
+    utility/tests/test_Optional.cpp
+  LINK
+    ospray_common
+  )
+
+  ADD_TEST(NAME Optional COMMAND test_Optional)
 
   # containers/TransactionalBuffer
 

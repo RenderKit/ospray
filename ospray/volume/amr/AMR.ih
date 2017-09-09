@@ -1,0 +1,144 @@
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+// ospray
+#include "math/box.ih"
+// ours
+#include "KDTree.ih"
+#include "range.ih"
+
+inline vec3f lerp(const box3f box, const vec3f w)
+{
+  return box.lower + (box.upper-box.lower)*w;
+}
+
+inline float max(float a, float b, float c)
+{
+  return max(max(a,b),c);
+}
+
+inline float min(float a, float b, float c)
+{
+   return min(min(a,b),c);
+}
+
+inline float max(float a, float b, float c, float d,
+                 float e, float f, float g, float h)
+{
+  return max(max(max(a,b),max(c,d)),max(max(e,f),max(g,h)));
+}
+
+inline float min(float a, float b, float c, float d,
+                 float e, float f, float g, float h)
+{
+  return min(min(min(a,b),min(c,d)),min(min(e,f),min(g,h)));
+}
+
+/*! enum to symbolically iterate the 8 corners of an octant */
+enum { C000=0, C001,C010,C011,C100,C101,C110,C111 };
+
+struct AMRBrick
+{
+  /*! bounding box of integer coordinates of cells. note that
+    this EXCLUDES the width of the rightmost cell: ie, a 4^3
+    box at root level pos (0,0,0) would have a _box_ of
+    [(0,0,0)-(3,3,3)] (because 3,3,3 is the highest valid
+    coordinate in this box!), while its bounds would be
+    [(0,0,0)-(4,4,4)]. Make sure to NOT use box.size() for the
+    grid dimensions, since this will always be one lower than
+    the dims of the grid.... */
+  box3i box;
+  //! level this brick is at
+  int   level;
+  // width of each cell in this level
+  float cellWidth;
+
+  /* world bounds, including entire cells. ie, a 4^3 root brick
+     at (0,0,0) would have bounds [(0,0,0)-(4,4,4)] (as opposed
+     to the 'box' value, see above!) */
+  box3f bounds;
+  // pointer to the actual data values stored in this brick
+  float *value;
+  // dimensions of this box's data
+  vec3i dims;
+  // scale factor from grid space to world space (ie,1.f/cellWidth)
+  float gridToWorldScale;
+
+  // rcp(bounds.upper-bounds.lower);
+  vec3f bounds_scale;
+  // dimensions, in float
+  vec3f f_dims;
+};
+
+struct AMRLeaf
+{
+  AMRBrick **brickList;
+  box3f bounds;
+  range1f valueRange;
+};
+
+struct AMRLevel
+{
+  float cellWidth;
+  /* do not use these values: they are computed on the C side, at
+     apparently different accuracy than when they get computed on the
+     ISPC side - this gets "sometimes" inconsistent results */
+  float doNotUse_rcpCellWidth;
+  float doNotUse_halfCellWidth;
+  int   level;
+};
+
+struct AMR
+{
+  /*! "item list" array - each leaf node in the tree points into this
+    array, and the 'num' elements follwing the pointed-to-location
+    are the bricks stored at this leaf */
+  AMRLeaf           *leaf;
+  // AMRBrick *uniform *uniform item;
+  KDTreeNode           *node;
+  AMRLevel          *level;
+  AMRLevel          *finestLevel;
+  uint32 numNodes;
+  uint32 numLeaves;
+  uint32 numLevels;
+  float finestLevelCellWidth;
+
+  box3f worldBounds;
+  vec3f maxValidPos;
+};
+
+inline float nextafter(const float f, const float s)
+{
+  const float af = abs(f);
+  const float nf = f+s*af*(1.f/(float)(1<<23));
+  return nf;
+}
+
+inline vec3f nextafter(const vec3f v, const vec3f sign)
+{
+  return make_vec3f(nextafter(v.x,sign.x),
+                    nextafter(v.y,sign.y),
+                    nextafter(v.z,sign.z));
+}
+
+inline uniform vec3f nextafter(const uniform vec3f v, const uniform float sign)
+{
+  return make_vec3f(nextafter(v.x,sign),
+                    nextafter(v.y,sign),
+                    nextafter(v.z,sign));
+}

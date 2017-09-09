@@ -200,7 +200,18 @@ SET(OSPRAY_SOURCES
   volume/unstructured/MinMaxBVH2.ispc
   volume/unstructured/tetrahedral/TetrahedralVolume.cpp
   volume/unstructured/tetrahedral/TetrahedralVolume.ispc
+
+  volume/amr/AMRAccel.cpp
+  volume/amr/AMRData.cpp
+  volume/amr/AMRVolume.ispc
+  volume/amr/AMRVolume.cpp
+  volume/amr/CellRef.ispc
+  volume/amr/DualCell.ispc
+  volume/amr/method_current.ispc
+  volume/amr/method_finest.ispc
+  volume/amr/method_octant.ispc
 )
+
 
 # -------------------------------------------------------
 # Install API headers
@@ -326,6 +337,20 @@ OSPRAY_INSTALL_SDK_HEADERS(
   volume/Volume.h
   volume/Volume.ih
   DESTINATION volume
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  volume/amr/AMR.ih
+  volume/amr/AMRAccel.h
+  volume/amr/AMRData.h
+  volume/amr/AMRVolume.h
+  volume/amr/AMRVolume.ih
+  volume/amr/CellRef.ih
+  volume/amr/DualCell.ih
+  volume/amr/FindStack.ih
+  volume/amr/KDTree.ih
+  volume/amr/range.ih
+  DESTINATION volume/amr
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(

@@ -14,32 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "CellRef.ih"
+#include "AMRVolume.ih"
+#include "DualCell.ih"
 
-#include "sg/common/Node.h"
-#include "AsyncRenderEngine.h"
+varying float AMR_finest(void *uniform _self, const varying vec3f &P)
+{
+  const AMRVolume *uniform self = (AMRVolume *)_self;
+  const AMR *uniform amr = &self->amr;
 
-namespace ospray {
-  namespace sg {
+  DualCell D;
+  initDualCell(D,P,*amr->finestLevel);
+  findDualCell(amr,D);
+  return lerp(D);
+}
 
-    class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngineSg
-        : public AsyncRenderEngine
-    {
-    public:
+varying float AMR_finestLevel(void *uniform _self, const varying vec3f &P)
+{
+  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+  AMR *uniform amr = &self->amr;
 
-      AsyncRenderEngineSg(const std::shared_ptr<Node> &sgRenderer,
-                          const std::shared_ptr<Node> &sgRendererDW);
-      ~AsyncRenderEngineSg() = default;
+  const CellRef C = findLeafCell(amr,P);
+  float width = C.width;
+  if (isnan(width))
+    width = 1.0f;
+  return width;
+}
 
-    private:
-
-      virtual void run()      override;
-      virtual void validate() override;
-
-      const std::shared_ptr<Node> scenegraph;
-      const std::shared_ptr<Node> scenegraphDW;
-      sg::TimeStamp  lastRTime;
-    };
-
-  } // ::ospray::sg
-} // ::ospray
+export void AMR_install_finest(void *uniform _self)
+{
+  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+  self->super.sample = AMR_finest;
+  self->computeSampleLevel = AMR_finestLevel;
+}

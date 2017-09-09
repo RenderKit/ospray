@@ -23,7 +23,7 @@
 
 #include "Imgui3dExport.h"
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget

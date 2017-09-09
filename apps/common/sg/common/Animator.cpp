@@ -20,7 +20,7 @@ namespace ospray {
   namespace sg {
 
    template<typename T>
-   SGVar lerp(float interp, const SGVar& value1, const SGVar& value2)
+   Any lerp(float interp, const Any& value1, const Any& value2)
    {
      return T((1.f-interp)*value1.get<T>()+interp*value2.get<T>());
    }
@@ -56,8 +56,8 @@ namespace ospray {
       Node::preTraverse(ctx,operation, traverseChildren);
       if (operation == "animate")
       {
-        const SGVar& value1 = child("value1").value();
-        const SGVar& value2 = child("value2").value();
+        const Any& value1 = child("value1").value();
+        const Any& value2 = child("value2").value();
         const float start = child("start").valueAs<float>();
         const float stop = child("stop").valueAs<float>();
         const float duration = stop-start;

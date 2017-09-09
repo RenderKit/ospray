@@ -34,6 +34,7 @@
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "ospcommon/networking/BufferedDataStreaming.h"
 #include "ospcommon/networking/Socket.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 // std
 #ifndef _WIN32
@@ -51,6 +52,7 @@ namespace ospray {
   namespace mpi {
 
     using namespace mpicommon;
+    using ospcommon::utility::getEnvVar;
 
     // Forward declarations ///////////////////////////////////////////////////
 
@@ -217,14 +219,14 @@ namespace ospray {
       }
 
       MPI_CALL(Open_port(MPI_INFO_NULL, appPortName));
-      
+
       socket_t mpiPortSocket = ospcommon::bind(3141);
       socket_t clientSocket = ospcommon::listen(mpiPortSocket);
       size_t len = strlen(appPortName);
       ospcommon::write(clientSocket,&len,sizeof(len));
       ospcommon::write(clientSocket,appPortName,len);
       flush(clientSocket);
-      
+
       MPI_CALL(Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm));
       ospcommon::close(clientSocket);
       ospcommon::close(mpiPortSocket);
@@ -251,7 +253,7 @@ namespace ospray {
                                      const std::string &host)
     {
       mpi::init(ac,av);
-      
+
       if (world.rank < 1) {
         postStatusMsg("=====================================================\n"
                       "initializing OSPRay MPI in 'connect to master' mode  \n"
@@ -265,7 +267,7 @@ namespace ospray {
       char appPortName[MPI_MAX_PORT_NAME];
       if (worker.rank == 0) {
         auto masterSocket = ospcommon::connect(host.c_str(),3141);
-        
+
         size_t len;
         ospcommon::read(masterSocket,&len,sizeof(len));
         ospcommon::read(masterSocket,appPortName,len);
@@ -370,7 +372,7 @@ namespace ospray {
     }
 
     // MPIDevice definitions //////////////////////////////////////////////////
-    
+
     MPIOffloadDevice::~MPIOffloadDevice()
     {
       if (IamTheMaster()) {
@@ -380,11 +382,8 @@ namespace ospray {
       }
     }
 
-    void MPIOffloadDevice::commit()
+    void MPIOffloadDevice::initializeDevice()
     {
-      if (initialized)
-        return;
-
       Device::commit();
 
       initialized = true;
@@ -438,16 +437,33 @@ namespace ospray {
       mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker, MPI_ROOT, 0);
       readStream  = make_unique<networking::BufferedReadStream>(*mpiFabric);
       writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric);
-
-      auto OSPRAY_DYNAMIC_LOADBALANCER = getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
-      if (OSPRAY_DYNAMIC_LOADBALANCER.first && OSPRAY_DYNAMIC_LOADBALANCER.second) {
-        puts("#osp:mpi: using dynamicLoadBalancer");
-        TiledLoadBalancer::instance = make_unique<dynamicLoadBalancer::Master>();
-      } else
-      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }
 
-    OSPFrameBuffer 
+    void MPIOffloadDevice::commit()
+    {
+      if (!initialized)
+        initializeDevice();
+
+      auto OSPRAY_DYNAMIC_LOADBALANCER =
+          getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
+
+      auto useDynamicLoadBalancer =
+          getParam1i("dynamicLoadBalancer",
+                     OSPRAY_DYNAMIC_LOADBALANCER.value_or(false));
+
+      auto OSPRAY_PREALLOCATED_TILES =
+          utility::getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
+
+      auto preAllocatedTiles =
+          OSPRAY_PREALLOCATED_TILES.value_or(getParam1i("preAllocatedTiles",4));
+
+      work::SetLoadBalancer slbWork(ObjectHandle(),
+                                    useDynamicLoadBalancer,
+                                    preAllocatedTiles);
+      processWork(slbWork);
+    }
+
+    OSPFrameBuffer
     MPIOffloadDevice::frameBufferCreate(const vec2i &size,
                                         const OSPFrameBufferFormat mode,
                                         const uint32 channels)
@@ -465,7 +481,7 @@ namespace ospray {
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-      
+
       switch (channel) {
       case OSP_FB_COLOR: return fb->mapColorBuffer();
       case OSP_FB_DEPTH: return fb->mapDepthBuffer();
@@ -479,7 +495,7 @@ namespace ospray {
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-      
+
       fb->unmap(mapped);
     }
 
@@ -519,8 +535,6 @@ namespace ospray {
                                       void *init, int flags)
     {
       ObjectHandle handle = allocateHandle();
-
-      flags = flags & ~OSP_DATA_SHARED_BUFFER;
 
       work::NewData work(handle, nitems, format, init, flags);
       processWork(work);
@@ -823,8 +837,8 @@ namespace ospray {
     }
 
     OSPPickResult MPIOffloadDevice::pick(OSPRenderer renderer,
-                                         const vec2f &screenPos) 
-    { 
+                                         const vec2f &screenPos)
+    {
       work::Pick work(renderer, screenPos);
       processWork(work, true);
       return work.pickResult;

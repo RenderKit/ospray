@@ -27,8 +27,7 @@ namespace ospray {
       /*! constructor allocates an OSP frame buffer object */
       FrameBuffer(vec2i size = vec2i(300,300));
 
-      /*! destructor - relasess the OSP frame buffer object */
-      virtual ~FrameBuffer();
+      // no destructor since we release the framebuffer object in Node::~Node()
 
       unsigned char *map();
       void unmap(const void *mem);

@@ -16,37 +16,85 @@
 
 #include "AsyncRenderEngine.h"
 
+#include "sg/common/FrameBuffer.h"
+#include "sg/Renderer.h"
+
 namespace ospray {
+
+  AsyncRenderEngine::AsyncRenderEngine(std::shared_ptr<sg::Node> sgRenderer,
+                                       std::shared_ptr<sg::Node> sgRendererDW)
+    : scenegraph(sgRenderer), scenegraphDW(sgRendererDW)
+  {
+    backgroundThread = make_unique<AsyncLoop>([&](){
+      static sg::TimeStamp lastFTime;
+
+      auto &sgFB = scenegraph->child("frameBuffer");
+
+      static bool once = false;  //TODO: initial commit as timestamp cannot
+                                 //      be set to 0
+      static int counter = 0;
+      if (sgFB.childrenLastModified() > lastFTime || !once) {
+        auto &size = sgFB["size"];
+        nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
+        pixelBuffer[0].resize(nPixels);
+        pixelBuffer[1].resize(nPixels);
+        lastFTime = sg::TimeStamp();
+      }
+
+      if (scenegraph->childrenLastModified() > lastRTime || !once) {
+        double time = ospcommon::getSysTime();
+        scenegraph->traverse("verify");
+        double verifyTime = ospcommon::getSysTime() - time;
+        time = ospcommon::getSysTime();
+        scenegraph->traverse("commit");
+        double commitTime = ospcommon::getSysTime() - time;
+
+        if (scenegraphDW) {
+          scenegraphDW->traverse("verify");
+          scenegraphDW->traverse("commit");
+        }
+
+        lastRTime = sg::TimeStamp();
+      }
+      if (scenegraph->hasChild("animationcontroller"))
+        scenegraph->child("animationcontroller").traverse("animate");
+
+      if (pickPos.update()) {
+        pickResult = scenegraph->nodeAs<sg::Renderer>()->pick(pickPos.ref());
+      }
+
+      fps.start();
+      scenegraph->traverse("render");
+      if (scenegraphDW)
+        scenegraphDW->traverse("render");
+      once = true;
+      fps.stop();
+
+      auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
+
+      auto *srcPB = (uint32_t*)sgFBptr->map();
+      auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
+
+      memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
+
+      sgFBptr->unmap(srcPB);
+
+      if (fbMutex.try_lock()) {
+        std::swap(currentPB, mappedPB);
+        newPixels = true;
+        fbMutex.unlock();
+      }
+    });
+  }
 
   AsyncRenderEngine::~AsyncRenderEngine()
   {
     stop();
   }
 
-  void AsyncRenderEngine::setRenderer(cpp::Renderer renderer,
-                                      cpp::Renderer rendererDW,
-                                      cpp::FrameBuffer frameBufferDW)
-  {
-    this->renderer      = renderer;
-    this->rendererDW    = rendererDW;
-    this->frameBufferDW = frameBufferDW;
-  }
-
   void AsyncRenderEngine::setFbSize(const ospcommon::vec2i &size)
   {
     fbSize = size;
-  }
-
-  void AsyncRenderEngine::scheduleObjectCommit(const cpp::ManagedObject &obj)
-  {
-    OSPObject h = obj.object();
-    scheduleFunction([=](cpp::Renderer&) { ospCommit(h); });
-  }
-
-  void AsyncRenderEngine::scheduleFunction(ScheduledFunction f)
-  {
-    std::lock_guard<std::mutex> lock{scheduleFcnMutex};
-    scheduledFunctions.push_back(f);
   }
 
   void AsyncRenderEngine::start(int numThreads)
@@ -61,8 +109,16 @@ namespace ospray {
     if (state == ExecState::INVALID)
       throw std::runtime_error("Can't start the engine in an invalid state!");
 
+    auto device = ospGetCurrentDevice();
+    if(device == nullptr)
+      throw std::runtime_error("Can't get current device!");
+
+    if (numOsprayThreads > 0)
+      ospDeviceSet1i(device, "numThreads", numOsprayThreads);
+    ospDeviceCommit(device);
+
     state = ExecState::RUNNING;
-    backgroundThread = std::thread([&](){ run(); });
+    backgroundThread->start();
   }
 
   void AsyncRenderEngine::stop()
@@ -71,8 +127,7 @@ namespace ospray {
       return;
 
     state = ExecState::STOPPED;
-    if (backgroundThread.joinable())
-      backgroundThread.join();
+    backgroundThread->stop();
   }
 
   ExecState AsyncRenderEngine::runningState() const
@@ -90,6 +145,26 @@ namespace ospray {
     return fps.perSecondSmoothed();
   }
 
+  float AsyncRenderEngine::getLastVariance() const
+  {
+    return scenegraph->nodeAs<sg::Renderer>()->getLastVariance();
+  }
+
+  void AsyncRenderEngine::pick(const vec2f &screenPos)
+  {
+    pickPos = screenPos;
+  }
+
+  bool AsyncRenderEngine::hasNewPickResult()
+  {
+    return pickResult.update();
+  }
+
+  OSPPickResult AsyncRenderEngine::getPickResult()
+  {
+    return pickResult.get();
+  }
+
   const std::vector<uint32_t> &AsyncRenderEngine::mapFramebuffer()
   {
     fbMutex.lock();
@@ -105,84 +180,7 @@ namespace ospray {
   void AsyncRenderEngine::validate()
   {
     if (state == ExecState::INVALID)
-    {
-      renderer.update();
-      rendererDW.update();
-      state = renderer.ref().handle() ? ExecState::STOPPED : ExecState::INVALID;
-    }
-  }
-
-  bool AsyncRenderEngine::checkForScheduledFunctions()
-  {
-    std::lock_guard<std::mutex> lock{scheduleFcnMutex};
-    const bool ranFcns = !scheduledFunctions.empty();
-    for (auto &f: scheduledFunctions) {
-      f(renderer.ref());
-    }
-    scheduledFunctions.clear();
-    return ranFcns;
-  }
-
-  bool AsyncRenderEngine::checkForFbResize()
-  {
-    bool changed = fbSize.update();
-
-    if (changed) {
-      auto &size  = fbSize.ref();
-      frameBuffer = cpp::FrameBuffer(size, OSP_FB_SRGBA,
-                                     OSP_FB_COLOR | OSP_FB_DEPTH |
-                                     OSP_FB_ACCUM | OSP_FB_VARIANCE);
-
-      nPixels = size.x * size.y;
-      pixelBuffer[0].resize(nPixels);
-      pixelBuffer[1].resize(nPixels);
-    }
-
-    return changed;
-  }
-
-  void AsyncRenderEngine::run()
-  {
-    auto device = ospGetCurrentDevice();
-    if(device == nullptr)
-      throw std::runtime_error("Can't get current device!");
-
-    if (numOsprayThreads > 0)
-      ospDeviceSet1i(device, "numThreads", numOsprayThreads);
-    ospDeviceCommit(device);
-
-    while (state == ExecState::RUNNING) {
-      bool resetAccum = false;
-      resetAccum |= renderer.update();
-      resetAccum |= checkForFbResize();
-      resetAccum |= checkForScheduledFunctions();
-
-      if (resetAccum) {
-        frameBuffer.clear(OSP_FB_ACCUM);
-        if (frameBufferDW)
-          frameBufferDW.clear(OSP_FB_ACCUM);
-      }
-
-      fps.start();
-      renderer.ref().renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
-      if (rendererDW.ref())
-        rendererDW.ref().renderFrame(frameBufferDW, OSP_FB_COLOR | OSP_FB_ACCUM);
-      fps.stop();
-
-      auto *srcPB = (uint32_t*)frameBuffer.map(OSP_FB_COLOR);
-      auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
-
-      memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
-
-      frameBuffer.unmap(srcPB);
-
-      if (fbMutex.try_lock())
-      {
-        std::swap(currentPB, mappedPB);
-        newPixels = true;
-        fbMutex.unlock();
-      }
-    }
+      state = ExecState::STOPPED;
   }
 
 }// namespace ospray

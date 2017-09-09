@@ -1,0 +1,190 @@
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+// ours
+#include "CellRef.ih"
+#include "FindStack.ih"
+#include "AMR.ih"
+
+struct DualCellID
+{
+  /*! position of LOWER-LEFT COORDINATE (ie, CENTER of lower-left cell */
+  vec3f pos;
+  //! width of dual cell, also doubles as level indicator
+  float width;
+};
+
+struct DualCell
+{
+  // -------------------------------------------------------
+  /* input parameters that specify the cell. coords must be the actual
+     cell centers on the desired level */
+  DualCellID cellID;
+  //! interpolation weights
+  vec3f weights;
+  // -------------------------------------------------------
+  /* values as found the by the query */
+  float value[8];
+  float actualWidth[8];
+  bool  isLeaf[8];
+};
+
+inline vec3f dualCellLerpWeightsForLevel(const vec3f &P, const float cellWidth)
+{
+  const float halfCellWidth = 0.5f*cellWidth;
+  const float rcpCellWidth = rcp(cellWidth);
+  const vec3f xfmed = (P-halfCellWidth)*rcpCellWidth;
+  const vec3f f_idx = floor(xfmed);
+  // D.cellID.pos   = f_idx * cellWidth + halfCellWidth;
+  // D.cellID.width = cellWidth;
+  return (xfmed - f_idx);
+}
+
+inline void initDualCell(DualCell &D,
+                         const vec3f &P,
+                         const uniform AMRLevel &level)
+{
+  const float cellWidth = level.cellWidth;
+  const float halfCellWidth = 0.5f*cellWidth;
+  const float rcpCellWidth = rcp(cellWidth);
+  const vec3f xfmed = (P-halfCellWidth)*rcpCellWidth;
+  const vec3f f_idx = floor(xfmed);
+  D.cellID.pos   = f_idx * cellWidth + halfCellWidth;
+  D.cellID.width = cellWidth;
+  D.weights      = xfmed - f_idx;
+}
+
+inline void initDualCell(DualCell &D, const vec3f &P, const float cellWidth)
+{
+  const float halfCellWidth = cellWidth * 0.5f;
+  const float rcpCellWidth  = rcp(cellWidth);
+  const vec3f xfmed = (P-halfCellWidth)*rcpCellWidth;
+  const vec3f f_idx = floor(xfmed);
+  D.cellID.pos   = f_idx * cellWidth + halfCellWidth;
+  D.cellID.width = cellWidth;
+  D.weights      = xfmed - f_idx;
+}
+
+inline bool allCornersAreLeaves(const DualCell &D)
+{
+  return
+    D.isLeaf[0] &
+    D.isLeaf[1] &
+    D.isLeaf[2] &
+    D.isLeaf[3] &
+    D.isLeaf[4] &
+    D.isLeaf[5] &
+    D.isLeaf[6] &
+    D.isLeaf[7];
+}
+
+inline bool allCornersArePresent(const DualCell &D)
+{
+  return
+    (D.actualWidth[0] == D.cellID.width) &
+    (D.actualWidth[1] == D.cellID.width) &
+    (D.actualWidth[2] == D.cellID.width) &
+    (D.actualWidth[3] == D.cellID.width) &
+    (D.actualWidth[4] == D.cellID.width) &
+    (D.actualWidth[5] == D.cellID.width) &
+    (D.actualWidth[6] == D.cellID.width) &
+    (D.actualWidth[7] == D.cellID.width);
+}
+
+inline float lerp(const DualCell &D)
+{
+  const vec3f &w = D.weights;
+  const float f000 = D.value[C000];
+  const float f001 = D.value[C001];
+  const float f010 = D.value[C010];
+  const float f011 = D.value[C011];
+  const float f100 = D.value[C100];
+  const float f101 = D.value[C101];
+  const float f110 = D.value[C110];
+  const float f111 = D.value[C111];
+
+  const float f00 = (1.f-w.x)*f000 + w.x*f001;
+  const float f01 = (1.f-w.x)*f010 + w.x*f011;
+  const float f10 = (1.f-w.x)*f100 + w.x*f101;
+  const float f11 = (1.f-w.x)*f110 + w.x*f111;
+
+  const float f0 = (1.f-w.y)*f00+w.y*f01;
+  const float f1 = (1.f-w.y)*f10+w.y*f11;
+
+  const float f = (1.f-w.z)*f0+w.z*f1;
+  return f;
+}
+
+inline float lerpWithExplicitWeights(const DualCell &D, const vec3f &w)
+{
+  const float f000 = D.value[C000];
+  const float f001 = D.value[C001];
+  const float f010 = D.value[C010];
+  const float f011 = D.value[C011];
+  const float f100 = D.value[C100];
+  const float f101 = D.value[C101];
+  const float f110 = D.value[C110];
+  const float f111 = D.value[C111];
+
+  const float f00 = (1.f-w.x)*f000 + w.x*f001;
+  const float f01 = (1.f-w.x)*f010 + w.x*f011;
+  const float f10 = (1.f-w.x)*f100 + w.x*f101;
+  const float f11 = (1.f-w.x)*f110 + w.x*f111;
+
+  const float f0 = (1.f-w.y)*f00+w.y*f01;
+  const float f1 = (1.f-w.y)*f10+w.y*f11;
+
+  const float f = (1.f-w.z)*f0+w.z*f1;
+  return f;
+}
+
+inline float lerpAlpha(const DualCell &D)
+{
+  const vec3f &w = D.weights;
+  const float f000 = D.actualWidth[C000] == D.cellID.width ? 1.f : 0.f;
+  const float f001 = D.actualWidth[C001] == D.cellID.width ? 1.f : 0.f;
+  const float f010 = D.actualWidth[C010] == D.cellID.width ? 1.f : 0.f;
+  const float f011 = D.actualWidth[C011] == D.cellID.width ? 1.f : 0.f;
+  const float f100 = D.actualWidth[C100] == D.cellID.width ? 1.f : 0.f;
+  const float f101 = D.actualWidth[C101] == D.cellID.width ? 1.f : 0.f;
+  const float f110 = D.actualWidth[C110] == D.cellID.width ? 1.f : 0.f;
+  const float f111 = D.actualWidth[C111] == D.cellID.width ? 1.f : 0.f;
+
+  const float f00 = (1.f-w.x)*f000 + w.x*f001;
+  const float f01 = (1.f-w.x)*f010 + w.x*f011;
+  const float f10 = (1.f-w.x)*f100 + w.x*f101;
+  const float f11 = (1.f-w.x)*f110 + w.x*f111;
+
+  const float f0 = (1.f-w.y)*f00+w.y*f01;
+  const float f1 = (1.f-w.y)*f10+w.y*f11;
+
+  const float f = (1.f-w.z)*f0+w.z*f1;
+  return f;
+}
+
+/*! find the dual cell given by the two */
+extern void findDualCell(const AMR *uniform self,
+                         DualCell &o);
+
+/*! find specified dual cell, but mirror the x, y, and z dimensions
+  for lower and upper coordinates.  e.g., with loID=0,0,0 we perfom a
+  regular dual cell query, and corner C000 will be the lower front
+  left corner.  with loID=1,0,0 we will mirror corners in the x axis,
+  so value[C000] would be the value fro the lower front RIGHT
+  corner */
+extern void findMirroredDualCell(const AMR *uniform self,
+                                 const vec3i &loID,
+                                 DualCell &dual);

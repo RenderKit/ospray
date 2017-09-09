@@ -21,6 +21,7 @@
 #include "imgui_impl_glfw_gl3.h"
 
 #include "ospcommon/utility/CodeTimer.h"
+#include "ospcommon/utility/getEnvVar.h"
 #include "ospray/version.h"
 
 #include <stdio.h>
@@ -47,15 +48,15 @@ extern "C" void glDrawPixels( GLsizei width, GLsizei height,
                               GLenum format, GLenum type,
                               const GLvoid *pixels );
 
-namespace ospray {
+using ospcommon::utility::getEnvVar;
 
+namespace ospray {
   namespace imgui3D {
 
     bool dumpScreensDuringAnimation = false;
+    bool ImGui3DWidget::showGui = false;
 
     static ImGui3DWidget *currentWidget = nullptr;
-
-    bool ImGui3DWidget::showGui = false;
 
     // Class definitions //////////////////////////////////////////////////////
 
@@ -332,10 +333,10 @@ namespace ospray {
       auto size = defaultInitSize;
 
       auto defaultSizeFromEnv =
-        getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
+          getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
 
-      if (defaultSizeFromEnv.first) {
-        int rc = sscanf(defaultSizeFromEnv.second.c_str(),
+      if (defaultSizeFromEnv) {
+        int rc = sscanf(defaultSizeFromEnv.value().c_str(),
                         "%dx%d", &size.x, &size.y);
         if (rc != 2) {
           throw std::runtime_error("could not parse"
@@ -454,7 +455,7 @@ namespace ospray {
           std::stringstream ss;
           ss << 1.f/currentWidget->renderTime;
           ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.8,.8,.8,1.f));
-          ImGui::Text("%s", ("FPS: " + ss.str()).c_str());
+          ImGui::Text("%s", ("fps: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
           ImGui::PopStyleColor(1);
 

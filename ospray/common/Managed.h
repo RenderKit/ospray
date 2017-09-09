@@ -241,7 +241,8 @@ namespace ospray {
     float  getParamf (const char *name, const float  valIfNotFound);
 
     void *getVoidPtr(const char *name, void *valIfNotFound);
-    const char *getParamString(const char *name, const char *valIfNotFound);
+    const char *getParamString(const char *name,
+                               const char *valIfNotFound = "");
     /*! @} */
 
     // ------------------------------------------------------------------

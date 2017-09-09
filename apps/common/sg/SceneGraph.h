@@ -50,7 +50,7 @@ namespace ospray {
 
     /*! \brief allows for adding semantical info to a model/scene
      graph.  \note will not do anything by itself. */
-    struct Info : public sg::Node
+    struct OSPSG_INTERFACE Info : public sg::Node
     {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
@@ -60,7 +60,7 @@ namespace ospray {
       std::string description;
     };
 
-    struct Group : public sg::Renderable
+    struct OSPSG_INTERFACE Group : public sg::Renderable
     {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;

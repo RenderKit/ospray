@@ -25,10 +25,8 @@ namespace ospray {
       'n' items of a given type */
   struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   {
-    /*! constructor */
-    Data(size_t numItems, OSPDataType type, void *data, int flags);
-    
-    /*! destructor */
+    Data(size_t numItems, OSPDataType type, void *data, int flags = 0);
+
     virtual ~Data();
 
     /*! commit this object - for this object type, make sure that all

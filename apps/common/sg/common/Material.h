@@ -26,7 +26,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Material : public Node
     {
       Material();
-      
+
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
 
@@ -34,7 +34,7 @@ namespace ospray {
       virtual void postCommit(RenderContext &ctx) override;
 
       //! a logical name, of no other useful meaning whatsoever
-      std::string name; 
+      std::string name;
       //! indicates the type of material/shader the renderer should use for
       //  these parameters
       std::string type;
@@ -42,8 +42,7 @@ namespace ospray {
       // Carson: what is this?  seems to be used by RIVL.  Is this supposed to be map_Kd?
       // how do I use a vector of textures?
       std::vector<std::shared_ptr<Texture2D>> textures;
-      
-      OSPMaterial ospMaterial {nullptr};
+
       OSPRenderer ospRenderer {nullptr};
     };
 

@@ -26,9 +26,6 @@
 
 namespace ospray {
   namespace sg {
-    using std::string;
-    using std::cout;
-    using std::endl;
 
     /*! create a node of given type if registered (and tell it to
       parse itself from that xml node), or throw an exception if
@@ -36,13 +33,6 @@ namespace ospray {
     std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node,
                                              const unsigned char *binBasePtr)
     {
-      if (node.name.find("Chombo") != std::string::npos) {
-        if (!ospLoadModule("amr"))
-            std::runtime_error("could not load amr module\n");
-        if (!ospLoadModule("sg_amr"))
-            std::runtime_error("could not load amr module\n");
-      }
-
       std::string name = "untitled";
       if (node.hasProp("name"))
         name = node.getProp("name");
@@ -184,9 +174,11 @@ namespace ospray {
     {
       std::shared_ptr<xml::XMLDoc> doc;
       // std::shared_ptr<xml::XMLDoc> doc = NULL;
-      cout << "#osp:sg: starting to read OSPRay XML file '" << fileName << "'" << endl;
+      std::cout << "#osp:sg: starting to read OSPRay XML file '" << fileName
+                << "'" << std::endl;
       doc = xml::readXML(fileName);
-      cout << "#osp:sg: XML file read, starting to parse content..." << endl;
+      std::cout << "#osp:sg: XML file read, starting to parse content..."
+                << std::endl;
       assert(doc);
 
       if (doc->child.empty())
@@ -224,7 +216,7 @@ namespace ospray {
         parseWorldNode(world,*root,binBasePtr);
       }
 
-      cout << "#osp:sg: done parsing OSP file" << endl;
+      std::cout << "#osp:sg: done parsing OSP file" << std::endl;
     }
 
     std::shared_ptr<sg::Node> loadOSP(const std::string &fileName)

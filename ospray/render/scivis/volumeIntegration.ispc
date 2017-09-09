@@ -197,14 +197,14 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
           initShadingInfo(info);
 
           // hardcode volume spec for now
-          info.Ks            = volume->specular * sampleOpacity;
+          info.Ks            = volume->specular;
           info.Ns            = volume->ns;
-          info.local_opacity = sampleOpacity;
+          info.local_opacity = 1.f;
           dg.material        = 0;
           shadeMaterials(dg, info);
 
           vec3f litColor = make_vec3f(0.0f);
-          info.Ns *= 0.3f;
+          shadeAO(renderer, sampleID, dg, info, litColor);
           integrateOverLights(renderer,
                               ray,
                               dg,
@@ -268,7 +268,6 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
 
     vec3f litColor = make_vec3f(0.0f);
     shadeAO(renderer, sampleID, dg, info, litColor);
-    info.Ns *= 0.3f;
     integrateOverLights(
         renderer, ray, dg, info, litColor, rayOffset, sampleID, quality * 0.5f);
     intervalColor = make_vec4f(litColor, intervalColor.w);

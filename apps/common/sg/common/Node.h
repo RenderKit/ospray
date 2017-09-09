@@ -34,7 +34,7 @@
 namespace ospray {
   namespace sg {
 
-    using SGVar = ospcommon::utility::Any;
+    using Any = ospcommon::utility::Any;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
@@ -57,7 +57,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       Node();
-      virtual ~Node() {}
+      virtual ~Node();
 
       // NOTE: Nodes are not copyable nor movable! The operator=() will be used
       //       to assign a Node's _value_, which is different than the
@@ -99,19 +99,19 @@ namespace ospray {
 
       std::string name()          const;
       std::string type()          const;
-      SGVar       min()           const;
-      SGVar       max()           const;
+      Any         min()           const;
+      Any         max()           const;
       NodeFlags   flags()         const;
       std::string documentation() const;
 
       void setName(const std::string &v);
       void setType(const std::string &v);
-      void setMinMax(const SGVar& minv, const SGVar& maxv);
+      void setMinMax(const Any& minv, const Any& maxv);
       void setFlags(NodeFlags f);
       void setFlags(int f);
       void setDocumentation(const std::string &s);
-      void setWhiteList(const std::vector<SGVar> &values);
-      void setBlackList(const std::vector<SGVar> &values);
+      void setWhiteList(const std::vector<Any> &values);
+      void setBlackList(const std::vector<Any> &values);
 
       bool isValid() const;
 
@@ -129,8 +129,8 @@ namespace ospray {
 
       // Node stored value (data) interface ///////////////////////////////////
 
-      //! get the value of the node, whithout template conversion
-      SGVar value();
+      //! get the value (copy) of the node, without template conversion
+      Any value();
 
       //! returns the value of the node in the desired type
       template <typename T>
@@ -140,8 +140,13 @@ namespace ospray {
       template <typename T>
       const T& valueAs() const;
 
+      //! return if the value is the given type
+      template <typename T>
+      bool valueIsType() const;
+
       //! set the value of the node. Requires strict typecast
-      void setValue(SGVar val);
+      template <typename T>
+      void setValue(T val);
 
       //! set the value via the '=' operator
       template <typename T>
@@ -189,7 +194,7 @@ namespace ospray {
 
       Node& createChild(std::string name,
                         std::string type = "Node",
-                        SGVar var = SGVar(),
+                        Any var = Any(),
                         int flags = sg::NodeFlags::none,
                         std::string documentation = "");
 
@@ -235,11 +240,11 @@ namespace ospray {
       {
         std::string name;
         std::string type;
-        std::vector<SGVar> minmax;
-        std::vector<SGVar> whitelist;
-        std::vector<SGVar> blacklist;
+        std::vector<Any> minmax;
+        std::vector<Any> whitelist;
+        std::vector<Any> blacklist;
         std::map<std::string, std::shared_ptr<Node>> children;
-        SGVar value;
+        Any value;
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
@@ -258,7 +263,7 @@ namespace ospray {
     OSPSG_INTERFACE std::shared_ptr<Node>
     createNode(std::string name,
                std::string type = "Node",
-               SGVar var = SGVar(),
+               Any var = Any(),
                int flags = sg::NodeFlags::none,
                std::string documentation = "");
 
@@ -292,6 +297,41 @@ namespace ospray {
     }
 
     template <typename T>
+    inline void Node::setValue(T _val)
+    {
+      Any val(_val);
+      bool modified = false;
+      {
+        std::lock_guard<std::mutex> lock{mutex};
+        if (val != properties.value)
+        {
+          properties.value = val;
+          modified = true;
+        }
+      }
+
+      if (modified)
+        markAsModified();
+    }
+
+    template <>
+    inline void Node::setValue(Any val)
+    {
+      bool modified = false;
+      {
+        std::lock_guard<std::mutex> lock{mutex};
+        if (val != properties.value)
+        {
+          properties.value = val;
+          modified = true;
+        }
+      }
+
+      if (modified)
+        markAsModified();
+    }
+
+    template <typename T>
     inline T& Node::valueAs()
     {
       std::lock_guard<std::mutex> lock{mutex};
@@ -306,17 +346,71 @@ namespace ospray {
     }
 
     template <typename T>
+    inline bool Node::valueIsType() const
+    {
+      return properties.value.is<T>();
+    }
+
+    template <typename T>
     inline void Node::operator=(T &&v)
     {
       setValue(std::forward<T>(v));
     }
+
+    // NOTE(jda) - Specialize valueAs() and operator=() so we don't have to
+    //             convert to/from OSPObject manually, must trust the user to
+    //             store/get the right type of OSPObject. This is because
+    //             ospcommon::utility::Any<> cannot do implicit conversion...
+
+#define DECLARE_VALUEAS_SPECIALIZATION(a)                                      \
+    template <>                                                                \
+    inline a& Node::valueAs()                                                  \
+    {                                                                          \
+      std::lock_guard<std::mutex> lock{mutex};                                 \
+      return (a&)properties.value.get<OSPObject>();                            \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    inline const a& Node::valueAs() const                                      \
+    {                                                                          \
+      std::lock_guard<std::mutex> lock{mutex};                                 \
+      return (const a&)properties.value.get<OSPObject>();                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    inline void Node::operator=(a &&v)                                         \
+    {                                                                          \
+      setValue((OSPObject)v);                                                  \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    inline void Node::setValue(a val)                                          \
+    {                                                                          \
+      setValue((OSPObject)val);                                                \
+    }
+
+    DECLARE_VALUEAS_SPECIALIZATION(OSPDevice)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPFrameBuffer)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPRenderer)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPCamera)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPModel)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPData)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPGeometry)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPMaterial)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPLight)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPVolume)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPTransferFunction)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPTexture2D)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPPixelOp)
+
+#undef DECLARE_VALUEAS_SPECIALIZATION
 
     // Helper functions ///////////////////////////////////////////////////////
 
     // Compare //
 
     template <typename T>
-    inline bool compare(const SGVar& min, const SGVar& max, const SGVar& value)
+    inline bool compare(const Any& min, const Any& max, const Any& value)
     {
       if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
         return false;
@@ -324,9 +418,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2f>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<vec2f>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       const vec2f &v1 = min.get<vec2f>();
       const vec2f &v2 = max.get<vec2f>();
@@ -336,9 +430,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2i>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<vec2i>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       const vec2i &v1 = min.get<vec2i>();
       const vec2i &v2 = max.get<vec2i>();
@@ -348,9 +442,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec3f>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<vec3f>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       const vec3f &v1 = min.get<vec3f>();
       const vec3f &v2 = max.get<vec3f>();
@@ -361,9 +455,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<box3f>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<box3f>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
     }
@@ -429,6 +523,13 @@ namespace ospray {
     {
       ospSet4fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec4f>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<std::string>(Node &n)
+    {
+      ospSetString(n.parent().valueAs<OSPObject>(),
+                   n.name().c_str(), n.valueAs<std::string>().c_str());
     }
 
     // Helper parameter node wrapper //////////////////////////////////////////

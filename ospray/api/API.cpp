@@ -16,6 +16,7 @@
 
 //ospcommon
 #include "ospcommon/utility/OnScopeExit.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 //ospray
 #include "common/OSPCommon.h"
@@ -112,16 +113,16 @@ OSPRAY_CATCH_BEGIN
     throw std::runtime_error("device already exists [ospInit() called twice?]");
   }
 
-  auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
+  auto OSP_MPI_LAUNCH = utility::getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
-  if (OSP_MPI_LAUNCH.first) {
+  if (OSP_MPI_LAUNCH) {
     postStatusMsg("#osp: launching ospray mpi ring - "
                  "make sure that mpd is running");
 
     currentDevice = createMpiDevice("mpi_offload");
     currentDevice->findParam("mpiMode", true)->set("mpi-launch");
     currentDevice->findParam("launchCommand", true)
-                 ->set(OSP_MPI_LAUNCH.second.c_str());
+                 ->set(OSP_MPI_LAUNCH.value().c_str());
   }
 
   if (_ac && _av) {
@@ -149,7 +150,7 @@ OSPRAY_CATCH_BEGIN
       if (deviceSwitch == "--osp:device:") {
         removeArgs(*_ac,(char **&)_av,i,1);
         auto deviceName = av.substr(13);
-        
+
         try {
           currentDevice = Device::createDevice(deviceName.c_str());
         } catch (const std::runtime_error &) {

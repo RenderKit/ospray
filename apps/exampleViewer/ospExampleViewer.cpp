@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,12 +19,13 @@
 #include "common/sg/importer/Importer.h"
 #include "ospcommon/FileName.h"
 #include "ospcommon/networking/Socket.h"
+#include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/vec.h"
 #include "common/sg/common/Animator.h"
 
 #include "sg/geometry/TriangleMesh.h"
 
-#include "widgets/imguiViewerSg.h"
+#include "widgets/imguiViewer.h"
 #include <sstream>
 
 using namespace ospcommon;
@@ -45,19 +46,13 @@ struct clFile
   clTransform transform;
 };
 
-inline bool groundPlaneDefaultFromEnv()
-{
-  auto env = getEnvVar<int>("OSPRAY_VIEWER_GROUND_PLANE");
-  if (!env.first)
-    return true;
-  else
-    return env.second;
-}
-
 std::vector<clFile> files;
 std::vector< std::vector<clFile> > animatedFiles;
 std::string initialRendererType;
-bool addPlane = groundPlaneDefaultFromEnv();
+
+bool addPlane =
+    utility::getEnvVar<int>("OSPRAY_VIEWER_GROUND_PLANE").value_or(true);
+
 bool debug = false;
 bool fullscreen = false;
 bool print = false;
@@ -164,9 +159,9 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
       }
       auto &node = node_ref.get();
 
-      if (addNode)
-      {
-        std::stringstream vals(value);
+      std::stringstream vals(value);
+
+      if (addNode) {
         std::string name, type;
         vals >> name >> type;
         try {
@@ -175,49 +170,40 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
           std::cerr << "Warning: unknown sg::Node type '" << type
             << "', ignoring option '" << orgarg << "'." << std::endl;
         }
-        continue;
+      } else { // set node value
+
+        // TODO: more generic implementation
+        if (node.valueIsType<std::string>()) {
+          node.setValue(value);
+        } else if (node.valueIsType<float>()) {
+          float x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<int>()) {
+          int x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<bool>()) {
+          bool x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<ospcommon::vec3f>()) {
+          float x,y,z;
+          vals >> x >> y >> z;
+          node.setValue(ospcommon::vec3f(x,y,z));
+        } else if (node.valueIsType<ospcommon::vec2i>()) {
+          int x,y;
+          vals >> x >> y;
+          node.setValue(ospcommon::vec2i(x,y));
+        } else try {
+          auto &vec = dynamic_cast<sg::DataVector1f&>(node);
+          float f;
+          while (vals.good()) {
+            vals >> f;
+            vec.push_back(f);
+          }
+        } catch(...) {}
       }
-      //Carson: TODO: reimplement with a way of determining type of node value
-      //  currently relies on exception on value cast
-      try {
-        node.valueAs<std::string>();
-        node.setValue(value);
-      } catch(...) {}
-      try {
-        node.valueAs<float>();
-        std::stringstream vals(value);
-        float x;
-        vals >> x;
-        node.setValue(x);
-      } catch(...) {}
-      try {
-        node.valueAs<int>();
-        std::stringstream vals(value);
-        int x;
-        vals >> x;
-        node.setValue(x);
-      } catch(...) {}
-      try {
-        node.valueAs<bool>();
-        std::stringstream vals(value);
-        bool x;
-        vals >> x;
-        node.setValue(x);
-      } catch(...) {}
-      try {
-        node.valueAs<ospcommon::vec3f>();
-        std::stringstream vals(value);
-        float x,y,z;
-        vals >> x >> y >> z;
-        node.setValue(ospcommon::vec3f(x,y,z));
-      } catch(...) {}
-      try {
-        node.valueAs<ospcommon::vec2i>();
-        std::stringstream vals(value);
-        int x,y;
-        vals >> x >> y;
-        node.setValue(ospcommon::vec2i(x,y));
-      } catch(...) {}
     }
   }
 }
@@ -236,26 +222,19 @@ static inline void addPlaneToScene(sg::Node& renderer)
     bbox.upper = vec3f(5,10,5);
   }
 
-  osp::vec3f *vertices = new osp::vec3f[4];
-  float ps = bbox.upper.x*3.f;
-  float py = bbox.lower.z-.1f;
+  float ps = bbox.upper.x * 3.f;
+  float py = bbox.lower.y + 0.01f;
 
-  py = bbox.lower.y+0.01f;
-  vertices[0] = osp::vec3f{-ps, py, -ps};
-  vertices[1] = osp::vec3f{-ps, py, ps};
-  vertices[2] = osp::vec3f{ps, py, -ps};
-  vertices[3] = osp::vec3f{ps, py, ps};
-  auto position = std::make_shared<sg::DataArray3f>((vec3f*)&vertices[0],
-                                                    size_t(4),
-                                                    false);
+  auto position = std::make_shared<sg::DataVector3f>();
+  position->push_back(vec3f{-ps, py, -ps});
+  position->push_back(vec3f{-ps, py, ps});
+  position->push_back(vec3f{ps, py, -ps});
+  position->push_back(vec3f{ps, py, ps});
   position->setName("vertex");
 
-  osp::vec3i *triangles = new osp::vec3i[2];
-  triangles[0] = osp::vec3i{0,1,2};
-  triangles[1] = osp::vec3i{1,2,3};
-  auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
-                                                 size_t(2),
-                                                 false);
+  auto index = std::make_shared<sg::DataVector3i>();
+  index->push_back(vec3i{0,1,2});
+  index->push_back(vec3i{1,2,3});
   index->setName("index");
 
   auto &plane = world.createChild("plane", "Instance");
@@ -407,14 +386,12 @@ int main(int ac, const char **av)
   }
 
   auto device = ospGetCurrentDevice();
-  if(device == nullptr) {
-	std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
+  if (device == nullptr) {
+    std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
     return 1;
   }
-  ospDeviceSetStatusFunc(device,
-                         [](const char *msg) { std::cout << msg; });
-  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
+  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
   ospDeviceSetErrorFunc(device,
                         [](OSPError e, const char *msg) {
                           std::cout << "OSPRAY ERROR [" << e << "]: "
@@ -422,11 +399,10 @@ int main(int ac, const char **av)
                           std::exit(1);
                         });
 
-#ifdef _WIN32
-  // TODO: Why do we not have the sg symbols already available for us
-  // since we link against it?
+  ospDeviceCommit(device);
+
+  // access/load symbols/sg::Nodes dynamically
   loadLibrary("ospray_sg");
-#endif
 
   ospray::imgui3D::init(&ac,av);
 
@@ -455,7 +431,7 @@ int main(int ac, const char **av)
   if (print || debug)
     renderer.traverse("print");
 
-  ospray::ImGuiViewerSg window(renderer_ptr);
+  ospray::ImGuiViewer window(renderer_ptr);
 
   auto &viewPort = window.viewPort;
   // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions

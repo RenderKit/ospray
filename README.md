@@ -112,8 +112,8 @@ CMake is easy:
 
 -   Create a build directory, and go into it
 
-        user@mymachine[~/Projects]: mkdir ospray/release
-        user@mymachine[~/Projects]: cd ospray/release
+        mkdir ospray/build
+        cd ospray/build
 
     (We do recommend having separate build directories for different
     configurations such as release, debug, etc).
@@ -124,8 +124,7 @@ CMake is easy:
     compiler. The default compiler on most linux machines is `gcc`, but
     it can be pointed to `clang` instead by executing the following:
 
-        user@mymachine[~/Projects/ospray/release]: cmake
-            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+        cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
     CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
@@ -134,13 +133,13 @@ CMake is easy:
 
 -   Open the CMake configuration dialog
 
-        user@mymachine[~/Projects/ospray/release]: ccmake ..
+        ccmake ..
 
 -   Make sure to properly set build mode and enable the components you
     need, etc; then type 'c'onfigure and 'g'enerate. When back on the
     command prompt, build it using
 
-        user@mymachine[~/Projects/ospray/release]: make
+        make
 
 -   You should now have `libospray.so` as well as a set of example
     application. You can test your version of OSPRay using any of the
@@ -427,9 +426,8 @@ implemented in shared libraries. To load plugin `name` from
 OSPError ospLoadModule(const char *name);
 ```
 
-Modules are searched in OS-dependent paths, which include the
-application directory. `ospLoadModule` returns `OSP_NO_ERROR` if the
-plugin could be successfully loaded.
+Modules are searched in OS-dependent paths. `ospLoadModule` returns
+`OSP_NO_ERROR` if the plugin could be successfully loaded.
 
 Objects
 -------
@@ -1413,7 +1411,7 @@ green towards the top of the texture image (see also the example image
 of a normal map). If this is not the case flip the normal map vertically
 or invert its green channel.
 
-<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." style="width:60.0%" />
+<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." width="60.0%" />
 
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with "`map_`". The fetched texels
@@ -1425,6 +1423,35 @@ encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
 linear format (and only the first component is used). The path tracer
 additionally supports [texture
 transformations](#texture-transformations) for all textures.
+
+<img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" />
+
+#### Metal
+
+The [path tracer](#path-tracer) offers a physical metal, supporting
+changing roughness and realistic color shifts at edges. To create a
+Metal material pass the type string "`Metal`" to `ospNewMaterial`. Its
+parameters are
+
+| Type  | Name      |  Default| Description                               |
+|:------|:----------|--------:|:------------------------------------------|
+| vec3f | eta       |   Alumi-| index of refraction, real part            |
+| vec3f | k         |     nium| index of refraction, imaginary part       |
+| float | roughness |      0.1| roughness in \[0–1\], 0 is perfect mirror |
+
+: Parameters of the Glass material.
+
+The main appearence (mostly the color) of the Metal material is
+controled by the physical parameters `eta` and `k`, the
+wavelength-dependent, complex index of refraction. These coefficients
+are quite counterintuitive but can be found in published measurements.
+The `roughness` parameter controls the variation of microfacets and thus
+how polished the metal will look. The roughness can be modified by a
+[texture](#texture) `map_roughness` ([texture
+transformations](#texture-transformations) are supported as well) to
+create interesting edging effects.
+
+<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
 
 #### Glass
 
@@ -1446,6 +1473,42 @@ coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
 
+<img src="https://ospray.github.io/images/material_Glass.jpg" alt="Rendering of a Glass material with orange attenuation." width="60.0%" />
+
+#### ThinGlass
+
+The [path tracer](#path-tracer) offers a thin glass material useful for
+objects with just a single surface, most prominently windows. It models
+a very thin, transparent slab, i.e. it behaves as if a second, virtual
+surface is parallel to the real geometric surface. The implementation
+accounts for multiple internal reflections between the interfaces
+(including attenuation), but neglects parallaxe effects due to its
+(virtual) thickness. To create a such a thin glass material pass the
+type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
+
+| Type  | Name                |  Default| Description                        |
+|:------|:--------------------|--------:|:-----------------------------------|
+| float | eta                 |      1.5| index of refraction                |
+| vec3f | attenuationColor    |    white| resulting color due to attenuation |
+| float | attenuationDistance |        1| distance affecting attenuation     |
+| float | thickness           |        1| virtual thickness                  |
+
+: Parameters of the ThinGlass material.
+
+For convenience the attenuation is controlled the same way as with the
+[Glass](#glass) material. Additionally, the color due to attenuation can
+be modulated with a [texture](#texture) `map_attenuationColor` ([texture
+transformations](#texture-transformations) are supported as well). The
+`thickness` parameter sets the (virtual) thickness and allows for easy
+exchange of parameters with the (real) [Glass](#glass) material;
+internally just the ratio between `attenuationDistance` and `thickness`
+is used to calculate the resulting attenuation and thus the material
+appearence.
+
+<img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
+
+<img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" />
+
 #### Luminous
 
 The [path tracer](#path-tracer) supports the Luminous material which
@@ -1454,6 +1517,8 @@ turn any geometric object into a light source. It is created by passing
 the type string "`Luminous`" to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
+
+<img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" />
 
 ### Texture
 
@@ -1585,11 +1650,11 @@ plane and thus the plane of focus is oriented parallel to the front of
 buildings, the whole façade appears sharp, as can be seen in the example
 images below.
 
-<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." width="60.0%" />
 
-<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" />
 
-<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." style="width:90.0%" />
+<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." width="90.0%" />
 
 #### Orthographic Camera
 
@@ -1613,7 +1678,7 @@ the scene that is captured in the image, can be controlled with the
 and `imageEnd`, and both methods can be combined. In any case, the
 `aspect` ratio needs to be set accordingly to get an undistorted image.
 
-<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." width="60.0%" />
 
 #### Panoramic Camera
 
@@ -1624,7 +1689,7 @@ of 2:1. A panoramic camera is created by passing the type string
 "`panoramic`" to `ospNewCamera`. It is placed and oriented in the scene
 by using the [general parameters](#cameras) understood by all cameras.
 
-<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." style="width:90.0%" />
+<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." width="90.0%" />
 
 ### Picking
 
@@ -1811,13 +1876,13 @@ OSPRay in MPI mode:
 -   An MPI implementation you can build against (i.e. Intel MPI,
     MVAPICH2, etc...)
 
-Enabling the MPI module in your build
+Enabling the MPI Module in your Build
 -------------------------------------
 
-To build the MPI module the CMake variable `OSPRAY_MODULE_MPI=ON` must
-be enabled, which can be done directly on the command line (with
-`-D...`) or through a configuration dialog (`ccmake`, `cmake-gui`), see
-also [Compiling OSPRay](#compiling-ospray).
+To build the MPI module the CMake option `OSPRAY_MODULE_MPI` must be
+enabled, which can be done directly on the command line (with
+`-DOSPRAY_MODULE_MPI=ON`) or through a configuration dialog (`ccmake`,
+`cmake-gui`), see also [Compiling OSPRay](#compiling-ospray).
 
 This will trigger CMake to go look for an MPI implementation in your
 environment. You can then inspect the CMake value of `MPI_LIBRARY` to
@@ -1826,13 +1891,11 @@ make sure that CMake found your MPI build environment correctly.
 This will result in an OSPRay module being built. To enable using it,
 applications will need to either link `libospray_module_mpi`, or call
 
-``` {.cpp}
-ospLoadModule("mpi");
-```
+    ospLoadModule("mpi");
 
 before initializing OSPRay.
 
-Modes of using OSPRay's MPI features
+Modes of Using OSPRay's MPI Features
 ------------------------------------
 
 OSPRay provides two ways of using MPI to scale up rendering: offload and
@@ -1863,7 +1926,7 @@ lock-step. This mode targets using all available aggregate memory for
 very large scenes and for "in-situ" visualization where the data is
 already distributed by a simulation app.
 
-Running an application with the "offload" device
+Running an Application with the "offload" Device
 ------------------------------------------------
 
 As an example, our sample viewer can be run as a single application
@@ -1880,7 +1943,7 @@ parameter will automatically call `ospLoadModule("mpi")` to load the MPI
 module, while the application will have to load the module explicitly if
 using `ospNewDevice()`.
 
-**Option 1: single MPI launch**
+### Single MPI Launch
 
 OSPRay is initialized with the `ospInit()` function call which takes
 command line arguments in and configures OSPRay based on what it finds.
@@ -1890,21 +1953,17 @@ a worker process for OSPRay. Here's an example of running the
 ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
 `localhost` the process running the viewer itself:
 
-``` {.cpp}
-% mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer [scene_file] --osp:mpi
-```
+    mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer <scene file> --osp:mpi
 
-**Option 2: separate app/worker launches**
+### Separate Application&Worker Launches
 
 The second option is to explicitly launch the app on rank 0 and worker
 ranks on the other nodes. This is done by running `ospray_mpi_worker` on
 worker nodes and the application on the display node. Here's the same
 example above using this syntax:
 
-``` {.cpp}
-% mpirun -perhost 1 -hosts localhost ./ospExampleViewer [scene_file] --osp:mpi \
-  : -hosts c1,c2,c3,c4 ./ospray_mpi_worker --osp:mpi
-```
+    mpirun -perhost 1 -hosts localhost ./ospExampleViewer <scene file> --osp:mpi \
+      : -hosts c1,c2,c3,c4 ./ospray_mpi_worker
 
 This method of launching the application and OSPRay worker separately
 works best for applications which do not immediately call `ospInit()` in
@@ -1912,7 +1971,7 @@ their `main()` function, or for environments where application
 dependencies (such as GUI libraries) may not be available on compute
 nodes.
 
-Running an application with the "distributed" device
+Running an Application with the "distributed" Device
 ----------------------------------------------------
 
 Applications using the new distributed device should initialize OSPRay
@@ -1971,7 +2030,7 @@ right clicking on "world" and creating an "Importer" node will add a new
 scene importer from a file. Changing the filename to an appropriate file
 will load the scene and propagate the resulting state.
 
-<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" style="width:80.0%" />
+<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" width="80.0%" />
 
 Distributed Viewer
 ------------------

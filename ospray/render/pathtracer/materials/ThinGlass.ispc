@@ -15,62 +15,95 @@
 // ======================================================================== //
 
 #include "Material.ih"
+#include "texture/TextureParam.ih"
 #include "../bsdfs/ThinDielectric.ih"
 
 struct ThinGlass
 {
   PathTraceMaterial super;
 
-  float eta;
-  vec3f transmission;
-  float thickness;
+  float eta; //!< reciprocal refraction index of internal medium
+             // assumed to be <=1
+  vec3f attenuation; //!< negative Napierian attenuation coefficient,
+                     // i.e. wrt. the natural base e
+  float attenuationScale; //!< factor to scale attenuation from texture due to
+                          // thickness and attenuationDistance
+  TextureParam map_attenuationColor;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform ThinGlass_getBSDF(const uniform PathTraceMaterial* uniform super,
-                                              uniform ShadingContext* uniform ctx,
+const varying BSDF* uniform ThinGlass_getBSDF(const PathTraceMaterial* uniform super,
+                                              ShadingContext* uniform ctx,
                                               const DifferentialGeometry& dg,
                                               const Ray& ray,
                                               const Medium& currentMedium)
 {
-  const uniform ThinGlass* uniform self = (const uniform ThinGlass* uniform)super;
+  const ThinGlass* uniform self = (const ThinGlass* uniform)super;
 
-  return ThinDielectric_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->eta, self->transmission, self->thickness);
+  vec3f attenuation = self->attenuation;
+  if (valid(self->map_attenuationColor)) {
+    vec3f attenuationColor = get3f(self->map_attenuationColor, dg.st);
+    attenuation = attenuation + logf(attenuationColor) * self->attenuationScale;
+  }
+
+  varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
+  return ThinDielectric_create(ctx, frame, self->eta, attenuation);
 }
 
-vec3f ThinGlass_getTransparency(const uniform PathTraceMaterial* uniform material,
+vec3f ThinGlass_getTransparency(const PathTraceMaterial* uniform material,
                                 const DifferentialGeometry& dg,
                                 const Ray& ray,
                                 const Medium& currentMedium)
 {
-  const uniform ThinGlass* uniform self = (const uniform ThinGlass* uniform)material;
+  const ThinGlass* uniform self = (const ThinGlass* uniform)material;
 
   float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
-  float alpha = self->thickness * rcp(cosThetaO);
-  return powf(self->transmission, alpha) * (1.0f-fresnelDielectric(cosThetaO, self->eta));
-}
+  
+  const float R = fresnelDielectric(cosThetaO, self->eta); // Fresnel
+  const float length = rsqrt(sqrCosT(cosThetaO, self->eta)); // refracted dir!
 
-void ThinGlass_Constructor(uniform ThinGlass* uniform self,
-                           uniform float ior,
-                           const uniform vec3f& transmission,
-                           uniform float thickness)
-{
-  PathTraceMaterial_Constructor(&self->super, ThinGlass_getBSDF, ThinGlass_getTransparency);
-  self->eta = rcp(ior);
-  self->transmission = transmission;
-  self->thickness = thickness;
+  vec3f attenuation = self->attenuation;
+  if (valid(self->map_attenuationColor)) {
+    vec3f attenuationColor = get3f(self->map_attenuationColor, dg.st);
+    attenuation = attenuation + logf(attenuationColor) * self->attenuationScale;
+  }
+
+  // attenuation (Beer's law) when crossing the slab once
+  const vec3f A = expf(attenuation * length);
+
+  // total transmission (see ThinDielectric)
+  return A * sqr(1.f - R) * rcp(1.f - sqr(R*A));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform PathTracer_ThinGlass_create(uniform float ior,
-                                                 const uniform vec3f& transmission,
-                                                 uniform float thickness)
+export void PathTracer_ThinGlass_set(void *uniform _self
+    , const uniform float ior
+    , const uniform vec3f& attenuationColor
+    , void* uniform map_attenuationColor
+    , const uniform affine2f &xform_attenuationColor
+    , const uniform float attenuationDistance
+    , const uniform float thickness
+    )
 {
-  uniform ThinGlass* uniform self = uniform new uniform ThinGlass;
-  ThinGlass_Constructor(self, ior, transmission, thickness);
+  ThinGlass* uniform self = (ThinGlass* uniform)_self;
+  self->eta = rcp(ior);
+  self->attenuationScale = thickness*rcp(attenuationDistance);
+  self->attenuation = logf(attenuationColor) * self->attenuationScale;
+  self->map_attenuationColor =
+    make_TextureParam((uniform Texture2D*)map_attenuationColor,
+        xform_attenuationColor);
+}
+
+export void* uniform PathTracer_ThinGlass_create()
+{
+  ThinGlass* uniform self = uniform new ThinGlass;
+  PathTraceMaterial_Constructor(&self->super, ThinGlass_getBSDF, ThinGlass_getTransparency);
+  PathTracer_ThinGlass_set(self, 1.5f, make_vec3f(1.f),
+      NULL, make_AffineSpace2f_identity(), 1.f, 1.f);
+
   return self;
 }

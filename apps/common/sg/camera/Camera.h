@@ -29,8 +29,6 @@ namespace ospray {
 
       virtual std::string toString() const override;
 
-      virtual void create();
-      virtual void destroy();
       virtual void postCommit(RenderContext &ctx) override;
 
     protected:
@@ -46,6 +44,7 @@ namespace ospray {
 
     inline Camera::Camera(const std::string &type) : type(type)
     {
+      setValue(ospNewCamera(type.c_str()));
     }
 
     inline std::string Camera::toString() const
@@ -53,25 +52,9 @@ namespace ospray {
       return "ospray::sg::Camera";
     }
 
-    inline void Camera::create()
-    {
-      if (ospCamera) destroy();
-      ospCamera = ospNewCamera(type.c_str());
-      setValue((OSPObject)ospCamera);
-    }
-
-    inline void Camera::destroy()
-    {
-      if (!ospCamera) return;
-      ospRelease(ospCamera);
-      ospCamera = 0;
-    }
-
     inline void Camera::postCommit(RenderContext &ctx)
     {
-      if (!ospCamera)
-        create();
-      ospCommit(ospCamera);
+      ospCommit(valueAs<OSPCamera>());
     }
 
   } // ::ospray::sg

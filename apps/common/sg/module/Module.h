@@ -24,10 +24,10 @@
 
 namespace ospray {
   namespace sg {
-    
+
     /*! allows a user of the scene graph (e.g., a model viewer) to
         load a scene graph module */
-    void loadModule(const std::string &moduleName);
+    void OSPSG_INTERFACE loadModule(const std::string &moduleName);
 
     /*! use this macro in a loadable module to properly define this
         module to the scene graph. Make sure to follow this
@@ -36,11 +36,11 @@ namespace ospray {
 #define OSPRAY_SG_DECLARE_MODULE(moduleName)            \
     extern "C" void ospray_sg_##moduleName##_init()
 
-    
+
     /*! use this macro in a loadable module to properly define this
         module to the scene graph. Make sure to follow this
         declaration with a function body that does the actual
-        initialization of this module. 
+        initialization of this module.
 
         Note: NEW NAMING SCHEME to make it consistent with
         OSP_SG_REGISTER_NODE macro */

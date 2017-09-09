@@ -271,19 +271,13 @@ namespace ospray {
               if (hdr) {
                 const float *pixel = &((float*)pixels)[(y*tex->size.x+x)*tex->channels];
                 float *dst = &((float*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
-                *dst++ = pixel[0];
-                *dst++ = pixel[1];
-                *dst++ = pixel[2];
-                if (tex->channels == 4)
-                  *dst++ = pixel[3];
+                for(int i = 0;i<tex->channels;i++)
+                  *dst++ = pixel[i];
               } else {
                 const unsigned char *pixel = &pixels[(y*tex->size.x+x)*tex->channels];
                 unsigned char *dst = &((unsigned char*)tex->data)[((tex->size.y-1-y)*tex->size.x+x)*tex->channels];
-                *dst++ = pixel[0];
-                *dst++ = pixel[1];
-                *dst++ = pixel[2];
-                if (tex->channels == 4)
-                  *dst++ = pixel[3];
+                for(int i = 0;i<tex->channels;i++)
+                  *dst++ = pixel[i];
               }
             }
           }
@@ -295,9 +289,9 @@ namespace ospray {
     }
 
     Texture2D::Texture2D()
-      : data(nullptr), texelData(nullptr), ospTexture2D(nullptr)
+      : data(nullptr), texelData(nullptr)
     {
-      setValue((OSPObject)nullptr);
+      setValue((OSPTexture2D)nullptr);
     }
 
     void Texture2D::preCommit(RenderContext &ctx)
@@ -321,21 +315,17 @@ namespace ospray {
         dat = texelData->base();
       if (!dat)
       {
-        ospTexture2D = nullptr;
+        setValue((OSPTexture2D)nullptr);
         std::cout << "Texture2D: image data null\n";
         return;
       }
 
-      ospTexture2D = ospNewTexture2D( (osp::vec2i&)size,
-                                       type,
-                                       dat,
-                                       0);
-      setValue((OSPObject)ospTexture2D);
+      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, 0);
+      setValue(ospTexture2D);
       ospCommit(ospTexture2D);
     }
 
     OSP_REGISTER_SG_NODE(Texture2D);
-
 
   } // ::ospray::sg
 } // ::ospray

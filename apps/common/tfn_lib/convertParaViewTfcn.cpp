@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
     rgbSamples.push_back(color);
   }
 
-  tfn::TransferFunction converted(tfcnName, rgbSamples, opacities, dataValueMin, dataValueMax, 0.5f);
+  tfn::TransferFunction converted(tfcnName, rgbSamples, opacities, 0, 1.0, 0.5f);
   converted.save(argv[2]);
 
   return 0;
