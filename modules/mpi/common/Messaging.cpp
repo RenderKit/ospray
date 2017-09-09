@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "Messaging.h"
+// ospcommon
+#include "ospcommon/utility/DeletedUniquePtr.h"
 // stl
 #include <unordered_map>
 
@@ -23,6 +25,8 @@ namespace ospray {
     namespace messaging {
 
       using namespace mpicommon;
+      using ospcommon::utility::DeletedUniquePtr;
+      using ospcommon::utility::make_deleted_unique;
 
       // Internal maml message handler for all of OSPRay //////////////////////
 
@@ -31,24 +35,33 @@ namespace ospray {
         void registerMessageListener(int handleObjID,
                                      maml::MessageHandler *listener);
 
+        void removeMessageListener(int handleObjID);
+
         void incoming(const std::shared_ptr<Message> &message) override;
 
         // Data members //
 
-        std::unordered_map<int, maml::MessageHandler*> objectListeners;
+       private:
+
+        std::unordered_map<int, MessageHandler*> objectListeners;
       };
 
       // Inlined ObjectMessageHandler definitions /////////////////////////////
 
       inline void ObjectMessageHandler::registerMessageListener(
         int handleObjID,
-        maml::MessageHandler *listener
+        MessageHandler *listener
       )
       {
         if (objectListeners.find(handleObjID) != objectListeners.end())
           postStatusMsg() << "WARNING: overwriting an existing listener!";
 
         objectListeners[handleObjID] = listener;
+      }
+
+      inline void ObjectMessageHandler::removeMessageListener(int handleObjID)
+      {
+        objectListeners.erase(handleObjID);
       }
 
       inline void ObjectMessageHandler::incoming(
@@ -59,30 +72,56 @@ namespace ospray {
         if (obj != objectListeners.end()) {
           obj->second->incoming(message);
         } else {
-          postStatusMsg() << "No destination for incoming message!";
+          postStatusMsg() << "WARNING: No destination for incoming message!";
         }
       }
 
       // Singleton instance (hidden) and helper creation function /////////////
 
-      std::unique_ptr<ObjectMessageHandler> createHandler()
+      static DeletedUniquePtr<ObjectMessageHandler> handler;
+      static bool handlerValid = false;
+
+      DeletedUniquePtr<ObjectMessageHandler> createHandler()
       {
-        auto instance = ospcommon::make_unique<ObjectMessageHandler>();
+        auto instance =
+            make_deleted_unique<ObjectMessageHandler>(
+              [](ObjectMessageHandler *handler){
+                handlerValid = false; delete handler;
+              }
+            );
+
         maml::registerHandlerFor(world.comm, instance.get());
+        handlerValid = true;
         return instance;
       }
 
-      static std::unique_ptr<ObjectMessageHandler> handler;
+      // MessageHandler definitions ///////////////////////////////////////////
+
+      MessageHandler::MessageHandler(ObjectHandle handle) : myId(handle)
+      {
+        registerMessageListener(myId, this);
+      }
+
+      MessageHandler::~MessageHandler()
+      {
+        removeMessageListener(myId);
+      }
 
       // ospray::mpi::messaging definitions ///////////////////////////////////
 
       void registerMessageListener(int handleObjID,
-                                   maml::MessageHandler *listener)
+                                   MessageHandler *listener)
       {
-        if (!handler.get())
+        if (!handlerValid)
           handler = createHandler();
 
         handler->registerMessageListener(handleObjID, listener);
+      }
+
+      void removeMessageListener(int handleObjID)
+      {
+        if (handlerValid)
+          handler->removeMessageListener(handleObjID);
       }
 
       void enableAsyncMessaging()

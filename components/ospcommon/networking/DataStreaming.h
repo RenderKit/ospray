@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../common.h"
+#include "../utility/ArrayView.h"
 
 #include <vector>
 
@@ -29,7 +30,7 @@ namespace ospcommon {
       virtual void write(void *mem, size_t size) = 0;
       virtual void flush() {}
     };
-      
+
     /*! abstraction of an object that we can read (raw) data from to
       then de-serialize into work objects */
     struct ReadStream
@@ -58,7 +59,7 @@ namespace ospcommon {
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((byte_t*)&rh[0], sizeof(T)*sz);
+      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
       return buf;
     }
 
@@ -68,11 +69,23 @@ namespace ospcommon {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      buf.read((byte_t*)&rh[0], sizeof(T)*sz);
+      buf.read((byte_t*)rh.data(), sizeof(T)*sz);
       return buf;
     }
     /*! @} */
-      
+
+    /*! @{ stream operators into/out of read/write streams, for ArrayView<T> */
+    template<typename T>
+    inline WriteStream &operator<<(WriteStream &buf,
+                                   const utility::ArrayView<T> &rh)
+    {
+      const size_t sz = rh.size();
+      buf << sz;
+      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
+      return buf;
+    }
+    /*! @} */
+
     /*! @{ serialize operations for strings */
     inline WriteStream &operator<<(WriteStream &buf, const std::string &rh)
     {

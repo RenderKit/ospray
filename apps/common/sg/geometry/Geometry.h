@@ -22,7 +22,7 @@
 namespace ospray {
   namespace sg {
 
-    struct Geometry : public Renderable
+    struct OSPSG_INTERFACE Geometry : public Renderable
     {
       Geometry(const std::string &type);
 

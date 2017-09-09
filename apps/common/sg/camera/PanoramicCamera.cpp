@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/camera/PanoramicCamera.h"
+#include "PanoramicCamera.h"
 
 namespace ospray {
   namespace sg {
@@ -28,16 +28,6 @@ namespace ospray {
                        NodeFlags::required | NodeFlags::valid_min_max |
                        NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
       createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
-    }
-
-    void PanoramicCamera::postCommit(RenderContext &ctx)
-    {
-      if (!ospCamera) create();
-
-      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos").valueAs<vec3f>());
-      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir").valueAs<vec3f>());
-      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up").valueAs<vec3f>());
-      ospCommit(ospCamera);
     }
 
     OSP_REGISTER_SG_NODE(PanoramicCamera);

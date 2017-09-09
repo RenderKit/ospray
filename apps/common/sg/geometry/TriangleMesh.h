@@ -26,7 +26,7 @@ namespace ospray {
 
     /*! A Simple Triangle Mesh that stores vertex, normal, texcoord,
         and vertex color in separate arrays */
-    struct TriangleMesh : public sg::Geometry
+    struct OSPSG_INTERFACE TriangleMesh : public sg::Geometry
     {
       TriangleMesh();
 

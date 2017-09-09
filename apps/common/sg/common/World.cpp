@@ -21,7 +21,7 @@ namespace ospray {
 
     Model::Model()
     {
-      setValue((OSPObject)ospNewModel());
+      setValue(ospNewModel());
     }
 
     std::string Model::toString() const
@@ -45,7 +45,7 @@ namespace ospray {
       if (model)
         ospRelease(model);
       model = ospNewModel();
-      setValue((OSPObject)model);
+      setValue(model);
       stashedModel = ctx.currentOSPModel;
       ctx.currentOSPModel = model;
     }
@@ -180,35 +180,36 @@ namespace ospray {
 
     void Instance::updateTransform(RenderContext &ctx)
     {
-        vec3f scale = child("scale").valueAs<vec3f>();
-        vec3f rotation = child("rotation").valueAs<vec3f>();
-        vec3f translation = child("position").valueAs<vec3f>();
-        worldTransform = ctx.currentTransform*baseTransform*ospcommon::affine3f::translate(translation)*
-        ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
-        ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
-        ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
-        ospcommon::affine3f::scale(scale);
+      vec3f scale = child("scale").valueAs<vec3f>();
+      vec3f rotation = child("rotation").valueAs<vec3f>();
+      vec3f translation = child("position").valueAs<vec3f>();
+      worldTransform = ctx.currentTransform*baseTransform*ospcommon::affine3f::translate(translation)*
+      ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
+      ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
+      ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
+      ospcommon::affine3f::scale(scale);
     }
 
     void Instance::updateInstance(RenderContext &ctx)
     {
-        updateTransform(ctx);
-        cachedTransform=ctx.currentTransform;
+      updateTransform(ctx);
+      cachedTransform=ctx.currentTransform;
 
-        if (ospInstance)
-          ospRelease(ospInstance);
-        ospInstance = nullptr;
+      if (ospInstance)
+        ospRelease(ospInstance);
+      ospInstance = nullptr;
 
-        OSPModel model = (OSPModel)child("model").valueAs<OSPObject>();
-        if (model) {
-          ospInstance = ospNewInstance(model,(osp::affine3f&)worldTransform);
-          ospCommit(ospInstance);
-        }
-        instanceDirty=false;
+      auto model = child("model").valueAs<OSPModel>();
+      if (model) {
+        ospInstance = ospNewInstance(model,(osp::affine3f&)worldTransform);
+        ospCommit(ospInstance);
+      }
+      instanceDirty=false;
     }
 
     OSP_REGISTER_SG_NODE(Model);
     OSP_REGISTER_SG_NODE(World);
     OSP_REGISTER_SG_NODE(Instance);
-  }
-}
+
+  } // ::ospray::sg
+} // ::ospray

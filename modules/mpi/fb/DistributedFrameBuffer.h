@@ -66,7 +66,7 @@ namespace ospray {
       void sync(); // broadcast tileErrorBuffer to all workers
   };
 
-  struct DistributedFrameBuffer : public maml::MessageHandler,
+  struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
                                   public FrameBuffer
   {
     DistributedFrameBuffer(const vec2i &numPixels,

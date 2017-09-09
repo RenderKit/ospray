@@ -27,11 +27,14 @@ namespace ospray {
       virtual std::string toString() const  override
       { return "ospray::pathtracer::Velvet"; }
 
+      Velvet()
+      {
+        ispcEquivalent = ispc::PathTracer_Velvet_create();
+      }
+
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        if (getIE() != nullptr) return;
-
         vec3f reflectance              = getParam3f("reflectance",
                                                     vec3f(.4f,0.f,0.f));
         float backScattering           = getParam1f("backScattering",.5f);
@@ -39,8 +42,8 @@ namespace ospray {
                                                     vec3f(.75f,.1f,.1f));
         float horizonScatteringFallOff = getParam1f("horizonScatteringFallOff",10);
 
-        ispcEquivalent = ispc::PathTracer_Velvet_create
-          ((const ispc::vec3f&)reflectance,(const ispc::vec3f&)horizonScatteringColor,
+        ispc::PathTracer_Velvet_set
+          (getIE(), (const ispc::vec3f&)reflectance,(const ispc::vec3f&)horizonScatteringColor,
            horizonScatteringFallOff,backScattering);
       }
     };

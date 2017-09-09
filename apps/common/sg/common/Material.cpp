@@ -30,10 +30,6 @@ namespace ospray {
                   NodeFlags::required |
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_color).setMinMax(0.f, 1.f);
-      createChild("Ka", "vec3f", vec3f(0),
-                  NodeFlags::required |
-                  NodeFlags::valid_min_max |
-                  NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("Kd", "vec3f", kd,
                   NodeFlags::required |
                   NodeFlags::valid_min_max |
@@ -46,7 +42,7 @@ namespace ospray {
                   NodeFlags::required |
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_slider).setMinMax(2.f, 1000.f);
-      setValue((OSPObject)nullptr);
+      setValue((OSPMaterial)nullptr);
     }
 
     std::string Material::toString() const
@@ -59,11 +55,13 @@ namespace ospray {
       assert(ctx.ospRenderer);
       const bool typeChanged =
         child("type").lastModified() > child("type").lastCommitted();
-      if (!typeChanged && ospMaterial != nullptr
+
+      if (!typeChanged && valueAs<OSPMaterial>() != nullptr
           && ospRenderer == ctx.ospRenderer)
       {
         return;
       }
+
       auto mat = ospNewMaterial(ctx.ospRenderer,
                                 child("type").valueAs<std::string>().c_str());
       if (!mat)
@@ -83,29 +81,22 @@ namespace ospray {
         mat = defaultMaterial;
       }
 
-      setValue((OSPObject)mat);
-      ospMaterial = mat;
+      setValue(mat);
       ospRenderer = ctx.ospRenderer;
     }
 
     void Material::postCommit(RenderContext &ctx)
     {
-      if (hasChild("map_Kd"))
-        ospSetObject(valueAs<OSPObject>(), "map_Kd",
-          child("map_Kd").valueAs<OSPObject>());
-      if (hasChild("map_Ks"))
-        ospSetObject(valueAs<OSPObject>(), "map_Ks",
-          child("map_Ks").valueAs<OSPObject>());
-      if (hasChild("map_Ns"))
-        ospSetObject(valueAs<OSPObject>(), "map_Ns",
-          child("map_Ns").valueAs<OSPObject>());
-      if (hasChild("map_d"))
-        ospSetObject(valueAs<OSPObject>(), "map_d",
-          child("map_d").valueAs<OSPObject>());
-      if (hasChild("map_Bump"))
-        ospSetObject(valueAs<OSPObject>(), "map_Bump",
-          child("map_Bump").valueAs<OSPObject>());
-      ospCommit(ospMaterial);
+      auto mat = valueAs<OSPMaterial>();
+
+      // handle objects (mostly textures)
+      for (auto &it : properties.children) {
+        auto &child = *it.second;
+        if (child.valueIsType<OSPObject>())
+          ospSetObject(mat, child.name().c_str(), child.valueAs<OSPObject>());
+      }
+
+      ospCommit(mat);
     }
 
     OSP_REGISTER_SG_NODE(Material);

@@ -25,7 +25,7 @@ namespace ospray {
 
     /*! simple spheres, with all of the key info - position, radius,
         and a int32_t type specifier baked into each sphere  */
-    struct Spheres : public sg::Geometry
+    struct OSPSG_INTERFACE Spheres : public sg::Geometry
     {
       Spheres();
 

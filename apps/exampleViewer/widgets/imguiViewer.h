@@ -19,14 +19,12 @@
 #include <atomic>
 #include <mutex>
 
-#include <ospray/ospray_cpp/Camera.h>
-#include <ospray/ospray_cpp/Model.h>
-#include <ospray/ospray_cpp/Renderer.h>
-
 #include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
 #include "Imgui3dExport.h"
+
+#include "common/sg/SceneGraph.h"
 
 #include <deque>
 
@@ -40,72 +38,50 @@ namespace ospray {
   {
   public:
 
-    ImGuiViewer(const std::deque<ospcommon::box3f> &worldBounds,
-                const std::deque<cpp::Model> &model,
-                cpp::Renderer renderer,
-                cpp::Camera camera);
+    ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph);
 
-    ImGuiViewer(const std::deque<ospcommon::box3f> &worldBounds,
-                const std::deque<cpp::Model> &model,
-                cpp::Renderer renderer,
-                cpp::Renderer rendererDW,
-                cpp::FrameBuffer frameBufferDW,
-                cpp::Camera camera);
+    ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph,
+                const std::shared_ptr<sg::Node> &scenegraphDW);
+
     ~ImGuiViewer();
-
-    void setRenderer(OSPRenderer renderer,
-                     OSPRenderer rendererDW,
-                     OSPFrameBuffer frameBufferDW);
-    void setScale(const ospcommon::vec3f& v )  {scale = v;}
-    void setTranslation(const ospcommon::vec3f& v)  {translate = v;}
-    void setLockFirstAnimationFrame(bool st) {lockFirstAnimationFrame = st;}
 
   protected:
 
-    virtual void reshape(const ospcommon::vec2i &newSize) override;
-    virtual void keypress(char key) override;
-    virtual void mouseButton(int button, int action, int mods) override;
+    void mouseButton(int button, int action, int mods);
+    void reshape(const ospcommon::vec2i &newSize) override;
+    void keypress(char key) override;
 
     void resetView();
     void printViewport();
     void saveScreenshot(const std::string &basename);
     void toggleRenderingPaused();
-    // We override this so we can update the AO ray length
-    void setWorldBounds(const ospcommon::box3f &worldBounds) override;
 
     void display() override;
 
-    virtual void updateAnimation(double deltaSeconds);
+    void buildGui() override;
+    void buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent);
 
-    virtual void buildGui() override;
+    void setCurrentDeviceParameter(const std::string &param, int value);
 
     // Data //
 
-    std::deque<cpp::Model>       sceneModels;
-    std::deque<ospcommon::box3f> worldBounds;
-    cpp::Camera   camera;
-    cpp::Renderer renderer;
-    cpp::Renderer rendererDW;
-    cpp::FrameBuffer frameBufferDW;
-
     double lastFrameFPS;
+    double lastGUITime;
+    double lastDisplayTime;
+    double lastTotalTime;
+    float lastVariance;
 
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
 
-    double frameTimer;
-    double animationTimer {0.};
-    double animationFrameDelta {0.03};
-    size_t animationFrameId {0};
-    bool animationPaused {false};
-    bool lockFirstAnimationFrame {false};  //use for static scene
-    ospcommon::vec3f translate;
-    ospcommon::vec3f scale {1.f, 1.f, 1.f};
-
-    float aoDistance {1e20f};
+    std::shared_ptr<sg::Node> scenegraph;
+    std::shared_ptr<sg::Node> scenegraphDW;
 
     AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
+
+    bool useDynamicLoadBalancer{false};
+    int  numPreAllocatedTiles{4};
   };
 
 }// namespace ospray

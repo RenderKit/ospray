@@ -23,17 +23,15 @@
 namespace ospray {
   namespace sg {
 
-    struct Volume : public Renderable
+    struct OSPSG_INTERFACE Volume : public Renderable
     {
       Volume();
 
       virtual std::string toString() const override;
 
-      //! return bounding box of all primitives
-      virtual box3f bounds() const override = 0;
-
-      //! serialize into given serialization state
       virtual void serialize(sg::Serialization::State &state) override;
+
+      virtual void postCommit(RenderContext &ctx) override;
 
       virtual void postRender(RenderContext &ctx) override;
 
@@ -41,7 +39,7 @@ namespace ospray {
     };
 
     /*! a plain old structured volume */
-    struct StructuredVolume : public Volume
+    struct OSPSG_INTERFACE StructuredVolume : public Volume
     {
       std::string toString() const override;
 
@@ -59,7 +57,7 @@ namespace ospray {
     };
 
     /*! a plain old structured volume */
-    struct StructuredVolumeFromFile : public StructuredVolume
+    struct OSPSG_INTERFACE StructuredVolumeFromFile : public StructuredVolume
     {
       std::string toString() const override;
 
@@ -68,7 +66,6 @@ namespace ospray {
                       const unsigned char *binBasePtr) override;
 
       void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
 
       //! \brief file name of the xml doc when the node was loaded from xml
       /*! \detailed we need this to properly resolve relative file names */
@@ -78,7 +75,7 @@ namespace ospray {
     };
 
     /*! a structured volume loaded from the Richtmyer-Meshkov .bob files */
-    struct RichtmyerMeshkov : public StructuredVolume
+    struct OSPSG_INTERFACE RichtmyerMeshkov : public StructuredVolume
     {
       RichtmyerMeshkov();
 
@@ -89,7 +86,6 @@ namespace ospray {
                       const unsigned char *binBasePtr) override;
 
       void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
 
       std::string dirName;
       int timeStep {-1};

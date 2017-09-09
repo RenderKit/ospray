@@ -52,10 +52,8 @@ namespace ospray {
       //! format of each texel
       OSPTextureFormat texelType {OSP_TEXTURE_FORMAT_INVALID};
 
-      OSPTexture2D ospTexture {nullptr};
       std::shared_ptr<sg::DataArray1uc> texelData;
       void* data{nullptr};
-      OSPTexture2D ospTexture2D;
     };
 
   } // ::ospray::sg

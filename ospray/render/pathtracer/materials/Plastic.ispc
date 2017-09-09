@@ -64,11 +64,17 @@ void Plastic_Constructor(uniform Plastic* uniform self,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform PathTracer_Plastic_create(const uniform vec3f& pigmentColor,
+export void* uniform PathTracer_Plastic_create()
+{
+  uniform Plastic* uniform self = uniform new uniform Plastic;
+  return self;
+}
+
+export void* uniform PathTracer_Plastic_set(void* uniform _self, const uniform vec3f& pigmentColor,
                                                uniform float ior,
                                                uniform float roughness)
 {
-  uniform Plastic* uniform self = uniform new uniform Plastic;
+  uniform Plastic* uniform self = (uniform Plastic* uniform)_self;
   Plastic_Constructor(self, pigmentColor, ior, roughness);
   return self;
 }

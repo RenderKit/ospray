@@ -22,51 +22,57 @@
   lambda functions */
 
 namespace ospcommon {
-  namespace array3D { 
+  namespace array3D {
 
     /*! compute - in 64 bit - the number of voxels in a vec3i */
     inline size_t longProduct(const vec3i &dims)
-    { return dims.x*size_t(dims.y)*dims.z; }
+    {
+      return dims.x * size_t(dims.y) * dims.z;
+    }
 
     /*! compute - in 64 bit - the linear array index of vec3i index in
         a vec3i sized array */
     inline size_t longIndex(const vec3i &idx, const vec3i &dims)
-    { return idx.x + size_t(dims.x)*(idx.y + size_t(dims.y)*idx.z); }
+    {
+      return idx.x + size_t(dims.x) * (idx.y + size_t(dims.y) * idx.z);
+    }
+
+    /*! iterate through all indices in [lower,upper), EXCLUSING the
+        'upper' value */
+    template <typename Functor>
+    inline void for_each(const vec3i &lower,
+                         const vec3i &upper,
+                         Functor &&functor)
+    {
+      for (int iz = lower.z; iz < upper.z; iz++)
+        for (int iy = lower.y; iy < upper.y; iy++)
+          for (int ix = lower.x; ix < upper.x; ix++)
+            functor(vec3i(ix, iy, iz));
+    }
 
     /*! a template that calls the given functor (typically a lambda) for
       every vec3i(ix,iy,iz) with 0<=ix<xize.x, 0<=iy<size.y, and
-      0<=iz<size.z) 
+      0<=iz<size.z)
 
-      Example: 
-    
+      Example:
+
       array3D::for_each(volume->size(),[&](const vec3i &idx){
-      domeSomeThing(volume,index);
+        doSomeThing(volume,index);
       });
     */
-    template<typename Functor>
-    inline void for_each(const vec3i &size, const Functor &functor) {
-      for (int iz=0;iz<size.z;iz++)
-        for (int iy=0;iy<size.y;iy++)
-          for (int ix=0;ix<size.x;ix++)
-            functor(vec3i(ix,iy,iz));
+    template <typename Functor>
+    inline void for_each(const vec3i &size, Functor &&functor)
+    {
+      for_each({0, 0, 0}, size, std::forward<Functor>(functor));
     }
 
     /*! iterate through all indices in [lower,upper), EXCLUSING the
         'upper' value */
-    template<typename Functor>
-    inline void for_each(const vec3i &lower, const vec3i &upper, const Functor &functor) {
-      for (int iz=lower.z;iz<upper.z;iz++)
-        for (int iy=lower.y;iy<upper.y;iy++)
-          for (int ix=lower.x;ix<upper.x;ix++)
-            functor(vec3i(ix,iy,iz));
+    template <typename Functor>
+    inline void for_each(const box3i &coords, Functor &&functor)
+    {
+      for_each(coords.lower, coords.upper, std::forward<Functor>(functor));
     }
 
-    /*! iterate through all indices in [lower,upper), EXCLUSING the
-        'upper' value */
-    template<typename Functor>
-    inline void for_each(const box3i &coords, const Functor &functor) {
-      for_each(coords.lower,coords.upper,functor);
-    }
-
-  } // ::ospcommon::array3D
-} // ::ospcommon
+  }  // ::ospcommon::array3D
+}  // ::ospcommon

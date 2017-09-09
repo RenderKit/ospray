@@ -20,9 +20,12 @@
 #include "ospcommon/malloc.h"
 #include "ospcommon/tasking/async.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 using ospcommon::AsyncLoop;
 using ospcommon::make_unique;
+using ospcommon::tasking::numTaskingThreads;
+using ospcommon::utility::getEnvVar;
 
 namespace maml {
 
@@ -202,12 +205,9 @@ namespace maml {
     if (!isRunning()) {
       tasksAreRunning = true;
 
-      auto MAML_SPAWN_THREADS = ospcommon::getEnvVar<int>("MAML_SPAWN_THREADS");
+      auto MAML_SPAWN_THREADS = getEnvVar<int>("MAML_SPAWN_THREADS");
 
-      if (MAML_SPAWN_THREADS.first)
-        useTaskingSystem = !MAML_SPAWN_THREADS.second;
-      else
-        useTaskingSystem = ospcommon::tasking::numTaskingThreads() >= 4;
+      useTaskingSystem = !MAML_SPAWN_THREADS.value_or(numTaskingThreads() < 4);
 
       if (useTaskingSystem) {
         sendReceiveFuture = ospcommon::tasking::async([&](){

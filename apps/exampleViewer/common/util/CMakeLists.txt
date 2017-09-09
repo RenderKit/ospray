@@ -17,7 +17,6 @@
 ospray_create_library(ospray_imgui_util_sg
   ImguiUtilExport.h
   AsyncRenderEngine.cpp
-  AsyncRenderEngineSg.cpp
 LINK
   ospray
   ospray_sg

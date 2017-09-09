@@ -26,14 +26,10 @@ namespace ospray {
       return "ospray::sg::TetVolume";
     }
 
-    box3f TetVolume::bounds() const
-    {
-      return child("bounds").valueAs<box3f>();
-    }
-
     void TetVolume::preCommit(RenderContext &ctx)
     {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      auto ospVolume = valueAs<OSPVolume>();
+
       if (ospVolume) {
         ospCommit(ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
@@ -46,8 +42,7 @@ namespace ospray {
         return;
       }
 
-      ospVolume = ospNewVolume("tetrahedral_volume");
-      setValue((OSPObject)ospVolume);
+      setValue(ospNewVolume("tetrahedral_volume"));
 
       if (!hasChild("vertices"))
         throw std::runtime_error("#osp:sg TetVolume -> no 'vertices' array!");
@@ -77,14 +72,6 @@ namespace ospray {
       float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
         child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
-    }
-
-    void TetVolume::postCommit(RenderContext &ctx)
-    {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
-      ospSetObject(ospVolume, "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(ospVolume);
     }
 
     OSP_REGISTER_SG_NODE(TetVolume);

@@ -23,10 +23,10 @@
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/Device.h"
 #include "ospray/ospray_cpp/FrameBuffer.h"
+#include "ospray/ospray_cpp/Model.h"
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
-#include "widgets/imguiViewer.h"
 #include <tfn_lib/tfn_lib.h>
 // stl
 #include <random>

@@ -58,7 +58,6 @@ namespace ospray {
         auto &material = spGeom->child("material");
 
         material["d"]  = 1.f;
-        material["Ka"] = vec3f(0.0f, 0.0f, 0.0f);
         material["Kd"] = m.atomType[i]->color;
         material["Ks"] = vec3f(0.2f, 0.2f, 0.2f);
 

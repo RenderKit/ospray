@@ -12,6 +12,7 @@ tags
 *.rpm
 *.zip
 *.bak
+*.patch
 .vscode
 deps
 tbb

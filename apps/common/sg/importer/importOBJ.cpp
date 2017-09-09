@@ -41,7 +41,7 @@ namespace ospray {
     }
 
     void addTextureIfNeeded(Material &node,
-                            const std::string &type,
+                            const std::string &name,
                             const FileName &texName,
                             const FileName &containingPath,
                             bool preferLinear = false)
@@ -49,30 +49,10 @@ namespace ospray {
       if (!texName.str().empty()) {
         auto tex = loadTexture(containingPath + texName, preferLinear);
         if (tex) {
-          tex->setName(type);
-          node.setChild(type, tex);
+          tex->setName(name);
+          node.setChild(name, tex);
         }
       }
-    }
-
-    static inline float parseFloatString(std::string valueString)
-    {
-      std::stringstream valueStream(valueString);
-
-      float value;
-      valueStream >> value;
-
-      return value;
-    }
-
-    static inline vec3f parseVec3fString(std::string valueString)
-    {
-      std::stringstream valueStream(valueString);
-
-      vec3f value;
-      valueStream >> value.x >> value.y >> value.z;
-
-      return value;
     }
 
     static inline void parseParameterString(std::string typeAndValueString,
@@ -80,16 +60,24 @@ namespace ospray {
                                             ospcommon::utility::Any &paramValue)
     {
       std::stringstream typeAndValueStream(typeAndValueString);
-
-      typeAndValueStream >> paramType;
-
       std::string paramValueString;
       getline(typeAndValueStream, paramValueString);
 
-      if (paramType == "float") {
-        paramValue = parseFloatString(paramValueString);
-      } else if (paramType == "vec3f") {
-        paramValue = parseVec3fString(paramValueString);
+      std::vector<float> floats;
+      std::stringstream valueStream(typeAndValueString);
+      float val;
+      while (valueStream >> val)
+        floats.push_back(val);
+
+      if (floats.size() == 1) {
+        paramType = "float";
+        paramValue = floats[0];
+      } else if (floats.size() == 2) {
+        paramType = "vec2f";
+        paramValue = vec2f(floats[0], floats[1]);
+      } else if (floats.size() == 3) {
+        paramType = "vec3f";
+        paramValue = vec3f(floats[0], floats[1], floats[2]);
       } else {
         // Unknown type.
         paramValue = typeAndValueString;
@@ -104,12 +92,14 @@ namespace ospray {
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
         auto &matNode   = *matNodePtr;
+        bool addOBJparams = true;
 
         for (auto &param : mat.unknown_parameter) {
           if (param.first == "type") {
             matNode["type"] = param.second;
             std::cout << "Creating material node of type " << param.second
                       << std::endl;
+            addOBJparams = false;
           } else {
             std::string paramType;
             ospcommon::utility::Any paramValue;
@@ -118,31 +108,32 @@ namespace ospray {
               matNode.createChildWithValue(param.first, paramType, paramValue);
             } catch (const std::runtime_error &) {
               // NOTE(jda) - silently move on if parsed node type doesn't exist
+              // maybe it's a texture, try it
+              addTextureIfNeeded(matNode, param.first, param.second, containingPath);
             }
           }
         }
 
-        matNode["d"]  = mat.dissolve;
-        matNode["Ka"] = vec3f(mat.ambient[0], mat.ambient[1], mat.ambient[2]);
-        matNode["Kd"] = vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
-        matNode["Ks"] =
+        if (addOBJparams) {
+          matNode["d"]  = mat.dissolve;
+          matNode["Kd"] = vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+          matNode["Ks"] =
             vec3f(mat.specular[0], mat.specular[1], mat.specular[2]);
 
-        addTextureIfNeeded(
-            matNode, "map_Ka", mat.ambient_texname, containingPath);
-        addTextureIfNeeded(
-            matNode, "map_Kd", mat.diffuse_texname, containingPath);
-        addTextureIfNeeded(
-            matNode, "map_Ks", mat.specular_texname, containingPath);
-        addTextureIfNeeded(matNode,
-                           "map_Ns",
-                           mat.specular_highlight_texname,
-                           containingPath,
-                           true);
-        addTextureIfNeeded(
-            matNode, "map_bump", mat.bump_texname, containingPath);
-        addTextureIfNeeded(
-            matNode, "map_d", mat.alpha_texname, containingPath, true);
+          addTextureIfNeeded(
+              matNode, "map_Kd", mat.diffuse_texname, containingPath);
+          addTextureIfNeeded(
+              matNode, "map_Ks", mat.specular_texname, containingPath);
+          addTextureIfNeeded(matNode,
+              "map_Ns",
+              mat.specular_highlight_texname,
+              containingPath,
+              true);
+          addTextureIfNeeded(
+              matNode, "map_bump", mat.bump_texname, containingPath);
+          addTextureIfNeeded(
+              matNode, "map_d", mat.alpha_texname, containingPath, true);
+        }
 
         sgMaterials.push_back(matNodePtr);
       }
@@ -222,7 +213,8 @@ namespace ospray {
                              attrib.vertices[idx2.vertex_index * 3 + 1],
                              attrib.vertices[idx2.vertex_index * 3 + 2]));
 
-          if (!attrib.normals.empty()) {
+          // TODO create missing normals&texcoords if only some faces have them
+          if (!attrib.normals.empty() && idx0.normal_index != -1) {
             vn->push_back(vec3f(attrib.normals[idx0.normal_index * 3 + 0],
                                 attrib.normals[idx0.normal_index * 3 + 1],
                                 attrib.normals[idx0.normal_index * 3 + 2]));
@@ -234,7 +226,7 @@ namespace ospray {
                                 attrib.normals[idx2.normal_index * 3 + 2]));
           }
 
-          if (!attrib.texcoords.empty()) {
+          if (!attrib.texcoords.empty() && idx0.texcoord_index != -1) {
             vt->push_back(vec2f(attrib.texcoords[idx0.texcoord_index * 2 + 0],
                                 attrib.texcoords[idx0.texcoord_index * 2 + 1]));
             vt->push_back(vec2f(attrib.texcoords[idx1.texcoord_index * 2 + 0],
@@ -257,6 +249,7 @@ namespace ospray {
             mesh->setChild("material", sgMaterials[matIdx]);
           else
             mesh->setChild("material", sgMaterials[0]);
+          mesh->child("material").setParent(mesh);
         }
 
         auto model = createNode(name + "_model", "Model");
