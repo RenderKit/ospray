@@ -112,7 +112,7 @@ until [ -z "$1" ]; do
 	# --- Setup additionnnnal arguments
 	-a  | --cmake-args)
 	    CMAKEARGS=${CMAKEARGS}" "${2}
-	    ARGCACHE=${ARGCACHE}" -a "${2}
+	    ARGCACHE=${ARGCACHE}" -a "'"'${2}'"'
 	    shift 2
 	    ;;
 
@@ -229,6 +229,7 @@ until [ -z "$1" ]; do
 
 	# --- error input
 	*)
+	    echo "wrong argument: "${1}
 	    HELP
 	    exit
 	    ;;
