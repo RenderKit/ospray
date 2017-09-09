@@ -19,53 +19,55 @@
 #include "VisItModuleCommon.h"
 #include "render/VisItDistributedRaycast.h"
 #include "volume/VisItSharedStructuredVolume.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
 namespace ospray {
   
-    /*! though not required, it is good practice to put any module into
-      its own namespace (isnide of ospray:: ). Unlike for the naming of
-      library and init function, the naming for this namespace doesn't
-      particularlly matter. E.g., 'bilinearPatch', 'module_blp',
-      'bilinar_patch' etc would all work equally well. */
-    namespace visit {
+  /*! though not required, it is good practice to put any module into
+    its own namespace (isnide of ospray:: ). Unlike for the naming of
+    library and init function, the naming for this namespace doesn't
+    particularlly matter. E.g., 'bilinearPatch', 'module_blp',
+    'bilinar_patch' etc would all work equally well. */
+  namespace visit {
     
-	/*! the actual module initialization function. This function gets
-	  called exactly once, when the module gets first loaded through
-	  'ospLoadModule'. Notes:
+    /*! the actual module initialization function. This function gets
+      called exactly once, when the module gets first loaded through
+      'ospLoadModule'. Notes:
 
-	  a) this function does _not_ get called if the application directly
-	  links to libospray_module_<modulename> (which it
-	  shouldn't!). Modules should _always_ be loaded through
-	  ospLoadModule. 
+      a) this function does _not_ get called if the application directly
+      links to libospray_module_<modulename> (which it
+      shouldn't!). Modules should _always_ be loaded through
+      ospLoadModule. 
 
-	  b) it is _not_ valid for the module to do ospray _api_ calls
-	  inside such an intiailzatoin function. Ie, you can _not_ do a
-	  ospLoadModule("anotherModule") from within this function (but
-	  you could, of course, have this module dynamically link to the
-	  other one, and call its init function)
+      b) it is _not_ valid for the module to do ospray _api_ calls
+      inside such an intiailzatoin function. Ie, you can _not_ do a
+      ospLoadModule("anotherModule") from within this function (but
+      you could, of course, have this module dynamically link to the
+      other one, and call its init function)
 
-	  c) in order for ospray to properly resolve that symbol, it
-	  _has_ to have extern C linkage, and it _has_ to correspond to
-	  name of the module and shared library containing this module
-	  (see comments regarding library name in CMakeLists.txt)
-	*/
+      c) in order for ospray to properly resolve that symbol, it
+      _has_ to have extern C linkage, and it _has_ to correspond to
+      name of the module and shared library containing this module
+      (see comments regarding library name in CMakeLists.txt)
+    */
 
-	bool verbose = false;
-	extern "C" void ospray_init_module_visit()
-	{
-	    auto OSPRAY_VERBOSE_PAIR = getEnvVar<int>("OSPRAY_VERBOSE");
-	    ::ospray::visit::verbose = OSPRAY_VERBOSE_PAIR.first ? 
-		  OSPRAY_VERBOSE_PAIR.second > 0 : false;
-	    if (::ospray::visit::CheckVerbose()) 
-	    {
-		std::cout << "#osp: initializing the 'visit' module" << std::endl;
-	    }
-	    /* nothing to do, actually - this is only an example */
-	}
+    bool verbose = false;
+    extern "C" void ospray_init_module_visit()
+    {
+      using ospcommon::utility::getEnvVar;
+      auto OSPRAY_VERBOSE = 
+	getEnvVar<int>("OSPRAY_VERBOSE").value_or(0);
+      ::ospray::visit::verbose = OSPRAY_VERBOSE > 0; 
+      if (::ospray::visit::CheckVerbose()) 
+      {
+	std::cout << "#osp: initializing the 'visit' module" << std::endl;
+      }
+      /* nothing to do, actually - this is only an example */
+    }
     
-    }; // ::ospray::visit
+  }; // ::ospray::visit
 
 }; // ::ospray
   
