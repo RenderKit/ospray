@@ -65,6 +65,14 @@ namespace ospray {
                   "the number, the smoother the resulting image.");
       child("spp").setMinMax(-8,128);
 
+      createChild("minContribution", "float", 0.001f,
+                  NodeFlags::required |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider,
+                  "sample contributions below this value will be neglected"
+                  " to speed-up rendering.");
+      child("minContribution").setMinMax(0.f, 0.1f);
+
       createChild("varianceThreshold", "float", 0.f,
                   NodeFlags::required |
                   NodeFlags::valid_min_max |

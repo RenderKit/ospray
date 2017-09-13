@@ -184,6 +184,8 @@ export void Renderer_set(void *uniform _self
     , void *uniform _camera
     , const uniform float epsilon
     , const uniform int32 spp
+    , const uniform int32 maxDepth
+    , const uniform float minContribution
     , const uniform vec4f &bgColor
     , void *uniform _maxDepthTexture
     );
@@ -197,7 +199,7 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->beginFrame   = Renderer_default_beginFrame;
   self->endFrame     = Renderer_default_endFrame;
   self->fb = NULL;
-  Renderer_set(self, NULL, NULL, 1e-6f, 1, make_vec4f(0.f), NULL);
+  Renderer_set(self, NULL, NULL, 1e-6f, 1, 20, 0.001f, make_vec4f(0.f), NULL);
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -244,6 +246,8 @@ export void Renderer_set(void *uniform _self
     , void *uniform _camera
     , const uniform float epsilon
     , const uniform int32 spp
+    , const uniform int32 maxDepth
+    , const uniform float minContribution
     , const uniform vec4f &bgColor
     , void *uniform _maxDepthTexture
     )
@@ -253,6 +257,8 @@ export void Renderer_set(void *uniform _self
   self->camera = (uniform Camera *uniform)_camera;
   self->epsilon = epsilon;
   self->spp = spp;
+  self->maxDepth = maxDepth;
+  self->minContribution = minContribution;
   self->bgColor = bgColor;
   self->maxDepthTexture = (uniform Texture2D *uniform)_maxDepthTexture;
 
