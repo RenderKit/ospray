@@ -680,6 +680,7 @@ namespace ospray {
         CommandRelease(ObjectHandle handle);
 
         void run() override;
+        void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
