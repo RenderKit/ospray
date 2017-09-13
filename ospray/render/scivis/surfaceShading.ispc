@@ -15,8 +15,61 @@
 // ======================================================================== //
 
 #include "surfaceShading.ih"
+#include "SciVisMaterial.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
+
+void initShadingInfo(varying SciVisShadingInfo &info)
+{
+  info.d  = 1.f;
+  info.Ns = 0.f;
+  info.Kd = make_vec3f(0.f);
+  info.Ks = make_vec3f(0.f);
+
+  info.local_opacity = 0.f;
+}
+
+// Material functions //
+
+void shadeMaterials(const varying DifferentialGeometry &dg,
+                    varying SciVisShadingInfo &info)
+{
+  SciVisMaterial *scivisMaterial = (SciVisMaterial *)dg.material;
+
+  info.shadingNormal = dg.Ns;
+
+  // Get each term from the material //
+  if (!scivisMaterial) {
+    info.d = dg.color.w;
+    info.Kd = make_vec3f(dg.color);
+  } else {
+    foreach_unique (mat in scivisMaterial) {
+      // textures modify (mul) values, see
+      //   http://paulbourke.net/dataformats/mtl/
+      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f) * dg.color.w;
+      info.Kd = mat->Kd * make_vec3f(dg.color);
+      if (mat->map_Kd) {
+        vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
+        info.Kd = info.Kd * make_vec3f(Kd_from_map);
+        info.d *= Kd_from_map.w;
+      }
+      info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
+      info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
+      // normal mapping
+      if (mat->map_Bump) {
+        // get normal from texture
+        vec3f localNormal = getNormal(mat->map_Bump, dg.st);
+        // transform to world space and align to tangents/texture coordinates
+        linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
+        // in general f is not ortho-normal, thus need to re-normalize
+        info.shadingNormal = normalize(f * localNormal);
+      }
+    }
+  }
+  // BRDF normalization
+  info.Kd = info.Kd * one_over_pi;
+  info.Ks = info.Ks * ((info.Ns + 2.f) * one_over_two_pi);
+}
 
 // AO functions //
 
