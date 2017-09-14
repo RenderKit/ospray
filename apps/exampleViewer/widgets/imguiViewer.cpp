@@ -213,7 +213,6 @@ namespace ospray {
       camera["dir"] = dir;
       camera["pos"] = viewPort.from;
       camera["up"]  = viewPort.up;
-      camera["fovy"] = viewPort.openingAngle;
       camera.markAsModified();
 
       if (scenegraphDW.get()) {
@@ -221,7 +220,6 @@ namespace ospray {
         camera["dir"] = dir;
         camera["pos"] = viewPort.from;
         camera["up"]  = viewPort.up;
-        camera["fovy"] = viewPort.openingAngle;
         camera.markAsModified();
       }
 

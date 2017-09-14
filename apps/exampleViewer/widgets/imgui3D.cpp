@@ -108,7 +108,8 @@ namespace ospray {
       at(0,0,0),
       up(0,1,0),
       openingAngle(60.f),
-      aspect(1.f)
+      aspect(1.f),
+      apertureRadius(0.f)
     {
       frame = AffineSpace3fa::translate(from) * AffineSpace3fa(ospcommon::one);
     }
@@ -598,6 +599,13 @@ namespace ospray {
           if (!viewPortFromCmdLine)
             viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
           viewPortFromCmdLine->openingAngle = atof(av[i+1]);
+          assert(i+1 < *ac);
+          removeArgs(*ac,(char **&)av,i,2); --i;
+          continue;
+        } if (arg == "-ar") {
+          if (!viewPortFromCmdLine)
+            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
+          viewPortFromCmdLine->apertureRadius = atof(av[i+1]);
           assert(i+1 < *ac);
           removeArgs(*ac,(char **&)av,i,2); --i;
           continue;
