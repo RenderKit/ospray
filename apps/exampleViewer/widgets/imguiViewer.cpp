@@ -46,8 +46,13 @@ namespace ospray {
       scenegraphDW(scenegraphDW),
       renderEngine(scenegraph, scenegraphDW)
   {
-    useDynamicLoadBalancer =
-        utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER").value_or(false);
+    auto OSPRAY_DYNAMIC_LOADBALANCER=
+      utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
+
+    useDynamicLoadBalancer = OSPRAY_DYNAMIC_LOADBALANCER.value_or(false);
+
+    if (useDynamicLoadBalancer)
+      numPreAllocatedTiles = OSPRAY_DYNAMIC_LOADBALANCER.value();
 
     //do initial commit to make sure bounds are correctly computed
     scenegraph->traverse("verify");

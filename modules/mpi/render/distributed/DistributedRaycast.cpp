@@ -46,12 +46,7 @@ namespace ospray {
     void DistributedRaycastRenderer::commit()
     {
       Renderer::commit();
-      DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
-      if (distribModel) {
-        ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
-            (ispc::box3f*)distribModel->myRegions.data(), distribModel->myRegions.size(),
-            (ispc::box3f*)distribModel->othersRegions.data(), distribModel->othersRegions.size());
-      } else {
+      if (!dynamic_cast<DistributedModel*>(model)) {
         throw std::runtime_error("DistributedRaycastRender must use a DistributedModel from "
                                  "the MPIDistributedDevice");
       }
@@ -67,12 +62,20 @@ namespace ospray {
       dfb->startNewFrame(errorThreshold);
       dfb->beginFrame();
 
+      DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
+      ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
+          (ispc::box3f*)distribModel->myRegions.data(),
+          distribModel->myRegions.size(),
+          (ispc::box3f*)distribModel->othersRegions.data(),
+          distribModel->othersRegions.size());
+
+      const size_t numRegions = distribModel->myRegions.size()
+        + distribModel->othersRegions.size();
+
       auto *perFrameData = beginFrame(dfb);
       // This renderer doesn't use per frame data, since we sneak in some tile
       // info in this pointer.
       assert(!perFrameData);
-      DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
-      const size_t numRegions = distribModel->myRegions.size() + distribModel->othersRegions.size();
 
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;

@@ -35,10 +35,8 @@ export void SciVisMaterial_set(void *uniform _mat,
                                const void *uniform map_Bump,
                                void *uniform _volume)
 {
-  uniform SciVisMaterial *uniform self =
-      (uniform SciVisMaterial *uniform)_mat;
-
-  uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
+  SciVisMaterial *uniform self = (SciVisMaterial *uniform)_mat;
+  Volume *uniform volume = (Volume *uniform)_volume;
 
   self->map_d = (uniform Texture2D *uniform)map_d;
   self->d = d;

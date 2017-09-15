@@ -96,6 +96,11 @@ ENDIF()
 ADD_SUBDIRECTORY(modules)
 
 ##############################################################
+# Google Test
+##############################################################
+ADD_SUBDIRECTORY(tests)
+
+##############################################################
 # add target for running clang-format
 ##############################################################
 OPTION(OSPRAY_ENABLE_TARGET_CLANGFORMAT

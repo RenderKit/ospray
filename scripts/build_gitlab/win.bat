@@ -19,7 +19,6 @@ setlocal
 
 md build
 cd build
-
 cmake -L ^
 -G "%~1" ^
 -T "%~2" ^

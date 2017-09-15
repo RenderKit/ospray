@@ -53,7 +53,6 @@ namespace ospray {
       void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
       const bool shadowsEnabled = getParam1i("shadowsEnabled", 0);
-      const int32 maxDepth = getParam1i("maxDepth", 10);
       int aoSamples = getParam1i("aoSamples", 0);
       float aoDistance = getParam1f("aoDistance",
                           getParam1f("aoOcclusionDistance"/*old name*/, 1e20f));
@@ -65,7 +64,6 @@ namespace ospray {
 
       ispc::SciVisRenderer_set(getIE(),
                                shadowsEnabled,
-                               maxDepth,
                                aoSamples,
                                aoDistance,
                                (ispc::vec3f&)aoColor,

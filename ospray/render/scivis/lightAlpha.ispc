@@ -35,7 +35,7 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
 {
   float alpha = 1.f;
   const float org_t_max = ray.t;
-  uniform int remaining_depth = self->maxDepth;
+  uniform int remaining_depth = self->super.maxDepth;
 
   while (1) {
     traceRay(model,ray);
