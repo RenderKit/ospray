@@ -32,7 +32,6 @@
 #include <map>
 
 namespace ospray {
-  namespace amr {
 
     AMRVolume::AMRVolume()
     {
@@ -90,9 +89,9 @@ namespace ospray {
       assert(brickDataData->data);
 
       assert(data == nullptr);
-      data = new AMRData(*brickInfoData,*brickDataData);
+      data = new amr::AMRData(*brickInfoData,*brickDataData);
       assert(accel == nullptr);
-      accel = new AMRAccel(*data);
+      accel = new amr::AMRAccel(*data);
 
       float finestLevelCellWidth = data->brick[0]->cellWidth;
       box3i rootLevelBox = empty;
@@ -117,7 +116,11 @@ namespace ospray {
 
       box3f worldBounds = accel->worldBounds;
 
-      ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep);
+      const vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+      const vec3f gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+
+      ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep,
+                          (const ispc::vec3f&)gridOrigin, (const ispc::vec3f&)gridSpacing);
 
       ispc::AMRVolume_setAMR(getIE(),
                              accel->node.size(),
@@ -136,5 +139,4 @@ namespace ospray {
     OSP_REGISTER_VOLUME(AMRVolume, AMRVolume);
     OSP_REGISTER_VOLUME(AMRVolume, amr_volume);
 
-  } // ::ospray::amr
 } // ::ospray

@@ -74,9 +74,11 @@ inline void AMR_stepRay(void *uniform _volume,
   // Cast to the actual Volume subtype.
   AMRVolume *uniform volume = (AMRVolume *uniform) _volume;
 
+  //sample AMR structure to find size of current and next leaf sizes,
+  // take the smallest reasonable step based on leaf size
   const float level1 = AMR_level(volume, ray.org + ray.dir*ray.t0);
   const float level2 = AMR_level(volume, ray.org + ray.dir*(ray.t0+ray.time));
-  const float level = min(level1,level1);
+  const float level = min(level1,level2);
   float rate = 1.f;
   if (level < 1.0f)
   {
@@ -126,6 +128,16 @@ export void AMRVolume_computeValueRangeOfLeaf(void *uniform _self,
       }
 }
 
+inline void AMRVolume_transformLocalToWorld(const AMRVolume *uniform volume, const varying vec3f &localCoordinates, varying vec3f &worldCoordinates)
+{
+  worldCoordinates = volume->gridOrigin + localCoordinates * volume->gridSpacing;
+}
+
+inline void AMRVolume_transformWorldToLocal(const AMRVolume *uniform volume, const varying vec3f &worldCoordinates, varying vec3f &localCoordinates)
+{
+  localCoordinates = rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
+}
+
 export void AMRVolume_setAMR(void *uniform _self,
                              uniform int numNodes, void *uniform _node,
                              uniform int numLeaves, void *uniform _leaf,
@@ -148,13 +160,22 @@ export void AMRVolume_setAMR(void *uniform _self,
 
 export void AMRVolume_set(void *uniform _self,
                           uniform box3f &worldBounds,
-                          uniform float samplingStep)
+                          uniform float samplingStep,
+                          const uniform vec3f &gridOrigin,
+                          const uniform vec3f &gridSpacing)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
 
-  self->super.boundingBox       = worldBounds;
-  self->super.volumeClippingBox = worldBounds;
+  self->super.boundingBox       =
+    make_box3f(gridOrigin+worldBounds.lower, worldBounds.lower + gridOrigin +
+    (worldBounds.upper-worldBounds.lower)*gridSpacing);
+  self->super.volumeClippingBox = self->super.boundingBox;
   self->super.samplingStep      = samplingStep;
   self->super.stepRay           = &AMR_stepRay;
   self->super.computeGradient   = &AMR_gradient;
+  self->transformLocalToWorld = AMRVolume_transformLocalToWorld;
+  self->transformWorldToLocal = AMRVolume_transformWorldToLocal;
+
+  self->gridSpacing = gridSpacing;
+  self->gridOrigin = gridOrigin;
 }

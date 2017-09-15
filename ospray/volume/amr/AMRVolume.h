@@ -22,7 +22,6 @@
 #include "AMRAccel.h"
 
 namespace ospray {
-  namespace amr {
 
     /*! the actual ospray volume object */
     struct AMRVolume : public ospray::Volume
@@ -37,8 +36,8 @@ namespace ospray {
                     const vec3i &index,
                     const vec3i &count) override;
 
-      AMRData  *data{nullptr};
-      AMRAccel *accel{nullptr};
+      amr::AMRData  *data{nullptr};
+      amr::AMRAccel *accel{nullptr};
 
       Ref<Data> brickInfoData;
       Ref<Data> brickDataData;
@@ -53,5 +52,4 @@ namespace ospray {
       vec3f scaleFactor {1};
     };
 
-  } // ::ospray::amr
 } // ::ospray

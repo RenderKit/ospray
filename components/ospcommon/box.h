@@ -121,6 +121,8 @@ namespace ospcommon {
 
   using box2i  = box_t<int32_t, 2>;
   using box3i  = box_t<int32_t, 3>;
+  using box1f  = box_t<float, 1>;
+  using box2f  = box_t<float, 2>;
   using box3f  = box_t<float, 3>;
   using box4f  = box_t<float, 4>;
   using box3fa = box_t<float, 3, 1>;

@@ -178,8 +178,6 @@ namespace ospray {
           PRINT(bestPos);
           PRINT(bestDim);
           PRINT(brick.size());
-          for (int i=0;i<brick.size();i++)
-            std::cout << "  brick " << brick[i]->worldBounds << " " << brick[i]->level << std::endl;
         }
         assert(!(l.empty() || r.empty()));
 
