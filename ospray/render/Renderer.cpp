@@ -33,6 +33,8 @@ namespace ospray {
   {
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
+    const int32 maxDepth = getParam1i("maxDepth", 20);
+    const float minContribution = getParam1f("minContribution", 0.001f);
     errorThreshold = getParam1f("varianceThreshold", 0.f);
     maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", nullptr);
     model = (Model*)getParamObject("model", getParamObject("world"));
@@ -62,6 +64,8 @@ namespace ospray {
           , camera ? camera->getIE() : nullptr
           , epsilon
           , spp
+          , maxDepth
+          , minContribution
           , (ispc::vec4f&)bgColor
           , maxDepthTexture ? maxDepthTexture->getIE() : nullptr
           );

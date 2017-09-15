@@ -56,6 +56,7 @@ build-centos6-gcc:
 build-centos6-icc:
   <<: *build_job_shell
   script:
+    - module load gcc/4.8.2
     - module load intel
     - export CC=icc
     - export CXX=icpc
@@ -67,6 +68,7 @@ build-centos6-icc:
 build-centos6-icc15:
   <<: *build_job_shell
   script:
+    - module load gcc/4.8.2
     - module load intel/2015
     - export CC=icc
     - export CXX=icpc

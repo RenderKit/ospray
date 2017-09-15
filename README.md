@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.3.1 (devel) of OSPRay. For changes and new features
+This is release v1.4.0 (devel) of OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
 more information.
 
@@ -975,15 +975,16 @@ The call returns `NULL` if that type of renderer is not known, or else
 an `OSPRenderer` handle to the created renderer. General parameters of
 all renderers are
 
-| Type         | Name              | Description                                                                         |
-|:-------------|:------------------|:------------------------------------------------------------------------------------|
-| OSPModel     | model             | the [model](#model) to render                                                       |
-| OSPCamera    | camera            | the [camera](#cameras) to be used for rendering                                     |
-| OSPLight\[\] | lights            | [data](#data) array with handles of the [lights](#lights)                           |
-| float        | epsilon           | ray epsilon to avoid self-intersections, relative to scene diameter, default 10^-6^ |
-| int          | spp               | samples per pixel, default 1                                                        |
-| int          | maxDepth          | maximum ray recursion depth                                                         |
-| float        | varianceThreshold | threshold for adaptive accumulation                                                 |
+| Type         | Name              |  Default| Description                                                                   |
+|:-------------|:------------------|--------:|:------------------------------------------------------------------------------|
+| OSPModel     | model             |         | the [model](#model) to render                                                 |
+| OSPCamera    | camera            |         | the [camera](#cameras) to be used for rendering                               |
+| OSPLight\[\] | lights            |         | [data](#data) array with handles of the [lights](#lights)                     |
+| float        | epsilon           |   10^-6^| ray epsilon to avoid self-intersections, relative to scene diameter           |
+| int          | spp               |        1| samples per pixel                                                             |
+| int          | maxDepth          |       20| maximum ray recursion depth                                                   |
+| float        | minContribution   |    0.001| sample contributions below this value will be neglected to speed-up rendering |
+| float        | varianceThreshold |        0| threshold for adaptive accumulation                                           |
 
 : Parameters understood by all renderers.
 
@@ -1111,17 +1112,11 @@ special parameters:
 <tbody>
 <tr class="odd">
 <td align="left">float</td>
-<td align="left">minContribution</td>
-<td align="right">0.01</td>
-<td align="left">sample contributions below this value will be neglected to speed-up rendering</td>
-</tr>
-<tr class="even">
-<td align="left">float</td>
 <td align="left">maxContribution</td>
 <td align="right">∞</td>
 <td align="left">samples are clamped to this value before they are accumulated into the framebuffer</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">OSPTexture2D</td>
 <td align="left">backplate</td>
 <td align="right">NULL</td>

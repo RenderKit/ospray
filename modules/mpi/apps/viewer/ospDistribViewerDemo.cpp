@@ -193,6 +193,7 @@ int main(int argc, char **argv) {
   }
   Device device("mpi_distributed");
   device.set("masterRank", 0);
+  ospDeviceSetStatusFunc(device.handle(), [](const char *msg) { std::cout << msg << "\n"; });
   device.commit();
   device.setCurrent();
 
@@ -249,7 +250,6 @@ int main(int argc, char **argv) {
 
   Renderer renderer("mpi_raycast");
   // Should just do 1 set here, which is read?
-  renderer.set("world", model);
   renderer.set("model", model);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec3f(0.02));

@@ -28,59 +28,6 @@
 
 // Function definitions ///////////////////////////////////////////////////////
 
-void initShadingInfo(varying SciVisShadingInfo &info)
-{
-  info.d  = 1.f;
-  info.Ns = 0.f;
-  info.Kd = make_vec3f(0.f);
-  info.Ks = make_vec3f(0.f);
-
-  info.local_opacity = 0.f;
-}
-
-// Material functions //
-
-void shadeMaterials(const varying DifferentialGeometry &dg,
-                    varying SciVisShadingInfo &info)
-{
-  uniform SciVisMaterial *scivisMaterial =
-    (uniform SciVisMaterial *)dg.material;
-
-  info.shadingNormal = dg.Ns;
-
-  // Get each term from the material //
-  if (!scivisMaterial) {
-    info.d = dg.color.w;
-    info.Kd = make_vec3f(dg.color);
-  } else {
-    foreach_unique (mat in scivisMaterial) {
-      // textures modify (mul) values, see
-      //   http://paulbourke.net/dataformats/mtl/
-      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f) * dg.color.w;
-      info.Kd = mat->Kd * make_vec3f(dg.color);
-      if (mat->map_Kd) {
-        vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
-        info.Kd = info.Kd * make_vec3f(Kd_from_map);
-        info.d *= Kd_from_map.w;
-      }
-      info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
-      info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
-      // normal mapping
-      if (mat->map_Bump) {
-        // get normal from texture
-        vec3f localNormal = getNormal(mat->map_Bump, dg.st);
-        // transform to world space and align to tangents/texture coordinates
-        linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
-        // in general f is not ortho-normal, thus need to re-normalize
-        info.shadingNormal = normalize(f * localNormal);
-      }
-    }
-  }
-  // BRDF normalization
-  info.Kd = info.Kd * one_over_pi;
-  info.Ks = info.Ks * ((info.Ns + 2.f) * one_over_two_pi);
-}
-
 vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                            const varying vec3i &sampleID,
                                            varying Ray &ray, const varying float &rayOffset)
@@ -121,7 +68,7 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
     info.local_opacity = path_opacity * info.d;
 
-    if (info.local_opacity > 0.01f) { // worth shading?
+    if (info.local_opacity > self->super.minContribution) { // worth shading?
       shadeAO(self, sampleID, dg, info, color);
       integrateOverLights(self, ray, dg, info, color, rayOffset,sampleID, 0.5f);
     }
@@ -129,7 +76,8 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
     // Kill path when reached max depth or if remaining contribution too low
     path_opacity = path_opacity * (1.f - info.d);
     path_depth++;
-    if (path_depth >= self->maxDepth || path_opacity < 0.01f ) {
+    if (path_depth >= self->super.maxDepth
+        || path_opacity < self->super.minContribution) {
       ray.t = first_hit_dist;
       return make_vec4f(color, 1.f - path_opacity);
     }
@@ -303,7 +251,6 @@ SciVisRenderer_beginFrame(uniform Renderer *uniform _self,
 
 export void SciVisRenderer_set(void *uniform _self,
                                const uniform bool shadowsEnabled,
-                               const uniform int maxDepth,
                                const uniform int aoSamples,
                                const uniform float aoDistance,
                                const uniform vec3f &aoColor,
@@ -316,7 +263,6 @@ export void SciVisRenderer_set(void *uniform _self,
   uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
 
   self->shadowsEnabled = shadowsEnabled;
-  self->maxDepth = maxDepth;
   self->aoSamples = aoSamples;
   self->aoDistance = aoDistance;
   self->aoTransparencyEnabled = aoTransparencyEnabled;
@@ -342,7 +288,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
   self->super.beginFrame = SciVisRenderer_beginFrame;
-  SciVisRenderer_set(self, false, 10, 4, infinity, make_vec3f(0.25f), false, NULL, 0, true);
+  SciVisRenderer_set(self, false, 4, infinity, make_vec3f(0.25f), false, NULL, 0, true);
 
   return self;
 }

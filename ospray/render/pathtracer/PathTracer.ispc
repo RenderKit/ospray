@@ -42,7 +42,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
                         Ray &shadowRay,
                         Medium medium)
 {
-  uniform int maxDepth = self->maxDepth;
+  uniform int maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
 
   while (1) {
@@ -69,7 +69,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
       lightContrib = lightContrib
                      * expf(medium.attenuation * (shadowRay.t - shadowRay.t0));
 
-    if (reduce_max(lightContrib) <= self->minContribution)
+    if (reduce_max(lightContrib) <= self->super.minContribution)
       return lightContrib;
 
     if (--maxDepth <= 0)
@@ -226,7 +226,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
     // except if we have geometry lights (which we still need to evaluate for MIS)
-    if (depth >= self->maxDepth && self->numGeoLights == 0)
+    if (depth >= self->super.maxDepth && self->numGeoLights == 0)
       break;
 
     ////////////////////////////////////
@@ -258,7 +258,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       }
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
-    if (depth >= self->maxDepth)
+    if (depth >= self->super.maxDepth)
       break;
 
     // shade surface
@@ -363,7 +363,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     straightPath &= eq(ray.dir, fs.wi);
     setRay(ray, dg.P, fs.wi, self->super.epsilon, inf);
     depth++;
-  } while (reduce_max(Lw) > self->minContribution);
+  } while (reduce_max(Lw) > self->super.minContribution);
 
   sample.rgb = L;
   if (isnan(L.x) || isnan(L.y) || isnan(L.z)){
@@ -466,9 +466,7 @@ unmasked void PathTracer_renderTile(uniform Renderer *uniform _self,
 //////////////////////////////////////////////////////////////////////////////
 
 export void PathTracer_set(void *uniform _self
-    , const uniform int32 maxDepth
     , const uniform int32 rouletteDepth
-    , const uniform float minContribution
     , const uniform float maxRadiance
     , void *uniform backplate
     , const uniform vec4f &shadowCatcherPlane
@@ -480,9 +478,7 @@ export void PathTracer_set(void *uniform _self
 {
   PathTracer *uniform self = (PathTracer *uniform)_self;
 
-  self->maxDepth = maxDepth;
   self->rouletteDepth = rouletteDepth;
-  self->minContribution = minContribution;
   self->maxRadiance = maxRadiance;
   self->backplate = (uniform Texture2D *uniform)backplate;
 
@@ -504,7 +500,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 20, 5, 0.01f, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
+  PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
   precomputeZOrder();
 
   return self;
