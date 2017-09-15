@@ -44,6 +44,13 @@ namespace ospray {
     // to simulate sensor shift
     vec2f  imageStart; // lower left corner
     vec2f  imageEnd; // upper right corner
+    // handedness of the coordinate system
+    typedef enum {
+      OSP_HANDEDNESS_LEFT,
+      OSP_HANDEDNESS_RIGHT,
+    } Handedness;
+    Handedness handedness;
+    vec2f shutter; // start and end time of camera shutter
   };
 
   /*! \brief registers a internal ospray::'ClassName' camera under

@@ -34,4 +34,5 @@ struct PerspectiveCamera {
   float aspect; //!< image plane size x / y
   bool side_by_side; //!< stereo mode SIDE_BY_SIDE
   vec3f ipd_offset; //!< shift of camera position for left/right eye (only when SIDE_BY_SIDE)
+  vec2f shutter; //!< camera shutter start and end time
 };

@@ -52,7 +52,10 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
     dir = dir - lp;
   }
 
-  setRay(ray, org, normalize(dir), self->super.nearClip, infinity);
+  const uniform vec2f shutter = self->shutter;
+  float time = (1.0f-sample.time)*shutter.x + sample.time*shutter.y;
+
+  setRay(ray, org, normalize(dir), self->super.nearClip, infinity, time);
 }
 
 /*! create a new ispc-side version of a perspectivecamera - with given
@@ -77,7 +80,8 @@ export void PerspectiveCamera_set(void *uniform _self,
                                   const uniform float scaledAperture,
                                   const uniform float aspect,
                                   const uniform bool  side_by_side,
-                                  const uniform vec3f &ipd_offset)
+                                  const uniform vec3f &ipd_offset,
+                                  const uniform vec2f &shutter)
 {
   uniform PerspectiveCamera *uniform self
     = (uniform PerspectiveCamera *uniform)_self;
@@ -90,4 +94,5 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->aspect = aspect;
   self->side_by_side = side_by_side;
   self->ipd_offset = ipd_offset;
+  self->shutter = shutter;
 }

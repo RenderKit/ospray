@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray 
+// ospray
 #include "Camera.h"
 #include "common/Util.h"
 #include "Camera_ispc.h"
@@ -42,9 +42,21 @@ namespace ospray {
     imageStart = getParam2f("image_start", getParam2f("imageStart", vec2f(0.f)));
     imageEnd   = getParam2f("image_end", getParam2f("imageEnd", vec2f(1.f)));
 
+    vec2f imageStart2 = imageStart;
+    vec2f imageEnd2 = imageEnd;
+
+    handedness = (Handedness)getParam1i("handedness", OSP_HANDEDNESS_RIGHT);
+
+    if (handedness == OSP_HANDEDNESS_LEFT) {
+      imageStart2.x = 1.0f - imageStart2.x;
+      imageEnd2.x   = 1.0f - imageEnd2.x;
+    }
+
+    shutter = getParam2f("shutter", vec2f(0.0f,1.0f));
+
     ispc::Camera_set(getIE(), nearClip,
-                    (const ispc::vec2f&)imageStart,
-                    (const ispc::vec2f&)imageEnd);
+                     (const ispc::vec2f&)imageStart2,
+                     (const ispc::vec2f&)imageEnd2);
   }
 
 } // ::ospray
