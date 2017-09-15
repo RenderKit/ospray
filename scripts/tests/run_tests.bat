@@ -17,21 +17,17 @@ rem ======================================================================== rem
 
 setlocal
 
-md build
-cd build
-cmake -L ^
--G "%~1" ^
--T "%~2" ^
--D "%~3" ^
--D OSPRAY_BUILD_ISA=ALL ^
--D OSPRAY_MODULE_BILINEAR_PATCH=ON ^
--D OSPRAY_ENABLE_TESTING=ON ^
--D USE_IMAGE_MAGICK=OFF ^
-..
+echo Running tests
+md failed
 
-cmake --build . --config Release --target ALL_BUILD -- /m /nologo ^
-  && ctest . -C Release
+set OSP_LIBS=build\Release
+set EMBREE_DIR=C:\Program Files\Intel\Embree v2.16.1 x64
+set BASELINE_DIR=N:\OSPRay\test-data\img
 
-:abort
+set PATH=%PATH%;%OSP_LIBS%;%EMBREE_DIR%\bin
+
+call build\regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
+
+exit /B %ERRORLEBEL%
+
 endlocal
-:end

@@ -16,16 +16,16 @@ run:
 
 3. Run benchmark script
 
-In ${OSPRAY_BUILD_DIR}, run the "run_benchmark.sh" script. Using the
+In ${OSPRAY_BUILD_DIR}, run the "run_benchmark.py" script. Using the
 same directory structure from step 2, you would run:
 
-% ../scripts/bench/run_benchmark_sh
+% ../scripts/bench/run_benchmark.py
 
 The benchmarks will use a 1024x1024 frame buffer by default, which can
 be modified by passing the width and height to the script. For example,
 to run the benchmarks at 1024x768, you would run:
 
-% ../scripts/bench/run_benchmark_sh 1024 768
+% ../scripts/bench/run_benchmark.py --width 1024 --height 768
 
 The images rendered for each benchmark are saved into a directory (which
 is created if it doesn't exist) "test_images", where each image is saved
