@@ -52,9 +52,7 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
     dir = dir - lp;
   }
 
-  const uniform vec2f shutter = self->shutter;
-  float time = (1.0f-sample.time)*shutter.x + sample.time*shutter.y;
-
+  const float time = Camera_shutterTime(_self, sample.time);
   setRay(ray, org, normalize(dir), self->super.nearClip, infinity, time);
 }
 
@@ -72,16 +70,16 @@ export void *uniform PerspectiveCamera_create(void *uniform cppE)
   return self;
 }
 
-export void PerspectiveCamera_set(void *uniform _self,
-                                  const uniform vec3f &org,
-                                  const uniform vec3f &dir_00,
-                                  const uniform vec3f &dir_du,
-                                  const uniform vec3f &dir_dv,
-                                  const uniform float scaledAperture,
-                                  const uniform float aspect,
-                                  const uniform bool  side_by_side,
-                                  const uniform vec3f &ipd_offset,
-                                  const uniform vec2f &shutter)
+export void PerspectiveCamera_set(void *uniform _self
+    , const uniform vec3f &org
+    , const uniform vec3f &dir_00
+    , const uniform vec3f &dir_du
+    , const uniform vec3f &dir_dv
+    , const uniform float scaledAperture
+    , const uniform float aspect
+    , const uniform bool  side_by_side
+    , const uniform vec3f &ipd_offset
+    )
 {
   uniform PerspectiveCamera *uniform self
     = (uniform PerspectiveCamera *uniform)_self;
@@ -94,5 +92,4 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->aspect = aspect;
   self->side_by_side = side_by_side;
   self->ipd_offset = ipd_offset;
-  self->shutter = shutter;
 }

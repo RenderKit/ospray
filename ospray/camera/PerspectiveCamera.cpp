@@ -90,16 +90,16 @@ namespace ospray {
       scaledAperture = apertureRadius / (imgPlane_size_x * focusDistance);
     }
 
-    ispc::PerspectiveCamera_set(getIE(),
-                                (const ispc::vec3f&)org,
-                                (const ispc::vec3f&)dir_00,
-                                (const ispc::vec3f&)dir_du,
-                                (const ispc::vec3f&)dir_dv,
-                                scaledAperture,
-                                aspect,
-                                stereoMode == OSP_STEREO_SIDE_BY_SIDE,
-                                (const ispc::vec3f&)ipd_offset,
-                                (const ispc::vec2f&)shutter);
+    ispc::PerspectiveCamera_set(getIE()
+        , (const ispc::vec3f&)org
+        , (const ispc::vec3f&)dir_00
+        , (const ispc::vec3f&)dir_du
+        , (const ispc::vec3f&)dir_dv
+        , scaledAperture
+        , aspect
+        , stereoMode == OSP_STEREO_SIDE_BY_SIDE
+        , (const ispc::vec3f&)ipd_offset
+        );
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);

@@ -50,7 +50,8 @@ namespace ospray {
       OSP_HANDEDNESS_RIGHT,
     } Handedness;
     Handedness handedness;
-    vec2f shutter; // start and end time of camera shutter
+    float shutterOpen; // start time of camera shutter
+    float shutterClose; // end time of camera shutter
   };
 
   /*! \brief registers a internal ospray::'ClassName' camera under
