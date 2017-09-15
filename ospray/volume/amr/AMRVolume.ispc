@@ -76,6 +76,8 @@ inline void AMR_stepRay(void *uniform _volume,
 
   //sample AMR structure to find size of current and next leaf sizes,
   // take the smallest reasonable step based on leaf size
+  //TODO: Carson:  it would be significantly faster to return this in the
+  // a single sampling step and adjust as necessary
   const float level1 = AMR_level(volume, ray.org + ray.dir*ray.t0);
   const float level2 = AMR_level(volume, ray.org + ray.dir*(ray.t0+ray.time));
   const float level = min(level1,level2);
