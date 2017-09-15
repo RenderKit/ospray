@@ -405,7 +405,6 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
     cameraSample.time     = timeSample.x;
 
     camera->initRay(camera, screenSample.ray, cameraSample);
-    screenSample.ray.time = timeSample.x;
 
     ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
                                                  screenSample.ray, rng);
