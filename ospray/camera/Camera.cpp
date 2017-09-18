@@ -45,20 +45,10 @@ namespace ospray {
     shutterOpen = getParam1f("shutterOpen", 0.0f);
     shutterClose = getParam1f("shutterClose", 0.0f);
 
-    vec2f imageStart2 = imageStart;
-    vec2f imageEnd2 = imageEnd;
-
-    handedness = (Handedness)getParam1i("handedness", OSP_HANDEDNESS_RIGHT);
-
-    if (handedness == OSP_HANDEDNESS_LEFT) {
-      imageStart2.x = 1.0f - imageStart2.x;
-      imageEnd2.x   = 1.0f - imageEnd2.x;
-    }
-
     ispc::Camera_set(getIE()
         , nearClip
-        , (const ispc::vec2f&)imageStart2
-        , (const ispc::vec2f&)imageEnd2
+        , (const ispc::vec2f&)imageStart
+        , (const ispc::vec2f&)imageEnd
         , shutterOpen
         , shutterClose
         );
