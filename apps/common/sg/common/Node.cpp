@@ -509,6 +509,7 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(Node);
+    //OSPRay types
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);

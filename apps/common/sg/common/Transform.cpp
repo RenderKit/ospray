@@ -22,7 +22,7 @@ namespace ospray {
 
 
     Transform::Transform()
-      : baseTransform(ospcommon::one), worldTransform(ospcommon::one)
+      : worldTransform(ospcommon::one)
     {
       createChild("bounds", "box3f");
       createChild("visible", "bool", true);
@@ -33,6 +33,7 @@ namespace ospray {
                      NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
                                                       vec3f(2*3.15f));
       createChild("scale", "vec3f", vec3f(1.f));
+      createChild("userTransform", "affine3f");
     }
 
 
@@ -43,10 +44,11 @@ namespace ospray {
 
     void Transform::preRender(RenderContext &ctx)
     {
-      vec3f scale = child("scale").valueAs<vec3f>();
-      vec3f rotation = child("rotation").valueAs<vec3f>();
-      vec3f translation = child("position").valueAs<vec3f>();
-      worldTransform = ctx.currentTransform*baseTransform*ospcommon::affine3f::translate(translation)*
+      const vec3f scale = child("scale").valueAs<vec3f>();
+      const vec3f rotation = child("rotation").valueAs<vec3f>();
+      const vec3f translation = child("position").valueAs<vec3f>();
+      const ospcommon::affine3f userTransform = child("userTransform").valueAs<affine3f>();
+      worldTransform = ctx.currentTransform*userTransform*ospcommon::affine3f::translate(translation)*
       ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
       ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
       ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
@@ -61,6 +63,8 @@ namespace ospray {
       ctx.currentTransform = oldTransform;
     }
 
+    //OSPRay common
+    OSP_REGISTER_SG_NODE_NAME(Affine3f, affine3f);
     OSP_REGISTER_SG_NODE(Transform);
 
   } // ::ospray::sg
