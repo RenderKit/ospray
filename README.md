@@ -886,33 +886,33 @@ linearly interpolated.
 
 ### Streamlines
 
-A geometry consisting of multiple stream lines of constant radius is
+A geometry consisting of multiple streamlines of constant radius is
 created by calling `ospNewGeometry` with type string "`streamlines`".
-The stream lines are internally assembled from connected (and rounded)
+The streamlines are internally assembled from connected (and rounded)
 cylinder segments and are thus perfectly round. The parameters defining
 this geometry are listed in the table below.
 
 | Type       | Name         | Description                                                  |
 |:-----------|:-------------|:-------------------------------------------------------------|
-| float      | radius       | radius of all stream lines, default 0.01                     |
-| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* stream lines   |
+| float      | radius       | radius of all streamlines, default 0.01                      |
+| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* streamlines    |
 | vec4f\[\]  | vertex.color | [data](#data) array of corresponding vertex colors (RGBA)    |
 | int32\[\]  | index        | [data](#data) array of indices to the first vertex of a link |
 
 : Parameters defining a streamlines geometry.
 
-Each stream line is specified by a set of (aligned) vec3fa control
-points in `vertex`; all vertices belonging to to the same logical stream
-line are connected via [cylinders](#cylinders) of a fixed radius
-`radius`, with additional [spheres](#spheres) at each vertex to make for
-a smooth transition between the cylinders.
+Each streamline is specified by a set of (aligned) vec3fa control points
+in `vertex`; all vertices belonging to to the same logical streamline
+are connected via [cylinders](#cylinders) of a fixed radius `radius`,
+with additional [spheres](#spheres) at each vertex to make for a smooth
+transition between the cylinders.
 
-A streamlines geometry can contain multiple disjoint stream lines, each
+A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of linear segments (or links)
 referenced via `index`: each entry `e` of the `index` array points the
 first vertex of a link (`vertex[index[e]]`) and the second vertex of the
 link is implicitly the directly following one (`vertex[index[e]+1]`).
-For example, two stream lines of vertices `(A-B-C-D)` and `(E-F-G)`,
+For example, two streamlines of vertices `(A-B-C-D)` and `(E-F-G)`,
 respectively, would internally correspond to five links (`A-B`, `B-C`,
 `C-D`, `E-F`, and `F-G`), and would be specified via an array of
 vertices `[A,B,C,D,E,F,G]`, plus an array of link indices `[0,1,2,4,5]`.
@@ -1111,12 +1111,18 @@ special parameters:
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">int</td>
+<td align="left">rouletteDepth</td>
+<td align="right">5</td>
+<td align="left">ray recursion depth at which to start Russian roulette termination</td>
+</tr>
+<tr class="even">
 <td align="left">float</td>
 <td align="left">maxContribution</td>
 <td align="right">∞</td>
 <td align="left">samples are clamped to this value before they are accumulated into the framebuffer</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">OSPTexture2D</td>
 <td align="left">backplate</td>
 <td align="right">NULL</td>
