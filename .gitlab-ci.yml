@@ -325,6 +325,7 @@ benchmark-centos7-gcc:
       - $CI_PROJECT_DIR/build/bench_output
       - $CI_PROJECT_DIR/build/benchmarks/stats.csv
     expire_in: 1 week
+    when: always
   dependencies:
     - build-centos7-gcc
 
