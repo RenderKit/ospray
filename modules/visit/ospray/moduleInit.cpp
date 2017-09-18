@@ -62,7 +62,7 @@ namespace ospray {
       ::ospray::visit::verbose = OSPRAY_VERBOSE > 0; 
       if (::ospray::visit::CheckVerbose()) 
       {
-	std::cout << "#osp: initializing the 'visit' module" << std::endl;
+	std::cout << "[ospray] initializing the 'visit' module" << std::endl;
       }
       /* nothing to do, actually - this is only an example */
     }
