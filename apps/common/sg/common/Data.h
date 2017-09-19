@@ -30,7 +30,7 @@
 namespace ospray {
   namespace sg {
 
-    typedef unsigned long long index_t;
+    using intex_t = unsigned long long;
 
     struct OSPSG_INTERFACE DataBuffer : public Node
     {
@@ -172,7 +172,7 @@ namespace ospray {
     template<typename T>
     std::shared_ptr<T> make_shared_aligned(void *data, size_t num)
     {
-      typedef typename T::ElementType ElementType;
+      using ElementType = typename T::ElementType;
       if ((size_t)data & 0x3) {
         // Data *not* aligned correctly, copy into a new buffer appropriately...
         char *m = new char[num * sizeof(ElementType)];
