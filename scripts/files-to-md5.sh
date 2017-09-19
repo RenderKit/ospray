@@ -22,6 +22,10 @@
 # CI_TARGET_MACHINE_PATH=user@machine-name:/target/path BASELINE_MD5_DIR=/dir/with/md5/hashes
 # BASELINE_DIR=/dir/with/files/to/be/synced ../scripts/files-to-md5.sh
 
+CI_TARGET_MACHINE_PATH=visuser@10.123.110.111:/NAS/OSPRay/benchmark-data/MD5
+BASELINE_MD5_DIR=/localdisk/work/OSPray_all/ospray/scripts/bench/baseline
+BASELINE_DIR=/localdisk/work/OSPray_all/ospray/release/bench_output
+
 md5 () {
     md5sum $1 | awk '{print $1 }'
 }
