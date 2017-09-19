@@ -36,6 +36,12 @@ namespace ospray {
                          std::string("finestLevel")});
     }
 
+    AMRVolume::~AMRVolume()
+    {
+      for (auto *ptr : brickPtrs)
+        delete [] ptr;
+    }
+
     std::string AMRVolume::toString() const
     {
       return "ospray::sg::AMRVolume";
@@ -120,6 +126,7 @@ namespace ospray {
                                          brickData.size(),
                                          false);
       brickDataNode->setName("brickData");
+      brickDataNode->setType("DataArrayOSP");
       add(brickDataNode);
 
       auto brickInfoNode =
@@ -127,7 +134,14 @@ namespace ospray {
                                          brickInfo.size() * sizeof(BrickInfo),
                                          false);
       brickInfoNode->setName("brickInfo");
+      brickInfoNode->setType("DataArrayRAW");
       add(brickInfoNode);
+
+      // NOTE(jda) - Hack! there are issues with adding data array nodes
+      //             *during* sg traversal...remove this when setFromXML() is
+      //             changed
+      brickDataNode->postCommit(ctx);
+      brickInfoNode->postCommit(ctx);
 
       child("voxelRange") = valueRange.toVec2f();
     }
@@ -156,7 +170,7 @@ namespace ospray {
                              clampRangeString.empty() ? nullptr : &clampRange,
                              child("maxLevel").valueAs<int>());
 #else
-          throw std::runtime_error("chombo support not built in");
+          throw std::runtime_error("chombo support (hdf5) not built in");
 #endif
         } else {
           std::string BSs = node.getProp("brickSize");
