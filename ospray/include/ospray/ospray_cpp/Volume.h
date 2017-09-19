@@ -23,6 +23,13 @@
 namespace ospray {
 namespace cpp    {
 
+struct AMRBrickInfo
+{
+  ospcommon::box3i bounds;
+  int              refinemntLevel;
+  float            cellWidth;
+};
+
 class Volume : public ManagedObject_T<OSPVolume>
 {
 public:
