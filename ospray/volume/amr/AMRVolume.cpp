@@ -120,7 +120,8 @@ namespace ospray {
       const vec3f gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
 
       ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep,
-                          (const ispc::vec3f&)gridOrigin, (const ispc::vec3f&)gridSpacing);
+                          (const ispc::vec3f&)gridOrigin,
+                          (const ispc::vec3f&)gridSpacing);
 
       ispc::AMRVolume_setAMR(getIE(),
                              accel->node.size(),
@@ -131,7 +132,7 @@ namespace ospray {
                              &accel->level[0],
                              (ispc::box3f &)worldBounds);
 
-      ospcommon::tasking::parallel_for(accel->leaf.size(),[&](int leafID) {
+      tasking::parallel_for(accel->leaf.size(),[&](int leafID) {
         ispc::AMRVolume_computeValueRangeOfLeaf(getIE(), leafID);
       });
     }

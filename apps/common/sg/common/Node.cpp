@@ -341,11 +341,11 @@ namespace ospray {
 
     Node& Node::createChild(std::string name,
                             std::string type,
-                            Any var,
+                            Any value,
                             int flags,
                             std::string documentation)
     {
-      auto child = createNode(name, type, var, flags, documentation);
+      auto child = createNode(name, type, value, flags, documentation);
       add(child);
       return *child;
     }
@@ -478,7 +478,7 @@ namespace ospray {
 
     std::shared_ptr<Node> createNode(std::string name,
                                      std::string type,
-                                     Any var,
+                                     Any value,
                                      int flags,
                                      std::string documentation)
     {
@@ -503,12 +503,13 @@ namespace ospray {
       newNode->setFlags(flags);
       newNode->setDocumentation(documentation);
 
-      if (var.valid()) newNode->setValue(var);
+      if (value.valid()) newNode->setValue(value);
 
       return newNode;
     }
 
     OSP_REGISTER_SG_NODE(Node);
+    //OSPRay types
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);

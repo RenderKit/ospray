@@ -252,6 +252,20 @@ release-windows:
       - build_release\ospray*.exe
 
 ### TEST JOBS ###
+test-gen-centos7-gcc:
+  <<: *test_job
+  image: ospray/docker-images:centos7
+  script:
+    - cd $CI_PROJECT_DIR/build
+    - ../scripts/tests/generate_baseline.sh
+  artifacts:
+    paths:
+     - $CI_PROJECT_DIR/build/img
+    expire_in: 1 week
+  dependencies:
+      - build-centos7-gcc
+  when: manual
+
 test-centos7-gcc:
   <<: *test_job
   image: ospray/docker-images:centos7

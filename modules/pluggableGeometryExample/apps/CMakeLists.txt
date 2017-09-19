@@ -27,15 +27,13 @@ OSPRAY_CREATE_APPLICATION(ospBilinearPatchViewer
   bilinearPatchViewer.cpp
   # helper code to parse demo files
   Patch.cpp
-  
+
   LINK
 
   ospray
-  ospray_commandline
   ospray_common
-  ospray_imgui3d
-  ospray_minisg
-  ospray_importer
+  ospray_imgui3d_sg
+  ospray_sg
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
 )

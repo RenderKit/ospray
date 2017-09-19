@@ -21,6 +21,11 @@
 namespace ospray {
   namespace sg {
 
+    struct OSPSG_INTERFACE Affine3f : public Node
+    {
+      Affine3f() : Node() { setValue(ospcommon::affine3f(ospcommon::one)); }
+    };
+
     struct OSPSG_INTERFACE Transform : public Renderable
     {
       Transform();
@@ -30,10 +35,7 @@ namespace ospray {
       void postRender(RenderContext &ctx) override;
 
       //! \brief the actual (affine) transformation matrix
-      AffineSpace3f xfm;
-      ospcommon::affine3f cachedTransform;
-      ospcommon::affine3f baseTransform;
-      ospcommon::affine3f worldTransform;
+      ospcommon::affine3f worldTransform;  // computed transform
       ospcommon::affine3f oldTransform{ospcommon::one};
     };
 

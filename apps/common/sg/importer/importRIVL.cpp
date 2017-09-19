@@ -263,7 +263,7 @@ namespace ospray {
       }
       xfNode->setChild(child->name(), child);
       child->setParent(xfNode);
-      std::static_pointer_cast<sg::Transform>(xfNode)->baseTransform = xfm;
+      xfNode->child("userTransform").setValue(xfm);
       nodeList.push_back(std::dynamic_pointer_cast<sg::Node>(xfNode));
     }
 

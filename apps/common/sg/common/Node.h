@@ -194,7 +194,7 @@ namespace ospray {
 
       Node& createChild(std::string name,
                         std::string type = "Node",
-                        Any var = Any(),
+                        Any value = Any(),
                         int flags = sg::NodeFlags::none,
                         std::string documentation = "");
 
