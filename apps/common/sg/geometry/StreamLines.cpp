@@ -38,7 +38,7 @@ namespace ospray {
       box3f bounds = empty;
       if (hasChild("vertex")) {
         auto v = child("vertex").nodeAs<DataBuffer>();
-        for (uint32_t i = 0; i < v->size(); i++)
+        for (uint32_t i = 0; i < v->size(); i += 4)
           bounds.extend(v->get<vec3fa>(i));
       }
       return bounds;
