@@ -72,7 +72,7 @@ namespace ospray {
         float *bd = new float[BS * BS * BS];
         int nr    = fread(bd, sizeof(float), BS * BS * BS, dataFile);
         if (bi.level > maxLevel) {
-          delete bd;
+          delete [] bd;
           continue;
         }
         brickInfo.push_back(bi);
@@ -110,12 +110,19 @@ namespace ospray {
         this->brickData.push_back(data);
       }
 
-      brickDataData =
-          ospNewData(brickData.size(), OSP_OBJECT, brickData.data());
-      ospSetData(volume, "brickData", brickDataData);
-      brickInfoData = ospNewData(
-          brickInfo.size() * sizeof(brickInfo[0]), OSP_RAW, brickInfo.data());
-      ospSetData(volume, "brickInfo", brickInfoData);
+      auto brickDataNode =
+          std::make_shared<DataArrayOSP>((OSPObject*)brickData.data(),
+                                         brickData.size(),
+                                         false);
+      brickDataNode->setName("brickData");
+      add(brickDataNode);
+
+      auto brickInfoNode =
+          std::make_shared<DataArrayRAW>((byte_t*)brickInfo.data(),
+                                         brickInfo.size() * sizeof(BrickInfo),
+                                         false);
+      brickInfoNode->setName("brickInfo");
+      add(brickInfoNode);
 
       child("voxelRange") = valueRange.toVec2f();
     }

@@ -70,8 +70,6 @@ namespace ospray {
       std::vector<OSPData> brickData;
       std::vector<BrickInfo> brickInfo;
       std::vector<float *> brickPtrs;
-      OSPData brickInfoData;
-      OSPData brickDataData;
     };
 
 #ifdef OSPRAY_APPS_SG_CHOMBO
