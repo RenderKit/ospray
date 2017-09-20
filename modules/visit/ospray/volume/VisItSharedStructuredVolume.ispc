@@ -272,7 +272,7 @@ VisItSSV_stepRay(void *uniform _volume,
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   // The recommended step size for ray casting based volume renderers.
-  const varying float step = volume->super.samplingStep / samplingRate;
+  const varying float step = volume->super.samplingStep * rcpf(samplingRate);
 
   // Tentatively advance the ray.
   ray.t0 += step;
