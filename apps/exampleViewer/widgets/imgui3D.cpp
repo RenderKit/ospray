@@ -25,7 +25,6 @@
 #include "ospray/version.h"
 
 #include <stdio.h>
-#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
 #ifdef _WIN32
@@ -356,7 +355,6 @@ namespace ospray {
         window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
 
       glfwMakeContextCurrent(window);
-      gl3wInit();
 
       // NOTE(jda) - move key handler registration into this class
       ImGui_ImplGlfwGL3_Init(window, true);
