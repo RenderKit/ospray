@@ -332,16 +332,14 @@ namespace ospray {
             ospCommit(ospPrimIDList);
             mesh->ospPrimIDList = ospPrimIDList;
           } else if (child.name == "materiallist") {
-            auto &materialList = mesh->materialList;
             char* value = strdup(child.content.c_str());
             int matCounter=0;
-            auto &materialListNode = mesh->createChild("materialList", "Node");
+            auto &materialListNode = mesh->child("materialList");
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(nullptr," \t\n\r")) {
               size_t matID = atoi(s);
               auto mat = nodeList[matID]->nodeAs<sg::Material>();
               mesh->setChild("material", mat);
               mat->setParent(mesh);
-              materialList.push_back(mat);
               materialListNode.add(mat);
             }
             free(value);

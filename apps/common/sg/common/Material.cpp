@@ -89,13 +89,12 @@ namespace ospray {
     {
       auto mat = valueAs<OSPMaterial>();
 
-      // handle objects (mostly textures)
+      // handle textures
       for (auto &it : properties.children) {
         auto &child = *it.second;
-        if (child.valueIsType<OSPObject>())
-          ospSetObject(mat, child.name().c_str(), child.valueAs<OSPObject>());
+        if (child.type() == "Texture2D")
+          ospSetObject(mat, it.first.c_str(), child.valueAs<OSPObject>());
       }
-
       ospCommit(mat);
     }
 
