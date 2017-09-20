@@ -34,7 +34,6 @@ LINK
   ospray_imgui_util_sg
   ospray_tfn
   ${GLFW_LIBRARY}
-  gl3w
   imgui
   ${OPENGL_LIBRARIES}
 )
