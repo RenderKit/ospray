@@ -45,13 +45,20 @@ namespace ospray {
     /*! this structure defines only the format of the INPUT of amr
       data - ie, what we get from the scene graph or applicatoin */
     AMRData::AMRData(const Data &brickInfoData, const Data &brickDataData)
-      : numBricks(getNumBricks(brickInfoData))
     {
-      brick = new const Brick *[numBricks];
+      auto numBricks = getNumBricks(brickInfoData);
+      brick.reset(new const Brick *[numBricks], numBricks);
       const BrickInfo *brickInfo = (const BrickInfo *)brickInfoData.data;
       const Data **allBricksData = (const Data **)brickDataData.data;
-      for (int i=0;i<numBricks;i++)
+      for (int i = 0; i < brick.size() ;i++)
         brick[i] = new Brick(brickInfo[i],(const float*)allBricksData[i]->data);
+    }
+
+    AMRData::~AMRData()
+    {
+      for (auto &b : brick)
+        delete b;
+      delete brick.data();
     }
 
   } // ::ospray::amr

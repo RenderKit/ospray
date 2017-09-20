@@ -18,6 +18,7 @@
 
 // amr base
 #include "ospcommon/array3D/Array3D.h"
+#include "ospcommon/utility/ArrayView.h"
 // ospray
 #include "ospray/common/Data.h"
 
@@ -29,6 +30,7 @@ namespace ospray {
     struct AMRData
     {
       AMRData(const Data &brickInfoData, const Data &brickDataData);
+      ~AMRData();
 
       /*! this is how an app _specifies_ a brick (or better, the array
         of bricks); the brick data is specified through a separate
@@ -81,9 +83,8 @@ namespace ospray {
         vec3f f_dims;
       };
 
-      //! out own, internal represenation of a brick
-      const Brick **brick{nullptr};
-      const size_t numBricks;
+      //! our own, internal represenation of a brick
+      utility::ArrayView<const Brick *> brick;
 
       /*! compute world-space bounding box (lot in _logical_ space,
           but in _absolute_ space, with proper cell width as specified
@@ -91,8 +92,8 @@ namespace ospray {
       inline box3f worldBounds() const
       {
         box3f worldBounds = empty;
-        for (int i=0;i<numBricks;i++)
-          worldBounds.extend(brick[i]->worldBounds);
+        for (const auto &b : brick)
+          worldBounds.extend(b->worldBounds);
         return worldBounds;
       }
     };
