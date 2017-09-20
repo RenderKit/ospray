@@ -25,8 +25,8 @@ namespace ospray {
       box3f bounds = empty;
       std::vector<const AMRData::Brick *> brickVec;
       for (auto &b : input.brick) {
-        brickVec.push_back(b);
-        bounds.extend(b->worldBounds);
+        brickVec.push_back(&b);
+        bounds.extend(b.worldBounds);
       }
       this->worldBounds = bounds;
 
@@ -40,7 +40,7 @@ namespace ospray {
       }
 
       node.resize(1);
-      buildRec(0,bounds,brickVec);
+      buildRec(0, bounds, brickVec);
     }
 
     /*! destructor that frees all allocated memory */

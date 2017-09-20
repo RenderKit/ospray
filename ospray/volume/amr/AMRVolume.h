@@ -36,8 +36,8 @@ namespace ospray {
                     const vec3i &index,
                     const vec3i &count) override;
 
-      amr::AMRData  *data{nullptr};
-      amr::AMRAccel *accel{nullptr};
+      std::unique_ptr<amr::AMRData>  data;
+      std::unique_ptr<amr::AMRAccel> accel;
 
       Ref<Data> brickInfoData;
       Ref<Data> brickDataData;

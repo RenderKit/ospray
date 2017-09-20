@@ -88,21 +88,19 @@ namespace ospray {
       assert(brickDataData);
       assert(brickDataData->data);
 
-      assert(data == nullptr);
-      data = new amr::AMRData(*brickInfoData,*brickDataData);
-      assert(accel == nullptr);
-      accel = new amr::AMRAccel(*data);
+      data  = make_unique<amr::AMRData>(*brickInfoData,*brickDataData);
+      accel = make_unique<amr::AMRAccel>(*data);
 
       // finding coarset cell size + finest level cell width
       float coarsestCellWidth = 0.f;
-      float finestLevelCellWidth = data->brick[0]->cellWidth;
+      float finestLevelCellWidth = data->brick[0].cellWidth;
       box3i rootLevelBox = empty;
 
       for (auto &b : data->brick) {
-        if (b->level == 0)
-          rootLevelBox.extend(b->box);
-        finestLevelCellWidth = min(finestLevelCellWidth, b->cellWidth);
-        coarsestCellWidth    = max(coarsestCellWidth, b->cellWidth);
+        if (b.level == 0)
+          rootLevelBox.extend(b.box);
+        finestLevelCellWidth = min(finestLevelCellWidth, b.cellWidth);
+        coarsestCellWidth    = max(coarsestCellWidth, b.cellWidth);
       }
 
       vec3i rootGridDims = rootLevelBox.size() + vec3i(1);
