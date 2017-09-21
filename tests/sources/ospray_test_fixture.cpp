@@ -571,5 +571,74 @@ void SlicedCube::SetUp() {
   AddLight(ambient);
 }
 
+MTLMirrors::MTLMirrors() {
+  auto param = GetParam();
+  Kd = std::get<0>(param);
+  Ks = std::get<1>(param);
+  Ns = std::get<2>(param);
+  d = std::get<3>(param);
+  Tf = std::get<4>(param);
+
+  rendererType = "pathtracer";
+}
+
+void MTLMirrors::SetUp() {
+  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+
+  ospSet3f(renderer, "bgColor", 0.5f, 0.5f, 0.45f);
+  ospCommit(renderer);
+
+  OSPData data;
+
+  float mirrorsVertices[] = {
+    2.f, 1.f, 5.f,
+    2.f, -1.f, 5.f,
+    0.f, 1.f, 2.f,
+    0.f, -1.f, 2.f,
+    0.f, 1.f, 5.f,
+    0.f, -1.f, 5.f,
+    -2.f, 1.f, 2.f,
+    -2.f, -1.f, 2.f,
+  };
+  int32_t mirrorsIndices[] = { 0, 1, 2, 1, 2, 3, 4, 5, 6, 5, 6, 7 };
+  OSPGeometry mirrors = ospNewGeometry("triangles");
+  ASSERT_TRUE(mirrors);
+  data = ospNewData(8, OSP_FLOAT3, mirrorsVertices);
+  ASSERT_TRUE(data);
+  ospCommit(data);
+  ospSetData(mirrors, "vertex", data);
+  data = ospNewData(4, OSP_INT3, mirrorsIndices);
+  ASSERT_TRUE(data);
+  ospSetData(mirrors, "index", data);
+  OSPMaterial mirrorsMaterial = ospNewMaterial(renderer, "OBJMaterial");
+  ASSERT_TRUE(mirrorsMaterial);
+  ospSet3f(mirrorsMaterial, "Kd", Kd.x, Kd.y, Kd.z);
+  ospSet3f(mirrorsMaterial, "Ks", Ks.x, Ks.y, Ks.z);
+  ospSetf(mirrorsMaterial, "Ns", Ns);
+  ospSetf(mirrorsMaterial, "d", d);
+  ospSet3f(mirrorsMaterial, "Tf", Tf.x, Tf.y, Tf.z);
+  ospCommit(mirrorsMaterial);
+  ospSetMaterial(mirrors, mirrorsMaterial);
+  ospCommit(mirrors);
+  AddGeometry(mirrors);
+
+  float sphereCenters[] = { 1.f, 0.f, 7.f, 0.f };
+  OSPGeometry light = ospNewGeometry("spheres");
+  ASSERT_TRUE(light);
+  ospSetf(light, "radius", 1.f);
+  data = ospNewData(1, OSP_FLOAT4, sphereCenters);
+  ASSERT_TRUE(data);
+  ospSetData(light, "spheres", data);
+  ospSetMaterial(light, ospNewMaterial(renderer, "Luminous"));
+  ospCommit(light);
+  AddGeometry(light);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient);
+  ospSetf(ambient, "intensity", 0.01f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
 } // namespace OSPRayTestScenes
 

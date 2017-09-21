@@ -107,5 +107,17 @@ private:
   std::vector<float> volumetricData; 
 };
 
+class MTLMirrors : public Base, public ::testing::TestWithParam<std::tuple<osp::vec3f, osp::vec3f, float, float, osp::vec3f>> {
+public:
+  MTLMirrors();
+  virtual void SetUp();
+private:
+  osp::vec3f Kd;
+  osp::vec3f Ks;
+  float Ns;
+  float d;
+  osp::vec3f Tf;
+};
+
 } // namespace OSPRayTestScenes
 
