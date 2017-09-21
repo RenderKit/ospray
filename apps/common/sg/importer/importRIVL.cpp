@@ -336,13 +336,15 @@ namespace ospray {
           } else if (child.name == "materiallist") {
             char* value = strdup(child.content.c_str());
             int matCounter=0;
-            auto &materialListNode = mesh->child("materialList");
-            for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(nullptr," \t\n\r")) {
+            auto materialListNode =
+                mesh->child("materialList").nodeAs<MaterialList>();
+            for(char *s = strtok((char*)value," \t\n\r");
+                s;
+                s = strtok(nullptr," \t\n\r")) {
               size_t matID = atoi(s);
               auto mat = nodeList[matID]->nodeAs<sg::Material>();
               mesh->setChild("material", mat);
-              mat->setParent(mesh);
-              materialListNode.add(mat);
+              materialListNode->push_back(mat);
             }
             free(value);
           } else {

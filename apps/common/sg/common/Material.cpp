@@ -99,6 +99,7 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(Material);
+    OSP_REGISTER_SG_NODE(MaterialList);
 
   } // ::ospray::sg
 } // ::ospray

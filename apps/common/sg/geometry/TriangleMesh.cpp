@@ -22,7 +22,7 @@ namespace ospray {
 
     TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
     {
-      createChild("materialList", "Node");
+      createChild("materialList", "MaterialList");
     }
 
     std::string TriangleMesh::toString() const
@@ -97,7 +97,8 @@ namespace ospray {
 
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
-      auto materialList = child("materialList").children();
+      auto materialListNode = child("materialList").nodeAs<MaterialList>();
+      const auto &materialList = materialListNode->nodes;
       if (!materialList.empty()) {
         std::vector<OSPObject> mats;
         for (auto mat : materialList) {
