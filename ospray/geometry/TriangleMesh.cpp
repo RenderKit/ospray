@@ -22,8 +22,6 @@
 #include "TriangleMesh_ispc.h"
 #include <cmath>
 
-#define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
-
 namespace ospray {
 
   inline bool inRange(int64 i, int64 i0, int64 i1)
