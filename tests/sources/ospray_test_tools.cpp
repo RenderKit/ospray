@@ -1,5 +1,7 @@
 #include "ospray_test_tools.h"
 
+#include <cmath>
+
 extern OSPRayEnvironment * ospEnv;
 
 // helper function to write the rendered image as PPM file
@@ -48,14 +50,13 @@ OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *test
 
   unsigned int bufferLen = 4 * size.x * size.y;
   std::vector<pixelColorValue> baselineImage(bufferLen, 255);
+  std::vector<pixelColorValue> diffImage(bufferLen, 0);
 
-  int failed = 0;
   for (int y = 0; y < size.y; ++y) {
-    for (int x = 0; baseline.good() && x < size.x; ++x) {
-      char* baselinePixel = (char*)(baselineImage.data() + 4 * ((size.y-1-y)*size.x + x));
-      char* renderedPixel = (char*)(testImage + 4 * ((size.y-1-y)*size.x + x));
-      baseline.read(baselinePixel, 3);
-      failed |= std::memcmp(baselinePixel, renderedPixel, 2);
+    for (int x = 0; x < size.x; ++x) {
+      int index = 4*((size.y-y-1) * size.x + x);
+      pixelColorValue* pixelAddr = &(baselineImage[index]);
+      baseline.read((char*)pixelAddr, 3);
     }
   }
 
@@ -64,50 +65,63 @@ OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *test
     return OsprayStatus::Error;
   }
 
-  unsigned colorRenderError = 0;
+  bool notPerfect = false;
+  unsigned incorrectPixels = 0;
   pixelColorValue maxError = 0;
   pixelColorValue minError = 255;
-  float meanError = 0;
+  long long totalError = 0;
+
+  for (int pixel = 0; pixel < size.x * size.y; ++pixel) {
+    for (int channel = 0; baseline.good() && channel < 3; ++channel) {
+      pixelColorValue baselineValue = baselineImage[4*pixel + channel];
+      pixelColorValue renderedValue = testImage[4*pixel + channel];
+      pixelColorValue diffValue = std::abs((int)baselineValue - (int)renderedValue);
+
+      notPerfect = notPerfect || diffValue;
+      maxError = std::max(maxError, diffValue);
+      minError = std::min(minError, diffValue);
+      totalError += diffValue;
+      if (diffValue > pixelThreshold)
+        incorrectPixels++;
+
+      diffImage[4*pixel + channel] = diffValue;
+    }
+  }
+
+  if (notPerfect)
+    std::cerr << "[ WARNING  ] " << baselineName << " is not pixel perfect" << std::endl;
+
+  if(incorrectPixels > 0) {
+    double meanError = totalError / double(3*size.x*size.y);
+    double variance = 0.0;
+    for (int pixel = 0; pixel < size.x * size.y; ++pixel)
+      for (int channel = 0; channel < 3; ++channel) {
+         double diff = diffImage[4*pixel + channel] - meanError;
+         variance += diff * diff;
+      }
+    variance /= (3*size.x*size.y);
+    double stdDev = sqrt(variance);
+
+    std::cerr << "[ STATISTIC] Number of errors: " << incorrectPixels << std::endl;
+    std::cerr << "[ STATISTIC] Min/Max/Mean/StdDev: "
+      << (int)minError << "/"
+      << (int)maxError << "/"
+      << std::fixed << std::setprecision(2) << meanError << "/"
+      << std::fixed << std::setprecision(2) << stdDev
+      << std::endl;
+  }
+
+  bool failed = (incorrectPixels / double(3*size.x*size.y)) > errorRate;
 
   if (failed) {
-    std::vector<pixelColorValue> diffImage(bufferLen, 255);
-
-    std::cerr << "[ WARNING  ] " << baselineName << " is not pixel perfect" << std::endl;
-    for (int idx = 0; idx < size.x * size.y; ++idx) {
-      for ( int colorIdx = 0; colorIdx < 3; ++colorIdx) {
-        diffImage[4*idx + colorIdx] = std::abs((int)(testImage[4*idx + colorIdx]) - (int)(baselineImage[4*idx + colorIdx]));
-
-        if(diffImage[4*idx + colorIdx] > pixelThreshold)
-        {
-          maxError = diffImage[4 *idx + colorIdx] > maxError ? diffImage[4*idx + colorIdx] : maxError;
-          minError = diffImage[4 *idx + colorIdx] < minError ? diffImage[4*idx + colorIdx] : minError;
-          meanError += diffImage[4*idx + colorIdx];
-          colorRenderError++;
-        }
-      }
-    }
-
     writeImg(ospEnv->GetFailedDir()+"/"+testName+"_baseline.ppm", size, (const uint32_t*)baselineImage.data());
     writeImg(ospEnv->GetFailedDir()+"/"+testName+"_rendered.ppm", size, (const uint32_t*)testImage);
     writeImg(ospEnv->GetFailedDir()+"/"+testName+"_diff.ppm",     size, (const uint32_t*)diffImage.data());
   }
 
-  if(colorRenderError) {
-    meanError = (meanError/float(colorRenderError))/3.f;
-    std::cerr << "[ STATISTIC] Number of errors: " << colorRenderError << std::endl;
-    std::cerr << "[ STATISTIC] Min/Max/Mean: "
-      << (int)minError << "/"
-      << (int)maxError << "/"
-      << std::fixed << std::setprecision(2) << meanError
-      << std::endl;
-  }
-  if (failed != 0 && colorRenderError/float(size.x*size.y) > errorRate)
-  {
+  if (failed)
     return OsprayStatus::Fail;
-  }
   else
-  {
     return OsprayStatus::Ok;
-  }
 }
 
