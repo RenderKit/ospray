@@ -20,7 +20,8 @@
 namespace ospray {
   namespace sg {
 
-    TriangleMesh::TriangleMesh() : Geometry("trianglemesh") {
+    TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
+    {
       createChild("materialList", "Node");
     }
 
@@ -107,8 +108,6 @@ namespace ospray {
         auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
         ospCommit(ospMaterialList);
         ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
-        if (ospPrimIDList)
-          ospSetData(valueAs<OSPObject>(), "prim.materialID", ospPrimIDList);
       }
 
       Geometry::postCommit(ctx);

@@ -287,8 +287,8 @@ namespace ospray {
           assert(binBasePtr);
           if (child.name == "text") {
           } else if (child.name == "vertex") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto vertex =
@@ -296,8 +296,8 @@ namespace ospray {
             vertex->setName("vertex");
             mesh->add(vertex);
           } else if (child.name == "normal") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto normal =
@@ -306,8 +306,8 @@ namespace ospray {
             normal->setName("normal");
             mesh->add(normal);
           } else if (child.name == "texcoord") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto texcoord =
@@ -316,8 +316,8 @@ namespace ospray {
             texcoord->setName("texcoord");
             mesh->add(texcoord);
           } else if (child.name == "prim") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto index =
@@ -325,12 +325,14 @@ namespace ospray {
             index->setName("index");
             mesh->add(index);
 
-            std::vector<uint32_t> matIDs;
-            for( size_t i=0;i<index->size();i++)
-              matIDs.push_back((*index)[i].w >> 16);
-            auto ospPrimIDList = ospNewData(matIDs.size(), OSP_INT, matIDs.data());
-            ospCommit(ospPrimIDList);
-            mesh->ospPrimIDList = ospPrimIDList;
+            auto primIDList =
+              createNode("prim.materialID",
+                         "DataVector1i")->nodeAs<DataVector1i>();
+
+            for(size_t i = 0; i < index->size(); i++)
+              primIDList->v.push_back((*index)[i].w >> 16);
+
+            mesh->add(primIDList);
           } else if (child.name == "materiallist") {
             char* value = strdup(child.content.c_str());
             int matCounter=0;
