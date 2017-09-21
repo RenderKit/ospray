@@ -97,11 +97,9 @@ namespace ospray {
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
       auto materialList = child("materialList").children();
-      if (materialList.size() > 0)
-      {
+      if (!materialList.empty()) {
         std::vector<OSPObject> mats;
-        for ( auto mat : materialList )
-        {
+        for (auto mat : materialList) {
           auto m = mat->valueAs<OSPObject>();
           if (m)
             mats.push_back(m);
@@ -109,8 +107,10 @@ namespace ospray {
         auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
         ospCommit(ospMaterialList);
         ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
-        if (ospPrimIDList) ospSetData(valueAs<OSPObject>(), "prim.materialID", ospPrimIDList);
+        if (ospPrimIDList)
+          ospSetData(valueAs<OSPObject>(), "prim.materialID", ospPrimIDList);
       }
+
       Geometry::postCommit(ctx);
     }
 

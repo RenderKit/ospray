@@ -96,7 +96,10 @@ namespace ospray {
     this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : nullptr;
     
-    if (materialList && !ispcMaterialPtrs) {
+    if (materialList) {
+      if (ispcMaterialPtrs)
+        delete ispcMaterialPtrs;
+
       const int num_materials = materialListData->numItems;
       ispcMaterialPtrs = new void*[num_materials];
       for (int i = 0; i < num_materials; i++) {
