@@ -99,5 +99,13 @@ public:
   virtual void SetUp();
 };
 
+class SlicedCube : public Base, public ::testing::Test {
+public:
+  SlicedCube();
+  virtual void SetUp();
+private:
+  std::vector<float> volumetricData; 
+};
+
 } // namespace OSPRayTestScenes
 

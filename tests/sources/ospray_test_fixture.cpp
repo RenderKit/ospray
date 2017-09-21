@@ -487,5 +487,89 @@ void Torus::SetUp() {
   AddLight(ambient);
 }
 
+SlicedCube::SlicedCube() {
+}
+
+void SlicedCube::SetUp() {
+  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+
+  float cam_pos[] = {-0.7f, -1.4f, 0.f};
+  float cam_up[] = {0.f, 0.f, -1.f};
+  float cam_view[] = {0.5f, 1.f, 0.f};
+  ospSet3fv(camera, "pos", cam_pos);
+  ospSet3fv(camera, "dir", cam_view);
+  ospSet3fv(camera, "up",  cam_up);
+  ospCommit(camera);
+  ospCommit(renderer);
+
+  ospSet1f(renderer, "epsilon", 0.01);
+  ospCommit(renderer);
+
+  int size = 100;
+
+  volumetricData.resize(size*size*size, 0);
+
+  for (int x = 0; x < size; ++x) {
+    for (int y = 0; y < size; ++y) {
+      for (int z = 0; z < size; ++z) {
+        float X = (x / (float)size) - 0.5;
+        float Y = (y / (float)size) - 0.5;
+        float Z = (z / (float)size) - 0.5;
+
+        volumetricData[size*size * x + size * y + z] = sin(30*X + 3 * sin(30*Y + 3 * sin(30*Z)));
+      }
+    }
+  }
+
+  OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
+  ASSERT_TRUE(transferFun);
+  ospSet2f(transferFun, "valueRange", -1.f, 1.f);
+  float colors[] = {
+    0.85f, 0.85f, 1.0f,
+    0.1f, 0.0f, 0.0f
+  };
+  float opacites[] = { 0.0f, 1.0f };
+  OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
+  ASSERT_TRUE(tfColorData);
+  ospSetData(transferFun, "colors", tfColorData);
+  OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
+  ASSERT_TRUE(tfOpacityData);
+  ospSetData(transferFun, "opacities", tfOpacityData);
+  ospCommit(transferFun);
+
+  OSPVolume blob = ospNewVolume("shared_structured_volume");
+  ASSERT_TRUE(blob);
+  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT, volumetricData.data(), OSP_DATA_SHARED_BUFFER);
+  ASSERT_TRUE(voxelsData);
+  ospSetData(blob, "voxelData", voxelsData);
+  ospSet3i(blob, "dimensions", size, size, size);
+  ospSetString(blob, "voxelType", "float");
+  ospSet2f(blob, "voxelRange", 0.f, 3.f);
+  ospSet3f(blob, "gridOrigin", -0.5f, -0.5f, -0.5f);
+  ospSet3f(blob, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  ospSetObject(blob, "transferFunction", transferFun);
+  ospCommit(blob);
+
+  OSPGeometry slice = ospNewGeometry("slices");
+  ASSERT_TRUE(slice);
+  float planes[] = {
+    1.f, 1.f, 1.f, 0.5f,
+    1.f, 1.f, 1.f, 0.f,
+    1.f, 1.f, 1.f, -0.5f
+  };
+  OSPData planesData = ospNewData(3, OSP_FLOAT4, planes);
+  ASSERT_TRUE(planesData);
+  ospSetData(slice, "planes", planesData);
+  ospSetObject(slice, "volume", blob);
+  ospCommit(slice);
+  AddGeometry(slice);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient);
+  ospSetf(ambient, "intensity", 0.5f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
 } // namespace OSPRayTestScenes
 

@@ -21,6 +21,7 @@ SET(TESTS_SOURCES
     sources/ospray_environment.cpp
     sources/ospray_test_fixture.cpp
     sources/ospray_test_geometry.cpp
+    sources/ospray_test_slices.cpp
     sources/ospray_test_volumetric.cpp
     sources/ospray_test_tools.cpp
 )
