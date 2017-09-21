@@ -18,6 +18,7 @@ class Base {
   std::string testName;
   std::string rendererType;
   int frames;
+  int samplesPerPixel;
 
   OSPFrameBuffer framebuffer;
   OSPRenderer renderer;

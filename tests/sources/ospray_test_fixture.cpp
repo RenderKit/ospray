@@ -18,6 +18,7 @@ Base::Base() {
 
   rendererType = "scivis";
   frames = 1;
+  samplesPerPixel = 50;
 }
 
 Base::~Base() {
@@ -97,11 +98,11 @@ void Base::SetLights() {
 
 void Base::SetRenderer() {
   renderer = ospNewRenderer(rendererType.data());
-
   ospSet1i(renderer, "aoSamples", 1);
   ospSet1f(renderer, "bgColor", 1.0f);
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
+  ospSet1i(renderer, "spp", samplesPerPixel);
   ospCommit(renderer);
 }
 
@@ -322,7 +323,6 @@ Sierpinski::Sierpinski() {
   level = std::get<2>(params);
 
   rendererType = std::get<0>(params);
-  frames = 5;
 }
 
 void Sierpinski::SetUp() {
