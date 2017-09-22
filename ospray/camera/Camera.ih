@@ -28,7 +28,7 @@ struct Camera;
 struct CameraSample {
   vec2f screen; /*!< normalized screen sample, from [0..1] */
   vec2f lens;   /*!< may be left un-initialized if 'camera.doesDOF' is false */
-  float time;   /*!< time, currently unused */
+  float time;   /*!< time */
 };
 
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
@@ -48,11 +48,17 @@ struct Camera
                     'lens' value; if not, this value can remain
                     unused. */
 
-  float nearClip; /*!< \brief near clipping plane. */
+  float nearClip; //!< \brief near clipping plane.
   box2f subImage; //!< viewable tile / subregion to compute, [0..1]^2 x [0..1]^2
+  region1f shutter; //!< camera shutter open start and end time, in [0..1]
 };
 
-inline vec2f Camera_subRegion(const uniform Camera *uniform self, const vec2f &screen)
+inline vec2f Camera_subRegion(const Camera *uniform self, const vec2f &screen)
 {
   return lerp(screen, self->subImage.lower, self->subImage.upper);
+}
+
+inline float Camera_shutterTime(const Camera *uniform self, const float time)
+{
+  return lerp(time, self->shutter.lower, self->shutter.upper);
 }

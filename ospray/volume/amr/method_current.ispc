@@ -23,10 +23,13 @@ varying float AMR_current(void *uniform _self, const varying vec3f &P)
   const AMRVolume *uniform self = (AMRVolume *)_self;
   const AMR *uniform amr = &self->amr;
 
-  const CellRef C = findLeafCell(amr,P);
+  vec3f lP;  //local amr space
+  self->transformWorldToLocal(self, P, lP);
+
+  const CellRef C = findLeafCell(amr,lP);
 
   DualCell D;
-  initDualCell(D,P,C.width);
+  initDualCell(D,lP,C.width);
   findDualCell(amr,D);
 
   return lerp(D);

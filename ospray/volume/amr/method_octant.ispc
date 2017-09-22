@@ -416,8 +416,11 @@ varying float AMR_octant(void *uniform _self, const varying vec3f &P)
   const AMRVolume *uniform self = (AMRVolume *)_self;
   const AMR *uniform amr = &self->amr;
 
-  const CellRef C = findLeafCell(amr,P);
-  return doOctant(amr,C,P);
+  vec3f lP;  //local amr space
+  self->transformWorldToLocal(self, P, lP);
+
+  const CellRef C = findLeafCell(amr,lP);
+  return doOctant(amr,C,lP);
 }
 
 varying float AMR_octantLevel(void *uniform _self, const varying vec3f &P)
@@ -425,7 +428,10 @@ varying float AMR_octantLevel(void *uniform _self, const varying vec3f &P)
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
   AMR *uniform amr = &self->amr;
 
-  const CellRef C = findLeafCell(amr,P);
+  vec3f lP;  //local amr space
+  self->transformWorldToLocal(self, P, lP);
+
+  const CellRef C = findLeafCell(amr,lP);
   float width = C.width;
   if (isnan(width))
     width = 1.0f;

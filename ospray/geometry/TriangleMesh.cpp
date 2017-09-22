@@ -22,8 +22,6 @@
 #include "TriangleMesh_ispc.h"
 #include <cmath>
 
-#define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
-
 namespace ospray {
 
   inline bool inRange(int64 i, int64 i0, int64 i1)
@@ -32,9 +30,7 @@ namespace ospray {
   }
 
   TriangleMesh::TriangleMesh() 
-    : eMesh(RTC_INVALID_ID)
   {
-    this->ispcMaterialPtrs = nullptr;
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
 
@@ -96,13 +92,11 @@ namespace ospray {
     this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : nullptr;
     
-    if (materialList && !ispcMaterialPtrs) {
+    if (materialList) {
       const int num_materials = materialListData->numItems;
-      ispcMaterialPtrs = new void*[num_materials];
-      for (int i = 0; i < num_materials; i++) {
-        assert(this->materialList[i] != nullptr && "Materials in list should never be NULL");
-        this->ispcMaterialPtrs[i] = this->materialList[i]->getIE();
-      }
+      ispcMaterialPtrs.resize(num_materials);
+      for (int i = 0; i < num_materials; i++)
+        ispcMaterialPtrs[i] = materialList[i]->getIE();
     } 
 
     size_t numTris  = -1;
@@ -171,8 +165,8 @@ namespace ospray {
                            (ispc::vec4f*)color,
                            (ispc::vec2f*)texcoord,
                            geom_materialID,
-                           getMaterial()?getMaterial()->getIE():nullptr,
-                           ispcMaterialPtrs,
+                           getMaterial() ? getMaterial()->getIE() : nullptr,
+                           materialList ? ispcMaterialPtrs.data() : nullptr,
                            (uint32_t*)prim_materialID,
                            colorData && colorData->type == OSP_FLOAT4,
                            huge_mesh);

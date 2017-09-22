@@ -162,8 +162,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           // test for shadows
           Ray shadowRay;
           setRay(shadowRay, dg.P, ls.dir,
-              self->super.epsilon, ls.dist - self->super.epsilon);
-          shadowRay.time = ray.time;
+              self->super.epsilon, ls.dist - self->super.epsilon, ray.time);
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
@@ -300,8 +299,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         // test for shadows
         Ray shadowRay;
         setRay(shadowRay, dg.P, ls.dir,
-               self->super.epsilon, ls.dist - self->super.epsilon);
-        shadowRay.time = ray.time;
+               self->super.epsilon, ls.dist - self->super.epsilon, ray.time);
 
         const vec3f nextLw = Lw * fe.value;
 
@@ -361,7 +359,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);
-    setRay(ray, dg.P, fs.wi, self->super.epsilon, inf);
+    setRay(ray, dg.P, fs.wi, self->super.epsilon, inf, ray.time);
     depth++;
   } while (reduce_max(Lw) > self->super.minContribution);
 
@@ -400,13 +398,13 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
     CameraSample cameraSample;
     const vec2f pixelSample = RandomTEA__getFloats(rng);
+    const vec2f timeSample = RandomTEA__getFloats(rng);
     cameraSample.screen.x = (screenSample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
     cameraSample.screen.y = (screenSample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
     cameraSample.lens     = RandomTEA__getFloats(rng);
+    cameraSample.time     = timeSample.x;
 
     camera->initRay(camera, screenSample.ray, cameraSample);
-    const vec2f timeSample = RandomTEA__getFloats(rng);
-    screenSample.ray.time = timeSample.x;
 
     ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
                                                  screenSample.ray, rng);

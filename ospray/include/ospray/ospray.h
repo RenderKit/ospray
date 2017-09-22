@@ -129,6 +129,7 @@ namespace osp {
   struct vec3i    { int x, y, z; };
   struct vec4f    { float x, y, z, w; };
   struct box2i    { vec2i lower, upper; };
+  struct box3i    { vec3i lower, upper; };
   struct box3f    { vec3f lower, upper; };
   struct linear3f { vec3f vx, vy, vz; };
   struct affine3f { linear3f l; vec3f p; };
@@ -150,6 +151,14 @@ namespace osp {
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
+
+  struct amr_brick_info
+  {
+    box3i bounds;
+    int   refinemntLevel;
+    float cellWidth;
+  };
+
 } // ::osp
 
 typedef osp::Device            *OSPDevice;
@@ -180,9 +189,17 @@ typedef struct { float x, y, z;
 typedef struct { int x, y, z; }                             osp_vec3i;
 typedef struct { float x, y, z, w; }                        osp_vec4f;
 typedef struct { osp_vec2i lower, upper; }                  osp_box2i;
+typedef struct { osp_vec3i lower, upper; }                  osp_box3i;
 typedef struct { osp_vec3f lower, upper; }                  osp_box3f;
 typedef struct { osp_vec3f vx, vy, vz; }                    osp_linear3f;
 typedef struct { osp_linear3f l; osp_vec3f p; }             osp_affine3f;
+
+typedef struct
+{
+  osp_box3i bounds;
+  int       refinemntLevel;
+  float     cellWidth;
+} osp_amr_brick_info;
 
 /*! abstract object types. in C99, those are all the same because C99
   doesn't know inheritance, and we want to make sure that a

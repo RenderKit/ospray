@@ -84,10 +84,11 @@ namespace ospray {
       }
     }
 
-    static inline std::vector<std::shared_ptr<Material>> createSgMaterials(
+    static inline std::shared_ptr<MaterialList> createSgMaterials(
         std::vector<tinyobj::material_t> &mats, const FileName &containingPath)
     {
-      std::vector<std::shared_ptr<Material>> sgMaterials;
+      auto sgMaterials =
+          createNode("materialList", "MaterialList")->nodeAs<MaterialList>();
 
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
@@ -109,7 +110,8 @@ namespace ospray {
             } catch (const std::runtime_error &) {
               // NOTE(jda) - silently move on if parsed node type doesn't exist
               // maybe it's a texture, try it
-              addTextureIfNeeded(matNode, param.first, param.second, containingPath);
+              addTextureIfNeeded(matNode, param.first,
+                                 param.second, containingPath);
             }
           }
         }
@@ -135,7 +137,7 @@ namespace ospray {
               matNode, "map_d", mat.alpha_texname, containingPath, true);
         }
 
-        sgMaterials.push_back(matNodePtr);
+        sgMaterials->push_back(matNodePtr);
       }
 
       return sgMaterials;
@@ -243,14 +245,17 @@ namespace ospray {
         if (!vt->empty())
           mesh->add(vt);
 
-        auto matIdx = shape.mesh.material_ids[0];
-        if (!sgMaterials.empty()) {
-          if (matIdx >= 0)
-            mesh->setChild("material", sgMaterials[matIdx]);
-          else
-            mesh->setChild("material", sgMaterials[0]);
-          mesh->child("material").setParent(mesh);
-        }
+        auto pmids = createNode("prim.materialID",
+                                "DataVector1i")->nodeAs<DataVector1i>();
+
+        auto numMatIds = shape.mesh.material_ids.size();
+        pmids->v.reserve(numMatIds);
+
+        for (auto id : shape.mesh.material_ids)
+          pmids->v.push_back(id);
+
+        mesh->add(pmids);
+        mesh->add(sgMaterials);
 
         auto model = createNode(name + "_model", "Model");
         model->add(mesh);

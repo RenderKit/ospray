@@ -29,7 +29,6 @@ add_subdirectory(widgets)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}
-  common/gl3w
   common/imgui
   ${OPENGL_INCLUDE_DIR}
 )
@@ -39,7 +38,6 @@ ospray_create_application(ospExampleViewer
   LINK
   ${OPENGL_LIBRARIES}
   ${GLFW_LIBRARY}
-  gl3w
   imgui
   ospray
   ospray_common

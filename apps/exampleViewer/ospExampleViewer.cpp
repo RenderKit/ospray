@@ -47,7 +47,7 @@ struct clFile
 };
 
 std::vector<clFile> files;
-std::vector< std::vector<clFile> > animatedFiles;
+std::vector<std::vector<clFile>> animatedFiles;
 std::string initialRendererType;
 
 bool addPlane =

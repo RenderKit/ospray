@@ -24,31 +24,30 @@ namespace ospray {
     {
       box3f bounds = empty;
       std::vector<const AMRData::Brick *> brickVec;
-      for (int i=0;i<input.numBricks;i++) {
-        brickVec.push_back(input.brick[i]);
-        bounds.extend(brickVec.back()->worldBounds);
+      for (auto &b : input.brick) {
+        brickVec.push_back(&b);
+        bounds.extend(b.worldBounds);
       }
       this->worldBounds = bounds;
 
-      for (int i=0;i<brickVec.size();i++) {
-        const AMRData::Brick *brick = brickVec[i];
-        if (brick->level >= level.size())
-          level.resize(brick->level+1);
-        level[brick->level].level = brick->level;
-        level[brick->level].cellWidth = brick->cellWidth;
-        level[brick->level].halfCellWidth = 0.5f*brick->cellWidth;
-        level[brick->level].rcpCellWidth = 1.f/brick->cellWidth;
+      for (auto &b : brickVec) {
+        if (b->level >= level.size())
+          level.resize(b->level+1);
+        level[b->level].level = b->level;
+        level[b->level].cellWidth = b->cellWidth;
+        level[b->level].halfCellWidth = 0.5f*b->cellWidth;
+        level[b->level].rcpCellWidth = 1.f/b->cellWidth;
       }
 
       node.resize(1);
-      buildRec(0,bounds,brickVec);
+      buildRec(0, bounds, brickVec);
     }
 
     /*! destructor that frees all allocated memory */
     AMRAccel::~AMRAccel()
     {
       for (auto &l : leaf)
-        delete[] l.brickList;
+        delete [] l.brickList;
 
       leaf.clear();
       node.clear();
@@ -178,8 +177,6 @@ namespace ospray {
           PRINT(bestPos);
           PRINT(bestDim);
           PRINT(brick.size());
-          for (int i=0;i<brick.size();i++)
-            std::cout << "  brick " << brick[i]->worldBounds << " " << brick[i]->level << std::endl;
         }
         assert(!(l.empty() || r.empty()));
 
