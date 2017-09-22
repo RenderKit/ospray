@@ -1,6 +1,7 @@
 #include "ospray_test_fixture.h"
 
 #include <cmath>
+#include <cstring>
 
 extern OSPRayEnvironment * ospEnv;
 
@@ -11,10 +12,21 @@ Base::Base() {
   const ::testing::TestInfo* const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
   imgSize = ospEnv->GetImgSize();
 
-  testName = std::string(testCase->name()) + "__" + testInfo->name();
-  for (char& byte : testName)
-    if (byte == '/')
-      byte = '_';
+  {
+    std::string testCaseName = testCase->name();
+    std::string testInfoName = testInfo->name();
+    size_t pos = testCaseName.find('/');
+    if (pos == std::string::npos) {
+      testName = testCaseName + "_" + testInfoName;
+    } else {
+      std::string instantiationName = testCaseName.substr(0, pos);
+      std::string className = testCaseName.substr(pos + 1);
+      testName = className + "_" + instantiationName + "_" + testInfoName; 
+    }
+    for (char& byte : testName)
+      if (byte == '/')
+        byte = '_';
+  }
 
   rendererType = "scivis";
   frames = 1;
