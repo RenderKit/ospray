@@ -160,15 +160,7 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      if (child("camera").childrenLastModified() > frameMTime
-          || child("camera").lastModified() > frameMTime
-          || child("lights").childrenLastModified() > frameMTime
-          || lastModified() > frameMTime
-          || child("shadowsEnabled").lastModified() > frameMTime
-          || child("aoSamples").lastModified() > frameMTime
-          || child("spp").lastModified() > frameMTime
-          || child("world").childrenLastModified() > frameMTime)
-      {
+      if (lastModified() > frameMTime || childrenLastModified() > frameMTime) {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM

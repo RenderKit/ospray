@@ -81,9 +81,8 @@ namespace ospray {
         vec3f f_dims;
       };
 
-      //! out own, internal represenation of a brick
-      const Brick **brick{nullptr};
-      const size_t numBricks;
+      //! our own, internal represenation of a brick
+      std::vector<Brick> brick;
 
       /*! compute world-space bounding box (lot in _logical_ space,
           but in _absolute_ space, with proper cell width as specified
@@ -91,8 +90,8 @@ namespace ospray {
       inline box3f worldBounds() const
       {
         box3f worldBounds = empty;
-        for (int i=0;i<numBricks;i++)
-          worldBounds.extend(brick[i]->worldBounds);
+        for (const auto &b : brick)
+          worldBounds.extend(b.worldBounds);
         return worldBounds;
       }
     };

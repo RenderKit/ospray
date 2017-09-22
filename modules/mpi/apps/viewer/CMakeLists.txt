@@ -30,7 +30,6 @@ LINK
   ospray_tfn
   imgui
   glfw
-  gl3w
   gensv
 )
 

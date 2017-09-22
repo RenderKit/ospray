@@ -88,25 +88,23 @@ namespace ospray {
       assert(brickDataData);
       assert(brickDataData->data);
 
-      assert(data == nullptr);
-      data = new amr::AMRData(*brickInfoData,*brickDataData);
-      assert(accel == nullptr);
-      accel = new amr::AMRAccel(*data);
+      data  = make_unique<amr::AMRData>(*brickInfoData,*brickDataData);
+      accel = make_unique<amr::AMRAccel>(*data);
 
-      float finestLevelCellWidth = data->brick[0]->cellWidth;
-      box3i rootLevelBox = empty;
-      for (int i=0;i<data->numBricks;i++) {
-        if (data->brick[i]->level == 0)
-          rootLevelBox.extend(data->brick[i]->box);
-        finestLevelCellWidth = min(finestLevelCellWidth,data->brick[i]->cellWidth);
-      }
-      vec3i rootGridDims = rootLevelBox.size()+vec3i(1);
-      ospLogF(1) << "found root level dimensions of " << rootGridDims;
-
-      // finding coarset cell size:
+      // finding coarset cell size + finest level cell width
       float coarsestCellWidth = 0.f;
-      for (int i=0;i<data->numBricks;i++)
-        coarsestCellWidth = max(coarsestCellWidth,data->brick[i]->cellWidth);
+      float finestLevelCellWidth = data->brick[0].cellWidth;
+      box3i rootLevelBox = empty;
+
+      for (auto &b : data->brick) {
+        if (b.level == 0)
+          rootLevelBox.extend(b.box);
+        finestLevelCellWidth = min(finestLevelCellWidth, b.cellWidth);
+        coarsestCellWidth    = max(coarsestCellWidth, b.cellWidth);
+      }
+
+      vec3i rootGridDims = rootLevelBox.size() + vec3i(1);
+      ospLogF(1) << "found root level dimensions of " << rootGridDims;
       ospLogF(1) << "coarsest cell width is " << coarsestCellWidth << std::endl;
 
       auto rateFromEnv =
@@ -117,7 +115,7 @@ namespace ospray {
       box3f worldBounds = accel->worldBounds;
 
       const vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
-      const vec3f gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+      const vec3f gridOrigin  = getParam3f("gridOrigin", vec3f(0.f));
 
       ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep,
                           (const ispc::vec3f&)gridOrigin,

@@ -57,16 +57,11 @@ else()
 endif()
 endif()
 
-##############################################################
-# Build gl3w
-##############################################################
-
 IF (USE_STATIC_RUNTIME)
   STRING(REPLACE "/MDd" "/MTd" CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
   STRING(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
   STRING(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
 ENDIF()
-add_subdirectory(gl3w)
 
 ##############################################################
 # Build imgui

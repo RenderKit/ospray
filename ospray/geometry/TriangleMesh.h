@@ -19,6 +19,9 @@
 #include "Geometry.h"
 #include "common/Data.h"
 
+// embree
+#include "embree2/rtcore.h"
+
 namespace ospray {
 
   /*! \defgroup geometry_trianglemesh Triangle Meshes ("trianglemesh")
@@ -92,9 +95,11 @@ namespace ospray {
     Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
     Ref<Data> prim_materialIDData;  /*!< data array for per-prim material ID (uint32) */
     Ref<Data> materialListData; /*!< data array for per-prim materials */
-    uint32    eMesh;   /*!< embree triangle mesh handle */
 
-    void** ispcMaterialPtrs; /*!< pointers to ISPC equivalent materials */
+    #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
+    uint32 eMesh{RTC_INVALID_ID};   /*!< embree triangle mesh handle */
+
+    std::vector<void*> ispcMaterialPtrs; /*!< pointers to ISPC equivalent materials */
   };
 
 } // ::ospray
