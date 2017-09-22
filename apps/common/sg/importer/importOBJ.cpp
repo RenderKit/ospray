@@ -260,11 +260,19 @@ namespace ospray {
         auto model = createNode(name + "_model", "Model");
         model->add(mesh);
 
+        // TODO: Large .obj models with lots of groups run much slower with each
+        //       group put in a separate instance. In the future, we want to
+        //       support letting the user (ospExampleViewer, for starters)
+        //       specify if each group should be placed in an instance or not.
+#if 0
         auto instance = createNode(name + "_instance", "Instance");
         instance->setChild("model", model);
         model->setParent(instance);
 
         world->add(instance);
+#else
+        world->add(mesh);
+#endif
       }
     }
 
