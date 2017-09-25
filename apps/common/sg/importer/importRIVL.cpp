@@ -38,11 +38,7 @@ namespace ospray {
       std::stringstream ss;
       ss << "rivlTexture_" << nodeList.size();
       const std::string name = ss.str();
-      const std::string type = "Texture2D";
-      std::shared_ptr<sg::Texture2D> txt = std::make_shared<sg::Texture2D>();
-      txt->setName(name);
-      txt->setType(type);
-      txt->setValue((OSPTexture2D)nullptr);
+      auto txt = createNode(name, "Texture2D")->nodeAs<sg::Texture2D>();
       nodeList.push_back(txt);
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
@@ -111,7 +107,7 @@ namespace ospray {
         char *s = strtok(tokenBuffer, " \t\n\r");
         while (s) {
           int texID = atoi(s);
-          std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(nodeList[texID]);
+          auto tex = nodeList[texID]->nodeAs<Texture2D>();
           mat->textures.push_back(tex);
           s = strtok(nullptr, " \t\n\r");
         }
@@ -141,7 +137,7 @@ namespace ospray {
       {
         //TODO: lookup id into textures
         int texID = atoi(s);
-          std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(mat->textures[texID]);
+          auto tex = mat->textures[texID]->nodeAs<Texture2D>();
           s = strtok(nullptr, " \t\n\r");
           mat->setChild(paramName, tex);
       }
@@ -257,21 +253,17 @@ namespace ospray {
       if (child->type() == "Model")
       {
         auto instance = createNode(ss.str(), "Instance");
-        instance->setChild("model",child);
-        child->setParent(instance);
+        instance->add(child, "model");
         child = instance;
       }
-      xfNode->setChild(child->name(), child);
-      child->setParent(xfNode);
+      xfNode->add(child);
       xfNode->child("userTransform").setValue(xfm);
-      nodeList.push_back(std::dynamic_pointer_cast<sg::Node>(xfNode));
+      nodeList.push_back(xfNode);
     }
-
-
 
     void parseMeshNode(const xml::Node &node)
     {
-      std::shared_ptr<sg::TriangleMesh> mesh = std::make_shared<sg::TriangleMesh>();
+      auto mesh = std::make_shared<sg::TriangleMesh>();
       std::stringstream ss;
       ss << node.getProp("name");
       if (ss.str() == "")
@@ -279,11 +271,11 @@ namespace ospray {
       ss << "_" << node.getProp("id");
       mesh->setName(ss.str());
       mesh->setType("TriangleMesh");
-      auto model = createNode ("model_"+ss.str(),"Model");
+      auto model = createNode ("model_" + ss.str(), "Model");
       model->add(mesh);
       nodeList.push_back(model);
 
-      xml::for_each_child_of(node,[&](const xml::Node &child){
+      xml::for_each_child_of(node, [&](const xml::Node &child){
           assert(binBasePtr);
           if (child.name == "text") {
           } else if (child.name == "vertex") {
@@ -343,7 +335,7 @@ namespace ospray {
                 s = strtok(nullptr," \t\n\r")) {
               size_t matID = atoi(s);
               auto mat = nodeList[matID]->nodeAs<sg::Material>();
-              mesh->setChild("material", mat);
+              mesh->add(mat, "material");
               materialListNode->push_back(mat);
             }
             free(value);
@@ -364,7 +356,9 @@ namespace ospray {
       if (!node.content.empty()) {
         char *value = strdup(node.content.c_str());
 
-        for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(nullptr," \t\n\r")) {
+        for(char *s = strtok((char*)value," \t\n\r");
+            s;
+            s=strtok(nullptr," \t\n\r")) {
           size_t childID = atoi(s);
           auto child = nodeList[childID];
 
@@ -376,12 +370,10 @@ namespace ospray {
           ss << "child_" << childID;
           if (child->type() == "Model") {
             auto instance = createNode(ss.str(), "Instance");
-            instance->setChild("model",child);
-            child->setParent(instance);
+            instance->add(child, "model");
             child = instance;
           }
-          group->setChild(ss.str(), child);
-          child->setParent(group);
+          group->add(child, ss.str());
         }
 
         free(value);
