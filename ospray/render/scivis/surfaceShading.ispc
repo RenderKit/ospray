@@ -66,9 +66,13 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
       }
     }
   }
+
+  // convert from Phong exponent to Blinn
+  info.Ns *= 4.0f;
   // BRDF normalization
   info.Kd = info.Kd * one_over_pi;
-  info.Ks = info.Ks * ((info.Ns + 2.f) * one_over_two_pi);
+  info.Ks = info.Ks * ((info.Ns + 2.f) * one_over_four_pi *
+      rcp(2.f - exp(info.Ns * -lntwo_over_two)));
 }
 
 // AO functions //
@@ -156,10 +160,12 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
           continue;
       } else
         cosNL = abs(cosNL);
-      const float cosLR = max(0.f, dot(light.dir, R));
-      vec3f specular = info.Ks * powf(cosLR, info.Ns);
-      const vec3f brdf = info.Kd + specular;
-      const vec3f light_contrib = info.local_opacity * brdf * cosNL * light.weight;
+      const vec3f H = normalize(light.dir - ray.dir);
+      const float cosNH = dot(H, info.shadingNormal);
+      const vec3f specular = info.Ks * powf(cosNH, info.Ns);
+      const vec3f diffuse = info.Kd * cosNL;
+      const vec3f light_contrib =
+        info.local_opacity * (diffuse + specular) * light.weight;
 
       if (self->shadowsEnabled) {
         const float max_contrib = reduce_max(light_contrib);

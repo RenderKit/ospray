@@ -52,12 +52,12 @@ inline vec3f cosineSampleHemisphere(const vec2f s)
 
 inline float cosineSampleHemispherePDF(const vec3f &dir)
 {
-  return dir.z / M_PI;
+  return dir.z * one_over_pi;
 }
 
 inline float cosineSampleHemispherePDF(float cosTheta)
 {
-  return cosTheta / M_PI;
+  return cosTheta * one_over_pi;
 }
 
 
@@ -73,12 +73,12 @@ inline vec3f powerCosineSampleHemisphere(const float n, const vec2f &s)
 
 inline float powerCosineSampleHemispherePDF(const float cosTheta, const float n) // TODO: order of arguments
 {
-  return (n + 1.0f) * (0.5f / M_PI) * pow(cosTheta, n);
+  return (n + 1.0f) * one_over_two_pi * pow(cosTheta, n);
 }
 
 inline float powerCosineSampleHemispherePDF(const vec3f& dir, const float n) // TODO: order of arguments
 {
-  return (n + 1.0f) * (0.5f / M_PI) * pow(dir.z, n);
+  return (n + 1.0f) * one_over_two_pi * pow(dir.z, n);
 }
 
 /// uniform sampling of cone of directions oriented along the +z-axis
