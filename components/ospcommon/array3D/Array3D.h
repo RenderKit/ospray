@@ -19,6 +19,7 @@
 // ospray
 #include <sstream>
 #include <vector>
+#include "../common.h"
 #include "../range.h"
 #include "for_each.h"
 
@@ -27,7 +28,7 @@ namespace ospcommon {
 
     /*! ABSTRACTION for a 3D array of data */
     template <typename value_t>
-    struct Array3D
+    struct OSPCOMMON_INTERFACE Array3D
     {
       /*! return size (ie, "dimensions") of volume */
       virtual vec3i size() const = 0;
@@ -54,7 +55,7 @@ namespace ospcommon {
 
     /*! implementation for an actual array3d that stores a 3D array of values */
     template <typename value_t>
-    struct ActualArray3D : public Array3D<value_t>
+    struct OSPCOMMON_INTERFACE ActualArray3D : public Array3D<value_t>
     {
       ActualArray3D(const vec3i &dims, void *externalMem = nullptr);
       virtual ~ActualArray3D()
@@ -136,7 +137,7 @@ namespace ospcommon {
     /*! implemnetaiton of a wrapper class that makes an actual array3d
       of one type look like that of another type */
     template <typename in_t, typename out_t>
-    struct Array3DAccessor : public Array3D<out_t>
+    struct OSPCOMMON_INTERFACE Array3DAccessor : public Array3D<out_t>
     {
       Array3DAccessor(std::shared_ptr<Array3D<in_t>> actual);
 
@@ -159,7 +160,7 @@ namespace ospcommon {
     /*! wrapper class that generates an artifically larger data set by
       simply repeating the given input */
     template <typename T>
-    struct Array3DRepeater : public Array3D<T>
+    struct OSPCOMMON_INTERFACE Array3DRepeater : public Array3D<T>
     {
       Array3DRepeater(const std::shared_ptr<Array3D<T>> &actual,
                       const vec3i &repeatedSize);
@@ -272,8 +273,8 @@ namespace ospcommon {
       file (uint8,float,...) is given through the function's
       template parameter */
     template <typename T>
-    std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName,
-                                        const vec3i &dims);
+    std::shared_ptr<Array3D<T>> OSPCOMMON_INTERFACE
+    loadRAW(const std::string &fileName, const vec3i &dims);
 
     /*! load raw file with given dimensions. the 'type' of the raw
       file (uint8,float,...) is given through the function's
