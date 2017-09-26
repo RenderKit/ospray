@@ -14,35 +14,4 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_DEFAULT_COMPONENT apps)
-
-INCLUDE_DIRECTORIES(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}
-  common
-)
-
-# benchmark application which has no windowing framework dependencies
-OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
-OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
-OPTION(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
-
-# common utilities
-IF(OSPRAY_APPS_BENCHMARK OR OSRPAY_APPS_EXAMPLEVIEWER)
-  ADD_SUBDIRECTORY(common/sg)
-  ADD_SUBDIRECTORY(common/tfn_lib)
-  ADD_SUBDIRECTORY(common/xml)
-ENDIF()
-
-IF(OSPRAY_APPS_BENCHMARK)
-  ADD_SUBDIRECTORY(bench)
-ENDIF()
-
-IF (OSPRAY_APPS_EXAMPLEVIEWER)
-  ADD_SUBDIRECTORY(exampleViewer)
-ENDIF()
-
-IF (OSPRAY_APPS_UTILITIES)
-  ADD_SUBDIRECTORY(utility)
-ENDIF()
+ospray_create_application(ospRawToAmr raw2amr.cpp LINK ospray_common)
