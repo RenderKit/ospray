@@ -21,10 +21,9 @@ echo Running tests
 md failed
 
 set OSP_LIBS=build\Release
-set EMBREE_DIR=C:\Program Files\Intel\Embree v2.16.1 x64
 set BASELINE_DIR=N:\OSPRay\test-data\img
 
-set PATH=%PATH%;%OSP_LIBS%;%EMBREE_DIR%\bin
+set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
 
 call build\regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
 

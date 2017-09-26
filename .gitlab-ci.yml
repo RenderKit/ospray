@@ -118,7 +118,6 @@ build-centos6-icc15:
     - centos6
     - icc
 
-
 build-centos7-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:centos7
@@ -205,53 +204,9 @@ build-scan-kw:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 1 day
 
-### RELEASE JOBS ###
-release-linux-icc:
-  <<: *release_job
-  script:
-    - module load cmake
-    - module load gcc/4.8.2
-    - module load intel
-    - export CC=icc
-    - export CXX=icpc
-    - scripts/release/linux.sh
-  tags:
-    - icc
-    - centos6
-    - mpi
-  artifacts:
-    paths:
-      - build_release/*.gz
-
-release-osx-clang:
-  <<: *release_job
-  script:
-    - export CC=clang
-    - export CXX=clang++
-    - scripts/release/macosx.sh
-  tags:
-    - clang
-    - osx
-    - mpi
-  artifacts:
-    paths:
-      - build_release/*.gz
-      - build_release/*.dmg
-
-release-windows:
-  <<: *release_job
-  script:
-    - call scripts\release\win.bat
-  tags:
-    - msvc
-    - win7
-    - mpi
-  artifacts:
-    paths:
-      - build_release\ospray*.zip
-      - build_release\ospray*.exe
 
 ### TEST JOBS ###
+
 test-gen-centos7-gcc:
   <<: *test_job
   image: ospray/docker-images:centos7
@@ -354,7 +309,9 @@ test-kw-critical:
     - kw-scan-docker
   allow_failure: true
 
+
 ### RELEASE JOBS ###
+
 release-linux-icc:
   <<: *release_job
   script:
@@ -398,5 +355,4 @@ release-windows:
   artifacts:
     paths:
       - build_release\ospray*.zip
-      - build_release\ospray*.exe
-
+      - build_release\ospray*.msi
