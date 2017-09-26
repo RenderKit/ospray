@@ -4,10 +4,6 @@ stages:
   - test-build
   - deploy
 
-cache:
-    untracked: false
-    paths:
-
 variables:
   GIT_DEPTH: "3"
   KW_PROJECT_NAME: ospray
@@ -29,6 +25,7 @@ variables:
   stage: deploy
   tags:
     - release
+  dependencies:
   only:
     - devel
     - master
