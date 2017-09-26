@@ -277,6 +277,7 @@ namespace ospcommon {
       const std::vector<std::shared_ptr<Array3D<value_t>>> slice;
     };
 
+#ifndef _WIN32
     /*! load raw file with given dimensions. the 'type' of the raw
       file (uint8,float,...) is given through the function's
       template parameter */
@@ -290,6 +291,7 @@ namespace ospcommon {
     template <typename T>
     std::shared_ptr<Array3D<T>> OSPCOMMON_INTERFACE
     mmapRAW(const std::string &fileName, const vec3i &dims);
+#endif
 
     // Inlined definitions ////////////////////////////////////////////////////
 

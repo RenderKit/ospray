@@ -14,4 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_create_application(ospRawToAmr raw2amr.cpp LINK ospray_common)
+if (NOT WIN32)
+  ospray_create_application(ospRawToAmr raw2amr.cpp LINK ospray_common)
+endif()
