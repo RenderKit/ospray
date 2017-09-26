@@ -4,12 +4,16 @@ stages:
   - test-build
   - deploy
 
+cache:
+    untracked: false
+    paths:
+
 variables:
   GIT_DEPTH: "3"
   KW_PROJECT_NAME: ospray
 
 .job_template: &build_job_docker
-  type: build
+  stage: build
   tags:
     - docker
   image: ospray/docker-images:arch  # default image
@@ -17,12 +21,12 @@ variables:
     - scripts/build_gitlab/linux.sh # default script
 
 .job_template: &build_job_shell
-  type: build
+  stage: build
   tags:
     - build
 
 .job_template: &release_job
-  type: deploy
+  stage: deploy
   tags:
     - release
   only:
@@ -32,7 +36,7 @@ variables:
     - gtest-devel #TODO - remove it after few runs
 
 .job_template: &test_job
-  type: test-build
+  stage: test-build
   tags:
     - docker
   script:
@@ -193,7 +197,7 @@ build-windows-icc:
     expire_in: 1 day
 
 build-scan-kw:
-  type: build
+  stage: build
   image: ospray-kw-centos7
   script:
     - /tmp/build-scan-kw.sh
@@ -278,7 +282,7 @@ test-windows-msvc14:
     - build-windows-msvc14
 
 benchmark-centos7-gcc:
-  type: test-build
+  stage: test-build
   image: ospray/docker-images:centos7
   script:
     - cd $CI_PROJECT_DIR/build
@@ -299,7 +303,7 @@ benchmark-centos7-gcc:
   allow_failure: true
 
 test-kw-critical:
-  type: test-src
+  stage: test-src
   image: ospray-kw-centos7
   script:
     - /tmp/test-kw-critical.sh
