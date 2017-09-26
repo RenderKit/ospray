@@ -12,6 +12,10 @@
 
 namespace OSPRayTestScenes {
 
+// Base class for all test fixtures.
+// Deriving classes can call CreateEmptyScene() to set up model, renderer, camera etc.
+// Behaviour of this method can be changed by modifying fields rendererType, frames and
+// samplesPerPixel beforehand.
 class Base {
  protected:
   osp::vec2i imgSize;
@@ -55,6 +59,8 @@ protected:
   void RenderFrame(const uint32_t frameBufferChannels = OSP_FB_COLOR | OSP_FB_ACCUM);
 };
 
+// Fixture class for tests parametrized with renderer type and material type, intended for
+// rendering scenes with a single object.
 class SingleObject : public Base, public ::testing::TestWithParam<std::tuple<const char*, const char*>> {
 protected:
   std::string materialType;
@@ -69,6 +75,8 @@ protected:
   void SetMaterial();
 };
 
+// Fixture class that renders a fixed scene depicting a Cornell Box with a cuboid and a sphere.
+// It is parametrized with two types of materials.
 class Box : public Base, public ::testing::TestWithParam<std::tuple<const char*, const char*>> {
 protected:
   std::string cuboidMaterialType;
@@ -85,6 +93,9 @@ protected:
   OSPMaterial GetMaterial(std::string);
 };
 
+// Fixture class that renders a Sierpinski tetrahedron using volumes or isosurfaces. It is
+// parametrized with renderer type, boolean value that controls wheter volumes of isosurfaces
+// should be used (false and true respectively) and number of steps taken to generate the fractal.
 class Sierpinski : public Base, public ::testing::TestWithParam<std::tuple<const char*, bool, int>> {
 protected:
   int level;
@@ -94,20 +105,26 @@ public:
   virtual void SetUp();
 };
 
+// Fixture class used for tests that generates two isosurfaces, one in shape of a torus.
+// It's parametrized with type of the renderer.
 class Torus : public Base, public ::testing::TestWithParam<const char*> {
 public:
   Torus();
   virtual void SetUp();
 };
 
+// Fixture for test that renders three cuts of a cubic volume.
 class SlicedCube : public Base, public ::testing::Test {
 public:
   SlicedCube();
   virtual void SetUp();
 private:
-  std::vector<float> volumetricData; 
+  std::vector<float> volumetricData;
 };
 
+// Fixture class for testing materials of type "OBJMaterial". The rendered scene is composed of
+// two quads and a luminous sphere. Parameters of this tests are passed to a new "OBJMaterial"
+// material as "Kd", "Ks", "Ns", "d" and "Tf" and said material is used by the quads.
 class MTLMirrors : public Base, public ::testing::TestWithParam<std::tuple<osp::vec3f, osp::vec3f, float, float, osp::vec3f>> {
 public:
   MTLMirrors();
