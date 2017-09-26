@@ -60,7 +60,7 @@ namespace ospcommon {
 
     /*! implementation for an actual array3d that stores a 3D array of values */
     template <typename value_t>
-    struct OSPCOMMON_INTERFACE ActualArray3D : public Array3D<value_t>
+    struct ActualArray3D : public Array3D<value_t>
     {
       ActualArray3D(const vec3i &dims, void *externalMem = nullptr);
       virtual ~ActualArray3D()
