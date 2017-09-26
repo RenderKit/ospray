@@ -142,7 +142,7 @@ namespace ospray {
                                   brickIdx / (numBricks.x * numBricks.y));
               brick.box.lower = brickID * BS;
               brick.box.upper = brick.box.lower + (BS - 1);
-              float data[BS * BS * BS];
+              std::vector<float> data(BS * BS * BS);
               size_t out = 0;
               ospcommon::range1f brickRange;
               for (int iz = brick.box.lower.z; iz <= brick.box.upper.z; iz++)
@@ -166,7 +166,7 @@ namespace ospray {
               } else {
                 numWritten++;
                 fwrite(&brick, sizeof(brick), 1, infoOut);
-                fwrite(data, sizeof(float), BS * BS * BS, dataOut);
+                fwrite(data.data(), sizeof(float), BS * BS * BS, dataOut);
               }
               progress.ping();
             });
