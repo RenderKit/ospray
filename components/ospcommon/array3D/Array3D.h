@@ -28,7 +28,7 @@ namespace ospcommon {
 
     /*! ABSTRACTION for a 3D array of data */
     template <typename value_t>
-    struct OSPCOMMON_INTERFACE Array3D
+    struct Array3D
     {
       /*! return size (ie, "dimensions") of volume */
       virtual vec3i size() const = 0;
@@ -41,7 +41,12 @@ namespace ospcommon {
       /*! get the range/interval of all cell values in the given
         begin/end region of the volume */
       range_t<value_t> getValueRange(const vec3i &begin,
-                                     const vec3i &end) const;
+                                     const vec3i &end) const
+      {
+        range_t<value_t> v = get(begin);
+        for_each(begin, end, [&](const vec3i &idx) { v.extend(get(idx)); });
+        return v;
+      }
 
       /*! get value range over entire volume */
       range_t<value_t> getValueRange() const
@@ -83,7 +88,10 @@ namespace ospcommon {
       virtual size_t numElements() const override;
 
       /* compute the (1D) linear array index for a (3D) grid coordinate */
-      size_t indexOf(const vec3i &coord) const;
+      size_t indexOf(const vec3i &pos) const
+      {
+        return pos.x + size_t(dims.x) * (pos.y + size_t(dims.y) * pos.z);
+      }
 
       const vec3i dims;
       value_t *value;
@@ -137,7 +145,7 @@ namespace ospcommon {
     /*! implemnetaiton of a wrapper class that makes an actual array3d
       of one type look like that of another type */
     template <typename in_t, typename out_t>
-    struct OSPCOMMON_INTERFACE Array3DAccessor : public Array3D<out_t>
+    struct Array3DAccessor : public Array3D<out_t>
     {
       Array3DAccessor(std::shared_ptr<Array3D<in_t>> actual);
 
@@ -160,7 +168,7 @@ namespace ospcommon {
     /*! wrapper class that generates an artifically larger data set by
       simply repeating the given input */
     template <typename T>
-    struct OSPCOMMON_INTERFACE Array3DRepeater : public Array3D<T>
+    struct Array3DRepeater : public Array3D<T>
     {
       Array3DRepeater(const std::shared_ptr<Array3D<T>> &actual,
                       const vec3i &repeatedSize);
@@ -280,12 +288,12 @@ namespace ospcommon {
       file (uint8,float,...) is given through the function's
       template parameter */
     template <typename T>
-    std::shared_ptr<Array3D<T>> mmapRAW(const std::string &fileName,
-                                        const vec3i &dims);
+    std::shared_ptr<Array3D<T>> OSPCOMMON_INTERFACE
+    mmapRAW(const std::string &fileName, const vec3i &dims);
 
-    // -------------------------------------------------------
-    // implementation section
-    // -------------------------------------------------------
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    // ActualArray3D //
 
     template <typename T>
     inline vec3i ActualArray3D<T>::size() const
@@ -313,7 +321,7 @@ namespace ospcommon {
     }
 
     template <typename T>
-    ActualArray3D<T>::ActualArray3D(const vec3i &dims, void *externalMem)
+    inline ActualArray3D<T>::ActualArray3D(const vec3i &dims, void *externalMem)
         : dims(dims),
           value((T *)externalMem),
           valuesAreMine(externalMem == nullptr)
@@ -342,6 +350,74 @@ namespace ospcommon {
     {
       for_each(size(), [&](const vec3i &idx){ set(idx, t); });
     }
+
+    // Array3DAccessor //
+
+    template <typename in_t, typename out_t>
+    inline Array3DAccessor<in_t, out_t>::Array3DAccessor(
+        std::shared_ptr<Array3D<in_t>> actual)
+        : actual(actual)
+    {
+    }
+
+    template <typename in_t, typename out_t>
+    inline vec3i Array3DAccessor<in_t, out_t>::size() const
+    {
+      return actual->size();
+    }
+
+    template <typename in_t, typename out_t>
+    inline out_t Array3DAccessor<in_t, out_t>::get(const vec3i &where) const
+    {
+      return (out_t)actual->get(where);
+    }
+
+    template <typename in_t, typename out_t>
+    inline size_t Array3DAccessor<in_t, out_t>::numElements() const
+    {
+      assert(actual);
+      return actual->numElements();
+    }
+
+    // Array3DRepeater //
+
+    template <typename T>
+    inline Array3DRepeater<T>::Array3DRepeater(
+        const std::shared_ptr<Array3D<T>> &actual, const vec3i &repeatedSize)
+        : repeatedSize(repeatedSize), actual(actual)
+    {
+    }
+
+    template <typename T>
+    inline vec3i Array3DRepeater<T>::size() const
+    {
+      return repeatedSize;
+    }
+
+    template <typename T>
+    inline T Array3DRepeater<T>::get(const vec3i &_where) const
+    {
+      vec3i where(_where.x % repeatedSize.x,
+                  _where.y % repeatedSize.y,
+                  _where.z % repeatedSize.z);
+
+      if ((_where.x / repeatedSize.x) % 2)
+        where.x = repeatedSize.x - 1 - where.x;
+      if ((_where.y / repeatedSize.y) % 2)
+        where.y = repeatedSize.y - 1 - where.y;
+      if ((_where.z / repeatedSize.z) % 2)
+        where.z = repeatedSize.z - 1 - where.z;
+
+      return actual->get(where);
+    }
+
+    template <typename T>
+    inline size_t Array3DRepeater<T>::numElements() const
+    {
+      return size_t(repeatedSize.x) * size_t(repeatedSize.y) *
+             size_t(repeatedSize.z);
+    }
+
 
   }  // ::ospcommon::array3D
 }  // ::ospcommon
