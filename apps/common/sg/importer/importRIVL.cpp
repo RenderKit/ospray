@@ -199,7 +199,14 @@ namespace ospray {
       std::shared_ptr<sg::Material> mat = std::make_shared<sg::Material>();
       nodeList.push_back(mat);
 
-      mat->setName(node.getProp("name"));
+      static int counter=0;
+      std::stringstream name(node.getProp("name"));
+      if (name.str() == "")
+      {
+        name << "material_" << counter;
+      }
+      counter++;
+      mat->setName(name.str());
       mat->child("type") = node.getProp("type");
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
