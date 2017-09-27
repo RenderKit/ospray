@@ -1421,9 +1421,8 @@ are multiplied by the respective parameter value. Texturing requires
 mesh](#triangle-mesh) with `vertex.texcoord` provided. The color
 textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
 encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
-linear format (and only the first component is used). The path tracer
-additionally supports [texture
-transformations](#texture-transformations) for all textures.
+linear format (and only the first component is used). Additionally, all
+textures support [texture transformations](#texture-transformations).
 
 <img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" />
 
@@ -1562,7 +1561,7 @@ texture creating flags can be combined with a bitwise OR.
 
 ### Texture Transformations
 
-Many materials with textures also offer to manipulate the placement of
+All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
 convention shall be used. The following parameters (prefixed with
 "`texture_name.`") are combined into one transformation matrix:
@@ -1997,7 +1996,7 @@ with
 
 On Windows build it in the build\_directory\\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.

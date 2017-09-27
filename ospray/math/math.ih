@@ -36,6 +36,7 @@
 #define one_over_two_pi  0.15915494309189534561f
 #define one_over_four_pi 0.079577471545947672804f
 #define one_over_two_pi_sqr 0.050660591821168885722f
+#define lntwo_over_two 0.346573590279972654709f
 
 /*! c-style reciprocal. required since ispc 1.7 due to type changes in this version */
 inline float rcpf(const float f) { return rcp(f); }

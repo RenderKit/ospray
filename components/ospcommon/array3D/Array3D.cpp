@@ -37,19 +37,6 @@
 namespace ospcommon {
   namespace array3D {
 
-    // Array3D //
-
-    /*! get the range/interval of all cell values in the given
-      begin/end region of the volume */
-    template <typename T>
-    range_t<T> Array3D<T>::getValueRange(const vec3i &begin,
-                                         const vec3i &end) const
-    {
-      range_t<T> v = get(begin);
-      for_each(begin, end, [&](const vec3i &idx) { v.extend(get(idx)); });
-      return v;
-    }
-
     template <typename T>
     std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName,
                                         const vec3i &dims)
@@ -111,80 +98,6 @@ namespace ospcommon {
 #endif
     }
 
-    // ActualArray3D //
-
-    template <typename T>
-    size_t ActualArray3D<T>::indexOf(const vec3i &pos) const
-    {
-      return pos.x + size_t(dims.x) * (pos.y + size_t(dims.y) * pos.z);
-    }
-
-    // Array3DAccessor //
-
-    template <typename in_t, typename out_t>
-    Array3DAccessor<in_t, out_t>::Array3DAccessor(
-        std::shared_ptr<Array3D<in_t>> actual)
-        : actual(actual)
-    {
-    }
-
-    template <typename in_t, typename out_t>
-    vec3i Array3DAccessor<in_t, out_t>::size() const
-    {
-      return actual->size();
-    }
-
-    template <typename in_t, typename out_t>
-    out_t Array3DAccessor<in_t, out_t>::get(const vec3i &where) const
-    {
-      return (out_t)actual->get(where);
-    }
-
-    template <typename in_t, typename out_t>
-    size_t Array3DAccessor<in_t, out_t>::numElements() const
-    {
-      assert(actual);
-      return actual->numElements();
-    }
-
-    // Array3DRepeater //
-
-    template <typename T>
-    Array3DRepeater<T>::Array3DRepeater(
-        const std::shared_ptr<Array3D<T>> &actual, const vec3i &repeatedSize)
-        : repeatedSize(repeatedSize), actual(actual)
-    {
-    }
-
-    template <typename T>
-    vec3i Array3DRepeater<T>::size() const
-    {
-      return repeatedSize;
-    }
-
-    template <typename T>
-    T Array3DRepeater<T>::get(const vec3i &_where) const
-    {
-      vec3i where(_where.x % repeatedSize.x,
-                  _where.y % repeatedSize.y,
-                  _where.z % repeatedSize.z);
-
-      if ((_where.x / repeatedSize.x) % 2)
-        where.x = repeatedSize.x - 1 - where.x;
-      if ((_where.y / repeatedSize.y) % 2)
-        where.y = repeatedSize.y - 1 - where.y;
-      if ((_where.z / repeatedSize.z) % 2)
-        where.z = repeatedSize.z - 1 - where.z;
-
-      return actual->get(where);
-    }
-
-    template <typename T>
-    size_t Array3DRepeater<T>::numElements() const
-    {
-      return size_t(repeatedSize.x) * size_t(repeatedSize.y) *
-             size_t(repeatedSize.z);
-    }
 
     // -------------------------------------------------------
     // explicit instantiations section

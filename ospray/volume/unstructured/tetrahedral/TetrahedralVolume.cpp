@@ -144,29 +144,29 @@ namespace ospray {
 
   void TetrahedralVolume::calculateFaceNormals()
   {
-    auto numNormals = nTetrahedra * 4;
+    const auto numNormals = nTetrahedra * 4;
     faceNormals.resize(numNormals);
 
     tasking::parallel_for(numNormals / 4, [&](int taskIndex) {
-      int i   = taskIndex * 4;
-      auto &t = tetrahedra[i / 4];
+      const int i   = taskIndex * 4;
+      const auto &t = tetrahedra[i / 4];
 
       // The corners of each triangle in the tetrahedron.
-      int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
+      const int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
 
       for (int j = 0; j < 4; j++) {
-        int t0 = t[faces[j][0]];
-        int t1 = t[faces[j][1]];
-        int t2 = t[faces[j][2]];
+        const int t0 = t[faces[j][0]];
+        const int t1 = t[faces[j][1]];
+        const int t2 = t[faces[j][2]];
 
         const auto &p0 = vertices[t0];
         const auto &p1 = vertices[t1];
         const auto &p2 = vertices[t2];
 
-        auto q0 = p1 - p0;
-        auto q1 = p2 - p0;
+        const auto q0 = p1 - p0;
+        const auto q1 = p2 - p0;
 
-        auto norm = normalize(cross(q0, q1));
+        const auto norm = normalize(cross(q0, q1));
 
         faceNormals[i + j] = norm;
       }
