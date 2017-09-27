@@ -21,7 +21,7 @@ echo Running tests
 md img
 
 set OSP_LIBS=build\Release
-set BASELINE_PATH=img
+set BASELINE_PATH=img\
 set EMBREE_DIR=C:\Program Files\Intel\Embree v2.16.1 x64
 
 set PATH=%PATH%;%OSP_LIBS%;%EMBREE_DIR%\bin
