@@ -78,7 +78,7 @@ build-ubuntu1604-gcc:
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-ubuntu1404-gcc:
   <<: *build_job_docker
@@ -86,7 +86,7 @@ build-ubuntu1404-gcc:
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-centos6-gcc:
   <<: *build_job_docker
@@ -94,7 +94,7 @@ build-centos6-gcc:
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-centos6-icc:
   <<: *build_job_shell
@@ -126,7 +126,7 @@ build-centos7-gcc:
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-debug:
   <<: *build_job_docker
@@ -156,7 +156,7 @@ build-windows-msvc:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-windows-msvc14:
   <<: *build_job_shell
@@ -168,7 +168,7 @@ build-windows-msvc14:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-windows-msvc15:
   <<: *build_job_shell
@@ -180,7 +180,7 @@ build-windows-msvc15:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-windows-icc:
   <<: *build_job_shell
@@ -192,7 +192,7 @@ build-windows-icc:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-scan-kw:
   stage: build
@@ -204,7 +204,7 @@ build-scan-kw:
   artifacts:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
-    expire_in: 1 day
+    expire_in: 3 day
 
 
 ### TEST JOBS ###
