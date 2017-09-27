@@ -34,7 +34,7 @@ OsprayStatus writeImg(const std::string& fileName, const osp::vec2i &size, const
 OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *testImg, const std::string &testName) {
   pixelColorValue* testImage = (pixelColorValue*)testImg;
 
-  std::string baselineName = ospEnv->GetBaselineDir() + "/" + testName + ".ppm";
+  std::string baselineName = ospEnv->GetBaselineDir() + testName + ".ppm";
   std::ifstream baseline(baselineName.c_str(), std::ifstream::in | std::ifstream::binary);
   if (!baseline.good()) {
     std::cerr << "Failed to open file " << baselineName << std::endl;

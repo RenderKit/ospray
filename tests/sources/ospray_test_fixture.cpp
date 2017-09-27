@@ -52,7 +52,7 @@ void Base::PerformRenderTest() {
   uint32_t* framebuffer_data = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
   if(ospEnv->GetDumpImg()) {
-    std::string fileName = ospEnv->GetBaselineDir() + "/" + GetTestName() + ".ppm";
+    std::string fileName = ospEnv->GetBaselineDir() + GetTestName() + ".ppm";
     EXPECT_EQ(writeImg(fileName, imgSize, framebuffer_data), OsprayStatus::Ok);
   } else {
     EXPECT_EQ(compareImgWithBaseline(GetImgSize(), framebuffer_data, GetTestName()), OsprayStatus::Ok);
