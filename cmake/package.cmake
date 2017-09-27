@@ -37,8 +37,10 @@ ELSE()
     # we do not want any RPath for installed binaries
     SET(CMAKE_SKIP_INSTALL_RPATH ON)
   ENDIF()
-  # for RPMs install docu in versioned folder
-  SET(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_DOCDIR}-${OSPRAY_VERSION})
+  IF (NOT WIN32)
+    # for RPMs install docu in versioned folder
+    SET(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_DOCDIR}-${OSPRAY_VERSION})
+  ENDIF()
 ENDIF()
 
 ##############################################################
@@ -85,13 +87,13 @@ SET(CPACK_COMPONENT_DEVEL_DISPLAY_NAME "Development")
 SET(CPACK_COMPONENT_DEVEL_DESCRIPTION "Header files for C and C++ required to develop applications with OSPRay.")
 
 SET(CPACK_COMPONENT_APPS_DISPLAY_NAME "Applications")
-SET(CPACK_COMPONENT_APPS_DESCRIPTION "Viewer applications and tutorials demonstrating how to use OSPRay.")
+SET(CPACK_COMPONENT_APPS_DESCRIPTION "Example and viewer applications and tutorials demonstrating how to use OSPRay.")
 
 SET(CPACK_COMPONENT_MPI_DISPLAY_NAME "MPI Module")
 SET(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed rendering.")
 
 SET(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
-SET(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, glfw) that may or may not be already installed on your system.")
+SET(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, imgui) that may or may not be already installed on your system.")
 
 # dependencies between components
 SET(CPACK_COMPONENT_DEVEL_DEPENDS lib)
@@ -108,7 +110,7 @@ IF (OSPRAY_ZIP_MODE)
 ENDIF()
 
 
-IF(WIN32) # Windows specific settings
+IF (WIN32) # Windows specific settings
 
   IF (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     MESSAGE(FATAL_ERROR "Only 64bit architecture supported.")
@@ -119,6 +121,9 @@ IF(WIN32) # Windows specific settings
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.windows")
   ELSE()
     SET(CPACK_GENERATOR WIX)
+    SET(CPACK_WIX_ROOT_FEATURE_DESCRIPTION "OSPRay is an open source, scalable, and portable ray tracing engine for high-performance, high-fidelity visualization.")
+    SET(CPACK_WIX_PROPERTY_ARPURLINFOABOUT http://www.ospray.org/)
+    SET(CPACK_PACKAGE_NAME "OSPRay v${OSPRAY_VERSION}")
     SET(CPACK_COMPONENTS_ALL lib devel apps mpi redist)
     SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION}")
     MATH(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")
@@ -160,7 +165,7 @@ ELSE() # Linux specific settings
 
     # dependencies
     SET(OSPLIB_REQS "embree-lib >= ${EMBREE_VERSION_REQUIRED}")
-    IF(CMAKE_VERSION VERSION_LESS "3.4.0")
+    IF (CMAKE_VERSION VERSION_LESS "3.4.0")
       OSPRAY_WARN_ONCE(RPM_PACKAGING "You need at least v3.4.0 of CMake for generating RPMs")
       SET(CPACK_RPM_PACKAGE_REQUIRES ${OSPLIB_REQS})
     ELSE()
