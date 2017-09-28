@@ -396,7 +396,6 @@ int main(int ac, const char **av)
                         [](OSPError e, const char *msg) {
                           std::cout << "OSPRAY ERROR [" << e << "]: "
                                     << msg << std::endl;
-                          std::exit(1);
                         });
 
   ospDeviceCommit(device);

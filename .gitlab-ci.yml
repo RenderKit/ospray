@@ -5,7 +5,7 @@ stages:
   - deploy
 
 variables:
-  GIT_DEPTH: "3"
+  GIT_DEPTH: "15"
   KW_PROJECT_NAME: ospray
 
 .job_template: &build_job_docker
@@ -73,6 +73,14 @@ build-arch-clang:
     - export CC=clang
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh
+
+build-ubuntu1704-gcc:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu17.04
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR
+    expire_in: 3 day
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker

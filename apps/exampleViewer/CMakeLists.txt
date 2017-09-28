@@ -27,18 +27,9 @@ add_subdirectory(widgets)
 # Build app
 ##############################################################
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}
-  common/imgui
-  ${OPENGL_INCLUDE_DIR}
-)
-
 ospray_create_application(ospExampleViewer
   ospExampleViewer.cpp
-  LINK
-  ${OPENGL_LIBRARIES}
-  ${GLFW_LIBRARY}
-  imgui
+LINK
   ospray
   ospray_common
   ospray_imgui3d_sg

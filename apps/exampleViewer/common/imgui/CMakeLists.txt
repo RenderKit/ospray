@@ -14,25 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+INCLUDE_DIRECTORIES(. imguifilesystem)
 
-##############################################################
-# Build imgui
-##############################################################
-
-set(LIB_NAME imgui)
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}/apps/exampleViewer/common/imgui
-  ${CMAKE_SOURCE_DIR}/apps/exampleViewer/common/imgui/imguifilesystem
-)
-
-add_library(${LIB_NAME} SHARED
+OSPRAY_CREATE_LIBRARY(ospray_imgui
   imgui.cpp
   imgui_draw.cpp
   imgui_demo.cpp
   imguifilesystem/imguifilesystem.cpp
-)
-
-target_link_libraries(${LIB_NAME}
+LINK
   ${OPENGL_LIBRARIES}
 )
