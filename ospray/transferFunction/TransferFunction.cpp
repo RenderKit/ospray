@@ -24,8 +24,10 @@ namespace ospray {
   void TransferFunction::commit()
   {
     vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));
+    float opacityScale = getParam1f("opacityScale", 1.f);
     ispc::TransferFunction_setValueRange(ispcEquivalent,
-                                         (const ispc::vec2f &)valueRange);
+                                         (const ispc::vec2f &)valueRange,
+                                         opacityScale);
   }
 
   std::string TransferFunction::toString() const
