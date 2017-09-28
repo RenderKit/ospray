@@ -21,7 +21,7 @@ echo Running tests
 md failed
 
 set OSP_LIBS=build\Release
-set BASELINE_DIR=N:\OSPRay\test-data\img\
+set BASELINE_DIR=\\sdvis-nas\NAS\OSPRay\test-data\img\
 
 set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
 
