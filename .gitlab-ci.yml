@@ -5,7 +5,7 @@ stages:
   - deploy
 
 variables:
-  GIT_DEPTH: "3"
+  GIT_DEPTH: "15"
   KW_PROJECT_NAME: ospray
 
 .job_template: &build_job_docker
