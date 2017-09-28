@@ -63,11 +63,6 @@ namespace ospray {
 
     void VisItSharedStructuredVolume::commit()
     {
-      // // Check if use grid accelerator
-      // bool oldGridAcceleratorState = useGridAccelerator;
-      // useGridAccelerator = getParam1i("useGridAccelerator", 0);	    
-      // std::cout << "#osp: using grid accelerator = " << useGridAccelerator << std::endl;
-
       // Create the equivalent ISPC volume container.
       if (ispcEquivalent == nullptr) createEquivalentISPC();
       // StructuredVolume commit actions.	    
@@ -81,13 +76,6 @@ namespace ospray {
 	finish();
 	finished = true;
       }
-
-      // // Build grid accelerator if it is not built
-      // if (oldGridAcceleratorState != useGridAccelerator && useGridAccelerator) {
-      // 	ispc::VisItSharedStructuredVolume_UseGridAccelerator(ispcEquivalent, 
-      // 							     useGridAccelerator);
-      // 	buildAccelerator();
-      // }
     }
 
     int VisItSharedStructuredVolume::setRegion(const void *source, 
