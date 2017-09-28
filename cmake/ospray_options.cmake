@@ -126,7 +126,7 @@ MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
 INCLUDE(package)
 
 ##############################################################
-# redistribute TBB, Embree and ImGui
+# redistribute TBB and Embree
 ##############################################################
 
 IF (OSPRAY_INSTALL_DEPENDENCIES)
@@ -179,9 +179,5 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
     IF (NOT APPLE)
       OSPRAY_INSTALL_NAMELINK(embree)
     ENDIF()
-  ENDIF()
-
-  IF (OSPRAY_APPS_EXAMPLEVIEWER)
-    OSPRAY_INSTALL_LIBRARY(imgui redist)
   ENDIF()
 ENDIF()
