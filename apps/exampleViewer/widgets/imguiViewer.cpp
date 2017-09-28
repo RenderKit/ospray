@@ -567,8 +567,8 @@ namespace ospray {
         if (!node->isValid())
           ImGui::PopStyleColor(styles--);
 
-        for(auto child : node->childrenMap())
-          buildGUINode(child.first,child.second, ++indent);
+        for(auto child : node->children())
+          buildGUINode(child.first, child.second, ++indent);
 
         ImGui::TreePop();
       }
