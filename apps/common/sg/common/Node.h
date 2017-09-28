@@ -164,6 +164,8 @@ namespace ospray {
 
       // Parent-child structual interface /////////////////////////////////////
 
+      using NodeLink = std::pair<std::string, std::shared_ptr<Node>>;
+
       // Children //
 
       bool hasChild(const std::string &name) const;

@@ -227,17 +227,43 @@ namespace ospray {
 
     bool Node::hasChild(const std::string &name) const
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      auto itr = properties.children.find(lower);
+      auto itr = properties.children.find(name);
+      if (itr != properties.children.end())
+        return true;
+
+      std::string name_lower = name;
+      std::transform(name_lower.begin(), name_lower.end(),
+                     name_lower.begin(), ::tolower);
+
+      auto &c = properties.children;
+      itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
+        std::string node_lower = n.first;
+        std::transform(node_lower.begin(), node_lower.end(),
+                       node_lower.begin(), ::tolower);
+        return node_lower == name_lower;
+      });
+
       return itr != properties.children.end();
     }
 
     Node& Node::child(const std::string &name) const
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      auto itr = properties.children.find(lower);
+      auto itr = properties.children.find(name);
+      if (itr != properties.children.end())
+        return *itr->second;
+
+      std::string name_lower = name;
+      std::transform(name_lower.begin(), name_lower.end(),
+                     name_lower.begin(), ::tolower);
+
+      auto &c = properties.children;
+      itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
+        std::string node_lower = n.first;
+        std::transform(node_lower.begin(), node_lower.end(),
+                       node_lower.begin(), ::tolower);
+        return node_lower == name_lower;
+      });
+
       if (itr == properties.children.end()) {
         throw std::runtime_error("in node " + toString() +
                                  " : could not find sg child node with name '"
@@ -254,14 +280,7 @@ namespace ospray {
 
     bool Node::hasChildRecursive(const std::string &name)
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      Node* n = this;
-      auto f = n->properties.children.find(lower);
-      if (f != n->properties.children.end())
-        return true;
-
-      bool found = false;
+      bool found = hasChild(name);
 
       for (auto &child : properties.children) {
         try {
@@ -275,12 +294,8 @@ namespace ospray {
 
     Node& Node::childRecursive(const std::string &name)
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      Node* n = this;
-      auto f = n->properties.children.find(lower);
-      if (f != n->properties.children.end())
-        return *f->second;
+      if (hasChild(name))
+        return child(name);
 
       for (auto &child : properties.children) {
         try {
@@ -335,9 +350,7 @@ namespace ospray {
     void Node::setChild(const std::string &name,
                         const std::shared_ptr<Node> &node)
     {
-      std::string lower = name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
+      properties.children[name] = node;
 #ifndef _WIN32
 # warning "TODO: child node parent needs to be set, which requires multi-parent support"
 #endif
