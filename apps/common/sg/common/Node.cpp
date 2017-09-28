@@ -181,7 +181,7 @@ namespace ospray {
 
     Any Node::value()
     {
-      std::lock_guard<std::mutex> lock{mutex};
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value;
     }
 
@@ -229,7 +229,6 @@ namespace ospray {
     {
       std::string lower=name;
       std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(lower);
       return itr != properties.children.end();
     }
@@ -238,7 +237,6 @@ namespace ospray {
     {
       std::string lower=name;
       std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(lower);
       if (itr == properties.children.end()) {
         throw std::runtime_error("in node " + toString() +
@@ -258,25 +256,20 @@ namespace ospray {
     {
       std::string lower=name;
       std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      mutex.lock();
       Node* n = this;
       auto f = n->properties.children.find(lower);
-      if (f != n->properties.children.end()) {
-        mutex.unlock();
+      if (f != n->properties.children.end())
         return true;
-      }
+
       bool found = false;
 
       for (auto &child : properties.children) {
-        mutex.unlock();
         try {
           found |= child.second->hasChildRecursive(name);
         }
         catch (const std::runtime_error &) {}
-        mutex.lock();
       }
 
-      mutex.unlock();
       return found;
     }
 
@@ -284,25 +277,18 @@ namespace ospray {
     {
       std::string lower=name;
       std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      mutex.lock();
       Node* n = this;
       auto f = n->properties.children.find(lower);
-      if (f != n->properties.children.end()) {
-        mutex.unlock();
+      if (f != n->properties.children.end())
         return *f->second;
-      }
 
       for (auto &child : properties.children) {
-        mutex.unlock();
         try {
           return child.second->childRecursive(name);
         }
         catch (const std::runtime_error &) {}
-
-        mutex.lock();
       }
 
-      mutex.unlock();
       throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
@@ -349,7 +335,6 @@ namespace ospray {
     void Node::setChild(const std::string &name,
                         const std::shared_ptr<Node> &node)
     {
-      std::lock_guard<std::mutex> lock{mutex};
       std::string lower = name;
       std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
       properties.children[lower] = node;
@@ -370,13 +355,11 @@ namespace ospray {
 
     void Node::setParent(Node &p)
     {
-      std::lock_guard<std::mutex> lock{mutex};
       properties.parent = &p;
     }
 
     void Node::setParent(const std::shared_ptr<Node> &p)
     {
-      std::lock_guard<std::mutex> lock{mutex};
       properties.parent = p.get();
     }
 

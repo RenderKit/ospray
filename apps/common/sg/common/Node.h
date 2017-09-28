@@ -255,7 +255,7 @@ namespace ospray {
 
       // NOTE(jda) - The mutex is 'mutable' because const methods still need
       //             to be able to lock the mutex
-      mutable std::mutex mutex;
+      mutable std::mutex value_mutex;
     };
 
     OSPSG_INTERFACE std::shared_ptr<Node>
@@ -300,9 +300,8 @@ namespace ospray {
       Any val(_val);
       bool modified = false;
       {
-        std::lock_guard<std::mutex> lock{mutex};
-        if (val != properties.value)
-        {
+        std::lock_guard<std::mutex> lock{value_mutex};
+        if (val != properties.value) {
           properties.value = val;
           modified = true;
         }
@@ -317,7 +316,7 @@ namespace ospray {
     {
       bool modified = false;
       {
-        std::lock_guard<std::mutex> lock{mutex};
+        std::lock_guard<std::mutex> lock{value_mutex};
         if (val != properties.value)
         {
           properties.value = val;
@@ -332,14 +331,12 @@ namespace ospray {
     template <typename T>
     inline T& Node::valueAs()
     {
-      std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
     }
 
     template <typename T>
     inline const T& Node::valueAs() const
     {
-      std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
     }
 
@@ -364,14 +361,12 @@ namespace ospray {
     template <>                                                                \
     inline a& Node::valueAs()                                                  \
     {                                                                          \
-      std::lock_guard<std::mutex> lock{mutex};                                 \
       return (a&)properties.value.get<OSPObject>();                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
     inline const a& Node::valueAs() const                                      \
     {                                                                          \
-      std::lock_guard<std::mutex> lock{mutex};                                 \
       return (const a&)properties.value.get<OSPObject>();                      \
     }                                                                          \
                                                                                \
