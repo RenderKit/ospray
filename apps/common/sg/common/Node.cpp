@@ -306,18 +306,14 @@ namespace ospray {
       throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
-    std::vector<std::shared_ptr<Node>> Node::children() const
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::vector<std::shared_ptr<Node>> result;
-      for (auto &child : properties.children)
-        result.push_back(child.second);
-      return result;
-    }
-
-    std::map<std::string, std::shared_ptr<Node>>& Node::childrenMap()
+    const std::map<std::string, std::shared_ptr<Node>>& Node::children() const
     {
       return properties.children;
+    }
+
+    size_t Node::numChildren() const
+    {
+      return properties.children.size();
     }
 
     void Node::add(std::shared_ptr<Node> node)

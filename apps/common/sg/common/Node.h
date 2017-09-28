@@ -175,11 +175,9 @@ namespace ospray {
       Node& childRecursive(const std::string &name);
       bool hasChildRecursive(const std::string &name);
 
-      std::vector<std::shared_ptr<Node>> children() const;
+      const std::map<std::string, std::shared_ptr<Node>>& children() const;
 
-      size_t numChildren() { return properties.children.size(); }
-
-      std::map<std::string, std::shared_ptr<Node>>& childrenMap();
+      size_t numChildren() const;
 
       void add(std::shared_ptr<Node> node);
       void add(std::shared_ptr<Node> node, const std::string &name);
