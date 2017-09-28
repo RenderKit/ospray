@@ -72,6 +72,15 @@ build-arch-clang:
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh
 
+build-ubuntu1704-gcc:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu17.04
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR
+    expire_in: 3 day
+  allow_failure: true
+
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
