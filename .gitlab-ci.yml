@@ -79,7 +79,6 @@ build-ubuntu1704-gcc:
     paths:
       - $CI_PROJECT_DIR
     expire_in: 3 day
-  allow_failure: true
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker

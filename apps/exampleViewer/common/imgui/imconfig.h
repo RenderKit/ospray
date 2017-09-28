@@ -13,7 +13,7 @@
 
 //---- Define attributes of all API symbols declarations, e.g. for DLL under Windows.
 #ifdef _WIN32
-#  ifdef imgui_EXPORTS
+#  ifdef ospray_imgui_EXPORTS
 #    define IMGUI_API __declspec(dllexport)
 #  else
 #    define IMGUI_API __declspec(dllimport)
