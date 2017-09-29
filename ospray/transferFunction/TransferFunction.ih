@@ -24,6 +24,8 @@ struct TransferFunction {
 
   //! The value range covered by the transfer function.
   vec2f valueRange;
+  //! opacity scalar per unit distance
+  float opacityScale; 
   uniform bool preIntegration;
   uniform bool preIntegrationComputed;
 

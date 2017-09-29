@@ -152,13 +152,13 @@ namespace ospray {
       if (!node->children().empty())
         fprintf(out, "\">\n");
 
-      for(auto child : node->childrenMap())
+      for(auto child : node->children())
       {
         writeNode(child.first, child.second, out, indent+1);
       }
       if (!node->children().empty())
       {
-        for (int i=0;i<indent;i++)
+        for (int i = 0; i < indent; i++)
           fprintf(out,"  ");
       }
       if (ptrName != lower)

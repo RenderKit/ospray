@@ -17,11 +17,13 @@
 #include "transferFunction/TransferFunction.ih"
 
 export void TransferFunction_setValueRange(void *uniform pointer, 
-                                           const uniform vec2f &value) 
+                                           const uniform vec2f &value,
+                                           const uniform float opacityScale)
 {
   // Cast to the actual type.
   TransferFunction *uniform transferFunction = (TransferFunction *uniform) pointer;
 
   // Set the transfer function value range.
   transferFunction->valueRange = value;
+  transferFunction->opacityScale = opacityScale;
 }
