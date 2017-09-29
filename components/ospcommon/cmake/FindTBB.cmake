@@ -102,6 +102,7 @@ ELSE ()
       ${PROJECT_SOURCE_DIR}/tbb
       /opt/intel/composerxe/tbb
       /opt/intel/compilers_and_libraries/tbb
+      /opt/intel/tbb
   )
 
   IF (APPLE)

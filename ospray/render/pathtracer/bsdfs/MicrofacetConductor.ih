@@ -23,8 +23,8 @@ struct MicrofacetConductor
 {
   BSDF super;
 
-  vec3f eta;
-  vec3f k;
+  spectrum eta;
+  spectrum k;
   GGXDistribution distribution;
 };
 
@@ -79,13 +79,13 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
 
   res.type = BSDF_GLOSSY_REFLECTION;
   res.pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
-  //res.weight = F * (G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
   res.weight = F * (G * rcp_safe(G1(self->distribution, cosThetaO, cosThetaOH)));
+
   return res;
 }
 
 inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext*
-    uniform ctx, const varying linear3f* uniform frame, vec3f eta, vec3f k,
+    uniform ctx, const varying linear3f* uniform frame, spectrum eta, spectrum k,
     float roughness)
 {
   varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));

@@ -15,7 +15,9 @@
 // ======================================================================== //
 
 #include "common/Material.h"
+#include "common/Data.h"
 #include "texture/Texture2D.h"
+#include "math/spectrum.h"
 #include "Metal_ispc.h"
 
 namespace ospray {
@@ -36,17 +38,36 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
+        auto ior = getParamData("ior");
         // default to Aluminium
-        const vec3f& eta = getParam3f("eta", vec3f(1.697f, 0.879f, 0.5302f));
-        const vec3f& k = getParam3f("k", vec3f(9.302f, 6.276f, 4.894f));
-        const float roughness = getParamf("roughness", 0.1f); 
+        float etaResampled[SPECTRUM_SAMPLES]
+          = {0.570, 0.668, 0.776, 0.888, 1.02, 1.16, 1.31, 1.49};
+        float kResampled[SPECTRUM_SAMPLES]
+          = {5.21, 5.57, 5.93, 6.28, 6.63, 6.97, 7.30, 7.61};
+        if (ior && ior->data && ior->size() > 0) {
+          if (ior->type != OSP_FLOAT3)
+            throw std::runtime_error("Metal::ior must have data type OSP_FLOAT3 (wavelength, eta, k)[]");
+          // resample, relies on ordered samples
+          auto iorP = (vec3f*)ior->data;
+          auto iorPrev = *iorP;
+          const auto iorLast = (vec3f*)ior->data + ior->size()-1;
+          float wl = SPECTRUM_FIRSTWL;
+          for(int l = 0; l < SPECTRUM_SAMPLES; wl += SPECTRUM_SPACING, l++) {
+            for(; iorP != iorLast && iorP->x < wl; iorP++)
+              iorPrev = *iorP;
+            auto f = (wl-iorPrev.x)/(iorP->x-iorPrev.x);
+            etaResampled[l] = (1.f - f) * iorPrev.y + f * iorP->y;
+            kResampled[l] = (1.f - f) * iorPrev.z + f * iorP->z;
+          }
+        }
 
+        const float roughness = getParamf("roughness", 0.1f);
         Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness"); 
 
         ispc::PathTracer_Metal_set(getIE()
-            , (const ispc::vec3f&)eta
-            , (const ispc::vec3f&)k
+            , etaResampled
+            , kResampled
             , roughness
             , map_roughness ? map_roughness->getIE() : nullptr
             , (const ispc::AffineSpace2f&)xform_roughness

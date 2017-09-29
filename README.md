@@ -1592,18 +1592,46 @@ changing roughness and realistic color shifts at edges. To create a
 Metal material pass the type string "`Metal`" to `ospNewMaterial`. Its
 parameters are
 
-| Type  | Name      |  Default| Description                               |
-|:------|:----------|--------:|:------------------------------------------|
-| vec3f | eta       |   Alumi-| index of refraction, real part            |
-| vec3f | k         |     nium| index of refraction, imaginary part       |
-| float | roughness |      0.1| roughness in \[0–1\], 0 is perfect mirror |
+<table style="width:98%;">
+<caption>Parameters of the Metal material.</caption>
+<colgroup>
+<col width="12%" />
+<col width="14%" />
+<col width="16%" />
+<col width="55%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="right">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f[]</td>
+<td align="left">ior</td>
+<td align="right">Aluminium</td>
+<td align="left"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
+</tr>
+<tr class="even">
+<td align="left">float</td>
+<td align="left">roughness</td>
+<td align="right">0.1</td>
+<td align="left">roughness in [0–1], 0 is perfect mirror</td>
+</tr>
+</tbody>
+</table>
 
-: Parameters of the Glass material.
+: Parameters of the Metal material.
 
 The main appearence (mostly the color) of the Metal material is
 controled by the physical parameters `eta` and `k`, the
 wavelength-dependent, complex index of refraction. These coefficients
-are quite counterintuitive but can be found in published measurements.
+are quite counterintuitive but can be found in [published
+measurements](https://refractiveindex.info/).
+
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
 [texture](#texture) `map_roughness` ([texture
@@ -2176,7 +2204,7 @@ with
 
 On Windows build it in the build\_directory\\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
