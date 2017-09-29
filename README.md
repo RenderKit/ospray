@@ -204,8 +204,8 @@ prefixed by convention with "`--osp:`") are understood:
 <table style="width:98%;">
 <caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
 <colgroup>
-<col width="32%" />
-<col width="65%" />
+<col width="33%" />
+<col width="63%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -252,13 +252,17 @@ prefixed by convention with "`--osp:`") are understood:
 </tr>
 <tr class="even">
 <td align="left"><code>--osp:logoutput &lt;dst&gt;</code></td>
-<td align="left">convenience for setting where error/status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+<td align="left">convenience for setting where status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="odd">
+<td align="left"><code>--osp:erroroutput &lt;dst&gt;</code></td>
+<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
 <td align="left"><code>--osp:device:&lt;name&gt;</code></td>
 <td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>--osp:setaffinity &lt;n&gt;</code></td>
 <td align="left">if <code>1</code>, bind software threads to hardware threads; <code>0</code> disables binding; default is <code>1</code> on KNL and <code>0</code> otherwise</td>
 </tr>
@@ -299,12 +303,53 @@ void ospDeviceSetString(OSPDevice, const char *id, const char *val);
 to set parameters on the device. The following parameters can be set on
 all devices:
 
-| Type | Name        | Description                                                                                                             |
-|:-----|:------------|:------------------------------------------------------------------------------------------------------------------------|
-| int  | numThreads  | number of threads which OSPRay should use                                                                               |
-| int  | logLevel    | logging level                                                                                                           |
-| int  | debug       | set debug mode; equivalent to logLevel=2 and numThreads=1                                                               |
-| int  | setAffinity | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose |
+<table style="width:99%;">
+<caption>Parameters shared by all devices.</caption>
+<colgroup>
+<col width="9%" />
+<col width="16%" />
+<col width="72%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">numThreads</td>
+<td align="left">number of threads which OSPRay should use</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">logLevel</td>
+<td align="left">logging level</td>
+</tr>
+<tr class="odd">
+<td align="left">string</td>
+<td align="left">logOutput</td>
+<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
+<td align="left">string</td>
+<td align="left">errorOutput</td>
+<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">debug</td>
+<td align="left">set debug mode; equivalent to logLevel=2 and numThreads=1</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">setAffinity</td>
+<td align="left">bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters shared by all devices.
 
@@ -348,6 +393,7 @@ with "`OSPRAY_`"):
 | OSPRAY\_THREADS       | equivalent to `--osp:numthreads`  |
 | OSPRAY\_LOG\_LEVEL    | equivalent to `--osp:loglevel`    |
 | OSPRAY\_LOG\_OUTPUT   | equivalent to `--osp:logoutput`   |
+| OSPRAY\_ERROR\_OUTPUT | equivalent to `--osp:erroroutput` |
 | OSPRAY\_DEBUG         | equivalent to `--osp:debug`       |
 | OSPRAY\_SET\_AFFINITY | equivalent to `--osp:setaffinity` |
 
