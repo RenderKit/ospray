@@ -219,7 +219,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
     }
     if (volume->adaptiveSampling) {
       // ray.time = absolute step length.  convert to effective sampling rate
-      float dt = 1.0f / ((ray.time) );
+      float dt = 1.0f / ((ray.time) / volume->samplingStep);
       vec4f contribution =
           clamp(sampleOpacity / dt) *
           make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);

@@ -54,6 +54,14 @@ namespace ospray {
         ss >> val.x >> val.y;
         sgNode->setValue(val);
       }
+      else if (type == "DataVector3f")
+      {
+        vec3f val;
+        while (ss.good()) {
+          ss >> val.x >> val.y >> val.z;
+          sgNode->nodeAs<DataVector3f>()->push_back(val);
+        }
+      }
       for (auto child : node.child)
       {
         if (sgNode->hasChild(child->name))

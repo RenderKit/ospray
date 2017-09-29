@@ -47,7 +47,7 @@ namespace ospray {
         
         const float attenuationDistance =
           getParamf("attenuationDistance", getParamf("distance", 1.0f));
-        
+
         ispc::PathTracer_Glass_set(
           ispcEquivalent,
           etaInside, 

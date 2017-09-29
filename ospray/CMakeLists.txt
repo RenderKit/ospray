@@ -127,6 +127,9 @@ SET(OSPRAY_SOURCES
   math/box.ispc
   math/Distribution1D.ispc
   math/Distribution2D.ispc
+  math/spectrum.h
+  math/spectrum.ih
+  math/spectrum.ispc
 
   render/LoadBalancer.cpp
   render/Renderer.ispc
