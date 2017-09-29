@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "sg/common/TimeStamp.h"
-#include "sg/common/Serialization.h"
-#include "sg/common/RenderContext.h"
-#include "sg/common/RuntimeError.h"
+#include "TimeStamp.h"
+#include "Serialization.h"
+#include "RenderContext.h"
+#include "RuntimeError.h"
 // stl
 #include <map>
 #include <memory>
@@ -34,23 +34,10 @@
 namespace ospray {
   namespace sg {
 
-    using SGVar = ospcommon::utility::Any;
+    using Any = ospcommon::utility::Any;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
-
-    /*! helper macro that adds a new member to a scene graph node, and
-      automatically defines all accessor functions for said
-      member.  */
-#define SG_NODE_DECLARE_MEMBER(type,name,capName)       \
-  public:                                               \
-    inline type get##capName() const { return name; }   \
-    inline void set##capName(const type &name) {        \
-      this->name = name;                                \
-      this->properties.lastModified = TimeStamp();      \
-    };                                                  \
-  protected:                                            \
-  type name                                             \
 
     enum NodeFlags
     {
@@ -70,6 +57,15 @@ namespace ospray {
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       Node();
+      virtual ~Node();
+
+      // NOTE: Nodes are not copyable nor movable! The operator=() will be used
+      //       to assign a Node's _value_, which is different than the
+      //       parent/child structure of the Node itself.
+      Node(const Node &) = delete;
+      Node(Node &&) = delete;
+      Node& operator=(const Node &) = delete;
+      Node& operator=(Node &&) = delete;
 
       virtual std::string toString() const;
 
@@ -96,23 +92,26 @@ namespace ospray {
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
+      template <typename T>
+      std::shared_ptr<T> nodeAs();
+
       // Properties ///////////////////////////////////////////////////////////
 
       std::string name()          const;
       std::string type()          const;
-      SGVar       min()           const;
-      SGVar       max()           const;
+      Any         min()           const;
+      Any         max()           const;
       NodeFlags   flags()         const;
       std::string documentation() const;
 
       void setName(const std::string &v);
       void setType(const std::string &v);
-      void setMinMax(const SGVar& minv, const SGVar& maxv);
+      void setMinMax(const Any& minv, const Any& maxv);
       void setFlags(NodeFlags f);
       void setFlags(int f);
       void setDocumentation(const std::string &s);
-      void setWhiteList(const std::vector<SGVar> &values);
-      void setBlackList(const std::vector<SGVar> &values);
+      void setWhiteList(const std::vector<Any> &values);
+      void setBlackList(const std::vector<Any> &values);
 
       bool isValid() const;
 
@@ -120,6 +119,7 @@ namespace ospray {
       virtual bool computeValidMinMax();
 
       /*! \brief return bounding box in world coordinates.
+        Cached on node commit.
 
         This function can be used by the viewer(s) for calibrating
         camera motion, setting default camera position, etc. Nodes
@@ -129,19 +129,28 @@ namespace ospray {
 
       // Node stored value (data) interface ///////////////////////////////////
 
-      //! get the value of the node, whithout template conversion
-      SGVar value();
+      //! get the value (copy) of the node, without template conversion
+      Any value();
 
       //! returns the value of the node in the desired type
-      template<typename T>
+      template <typename T>
       T& valueAs();
 
       //! returns the value of the node in the desired type
-      template<typename T>
+      template <typename T>
       const T& valueAs() const;
 
-      //! set the value of the node.  Requires strict typecast
-      void setValue(SGVar val);
+      //! return if the value is the given type
+      template <typename T>
+      bool valueIsType() const;
+
+      //! set the value of the node. Requires strict typecast
+      template <typename T>
+      void setValue(T val);
+
+      //! set the value via the '=' operator
+      template <typename T>
+      void operator=(T &&val);
 
       // Update detection interface ///////////////////////////////////////////
 
@@ -155,6 +164,8 @@ namespace ospray {
 
       // Parent-child structual interface /////////////////////////////////////
 
+      using NodeLink = std::pair<std::string, std::shared_ptr<Node>>;
+
       // Children //
 
       bool hasChild(const std::string &name) const;
@@ -164,27 +175,31 @@ namespace ospray {
       Node& operator[] (const std::string &c) const;
 
       Node& childRecursive(const std::string &name);
+      bool hasChildRecursive(const std::string &name);
 
-      std::vector<std::shared_ptr<Node>> children() const;
+      const std::map<std::string, std::shared_ptr<Node>>& children() const;
 
-      std::map<std::string, std::shared_ptr<Node>>& childrenMap();
+      size_t numChildren() const;
 
-      //! add node as child of this one
       void add(std::shared_ptr<Node> node);
-      Node& operator+=(std::shared_ptr<Node> node);
+      void add(std::shared_ptr<Node> node, const std::string &name);
+
+      void remove(const std::string& name);
 
       //! just for convenience; add a typed 'setParam' function
-      template<typename T>
-      void createChildWithValue(const std::string &name, const std::string& type, const T &t);
+      template <typename T>
+      Node& createChildWithValue(const std::string &name,
+                                 const std::string& type,
+                                 const T &t);
 
       Node& createChild(std::string name,
-                            std::string type = "Node",
-                            SGVar var = SGVar(),
-                            int flags = sg::NodeFlags::none,
-                            std::string documentation="");
+                        std::string type = "Node",
+                        Any value = Any(),
+                        int flags = sg::NodeFlags::none,
+                        std::string documentation = "");
 
       void setChild(const std::string &name,
-                        const std::shared_ptr<Node> &node);
+                    const std::shared_ptr<Node> &node);
 
       // Parent //
 
@@ -196,7 +211,7 @@ namespace ospray {
 
       // Traversal interface //////////////////////////////////////////////////
 
-      //! traverse this node and childrend with given operation, such as
+      //! traverse this node and children with given operation, such as
       //  print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
 
@@ -206,7 +221,8 @@ namespace ospray {
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation, bool& traverseChildren);
+                               const std::string& operation,
+                               bool& traverseChildren);
 
       //! called after traversing children
       virtual void postTraverse(RenderContext &ctx,
@@ -224,11 +240,11 @@ namespace ospray {
       {
         std::string name;
         std::string type;
-        std::vector<SGVar> minmax;
-        std::vector<SGVar> whitelist;
-        std::vector<SGVar> blacklist;
+        std::vector<Any> minmax;
+        std::vector<Any> whitelist;
+        std::vector<Any> blacklist;
         std::map<std::string, std::shared_ptr<Node>> children;
-        SGVar value;
+        Any value;
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
@@ -241,52 +257,155 @@ namespace ospray {
 
       // NOTE(jda) - The mutex is 'mutable' because const methods still need
       //             to be able to lock the mutex
-      mutable std::mutex mutex;
+      mutable std::mutex value_mutex;
     };
+
+    OSPSG_INTERFACE std::shared_ptr<Node>
+    createNode(std::string name,
+               std::string type = "Node",
+               Any var = Any(),
+               int flags = sg::NodeFlags::none,
+               std::string documentation = "");
 
     // Inlined Node definitions ///////////////////////////////////////////////
 
-    //! just for convenience; add a typed 'setParam' function
-    template<typename T>
-    inline void Node::createChildWithValue(const std::string &name, const std::string& type, const T &t)
+    template <typename T>
+    inline std::shared_ptr<T> Node::nodeAs()
     {
-      if (hasChild(name))
-        child(name).setValue(t);
+      static_assert(std::is_base_of<Node, T>::value,
+                    "Can only use nodeAs<T> to cast to an ospray::sg::Node"
+                    " type! 'T' must be a child of ospray::sg::Node!");
+      return std::static_pointer_cast<T>(shared_from_this());
+    }
+
+    //! just for convenience; add a typed 'setParam' function
+    template <typename T>
+    inline Node &Node::createChildWithValue(const std::string &name,
+                                            const std::string& type,
+                                            const T &t)
+    {
+      if (hasChild(name)) {
+        auto &c = child(name);
+        c.setValue(t);
+        return c;
+      }
       else {
-        auto node = std::make_shared<Node>();
-        node->setType(type);
-        node->setValue(t);
-        node->setName(name);
+        auto node = createNode(name, type, t);
         add(node);
+        return *node;
       }
     }
 
-    template<typename T>
+    template <typename T>
+    inline void Node::setValue(T _val)
+    {
+      Any val(_val);
+      bool modified = false;
+      {
+        std::lock_guard<std::mutex> lock{value_mutex};
+        if (val != properties.value) {
+          properties.value = val;
+          modified = true;
+        }
+      }
+
+      if (modified)
+        markAsModified();
+    }
+
+    template <>
+    inline void Node::setValue(Any val)
+    {
+      bool modified = false;
+      {
+        std::lock_guard<std::mutex> lock{value_mutex};
+        if (val != properties.value)
+        {
+          properties.value = val;
+          modified = true;
+        }
+      }
+
+      if (modified)
+        markAsModified();
+    }
+
+    template <typename T>
     inline T& Node::valueAs()
     {
-      std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
     }
 
-    template<typename T>
+    template <typename T>
     inline const T& Node::valueAs() const
     {
-      std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
     }
 
-    OSPSG_INTERFACE std::shared_ptr<Node> createNode(std::string name,
-                                                     std::string type = "Node",
-                                                     SGVar var = SGVar(),
-                                                     int flags = sg::NodeFlags::none,
-                                                     std::string documentation="");
+    template <typename T>
+    inline bool Node::valueIsType() const
+    {
+      return properties.value.is<T>();
+    }
+
+    template <typename T>
+    inline void Node::operator=(T &&v)
+    {
+      setValue(std::forward<T>(v));
+    }
+
+    // NOTE(jda) - Specialize valueAs() and operator=() so we don't have to
+    //             convert to/from OSPObject manually, must trust the user to
+    //             store/get the right type of OSPObject. This is because
+    //             ospcommon::utility::Any<> cannot do implicit conversion...
+
+#define DECLARE_VALUEAS_SPECIALIZATION(a)                                      \
+    template <>                                                                \
+    inline a& Node::valueAs()                                                  \
+    {                                                                          \
+      return (a&)properties.value.get<OSPObject>();                            \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    inline const a& Node::valueAs() const                                      \
+    {                                                                          \
+      return (const a&)properties.value.get<OSPObject>();                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    inline void Node::operator=(a &&v)                                         \
+    {                                                                          \
+      setValue((OSPObject)v);                                                  \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    inline void Node::setValue(a val)                                          \
+    {                                                                          \
+      setValue((OSPObject)val);                                                \
+    }
+
+    DECLARE_VALUEAS_SPECIALIZATION(OSPDevice)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPFrameBuffer)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPRenderer)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPCamera)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPModel)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPData)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPGeometry)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPMaterial)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPLight)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPVolume)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPTransferFunction)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPTexture2D)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPPixelOp)
+
+#undef DECLARE_VALUEAS_SPECIALIZATION
 
     // Helper functions ///////////////////////////////////////////////////////
 
     // Compare //
 
     template <typename T>
-    inline bool compare(const SGVar& min, const SGVar& max, const SGVar& value)
+    inline bool compare(const Any& min, const Any& max, const Any& value)
     {
       if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
         return false;
@@ -294,9 +413,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2f>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<vec2f>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       const vec2f &v1 = min.get<vec2f>();
       const vec2f &v2 = max.get<vec2f>();
@@ -306,9 +425,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2i>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<vec2i>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       const vec2i &v1 = min.get<vec2i>();
       const vec2i &v2 = max.get<vec2i>();
@@ -318,9 +437,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec3f>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<vec3f>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       const vec3f &v1 = min.get<vec3f>();
       const vec3f &v2 = max.get<vec3f>();
@@ -331,9 +450,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<box3f>(const SGVar& min,
-                               const SGVar& max,
-                               const SGVar& value)
+    inline bool compare<box3f>(const Any& min,
+                               const Any& max,
+                               const Any& value)
     {
       return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
     }
@@ -343,13 +462,6 @@ namespace ospray {
     template <typename T>
     inline void commitNodeValue(Node &)
     {
-    }
-
-    template <>
-    inline void commitNodeValue<float>(Node &n)
-    {
-      ospSet1f(n.parent().valueAs<OSPObject>(),
-               n.name().c_str(), n.valueAs<float>());
     }
 
     template <>
@@ -367,18 +479,52 @@ namespace ospray {
     }
 
     template <>
+    inline void commitNodeValue<vec2i>(Node &n)
+    {
+      ospSet2iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2i>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<vec3i>(Node &n)
+    {
+      ospSet3iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3i>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<float>(Node &n)
+    {
+      ospSet1f(n.parent().valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<float>());
+    }
+
+    template <>
+    inline void commitNodeValue<vec2f>(Node &n)
+    {
+      ospSet2fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2f>().x);
+    }
+
+    template <>
     inline void commitNodeValue<vec3f>(Node &n)
     {
       ospSet3fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec3f>().x);
     }
 
+    template <>
+    inline void commitNodeValue<vec4f>(Node &n)
+    {
+      ospSet4fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec4f>().x);
+    }
 
     template <>
-    inline void commitNodeValue<vec2f>(Node &n)
+    inline void commitNodeValue<std::string>(Node &n)
     {
-      ospSet3fv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec2f>().x);
+      ospSetString(n.parent().valueAs<OSPObject>(),
+                   n.name().c_str(), n.valueAs<std::string>().c_str());
     }
 
     // Helper parameter node wrapper //////////////////////////////////////////
@@ -408,36 +554,6 @@ namespace ospray {
       }
     };
 
-    // Base Node for all renderables //////////////////////////////////////////
-
-    //! a Node with bounds and a render operation
-    struct OSPSG_INTERFACE Renderable : public Node
-    {
-      Renderable() { createChild("bounds", "box3f"); }
-      virtual ~Renderable() = default;
-
-      virtual box3f bounds() const override { return child("bounds").valueAs<box3f>(); }
-      virtual box3f computeBounds() const
-      {
-        box3f cbounds = empty;
-        for (const auto &child : properties.children)
-        {
-          auto tbounds = child.second->bounds();
-            cbounds.extend(tbounds);
-        }
-        return cbounds;
-      }
-      // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
-      virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation, bool& traverseChildren) override;
-      virtual void postTraverse(RenderContext &ctx,
-                                const std::string& operation) override;
-      virtual void postCommit(RenderContext &ctx) override { 
-        child("bounds").setValue(computeBounds()); }
-      virtual void preRender(RenderContext &ctx)  {}
-      virtual void postRender(RenderContext &ctx) {}
-    };
-
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"
 
@@ -447,15 +563,6 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this renderer.
     */
-#define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
-    ospray_create_sg_node__##InternalClassName()                        \
-    {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
-    }                                                                   \
-    /* Extra declaration to avoid "extra ;" pedantic warnings */        \
-    ospray::sg::Node* ospray_create_sg_node__##InternalClassName()
-
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
     extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##Name()                                     \
@@ -464,6 +571,9 @@ namespace ospray {
     }                                                                   \
     /* Extra declaration to avoid "extra ;" pedantic warnings */        \
     ospray::sg::Node* ospray_create_sg_node__##Name()
+
+#define OSP_REGISTER_SG_NODE(InternalClassName)                         \
+    OSP_REGISTER_SG_NODE_NAME(InternalClassName, InternalClassName)
 
   } // ::ospray::sg
 } // ::ospray

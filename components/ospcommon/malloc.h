@@ -27,6 +27,12 @@ namespace ospcommon
   OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
   OSPCOMMON_INTERFACE void alignedFree(void* ptr);
 
+  template<typename T>
+   __forceinline T* alignedMalloc(size_t nElements, size_t align = 64)
+  {
+    return (T*)alignedMalloc(nElements*sizeof(T), align);
+  }
+
 // NOTE(jda) - can't use function wrapped alloca solution as Clang won't inline
 //             a function containing alloca()...but it works with gcc/icc
 #if 0

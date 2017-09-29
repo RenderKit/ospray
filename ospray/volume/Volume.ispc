@@ -92,6 +92,12 @@ export void Volume_setSpecular(void *uniform _self, const uniform vec3f &value)
   self->specular = value;
 }
 
+export void Volume_setNs(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->ns = value;
+}
+
 export void Volume_setTransferFunction(void *uniform _self, void *uniform value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
@@ -102,6 +108,15 @@ export void Volume_setVolumeClippingBox(void *uniform _self, const uniform box3f
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
   self->volumeClippingBox = value;
+}
+
+export void Volume_setAffineTransformations(void *uniform _self,
+					    const uniform AffineSpace3f &xfm,
+					    const uniform AffineSpace3f &rcp_xfm)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->xfm = xfm;
+  self->rcp_xfm = rcp_xfm;
 }
 
 export void Volume_getBoundingBox(uniform box3f *uniform ret, void *uniform _self)
@@ -119,7 +134,7 @@ export void Volume_computeSamples(void *uniform _self,
 
   foreach (i=0 ... count) {
     vec3f c = worldCoordinates[i];
-    float sample = self->computeSample(self, c);
+    float sample = self->sample(self, c);
     (*results)[i] = sample;
   }
 }

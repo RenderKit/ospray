@@ -20,11 +20,12 @@
  * On Linux build it in the build_directory with
  *   gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorialC
  * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\ospTutorial.c /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
+ *   cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
  */
 
 #include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 #ifdef _WIN32
 #  include <malloc.h>
 #else
@@ -38,6 +39,10 @@ void writePPM(const char *fileName,
               const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
+  if (!file) {
+    fprintf(stderr, "fopen('%s', 'wb') failed: %d", fileName, errno);
+    return;
+  }
   fprintf(file, "P6\n%i %i\n255\n", size->x, size->y);
   unsigned char *out = (unsigned char *)alloca(3*size->x);
   for (int y = 0; y < size->y; y++) {
@@ -79,7 +84,7 @@ int main(int argc, const char **argv) {
 
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
-  int init_error = ospInit(&argc, argv);
+  OSPError init_error = ospInit(&argc, argv);
   if (init_error != OSP_NO_ERROR)
     return init_error;
 

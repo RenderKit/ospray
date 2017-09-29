@@ -30,7 +30,8 @@ void OrthographicCamera_initRay(uniform Camera *uniform _self,
     + screen.x * self->pos_du
     + screen.y * self->pos_dv;
 
-  setRay(ray, org, dir, self->super.nearClip, infinity);
+  const float time = Camera_shutterTime(_self, sample.time);
+  setRay(ray, org, dir, self->super.nearClip, infinity, time);
 }
 
 /*! create a new ispc-side version of a orthographiccamera - with given

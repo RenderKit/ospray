@@ -21,25 +21,25 @@
 
 namespace ospray {
 
-  /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
+  /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
   extern "C" void *malloc64(size_t size)
   {
     return ospcommon::alignedMalloc(size);
   }
 
-  /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
+  /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
   extern "C" void free64(void *ptr)
   {
     return ospcommon::alignedFree(ptr);
   }
 
-  WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) 
-    : s(s) 
+  WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel)
+    : s(s)
   {
     postStatusMsg(postAtLogLevel) << "Warning: " << s
                                   << " (only reporting first occurrence)";
   }
-  
+
   /*! for debugging. compute a checksum for given area range... */
   void *computeCheckSum(const void *ptr, size_t numBytes)
   {
@@ -89,12 +89,21 @@ namespace ospray {
         } else if (parm == "--osp:logoutput") {
           std::string dst = av[i+1];
 
-          if (dst == "cout")
-            device->msg_fcn = [](const char *msg){ std::cout << msg; };
-          else if (dst == "cerr")
-            device->msg_fcn = [](const char *msg){ std::cerr << msg; };
+          if (dst == "cout" || dst == "cerr")
+            device->findParam("logOutput", true)->set(av[i+1]);
           else
             postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
+
+          removeArgs(ac,av,i,2);
+        } else if (parm == "--osp:erroroutput") {
+          std::string dst = av[i+1];
+
+          if (dst == "cout" || dst == "cerr")
+            device->findParam("errorOutput", true)->set(av[i+1]);
+          else {
+            postStatusMsg("You must use 'cout' or 'cerr' for"
+                          " --osp:erroroutput!");
+          }
 
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
@@ -300,6 +309,11 @@ namespace ospray {
     return OSP_NO_ERROR;
   }
 
+  StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
+  {
+    return StatusMsgStream(postAtLogLevel);
+  }
+
   void postStatusMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
   {
     postStatusMsg(msg.str(), postAtLogLevel);
@@ -309,23 +323,6 @@ namespace ospray {
   {
     if (logLevel() >= postAtLogLevel && ospray::api::Device::current.ptr)
       ospray::api::Device::current->msg_fcn((msg + '\n').c_str());
-  }
-
-  StatusMsgStream::StatusMsgStream(uint32_t postAtLogLevel)
-    : logLevel(postAtLogLevel)
-  {
-  }
-
-  StatusMsgStream::~StatusMsgStream()
-  {
-    if (!msg.str().empty()) {
-      postStatusMsg(msg, logLevel);
-    }
-  }
-
-  StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
-  {
-    return StatusMsgStream(postAtLogLevel);
   }
 
   void handleError(OSPError e, const std::string &message)

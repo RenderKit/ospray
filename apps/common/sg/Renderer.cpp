@@ -23,13 +23,12 @@ namespace ospray {
 
     Renderer::Renderer()
     {
-      createChild("bounds", "box3f");
       createChild("rendererType", "string", std::string("scivis"),
-                      NodeFlags::required |
-                      NodeFlags::valid_whitelist |
-                      NodeFlags::gui_combo,
-                      "scivis: standard whitted style ray tracer. "
-                      "pathtracer/pt: photo-realistic path tracer");
+                  NodeFlags::required |
+                  NodeFlags::valid_whitelist |
+                  NodeFlags::gui_combo,
+                  "scivis: standard whitted style ray tracer. "
+                  "pathtracer/pt: photo-realistic path tracer");
       child("rendererType").setWhiteList({std::string("scivis"),
                                           std::string("sv"),
                                           std::string("raytracer"),
@@ -41,10 +40,16 @@ namespace ospray {
                                           std::string("ao8"),
                                           std::string("ao16"),
                                           std::string("dvr"),
+                                          std::string("raycast"),
+                                          std::string("raycast_Ng"),
+                                          std::string("raycast_Ns"),
+                                          std::string("primID"),
+                                          std::string("geomID"),
+                                          std::string("instID"),
                                           std::string("pathtracer"),
                                           std::string("pt")});
       createChild("world",
-                      "World").setDocumentation("model containing scene objects");
+                  "World").setDocumentation("model containing scene objects");
       createChild("camera", "PerspectiveCamera");
       createChild("frameBuffer", "FrameBuffer");
       createChild("lights");
@@ -59,6 +64,14 @@ namespace ospray {
                   "the number of samples rendered per pixel. The higher "
                   "the number, the smoother the resulting image.");
       child("spp").setMinMax(-8,128);
+
+      createChild("minContribution", "float", 0.001f,
+                  NodeFlags::required |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider,
+                  "sample contributions below this value will be neglected"
+                  " to speed-up rendering.");
+      child("minContribution").setMinMax(0.f, 0.1f);
 
       createChild("varianceThreshold", "float", 0.f,
                   NodeFlags::required |
@@ -86,27 +99,37 @@ namespace ospray {
                   " building to be completely black from occlusion.");
       child("aoDistance").setMinMax(1e-20f, 1e20f);
 
+      createChild("epsilon", "float", 1e-3f,
+                  NodeFlags::required | NodeFlags::valid_min_max,
+                  "epsilon step for secondary ray generation.  Adjust"
+                  " if you see speckles or a lack of lighting.");
+      child("epsilon").setMinMax(1e-20f, 1e20f);
+      createChild("autoEpsilon", "bool", true, NodeFlags::required,
+        "automatically adjust epsilon step by world bounds");
+
       createChild("oneSidedLighting", "bool", true, NodeFlags::required);
-      createChild("aoTransparency", "bool", true, NodeFlags::required);
+      createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
+    }
+
+    std::string Renderer::toString() const
+    {
+      return "ospray::sg::Renderer";
     }
 
     void Renderer::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "render")
-      {
+      if (operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
     void Renderer::postRender(RenderContext &ctx)
     {
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
-      ospRenderFrame(fb,
-                     ospRenderer,
-                     OSP_FB_COLOR | OSP_FB_ACCUM);
+      variance = ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
     }
 
     void Renderer::preRender(RenderContext& ctx)
@@ -116,13 +139,12 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (child("frameBuffer")["size"].lastModified() >
+      if (child("camera").hasChild("aspect") &&
+          child("frameBuffer")["size"].lastModified() >
           child("camera")["aspect"].lastCommitted()) {
-        
-        child("camera")["aspect"].setValue(
-          child("frameBuffer")["size"].valueAs<vec2i>().x /
-          float(child("frameBuffer")["size"].valueAs<vec2i>().y)
-        );
+
+        auto fbSize = child("frameBuffer")["size"].valueAs<vec2i>();
+        child("camera")["aspect"] = fbSize.x / float(fbSize.y);
       }
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
@@ -133,20 +155,12 @@ namespace ospray {
         ospCommit(ospRenderer);
         setValue((OSPObject)ospRenderer);
       }
-      ctx.ospRenderer = ospRenderer;  
+      ctx.ospRenderer = ospRenderer;
     }
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      if (child("camera").childrenLastModified() > frameMTime
-          || child("lights").childrenLastModified() > frameMTime
-          || lastModified() > frameMTime
-          || child("shadowsEnabled").lastModified() > frameMTime
-          || child("aoSamples").lastModified() > frameMTime
-          || child("spp").lastModified() > frameMTime
-          || child("world").childrenLastModified() > frameMTime
-          )
-      {
+      if (lastModified() > frameMTime || childrenLastModified() > frameMTime) {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
@@ -155,10 +169,14 @@ namespace ospray {
         if (lightsData == nullptr ||
           lightsBuildTime < child("lights").childrenLastModified())
         {
-          // create and setup light for Ambient Occlusion
+          // create and setup light list
           std::vector<OSPLight> lights;
           for(auto &lightNode : child("lights").children())
-            lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
+          {
+            auto light = lightNode.second->valueAs<OSPLight>();
+            if (light)
+              lights.push_back(light);
+          }
 
           if (lightsData)
             ospRelease(lightsData);
@@ -174,11 +192,36 @@ namespace ospray {
         {
           child("world").traverse(ctx, "render");
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
+          if (child("autoEpsilon").valueAs<bool>()) {
+            const box3f bounds = child("world")["bounds"].valueAs<box3f>();
+            const float diam = length(bounds.size());
+            float logDiam = ospcommon::log(diam);
+            if (logDiam < 0.f)
+            {
+              logDiam = -1.f/logDiam;
+            }
+            const float epsilon = 1e-5f*logDiam;
+            ospSet1f(ospRenderer, "epsilon", epsilon);
+            ospSet1f(ospRenderer, "aoDistance", diam*0.3);
+          }
+
         }
         ospCommit(ospRenderer);
         frameMTime = TimeStamp();
       }
 
+    }
+
+    OSPPickResult Renderer::pick(const vec2f &pickPos)
+    {
+      OSPPickResult result;
+      ospPick(&result, ospRenderer, (osp::vec2f&)pickPos);
+      return result;
+    }
+
+    float Renderer::getLastVariance() const
+    {
+      return variance;
     }
 
     OSP_REGISTER_SG_NODE(Renderer);

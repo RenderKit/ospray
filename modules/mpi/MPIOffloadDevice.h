@@ -201,13 +201,12 @@ namespace ospray {
       OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
                                 void *data, const uint32 flags) override;
 
-      /*! sample a volume */
-      void sampleVolume(float **results,
-                        OSPVolume volume,
-                        const vec3f *worldCoordinates,
-                        const size_t &count) override;
+      OSPPickResult pick(OSPRenderer renderer,
+                         const vec2f &screenPos) override;
 
     private:
+
+      void initializeDevice();
 
       void processWork(work::Work &work, bool flushWriteStream = false);
 

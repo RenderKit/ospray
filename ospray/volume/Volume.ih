@@ -19,15 +19,7 @@
 #include "../common/Ray.ih"
 #include "../transferFunction/TransferFunction.ih"
 #include "../math/box.ih"
-
-// #if EXP_DATA_PARALLEL
-// struct DataParallelInfo {
-//   /*! total number of pieces, across all nodes */
-//   uint32 numPieces;
-//   /*! number of pieces on _this_ node that I own */
-//   uint32 numMine;
-// };
-// #endif
+#include "../math/AffineSpace.ih"
 
 //! \brief Variables and methods common to all subtypes of the Volume
 //!  class, an abstraction for the concrete object which performs the
@@ -66,7 +58,11 @@ struct Volume {
   //! Recommended sampling rate for the renderer.
   uniform float samplingRate;
 
+  //! kd, specular color
   uniform vec3f specular;
+
+  //! specular power
+  uniform float ns;
 
   //! Color and opacity transfer function.
   TransferFunction *uniform transferFunction;
@@ -74,24 +70,27 @@ struct Volume {
   //! Clipping box for the volume (applies to volume rendering only). An empty clipping box is ignored.
   uniform box3f volumeClippingBox;
 
+  //! Affine transformation
+  AffineSpace3f xfm; //!< instantiation matrix
+  AffineSpace3f rcp_xfm; //!< rcp(instantiation matrix)
+
   //! The value at the given sample location in world coordinates.
-  varying float (*uniform computeSample)(void *uniform _self, 
-                                         const varying vec3f &worldCoordinates);
+  varying float (*uniform sample)(void *uniform _self,
+                                  const varying vec3f &worldCoordinates);
 
   //! The gradient at the given sample location in world coordinates.
-  varying vec3f (*uniform computeGradient)(void *uniform _self, 
+  varying vec3f (*uniform computeGradient)(void *uniform _self,
                                            const varying vec3f &worldCoordinates);
 
   //! Find the next hit point in the volume for ray casting based renderers.
-  void (*uniform intersect)(void *uniform _self, varying Ray &ray);
-
-  //! Find the next hit point in the volume for ray casting based renderers.
-  void (*uniform intersectAdaptive)(void *uniform _self, varying Ray &ray, const varying float samplingRate);
+  void (*uniform stepRay)(void *uniform _self,
+                          varying Ray &ray,
+                          const varying float samplingRate);
 
   //! Find the next isosurface hit point in the volume for ray casting based renderers.
-  void (*uniform intersectIsosurface)(void *uniform _self, 
-                                      uniform float *uniform isovalues, 
-                                      uniform int numIsovalues, 
+  void (*uniform intersectIsosurface)(void *uniform _self,
+                                      uniform float *uniform isovalues,
+                                      uniform int numIsovalues,
                                       varying Ray &ray);
 
   //! Bounding box for the volume in world coordinates.  This is an internal derived parameter and not meant to be redefined externally.

@@ -16,6 +16,7 @@
 
 //ospcommon
 #include "ospcommon/utility/OnScopeExit.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 //ospray
 #include "common/OSPCommon.h"
@@ -67,7 +68,7 @@ inline std::string toString(OSPObject obj)
   });
 
 #define OSPRAY_CATCH_END(a)                                                   \
-  } catch (const std::bad_alloc &e) {                                         \
+  } catch (const std::bad_alloc &) {                                          \
     handleError(OSP_OUT_OF_MEMORY, "OSPRay was unable to allocate memory");   \
     return a;                                                                 \
   } catch (const std::runtime_error &e) {                                     \
@@ -112,16 +113,16 @@ OSPRAY_CATCH_BEGIN
     throw std::runtime_error("device already exists [ospInit() called twice?]");
   }
 
-  auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
+  auto OSP_MPI_LAUNCH = utility::getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
-  if (OSP_MPI_LAUNCH.first) {
+  if (OSP_MPI_LAUNCH) {
     postStatusMsg("#osp: launching ospray mpi ring - "
                  "make sure that mpd is running");
 
     currentDevice = createMpiDevice("mpi_offload");
     currentDevice->findParam("mpiMode", true)->set("mpi-launch");
     currentDevice->findParam("launchCommand", true)
-                 ->set(OSP_MPI_LAUNCH.second.c_str());
+                 ->set(OSP_MPI_LAUNCH.value().c_str());
   }
 
   if (_ac && _av) {
@@ -149,7 +150,7 @@ OSPRAY_CATCH_BEGIN
       if (deviceSwitch == "--osp:device:") {
         removeArgs(*_ac,(char **&)_av,i,1);
         auto deviceName = av.substr(13);
-        
+
         try {
           currentDevice = Device::createDevice(deviceName.c_str());
         } catch (const std::runtime_error &) {
@@ -844,10 +845,10 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPGeometry geom = ospNewGeometry("instance");
-  ospSet3fv(geom,"xfm.l.vx",&xfm.l.vx.x);
-  ospSet3fv(geom,"xfm.l.vy",&xfm.l.vy.x);
-  ospSet3fv(geom,"xfm.l.vz",&xfm.l.vz.x);
-  ospSet3fv(geom,"xfm.p",&xfm.p.x);
+  ospSet3f(geom, "xfm.l.vx", xfm.l.vx.x, xfm.l.vx.y, xfm.l.vx.z);
+  ospSet3f(geom, "xfm.l.vy", xfm.l.vy.x, xfm.l.vy.y, xfm.l.vy.z);
+  ospSet3f(geom, "xfm.l.vz", xfm.l.vz.x, xfm.l.vz.y, xfm.l.vz.z);
+  ospSet3f(geom, "xfm.p", xfm.p.x, xfm.p.y, xfm.p.z);
   ospSetObject(geom,"model",modelToInstantiate);
   return geom;
 }

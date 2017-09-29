@@ -48,12 +48,13 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
 
 OSPRAY_CREATE_TEST(mamlTest
   apps/mamlTest.cpp
-LINK
+  LINK
   ${MAML_LIBRARY}
 )
 
 OSPRAY_CREATE_TEST(mamlTestMessageSwarm
   apps/testMessageSwarm.cpp
-LINK
+  LINK
   ${MAML_LIBRARY}
 )
+

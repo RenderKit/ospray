@@ -19,6 +19,13 @@
 mkdir build
 cd build
 
-cmake -DOSPRAY_BUILD_ISA=ALL -DOSPRAY_MODULE_BILINEAR_PATCH=ON "$@" ..
+cmake \
+  -D OSPRAY_BUILD_ISA=ALL \
+  -D OSPRAY_MODULE_BILINEAR_PATCH=ON \
+  -D OSPRAY_ENABLE_TESTING=ON \
+  -D OSPRAY_SG_CHOMBO=OFF \
+  -D OSPRAY_SG_OPENIMAGEIO=OFF \
+  -D OSPRAY_SG_VTK=OFF \
+  "$@" ..
 
-make -j`nproc`
+make -j`nproc` && make test

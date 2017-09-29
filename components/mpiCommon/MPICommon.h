@@ -64,7 +64,7 @@ namespace mpicommon {
 
   /*! global variable that turns on logging of MPI communication
     (for debugging) _may_ eventually turn this into a real logLevel,
-    but for now tihs is cleaner here thatn in the MPI device
+    but for now this is cleaner here than in the MPI device
   */
   OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
 
@@ -174,8 +174,9 @@ namespace mpicommon {
     group */
   OSPRAY_MPI_INTERFACE extern Group worker;
 
-  // Initialize OSPRay's MPI groups
-  OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
+  // Initialize OSPRay's MPI groups, returns false if MPI
+  // was already initialized.
+  OSPRAY_MPI_INTERFACE bool init(int *ac, const char **av);
 
   inline int globalRank()
   {

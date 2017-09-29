@@ -1,6 +1,38 @@
 Version History
 ---------------
 
+### Changes in v1.4.0:
+
+-   New adaptive mesh refinement (AMR) and unstructured tetrahedral volume types
+-   Dynamic load balancing is now implemented for the `mpi_offload` device
+-   Many improvements and fixes to the available path tracer materials
+    -   Specular lobe of OBJMaterial uses Blinn-Phong for more
+        realistic highlights
+    -   Metal accepts spectral samples of complex refraction index
+    -   ThinGlass behaves consistent to Glass and can texture
+        attenuation color
+-   Added Russian roulette termination to path tracer
+-   SciVis OBJMaterial accepts texture coordinate transformations
+-   Applications can now access depth information in MPI distributed uses of
+    OSPRay (both `mpi_offload` and `mpi_distributed` devices)
+-   Many robustness fixes for both the `mpi_offload` and `mpi_distributed`
+    devices through improvements to the `mpi_common` and `mpi_maml`
+    infrastructure libraries
+-   Major sample app cleanups:
+    -   `ospray_sg` library is the new basis for building apps, which
+         is a scenegraph implementation
+    -   Old (unused) libraries have been removed: miniSG, commandline,
+        importer, loaders, and scripting
+    -   Some removed functionality (such as scripting) may be reintroduced in
+        the new infrastructure later, though most features have
+        remained and have been improved
+    -   Optional improved texture loading has been transitioned
+        from ImageMagick to OpenImageIO
+-   Many cleanups, bug fixes, and improvements to `ospray_common` and
+    other support libraries
+-   This will be the last release in which we support MSVC12
+    (Visual Studio 2013). Future releases will require VS2015 or newer
+
 ### Changes in v1.3.1:
 
 -   Improved robustness of OSPRay CMake find_package config

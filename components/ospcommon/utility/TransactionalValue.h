@@ -25,7 +25,7 @@ namespace ospcommon {
      * value for another thread to later get. This is conceptually similar to
      * "doublebuffering" a single value. Note that all values from the producer
      * thread overwrite the "queued" value, where the consumer thread will
-     * always get the last value set by the produer thread.
+     * always get the last value set by the producer thread.
      */
     template <typename T>
     class TransactionalValue

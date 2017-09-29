@@ -14,18 +14,20 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
 #include "ospray/ospray_cpp/Camera.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/Device.h"
+#include "ospray/ospray_cpp/Model.h"
 #include "ospray/ospray_cpp/FrameBuffer.h"
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
-// ospray apps
-#include "common/commandline/CameraParser.h"
-#include "widgets/imguiViewer.h"
+// pico_bench
+#include "apps/bench/pico_bench/pico_bench.h"
 // stl
 #include <random>
 
@@ -43,27 +45,11 @@ namespace ospRandSphereTest {
   int   numFrames         = 32;
   bool  runDistributed    = true;
 
-  //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
-  // helper function to write the rendered image as PPM file
-  void writePPM(const std::string &fileName,
-                const int sizeX, const int sizeY,
-                const uint32_t *pixel)
-  {
-    FILE *file = fopen(fileName.c_str(), "wb");
-    fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-    unsigned char *out = (unsigned char *)alloca(3*sizeX);
-    for (int y = 0; y < sizeY; y++) {
-      auto *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-      for (int x = 0; x < sizeX; x++) {
-        out[3*x + 0] = in[4*x + 0];
-        out[3*x + 1] = in[4*x + 1];
-        out[3*x + 2] = in[4*x + 2];
-      }
-      fwrite(out, 3*sizeX, sizeof(char), file);
-    }
-    fprintf(file, "\n");
-    fclose(file);
-  }
+  vec3f up;
+  vec3f pos;
+  vec3f gaze;
+  float fovy = 60.f;
+  bool customView = false;
 
   // Compute an X x Y x Z grid to have num bricks,
   // only gives a nice grid for numbers with even factors since
@@ -144,14 +130,19 @@ namespace ospRandSphereTest {
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
-    vec3f center = ospcommon::center(worldBounds);
-    vec3f diag   = worldBounds.size();
-    diag         = max(diag,vec3f(0.3f*length(diag)));
-    vec3f from   = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-    vec3f dir    = center - from;
+    if (!customView) {
+      vec3f diag = worldBounds.size();
+      diag       = max(diag,vec3f(0.3f*length(diag)));
 
-    camera.set("pos", from);
-    camera.set("dir", dir);
+      gaze = ospcommon::center(worldBounds);
+
+      pos = gaze - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+      up  = vec3f(0.f, 1.f, 0.f);
+    }
+
+    camera.set("pos", pos);
+    camera.set("dir", gaze - pos);
+    camera.set("up",  up );
     camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
 
     camera.commit();
@@ -173,6 +164,23 @@ namespace ospRandSphereTest {
         numFrames = std::atoi(av[++i]);
       } else if (arg == "-l" || arg == "--local") {
         runDistributed = false;
+      } else if (arg == "-vp" || arg == "--eye") {
+        pos.x = atof(av[++i]);
+        pos.y = atof(av[++i]);
+        pos.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vu" || arg == "--up") {
+        up.x = atof(av[++i]);
+        up.y = atof(av[++i]);
+        up.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vi" || arg == "--gaze") {
+        gaze.x = atof(av[++i]);
+        gaze.y = atof(av[++i]);
+        gaze.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-fv" || arg == "--fovy") {
+        fovy = atof(av[++i]);
       }
     }
   }
@@ -201,6 +209,8 @@ namespace ospRandSphereTest {
 
   extern "C" int main(int ac, const char **av)
   {
+    using namespace std::chrono;
+
     parseCommandLine(ac, av);
 
     initialize_ospray();
@@ -210,9 +220,7 @@ namespace ospRandSphereTest {
     model.addGeometry(spheres.first);
     model.commit();
 
-    DefaultCameraParser cameraClParser;
-    cameraClParser.parse(ac, av);
-    auto camera = cameraClParser.camera();
+    auto camera = ospray::cpp::Camera("perspective");
     setupCamera(camera, spheres.second);
 
     ospray::cpp::Renderer renderer;
@@ -230,50 +238,48 @@ namespace ospRandSphereTest {
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
     fb.clear(OSP_FB_ACCUM);
 
+    auto bencher = pico_bench::Benchmarker<milliseconds>{numFrames};
+
     if (runDistributed) {
+
+      if (mpicommon::IamTheMaster()) {
+        std::cout << "Benchmark results will be in (ms)" << '\n';
+        std::cout << "...starting distributed tests" << '\n';
+      }
 
       mpicommon::world.barrier();
 
-      auto frameStartTime = ospcommon::getSysTime();
-
-      for (int i = 0; i < numFrames; ++i) {
-        if (mpicommon::IamTheMaster())
-          std::cout << "rendering frame " << i << std::endl;
-
+      auto stats = bencher([&](){
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      }
-
-      double seconds = ospcommon::getSysTime() - frameStartTime;
+      });
 
       if (mpicommon::IamTheMaster()) {
+        std::cout << stats << '\n';
         auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-        writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
+        utility::writePPM("randomSphereTestDistributed.ppm",
+                          fbSize.x, fbSize.y, lfb);
         fb.unmap(lfb);
         std::cout << "\noutput: 'randomSphereTestDistributed.ppm'" << std::endl;
-        std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
-                  << numFrames / seconds << " frames per second" << std::endl;
       }
 
       mpicommon::world.barrier();
 
     } else {
 
-      auto frameStartTime = ospcommon::getSysTime();
+      std::cout << "Benchmark results will be in (ms)" << '\n';
+      std::cout << "...starting non-distributed tests" << '\n';
 
-      for (int i = 0; i < numFrames; ++i) {
-        std::cout << "rendering frame " << i << std::endl;
-
+      auto stats = bencher([&](){
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      }
+      });
 
-      double seconds = ospcommon::getSysTime() - frameStartTime;
+      std::cout << stats << '\n';
 
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
+      utility::writePPM("randomSphereTestLocal.ppm",
+                        fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'randomSphereTestLocal.ppm'" << std::endl;
-      std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
-                << numFrames / seconds << " frames per second" << std::endl;
 
     }
 

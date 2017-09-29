@@ -126,16 +126,14 @@ namespace ospray {
 
     void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
-    const int32 maxDepth = getParam1i("maxDepth", 20);
-    const float minContribution = getParam1f("minContribution", 0.01f);
+    const int32 rouletteDepth = getParam1i("rouletteDepth", 5);
     const float maxRadiance = getParam1f("maxContribution",
                                          getParam1f("maxRadiance", inf));
     Texture2D *backplate = (Texture2D*)getParamObject("backplate", nullptr);
     const vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
 
     ispc::PathTracer_set(getIE()
-        , maxDepth
-        , minContribution
+        , rouletteDepth
         , maxRadiance
         , backplate ? backplate->getIE() : nullptr
         , (ispc::vec4f&)shadowCatcherPlane

@@ -31,16 +31,16 @@ namespace ospray {
 
   /*! \brief create a material of given type */
   ospray::Material *SimpleAO::createMaterial(const char * /*type*/)
-  { 
+  {
     return new simpleao::Material;
   }
 
   /*! \brief common function to help printf-debugging */
   std::string SimpleAO::toString() const
   {
-    return "ospray::render::SimpleAO"; 
+    return "ospray::render::SimpleAO";
   }
-  
+
   /*! \brief commit the object's outstanding changes
    *         (such as changed parameters etc) */
   void SimpleAO::commit()
@@ -48,7 +48,7 @@ namespace ospray {
     Renderer::commit();
 
     int   numSamples = getParam1i("aoSamples", defaultNumSamples);
-    float rayLength  = getParam1f("aoOcclusionDistance", 1e20f);
+    float rayLength  = getParam1f("aoDistance", 1e20f);
     ispc::SimpleAO_set(getIE(), numSamples, rayLength);
   }
 

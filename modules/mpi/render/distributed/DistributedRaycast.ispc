@@ -96,13 +96,24 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   } else {
     // Spheres are cheap to shade so it's fine we do it early, potentially tossing
     // the result if the volume is opaque before the hit. This also assumes that
-    // the spheres are opaque.
+    // the spheres are opaque, since we treat the hit point as the end of the
+    // ray, and send alpha to 1 for this sample.
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
     postIntersect(self->super.model, dg, sample.ray,
                   DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
-    sample.rgb = make_vec3f(dg.color) *
-                 abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
+    const vec3f matColor = make_vec3f(dg.color);
+    const vec3f specColor = make_vec3f(0.6);
+    const vec3f viewDir = normalize(negate(sample.ray.dir));
+    // TODO: read the light params?
+    const vec3f lightDir = normalize(make_vec3f(1.0));
+    const vec3f dgNormal = normalize(dg.Ns);
+    // Hard-coded Blinn-Phong. TODO: Materials API support
+    sample.rgb = matColor * make_vec3f(0.05);
+    if (dot(lightDir, dgNormal) > 0.0) {
+      sample.rgb = sample.rgb + matColor * dot(lightDir, dgNormal)
+                + specColor * pow(dot(dgNormal, normalize(viewDir + lightDir)), 20);
+    }
     sample.alpha = 1.f;
   }
 
@@ -114,6 +125,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     float t0, t1;
     Volume *uniform volume = self->super.model->volumes[0];
     intersectBox(ray, volume->boundingBox, t0, t1);
+    t1 = min(t1, sample.ray.t);
     if (t0 < t1 && t0 >= ray.t0 && t0 <= ray.t) {
       // Sample offset placement correction, like in the data-parallel
       // raycast renderer. We must offset and step as if we're sampling a continuous
@@ -129,7 +141,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       // Now raymarch the volume
       while (ray.t0 < ray.t && volumeColor.w < 1.0) {
         const vec3f coordinates = ray.org + ray.t0 * ray.dir;
-        const float sample = volume->computeSample(volume, coordinates);
+        const float sample = volume->sample(volume, coordinates);
 
         TransferFunction *uniform tfcn = volume->transferFunction;
         // Look up the color associated with the volume sample.
@@ -143,12 +155,9 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         volumeColor = volumeColor + (1.f - volumeColor.w) * color;
 
         // Advance the ray
-        volume->intersect(volume, ray);
+        volume->stepRay(volume, ray, volume->samplingRate);
       }
       volumeColor.w = clamp(volumeColor.w);
-      if (sample.ray.geomID < 0) {
-        sample.z = t1;
-      }
     }
   }
   // Composite the geometry

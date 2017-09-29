@@ -14,21 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
 #include "ospray/ospray_cpp/Camera.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/Device.h"
+#include "ospray/ospray_cpp/Model.h"
 #include "ospray/ospray_cpp/FrameBuffer.h"
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
-// ospray apps
-#include "common/commandline/CameraParser.h"
-#include "widgets/imguiViewer.h"
+// pico_bench
+#include "apps/bench/pico_bench/pico_bench.h"
 // stl
 #include <random>
+#include "gensv/generateSciVis.h"
 
 #define RUN_LOCAL 0
 
@@ -53,6 +56,10 @@
  * avoid any artifacts. For example, if a sphere center is on the border
  * between two nodes, each would render half the sphere and the halves
  * would be composited to produce the final complete sphere in the image.
+ *
+ * See gensv::makeVolume for an example of how to properly load a volume
+ * distributed across ranks with correct specification of brick positions
+ * and ghost voxels.
  */
 
 namespace ospRandSciVisTest {
@@ -66,175 +73,27 @@ namespace ospRandSciVisTest {
   bool  runDistributed    = true;
   int   logLevel          = 0;
 
-  //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
-  // helper function to write the rendered image as PPM file
-  void writePPM(const std::string &fileName,
-                const int sizeX, const int sizeY,
-                const uint32_t *pixel)
-  {
-    FILE *file = fopen(fileName.c_str(), "wb");
-    fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-    unsigned char *out = (unsigned char *)alloca(3*sizeX);
-    for (int y = 0; y < sizeY; y++) {
-      auto *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-      for (int x = 0; x < sizeX; x++) {
-        out[3*x + 0] = in[4*x + 0];
-        out[3*x + 1] = in[4*x + 1];
-        out[3*x + 2] = in[4*x + 2];
-      }
-      fwrite(out, 3*sizeX, sizeof(char), file);
-    }
-    fprintf(file, "\n");
-    fclose(file);
-  }
-
-  // Compute an X x Y x Z grid to have num bricks,
-  // only gives a nice grid for numbers with even factors since
-  // we don't search for factors of the number, we just try dividing by two
-  vec3i computeGrid(int num)
-  {
-    vec3i grid(1);
-    int axis = 0;
-    while (num % 2 == 0) {
-      grid[axis] *= 2;
-      num /= 2;
-      axis = (axis + 1) % 3;
-    }
-    if (num != 1) {
-      grid[axis] = num;
-    }
-    return grid;
-  }
-
-  /* This function generates the rank's local geometry within its
-   * volume's bounding box. The bbox represents say its simulation
-   * or owned data region.
-   */
-  ospray::cpp::Geometry makeSpheres(const box3f &bbox)
-  {
-    struct Sphere
-    {
-      vec3f org;
-      int colorID {0};
-    };
-
-    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
-    auto myRank   = mpicommon::globalRank();
-
-    std::vector<Sphere> spheres(numSpheresPerNode);
-
-    std::mt19937 rng;
-    rng.seed(std::random_device()());
-
-    // Generate spheres within this nodes volume, to keep the data disjoint.
-    // We also leave some buffer space on the boundaries to avoid clipping
-    // artifacts or needing duplication across nodes in the case a sphere
-    // crosses a boundary. Note: Since we don't communicated ghost regions
-    // among the nodes, we make sure not to generate any spheres which would
-    // be clipped.
-    std::uniform_real_distribution<float> dist_x(bbox.lower.x + sphereRadius,
-                                                 bbox.upper.x - sphereRadius);
-    std::uniform_real_distribution<float> dist_y(bbox.lower.y + sphereRadius,
-                                                 bbox.upper.y - sphereRadius);
-    std::uniform_real_distribution<float> dist_z(bbox.lower.z + sphereRadius,
-                                                 bbox.upper.z - sphereRadius);
-
-    for (auto &s : spheres) {
-      s.org.x = dist_x(rng);
-      s.org.y = dist_y(rng);
-      s.org.z = dist_z(rng);
-    }
-
-    ospray::cpp::Data sphere_data(numSpheresPerNode * sizeof(Sphere),
-                                  OSP_UCHAR, spheres.data());
-
-
-    const float r = (numRanks - myRank) / numRanks;
-    const float b = myRank / numRanks;
-    const float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
-    vec4f color(r, g, b, 1.f);
-    ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
-
-    ospray::cpp::Geometry geom("spheres");
-    geom.set("spheres", sphere_data);
-    geom.set("color", color_data);
-    geom.set("offset_colorID", int(sizeof(vec3f)));
-    geom.set("radius", sphereRadius);
-    geom.commit();
-
-    return geom;
-  }
-
-  /* Generate this rank's volume data. The volumes are placed in
-   * cells of the grid computed in 'computeGrid' based on the number
-   * of ranks with each rank owning a specific cell in the gridding.
-   * The coloring is based on color-mapping the ranks id.
-   * The region occupied by the volume is then used to be the rank's
-   * overall region bounds and will be the bounding box for the
-   * generated geometry as well.
-   */
-  std::pair<ospray::cpp::Volume, box3f> makeVolume()
-  {
-    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
-    auto myRank   = mpicommon::globalRank();
-
-    ospray::cpp::TransferFunction transferFcn("piecewise_linear");
-    const std::vector<vec3f> colors = {
-      vec3f(0, 0, 0.56),
-      vec3f(0, 0, 1),
-      vec3f(0, 1, 1),
-      vec3f(0.5, 1, 0.5),
-      vec3f(1, 1, 0),
-      vec3f(1, 0, 0),
-      vec3f(0.5, 0, 0)
-    };
-    const std::vector<float> opacities = {0.015, 0.015};
-    ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
-    ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
-    colorsData.commit();
-    opacityData.commit();
-
-    const vec2f valueRange(static_cast<float>(0), static_cast<float>(numRanks));
-    transferFcn.set("colors", colorsData);
-    transferFcn.set("opacities", opacityData);
-    transferFcn.set("valueRange", valueRange);
-    transferFcn.commit();
-
-    const vec3i volumeDims(128);
-    const vec3i grid = computeGrid(numRanks);
-    ospray::cpp::Volume volume("block_bricked_volume");
-    volume.set("voxelType", "uchar");
-    volume.set("dimensions", volumeDims);
-    volume.set("transferFunction", transferFcn);
-
-    const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
-    volume.set("gridSpacing", gridSpacing);
-
-    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
-    const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
-    volume.set("gridOrigin", gridOrigin);
-
-    std::vector<unsigned char> volumeData(volumeDims.x * volumeDims.y * volumeDims.z, 0);
-    for (size_t i = 0; i < volumeData.size(); ++i) {
-      volumeData[i] = myRank;
-    }
-    volume.setRegion(volumeData.data(), vec3i(0), volumeDims);
-    volume.commit();
-
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
-    return std::make_pair(volume, bbox);
-  }
+  vec3f up;
+  vec3f pos;
+  vec3f gaze;
+  float fovy = 60.f;
+  bool customView = false;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
-    vec3f center = ospcommon::center(worldBounds);
-    vec3f diag   = worldBounds.size();
-    diag         = max(diag,vec3f(0.3f*length(diag)));
-    vec3f from   = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-    vec3f dir    = center - from;
+    if (!customView) {
+      vec3f diag = worldBounds.size();
+      diag       = max(diag,vec3f(0.3f*length(diag)));
 
-    camera.set("pos", from);
-    camera.set("dir", dir);
+      gaze = ospcommon::center(worldBounds);
+
+      pos = gaze - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+      up  = vec3f(0.f, 1.f, 0.f);
+    }
+
+    camera.set("pos", pos);
+    camera.set("dir", gaze - pos);
+    camera.set("up",  up );
     camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
 
     camera.commit();
@@ -258,6 +117,23 @@ namespace ospRandSciVisTest {
         runDistributed = false;
       } else if (arg == "--log") {
         logLevel = std::atoi(av[++i]);
+      } else if (arg == "-vp" || arg == "--eye") {
+        pos.x = atof(av[++i]);
+        pos.y = atof(av[++i]);
+        pos.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vu" || arg == "--up") {
+        up.x = atof(av[++i]);
+        up.y = atof(av[++i]);
+        up.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vi" || arg == "--gaze") {
+        gaze.x = atof(av[++i]);
+        gaze.y = atof(av[++i]);
+        gaze.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-fv" || arg == "--fovy") {
+        fovy = atof(av[++i]);
       }
     }
   }
@@ -296,16 +172,19 @@ namespace ospRandSciVisTest {
 
   extern "C" int main(int ac, const char **av)
   {
+    using namespace std::chrono;
+
     parseCommandLine(ac, av);
 
     initialize_ospray();
 
     ospray::cpp::Model model;
-    auto volume = makeVolume();
-    model.addVolume(volume.first);
+    gensv::LoadedVolume volume = gensv::makeVolume();
+    model.addVolume(volume.volume);
 
     // Generate spheres within the bounds of the volume
-    auto spheres = makeSpheres(volume.second);
+    auto spheres = gensv::makeSpheres(volume.bounds, numSpheresPerNode,
+                                      sphereRadius);
     model.addGeometry(spheres);
 
     // We must use the global world bounds, not our local bounds
@@ -324,7 +203,7 @@ namespace ospRandSciVisTest {
      * On some ranks we add some additional regions to clip the volume
      * and make some gaps, just to show usage and test multiple regions per-rank
      */
-    std::vector<box3f> regions{volume.second};
+    std::vector<box3f> regions{volume.bounds};
     bool setGap = false;
     if (mpicommon::numGlobalRanks() % 2 == 0) {
       setGap = mpicommon::globalRank() % 3 == 0;
@@ -344,9 +223,7 @@ namespace ospRandSciVisTest {
     model.set("regions", regionData);
     model.commit();
 
-    DefaultCameraParser cameraClParser;
-    cameraClParser.parse(ac, av);
-    auto camera = cameraClParser.camera();
+    auto camera = ospray::cpp::Camera("perspective");
     setupCamera(camera, worldBounds);
 
     // In the distributed mode we use the 'mpi_raycast' renderer which
@@ -367,54 +244,48 @@ namespace ospRandSciVisTest {
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
     fb.clear(OSP_FB_ACCUM);
 
+    auto bencher = pico_bench::Benchmarker<milliseconds>{numFrames};
+
     if (runDistributed) {
+
+      if (mpicommon::IamTheMaster()) {
+        std::cout << "Benchmark results will be in (ms)" << '\n';
+        std::cout << "...starting distributed tests" << '\n';
+      }
 
       mpicommon::world.barrier();
 
-      auto frameStartTime = ospcommon::getSysTime();
-
-      for (int i = 0; i < numFrames; ++i) {
-        if (mpicommon::IamTheMaster())
-          std::cout << "rendering frame " << i << std::endl;
-
+      auto stats = bencher([&](){
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      }
-
-      double seconds = ospcommon::getSysTime() - frameStartTime;
+      });
 
       // Only the OSPRay master rank will have the final framebuffer which
       // can be saved out or displayed to the user, the others only store
       // the tiles which they composite.
       if (mpicommon::IamTheMaster()) {
+        std::cout << stats << '\n';
         auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-        writePPM("randomSciVisTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
+        utility::writePPM("randomSciVisTestDistributed.ppm",
+                          fbSize.x, fbSize.y, lfb);
         fb.unmap(lfb);
         std::cout << "\noutput: 'randomSciVisTestDistributed.ppm'" << std::endl;
-        std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
-                  << numFrames / seconds << " frames per second" << std::endl;
       }
 
       mpicommon::world.barrier();
 
     } else {
 
-      auto frameStartTime = ospcommon::getSysTime();
+      std::cout << "Benchmark results will be in (ms)" << '\n';
+      std::cout << "...starting non-distributed tests" << '\n';
 
-      for (int i = 0; i < numFrames; ++i) {
-        std::cout << "rendering frame " << i << std::endl;
-
+      auto stats = bencher([&](){
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      }
-
-      double seconds = ospcommon::getSysTime() - frameStartTime;
+      });
 
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      writePPM("randomSciVisTestLocal.ppm", fbSize.x, fbSize.y, lfb);
+      utility::writePPM("randomSciVisTestLocal.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'randomSciVisTestLocal.ppm'" << std::endl;
-      std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
-                << numFrames / seconds << " frames per second" << std::endl;
-
     }
 
     return 0;

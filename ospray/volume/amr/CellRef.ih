@@ -1,0 +1,53 @@
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+// ours
+#include "AMR.ih"
+#include "AMRVolume.ih"
+
+/*! a reference to a given cell on a given level; this is what a 'node location' kernel will return */
+struct CellRef
+{
+  //! lower left front position, in unit grid space
+  vec3f pos;
+  //! width of cell, also doubles as level indicator
+  float width;
+  //! value at this cell
+  float value;
+};
+
+inline vec3f centerOf(const CellRef &cr)
+{
+  return cr.pos + make_vec3f(0.5f*cr.width);
+}
+
+inline void set(CellRef &cr, const vec3f &pos,
+                const float width, const float value)
+{
+  cr.pos   = pos;
+  cr.width = width;
+  cr.value = value;
+}
+
+  /* packet-based variant of findCell kernel */
+extern CellRef findCell(const AMR *uniform self,
+                        const varying vec3f &_worldSpacePos,
+                        const float minWidth);
+
+extern CellRef findLeafCell(const AMR *uniform self,
+                            const varying vec3f &_worldSpacePos);

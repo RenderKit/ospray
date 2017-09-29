@@ -331,7 +331,11 @@ GLFWbool _glfwRefreshContextAttribs(const _GLFWctxconfig* ctxconfig)
     };
 
     window = _glfwPlatformGetCurrentContext();
-
+    if (!window)
+    {
+        _glfwInputError(GLFW_NO_CURRENT_CONTEXT, NULL);
+        return GLFW_FALSE;
+    }
     window->context.source = ctxconfig->source;
     window->context.client = GLFW_OPENGL_API;
 

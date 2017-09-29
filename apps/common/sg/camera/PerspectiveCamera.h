@@ -24,8 +24,6 @@ namespace ospray {
     struct OSPSG_INTERFACE PerspectiveCamera : public sg::Camera
     {
       PerspectiveCamera();
-
-      void postCommit(RenderContext &ctx) override;
     };
 
   } // ::ospray::sg

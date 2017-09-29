@@ -19,18 +19,37 @@
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
 
 IF (NOT WIN32)# Internal Compiler Error on MSVC12...
+  ADD_SUBDIRECTORY(gensv)
+
   OSPRAY_CREATE_TEST(ospRandSphereTest
     ospRandSphereTest.cpp
   LINK
     ospray
     ospray_mpi_common
-    ospray_commandline
   )
+
   OSPRAY_CREATE_TEST(ospRandSciVisTest
     ospRandSciVisTest.cpp
   LINK
     ospray
     ospray_mpi_common
-    ospray_commandline
+    gensv
   )
+
+  OSPRAY_CREATE_TEST(ospDDLoader
+    ospDDLoader.cpp
+  LINK
+    ospray
+    ospray_mpi_common
+    ospray_tfn
+    gensv
+  )
+
+  OPTION(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
+    ${OSPRAY_APPS_EXAMPLEVIEWER})
+
+  IF (OSPRAY_MODULE_MPI_APPS)
+    INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+    ADD_SUBDIRECTORY(viewer)
+  ENDIF()
 ENDIF()

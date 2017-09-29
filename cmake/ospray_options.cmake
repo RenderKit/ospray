@@ -19,8 +19,8 @@
 ##############################################################
 
 SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 3)
-SET(OSPRAY_VERSION_PATCH 1)
+SET(OSPRAY_VERSION_MINOR 4)
+SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
@@ -143,6 +143,7 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
         ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
         ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
         ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER}
+        ${TBB_ROOT}/bin
       )
       FIND_FILE(TBB_DLL tbb.dll HINTS ${TBB_DLL_HINTS})
       FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})

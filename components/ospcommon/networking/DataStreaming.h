@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../common.h"
+#include "../utility/ArrayView.h"
 
 #include <vector>
 
@@ -29,7 +30,7 @@ namespace ospcommon {
       virtual void write(void *mem, size_t size) = 0;
       virtual void flush() {}
     };
-      
+
     /*! abstraction of an object that we can read (raw) data from to
       then de-serialize into work objects */
     struct ReadStream
@@ -52,25 +53,13 @@ namespace ospcommon {
       return buf;
     }
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors
-
-      \warning This code is often _expensive_ - if this, is for
-      example, a std::vector<byte>, then we'll do a buf.write for each
-      and every one of these vector entries. for cases like the, what
-      the caller _should_ do is to manually write first the size, and
-      then _all_ items in a single block. Still, it is good to have
-      this in here for correctness, so I'll leave it in here - the
-      alternative would be to explciitly 'throw' an execptoin in there
-      to prevent the user from using this slow-path in the first place.
-      Finally - last comment on this - we might actually want to do add
-      some templates
-     */
+    /*! @{ stream operators into/out of read/write streams, for std::vectors */
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
-      buf << rh.size();
-      for (const T &v : rh)
-        buf << v;
+      const size_t sz = rh.size();
+      buf << sz;
+      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
       return buf;
     }
 
@@ -80,26 +69,38 @@ namespace ospcommon {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      for (T &v : rh)
-        buf >> v;
+      buf.read((byte_t*)rh.data(), sizeof(T)*sz);
       return buf;
     }
     /*! @} */
-      
+
+    /*! @{ stream operators into/out of read/write streams, for ArrayView<T> */
+    template<typename T>
+    inline WriteStream &operator<<(WriteStream &buf,
+                                   const utility::ArrayView<T> &rh)
+    {
+      const size_t sz = rh.size();
+      buf << sz;
+      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
+      return buf;
+    }
+    /*! @} */
+
     /*! @{ serialize operations for strings */
     inline WriteStream &operator<<(WriteStream &buf, const std::string &rh)
     {
-      buf << rh.size();
-      buf.write((byte_t*)rh.c_str(), rh.size());
+      const size_t sz = rh.size();
+      buf << sz;
+      buf.write((byte_t*)rh.c_str(), sz);
       return buf;
     }
 
     inline ReadStream &operator>>(ReadStream &buf, std::string &rh)
     {
-      size_t size;
-      buf >> size;
-      rh = std::string(size, ' ');
-      buf.read((byte_t*)rh.data(), size);
+      size_t sz;
+      buf >> sz;
+      rh.resize(sz);
+      buf.read((byte_t*)rh.data(), sz);
       return buf;
     }
     /*! @} */

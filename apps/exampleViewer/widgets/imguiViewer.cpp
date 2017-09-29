@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2016-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,83 +15,58 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
+#include "ospcommon/utility/getEnvVar.h"
+
 #include "imguiViewer.h"
 
+#include "common/sg/common/FrameBuffer.h"
+#include "transferFunction.h"
+
 #include <imgui.h>
+#include <imguifilesystem/imguifilesystem.h>
+#include <sstream>
 
 using std::string;
 using namespace ospcommon;
-
-// Static local helper functions //////////////////////////////////////////////
-
-// helper function to write the rendered image as PPM file
-static void writePPM(const string &fileName, const int sizeX, const int sizeY,
-                     const uint32_t *pixel)
-{
-  FILE *file = fopen(fileName.c_str(), "wb");
-  fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-  unsigned char *out = (unsigned char *)alloca(3*sizeX);
-  for (int y = 0; y < sizeY; y++) {
-    const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-    for (int x = 0; x < sizeX; x++) {
-      out[3*x + 0] = in[4*x + 0];
-      out[3*x + 1] = in[4*x + 1];
-      out[3*x + 2] = in[4*x + 2];
-    }
-    fwrite(out, 3*sizeX, sizeof(char), file);
-  }
-  fprintf(file, "\n");
-  fclose(file);
-}
 
 // ImGuiViewer definitions ////////////////////////////////////////////////////
 
 namespace ospray {
 
-  ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
-                           const std::deque<cpp::Model> &model,
-                           cpp::Renderer renderer,
-                           cpp::Camera camera)
-    : ImGuiViewer(worldBounds, model, renderer,
-                  cpp::Renderer(), cpp::FrameBuffer(), camera)
-  {
-  }
+  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph)
+    : ImGuiViewer(scenegraph, nullptr)
+  {}
 
-  ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
-                           const std::deque<cpp::Model> &model,
-                           cpp::Renderer renderer,
-                           cpp::Renderer rendererDW,
-                           cpp::FrameBuffer frameBufferDW,
-                           cpp::Camera camera)
+  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph,
+                           const std::shared_ptr<sg::Node> &scenegraphDW)
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
-      sceneModels(model),
-      worldBounds(worldBounds),
-      camera(camera),
-      renderer(renderer),
-      rendererDW(rendererDW),
-      frameBufferDW(frameBufferDW)
+      scenegraph(scenegraph),
+      scenegraphDW(scenegraphDW),
+      renderEngine(scenegraph, scenegraphDW)
   {
-    if (!worldBounds.empty())
-      setWorldBounds(worldBounds[0]);
+    auto OSPRAY_DYNAMIC_LOADBALANCER=
+      utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
 
-    renderer.set("model",  sceneModels[0]);
-    renderer.set("camera", camera);
-    renderer.set("bgColor", 1.f, 1.f, 1.f, 1.f);
+    useDynamicLoadBalancer = OSPRAY_DYNAMIC_LOADBALANCER.value_or(false);
 
-    if (rendererDW) {
-      rendererDW.set("model",  sceneModels[0]);
-      rendererDW.set("camera", camera);
-      rendererDW.set("bgColor", 1.f, 1.f, 1.f, 1.f);
+    if (useDynamicLoadBalancer)
+      numPreAllocatedTiles = OSPRAY_DYNAMIC_LOADBALANCER.value();
+
+    //do initial commit to make sure bounds are correctly computed
+    scenegraph->traverse("verify");
+    scenegraph->traverse("commit");
+    auto bbox = scenegraph->child("world").bounds();
+    if (bbox.empty()) {
+      bbox.lower = vec3f(-5,0,-5);
+      bbox.upper = vec3f(5,10,5);
     }
-    renderEngine.setRenderer(renderer, rendererDW, frameBufferDW);
+    setWorldBounds(bbox);
     renderEngine.setFbSize({1024, 768});
 
-    renderEngine.scheduleObjectCommit(renderer);
-    if (rendererDW)
-      renderEngine.scheduleObjectCommit(rendererDW);
     renderEngine.start();
 
-    frameTimer = ospcommon::getSysTime();
     originalView = viewPort;
   }
 
@@ -100,14 +75,15 @@ namespace ospray {
     renderEngine.stop();
   }
 
-  void ImGuiViewer::setRenderer(OSPRenderer renderer, 
-                                OSPRenderer rendererDW,
-                                OSPFrameBuffer frameBufferDW)
+  void ImGuiViewer::mouseButton(int button, int action, int mods)
   {
-    this->renderer = renderer;
-    this->rendererDW = rendererDW;
-    this->frameBufferDW = frameBufferDW;
-    renderEngine.setRenderer(renderer,rendererDW,frameBufferDW);
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS
+        && (mods & GLFW_MOD_SHIFT))
+    {
+      const vec2f pos(currMousePos.x / static_cast<float>(windowSize.x),
+                      1.f - currMousePos.y / static_cast<float>(windowSize.y));
+      renderEngine.pick(pos);
+    }
   }
 
   void ImGuiViewer::reshape(const vec2i &newSize)
@@ -118,6 +94,8 @@ namespace ospray {
     viewPort.modified = true;
 
     renderEngine.setFbSize(newSize);
+    scenegraph->child("frameBuffer")["size"].setValue(newSize);
+
     pixelBuffer.resize(newSize.x * newSize.y);
   }
 
@@ -125,28 +103,20 @@ namespace ospray {
   {
     switch (key) {
     case ' ':
-      animationPaused = !animationPaused;
+    {
+      if (scenegraph && scenegraph->hasChild("animationcontroller"))
+      {
+        bool animating =
+            scenegraph->child("animationcontroller")["enabled"].valueAs<bool>();
+        scenegraph->child("animationcontroller")["enabled"] = !animating;
+      }
       break;
-    case '<':
-      animationFrameDelta = max(animationFrameDelta-0.01, 0.0001);
-      break;
-    case '>':
-      animationFrameDelta = min(animationFrameDelta+0.01, 1.0);
-      break;
-    case '=':
-    case '+':
-      motionSpeed *= 1.5f;
-      std::cout << "new motion speed: " << motionSpeed << std::endl;
-      break;
-    case '-':
-      motionSpeed /= 1.5f;
-      std::cout << "new motion speed: " << motionSpeed << std::endl;
-      break;
+    }
     case 'R':
       toggleRenderingPaused();
       break;
     case '!':
-      saveScreenshot("ospimguiviewer");
+      saveScreenshot("ospexampleviewer");
       break;
     case 'X':
       if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0)) {
@@ -186,7 +156,7 @@ namespace ospray {
     case 'Q':
       renderEngine.stop();
       std::exit(0);
-    break;
+      break;
     default:
       ImGui3DWidget::keypress(key);
     }
@@ -210,7 +180,8 @@ namespace ospray {
 
   void ImGuiViewer::saveScreenshot(const std::string &basename)
   {
-    writePPM(basename + ".ppm", windowSize.x, windowSize.y, pixelBuffer.data());
+    utility::writePPM(basename + ".ppm",
+                      windowSize.x, windowSize.y, pixelBuffer.data());
     std::cout << "saved current frame to '" << basename << ".ppm'" << std::endl;
   }
 
@@ -220,32 +191,39 @@ namespace ospray {
     renderingPaused ? renderEngine.stop() : renderEngine.start();
   }
 
-  void ImGuiViewer::setWorldBounds(const box3f &worldBounds) 
-  {
-    ImGui3DWidget::setWorldBounds(worldBounds);
-    aoDistance = (worldBounds.upper.x - worldBounds.lower.x)/4.f;
-    renderer.set("aoDistance", aoDistance);
-    if (rendererDW)
-      rendererDW.set("aoDistance", aoDistance);
-    renderEngine.scheduleObjectCommit(renderer);
-  }
-
   void ImGuiViewer::display()
   {
-    updateAnimation(ospcommon::getSysTime()-frameTimer);
-    frameTimer = ospcommon::getSysTime();
+    if (renderEngine.hasNewPickResult()) {
+      auto picked = renderEngine.getPickResult();
+      if (picked.hit) {
+        // No conversion operator or ctor??
+        viewPort.at.x = picked.position.x;
+        viewPort.at.y = picked.position.y;
+        viewPort.at.z = picked.position.z;
+        viewPort.modified = true;
+      }
+    }
 
     if (viewPort.modified) {
-      Assert2(camera.handle(),"ospray camera is null");
-      camera.set("pos", viewPort.from);
+      auto &camera = scenegraph->child("camera");
       auto dir = viewPort.at - viewPort.from;
-      camera.set("dir", dir);
-      camera.set("up", viewPort.up);
-      camera.set("aspect", viewPort.aspect);
-      camera.set("fovy", viewPort.openingAngle);
+      if (camera.hasChild("focusdistance"))
+        camera["focusdistance"] = length(dir);
+      dir = normalize(dir);
+      camera["dir"] = dir;
+      camera["pos"] = viewPort.from;
+      camera["up"]  = viewPort.up;
+      camera.markAsModified();
+
+      if (scenegraphDW.get()) {
+        auto &camera = scenegraphDW->child("camera");
+        camera["dir"] = dir;
+        camera["pos"] = viewPort.from;
+        camera["up"]  = viewPort.up;
+        camera.markAsModified();
+      }
 
       viewPort.modified = false;
-      renderEngine.scheduleObjectCommit(camera);
     }
 
     if (renderEngine.hasNewFrame()) {
@@ -267,62 +245,12 @@ namespace ospray {
     frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
     ImGui3DWidget::display();
 
+    lastTotalTime = ImGui3DWidget::totalTime;
+    lastGUITime = ImGui3DWidget::guiTime;
+    lastDisplayTime = ImGui3DWidget::displayTime;
+
     // that pointer is no longer valid, so set it to null
     ucharFB = nullptr;
-  }
-
-  void ImGuiViewer::updateAnimation(double deltaSeconds)
-  {
-    if (sceneModels.size() < 2)
-      return;
-    if (animationPaused)
-      return;
-    animationTimer += deltaSeconds;
-    int framesSize = sceneModels.size();
-    const int frameStart = (lockFirstAnimationFrame ? 1 : 0);
-    if (lockFirstAnimationFrame)
-      framesSize--;
-
-    if (animationTimer > animationFrameDelta)
-      {
-        animationFrameId++;
-
-        //set animation time to remainder off of delta
-        animationTimer -= int(animationTimer/deltaSeconds) * deltaSeconds;
-
-        size_t dataFrameId = animationFrameId%framesSize+frameStart;
-        if (lockFirstAnimationFrame)
-          {
-            ospcommon::affine3f xfm = ospcommon::one;
-            xfm *= ospcommon::affine3f::translate(translate)
-              * ospcommon::affine3f::scale(scale);
-            OSPGeometry dynInst =
-              ospNewInstance((OSPModel)sceneModels[dataFrameId].object(),
-                             (osp::affine3f&)xfm);
-            ospray::cpp::Model worldModel = ospNewModel();
-            ospcommon::affine3f staticXFM = ospcommon::one;
-            OSPGeometry staticInst =
-              ospNewInstance((OSPModel)sceneModels[0].object(),
-                             (osp::affine3f&)staticXFM);
-            //Carson: TODO: creating new world model every frame unecessary
-            worldModel.addGeometry(staticInst);
-            worldModel.addGeometry(dynInst);
-            renderEngine.scheduleObjectCommit(worldModel);
-            renderer.set("model",  worldModel);
-            if (rendererDW)
-              rendererDW.set("model",  worldModel);
-          }
-        else
-          {
-            renderer.set("model",  sceneModels[dataFrameId]);
-            if (rendererDW)
-              rendererDW.set("model",  sceneModels[dataFrameId]);
-          }
-
-        renderEngine.scheduleObjectCommit(renderer);
-        if (rendererDW)
-          renderEngine.scheduleObjectCommit(rendererDW);
-      }
   }
 
   void ImGuiViewer::buildGui()
@@ -336,9 +264,6 @@ namespace ospray {
 
     if (ImGui::BeginMenuBar()) {
       if (ImGui::BeginMenu("App")) {
-#if 0
-          ImGui::Checkbox("Show ImGui Demo Window", &demo_window);
-#endif
 
         ImGui::Checkbox("Auto-Rotate", &animating);
 
@@ -347,7 +272,7 @@ namespace ospray {
           toggleRenderingPaused();
 
         if (ImGui::MenuItem("Take Screenshot"))
-          saveScreenshot("ospimguiviewer");
+            saveScreenshot("ospimguiviewer");
 
         if (ImGui::MenuItem("Quit")) {
           renderEngine.stop();
@@ -361,16 +286,35 @@ namespace ospray {
         bool orbitMode = (manipulator == inspectCenterManipulator);
         bool flyMode   = (manipulator == moveModeManipulator);
 
-        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode)) {
+        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
           manipulator = inspectCenterManipulator;
-        }
-        if (ImGui::Checkbox("Fly Camera Mode", &flyMode)) {
+
+        if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
+
+        if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
           manipulator = moveModeManipulator;
-        }
 
         if (ImGui::MenuItem("Reset View")) resetView();
         if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
         if (ImGui::MenuItem("Print View")) printViewport();
+
+        ImGui::EndMenu();
+      }
+
+      if (ImGui::BeginMenu("MPI Extras")) {
+        if (ImGui::Checkbox("Use Dynamic Load Balancer",
+                            &useDynamicLoadBalancer)) {
+          setCurrentDeviceParameter("dynamicLoadBalancer",
+                                    useDynamicLoadBalancer);
+          viewPort.modified = true;
+        }
+
+        if (useDynamicLoadBalancer) {
+          if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
+            setCurrentDeviceParameter("preAllocatedTiles",
+                                      numPreAllocatedTiles);
+          }
+        }
 
         ImGui::EndMenu();
       }
@@ -380,102 +324,273 @@ namespace ospray {
 
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
-    if (ImGui::CollapsingHeader("FPS Statistics", "FPS Statistics",
-                                true, true)) {
+    if (ImGui::CollapsingHeader("Rendering Statistics", "Rendering Statistics",
+                                true, false)) {
       ImGui::NewLine();
-      ImGui::Text("OSPRay render rate: %.1f FPS", lastFrameFPS);
-      ImGui::Text("  GUI display rate: %.1f FPS", ImGui::GetIO().Framerate);
+      ImGui::Text("OSPRay render rate: %.1f fps", lastFrameFPS);
+      ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
+      ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
+      ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);
+      ImGui::Text("  display pixel time: %.1f ms", lastDisplayTime*1000.f);
+      ImGui::Text("Variance: %.3f", renderEngine.getLastVariance());
+      ImGui3DWidget::display();
       ImGui::NewLine();
     }
 
-    if (ImGui::CollapsingHeader("Renderer Parameters")) {
-      bool renderer_changed = false;
-
-      static int numThreads = -1;
-      if (ImGui::InputInt("# threads", &numThreads, 1)) {
-        renderEngine.stop();
-        renderEngine.start(numThreads);
-        renderer_changed = true;
-      }
-
-      static int ao = 1;
-      if (ImGui::SliderInt("aoSamples", &ao, 0, 32)) {
-        renderer.set("aoSamples", ao);
-        if (rendererDW)
-          rendererDW.set("aoSamples", ao);
-
-        renderer_changed = true;
-      }
-
-      if (ImGui::InputFloat("aoDistance", &aoDistance)) {
-        renderer.set("aoDistance", aoDistance);
-        if (rendererDW)
-          rendererDW.set("aoDistance", aoDistance);
-        renderer_changed = true;
-      }
-
-      static bool ao_transparency = false;
-      if (ImGui::Checkbox("ao transparency", &ao_transparency)) {
-        renderer.set("aoTransparencyEnabled", int(ao_transparency));
-        if (rendererDW)
-          rendererDW.set("aoTransparencyEnabled", int(ao_transparency));
-        renderer_changed = true;
-      }
-
-      static bool shadows = true;
-      if (ImGui::Checkbox("shadows", &shadows)) {
-        renderer.set("shadowsEnabled", int(shadows));
-        if (rendererDW)
-          rendererDW.set("shadowsEnabled", int(shadows));
-        renderer_changed = true;
-      }
-
-      static bool singleSidedLighting = true;
-      if (ImGui::Checkbox("single sided lighting", &singleSidedLighting)) {
-        renderer.set("oneSidedLighting", int(singleSidedLighting));
-        if (rendererDW)
-          rendererDW.set("oneSidedLighting", int(singleSidedLighting));
-        renderer_changed = true;
-      }
-
-      static int exponent = -6;
-      if (ImGui::SliderInt("ray epsilon (exponent)", &exponent, -10, 2)) {
-        renderer.set("epsilon", ospcommon::pow(10.f, (float)exponent));
-        if (rendererDW)
-          rendererDW.set("epsilon", ospcommon::pow(10.f, (float)exponent));
-        renderer_changed = true;
-      }
-
-      static int spp = 1;
-      if (ImGui::SliderInt("spp", &spp, -4, 16)) {
-        renderer.set("spp", spp);
-        if (rendererDW)
-          rendererDW.set("spp", spp);
-        renderer_changed = true;
-      }
-
-      static float varianceThreshold = 0.f;
-      if (ImGui::InputFloat("variance threshold", &varianceThreshold)) {
-        renderer.set("varianceThreshold", varianceThreshold);
-        renderer_changed = true;
-      }
-
-      static ImVec4 bg_color = ImColor(255, 255, 255);
-      if (ImGui::ColorEdit3("bg_color", (float*)&bg_color)) {
-        renderer.set("bgColor", bg_color.x, bg_color.y, bg_color.z);
-        if (rendererDW)
-          rendererDW.set("bgColor", bg_color.x, bg_color.y, bg_color.z);
-        renderer_changed = true;
-      }
-
-      if (renderer_changed) {
-        renderEngine.scheduleObjectCommit(renderer);
-        if (rendererDW)
-        renderEngine.scheduleObjectCommit(rendererDW);
-      }
-    }
+    if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
+      buildGUINode("root", scenegraph, 0);
 
     ImGui::End();
   }
 
-}// namepace ospray
+  void ImGuiViewer::buildGUINode(std::string name,
+                                 std::shared_ptr<sg::Node> node,
+                                 int indent)
+  {
+    int styles=0;
+    if (!node->isValid()) {
+      ImGui::PushStyleColor(ImGuiCol_Text, ImColor(200, 75, 48,255));
+      styles++;
+    }
+    std::string text("");
+    std::string nameLower=name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    std::string nodeNameLower=node->name();
+    std::transform(nodeNameLower.begin(), nodeNameLower.end(), nodeNameLower.begin(), ::tolower);
+    if (nameLower != nodeNameLower)
+      text += std::string(name+" -> "+node->name()+" : ");
+    else
+      text += std::string(name+" : ");
+    const int numChildren = node->numChildren();
+    if (node->type() == "vec3f") {
+      ImGui::Text(text.c_str());
+      ImGui::SameLine();
+      vec3f val = node->valueAs<vec3f>();
+      text = "##"+((std::ostringstream&)(std::ostringstream("")
+                                         << node.get())).str(); //TODO: use unique uuid for every node
+      if ((node->flags() & sg::NodeFlags::gui_color)) {
+        if (ImGui::ColorEdit3(text.c_str(), (float*)&val.x))
+          node->setValue(val);
+      }
+      else if ((node->flags() & sg::NodeFlags::gui_slider)) {
+        if (ImGui::SliderFloat3(text.c_str(), &val.x,
+                                node->min().get<vec3f>().x,
+                                node->max().get<vec3f>().x))
+          node->setValue(val);
+      }
+      else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
+        node->setValue(val);
+      }
+    } else if (node->type() == "vec2f") {
+      ImGui::Text(text.c_str());
+      ImGui::SameLine();
+      vec2f val = node->valueAs<vec2f>();
+      text = "##"+((std::ostringstream&)(std::ostringstream("")
+                                         << node.get())).str(); //TODO: use unique uuid for every node
+      if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
+        node->setValue(val);
+      }
+    } else if (node->type() == "vec2i") {
+      ImGui::Text(text.c_str());
+      ImGui::SameLine();
+      vec2i val = node->valueAs<vec2i>();
+      text = "##"+((std::ostringstream&)(std::ostringstream("")
+                                         << node.get())).str(); //TODO: use unique uuid for every node
+      if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
+        node->setValue(val);
+      }
+    } else if (node->type() == "float") {
+      ImGui::Text(text.c_str());
+      ImGui::SameLine();
+      float val = node->valueAs<float>();
+      text = "##"+((std::ostringstream&)(std::ostringstream("")
+                                         << node.get())).str(); //TODO: use unique uuid for every node
+      if ((node->flags() & sg::NodeFlags::gui_slider)) {
+        if (ImGui::SliderFloat(text.c_str(), &val,
+                               node->min().get<float>(),
+                               node->max().get<float>()))
+          node->setValue(val);
+      }
+      else if (ImGui::DragFloat(text.c_str(), &val, .01f)) {
+        node->setValue(val);
+      }
+    } else if (node->type() == "bool") {
+      ImGui::Text(text.c_str());
+      ImGui::SameLine();
+      bool val = node->valueAs<bool>();
+      text = "##"+((std::ostringstream&)(std::ostringstream("")
+                                         << node.get())).str(); //TODO: use unique uuid for every node
+      if (ImGui::Checkbox(text.c_str(), &val)) {
+        node->setValue(val);
+      }
+    } else if (node->type() == "int") {
+      ImGui::Text(text.c_str());
+      ImGui::SameLine();
+      int val = node->valueAs<int>();
+      text = "##"+((std::ostringstream&)(std::ostringstream("")
+                                         << node.get())).str(); //TODO: use unique uuid for every node
+      if ((node->flags() & sg::NodeFlags::gui_slider)) {
+        if (ImGui::SliderInt(text.c_str(), &val,
+                             node->min().get<int>(),
+                             node->max().get<int>()))
+          node->setValue(val);
+      }
+      else if (ImGui::DragInt(text.c_str(), &val)) {
+        node->setValue(val);
+      }
+    } else if (node->type() == "string") {
+      std::string value = node->valueAs<std::string>().c_str();
+      char* buf = (char*)malloc(value.size()+1+256);
+      strcpy(buf,value.c_str());
+      buf[value.size()] = '\0';
+      ImGui::Text(text.c_str());
+      ImGui::SameLine();
+      text = "##"+((std::ostringstream&)(std::ostringstream("")
+                                         << node.get())).str(); //TODO: use unique uuid for every node
+      if (ImGui::InputText(text.c_str(), buf,
+                           value.size()+256,
+                           ImGuiInputTextFlags_EnterReturnsTrue))
+      {
+        node->setValue(std::string(buf));
+      }
+      free(buf);
+    } else if (numChildren == 0) {
+      text += node->type();
+      ImGui::Text(text.c_str());
+    }
+
+    if (numChildren > 0) {
+      text+=node->type();
+      text += "##"+((std::ostringstream&)(std::ostringstream("")
+                                          << node.get())).str(); //TODO: use unique uuid for every node
+      if (ImGui::TreeNodeEx(text.c_str(),
+                            (indent > 1 && numChildren > 20) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
+        {
+          if (ImGui::BeginPopupContextItem("item context menu")) {
+            char buf[256];
+            buf[0]='\0';
+            static std::shared_ptr<sg::Node> copiedLink = nullptr;
+            if (ImGui::Button("CopyLink"))
+              copiedLink = node;
+            if (ImGui::Button("PasteLink"))
+            {
+              if (copiedLink)
+              {
+                copiedLink->setParent(node->parent());
+                node->parent().setChild(name, copiedLink);
+              }
+            }
+            if (ImGui::Button("Add new node..."))
+              ImGui::OpenPopup("Add new node...");
+            if (ImGui::BeginPopup("Add new node..."))
+            {
+              if (ImGui::InputText("node type: ", buf,
+                                   256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                std::cout << "add node: \"" << buf << "\"\n";
+                try {
+                  static int counter = 0;
+                  std::stringstream ss;
+                  ss << "userDefinedNode" << counter++;
+                  node->add(sg::createNode(ss.str(), buf));
+                }
+                catch (...)
+                {
+                  std::cerr << "invalid node type: " << buf << std::endl;
+                }
+              }
+              ImGui::EndPopup();
+            }
+            if (ImGui::Button("Set to new node..."))
+              ImGui::OpenPopup("Set to new node...");
+            if (ImGui::BeginPopup("Set to new node..."))
+            {
+              if (ImGui::InputText("node type: ", buf,
+                                   256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                std::cout << "set node: \"" << buf << "\"\n";
+                try {
+                  static int counter = 0;
+                  std::stringstream ss;
+                  ss << "userDefinedNode" << counter++;
+                  auto newNode = sg::createNode(ss.str(), buf);
+                  newNode->setParent(node->parent());
+                  node->parent().setChild(name, newNode);
+                }
+                catch (...)
+                {
+                  std::cerr << "invalid node type: " << buf << std::endl;
+                }
+              }
+              ImGui::EndPopup();
+            }
+            static ImGuiFs::Dialog importdlg;
+            const bool importButtonPressed = ImGui::Button("Import...");
+            const char* importpath = importdlg.chooseFileDialog(importButtonPressed);
+            if (strlen(importpath) > 0)
+            {
+              std::cout << "importing OSPSG file from path: " << importpath << std::endl;
+              sg::loadOSPSG(node, std::string(importpath));
+            }
+
+            static ImGuiFs::Dialog exportdlg;
+            const bool exportButtonPressed = ImGui::Button("Export...");
+            const char* exportpath = exportdlg.saveFileDialog(exportButtonPressed);
+            if (strlen(exportpath) > 0)
+            {
+              std::cout << "writing OSPSG file to path: " << exportpath << std::endl;
+              sg::writeOSPSG(node, std::string(exportpath));
+            }
+
+            ImGui::EndPopup();
+          }
+
+          if (node->type() == "TransferFunction") {
+            if (!node->hasChild("transferFunctionWidget")) {
+              std::shared_ptr<sg::TransferFunction> tfn =
+                std::dynamic_pointer_cast<sg::TransferFunction>(node);
+
+              node->createChildWithValue("transferFunctionWidget","Node",
+                                         TransferFunction(tfn));
+            }
+
+            auto &tfnWidget =
+              node->child("transferFunctionWidget").valueAs<TransferFunction>();
+
+            tfnWidget.render();
+            tfnWidget.drawUi();
+          }
+        }
+
+        if (!node->isValid())
+          ImGui::PopStyleColor(styles--);
+
+        for(auto child : node->children())
+          buildGUINode(child.first, child.second, ++indent);
+
+        ImGui::TreePop();
+      }
+    } else { // generic holder node
+    }
+
+    if (!node->isValid())
+      ImGui::PopStyleColor(styles--);
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip("%s", node->documentation().c_str());
+  }
+
+  void ImGuiViewer::setCurrentDeviceParameter(const std::string &param,
+                                              int value)
+  {
+    renderEngine.stop();
+
+    auto device = ospGetCurrentDevice();
+    if (device == nullptr)
+      throw std::runtime_error("FATAL: could not get current OSPDevice!");
+
+    ospDeviceSet1i(device, param.c_str(), value);
+    ospDeviceCommit(device);
+
+    if (!renderingPaused)
+      renderEngine.start();
+  }
+
+}// ::ospray

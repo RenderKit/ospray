@@ -38,9 +38,10 @@ namespace ospray {
 
       // Data members //
 
-      std::shared_ptr<sg::World>      world;      //!< world we're rendering into
+      std::shared_ptr<sg::World> world;      //!< world we're rendering into
       OSPModel currentOSPModel{nullptr};
       affine3f currentTransform{ospcommon::one};
+      float time {0.f};
 
       OSPRenderer ospRenderer {nullptr};
       int level {0};

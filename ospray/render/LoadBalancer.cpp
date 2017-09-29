@@ -43,7 +43,13 @@ namespace ospray {
       if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
+#define MAX_TILE_SIZE 128
+#if TILE_SIZE > MAX_TILE_SIZE
+      auto tilePtr = make_unique<Tile>(tileID, fb->size, accumID);
+      auto &tile   = *tilePtr;
+#else
       Tile __aligned(64) tile(tileID, fb->size, accumID);
+#endif
 
       tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
         renderer->renderTile(perFrameData, tile, tIdx);

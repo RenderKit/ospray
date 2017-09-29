@@ -23,9 +23,8 @@ struct MicrofacetConductor
 {
   BSDF super;
 
-  vec3f reflectance;
-  vec3f eta;
-  vec3f k;
+  spectrum eta;
+  spectrum k;
   GGXDistribution distribution;
 };
 
@@ -80,28 +79,23 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
 
   res.type = BSDF_GLOSSY_REFLECTION;
   res.pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
-  //res.weight = F * (G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
   res.weight = F * (G * rcp_safe(G1(self->distribution, cosThetaO, cosThetaOH)));
+
   return res;
 }
 
-inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform self, const varying linear3f* uniform frame,
-                                            vec3f reflectance, vec3f eta, vec3f k, float roughness)
+inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext*
+    uniform ctx, const varying linear3f* uniform frame, spectrum eta, spectrum k,
+    float roughness)
 {
-  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
-                   MicrofacetConductor_eval, MicrofacetConductor_sample,
-                   frame);
+  varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
 
-  self->reflectance = reflectance;
+  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
+      MicrofacetConductor_eval, MicrofacetConductor_sample, frame);
+
   self->eta = eta;
   self->k = k;
   self->distribution = make_GGXDistribution(roughnessToAlpha(roughness));
-}
 
-inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                        vec3f reflectance, vec3f eta, vec3f k, float roughness)
-{
-  varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
-  MicrofacetConductor_Constructor(self, frame, reflectance, eta, k, roughness);
   return &self->super;
 }

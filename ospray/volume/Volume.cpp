@@ -115,8 +115,10 @@ namespace ospray {
     ispc::Volume_setSamplingRate(ispcEquivalent,
                                  getParam1f("samplingRate", 0.125f));
 
-    vec3f specular = getParam3f("specular", vec3f(0.3f));
+    vec3f specular = getParam3f("specular", getParam3f("ks", getParam3f("Ks", vec3f(0.3f))));
     ispc::Volume_setSpecular(ispcEquivalent, (const ispc::vec3f &)specular);
+    float Ns = getParam1f("ns", getParam1f("Ns", 20.f));
+    ispc::Volume_setNs(ispcEquivalent, Ns);
 
     // Set the transfer function.
     TransferFunction *transferFunction =
@@ -131,6 +133,17 @@ namespace ospray {
                                                vec3f(0.f)));
     ispc::Volume_setVolumeClippingBox(ispcEquivalent,
                                       (const ispc::box3f &)volumeClippingBox);
+    
+    // Set affine transformation
+    AffineSpace3f xfm;
+    xfm.l.vx = getParam3f("xfm.l.vx",vec3f(1.f,0.f,0.f));
+    xfm.l.vy = getParam3f("xfm.l.vy",vec3f(0.f,1.f,0.f));
+    xfm.l.vz = getParam3f("xfm.l.vz",vec3f(0.f,0.f,1.f));
+    xfm.p    = getParam3f("xfm.p",   vec3f(0.f,0.f,0.f));
+    AffineSpace3f rcp_xfm = rcp(xfm);
+    ispc::Volume_setAffineTransformations(ispcEquivalent,
+					  (ispc::AffineSpace3f&)xfm, 
+					  (ispc::AffineSpace3f&)rcp_xfm);
   }
 
 } // ::ospray

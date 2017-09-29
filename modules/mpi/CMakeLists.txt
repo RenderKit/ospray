@@ -46,14 +46,6 @@ IF (OSPRAY_MODULE_MPI)
     render/MPILoadBalancer.cpp
     render/distributed/DistributedRaycast.cpp
     render/distributed/DistributedRaycast.ispc
-    render/volume/RaycastVolumeMaterial.cpp
-    render/volume/RaycastVolumeMaterial.ih
-    render/volume/RaycastVolumeMaterial.ispc
-    render/volume/RaycastVolumeRenderer.cpp
-    render/volume/RaycastVolumeRenderer.ispc
-
-    volume/DataDistributedBlockedVolume.ispc
-    volume/DataDistributedBlockedVolume.cpp
 
   LINK
 

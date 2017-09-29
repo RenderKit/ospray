@@ -40,6 +40,13 @@ namespace ospray {
       markAsModified();
     }
 
+    Node::~Node()
+    {
+      // Call ospRelease() if the value is an OSPObject handle
+      if (valueIsType<OSPObject>())
+        ospRelease(valueAs<OSPObject>());
+    }
+
     std::string Node::toString() const
     {
       return "ospray::sg::Node";
@@ -68,12 +75,12 @@ namespace ospray {
       return properties.type;
     }
 
-    SGVar Node::min() const
+    Any Node::min() const
     {
       return properties.minmax[0];
     }
 
-    SGVar Node::max() const
+    Any Node::max() const
     {
       return properties.minmax[1];
     }
@@ -98,7 +105,7 @@ namespace ospray {
       properties.type = v;
     }
 
-    void Node::setMinMax(const SGVar &minv, const SGVar &maxv)
+    void Node::setMinMax(const Any &minv, const Any &maxv)
     {
       properties.minmax.resize(2);
       properties.minmax[0] = minv;
@@ -120,12 +127,12 @@ namespace ospray {
       properties.documentation = s;
     }
 
-    void Node::setWhiteList(const std::vector<SGVar> &values)
+    void Node::setWhiteList(const std::vector<Any> &values)
     {
       properties.whitelist = values;
     }
 
-    void Node::setBlackList(const std::vector<SGVar> &values)
+    void Node::setBlackList(const std::vector<Any> &values)
     {
       properties.blacklist = values;
     }
@@ -137,29 +144,27 @@ namespace ospray {
 
     bool Node::computeValid()
     {
-#ifndef _WIN32
-# warning "Are validation node flags mutually exclusive?"
-#endif
+      bool valid = true;
 
       if ((flags() & NodeFlags::valid_min_max) &&
           properties.minmax.size() > 1) {
         if (!computeValidMinMax())
-          return false;
+          valid = false;
       }
 
       if (flags() & NodeFlags::valid_blacklist) {
-        return std::find(properties.blacklist.begin(),
+        valid &= std::find(properties.blacklist.begin(),
                          properties.blacklist.end(),
                          value()) == properties.blacklist.end();
       }
 
       if (flags() & NodeFlags::valid_whitelist) {
-        return std::find(properties.whitelist.begin(),
+        valid &= std::find(properties.whitelist.begin(),
                          properties.whitelist.end(),
                          value()) != properties.whitelist.end();
       }
 
-      return true;
+      return valid;
     }
 
     bool Node::computeValidMinMax()
@@ -174,21 +179,10 @@ namespace ospray {
 
     // Node stored value (data) interface /////////////////////////////////////
 
-    SGVar Node::value()
+    Any Node::value()
     {
-      std::lock_guard<std::mutex> lock{mutex};
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value;
-    }
-
-    void Node::setValue(SGVar val)
-    {
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        if (val != properties.value)
-          properties.value = val;
-      }
-
-      markAsModified();
     }
 
     // Update detection interface /////////////////////////////////////////////
@@ -233,19 +227,43 @@ namespace ospray {
 
     bool Node::hasChild(const std::string &name) const
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(lower);
+      auto itr = properties.children.find(name);
+      if (itr != properties.children.end())
+        return true;
+
+      std::string name_lower = name;
+      std::transform(name_lower.begin(), name_lower.end(),
+                     name_lower.begin(), ::tolower);
+
+      auto &c = properties.children;
+      itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
+        std::string node_lower = n.first;
+        std::transform(node_lower.begin(), node_lower.end(),
+                       node_lower.begin(), ::tolower);
+        return node_lower == name_lower;
+      });
+
       return itr != properties.children.end();
     }
 
     Node& Node::child(const std::string &name) const
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(lower);
+      auto itr = properties.children.find(name);
+      if (itr != properties.children.end())
+        return *itr->second;
+
+      std::string name_lower = name;
+      std::transform(name_lower.begin(), name_lower.end(),
+                     name_lower.begin(), ::tolower);
+
+      auto &c = properties.children;
+      itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
+        std::string node_lower = n.first;
+        std::transform(node_lower.begin(), node_lower.end(),
+                       node_lower.begin(), ::tolower);
+        return node_lower == name_lower;
+      });
+
       if (itr == properties.children.end()) {
         throw std::runtime_error("in node " + toString() +
                                  " : could not find sg child node with name '"
@@ -260,79 +278,79 @@ namespace ospray {
       return child(c);
     }
 
-    Node& Node::childRecursive(const std::string &name)
+    bool Node::hasChildRecursive(const std::string &name)
     {
-      mutex.lock();
-      Node* n = this;
-      auto f = n->properties.children.find(name);
-      if (f != n->properties.children.end()) {
-        mutex.unlock();
-        return *f->second;
-      }
+      bool found = hasChild(name);
 
       for (auto &child : properties.children) {
-        mutex.unlock();
+        try {
+          found |= child.second->hasChildRecursive(name);
+        }
+        catch (const std::runtime_error &) {}
+      }
+
+      return found;
+    }
+
+    Node& Node::childRecursive(const std::string &name)
+    {
+      if (hasChild(name))
+        return child(name);
+
+      for (auto &child : properties.children) {
         try {
           return child.second->childRecursive(name);
         }
         catch (const std::runtime_error &) {}
-
-        mutex.lock();
       }
 
-      mutex.unlock();
       throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
-    std::vector<std::shared_ptr<Node>> Node::children() const
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::vector<std::shared_ptr<Node>> result;
-      for (auto &child : properties.children)
-        result.push_back(child.second);
-      return result;
-    }
-
-    std::map<std::string, std::shared_ptr<Node>>& Node::childrenMap()
+    const std::map<std::string, std::shared_ptr<Node>>& Node::children() const
     {
       return properties.children;
     }
 
+    size_t Node::numChildren() const
+    {
+      return properties.children.size();
+    }
+
     void Node::add(std::shared_ptr<Node> node)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      const std::string& name = node->name();
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
+      add(node, node->name());
+    }
 
+    void Node::add(std::shared_ptr<Node> node, const std::string &name)
+    {
+      setChild(name, node);
       node->setParent(*this);
     }
 
-    Node& Node::operator+=(std::shared_ptr<Node> n)
+    void Node::remove(const std::string &name)
     {
-      add(n);
-      return *this;
+      if (hasChild(name)) {
+        child(name).properties.parent = nullptr;
+        properties.children.erase(name);
+      }
     }
 
     Node& Node::createChild(std::string name,
-                                std::string type,
-                                SGVar var,
-                                int flags,
-                                std::string documentation)
+                            std::string type,
+                            Any value,
+                            int flags,
+                            std::string documentation)
     {
-      auto child = createNode(name, type, var, flags, documentation);
+      auto child = createNode(name, type, value, flags, documentation);
       add(child);
       return *child;
     }
 
     void Node::setChild(const std::string &name,
-                            const std::shared_ptr<Node> &node)
+                        const std::shared_ptr<Node> &node)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
+      properties.children[name] = node;
 #ifndef _WIN32
 # warning "TODO: child node parent needs to be set, which requires multi-parent support"
 #endif
@@ -350,13 +368,11 @@ namespace ospray {
 
     void Node::setParent(Node &p)
     {
-      std::lock_guard<std::mutex> lock{mutex};
       properties.parent = &p;
     }
 
     void Node::setParent(const std::shared_ptr<Node> &p)
     {
-      std::lock_guard<std::mutex> lock{mutex};
       properties.parent = p.get();
     }
 
@@ -395,19 +411,26 @@ namespace ospray {
       if (operation == "print") {
         for (int i=0;i<ctx.level;i++)
           std::cout << "  ";
-        std::cout << name() << " : " << type() << "\n";
+        std::cout << name() << " : " << type() << "=\"";
+        if (type() == "string")
+          std::cout << valueAs<std::string>();
+        if (type() == "float")
+          std::cout << valueAs<float>();
+        if (type() == "vec3f")
+          std::cout << valueAs<vec3f>();
+        if (type() == "vec2i")
+          std::cout << valueAs<vec2i>();
+        std::cout << "\"\n";
       } else if (operation == "commit") {
        if (lastModified() >= lastCommitted() ||
                 childrenLastModified() >= lastCommitted())
           preCommit(ctx);
-        else 
+        else
           traverseChildren = false;
       } else if (operation == "verify") {
         if (properties.valid && childrenLastModified() < properties.lastVerified)
           traverseChildren = false;
         properties.valid = computeValid();
-        if (!properties.valid)
-          std::cout << name() << " marked invalid\n";
         properties.lastVerified = TimeStamp();
       } else if (operation == "modified") {
         markAsModified();
@@ -438,26 +461,6 @@ namespace ospray {
     }
 
     // ==================================================================
-    // Renderable
-    // ==================================================================
-
-    void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation, bool& traverseChildren)
-    {
-      Node::preTraverse(ctx,operation, traverseChildren);
-      if (operation == "render")
-        preRender(ctx);
-    }
-
-    void Renderable::postTraverse(RenderContext &ctx,
-                                  const std::string& operation)
-    {
-      Node::postTraverse(ctx,operation);
-      if (operation == "render")
-        postRender(ctx);
-    }
-
-    // ==================================================================
     // global stuff
     // ==================================================================
 
@@ -467,7 +470,7 @@ namespace ospray {
 
     std::shared_ptr<Node> createNode(std::string name,
                                      std::string type,
-                                     SGVar var,
+                                     Any value,
                                      int flags,
                                      std::string documentation)
     {
@@ -475,11 +478,11 @@ namespace ospray {
       CreatorFct creator = nullptr;
 
       if (it == nodeRegistry.end()) {
-        std::string creatorName = "ospray_create_sg_node__"+std::string(type);
+        std::string creatorName = "ospray_create_sg_node__" + type;
         creator = (CreatorFct)getSymbol(creatorName);
 
         if (!creator)
-          throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
+          throw std::runtime_error("unknown OSPRay sg::Node '" + type + "'");
 
         nodeRegistry[type] = creator;
       } else {
@@ -492,12 +495,13 @@ namespace ospray {
       newNode->setFlags(flags);
       newNode->setDocumentation(documentation);
 
-      if (var.valid()) newNode->setValue(var);
+      if (value.valid()) newNode->setValue(value);
 
       return newNode;
     }
 
     OSP_REGISTER_SG_NODE(Node);
+    //OSPRay types
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);

@@ -21,13 +21,14 @@
 #include "imgui_impl_glfw_gl3.h"
 
 #include "ospcommon/utility/CodeTimer.h"
+#include "ospcommon/utility/getEnvVar.h"
 #include "ospray/version.h"
 
 #include <stdio.h>
-#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
 #ifdef _WIN32
+#  define snprintf(buf,len, format,...) _snprintf_s(buf, len,len, format, __VA_ARGS__)
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
@@ -46,15 +47,15 @@ extern "C" void glDrawPixels( GLsizei width, GLsizei height,
                               GLenum format, GLenum type,
                               const GLvoid *pixels );
 
-namespace ospray {
+using ospcommon::utility::getEnvVar;
 
+namespace ospray {
   namespace imgui3D {
 
     bool dumpScreensDuringAnimation = false;
+    bool ImGui3DWidget::showGui = false;
 
     static ImGui3DWidget *currentWidget = nullptr;
-
-    bool ImGui3DWidget::showGui = false;
 
     // Class definitions //////////////////////////////////////////////////////
 
@@ -87,7 +88,6 @@ namespace ospray {
                 << fileName << std::endl;
     }
 
-#define INVERT_RMB
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
     vec2i ImGui3DWidget::defaultInitSize(1024,768);
@@ -97,7 +97,6 @@ namespace ospray {
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
     /*! viewport as specified on the command line */
     ImGui3DWidget::ViewPort *viewPortFromCmdLine = nullptr;
-    vec3f upVectorFromCmdLine(0,1,0);
 
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
@@ -106,14 +105,22 @@ namespace ospray {
       modified(true),
       from(0,0,-1),
       at(0,0,0),
-      up(upVectorFromCmdLine),
+      up(0,1,0),
       openingAngle(60.f),
-      aspect(1.f)
+      aspect(1.f),
+      apertureRadius(0.f)
     {
       frame = AffineSpace3fa::translate(from) * AffineSpace3fa(ospcommon::one);
     }
 
-    void ImGui3DWidget::ViewPort::snapUp()
+    void ImGui3DWidget::ViewPort::snapViewUp()
+    {
+      auto look = at - from;
+      auto right = cross(look, up);
+      up = normalize(cross(right, look));
+    }
+
+    void ImGui3DWidget::ViewPort::snapFrameUp()
     {
       if (fabsf(dot(up,frame.l.vz)) < 1e-3f)
         return;
@@ -129,6 +136,9 @@ namespace ospray {
       lastMousePos = currMousePos;
     }
 
+    void ImGui3DWidget::mouseButton(int button, int action, int mods)
+    {}
+
     ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
                                  ManipulatorMode initialManipulator,
                                  int allowedManipulators) :
@@ -139,7 +149,9 @@ namespace ospray {
       rotateSpeed(.003f),
       frameBufferMode(frameBufferMode),
       fontScale(2.f),
-      ucharFB(nullptr)
+      ucharFB(nullptr),
+	  moveModeManipulator(nullptr),
+	  inspectCenterManipulator(nullptr)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("ERROR: Can't create more than one ImGui3DWidget!");
@@ -181,17 +193,15 @@ namespace ospray {
       renderTime=-1.f;
       guiTime=-1.f;
       totalTime=-1.f;
-
     }
 
     void ImGui3DWidget::computeFrame()
     {
       viewPort.frame.l.vy = normalize(viewPort.at - viewPort.from);
       viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,viewPort.up));
-      viewPort.frame.l.vz =
-          normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+      viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
       viewPort.frame.p    = viewPort.from;
-      viewPort.snapUp();
+      viewPort.snapFrameUp();
       viewPort.modified = true;
     }
 
@@ -199,7 +209,7 @@ namespace ospray {
     {
       viewPort.up = up;
       if (up != vec3f(0.f))
-        viewPort.snapUp();
+        viewPort.snapFrameUp();
     }
 
     void ImGui3DWidget::reshape(const vec2i &newSize)
@@ -213,7 +223,7 @@ namespace ospray {
       if (animating) {
         auto *hack =
             (InspectCenter*)ImGui3DWidget::activeWindow->inspectCenterManipulator;
-        hack->rotate(-10.f * ImGui3DWidget::activeWindow->motionSpeed, 0);
+        hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
 
@@ -224,8 +234,6 @@ namespace ospray {
         if (ImGui3DWidget::animating && dumpScreensDuringAnimation) {
           char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
           static const char *dumpFileRoot;
-          if (!dumpFileRoot)
-            dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
           if (!dumpFileRoot) {
             auto rc = mkstemp(tmpFileName);
             (void)rc;
@@ -233,7 +241,7 @@ namespace ospray {
           }
 
           char fileName[100000];
-          sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(nullptr));
+          snprintf(fileName,sizeof(fileName),"%s_%08ld.ppm",dumpFileRoot,times(nullptr));
           saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
         }
 #endif
@@ -261,10 +269,9 @@ namespace ospray {
       this->worldBounds = worldBounds;
       viewPort.frame.l.vy = normalize(dir);
       viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-      viewPort.frame.l.vz =
-          normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+      viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
       viewPort.frame.p    = from;
-      viewPort.snapUp();
+      viewPort.snapFrameUp();
       viewPort.modified = true;
     }
 
@@ -288,10 +295,9 @@ namespace ospray {
         this->worldBounds = worldBounds;
         viewPort.frame.l.vy = normalize(dir);
         viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-        viewPort.frame.l.vz =
-            normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
         viewPort.frame.p    = from;
-        viewPort.snapUp();
+        viewPort.snapFrameUp();
         viewPort.modified = true;
       }
 
@@ -323,10 +329,10 @@ namespace ospray {
       auto size = defaultInitSize;
 
       auto defaultSizeFromEnv =
-        getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
+          getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
 
-      if (defaultSizeFromEnv.first) {
-        int rc = sscanf(defaultSizeFromEnv.second.c_str(),
+      if (defaultSizeFromEnv) {
+        int rc = sscanf(defaultSizeFromEnv.value().c_str(),
                         "%dx%d", &size.x, &size.y);
         if (rc != 2) {
           throw std::runtime_error("could not parse"
@@ -339,7 +345,9 @@ namespace ospray {
       if (fullScreen) {
         auto *monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-
+        if(mode == nullptr) {
+          throw std::runtime_error("could not get video mode");
+        }
         window = glfwCreateWindow(mode->width, mode->height,
                                   title, monitor, nullptr);
       }
@@ -347,11 +355,9 @@ namespace ospray {
         window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
 
       glfwMakeContextCurrent(window);
-      gl3wInit();
 
       // NOTE(jda) - move key handler registration into this class
       ImGui_ImplGlfwGL3_Init(window, true);
-
 
       glfwSetCursorPosCallback(
         window,
@@ -366,12 +372,13 @@ namespace ospray {
         window,
         [](GLFWwindow*, int button, int action, int mods) {
           ImGui3DWidget::activeWindow->currButton[button] = action;
+          ImGui3DWidget::activeWindow->mouseButton(button, action, mods);
         }
       );
 
       glfwSetCharCallback(
         window,
-       [](GLFWwindow*, unsigned int c) {
+        [](GLFWwindow*, unsigned int c) {
           ImGuiIO& io = ImGui::GetIO();
           if (c > 0 && c < 0x10000)
             io.AddInputCharacter((unsigned short)c);
@@ -443,7 +450,7 @@ namespace ospray {
           std::stringstream ss;
           ss << 1.f/currentWidget->renderTime;
           ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.8,.8,.8,1.f));
-          ImGui::Text("%s", ("FPS: " + ss.str()).c_str());
+          ImGui::Text("%s", ("fps: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
           ImGui::PopStyleColor(1);
 
@@ -500,7 +507,7 @@ namespace ospray {
             removeArgs(*ac,(char **&)av,i,2); --i;
           } else {
             ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-            ImGui3DWidget::defaultInitSize.y = atoi(av[i+1]);
+            ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
             removeArgs(*ac,(char **&)av,i,3); --i;
           }
           continue;
@@ -534,9 +541,9 @@ namespace ospray {
           auto& ay = viewPortFromCmdLine->at.y;
           auto& az = viewPortFromCmdLine->at.z;
 
-          auto& ux = upVectorFromCmdLine.x;
-          auto& uy = upVectorFromCmdLine.y;
-          auto& uz = upVectorFromCmdLine.z;
+          auto& ux = viewPortFromCmdLine->up.x;
+          auto& uy = viewPortFromCmdLine->up.y;
+          auto& uz = viewPortFromCmdLine->up.z;
 
           auto& fov = viewPortFromCmdLine->openingAngle;
 
@@ -560,11 +567,11 @@ namespace ospray {
           removeArgs(*ac,(char **&)av, i, 2); --i;
           continue;
         } if (arg == "-vu") {
-          upVectorFromCmdLine.x = atof(av[i+1]);
-          upVectorFromCmdLine.y = atof(av[i+2]);
-          upVectorFromCmdLine.z = atof(av[i+3]);
-          if (viewPortFromCmdLine)
-            viewPortFromCmdLine->up = upVectorFromCmdLine;
+          if (!viewPortFromCmdLine)
+            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
+          viewPortFromCmdLine->up.x = atof(av[i+1]);
+          viewPortFromCmdLine->up.y = atof(av[i+2]);
+          viewPortFromCmdLine->up.z = atof(av[i+3]);
           assert(i+3 < *ac);
           removeArgs(*ac,(char **&)av,i,4); --i;
           continue;
@@ -586,167 +593,22 @@ namespace ospray {
           assert(i+3 < *ac);
           removeArgs(*ac,(char **&)av,i,4); --i;
           continue;
+        } if (arg == "-fv") {
+          if (!viewPortFromCmdLine)
+            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
+          viewPortFromCmdLine->openingAngle = atof(av[i+1]);
+          assert(i+1 < *ac);
+          removeArgs(*ac,(char **&)av,i,2); --i;
+          continue;
+        } if (arg == "-ar") {
+          if (!viewPortFromCmdLine)
+            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
+          viewPortFromCmdLine->apertureRadius = atof(av[i+1]);
+          assert(i+1 < *ac);
+          removeArgs(*ac,(char **&)av,i,2); --i;
+          continue;
         }
       }
-    }
-
-    // ------------------------------------------------------------------
-    // base manipulator
-    // ------------------------------------------------------------------
-    void Manipulator::motion(ImGui3DWidget *widget)
-    {
-      auto &state = widget->currButton;
-      if (state[GLFW_MOUSE_BUTTON_RIGHT] == GLFW_PRESS) {
-        dragRight(widget,widget->currMousePos,widget->lastMousePos);
-      } else if (state[GLFW_MOUSE_BUTTON_MIDDLE] == GLFW_PRESS) {
-        dragMiddle(widget,widget->currMousePos,widget->lastMousePos);
-      } else if (state[GLFW_MOUSE_BUTTON_LEFT] == GLFW_PRESS) {
-        dragLeft(widget,widget->currMousePos,widget->lastMousePos);
-      }
-    }
-
-    // ------------------------------------------------------------------
-    // INSPECT_CENTER manipulator
-    // ------------------------------------------------------------------
-    InspectCenter::InspectCenter(ImGui3DWidget *widget)
-      : Manipulator(widget)
-      , pivot(ospcommon::center(widget->worldBounds))
-    {}
-
-    void InspectCenter::rotate(float du, float dv)
-    {
-      ImGui3DWidget::ViewPort &cam = widget->viewPort;
-      const vec3f pivot = widget->viewPort.at;//center(widget->worldBounds);
-      AffineSpace3fa xfm
-        = AffineSpace3fa::translate(pivot)
-        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
-        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
-        * AffineSpace3fa::translate(-pivot);
-      cam.frame = xfm * cam.frame;
-      cam.from  = xfmPoint(xfm,cam.from);
-      cam.at    = xfmPoint(xfm,cam.at);
-      cam.snapUp();
-      cam.modified = true;
-    }
-
-    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
-      forward/backward on right mouse button */
-    void InspectCenter::dragRight(ImGui3DWidget *widget,
-                                  const vec2i &to, const vec2i &from)
-    {
-      ImGui3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd =
-#ifdef INVERT_RMB
-#else
-        -
-#endif
-        (to.y - from.y) * 4 * widget->motionSpeed;
-      // * length(widget->worldBounds.size());
-      float oldDist = length(cam.at - cam.from);
-      float newDist = oldDist - fwd;
-      if (newDist < 1e-3f)
-        return;
-      cam.from = cam.at - newDist * cam.frame.l.vy;
-      cam.frame.p = cam.from;
-      cam.modified = true;
-    }
-
-    /*! INSPECT_CENTER::MiddleButton: move lookat/center of interest
-      forward/backward on middle mouse button */
-    void InspectCenter::dragMiddle(ImGui3DWidget *widget,
-                                   const vec2i &to, const vec2i &from)
-    {
-      ImGui3DWidget::ViewPort &cam = widget->viewPort;
-      float du = (to.x - from.x);
-      float dv = (to.y - from.y);
-
-      AffineSpace3fa xfm =
-          AffineSpace3fa::translate(widget->motionSpeed * dv * cam.frame.l.vz )
-        * AffineSpace3fa::translate(-1.0f * widget->motionSpeed
-                                    * du * cam.frame.l.vx);
-
-      cam.frame = xfm * cam.frame;
-      cam.from = xfmPoint(xfm, cam.from);
-      cam.at = xfmPoint(xfm, cam.at);
-      cam.modified = true;
-    }
-
-    void InspectCenter::dragLeft(ImGui3DWidget *widget,
-                                 const vec2i &to, const vec2i &from)
-    {
-      ImGui3DWidget::ViewPort &cam = widget->viewPort;
-      float du = (to.x - from.x) * widget->rotateSpeed;
-      float dv = (to.y - from.y) * widget->rotateSpeed;
-
-      const vec3f pivot = cam.at;
-      AffineSpace3fa xfm
-        = AffineSpace3fa::translate(pivot)
-        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
-        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
-        * AffineSpace3fa::translate(-pivot);
-      cam.frame = xfm * cam.frame;
-      cam.from  = xfmPoint(xfm,cam.from);
-      cam.at    = xfmPoint(xfm,cam.at);
-      cam.snapUp();
-      cam.modified = true;
-    }
-
-    // ------------------------------------------------------------------
-    // MOVE_MOVE manipulator - TODO.
-    // ------------------------------------------------------------------
-
-    void MoveMode::dragRight(ImGui3DWidget *widget,
-                             const vec2i &to, const vec2i &from)
-    {
-      ImGui3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd =
-#ifdef INVERT_RMB
-#else
-        -
-#endif
-        (to.y - from.y) * 4 * widget->motionSpeed;
-      cam.from = cam.from + fwd * cam.frame.l.vy;
-      cam.at   = cam.at   + fwd * cam.frame.l.vy;
-      cam.frame.p = cam.from;
-      cam.modified = true;
-    }
-
-    /*! todo */
-    void MoveMode::dragMiddle(ImGui3DWidget *widget,
-                              const vec2i &to, const vec2i &from)
-    {
-      ImGui3DWidget::ViewPort &cam = widget->viewPort;
-      float du = (to.x - from.x);
-      float dv = (to.y - from.y);
-
-      auto xfm =
-        AffineSpace3fa::translate(widget->motionSpeed * dv * cam.frame.l.vz ) *
-        AffineSpace3fa::translate(-1.0f * widget->motionSpeed * du * cam.frame.l.vx);
-
-      cam.frame = xfm * cam.frame;
-      cam.from = xfmPoint(xfm, cam.from);
-      cam.at = xfmPoint(xfm, cam.at);
-      cam.modified = true;
-    }
-
-    void MoveMode::dragLeft(ImGui3DWidget *widget,
-                            const vec2i &to, const vec2i &from)
-    {
-      ImGui3DWidget::ViewPort &cam = widget->viewPort;
-      float du = (to.x - from.x) * widget->rotateSpeed;
-      float dv = (to.y - from.y) * widget->rotateSpeed;
-
-      const vec3f pivot = cam.from; //center(widget->worldBounds);
-      AffineSpace3fa xfm
-        = AffineSpace3fa::translate(pivot)
-        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
-        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
-        * AffineSpace3fa::translate(-pivot);
-      cam.frame = xfm * cam.frame;
-      cam.from  = xfmPoint(xfm,cam.from);
-      cam.at    = xfmPoint(xfm,cam.at);
-      cam.snapUp();
-      cam.modified = true;
     }
 
     void ImGui3DWidget::keypress(char key)
@@ -758,8 +620,6 @@ namespace ospray {
         } else {
           char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
           static const char *dumpFileRoot;
-          if (!dumpFileRoot)
-            dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
 #ifndef _WIN32
           if (!dumpFileRoot) {
             auto rc = mkstemp(tmpFileName);
@@ -769,7 +629,7 @@ namespace ospray {
 #endif
           char fileName[100000];
           static int frameDumpSequenceID = 0;
-          sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
+          snprintf(fileName, sizeof(fileName), "%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
           if (ucharFB)
             saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
           return;

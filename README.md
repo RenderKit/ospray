@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.3.1 of OSPRay. For changes and new features see the
+This is release v1.4.0 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -112,8 +112,8 @@ CMake is easy:
 
 -   Create a build directory, and go into it
 
-        user@mymachine[~/Projects]: mkdir ospray/release
-        user@mymachine[~/Projects]: cd ospray/release
+        mkdir ospray/build
+        cd ospray/build
 
     (We do recommend having separate build directories for different
     configurations such as release, debug, etc).
@@ -124,8 +124,7 @@ CMake is easy:
     compiler. The default compiler on most linux machines is `gcc`, but
     it can be pointed to `clang` instead by executing the following:
 
-        user@mymachine[~/Projects/ospray/release]: cmake
-            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+        cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
     CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
@@ -134,13 +133,13 @@ CMake is easy:
 
 -   Open the CMake configuration dialog
 
-        user@mymachine[~/Projects/ospray/release]: ccmake ..
+        ccmake ..
 
 -   Make sure to properly set build mode and enable the components you
     need, etc; then type 'c'onfigure and 'g'enerate. When back on the
     command prompt, build it using
 
-        user@mymachine[~/Projects/ospray/release]: make
+        make
 
 -   You should now have `libospray.so` as well as a set of example
     application. You can test your version of OSPRay using any of the
@@ -151,9 +150,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 (2.1MB).
 
 For a deeper explanation of the concepts, design, features and
@@ -205,8 +204,8 @@ prefixed by convention with "`--osp:`") are understood:
 <table style="width:98%;">
 <caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
 <colgroup>
-<col width="32%" />
-<col width="65%" />
+<col width="33%" />
+<col width="63%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -253,13 +252,17 @@ prefixed by convention with "`--osp:`") are understood:
 </tr>
 <tr class="even">
 <td align="left"><code>--osp:logoutput &lt;dst&gt;</code></td>
-<td align="left">convenience for setting where error/status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+<td align="left">convenience for setting where status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="odd">
+<td align="left"><code>--osp:erroroutput &lt;dst&gt;</code></td>
+<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
 <td align="left"><code>--osp:device:&lt;name&gt;</code></td>
 <td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>--osp:setaffinity &lt;n&gt;</code></td>
 <td align="left">if <code>1</code>, bind software threads to hardware threads; <code>0</code> disables binding; default is <code>1</code> on KNL and <code>0</code> otherwise</td>
 </tr>
@@ -300,12 +303,53 @@ void ospDeviceSetString(OSPDevice, const char *id, const char *val);
 to set parameters on the device. The following parameters can be set on
 all devices:
 
-| Type | Name        | Description                                                                                                             |
-|:-----|:------------|:------------------------------------------------------------------------------------------------------------------------|
-| int  | numThreads  | number of threads which OSPRay should use                                                                               |
-| int  | logLevel    | logging level                                                                                                           |
-| int  | debug       | set debug mode; equivalent to logLevel=2 and numThreads=1                                                               |
-| int  | setAffinity | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose |
+<table style="width:99%;">
+<caption>Parameters shared by all devices.</caption>
+<colgroup>
+<col width="9%" />
+<col width="16%" />
+<col width="72%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">numThreads</td>
+<td align="left">number of threads which OSPRay should use</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">logLevel</td>
+<td align="left">logging level</td>
+</tr>
+<tr class="odd">
+<td align="left">string</td>
+<td align="left">logOutput</td>
+<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
+<td align="left">string</td>
+<td align="left">errorOutput</td>
+<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">debug</td>
+<td align="left">set debug mode; equivalent to logLevel=2 and numThreads=1</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">setAffinity</td>
+<td align="left">bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters shared by all devices.
 
@@ -349,6 +393,7 @@ with "`OSPRAY_`"):
 | OSPRAY\_THREADS       | equivalent to `--osp:numthreads`  |
 | OSPRAY\_LOG\_LEVEL    | equivalent to `--osp:loglevel`    |
 | OSPRAY\_LOG\_OUTPUT   | equivalent to `--osp:logoutput`   |
+| OSPRAY\_ERROR\_OUTPUT | equivalent to `--osp:erroroutput` |
 | OSPRAY\_DEBUG         | equivalent to `--osp:debug`       |
 | OSPRAY\_SET\_AFFINITY | equivalent to `--osp:setaffinity` |
 
@@ -427,9 +472,8 @@ implemented in shared libraries. To load plugin `name` from
 OSPError ospLoadModule(const char *name);
 ```
 
-Modules are searched in OS-dependent paths, which include the
-application directory. `ospLoadModule` returns `OSP_NO_ERROR` if the
-plugin could be successfully loaded.
+Modules are searched in OS-dependent paths. `ospLoadModule` returns
+`OSP_NO_ERROR` if the plugin could be successfully loaded.
 
 Objects
 -------
@@ -604,6 +648,29 @@ OSPVolume ospNewVolume(const char *type);
 The call returns `NULL` if that type of volume is not known by OSPRay,
 or else an `OSPVolume` handle.
 
+The common parameters understood by all volume variants are summarized
+in the table below.
+
+| Type  | Name                    |   Default| Description                                                                       |
+|:------|:------------------------|---------:|:----------------------------------------------------------------------------------|
+| vec2f | voxelRange              |          | minimum and maximum of the scalar values                                          |
+| bool  | gradientShadingEnabled  |     false| volume is rendered with surface shading wrt. to normalized gradient               |
+| bool  | preIntegration          |     false| use pre-integration for [transfer function](#transfer-function) lookups           |
+| bool  | singleShade             |      true| shade only at the point of maximum intensity                                      |
+| bool  | adaptiveSampling        |      true| adapt ray step size based on opacity                                              |
+| float | adaptiveScalar          |        15| modifier for adaptive step size                                                   |
+| float | adaptiveMaxSamplingRate |         2| maximum sampling rate for adaptive sampling                                       |
+| float | samplingRate            |     0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
+| vec3f | specular                |  gray 0.3| specular color for shading                                                        |
+| vec3f | volumeClippingBoxLower  |  disabled| lower coordinate (in object-space) to clip the volume values                      |
+| vec3f | volumeClippingBoxUpper  |  disabled| upper coordinate (in object-space) to clip the volume values                      |
+
+: Configuration parameters shared by all volume types.
+
+Note that if `voxelRange` is not provided for a volume then OSPRay will
+compute it based on the voxel data, which may result in slower data
+updates.
+
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because
@@ -641,34 +708,124 @@ necessary then memory for the volume is allocated on the first call to
 this function.
 
 The common parameters understood by both structured volume variants are
-summarized in the table below. If `voxelRange` is not provided for a
-volume OSPRay will compute it based on the voxel data, which may result
-in slower data updates.
+summarized in the table below.
 
-| Type   | Name                    |      Default| Description                                                                       |
-|:-------|:------------------------|------------:|:----------------------------------------------------------------------------------|
-| vec3i  | dimensions              |             | number of voxels in each dimension $(x, y, z)$                                    |
-| string | voxelType               |             | data type of each voxel, currently supported are:                                 |
-|        |                         |             | "uchar" (8 bit unsigned integer)                                                  |
-|        |                         |             | "short" (16 bit signed integer)                                                   |
-|        |                         |             | "ushort" (16 bit unsigned integer)                                                |
-|        |                         |             | "float" (32 bit single precision floating point)                                  |
-|        |                         |             | "double" (64 bit double precision floating point)                                 |
-| vec2f  | voxelRange              |             | minimum and maximum of the scalar values                                          |
-| vec3f  | gridOrigin              |  $(0, 0, 0)$| origin of the grid in world-space                                                 |
-| vec3f  | gridSpacing             |  $(1, 1, 1)$| size of the grid cells in world-space                                             |
-| bool   | gradientShadingEnabled  |        false| volume is rendered with surface shading wrt. to normalized gradient               |
-| bool   | preIntegration          |        false| use pre-integration for [transfer function](#transfer-function) lookups           |
-| bool   | singleShade             |         true| shade only at the point of maximum intensity                                      |
-| bool   | adaptiveSampling        |         true| adapt ray step size based on opacity                                              |
-| float  | adaptiveScalar          |           15| modifier for adaptive step size                                                   |
-| float  | adaptiveMaxSamplingRate |            2| maximum sampling rate for adaptive sampling                                       |
-| float  | samplingRate            |        0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
-| vec3f  | specular                |     gray 0.3| specular color for shading                                                        |
-| vec3f  | volumeClippingBoxLower  |     disabled| lower coordinate (in object-space) to clip the volume values                      |
-| vec3f  | volumeClippingBoxUpper  |     disabled| upper coordinate (in object-space) to clip the volume values                      |
+| Type   | Name        | Default     | Description                                       |
+|:-------|:------------|:------------|:--------------------------------------------------|
+| vec3i  | dimensions  |             | number of voxels in each dimension $(x, y, z)$    |
+| string | voxelType   |             | data type of each voxel, currently supported are: |
+|        |             |             | "uchar" (8 bit unsigned integer)                  |
+|        |             |             | "short" (16 bit signed integer)                   |
+|        |             |             | "ushort" (16 bit unsigned integer)                |
+|        |             |             | "float" (32 bit single precision floating point)  |
+|        |             |             | "double" (64 bit double precision floating point) |
+| vec3f  | gridOrigin  | $(0, 0, 0)$ | origin of the grid in world-space                 |
+| vec3f  | gridSpacing | $(1, 1, 1)$ | size of the grid cells in world-space             |
 
-: Parameters to configure a structured volume.
+: Additional configuration parameters for structured volumes.
+
+### Adaptive Mesh Refinement (AMR) Volume
+
+AMR volumes are specified as a list of bricks, which are levels of
+refinement in potentially overlapping regions. There can be any number
+of refinement levels and any number of bricks at any level of
+refinement. An AMR volume type is created by passing the type string
+"`amr_volume`" to `ospNewVolume`.
+
+Applications should first create an `OSPData` array which holds
+information about each brick. The following structure is used to
+populate this array (found in `ospray.h`):
+
+``` {.cpp}
+struct amr_brick_info
+{
+  box3i bounds;
+  int   refinementLevel;
+  float cellWidth;
+};
+```
+
+Then for each brick, the application should create an `OSPData` array of
+`OSPData` handles, where each handle is the data per-brick. Currently we
+only support `float` voxels.
+
+<table style="width:98%;">
+<caption>Additional configuration parameters for AMR volumes.</caption>
+<colgroup>
+<col width="12%" />
+<col width="17%" />
+<col width="19%" />
+<col width="49%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f</td>
+<td align="left">gridOrigin</td>
+<td align="left"><span class="math inline">(0, 0, 0)</span></td>
+<td align="left">origin of the grid in world-space</td>
+</tr>
+<tr class="even">
+<td align="left">vec3f</td>
+<td align="left">gridSpacing</td>
+<td align="left"><span class="math inline">(1, 1, 1)</span></td>
+<td align="left">size of the grid cells in world-space</td>
+</tr>
+<tr class="odd">
+<td align="left">string</td>
+<td align="left">amrMethod</td>
+<td align="left">current</td>
+<td align="left">sampling method; valid values are &quot;finest&quot;, &quot;current&quot;, or &quot;octant&quot;</td>
+</tr>
+<tr class="even">
+<td align="left">OSPData</td>
+<td align="left">brickInfo</td>
+<td align="left"></td>
+<td align="left">array of info defining each brick</td>
+</tr>
+<tr class="odd">
+<td align="left">OSPData</td>
+<td align="left">brickData</td>
+<td align="left"></td>
+<td align="left">array of handles to per-brick voxel data</td>
+</tr>
+</tbody>
+</table>
+
+: Additional configuration parameters for AMR volumes.
+
+Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
+like the structured volume equivalent, but they only modify the root
+(coarsest level) of refinement.
+
+### Unstructured Tetrahedral Volumes
+
+Unstructured tetrahedral volumes are defined by three arrays: vertices,
+corresponding field values, and tetrahedra indices. A tetrahedral volume
+type is created by passing the type string "`tetrahedral_volume`" to
+`ospNewVolume`.
+
+Similar to [triangle mesh](#triangle-mesh), each tetrahedra is formed by
+a group of indices into the vertices. For each vertex, the corresponding
+(by array index) data value will be used for sampling when rendering.
+Note that the index order for each tetrahedra does not matter, as OSPRay
+internally calculates vertex normals to ensure proper sampling and
+interpolation.
+
+| Type      | Name       | Description                                                         |
+|:----------|:-----------|:--------------------------------------------------------------------|
+| vec3f\[\] | vertices   | [data](#data) array of vertex positions                             |
+| float\[\] | field      | [data](#data) array of vertex data values to be sampled             |
+| vec4i\[\] | tetrahedra | [data](#data) array of tetrahedra indices (into vertices and field) |
+
+: Additional configuration parameters for tetrahedral volumes.
 
 ### Transfer Function
 
@@ -888,33 +1045,33 @@ linearly interpolated.
 
 ### Streamlines
 
-A geometry consisting of multiple stream lines of constant radius is
+A geometry consisting of multiple streamlines of constant radius is
 created by calling `ospNewGeometry` with type string "`streamlines`".
-The stream lines are internally assembled from connected (and rounded)
+The streamlines are internally assembled from connected (and rounded)
 cylinder segments and are thus perfectly round. The parameters defining
 this geometry are listed in the table below.
 
 | Type       | Name         | Description                                                  |
 |:-----------|:-------------|:-------------------------------------------------------------|
-| float      | radius       | radius of all stream lines, default 0.01                     |
-| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* stream lines   |
+| float      | radius       | radius of all streamlines, default 0.01                      |
+| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* streamlines    |
 | vec4f\[\]  | vertex.color | [data](#data) array of corresponding vertex colors (RGBA)    |
 | int32\[\]  | index        | [data](#data) array of indices to the first vertex of a link |
 
 : Parameters defining a streamlines geometry.
 
-Each stream line is specified by a set of (aligned) vec3fa control
-points in `vertex`; all vertices belonging to to the same logical stream
-line are connected via [cylinders](#cylinders) of a fixed radius
-`radius`, with additional [spheres](#spheres) at each vertex to make for
-a smooth transition between the cylinders.
+Each streamline is specified by a set of (aligned) vec3fa control points
+in `vertex`; all vertices belonging to to the same logical streamline
+are connected via [cylinders](#cylinders) of a fixed radius `radius`,
+with additional [spheres](#spheres) at each vertex to make for a smooth
+transition between the cylinders.
 
-A streamlines geometry can contain multiple disjoint stream lines, each
+A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of linear segments (or links)
 referenced via `index`: each entry `e` of the `index` array points the
 first vertex of a link (`vertex[index[e]]`) and the second vertex of the
 link is implicitly the directly following one (`vertex[index[e]+1]`).
-For example, two stream lines of vertices `(A-B-C-D)` and `(E-F-G)`,
+For example, two streamlines of vertices `(A-B-C-D)` and `(E-F-G)`,
 respectively, would internally correspond to five links (`A-B`, `B-C`,
 `C-D`, `E-F`, and `F-G`), and would be specified via an array of
 vertices `[A,B,C,D,E,F,G]`, plus an array of link indices `[0,1,2,4,5]`.
@@ -977,15 +1134,16 @@ The call returns `NULL` if that type of renderer is not known, or else
 an `OSPRenderer` handle to the created renderer. General parameters of
 all renderers are
 
-| Type         | Name              | Description                                                                         |
-|:-------------|:------------------|:------------------------------------------------------------------------------------|
-| OSPModel     | model             | the [model](#model) to render                                                       |
-| OSPCamera    | camera            | the [camera](#cameras) to be used for rendering                                     |
-| OSPLight\[\] | lights            | [data](#data) array with handles of the [lights](#lights)                           |
-| float        | epsilon           | ray epsilon to avoid self-intersections, relative to scene diameter, default 10^-6^ |
-| int          | spp               | samples per pixel, default 1                                                        |
-| int          | maxDepth          | maximum ray recursion depth                                                         |
-| float        | varianceThreshold | threshold for adaptive accumulation                                                 |
+| Type         | Name              |  Default| Description                                                                   |
+|:-------------|:------------------|--------:|:------------------------------------------------------------------------------|
+| OSPModel     | model             |         | the [model](#model) to render                                                 |
+| OSPCamera    | camera            |         | the [camera](#cameras) to be used for rendering                               |
+| OSPLight\[\] | lights            |         | [data](#data) array with handles of the [lights](#lights)                     |
+| float        | epsilon           |   10^-6^| ray epsilon to avoid self-intersections, relative to scene diameter           |
+| int          | spp               |        1| samples per pixel                                                             |
+| int          | maxDepth          |       20| maximum ray recursion depth                                                   |
+| float        | minContribution   |    0.001| sample contributions below this value will be neglected to speed-up rendering |
+| float        | varianceThreshold |        0| threshold for adaptive accumulation                                           |
 
 : Parameters understood by all renderers.
 
@@ -1112,10 +1270,10 @@ special parameters:
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">float</td>
-<td align="left">minContribution</td>
-<td align="right">0.01</td>
-<td align="left">sample contributions below this value will be neglected to speed-up rendering</td>
+<td align="left">int</td>
+<td align="left">rouletteDepth</td>
+<td align="right">5</td>
+<td align="left">ray recursion depth at which to start Russian roulette termination</td>
 </tr>
 <tr class="even">
 <td align="left">float</td>
@@ -1413,7 +1571,7 @@ green towards the top of the texture image (see also the example image
 of a normal map). If this is not the case flip the normal map vertically
 or invert its green channel.
 
-<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." style="width:60.0%" />
+<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." width="60.0%" />
 
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with "`map_`". The fetched texels
@@ -1422,9 +1580,65 @@ are multiplied by the respective parameter value. Texturing requires
 mesh](#triangle-mesh) with `vertex.texcoord` provided. The color
 textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
 encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
-linear format (and only the first component is used). The path tracer
-additionally supports [texture
-transformations](#texture-transformations) for all textures.
+linear format (and only the first component is used). Additionally, all
+textures support [texture transformations](#texture-transformations).
+
+<img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" />
+
+#### Metal
+
+The [path tracer](#path-tracer) offers a physical metal, supporting
+changing roughness and realistic color shifts at edges. To create a
+Metal material pass the type string "`Metal`" to `ospNewMaterial`. Its
+parameters are
+
+<table style="width:98%;">
+<caption>Parameters of the Metal material.</caption>
+<colgroup>
+<col width="12%" />
+<col width="14%" />
+<col width="16%" />
+<col width="55%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="right">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f[]</td>
+<td align="left">ior</td>
+<td align="right">Aluminium</td>
+<td align="left"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
+</tr>
+<tr class="even">
+<td align="left">float</td>
+<td align="left">roughness</td>
+<td align="right">0.1</td>
+<td align="left">roughness in [0–1], 0 is perfect mirror</td>
+</tr>
+</tbody>
+</table>
+
+: Parameters of the Metal material.
+
+The main appearence (mostly the color) of the Metal material is
+controled by the physical parameters `eta` and `k`, the
+wavelength-dependent, complex index of refraction. These coefficients
+are quite counterintuitive but can be found in [published
+measurements](https://refractiveindex.info/).
+
+The `roughness` parameter controls the variation of microfacets and thus
+how polished the metal will look. The roughness can be modified by a
+[texture](#texture) `map_roughness` ([texture
+transformations](#texture-transformations) are supported as well) to
+create interesting edging effects.
+
+<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
 
 #### Glass
 
@@ -1446,6 +1660,42 @@ coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
 
+<img src="https://ospray.github.io/images/material_Glass.jpg" alt="Rendering of a Glass material with orange attenuation." width="60.0%" />
+
+#### ThinGlass
+
+The [path tracer](#path-tracer) offers a thin glass material useful for
+objects with just a single surface, most prominently windows. It models
+a very thin, transparent slab, i.e. it behaves as if a second, virtual
+surface is parallel to the real geometric surface. The implementation
+accounts for multiple internal reflections between the interfaces
+(including attenuation), but neglects parallaxe effects due to its
+(virtual) thickness. To create a such a thin glass material pass the
+type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
+
+| Type  | Name                |  Default| Description                        |
+|:------|:--------------------|--------:|:-----------------------------------|
+| float | eta                 |      1.5| index of refraction                |
+| vec3f | attenuationColor    |    white| resulting color due to attenuation |
+| float | attenuationDistance |        1| distance affecting attenuation     |
+| float | thickness           |        1| virtual thickness                  |
+
+: Parameters of the ThinGlass material.
+
+For convenience the attenuation is controlled the same way as with the
+[Glass](#glass) material. Additionally, the color due to attenuation can
+be modulated with a [texture](#texture) `map_attenuationColor` ([texture
+transformations](#texture-transformations) are supported as well). The
+`thickness` parameter sets the (virtual) thickness and allows for easy
+exchange of parameters with the (real) [Glass](#glass) material;
+internally just the ratio between `attenuationDistance` and `thickness`
+is used to calculate the resulting attenuation and thus the material
+appearence.
+
+<img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
+
+<img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" />
+
 #### Luminous
 
 The [path tracer](#path-tracer) supports the Luminous material which
@@ -1454,6 +1704,8 @@ turn any geometric object into a light source. It is created by passing
 the type string "`Luminous`" to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
+
+<img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" />
 
 ### Texture
 
@@ -1496,7 +1748,7 @@ texture creating flags can be combined with a bitwise OR.
 
 ### Texture Transformations
 
-Many materials with textures also offer to manipulate the placement of
+All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
 convention shall be used. The following parameters (prefixed with
 "`texture_name.`") are combined into one transformation matrix:
@@ -1539,13 +1791,15 @@ parameters:
 : Parameters accepted by all cameras.
 
 The camera is placed and oriented in the world with `pos`, `dir` and
-`up`. The region of the camera sensor that is rendered to the image can
-be specified in normalized screen-space coordinates with `imageStart`
-(lower left corner) and `imageEnd` (upper right corner). This can be
-used, for example, to crop the image or to achieve asymmetrical view
-frusta. Note that values outside the default range of \[0–1\] are valid,
-which is useful to easily realize overscan or film gate, or to emulate a
-shifted sensor.
+`up`. OSPRay uses a right-handed coordinate system. The region of the
+camera sensor that is rendered to the image can be specified in
+normalized screen-space coordinates with `imageStart` (lower left
+corner) and `imageEnd` (upper right corner). This can be used, for
+example, to crop the image, to achieve asymmetrical view frusta, or to
+horizontally flip the image to view scenes which are specified in a
+left-handed coordinate system. Note that values outside the default
+range of \[0–1\] are valid, which is useful to easily realize overscan
+or film gate, or to emulate a shifted sensor.
 
 #### Perspective Camera
 
@@ -1583,11 +1837,11 @@ plane and thus the plane of focus is oriented parallel to the front of
 buildings, the whole façade appears sharp, as can be seen in the example
 images below.
 
-<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." width="60.0%" />
 
-<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" />
 
-<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." style="width:90.0%" />
+<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." width="90.0%" />
 
 #### Orthographic Camera
 
@@ -1611,7 +1865,7 @@ the scene that is captured in the image, can be controlled with the
 and `imageEnd`, and both methods can be combined. In any case, the
 `aspect` ratio needs to be set accordingly to get an undistorted image.
 
-<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." style="width:60.0%" />
+<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." width="60.0%" />
 
 #### Panoramic Camera
 
@@ -1622,7 +1876,7 @@ of 2:1. A panoramic camera is created by passing the type string
 "`panoramic`" to `ospNewCamera`. It is placed and oriented in the scene
 by using the [general parameters](#cameras) understood by all cameras.
 
-<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." style="width:90.0%" />
+<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." width="90.0%" />
 
 ### Picking
 
@@ -1809,13 +2063,13 @@ OSPRay in MPI mode:
 -   An MPI implementation you can build against (i.e. Intel MPI,
     MVAPICH2, etc...)
 
-Enabling the MPI module in your build
+Enabling the MPI Module in your Build
 -------------------------------------
 
-To build the MPI module the CMake variable `OSPRAY_MODULE_MPI` must be
-enabled, which can be done directly on the command line (with `-D...`)
-or through a configuration dialog (`ccmake`, `cmake-gui`), see also
-\[Compiling OSPRay\].
+To build the MPI module the CMake option `OSPRAY_MODULE_MPI` must be
+enabled, which can be done directly on the command line (with
+`-DOSPRAY_MODULE_MPI=ON`) or through a configuration dialog (`ccmake`,
+`cmake-gui`), see also [Compiling OSPRay](#compiling-ospray).
 
 This will trigger CMake to go look for an MPI implementation in your
 environment. You can then inspect the CMake value of `MPI_LIBRARY` to
@@ -1824,17 +2078,17 @@ make sure that CMake found your MPI build environment correctly.
 This will result in an OSPRay module being built. To enable using it,
 applications will need to either link `libospray_module_mpi`, or call
 
-``` {.cpp}
-ospLoadModule("mpi");
-```
+    ospLoadModule("mpi");
 
 before initializing OSPRay.
 
-Modes of using OSPRay's MPI features
+Modes of Using OSPRay's MPI Features
 ------------------------------------
 
 OSPRay provides two ways of using MPI to scale up rendering: offload and
 distributed.
+
+### Offload Rendering
 
 The "offload" rendering mode is where a single (not-distributed) calling
 application treats the OSPRay API the same as with local rendering.
@@ -1846,6 +2100,25 @@ many samples-per-pixel is very compute heavy, making it a good situation
 to use the offload feature. This can be done with any application which
 already uses OSPRay for local rendering without the need for any code
 changes.
+
+When doing MPI offload rendering, applications can optionally enable
+dynamic load balancing, which can be beneficial in certain contexts.
+This load balancing refers to the distribution of tile rendering work
+across nodes: thread-level load balancing on each node is still dynamic
+with the thread tasking system. The options for enabling/controlling the
+dynamic load balacing features on the `mpi_offload` device are found in
+the table below, which can be changed while the application is running.
+Please note that these options will likely only pay off for scenes which
+have heavy rendering load (e.g. path tracing a non-trivial scene) and
+have a lot of variance in how expensive each tile is to render.
+
+| Type | Name                |  Default| Description                           |
+|:-----|:--------------------|--------:|:--------------------------------------|
+| bool | dynamicLoadBalancer |    false| whether to use dynamic load balancing |
+
+: Parameters specific to the `mpi_offload` device
+
+### Distributed Rendering
 
 The "distributed" rendering mode is where a MPI distributed application
 (such as a scientific simulation) uses OSPRay collectively to render
@@ -1861,7 +2134,7 @@ lock-step. This mode targets using all available aggregate memory for
 very large scenes and for "in-situ" visualization where the data is
 already distributed by a simulation app.
 
-Running an application with the "offload" device
+Running an Application with the "offload" Device
 ------------------------------------------------
 
 As an example, our sample viewer can be run as a single application
@@ -1878,7 +2151,7 @@ parameter will automatically call `ospLoadModule("mpi")` to load the MPI
 module, while the application will have to load the module explicitly if
 using `ospNewDevice()`.
 
-**Option 1: single MPI launch**
+### Single MPI Launch
 
 OSPRay is initialized with the `ospInit()` function call which takes
 command line arguments in and configures OSPRay based on what it finds.
@@ -1888,21 +2161,17 @@ a worker process for OSPRay. Here's an example of running the
 ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
 `localhost` the process running the viewer itself:
 
-``` {.cpp}
-% mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer [scene_file] --osp:mpi
-```
+    mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer <scene file> --osp:mpi
 
-**Option 2: separate app/worker launches**
+### Separate Application&Worker Launches
 
 The second option is to explicitly launch the app on rank 0 and worker
 ranks on the other nodes. This is done by running `ospray_mpi_worker` on
 worker nodes and the application on the display node. Here's the same
 example above using this syntax:
 
-``` {.cpp}
-% mpirun -perhost 1 -hosts localhost ./ospExampleViewer [scene_file] --osp:mpi \
-  : -hosts c1,c2,c3,c4 ./ospray_mpi_worker --osp:mpi
-```
+    mpirun -perhost 1 -hosts localhost ./ospExampleViewer <scene file> --osp:mpi \
+      : -hosts c1,c2,c3,c4 ./ospray_mpi_worker
 
 This method of launching the application and OSPRay worker separately
 works best for applications which do not immediately call `ospInit()` in
@@ -1910,7 +2179,7 @@ their `main()` function, or for environments where application
 dependencies (such as GUI libraries) may not be available on compute
 nodes.
 
-Running an application with the "distributed" device
+Running an Application with the "distributed" Device
 ----------------------------------------------------
 
 Applications using the new distributed device should initialize OSPRay
@@ -1935,7 +2204,7 @@ with
 
 On Windows build it in the build\_directory\\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
@@ -1943,7 +2212,7 @@ The first image `firstFrame.ppm` shows the result after one call to
 `ospRenderFrame` – jagged edges and noise in the shadow can be seen.
 Calling `ospRenderFrame` multiple times enables progressive refinement,
 resulting in antialiased edges and converged shadows, shown after ten
-frames in the second image `accumulatedFrames.png`.
+frames in the second image `accumulatedFrames.ppm`.
 
 ![First frame.](https://ospray.github.io/images/tutorial_firstframe.png)
 
@@ -1969,7 +2238,77 @@ right clicking on "world" and creating an "Importer" node will add a new
 scene importer from a file. Changing the filename to an appropriate file
 will load the scene and propagate the resulting state.
 
-<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" style="width:80.0%" />
+<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" width="80.0%" />
+
+Distributed Viewer
+------------------
+
+The application `ospDistribViewerDemo` demonstrates how to write a
+distributed SciVis style interactive renderer using the distributed MPI
+device. Note that because OSPRay uses sort-last compositing it is up to
+the user to ensure that the data distribution across the nodes is
+suitable. Specifically, each nodes' data must be convex and disjoint.
+This renderer supports multiple volumes and geometries per node. To
+ensure they are composited correctly you specify a list of bounding
+regions to the model, within these regions can be arbitrary
+volumes/geometries and each rank can have as many regions as needed. As
+long as the regions are disjoint/convex the data will be rendered
+correctly. In this demo we either generate a volume, or load a RAW
+volume file if one is passed on the commandline.
+
+### Loading a RAW Volume
+
+To load a RAW volume you must specify the filename (`-f <file>`), the
+data type (`-dtype <dtype>`), the dimensions (`-dims <x> <y> <z>`) and
+the value range for the transfer function (`-range <min> <max>`). For
+example, to run on the [CSAFE dataset from the demos
+page](http://www.ospray.org/demos.html#csafe-heptane-gas-dataset) you
+would pass the following arguments:
+
+    mpirun -np <n> ./ospDistribViewerDemo \
+        -f <path to csafe>/csafe-heptane-302-volume.raw \
+        -dtype uchar -dims 302 302 302 -range 0 255
+
+The volume file will then be chunked up into an `x×y×z` grid such that
+$n = xyz$. See `loadVolume` in
+[gensv/generateSciVis.cpp](https://github.com/ospray/ospray/blob/devel/modules/mpi/apps/gensv/generateSciVis.cpp#L213)
+for an example of how to properly load a volume distributed across ranks
+with correct specification of brick positions and ghost voxels for
+interpolation at boundaries. If no volume file data is passed a volume
+will be generated instead, in that case see `makeVolume`.
+
+### Geometry
+
+The viewer can also display some randomly generated sphere geometry if
+you pass `-spheres <n>` where `n` is the number of spheres to generate
+per-node. These spheres will be generated inside the bounding box of the
+region's volume data.
+
+In the case that you have geometry crossing the boundary of nodes and
+are replicating it on both nodes to render (ghost zones, etc.) the
+region will be used by the renderer to clip rays against allowing to
+split the object between the two nodes, with each rendering half. This
+will keep the regions rendered by each rank disjoint and thus avoid any
+artifacts. For example, if a sphere center is on the border between two
+nodes, each would render half the sphere and the halves would be
+composited to produce the final complete sphere in the image.
+
+### App-initialized MPI
+
+Passing the `-appMPI` flag will have the application initialize MPI
+instead of letting OSPRay do it internally when creating the MPI
+distributed device. In this case OSPRay will not finalize MPI when
+cleaning up the device, allowing the application to use OSPRay for some
+work, shut it down and recreate everything later if needed for
+additional computation, without accidentally shutting down its MPI
+communication.
+
+### Interactive Viewer
+
+Rank 0 will open an interactive window with GLFW and display the
+rendered image. When the application state needs to update (e.g. camera
+or transfer function changes), this information is broadcasted out to
+the other nodes to update their scene data.
 
 Demos
 -----

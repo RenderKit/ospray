@@ -26,7 +26,7 @@ namespace ospray {
 
     /*! A Simple Triangle Mesh that stores vertex, normal, texcoord,
         and vertex color in separate arrays */
-    struct TriangleMesh : public sg::Geometry
+    struct OSPSG_INTERFACE TriangleMesh : public sg::Geometry
     {
       TriangleMesh();
 
@@ -35,8 +35,8 @@ namespace ospray {
 
       box3f computeBounds() const override;
 
-      void postCommit(RenderContext &ctx) override;
-      void postRender(RenderContext& ctx) override;
+      void preCommit(RenderContext& ctx) override;
+      void postCommit(RenderContext& ctx) override;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -56,60 +56,7 @@ namespace ospray {
       */
       void setFromXML(const xml::Node &node,
                       const unsigned char *binBasePtr) override;
-
-      // Data members //
-
-      OSPGeometry ospGeometry {nullptr};
-      OSPGeometry ospGeometryInstance {nullptr};
-      OSPModel    ospModel {nullptr};
-
-      // to allow memory-mapping triangle arrays (or in general,
-      // sharing data with an application) we use data arrays, not std::vector's
-
-      //! vertex (position) array
-      std::shared_ptr<DataBuffer> vertex;
-
-      //! vertex normal array. empty means 'not present'
-      std::shared_ptr<DataBuffer> normal;
-
-      //! vertex color array. empty means 'not present'
-      std::shared_ptr<DataBuffer> color;
-
-      //! vertex texture coordinate array. empty means 'not present'
-      std::shared_ptr<DataBuffer> texcoord;
-
-      //! triangle indices
-      std::shared_ptr<DataBuffer> index;
     };
-
-
-    /*! A special triangle mesh that allows per-triangle materials */
-    //TODO: add commit code to commit material list!
-    struct PTMTriangleMesh : public sg::TriangleMesh
-    {
-      /*! triangle with per-triangle material ID */
-      struct Triangle
-      {
-        uint32_t vtxID[3], materialID;
-      };
-
-      //! constructor
-      PTMTriangleMesh();
-
-      // Data members //
-
-      /*! \brief "material list" for this trianglemesh
-
-        If non-empty, the 'Triangle::materialID' indexes into this
-        list; if empty, all trianlges should use the
-        Geometry::material no matter what Triangle::materialID is set
-       */
-      std::vector<std::shared_ptr<sg::Material>> materialList;
-      std::vector<uint32_t> materialIDs;      
-
-      //! material IDs
-      OSPData primMatIDs;
-   };
 
   } // ::ospray::sg
 } // ::ospray

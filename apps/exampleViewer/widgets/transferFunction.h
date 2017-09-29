@@ -23,11 +23,12 @@ namespace ospray {
   {
   public:
 
-    TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn);
+    TransferFunction(std::shared_ptr<sg::TransferFunction> tfn);
     ~TransferFunction();
     TransferFunction(const TransferFunction &t);
     TransferFunction& operator=(const TransferFunction &t);
-    /* Draw the transfer function editor widget
+    /* Draw the transfer function editor widget, returns true if the
+     * transfer function changed
     */
     void drawUi();
     /* Render the transfer function to a 1D texture that can

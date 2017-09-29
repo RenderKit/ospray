@@ -29,9 +29,9 @@
 #include "texture/Texture2D.h"
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
 #include "common/OSPWork.h"
+#include "ospcommon/utility/getEnvVar.h"
 // std
 #include <algorithm>
 
@@ -58,6 +58,7 @@ namespace ospray {
   namespace mpi {
 
     using namespace mpicommon;
+    using ospcommon::utility::getEnvVar;
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
@@ -131,8 +132,6 @@ namespace ospray {
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
           << "#w: running MPI worker process " << worker.rank
           << "/" << worker.size << " on pid " << getpid() << "@" << hostname;
-
-      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
       // -------------------------------------------------------
       // setting up read/write streams

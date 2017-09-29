@@ -14,9 +14,12 @@
 // limitations under the License.                                             //
 // ************************************************************************** //
 
+#include "ospcommon/tasking/tasking_system_handle.h"
 #include "maml/maml.h"
 #include <atomic>
-#include <sys/times.h>
+#include <chrono>
+#include <thread>
+#include <random>
 
 struct MyHandler : public maml::MessageHandler
 {
@@ -33,7 +36,10 @@ struct MyHandler : public maml::MessageHandler
 extern "C" int main(int ac, char **av)
 {
   MPI_CALL(Init(&ac, &av));
-  srand48(times(nullptr));
+  ospcommon::tasking::initTaskingSystem();
+
+  std::mt19937 rng(std::random_device{}());
+  std::uniform_int_distribution<int> distrib(0, 255);
 
   int numRuns = 1000000;
   int rank = -1;
@@ -49,7 +55,7 @@ extern "C" int main(int ac, char **av)
 
   char *payload = (char*)malloc(payloadSize);
   for (int i=0;i<payloadSize;i++)
-    payload[i] = drand48()*256;
+    payload[i] = distrib(rng);
   
   for (int run=0;run<numRuns;run++) {
     MPI_CALL(Barrier(MPI_COMM_WORLD));
@@ -58,17 +64,12 @@ extern "C" int main(int ac, char **av)
     
     for (int mID=0;mID<numMessages;mID++) {
       for (int r=0;r<numRanks;r++) {
-        // usleep(1000*drand48());
         maml::sendTo(MPI_COMM_WORLD,r,std::make_shared<maml::Message>(payload,payloadSize));
-        // maml::sendTo(MPI_COMM_WORLD,r,new maml::Message(&r,sizeof(r)));
       }
     }
 
     while (handler.numReceived != numRanks*numMessages*(run+1)) {
-      // printf("rank %i received %i/%i (maml::state %i)\n",
-      //        rank,(int)handler.numReceived,numRanks*numMessages*(run+1),
-      //        maml::state);
-      usleep(10000);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     maml::stop();

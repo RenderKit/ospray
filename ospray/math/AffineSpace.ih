@@ -29,7 +29,7 @@ inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
                                                 const uniform vec3f vy,
                                                 const uniform vec3f vz,
                                                 const uniform vec3f p)
-{ 
+{
   uniform AffineSpace3f xfm;
   xfm.l.vx = vx;
   xfm.l.vy = vy;
@@ -38,16 +38,26 @@ inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
   return xfm;
 }
 
+inline uniform AffineSpace3f make_AffineSpace3f(const uniform LinearSpace3f l) {
+  uniform AffineSpace3f xfm; xfm.l = l; xfm.p = make_vec3f(0,0,0); return xfm;
+}
+inline uniform AffineSpace3f make_AffineSpace3f(const uniform LinearSpace3f l, const uniform vec3f p) {
+  uniform AffineSpace3f xfm; xfm.l = l; xfm.p = p; return xfm;
+}
+inline varying AffineSpace3f make_AffineSpace3f(const varying LinearSpace3f l, const varying vec3f p) {
+  varying AffineSpace3f xfm; xfm.l = l; xfm.p = p; return xfm;
+}
+
 /*! apply given affine transformation to given _point_ v */
 inline uniform vec3f xfmPoint(const uniform AffineSpace3f a, const uniform vec3f v)
 { return a.p + xfmVector(a.l, v); }
 
 /*! apply given affine transformation to given _point_ v */
-inline varying vec3f xfmPoint(const uniform AffineSpace3f a, const varying vec3f v) 
+inline varying vec3f xfmPoint(const uniform AffineSpace3f a, const varying vec3f v)
 { return a.p + xfmVector(a.l, v); }
 
 /*! apply given affine transformation to given _point_ v */
-inline varying vec3f xfmPoint(const varying AffineSpace3f a, const varying vec3f v) 
+inline varying vec3f xfmPoint(const varying AffineSpace3f a, const varying vec3f v)
 { return a.p + xfmVector(a.l, v); }
 
 /*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
@@ -55,12 +65,32 @@ inline uniform vec3f xfmVector(const uniform AffineSpace3f a, const uniform vec3
 { return xfmVector(a.l, v); }
 
 /*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
-inline varying vec3f xfmVector(const uniform AffineSpace3f a, const varying vec3f v) 
+inline varying vec3f xfmVector(const uniform AffineSpace3f a, const varying vec3f v)
 { return xfmVector(a.l, v); }
 
 /*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
-inline varying vec3f xfmVector(const varying AffineSpace3f a, const varying vec3f v) 
+inline varying vec3f xfmVector(const varying AffineSpace3f a, const varying vec3f v)
 { return xfmVector(a.l, v); }
+
+inline uniform AffineSpace3f operator+(const uniform AffineSpace3f a, const uniform AffineSpace3f b) { return make_AffineSpace3f(a.l+b.l, a.p+b.p); }
+inline varying AffineSpace3f operator+(const varying AffineSpace3f a, const varying AffineSpace3f b) { return make_AffineSpace3f(a.l+b.l, a.p+b.p); }
+
+inline uniform AffineSpace3f operator-(const uniform AffineSpace3f a, const uniform AffineSpace3f b) { return make_AffineSpace3f(a.l-b.l, a.p-b.p); }
+inline varying AffineSpace3f operator-(const varying AffineSpace3f a, const varying AffineSpace3f b) { return make_AffineSpace3f(a.l-b.l, a.p-b.p); }
+
+inline uniform AffineSpace3f operator*( const uniform float         a, const uniform AffineSpace3f b ) { return make_AffineSpace3f(a*b.l,a*b.p); }
+inline uniform AffineSpace3f operator*( const uniform AffineSpace3f a, const uniform float         b ) { return make_AffineSpace3f(a.l*b,a.p*b); }
+inline uniform AffineSpace3f operator*( const uniform AffineSpace3f a, const uniform AffineSpace3f b ) { return make_AffineSpace3f(a.l*b.l,a.l*b.p+a.p); }
+
+inline varying AffineSpace3f operator*( const varying float         a, const varying AffineSpace3f b ) { return make_AffineSpace3f(a*b.l,a*b.p); }
+inline varying AffineSpace3f operator*( const varying AffineSpace3f a, const varying float         b ) { return make_AffineSpace3f(a.l*b,a.p*b); }
+inline varying AffineSpace3f operator*( const varying AffineSpace3f a, const varying AffineSpace3f b ) { return make_AffineSpace3f(a.l*b.l,a.l*b.p + a.p); }
+
+inline uniform AffineSpace3f neg(const uniform AffineSpace3f a) { return make_AffineSpace3f(neg(a.l),neg(a.p)); }
+inline varying AffineSpace3f neg(const varying AffineSpace3f a) { return make_AffineSpace3f(neg(a.l),neg(a.p)); }
+
+inline uniform AffineSpace3f rcp( const uniform AffineSpace3f a) { uniform LinearSpace3f il = rcp(a.l); return make_AffineSpace3f(il,neg(il*a.p)); }
+inline varying AffineSpace3f rcp( const varying AffineSpace3f a) { varying LinearSpace3f il = rcp(a.l); return make_AffineSpace3f(il,neg(il*a.p)); }
 
 /*! short-hand name for AffineSpace3f */
 typedef AffineSpace3f affine3f;
@@ -80,7 +110,7 @@ struct AffineSpace2f {
 /*! create a new affine space from given basis vectors v{x,y,z} and translation p */
 inline uniform AffineSpace2f make_AffineSpace2f(const uniform LinearSpace2f l,
                                                 const uniform vec2f p)
-{ 
+{
   uniform AffineSpace2f xfm;
   xfm.l = l;
   xfm.p = p;
@@ -90,7 +120,7 @@ inline uniform AffineSpace2f make_AffineSpace2f(const uniform LinearSpace2f l,
 inline uniform AffineSpace2f make_AffineSpace2f(const uniform vec2f vx,
                                                 const uniform vec2f vy,
                                                 const uniform vec2f p)
-{ 
+{
   return make_AffineSpace2f(make_LinearSpace2f(vx, vy), p);
 }
 
@@ -105,17 +135,17 @@ inline uniform AffineSpace2f make_AffineSpace2f_identity()
 inline uniform vec2f operator*(const uniform AffineSpace2f a, const uniform vec2f v)
 { return a.l * v + a.p; }
 
-inline varying vec2f operator*(const uniform AffineSpace2f a, const varying vec2f v) 
+inline varying vec2f operator*(const uniform AffineSpace2f a, const varying vec2f v)
 { return a.l * v + a.p; }
 
-inline varying vec2f operator*(const varying AffineSpace2f a, const varying vec2f v) 
+inline varying vec2f operator*(const varying AffineSpace2f a, const varying vec2f v)
 { return a.l * v + a.p; }
 
 /*! short-hand name for AffineSpace3f */
 typedef AffineSpace2f affine2f;
 
-inline void out(uniform affine3f a) 
-{ 
+inline void out(uniform affine3f a)
+{
   print("Affine3f(");
   out(a.l.vx);
   out(a.l.vy);

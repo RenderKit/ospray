@@ -59,48 +59,25 @@ namespace ospray {
 
   void TileData::accumulate(const ospray::Tile &tile)
   {
-    vec2i dia = tile.region.upper - tile.region.lower;
-    float pixelsf = (float)dia.x * dia.y;
+    // Note: also used for FB_NONE
+    // We accumulate here to enable PixelOps working correctly...
+    // TODO this needs a better solution!
+    auto DFB_accumulate = &ispc::DFB_accumulate_RGBA32F;
     switch(dfb->colorBufferFormat) {
       case OSP_FB_RGBA8:
-        error = ispc::DFB_accumulate_RGBA8(dfb->ispcEquivalent,
-            (ispc::VaryingTile*)&tile,
-            (ispc::VaryingTile*)&this->final,
-            (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingTile*)&this->variance,
-            &this->color,
-            pixelsf,
-            dfb->hasAccumBuffer,
-            dfb->hasVarianceBuffer);
+        DFB_accumulate = &ispc::DFB_accumulate_RGBA8;
         break;
       case OSP_FB_SRGBA:
-        error = ispc::DFB_accumulate_SRGBA(dfb->ispcEquivalent,
-            (ispc::VaryingTile*)&tile,
-            (ispc::VaryingTile*)&this->final,
-            (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingTile*)&this->variance,
-            &this->color,
-            pixelsf,
-            dfb->hasAccumBuffer,
-            dfb->hasVarianceBuffer);
-        break;
-      case OSP_FB_NONE:// NOTE(jda) - We accumulate here to enable PixelOps
-                       //             working correctly here...this needs a
-                       //             better solution!
-      case OSP_FB_RGBA32F:
-        error = ispc::DFB_accumulate_RGBA32F(dfb->ispcEquivalent,
-            (ispc::VaryingTile*)&tile,
-            (ispc::VaryingTile*)&this->final,
-            (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingTile*)&this->variance,
-            &this->color,
-            pixelsf,
-            dfb->hasAccumBuffer,
-            dfb->hasVarianceBuffer);
-        break;
-    default:
-      break;
+        DFB_accumulate = &ispc::DFB_accumulate_SRGBA;
     }
+    error = DFB_accumulate((ispc::VaryingTile*)&tile
+        , (ispc::VaryingTile*)&final
+        , (ispc::VaryingTile*)&accum
+        , (ispc::VaryingTile*)&variance
+        , &color
+        , dfb->hasAccumBuffer
+        , dfb->hasVarianceBuffer
+        );
   }
 
   /*! called exactly once for each ospray::Tile that needs to get
@@ -158,27 +135,95 @@ namespace ospray {
     }
   }
 
-  /*! called exactly once at the beginning of each frame */
-  void WriteOnlyOnceTile::newFrame()
+  void WriteMultipleTile::newFrame()
   {
-    /* nothing to do for write-once tile - we *know* it'll get written
-       only once */
+    maxAccumID = 0;
+    instances = dfb->tileInstances[tileID];
+    writeOnceTile = instances <= 1;
+    tileBuffered = false;
   }
 
-  /*! called exactly once for each ospray::Tile that needs to get
-    written into / composited into this dfb tile.
-
-    for a write-once tile, we expect this to be called exactly once
-    per tile, so there's not a lot to do in here than accumulating the
-    tile data and telling the parent that we're done.
-  */
-  void WriteOnlyOnceTile::process(const ospray::Tile &tile)
+  void WriteMultipleTile::process(const ospray::Tile &tile)
   {
-    this->final.region = tile.region;
-    this->final.fbSize = tile.fbSize;
-    this->final.rcp_fbSize = tile.rcp_fbSize;
-    accumulate(tile);
-    dfb->tileIsCompleted(this);
+    if (writeOnceTile) {
+      final.region = tile.region;
+      final.fbSize = tile.fbSize;
+      final.rcp_fbSize = tile.rcp_fbSize;
+      accumulate(tile);
+      dfb->tileIsCompleted(this);
+      return;
+    }
+
+    bool done = false;
+
+    if (tile.accumID == 0) {
+      final.region = tile.region;
+      final.fbSize = tile.fbSize;
+      final.rcp_fbSize = tile.rcp_fbSize;
+
+      const auto bytes = tile.region.size().y * (TILE_SIZE * sizeof(float));
+      memcpy(accum.z, tile.z, bytes);
+      memcpy(final.z, tile.z, bytes);
+    }
+
+    {
+      SCOPED_LOCK(mutex);
+      maxAccumID = std::max(maxAccumID, tile.accumID);
+      if (!tileBuffered && (tile.accumID & 1) == 0) {
+        memcpy(&bufferedTile, &tile, sizeof(ospray::Tile));
+        tileBuffered = true;
+      } else
+        ispc::DFB_accumulate_only((ispc::VaryingTile*)&tile
+            , (ispc::VaryingTile*)&this->accum
+            , (ispc::VaryingTile*)&this->variance
+            );
+      done = --instances == 0;
+    }
+
+    if (done) {
+      // normalize and write final color, and compute error
+      auto  DFB_readout = &ispc::DFB_readout_RGBA32F;
+      switch(dfb->colorBufferFormat) {
+        case OSP_FB_RGBA8:
+          DFB_readout = &ispc::DFB_readout_RGBA8;
+          break;
+        case OSP_FB_SRGBA:
+          DFB_readout = &ispc::DFB_readout_SRGBA;
+      }
+      auto sz = tile.region.size();
+
+      if ((maxAccumID & 1) == 0) {
+        // if maxAccumID is even, variance buffer is one accumulated tile
+        // short, which leads to vast over-estimation of variance; thus
+        // estimate variance now, when accum buffer is also one (the buffered)
+        // tile short
+        const float prevErr = DFB_calcerror((ispc::vec2i&)sz
+            , (ispc::VaryingTile*)&accum
+            , (ispc::VaryingTile*)&variance
+            , maxAccumID - 1
+            );
+
+        // use maxAccumID for correct normalization
+        // this is OK, because both accumIDs are even
+        bufferedTile.accumID = maxAccumID;
+        accumulate(bufferedTile);
+        error = prevErr;
+      } else {
+        ispc::DFB_accumulate_only((ispc::VaryingTile*)&bufferedTile
+            , (ispc::VaryingTile*)&this->accum
+            , (ispc::VaryingTile*)&this->variance
+            );
+        error = DFB_readout((ispc::vec2i&)sz
+            , (ispc::VaryingTile*)&accum
+            , (ispc::VaryingTile*)&variance
+            , maxAccumID
+            , (ispc::VaryingTile*)&final
+            , &color
+            );
+      }
+
+      dfb->tileIsCompleted(this);
+    }
   }
 
   ZCompositeTile::ZCompositeTile(DistributedFrameBuffer *dfb,

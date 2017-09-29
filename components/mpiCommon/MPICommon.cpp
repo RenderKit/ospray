@@ -18,11 +18,7 @@
 
 namespace mpicommon {
 
-  /*! global variable that turns on logging of MPI communication
-    (for debugging) _may_ eventually turn this into a real logLevel,
-    but for now tihs is cleaner here thatn in the MPI device
-   */
-  OSPRAY_MPI_INTERFACE bool mpiIsThreaded = 0;
+  OSPRAY_MPI_INTERFACE bool mpiIsThreaded = false;
 
   OSPRAY_MPI_INTERFACE Group world;
   OSPRAY_MPI_INTERFACE Group app;
@@ -55,16 +51,16 @@ namespace mpicommon {
     this->comm = comm; makeIntraComm();
   }
 
-  void Group::makeInterComm(MPI_Comm comm)
-  {
-    this->comm = comm; makeInterComm();
-  }
-
   void Group::makeInterComm()
   {
     containsMe = false;
     rank = MPI_ROOT;
     MPI_CALL(Comm_remote_size(comm, &size));
+  }
+
+  void Group::makeInterComm(MPI_Comm comm)
+  {
+    this->comm = comm; makeInterComm();
   }
 
   void Group::barrier() const
@@ -128,9 +124,7 @@ namespace mpicommon {
   /*! destruct message and free allocated memory */
   Message::~Message()
   {
-    if (data) {
-      free(data);
-    }
+    free(data);
   }
 
   bool Message::isValid() const
@@ -138,7 +132,7 @@ namespace mpicommon {
     return comm != MPI_COMM_NULL && rank >= 0;
   }
 
-  void init(int *ac, const char **av)
+  bool init(int *ac, const char **av)
   {
     int initialized = false;
     MPI_CALL(Initialized(&initialized));
@@ -152,24 +146,12 @@ namespace mpicommon {
       /* MPI was already initialized by the app that called us! */
       MPI_Query_thread(&provided);
     }
+    mpiIsThreaded = provided == MPI_THREAD_MULTIPLE;
 
-    int rank;
-    MPI_CALL(Comm_rank(MPI_COMM_WORLD,&rank));
-    switch(provided) {
-    case MPI_THREAD_MULTIPLE:
-      mpiIsThreaded = true;
-      break;
-    case MPI_THREAD_SERIALIZED:
-      mpiIsThreaded = false;
-      break;
-    default:
-      throw std::runtime_error("fatal MPI error: MPI runtime doesn't offer "
-                               "even MPI_THREAD_SERIALIZED ...");
-    }
-
-    world.comm = MPI_COMM_WORLD;
-    MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
-    MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
+    MPI_CALL(Comm_dup(MPI_COMM_WORLD, &world.comm));
+    MPI_CALL(Comm_rank(world.comm, &world.rank));
+    MPI_CALL(Comm_size(world.comm, &world.size));
+    return !initialized;
   }
 
 } // ::mpicommon

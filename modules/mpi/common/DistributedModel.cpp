@@ -89,11 +89,6 @@ namespace ospray {
       }
 
       if (logLevel() >= 1) {
-        const bool asyncWasRunning = messaging::asyncMessagingEnabled();
-        messaging::disableAsyncMessaging();
-
-        // TODO: WILL: Just for making the debug log more readable,
-        // this will NOT stick around
         for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
           if (i == mpicommon::globalRank()) {
             postStatusMsg(1) << "Rank " << mpicommon::globalRank()
@@ -103,13 +98,6 @@ namespace ospray {
             }
             postStatusMsg(1) << "}";
           }
-
-          mpicommon::world.barrier();
-        }
-
-        if (asyncWasRunning) {
-          postStatusMsg("Async was running, re-enabling", 1);
-          messaging::enableAsyncMessaging();
         }
       }
     }

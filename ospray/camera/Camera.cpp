@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray 
+// ospray
 #include "Camera.h"
 #include "common/Util.h"
 #include "Camera_ispc.h"
@@ -37,14 +37,21 @@ namespace ospray {
     pos      = getParam3f("pos", vec3f(0.f));
     dir      = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
     up       = getParam3f("up", vec3f(0.f, 1.f, 0.f));
-    nearClip = getParam1f("near_clip", getParam1f("nearClip", 1e-6f));
+    nearClip = getParam1f("nearClip", getParam1f("near_clip", 1e-6f));
 
-    imageStart = getParam2f("image_start", getParam2f("imageStart", vec2f(0.f)));
-    imageEnd   = getParam2f("image_end", getParam2f("imageEnd", vec2f(1.f)));
+    imageStart = getParam2f("imageStart", getParam2f("image_start", vec2f(0.f)));
+    imageEnd   = getParam2f("imageEnd", getParam2f("image_end", vec2f(1.f)));
 
-    ispc::Camera_set(getIE(), nearClip,
-                    (const ispc::vec2f&)imageStart,
-                    (const ispc::vec2f&)imageEnd);
+    shutterOpen = getParam1f("shutterOpen", 0.0f);
+    shutterClose = getParam1f("shutterClose", 0.0f);
+
+    ispc::Camera_set(getIE()
+        , nearClip
+        , (const ispc::vec2f&)imageStart
+        , (const ispc::vec2f&)imageEnd
+        , shutterOpen
+        , shutterClose
+        );
   }
 
 } // ::ospray

@@ -23,17 +23,21 @@ namespace ospray {
 
     class FrameBuffer;
 
-    struct Renderer : public Renderable
+    struct OSPSG_INTERFACE Renderer : public Renderable
     {
       Renderer();
+      virtual std::string toString() const override;
 
       // renderer renders the scene into the framebuffer on render call.
       //  It will call render on model when commit when model modified
-      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+      virtual void traverse(RenderContext &ctx,
+                            const std::string& operation) override;
       void preRender(RenderContext &ctx) override;
       void postRender(RenderContext &ctx) override;
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
+      OSPPickResult pick(const vec2f &pickPos);
+      float getLastVariance() const;
 
     private:
 
@@ -43,6 +47,7 @@ namespace ospray {
       OSPData lightsData {nullptr};
       TimeStamp lightsBuildTime;
       TimeStamp frameMTime;
+      float variance {inf};
       std::string createdType = "none";
     };
 

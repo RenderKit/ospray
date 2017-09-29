@@ -29,14 +29,24 @@ namespace ospray {
     void SciVisMaterial::commit()
     {
       map_d  = (Texture2D*)getParamObject("map_d", nullptr);
+      affine2f xform_d  = getTextureTransform("map_d");
       map_Kd = (Texture2D*)getParamObject("map_Kd",
                                           getParamObject("map_kd", nullptr));
+      affine2f xform_Kd = getTextureTransform("map_Kd")
+        * getTextureTransform("map_kd"); 
       map_Ks = (Texture2D*)getParamObject("map_Ks",
                                           getParamObject("map_ks", nullptr));
+      affine2f xform_Ks = getTextureTransform("map_Ks")
+        * getTextureTransform("map_ks"); 
       map_Ns = (Texture2D*)getParamObject("map_Ns",
                                           getParamObject("map_ns", nullptr));
+      affine2f xform_Ns = getTextureTransform("map_Ns")
+        * getTextureTransform("map_ns"); 
       map_Bump = (Texture2D*)getParamObject("map_Bump",
                                             getParamObject("map_bump",nullptr));
+      affine2f xform_Bump = getTextureTransform("map_Bump")
+        * getTextureTransform("map_bump"); 
+      linear2f rot_Bump = xform_Bump.l.orthogonal().transposed();
 
       d  = getParam1f("d", 1.f);
       Kd = getParam3f("kd", getParam3f("Kd", vec3f(.8f)));
@@ -46,19 +56,26 @@ namespace ospray {
 
       ispc::SciVisMaterial_set(getIE(),
                                map_d ? map_d->getIE() : nullptr,
+                               (const ispc::AffineSpace2f&)xform_d,
                                d,
                                map_Kd ? map_Kd->getIE() : nullptr,
+                               (const ispc::AffineSpace2f&)xform_Kd,
                                (ispc::vec3f&)Kd,
                                map_Ks ? map_Ks->getIE() : nullptr,
+                               (const ispc::AffineSpace2f&)xform_Ks,
                                (ispc::vec3f&)Ks,
                                map_Ns ? map_Ns->getIE() : nullptr,
+                               (const ispc::AffineSpace2f&)xform_Ns,
                                Ns,
-                               map_Bump != nullptr ? map_Bump->getIE():nullptr,
+                               map_Bump ? map_Bump->getIE() : nullptr,
+                               (const ispc::AffineSpace2f&)xform_Bump,
+                               (const ispc::LinearSpace2f&)rot_Bump,
                                volume ? volume->getIE() : nullptr);
     }
 
     OSP_REGISTER_MATERIAL(SciVisMaterial, SciVisMaterial);
     OSP_REGISTER_MATERIAL(SciVisMaterial, OBJMaterial);
+    OSP_REGISTER_MATERIAL(SciVisMaterial, default);
 
   } // ::ospray::scivis
 } // ::ospray

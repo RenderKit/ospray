@@ -19,10 +19,11 @@
 #include "ospcommon/common.h"
 #include "ospcommon/box.h"
 #include "ospcommon/AffineSpace.h"
+#include "cameraManipulator.h"
 
 #include "Imgui3dExport.h"
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
@@ -36,54 +37,6 @@ namespace ospray {
     OSPRAY_IMGUI3D_INTERFACE void run();
 
     using ospcommon::AffineSpace3fa;
-
-    struct ImGui3DWidget;
-
-    struct OSPRAY_IMGUI3D_INTERFACE Manipulator {
-      // this is the fct that gets called when the mouse moved in the
-      // associated window
-      virtual void motion(ImGui3DWidget *widget);
-      Manipulator(ImGui3DWidget *widget)
-        : widget(widget) {}
-
-      // helper functions called from the default 'motion' fct
-      virtual void dragLeft(ImGui3DWidget *widget,
-                            const vec2i &to,
-                            const vec2i &from) {}
-      virtual void dragRight(ImGui3DWidget *widget,
-                             const vec2i &to,
-                             const vec2i &from) {}
-      virtual void dragMiddle(ImGui3DWidget *widget,
-                              const vec2i &to,
-                              const vec2i &from) {}
-
-      ImGui3DWidget *widget;
-    };
-
-    struct InspectCenter : public Manipulator
-    {
-      void dragLeft(ImGui3DWidget *widget,
-                    const vec2i &to, const vec2i &from) override;
-      void dragRight(ImGui3DWidget *widget,
-                     const vec2i &to, const vec2i &from) override;
-      void dragMiddle(ImGui3DWidget *widget,
-                      const vec2i &to, const vec2i &from) override;
-      InspectCenter(ImGui3DWidget *widget);
-      void rotate(float du, float dv);
-
-      vec3f pivot;
-    };
-
-    struct MoveMode : public Manipulator
-    {
-      void dragLeft(ImGui3DWidget *widget,
-                    const vec2i &to, const vec2i &from) override;
-      void dragRight(ImGui3DWidget *widget,
-                     const vec2i &to, const vec2i &from) override;
-      void dragMiddle(ImGui3DWidget *widget,
-                      const vec2i &to, const vec2i &from) override;
-      MoveMode(ImGui3DWidget *widget) : Manipulator(widget) {}
-    };
 
     /*! a IMGUI-based 3D viewer widget that includes simple sample code
       for manipulating a 3D viewPort with the mouse.
@@ -127,6 +80,7 @@ namespace ospray {
          vec3f up;
          float openingAngle; //!< in degrees, along Y direction
          float aspect; //!< aspect ratio X:Y
+         float apertureRadius;
          // float focalDistance;
 
          /*! camera frame in which the Y axis is the depth axis, and X
@@ -134,9 +88,13 @@ namespace ospray {
            itself remains normalized. */
          AffineSpace3fa frame;
 
+         /*! use current 'from', 'up', and 'at' to fix the 'up' vector according
+             to */
+         void snapViewUp();
+
          /*! set 'up' vector. if this vector is '0,0,0' the viewer will
           *not* apply the up-vector after camera manipulation */
-         void snapUp();
+         void snapFrameUp();
 
          ViewPort();
        };
@@ -166,6 +124,7 @@ namespace ospray {
        // ------------------------------------------------------------------
 
        virtual void motion(const vec2i &pos);
+       virtual void mouseButton(int button, int action, int mods);
        virtual void reshape(const vec2i &newSize);
        /*! display this window. By default this will just clear this
            window's framebuffer; it's up to the user to override this fct
@@ -223,6 +182,7 @@ namespace ospray {
        double guiTime;
        double totalTime;
        float  fontScale;
+       bool upAnchored {true};
 
        bool renderingPaused {false};
        /*! pointer to the frame buffer data. it is the repsonsiblity of

@@ -26,24 +26,25 @@ namespace ospray {
       /*! Every derived class should overrride this! */
       virtual std::string toString() const override
       { return "ospray::pathtracer::MetallicPaint"; }
+
+      MetallicPaint()
+      {
+        ispcEquivalent = ispc::PathTracer_MetallicPaint_create();
+      }
       
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        if (getIE() != nullptr) return;
-
         const vec3f& shadeColor
           = getParam3f("shadeColor",vec3f(0.5,0.42,0.35)); //vec3f(0.19,0.45,1.5));
-        const vec3f& glitterColor
-          = getParam3f("glitterColor",vec3f(0.5,0.44,0.42)); //3.06,2.4,1.88));
 
         const float glitterSpread
           = getParamf("glitterSpread",0.f);
         const float eta
           = getParamf("eta",1.45f);
         
-        ispcEquivalent = ispc::PathTracer_MetallicPaint_create
-          ((const ispc::vec3f&)shadeColor,(const ispc::vec3f&)glitterColor,
+        ispc::PathTracer_MetallicPaint_set(getIE(),
+          (const ispc::vec3f&)shadeColor,
            glitterSpread, eta);
       }
     };

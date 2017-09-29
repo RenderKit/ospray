@@ -28,7 +28,6 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
   {
     LinearTransferFunction() = default;
-    virtual ~LinearTransferFunction();
 
     virtual void commit() override;
 

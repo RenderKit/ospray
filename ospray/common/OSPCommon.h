@@ -137,11 +137,6 @@ namespace ospray {
     const std::string s;
   };
 
-  // use postStatusMsg to output any information, which will OSPRay's internal
-  // infrastructure, optionally at a given loglevel
-  // a newline is added implicitely
-  //////////////////////////////////////////////////////////////////////////////
-
   OSPRAY_SDK_INTERFACE uint32_t logLevel();
 
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::stringstream &msg,
@@ -150,36 +145,53 @@ namespace ospray {
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::string &msg,
                                           uint32_t postAtLogLevel = 0);
 
-  struct OSPRAY_SDK_INTERFACE StatusMsgStream
+  // use postStatusMsg to output any information, which will use OSPRay's
+  // internal infrastructure, optionally at a given loglevel
+  // a newline is added implicitely
+  //////////////////////////////////////////////////////////////////////////////
+
+  struct StatusMsgStream : public std::stringstream
   {
     StatusMsgStream(uint32_t postAtLogLevel = 0);
-    // a "= default" move constructor is not supported by older compilers
-    // however, apparently it just needs to be declared, it won't be called
     StatusMsgStream(StatusMsgStream &&other);
     ~StatusMsgStream();
 
   private:
 
-    template <typename T>
-    friend StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs);
-
-    std::stringstream msg;
     uint32_t logLevel {0};
   };
 
-  template <typename T>
-  inline StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs)
+  inline StatusMsgStream::StatusMsgStream(uint32_t postAtLogLevel)
+    : logLevel(postAtLogLevel)
   {
-    if (logLevel() >= stream.logLevel)
-      stream.msg << std::forward<T>(rhs);
-    return std::forward<StatusMsgStream>(stream);
+  }
+
+  inline StatusMsgStream::~StatusMsgStream()
+  {
+    auto msg = str();
+    if (!msg.empty())
+      postStatusMsg(msg, logLevel);
+  }
+
+  inline StatusMsgStream::StatusMsgStream(StatusMsgStream &&other)
+  {
+    this->str(other.str());
   }
 
   OSPRAY_SDK_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
 
+  /////////////////////////////////////////////////////////////////////////////
+
   OSPRAY_SDK_INTERFACE void handleError(OSPError e, const std::string &message);
 
   OSPRAY_SDK_INTERFACE void postTraceMsg(const std::string &message);
+
+  //! log status message at loglevel x
+  #define ospLog(x) StatusMsgStream(x) << "(" << x << "): "
+  //! log status message at loglevel x with function name
+  #define ospLogF(x) StatusMsgStream(x) << __FUNCTION__ << ": "
+  //! log status message at loglevel x with function, file, and line number
+  #define ospLogL(x) StatusMsgStream(x) << __FUNCTION__ << "(" << __FILE__ << ":" << __LINE__ << "): "
 
   // RTTI hash ID lookup helper functions ///////////////////////////////////
 

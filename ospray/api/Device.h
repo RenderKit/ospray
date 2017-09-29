@@ -43,13 +43,13 @@ namespace ospray {
       static Device *createDevice(const char *type);
 
       /*! create a new frame buffer/swap chain of given type */
-      virtual OSPFrameBuffer 
-      frameBufferCreate(const vec2i &size, 
+      virtual OSPFrameBuffer
+      frameBufferCreate(const vec2i &size,
                         const OSPFrameBufferFormat mode,
                         const uint32 channels) = 0;
-      
+
       /*! map frame buffer */
-      virtual const void *frameBufferMap(OSPFrameBuffer fb, 
+      virtual const void *frameBufferMap(OSPFrameBuffer fb,
                                          const OSPFrameBufferChannel) = 0;
 
       /*! unmap previously mapped frame buffer */
@@ -82,7 +82,7 @@ namespace ospray {
                               void *init, int flags) = 0;
 
       /*! Copy data into the given volume. */
-      virtual int setRegion(OSPVolume object, const void *source, 
+      virtual int setRegion(OSPVolume object, const void *source,
                             const vec3i &index, const vec3i &count) = 0;
 
       /*! assign (named) string parameter to an object */
@@ -125,16 +125,16 @@ namespace ospray {
 
       /*! set a frame buffer's pixel op object */
       virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) = 0;
-      
+
       /*! create a new geometry object (out of list of registered geometries) */
       virtual OSPGeometry newGeometry(const char *type) = 0;
-      
+
       /*! create a new camera object (out of list of registered cameras) */
       virtual OSPCamera newCamera(const char *type) = 0;
-      
+
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type) = 0;
-      
+
       /*! create a new transfer function object (out of list of registered
        *  transfer function types) */
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
@@ -151,18 +151,18 @@ namespace ospray {
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
 
       /*! clear the specified channel(s) in 'fbChannelFlags'
-        
+
         if fbChannelFlags&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.  
+        '0,0,0,0'.
 
         if fbChannelFlags&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.  
+        +inf.
 
         if fbChannelFlags&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
       */
       virtual void frameBufferClear(OSPFrameBuffer _fb,
-                                    const uint32 fbChannelFlags) = 0; 
+                                    const uint32 fbChannelFlags) = 0;
 
       /*! call a renderer to render a frame buffer */
       virtual float renderFrame(OSPFrameBuffer _sc,
@@ -170,7 +170,7 @@ namespace ospray {
                                 const uint32 fbChannelFlags) = 0;
 
 
-  
+
       //! release (i.e., reduce refcount of) given object
       /*! note that all objects in ospray are refcounted, so one cannot
         explicitly "delete" any object. instead, each object is created
@@ -197,8 +197,8 @@ namespace ospray {
       }
 
       /*! perform a pick operation */
-      virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) 
-      { 
+      virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos)
+      {
         UNUSED(renderer, screenPos);
         NOT_IMPLEMENTED;
       }

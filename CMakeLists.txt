@@ -95,6 +95,17 @@ ENDIF()
 ##############################################################
 ADD_SUBDIRECTORY(modules)
 
+##############################################################
+# Google Test
+##############################################################
+ADD_SUBDIRECTORY(tests)
+
+##############################################################
+# add target for running clang-format
+##############################################################
+OPTION(OSPRAY_ENABLE_TARGET_CLANGFORMAT
+       "Enable 'format' target, requires clang-format too" OFF)
+INCLUDE(clang-format)
 
 # create a configure file that both ospray and ispc can read the cmake config
 # from needs to be at the end, after all cache variables have been set

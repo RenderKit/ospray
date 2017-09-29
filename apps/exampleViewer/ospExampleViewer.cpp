@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,166 +14,438 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospray/ospray_cpp/Device.h>
-#include <ospray/ospray_cpp/FrameBuffer.h>
-#include <ospray/ospray_cpp/Renderer.h>
-#include "common/commandline/Utility.h"
+#include "common/sg/SceneGraph.h"
+#include "common/sg/Renderer.h"
+#include "common/sg/importer/Importer.h"
+#include "ospcommon/FileName.h"
 #include "ospcommon/networking/Socket.h"
+#include "ospcommon/utility/getEnvVar.h"
+#include "ospcommon/vec.h"
+#include "common/sg/common/Animator.h"
+
+#include "sg/geometry/TriangleMesh.h"
 
 #include "widgets/imguiViewer.h"
+#include <sstream>
 
-namespace exampleViewer {
+using namespace ospcommon;
+using namespace ospray;
 
-  using namespace commandline;
+struct clTransform
+{
+  vec3f translate{0,0,0};
+  vec3f scale{1,1,1};
+  vec3f rotation{0,0,0};
+};
 
-  ospcommon::vec3f translate;
-  ospcommon::vec3f scale;
-  bool lockFirstFrame = false;
-  bool fullscreen = false;
-  std::string displayWall = "";
+//command line file
+struct clFile
+{
+  clFile(std::string f, const clTransform& t) : file(f), transform(t) {}
+  std::string file;
+  clTransform transform;
+};
 
-  namespace dw {
-    
-    struct ServiceInfo {
-      /* constructor that initializes everything to default values */
-      ServiceInfo()
-        : totalPixelsInWall(-1,-1),
-          mpiPortName("<value not set>")
-      {}
-      
-      /*! total pixels in the entire display wall, across all
-        indvididual displays, and including bezels (future versios
-        will allow to render to smaller resolutions, too - and have
-        the clients upscale this - but for now the client(s) have to
-        render at exactly this resolution */
-      ospcommon::vec2i totalPixelsInWall;
+std::vector<clFile> files;
+std::vector<std::vector<clFile>> animatedFiles;
+std::string initialRendererType;
 
-      /*! the MPI port name that the service is listening on client
-        connections for (ie, the one to use with
-        client::establishConnection) */
-      std::string mpiPortName; 
+bool addPlane =
+    utility::getEnvVar<int>("OSPRAY_VIEWER_GROUND_PLANE").value_or(true);
 
-      /*! whether this runs in stereo mode */
-      int stereo;
+bool debug = false;
+bool fullscreen = false;
+bool print = false;
+bool no_defaults = false;
+std::string hdri_light;
+int matrix_i =1, matrix_j=1, matrix_k = 1;
 
-      /*! read a service info from a given hostName:port. The service
-        has to already be running on that port 
-
-        Note this may throw a std::runtime_error if the connection
-        cannot be established 
-      */
-      void getFrom(const std::string &hostName,
-                   const int portNo);
-    };
-    /*! read a service info from a given hostName:port. The service
-      has to already be running on that port */
-    void ServiceInfo::getFrom(const std::string &hostName,
-                              const int portNo)
-    {
-      ospcommon::socket_t sock = ospcommon::connect(hostName.c_str(),portNo);
-      if (!sock)
-        throw std::runtime_error("could not create display wall connection!");
-
-      mpiPortName = read_string(sock);
-      totalPixelsInWall.x = read_int(sock);
-      totalPixelsInWall.y = read_int(sock);
-      stereo = read_int(sock);
-      close(sock);
+static inline void parseCommandLine(int ac, const char **&av)
+{
+  clTransform currentCLTransform;
+  bool inAnimation = false;
+  for (int i = 1; i < ac; i++) {
+    const std::string arg = av[i];
+    if (arg == "-np" || arg == "--no-plane") {
+      addPlane = false;
+    } else if (arg == "-d" || arg == "--debug") {
+      debug = true;
+    } else if (arg == "-r" || arg == "--renderer") {
+      initialRendererType = av[++i];
+    } else if (arg == "-m" || arg == "--module") {
+      ospLoadModule(av[++i]);
+    } else if (arg == "--print") {
+      print=true;
+    } else if (arg == "--no-defaults") {
+      no_defaults=true;
+    } else if (arg == "--matrix") {
+      matrix_i = atoi(av[++i]);
+      matrix_j = atoi(av[++i]);
+      matrix_k = atoi(av[++i]);
+    } else if (arg == "--fullscreen") {
+      fullscreen = true;
+    } else if (arg == "--hdri-light") {
+      hdri_light = av[++i];
+    } else if (arg == "--translate") {
+      currentCLTransform.translate.x = atof(av[++i]);
+      currentCLTransform.translate.y = atof(av[++i]);
+      currentCLTransform.translate.z = atof(av[++i]);
+    } else if (arg == "--scale") {
+      currentCLTransform.scale.x = atof(av[++i]);
+      currentCLTransform.scale.y = atof(av[++i]);
+      currentCLTransform.scale.z = atof(av[++i]);
+    } else if (arg == "--rotate") {
+      currentCLTransform.rotation.x = atof(av[++i]);
+      currentCLTransform.rotation.y = atof(av[++i]);
+      currentCLTransform.rotation.z = atof(av[++i]);
+    } else if (arg == "--animation") {
+      inAnimation = true;
+      animatedFiles.push_back(std::vector<clFile>());
+    } else if (arg == "--file") {
+      inAnimation = false;
+    } else if (arg[0] != '-') {
+      if (!inAnimation)
+        files.push_back(clFile(av[i], currentCLTransform));
+      else
+        animatedFiles.back().push_back(clFile(av[i], currentCLTransform));
     }
   }
+}
 
-  void parseExtraParametersFromComandLine(int ac, const char **&av)
-  {
-    for (int i = 1; i < ac; i++) {
-      const std::string arg = av[i];
-      if (arg == "--translate") {
-        translate.x = atof(av[++i]);
-        translate.y = atof(av[++i]);
-        translate.z = atof(av[++i]);
-      } else if (arg == "--display-wall" || arg == "-dw") {
-        displayWall = av[++i];
-      } else if (arg == "--scale") {
-        scale.x = atof(av[++i]);
-        scale.y = atof(av[++i]);
-        scale.z = atof(av[++i]);
-      } else if (arg == "--lockFirstFrame") {
-        lockFirstFrame = true;
-      } else if (arg == "--fullscreen") {
-        fullscreen = true;
+//parse command line arguments containing the format:
+//  -nodeName:...:nodeName=value,value,value -- changes value
+//  -nodeName:...:nodeName+=name,type        -- adds new child node
+static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
+{
+  for(int i=1;i < ac; i++) {
+    std::string arg(av[i]);
+    size_t f;
+    std::string value("");
+    if (arg.size() < 2 || arg[0] != '-')
+      continue;
+
+    const std::string orgarg(arg);
+    while ((f = arg.find(":")) != std::string::npos ||
+           (f = arg.find(",")) != std::string::npos) {
+      arg[f] = ' ';
+    }
+
+    f = arg.find("+=");
+    bool addNode = false;
+    if (f != std::string::npos)
+    {
+      value = arg.substr(f+2,arg.size());
+      addNode = true;
+    }
+    else
+    {
+      f = arg.find("=");
+      if (f != std::string::npos)
+        value = arg.substr(f+1,arg.size());
+    }
+
+    if (value != "") {
+      std::stringstream ss;
+      ss << arg.substr(1,f-1);
+      std::string child;
+      std::reference_wrapper<sg::Node> node_ref = root;
+      try {
+        while (ss >> child) {
+          node_ref = node_ref.get().childRecursive(child);
+        }
+      } catch (const std::runtime_error &) {
+        std::cerr << "Warning: unknown sg::Node '" << child
+          << "', ignoring option '" << orgarg << "'." << std::endl;
+      }
+      auto &node = node_ref.get();
+
+      std::stringstream vals(value);
+
+      if (addNode) {
+        std::string name, type;
+        vals >> name >> type;
+        try {
+          node.createChild(name, type);
+        } catch (const std::runtime_error &) {
+          std::cerr << "Warning: unknown sg::Node type '" << type
+            << "', ignoring option '" << orgarg << "'." << std::endl;
+        }
+      } else { // set node value
+
+        // TODO: more generic implementation
+        if (node.valueIsType<std::string>()) {
+          node.setValue(value);
+        } else if (node.valueIsType<float>()) {
+          float x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<int>()) {
+          int x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<bool>()) {
+          bool x;
+          vals >> x;
+          node.setValue(x);
+        } else if (node.valueIsType<ospcommon::vec3f>()) {
+          float x,y,z;
+          vals >> x >> y >> z;
+          node.setValue(ospcommon::vec3f(x,y,z));
+        } else if (node.valueIsType<ospcommon::vec2i>()) {
+          int x,y;
+          vals >> x >> y;
+          node.setValue(ospcommon::vec2i(x,y));
+        } else try {
+          auto &vec = dynamic_cast<sg::DataVector1f&>(node);
+          float f;
+          while (vals.good()) {
+            vals >> f;
+            vec.push_back(f);
+          }
+        } catch(...) {}
       }
     }
   }
+}
 
-  extern "C" int main(int ac, const char **av)
+static inline void addPlaneToScene(sg::Node& renderer)
+{
+  auto &world = renderer["world"];
+
+  // update world bounds first
+  renderer.traverse("verify");
+  renderer.traverse("commit");
+
+  auto bbox = world.bounds();
+  if (bbox.empty()) {
+    bbox.lower = vec3f(-5,0,-5);
+    bbox.upper = vec3f(5,10,5);
+  }
+
+  float ps = bbox.upper.x * 3.f;
+  float py = bbox.lower.y + 0.01f;
+
+  auto position = std::make_shared<sg::DataVector3f>();
+  position->push_back(vec3f{-ps, py, -ps});
+  position->push_back(vec3f{-ps, py, ps});
+  position->push_back(vec3f{ps, py, -ps});
+  position->push_back(vec3f{ps, py, ps});
+  position->setName("vertex");
+
+  auto index = std::make_shared<sg::DataVector3i>();
+  index->push_back(vec3i{0,1,2});
+  index->push_back(vec3i{1,2,3});
+  index->setName("index");
+
+  auto &plane = world.createChild("plane", "Instance");
+  auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
+
+  auto sg_plane = mesh.nodeAs<sg::TriangleMesh>();
+  sg_plane->add(position);
+  sg_plane->add(index);
+  auto &planeMaterial = mesh["material"];
+  planeMaterial["Kd"] = vec3f(0.5f);
+  planeMaterial["Ks"] = vec3f(0.1f);
+  planeMaterial["Ns"] = 10.f;
+}
+
+static inline void addLightsToScene(sg::Node& renderer)
+{
+  auto &lights = renderer["lights"];
+
+  if (!no_defaults)
   {
-    int init_error = ospInit(&ac, av);
-    if (init_error != OSP_NO_ERROR) {
-      std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
-      return init_error;
+    auto &sun = lights.createChild("sun", "DirectionalLight");
+    sun["color"] = vec3f(1.f,232.f/255.f,166.f/255.f);
+    sun["direction"] = vec3f(0.462f,-1.f,-.1f);
+    sun["intensity"] = 1.5f;
+
+    auto &bounce = lights.createChild("bounce", "DirectionalLight");
+    bounce["color"] = vec3f(127.f/255.f,178.f/255.f,255.f/255.f);
+    bounce["direction"] = vec3f(-.93,-.54f,-.605f);
+    bounce["intensity"] = 0.25f;
+
+    if (hdri_light == "")
+    {
+      auto &ambient = lights.createChild("ambient", "AmbientLight");
+      ambient["intensity"] = 0.9f;
+      ambient["color"] = vec3f(174.f/255.f,218.f/255.f,255.f/255.f);
     }
+  }
 
-    auto device = ospGetCurrentDevice();
-    ospDeviceSetStatusFunc(device,
-                           [](const char *msg) { std::cout << msg; });
-
-    ospDeviceSetErrorFunc(device,
-                          [](OSPError e, const char *msg) {
-                            std::cout << "OSPRAY ERROR [" << e << "]: "
-                                      << msg << std::endl;
-                            std::exit(1);
-                          });
-
-    ospray::imgui3D::init(&ac,av);
-
-    auto ospObjs = parseWithDefaultParsersDW(ac, av);
-
-    std::deque<ospcommon::box3f>   bbox;
-    std::deque<ospray::cpp::Model> model;
-    ospray::cpp::Renderer renderer;
-    ospray::cpp::Renderer rendererDW;
-    ospray::cpp::Camera   camera;
-    ospray::cpp::FrameBuffer frameBufferDW;
-    
-    std::tie(bbox, model, renderer, rendererDW, camera) = ospObjs;
-    
-    parseExtraParametersFromComandLine(ac, av);
-    
-    if (displayWall != "") {
-      std::cout << "#############################################" << std::endl;
-      std::cout << "found --display-wall cmdline argument ...." << std::endl;
-      std::cout << "trying to connect to display wall service on "
-                << displayWall << ":2903" << std::endl;
-      
-      dw::ServiceInfo dwService;
-      dwService.getFrom(displayWall,2903);
-      std::cout << "found display wall service on MPI port "
-                << dwService.mpiPortName << std::endl;
-      std::cout << "#############################################" << std::endl;
-      frameBufferDW = ospray::cpp::FrameBuffer(dwService.totalPixelsInWall,
-                                               (OSPFrameBufferFormat)OSP_FB_NONE,
-                                               OSP_FB_COLOR|OSP_FB_ACCUM);
-      
-      ospLoadModule("displayWald");
-      OSPPixelOp pixelOp = ospNewPixelOp("display_wald");
-      ospSetString(pixelOp,"streamName",dwService.mpiPortName.c_str());
-      ospCommit(pixelOp);
-      ospSetPixelOp(frameBufferDW.handle(),pixelOp);
-      rendererDW.set("frameBuffer", frameBufferDW.handle());
-      rendererDW.commit();
-    } else {
-      // no diplay wall - nix the display wall renderer
-      rendererDW = ospray::cpp::Renderer();
-    }
-
-    ospray::ImGuiViewer window(bbox, model, renderer, rendererDW,
-                               frameBufferDW, camera);
-    window.setScale(scale);
-    window.setLockFirstAnimationFrame(lockFirstFrame);
-    window.setTranslation(translate);
-    window.create("ospImGui: OSPRay ImGui Viewer App", fullscreen);
-
-    ospray::imgui3D::run();
-    return 0;
+  if (hdri_light != "")
+  {
+    auto tex = sg::Texture2D::load(hdri_light, false);
+    tex->setName("map");
+    auto& hdri = lights.createChild("hdri", "HDRILight");
+    tex->traverse("verify");
+    tex->traverse("commit");
+    hdri.add(tex);
   }
 
 }
+
+static inline void addImporterNodesToWorld(sg::Node& renderer)
+{
+  auto &world = renderer["world"];
+  auto &animation = renderer["animationcontroller"];
+
+  for (auto file : files) {
+    FileName fn = file.file;
+    if (fn.ext() == "ospsg")
+      sg::loadOSPSG(renderer.shared_from_this(), fn.str());
+    else {
+      //create material array
+      for (int i=0;i<matrix_i;i++)
+      {
+        for(int j=0;j<matrix_j;j++)
+        {
+          for(int k=0;k<matrix_k;k++)
+          {
+            std::stringstream ss;
+            ss << fn.name() << "_" << i << "_" << j << "_" << k;
+            auto importerNode_ptr = sg::createNode(ss.str(), "Importer")->nodeAs<sg::Importer>();;
+            auto &importerNode = *importerNode_ptr;
+            importerNode["fileName"] = fn.str();
+
+            auto &transform = world.createChild("transform_"+ss.str(), "Transform");
+            transform["scale"] = file.transform.scale;
+            transform["rotation"] = file.transform.rotation;
+            if (files.size() < 2 && animatedFiles.empty()) {
+              auto &rotation =
+                              transform["rotation"].createChild("animator", "Animator");
+
+              rotation.traverse("verify");
+              rotation.traverse("commit");
+              rotation.child("value1") = vec3f(0.f,0.f,0.f);
+              rotation.child("value2") = vec3f(0.f,2.f*3.14f,0.f);
+
+              animation.setChild("rotation", rotation.shared_from_this());
+            }
+
+            transform.add(importerNode_ptr);
+            renderer.traverse("verify");
+            renderer.traverse("commit");
+            auto bounds = importerNode_ptr->computeBounds();
+            auto size = bounds.upper - bounds.lower;
+            float maxSize = max(max(size.x,size.y),size.z);
+            vec3f offset={i*maxSize*1.3f,j*maxSize*1.3f,k*maxSize*1.3f};
+            transform["position"] = file.transform.translate + offset;
+          }
+        }
+      }
+    }
+  }
+}
+
+static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
+{
+  auto &world = renderer["world"];
+  auto &animation = renderer["animationcontroller"];
+
+  for (auto &animatedFile : animatedFiles) {
+    if (animatedFile.empty())
+      continue;
+
+    auto &transform =
+      world.createChild("transform_" + animatedFile[0].file, "Transform");
+
+    transform["scale"] = animatedFile[0].transform.scale;
+    transform["position"] = animatedFile[0].transform.translate;
+    transform["rotation"] = animatedFile[0].transform.rotation;
+    auto &selector =
+      transform.createChild("selector_" + animatedFile[0].file, "Selector");
+
+    for (auto file : animatedFile) {
+      FileName fn = file.file;
+      if (fn.ext() == "ospsg")
+        sg::loadOSPSG(renderer.shared_from_this(),fn.str());
+      else {
+        auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+        auto &importerNode = *importerNode_ptr;
+        importerNode["fileName"] = fn.str();
+        selector.add(importerNode_ptr);
+      }
+    }
+    auto& anim_selector =
+      selector["index"].createChild("anim_"+animatedFile[0].file, "Animator");
+
+    anim_selector.traverse("verify");
+    anim_selector.traverse("commit");
+    anim_selector["value2"] = int(animatedFile.size());
+    animation.setChild("anim_selector", anim_selector.shared_from_this());
+  }
+}
+
+int main(int ac, const char **av)
+{
+  int init_error = ospInit(&ac, av);
+  if (init_error != OSP_NO_ERROR) {
+    std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
+    return init_error;
+  }
+
+  auto device = ospGetCurrentDevice();
+  if (device == nullptr) {
+    std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
+    return 1;
+  }
+
+  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
+  ospDeviceSetErrorFunc(device,
+                        [](OSPError e, const char *msg) {
+                          std::cout << "OSPRAY ERROR [" << e << "]: "
+                                    << msg << std::endl;
+                        });
+
+  ospDeviceCommit(device);
+
+  // access/load symbols/sg::Nodes dynamically
+  loadLibrary("ospray_sg");
+
+  ospray::imgui3D::init(&ac,av);
+
+  parseCommandLine(ac, av);
+
+  auto renderer_ptr = sg::createNode("renderer", "Renderer");
+  auto &renderer = *renderer_ptr;
+
+  auto &win_size = ospray::imgui3D::ImGui3DWidget::defaultInitSize;
+  renderer["frameBuffer"]["size"] = win_size;
+
+  if (!initialRendererType.empty())
+    renderer["rendererType"] = initialRendererType;
+
+  renderer.createChild("animationcontroller", "AnimationController");
+
+  addLightsToScene(renderer);
+  addImporterNodesToWorld(renderer);
+  addAnimatedImporterNodesToWorld(renderer);
+  if (!no_defaults && addPlane)
+    addPlaneToScene(renderer);
+
+  // last, to be able to modify all created SG nodes
+  parseCommandLineSG(ac, av, renderer);
+
+  if (print || debug)
+    renderer.traverse("print");
+
+  ospray::ImGuiViewer window(renderer_ptr);
+
+  auto &viewPort = window.viewPort;
+  // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
+  auto dir = normalize(viewPort.at - viewPort.from);
+  renderer["camera"]["dir"] = dir;
+  renderer["camera"]["pos"] = viewPort.from;
+  renderer["camera"]["up"]  = viewPort.up;
+  renderer["camera"]["fovy"] = viewPort.openingAngle;
+  renderer["camera"]["apertureRadius"] = viewPort.apertureRadius;
+  if (renderer["camera"].hasChild("focusdistance"))
+    renderer["camera"]["focusdistance"] = length(viewPort.at - viewPort.from);
+
+  window.create("OSPRay Example Viewer App", fullscreen);
+
+  ospray::imgui3D::run();
+  return 0;
+}
+

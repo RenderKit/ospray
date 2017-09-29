@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(TBB_MAJOR_VERSION_REQUIRED "3.0")
+SET(TBB_VERSION_REQUIRED "3.0")
 
 IF (NOT TBB_ROOT)
   SET(TBB_ROOT $ENV{TBB_ROOT})
@@ -69,14 +69,29 @@ IF (WIN32)
     SET(TBB_VCVER vc14)
   ENDIF()
 
-  SET(TBB_LIBDIR ${TBB_ROOT}/lib/${TBB_ARCH}/${TBB_VCVER})
-  SET(TBB_BINDIR ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER})
+  SET(TBB_LIBDIR ${TBB_ROOT}/lib)
 
   FIND_PATH(TBB_INCLUDE_DIR tbb/task_scheduler_init.h PATHS ${TBB_ROOT}/include NO_DEFAULT_PATH)
-  FIND_LIBRARY(TBB_LIBRARY tbb PATHS ${TBB_LIBDIR} NO_DEFAULT_PATH)
-  FIND_LIBRARY(TBB_LIBRARY_DEBUG tbb_debug PATHS ${TBB_LIBDIR} NO_DEFAULT_PATH)
-  FIND_LIBRARY(TBB_LIBRARY_MALLOC tbbmalloc PATHS ${TBB_LIBDIR} NO_DEFAULT_PATH)
-  FIND_LIBRARY(TBB_LIBRARY_MALLOC_DEBUG tbbmalloc_debug PATHS ${TBB_LIBDIR} NO_DEFAULT_PATH)
+  FIND_LIBRARY(TBB_LIBRARY tbb
+    PATHS
+    ${TBB_LIBDIR}/${TBB_ARCH}/${TBB_VCVER}
+    ${TBB_LIBDIR}
+    NO_DEFAULT_PATH)
+  FIND_LIBRARY(TBB_LIBRARY_DEBUG tbb_debug
+    PATHS
+    ${TBB_LIBDIR}/${TBB_ARCH}/${TBB_VCVER}
+    ${TBB_LIBDIR}
+    NO_DEFAULT_PATH)
+  FIND_LIBRARY(TBB_LIBRARY_MALLOC tbbmalloc
+    PATHS
+    ${TBB_LIBDIR}/${TBB_ARCH}/${TBB_VCVER}
+    ${TBB_LIBDIR}
+    NO_DEFAULT_PATH)
+  FIND_LIBRARY(TBB_LIBRARY_MALLOC_DEBUG tbbmalloc_debug
+    PATHS
+    ${TBB_LIBDIR}/${TBB_ARCH}/${TBB_VCVER}
+    ${TBB_LIBDIR}
+    NO_DEFAULT_PATH)
 
 ELSE ()
 
@@ -87,6 +102,7 @@ ELSE ()
       ${PROJECT_SOURCE_DIR}/tbb
       /opt/intel/composerxe/tbb
       /opt/intel/compilers_and_libraries/tbb
+      /opt/intel/tbb
   )
 
   IF (APPLE)
@@ -108,7 +124,7 @@ ENDIF()
 SET(TBB_ROOT_LAST ${TBB_ROOT} CACHE INTERNAL "Last value of TBB_ROOT to detect changes")
 
 SET(TBB_ERROR_MESSAGE
-  "Threading Building Blocks (TBB) with minimum version ${TBB_MAJOR_VERSION_REQUIRED}.0 not found.
+  "Threading Building Blocks (TBB) with minimum version ${TBB_VERSION_REQUIRED} not found.
 OSPRay uses TBB as default tasking system. Please make sure you have the TBB headers installed as well (the package is typically named 'libtbb-dev' or 'tbb-devel') and/or hint the location of TBB in TBB_ROOT.
 Alternatively, you can try to use OpenMP as tasking system by setting OSPRAY_TASKING_SYSTEM=OpenMP")
 
@@ -128,7 +144,7 @@ IF (TBB_INCLUDE_DIR)
   STRING(REGEX MATCH "#define TBB_VERSION_MINOR ([0-9]+)" DUMMY "${TBB_STDDEF_H}")
   SET(TBB_VERSION "${TBB_VERSION_MAJOR}.${CMAKE_MATCH_1}")
 
-  IF (TBB_VERSION_MAJOR VERSION_LESS TBB_VERSION_REQUIRED)
+  IF (TBB_VERSION VERSION_LESS TBB_VERSION_REQUIRED)
     MESSAGE(FATAL_ERROR ${TBB_ERROR_MESSAGE})
   ENDIF()
 

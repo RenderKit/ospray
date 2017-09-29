@@ -53,9 +53,9 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
-DEP_EMBREE=embree-2.16.1.x86_64.linux
+DEP_EMBREE=embree-2.17.0.x86_64.linux
 DEP_ISPC=ispc-v1.9.1-linux
-DEP_TBB=tbb2017_20170412oss
+DEP_TBB=tbb2018_20170726oss
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz"
 
 
@@ -106,10 +106,12 @@ cmake \
 -D OSPRAY_MODULE_MPI=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
--D USE_IMAGE_MAGICK=OFF \
+-D OSPRAY_SG_CHOMBO=OFF \
+-D OSPRAY_SG_OPENIMAGEIO=OFF \
+-D OSPRAY_SG_VTK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
 -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
--D CMAKE_INSTALL_PREFIX=/usr \
+-D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
 ..
 
 # create RPM files
@@ -124,18 +126,13 @@ make -j `nproc` package
 # read OSPRay version
 OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
 
-# rename RPMs to have component name before version
-for i in ospray-${OSPRAY_VERSION}-1.*.rpm ; do
-  newname=`echo $i | sed -e "s/ospray-\(.\+\)-\([a-z_]\+\)\.rpm/ospray-\2-\1.rpm/"`
-  mv $i $newname
-done
-
-tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-1.x86_64.rpm
+tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
 
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \
+-D CPACK_PACKAGING_INSTALL_PREFIX=/ \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=doc \

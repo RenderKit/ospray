@@ -14,19 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+INCLUDE_DIRECTORIES(. imguifilesystem)
 
-##############################################################
-# Build imgui
-##############################################################
-
-set(LIB_NAME imgui)
-
-add_library(${LIB_NAME} STATIC
+OSPRAY_CREATE_LIBRARY(ospray_imgui
   imgui.cpp
   imgui_draw.cpp
   imgui_demo.cpp
-)
-
-target_link_libraries(${LIB_NAME}
+  imguifilesystem/imguifilesystem.cpp
+LINK
   ${OPENGL_LIBRARIES}
 )

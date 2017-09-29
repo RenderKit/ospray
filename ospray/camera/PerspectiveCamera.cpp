@@ -44,7 +44,7 @@ namespace ospray {
     stereoMode = (StereoMode)getParam1i("stereoMode", OSP_STEREO_NONE);
     // the default 63.5mm represents the average human IPD
     interpupillaryDistance = getParamf("interpupillaryDistance", 0.0635f);
-    
+
     // ------------------------------------------------------------------
     // now, update the local precomputed values
     // ------------------------------------------------------------------
@@ -72,7 +72,7 @@ namespace ospray {
       case OSP_STEREO_NONE:
         break;
     }
-    
+
     float imgPlane_size_y = 2.f*tanf(deg2rad(0.5f*fovy));
     float imgPlane_size_x = imgPlane_size_y * aspect;
 
@@ -87,18 +87,19 @@ namespace ospray {
       dir_du *= focusDistance;
       dir_dv *= focusDistance;
       dir_00 *= focusDistance;
-      scaledAperture = apertureRadius / imgPlane_size_x;
+      scaledAperture = apertureRadius / (imgPlane_size_x * focusDistance);
     }
 
-    ispc::PerspectiveCamera_set(getIE(),
-                                (const ispc::vec3f&)org,
-                                (const ispc::vec3f&)dir_00,
-                                (const ispc::vec3f&)dir_du,
-                                (const ispc::vec3f&)dir_dv,
-                                scaledAperture,
-                                aspect,
-                                stereoMode == OSP_STEREO_SIDE_BY_SIDE,
-                                (const ispc::vec3f&)ipd_offset);
+    ispc::PerspectiveCamera_set(getIE()
+        , (const ispc::vec3f&)org
+        , (const ispc::vec3f&)dir_00
+        , (const ispc::vec3f&)dir_du
+        , (const ispc::vec3f&)dir_dv
+        , scaledAperture
+        , aspect
+        , stereoMode == OSP_STEREO_SIDE_BY_SIDE
+        , (const ispc::vec3f&)ipd_offset
+        );
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);

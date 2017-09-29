@@ -16,29 +16,29 @@
 
 #pragma once
 
-// sg components
-#include "sg/common/Node.h"
+#include "Renderable.h"
 
 namespace ospray {
   namespace sg {
 
-    //! a transformation node
-    struct OSPSG_INTERFACE Transform : public sg::Renderable
+    struct OSPSG_INTERFACE Affine3f : public Node
+    {
+      Affine3f() : Node() { setValue(ospcommon::affine3f(ospcommon::one)); }
+    };
+
+    struct OSPSG_INTERFACE Transform : public Renderable
     {
       Transform();
       std::string toString() const override;
 
-      virtual void preRender(RenderContext &ctx) override;
-      virtual void postRender(RenderContext &ctx) override;
+      void preRender(RenderContext &ctx) override;
+      void postRender(RenderContext &ctx) override;
 
       //! \brief the actual (affine) transformation matrix
-      AffineSpace3f xfm;
-      ospcommon::affine3f cachedTransform;
-      ospcommon::affine3f baseTransform;
-      ospcommon::affine3f worldTransform;  
+      ospcommon::affine3f worldTransform;  // computed transform
       ospcommon::affine3f oldTransform{ospcommon::one};
     };
 
   } // ::ospray::sg
 } // ::ospray
-  
+

@@ -19,19 +19,29 @@
     sends them to random other ranks; every time a message is received
     it's simply bounced to anohter random node */
 
+#include "ospcommon/tasking/tasking_system_handle.h"
 #include "maml/maml.h"
 #include <atomic>
-#include <sys/times.h>
+#include <chrono>
+#include <thread>
+#include <random>
 
 int numRanks = 0;
 std::atomic<size_t> numReceived;
 
+
 struct BounceHandler : public maml::MessageHandler
 {
+  std::mt19937 rng;
+  std::uniform_int_distribution<> rank_distrib;
+
+  BounceHandler() : rng(std::random_device{}()), rank_distrib(0, numRanks - 1)
+  {}
+
   void incoming(const std::shared_ptr<maml::Message> &message) override
   {
     ++numReceived;
-    int nextRank = (int)(drand48() * numRanks);
+    int nextRank = rank_distrib(rng);
     maml::sendTo(MPI_COMM_WORLD, nextRank, message);
   }
 };
@@ -39,11 +49,15 @@ struct BounceHandler : public maml::MessageHandler
 extern "C" int main(int ac, char **av)
 {
   MPI_CALL(Init(&ac, &av));
-  srand48(times(nullptr));
+  ospcommon::tasking::initTaskingSystem();
 
   int rank = -1;
   MPI_CALL(Comm_size(MPI_COMM_WORLD, &numRanks));
   MPI_CALL(Comm_rank(MPI_COMM_WORLD, &rank));
+
+  std::mt19937 rng(std::random_device{}());
+  std::uniform_int_distribution<int> distrib(0, 255);
+  std::uniform_int_distribution<> rank_distrib(0, numRanks - 1);
 
   int numMessages = 100;
   int payloadSize = 100000;
@@ -53,19 +67,19 @@ extern "C" int main(int ac, char **av)
 
   char *payload = (char*)malloc(payloadSize);
   for (int i = 0; i < payloadSize; i++)
-    payload[i] = drand48() * 256;
+    payload[i] = distrib(rng);
 
   maml::start();
   
   double t0 = ospcommon::getSysTime();
   for (int mID = 0; mID < numMessages; mID++) {
-    int r = int(drand48() * numRanks);
+    int r = rank_distrib(rng);
     maml::sendTo(MPI_COMM_WORLD, r,
                  std::make_shared<maml::Message>(payload, payloadSize));
   }
   
   while (1) {
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     double t1 = ospcommon::getSysTime();
     std::string numBytes =
       ospcommon::prettyNumber((size_t)numReceived*payloadSize);

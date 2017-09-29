@@ -21,7 +21,7 @@
 
 namespace ospcommon {
 
-  class Library
+  class OSPCOMMON_INTERFACE Library
   {
     public:
       /* opens a shared library */
@@ -36,7 +36,7 @@ namespace ospcommon {
       friend class LibraryRepository;
   };
 
-  class LibraryRepository
+  class OSPCOMMON_INTERFACE LibraryRepository
   {
     public:
       static LibraryRepository* getInstance();
