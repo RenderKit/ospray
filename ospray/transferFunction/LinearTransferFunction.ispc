@@ -92,8 +92,7 @@ LinearTransferFunction_getOpacityForValue(const void *uniform _self,
   // The interpolated opacity.
   float ret =
     (1.0f - remainder) * self->opacityValues[index]
-    + remainder * self->opacityValues[min(index + 1, self->opacityValueCount - 1)]
-      * self->super.opacityScale;
+    + remainder * self->opacityValues[min(index + 1, self->opacityValueCount - 1)];
   return ret;
 }
 
@@ -178,7 +177,7 @@ LinearTransferFunction_getIntegratedOpacityForValue(const void *uniform _self,
 
   if (index2 - index1 > 1)
     ret += self->opacityPITable[(index1+1)+(index2-1)*self->opacityValueCount];
-  return  (ret + interpval1 + interpval2)/(index2-index1+1)*self->super.opacityScale;
+  return  (ret + interpval1 + interpval2)/(index2-index1+1);
 }
 
 inline varying vec3f
