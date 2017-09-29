@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.4.0 (devel) of OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
-more information.
+This is release v1.4.0 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -602,6 +602,29 @@ OSPVolume ospNewVolume(const char *type);
 The call returns `NULL` if that type of volume is not known by OSPRay,
 or else an `OSPVolume` handle.
 
+The common parameters understood by all volume variants are summarized
+in the table below.
+
+| Type  | Name                    |   Default| Description                                                                       |
+|:------|:------------------------|---------:|:----------------------------------------------------------------------------------|
+| vec2f | voxelRange              |          | minimum and maximum of the scalar values                                          |
+| bool  | gradientShadingEnabled  |     false| volume is rendered with surface shading wrt. to normalized gradient               |
+| bool  | preIntegration          |     false| use pre-integration for [transfer function](#transfer-function) lookups           |
+| bool  | singleShade             |      true| shade only at the point of maximum intensity                                      |
+| bool  | adaptiveSampling        |      true| adapt ray step size based on opacity                                              |
+| float | adaptiveScalar          |        15| modifier for adaptive step size                                                   |
+| float | adaptiveMaxSamplingRate |         2| maximum sampling rate for adaptive sampling                                       |
+| float | samplingRate            |     0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
+| vec3f | specular                |  gray 0.3| specular color for shading                                                        |
+| vec3f | volumeClippingBoxLower  |  disabled| lower coordinate (in object-space) to clip the volume values                      |
+| vec3f | volumeClippingBoxUpper  |  disabled| upper coordinate (in object-space) to clip the volume values                      |
+
+: Configuration parameters shared by all volume types.
+
+Note that if `voxelRange` is not provided for a volume then OSPRay will
+compute it based on the voxel data, which may result in slower data
+updates.
+
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because
@@ -639,34 +662,124 @@ necessary then memory for the volume is allocated on the first call to
 this function.
 
 The common parameters understood by both structured volume variants are
-summarized in the table below. If `voxelRange` is not provided for a
-volume OSPRay will compute it based on the voxel data, which may result
-in slower data updates.
+summarized in the table below.
 
-| Type   | Name                    |      Default| Description                                                                       |
-|:-------|:------------------------|------------:|:----------------------------------------------------------------------------------|
-| vec3i  | dimensions              |             | number of voxels in each dimension $(x, y, z)$                                    |
-| string | voxelType               |             | data type of each voxel, currently supported are:                                 |
-|        |                         |             | "uchar" (8 bit unsigned integer)                                                  |
-|        |                         |             | "short" (16 bit signed integer)                                                   |
-|        |                         |             | "ushort" (16 bit unsigned integer)                                                |
-|        |                         |             | "float" (32 bit single precision floating point)                                  |
-|        |                         |             | "double" (64 bit double precision floating point)                                 |
-| vec2f  | voxelRange              |             | minimum and maximum of the scalar values                                          |
-| vec3f  | gridOrigin              |  $(0, 0, 0)$| origin of the grid in world-space                                                 |
-| vec3f  | gridSpacing             |  $(1, 1, 1)$| size of the grid cells in world-space                                             |
-| bool   | gradientShadingEnabled  |        false| volume is rendered with surface shading wrt. to normalized gradient               |
-| bool   | preIntegration          |        false| use pre-integration for [transfer function](#transfer-function) lookups           |
-| bool   | singleShade             |         true| shade only at the point of maximum intensity                                      |
-| bool   | adaptiveSampling        |         true| adapt ray step size based on opacity                                              |
-| float  | adaptiveScalar          |           15| modifier for adaptive step size                                                   |
-| float  | adaptiveMaxSamplingRate |            2| maximum sampling rate for adaptive sampling                                       |
-| float  | samplingRate            |        0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
-| vec3f  | specular                |     gray 0.3| specular color for shading                                                        |
-| vec3f  | volumeClippingBoxLower  |     disabled| lower coordinate (in object-space) to clip the volume values                      |
-| vec3f  | volumeClippingBoxUpper  |     disabled| upper coordinate (in object-space) to clip the volume values                      |
+| Type   | Name        | Default     | Description                                       |
+|:-------|:------------|:------------|:--------------------------------------------------|
+| vec3i  | dimensions  |             | number of voxels in each dimension $(x, y, z)$    |
+| string | voxelType   |             | data type of each voxel, currently supported are: |
+|        |             |             | "uchar" (8 bit unsigned integer)                  |
+|        |             |             | "short" (16 bit signed integer)                   |
+|        |             |             | "ushort" (16 bit unsigned integer)                |
+|        |             |             | "float" (32 bit single precision floating point)  |
+|        |             |             | "double" (64 bit double precision floating point) |
+| vec3f  | gridOrigin  | $(0, 0, 0)$ | origin of the grid in world-space                 |
+| vec3f  | gridSpacing | $(1, 1, 1)$ | size of the grid cells in world-space             |
 
-: Parameters to configure a structured volume.
+: Additional configuration parameters for structured volumes.
+
+### Adaptive Mesh Refinement (AMR) Volume
+
+AMR volumes are specified as a list of bricks, which are levels of
+refinement in potentially overlapping regions. There can be any number
+of refinement levels and any number of bricks at any level of
+refinement. An AMR volume type is created by passing the type string
+"`amr_volume`" to `ospNewVolume`.
+
+Applications should first create an `OSPData` array which holds
+information about each brick. The following structure is used to
+populate this array (found in `ospray.h`):
+
+``` {.cpp}
+struct amr_brick_info
+{
+  box3i bounds;
+  int   refinementLevel;
+  float cellWidth;
+};
+```
+
+Then for each brick, the application should create an `OSPData` array of
+`OSPData` handles, where each handle is the data per-brick. Currently we
+only support `float` voxels.
+
+<table style="width:98%;">
+<caption>Additional configuration parameters for AMR volumes.</caption>
+<colgroup>
+<col width="12%" />
+<col width="17%" />
+<col width="19%" />
+<col width="49%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f</td>
+<td align="left">gridOrigin</td>
+<td align="left"><span class="math inline">(0, 0, 0)</span></td>
+<td align="left">origin of the grid in world-space</td>
+</tr>
+<tr class="even">
+<td align="left">vec3f</td>
+<td align="left">gridSpacing</td>
+<td align="left"><span class="math inline">(1, 1, 1)</span></td>
+<td align="left">size of the grid cells in world-space</td>
+</tr>
+<tr class="odd">
+<td align="left">string</td>
+<td align="left">amrMethod</td>
+<td align="left">current</td>
+<td align="left">sampling method; valid values are &quot;finest&quot;, &quot;current&quot;, or &quot;octant&quot;</td>
+</tr>
+<tr class="even">
+<td align="left">OSPData</td>
+<td align="left">brickInfo</td>
+<td align="left"></td>
+<td align="left">array of info defining each brick</td>
+</tr>
+<tr class="odd">
+<td align="left">OSPData</td>
+<td align="left">brickData</td>
+<td align="left"></td>
+<td align="left">array of handles to per-brick voxel data</td>
+</tr>
+</tbody>
+</table>
+
+: Additional configuration parameters for AMR volumes.
+
+Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
+like the structured volume equivalent, but they only modify the root
+(coarsest level) of refinement.
+
+### Unstructured Tetrahedral Volumes
+
+Unstructured tetrahedral volumes are defined by three arrays: vertices,
+corresponding field values, and tetrahedra indices. A tetrahedral volume
+type is created by passing the type string "`tetrahedral_volume`" to
+`ospNewVolume`.
+
+Similar to [triangle mesh](#triangle-mesh), each tetrahedra is formed by
+a group of indices into the vertices. For each vertex, the corresponding
+(by array index) data value will be used for sampling when rendering.
+Note that the index order for each tetrahedra does not matter, as OSPRay
+internally calculates vertex normals to ensure proper sampling and
+interpolation.
+
+| Type      | Name       | Description                                                         |
+|:----------|:-----------|:--------------------------------------------------------------------|
+| vec3f\[\] | vertices   | [data](#data) array of vertex positions                             |
+| float\[\] | field      | [data](#data) array of vertex data values to be sampled             |
+| vec4i\[\] | tetrahedra | [data](#data) array of tetrahedra indices (into vertices and field) |
+
+: Additional configuration parameters for tetrahedral volumes.
 
 ### Transfer Function
 
@@ -1901,6 +2014,8 @@ Modes of Using OSPRay's MPI Features
 OSPRay provides two ways of using MPI to scale up rendering: offload and
 distributed.
 
+### Offload Rendering
+
 The "offload" rendering mode is where a single (not-distributed) calling
 application treats the OSPRay API the same as with local rendering.
 However, OSPRay uses multiple MPI connected nodes to evenly distribute
@@ -1911,6 +2026,25 @@ many samples-per-pixel is very compute heavy, making it a good situation
 to use the offload feature. This can be done with any application which
 already uses OSPRay for local rendering without the need for any code
 changes.
+
+When doing MPI offload rendering, applications can optionally enable
+dynamic load balancing, which can be beneficial in certain contexts.
+This load balancing refers to the distribution of tile rendering work
+across nodes: thread-level load balancing on each node is still dynamic
+with the thread tasking system. The options for enabling/controlling the
+dynamic load balacing features on the `mpi_offload` device are found in
+the table below, which can be changed while the application is running.
+Please note that these options will likely only pay off for scenes which
+have heavy rendering load (e.g. path tracing a non-trivial scene) and
+have a lot of variance in how expensive each tile is to render.
+
+| Type | Name                |  Default| Description                           |
+|:-----|:--------------------|--------:|:--------------------------------------|
+| bool | dynamicLoadBalancer |    false| whether to use dynamic load balancing |
+
+: Parameters specific to the `mpi_offload` device
+
+### Distributed Rendering
 
 The "distributed" rendering mode is where a MPI distributed application
 (such as a scientific simulation) uses OSPRay collectively to render
