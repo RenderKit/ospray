@@ -2204,7 +2204,7 @@ with
 
 On Windows build it in the build\_directory\\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
