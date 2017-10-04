@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.4.0 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.4.1 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -153,7 +153,7 @@ The following [API
 documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
 document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
-(2.1MB).
+(3.3MB).
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -331,12 +331,12 @@ all devices:
 <tr class="odd">
 <td align="left">string</td>
 <td align="left">logOutput</td>
-<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+<td align="left">convenience for setting where status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="even">
 <td align="left">string</td>
 <td align="left">errorOutput</td>
-<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+<td align="left">convenience for setting where error messages go; valid values are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="odd">
 <td align="left">int</td>

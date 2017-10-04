@@ -3,55 +3,59 @@ Version History
 
 ### Changes in v1.4.0:
 
--   New adaptive mesh refinement (AMR) and unstructured tetrahedral volume types
--   Dynamic load balancing is now implemented for the `mpi_offload` device
+-   New adaptive mesh refinement (AMR) and unstructured tetrahedral
+    volume types
+-   Dynamic load balancing is now implemented for the `mpi_offload`
+    device
 -   Many improvements and fixes to the available path tracer materials
-    -   Specular lobe of OBJMaterial uses Blinn-Phong for more
-        realistic highlights
+    -   Specular lobe of OBJMaterial uses Blinn-Phong for more realistic
+        highlights
     -   Metal accepts spectral samples of complex refraction index
     -   ThinGlass behaves consistent to Glass and can texture
         attenuation color
 -   Added Russian roulette termination to path tracer
 -   SciVis OBJMaterial accepts texture coordinate transformations
--   Applications can now access depth information in MPI distributed uses of
-    OSPRay (both `mpi_offload` and `mpi_distributed` devices)
--   Many robustness fixes for both the `mpi_offload` and `mpi_distributed`
-    devices through improvements to the `mpi_common` and `mpi_maml`
-    infrastructure libraries
+-   Applications can now access depth information in MPI distributed
+    uses of OSPRay (both `mpi_offload` and `mpi_distributed` devices)
+-   Many robustness fixes for both the `mpi_offload` and
+    `mpi_distributed` devices through improvements to the `mpi_common`
+    and `mpi_maml` infrastructure libraries
 -   Major sample app cleanups:
-    -   `ospray_sg` library is the new basis for building apps, which
-         is a scenegraph implementation
+    -   `ospray_sg` library is the new basis for building apps, which is
+        a scenegraph implementation
     -   Old (unused) libraries have been removed: miniSG, commandline,
         importer, loaders, and scripting
-    -   Some removed functionality (such as scripting) may be reintroduced in
-        the new infrastructure later, though most features have
-        remained and have been improved
-    -   Optional improved texture loading has been transitioned
-        from ImageMagick to OpenImageIO
+    -   Some removed functionality (such as scripting) may be
+        reintroduced in the new infrastructure later, though most
+        features have remained and have been improved
+    -   Optional improved texture loading has been transitioned from
+        ImageMagick to OpenImageIO
 -   Many cleanups, bug fixes, and improvements to `ospray_common` and
     other support libraries
--   This will be the last release in which we support MSVC12
-    (Visual Studio 2013). Future releases will require VS2015 or newer
+-   This will be the last release in which we support MSVC12 (Visual
+    Studio 2013). Future releases will require VS2015 or newer
 
 ### Changes in v1.3.1:
 
 -   Improved robustness of OSPRay CMake find_package config
-    -   Fixed bugs related to CMake configuration when using
-        the OSPRay SDK from an install
+    -   Fixed bugs related to CMake configuration when using the OSPRay
+        SDK from an install
 -   Fixed issue with Embree library when installing with
     `OSPRAY_INSTALL_DEPENDENCIES` enabled
 
 ### Changes in v1.3.0:
 
 -   New MPI distributed device to support MPI distributed applications
-    using OSPRay collectively for "in-situ" rendering (currently in "alpha")
+    using OSPRay collectively for "in-situ" rendering (currently in
+    "alpha")
     -   Enabled via new `mpi_distributed` device type
-    -   Currently only supports `raycast` renderer, other renderers will be
-        supported in the future
-    -   All API calls are expected to be exactly replicated (object instances
-        and parameters) except scene data (geometries and volumes)
-    -   The original MPI device is now called the `mpi_offload` device to
-        differentiate between the two implementations
+    -   Currently only supports `raycast` renderer, other renderers will
+        be supported in the future
+    -   All API calls are expected to be exactly replicated (object
+        instances and parameters) except scene data (geometries and
+        volumes)
+    -   The original MPI device is now called the `mpi_offload` device
+        to differentiate between the two implementations
 -   Support of Intel® AVX-512 for next generation Intel® Xeon® processor
     (codename Skylake), thus new minimum ISPC version is 1.9.1
 -   Thread affinity of OSPRay's tasking system can now be controlled via
@@ -65,9 +69,9 @@ Version History
     coordinates
 -   The GLUT- and Qt-based demo viewer applications have been replaced
     by an example viewer with minimal dependencies
-    -   Building the sample applications now requires GCC 4.9 (previously
-        4.8) for features used in the C++ standard library; OSPRay
-        itself can still be built with GCC 4.8
+    -   Building the sample applications now requires GCC 4.9
+        (previously 4.8) for features used in the C++ standard library;
+        OSPRay itself can still be built with GCC 4.8
     -   The new example viewer based on `ospray::sg` (called
         `ospExampleViewerSg`) is the single application we are
         consolidating to, `ospExampleViewer` will remain only as a
