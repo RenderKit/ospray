@@ -51,7 +51,7 @@ const varying BSDF* uniform MetallicPaint_getBSDF(const uniform PathTraceMateria
   {
     const spectrum etaAluminium = {0.570, 0.668, 0.776, 0.888, 1.02, 1.16, 1.31, 1.49};
     const spectrum kAluminium = {5.21, 5.57, 5.93, 6.28, 6.63, 6.97, 7.30, 7.61};
-    MultiBSDF_add(bsdf, MicrofacetConductor_create(ctx, shadingFrame, etaAluminium, kAluminium, self->glitterSpread));
+    MultiBSDF_add(bsdf, MicrofacetConductor_create(ctx, shadingFrame, etaAluminium, kAluminium, 0.8f));
   }
 
   bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);

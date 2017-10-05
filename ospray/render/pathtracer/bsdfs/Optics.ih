@@ -95,7 +95,8 @@ inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
     cosT = 0.0f;
     return 1.0f;
   }
-  return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
+  cosT = sqrt(sqrCosT);
+  return fresnelDielectric(cosI, cosT, eta);
 }
 
 /*! Computes fresnel coefficient for conductor medium with complex
