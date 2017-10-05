@@ -31,7 +31,9 @@ class Base {
   OSPCamera camera;
   OSPModel world;
   OSPData lights;
+  OSPFrameBufferFormat frameBufferFormat = OSP_FB_SRGBA;
 
+  OSPImageTools *imageTool;
   std::vector<OSPLight> lightsList;
 
 public:

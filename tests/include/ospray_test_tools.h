@@ -34,16 +34,28 @@ enum ImgType {
     RGBA,
 };
 
-// helper function to write the rendered image with given format
-OsprayStatus writeImg(const std::string &fileName, const osp::vec2i &size, const void *pixel);
-// helper function to write the rendered image as PPM file
-OsprayStatus writePPM(const std::string &fileName, const osp::vec2i &size, const uint32_t *pixel);
-// helper function to write the rendered image as PNG file
-OsprayStatus writePNG(const std::string &fileName, const osp::vec2i &size, const uint32_t *pixel);
-// helper function to write the rendered image as HDR file
-OsprayStatus writeHDR(const std::string &fileName, const osp::vec2i &size, const float *pixel);
-// helper function to compare gold image with current framebuffer render
-OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *testImg,const std::string &testName);
+class OSPImageTools {
+  protected:
+    osp::vec2i size;
+    std::string fileFormat;
+    std::string imgName;
 
+    // helper method to write the rendered image as PPM file
+    OsprayStatus writePPM(std::string fileName, const uint32_t *pixel);
+    // helper method to write the rendered image as PNG file
+    OsprayStatus writePNG(std::string fileName, const uint32_t *pixel);
+    // helper method to write the rendered image as HDR file
+    OsprayStatus writeHDR(std::string fileName, const float *pixel);
+    // helper method to write the image with given format
+    OsprayStatus writeImg(std::string fileName, const void *pixel);
+    std::string GetFileFormat() const { return fileFormat; };
 
+  public:
+    OSPImageTools(osp::vec2i imgSize, std::string testName, OSPFrameBufferFormat frameBufferFormat);
+    ~OSPImageTools();
 
+    // helper method to saved rendered file
+    OsprayStatus saveTestImage(const void *pixel);
+    // helper method to compare gold image with current framebuffer render
+    OsprayStatus compareImgWithBaseline(const uint32_t *testImg);
+};

@@ -28,9 +28,15 @@ Base::Base() {
   rendererType = "scivis";
   frames = 1;
   samplesPerPixel = 50;
+  try {
+    imageTool = new OSPImageTools(imgSize, GetTestName(), frameBufferFormat);
+  } catch (std::bad_alloc &e) {
+    ADD_FAILURE();
+  }
 }
 
 Base::~Base() {
+  delete imageTool;
 }
 
 void Base::SetUp() {
@@ -62,10 +68,9 @@ void Base::PerformRenderTest() {
   uint32_t* framebuffer_data = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
   if(ospEnv->GetDumpImg()) {
-    std::string fileName = ospEnv->GetBaselineDir() + "/" + GetTestName() + ".png";
-    EXPECT_EQ(writeImg(fileName, imgSize, framebuffer_data), OsprayStatus::Ok);
+    EXPECT_EQ(imageTool->saveTestImage(framebuffer_data), OsprayStatus::Ok);
   } else {
-    EXPECT_EQ(compareImgWithBaseline(GetImgSize(), framebuffer_data, GetTestName()), OsprayStatus::Ok);
+    EXPECT_EQ(imageTool->compareImgWithBaseline(framebuffer_data), OsprayStatus::Ok);
   }
 
   ospUnmapFrameBuffer(framebuffer_data, framebuffer);
@@ -116,7 +121,7 @@ void Base::SetRenderer() {
 }
 
 void Base::SetFramebuffer() {
-  framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+  framebuffer = ospNewFrameBuffer(imgSize, frameBufferFormat, OSP_FB_COLOR | OSP_FB_ACCUM);
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR);
 }
 

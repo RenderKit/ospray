@@ -5,7 +5,27 @@
 
 extern OSPRayEnvironment * ospEnv;
 
-OsprayStatus writePPM(const std::string& fileName, const osp::vec2i &size, const uint32_t *pixel) {
+OSPImageTools::OSPImageTools(osp::vec2i imgSize, std::string testName, OSPFrameBufferFormat frameBufferFormat) : size(imgSize), imgName(testName) {
+  switch(frameBufferFormat) {
+    case OSP_FB_RGBA8:
+      fileFormat = ".ppm";
+      break;
+    case OSP_FB_SRGBA:
+      fileFormat = ".png";
+      break;
+    case OSP_FB_RGBA32F:
+      fileFormat = ".hdr";
+      break;
+    default:
+      fileFormat = ".err";
+      break;
+  }
+}
+
+OSPImageTools::~OSPImageTools() {
+}
+
+OsprayStatus OSPImageTools::writePPM(std::string fileName, const uint32_t *pixel) {
   std::ofstream outFile(fileName.c_str(), std::ofstream::out | std::ofstream::binary);
   if (!outFile.good()) {
     std::cerr << "Failed to open file " << fileName << std::endl;
@@ -32,8 +52,7 @@ OsprayStatus writePPM(const std::string& fileName, const osp::vec2i &size, const
   return OsprayStatus::Ok;
 }
 
-OsprayStatus writePNG(const std::string& fileName, const osp::vec2i &size, const uint32_t *pixel) {
-
+OsprayStatus OSPImageTools::writePNG(std::string fileName, const uint32_t *pixel) {
   unsigned int bufferLen = ImgType::RGBA * size.x * size.y;
   std::vector<pixelColorValue> writeImage(bufferLen, std::numeric_limits<pixelColorValue>::max());
 
@@ -50,7 +69,7 @@ OsprayStatus writePNG(const std::string& fileName, const osp::vec2i &size, const
   return OsprayStatus::Ok;
 }
 
-OsprayStatus writeHDR(const std::string& fileName, const osp::vec2i &size, const float *pixel) {
+OsprayStatus OSPImageTools::writeHDR(std::string fileName, const float *pixel) {
   unsigned int bufferLen = ImgType::RGBA * size.x * size.y;
   std::vector<float> writeImage(bufferLen, std::numeric_limits<float>::max());
 
@@ -68,15 +87,15 @@ OsprayStatus writeHDR(const std::string& fileName, const osp::vec2i &size, const
 }
 
 // helper function to write the rendered image
-OsprayStatus writeImg(const std::string& fileName, const osp::vec2i &size, const void *pixel) {
+OsprayStatus OSPImageTools::writeImg(std::string fileName, const void *pixel) {
   OsprayStatus writeErr = OsprayStatus::Error;
-  const std::string fileFormat = fileName.substr(fileName.find_last_of(".") + 1);
-  if (fileFormat == "ppm") {
-    writeErr =  writePPM(fileName, size, (const uint32_t*)pixel);
-  }else if (fileFormat == "png") {
-    writeErr =  writePNG(fileName, size, (const uint32_t*)pixel);
-  }else if (fileFormat == "hdr") {
-    writeErr =  writeHDR(fileName, size, (const float*)pixel);
+  fileName += GetFileFormat();
+  if (GetFileFormat() == ".ppm") {
+    writeErr =  writePPM(fileName, (const uint32_t*)pixel);
+  }else if (GetFileFormat() == ".png") {
+    writeErr =  writePNG(fileName, (const uint32_t*)pixel);
+  }else if (GetFileFormat() == ".hdr") {
+    writeErr =  writeHDR(fileName, (const float*)pixel);
   }else {
     std::cerr << "Unsuporrted file format" << std::endl;
     writeErr =  OsprayStatus::Error;
@@ -85,11 +104,15 @@ OsprayStatus writeImg(const std::string& fileName, const osp::vec2i &size, const
   return writeErr;
 }
 
-// comparare the baseline image wiht the values form the framebuffer
-OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *testImg, const std::string &testName) {
-  pixelColorValue* testImage = (pixelColorValue*)testImg;
+OsprayStatus OSPImageTools::saveTestImage(const void *pixel)
+{
+  return writeImg(ospEnv->GetBaselineDir() + "/" + imgName, pixel);
+}
 
-  std::string baselineName = ospEnv->GetBaselineDir() + "/" + testName + ".png";
+// comparare the baseline image wiht the values form the framebuffer
+OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg) {
+  pixelColorValue* testImage = (pixelColorValue*)testImg;
+  std::string baselineName = ospEnv->GetBaselineDir() + "/" + imgName +  GetFileFormat();
 
   int dataX , dataY, dataN;
   pixelColorValue *baselineData = stbi_load(baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
@@ -161,9 +184,9 @@ OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *test
   bool failed = (incorrectPixels / double(3*size.x*size.y)) > errorRate;
 
   if (failed) {
-    writeImg(ospEnv->GetFailedDir()+"/"+testName+"_baseline.png", size, (const uint32_t*)baselineImage.data());
-    writeImg(ospEnv->GetFailedDir()+"/"+testName+"_rendered.png", size, (const uint32_t*)testImage);
-    writeImg(ospEnv->GetFailedDir()+"/"+testName+"_diff.png",     size, (const uint32_t*)diffImage.data());
+    writeImg(ospEnv->GetFailedDir()+"/"+imgName+"_baseline", (const uint32_t*)baselineImage.data());
+    writeImg(ospEnv->GetFailedDir()+"/"+imgName+"_rendered", (const uint32_t*)testImage);
+    writeImg(ospEnv->GetFailedDir()+"/"+imgName+"_diff", (const uint32_t*)diffImage.data());
   }
 
   stbi_image_free(baselineData);
