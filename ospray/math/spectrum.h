@@ -18,5 +18,8 @@
 
 #define SPECTRUM_SAMPLES 8
 #define SPECTRUM_FIRSTWL 430.f
-#define SPECTRUM_SPACING 30.f
-// ==> 430..640
+#define SPECTRUM_SPACING 35.f
+// ==> 430..675
+
+#define SPECTRUM_AL_ETA {0.570, 0.686, 0.813, 0.952, 1.11, 1.29, 1.49, 1.73}
+#define SPECTRUM_AL_K {5.21, 5.64, 6.05, 6.45, 6.85, 7.24, 7.61, 7.94}

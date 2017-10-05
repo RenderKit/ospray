@@ -132,5 +132,5 @@ inline vec3f fresnelConductor(float cosI, spectrum eta, spectrum k)
     rgb = rgb + fresnelConductor(cosI, eta[l], k[l])
       * make_vec3f(spectrum_sRGB_r[l], spectrum_sRGB_g[l], spectrum_sRGB_b[l]);
 
-  return max(rgb, make_vec3f(0.f));
+  return clamp(rgb);
 }

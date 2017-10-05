@@ -80,10 +80,8 @@ export void* uniform PathTracer_Metal_create()
 {
   Metal* uniform self = uniform new Metal;
   PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
-  spectrum eta
-    = {0.570, 0.668, 0.776, 0.888, 1.02, 1.16, 1.31, 1.49};
-  spectrum k
-    = {5.21, 5.57, 5.93, 6.28, 6.63, 6.97, 7.30, 7.61};
+  spectrum eta = SPECTRUM_AL_ETA;
+  spectrum k = SPECTRUM_AL_K;
   PathTracer_Metal_set(self, &eta[0], &k[0], 0.1f, NULL,
       make_AffineSpace2f_identity());
   return self;

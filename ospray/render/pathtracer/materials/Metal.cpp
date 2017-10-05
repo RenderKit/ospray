@@ -40,10 +40,8 @@ namespace ospray {
       {
         auto ior = getParamData("ior");
         // default to Aluminium
-        float etaResampled[SPECTRUM_SAMPLES]
-          = {0.570, 0.668, 0.776, 0.888, 1.02, 1.16, 1.31, 1.49};
-        float kResampled[SPECTRUM_SAMPLES]
-          = {5.21, 5.57, 5.93, 6.28, 6.63, 6.97, 7.30, 7.61};
+        float etaResampled[SPECTRUM_SAMPLES] = SPECTRUM_AL_ETA;
+        float kResampled[SPECTRUM_SAMPLES] = SPECTRUM_AL_K;
         if (ior && ior->data && ior->size() > 0) {
           if (ior->type != OSP_FLOAT3)
             throw std::runtime_error("Metal::ior must have data type OSP_FLOAT3 (wavelength, eta, k)[]");
@@ -55,9 +53,14 @@ namespace ospray {
           for(int l = 0; l < SPECTRUM_SAMPLES; wl += SPECTRUM_SPACING, l++) {
             for(; iorP != iorLast && iorP->x < wl; iorP++)
               iorPrev = *iorP;
-            auto f = (wl-iorPrev.x)/(iorP->x-iorPrev.x);
-            etaResampled[l] = (1.f - f) * iorPrev.y + f * iorP->y;
-            kResampled[l] = (1.f - f) * iorPrev.z + f * iorP->z;
+            if (iorP->x == iorPrev.x) {
+              etaResampled[l] = iorPrev.y;
+              kResampled[l] = iorPrev.z;
+            } else {
+              auto f = (wl - iorPrev.x) / (iorP->x - iorPrev.x);
+              etaResampled[l] = (1.f - f) * iorPrev.y + f * iorP->y;
+              kResampled[l] = (1.f - f) * iorPrev.z + f * iorP->z;
+            }
           }
         }
 
