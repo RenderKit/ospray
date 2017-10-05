@@ -14,7 +14,7 @@ OsprayStatus writePPM(const std::string& fileName, const osp::vec2i &size, const
 
   outFile << "P6\n"
     << size.x << " " << size.y << "\n"
-    << "255\n";
+    << "std::numeric_limits<pixelColorValue>::max()\n";
 
   std::vector<pixelColorValue> out_vec(3 * size.x);
   pixelColorValue* out = out_vec.data();
@@ -23,7 +23,7 @@ OsprayStatus writePPM(const std::string& fileName, const osp::vec2i &size, const
     const pixelColorValue* in = (const pixelColorValue*)(pixel + (size.y-1-y)*size.x);
 
     for (int x = 0; x < size.x; x++)
-      std::memcpy(out + 3*x, in + 4*x, 3);
+      std::memcpy(out + 3*x, in + ImgType::RGBA*x, 3);
 
     outFile.write((const char*)out, 3 * size.x);
   }
@@ -34,14 +34,14 @@ OsprayStatus writePPM(const std::string& fileName, const osp::vec2i &size, const
 
 OsprayStatus writePNG(const std::string& fileName, const osp::vec2i &size, const uint32_t *pixel) {
 
-  unsigned int bufferLen = 4 * size.x * size.y;
-  std::vector<pixelColorValue> writeImage(bufferLen, 255);
+  unsigned int bufferLen = ImgType::RGBA * size.x * size.y;
+  std::vector<pixelColorValue> writeImage(bufferLen, std::numeric_limits<pixelColorValue>::max());
 
   for (int y = 0; y < size.y; ++y) {
-    pixelColorValue* lineAdrr = &(writeImage[4*size.x *(size.y-1- y)]);
-    std::memcpy(lineAdrr, &(pixel[size.x*y]), 4*sizeof(pixelColorValue)*size.x);
+    pixelColorValue* lineAdrr = &(writeImage[ImgType::RGBA*size.x *(size.y-1- y)]);
+    std::memcpy(lineAdrr, &(pixel[size.x*y]), ImgType::RGBA*sizeof(pixelColorValue)*size.x);
   }
-  int retCode = stbi_write_png(fileName.c_str(), size.x, size.y, static_cast<int>(ImgType::RGBA), (const void*)writeImage.data(), 0);
+  int retCode = stbi_write_png(fileName.c_str(), size.x, size.y, ImgType::RGBA, (const void*)writeImage.data(), 0);
   if (!retCode)
   {
     std::cerr << "Failed to save image: " << fileName << std::endl;
@@ -50,8 +50,15 @@ OsprayStatus writePNG(const std::string& fileName, const osp::vec2i &size, const
   return OsprayStatus::Ok;
 }
 
-OsprayStatus writeHDR(const std::string& fileName, const osp::vec2i &size, const uint32_t *pixel) {
-  int retCode = stbi_write_hdr(fileName.c_str(), size.x, size.y, static_cast<int>(ImgType::RGBA), (const float*)pixel);
+OsprayStatus writeHDR(const std::string& fileName, const osp::vec2i &size, const float *pixel) {
+  unsigned int bufferLen = ImgType::RGBA * size.x * size.y;
+  std::vector<float> writeImage(bufferLen, std::numeric_limits<float>::max());
+
+  for (int y = 0; y < size.y; ++y) {
+    float* lineAdrr = &(writeImage[ImgType::RGBA*size.x *(size.y-1- y)]);
+    std::memcpy(lineAdrr, &(pixel[size.x*y]), ImgType::RGBA*sizeof(pixelColorValue)*size.x);
+  }
+  int retCode = stbi_write_hdr(fileName.c_str(), size.x, size.y, ImgType::RGBA, writeImage.data());
   if (!retCode)
   {
     std::cerr << "Failed to save image: " << fileName << std::endl;
@@ -61,15 +68,15 @@ OsprayStatus writeHDR(const std::string& fileName, const osp::vec2i &size, const
 }
 
 // helper function to write the rendered image
-OsprayStatus writeImg(const std::string& fileName, const osp::vec2i &size, const uint32_t *pixel) {
+OsprayStatus writeImg(const std::string& fileName, const osp::vec2i &size, const void *pixel) {
   OsprayStatus writeErr = OsprayStatus::Error;
   const std::string fileFormat = fileName.substr(fileName.find_last_of(".") + 1);
   if (fileFormat == "ppm") {
-    writeErr =  writePPM(fileName, size, pixel);
+    writeErr =  writePPM(fileName, size, (const uint32_t*)pixel);
   }else if (fileFormat == "png") {
-    writeErr =  writePNG(fileName, size, pixel);
+    writeErr =  writePNG(fileName, size, (const uint32_t*)pixel);
   }else if (fileFormat == "hdr") {
-    writeErr =  writeHDR(fileName, size, pixel);
+    writeErr =  writeHDR(fileName, size, (const float*)pixel);
   }else {
     std::cerr << "Unsuporrted file format" << std::endl;
     writeErr =  OsprayStatus::Error;
@@ -85,7 +92,7 @@ OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *test
   std::string baselineName = ospEnv->GetBaselineDir() + "/" + testName + ".png";
 
   int dataX , dataY, dataN;
-  pixelColorValue *baselineData = stbi_load(baselineName.c_str(), &dataX, &dataY, &dataN, 4);
+  pixelColorValue *baselineData = stbi_load(baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
   if (!baselineData) {
     std::cerr << "Failed to load image: " << baselineName << std::endl;
     return OsprayStatus::Fail;
@@ -96,25 +103,25 @@ OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *test
     return OsprayStatus::Fail;
   }
 
-  unsigned int bufferLen = 4 * size.x * size.y;
-  std::vector<pixelColorValue> baselineImage(bufferLen, 255);
-  std::vector<pixelColorValue> diffImage(bufferLen, 255);
+  unsigned int bufferLen = ImgType::RGBA * size.x * size.y;
+  std::vector<pixelColorValue> baselineImage(bufferLen, std::numeric_limits<pixelColorValue>::max());
+  std::vector<pixelColorValue> diffImage(bufferLen, std::numeric_limits<pixelColorValue>::max());
 
   for (int y = 0; y < size.y; ++y) {
-    pixelColorValue* lineAdrr = &(baselineImage[4*size.x *(size.y-1- y)]);
-    std::memcpy(lineAdrr, &(baselineData[4*size.x*y]), 4*sizeof(pixelColorValue)*size.x);
+    pixelColorValue* lineAdrr = &(baselineImage[ImgType::RGBA*size.x *(size.y-1- y)]);
+    std::memcpy(lineAdrr, &(baselineData[ImgType::RGBA*size.x*y]), ImgType::RGBA*sizeof(pixelColorValue)*size.x);
   }
 
   bool notPerfect = false;
   unsigned incorrectPixels = 0;
   pixelColorValue maxError = 0;
-  pixelColorValue minError = 255;
+  pixelColorValue minError = std::numeric_limits<pixelColorValue>::max();
   long long totalError = 0;
 
   for (int pixel = 0; pixel < size.x * size.y; ++pixel) {
     for (int channel = 0; channel < 3; ++channel) {
-      pixelColorValue baselineValue = baselineImage[4*pixel + channel];
-      pixelColorValue renderedValue = testImage[4*pixel + channel];
+      pixelColorValue baselineValue = baselineImage[ImgType::RGBA*pixel + channel];
+      pixelColorValue renderedValue = testImage[ImgType::RGBA*pixel + channel];
       pixelColorValue diffValue = std::abs((int)baselineValue - (int)renderedValue);
 
       notPerfect = notPerfect || diffValue;
@@ -124,7 +131,7 @@ OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *test
       if (diffValue > pixelThreshold)
         incorrectPixels++;
 
-      diffImage[4*pixel + channel] = diffValue;
+      diffImage[ImgType::RGBA*pixel + channel] = diffValue;
     }
   }
 
@@ -136,7 +143,7 @@ OsprayStatus compareImgWithBaseline(const osp::vec2i &size, const uint32_t *test
     double variance = 0.0;
     for (int pixel = 0; pixel < size.x * size.y; ++pixel)
       for (int channel = 0; channel < 3; ++channel) {
-         double diff = diffImage[4*pixel + channel] - meanError;
+         double diff = diffImage[ImgType::RGBA*pixel + channel] - meanError;
          variance += diff * diff;
       }
     variance /= (3*size.x*size.y);
