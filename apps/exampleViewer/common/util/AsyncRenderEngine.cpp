@@ -26,6 +26,7 @@ namespace ospray {
     : scenegraph(sgRenderer), scenegraphDW(sgRendererDW)
   {
     backgroundThread = make_unique<AsyncLoop>([&](){
+      ospDeviceCommit(ospGetCurrentDevice()); // workaround #239
       static sg::TimeStamp lastFTime;
 
       auto &sgFB = scenegraph->child("frameBuffer");
