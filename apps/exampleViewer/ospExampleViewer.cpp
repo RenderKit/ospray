@@ -438,8 +438,10 @@ int main(int ac, const char **av)
   renderer["camera"]["dir"] = dir;
   renderer["camera"]["pos"] = viewPort.from;
   renderer["camera"]["up"]  = viewPort.up;
-  renderer["camera"]["fovy"] = viewPort.openingAngle;
-  renderer["camera"]["apertureRadius"] = viewPort.apertureRadius;
+  if (renderer["camera"].hasChild("fovy"))
+    renderer["camera"]["fovy"] = viewPort.openingAngle;
+  if (renderer["camera"].hasChild("apertureRadius"))
+    renderer["camera"]["apertureRadius"] = viewPort.apertureRadius;
   if (renderer["camera"].hasChild("focusdistance"))
     renderer["camera"]["focusdistance"] = length(viewPort.at - viewPort.from);
 
