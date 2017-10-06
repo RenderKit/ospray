@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <cmath>
+#include <cstring>
 
 #include <ospray/ospray.h>
 #include <gtest/gtest.h>

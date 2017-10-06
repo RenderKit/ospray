@@ -1,8 +1,5 @@
 #include "ospray_test_fixture.h"
 
-#include <cmath>
-#include <cstring>
-
 extern OSPRayEnvironment * ospEnv;
 
 namespace OSPRayTestScenes {

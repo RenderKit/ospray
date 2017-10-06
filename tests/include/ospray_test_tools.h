@@ -6,6 +6,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <cmath>
+
 #include <ospray/ospray.h>
 #include <gtest/gtest.h>
 
@@ -14,7 +16,7 @@
 using pixelColorValue = unsigned char;
 
 const pixelColorValue pixelThreshold = 10;
-const float errorRate = 0.01;
+const float errorRate = 0.03;
 
 enum class OsprayStatus {
   Ok,
