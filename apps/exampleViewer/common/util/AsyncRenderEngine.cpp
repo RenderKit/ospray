@@ -105,24 +105,23 @@ namespace ospray {
     fbSize = size;
   }
 
-  void AsyncRenderEngine::start(int numThreads)
+  void AsyncRenderEngine::start(int numOsprayThreads)
   {
     if (state == ExecState::RUNNING)
       return;
-
-    numOsprayThreads = numThreads;
 
     validate();
 
     if (state == ExecState::INVALID)
       throw std::runtime_error("Can't start the engine in an invalid state!");
 
-    auto device = ospGetCurrentDevice();
-    if(device == nullptr)
-      throw std::runtime_error("Can't get current device!");
+    if (numOsprayThreads > 0) {
+      auto device = ospGetCurrentDevice();
+      if(device == nullptr)
+        throw std::runtime_error("Can't get current device!");
 
-    if (numOsprayThreads > 0)
       ospDeviceSet1i(device, "numThreads", numOsprayThreads);
+    }
 
     state = ExecState::RUNNING;
     commitDeviceOnAsyncLoopThread = true;
