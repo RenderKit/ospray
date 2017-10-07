@@ -37,8 +37,8 @@ namespace ospray {
       if (sgFB.childrenLastModified() > lastFTime || !once) {
         auto &size = sgFB["size"];
         nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
-        pixelBuffer[0].resize(nPixels);
-        pixelBuffer[1].resize(nPixels);
+        pixelBuffers.front().resize(nPixels);
+        pixelBuffers.back().resize(nPixels);
         lastFTime = sg::TimeStamp();
       }
 
@@ -74,14 +74,14 @@ namespace ospray {
       auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
 
       auto *srcPB = (uint32_t*)sgFBptr->map();
-      auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
+      auto *dstPB = (uint32_t*)pixelBuffers.back().data();
 
       memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
 
       sgFBptr->unmap(srcPB);
 
       if (fbMutex.try_lock()) {
-        std::swap(currentPB, mappedPB);
+        pixelBuffers.swap();
         newPixels = true;
         fbMutex.unlock();
       }
@@ -170,7 +170,7 @@ namespace ospray {
   {
     fbMutex.lock();
     newPixels = false;
-    return pixelBuffer[mappedPB];
+    return pixelBuffers.front();
   }
 
   void AsyncRenderEngine::unmapFramebuffer()

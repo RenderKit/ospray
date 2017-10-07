@@ -24,6 +24,7 @@
 #include "ospcommon/box.h"
 #include "ospcommon/AsyncLoop.h"
 #include "ospcommon/utility/CodeTimer.h"
+#include "ospcommon/utility/DoubleBufferedValue.h"
 #include "ospcommon/utility/TransactionalValue.h"
 
 #include "sg/common/Node.h"
@@ -95,11 +96,8 @@ namespace ospray {
 
     int nPixels {0};
 
-    int currentPB {0};
-    int mappedPB  {1};
-
     std::mutex fbMutex;
-    std::vector<uint32_t> pixelBuffer[2];
+    ospcommon::utility::DoubleBufferedValue<std::vector<uint32_t>> pixelBuffers;
 
     std::atomic<bool> newPixels {false};
 
