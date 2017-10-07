@@ -104,7 +104,7 @@ namespace ospVisItRandSciVisTest {
 
   float SRGB(float c) {
 #if 1
-    return pow(c, 1.f/2.2f); // hacked version used in OSPRay
+    return std::pow(c, 1.f/2.2f); // hacked version used in OSPRay
 #else
     const float a = 0.055f;
     if (c <= 0.0031308) {

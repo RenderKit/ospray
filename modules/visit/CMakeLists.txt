@@ -19,6 +19,8 @@
 # Though not actually required we guard each module 'moduleName' with
 # a OSPRAY_MODULE_MODULENAME flag that enables/disables its building.
 #
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+PROJECT(module_visit)
 OPTION(OSPRAY_MODULE_VISIT "Build visit-ospray module" OFF)
 IF (OSPRAY_MODULE_VISIT AND OSPRAY_MODULE_MPI)
 
