@@ -38,8 +38,8 @@ namespace ospray {
 
     size_t numBricksWritten = 0;
     std::mutex fileMutex;
-    FILE *infoOut;
-    FILE *dataOut;
+    FILE *infoOut = nullptr;
+    FILE *dataOut = nullptr;
 
     size_t numWritten = 0;
     size_t numRemoved = 0;
@@ -208,9 +208,12 @@ namespace ospray {
         throw std::runtime_error("unknown input voxel format");
 
       infoOut = fopen((outFileBase + ".info").c_str(), "wb");
-      assert(infoOut);
+      if (!infoOut)
+        throw std::runtime_error("could not open info output file!");
+
       dataOut = fopen((outFileBase + ".data").c_str(), "wb");
-      assert(dataOut);
+      if (!dataOut)
+        throw std::runtime_error("could not open data output file!");
 
       ofstream osp(outFileBase + ".osp");
       osp << "<?xml?>" << endl;
@@ -233,9 +236,6 @@ namespace ospray {
       osp << "	clamp=\"0 100000\"" << endl;
       osp << "	/>" << endl;
       osp << "</ospray>" << endl;
-
-      assert(infoOut);
-      assert(dataOut);
 
       makeAMR(in, numLevels, BS, RF, threshold);
 
