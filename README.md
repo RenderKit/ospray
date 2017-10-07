@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.4.0 (devel) of OSPRay. For changes and new features
+This is release v1.4.1 (devel) of OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
 more information.
 
@@ -153,7 +153,7 @@ The following [API
 documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
 document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
-(2.1MB).
+(3.3MB).
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -204,8 +204,8 @@ prefixed by convention with "`--osp:`") are understood:
 <table style="width:98%;">
 <caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
 <colgroup>
-<col width="32%" />
-<col width="65%" />
+<col width="33%" />
+<col width="63%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -252,13 +252,17 @@ prefixed by convention with "`--osp:`") are understood:
 </tr>
 <tr class="even">
 <td align="left"><code>--osp:logoutput &lt;dst&gt;</code></td>
-<td align="left">convenience for setting where error/status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+<td align="left">convenience for setting where status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="odd">
+<td align="left"><code>--osp:erroroutput &lt;dst&gt;</code></td>
+<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
 <td align="left"><code>--osp:device:&lt;name&gt;</code></td>
 <td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>--osp:setaffinity &lt;n&gt;</code></td>
 <td align="left">if <code>1</code>, bind software threads to hardware threads; <code>0</code> disables binding; default is <code>1</code> on KNL and <code>0</code> otherwise</td>
 </tr>
@@ -299,12 +303,53 @@ void ospDeviceSetString(OSPDevice, const char *id, const char *val);
 to set parameters on the device. The following parameters can be set on
 all devices:
 
-| Type | Name        | Description                                                                                                             |
-|:-----|:------------|:------------------------------------------------------------------------------------------------------------------------|
-| int  | numThreads  | number of threads which OSPRay should use                                                                               |
-| int  | logLevel    | logging level                                                                                                           |
-| int  | debug       | set debug mode; equivalent to logLevel=2 and numThreads=1                                                               |
-| int  | setAffinity | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose |
+<table style="width:99%;">
+<caption>Parameters shared by all devices.</caption>
+<colgroup>
+<col width="9%" />
+<col width="16%" />
+<col width="72%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">numThreads</td>
+<td align="left">number of threads which OSPRay should use</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">logLevel</td>
+<td align="left">logging level</td>
+</tr>
+<tr class="odd">
+<td align="left">string</td>
+<td align="left">logOutput</td>
+<td align="left">convenience for setting where status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
+<td align="left">string</td>
+<td align="left">errorOutput</td>
+<td align="left">convenience for setting where error messages go; valid values are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">debug</td>
+<td align="left">set debug mode; equivalent to logLevel=2 and numThreads=1</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">setAffinity</td>
+<td align="left">bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters shared by all devices.
 
@@ -348,6 +393,7 @@ with "`OSPRAY_`"):
 | OSPRAY\_THREADS       | equivalent to `--osp:numthreads`  |
 | OSPRAY\_LOG\_LEVEL    | equivalent to `--osp:loglevel`    |
 | OSPRAY\_LOG\_OUTPUT   | equivalent to `--osp:logoutput`   |
+| OSPRAY\_ERROR\_OUTPUT | equivalent to `--osp:erroroutput` |
 | OSPRAY\_DEBUG         | equivalent to `--osp:debug`       |
 | OSPRAY\_SET\_AFFINITY | equivalent to `--osp:setaffinity` |
 
@@ -602,6 +648,29 @@ OSPVolume ospNewVolume(const char *type);
 The call returns `NULL` if that type of volume is not known by OSPRay,
 or else an `OSPVolume` handle.
 
+The common parameters understood by all volume variants are summarized
+in the table below.
+
+| Type  | Name                    |   Default| Description                                                                       |
+|:------|:------------------------|---------:|:----------------------------------------------------------------------------------|
+| vec2f | voxelRange              |          | minimum and maximum of the scalar values                                          |
+| bool  | gradientShadingEnabled  |     false| volume is rendered with surface shading wrt. to normalized gradient               |
+| bool  | preIntegration          |     false| use pre-integration for [transfer function](#transfer-function) lookups           |
+| bool  | singleShade             |      true| shade only at the point of maximum intensity                                      |
+| bool  | adaptiveSampling        |      true| adapt ray step size based on opacity                                              |
+| float | adaptiveScalar          |        15| modifier for adaptive step size                                                   |
+| float | adaptiveMaxSamplingRate |         2| maximum sampling rate for adaptive sampling                                       |
+| float | samplingRate            |     0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
+| vec3f | specular                |  gray 0.3| specular color for shading                                                        |
+| vec3f | volumeClippingBoxLower  |  disabled| lower coordinate (in object-space) to clip the volume values                      |
+| vec3f | volumeClippingBoxUpper  |  disabled| upper coordinate (in object-space) to clip the volume values                      |
+
+: Configuration parameters shared by all volume types.
+
+Note that if `voxelRange` is not provided for a volume then OSPRay will
+compute it based on the voxel data, which may result in slower data
+updates.
+
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because
@@ -639,34 +708,124 @@ necessary then memory for the volume is allocated on the first call to
 this function.
 
 The common parameters understood by both structured volume variants are
-summarized in the table below. If `voxelRange` is not provided for a
-volume OSPRay will compute it based on the voxel data, which may result
-in slower data updates.
+summarized in the table below.
 
-| Type   | Name                    |      Default| Description                                                                       |
-|:-------|:------------------------|------------:|:----------------------------------------------------------------------------------|
-| vec3i  | dimensions              |             | number of voxels in each dimension $(x, y, z)$                                    |
-| string | voxelType               |             | data type of each voxel, currently supported are:                                 |
-|        |                         |             | "uchar" (8 bit unsigned integer)                                                  |
-|        |                         |             | "short" (16 bit signed integer)                                                   |
-|        |                         |             | "ushort" (16 bit unsigned integer)                                                |
-|        |                         |             | "float" (32 bit single precision floating point)                                  |
-|        |                         |             | "double" (64 bit double precision floating point)                                 |
-| vec2f  | voxelRange              |             | minimum and maximum of the scalar values                                          |
-| vec3f  | gridOrigin              |  $(0, 0, 0)$| origin of the grid in world-space                                                 |
-| vec3f  | gridSpacing             |  $(1, 1, 1)$| size of the grid cells in world-space                                             |
-| bool   | gradientShadingEnabled  |        false| volume is rendered with surface shading wrt. to normalized gradient               |
-| bool   | preIntegration          |        false| use pre-integration for [transfer function](#transfer-function) lookups           |
-| bool   | singleShade             |         true| shade only at the point of maximum intensity                                      |
-| bool   | adaptiveSampling        |         true| adapt ray step size based on opacity                                              |
-| float  | adaptiveScalar          |           15| modifier for adaptive step size                                                   |
-| float  | adaptiveMaxSamplingRate |            2| maximum sampling rate for adaptive sampling                                       |
-| float  | samplingRate            |        0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
-| vec3f  | specular                |     gray 0.3| specular color for shading                                                        |
-| vec3f  | volumeClippingBoxLower  |     disabled| lower coordinate (in object-space) to clip the volume values                      |
-| vec3f  | volumeClippingBoxUpper  |     disabled| upper coordinate (in object-space) to clip the volume values                      |
+| Type   | Name        | Default     | Description                                       |
+|:-------|:------------|:------------|:--------------------------------------------------|
+| vec3i  | dimensions  |             | number of voxels in each dimension $(x, y, z)$    |
+| string | voxelType   |             | data type of each voxel, currently supported are: |
+|        |             |             | "uchar" (8 bit unsigned integer)                  |
+|        |             |             | "short" (16 bit signed integer)                   |
+|        |             |             | "ushort" (16 bit unsigned integer)                |
+|        |             |             | "float" (32 bit single precision floating point)  |
+|        |             |             | "double" (64 bit double precision floating point) |
+| vec3f  | gridOrigin  | $(0, 0, 0)$ | origin of the grid in world-space                 |
+| vec3f  | gridSpacing | $(1, 1, 1)$ | size of the grid cells in world-space             |
 
-: Parameters to configure a structured volume.
+: Additional configuration parameters for structured volumes.
+
+### Adaptive Mesh Refinement (AMR) Volume
+
+AMR volumes are specified as a list of bricks, which are levels of
+refinement in potentially overlapping regions. There can be any number
+of refinement levels and any number of bricks at any level of
+refinement. An AMR volume type is created by passing the type string
+"`amr_volume`" to `ospNewVolume`.
+
+Applications should first create an `OSPData` array which holds
+information about each brick. The following structure is used to
+populate this array (found in `ospray.h`):
+
+``` {.cpp}
+struct amr_brick_info
+{
+  box3i bounds;
+  int   refinementLevel;
+  float cellWidth;
+};
+```
+
+Then for each brick, the application should create an `OSPData` array of
+`OSPData` handles, where each handle is the data per-brick. Currently we
+only support `float` voxels.
+
+<table style="width:98%;">
+<caption>Additional configuration parameters for AMR volumes.</caption>
+<colgroup>
+<col width="12%" />
+<col width="17%" />
+<col width="19%" />
+<col width="49%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f</td>
+<td align="left">gridOrigin</td>
+<td align="left"><span class="math inline">(0, 0, 0)</span></td>
+<td align="left">origin of the grid in world-space</td>
+</tr>
+<tr class="even">
+<td align="left">vec3f</td>
+<td align="left">gridSpacing</td>
+<td align="left"><span class="math inline">(1, 1, 1)</span></td>
+<td align="left">size of the grid cells in world-space</td>
+</tr>
+<tr class="odd">
+<td align="left">string</td>
+<td align="left">amrMethod</td>
+<td align="left">current</td>
+<td align="left">sampling method; valid values are &quot;finest&quot;, &quot;current&quot;, or &quot;octant&quot;</td>
+</tr>
+<tr class="even">
+<td align="left">OSPData</td>
+<td align="left">brickInfo</td>
+<td align="left"></td>
+<td align="left">array of info defining each brick</td>
+</tr>
+<tr class="odd">
+<td align="left">OSPData</td>
+<td align="left">brickData</td>
+<td align="left"></td>
+<td align="left">array of handles to per-brick voxel data</td>
+</tr>
+</tbody>
+</table>
+
+: Additional configuration parameters for AMR volumes.
+
+Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
+like the structured volume equivalent, but they only modify the root
+(coarsest level) of refinement.
+
+### Unstructured Tetrahedral Volumes
+
+Unstructured tetrahedral volumes are defined by three arrays: vertices,
+corresponding field values, and tetrahedra indices. A tetrahedral volume
+type is created by passing the type string "`tetrahedral_volume`" to
+`ospNewVolume`.
+
+Similar to [triangle mesh](#triangle-mesh), each tetrahedra is formed by
+a group of indices into the vertices. For each vertex, the corresponding
+(by array index) data value will be used for sampling when rendering.
+Note that the index order for each tetrahedra does not matter, as OSPRay
+internally calculates vertex normals to ensure proper sampling and
+interpolation.
+
+| Type      | Name       | Description                                                         |
+|:----------|:-----------|:--------------------------------------------------------------------|
+| vec3f\[\] | vertices   | [data](#data) array of vertex positions                             |
+| float\[\] | field      | [data](#data) array of vertex data values to be sampled             |
+| vec4i\[\] | tetrahedra | [data](#data) array of tetrahedra indices (into vertices and field) |
+
+: Additional configuration parameters for tetrahedral volumes.
 
 ### Transfer Function
 
@@ -886,33 +1045,33 @@ linearly interpolated.
 
 ### Streamlines
 
-A geometry consisting of multiple stream lines of constant radius is
+A geometry consisting of multiple streamlines of constant radius is
 created by calling `ospNewGeometry` with type string "`streamlines`".
-The stream lines are internally assembled from connected (and rounded)
+The streamlines are internally assembled from connected (and rounded)
 cylinder segments and are thus perfectly round. The parameters defining
 this geometry are listed in the table below.
 
 | Type       | Name         | Description                                                  |
 |:-----------|:-------------|:-------------------------------------------------------------|
-| float      | radius       | radius of all stream lines, default 0.01                     |
-| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* stream lines   |
+| float      | radius       | radius of all streamlines, default 0.01                      |
+| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* streamlines    |
 | vec4f\[\]  | vertex.color | [data](#data) array of corresponding vertex colors (RGBA)    |
 | int32\[\]  | index        | [data](#data) array of indices to the first vertex of a link |
 
 : Parameters defining a streamlines geometry.
 
-Each stream line is specified by a set of (aligned) vec3fa control
-points in `vertex`; all vertices belonging to to the same logical stream
-line are connected via [cylinders](#cylinders) of a fixed radius
-`radius`, with additional [spheres](#spheres) at each vertex to make for
-a smooth transition between the cylinders.
+Each streamline is specified by a set of (aligned) vec3fa control points
+in `vertex`; all vertices belonging to to the same logical streamline
+are connected via [cylinders](#cylinders) of a fixed radius `radius`,
+with additional [spheres](#spheres) at each vertex to make for a smooth
+transition between the cylinders.
 
-A streamlines geometry can contain multiple disjoint stream lines, each
+A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of linear segments (or links)
 referenced via `index`: each entry `e` of the `index` array points the
 first vertex of a link (`vertex[index[e]]`) and the second vertex of the
 link is implicitly the directly following one (`vertex[index[e]+1]`).
-For example, two stream lines of vertices `(A-B-C-D)` and `(E-F-G)`,
+For example, two streamlines of vertices `(A-B-C-D)` and `(E-F-G)`,
 respectively, would internally correspond to five links (`A-B`, `B-C`,
 `C-D`, `E-F`, and `F-G`), and would be specified via an array of
 vertices `[A,B,C,D,E,F,G]`, plus an array of link indices `[0,1,2,4,5]`.
@@ -1111,12 +1270,18 @@ special parameters:
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">int</td>
+<td align="left">rouletteDepth</td>
+<td align="right">5</td>
+<td align="left">ray recursion depth at which to start Russian roulette termination</td>
+</tr>
+<tr class="even">
 <td align="left">float</td>
 <td align="left">maxContribution</td>
 <td align="right">∞</td>
 <td align="left">samples are clamped to this value before they are accumulated into the framebuffer</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">OSPTexture2D</td>
 <td align="left">backplate</td>
 <td align="right">NULL</td>
@@ -1415,9 +1580,8 @@ are multiplied by the respective parameter value. Texturing requires
 mesh](#triangle-mesh) with `vertex.texcoord` provided. The color
 textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
 encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
-linear format (and only the first component is used). The path tracer
-additionally supports [texture
-transformations](#texture-transformations) for all textures.
+linear format (and only the first component is used). Additionally, all
+textures support [texture transformations](#texture-transformations).
 
 <img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" />
 
@@ -1428,18 +1592,46 @@ changing roughness and realistic color shifts at edges. To create a
 Metal material pass the type string "`Metal`" to `ospNewMaterial`. Its
 parameters are
 
-| Type  | Name      |  Default| Description                               |
-|:------|:----------|--------:|:------------------------------------------|
-| vec3f | eta       |   Alumi-| index of refraction, real part            |
-| vec3f | k         |     nium| index of refraction, imaginary part       |
-| float | roughness |      0.1| roughness in \[0–1\], 0 is perfect mirror |
+<table style="width:98%;">
+<caption>Parameters of the Metal material.</caption>
+<colgroup>
+<col width="12%" />
+<col width="14%" />
+<col width="16%" />
+<col width="55%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="right">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f[]</td>
+<td align="left">ior</td>
+<td align="right">Aluminium</td>
+<td align="left"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
+</tr>
+<tr class="even">
+<td align="left">float</td>
+<td align="left">roughness</td>
+<td align="right">0.1</td>
+<td align="left">roughness in [0–1], 0 is perfect mirror</td>
+</tr>
+</tbody>
+</table>
 
-: Parameters of the Glass material.
+: Parameters of the Metal material.
 
 The main appearence (mostly the color) of the Metal material is
 controled by the physical parameters `eta` and `k`, the
 wavelength-dependent, complex index of refraction. These coefficients
-are quite counterintuitive but can be found in published measurements.
+are quite counterintuitive but can be found in [published
+measurements](https://refractiveindex.info/).
+
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
 [texture](#texture) `map_roughness` ([texture
@@ -1556,7 +1748,7 @@ texture creating flags can be combined with a bitwise OR.
 
 ### Texture Transformations
 
-Many materials with textures also offer to manipulate the placement of
+All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
 convention shall be used. The following parameters (prefixed with
 "`texture_name.`") are combined into one transformation matrix:
@@ -1896,6 +2088,8 @@ Modes of Using OSPRay's MPI Features
 OSPRay provides two ways of using MPI to scale up rendering: offload and
 distributed.
 
+### Offload Rendering
+
 The "offload" rendering mode is where a single (not-distributed) calling
 application treats the OSPRay API the same as with local rendering.
 However, OSPRay uses multiple MPI connected nodes to evenly distribute
@@ -1906,6 +2100,25 @@ many samples-per-pixel is very compute heavy, making it a good situation
 to use the offload feature. This can be done with any application which
 already uses OSPRay for local rendering without the need for any code
 changes.
+
+When doing MPI offload rendering, applications can optionally enable
+dynamic load balancing, which can be beneficial in certain contexts.
+This load balancing refers to the distribution of tile rendering work
+across nodes: thread-level load balancing on each node is still dynamic
+with the thread tasking system. The options for enabling/controlling the
+dynamic load balacing features on the `mpi_offload` device are found in
+the table below, which can be changed while the application is running.
+Please note that these options will likely only pay off for scenes which
+have heavy rendering load (e.g. path tracing a non-trivial scene) and
+have a lot of variance in how expensive each tile is to render.
+
+| Type | Name                |  Default| Description                           |
+|:-----|:--------------------|--------:|:--------------------------------------|
+| bool | dynamicLoadBalancer |    false| whether to use dynamic load balancing |
+
+: Parameters specific to the `mpi_offload` device
+
+### Distributed Rendering
 
 The "distributed" rendering mode is where a MPI distributed application
 (such as a scientific simulation) uses OSPRay collectively to render
@@ -1991,7 +2204,7 @@ with
 
 On Windows build it in the build\_directory\\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.

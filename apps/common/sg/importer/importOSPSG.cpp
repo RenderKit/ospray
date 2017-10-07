@@ -54,6 +54,14 @@ namespace ospray {
         ss >> val.x >> val.y;
         sgNode->setValue(val);
       }
+      else if (type == "DataVector3f")
+      {
+        vec3f val;
+        while (ss.good()) {
+          ss >> val.x >> val.y >> val.z;
+          sgNode->nodeAs<DataVector3f>()->push_back(val);
+        }
+      }
       for (auto child : node.child)
       {
         if (sgNode->hasChild(child->name))
@@ -152,13 +160,13 @@ namespace ospray {
       if (!node->children().empty())
         fprintf(out, "\">\n");
 
-      for(auto child : node->childrenMap())
+      for(auto child : node->children())
       {
         writeNode(child.first, child.second, out, indent+1);
       }
       if (!node->children().empty())
       {
-        for (int i=0;i<indent;i++)
+        for (int i = 0; i < indent; i++)
           fprintf(out,"  ");
       }
       if (ptrName != lower)

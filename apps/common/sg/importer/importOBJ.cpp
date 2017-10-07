@@ -27,6 +27,8 @@
 #include <cstring>
 #include <sstream>
 
+#define USE_INSTANCES 0
+
 namespace ospray {
   namespace sg {
 
@@ -172,6 +174,10 @@ namespace ospray {
       std::string base_name = fileName.name() + '_';
       int shapeId           = 0;
 
+#if !USE_INSTANCES
+      auto objInstance = createNode("instance", "Instance");
+      world->add(objInstance);
+#endif
       for (auto &shape : shapes) {
         for (int numVertsInFace : shape.mesh.num_face_vertices) {
           if (numVertsInFace != 3) {
@@ -260,13 +266,20 @@ namespace ospray {
         auto model = createNode(name + "_model", "Model");
         model->add(mesh);
 
+        // TODO: Large .obj models with lots of groups run much slower with each
+        //       group put in a separate instance. In the future, we want to
+        //       support letting the user (ospExampleViewer, for starters)
+        //       specify if each group should be placed in an instance or not.
+#if USE_INSTANCES
         auto instance = createNode(name + "_instance", "Instance");
         instance->setChild("model", model);
         model->setParent(instance);
 
         world->add(instance);
+#else
+        (*objInstance)["model"].add(mesh);
+#endif
       }
     }
-
   }  // ::ospray::sg
 }  // ::ospray

@@ -122,7 +122,7 @@ inline void postIntersect(uniform Model *uniform model,
   if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
     if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);
   if ((flags & DG_NS_FACEFORWARD) == DG_NS_FACEFORWARD)
-    if (dot(ray.dir,dg.Ns) >= 0.f) dg.Ns = neg(dg.Ns);
+    if (dot(dg.Ng,dg.Ns) < 0.f) dg.Ns = neg(dg.Ns);
 
 #undef  DG_NG_FACEFORWARD
 #undef  DG_NS_FACEFORWARD

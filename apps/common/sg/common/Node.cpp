@@ -181,7 +181,7 @@ namespace ospray {
 
     Any Node::value()
     {
-      std::lock_guard<std::mutex> lock{mutex};
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value;
     }
 
@@ -227,19 +227,43 @@ namespace ospray {
 
     bool Node::hasChild(const std::string &name) const
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(lower);
+      auto itr = properties.children.find(name);
+      if (itr != properties.children.end())
+        return true;
+
+      std::string name_lower = name;
+      std::transform(name_lower.begin(), name_lower.end(),
+                     name_lower.begin(), ::tolower);
+
+      auto &c = properties.children;
+      itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
+        std::string node_lower = n.first;
+        std::transform(node_lower.begin(), node_lower.end(),
+                       node_lower.begin(), ::tolower);
+        return node_lower == name_lower;
+      });
+
       return itr != properties.children.end();
     }
 
     Node& Node::child(const std::string &name) const
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(lower);
+      auto itr = properties.children.find(name);
+      if (itr != properties.children.end())
+        return *itr->second;
+
+      std::string name_lower = name;
+      std::transform(name_lower.begin(), name_lower.end(),
+                     name_lower.begin(), ::tolower);
+
+      auto &c = properties.children;
+      itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
+        std::string node_lower = n.first;
+        std::transform(node_lower.begin(), node_lower.end(),
+                       node_lower.begin(), ::tolower);
+        return node_lower == name_lower;
+      });
+
       if (itr == properties.children.end()) {
         throw std::runtime_error("in node " + toString() +
                                  " : could not find sg child node with name '"
@@ -256,68 +280,41 @@ namespace ospray {
 
     bool Node::hasChildRecursive(const std::string &name)
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      mutex.lock();
-      Node* n = this;
-      auto f = n->properties.children.find(lower);
-      if (f != n->properties.children.end()) {
-        mutex.unlock();
-        return true;
-      }
-      bool found = false;
+      bool found = hasChild(name);
 
       for (auto &child : properties.children) {
-        mutex.unlock();
         try {
           found |= child.second->hasChildRecursive(name);
         }
         catch (const std::runtime_error &) {}
-        mutex.lock();
       }
 
-      mutex.unlock();
       return found;
     }
 
     Node& Node::childRecursive(const std::string &name)
     {
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      mutex.lock();
-      Node* n = this;
-      auto f = n->properties.children.find(lower);
-      if (f != n->properties.children.end()) {
-        mutex.unlock();
-        return *f->second;
-      }
+      if (hasChild(name))
+        return child(name);
 
       for (auto &child : properties.children) {
-        mutex.unlock();
         try {
           return child.second->childRecursive(name);
         }
         catch (const std::runtime_error &) {}
-
-        mutex.lock();
       }
 
-      mutex.unlock();
       throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
-    std::vector<std::shared_ptr<Node>> Node::children() const
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::vector<std::shared_ptr<Node>> result;
-      for (auto &child : properties.children)
-        result.push_back(child.second);
-      return result;
-    }
-
-    std::map<std::string, std::shared_ptr<Node>>& Node::childrenMap()
+    const std::map<std::string, std::shared_ptr<Node>>& Node::children() const
     {
       return properties.children;
+    }
+
+    size_t Node::numChildren() const
+    {
+      return properties.children.size();
     }
 
     void Node::add(std::shared_ptr<Node> node)
@@ -353,10 +350,7 @@ namespace ospray {
     void Node::setChild(const std::string &name,
                         const std::shared_ptr<Node> &node)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::string lower = name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
+      properties.children[name] = node;
 #ifndef _WIN32
 # warning "TODO: child node parent needs to be set, which requires multi-parent support"
 #endif
@@ -374,13 +368,11 @@ namespace ospray {
 
     void Node::setParent(Node &p)
     {
-      std::lock_guard<std::mutex> lock{mutex};
       properties.parent = &p;
     }
 
     void Node::setParent(const std::shared_ptr<Node> &p)
     {
-      std::lock_guard<std::mutex> lock{mutex};
       properties.parent = p.get();
     }
 

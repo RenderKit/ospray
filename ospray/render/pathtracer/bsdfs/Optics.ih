@@ -18,6 +18,7 @@
 
 #include "math/sampling.ih"
 #include "math/LinearSpace.ih"
+#include "math/spectrum.ih"
 
 /*! Reflects a viewing vector I at a normal N. Cosine between I
  *  and N is given as input. */
@@ -94,7 +95,8 @@ inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
     cosT = 0.0f;
     return 1.0f;
   }
-  return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
+  cosT = sqrt(sqrCosT);
+  return fresnelDielectric(cosI, cosT, eta);
 }
 
 /*! Computes fresnel coefficient for conductor medium with complex
@@ -111,49 +113,24 @@ inline vec3f fresnelConductor(float cosI, vec3f eta, vec3f k)
   return 0.5f * (Rpar + Rper);
 }
 
-// =======================================================
-struct FresnelConductor
+inline float fresnelConductor(const float cosI, const uniform float eta, const uniform float k)
 {
-  vec3f eta;  //!< real part of refraction index
-  vec3f k;    //!< imaginary part of refraction index
-};
-
-inline vec3f eval(const uniform FresnelConductor& self,
-                  float cosTheta)
-{
-  return fresnelConductor(cosTheta, self.eta, self.k);
+  const uniform float tmp = sqr(eta) + sqr(k);
+  const float Rpar
+    = (tmp * sqr(cosI) - eta*(2.0f*cosI) + 1.f)
+    * rcp(tmp * sqr(cosI) + eta*(2.0f*cosI) + 1.f);
+  const float Rper
+    = (tmp - 2.0f*eta*cosI + sqr(cosI))
+    * rcp(tmp + 2.0f*eta*cosI + sqr(cosI));
+  return 0.5f * (Rpar + Rper);
 }
 
-inline uniform FresnelConductor make_FresnelConductor(uniform vec3f eta, uniform vec3f k)
+inline vec3f fresnelConductor(float cosI, spectrum eta, spectrum k)
 {
-  uniform FresnelConductor m;
-  m.eta = eta;
-  m.k = k;
-  return m;
-}
+  vec3f rgb = make_vec3f(0.f);
+  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++) 
+    rgb = rgb + fresnelConductor(cosI, eta[l], k[l])
+      * make_vec3f(spectrum_sRGB_r[l], spectrum_sRGB_g[l], spectrum_sRGB_b[l]);
 
-// =======================================================
-struct FresnelDielectric
-{
-  /*! refraction index of the medium the incident ray travels in */
-  float etai;
-
-  /*! refraction index of the medium the outgoing transmission ray
-   *  travels in */
-  float etat;
-};
-
-inline vec3f eval(const uniform FresnelDielectric &self,
-                  const float cosTheta)
-{
-  return make_vec3f(fresnelDielectric(cosTheta,self.etai/self.etat));
-}
-
-inline uniform FresnelDielectric make_FresnelDielectric(const uniform float etai,
-                                                        const uniform float etat)
-{
-  uniform FresnelDielectric m;
-  m.etai = etai;
-  m.etat = etat;
-  return m;
+  return clamp(rgb);
 }

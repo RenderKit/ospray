@@ -173,7 +173,7 @@ namespace ospray {
           std::vector<OSPLight> lights;
           for(auto &lightNode : child("lights").children())
           {
-            auto light = (OSPLight)lightNode->valueAs<OSPObject>();
+            auto light = lightNode.second->valueAs<OSPLight>();
             if (light)
               lights.push_back(light);
           }

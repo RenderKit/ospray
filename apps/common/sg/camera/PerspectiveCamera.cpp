@@ -22,12 +22,6 @@ namespace ospray {
     PerspectiveCamera::PerspectiveCamera()
       : Camera("perspective")
     {
-      createChild("pos", "vec3f", vec3f(0, -1, 0));
-      // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
-      createChild("dir", "vec3f", vec3f(0, 0, 0),
-                       NodeFlags::required | NodeFlags::valid_min_max |
-                       NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
-      createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
       createChild("aspect", "float", 1.f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max).setMinMax(1e-31f, 1e31f);

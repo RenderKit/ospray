@@ -26,6 +26,7 @@ INCLUDE_DIRECTORIES(
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
 OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
+OPTION(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
 
 # common utilities
 IF(OSPRAY_APPS_BENCHMARK OR OSRPAY_APPS_EXAMPLEVIEWER)
@@ -40,4 +41,8 @@ ENDIF()
 
 IF (OSPRAY_APPS_EXAMPLEVIEWER)
   ADD_SUBDIRECTORY(exampleViewer)
+ENDIF()
+
+IF (OSPRAY_APPS_UTILITIES)
+  ADD_SUBDIRECTORY(utility)
 ENDIF()

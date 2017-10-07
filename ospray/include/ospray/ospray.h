@@ -155,7 +155,7 @@ namespace osp {
   struct amr_brick_info
   {
     box3i bounds;
-    int   refinemntLevel;
+    int   refinementLevel;
     float cellWidth;
   };
 
@@ -197,7 +197,7 @@ typedef struct { osp_linear3f l; osp_vec3f p; }             osp_affine3f;
 typedef struct
 {
   osp_box3i bounds;
-  int       refinemntLevel;
+  int       refinementLevel;
   float     cellWidth;
 } osp_amr_brick_info;
 
