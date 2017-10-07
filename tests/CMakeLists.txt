@@ -3,6 +3,12 @@
 ##############################################################
 OSPRAY_BUILD_COMPONENT(ospcommon/testing/gtest)
 
+MARK_AS_ADVANCED(gtest_build_samples)
+MARK_AS_ADVANCED(gtest_build_tests)
+MARK_AS_ADVANCED(gtest_disable_pthreads)
+MARK_AS_ADVANCED(gtest_force_shared_crt)
+MARK_AS_ADVANCED(gtest_hide_internal_symbols)
+
 ##############################################################
 # Tests
 ##############################################################
