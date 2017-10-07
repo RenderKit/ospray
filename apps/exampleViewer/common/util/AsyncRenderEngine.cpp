@@ -26,7 +26,14 @@ namespace ospray {
     : scenegraph(sgRenderer), scenegraphDW(sgRendererDW)
   {
     backgroundThread = make_unique<AsyncLoop>([&](){
-      ospDeviceCommit(ospGetCurrentDevice()); // workaround #239
+
+      if (commitDeviceOnAsyncLoopThread) {
+        auto *device = ospGetCurrentDevice();
+        if (!device)
+          throw std::runtime_error("could not get the current device!");
+        ospDeviceCommit(device); // workaround #239
+        commitDeviceOnAsyncLoopThread = false;
+      }
       static sg::TimeStamp lastFTime;
 
       auto &sgFB = scenegraph->child("frameBuffer");
@@ -116,9 +123,9 @@ namespace ospray {
 
     if (numOsprayThreads > 0)
       ospDeviceSet1i(device, "numThreads", numOsprayThreads);
-    ospDeviceCommit(device);
 
     state = ExecState::RUNNING;
+    commitDeviceOnAsyncLoopThread = true;
     backgroundThread->start();
   }
 

@@ -101,6 +101,8 @@ namespace ospray {
 
     std::atomic<bool> newPixels {false};
 
+    bool commitDeviceOnAsyncLoopThread {true};
+
     ospcommon::utility::CodeTimer fps;
   };
 }// namespace ospray
