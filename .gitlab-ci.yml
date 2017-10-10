@@ -112,6 +112,7 @@ build-centos6-icc:
     - module load gcc/4.8.2
     - module load intel
     - module load embree
+    - module load tbb
     - export CC=icc
     - export CXX=icpc
     - scripts/build_gitlab/linux.sh
@@ -125,6 +126,7 @@ build-centos6-icc15:
     - module load gcc/4.8.2
     - module load intel/2015
     - module load embree
+    - module load tbb
     - export CC=icc
     - export CXX=icpc
     - scripts/build_gitlab/linux.sh
