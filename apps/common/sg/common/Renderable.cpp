@@ -36,7 +36,7 @@ namespace ospray {
 
     box3f Renderable::computeBounds() const
     {
-      box3f cbounds = empty;
+      box3f cbounds = bounds();
       for (const auto &child : properties.children)
       {
         auto tbounds = child.second->bounds();

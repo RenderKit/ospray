@@ -33,7 +33,7 @@ namespace ospray {
       return "ospray::sg::StreamLines";
     }
 
-    box3f StreamLines::computeBounds() const
+    box3f StreamLines::bounds() const
     {
       box3f bounds = empty;
       if (hasChild("vertex")) {

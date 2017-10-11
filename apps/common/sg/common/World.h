@@ -64,7 +64,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Instance : public World
     {
       Instance();
-      virtual ~Instance() override = default;
+      ~Instance() override = default;
 
       /*! \brief return bounding box in world coordinates.
 
@@ -72,16 +72,17 @@ namespace ospray {
       camera motion, setting default camera position, etc. Nodes
       for which that does not apply can simpy return
       box3f(embree::empty) */
-      virtual box3f computeBounds() const override;
+      box3f bounds() const override;
 
       //Instance caches renders.  It will render children during commit, and add
          //cached rendered children during render call.
-      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
-      virtual void preRender(RenderContext &ctx) override;
-      virtual void postRender(RenderContext &ctx) override;
+      void traverse(RenderContext &ctx, const std::string& operation) override;
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
+      void preRender(RenderContext &ctx) override;
+      void postRender(RenderContext &ctx) override;
 
+    private:
 
       OSPGeometry ospInstance {nullptr};
       //currently, nested instances do not appear to work in OSPRay.  To get around this,
@@ -89,7 +90,6 @@ namespace ospray {
       bool instanced {true};
       ospcommon::affine3f baseTransform{ospcommon::one};
 
-    protected:
       void updateInstance(RenderContext &ctx);
       void updateTransform(RenderContext &ctx);
       bool instanceDirty{true};

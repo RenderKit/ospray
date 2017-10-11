@@ -30,7 +30,7 @@ namespace ospray {
       return "ospray::sg::TriangleMesh";
     }
 
-    box3f TriangleMesh::computeBounds() const
+    box3f TriangleMesh::bounds() const
     {
       box3f bounds = empty;
       if (hasChild("vertex")) {
