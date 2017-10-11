@@ -82,7 +82,7 @@ before you can build OSPRay you need the following prerequisites:
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
 -   OSPRay also heavily uses [Embree](https://embree.github.io/),
-    installing version 2.13 or newer is required. If Embree is not found
+    installing version 2.15 or newer is required. If Embree is not found
     by CMake its location can be hinted with the variable `embree_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
@@ -104,8 +104,14 @@ Under Mac OS X these dependencies can be installed using
 
     sudo port install cmake tbb
 
-Compiling OSPRay
-----------------
+Under Windows please directly use the appropriate installers for
+[CMake](https://cmake.org/download/),
+[TBB](https://github.com/01org/tbb/releases),
+[ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
+version) and [Embree](https://github.com/embree/embree/releases/).
+
+Compiling OSPRay on Linux and Mac OS X
+--------------------------------------
 
 Assume the above requisites are all fulfilled, building OSPRay through
 CMake is easy:
@@ -145,6 +151,50 @@ CMake is easy:
     application. You can test your version of OSPRay using any of the
     examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
+
+Compiling OSPRay on Windows
+---------------------------
+
+On Windows using the CMake GUI (`cmake-gui.exe`) is the most convenient
+way to configure OSPRay and to create the Visual Studio solution files:
+
+-   Browse to the OSPRay sources and specify a build directory (if it
+    does not exist yet CMake will create it).
+
+-   Click "Configure" and select as generator the Visual Studio version
+    you have, for Win64 (32 bit builds are not supported by OSPRay),
+    e.g. "Visual Studio 15 2017 Win64".
+
+-   If the configuration fails because some dependencies could not be
+    found then follow the instructions given in the error message, e.g.
+    set the variable `embree_DIR` to the folder where Embree was
+    installed.
+
+-   Optionally change the default build options, and then click
+    "Generate" to create the solution and project files in the build
+    directory.
+
+-   Open the generated `OSPRay.sln` in Visual Studio, select the build
+    configuration and compile the project.
+
+Alternatively, OSPRay can also be built without any GUI, entirely on the
+console. In the Visual Studio command prompt type:
+
+    cd path\to\ospray
+    mkdir build
+    cd build
+    cmake -G "Visual Studio 12 2013 Win64" [-D VARIABLE=value] ..
+    cmake --build . --config Release
+
+Use `-D` to set variables for CMake, e.g. the path to Embree with
+"`-D embree_DIR=\path\to\embree`".
+
+You can also build only some projects with the `--target` switch.
+Additional parameters after "`--`" will be passed to `msbuild`. For
+example, to build in parallel only the OSPRay library without the
+example applications use
+
+    cmake --build . --config Release --target ospray -- /m
 
 Documentation
 =============
@@ -710,8 +760,8 @@ this function.
 The common parameters understood by both structured volume variants are
 summarized in the table below.
 
-| Type   | Name        | Default     | Description                                       |
-|:-------|:------------|:------------|:--------------------------------------------------|
+| Type   | Name        |      Default| Description                                       |
+|:-------|:------------|------------:|:--------------------------------------------------|
 | vec3i  | dimensions  |             | number of voxels in each dimension $(x, y, z)$    |
 | string | voxelType   |             | data type of each voxel, currently supported are: |
 |        |             |             | "uchar" (8 bit unsigned integer)                  |
@@ -719,8 +769,8 @@ summarized in the table below.
 |        |             |             | "ushort" (16 bit unsigned integer)                |
 |        |             |             | "float" (32 bit single precision floating point)  |
 |        |             |             | "double" (64 bit double precision floating point) |
-| vec3f  | gridOrigin  | $(0, 0, 0)$ | origin of the grid in world-space                 |
-| vec3f  | gridSpacing | $(1, 1, 1)$ | size of the grid cells in world-space             |
+| vec3f  | gridOrigin  |  $(0, 0, 0)$| origin of the grid in world-space                 |
+| vec3f  | gridSpacing |  $(1, 1, 1)$| size of the grid cells in world-space             |
 
 : Additional configuration parameters for structured volumes.
 
@@ -761,7 +811,7 @@ only support `float` voxels.
 <tr class="header">
 <th align="left">Type</th>
 <th align="left">Name</th>
-<th align="left">Default</th>
+<th align="right">Default</th>
 <th align="left">Description</th>
 </tr>
 </thead>
@@ -769,31 +819,31 @@ only support `float` voxels.
 <tr class="odd">
 <td align="left">vec3f</td>
 <td align="left">gridOrigin</td>
-<td align="left"><span class="math inline">(0, 0, 0)</span></td>
+<td align="right"><span class="math inline">(0, 0, 0)</span></td>
 <td align="left">origin of the grid in world-space</td>
 </tr>
 <tr class="even">
 <td align="left">vec3f</td>
 <td align="left">gridSpacing</td>
-<td align="left"><span class="math inline">(1, 1, 1)</span></td>
+<td align="right"><span class="math inline">(1, 1, 1)</span></td>
 <td align="left">size of the grid cells in world-space</td>
 </tr>
 <tr class="odd">
 <td align="left">string</td>
 <td align="left">amrMethod</td>
-<td align="left">current</td>
+<td align="right">current</td>
 <td align="left">sampling method; valid values are &quot;finest&quot;, &quot;current&quot;, or &quot;octant&quot;</td>
 </tr>
 <tr class="even">
 <td align="left">OSPData</td>
 <td align="left">brickInfo</td>
-<td align="left"></td>
+<td align="right"></td>
 <td align="left">array of info defining each brick</td>
 </tr>
 <tr class="odd">
 <td align="left">OSPData</td>
 <td align="left">brickData</td>
-<td align="left"></td>
+<td align="right"></td>
 <td align="left">array of handles to per-brick voxel data</td>
 </tr>
 </tbody>
