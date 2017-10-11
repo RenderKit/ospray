@@ -86,7 +86,7 @@ namespace ospray {
       }
     }
 
-    static void embreeErrorFunc(const RTCError code, const char* str)
+    static void embreeErrorFunc(void *, const RTCError code, const char* str)
     {
       postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
@@ -115,7 +115,7 @@ namespace ospray {
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
-        rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
+        rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
 
         RTCError erc = rtcDeviceGetError(embreeDevice);
         if (erc != RTC_NO_ERROR) {
@@ -232,7 +232,7 @@ namespace ospray {
     }
 
     OSPData MPIDistributedDevice::newData(size_t nitems, OSPDataType format,
-                                          void *init, int flags)
+                                          const void *init, int flags)
     {
       auto *instance = new Data(nitems, format, init, flags);
       instance->refInc();
@@ -370,8 +370,7 @@ namespace ospray {
       return createLocalObject<Geometry, OSPGeometry>(type);
     }
 
-    OSPMaterial MPIDistributedDevice::newMaterial(OSPRenderer _renderer,
-                                                  const char *type)
+    OSPMaterial MPIDistributedDevice::newMaterial(OSPRenderer, const char *)
     {
       NOT_IMPLEMENTED;
     }
@@ -440,26 +439,25 @@ namespace ospray {
       obj->refDec();
     }
 
-    void MPIDistributedDevice::setMaterial(OSPGeometry _geometry,
-                                           OSPMaterial _material)
+    void MPIDistributedDevice::setMaterial(OSPGeometry, OSPMaterial)
     {
       NOT_IMPLEMENTED;
     }
 
     OSPTexture2D MPIDistributedDevice::newTexture2D(
-      const vec2i &sz,
-      const OSPTextureFormat type,
-      void *data,
-      const uint32 flags
+      const vec2i &,
+      const OSPTextureFormat,
+      void *,
+      const uint32
     )
     {
       NOT_IMPLEMENTED;
     }
 
-    void MPIDistributedDevice::sampleVolume(float **results,
-                                            OSPVolume volume,
-                                            const vec3f *worldCoordinates,
-                                            const size_t &count)
+    void MPIDistributedDevice::sampleVolume(float **,
+                                            OSPVolume,
+                                            const vec3f *,
+                                            const size_t &)
     {
       NOT_IMPLEMENTED;
     }

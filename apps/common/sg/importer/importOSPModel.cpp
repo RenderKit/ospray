@@ -22,7 +22,7 @@ namespace ospray {
     struct ImportedModel : public sg::Model
     {
       ImportedModel();
-      virtual ~ImportedModel() = default;
+      virtual ~ImportedModel() override = default;
       virtual std::string toString() const override;
 
       virtual void preCommit(RenderContext &ctx) override;

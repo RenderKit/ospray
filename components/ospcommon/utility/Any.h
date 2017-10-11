@@ -242,7 +242,7 @@ namespace ospcommon {
     template <typename T>
     template <typename TYPE>
     inline traits::NoOperatorEquals<TYPE, bool>
-    Any::handle<T>::isSameImpl(Any::handle_base *other) const
+    Any::handle<T>::isSameImpl(Any::handle_base *) const
     {
       return false;
     }

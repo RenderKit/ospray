@@ -25,6 +25,7 @@ namespace ospcommon {
       sockets, mpi, etc */
     struct Fabric
     {
+      virtual ~Fabric() = default;
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
         delivered */

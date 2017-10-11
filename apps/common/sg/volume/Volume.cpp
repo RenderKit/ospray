@@ -120,7 +120,7 @@ namespace ospray {
       Node::serialize(state);
     }
 
-    void Volume::postCommit(RenderContext &ctx)
+    void Volume::postCommit(RenderContext &)
     {
       auto ospVolume = valueAs<OSPVolume>();
       ospSetObject(ospVolume, "transferFunction",
@@ -158,8 +158,7 @@ namespace ospray {
 
     //! \brief Initialize this node's value from given XML node
 
-    void StructuredVolume::setFromXML(const xml::Node &node,
-                                      const unsigned char *binBasePtr)
+    void StructuredVolume::setFromXML(const xml::Node &, const unsigned char *)
     {
       NOT_IMPLEMENTED;
     }
@@ -179,7 +178,7 @@ namespace ospray {
 
     //! \brief Initialize this node's value from given XML node
     void StructuredVolumeFromFile::setFromXML(const xml::Node &node,
-                                              const unsigned char *binBasePtr)
+                                              const unsigned char *)
     {
       voxelType = node.getProp("voxelType");
       if (voxelType == "uint8") voxelType = "uchar";
@@ -200,7 +199,7 @@ namespace ospray {
                 << "dimensions = " << dimensions << std::endl;
     }
 
-    void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
+    void StructuredVolumeFromFile::preCommit(RenderContext &)
     {
       auto ospVolume = valueAs<OSPVolume>();
 
@@ -308,7 +307,7 @@ namespace ospray {
 
     //! \brief Initialize this node's value from given XML node
     void RichtmyerMeshkov::setFromXML(const xml::Node &node,
-                                      const unsigned char *binBasePtr)
+                                      const unsigned char *)
     {
       dirName = node.getProp("dirName");
       const std::string t = node.getProp("timeStep");
@@ -324,7 +323,7 @@ namespace ospray {
       fileNameOfCorrespondingXmlDoc = node.doc->fileName;
     }
 
-    void RichtmyerMeshkov::preCommit(RenderContext &ctx)
+    void RichtmyerMeshkov::preCommit(RenderContext &)
     {
       auto ospVolume = valueAs<OSPVolume>();
 

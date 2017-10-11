@@ -37,7 +37,7 @@ namespace ospray {
 
   namespace api {
 
-    void embreeErrorFunc(const RTCError code, const char* str)
+    static void embreeErrorFunc(void *, const RTCError code, const char* str)
     {
       postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
@@ -55,7 +55,7 @@ namespace ospray {
       // -------------------------------------------------------
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
-        rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
+        rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
 
         RTCError erc = rtcDeviceGetError(embreeDevice);
         if (erc != RTC_NO_ERROR) {
@@ -208,7 +208,7 @@ namespace ospray {
 
     /*! create a new data buffer */
     OSPData LocalDevice::newData(size_t nitems, OSPDataType format,
-                                 void *init, int flags)
+                                 const void *init, int flags)
     {
       Data *data = new Data(nitems,format,init,flags);
       data->refInc();

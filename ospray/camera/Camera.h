@@ -26,7 +26,7 @@ namespace ospray {
       perspectivecamera etc for that */
   struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
   {
-    virtual ~Camera() = default;
+    virtual ~Camera() override = default;
 
     virtual std::string toString() const override;
 

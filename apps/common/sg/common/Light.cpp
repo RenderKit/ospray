@@ -35,7 +35,7 @@ namespace ospray {
         setValue(ospNewLight(ctx.ospRenderer, type.c_str()));
     }
 
-    void Light::postCommit(RenderContext &ctx)
+    void Light::postCommit(RenderContext &)
     {
       ospCommit(valueAs<OSPLight>());
     }

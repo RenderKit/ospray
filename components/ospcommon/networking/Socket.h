@@ -29,7 +29,11 @@ namespace ospcommon
   /*! exception thrown when other side disconnects */
   struct Disconnect : public std::exception
   {
-    virtual const char* what() const throw() override
+#ifdef _WIN32
+    virtual const char* what() const override
+#else
+    virtual const char* what() const noexcept override
+#endif
     { return "network disconnect"; }
   };
 

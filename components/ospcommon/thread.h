@@ -45,6 +45,7 @@ namespace ospcommon
   struct OSPCOMMON_INTERFACE Thread
   {
     Thread() = default;
+    virtual ~Thread() = default;
 
     /*! the actual run function that the newly started thread will execute */
     virtual void run() = 0;

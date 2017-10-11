@@ -82,7 +82,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE StreamLines : public Geometry
   {
     StreamLines();
-    virtual ~StreamLines() = default;
+    virtual ~StreamLines() override = default;
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;
 
@@ -92,12 +92,12 @@ namespace ospray {
     Ref<Data> indexData; //!< refcounted data array for segment data
     Ref<Data> colorData;  //!< refcounted data array for vertex color data
 
-    const vec3fa *vertex {nullptr};
-    size_t        numVertices {0};
-    const uint32 *index {nullptr};
-    size_t        numSegments {0};
-    const vec4f  *color {nullptr};
-    float         radius {0.f};
+    vec3fa *vertex {nullptr};
+    size_t  numVertices {0};
+    uint32 *index {nullptr};
+    size_t  numSegments {0};
+    vec4f  *color {nullptr};
+    float   radius {0.f};
   };
   /*! @} */
 

@@ -26,7 +26,7 @@ namespace ospray {
   //!
   struct OSPRAY_SDK_INTERFACE GhostBlockBrickedVolume : public StructuredVolume
   {
-    virtual ~GhostBlockBrickedVolume();
+    virtual ~GhostBlockBrickedVolume() override;
     virtual std::string toString() const override;
     virtual void commit() override;
 

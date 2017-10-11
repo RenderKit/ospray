@@ -74,6 +74,20 @@ build-arch-clang:
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh
 
+build-arch-gcc-warnings:
+  <<: *build_job_docker
+  script:
+    - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
+  allow_failure: true
+
+build-arch-clang-warnings:
+  <<: *build_job_docker
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
+  allow_failure: true
+
 build-ubuntu1704-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu17.04

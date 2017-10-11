@@ -48,18 +48,18 @@ namespace ospray {
     exit(0);
   }
 
-  std::vector<std::string> files;
-  std::string imageOutputFile = "";
-  size_t numWarmupFrames = 10;
-  size_t numBenchFrames  = 100;
-  int width  = 1024;
-  int height = 1024;
+  static std::vector<std::string> files;
+  static std::string imageOutputFile = "";
+  static size_t numWarmupFrames = 10;
+  static size_t numBenchFrames  = 100;
+  static int width  = 1024;
+  static int height = 1024;
 
-  vec3f up;
-  vec3f pos;
-  vec3f gaze;
-  float fovy = 60.f;
-  bool customView = false;
+  static vec3f up;
+  static vec3f pos;
+  static vec3f gaze;
+  static float fovy = 60.f;
+  static bool customView = false;
 
   void initializeOSPRay(int argc, const char *argv[])
   {
@@ -202,7 +202,7 @@ namespace ospray {
 
     renderer.traverse("commit");
 
-    for (int i = 0; i < numWarmupFrames; ++i)
+    for (size_t i = 0; i < numWarmupFrames; ++i)
       renderer.traverse("render");
 
     // Run benchmark //////////////////////////////////////////////////////////
@@ -218,7 +218,7 @@ namespace ospray {
     // Print results //////////////////////////////////////////////////////////
 
     if (!imageOutputFile.empty()) {
-      auto *srcPB = (uint32_t*)sgFB->map();
+      auto *srcPB = (const uint32_t*)sgFB->map();
       utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
       sgFB->unmap(srcPB);
     }

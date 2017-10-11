@@ -92,7 +92,7 @@ namespace ospray {
       ospRenderer = ctx.ospRenderer;
     }
 
-    void Material::postCommit(RenderContext &ctx)
+    void Material::postCommit(RenderContext &)
     {
       auto mat = valueAs<OSPMaterial>();
 

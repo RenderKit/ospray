@@ -27,10 +27,11 @@
 namespace ospray {
   namespace api {
 
-    struct LocalDevice : public Device {
+    struct LocalDevice : public Device
+    {
 
       LocalDevice()  = default;
-      ~LocalDevice() = default;
+      ~LocalDevice() override = default;
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -80,7 +81,7 @@ namespace ospray {
 
       /*! create a new data buffer */
       OSPData newData(size_t nitems, OSPDataType format,
-                      void *init, int flags) override;
+                      const void *init, int flags) override;
 
       /*! load module */
       int loadModule(const char *name) override;
