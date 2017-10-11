@@ -26,7 +26,7 @@ namespace ospray {
       createFB();
     }
 
-    void FrameBuffer::postCommit(RenderContext &ctx)
+    void FrameBuffer::postCommit(RenderContext &)
     {
       std::string displayWall = child("displayWall").valueAs<std::string>();
       this->displayWallStream = displayWall;
@@ -54,9 +54,10 @@ namespace ospray {
       ospCommit(ospFrameBuffer);
     }
 
-    unsigned char *FrameBuffer::map()
+    const unsigned char *FrameBuffer::map()
     {
-      return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
+      return (const unsigned char *)ospMapFrameBuffer(ospFrameBuffer,
+                                                      OSP_FB_COLOR);
     }
 
     void FrameBuffer::unmap(const void *mem)

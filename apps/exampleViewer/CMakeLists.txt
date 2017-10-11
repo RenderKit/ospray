@@ -16,6 +16,8 @@
 
 find_package(OpenGL REQUIRED)
 
+ospray_disable_compiler_warnings()
+
 ##############################################################
 # Build support libs
 ##############################################################

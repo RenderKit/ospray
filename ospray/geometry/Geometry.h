@@ -37,7 +37,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
   {
     Geometry();
-    virtual ~Geometry() = default;
+    virtual ~Geometry() override = default;
 
     //! set given geometry's material.
     /*! all material assignations should go through this function; the
@@ -47,7 +47,7 @@ namespace ospray {
         c++-side's material gets changed */
     virtual void setMaterial(Material *mat);
 
-    //! get material assigned to this geometry 
+    //! get material assigned to this geometry
     virtual Material *getMaterial() const;
 
     //! \brief common function to help printf-debugging

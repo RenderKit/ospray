@@ -54,7 +54,7 @@ namespace ospcommon
     SetThreadGroupAffinityFunc pSetThreadGroupAffinity = (SetThreadGroupAffinityFunc)GetProcAddress(hlib, "SetThreadGroupAffinity");
     SetThreadIdealProcessorExFunc pSetThreadIdealProcessorEx = (SetThreadIdealProcessorExFunc)GetProcAddress(hlib, "SetThreadIdealProcessorEx");
     if (pGetActiveProcessorGroupCount && pGetActiveProcessorCount && pSetThreadGroupAffinity && pSetThreadIdealProcessorEx &&
-       ((osvi.dwMajorVersion > 6) || ((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1)))) 
+       ((osvi.dwMajorVersion > 6) || ((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1))))
     {
       int groups = pGetActiveProcessorGroupCount();
       int totalProcessors = 0, group = 0, number = 0;
@@ -67,7 +67,7 @@ namespace ospcommon
         }
         totalProcessors += processors;
       }
-  
+
       GROUP_AFFINITY groupAffinity;
       groupAffinity.Group = (WORD)group;
       groupAffinity.Mask = (KAFFINITY)(uint64_t(1) << number);
@@ -76,15 +76,15 @@ namespace ospcommon
       groupAffinity.Reserved[2] = 0;
       if (!pSetThreadGroupAffinity(thread, &groupAffinity, nullptr))
         WARNING("SetThreadGroupAffinity failed"); // on purpose only a warning
-  
+
       PROCESSOR_NUMBER processorNumber;
       processorNumber.Group = group;
       processorNumber.Number = number;
       processorNumber.Reserved = 0;
       if (!pSetThreadIdealProcessorEx(thread, &processorNumber, nullptr))
         WARNING("SetThreadIdealProcessorEx failed"); // on purpose only a warning
-    } 
-    else 
+    }
+    else
     {
       if (!SetThreadAffinityMask(thread, DWORD_PTR(uint64_t(1) << affinity)))
         WARNING("SetThreadAffinityMask failed"); // on purpose only a warning
@@ -98,10 +98,10 @@ namespace ospcommon
     setAffinity(GetCurrentThread(), affinity);
   }
 
-  struct ThreadStartupData 
+  struct ThreadStartupData
   {
   public:
-    ThreadStartupData (thread_func f, void* arg) 
+    ThreadStartupData (thread_func f, void* arg)
       : f(f), arg(arg) {}
   public:
     thread_func f;
@@ -203,17 +203,17 @@ namespace ospcommon
 
 namespace ospcommon
 {
-  struct ThreadStartupData 
+  struct ThreadStartupData
   {
   public:
-    ThreadStartupData (thread_func f, void* arg, int affinity) 
-      : f(f), arg(arg), affinity(affinity) {}
-  public: 
+    ThreadStartupData (thread_func _f, void* _arg, int _affinity)
+      : f(_f), arg(_arg), affinity(_affinity) {}
+  public:
     thread_func f;
     void* arg;
     ssize_t affinity;
   };
-  
+
   static void* threadStartup(ThreadStartupData* parg)
   {
     _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));

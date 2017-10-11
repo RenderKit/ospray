@@ -49,7 +49,7 @@ namespace ospray {
       auto numBricks = getNumBricks(brickInfoData);
       const BrickInfo *brickInfo = (const BrickInfo *)brickInfoData.data;
       const Data **allBricksData = (const Data **)brickDataData.data;
-      for (int i = 0; i < numBricks; i++)
+      for (size_t i = 0; i < numBricks; i++)
         brick.emplace_back(brickInfo[i], (const float*)allBricksData[i]->data);
     }
 

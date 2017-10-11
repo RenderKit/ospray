@@ -24,7 +24,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE PointLight : public Light
   {
     PointLight();
-    virtual ~PointLight() = default;
+    virtual ~PointLight() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
 

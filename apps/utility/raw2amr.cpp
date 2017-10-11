@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-func-template"
+
 #include "ospcommon/FileName.h"
 #include "ospcommon/array3D/Array3D.h"
 #include "ospcommon/box.h"
@@ -27,8 +30,6 @@ namespace ospray {
     using namespace ospcommon;
     using namespace std;
 
-    int levels = 5;
-
     struct BrickDesc
     {
       box3i box;
@@ -36,24 +37,22 @@ namespace ospray {
       float dt;
     };
 
-    size_t numBricksWritten = 0;
-    std::mutex fileMutex;
-    FILE *infoOut = nullptr;
-    FILE *dataOut = nullptr;
+    static std::mutex fileMutex;
+    static FILE *infoOut = nullptr;
+    static FILE *dataOut = nullptr;
 
-    size_t numWritten = 0;
-    size_t numRemoved = 0;
+    static size_t numWritten = 0;
+    static size_t numRemoved = 0;
 
     struct Progress
     {
       Progress(const char *message, size_t numTotal, float pingInterval = 10.f)
-          : message(message),
-            numTotal(numTotal),
+          : numTotal(numTotal),
             pingInterval(pingInterval),
-            numDone(0)
+            message(message)
       {
-        lastPingTime = -1;
-      };
+      }
+
       void ping()
       {
         std::lock_guard<std::mutex> lock(mutex);
@@ -73,12 +72,12 @@ namespace ospray {
         }
       }
 
-      size_t numDone;
+      size_t numDone {0};
       size_t numTotal;
       float pingInterval;
       std::mutex mutex;
       std::string message;
-      double lastPingTime;
+      double lastPingTime {-1.0};
     };
 
     void makeAMR(const std::shared_ptr<Array3D<float>> _in,
@@ -198,14 +197,15 @@ namespace ospray {
       std::shared_ptr<Array3D<float>> in;
       if (format == "float") {
         in = mmapRAW<float>(inFileName, inDims);
-      } else if (format == "byte" || format == "uchar" || format == "uint8")
+      } else if (format == "byte" || format == "uchar" || format == "uint8") {
         in = std::make_shared<Array3DAccessor<unsigned char, float>>(
             mmapRAW<unsigned char>(inFileName, inDims));
-      else if (format == "double" || format == "float64")
+      } else if (format == "double" || format == "float64") {
         in = std::make_shared<Array3DAccessor<double, float>>(
             mmapRAW<double>(inFileName, inDims));
-      else
+      } else {
         throw std::runtime_error("unknown input voxel format");
+      }
 
       infoOut = fopen((outFileBase + ".info").c_str(), "wb");
       if (!infoOut)
@@ -245,3 +245,5 @@ namespace ospray {
     }
   }  // namespace amr
 }  // namespace ospray
+
+#pragma clang diagnostic pop

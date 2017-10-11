@@ -24,15 +24,15 @@
 struct MyHandler : public maml::MessageHandler
 {
   MyHandler() = default;
-  
-  void incoming(const std::shared_ptr<maml::Message> &message) override
+
+  void incoming(const std::shared_ptr<maml::Message> &) override
   {
     ++numReceived;
   }
 
   std::atomic<int> numReceived;
 };
-  
+
 extern "C" int main(int ac, char **av)
 {
   MPI_CALL(Init(&ac, &av));
@@ -49,19 +49,19 @@ extern "C" int main(int ac, char **av)
 
   int numMessages = 100;
   int payloadSize = 100000;
-  
+
   MyHandler handler;
   maml::registerHandlerFor(MPI_COMM_WORLD,&handler);
 
   char *payload = (char*)malloc(payloadSize);
   for (int i=0;i<payloadSize;i++)
     payload[i] = distrib(rng);
-  
+
   for (int run=0;run<numRuns;run++) {
     MPI_CALL(Barrier(MPI_COMM_WORLD));
     double t0 = ospcommon::getSysTime();
     maml::start();
-    
+
     for (int mID=0;mID<numMessages;mID++) {
       for (int r=0;r<numRanks;r++) {
         maml::sendTo(MPI_COMM_WORLD,r,std::make_shared<maml::Message>(payload,payloadSize));
@@ -80,7 +80,7 @@ extern "C" int main(int ac, char **av)
            rate.c_str());
     MPI_CALL(Barrier(MPI_COMM_WORLD));
   }
-  
+
   MPI_CALL(Barrier(MPI_COMM_WORLD));
   MPI_Finalize();
 }

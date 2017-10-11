@@ -27,7 +27,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Renderable : public Node
     {
       Renderable();
-      virtual ~Renderable() = default;
+      virtual ~Renderable() override = default;
 
       virtual std::string toString() const override;
 
@@ -42,8 +42,8 @@ namespace ospray {
 
       // Interface for render traversals //
 
-      virtual void preRender(RenderContext &ctx) {}
-      virtual void postRender(RenderContext &ctx) {}
+      virtual void preRender(RenderContext &) {}
+      virtual void postRender(RenderContext &) {}
     };
 
   } // ::ospray::sg

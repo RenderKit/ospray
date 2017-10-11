@@ -24,6 +24,7 @@ namespace ospray {
    */
   struct OSPRAY_SDK_INTERFACE Texture : public ManagedObject
   {
+    virtual ~Texture() override = default;
     //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::Texture"; }

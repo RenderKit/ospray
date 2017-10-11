@@ -46,11 +46,11 @@ namespace ospray {
     Assert(vertexData);
     Assert(indexData);
 
-    index       = (const uint32*)indexData->data;
+    index       = (uint32*)indexData->data;
     numSegments = indexData->numItems;
-    vertex      = (const vec3fa*)vertexData->data;
+    vertex      = (vec3fa*)vertexData->data;
     numVertices = vertexData->numItems;
-    color       = colorData ? (const vec4f*)colorData->data : nullptr;
+    color       = colorData ? (vec4f*)colorData->data : nullptr;
 
     postStatusMsg(2) << "#osp: creating streamlines geometry, "
                      << "#verts=" << numVertices << ", "

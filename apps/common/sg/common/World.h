@@ -26,7 +26,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Model : public Renderable
     {
       Model();
-      virtual ~Model() = default;
+      virtual ~Model() override = default;
       virtual std::string toString() const override;
 
       //commit caches renders.  It will render children during commit, and add
@@ -47,7 +47,7 @@ namespace ospray {
     struct OSPSG_INTERFACE World : public Model
     {
       World() = default;
-      virtual ~World() = default;
+      virtual ~World() override = default;
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
@@ -64,6 +64,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Instance : public World
     {
       Instance();
+      virtual ~Instance() override = default;
 
       /*! \brief return bounding box in world coordinates.
 

@@ -25,12 +25,12 @@ namespace ospray {
   namespace scivis {
 
     using Color = vec3f;
-    
+
     /*! implements the Material used by the \ref ospray_render_scivis */
     struct SciVisMaterial : public Material
     {
       SciVisMaterial();
-      virtual ~SciVisMaterial() = default;
+      virtual ~SciVisMaterial() override = default;
 
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */

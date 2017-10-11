@@ -61,7 +61,7 @@ namespace ospray {
         postRender(ctx);
     }
 
-    void Renderable::postCommit(RenderContext &ctx)
+    void Renderable::postCommit(RenderContext &)
     {
       child("bounds") = computeBounds();
     }

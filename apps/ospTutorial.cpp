@@ -27,12 +27,12 @@
 #include <stdio.h>
 #include <errno.h>
 #ifdef _WIN32
+#  define NOMINMAX
 #  include <malloc.h>
 #else
 #  include <alloca.h>
 #endif
 
-#define NOMINMAX
 #include "ospray/ospray_cpp.h"
 
 // helper function to write the rendered image as PPM file

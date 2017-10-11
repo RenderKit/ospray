@@ -26,7 +26,7 @@ namespace ospray {
     struct OSPSG_INTERFACE AMRVolume : public Volume
     {
       AMRVolume();
-      ~AMRVolume();
+      ~AMRVolume() override;
 
       std::string toString() const override;
 

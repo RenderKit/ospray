@@ -74,11 +74,24 @@ TEST_CASE("Optional<> construction", "[constructors]")
   }
 }
 
-TEST_CASE("Optional<>::operator=()", "[methods]")
+TEST_CASE("Optional<>::operator=(T)", "[methods]")
 {
   Optional<int> opt;
   opt = 5;
   verify_value(opt, 5);
+}
+
+TEST_CASE("Optional<>::operator=(Optional<>)", "[methods]")
+{
+  Optional<int> opt;
+  opt = 5;
+
+  Optional<int> otherOpt = opt;
+  verify_value(otherOpt, 5);
+
+  Optional<float> movedFromOpt;
+  movedFromOpt = std::move(opt);
+  verify_value(movedFromOpt, 5.f);
 }
 
 TEST_CASE("Optional<>::value_or()", "[methods]")

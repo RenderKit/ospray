@@ -52,7 +52,7 @@ namespace ospray {
         if (hasChild("radius"))
           radius = child("radius").valueAs<float>();
 
-        for (int i = 0; i < spheres->numBytes(); i += sphereBytes) {
+        for (size_t i = 0; i < spheres->numBytes(); i += sphereBytes) {
           vec3f &center = *(vec3f*)(base + i + offset_center);
           if (offset_radius >= 0)
             radius = *(float*)(base + i + offset_radius);
@@ -80,11 +80,9 @@ namespace ospray {
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void Spheres::setFromXML(const xml::Node &node,
-                             const unsigned char *binBasePtr)
+    void Spheres::setFromXML(const xml::Node &, const unsigned char *)
     {
-      throw std::runtime_error("setFromXML no longer makes sense with the"
-                               " new scene graph design");
+      NOT_IMPLEMENTED;
     }
 
     OSP_REGISTER_SG_NODE(Spheres);
