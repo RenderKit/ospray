@@ -862,12 +862,12 @@ corresponding field values, and tetrahedra indices. A tetrahedral volume
 type is created by passing the type string "`tetrahedral_volume`" to
 `ospNewVolume`.
 
-Similar to [triangle mesh](#triangle-mesh), each tetrahedra is formed by
-a group of indices into the vertices. For each vertex, the corresponding
-(by array index) data value will be used for sampling when rendering.
-Note that the index order for each tetrahedra does not matter, as OSPRay
-internally calculates vertex normals to ensure proper sampling and
-interpolation.
+Similar to [triangle mesh](#triangle-mesh), each tetrahedron is formed
+by a group of indices into the vertices. For each vertex, the
+corresponding (by array index) data value will be used for sampling when
+rendering. Note that the index order for each tetrahedron does not
+matter, as OSPRay internally calculates vertex normals to ensure proper
+sampling and interpolation.
 
 | Type      | Name       | Description                                                         |
 |:----------|:-----------|:--------------------------------------------------------------------|
@@ -1666,6 +1666,18 @@ parameters are
 <td align="left"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
 </tr>
 <tr class="even">
+<td align="left">vec3f</td>
+<td align="left">eta</td>
+<td align="right"></td>
+<td align="left">RGB complex refractive index, real part</td>
+</tr>
+<tr class="odd">
+<td align="left">vec3f</td>
+<td align="left">k</td>
+<td align="right"></td>
+<td align="left">RGB complex refractive index, imaginary part</td>
+</tr>
+<tr class="even">
 <td align="left">float</td>
 <td align="left">roughness</td>
 <td align="right">0.1</td>
@@ -1676,11 +1688,28 @@ parameters are
 
 : Parameters of the Metal material.
 
-The main appearence (mostly the color) of the Metal material is
-controled by the physical parameters `eta` and `k`, the
+The main appearance (mostly the color) of the Metal material is
+controlled by the physical parameters `eta` and `k`, the
 wavelength-dependent, complex index of refraction. These coefficients
 are quite counterintuitive but can be found in [published
-measurements](https://refractiveindex.info/).
+measurements](https://refractiveindex.info/). For accuracy the index of
+refraction can be given as an array of spectral samples in `ior`, each
+sample a triplet of wavelength (in nm), eta, and k, ordered
+monotonically increasing by wavelength; OSPRay will then calculate the
+Fresnel in the spectral domain. Alternatively, `eta` and `k` can also be
+specified as approximated RGB coefficients; some examples are given in
+below table.
+
+| Metal         |          eta          |        k        |
+|:--------------|:---------------------:|:---------------:|
+| Ag, Silver    | (0.051, 0.043, 0.041) | (5.3, 3.6, 2.3) |
+| Al, Aluminium |    (1.5, 0.98, 0.6)   | (7.6, 6.6, 5.4) |
+| Au, Gold      |   (0.07, 0.37, 1.5)   | (3.7, 2.3, 1.7) |
+| Cr, Chromium  |    (3.2, 3.1, 2.3)    | (3.3, 3.3, 3.1) |
+| Cu, Copper    |    (0.1, 0.8, 1.1)    | (3.5, 2.5, 2.4) |
+
+: Index of refraction of selected metals as approximated RGB
+coefficients, based on data from https://refractiveindex.info/.
 
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
@@ -1719,7 +1748,7 @@ objects with just a single surface, most prominently windows. It models
 a very thin, transparent slab, i.e. it behaves as if a second, virtual
 surface is parallel to the real geometric surface. The implementation
 accounts for multiple internal reflections between the interfaces
-(including attenuation), but neglects parallaxe effects due to its
+(including attenuation), but neglects parallax effects due to its
 (virtual) thickness. To create a such a thin glass material pass the
 type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
 
@@ -1740,7 +1769,7 @@ transformations](#texture-transformations) are supported as well). The
 exchange of parameters with the (real) [Glass](#glass) material;
 internally just the ratio between `attenuationDistance` and `thickness`
 is used to calculate the resulting attenuation and thus the material
-appearence.
+appearance.
 
 <img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
 

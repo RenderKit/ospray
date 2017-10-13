@@ -24,8 +24,11 @@ struct Metal
 {
   PathTraceMaterial super;
 
+  bool spectral;
   spectrum eta; // index of refraction
   spectrum k; // index of refraction, imaginary part
+  vec3f etaRGB; // index of refraction
+  vec3f kRGB; // index of refraction, imaginary part
   float roughness; // in [0, 1]; 0==ideally smooth (mirror)
   TextureParam map_roughness;
 };
@@ -46,10 +49,16 @@ const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* unifo
   if (valid(self->map_roughness))
     roughness *= get1f(self->map_roughness, dg.st);
 
-  if (roughness == 0.0f)
-    return Conductor_create(ctx, frame, self->eta, self->k);
+  Fresnel *uniform fresnel;
+  if (self->spectral)
+    fresnel = FresnelConductorSpectral_create(ctx, self->eta, self->k);
   else
-    return MicrofacetConductor_create(ctx, frame, self->eta, self->k, roughness);
+    fresnel = FresnelConductorRGBUniform_create(ctx, self->etaRGB, self->kRGB);
+
+  if (roughness == 0.0f)
+    return Conductor_create(ctx, frame, fresnel);
+  else
+    return MicrofacetConductor_create(ctx, frame, fresnel, roughness);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,18 +67,28 @@ const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* unifo
 export void* uniform PathTracer_Metal_set(void* uniform _self
     , const float *uniform eta
     , const float *uniform k
+    , const uniform vec3f& etaRGB
+    , const uniform vec3f& kRGB
     , uniform float roughness
     , void* uniform map_roughness
     , const uniform affine2f &xform_roughness
     )
 {
   Metal* uniform self = (Metal* uniform)_self;
-  // actually could pass "uniform spectrum &", but may have different alignment
-  // on C++ side, thus copy element-wise
-  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++)  {
-    self->eta[l] = eta[l];
-    self->k[l] = k[l];
+
+  self->spectral = eta && k;
+  if (self->spectral) {
+    // actually could pass "uniform spectrum &", but may have different
+    // alignment on C++ side, thus copy element-wise
+    for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++)  {
+      self->eta[l] = eta[l];
+      self->k[l] = k[l];
+    }
+  } else {
+    self->etaRGB = etaRGB;
+    self->kRGB = kRGB;
   }
+
   self->roughness = roughness;
   self->map_roughness =
     make_TextureParam((uniform Texture2D*)map_roughness,
@@ -80,9 +99,9 @@ export void* uniform PathTracer_Metal_create()
 {
   Metal* uniform self = uniform new Metal;
   PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
-  spectrum eta = SPECTRUM_AL_ETA;
-  spectrum k = SPECTRUM_AL_K;
-  PathTracer_Metal_set(self, &eta[0], &k[0], 0.1f, NULL,
+  uniform vec3f etaRGB = RGB_AL_ETA;
+  uniform vec3f kRGB = RGB_AL_K;
+  PathTracer_Metal_set(self, NULL, NULL, etaRGB, kRGB, 0.1f, NULL,
       make_AffineSpace2f_identity());
   return self;
 }

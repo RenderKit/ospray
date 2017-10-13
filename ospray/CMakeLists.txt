@@ -305,6 +305,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
   math/random.ih
   math/sampling.ih
   math/vec.ih
+  math/spectrum.h
+  math/spectrum.ih
   DESTINATION math
 )
 
