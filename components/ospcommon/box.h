@@ -84,7 +84,7 @@ namespace ospcommon {
   template <typename T, int N>
   inline bool disjoint(const box_t<T, N> &a, const box_t<T, N> &b)
   {
-    return anyLessThen(a.upper, b.lower) || anyLessThan(b.lower, a.upper);
+    return anyLessThan(a.upper, b.lower) || anyLessThan(b.lower, a.upper);
   }
 
   /*! returns the center of the box (not valid for empty boxes) */

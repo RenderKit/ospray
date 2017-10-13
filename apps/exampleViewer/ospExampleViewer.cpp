@@ -311,8 +311,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             transform["scale"] = file.transform.scale;
             transform["rotation"] = file.transform.rotation;
             if (files.size() < 2 && animatedFiles.empty()) {
-              auto &rotation =
-                              transform["rotation"].createChild("animator", "Animator");
+              auto &rotation = transform["rotation"].createChild("animator", "Animator");
 
               rotation.traverse("verify");
               rotation.traverse("commit");
