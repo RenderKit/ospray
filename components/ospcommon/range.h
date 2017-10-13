@@ -27,6 +27,15 @@ namespace ospcommon {
   using std::min;
   using std::max;
 
+  /*! default implementatoin of 'anyLessThan' for scalar types, so we
+      can make a range<float>s etc. Vec-types will overwrite that and
+      test if _any_ dimension is less */
+  template <typename TA, typename TB>
+  inline bool anyLessThan(const TA &a, const TB &b)
+  {
+     return a < b;
+  }
+
   template <typename T>
   struct range_t
   {
