@@ -1719,6 +1719,32 @@ create interesting edging effects.
 
 <img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
 
+#### Alloy
+
+The [path tracer](#path-tracer) offers an alloy material, which behaves
+similar to [metal](#metal), but allows for more intuitive and flexible
+control of the color. To create an Alloy material pass the type string
+"`Alloy`" to `ospNewMaterial`. Its parameters are
+
+| Type  | Name      |    Default| Description                                 |
+|:------|:----------|----------:|:--------------------------------------------|
+| vec3f | color     |  white 0.9| reflectivity at normal incidence (0 degree) |
+| vec3f | edgeColor |      white| reflectivity at grazing angle (90 degree)   |
+| float | roughness |        0.1| roughness in \[0–1\], 0 is perfect mirror   |
+
+: Parameters of the Alloy material.
+
+The main appearance of the Alloy material is controlled by the parameter
+`color`, while `edgeColor` influences the tint of reflections when seen
+at grazing angles (for real metals this is always 100% white). As in
+[Metal](#metal) the `roughness` parameter controls the variation of
+microfacets and thus how polished the alloy will look. All parameters
+can be textured by passing a [texture](#texture) handle, prefixed with
+"`map_`", [texture transformations](#texture-transformations) are
+supported as well.
+
+<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
+
 #### Glass
 
 The [path tracer](#path-tracer) offers a realistic a glass material,

@@ -85,7 +85,7 @@ inline float fresnelConductor(const float cosI, const uniform float eta, const u
 inline vec3f fresnelConductor(const float cosI, const spectrum eta, const spectrum k)
 {
   vec3f rgb = make_vec3f(0.f);
-  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++) 
+  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++)
     rgb = rgb + fresnelConductor(cosI, eta[l], k[l]) * spectrum_sRGB(l);
 
   return clamp(rgb);
@@ -118,19 +118,19 @@ struct FresnelConductorRGBUniform
 };
 
 inline vec3f FresnelConductorRGBUniform_eval(const Fresnel* uniform super, const float cosI) {
-  const FresnelConductorRGBUniform * uniform self = 
+  const FresnelConductorRGBUniform * uniform self =
     (const FresnelConductorRGBUniform * uniform)super;
 
   return make_vec3f(
-      fresnelConductor(cosI, self->eta.x, self->k.x), 
-      fresnelConductor(cosI, self->eta.y, self->k.y), 
+      fresnelConductor(cosI, self->eta.x, self->k.x),
+      fresnelConductor(cosI, self->eta.y, self->k.y),
       fresnelConductor(cosI, self->eta.z, self->k.z)
       );
 }
 
-inline Fresnel* uniform FresnelConductorRGBUniform_create(ShadingContext* uniform ctx, 
+inline Fresnel* uniform FresnelConductorRGBUniform_create(ShadingContext* uniform ctx,
     const uniform vec3f &eta, const uniform vec3f &k) {
-  FresnelConductorRGBUniform * uniform self = 
+  FresnelConductorRGBUniform * uniform self =
     (FresnelConductorRGBUniform * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBUniform));
   self->super.eval = &FresnelConductorRGBUniform_eval;
   self->eta = eta;
@@ -148,19 +148,45 @@ struct FresnelConductorRGBVarying
 };
 
 inline vec3f FresnelConductorRGBVarying_eval(const Fresnel* uniform super, const float cosI) {
-  const FresnelConductorRGBVarying * uniform self = 
+  const FresnelConductorRGBVarying * uniform self =
     (const FresnelConductorRGBVarying * uniform)super;
 
   return fresnelConductor(cosI, self->eta, self->k);
 }
 
-inline Fresnel* uniform FresnelConductorRGBVarying_create(ShadingContext* uniform ctx, 
+inline Fresnel* uniform FresnelConductorRGBVarying_create(ShadingContext* uniform ctx,
     const vec3f &eta, const vec3f &k) {
-  FresnelConductorRGBVarying * uniform self = 
+  FresnelConductorRGBVarying * uniform self =
     (FresnelConductorRGBVarying * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBVarying));
   self->super.eval = &FresnelConductorRGBVarying_eval;
   self->eta = eta;
   self->k = k;
+
+  return &self->super;
+}
+
+
+struct FresnelSchlick
+{
+  uniform Fresnel super;
+  varying vec3f r; // reflectivity at normal incidence (0 deg)
+  varying vec3f g; // reflectivity at grazing angle (90 deg)
+};
+
+inline vec3f FresnelSchlick_eval(const Fresnel* uniform super, const float cosI) {
+  const FresnelSchlick * uniform self = (const FresnelSchlick * uniform)super;
+
+  const float c = 1.f - cosI;
+  return lerp(sqr(sqr(c))*c, self->r, self->g);
+}
+
+inline Fresnel* uniform FresnelSchlick_create(ShadingContext* uniform ctx,
+    const varying vec3f &r, const varying vec3f &g) {
+  FresnelSchlick * uniform self =
+    (FresnelSchlick * uniform)ShadingContext_alloc(ctx, sizeof(FresnelSchlick));
+  self->super.eval = &FresnelSchlick_eval;
+  self->r = r;
+  self->g = g;
 
   return &self->super;
 }
@@ -174,15 +200,15 @@ struct FresnelConductorSpectral
 };
 
 inline vec3f FresnelConductorSpectral_eval(const Fresnel* uniform super, const float cosI) {
-  const FresnelConductorSpectral * uniform self = 
+  const FresnelConductorSpectral * uniform self =
     (const FresnelConductorSpectral * uniform)super;
 
   return fresnelConductor(cosI, self->eta, self->k);
 }
 
-inline Fresnel* uniform FresnelConductorSpectral_create(ShadingContext* uniform ctx, 
+inline Fresnel* uniform FresnelConductorSpectral_create(ShadingContext* uniform ctx,
     const spectrum &eta, const spectrum &k) {
-  FresnelConductorSpectral * uniform self = 
+  FresnelConductorSpectral * uniform self =
     (FresnelConductorSpectral * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorSpectral));
   self->super.eval = &FresnelConductorSpectral_eval;
   self->eta = eta;

@@ -26,3 +26,5 @@
 
 #define RGB_AL_ETA {1.47, 0.984, 0.602}
 #define RGB_AL_K {7.64, 6.55, 5.36}
+// = ((eta-1)^2+k^2)/((eta+1)^2+k^2)
+#define RGB_AL_COLOR {0.909, 0.916, 0.923}
