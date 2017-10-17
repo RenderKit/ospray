@@ -336,7 +336,7 @@ MACRO(OSPRAY_CONFIGURE_COMPILER)
   # unhide compiler to make it easier for users to see what they are using
   MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
-  OPTION(OSPRAY_STRICT_BUILD "Build with additional warning flags" OFF)
+  OPTION(OSPRAY_STRICT_BUILD "Build with additional warning flags" ON)
   MARK_AS_ADVANCED(OSPRAY_STRICT_BUILD)
 
   OPTION(OSPRAY_WARN_AS_ERRORS "Treat warnings as errors" OFF)
