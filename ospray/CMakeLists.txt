@@ -62,6 +62,8 @@ SET(OSPRAY_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/PixelOp.cpp
+  fb/ToneMapperPixelOp.cpp
+  fb/ToneMapperPixelOp.ispc
   fb/Tile.h
   fb/TileError.cpp
 

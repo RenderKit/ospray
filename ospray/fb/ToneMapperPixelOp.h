@@ -16,45 +16,28 @@
 
 #pragma once
 
-// sg components
-#include "sg/common/Node.h"
+// ospray
+#include "PixelOp.h"
 
 namespace ospray {
-  namespace sg {
 
-    struct OSPSG_INTERFACE FrameBuffer : public sg::Node
+  /*! \brief Generic tone mapping operator approximating ACES by default. */
+  struct OSPRAY_SDK_INTERFACE ToneMapperPixelOp : public PixelOp
+  {
+    struct OSPRAY_SDK_INTERFACE Instance : public PixelOp::Instance
     {
-      /*! constructor allocates an OSP frame buffer object */
-      FrameBuffer(vec2i size = vec2i(300,300));
+      Instance(void* ispcInstance);
 
-      // no destructor since we release the framebuffer object in Node::~Node()
-
-      unsigned char *map();
-      void unmap(const void *mem);
-
-      void clear();
-
-      void clearAccum();
-      
-      vec2i size() const;
-
-      virtual void postCommit(RenderContext &ctx) override;
-
-      /*! \brief returns a std::string with the c++ name of this class */
+      virtual void postAccum(Tile& tile) override;
       virtual std::string toString() const override;
 
-      OSPFrameBuffer handle() const;
-      
-      // create the ospray framebuffer for this class
-      void createFB();
-
-      // destroy the ospray framebuffer created via createFB()
-      void destroyFB();
-
-      OSPFrameBuffer ospFrameBuffer {nullptr};
-      OSPPixelOp toneMapper {nullptr};
-      std::string displayWallStream;
+      void* ispcInstance;
     };
 
-  } // ::ospray::sg
+    ToneMapperPixelOp();
+    virtual void commit() override;
+    virtual std::string toString() const override;
+    virtual PixelOp::Instance* createInstance(FrameBuffer* fb, PixelOp::Instance* prev) override;
+  };
+
 } // ::ospray
