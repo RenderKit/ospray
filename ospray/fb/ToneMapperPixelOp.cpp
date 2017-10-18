@@ -30,7 +30,7 @@ namespace ospray {
       
     float exposure = getParam1f("exposure", 1.f);
     
-    // Default parameters fitted for the ACES 1.0 grayscale curve (RRT.a1.0.3 + ODT.Academy.Rec709_100nits_dim.a1.0.3)
+    // Default parameters fitted to the ACES 1.0 grayscale curve (RRT.a1.0.3 + ODT.Academy.Rec709_100nits_dim.a1.0.3)
     // We included exposure adjustment to match 18% middle gray (ODT(RRT(0.18)) = 0.18)
     const float acesContrast = 1.6773f;
     const float acesShoulder = 0.9714f;
