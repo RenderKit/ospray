@@ -45,6 +45,12 @@ namespace ospray {
     inline Camera::Camera(const std::string &type) : type(type)
     {
       setValue(ospNewCamera(type.c_str()));
+      createChild("pos", "vec3f", vec3f(0, -1, 0));
+      // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
+      createChild("dir", "vec3f", vec3f(0, 0, 0),
+                       NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
+      createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
     }
 
     inline std::string Camera::toString() const
@@ -52,7 +58,7 @@ namespace ospray {
       return "ospray::sg::Camera";
     }
 
-    inline void Camera::postCommit(RenderContext &ctx)
+    inline void Camera::postCommit(RenderContext &)
     {
       ospCommit(valueAs<OSPCamera>());
     }

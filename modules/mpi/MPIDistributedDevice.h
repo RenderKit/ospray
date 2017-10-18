@@ -28,8 +28,8 @@ namespace ospray {
 
     struct MPIDistributedDevice : public api::Device
     {
-      MPIDistributedDevice()  = default;
-      ~MPIDistributedDevice();
+      MPIDistributedDevice() = default;
+      ~MPIDistributedDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -99,7 +99,7 @@ namespace ospray {
 
       /*! create a new data buffer */
       OSPData newData(size_t nitems, OSPDataType format,
-                      void *init, int flags) override;
+                      const void *init, int flags) override;
 
       /*! Copy data into the given volume. */
       int setRegion(OSPVolume object, const void *source,

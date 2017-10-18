@@ -5,11 +5,11 @@ stages:
   - deploy
 
 variables:
-  GIT_DEPTH: "3"
+  GIT_DEPTH: "15"
   KW_PROJECT_NAME: ospray
 
 .job_template: &build_job_docker
-  type: build
+  stage: build
   tags:
     - docker
   image: ospray/docker-images:arch  # default image
@@ -17,14 +17,16 @@ variables:
     - scripts/build_gitlab/linux.sh # default script
 
 .job_template: &build_job_shell
-  type: build
+  stage: build
   tags:
     - build
 
 .job_template: &release_job
-  type: deploy
+  stage: deploy
   tags:
     - release
+  dependencies:
+    - test-centos6-gcc
   only:
     - devel
     - master
@@ -32,7 +34,7 @@ variables:
     - gtest-devel #TODO - remove it after few runs
 
 .job_template: &test_job
-  type: test-build
+  stage: test-build
   tags:
     - docker
   script:
@@ -45,6 +47,7 @@ variables:
       - $CI_PROJECT_DIR/build/failed
     expire_in: 1 week
     when: always
+  allow_failure: true
 
 .job_template: &test_job_windows
   <<: *test_job
@@ -56,6 +59,7 @@ variables:
       - failed
     expire_in: 1 week
     when: always
+  allow_failure: true
 
 
 ### BUILD JOBS ###
@@ -70,13 +74,35 @@ build-arch-clang:
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh
 
+build-arch-gcc-warnings:
+  <<: *build_job_docker
+  script:
+    - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
+  allow_failure: true
+
+build-arch-clang-warnings:
+  <<: *build_job_docker
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
+  allow_failure: true
+
+build-ubuntu1704-gcc:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu17.04
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR
+    expire_in: 3 day
+
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-ubuntu1404-gcc:
   <<: *build_job_docker
@@ -84,7 +110,7 @@ build-ubuntu1404-gcc:
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-centos6-gcc:
   <<: *build_job_docker
@@ -92,13 +118,15 @@ build-centos6-gcc:
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-centos6-icc:
   <<: *build_job_shell
   script:
     - module load gcc/4.8.2
     - module load intel
+    - module load embree
+    - module load tbb
     - export CC=icc
     - export CXX=icpc
     - scripts/build_gitlab/linux.sh
@@ -111,6 +139,8 @@ build-centos6-icc15:
   script:
     - module load gcc/4.8.2
     - module load intel/2015
+    - module load embree
+    - module load tbb
     - export CC=icc
     - export CXX=icpc
     - scripts/build_gitlab/linux.sh
@@ -118,14 +148,13 @@ build-centos6-icc15:
     - centos6
     - icc
 
-
 build-centos7-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:centos7
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-debug:
   <<: *build_job_docker
@@ -155,7 +184,7 @@ build-windows-msvc:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-windows-msvc14:
   <<: *build_job_shell
@@ -167,7 +196,7 @@ build-windows-msvc14:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-windows-msvc15:
   <<: *build_job_shell
@@ -179,7 +208,7 @@ build-windows-msvc15:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-windows-icc:
   <<: *build_job_shell
@@ -191,10 +220,10 @@ build-windows-icc:
   artifacts:
     paths:
       - build
-    expire_in: 1 day
+    expire_in: 3 day
 
 build-scan-kw:
-  type: build
+  stage: build
   image: ospray-kw-centos7
   script:
     - /tmp/build-scan-kw.sh
@@ -203,55 +232,24 @@ build-scan-kw:
   artifacts:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
-    expire_in: 1 day
+    expire_in: 3 day
 
-### RELEASE JOBS ###
-release-linux-icc:
-  <<: *release_job
-  script:
-    - module load cmake
-    - module load gcc/4.8.2
-    - module load intel
-    - export CC=icc
-    - export CXX=icpc
-    - scripts/release/linux.sh
-  tags:
-    - icc
-    - centos6
-    - mpi
-  artifacts:
-    paths:
-      - build_release/*.gz
-
-release-osx-clang:
-  <<: *release_job
-  script:
-    - export CC=clang
-    - export CXX=clang++
-    - scripts/release/macosx.sh
-  tags:
-    - clang
-    - osx
-    - mpi
-  artifacts:
-    paths:
-      - build_release/*.gz
-      - build_release/*.dmg
-
-release-windows:
-  <<: *release_job
-  script:
-    - call scripts\release\win.bat
-  tags:
-    - msvc
-    - win7
-    - mpi
-  artifacts:
-    paths:
-      - build_release\ospray*.zip
-      - build_release\ospray*.exe
 
 ### TEST JOBS ###
+
+test-gen-centos7-gcc:
+  <<: *test_job
+  image: ospray/docker-images:centos7
+  script:
+    - cd $CI_PROJECT_DIR/build
+    - ../scripts/tests/generate_baseline.sh
+  artifacts:
+    paths:
+     - $CI_PROJECT_DIR/build/img
+    expire_in: 1 week
+  dependencies:
+      - build-centos7-gcc
+  when: manual
 
 test-centos7-gcc:
   <<: *test_job
@@ -310,7 +308,7 @@ test-windows-msvc14:
     - build-windows-msvc14
 
 benchmark-centos7-gcc:
-  type: test-build
+  stage: test-build
   image: ospray/docker-images:centos7
   script:
     - cd $CI_PROJECT_DIR/build
@@ -325,11 +323,13 @@ benchmark-centos7-gcc:
       - $CI_PROJECT_DIR/build/bench_output
       - $CI_PROJECT_DIR/build/benchmarks/stats.csv
     expire_in: 1 week
+    when: always
   dependencies:
     - build-centos7-gcc
+  allow_failure: true
 
 test-kw-critical:
-  type: test-src
+  stage: test-src
   image: ospray-kw-centos7
   script:
     - /tmp/test-kw-critical.sh
@@ -339,13 +339,16 @@ test-kw-critical:
     - kw-scan-docker
   allow_failure: true
 
+
 ### RELEASE JOBS ###
+
 release-linux-icc:
   <<: *release_job
   script:
     - module load cmake
     - module load gcc/4.8.2
     - module load intel
+    - module load embree
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh
@@ -383,5 +386,4 @@ release-windows:
   artifacts:
     paths:
       - build_release\ospray*.zip
-      - build_release\ospray*.exe
-
+      - build_release\ospray*.msi

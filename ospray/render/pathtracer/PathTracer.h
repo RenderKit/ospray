@@ -24,7 +24,7 @@ namespace ospray {
   struct PathTracer : public Renderer
   {
     PathTracer();
-    virtual ~PathTracer();
+    virtual ~PathTracer() override;
     virtual std::string toString() const override;
     virtual void commit() override;
     virtual Material *createMaterial(const char *type) override;

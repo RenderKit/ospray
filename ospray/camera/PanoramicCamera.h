@@ -46,7 +46,7 @@ namespace ospray {
   {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     PanoramicCamera();
-    virtual ~PanoramicCamera() = default;
+    virtual ~PanoramicCamera() override = default;
 
     virtual std::string toString() const override;
     virtual void commit() override;

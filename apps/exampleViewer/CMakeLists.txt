@@ -16,6 +16,8 @@
 
 find_package(OpenGL REQUIRED)
 
+ospray_disable_compiler_warnings()
+
 ##############################################################
 # Build support libs
 ##############################################################
@@ -27,20 +29,9 @@ add_subdirectory(widgets)
 # Build app
 ##############################################################
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}
-  common/gl3w
-  common/imgui
-  ${OPENGL_INCLUDE_DIR}
-)
-
 ospray_create_application(ospExampleViewer
   ospExampleViewer.cpp
-  LINK
-  ${OPENGL_LIBRARIES}
-  ${GLFW_LIBRARY}
-  gl3w
-  imgui
+LINK
   ospray
   ospray_common
   ospray_imgui3d_sg

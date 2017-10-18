@@ -17,6 +17,8 @@
 /*! \file sg/AMRVolume.cpp node for reading and rendering amr files */
 
 #include "AMRVolume.h"
+// ospcommon
+#include "ospcommon/utility/ArrayView.h"
 // sg
 #include "sg/importer/Importer.h"
 
@@ -32,6 +34,12 @@ namespace ospray {
                          std::string("octant"),
                          std::string("finest"),
                          std::string("finestLevel")});
+    }
+
+    AMRVolume::~AMRVolume()
+    {
+      for (auto *ptr : brickPtrs)
+        delete [] ptr;
     }
 
     std::string AMRVolume::toString() const
@@ -68,19 +76,23 @@ namespace ospray {
 
       BrickInfo bi;
       auto bounds = child("bounds").valueAs<box3f>();
+      auto numCells = BS * BS * BS;
       while (fread(&bi, sizeof(bi), 1, infoFile)) {
-        float *bd = new float[BS * BS * BS];
-        int nr    = fread(bd, sizeof(float), BS * BS * BS, dataFile);
+        utility::ArrayView<float> bd(new float[numCells], numCells);
+
+        int nr = fread(bd.data(), sizeof(float), numCells, dataFile);
+        UNUSED(nr);
+
         if (bi.level > maxLevel) {
-          delete bd;
+          delete [] bd.data();
           continue;
         }
         brickInfo.push_back(bi);
         bounds.extend((vec3f(bi.box.upper) + vec3f(1.f)) * bi.dt);
 
-        assert(nr == BS * BS * BS);
-        for (int i = 0; i < BS * BS * BS; i++)
-          valueRange.extend(bd[i]);
+        assert(nr == numCells);
+        for (const auto &c : bd)
+          valueRange.extend(c);
         brickPtrs.push_back(bd);
       }
 
@@ -101,7 +113,7 @@ namespace ospray {
         setValue(volume);
       }
 
-      for (int bID = 0; bID < brickInfo.size(); bID++) {
+      for (size_t bID = 0; bID < brickInfo.size(); bID++) {
         const auto &bi = brickInfo[bID];
         OSPData data = ospNewData(bi.size().product(),
                                   OSP_FLOAT,
@@ -110,18 +122,32 @@ namespace ospray {
         this->brickData.push_back(data);
       }
 
-      brickDataData =
-          ospNewData(brickData.size(), OSP_OBJECT, brickData.data());
-      ospSetData(volume, "brickData", brickDataData);
-      brickInfoData = ospNewData(
-          brickInfo.size() * sizeof(brickInfo[0]), OSP_RAW, brickInfo.data());
-      ospSetData(volume, "brickInfo", brickInfoData);
+      auto brickDataNode =
+          std::make_shared<DataArrayOSP>((OSPObject*)brickData.data(),
+                                         brickData.size(),
+                                         false);
+      brickDataNode->setName("brickData");
+      brickDataNode->setType("DataArrayOSP");
+      add(brickDataNode);
+
+      auto brickInfoNode =
+          std::make_shared<DataArrayRAW>((byte_t*)brickInfo.data(),
+                                         brickInfo.size() * sizeof(BrickInfo),
+                                         false);
+      brickInfoNode->setName("brickInfo");
+      brickInfoNode->setType("DataArrayRAW");
+      add(brickInfoNode);
+
+      // NOTE(jda) - Hack! there are issues with adding data array nodes
+      //             *during* sg traversal...remove this when setFromXML() is
+      //             changed
+      brickDataNode->postCommit(ctx);
+      brickInfoNode->postCommit(ctx);
 
       child("voxelRange") = valueRange.toVec2f();
     }
 
-    void AMRVolume::setFromXML(const xml::Node &node,
-                               const unsigned char *binBasePtr)
+    void AMRVolume::setFromXML(const xml::Node &node, const unsigned char *)
     {
       std::string fileName = node.getProp("fileName");
       range1f clampRange;
@@ -144,7 +170,7 @@ namespace ospray {
                              clampRangeString.empty() ? nullptr : &clampRange,
                              child("maxLevel").valueAs<int>());
 #else
-          throw std::runtime_error("chombo support not built in");
+          throw std::runtime_error("chombo support (hdf5) not built in");
 #endif
         } else {
           std::string BSs = node.getProp("brickSize");

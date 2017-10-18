@@ -19,6 +19,7 @@
 // ospray
 #include <sstream>
 #include <vector>
+#include "../common.h"
 #include "../range.h"
 #include "for_each.h"
 
@@ -29,6 +30,8 @@ namespace ospcommon {
     template <typename value_t>
     struct Array3D
     {
+      virtual ~Array3D() = default;
+
       /*! return size (ie, "dimensions") of volume */
       virtual vec3i size() const = 0;
 
@@ -40,7 +43,12 @@ namespace ospcommon {
       /*! get the range/interval of all cell values in the given
         begin/end region of the volume */
       range_t<value_t> getValueRange(const vec3i &begin,
-                                     const vec3i &end) const;
+                                     const vec3i &end) const
+      {
+        range_t<value_t> v = get(begin);
+        for_each(begin, end, [&](const vec3i &idx) { v.extend(get(idx)); });
+        return v;
+      }
 
       /*! get value range over entire volume */
       range_t<value_t> getValueRange() const
@@ -57,32 +65,35 @@ namespace ospcommon {
     struct ActualArray3D : public Array3D<value_t>
     {
       ActualArray3D(const vec3i &dims, void *externalMem = nullptr);
-      virtual ~ActualArray3D()
+      ~ActualArray3D() override
       {
         if (valuesAreMine)
           delete[] value;
       }
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override;
+      vec3i size() const override;
 
       /*! get cell value at location
 
         \warning 'where' MUST be a valid cell location */
-      virtual value_t get(const vec3i &where) const override;
+      value_t get(const vec3i &where) const override;
 
       /*! set cell value at location to given value
 
         \warning 'where' MUST be a valid cell location */
-      virtual void set(const vec3i &where, const value_t &t);
+      void set(const vec3i &where, const value_t &t);
 
       void clear(const value_t &t);
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
-      virtual size_t numElements() const override;
+      size_t numElements() const override;
 
       /* compute the (1D) linear array index for a (3D) grid coordinate */
-      size_t indexOf(const vec3i &coord) const;
+      size_t indexOf(const vec3i &pos) const
+      {
+        return pos.x + size_t(dims.x) * (pos.y + size_t(dims.y) * pos.z);
+      }
 
       const vec3i dims;
       value_t *value;
@@ -95,14 +106,14 @@ namespace ospcommon {
     template <typename value_t>
     struct IndexShiftedArray3D : public Array3D<value_t>
     {
-      IndexShiftedArray3D(std::shared_ptr<Array3D<value_t>> actual,
-                          const vec3i &shift)
-          : actual(actual), shift(shift)
+      IndexShiftedArray3D(std::shared_ptr<Array3D<value_t>> _actual,
+                          const vec3i &_shift)
+          : actual(_actual), shift(_shift)
       {
       }
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override
+      vec3i size() const override
       {
         return actual->size();
       }
@@ -110,7 +121,7 @@ namespace ospcommon {
       /*! get cell value at location
 
         \warning 'where' MUST be a valid cell location */
-      virtual value_t get(const vec3i &where) const override
+      value_t get(const vec3i &where) const override
       {
         return actual->get((where + size() + shift) % size());
       }
@@ -118,13 +129,13 @@ namespace ospcommon {
       /*! set cell value at location to given value
 
         \warning 'where' MUST be a valid cell location */
-      virtual void set(const vec3i &where, const value_t &t)
+      void set(const vec3i &, const value_t &)
       {
         throw std::runtime_error("cannot 'set' in a IndexShiftArray3D");
       }
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
-      virtual size_t numElements() const override
+      size_t numElements() const override
       {
         return actual->numElements();
       }
@@ -141,15 +152,15 @@ namespace ospcommon {
       Array3DAccessor(std::shared_ptr<Array3D<in_t>> actual);
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override;
+      vec3i size() const override;
 
       /*! get cell value at location
 
         \warning 'where' MUST be a valid cell location */
-      virtual out_t get(const vec3i &where) const override;
+      out_t get(const vec3i &where) const override;
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
-      virtual size_t numElements() const override;
+      size_t numElements() const override;
 
      private:
       //! the actual 3D array we're wrapping around
@@ -165,15 +176,15 @@ namespace ospcommon {
                       const vec3i &repeatedSize);
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override;
+      vec3i size() const override;
 
       /*! get cell value at location
 
         \warning 'where' MUST be a valid cell location */
-      virtual T get(const vec3i &where) const override;
+      T get(const vec3i &where) const override;
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
-      virtual size_t numElements() const override;
+      size_t numElements() const override;
 
       const vec3i repeatedSize;
       const std::shared_ptr<Array3D<T>> actual;
@@ -194,7 +205,7 @@ namespace ospcommon {
       }
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override
+      vec3i size() const override
       {
         return clipBox.size();
       }
@@ -202,7 +213,7 @@ namespace ospcommon {
       /*! get cell value at location
 
         \warning 'where' MUST be a valid cell location */
-      virtual value_t get(const vec3i &where) const override
+      value_t get(const vec3i &where) const override
       {
         return actual->get(where + clipBox.lower);
       }
@@ -210,13 +221,13 @@ namespace ospcommon {
       /*! set cell value at location to given value
 
         \warning 'where' MUST be a valid cell location */
-      virtual void set(const vec3i &where, const value_t &t)
+      void set(const vec3i &, const value_t &)
       {
         throw std::runtime_error("cannot 'set' in a SubBoxArray3D");
       }
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
-      virtual size_t numElements() const override
+      size_t numElements() const override
       {
         vec3i dims = clipBox.size();
         return size_t(dims.x) * size_t(dims.y) * size_t(dims.z);
@@ -237,7 +248,7 @@ namespace ospcommon {
       }
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override
+      vec3i size() const override
       {
         return vec3i(slice[0]->size().x, slice[0]->size().y, slice.size());
       }
@@ -245,7 +256,7 @@ namespace ospcommon {
       /*! get cell value at location
 
         \warning 'where' MUST be a valid cell location */
-      virtual value_t get(const vec3i &where) const override
+      value_t get(const vec3i &where) const override
       {
         return slice[clamp(where.z, 0, (int)slice.size() - 1)]->get(
             vec3i(where.x, where.y, 0));
@@ -254,13 +265,13 @@ namespace ospcommon {
       /*! set cell value at location to given value
 
         \warning 'where' MUST be a valid cell location */
-      virtual void set(const vec3i &where, const value_t &t)
+      void set(const vec3i &, const value_t &)
       {
         throw std::runtime_error("cannot 'set' in a MultiSliceArray3D");
       }
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
-      virtual size_t numElements() const override
+      size_t numElements() const override
       {
         return slice[0]->numElements() * slice.size();
       }
@@ -268,23 +279,25 @@ namespace ospcommon {
       const std::vector<std::shared_ptr<Array3D<value_t>>> slice;
     };
 
+#ifndef _WIN32
     /*! load raw file with given dimensions. the 'type' of the raw
       file (uint8,float,...) is given through the function's
       template parameter */
     template <typename T>
-    std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName,
-                                        const vec3i &dims);
+    std::shared_ptr<Array3D<T>> OSPCOMMON_INTERFACE
+    loadRAW(const std::string &fileName, const vec3i &dims);
 
     /*! load raw file with given dimensions. the 'type' of the raw
       file (uint8,float,...) is given through the function's
       template parameter */
     template <typename T>
-    std::shared_ptr<Array3D<T>> mmapRAW(const std::string &fileName,
-                                        const vec3i &dims);
+    std::shared_ptr<Array3D<T>> OSPCOMMON_INTERFACE
+    mmapRAW(const std::string &fileName, const vec3i &dims);
+#endif
 
-    // -------------------------------------------------------
-    // implementation section
-    // -------------------------------------------------------
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    // ActualArray3D //
 
     template <typename T>
     inline vec3i ActualArray3D<T>::size() const
@@ -312,7 +325,7 @@ namespace ospcommon {
     }
 
     template <typename T>
-    ActualArray3D<T>::ActualArray3D(const vec3i &dims, void *externalMem)
+    inline ActualArray3D<T>::ActualArray3D(const vec3i &dims, void *externalMem)
         : dims(dims),
           value((T *)externalMem),
           valuesAreMine(externalMem == nullptr)
@@ -322,7 +335,7 @@ namespace ospcommon {
           const size_t numVoxels = longProduct(dims);
           value = new T[numVoxels];
         }
-      } catch (const std::bad_alloc &e) {
+      } catch (const std::bad_alloc &) {
         std::stringstream ss;
         ss << "could not allocate memory for Array3D of dimensions " << dims
            << " (in Array3D::Array3D())";
@@ -341,6 +354,74 @@ namespace ospcommon {
     {
       for_each(size(), [&](const vec3i &idx){ set(idx, t); });
     }
+
+    // Array3DAccessor //
+
+    template <typename in_t, typename out_t>
+    inline Array3DAccessor<in_t, out_t>::Array3DAccessor(
+        std::shared_ptr<Array3D<in_t>> actual)
+        : actual(actual)
+    {
+    }
+
+    template <typename in_t, typename out_t>
+    inline vec3i Array3DAccessor<in_t, out_t>::size() const
+    {
+      return actual->size();
+    }
+
+    template <typename in_t, typename out_t>
+    inline out_t Array3DAccessor<in_t, out_t>::get(const vec3i &where) const
+    {
+      return (out_t)actual->get(where);
+    }
+
+    template <typename in_t, typename out_t>
+    inline size_t Array3DAccessor<in_t, out_t>::numElements() const
+    {
+      assert(actual);
+      return actual->numElements();
+    }
+
+    // Array3DRepeater //
+
+    template <typename T>
+    inline Array3DRepeater<T>::Array3DRepeater(
+        const std::shared_ptr<Array3D<T>> &actual, const vec3i &repeatedSize)
+        : repeatedSize(repeatedSize), actual(actual)
+    {
+    }
+
+    template <typename T>
+    inline vec3i Array3DRepeater<T>::size() const
+    {
+      return repeatedSize;
+    }
+
+    template <typename T>
+    inline T Array3DRepeater<T>::get(const vec3i &_where) const
+    {
+      vec3i where(_where.x % repeatedSize.x,
+                  _where.y % repeatedSize.y,
+                  _where.z % repeatedSize.z);
+
+      if ((_where.x / repeatedSize.x) % 2)
+        where.x = repeatedSize.x - 1 - where.x;
+      if ((_where.y / repeatedSize.y) % 2)
+        where.y = repeatedSize.y - 1 - where.y;
+      if ((_where.z / repeatedSize.z) % 2)
+        where.z = repeatedSize.z - 1 - where.z;
+
+      return actual->get(where);
+    }
+
+    template <typename T>
+    inline size_t Array3DRepeater<T>::numElements() const
+    {
+      return size_t(repeatedSize.x) * size_t(repeatedSize.y) *
+             size_t(repeatedSize.z);
+    }
+
 
   }  // ::ospcommon::array3D
 }  // ::ospcommon

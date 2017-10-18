@@ -782,6 +782,9 @@ inline vec3f clamp(const vec3f &a, const uniform vec3f &b, const uniform vec3f &
 inline vec3f clamp(const vec3f &a, const vec3f &b, const vec3f &c)
 { return(make_vec3f(clamp(a.x, b.x, c.x), clamp(a.y, b.y, c.y), clamp(a.z, b.z, c.z))); }
 
+inline vec3f clamp(const vec3f &a)
+{ return(make_vec3f(clamp(a.x), clamp(a.y), clamp(a.z))); }
+
 inline vec3i clamp(const vec3i &a, const uniform vec3i &b, const uniform vec3i &c)
 { return(make_vec3i(clamp(a.x, b.x, c.x), clamp(a.y, b.y, c.y), clamp(a.z, b.z, c.z))); }
 

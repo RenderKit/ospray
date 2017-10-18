@@ -26,7 +26,7 @@ namespace ospray {
       perspectivecamera etc for that */
   struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
   {
-    virtual ~Camera() = default;
+    virtual ~Camera() override = default;
 
     virtual std::string toString() const override;
 
@@ -44,12 +44,6 @@ namespace ospray {
     // to simulate sensor shift
     vec2f  imageStart; // lower left corner
     vec2f  imageEnd; // upper right corner
-    // handedness of the coordinate system
-    typedef enum {
-      OSP_HANDEDNESS_LEFT,
-      OSP_HANDEDNESS_RIGHT,
-    } Handedness;
-    Handedness handedness;
     float shutterOpen; // start time of camera shutter
     float shutterClose; // end time of camera shutter
   };

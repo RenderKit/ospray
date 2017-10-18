@@ -18,18 +18,15 @@
 
 #include "BSDF.ih"
 
+// uses a variant of Blinn-Phong BRDF:
+// f = r*(n+2)/(4pi(2-2^(-n/2)))*cos(HN)^n/cos(LN)
 struct Specular
 {
   BSDF super;
 
-  /*! The reflectivity parameter. The range is [0,1] where 0 means
-   *  no reflection at all, and 1 means full reflection. */
-  vec3f R;
-
-  /*! The exponent that determines the glossiness. The range is
-   *  [0,infinity[ where 0 means a diffuse surface, and the
-   *  specularity increases towards infinity. */
-  float exp;
+  vec3f ks; // reflectivity albedo, including normalization
+  vec3f weight; // = constant part of f * cosNL/pdf
+  float ns; // exponent
 };
 
 inline BSDF_EvalRes Specular_eval(const varying BSDF* uniform super,
@@ -38,10 +35,18 @@ inline BSDF_EvalRes Specular_eval(const varying BSDF* uniform super,
   const varying Specular* uniform self = (const varying Specular* uniform)super;
   BSDF_EvalRes res;
 
-  const vec3f refl = reflect(wo, getN(super));
-  if (dot(refl,wi) < 0.0f) return make_BSDF_EvalRes_zero();
-  res.pdf = powerCosineSampleHemispherePDF(dot(refl,wi), self->exp);
-  res.value = self->R * ((self->exp+2.f) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(super))));
+  const vec3f N = getN(super);
+  const float cosThetaO = dot(wo, N);
+  const float cosThetaI = dot(wi, N);
+  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f)
+    return make_BSDF_EvalRes_zero();
+
+  const vec3f wh = normalize(wo + wi);
+  const float cosThetaH = dot(wh, N);
+  res.pdf = powerCosineSampleHemispherePDF(cosThetaH, self->ns)
+    * rcp(4.0f * dot(wo, wh));
+  res.value = self->ks * powf(cosThetaH, self->ns);
+
   return res;
 }
 
@@ -51,12 +56,21 @@ inline BSDF_SampleRes Specular_sample(const varying BSDF* uniform super,
   const varying Specular* uniform self = (const varying Specular* uniform)super;
   BSDF_SampleRes res;
 
-  const vec3f refl = reflect(wo, getN(super));
-  const vec3f localDir = powerCosineSampleHemisphere(self->exp, s);
-  res.wi = frame(refl) * localDir;
-  res.pdf = powerCosineSampleHemispherePDF(localDir, self->exp);
+  const vec3f wh_local = powerCosineSampleHemisphere(self->ns, s);
+  const vec3f wh = getFrame(super) * wh_local;
+  const float cosThetaOH = dot(wo, wh);
+  res.wi = reflect(wo, wh, cosThetaOH);
+
+  const float cosThetaI = dot(res.wi, getN(super));
+  if (cosThetaI <= 0.0f) // below surface?
+    return make_BSDF_SampleRes_zero();
+
+  const float cosThetaH = wh_local.z;
+  res.pdf = powerCosineSampleHemispherePDF(cosThetaH, self->ns)
+    * rcp(4.0f * cosThetaOH);
   res.type = BSDF_GLOSSY_REFLECTION;
-  res.weight = self->R * ((self->exp+2.f) * rcp(self->exp+1.f) * clamp(dot(res.wi, getN(super))));
+  res.weight = self->weight * cosThetaOH;
+
   return res;
 }
 
@@ -67,8 +81,12 @@ inline void Specular_Constructor(varying Specular* uniform self,
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
                    Specular_eval, Specular_sample, frame);
-  self->R = R;
-  self->exp = exp_;
+
+  // convert from Phong exponent to Blinn
+  self->ns = exp_ * 4.f;
+  const float tmp = (self->ns + 2.f) * rcp(2.f - exp(self->ns * -lntwo_over_two));
+  self->ks = R * (one_over_four_pi * tmp);
+  self->weight = R * (2.f * tmp * rcp(self->ns + 1.f));
 }
 
 inline varying BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx,
@@ -76,7 +94,8 @@ inline varying BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx
                                              vec3f R,
                                              float exp_)
 {
-  varying Specular* uniform self = (varying Specular* uniform)ShadingContext_alloc(ctx, sizeof(Specular));
+  varying Specular* uniform self =
+    (varying Specular* uniform)ShadingContext_alloc(ctx, sizeof(Specular));
   Specular_Constructor(self, frame, R, exp_);
   return &self->super;
 }

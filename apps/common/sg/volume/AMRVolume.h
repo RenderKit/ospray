@@ -26,6 +26,7 @@ namespace ospray {
     struct OSPSG_INTERFACE AMRVolume : public Volume
     {
       AMRVolume();
+      ~AMRVolume() override;
 
       std::string toString() const override;
 
@@ -70,8 +71,6 @@ namespace ospray {
       std::vector<OSPData> brickData;
       std::vector<BrickInfo> brickInfo;
       std::vector<float *> brickPtrs;
-      OSPData brickInfoData;
-      OSPData brickDataData;
     };
 
 #ifdef OSPRAY_APPS_SG_CHOMBO

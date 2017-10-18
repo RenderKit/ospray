@@ -57,10 +57,10 @@ namespace ospray {
     bool defined() const;
 
     /*! define the given handle to refer to given object */
-    static void assign(const ObjectHandle &handle, const ManagedObject *object);
+    static void assign(const ObjectHandle &handle, ManagedObject *object);
 
     /*! define the given handle to refer to given object */
-    void assign(const ManagedObject *object) const;
+    void assign(ManagedObject *object) const;
 
     void freeObject() const;
 

@@ -35,7 +35,7 @@ namespace ospray {
                 bool hasDepthBuffer,
                 bool hasAccumBuffer,
                 bool hasVarianceBuffer = false);
-    virtual ~FrameBuffer() = default;
+    virtual ~FrameBuffer() override = default;
 
     virtual const void *mapDepthBuffer() = 0;
     virtual const void *mapColorBuffer() = 0;

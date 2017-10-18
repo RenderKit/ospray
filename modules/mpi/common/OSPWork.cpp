@@ -333,21 +333,23 @@ namespace ospray {
       NewData::NewData(ObjectHandle handle,
                        size_t nItems,
                        OSPDataType format,
-                       void *init,
+                       const void *_initMem,
                        int flags)
         : handle(handle),
           nItems(nItems),
           format(format),
           flags(flags)
       {
-        if (init && nItems) {
+        if (_initMem && nItems) {
           auto numBytes = sizeOf(format) * nItems;
 
+          auto *initMem = static_cast<const byte_t*>(_initMem);
+
           if (flags & OSP_DATA_SHARED_BUFFER) {
-            dataView.reset((byte_t*)init, numBytes);
+            dataView.reset(const_cast<byte_t*>(initMem), numBytes);
           } else {
             copiedData.resize(numBytes);
-            std::memcpy(copiedData.data(), init, numBytes);
+            std::memcpy(copiedData.data(), initMem, numBytes);
             dataView = copiedData;
           }
         }
@@ -719,10 +721,10 @@ namespace ospray {
         MPI_CALL(Finalize());
       }
 
-      void CommandFinalize::serialize(WriteStream &b) const
+      void CommandFinalize::serialize(WriteStream &) const
       {}
 
-      void CommandFinalize::deserialize(ReadStream &b)
+      void CommandFinalize::deserialize(ReadStream &)
       {}
 
       Pick::Pick(OSPRenderer renderer, const vec2f &screenPos)

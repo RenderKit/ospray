@@ -18,7 +18,6 @@ include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/../common/gl3w
   ${CMAKE_CURRENT_LIST_DIR}/../common/imgui
   ${GLFW_INCLUDE_DIRS}
-  ${OPENGL_INCLUDE_DIR}
 )
 
 ospray_create_library(ospray_imgui3d_sg
@@ -31,10 +30,8 @@ ospray_create_library(ospray_imgui3d_sg
 LINK
   ospray
   ospray_common
+  ospray_imgui
   ospray_imgui_util_sg
   ospray_tfn
   ${GLFW_LIBRARY}
-  gl3w
-  imgui
-  ${OPENGL_LIBRARIES}
 )

@@ -22,12 +22,6 @@ namespace ospray {
     PanoramicCamera::PanoramicCamera()
       : Camera("panoramic")
     {
-      createChild("pos", "vec3f", vec3f(0, -1, 0));
-      createChild("dir", "vec3f", vec3f(0, 0, 0),
-                       NodeFlags::required | NodeFlags::valid_min_max |
-                       NodeFlags::required | NodeFlags::valid_min_max |
-                       NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
-      createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
     }
 
     OSP_REGISTER_SG_NODE(PanoramicCamera);

@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  Data::Data(size_t numItems, OSPDataType type, void *init, int flags) :
+  Data::Data(size_t numItems, OSPDataType type, const void *init, int flags) :
     numItems(numItems),
     numBytes(numItems * sizeOf(type)),
     flags(flags),
@@ -28,7 +28,7 @@ namespace ospray {
   {
     if (flags & OSP_DATA_SHARED_BUFFER) {
       Assert2(init != NULL, "shared buffer is NULL");
-      data = init;
+      data = const_cast<void *>(init);
     } else {
       data = alignedMalloc(numBytes+16);
       if (init)

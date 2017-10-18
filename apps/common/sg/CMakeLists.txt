@@ -18,9 +18,9 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 ## VTK support ##
 
-OPTION(OSPRAY_APPS_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
+OPTION(OSPRAY_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
 
-IF(OSPRAY_APPS_SG_VTK)
+IF(OSPRAY_SG_VTK)
   FIND_PACKAGE(VTK COMPONENTS REQUIRED
     vtkIOLegacy
     vtkIOXML
@@ -38,9 +38,9 @@ ENDIF()
 
 ## Chombo AMR loader support ##
 
-OPTION(OSPRAY_APPS_SG_CHOMBO "AMR Chombo Reader" OFF)
+OPTION(OSPRAY_SG_CHOMBO "AMR Chombo Reader (requires HDF5)" OFF)
 
-IF (OSPRAY_APPS_SG_CHOMBO)
+IF (OSPRAY_SG_CHOMBO)
   FIND_PACKAGE(HDF5 REQUIRED)
   IF (HDF5_FOUND)
     INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIRS})
@@ -51,10 +51,10 @@ ENDIF()
 
 ## OpenImageIO support ##
 
-OPTION(USE_OPENIMAGEIO "Enable OpenImageIO support" OFF)
+OPTION(OSPRAY_SG_OPENIMAGEIO "Enable OpenImageIO support" OFF)
 
-IF(USE_OPENIMAGEIO)
-  FIND_PACKAGE(OpenImageIO)
+IF(OSPRAY_SG_OPENIMAGEIO)
+  FIND_PACKAGE(OpenImageIO 1.6.5)
   IF (OPENIMAGEIO_FOUND)
     ADD_DEFINITIONS(-DUSE_OPENIMAGEIO)
     INCLUDE_DIRECTORIES(${OPENIMAGEIO_INCLUDE_DIRS})
@@ -76,6 +76,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   camera/Camera.h
   camera/PerspectiveCamera.cpp
   camera/PanoramicCamera.cpp
+  camera/OrthographicCamera.cpp
 
   common/Common.cpp
   common/Data.cpp

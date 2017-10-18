@@ -14,7 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow-uncaptured-local"
 
 // sg
 #include "SceneGraph.h"
@@ -233,3 +234,4 @@ namespace ospray {
   } // ::ospray::sg
 } // ::ospray
 
+#pragma clang diagnostic pop

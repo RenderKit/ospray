@@ -20,13 +20,14 @@
  * On Linux build it in the build_directory with
  *   g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
+ *   cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
  */
 
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
 #ifdef _WIN32
+#  define NOMINMAX
 #  include <malloc.h>
 #else
 #  include <alloca.h>

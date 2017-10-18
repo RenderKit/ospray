@@ -25,7 +25,6 @@
 #include "ospray/version.h"
 
 #include <stdio.h>
-#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
 #ifdef _WIN32
@@ -356,7 +355,6 @@ namespace ospray {
         window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
 
       glfwMakeContextCurrent(window);
-      gl3wInit();
 
       // NOTE(jda) - move key handler registration into this class
       ImGui_ImplGlfwGL3_Init(window, true);
@@ -506,22 +504,22 @@ namespace ospray {
             std::stringstream ss(arg2);
             ss >> ImGui3DWidget::defaultInitSize.x
                >> ImGui3DWidget::defaultInitSize.y;
-            removeArgs(*ac,(char **&)av,i,2); --i;
+            removeArgs(*ac,av,i,2); --i;
           } else {
             ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
             ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-            removeArgs(*ac,(char **&)av,i,3); --i;
+            removeArgs(*ac,av,i,3); --i;
           }
           continue;
         } if (arg == "--1k" || arg == "-1k") {
           ImGui3DWidget::defaultInitSize.x =
               ImGui3DWidget::defaultInitSize.y = 1024;
-          removeArgs(*ac,(char **&)av,i,1); --i;
+          removeArgs(*ac,av,i,1); --i;
           continue;
         } if (arg == "--size") {
           ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
           ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-          removeArgs(*ac,(char **&)av,i,3); --i;
+          removeArgs(*ac,av,i,3); --i;
           continue;
         } if (arg == "-v" || arg == "--view") {
           std::ifstream fin(av[i+1]);
@@ -566,7 +564,7 @@ namespace ospray {
           }
 
           assert(i+1 < *ac);
-          removeArgs(*ac,(char **&)av, i, 2); --i;
+          removeArgs(*ac,av, i, 2); --i;
           continue;
         } if (arg == "-vu") {
           if (!viewPortFromCmdLine)
@@ -575,7 +573,7 @@ namespace ospray {
           viewPortFromCmdLine->up.y = atof(av[i+2]);
           viewPortFromCmdLine->up.z = atof(av[i+3]);
           assert(i+3 < *ac);
-          removeArgs(*ac,(char **&)av,i,4); --i;
+          removeArgs(*ac,av,i,4); --i;
           continue;
         } if (arg == "-vp") {
           if (!viewPortFromCmdLine)
@@ -584,7 +582,7 @@ namespace ospray {
           viewPortFromCmdLine->from.y = atof(av[i+2]);
           viewPortFromCmdLine->from.z = atof(av[i+3]);
           assert(i+3 < *ac);
-          removeArgs(*ac,(char **&)av,i,4); --i;
+          removeArgs(*ac,av,i,4); --i;
           continue;
         } if (arg == "-vi") {
           if (!viewPortFromCmdLine)
@@ -593,21 +591,21 @@ namespace ospray {
           viewPortFromCmdLine->at.y = atof(av[i+2]);
           viewPortFromCmdLine->at.z = atof(av[i+3]);
           assert(i+3 < *ac);
-          removeArgs(*ac,(char **&)av,i,4); --i;
+          removeArgs(*ac,av,i,4); --i;
           continue;
         } if (arg == "-fv") {
           if (!viewPortFromCmdLine)
             viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
           viewPortFromCmdLine->openingAngle = atof(av[i+1]);
           assert(i+1 < *ac);
-          removeArgs(*ac,(char **&)av,i,2); --i;
+          removeArgs(*ac,av,i,2); --i;
           continue;
         } if (arg == "-ar") {
           if (!viewPortFromCmdLine)
             viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
           viewPortFromCmdLine->apertureRadius = atof(av[i+1]);
           assert(i+1 < *ac);
-          removeArgs(*ac,(char **&)av,i,2); --i;
+          removeArgs(*ac,av,i,2); --i;
           continue;
         }
       }

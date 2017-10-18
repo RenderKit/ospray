@@ -17,6 +17,7 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "Fresnel.ih"
 
 // ThinDielectric models a very thin, transparent slab, i.e. it assumes two
 // parallel interfaces with unit-distrance with a (potentially) attenuating

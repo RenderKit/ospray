@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wextended-offsetof"
+
 #include "SceneGraph.h"
 #include "sg/volume/AMRVolume.h"
 #include "sg/volume/Volume.h"
@@ -31,7 +34,7 @@ namespace ospray {
     //! stores AMR Level data
     struct Level
     {
-      Level(int levelID) : levelID(levelID){};
+      Level(int _levelID) : levelID(_levelID){}
 
       int levelID;
       // apparently, the refinement factor of this level
@@ -83,7 +86,6 @@ namespace ospray {
     //! parses out level data from hdf5 files
     void parseBoxes(hid_t file, Level *level)
     {
-      herr_t status;
       char dataName[1000];
       sprintf(dataName, "level_%i/boxes", level->levelID);
       hid_t data = H5Dopen(file, dataName, H5P_DEFAULT);
@@ -91,24 +93,19 @@ namespace ospray {
         throw std::runtime_error("does not exist");
       hid_t space        = H5Dget_space(data);
       const size_t nDims = H5Sget_simple_extent_ndims(space);
-      hsize_t dims[nDims];
-      H5Sget_simple_extent_dims(space, dims, NULL);
+      hsize_t *dims = STACK_BUFFER(hsize_t, nDims);
+      H5Sget_simple_extent_dims(space, dims, nullptr);
       size_t numBoxes = dims[0];
 
       // create compound data type for a box
       hid_t boxType = H5Tcreate(H5T_COMPOUND, sizeof(box3i));
-      status =
-          H5Tinsert(boxType, "lo_i", HOFFSET(box3i, lower.x), H5T_NATIVE_INT);
-      status =
-          H5Tinsert(boxType, "lo_j", HOFFSET(box3i, lower.y), H5T_NATIVE_INT);
-      status =
-          H5Tinsert(boxType, "lo_k", HOFFSET(box3i, lower.z), H5T_NATIVE_INT);
-      status =
-          H5Tinsert(boxType, "hi_i", HOFFSET(box3i, upper.x), H5T_NATIVE_INT);
-      status =
-          H5Tinsert(boxType, "hi_j", HOFFSET(box3i, upper.y), H5T_NATIVE_INT);
-      status =
-          H5Tinsert(boxType, "hi_k", HOFFSET(box3i, upper.z), H5T_NATIVE_INT);
+
+      H5Tinsert(boxType, "lo_i", HOFFSET(box3i, lower.x), H5T_NATIVE_INT);
+      H5Tinsert(boxType, "lo_j", HOFFSET(box3i, lower.y), H5T_NATIVE_INT);
+      H5Tinsert(boxType, "lo_k", HOFFSET(box3i, lower.z), H5T_NATIVE_INT);
+      H5Tinsert(boxType, "hi_i", HOFFSET(box3i, upper.x), H5T_NATIVE_INT);
+      H5Tinsert(boxType, "hi_j", HOFFSET(box3i, upper.y), H5T_NATIVE_INT);
+      H5Tinsert(boxType, "hi_k", HOFFSET(box3i, upper.z), H5T_NATIVE_INT);
 
       level->boxes.resize(numBoxes);
       H5Dread(data, boxType, H5S_ALL, H5S_ALL, H5P_DEFAULT, &level->boxes[0]);
@@ -118,7 +115,6 @@ namespace ospray {
     //! parses out refinement levels for amr data
     void parseOffsets(hid_t file, Level *level)
     {
-      herr_t status;
       char dataName[1000];
       sprintf(dataName, "level_%i/data:offsets=0", level->levelID);
       hid_t data = H5Dopen(file, dataName, H5P_DEFAULT);
@@ -126,8 +122,8 @@ namespace ospray {
         throw std::runtime_error("does not exist");
       hid_t space        = H5Dget_space(data);
       const size_t nDims = H5Sget_simple_extent_ndims(space);
-      hsize_t dims[nDims];
-      H5Sget_simple_extent_dims(space, dims, NULL);
+      hsize_t *dims = STACK_BUFFER(hsize_t, nDims);
+      H5Sget_simple_extent_dims(space, dims, nullptr);
       size_t numOffsets = dims[0];
 
       level->offsets.resize(numOffsets);
@@ -143,14 +139,13 @@ namespace ospray {
     //! parse scalar data from hdf5 file
     void parseData(hid_t file, Level *level)
     {
-      herr_t status;
       char dataName[1000];
       sprintf(dataName, "level_%i/data:datatype=0", level->levelID);
       hid_t data         = H5Dopen(file, dataName, H5P_DEFAULT);
       hid_t space        = H5Dget_space(data);
       const size_t nDims = H5Sget_simple_extent_ndims(space);
-      hsize_t dims[nDims];
-      H5Sget_simple_extent_dims(space, dims, NULL);
+      hsize_t *dims = STACK_BUFFER(hsize_t, nDims);
+      H5Sget_simple_extent_dims(space, dims, nullptr);
       size_t numData = dims[0];
 
       level->data.resize(numData);
@@ -173,7 +168,6 @@ namespace ospray {
           "/" + levelName + "/" + "data_attributes";
       hid_t attr_ghost = H5Aopen_by_name(
           file, dataAttrName.c_str(), "outputGhost", H5P_DEFAULT, H5P_DEFAULT);
-      size_t ghostSize = H5Aget_storage_size(attr_ghost);
       hid_t ghostType  = H5Aget_type(attr_ghost);
       assert(ghostSize == sizeof(vec3i));
       H5Aread(attr_ghost, ghostType, &level->numGhostCells);
@@ -229,11 +223,10 @@ namespace ospray {
 
         hid_t att        = H5Aopen_name(file, compName);
         hid_t ftype      = H5Aget_type(att);
-        hid_t type_class = H5Tget_class(ftype);
         assert(type_class == H5T_STRING);
 
         size_t len = H5Tget_size(ftype);
-        char comp[len + 1];
+        char *comp = STACK_BUFFER(char, (len + 1));
         comp[len] = 0;
 
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
@@ -246,10 +239,10 @@ namespace ospray {
       unsigned long long numObjectsInFile;
       H5Gget_num_objs(file, &numObjectsInFile);
 
-      for (ssize_t objID = 0; objID < numObjectsInFile; objID++) {
+      for (size_t objID = 0; objID < numObjectsInFile; objID++) {
         const int MAX_NAME_SIZE = 1000;
         char name[MAX_NAME_SIZE];
-        ssize_t res = H5Gget_objname_by_idx(file, objID, name, MAX_NAME_SIZE);
+        H5Gget_objname_by_idx(file, objID, name, MAX_NAME_SIZE);
 
         if (objID == 0) {
           if (strcmp(name, "Chombo_global")) {
@@ -293,7 +286,7 @@ namespace ospray {
     box3f Level::getWorldBounds() const
     {
       box3f bounds = getWorldBounds(0);
-      for (int i = 1; i < boxes.size(); i++)
+      for (size_t i = 1; i < boxes.size(); i++)
         bounds.extend(getWorldBounds(i));
       return bounds;
     }
@@ -302,7 +295,7 @@ namespace ospray {
     box3f AMR::getWorldBounds() const
     {
       box3f bounds = empty;
-      for (int i = 0; i < level.size(); i++)
+      for (size_t i = 0; i < level.size(); i++)
         bounds.extend(level[i]->getWorldBounds());
       return bounds;
     }
@@ -333,14 +326,14 @@ namespace ospray {
       assert(!amr->level.empty());
 
       box3i rootLevelBounds = empty;
-      for (int i = 0; i < amr->level[0]->boxes.size(); i++)
+      for (size_t i = 0; i < amr->level[0]->boxes.size(); i++)
         rootLevelBounds.extend(amr->level[0]->boxes[i]);
       assert(rootLevelBounds.lower == vec3i(0));
 
       node->child("bounds") = amr->getWorldBounds();
 
       node->componentID = -1;
-      for (int i = 0; i < amr->component.size(); i++) {
+      for (size_t i = 0; i < amr->component.size(); i++) {
         if (amr->component[i] == desiredComponent) {
           node->componentID = i;
         }
@@ -355,11 +348,11 @@ namespace ospray {
                                    desiredComponent + "'");
       }
 
-      for (int levelID = 0; levelID < amr->level.size(); levelID++) {
+      for (size_t levelID = 0; levelID < amr->level.size(); levelID++) {
         amr::Level *level = amr->level[levelID];
         ospLogF(1) << " - level: " << levelID << " : " << level->boxes.size()
                    << " boxes" << std::endl;
-        for (int brickID = 0; brickID < level->boxes.size(); brickID++) {
+        for (size_t brickID = 0; brickID < level->boxes.size(); brickID++) {
           AMRVolume::BrickInfo bi;
           bi.box   = level->boxes[brickID];
           bi.dt    = level->dt;
@@ -389,3 +382,5 @@ namespace ospray {
 
   }  // ::ospray::sg
 }  // ::ospray
+
+#pragma clang diagnostic pop

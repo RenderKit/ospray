@@ -62,15 +62,22 @@ namespace ospray {
         return;
       }
 
-      auto mat = ospNewMaterial(ctx.ospRenderer,
+      OSPMaterial mat = nullptr;
+      try
+      {
+        mat = ospNewMaterial(ctx.ospRenderer,
                                 child("type").valueAs<std::string>().c_str());
+      } catch (...) {}
+
       if (!mat)
       {
         std::cerr << "Warning: Could not create material type '"
                   << type << "'. Replacing with default material." << std::endl;
         static OSPMaterial defaultMaterial = nullptr;
-        if (!defaultMaterial) {
-          defaultMaterial = ospNewMaterial(ctx.ospRenderer, "OBJ");
+        static OSPRenderer defaultMaterialRenderer = nullptr;
+        if (!defaultMaterial || defaultMaterialRenderer != ctx.ospRenderer) {
+          defaultMaterial = ospNewMaterial(ctx.ospRenderer, "default");
+          defaultMaterialRenderer = ctx.ospRenderer;
           const float kd[] = {.7f, .7f, .7f};
           const float ks[] = {.3f, .3f, .3f};
           ospSet3fv(defaultMaterial, "Kd", kd);
@@ -85,21 +92,21 @@ namespace ospray {
       ospRenderer = ctx.ospRenderer;
     }
 
-    void Material::postCommit(RenderContext &ctx)
+    void Material::postCommit(RenderContext &)
     {
       auto mat = valueAs<OSPMaterial>();
 
-      // handle objects (mostly textures)
+      // handle textures
       for (auto &it : properties.children) {
         auto &child = *it.second;
-        if (child.valueIsType<OSPObject>())
-          ospSetObject(mat, child.name().c_str(), child.valueAs<OSPObject>());
+        if (child.type() == "Texture2D")
+          ospSetObject(mat, it.first.c_str(), child.valueAs<OSPObject>());
       }
-
       ospCommit(mat);
     }
 
     OSP_REGISTER_SG_NODE(Material);
+    OSP_REGISTER_SG_NODE(MaterialList);
 
   } // ::ospray::sg
 } // ::ospray

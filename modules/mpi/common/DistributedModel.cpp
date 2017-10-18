@@ -77,7 +77,7 @@ namespace ospray {
         myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
       }
 
-      for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+      for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
           messaging::bcast(i, myRegions);
         } else {
@@ -89,7 +89,7 @@ namespace ospray {
       }
 
       if (logLevel() >= 1) {
-        for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+        for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
           if (i == mpicommon::globalRank()) {
             postStatusMsg(1) << "Rank " << mpicommon::globalRank()
               << ": Got regions from others {";

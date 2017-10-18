@@ -37,8 +37,10 @@ ELSE()
     # we do not want any RPath for installed binaries
     SET(CMAKE_SKIP_INSTALL_RPATH ON)
   ENDIF()
-  # for RPMs install docu in versioned folder
-  SET(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_DOCDIR}-${OSPRAY_VERSION})
+  IF (NOT WIN32)
+    # for RPMs install docu in versioned folder
+    SET(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_DOCDIR}-${OSPRAY_VERSION})
+  ENDIF()
 ENDIF()
 
 ##############################################################
@@ -60,11 +62,6 @@ INSTALL(FILES ${PROJECT_SOURCE_DIR}/CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DOC
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/README.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
 INSTALL(FILES ${CMAKE_BINARY_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
 
-LIST(APPEND CPACK_NSIS_MENU_LINKS "${CMAKE_INSTALL_DOCDIR}/LICENSE.txt" "LICENSE")
-LIST(APPEND CPACK_NSIS_MENU_LINKS "${CMAKE_INSTALL_DOCDIR}/CHANGELOG.md" "CHANGELOG")
-LIST(APPEND CPACK_NSIS_MENU_LINKS "${CMAKE_INSTALL_DOCDIR}/README.md" "README.md")
-LIST(APPEND CPACK_NSIS_MENU_LINKS "${CMAKE_INSTALL_DOCDIR}/readme.pdf" "readme.pdf")
-
 ##############################################################
 # CPack specific stuff
 ##############################################################
@@ -73,7 +70,8 @@ SET(CPACK_PACKAGE_NAME "OSPRay")
 SET(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}")
 #SET(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #SET(CPACK_PACKAGE_RELOCATABLE TRUE)
-SET(CPACK_STRIP_FILES TRUE)
+SET(CPACK_STRIP_FILES TRUE) # do not disable, stripping symbols is important for security reasons
+SET(CMAKE_STRIP "${PROJECT_SOURCE_DIR}/scripts/strip.sh") # needs this to properly strip under MacOSX
 
 SET(CPACK_PACKAGE_VERSION_MAJOR ${OSPRAY_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${OSPRAY_VERSION_MINOR})
@@ -89,13 +87,13 @@ SET(CPACK_COMPONENT_DEVEL_DISPLAY_NAME "Development")
 SET(CPACK_COMPONENT_DEVEL_DESCRIPTION "Header files for C and C++ required to develop applications with OSPRay.")
 
 SET(CPACK_COMPONENT_APPS_DISPLAY_NAME "Applications")
-SET(CPACK_COMPONENT_APPS_DESCRIPTION "Viewer applications and tutorials demonstrating how to use OSPRay.")
+SET(CPACK_COMPONENT_APPS_DESCRIPTION "Example and viewer applications and tutorials demonstrating how to use OSPRay.")
 
 SET(CPACK_COMPONENT_MPI_DISPLAY_NAME "MPI Module")
 SET(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed rendering.")
 
 SET(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
-SET(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, glfw) that may or may not be already installed on your system.")
+SET(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, imgui) that may or may not be already installed on your system.")
 
 # dependencies between components
 SET(CPACK_COMPONENT_DEVEL_DEPENDS lib)
@@ -112,7 +110,7 @@ IF (OSPRAY_ZIP_MODE)
 ENDIF()
 
 
-IF(WIN32) # Windows specific settings
+IF (WIN32) # Windows specific settings
 
   IF (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     MESSAGE(FATAL_ERROR "Only 64bit architecture supported.")
@@ -121,23 +119,17 @@ IF(WIN32) # Windows specific settings
   IF (OSPRAY_ZIP_MODE)
     SET(CPACK_GENERATOR ZIP)
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.windows")
-  ELSE() # NSIS specific settings
-    SET(CPACK_GENERATOR NSIS)
-    SET(CPACK_COMPONENTS_ALL lib devel apps mpi)
-    SET(CPACK_NSIS_INSTALL_ROOT "\$PROGRAMFILES64\\\\Intel")
-    SET(CPACK_PACKAGE_INSTALL_DIRECTORY "OSPRay v${OSPRAY_VERSION}")
-    SET(CPACK_NSIS_DISPLAY_NAME "OSPRay v${OSPRAY_VERSION}")
-    SET(CPACK_NSIS_PACKAGE_NAME "OSPRay v${OSPRAY_VERSION}")
-    SET(CPACK_NSIS_URL_INFO_ABOUT http://www.ospray.org/)
-    #SET(CPACK_NSIS_HELP_LINK http://www.ospray.org/getting_ospray.html)
-    #SET(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/scripts/install_windows/icon32.ico)
-    SET(CPACK_NSIS_CONTACT ${CPACK_PACKAGE_CONTACT})
-    #SET(CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS ${CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS} "\n CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\"")
-    #SET(CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS ${CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS} "\n CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\documentation\\\"")
-    #SET(CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS ${CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS} "\n CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\tutorials\\\" \n")
-    #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS  ${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS} "\n ${UNINSTALL_LIST}\n RMDir \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\documentation\\\"")
-    #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS  ${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS} "\n ${UNINSTALL_LIST}\n RMDir \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\tutorials\\\"")
-    #SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS  ${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS} "\n ${UNINSTALL_LIST}\n RMDir \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\"\n")
+  ELSE()
+    SET(CPACK_GENERATOR WIX)
+    SET(CPACK_WIX_ROOT_FEATURE_DESCRIPTION "OSPRay is an open source, scalable, and portable ray tracing engine for high-performance, high-fidelity visualization.")
+    SET(CPACK_WIX_PROPERTY_ARPURLINFOABOUT http://www.ospray.org/)
+    SET(CPACK_PACKAGE_NAME "OSPRay v${OSPRAY_VERSION}")
+    SET(CPACK_COMPONENTS_ALL lib devel apps mpi redist)
+    SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION}")
+    MATH(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")
+    SET(CPACK_WIX_PRODUCT_GUID "9D64D525-2603-4E8C-9108-845A146${OSPRAY_VERSION_NUMBER}")
+    SET(CPACK_WIX_UPGRADE_GUID "9D64D525-2603-4E8C-9108-845A146${OSPRAY_VERSION_MAJOR}0000") # upgrade as long as major version is the same
+    SET(CPACK_WIX_CMAKE_PACKAGE_REGISTRY TRUE)
   ENDIF()
 
 
@@ -173,7 +165,7 @@ ELSE() # Linux specific settings
 
     # dependencies
     SET(OSPLIB_REQS "embree-lib >= ${EMBREE_VERSION_REQUIRED}")
-    IF(CMAKE_VERSION VERSION_LESS "3.4.0")
+    IF (CMAKE_VERSION VERSION_LESS "3.4.0")
       OSPRAY_WARN_ONCE(RPM_PACKAGING "You need at least v3.4.0 of CMake for generating RPMs")
       SET(CPACK_RPM_PACKAGE_REQUIRES ${OSPLIB_REQS})
     ELSE()

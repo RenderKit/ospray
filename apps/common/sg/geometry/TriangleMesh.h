@@ -33,16 +33,10 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      box3f computeBounds() const override;
+      box3f bounds() const override;
 
       void preCommit(RenderContext& ctx) override;
       void postCommit(RenderContext& ctx) override;
-
-      //TODO: materialList requires pointers to OSPMaterial objects
-      // so for now this is stored as a vector and set in postCommit
-      //  TODO: add ability to store ordered list
-      std::vector<std::shared_ptr<sg::Material> > materialList;
-      OSPData ospPrimIDList;
 
       //! \brief Initialize this node's value from given XML node
       /*!

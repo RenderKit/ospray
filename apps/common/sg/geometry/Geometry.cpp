@@ -32,7 +32,7 @@ namespace ospray {
       return "ospray::sg::Geometry";
     }
 
-    void Geometry::preCommit(RenderContext &ctx)
+    void Geometry::preCommit(RenderContext &)
     {
       auto ospGeometry = valueAs<OSPGeometry>();
       if (!ospGeometry) {
@@ -44,7 +44,7 @@ namespace ospray {
       }
     }
 
-    void Geometry::postCommit(RenderContext &ctx)
+    void Geometry::postCommit(RenderContext &)
     {
       auto ospGeometry = valueAs<OSPGeometry>();
       if (hasChild("material")) {

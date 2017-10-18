@@ -27,6 +27,8 @@
 #include <cstring>
 #include <sstream>
 
+#define USE_INSTANCES 0
+
 namespace ospray {
   namespace sg {
 
@@ -84,10 +86,11 @@ namespace ospray {
       }
     }
 
-    static inline std::vector<std::shared_ptr<Material>> createSgMaterials(
+    static inline std::shared_ptr<MaterialList> createSgMaterials(
         std::vector<tinyobj::material_t> &mats, const FileName &containingPath)
     {
-      std::vector<std::shared_ptr<Material>> sgMaterials;
+      auto sgMaterials =
+          createNode("materialList", "MaterialList")->nodeAs<MaterialList>();
 
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
@@ -109,7 +112,8 @@ namespace ospray {
             } catch (const std::runtime_error &) {
               // NOTE(jda) - silently move on if parsed node type doesn't exist
               // maybe it's a texture, try it
-              addTextureIfNeeded(matNode, param.first, param.second, containingPath);
+              addTextureIfNeeded(matNode, param.first,
+                                 param.second, containingPath);
             }
           }
         }
@@ -135,7 +139,7 @@ namespace ospray {
               matNode, "map_d", mat.alpha_texname, containingPath, true);
         }
 
-        sgMaterials.push_back(matNodePtr);
+        sgMaterials->push_back(matNodePtr);
       }
 
       return sgMaterials;
@@ -170,6 +174,10 @@ namespace ospray {
       std::string base_name = fileName.name() + '_';
       int shapeId           = 0;
 
+#if !USE_INSTANCES
+      auto objInstance = createNode("instance", "Instance");
+      world->add(objInstance);
+#endif
       for (auto &shape : shapes) {
         for (int numVertsInFace : shape.mesh.num_face_vertices) {
           if (numVertsInFace != 3) {
@@ -195,7 +203,7 @@ namespace ospray {
             createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
-        for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
+        for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
           auto idx0 = shape.mesh.indices[i + 0];
           auto idx1 = shape.mesh.indices[i + 1];
           auto idx2 = shape.mesh.indices[i + 2];
@@ -243,25 +251,35 @@ namespace ospray {
         if (!vt->empty())
           mesh->add(vt);
 
-        auto matIdx = shape.mesh.material_ids[0];
-        if (!sgMaterials.empty()) {
-          if (matIdx >= 0)
-            mesh->setChild("material", sgMaterials[matIdx]);
-          else
-            mesh->setChild("material", sgMaterials[0]);
-          mesh->child("material").setParent(mesh);
-        }
+        auto pmids = createNode("prim.materialID",
+                                "DataVector1i")->nodeAs<DataVector1i>();
+
+        auto numMatIds = shape.mesh.material_ids.size();
+        pmids->v.reserve(numMatIds);
+
+        for (auto id : shape.mesh.material_ids)
+          pmids->v.push_back(id);
+
+        mesh->add(pmids);
+        mesh->add(sgMaterials);
 
         auto model = createNode(name + "_model", "Model");
         model->add(mesh);
 
+        // TODO: Large .obj models with lots of groups run much slower with each
+        //       group put in a separate instance. In the future, we want to
+        //       support letting the user (ospExampleViewer, for starters)
+        //       specify if each group should be placed in an instance or not.
+#if USE_INSTANCES
         auto instance = createNode(name + "_instance", "Instance");
         instance->setChild("model", model);
         model->setParent(instance);
 
         world->add(instance);
+#else
+        (*objInstance)["model"].add(mesh);
+#endif
       }
     }
-
   }  // ::ospray::sg
 }  // ::ospray

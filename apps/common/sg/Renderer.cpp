@@ -126,7 +126,7 @@ namespace ospray {
         Node::traverse(ctx,operation);
     }
 
-    void Renderer::postRender(RenderContext &ctx)
+    void Renderer::postRender(RenderContext &)
     {
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
       variance = ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
@@ -160,15 +160,7 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      if (child("camera").childrenLastModified() > frameMTime
-          || child("camera").lastModified() > frameMTime
-          || child("lights").childrenLastModified() > frameMTime
-          || lastModified() > frameMTime
-          || child("shadowsEnabled").lastModified() > frameMTime
-          || child("aoSamples").lastModified() > frameMTime
-          || child("spp").lastModified() > frameMTime
-          || child("world").childrenLastModified() > frameMTime)
-      {
+      if (lastModified() > frameMTime || childrenLastModified() > frameMTime) {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
@@ -181,7 +173,7 @@ namespace ospray {
           std::vector<OSPLight> lights;
           for(auto &lightNode : child("lights").children())
           {
-            auto light = (OSPLight)lightNode->valueAs<OSPObject>();
+            auto light = lightNode.second->valueAs<OSPLight>();
             if (light)
               lights.push_back(light);
           }
@@ -223,7 +215,7 @@ namespace ospray {
     OSPPickResult Renderer::pick(const vec2f &pickPos)
     {
       OSPPickResult result;
-      ospPick(&result, ospRenderer, (osp::vec2f&)pickPos);
+      ospPick(&result, ospRenderer, (const osp::vec2f&)pickPos);
       return result;
     }
 

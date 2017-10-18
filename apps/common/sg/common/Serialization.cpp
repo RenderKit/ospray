@@ -21,9 +21,9 @@ namespace ospray {
   namespace sg {
 
     void Serialization::serialize(std::shared_ptr<sg::World> world,
-                                  Serialization::Mode mode)
+                                  Serialization::Mode)
     {
-      clear(); 
+      clear();
       Serialization::State state;
       state.serialization = this;
       world->serialize(state);

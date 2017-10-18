@@ -44,16 +44,14 @@ namespace ospray {
     Volume::commit();
   }
 
-  int TetrahedralVolume::setRegion(const void *source_pointer,
-                                   const vec3i &target_index,
-                                   const vec3i &source_count)
+  int TetrahedralVolume::setRegion(const void *, const vec3i &, const vec3i &)
   {
     return 0;
   }
 
-  void TetrahedralVolume::computeSamples(float **results,
-                                         const vec3f *worldCoordinates,
-                                         const size_t &count)
+  void TetrahedralVolume::computeSamples(float **,
+                                         const vec3f *,
+                                         const size_t &)
   {
     NOT_IMPLEMENTED;
   }
@@ -62,7 +60,7 @@ namespace ospray {
   {
     auto t = tetrahedra[id];
 
-    box4f bbox;
+    box4f tetBox;
 
     for (int i = 0; i < 4; i++) {
       const auto &v = vertices[t[i]];
@@ -70,12 +68,12 @@ namespace ospray {
       const auto p  = vec4f(v.x, v.y, v.z, f);
 
       if (i == 0)
-        bbox.upper = bbox.lower = p;
+        tetBox.upper = tetBox.lower = p;
       else
-        bbox.extend(p);
+        tetBox.extend(p);
     }
 
-    return bbox;
+    return tetBox;
   }
 
   void TetrahedralVolume::finish()
@@ -144,29 +142,29 @@ namespace ospray {
 
   void TetrahedralVolume::calculateFaceNormals()
   {
-    auto numNormals = nTetrahedra * 4;
+    const auto numNormals = nTetrahedra * 4;
     faceNormals.resize(numNormals);
 
     tasking::parallel_for(numNormals / 4, [&](int taskIndex) {
-      int i   = taskIndex * 4;
-      auto &t = tetrahedra[i / 4];
+      const int i   = taskIndex * 4;
+      const auto &t = tetrahedra[i / 4];
 
       // The corners of each triangle in the tetrahedron.
-      int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
+      const int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
 
       for (int j = 0; j < 4; j++) {
-        int t0 = t[faces[j][0]];
-        int t1 = t[faces[j][1]];
-        int t2 = t[faces[j][2]];
+        const int t0 = t[faces[j][0]];
+        const int t1 = t[faces[j][1]];
+        const int t2 = t[faces[j][2]];
 
         const auto &p0 = vertices[t0];
         const auto &p1 = vertices[t1];
         const auto &p2 = vertices[t2];
 
-        auto q0 = p1 - p0;
-        auto q1 = p2 - p0;
+        const auto q0 = p1 - p0;
+        const auto q1 = p2 - p0;
 
-        auto norm = normalize(cross(q0, q1));
+        const auto norm = normalize(cross(q0, q1));
 
         faceNormals[i + j] = norm;
       }

@@ -264,7 +264,7 @@ namespace ospray {
         // TODO: estimate variance reduction to avoid duplicating tiles that are
         // just slightly above errorThreshold too often
         auto it = activeTiles.begin();
-        const int tilesTotal = dfb->getTotalTiles();
+        const size_t tilesTotal = dfb->getTotalTiles();
         // loop over (active) tiles multiple times (instead of e.g. computing
         // instance count) to have maximum distance between duplicated tiles in
         // queue ==> higher chance that duplicated tiles do not arrive at the
@@ -290,8 +290,8 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
-        for(auto&& notified : workerNotified)
-          notified = false;
+        for (size_t i = 0; i < workerNotified.size(); ++i)
+          workerNotified[i] = false;
 
         generateTileTasks(dfb, renderer->errorThreshold);
 

@@ -60,7 +60,7 @@ namespace ospray {
       createFB();
     }
 
-    void FrameBuffer::postCommit(RenderContext &ctx)
+    void FrameBuffer::postCommit(RenderContext &)
     {
       // Avoid clearing the framebuffer when only tonemapping parameters have been changed
       if (lastModified() >= lastCommitted()
@@ -121,9 +121,10 @@ namespace ospray {
       }
     }
 
-    unsigned char *FrameBuffer::map()
+    const unsigned char *FrameBuffer::map()
     {
-      return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
+      return (const unsigned char *)ospMapFrameBuffer(ospFrameBuffer,
+                                                      OSP_FB_COLOR);
     }
 
     void FrameBuffer::unmap(const void *mem)

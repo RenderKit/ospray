@@ -31,7 +31,7 @@ inline void verify_N(const ArrayView<T> &v, int N)
   REQUIRE(v.data() != nullptr);
   REQUIRE(v.begin() != nullptr);
   REQUIRE(v.cbegin() != nullptr);
-  REQUIRE(v.size() == N);
+  REQUIRE(v.size() == size_t(N));
 
   for (int i = 0; i < N; ++i)
     REQUIRE(v[i] == i);

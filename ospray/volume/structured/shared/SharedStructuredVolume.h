@@ -26,7 +26,7 @@ namespace ospray {
   //!
   struct OSPRAY_SDK_INTERFACE SharedStructuredVolume : public StructuredVolume
   {
-    virtual ~SharedStructuredVolume();
+    virtual ~SharedStructuredVolume() override;
 
     //! A string description of this class.
     virtual std::string toString() const override;

@@ -14,32 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/Material.h"
-#include "Matte_ispc.h"
+#pragma once
 
-namespace ospray {
-  namespace pathtracer {
+#include "math/spectrum.h"
+#include "math/vec.ih"
 
-    struct Matte : public ospray::Material
-    {
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should overrride this! */
-      virtual std::string toString() const override
-      { return "ospray::pathtracer::Matte"; }
+typedef uniform float<SPECTRUM_SAMPLES> spectrum;
 
-      //! \brief commit the material's parameters
-      virtual void commit() override
-      {
-        if (getIE() != nullptr) return;
+extern spectrum spectrum_sRGB_r;
+extern spectrum spectrum_sRGB_g;
+extern spectrum spectrum_sRGB_b;
 
-        const vec3f reflectance = getParam3f("reflectance",vec3f(1.f));
-        // const float rcpRoughness = rcpf(roughness);
+inline uniform vec3f spectrum_sRGB(const uniform int l) {
+  return make_vec3f(spectrum_sRGB_r[l], spectrum_sRGB_g[l], spectrum_sRGB_b[l]);
+}
 
-        ispcEquivalent = ispc::PathTracer_Matte_create
-          ((const ispc::vec3f&)reflectance);
-      }
-    };
+// note: result can be <0 or >1
+inline uniform vec3f spectrum2rgb(const spectrum &s) {
+  uniform vec3f rgb = make_vec3f(0.f);
+  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++) 
+    rgb = rgb + s[l] * spectrum_sRGB(l);
 
-    OSP_REGISTER_MATERIAL(Matte,PathTracer_Matte);
-  }
+  return rgb;
 }

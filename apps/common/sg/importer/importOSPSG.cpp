@@ -26,7 +26,6 @@ namespace ospray {
     std::shared_ptr<sg::Node> parseXMLNode(const xml::Node &node,
                       const unsigned char *binBasePtr, std::shared_ptr<sg::Node> sgNode)
     {
-      const std::string& name = node.name;
       std::string type = node.getProp("type");
       std::string value = node.getProp("value");
       if (value == "")
@@ -53,6 +52,14 @@ namespace ospray {
         vec2i val;
         ss >> val.x >> val.y;
         sgNode->setValue(val);
+      }
+      else if (type == "DataVector3f")
+      {
+        vec3f val;
+        while (ss.good()) {
+          ss >> val.x >> val.y >> val.z;
+          sgNode->nodeAs<DataVector3f>()->push_back(val);
+        }
       }
       for (auto child : node.child)
       {
@@ -152,13 +159,13 @@ namespace ospray {
       if (!node->children().empty())
         fprintf(out, "\">\n");
 
-      for(auto child : node->childrenMap())
+      for(auto child : node->children())
       {
         writeNode(child.first, child.second, out, indent+1);
       }
       if (!node->children().empty())
       {
-        for (int i=0;i<indent;i++)
+        for (int i = 0; i < indent; i++)
           fprintf(out,"  ");
       }
       if (ptrName != lower)
@@ -176,7 +183,7 @@ namespace ospray {
                                  + fileName +"'");
       }
       FILE *fbin = fopen((fileName+".bin").c_str(),"w");
-      if (!file) {
+      if (!fbin) {
         throw std::runtime_error("ospray::XML error: could not open file for writing '"
                                  + fileName +"'");
       }
@@ -184,6 +191,7 @@ namespace ospray {
       fprintf(file,"<!-- OSPRay Version 1.2.3 -->\n");
       writeNode(root->name(), root, file, 1);
       fclose(file);
+      fclose(fbin);
     }
 
   } // ::ospray::sg

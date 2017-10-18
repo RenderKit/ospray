@@ -29,33 +29,29 @@ namespace ospray {
     using std::endl;
     using std::string;
 
-    std::vector<std::shared_ptr<sg::Node>> nodeList;
+    static std::vector<std::shared_ptr<sg::Node>> nodeList;
 
-    void *binBasePtr;
+    static void *binBasePtr;
 
     void parseTextureNode(const xml::Node &node)
     {
       std::stringstream ss;
       ss << "rivlTexture_" << nodeList.size();
       const std::string name = ss.str();
-      const std::string type = "Texture2D";
-      std::shared_ptr<sg::Texture2D> txt = std::make_shared<sg::Texture2D>();
-      txt->setName(name);
-      txt->setType(type);
-      txt->setValue((OSPTexture2D)nullptr);
+      auto txt = createNode(name, "Texture2D")->nodeAs<sg::Texture2D>();
       nodeList.push_back(txt);
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-      xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
-          if (name == "ofs")
+      xml::for_each_prop(node,[&](const std::string &_name, const std::string &value){
+          if (_name == "ofs")
             ofs = atol(value.c_str());
-          else if (name == "width")
+          else if (_name == "width")
             width = atol(value.c_str());
-          else if (name == "height")
+          else if (_name == "height")
             height = atol(value.c_str());
-          else if (name == "channels")
+          else if (_name == "channels")
             channels = atol(value.c_str());
-          else if (name == "depth")
+          else if (_name == "depth")
             depth = atol(value.c_str());
         });
       assert(ofs != -1 && "Offset not properly parsed for Texture2D nodes");
@@ -111,7 +107,7 @@ namespace ospray {
         char *s = strtok(tokenBuffer, " \t\n\r");
         while (s) {
           int texID = atoi(s);
-          std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(nodeList[texID]);
+          auto tex = nodeList[texID]->nodeAs<Texture2D>();
           mat->textures.push_back(tex);
           s = strtok(nullptr, " \t\n\r");
         }
@@ -141,7 +137,7 @@ namespace ospray {
       {
         //TODO: lookup id into textures
         int texID = atoi(s);
-          std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(mat->textures[texID]);
+          auto tex = mat->textures[texID]->nodeAs<Texture2D>();
           s = strtok(nullptr, " \t\n\r");
           mat->setChild(paramName, tex);
       }
@@ -203,7 +199,14 @@ namespace ospray {
       std::shared_ptr<sg::Material> mat = std::make_shared<sg::Material>();
       nodeList.push_back(mat);
 
-      mat->setName(node.getProp("name"));
+      static int counter=0;
+      std::stringstream name(node.getProp("name"));
+      if (name.str() == "")
+      {
+        name << "material_" << counter;
+      }
+      counter++;
+      mat->setName(name.str());
       mat->child("type") = node.getProp("type");
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
@@ -233,7 +236,7 @@ namespace ospray {
         });
 
       // parse xfm matrix
-      int numRead = sscanf((char*)node.content.c_str(),
+      int numRead = sscanf((const char*)node.content.c_str(),
                            "%f %f %f\n%f %f %f\n%f %f %f\n%f %f %f",
                            &xfm.l.vx.x,
                            &xfm.l.vx.y,
@@ -257,21 +260,17 @@ namespace ospray {
       if (child->type() == "Model")
       {
         auto instance = createNode(ss.str(), "Instance");
-        instance->setChild("model",child);
-        child->setParent(instance);
+        instance->add(child, "model");
         child = instance;
       }
-      xfNode->setChild(child->name(), child);
-      child->setParent(xfNode);
-      std::static_pointer_cast<sg::Transform>(xfNode)->baseTransform = xfm;
-      nodeList.push_back(std::dynamic_pointer_cast<sg::Node>(xfNode));
+      xfNode->add(child);
+      xfNode->child("userTransform").setValue(xfm);
+      nodeList.push_back(xfNode);
     }
-
-
 
     void parseMeshNode(const xml::Node &node)
     {
-      std::shared_ptr<sg::TriangleMesh> mesh = std::make_shared<sg::TriangleMesh>();
+      auto mesh = std::make_shared<sg::TriangleMesh>();
       std::stringstream ss;
       ss << node.getProp("name");
       if (ss.str() == "")
@@ -279,16 +278,16 @@ namespace ospray {
       ss << "_" << node.getProp("id");
       mesh->setName(ss.str());
       mesh->setType("TriangleMesh");
-      auto model = createNode ("model_"+ss.str(),"Model");
+      auto model = createNode ("model_" + ss.str(), "Model");
       model->add(mesh);
       nodeList.push_back(model);
 
-      xml::for_each_child_of(node,[&](const xml::Node &child){
+      xml::for_each_child_of(node, [&](const xml::Node &child){
           assert(binBasePtr);
           if (child.name == "text") {
           } else if (child.name == "vertex") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto vertex =
@@ -296,8 +295,8 @@ namespace ospray {
             vertex->setName("vertex");
             mesh->add(vertex);
           } else if (child.name == "normal") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto normal =
@@ -306,8 +305,8 @@ namespace ospray {
             normal->setName("normal");
             mesh->add(normal);
           } else if (child.name == "texcoord") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto texcoord =
@@ -316,8 +315,8 @@ namespace ospray {
             texcoord->setName("texcoord");
             mesh->add(texcoord);
           } else if (child.name == "prim") {
-            size_t ofs      = std::stoll(child.getProp("ofs"));
-            size_t num      = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            size_t num = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             auto index =
@@ -325,24 +324,25 @@ namespace ospray {
             index->setName("index");
             mesh->add(index);
 
-            std::vector<uint32_t> matIDs;
-            for( size_t i=0;i<index->size();i++)
-              matIDs.push_back((*index)[i].w >> 16);
-            auto ospPrimIDList = ospNewData(matIDs.size(), OSP_INT, matIDs.data());
-            ospCommit(ospPrimIDList);
-            mesh->ospPrimIDList = ospPrimIDList;
+            auto primIDList =
+              createNode("prim.materialID",
+                         "DataVector1i")->nodeAs<DataVector1i>();
+
+            for(size_t i = 0; i < index->size(); i++)
+              primIDList->v.push_back((*index)[i].w >> 16);
+
+            mesh->add(primIDList);
           } else if (child.name == "materiallist") {
-            auto &materialList = mesh->materialList;
             char* value = strdup(child.content.c_str());
-            int matCounter=0;
-            auto &materialListNode = mesh->createChild("materialList", "Node");
-            for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(nullptr," \t\n\r")) {
+            auto materialListNode =
+                mesh->child("materialList").nodeAs<MaterialList>();
+            for(char *s = strtok((char*)value," \t\n\r");
+                s;
+                s = strtok(nullptr," \t\n\r")) {
               size_t matID = atoi(s);
               auto mat = nodeList[matID]->nodeAs<sg::Material>();
-              mesh->setChild("material", mat);
-              mat->setParent(mesh);
-              materialList.push_back(mat);
-              materialListNode.add(mat);
+              mesh->add(mat, "material");
+              materialListNode->push_back(mat);
             }
             free(value);
           } else {
@@ -354,15 +354,17 @@ namespace ospray {
     void parseGroupNode(const xml::Node &node)
     {
       auto group = std::make_shared<sg::Group>();
-      std::stringstream ss;
-      ss << "group_" << nodeList.size();
-      group->setName(ss.str());
+      std::stringstream ss_group;
+      ss_group << "group_" << nodeList.size();
+      group->setName(ss_group.str());
       group->setType("Node");
       nodeList.push_back(group);
       if (!node.content.empty()) {
         char *value = strdup(node.content.c_str());
 
-        for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(nullptr," \t\n\r")) {
+        for(char *s = strtok((char*)value," \t\n\r");
+            s;
+            s=strtok(nullptr," \t\n\r")) {
           size_t childID = atoi(s);
           auto child = nodeList[childID];
 
@@ -370,16 +372,14 @@ namespace ospray {
             continue;
 
           group->children.push_back(child);
-          std::stringstream ss;
-          ss << "child_" << childID;
+          std::stringstream ss_child;
+          ss_child << "child_" << childID;
           if (child->type() == "Model") {
-            auto instance = createNode(ss.str(), "Instance");
-            instance->setChild("model",child);
-            child->setParent(instance);
+            auto instance = createNode(ss_child.str(), "Instance");
+            instance->add(child, "model");
             child = instance;
           }
-          group->setChild(ss.str(), child);
-          child->setParent(group);
+          group->add(child, ss_child.str());
         }
 
         free(value);

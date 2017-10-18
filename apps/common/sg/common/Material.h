@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
+#include "sg/common/NodeList.h"
 #include "sg/common/Texture2D.h"
 
 namespace ospray {
@@ -45,6 +45,8 @@ namespace ospray {
 
       OSPRenderer ospRenderer {nullptr};
     };
+
+    using MaterialList = NodeList<Material>;
 
   } // ::ospray::sg
 } // ::ospray

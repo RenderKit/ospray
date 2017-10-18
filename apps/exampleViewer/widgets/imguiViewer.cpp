@@ -361,8 +361,9 @@ namespace ospray {
       text += std::string(name+" -> "+node->name()+" : ");
     else
       text += std::string(name+" : ");
+    const int numChildren = node->numChildren();
     if (node->type() == "vec3f") {
-      ImGui::Text("%s", text.c_str());
+      ImGui::Text(text.c_str());
       ImGui::SameLine();
       vec3f val = node->valueAs<vec3f>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -381,7 +382,7 @@ namespace ospray {
         node->setValue(val);
       }
     } else if (node->type() == "vec2f") {
-      ImGui::Text(text.c_str(),"");
+      ImGui::Text(text.c_str());
       ImGui::SameLine();
       vec2f val = node->valueAs<vec2f>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -390,7 +391,7 @@ namespace ospray {
         node->setValue(val);
       }
     } else if (node->type() == "vec2i") {
-      ImGui::Text("%s", text.c_str());
+      ImGui::Text(text.c_str());
       ImGui::SameLine();
       vec2i val = node->valueAs<vec2i>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -399,7 +400,7 @@ namespace ospray {
         node->setValue(val);
       }
     } else if (node->type() == "float") {
-      ImGui::Text(text.c_str(),"");
+      ImGui::Text(text.c_str());
       ImGui::SameLine();
       float val = node->valueAs<float>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -414,7 +415,7 @@ namespace ospray {
         node->setValue(val);
       }
     } else if (node->type() == "bool") {
-      ImGui::Text(text.c_str(),"");
+      ImGui::Text(text.c_str());
       ImGui::SameLine();
       bool val = node->valueAs<bool>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -423,7 +424,7 @@ namespace ospray {
         node->setValue(val);
       }
     } else if (node->type() == "int") {
-      ImGui::Text(text.c_str(),"");
+      ImGui::Text(text.c_str());
       ImGui::SameLine();
       int val = node->valueAs<int>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -442,7 +443,7 @@ namespace ospray {
       char* buf = (char*)malloc(value.size()+1+256);
       strcpy(buf,value.c_str());
       buf[value.size()] = '\0';
-      ImGui::Text(text.c_str(),"");
+      ImGui::Text(text.c_str());
       ImGui::SameLine();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
                                          << node.get())).str(); //TODO: use unique uuid for every node
@@ -453,23 +454,18 @@ namespace ospray {
         node->setValue(std::string(buf));
       }
       free(buf);
-    } else if (node->type() == "Texture2D")
-    {
-      ImGui::Text(text.c_str(),"");
+    } else if (numChildren == 0) {
+      text += node->type();
+      ImGui::Text(text.c_str());
     }
-    const int numChildren = node->numChildren();
-    if (numChildren > 0)
-    {
+
+    if (numChildren > 0) {
       text+=node->type();
       text += "##"+((std::ostringstream&)(std::ostringstream("")
                                           << node.get())).str(); //TODO: use unique uuid for every node
       if (ImGui::TreeNodeEx(text.c_str(),
                             (indent > 1 && numChildren > 20) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
         {
-          std::string popupName = "Add Node: ##" +
-            ((std::ostringstream&)(std::ostringstream("")
-                                   << node.get())).str();
-          static bool addChild = true;
           if (ImGui::BeginPopupContextItem("item context menu")) {
             char buf[256];
             buf[0]='\0';
@@ -567,13 +563,13 @@ namespace ospray {
         if (!node->isValid())
           ImGui::PopStyleColor(styles--);
 
-        for(auto child : node->childrenMap())
-          buildGUINode(child.first,child.second, ++indent);
+        for(auto child : node->children())
+          buildGUINode(child.first, child.second, ++indent);
 
         ImGui::TreePop();
       }
     } else { // generic holder node
-   }
+    }
 
     if (!node->isValid())
       ImGui::PopStyleColor(styles--);

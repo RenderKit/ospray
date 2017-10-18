@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,21 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-
-##############################################################
-# Build gl3w
-##############################################################
-
-set(LIB_NAME gl3w)
-
-include_directories(${CMAKE_CURRENT_LIST_DIR})
-
-add_library(${LIB_NAME} SHARED gl3w.c)
-
-set(DEPENDENCIES ${OPENGL_LIBRARIES})
-if (APPLE)
-  find_library(COREFOUNDATION_LIBRARY CoreFoundation)
-  list(APPEND DEPENDENCIES ${COREFOUNDATION_LIBRARY})
+if (NOT WIN32)
+  ospray_create_application(ospRawToAmr raw2amr.cpp LINK ospray_common)
 endif()
-
-target_link_libraries(${LIB_NAME} ${DEPENDENCIES})

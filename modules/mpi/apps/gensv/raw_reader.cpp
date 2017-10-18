@@ -38,14 +38,14 @@ size_t RawReader::readRegion(const vec3sz &start, const vec3sz &size, unsigned c
     read = fread(buffer, voxelSize, size.x * size.y * size.z, file);
     offset = startRead + read * voxelSize;
   } else if (size.x == dimensions.x) {
-    for (int z = start.z; z < start.z + size.z; ++z) {
+    for (size_t z = start.z; z < start.z + size.z; ++z) {
       const vec3sz startSlice(start.x, start.y, z);
       const vec3sz sizeSlice(size.x, size.y, 1);
       read += readRegion(startSlice, sizeSlice, buffer + read * voxelSize);
     }
   } else {
-    for (int z = start.z; z < start.z + size.z; ++z) {
-      for (int y = start.y; y < start.y + size.y; ++y) {
+    for (size_t z = start.z; z < start.z + size.z; ++z) {
+      for (size_t y = start.y; y < start.y + size.y; ++y) {
         const vec3sz startLine(start.x, y, z);
         const vec3sz sizeLine(size.x, 1, 1);
         read += readRegion(startLine, sizeLine, buffer + read * voxelSize);

@@ -24,31 +24,30 @@ namespace ospray {
     {
       box3f bounds = empty;
       std::vector<const AMRData::Brick *> brickVec;
-      for (int i=0;i<input.numBricks;i++) {
-        brickVec.push_back(input.brick[i]);
-        bounds.extend(brickVec.back()->worldBounds);
+      for (auto &b : input.brick) {
+        brickVec.push_back(&b);
+        bounds.extend(b.worldBounds);
       }
       this->worldBounds = bounds;
 
-      for (int i=0;i<brickVec.size();i++) {
-        const AMRData::Brick *brick = brickVec[i];
-        if (brick->level >= level.size())
-          level.resize(brick->level+1);
-        level[brick->level].level = brick->level;
-        level[brick->level].cellWidth = brick->cellWidth;
-        level[brick->level].halfCellWidth = 0.5f*brick->cellWidth;
-        level[brick->level].rcpCellWidth = 1.f/brick->cellWidth;
+      for (auto &b : brickVec) {
+        if (b->level >= static_cast<int>(level.size()))
+          level.resize(b->level+1);
+        level[b->level].level = b->level;
+        level[b->level].cellWidth = b->cellWidth;
+        level[b->level].halfCellWidth = 0.5f*b->cellWidth;
+        level[b->level].rcpCellWidth = 1.f/b->cellWidth;
       }
 
       node.resize(1);
-      buildRec(0,bounds,brickVec);
+      buildRec(0, bounds, brickVec);
     }
 
     /*! destructor that frees all allocated memory */
     AMRAccel::~AMRAccel()
     {
       for (auto &l : leaf)
-        delete[] l.brickList;
+        delete [] l.brickList;
 
       leaf.clear();
       node.clear();
@@ -89,8 +88,8 @@ namespace ospray {
                             std::vector<const AMRData::Brick *> &brick)
     {
       std::set<float> possibleSplits[3];
-      for (int i=0;i<brick.size();i++) {
-        const box3f clipped = intersectionOf(bounds,brick[i]->worldBounds);
+      for (const auto &b : brick) {
+        const box3f clipped = intersectionOf(bounds, b->worldBounds);
         assert(clipped.lower.x != clipped.upper.x);
         assert(clipped.lower.y != clipped.upper.y);
         assert(clipped.lower.z != clipped.upper.z);
@@ -152,19 +151,19 @@ namespace ospray {
 
         std::vector<const AMRData::Brick *> l, r;
         float sum_lo = 0.f, sum_hi = 0.f;
-        for (int i=0;i<brick.size();i++) {
-          const box3f wb = intersectionOf(brick[i]->worldBounds,bounds);
+        for (const auto &b : brick) {
+          const box3f wb = intersectionOf(b->worldBounds,bounds);
           if (wb.empty())
             throw std::runtime_error("empty box!?");
           sum_lo += wb.lower[bestDim];
           sum_hi += wb.upper[bestDim];
           if (wb.lower[bestDim] >= bestPos) {
-            r.push_back(brick[i]);
+            r.push_back(b);
           } else if (wb.upper[bestDim] <= bestPos) {
-            l.push_back(brick[i]);
+            l.push_back(b);
           } else {
-            r.push_back(brick[i]);
-            l.push_back(brick[i]);
+            r.push_back(b);
+            l.push_back(b);
           }
         }
         if (l.empty() || r.empty()) {

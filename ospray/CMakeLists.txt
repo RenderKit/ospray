@@ -129,6 +129,9 @@ SET(OSPRAY_SOURCES
   math/box.ispc
   math/Distribution1D.ispc
   math/Distribution2D.ispc
+  math/spectrum.h
+  math/spectrum.ih
+  math/spectrum.ispc
 
   render/LoadBalancer.cpp
   render/Renderer.ispc
@@ -160,6 +163,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Velvet.cpp
   render/pathtracer/materials/Metal.ispc
   render/pathtracer/materials/Metal.cpp
+  render/pathtracer/materials/Alloy.ispc
+  render/pathtracer/materials/Alloy.cpp
   render/pathtracer/materials/ThinGlass.ispc
   render/pathtracer/materials/ThinGlass.cpp
   render/pathtracer/materials/Glass.ispc
@@ -168,8 +173,6 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/MetallicPaint.cpp
   render/pathtracer/materials/Plastic.ispc
   render/pathtracer/materials/Plastic.cpp
-  render/pathtracer/materials/Matte.ispc
-  render/pathtracer/materials/Matte.cpp
   render/pathtracer/materials/Luminous.ispc
   render/pathtracer/materials/Luminous.cpp
   render/pathtracer/materials/Mix.ispc
@@ -306,6 +309,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
   math/random.ih
   math/sampling.ih
   math/vec.ih
+  math/spectrum.h
+  math/spectrum.ih
   DESTINATION math
 )
 
