@@ -30,12 +30,12 @@ namespace ospray {
       createChild("exposure", "float", 0.0f,
                     NodeFlags::required |
                     NodeFlags::valid_min_max |
-                    NodeFlags::gui_slider).setMinMax(-6.f, 6.f);
+                    NodeFlags::gui_slider).setMinMax(-8.f, 8.f);
 
       createChild("contrast", "float", 1.6773f,
                     NodeFlags::required |
                     NodeFlags::valid_min_max |
-                    NodeFlags::gui_slider).setMinMax(1.f, 4.f);
+                    NodeFlags::gui_slider).setMinMax(1.f, 5.f);
 
       createChild("shoulder", "float", 0.9714f,
                     NodeFlags::required |
