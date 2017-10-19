@@ -17,6 +17,8 @@
 #include "ToneMapperPixelOp.h"
 #include "ToneMapperPixelOp_ispc.h"
 
+using namespace ospcommon;
+
 namespace ospray {
 
   ToneMapperPixelOp::ToneMapperPixelOp()
