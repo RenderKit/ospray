@@ -47,8 +47,8 @@ namespace ospray {
     float w = max(getParam1f("hdrMax", acesHdrMax), 1.f);
     
     // Solve b and c
-    float b = -((pow(m,-a*d)*(-pow(m,a) + (n*(pow(m,a*d)*n*pow(w,a) - pow(m,a)*pow(w,a*d))) / (pow(m,a*d)*n - n*pow(w,a*d)))) / n);
-    float c = max((pow(m,a*d)*n*pow(w,a) - pow(m,a)*pow(w,a*d)) / (pow(m,a*d)*n - n*pow(w,a*d)), 0.f); // avoid discontinuous curve by clamping to 0
+    float b = -((powf(m, -a*d)*(-powf(m, a) + (n*(powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d))) / (powf(m, a*d)*n - n*powf(w, a*d)))) / n);
+    float c = max((powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d)) / (powf(m, a*d)*n - n*powf(w, a*d)), 0.f); // avoid discontinuous curve by clamping to 0
     
     ispc::ToneMapperPixelOp_set(ispcEquivalent, exposure, a, b, c, d);
   }
