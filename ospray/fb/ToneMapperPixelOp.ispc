@@ -27,14 +27,14 @@ struct ToneMapperPixelOp
   uniform float a, b, c, d; // coefficients
 };
 
-// ACES input matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT * REC709_2_XYZ_PRI_MAT
+// ACES input transform matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT * REC709_2_XYZ_PRI_MAT
 static const uniform LinearSpace3f acesInputMat = {
   {0.5972782409, 0.0760130499, 0.0284085382},
   {0.3545713181, 0.9083220973, 0.1338243154},
   {0.0482176639, 0.0156579968, 0.8375684636}
 };
 
-// ACES output matrix = XYZ_2_REC709_PRI_MAT * D60_2_D65_CAT * AP1_2_XYZ_MAT * ODT_SAT_MAT
+// ACES output transform matrix = XYZ_2_REC709_PRI_MAT * D60_2_D65_CAT * AP1_2_XYZ_MAT * ODT_SAT_MAT
 static const uniform LinearSpace3f acesOutputMat = {
   { 1.6047539945, -0.1020831870, -0.0032670420},
   {-0.5310794927,  1.1081322801, -0.0727552477},
