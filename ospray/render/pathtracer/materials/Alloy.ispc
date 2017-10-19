@@ -44,7 +44,7 @@ const varying BSDF* uniform Alloy_getBSDF(const uniform PathTraceMaterial* unifo
   const uniform Alloy* uniform self = (const uniform Alloy* uniform)super;
   varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
 
-  const vec3f color = self->color
+  const vec3f color = self->color * make_vec3f(dg.color)
     * get3f(self->map_color, dg.st, make_vec3f(1.f));
 
   const vec3f edgeColor = self->edgeColor

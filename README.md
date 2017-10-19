@@ -1605,6 +1605,10 @@ even for a white sheet of paper or white wall paint do better not set
 the contrast in the final images is low (for example, the corners of a
 white room would hardly be discernible).
 
+If present, the color component of [geometries](#geometries) is also
+used for the diffuse color `Kd` and the alpha component is also used for
+the opacity `d`.
+
 Note that currently only the path tracer implements colored transparency
 with `Tf`.
 
@@ -1736,12 +1740,13 @@ control of the color. To create an Alloy material pass the type string
 
 The main appearance of the Alloy material is controlled by the parameter
 `color`, while `edgeColor` influences the tint of reflections when seen
-at grazing angles (for real metals this is always 100% white). As in
-[Metal](#metal) the `roughness` parameter controls the variation of
-microfacets and thus how polished the alloy will look. All parameters
-can be textured by passing a [texture](#texture) handle, prefixed with
-"`map_`"; [texture transformations](#texture-transformations) are
-supported as well.
+at grazing angles (for real metals this is always 100% white). If
+present, the color component of [geometries](#geometries) is also used
+for reflectivity at normal incidence `color`. As in [Metal](#metal) the
+`roughness` parameter controls the variation of microfacets and thus how
+polished the alloy will look. All parameters can be textured by passing
+a [texture](#texture) handle, prefixed with "`map_`"; [texture
+transformations](#texture-transformations) are supported as well.
 
 <img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
 
@@ -1790,12 +1795,13 @@ type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
 For convenience the attenuation is controlled the same way as with the
 [Glass](#glass) material. Additionally, the color due to attenuation can
 be modulated with a [texture](#texture) `map_attenuationColor` ([texture
-transformations](#texture-transformations) are supported as well). The
-`thickness` parameter sets the (virtual) thickness and allows for easy
-exchange of parameters with the (real) [Glass](#glass) material;
-internally just the ratio between `attenuationDistance` and `thickness`
-is used to calculate the resulting attenuation and thus the material
-appearance.
+transformations](#texture-transformations) are supported as well). If
+present, the color component of [geometries](#geometries) is also used
+for the attenuation color. The `thickness` parameter sets the (virtual)
+thickness and allows for easy exchange of parameters with the (real)
+[Glass](#glass) material; internally just the ratio between
+`attenuationDistance` and `thickness` is used to calculate the resulting
+attenuation and thus the material appearance.
 
 <img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
 
@@ -1820,14 +1826,15 @@ to `ospNewMaterial`. Its parameters are listed in the table below.
 
 The color of the base coat `baseColor` can be textured by a
 [texture](#texture) `map_baseColor`, which also supports [texture
-transformations](#texture-transformations). The parameter `flakeAmount`
-controls the proportion of flakes in the base coat, so when setting it
-to 1 the `baseColor` will not be visible. The shininess of the metallic
-component is governed by `flakeSpread`, which controls the variation of
-the orientation of the flakes, similar to the `roughness` parameter of
-[Metal](#metal). Note that the effect of the metallic flakes is
-currently only computed on average, thus individual flakes are not
-visible.
+transformations](#texture-transformations). If present, the color
+component of [geometries](#geometries) is also used for the color of the
+base coat. parameter `flakeAmount` controls the proportion of flakes in
+the base coat, so when setting it to 1 the `baseColor` will not be
+visible. The shininess of the metallic component is governed by
+`flakeSpread`, which controls the variation of the orientation of the
+flakes, similar to the `roughness` parameter of [Metal](#metal). Note
+that the effect of the metallic flakes is currently only computed on
+average, thus individual flakes are not visible.
 
 <img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" />
 
