@@ -160,7 +160,20 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      if (lastModified() > frameMTime || childrenLastModified() > frameMTime) {
+      bool modified = lastModified() > frameMTime;
+      if (!modified) {
+        for (const auto& c : children()) {
+          // ignore changes to the frame buffer/tone mapper
+          if (c.second->lastModified() > frameMTime
+              || (c.second->childrenLastModified() > frameMTime && c.first != "frameBuffer"))
+          {
+            modified = true;
+            break;
+          }
+        }
+      }
+
+      if (modified) {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
