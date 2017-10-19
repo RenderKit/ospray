@@ -1722,7 +1722,7 @@ create interesting edging effects.
 #### Alloy
 
 The [path tracer](#path-tracer) offers an alloy material, which behaves
-similar to [metal](#metal), but allows for more intuitive and flexible
+similar to [Metal](#metal), but allows for more intuitive and flexible
 control of the color. To create an Alloy material pass the type string
 "`Alloy`" to `ospNewMaterial`. Its parameters are
 
@@ -1730,7 +1730,7 @@ control of the color. To create an Alloy material pass the type string
 |:------|:----------|----------:|:--------------------------------------------|
 | vec3f | color     |  white 0.9| reflectivity at normal incidence (0 degree) |
 | vec3f | edgeColor |      white| reflectivity at grazing angle (90 degree)   |
-| float | roughness |        0.1| roughness in \[0–1\], 0 is perfect mirror   |
+| float | roughness |        0.1| roughness, in \[0–1\], 0 is perfect mirror  |
 
 : Parameters of the Alloy material.
 
@@ -1740,7 +1740,7 @@ at grazing angles (for real metals this is always 100% white). As in
 [Metal](#metal) the `roughness` parameter controls the variation of
 microfacets and thus how polished the alloy will look. All parameters
 can be textured by passing a [texture](#texture) handle, prefixed with
-"`map_`", [texture transformations](#texture-transformations) are
+"`map_`"; [texture transformations](#texture-transformations) are
 supported as well.
 
 <img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
@@ -1800,6 +1800,36 @@ appearance.
 <img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
 
 <img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" />
+
+#### MetallicPaint
+
+The [path tracer](#path-tracer) offers a metallic paint material,
+consisting of a base coat with optional flakes and a clear coat. To
+create a MetallicPaint material pass the type string "`MetallicPaint`"
+to `ospNewMaterial`. Its parameters are listed in the table below.
+
+| Type  | Name        |    Default| Description                       |
+|:------|:------------|----------:|:----------------------------------|
+| vec3f | baseColor   |  white 0.8| color of base coat                |
+| float | flakeAmount |        0.3| amount of flakes, in \[0–1\]      |
+| vec3f | flakeColor  |  Aluminium| color of metallic flakes          |
+| float | flakeSpread |        0.5| spread of flakes, in \[0–1\]      |
+| float | eta         |        1.5| index of refraction of clear coat |
+
+: Parameters of the MetallicPaint material.
+
+The color of the base coat `baseColor` can be textured by a
+[texture](#texture) `map_baseColor`, which also supports [texture
+transformations](#texture-transformations). The parameter `flakeAmount`
+controls the proportion of flakes in the base coat, so when setting it
+to 1 the `baseColor` will not be visible. The shininess of the metallic
+component is governed by `flakeSpread`, which controls the variation of
+the orientation of the flakes, similar to the `roughness` parameter of
+[Metal](#metal). Note that the effect of the metallic flakes is
+currently only computed on average, thus individual flakes are not
+visible.
+
+<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" />
 
 #### Luminous
 
