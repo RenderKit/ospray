@@ -30,14 +30,6 @@ namespace ospray {
     this->ispcEquivalent = ispc::Spheres_create(this);
   }
 
-  Spheres::~Spheres()
-  {
-    if (_materialList) {
-      free(_materialList);
-      _materialList = nullptr;
-    }
-  }
-
   std::string Spheres::toString() const
   {
     return "ospray::Spheres";
@@ -45,6 +37,8 @@ namespace ospray {
 
   void Spheres::finalize(Model *model)
   {
+    Geometry::finalize(model);
+
     radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
     bytesPerSphere    = getParam1i("bytes_per_sphere",4*sizeof(float));
@@ -53,7 +47,6 @@ namespace ospray {
     offset_materialID = getParam1i("offset_materialID",-1);
     offset_colorID    = getParam1i("offset_colorID",-1);
     sphereData        = getParamData("spheres");
-    materialList      = getParamData("materialList");
     colorData         = getParamData("color");
     colorOffset       = getParam1i("color_offset",0);
     auto colComps     = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
@@ -79,21 +72,6 @@ namespace ospray {
                                "without causing address overflows)");
     }
 
-    if (_materialList) {
-      free(_materialList);
-      _materialList = nullptr;
-    }
-
-    if (materialList) {
-      void **ispcMaterials = (void**) malloc(sizeof(void*) *
-                                             materialList->numItems);
-      for (uint32_t i = 0; i < materialList->numItems; i++) {
-        Material *m = ((Material**)materialList->data)[i];
-        ispcMaterials[i] = m?m->getIE():nullptr;
-      }
-      _materialList = (void*)ispcMaterials;
-    }
-
     const char* spherePtr = (const char*)sphereData->data;
     bounds = empty;
     for (uint32_t i = 0; i < numSpheres; i++, spherePtr += bytesPerSphere) {
@@ -103,7 +81,7 @@ namespace ospray {
     }
 
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
-                              sphereData->data,_materialList,
+                              sphereData->data,
                               texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
                               colorData ? colorData->data : nullptr,
                               colorOffset, colorStride,

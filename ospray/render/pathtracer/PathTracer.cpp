@@ -80,8 +80,8 @@ namespace ospray {
         generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
             &(inst->areaPDF[0]));
       } else
-        if (geo->material && geo->material->getIE()
-            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
+        if (geo->materialList && geo->materialList[0]->getIE()
+            && ispc::PathTraceMaterial_isEmissive(geo->materialList[0]->getIE())) {
           void* light = ispc::GeometryLight_create(geo->getIE()
               , (const ispc::AffineSpace3f&)xfm
               , (const ispc::AffineSpace3f&)rcp_xfm

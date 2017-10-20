@@ -33,7 +33,6 @@ struct Cylinders {
   Geometry super; //!< inherited geometry fields
 
   uint8 *data;
-  Material **materialList;
 
   float radius;
   int   materialID;
@@ -161,9 +160,6 @@ static void Cylinders_postIntersect(Geometry *uniform _self,
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
     uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(cylinderPtr+self->offset_materialID));
-    if (self->materialList) {
-      dg.material = self->materialList[dg.materialID];
-    }
   }
 }
 
@@ -245,7 +241,6 @@ export void *uniform Cylinders_create(void *uniform cppEquivalent)
 export void CylindersGeometry_set(void *uniform _self
     , void *uniform _model
     , void *uniform data
-    , void *uniform materialList
     , void *uniform texcoord
     , void *uniform color
     , uniform int color_stride
@@ -271,7 +266,6 @@ export void CylindersGeometry_set(void *uniform _self
   self->super.primitives = numCylinders;
   self->super.getAreas = Cylinders_getAreas;
   self->super.sampleArea = Cylinders_sampleArea;
-  self->materialList = (Material **)materialList;
   self->texcoord = (CylinderTexCoord *uniform)texcoord;
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;

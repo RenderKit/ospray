@@ -43,9 +43,6 @@ struct Spheres {
   float      radius;
   float      epsilon;
 
-  /*! list of multiple  materials, in case of per-sphere materials */
-  Material **materialList;
-
   int        materialID;
 
   uint8     *color;
@@ -100,24 +97,15 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
             + self->stride*localPrimID;
           dg.materialID =
             *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-          if (self->materialList) {
-            dg.material = self->materialList[dg.materialID];
-          }
         }
       } else {
         uniform uint8 *varying spherePtr = self->data
           + self->stride*ray.primID;
         dg.materialID =
           *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-        if (self->materialList) {
-          dg.material = self->materialList[dg.materialID];
-        }
       }
     } else {
       dg.materialID = self->materialID;
-      if (self->materialList) {
-        dg.material = self->materialList[dg.materialID];
-      }
     }
   }
 }
@@ -275,7 +263,6 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
 export void SpheresGeometry_set(void  *uniform _self
     , void *uniform _model
     , void *uniform data
-    , void *uniform materialList
     , vec2f *uniform texcoord
     , void *uniform color
     , uniform int color_offset
@@ -301,7 +288,6 @@ export void SpheresGeometry_set(void  *uniform _self
   self->super.primitives = numSpheres;
   self->super.getAreas = Spheres_getAreas;
   self->super.sampleArea = Spheres_sampleArea;
-  self->materialList = (Material **)materialList;
   self->texcoord = texcoord;
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;

@@ -162,11 +162,6 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
     else {
       dg.materialID = self->geom_materialID;
     }
-
-    if( self->materialList) {
-      Material *myMat = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-      dg.material = myMat;
-    }
   }
 }
 
@@ -240,7 +235,6 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform vec4f  *uniform color,
                               uniform vec2f  *uniform texcoord,
                               uniform int32   geom_materialID,
-                              uniform Material *uniform material,
                               uniform Material *uniform *uniform materialList,
                               uniform uint32 *uniform prim_materialID,
                               uniform bool has_alpha,
@@ -249,7 +243,7 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   Geometry_Constructor(&mesh->super,cppEquivalent,
                        TriangleMesh_postIntersect,
                        model,geomID,
-                       material);
+                       materialList);
   mesh->super.getAreas = TriangleMesh_getAreas;
   mesh->super.sampleArea = TriangleMesh_sampleArea;
   mesh->super.primitives = numTriangles;
@@ -262,7 +256,6 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->vtxSize      = vtxSize;
   mesh->norSize      = norSize;
   mesh->prim_materialID = prim_materialID;
-  mesh->materialList = materialList;
   mesh->geom_materialID = geom_materialID;
   mesh->has_alpha = has_alpha;
   mesh->huge_mesh = huge_mesh;
@@ -272,7 +265,7 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   TriangleMesh *uniform mesh = uniform new TriangleMesh;
   TriangleMesh_Constructor(mesh, cppEquivalent,
-                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL, true, false);
+                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, true, false);
   return mesh;
 }
 
@@ -289,7 +282,6 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform vec4f  *uniform color,
                                       uniform vec2f  *uniform texcoord,
                                       uniform int32   geom_materialID,
-                                      void *uniform material,
                                       void *uniform _materialList,
                                       uniform uint32 *uniform prim_materialID,
                                       uniform bool has_alpha,
@@ -310,7 +302,6 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                            color,
                            texcoord,
                            geom_materialID,
-                           (Material*uniform)material,
                            (Material*uniform*uniform)materialList,
                            prim_materialID,
                            has_alpha,
