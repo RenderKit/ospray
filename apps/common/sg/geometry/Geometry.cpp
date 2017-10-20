@@ -47,7 +47,7 @@ namespace ospray {
     void Geometry::postCommit(RenderContext &)
     {
       auto ospGeometry = valueAs<OSPGeometry>();
-      if (hasChild("material")) {
+      if (hasChild("material") && !hasChild("materialList")) {
         ospSetMaterial(ospGeometry, child("material").valueAs<OSPMaterial>());
       }
       ospCommit(ospGeometry);
