@@ -1603,7 +1603,10 @@ the real world reflect at most only about 80% of the incoming light. So
 even for a white sheet of paper or white wall paint do better not set
 `Kd` larger than 0.8; otherwise rendering times are unnecessary long and
 the contrast in the final images is low (for example, the corners of a
-white room would hardly be discernible).
+white room would hardly be discernible, as can be seen in the figure
+below).
+
+<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to in higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" />
 
 Note that currently only the path tracer implements colored transparency
 with `Tf`.
@@ -2038,12 +2041,12 @@ The parameter `frameBufferChannels` specifies which channels the
 framebuffer holds, and can be combined together by bitwise OR from the
 values of `OSPFrameBufferChannel` listed in the table below.
 
-| Name              | Description                                                   |
-|:------------------|:--------------------------------------------------------------|
-| OSP\_FB\_COLOR    | RGB color including alpha                                     |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane)   |
-| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                |
-| OSP\_FB\_VARIANCE | estimate of the current variance, see [rendering](#rendering) |
+| Name              | Description                                                                                     |
+|:------------------|:------------------------------------------------------------------------------------------------|
+| OSP\_FB\_COLOR    | RGB color including alpha                                                                       |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane)                                     |
+| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                  |
+| OSP\_FB\_VARIANCE | estimate of the current variance if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
 
 : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
 naming optional information the framebuffer can store. These values can

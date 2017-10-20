@@ -284,7 +284,13 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().frameBufferCreate((const vec2i&)size, mode, channels);
+
+  // remove OSP_FB_VARIANCE when OSP_FB_ACCUM is not present
+  uint32_t ch = channels;
+  if ((channels & OSP_FB_ACCUM) == 0)
+    ch &= ~OSP_FB_VARIANCE;
+
+  return currentDevice().frameBufferCreate((const vec2i&)size, mode, ch);
 }
 OSPRAY_CATCH_END(nullptr)
 
