@@ -16,7 +16,6 @@
 
 // ospray 
 #include "Geometry.h"
-#include "common/Data.h"
 #include "common/Util.h"
 // ISPC exports
 #include "Geometry_ispc.h"

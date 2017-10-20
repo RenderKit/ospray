@@ -72,6 +72,7 @@ namespace ospray {
     auto colComps = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
                                 cylinderData->data,
+                                materialList ? ispcMaterialPtrs.data() : nullptr,
                                 texcoordData ? texcoordData->data : nullptr,
                                 colorData ? colorData->data : nullptr,
                                 colComps * sizeof(float),

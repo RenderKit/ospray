@@ -82,6 +82,7 @@ namespace ospray {
 
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
                               sphereData->data,
+                              materialList ? ispcMaterialPtrs.data() : nullptr,
                               texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
                               colorData ? colorData->data : nullptr,
                               colorOffset, colorStride,

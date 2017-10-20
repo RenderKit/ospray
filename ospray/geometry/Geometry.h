@@ -18,6 +18,7 @@
 
 #include "common/Managed.h"
 #include "common/OSPCommon.h"
+#include "common/Data.h"
 #include "common/Material.h"
 
 namespace ospray {

@@ -263,6 +263,7 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
 export void SpheresGeometry_set(void  *uniform _self
     , void *uniform _model
     , void *uniform data
+    , void *uniform materialList
     , vec2f *uniform texcoord
     , void *uniform color
     , uniform int color_offset
@@ -288,6 +289,7 @@ export void SpheresGeometry_set(void  *uniform _self
   self->super.primitives = numSpheres;
   self->super.getAreas = Spheres_getAreas;
   self->super.sampleArea = Spheres_sampleArea;
+  self->super.materialList = (Material **)materialList;
   self->texcoord = texcoord;
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;

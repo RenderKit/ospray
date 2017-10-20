@@ -241,6 +241,7 @@ export void *uniform Cylinders_create(void *uniform cppEquivalent)
 export void CylindersGeometry_set(void *uniform _self
     , void *uniform _model
     , void *uniform data
+    , void *uniform materialList
     , void *uniform texcoord
     , void *uniform color
     , uniform int color_stride
@@ -266,6 +267,7 @@ export void CylindersGeometry_set(void *uniform _self
   self->super.primitives = numCylinders;
   self->super.getAreas = Cylinders_getAreas;
   self->super.sampleArea = Cylinders_sampleArea;
+  self->super.materialList = (Material **)materialList;
   self->texcoord = (CylinderTexCoord *uniform)texcoord;
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;
