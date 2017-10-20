@@ -477,7 +477,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
       DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i/%i\n",
                  mpicommon::globalRank(), tile->begin.x, tile->begin.y,
-                 numTilesCompletedThisFrame.load(), myTiles.size()));
+                 numTilesCompletedThisFrame, myTiles.size()));
     } else {
       // If we're the master sending a message to ourself skip going
       // through the messaging layer entirely and just call incoming directly
@@ -485,7 +485,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
     }
   }
 
-  void DFB::finalizeTileOnMaster(TileData *)
+  void DFB::finalizeTileOnMaster(TileData *DBG(tile))
   {
     assert(mpicommon::IamTheMaster());
     /*! we will not do anything with the tile other than mark it's done */
