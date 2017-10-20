@@ -242,7 +242,7 @@ static inline void addPlaneToScene(sg::Node& renderer)
   auto sg_plane = plane.nodeAs<sg::TriangleMesh>();
   sg_plane->add(position);
   sg_plane->add(index);
-  auto &planeMaterial = plane["material"];
+  auto &planeMaterial = (*plane["materialList"].nodeAs<sg::MaterialList>())[0];
   planeMaterial["Kd"] = vec3f(0.5f);
   planeMaterial["Ks"] = vec3f(0.1f);
   planeMaterial["Ns"] = 10.f;

@@ -38,6 +38,9 @@ namespace ospray {
       void push_back(const NODE_T &node);
       void push_back(const std::shared_ptr<NODE_T> &node);
 
+      NODE_T& item(size_t i) const;
+      NODE_T& operator[](size_t i) const;
+
       std::vector<std::shared_ptr<NODE_T>> nodes;
     };
 
@@ -55,6 +58,18 @@ namespace ospray {
     {
       nodes.push_back(node);
       add(node);
+    }
+
+    template <typename NODE_T>
+    inline NODE_T& NodeList<NODE_T>::item(size_t i) const
+    {
+      return *(nodes[i]);
+    }
+
+    template <typename NODE_T>
+    inline NODE_T& NodeList<NODE_T>::operator[](size_t i) const
+    {
+      return item(i);
     }
 
   } // ::ospray::sg
