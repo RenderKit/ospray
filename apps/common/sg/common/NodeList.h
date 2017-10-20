@@ -35,6 +35,7 @@ namespace ospray {
                     "NodeList<> can only be instantiated with sg::Node or"
                     " a derived sg::Node type!");
 
+      void clear();
       void push_back(const NODE_T &node);
       void push_back(const std::shared_ptr<NODE_T> &node);
 
@@ -45,6 +46,12 @@ namespace ospray {
     };
 
     // Inlined members ////////////////////////////////////////////////////////
+
+    template <typename NODE_T>
+    inline void NodeList<NODE_T>::clear()
+    {
+      nodes.clear();
+    }
 
     template <typename NODE_T>
     inline void NodeList<NODE_T>::push_back(const NODE_T &node)
