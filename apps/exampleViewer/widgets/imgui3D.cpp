@@ -22,6 +22,7 @@
 
 #include "ospcommon/utility/CodeTimer.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "ospcommon/utility/SaveImage.h"
 #include "ospray/version.h"
 
 #include <stdio.h>
@@ -64,28 +65,9 @@ namespace ospray {
                                const uint32_t *pixel,
                                const uint32_t sizeX, const uint32_t sizeY)
     {
-      FILE *file = fopen(fileName,"wb");
-      if (!file) {
-        std::cerr << "#osp:glut3D: Warning - could not create screenshot file '"
-                  << fileName << "'" << std::endl;
-        return;
-      }
-      fprintf(file,"P6\n%i %i\n255\n",sizeX,sizeY);
-      unsigned char *out = (unsigned char *)alloca(3*sizeX);
-      for (size_t y = 0; y < sizeY; y++) {
-        const unsigned char *in =
-            (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-        for (size_t x = 0; x < sizeX; x++) {
-          out[3*x+0] = in[4*x+0];
-          out[3*x+1] = in[4*x+1];
-          out[3*x+2] = in[4*x+2];
-        }
-        fwrite(out, 3*sizeX, sizeof(char), file);
-      }
-      fprintf(file,"\n");
-      fclose(file);
-      std::cout << "#osp:glut3D: saved framebuffer to file "
-                << fileName << std::endl;
+      utility::writePPM(fileName, sizeX, sizeY, pixel);
+      std::cout << "#osp:glut3D: saved framebuffer to file " << fileName
+        << std::endl;
     }
 
     /*! currently active window */
