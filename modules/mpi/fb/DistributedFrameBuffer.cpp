@@ -670,6 +670,9 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
   int32 DFB::accumID(const vec2i &tile)
   {
+    if (!hasAccumBuffer)
+      return 0;
+
     const auto tileNr = tile.y * numTiles.x + tile.x;
     tileInstances[tileNr]++;
     return tileAccumID[tileNr]++;
