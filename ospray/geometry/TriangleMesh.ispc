@@ -219,7 +219,7 @@ void TriangleMesh_getAreas(
   const uniform int64 vtxSize = self->vtxSize;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
   for (uniform int32 i = 0; i < numPrims; i++) {
-    int *uniform index = self->index + primIDs[i];
+    int *uniform index = self->index + primIDs[i] * idxSize;
     const uniform vec3f a = *((vec3f*)(vertex + vtxSize * *index));
     const uniform vec3f b = *((vec3f*)(vertex + vtxSize * *(index+1)));
     const uniform vec3f c = *((vec3f*)(vertex + vtxSize * *(index+2)));
