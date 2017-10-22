@@ -195,27 +195,37 @@ SampleAreaRes TriangleMesh_sampleArea(
   return res;
 }
 
-void TriangleMesh_getAreas(
-    const Geometry *const uniform _self
-    , const uniform affine3f &xfm
-    , float *const uniform area
+int32 TriangleMesh_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
     )
 {
-  TriangleMesh *uniform self = (TriangleMesh *uniform)_self;
+  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
+  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
+}
 
-  const uniform int32 tris = self->super.primitives;
-  int *uniform index = self->index;
+void TriangleMesh_getAreas(
+    const Geometry *const uniform _self
+    , const int32 *const uniform primIDs
+    , const uniform int32 numPrims
+    , const uniform affine3f &xfm
+    , float *const uniform areas
+    )
+{
+  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
+
   const uniform int32 idxSize = self->idxSize;
   const float *const uniform vertex = self->vertex;
   const uniform int64 vtxSize = self->vtxSize;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-  for(uniform int32 i = 0; i < tris; i++, index += idxSize) {
+  for (uniform int32 i = 0; i < numPrims; i++) {
+    int *uniform index = self->index + primIDs[i];
     const uniform vec3f a = *((vec3f*)(vertex + vtxSize * *index));
     const uniform vec3f b = *((vec3f*)(vertex + vtxSize * *(index+1)));
     const uniform vec3f c = *((vec3f*)(vertex + vtxSize * *(index+2)));
     const uniform vec3f e1 = xfmVector(xfm, a-c);
     const uniform vec3f e2 = xfmVector(xfm, b-c);
-    area[i] = 0.5f * length(cross(e1, e2));
+    areas[i] = 0.5f * length(cross(e1, e2));
   }
 }
 
@@ -244,9 +254,10 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                        TriangleMesh_postIntersect,
                        model,geomID,
                        materialList);
+  mesh->super.getMaterialID = TriangleMesh_getMaterialID;
   mesh->super.getAreas = TriangleMesh_getAreas;
   mesh->super.sampleArea = TriangleMesh_sampleArea;
-  mesh->super.primitives = numTriangles;
+  mesh->super.numPrimitives = numTriangles;
   mesh->index        = index;
   mesh->vertex       = vertex;
   mesh->normal       = normal;
