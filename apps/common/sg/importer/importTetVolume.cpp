@@ -17,6 +17,11 @@
 // sg
 #include "SceneGraph.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wextra-semi"
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#pragma clang diagnostic ignored "-Winconsistent-missing-destructor-override"
+
 // vtk
 #include <vtkCell.h>
 #include <vtkCellData.h>
@@ -29,6 +34,8 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtksys/SystemTools.hxx>
+
+#pragma clang diagnostic pop
 
 // NOTE(jda) - This should be put in a more general place, only used here
 //             right now.
@@ -103,11 +110,6 @@ namespace ospray {
             vtkAbstractArray *ad = pd->GetAbstractArray(i);
             int nDataPoints      = ad->GetNumberOfValues();
 
-            int nComponents = ad->GetNumberOfComponents();
-            int nTuples     = ad->GetNumberOfTuples();
-
-            int arrayType = ad->GetArrayType();
-
             auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
 
             for (int j = 0; j < nDataPoints; j++) {
@@ -120,7 +122,7 @@ namespace ospray {
         return true;
       }
 
-      bool loadOFFFile(const FileName &fileName)
+      void loadOFFFile(const FileName &fileName)
       {
         ifstream in(fileName);
         int nPoints = 0, nTetrahedra = 0;

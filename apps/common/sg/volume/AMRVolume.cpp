@@ -81,6 +81,7 @@ namespace ospray {
         utility::ArrayView<float> bd(new float[numCells], numCells);
 
         int nr = fread(bd.data(), sizeof(float), numCells, dataFile);
+        UNUSED(nr);
 
         if (bi.level > maxLevel) {
           delete [] bd.data();
@@ -112,7 +113,7 @@ namespace ospray {
         setValue(volume);
       }
 
-      for (int bID = 0; bID < brickInfo.size(); bID++) {
+      for (size_t bID = 0; bID < brickInfo.size(); bID++) {
         const auto &bi = brickInfo[bID];
         OSPData data = ospNewData(bi.size().product(),
                                   OSP_FLOAT,
@@ -146,8 +147,7 @@ namespace ospray {
       child("voxelRange") = valueRange.toVec2f();
     }
 
-    void AMRVolume::setFromXML(const xml::Node &node,
-                               const unsigned char *binBasePtr)
+    void AMRVolume::setFromXML(const xml::Node &node, const unsigned char *)
     {
       std::string fileName = node.getProp("fileName");
       range1f clampRange;

@@ -73,31 +73,31 @@ namespace ospray {
       if (voxelType == "uchar") {
         out = malloc(sizeof(unsigned char) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned char *)source, (unsigned char *)out,
+        upsampleRegion((const unsigned char *)source, (unsigned char *)out,
                        regionSize, scaledRegionSize);
       }
       else if (voxelType == "short") {
         out = malloc(sizeof(short) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned short *)source, (unsigned short *)out,
+        upsampleRegion((const unsigned short *)source, (unsigned short *)out,
                        regionSize, scaledRegionSize);
       }
       else if (voxelType == "ushort") {
         out = malloc(sizeof(unsigned short) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned short *)source, (unsigned short *)out,
+        upsampleRegion((const unsigned short *)source, (unsigned short *)out,
                        regionSize, scaledRegionSize);
       }
       else if (voxelType == "float") {
         out = malloc(sizeof(float) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((float *)source, (float *)out, regionSize,
+        upsampleRegion((const float *)source, (float *)out, regionSize,
                        scaledRegionSize);
       }
       else if (voxelType == "double") {
         out = malloc(sizeof(double) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((double *)source, (double *)out, regionSize,
+        upsampleRegion((const double *)source, (double *)out, regionSize,
                        scaledRegionSize);
       }
       regionSize = scaledRegionSize;

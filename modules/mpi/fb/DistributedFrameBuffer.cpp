@@ -117,7 +117,7 @@ namespace ospray {
         vec2i coords, float error)
       : colorFormat(fmt), hasDepth(hasDepth)
     {
-      int command;
+      int command = 0;
       size_t msgSize = 0;
       switch (colorFormat) {
         case OSP_FB_NONE:
@@ -133,8 +133,6 @@ namespace ospray {
           msgSize = sizeof(MasterTileMessage_RGBA_F32);
           pixelSize = sizeof(vec4f);
           break;
-        default:
-          throw std::runtime_error("Unsupported color buffer fmt in DFB!");
       }
       if (hasDepth) {
         msgSize += sizeof(float) * TILE_SIZE * TILE_SIZE;
@@ -244,7 +242,7 @@ namespace ospray {
 
   void DFB::startNewFrame(const float errorThreshold)
   {
-    std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
+    std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
 
     {
       SCOPED_LOCK(mutex);
@@ -256,7 +254,7 @@ namespace ospray {
 
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
-      delayedMessage = this->delayedMessage;
+      _delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
 
       // NOTE: Doing error sync may do a broadcast, needs to be done before
@@ -300,7 +298,7 @@ namespace ospray {
     }
 
     // might actually want to move this to a thread:
-    for (auto &msg : delayedMessage)
+    for (auto &msg : _delayedMessage)
       scheduleProcessing(msg);
 
     if (isFrameComplete(0))
@@ -342,7 +340,6 @@ namespace ospray {
       td = new AlphaBlendTile_simple(this, xy, tileID, ownerID);
       break;
     case Z_COMPOSITE:
-    default:
       size_t numWorkers = masterIsAWorker ? mpicommon::numGlobalRanks() :
                                             mpicommon::numWorkers();
       td = new ZCompositeTile(this, xy, tileID, ownerID, numWorkers);
@@ -480,7 +477,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
       DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i/%i\n",
                  mpicommon::globalRank(), tile->begin.x, tile->begin.y,
-                 numTilesCompletedThisFrame.load(), myTiles.size()));
+                 numTilesCompletedThisFrame, myTiles.size()));
     } else {
       // If we're the master sending a message to ourself skip going
       // through the messaging layer entirely and just call incoming directly
@@ -488,7 +485,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
     }
   }
 
-  void DFB::finalizeTileOnMaster(TileData *tile)
+  void DFB::finalizeTileOnMaster(TileData *DBG(tile))
   {
     assert(mpicommon::IamTheMaster());
     /*! we will not do anything with the tile other than mark it's done */
@@ -673,6 +670,9 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
   int32 DFB::accumID(const vec2i &tile)
   {
+    if (!hasAccumBuffer)
+      return 0;
+
     const auto tileNr = tile.y * numTiles.x + tile.x;
     tileInstances[tileNr]++;
     return tileAccumID[tileNr]++;

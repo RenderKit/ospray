@@ -76,8 +76,8 @@ struct Geometry {
   //! number of primitives this geometry has
   uniform int32 primitives;
 
-  //! material attached to this geometry
-  Material *uniform material;
+  //! material list attached to this geometry
+  Material *uniform *uniform materialList;
 
   //! model that this geometry is part of
   Model *uniform model;
@@ -92,4 +92,4 @@ extern void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  uniform Geometry_postIntersectFct postIntersect,
                                  uniform Model *uniform model,
                                  uniform int32  geomID,
-                                 uniform Material *uniform material);
+                                 uniform Material *uniform *uniform materialList);

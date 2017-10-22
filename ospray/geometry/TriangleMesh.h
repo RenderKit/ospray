@@ -75,17 +75,16 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE TriangleMesh : public Geometry
   {
     TriangleMesh();
-    virtual ~TriangleMesh() = default;
+    virtual ~TriangleMesh() override = default;
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;
 
-    const int    *index;  //!< mesh's triangle index array
-    const float  *vertex; //!< mesh's vertex array
-    const float  *normal; //!< mesh's vertex normal array
-    const vec4f  *color;  //!< mesh's vertex color array
-    const vec2f  *texcoord; //!< mesh's vertex texcoord array
-    const uint32 *prim_materialID; //!< per-primitive material ID
-    Material **materialList; //!< per-primitive material list
+    int    *index;  //!< mesh's triangle index array
+    float  *vertex; //!< mesh's vertex array
+    float  *normal; //!< mesh's vertex normal array
+    vec4f  *color;  //!< mesh's vertex color array
+    vec2f  *texcoord; //!< mesh's vertex texcoord array
+    uint32 *prim_materialID; //!< per-primitive material ID
     int geom_materialID;
 
     Ref<Data> indexData;  /*!< triangle indices (A,B,C,materialID) */
@@ -94,12 +93,9 @@ namespace ospray {
     Ref<Data> colorData;  /*!< vertex color array (vec3fa) */
     Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
     Ref<Data> prim_materialIDData;  /*!< data array for per-prim material ID (uint32) */
-    Ref<Data> materialListData; /*!< data array for per-prim materials */
 
     #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
     uint32 eMesh{RTC_INVALID_ID};   /*!< embree triangle mesh handle */
-
-    std::vector<void*> ispcMaterialPtrs; /*!< pointers to ISPC equivalent materials */
   };
 
 } // ::ospray

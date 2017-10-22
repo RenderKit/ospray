@@ -37,6 +37,8 @@ namespace ospray {
 
   void Cylinders::finalize(Model *model)
   {
+    Geometry::finalize(model);
+
     radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
     bytesPerCylinder  = getParam1i("bytes_per_cylinder",6*sizeof(float));
@@ -46,7 +48,6 @@ namespace ospray {
     offset_materialID = getParam1i("offset_materialID",-1);
     offset_colorID    = getParam1i("offset_colorID",-1);
     cylinderData      = getParamData("cylinders");
-    materialList      = getParamData("materialList");
     colorData         = getParamData("color");
     texcoordData      = getParamData("texcoord");
 
@@ -58,34 +59,20 @@ namespace ospray {
     postStatusMsg(2) << "#osp: creating 'cylinders' geometry, #cylinders = "
                      << numCylinders;
 
-    if (_materialList) {
-      free(_materialList);
-      _materialList = nullptr;
-    }
-
-    if (materialList) {
-      void **ispcMaterials =
-          (void**) malloc(sizeof(void*) * materialList->numItems);
-      for (uint32_t i = 0; i < materialList->numItems; i++) {
-        Material *m = ((Material**)materialList->data)[i];
-        ispcMaterials[i] = m?m->getIE():nullptr;
-      }
-      _materialList = (void*)ispcMaterials;
-    }
-
     const char* cylinderPtr = (const char*)cylinderData->data;
     bounds = empty;
     for (uint32_t i = 0; i < numCylinders; i++, cylinderPtr += bytesPerCylinder) {
-      const float r = offset_radius < 0 ? radius : *(float*)(cylinderPtr + offset_radius);
-      const vec3f v0 = *(vec3f*)(cylinderPtr + offset_v0);
-      const vec3f v1 = *(vec3f*)(cylinderPtr + offset_v1);
+      const float r = offset_radius < 0 ? radius : *(const float*)(cylinderPtr + offset_radius);
+      const vec3f v0 = *(const vec3f*)(cylinderPtr + offset_v0);
+      const vec3f v1 = *(const vec3f*)(cylinderPtr + offset_v1);
       bounds.extend(box3f(v0 - r, v0 + r));
       bounds.extend(box3f(v1 - r, v1 + r));
     }
 
     auto colComps = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
-                                cylinderData->data,_materialList,
+                                cylinderData->data,
+                                materialList ? ispcMaterialPtrs.data() : nullptr,
                                 texcoordData ? texcoordData->data : nullptr,
                                 colorData ? colorData->data : nullptr,
                                 colComps * sizeof(float),

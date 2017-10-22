@@ -43,9 +43,6 @@ struct Spheres {
   float      radius;
   float      epsilon;
 
-  /*! list of multiple  materials, in case of per-sphere materials */
-  Material **materialList;
-
   int        materialID;
 
   uint8     *color;
@@ -100,24 +97,15 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
             + self->stride*localPrimID;
           dg.materialID =
             *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-          if (self->materialList) {
-            dg.material = self->materialList[dg.materialID];
-          }
         }
       } else {
         uniform uint8 *varying spherePtr = self->data
           + self->stride*ray.primID;
         dg.materialID =
           *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-        if (self->materialList) {
-          dg.material = self->materialList[dg.materialID];
-        }
       }
     } else {
       dg.materialID = self->materialID;
-      if (self->materialList) {
-        dg.material = self->materialList[dg.materialID];
-      }
     }
   }
 }
@@ -149,7 +137,10 @@ void Spheres_intersect(uniform Spheres *uniform self,
   }
   uniform vec3f center =
     *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-  const vec3f A = center - ray.org;
+  const vec3f At = center - ray.org;
+  const float close_d = dot(ray.dir, At) - radius;
+  const vec3f close_org = ray.org + ray.dir * close_d;
+  const vec3f A = center - close_org;
 
   const float a = dot(ray.dir,ray.dir);
   const float b = 2.f*dot(ray.dir,A);
@@ -160,8 +151,8 @@ void Spheres_intersect(uniform Spheres *uniform self,
 
   const float srad = sqrt(radical);
 
-  const float t_in = (b - srad) *rcpf(2.f*a);
-  const float t_out= (b + srad) *rcpf(2.f*a);
+  const float t_in = (b - srad) *rcpf(2.f*a) + close_d;
+  const float t_out= (b + srad) *rcpf(2.f*a) + close_d;
 
   bool hit = false;
   if (t_in > ray.t0 && t_in < ray.t) {
@@ -298,7 +289,7 @@ export void SpheresGeometry_set(void  *uniform _self
   self->super.primitives = numSpheres;
   self->super.getAreas = Spheres_getAreas;
   self->super.sampleArea = Spheres_sampleArea;
-  self->materialList = (Material **)materialList;
+  self->super.materialList = (Material **)materialList;
   self->texcoord = texcoord;
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;

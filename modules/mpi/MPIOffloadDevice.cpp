@@ -532,7 +532,7 @@ namespace ospray {
 
     /*! create a new data buffer */
     OSPData MPIOffloadDevice::newData(size_t nitems, OSPDataType format,
-                                      void *init, int flags)
+                                      const void *init, int flags)
     {
       ObjectHandle handle = allocateHandle();
 

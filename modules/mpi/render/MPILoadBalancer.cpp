@@ -69,8 +69,7 @@ namespace ospray {
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
 
         dfb->startNewFrame(renderer->errorThreshold);
-        dfb->beginFrame();
-
+        // dfb->beginFrame(); is called by renderer->beginFrame:
         void *perFrameData = renderer->beginFrame(fb);
 
         const int ALLTASKS = fb->getTotalTiles();
@@ -129,8 +128,7 @@ namespace ospray {
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
         dfb->startNewFrame(renderer->errorThreshold);
-        dfb->beginFrame();
-
+        dfb->beginFrame(); // XXX is called by renderer->beginFrame:
         auto *perFrameData = renderer->beginFrame(dfb);
 
         tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
@@ -264,7 +262,7 @@ namespace ospray {
         // TODO: estimate variance reduction to avoid duplicating tiles that are
         // just slightly above errorThreshold too often
         auto it = activeTiles.begin();
-        const int tilesTotal = dfb->getTotalTiles();
+        const size_t tilesTotal = dfb->getTotalTiles();
         // loop over (active) tiles multiple times (instead of e.g. computing
         // instance count) to have maximum distance between duplicated tiles in
         // queue ==> higher chance that duplicated tiles do not arrive at the
@@ -290,8 +288,8 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
-        for(auto&& notified : workerNotified)
-          notified = false;
+        for (size_t i = 0; i < workerNotified.size(); ++i)
+          workerNotified[i] = false;
 
         generateTileTasks(dfb, renderer->errorThreshold);
 
@@ -348,8 +346,7 @@ namespace ospray {
         tilesScheduled = 0;
 
         dfb->startNewFrame(renderer->errorThreshold);
-        dfb->beginFrame();
-
+        // dfb->beginFrame(); is called by renderer->beginFrame:
         perFrameData = renderer->beginFrame(fb);
         frameActive = true;
 
@@ -376,7 +373,7 @@ namespace ospray {
         Tile __aligned(64) tile(task.tileId, fb->size, task.accumId);
 #endif
 
-        while (!frameActive) PRINT(frameActive); // XXX busy wait for valid perFrameData
+        while (!frameActive);// PRINT(frameActive); // XXX busy wait for valid perFrameData
 
         tasking::parallel_for(numJobs(renderer->spp, task.accumId), [&](int tid) {
           renderer->renderTile(perFrameData, tile, tid);

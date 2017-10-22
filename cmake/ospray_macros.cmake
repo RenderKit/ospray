@@ -45,9 +45,9 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
     message(FATAL_ERROR
             "We did not find Embree installed on your system. OSPRay requires"
             " an Embree installation >= v${EMBREE_VERSION_REQUIRED}, please"
-            " download and extract Embree or compile Embree from source, then"
-            " set the 'embree_DIR' variable to"
-            " <embree-install-dir>/lib/cmake/embree-<version>.")
+            " download and extract Embree (or compile Embree from source), then"
+            " set the 'embree_DIR' variable to the installation (or build)"
+            " directory.")
   else()
     message(STATUS "Found Embree v${EMBREE_VERSION}: ${EMBREE_LIBRARY}")
   endif()

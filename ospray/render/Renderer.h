@@ -37,7 +37,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   {
     Renderer() = default;
-    virtual ~Renderer() = default;
+    virtual ~Renderer() override = default;
 
     /*! \brief creates an abstract renderer class of given type
 
@@ -49,10 +49,10 @@ namespace ospray {
 
     virtual void commit() override;
     virtual std::string toString() const override;
-    
+
     /*! \brief render one frame, and put it into given frame buffer */
     virtual float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags);
-    
+
     //! \brief called to initialize a new frame
     /*! this function gets called exactly once (on each node) at the
       beginning of each frame, and allows the renderer to do whatever

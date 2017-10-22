@@ -17,7 +17,7 @@
 #pragma once
 
 /*! \defgroup ospray_render_ao16 Simple 16-sample Ambient Occlusion Renderer
-  
+
   \ingroup ospray_supported_renderers
 
   \brief Implements a simple renderer that shoots 16 rays (generated
@@ -37,7 +37,7 @@
 namespace ospray {
 
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
-    
+
     \detailed This renderer uses a set of 16 precomputed AO directions
     to shoot shadow rays; for accumulation these 16 directions are
     (semi-)randomly rotated to give different directions every frame
@@ -56,7 +56,7 @@ namespace ospray {
   struct SimpleAO : public Renderer
   {
     SimpleAO(int defaultNumSamples);
-    virtual ~SimpleAO() = default;
+    virtual ~SimpleAO() override = default;
     virtual std::string toString() const override;
     virtual ospray::Material *createMaterial(const char *type) override;
     virtual void commit() override;

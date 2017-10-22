@@ -112,19 +112,22 @@ namespace ospray {
       }
     }
 
+#if 1
+    std::shared_ptr<sg::DataBuffer> parseDataNode(const xml::Node &)
+    {
+      NOTIMPLEMENTED;
+    }
+#else
     std::shared_ptr<sg::DataBuffer> parseDataNode(const xml::Node &node)
     {
-#if 1
-      NOTIMPLEMENTED;
-#else
       assert(node.name == "Data");
       Data *data = new Data;
       assert(node.child.empty());
       size_t num = atol(node.getProp("num").c_str());
       size_t ofs = atol(node.getProp("ofs").c_str());
       return data;
-#endif
     }
+#endif
 
     std::shared_ptr<sg::Node> parseNode(const xml::Node &node)
     {

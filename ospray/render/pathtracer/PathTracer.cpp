@@ -67,7 +67,7 @@ namespace ospray {
   void PathTracer::generateGeometryLights(const Model *const model
       , const affine3f& xfm
       , const affine3f& rcp_xfm
-      , float *const areaPDF
+      , float *const _areaPDF
       )
   {
     for(size_t i = 0; i < model->geometry.size(); i++) {
@@ -80,12 +80,12 @@ namespace ospray {
         generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
             &(inst->areaPDF[0]));
       } else
-        if (geo->material && geo->material->getIE()
-            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
+        if (geo->materialList && geo->materialList[0]->getIE()
+            && ispc::PathTraceMaterial_isEmissive(geo->materialList[0]->getIE())) {
           void* light = ispc::GeometryLight_create(geo->getIE()
               , (const ispc::AffineSpace3f&)xfm
               , (const ispc::AffineSpace3f&)rcp_xfm
-              , areaPDF+i);
+              , _areaPDF+i);
 
           if (light)
             lightArray.push_back(light);
@@ -130,7 +130,7 @@ namespace ospray {
     const float maxRadiance = getParam1f("maxContribution",
                                          getParam1f("maxRadiance", inf));
     Texture2D *backplate = (Texture2D*)getParamObject("backplate", nullptr);
-    const vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
+    vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
 
     ispc::PathTracer_set(getIE()
         , rouletteDepth

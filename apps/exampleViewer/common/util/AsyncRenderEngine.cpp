@@ -26,7 +26,14 @@ namespace ospray {
     : scenegraph(sgRenderer), scenegraphDW(sgRendererDW)
   {
     backgroundThread = make_unique<AsyncLoop>([&](){
-      ospDeviceCommit(ospGetCurrentDevice()); // workaround #239
+
+      if (commitDeviceOnAsyncLoopThread) {
+        auto *device = ospGetCurrentDevice();
+        if (!device)
+          throw std::runtime_error("could not get the current device!");
+        ospDeviceCommit(device); // workaround #239
+        commitDeviceOnAsyncLoopThread = false;
+      }
       static sg::TimeStamp lastFTime;
 
       auto &sgFB = scenegraph->child("frameBuffer");
@@ -37,8 +44,8 @@ namespace ospray {
       if (sgFB.childrenLastModified() > lastFTime || !once) {
         auto &size = sgFB["size"];
         nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
-        pixelBuffer[0].resize(nPixels);
-        pixelBuffer[1].resize(nPixels);
+        pixelBuffers.front().resize(nPixels);
+        pixelBuffers.back().resize(nPixels);
         lastFTime = sg::TimeStamp();
       }
 
@@ -74,14 +81,14 @@ namespace ospray {
       auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
 
       auto *srcPB = (uint32_t*)sgFBptr->map();
-      auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
+      auto *dstPB = (uint32_t*)pixelBuffers.back().data();
 
       memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
 
       sgFBptr->unmap(srcPB);
 
       if (fbMutex.try_lock()) {
-        std::swap(currentPB, mappedPB);
+        pixelBuffers.swap();
         newPixels = true;
         fbMutex.unlock();
       }
@@ -98,27 +105,26 @@ namespace ospray {
     fbSize = size;
   }
 
-  void AsyncRenderEngine::start(int numThreads)
+  void AsyncRenderEngine::start(int numOsprayThreads)
   {
     if (state == ExecState::RUNNING)
       return;
-
-    numOsprayThreads = numThreads;
 
     validate();
 
     if (state == ExecState::INVALID)
       throw std::runtime_error("Can't start the engine in an invalid state!");
 
-    auto device = ospGetCurrentDevice();
-    if(device == nullptr)
-      throw std::runtime_error("Can't get current device!");
+    if (numOsprayThreads > 0) {
+      auto device = ospGetCurrentDevice();
+      if(device == nullptr)
+        throw std::runtime_error("Can't get current device!");
 
-    if (numOsprayThreads > 0)
       ospDeviceSet1i(device, "numThreads", numOsprayThreads);
-    ospDeviceCommit(device);
+    }
 
     state = ExecState::RUNNING;
+    commitDeviceOnAsyncLoopThread = true;
     backgroundThread->start();
   }
 
@@ -170,7 +176,7 @@ namespace ospray {
   {
     fbMutex.lock();
     newPixels = false;
-    return pixelBuffer[mappedPB];
+    return pixelBuffers.front();
   }
 
   void AsyncRenderEngine::unmapFramebuffer()

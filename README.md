@@ -82,7 +82,7 @@ before you can build OSPRay you need the following prerequisites:
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
 -   OSPRay also heavily uses [Embree](https://embree.github.io/),
-    installing version 2.13 or newer is required. If Embree is not found
+    installing version 2.15 or newer is required. If Embree is not found
     by CMake its location can be hinted with the variable `embree_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
@@ -104,8 +104,14 @@ Under Mac OS X these dependencies can be installed using
 
     sudo port install cmake tbb
 
-Compiling OSPRay
-----------------
+Under Windows please directly use the appropriate installers for
+[CMake](https://cmake.org/download/),
+[TBB](https://github.com/01org/tbb/releases),
+[ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
+version) and [Embree](https://github.com/embree/embree/releases/).
+
+Compiling OSPRay on Linux and Mac OS X
+--------------------------------------
 
 Assume the above requisites are all fulfilled, building OSPRay through
 CMake is easy:
@@ -145,6 +151,50 @@ CMake is easy:
     application. You can test your version of OSPRay using any of the
     examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
+
+Compiling OSPRay on Windows
+---------------------------
+
+On Windows using the CMake GUI (`cmake-gui.exe`) is the most convenient
+way to configure OSPRay and to create the Visual Studio solution files:
+
+-   Browse to the OSPRay sources and specify a build directory (if it
+    does not exist yet CMake will create it).
+
+-   Click "Configure" and select as generator the Visual Studio version
+    you have, for Win64 (32 bit builds are not supported by OSPRay),
+    e.g. "Visual Studio 15 2017 Win64".
+
+-   If the configuration fails because some dependencies could not be
+    found then follow the instructions given in the error message, e.g.
+    set the variable `embree_DIR` to the folder where Embree was
+    installed.
+
+-   Optionally change the default build options, and then click
+    "Generate" to create the solution and project files in the build
+    directory.
+
+-   Open the generated `OSPRay.sln` in Visual Studio, select the build
+    configuration and compile the project.
+
+Alternatively, OSPRay can also be built without any GUI, entirely on the
+console. In the Visual Studio command prompt type:
+
+    cd path\to\ospray
+    mkdir build
+    cd build
+    cmake -G "Visual Studio 12 2013 Win64" [-D VARIABLE=value] ..
+    cmake --build . --config Release
+
+Use `-D` to set variables for CMake, e.g. the path to Embree with
+"`-D embree_DIR=\path\to\embree`".
+
+You can also build only some projects with the `--target` switch.
+Additional parameters after "`--`" will be passed to `msbuild`. For
+example, to build in parallel only the OSPRay library without the
+example applications use
+
+    cmake --build . --config Release --target ospray -- /m
 
 Documentation
 =============
@@ -710,8 +760,8 @@ this function.
 The common parameters understood by both structured volume variants are
 summarized in the table below.
 
-| Type   | Name        | Default     | Description                                       |
-|:-------|:------------|:------------|:--------------------------------------------------|
+| Type   | Name        |      Default| Description                                       |
+|:-------|:------------|------------:|:--------------------------------------------------|
 | vec3i  | dimensions  |             | number of voxels in each dimension $(x, y, z)$    |
 | string | voxelType   |             | data type of each voxel, currently supported are: |
 |        |             |             | "uchar" (8 bit unsigned integer)                  |
@@ -719,8 +769,8 @@ summarized in the table below.
 |        |             |             | "ushort" (16 bit unsigned integer)                |
 |        |             |             | "float" (32 bit single precision floating point)  |
 |        |             |             | "double" (64 bit double precision floating point) |
-| vec3f  | gridOrigin  | $(0, 0, 0)$ | origin of the grid in world-space                 |
-| vec3f  | gridSpacing | $(1, 1, 1)$ | size of the grid cells in world-space             |
+| vec3f  | gridOrigin  |  $(0, 0, 0)$| origin of the grid in world-space                 |
+| vec3f  | gridSpacing |  $(1, 1, 1)$| size of the grid cells in world-space             |
 
 : Additional configuration parameters for structured volumes.
 
@@ -761,7 +811,7 @@ only support `float` voxels.
 <tr class="header">
 <th align="left">Type</th>
 <th align="left">Name</th>
-<th align="left">Default</th>
+<th align="right">Default</th>
 <th align="left">Description</th>
 </tr>
 </thead>
@@ -769,31 +819,31 @@ only support `float` voxels.
 <tr class="odd">
 <td align="left">vec3f</td>
 <td align="left">gridOrigin</td>
-<td align="left"><span class="math inline">(0, 0, 0)</span></td>
+<td align="right"><span class="math inline">(0, 0, 0)</span></td>
 <td align="left">origin of the grid in world-space</td>
 </tr>
 <tr class="even">
 <td align="left">vec3f</td>
 <td align="left">gridSpacing</td>
-<td align="left"><span class="math inline">(1, 1, 1)</span></td>
+<td align="right"><span class="math inline">(1, 1, 1)</span></td>
 <td align="left">size of the grid cells in world-space</td>
 </tr>
 <tr class="odd">
 <td align="left">string</td>
 <td align="left">amrMethod</td>
-<td align="left">current</td>
+<td align="right">current</td>
 <td align="left">sampling method; valid values are &quot;finest&quot;, &quot;current&quot;, or &quot;octant&quot;</td>
 </tr>
 <tr class="even">
 <td align="left">OSPData</td>
 <td align="left">brickInfo</td>
-<td align="left"></td>
+<td align="right"></td>
 <td align="left">array of info defining each brick</td>
 </tr>
 <tr class="odd">
 <td align="left">OSPData</td>
 <td align="left">brickData</td>
-<td align="left"></td>
+<td align="right"></td>
 <td align="left">array of handles to per-brick voxel data</td>
 </tr>
 </tbody>
@@ -812,12 +862,12 @@ corresponding field values, and tetrahedra indices. A tetrahedral volume
 type is created by passing the type string "`tetrahedral_volume`" to
 `ospNewVolume`.
 
-Similar to [triangle mesh](#triangle-mesh), each tetrahedra is formed by
-a group of indices into the vertices. For each vertex, the corresponding
-(by array index) data value will be used for sampling when rendering.
-Note that the index order for each tetrahedra does not matter, as OSPRay
-internally calculates vertex normals to ensure proper sampling and
-interpolation.
+Similar to [triangle mesh](#triangle-mesh), each tetrahedron is formed
+by a group of indices into the vertices. For each vertex, the
+corresponding (by array index) data value will be used for sampling when
+rendering. Note that the index order for each tetrahedron does not
+matter, as OSPRay internally calculates vertex normals to ensure proper
+sampling and interpolation.
 
 | Type      | Name       | Description                                                         |
 |:----------|:-----------|:--------------------------------------------------------------------|
@@ -1553,7 +1603,14 @@ the real world reflect at most only about 80% of the incoming light. So
 even for a white sheet of paper or white wall paint do better not set
 `Kd` larger than 0.8; otherwise rendering times are unnecessary long and
 the contrast in the final images is low (for example, the corners of a
-white room would hardly be discernible).
+white room would hardly be discernible, as can be seen in the figure
+below).
+
+<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to in higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" />
+
+If present, the color component of [geometries](#geometries) is also
+used for the diffuse color `Kd` and the alpha component is also used for
+the opacity `d`.
 
 Note that currently only the path tracer implements colored transparency
 with `Tf`.
@@ -1616,6 +1673,18 @@ parameters are
 <td align="left"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
 </tr>
 <tr class="even">
+<td align="left">vec3f</td>
+<td align="left">eta</td>
+<td align="right"></td>
+<td align="left">RGB complex refractive index, real part</td>
+</tr>
+<tr class="odd">
+<td align="left">vec3f</td>
+<td align="left">k</td>
+<td align="right"></td>
+<td align="left">RGB complex refractive index, imaginary part</td>
+</tr>
+<tr class="even">
 <td align="left">float</td>
 <td align="left">roughness</td>
 <td align="right">0.1</td>
@@ -1626,11 +1695,28 @@ parameters are
 
 : Parameters of the Metal material.
 
-The main appearence (mostly the color) of the Metal material is
-controled by the physical parameters `eta` and `k`, the
+The main appearance (mostly the color) of the Metal material is
+controlled by the physical parameters `eta` and `k`, the
 wavelength-dependent, complex index of refraction. These coefficients
 are quite counterintuitive but can be found in [published
-measurements](https://refractiveindex.info/).
+measurements](https://refractiveindex.info/). For accuracy the index of
+refraction can be given as an array of spectral samples in `ior`, each
+sample a triplet of wavelength (in nm), eta, and k, ordered
+monotonically increasing by wavelength; OSPRay will then calculate the
+Fresnel in the spectral domain. Alternatively, `eta` and `k` can also be
+specified as approximated RGB coefficients; some examples are given in
+below table.
+
+| Metal         |          eta          |        k        |
+|:--------------|:---------------------:|:---------------:|
+| Ag, Silver    | (0.051, 0.043, 0.041) | (5.3, 3.6, 2.3) |
+| Al, Aluminium |    (1.5, 0.98, 0.6)   | (7.6, 6.6, 5.4) |
+| Au, Gold      |   (0.07, 0.37, 1.5)   | (3.7, 2.3, 1.7) |
+| Cr, Chromium  |    (3.2, 3.1, 2.3)    | (3.3, 3.3, 3.1) |
+| Cu, Copper    |    (0.1, 0.8, 1.1)    | (3.5, 2.5, 2.4) |
+
+: Index of refraction of selected metals as approximated RGB
+coefficients, based on data from https://refractiveindex.info/.
 
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
@@ -1639,6 +1725,33 @@ transformations](#texture-transformations) are supported as well) to
 create interesting edging effects.
 
 <img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
+
+#### Alloy
+
+The [path tracer](#path-tracer) offers an alloy material, which behaves
+similar to [Metal](#metal), but allows for more intuitive and flexible
+control of the color. To create an Alloy material pass the type string
+"`Alloy`" to `ospNewMaterial`. Its parameters are
+
+| Type  | Name      |    Default| Description                                 |
+|:------|:----------|----------:|:--------------------------------------------|
+| vec3f | color     |  white 0.9| reflectivity at normal incidence (0 degree) |
+| vec3f | edgeColor |      white| reflectivity at grazing angle (90 degree)   |
+| float | roughness |        0.1| roughness, in \[0–1\], 0 is perfect mirror  |
+
+: Parameters of the Alloy material.
+
+The main appearance of the Alloy material is controlled by the parameter
+`color`, while `edgeColor` influences the tint of reflections when seen
+at grazing angles (for real metals this is always 100% white). If
+present, the color component of [geometries](#geometries) is also used
+for reflectivity at normal incidence `color`. As in [Metal](#metal) the
+`roughness` parameter controls the variation of microfacets and thus how
+polished the alloy will look. All parameters can be textured by passing
+a [texture](#texture) handle, prefixed with "`map_`"; [texture
+transformations](#texture-transformations) are supported as well.
+
+<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
 
 #### Glass
 
@@ -1669,7 +1782,7 @@ objects with just a single surface, most prominently windows. It models
 a very thin, transparent slab, i.e. it behaves as if a second, virtual
 surface is parallel to the real geometric surface. The implementation
 accounts for multiple internal reflections between the interfaces
-(including attenuation), but neglects parallaxe effects due to its
+(including attenuation), but neglects parallax effects due to its
 (virtual) thickness. To create a such a thin glass material pass the
 type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
 
@@ -1685,16 +1798,48 @@ type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
 For convenience the attenuation is controlled the same way as with the
 [Glass](#glass) material. Additionally, the color due to attenuation can
 be modulated with a [texture](#texture) `map_attenuationColor` ([texture
-transformations](#texture-transformations) are supported as well). The
-`thickness` parameter sets the (virtual) thickness and allows for easy
-exchange of parameters with the (real) [Glass](#glass) material;
-internally just the ratio between `attenuationDistance` and `thickness`
-is used to calculate the resulting attenuation and thus the material
-appearence.
+transformations](#texture-transformations) are supported as well). If
+present, the color component of [geometries](#geometries) is also used
+for the attenuation color. The `thickness` parameter sets the (virtual)
+thickness and allows for easy exchange of parameters with the (real)
+[Glass](#glass) material; internally just the ratio between
+`attenuationDistance` and `thickness` is used to calculate the resulting
+attenuation and thus the material appearance.
 
 <img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
 
 <img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" />
+
+#### MetallicPaint
+
+The [path tracer](#path-tracer) offers a metallic paint material,
+consisting of a base coat with optional flakes and a clear coat. To
+create a MetallicPaint material pass the type string "`MetallicPaint`"
+to `ospNewMaterial`. Its parameters are listed in the table below.
+
+| Type  | Name        |    Default| Description                       |
+|:------|:------------|----------:|:----------------------------------|
+| vec3f | baseColor   |  white 0.8| color of base coat                |
+| float | flakeAmount |        0.3| amount of flakes, in \[0–1\]      |
+| vec3f | flakeColor  |  Aluminium| color of metallic flakes          |
+| float | flakeSpread |        0.5| spread of flakes, in \[0–1\]      |
+| float | eta         |        1.5| index of refraction of clear coat |
+
+: Parameters of the MetallicPaint material.
+
+The color of the base coat `baseColor` can be textured by a
+[texture](#texture) `map_baseColor`, which also supports [texture
+transformations](#texture-transformations). If present, the color
+component of [geometries](#geometries) is also used for the color of the
+base coat. parameter `flakeAmount` controls the proportion of flakes in
+the base coat, so when setting it to 1 the `baseColor` will not be
+visible. The shininess of the metallic component is governed by
+`flakeSpread`, which controls the variation of the orientation of the
+flakes, similar to the `roughness` parameter of [Metal](#metal). Note
+that the effect of the metallic flakes is currently only computed on
+average, thus individual flakes are not visible.
+
+<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" />
 
 #### Luminous
 
@@ -1933,12 +2078,12 @@ The parameter `frameBufferChannels` specifies which channels the
 framebuffer holds, and can be combined together by bitwise OR from the
 values of `OSPFrameBufferChannel` listed in the table below.
 
-| Name              | Description                                                   |
-|:------------------|:--------------------------------------------------------------|
-| OSP\_FB\_COLOR    | RGB color including alpha                                     |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane)   |
-| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                |
-| OSP\_FB\_VARIANCE | estimate of the current variance, see [rendering](#rendering) |
+| Name              | Description                                                                                     |
+|:------------------|:------------------------------------------------------------------------------------------------|
+| OSP\_FB\_COLOR    | RGB color including alpha                                                                       |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane)                                     |
+| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                  |
+| OSP\_FB\_VARIANCE | estimate of the current variance if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
 
 : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
 naming optional information the framebuffer can store. These values can

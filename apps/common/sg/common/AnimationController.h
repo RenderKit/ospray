@@ -31,9 +31,9 @@ namespace ospray {
       //! \brief constructor
       AnimationController();
 
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
-      virtual void preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren) override;
+      virtual void preTraverse(RenderContext &ctx,
+                               const std::string& operation,
+                               bool& traverseChildren) override;
 
     };
 

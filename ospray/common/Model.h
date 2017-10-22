@@ -38,7 +38,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Model : public ManagedObject
   {
     Model();
-    virtual ~Model() = default;
+    virtual ~Model() override = default;
 
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;

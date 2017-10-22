@@ -60,7 +60,7 @@ namespace ospray {
         float r = ((f-lo) * (color.size()-1)) / (hi-lo);
         int idx = int(r);
         if (idx < 0) idx = 0;
-        if (idx >= color.size()) idx = color.size()-2;
+        if (idx >= static_cast<int>(color.size())) idx = color.size()-2;
 
         vec3f c = color[idx] + (r-idx)*(color[idx+1]-color[idx]);
         return vec4f(c,1.f);
@@ -73,7 +73,7 @@ namespace ospray {
     bool readOne(FILE *file, float *f, int N, bool ascii)
     {
       if (!ascii)
-        return fread(f,sizeof(float),N,file) == N;
+        return fread(f,sizeof(float),N,file) == size_t(N);
 
       // ascii:
       for (int i=0;i<N;i++) {

@@ -40,7 +40,7 @@ namespace ospray {
                      bool hasAccumBuffer,
                      bool hasVarianceBuffer,
                      void *colorBufferToUse=nullptr);
-    virtual ~LocalFrameBuffer();
+    virtual ~LocalFrameBuffer() override;
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */

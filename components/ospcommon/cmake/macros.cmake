@@ -330,14 +330,17 @@ MACRO(OSPRAY_INSTALL_SDK_HEADERS)
   )
 ENDMACRO()
 
-## Compiler configuration macro ##
+## Compiler configuration macros ##
 
 MACRO(OSPRAY_CONFIGURE_COMPILER)
   # unhide compiler to make it easier for users to see what they are using
   MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
-  OPTION(OSPRAY_STRICT_BUILD "Build with additional warning flags" OFF)
+  OPTION(OSPRAY_STRICT_BUILD "Build with additional warning flags" ON)
   MARK_AS_ADVANCED(OSPRAY_STRICT_BUILD)
+
+  OPTION(OSPRAY_WARN_AS_ERRORS "Treat warnings as errors" OFF)
+  MARK_AS_ADVANCED(OSPRAY_WARN_AS_ERRORS)
 
   SET(OSPRAY_COMPILER_ICC   FALSE)
   SET(OSPRAY_COMPILER_GCC   FALSE)
@@ -369,6 +372,13 @@ MACRO(OSPRAY_CONFIGURE_COMPILER)
     # increase stack to 8MB (the default size of 1MB is too small for our apps)
     # note: linker options are independent of compiler (icc or MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
+  ENDIF()
+ENDMACRO()
+
+MACRO(OSPRAY_DISABLE_COMPILER_WARNINGS)
+  IF (NOT OSPRAY_COMPILER_MSVC)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+  #ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
   ENDIF()
 ENDMACRO()
 

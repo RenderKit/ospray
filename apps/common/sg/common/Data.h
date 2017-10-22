@@ -38,12 +38,12 @@ namespace ospray {
         : type(type), data(nullptr)
       {}
 
-      virtual ~DataBuffer() = default;
+      virtual ~DataBuffer() override = default;
 
       virtual std::string toString() const override
       { return "DataBuffer<abstract>"; }
 
-      virtual void postCommit(RenderContext &ctx) override
+      virtual void postCommit(RenderContext &) override
       {
         if (hasParent()) {
           if (parent().value().is<OSPObject>())
@@ -94,7 +94,7 @@ namespace ospray {
       DataArrayT(T *base, size_t size, bool mine = true)
         : DataBuffer((OSPDataType)TID), numElements(size),
           mine(mine), base_ptr(base) {}
-      ~DataArrayT() { if (mine && base_ptr) delete base_ptr; }
+      ~DataArrayT() override { if (mine && base_ptr) delete base_ptr; }
 
       std::string toString() const override
       { return "DataArray<" + stringForType((OSPDataType)TID) + ">"; }

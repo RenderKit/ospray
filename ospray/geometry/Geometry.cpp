@@ -36,20 +36,39 @@ namespace ospray {
       return;
     }
 
-    material = mat;
+    OSPMaterial ospMat = (OSPMaterial)mat;
+    setMaterialList(new Data(1, OSP_OBJECT, &ospMat));
+  }
+
+  void Geometry::setMaterialList(Data *matListData)
+  {
+    if (!matListData || matListData->numItems == 0) {
+      postStatusMsg() << "#osp: warning - tried to set NULL material list; ignoring"
+                      << "#osp: warning. (note this means that object may not "
+                      << " get any material at all!)";
+      return;
+    }
+
+    materialListData = matListData;
+    materialList = (Material**)materialListData->data;
 
     if (!getIE()) {
       postStatusMsg("#osp: warning: geometry does not have an "
                     "ispc equivalent!");
     }
     else {
-      ispc::Geometry_setMaterial(this->getIE(), mat ? mat->getIE() : nullptr);
+      const int numMaterials = materialListData->numItems;
+      ispcMaterialPtrs.resize(numMaterials);
+      for (int i = 0; i < numMaterials; i++)
+        ispcMaterialPtrs[i] = materialList[i]->getIE();
+
+      ispc::Geometry_setMaterialList(this->getIE(), ispcMaterialPtrs.data());
     }
   }
 
   Material *Geometry::getMaterial() const
   {
-    return material.ptr;
+    return materialList ? materialList[0] : nullptr;
   }
 
   std::string Geometry::toString() const
@@ -59,6 +78,9 @@ namespace ospray {
 
   void Geometry::finalize(Model *)
   {
+    Data *materialListDataPtr = getParamData("materialList");
+    if (materialListDataPtr)
+      setMaterialList(materialListDataPtr);
   }
 
   Geometry *Geometry::createInstance(const char *type)

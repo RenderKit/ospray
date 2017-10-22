@@ -237,13 +237,12 @@ static inline void addPlaneToScene(sg::Node& renderer)
   index->push_back(vec3i{1,2,3});
   index->setName("index");
 
-  auto &plane = world.createChild("plane", "Instance");
-  auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
+  auto &plane = world.createChild("plane", "TriangleMesh");
 
-  auto sg_plane = mesh.nodeAs<sg::TriangleMesh>();
+  auto sg_plane = plane.nodeAs<sg::TriangleMesh>();
   sg_plane->add(position);
   sg_plane->add(index);
-  auto &planeMaterial = mesh["material"];
+  auto &planeMaterial = (*plane["materialList"].nodeAs<sg::MaterialList>())[0];
   planeMaterial["Kd"] = vec3f(0.5f);
   planeMaterial["Ks"] = vec3f(0.1f);
   planeMaterial["Ns"] = 10.f;
@@ -312,8 +311,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             transform["scale"] = file.transform.scale;
             transform["rotation"] = file.transform.rotation;
             if (files.size() < 2 && animatedFiles.empty()) {
-              auto &rotation =
-                              transform["rotation"].createChild("animator", "Animator");
+              auto &rotation = transform["rotation"].createChild("animator", "Animator");
 
               rotation.traverse("verify");
               rotation.traverse("commit");

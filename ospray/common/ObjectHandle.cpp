@@ -20,15 +20,15 @@
 
 namespace ospray {
 
-  std::map<int64,Ref<ospray::ManagedObject>> objectByHandle;
-  std::stack<int64> freedHandles;
+  static std::map<int64,Ref<ospray::ManagedObject>> objectByHandle;
+  static std::stack<int64> freedHandles;
 
   //! next unassigned ID on this node
   /*! we start numbering with 1 to make sure that "0:0" is an
     invalid handle (so we can typecast between (64-bit) handles
     and (64-bit)OSPWhatEver pointers */
-  int32 nextFreeLocalID = 1;
-    
+  static int32 nextFreeLocalID = 1;
+
   void ObjectHandle::free()
   {
     freedHandles.push((int64)*this);
@@ -60,15 +60,14 @@ namespace ospray {
   }
 
   /*! define the given handle to refer to given object */
-  void ObjectHandle::assign(const ObjectHandle &handle,
-                            const ManagedObject *object)
+  void ObjectHandle::assign(const ObjectHandle &handle, ManagedObject *object)
   {
-    objectByHandle[handle] = (ManagedObject*)object;
+    objectByHandle[handle] = object;
   }
 
-  void ObjectHandle::assign(const ManagedObject *object) const
+  void ObjectHandle::assign(ManagedObject *object) const
   {
-    objectByHandle[*this] = (ManagedObject*)object;
+    objectByHandle[*this] = object;
   }
 
   void ObjectHandle::freeObject() const
@@ -124,7 +123,7 @@ namespace ospray {
 
     return(nullHandle);
   }
-    
+
   OSPRAY_SDK_INTERFACE const ObjectHandle nullHandle(0);
 
 } // ::ospray

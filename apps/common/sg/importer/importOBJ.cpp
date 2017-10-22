@@ -203,7 +203,7 @@ namespace ospray {
             createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
-        for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
+        for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
           auto idx0 = shape.mesh.indices[i + 0];
           auto idx1 = shape.mesh.indices[i + 1];
           auto idx2 = shape.mesh.indices[i + 2];

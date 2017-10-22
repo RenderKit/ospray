@@ -32,7 +32,7 @@ namespace ospray {
       createChild("stop", "float", 1.f);
     }
 
-    void Animator::preCommit(RenderContext &ctx)
+    void Animator::preCommit(RenderContext &)
     {
       if (!hasParent())
         return;
@@ -45,10 +45,6 @@ namespace ospray {
         setValue(parent().value());
       }
       parent().setValue(value());
-    }
-
-    void Animator::postCommit(RenderContext &ctx)
-    {
     }
 
     void Animator::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)

@@ -50,7 +50,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
   {
     Isosurfaces();
-    virtual ~Isosurfaces() = default;
+    virtual ~Isosurfaces() override = default;
 
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;

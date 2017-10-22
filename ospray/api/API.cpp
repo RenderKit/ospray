@@ -137,7 +137,7 @@ OSPRAY_CATCH_BEGIN
 
       auto moduleSwitch = av.substr(0, 13);
       if (moduleSwitch == "--osp:module:") {
-        removeArgs(*_ac,(char **&)_av,i,1);
+        removeArgs(*_ac,_av,i,1);
 
         auto moduleName = av.substr(13);
         loadLocalModule(moduleName);
@@ -148,7 +148,7 @@ OSPRAY_CATCH_BEGIN
 
       auto deviceSwitch = av.substr(0, 13);
       if (deviceSwitch == "--osp:device:") {
-        removeArgs(*_ac,(char **&)_av,i,1);
+        removeArgs(*_ac,_av,i,1);
         auto deviceName = av.substr(13);
 
         try {
@@ -164,7 +164,7 @@ OSPRAY_CATCH_BEGIN
       }
 
       if (av == "--osp:mpi" || av == "--osp:mpi-offload") {
-        removeArgs(*_ac,(char **&)_av,i,1);
+        removeArgs(*_ac,_av,i,1);
         if (!currentDevice)
           currentDevice = createMpiDevice("mpi_offload");
         --i;
@@ -172,7 +172,7 @@ OSPRAY_CATCH_BEGIN
       }
 
       if (av == "--osp:mpi-distributed") {
-        removeArgs(*_ac,(char **&)_av,i,1);
+        removeArgs(*_ac,_av,i,1);
         if (!currentDevice)
           currentDevice = createMpiDevice("mpi_distributed");
         --i;
@@ -183,7 +183,7 @@ OSPRAY_CATCH_BEGIN
         if (i+2 > *_ac)
           throw std::runtime_error("--osp:mpi-launch expects an argument");
         const char *launchCommand = strdup(_av[i+1]);
-        removeArgs(*_ac,(char **&)_av,i,2);
+        removeArgs(*_ac,_av,i,2);
 
         currentDevice = createMpiDevice("mpi_offload");
         currentDevice->findParam("mpiMode", true)->set("mpi-launch");
@@ -198,7 +198,7 @@ OSPRAY_CATCH_BEGIN
         if (strlen(_av[i]) > strlen(listenArgName)) {
           fileNameToStorePortIn = strdup(_av[i]+strlen(listenArgName)+1);
         }
-        removeArgs(*_ac,(char **&)_av,i,1);
+        removeArgs(*_ac,_av,i,1);
 
         currentDevice = createMpiDevice("mpi_offload");
         currentDevice->findParam("mpiMode", true)->set("mpi-listen");
@@ -211,7 +211,7 @@ OSPRAY_CATCH_BEGIN
       const char *connectArgName = "--osp:mpi-connect";
       if (!strncmp(_av[i], connectArgName, strlen(connectArgName))) {
         std::string portName = _av[i+1];
-        removeArgs(*_ac,(char **&)_av,i,2);
+        removeArgs(*_ac,_av,i,2);
 
         if (!currentDevice)
           currentDevice = createMpiDevice("mpi_offload");
@@ -284,7 +284,13 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().frameBufferCreate((vec2i&)size, mode, channels);
+
+  // remove OSP_FB_VARIANCE when OSP_FB_ACCUM is not present
+  uint32_t ch = channels;
+  if ((channels & OSP_FB_ACCUM) == 0)
+    ch &= ~OSP_FB_VARIANCE;
+
+  return currentDevice().frameBufferCreate((const vec2i&)size, mode, ch);
 }
 OSPRAY_CATCH_END(nullptr)
 
@@ -371,7 +377,7 @@ extern "C" OSPData ospNewData(size_t nitems, OSPDataType format,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  OSPData data = currentDevice().newData(nitems, format, (void*)init, flags);
+  OSPData data = currentDevice().newData(nitems, format, init, flags);
   return data;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -501,7 +507,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
-  return currentDevice().newTexture2D((vec2i&)size, type, data, flags);
+  return currentDevice().newTexture2D((const vec2i&)size, type, data, flags);
 }
 OSPRAY_CATCH_END(nullptr)
 
@@ -668,7 +674,8 @@ extern "C" OSPError ospSetRegion(OSPVolume object, void *source,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().setRegion(object, source, (vec3i&)index, (vec3i&)count)
+  return currentDevice().setRegion(object, source,
+                                   (const vec3i&)index, (const vec3i&)count)
     ? OSP_NO_ERROR : OSP_UNKNOWN_ERROR;
 }
 OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
@@ -881,6 +888,6 @@ OSPRAY_CATCH_BEGIN
   }
 
   currentDevice().sampleVolume(results, volume,
-                               (vec3f*)&worldCoordinates, count);
+                               (const vec3f*)&worldCoordinates, count);
 }
 OSPRAY_CATCH_END()

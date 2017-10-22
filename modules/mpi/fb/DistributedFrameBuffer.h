@@ -78,7 +78,7 @@ namespace ospray {
                            bool hasVarianceBuffer,
                            bool masterIsAWorker = false);
 
-    ~DistributedFrameBuffer();
+    ~DistributedFrameBuffer() override ;
 
     // ==================================================================
     // framebuffer / device interface

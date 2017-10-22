@@ -17,6 +17,7 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "Fresnel.ih"
 
 struct DielectricLayer
 {

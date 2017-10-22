@@ -107,7 +107,7 @@ namespace ospray {
       camera motion, setting default camera position, etc. Nodes
       for which that does not apply can simpy return
       box3f(empty) */
-    box3f Instance::computeBounds() const
+    box3f Instance::bounds() const
     {
       box3f cbounds = child("model").bounds();
       if (cbounds.empty())

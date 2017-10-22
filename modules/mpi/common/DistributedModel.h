@@ -33,7 +33,7 @@ namespace ospray {
     struct DistributedModel : public Model
     {
       DistributedModel();
-      virtual ~DistributedModel() = default;
+      virtual ~DistributedModel() override = default;
 
       virtual std::string toString() const override;
 

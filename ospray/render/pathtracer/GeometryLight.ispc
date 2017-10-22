@@ -103,7 +103,7 @@ export void* uniform GeometryLight_create(void* uniform _geo
   self->xfm = xfm;
   self->rcp_xfm = rcp_xfm;
 
-  PathTraceMaterial *uniform mat = (PathTraceMaterial *uniform)geo->material;
+  PathTraceMaterial *uniform mat = (PathTraceMaterial *uniform)geo->materialList[0];
   self->radiance = mat->emission;
 
   const uniform int32 prims = geo->primitives;

@@ -27,7 +27,9 @@ namespace ospcommon {
     /*! abstraction of an object that we can serailize/write (raw) data into */
     struct WriteStream
     {
-      virtual void write(void *mem, size_t size) = 0;
+      virtual ~WriteStream() = default;
+
+      virtual void write(const void *mem, size_t size) = 0;
       virtual void flush() {}
     };
 
@@ -35,6 +37,8 @@ namespace ospcommon {
       then de-serialize into work objects */
     struct ReadStream
     {
+      virtual ~ReadStream() = default;
+
       virtual void read(void *mem, size_t size) = 0;
     };
 
@@ -42,7 +46,7 @@ namespace ospcommon {
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
-      buf.write((byte_t*)&rh, sizeof(T));
+      buf.write((const byte_t*)&rh, sizeof(T));
       return buf;
     }
 
@@ -59,7 +63,7 @@ namespace ospcommon {
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
+      buf.write((const byte_t*)rh.data(), sizeof(T)*sz);
       return buf;
     }
 
@@ -81,7 +85,7 @@ namespace ospcommon {
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
+      buf.write((const byte_t*)rh.data(), sizeof(T)*sz);
       return buf;
     }
     /*! @} */
@@ -91,7 +95,7 @@ namespace ospcommon {
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((byte_t*)rh.c_str(), sz);
+      buf.write((const void *)rh.data(), sz);
       return buf;
     }
 
@@ -100,7 +104,7 @@ namespace ospcommon {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      buf.read((byte_t*)rh.data(), sz);
+      buf.read((void *)rh.data(), sz);
       return buf;
     }
     /*! @} */
