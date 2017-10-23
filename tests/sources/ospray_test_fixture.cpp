@@ -18,7 +18,7 @@ Base::Base() {
     } else {
       std::string instantiationName = testCaseName.substr(0, pos);
       std::string className = testCaseName.substr(pos + 1);
-      testName = className + "_" + instantiationName + "_" + testInfoName; 
+      testName = className + "_" + instantiationName + "_" + testInfoName;
     }
     for (char& byte : testName)
       if (byte == '/')
@@ -28,10 +28,14 @@ Base::Base() {
   rendererType = "scivis";
   frames = 1;
   samplesPerPixel = 50;
+  SetImageTool();
+}
+
+void Base::SetImageTool() {
   try {
     imageTool = new OSPImageTools(imgSize, GetTestName(), frameBufferFormat);
   } catch (std::bad_alloc &e) {
-    ADD_FAILURE();
+    FAIL() << "Failed to create image tool.\n";
   }
 }
 
@@ -353,8 +357,7 @@ void Sierpinski::SetUp() {
 
   int size = 1 << level;
 
-  unsigned char* volumetricData = (unsigned char*)malloc(size * size * size * sizeof(unsigned char));
-  std::memset(volumetricData, 0, size * size * size);
+  volumetricData.resize(size*size*size, 0);
 
   auto getIndex = [size](int layer, int x, int y) {
     return size*size * layer + size * x + y;
@@ -375,7 +378,7 @@ void Sierpinski::SetUp() {
   }
 
   OSPVolume pyramid = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_UCHAR, (unsigned char*)volumetricData, OSP_DATA_SHARED_BUFFER);
+  OSPData voxelsData = ospNewData(size * size * size, OSP_UCHAR, volumetricData.data(), OSP_DATA_SHARED_BUFFER);
   ospSetData(pyramid, "voxelData", voxelsData);
   ospSet3i(pyramid, "dimensions", size, size, size);
   ospSetString(pyramid, "voxelType", "uchar");
@@ -442,8 +445,7 @@ void Torus::SetUp() {
 
   int size = 250;
 
-  float* volumetricData = (float*)malloc(size * size * size * sizeof(float));
-  std::memset(volumetricData, 0, size * size * size);
+  volumetricData.resize(size*size*size, 0);
 
   float r = 30;
   float R = 80;
@@ -462,7 +464,7 @@ void Torus::SetUp() {
   }
 
   OSPVolume torus = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT, volumetricData, OSP_DATA_SHARED_BUFFER);
+  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT, volumetricData.data(), OSP_DATA_SHARED_BUFFER);
   ospSetData(torus, "voxelData", voxelsData);
   ospSet3i(torus, "dimensions", size, size, size);
   ospSetString(torus, "voxelType", "float");

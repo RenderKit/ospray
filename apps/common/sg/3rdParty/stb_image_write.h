@@ -752,6 +752,7 @@ unsigned char * stbi_zlib_compress(unsigned char *data, int data_len, int *out_l
    int i,j, bitcount=0;
    unsigned char *out = NULL;
    unsigned char ***hash_table = (unsigned char***) STBIW_MALLOC(stbiw__ZHASH * sizeof(char**));
+   if(!hash_table) return 0;
    if (quality < 5) quality = 5;
 
    stbiw__sbpush(out, 0x78);   // DEFLATE 32K window
@@ -1161,7 +1162,7 @@ static int stbiw__jpg_processDU(stbi__write_context *s, int *bitBuf, int *bitCnt
       int startpos = i;
       int nrzeroes;
       unsigned short bits[2];
-      for (; DU[i]==0 && i<=end0pos; ++i) {
+      for (; i<=end0pos && DU[i]==0; ++i) {
       }
       nrzeroes = i-startpos;
       if ( nrzeroes >= 16 ) {

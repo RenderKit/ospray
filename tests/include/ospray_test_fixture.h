@@ -42,6 +42,8 @@ public:
 
   virtual void SetUp();
   virtual void TearDown();
+  Base& operator=(const Base&) = delete;
+  Base(const Base&) = delete;
 
   void AddLight(OSPLight new_light);
   void AddGeometry(OSPGeometry new_geometry);
@@ -59,6 +61,7 @@ protected:
   void SetLights();
   void SetRenderer();
   void SetFramebuffer();
+  void SetImageTool();
 
   void RenderFrame(const uint32_t frameBufferChannels = OSP_FB_COLOR | OSP_FB_ACCUM);
 };
@@ -107,6 +110,8 @@ protected:
 public:
   Sierpinski();
   virtual void SetUp();
+private:
+  std::vector<unsigned char> volumetricData;
 };
 
 // Fixture class used for tests that generates two isosurfaces, one in shape of a torus.
@@ -115,6 +120,8 @@ class Torus : public Base, public ::testing::TestWithParam<const char*> {
 public:
   Torus();
   virtual void SetUp();
+private:
+  std::vector<float> volumetricData;
 };
 
 // Fixture for test that renders three cuts of a cubic volume.
