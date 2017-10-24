@@ -49,14 +49,15 @@ const varying BSDF* uniform MetallicPaint_getBSDF(const uniform PathTraceMateria
   const vec3f color = self->baseColor * make_vec3f(dg.color)
     * get3f(self->map_baseColor, dg.st, make_vec3f(1.f));
   MultiBSDF_add(bsdf, 
-                Lambert_create(ctx, shadingFrame, color), 
+                Lambert_create(ctx, shadingFrame, color),
+                1.f,
                 luminance(color));
 
   if (self->flakeAmount > 0.f) {
     const vec3f r = self->flakeColor;
     const vec3f g = make_vec3f(self->flakeAmount);
     Fresnel *uniform fresnel = FresnelSchlick_create(ctx, r, g);
-    MultiBSDF_add(bsdf, MicrofacetConductor_create(ctx, shadingFrame, fresnel, self->flakeSpread), luminance(r));
+    MultiBSDF_add(bsdf, MicrofacetConductor_create(ctx, shadingFrame, fresnel, self->flakeSpread), 1.f, luminance(r));
   }
 
   bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);
