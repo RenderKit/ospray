@@ -255,6 +255,53 @@ MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
   ENDIF()
 ENDMACRO()
 
+# convenience macro that creates a loadable library with different
+# simd-instantiations.
+#
+# i.e., 'OSPRAY_CREATE_SIMD_LIBRARY(myLib <sources>)' would, when
+# targets sse, avx, and avx2 are all enabled, create one
+# libmyLib_sse.so that has 'sources' comiled with sse compile flags,
+# one libmyLib_avx.so compiles with avx, etc.
+MACRO(OSPRAY_CREATE_SIMD_LIBRARY LIBRARY_BASE_NAME)
+  OSPRAY_SPLIT_CREATE_ARGS(LIBRARY ${ARGN})
+
+  # -------------------------------------------------------
+  # to be cleaned up, and set somewhere globally!
+  SET(ISALIST sse avx avx2)
+  # the
+  SET(OSPRAY_CXXFLAGS_SSE4 -msse4.2 -DOSPRAY_SIMD_SSE=1)
+  SET(OSPRAY_CXXFLAGS_AVX  -mavx -DOSPRAY_SIMD_AVX=1)
+  SET(OSPRAY_CXXFLAGS_AVX2 -mavx2 -DOSPRAY_SIMD_AVX2=1)
+  SET(OSPRAY_ISPC_TARGET_SSE4 sse4)
+  SET(OSPRAY_ISPC_TARGET_AVX  avx)
+  SET(OSPRAY_ISPC_TARGET_AVX2 avx2)
+  # end 'to be cleaned up'
+  # -------------------------------------------------------
+  
+  FOREACH(ISA ${OSPRAY_SUPPORTED_ISAS})
+    # hack: prevent ispc from doing multi-target binaries in this module by
+    # temporarily setting a single-target ispc target list
+    SET (SAVED_OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST})
+    SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_${ISA}})
+    SET(OSPRAY_ISPC_TARGET_NAME ${ISA})
+
+    SET(LIBRARY_NAME ${LIBRARY_BASE_NAME}_${ISA})
+    OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
+    TARGET_COMPILE_OPTIONS(${LIBRARY_NAME} PRIVATE ${OSPRAY_CXXFLAGS_${ISA}})
+    TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${LIBRARY_LIBS})
+    OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
+    IF(${LIBRARY_EXCLUDE_FROM_ALL})
+      SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    ELSE()
+      OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME} ${LIBRARY_COMPONENT})
+    ENDIF()
+
+    # end of hack: restore original ispc target list for multi-target libraries
+    SET (OSPRAY_ISPC_TARGET_LIST ${SAVED_OSPRAY_ISPC_TARGET_LIST})
+    SET(OSPRAY_ISPC_TARGET_NAME "")
+  ENDFOREACH()
+ENDMACRO()
+
 ## Conveniance macro for creating OSPRay applications ##
 # Usage
 #

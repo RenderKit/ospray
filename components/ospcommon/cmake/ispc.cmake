@@ -135,7 +135,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
     ELSEIF ("${dir}" MATCHES "^[A-Z]:") # absolute DOS-style path to input
       STRING(REGEX REPLACE "^[A-Z]:" "${ISPC_TARGET_DIR}/rebased/" outdir "${dir}")
     ELSE() # relative path to input
-      SET(outdir "${ISPC_TARGET_DIR}/local_${dir}")
+      SET(outdir "${ISPC_TARGET_DIR}/local_${OSPRAY_ISPC_TARGET_NAME}_${dir}")
       SET(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
     ENDIF()
 
