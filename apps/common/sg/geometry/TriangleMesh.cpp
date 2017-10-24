@@ -22,7 +22,6 @@ namespace ospray {
 
     TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
     {
-      createChild("materialList", "MaterialList");
     }
 
     std::string TriangleMesh::toString() const

@@ -204,8 +204,10 @@ SampleAreaRes StreamLines_sampleArea(
 
 void StreamLines_getAreas(
     const Geometry *const uniform _self
+    , const int32 *const uniform primIDs
+    , const uniform int32 numPrims
     , const uniform affine3f &xfm
-    , float *const uniform area
+    , float *const uniform areas
     )
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
@@ -225,21 +227,20 @@ void StreamLines_getAreas(
   // spheres at vertices
   const uniform float sphereArea = four_pi * sqr(self->radius * scaling);
   const uniform int32 spheres = self->numVertices;
-  // initialize with zero per default (i.e. deactivate sampling)
-  foreach(i = 0 ... spheres)
-    area[i] = 0.f;
 
   // cylinders for segments; area of a cylinder with unit-length
   const uniform float cyl1Area = two_pi * self->radius * sqr(scaling);
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-  for(uniform int32 i = spheres; i < self->super.primitives; i++) {
-    const uniform uint32 idx = self->index[i - spheres];
-    const uniform vec3f v0 = make_vec3f(self->vertex[idx]);
-    const uniform vec3f v1 = make_vec3f(self->vertex[idx+1]);
-    area[i] = cyl1Area * length(v0 - v1);
-    // only set area for spheres which are actually part of a segment
-    area[idx] = sphereArea;
-    area[idx+1] = sphereArea;
+  for (uniform int32 i = 0; i < numPrims; i++) {
+    const uniform int32 primID = primIDs[i];
+    if (primID < spheres) { // sphere
+      areas[i] = sphereArea;
+    } else { // cylinder
+      const uniform uint32 idx = self->index[primID - spheres];
+      const uniform vec3f v0 = make_vec3f(self->vertex[idx]);
+      const uniform vec3f v1 = make_vec3f(self->vertex[idx+1]);
+      areas[i] = cyl1Area * length(v0 - v1);
+    }
   }
 }
 
@@ -272,7 +273,7 @@ StreamLines_set(void *uniform _self,
   self->vertex = vertex;
   self->index = index;
   // XXX different representation for area sampling, see above
-  self->super.primitives = numVertices + numSegments;
+  self->super.numPrimitives = numVertices + numSegments;
   self->super.getAreas = StreamLines_getAreas;
   self->super.sampleArea = StreamLines_sampleArea;
   self->numVertices = numVertices;

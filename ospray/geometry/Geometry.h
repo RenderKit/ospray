@@ -18,6 +18,7 @@
 
 #include "common/Managed.h"
 #include "common/OSPCommon.h"
+#include "common/Data.h"
 #include "common/Material.h"
 
 namespace ospray {
@@ -39,13 +40,13 @@ namespace ospray {
     Geometry();
     virtual ~Geometry() override = default;
 
-    //! set given geometry's material.
-    /*! all material assignations should go through this function; the
-        'material' field itself is private). This allows the
-        respective geometry's derived instance to always properly set
-        the material field of the ISCP-equivalent whenever the
-        c++-side's material gets changed */
+    //! set given geometry's materials.
+    /*! all material assignations should go through these functions;
+        This allows the respective geometry's derived instance to
+        always properly set the material field of the ISCP-equivalent
+        whenever the C++-side's material gets changed */
     virtual void setMaterial(Material *mat);
+    virtual void setMaterialList(Data *matListData);
 
     //! get material assigned to this geometry
     virtual Material *getMaterial() const;
@@ -67,10 +68,12 @@ namespace ospray {
 
     box3f bounds {empty};
 
-    //! material associated to this geometry
-    /*! this field is private to make sure it is only set through
-        'setMaterial' (see comment there) */
-    Ref<Material> material;
+    //! materials associated to this geometry
+    /*! these fields should be set only through
+        'setMaterial' and 'setMaterialList' (see comments there) */
+    Material **materialList {nullptr};   //!< per-primitive material list
+    Ref<Data> materialListData;          //!< data array for per-prim materials
+    std::vector<void*> ispcMaterialPtrs; //!< pointers to ISPC equivalent materials
   };
 
   /*! \brief registers a internal ospray::<ClassName> geometry under

@@ -92,6 +92,11 @@ namespace ospray {
       auto sgMaterials =
           createNode("materialList", "MaterialList")->nodeAs<MaterialList>();
 
+      if (mats.empty()) {
+        sgMaterials->push_back(createNode("default", "Material")->nodeAs<Material>());
+        return sgMaterials;
+      }
+
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
         auto &matNode   = *matNodePtr;

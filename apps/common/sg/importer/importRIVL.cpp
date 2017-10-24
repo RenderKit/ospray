@@ -336,6 +336,7 @@ namespace ospray {
             char* value = strdup(child.content.c_str());
             auto materialListNode =
                 mesh->child("materialList").nodeAs<MaterialList>();
+            materialListNode->clear();
             for(char *s = strtok((char*)value," \t\n\r");
                 s;
                 s = strtok(nullptr," \t\n\r")) {
