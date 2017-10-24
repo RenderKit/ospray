@@ -133,6 +133,10 @@ namespace ospray {
   extern "C" int main(int argc, const char *argv[])
   {
     initializeOSPRay(argc, argv);
+
+    // access/load symbols/sg::Nodes dynamically
+    loadLibrary("ospray_sg");
+
     parseCommandLine(argc, argv);
 
     // Setup scene nodes //////////////////////////////////////////////////////
