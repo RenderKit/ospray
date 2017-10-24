@@ -38,20 +38,20 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        Texture2D *map_baseColor = (Texture2D*)getParamObject("map_baseColor");
+        Texture2D* map_baseColor = (Texture2D*)getParamObject("map_baseColor");
         affine2f xform_baseColor = getTextureTransform("map_baseColor");
-        vec3f baseColor = getParam3f("baseColor", map_baseColor ? vec3f(1.f) : vec3f(0.9f));
+        vec3f baseColor = getParam3f("baseColor", map_baseColor ? vec3f(1.f) : vec3f(0.8f));
         
-        Texture2D *map_metallic = (Texture2D*)getParamObject("map_metallic");
+        Texture2D* map_metallic = (Texture2D*)getParamObject("map_metallic");
         affine2f xform_metallic = getTextureTransform("map_metallic");
         float metallic = getParamf("metallic", map_metallic ? 1.f : 0.f);
 
-        const vec3f& edgeColor = getParam3f("edgeColor", vec3f(1.f));
-        Texture2D *map_edgeColor = (Texture2D*)getParamObject("map_edgeColor");
+        vec3f edgeColor = getParam3f("edgeColor", vec3f(1.f));
+        Texture2D* map_edgeColor = (Texture2D*)getParamObject("map_edgeColor");
         affine2f xform_edgeColor = getTextureTransform("map_edgeColor");
 
-        const float roughness = getParamf("roughness", 0.1f);
-        Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
+        float roughness = getParamf("roughness", 0.1f);
+        Texture2D* map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness");
 
         ispc::PathTracer_Principled_set(getIE(),

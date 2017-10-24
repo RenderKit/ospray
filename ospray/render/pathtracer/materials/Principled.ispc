@@ -51,7 +51,7 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
   varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
 
-  const vec3f baseColor = self->baseColor * make_vec3f(dg.color) * get3f(self->map_baseColor, dg.st, make_vec3f(1.f));
+  const vec3f baseColor = self->baseColor * get3f(self->map_baseColor, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color);
   const float metallic = self->metallic * get1f(self->map_metallic, dg.st, 1.f);
   const vec3f edgeColor = self->edgeColor * get3f(self->map_edgeColor, dg.st, make_vec3f(1.f));
   const float roughness = self->roughness * get1f(self->map_roughness, dg.st, 1.f);
