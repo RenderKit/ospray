@@ -102,7 +102,8 @@ namespace ospray {
             matNode["type"] = param.second;
             std::cout << "Creating material node of type " << param.second
                       << std::endl;
-            addOBJparams = false;
+            if (param.second != "OBJMaterial" && param.second != "default")
+              addOBJparams = false;
           } else {
             std::string paramType;
             ospcommon::utility::Any paramValue;
