@@ -89,8 +89,14 @@ MACRO (ADD_DEFINITIONS_ISPC)
 ENDMACRO ()
 
 MACRO (OSPRAY_ISPC_COMPILE)
+  message("ospray_ispc_compile OSPRAY_ISPC_TARGET_LIST=${OSPRAY_ISPC_TARGET_LIST} - args = ${ARGN}")
   SET(ISPC_ADDITIONAL_ARGS "")
-  SET(ISPC_TARGETS ${OSPRAY_ISPC_TARGET_LIST})
+  # iw: adding 'sse2' here forces ispc to generate multi-isa binaries
+  # even if we "want" only a single one - this is required because
+  # embree is compiled with multi-isa, and if we use a single-isa
+  # we'll get function symbols that are differently mangled than the
+  # one in embree, so will get link errors...
+  SET(ISPC_TARGETS sse2;${OSPRAY_ISPC_TARGET_LIST})
 
   SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
   STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
@@ -153,7 +159,6 @@ MACRO (OSPRAY_ISPC_COMPILE)
     ENDIF ()
 
     SET(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
-
     # if we have multiple targets add additional object files
     LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
     IF (NUM_TARGETS GREATER 1)
@@ -162,6 +167,8 @@ MACRO (OSPRAY_ISPC_COMPILE)
         SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
       ENDFOREACH()
     ENDIF()
+    message("results ${results}")
+    message(" ispc call: -o ${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
 
     ADD_CUSTOM_COMMAND(
       OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h
@@ -184,7 +191,8 @@ MACRO (OSPRAY_ISPC_COMPILE)
       DEPENDS ${input} ${deps}
       COMMENT "Building ISPC object ${outdir}/${fname}.dev${ISPC_TARGET_EXT}"
     )
-
-    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
+  
+  SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
+  message("ISPC_OBJECTS ${ISPC_OBJECTS}")
   ENDFOREACH()
 ENDMACRO()
