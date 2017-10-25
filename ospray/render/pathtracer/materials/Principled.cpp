@@ -48,7 +48,7 @@ namespace ospray {
 
         Texture2D* map_specular = (Texture2D*)getParamObject("map_specular");
         affine2f xform_specular = getTextureTransform("map_specular");
-        float specular = getParamf("specular", 0.5f);
+        float specular = getParamf("specular", map_specular ? 1.f : 0.f);
 
         Texture2D* map_edgeColor = (Texture2D*)getParamObject("map_edgeColor");
         affine2f xform_edgeColor = getTextureTransform("map_edgeColor");
@@ -56,14 +56,34 @@ namespace ospray {
         
         Texture2D* map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness");
-        float roughness = getParamf("roughness", 0.1f);
+        float roughness = getParamf("roughness", map_roughness ? 1.f : 0.1f);
+        
+        Texture2D* map_coat = (Texture2D*)getParamObject("map_coat");
+        affine2f xform_coat = getTextureTransform("map_coat");
+        float coat = getParamf("coat", map_coat ? 1.f : 0.f);
+
+        Texture2D* map_coatColor = (Texture2D*)getParamObject("map_coatColor");
+        affine2f xform_coatColor = getTextureTransform("map_coatColor");
+        vec3f coatColor = getParam3f("coatColor", vec3f(1.f));
+
+        Texture2D* map_coatThickness = (Texture2D*)getParamObject("map_coatThickness");
+        affine2f xform_coatThickness = getTextureTransform("map_coatThickness");
+        float coatThickness = getParamf("coatThickness", 1.f);
+        
+        Texture2D* map_coatRoughness = (Texture2D*)getParamObject("map_coatRoughness");
+        affine2f xform_coatRoughness = getTextureTransform("map_coatRoughness");
+        float coatRoughness = getParamf("coatRoughness", map_coatRoughness ? 1.f : 0.f);
 
         ispc::PathTracer_Principled_set(getIE(),
           (const ispc::vec3f&)baseColor, map_baseColor ? map_baseColor->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_baseColor,
           metallic, map_metallic ? map_metallic->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_metallic,
           specular, map_specular ? map_specular->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_specular,
           (const ispc::vec3f&)edgeColor, map_edgeColor ? map_edgeColor->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_edgeColor,
-          roughness, map_roughness ? map_roughness->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_roughness);
+          roughness, map_roughness ? map_roughness->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_roughness,
+          coat, map_coat ? map_coat->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_coat,
+          (const ispc::vec3f&)coatColor, map_coatColor ? map_coatColor->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_coatColor,
+          coatThickness, map_coatThickness ? map_coatThickness->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_coatThickness,
+          coatRoughness, map_coatRoughness ? map_coatRoughness->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_coatRoughness);
       }
     };
 
