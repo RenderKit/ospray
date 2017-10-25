@@ -72,7 +72,7 @@ namespace ospray {
       const size_t numRegions = distribModel->myRegions.size()
         + distribModel->othersRegions.size();
 
-      beginFrame(dfb);
+      const void *perFrameData = beginFrame(dfb);
       // This renderer doesn't use per frame data, since we sneak in some tile
       // info in this pointer.
       assert(!perFrameData);
