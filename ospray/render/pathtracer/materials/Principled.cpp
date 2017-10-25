@@ -46,17 +46,22 @@ namespace ospray {
         affine2f xform_metallic = getTextureTransform("map_metallic");
         float metallic = getParamf("metallic", map_metallic ? 1.f : 0.f);
 
-        vec3f edgeColor = getParam3f("edgeColor", vec3f(1.f));
+        Texture2D* map_specular = (Texture2D*)getParamObject("map_specular");
+        affine2f xform_specular = getTextureTransform("map_specular");
+        float specular = getParamf("specular", 0.5f);
+
         Texture2D* map_edgeColor = (Texture2D*)getParamObject("map_edgeColor");
         affine2f xform_edgeColor = getTextureTransform("map_edgeColor");
-
-        float roughness = getParamf("roughness", 0.1f);
+        vec3f edgeColor = getParam3f("edgeColor", vec3f(1.f));
+        
         Texture2D* map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness");
+        float roughness = getParamf("roughness", 0.1f);
 
         ispc::PathTracer_Principled_set(getIE(),
           (const ispc::vec3f&)baseColor, map_baseColor ? map_baseColor->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_baseColor,
           metallic, map_metallic ? map_metallic->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_metallic,
+          specular, map_specular ? map_specular->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_specular,
           (const ispc::vec3f&)edgeColor, map_edgeColor ? map_edgeColor->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_edgeColor,
           roughness, map_roughness ? map_roughness->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_roughness);
       }

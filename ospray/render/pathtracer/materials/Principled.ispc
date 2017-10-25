@@ -20,6 +20,8 @@
 #include "../bsdfs/Lambert.ih"
 #include "../bsdfs/Conductor.ih"
 #include "../bsdfs/MicrofacetConductor.ih"
+#include "../bsdfs/DielectricLayer.ih"
+#include "../bsdfs/MicrofacetDielectricLayer.ih"
 #include "math/spectrum.ih"
 
 struct Principled
@@ -32,8 +34,12 @@ struct Principled
   float metallic;
   TextureParam map_metallic;
   
-  vec3f edgeColor; // reflectivity at grazing angle (90 deg)
+  float specular; // dielectric specular reflectivity in [0, 1]; specular = sqr((ior-1)/(ior+1))/0.08
+  TextureParam map_specular;
+  
+  vec3f edgeColor; // metallic reflectivity at grazing angle (90 deg) / edge tint
   TextureParam map_edgeColor;
+  
   float roughness; // in [0, 1]; 0==ideally smooth (mirror)
   TextureParam map_roughness;
 };
@@ -53,21 +59,37 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
 
   const vec3f baseColor = self->baseColor * get3f(self->map_baseColor, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color);
   const float metallic = self->metallic * get1f(self->map_metallic, dg.st, 1.f);
-  const vec3f edgeColor = self->edgeColor * get3f(self->map_edgeColor, dg.st, make_vec3f(1.f));
   const float roughness = self->roughness * get1f(self->map_roughness, dg.st, 1.f);
 
+  // dielectric diffuse+specular
   const float diffuse = 1.f - metallic;
-  if (diffuse > 1e-5f)
-    MultiBSDF_add(bsdf, Lambert_create(ctx, frame, baseColor), diffuse, luminance(baseColor)*diffuse);
+  if (diffuse > 1e-5f) {
+    // diffuse
+    varying BSDF* uniform diffuseBsdf = Lambert_create(ctx, frame, baseColor);
     
+    // specular
+    const float specular = self->specular * get1f(self->map_specular, dg.st, 1.f);
+    if (specular > 1e-5f) {
+      const float specularIor = (2.f / (1.f - sqrt(0.08f * specular))) - 1.f;
+      if (roughness < 1e-5f)
+        diffuseBsdf = DielectricLayer_create(ctx, frame, diffuseBsdf, rcp(specularIor), make_vec3f(1.f), 1.f);
+      else
+        diffuseBsdf = MicrofacetDielectricLayer_create(ctx, frame, diffuseBsdf, rcp(specularIor), make_vec3f(1.f), 1.f, roughness);
+    }
+
+    MultiBSDF_add(bsdf, diffuseBsdf, diffuse, luminance(baseColor)*diffuse);
+  }
+    
+  // conductor
   if (metallic > 1e-5f) {
-    Fresnel* uniform fresnel = FresnelSchlick_create(ctx, baseColor, edgeColor);
-    varying BSDF* uniform conductor;
+    const vec3f edgeColor = self->edgeColor * get3f(self->map_edgeColor, dg.st, make_vec3f(1.f));
+    Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
+    varying BSDF* uniform conductorBsdf;
     if (roughness < 1e-5f)
-      conductor = Conductor_create(ctx, frame, fresnel);
+      conductorBsdf = Conductor_create(ctx, frame, fresnel);
     else
-      conductor = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
-    MultiBSDF_add(bsdf, conductor, metallic, luminance(baseColor)*metallic);
+      conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
+    MultiBSDF_add(bsdf, conductorBsdf, metallic, luminance(baseColor)*metallic);
   }
 
   return bsdf;
@@ -79,6 +101,7 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
 export void* uniform PathTracer_Principled_set(void* uniform _self,
     const uniform vec3f& baseColor, void* uniform map_baseColor, const uniform affine2f& xform_baseColor,
     uniform float metallic, void* uniform map_metallic, const uniform affine2f& xform_metallic,
+    uniform float specular, void* uniform map_specular, const uniform affine2f& xform_specular,
     const uniform vec3f& edgeColor, void* uniform map_edgeColor, const uniform affine2f& xform_edgeColor,
     uniform float roughness, void* uniform map_roughness, const uniform affine2f& xform_roughness)
 {
@@ -89,6 +112,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   
   self->metallic = metallic;
   self->map_metallic = make_TextureParam((uniform Texture2D*)map_metallic, xform_metallic);
+  
+  self->specular = specular;
+  self->map_specular = make_TextureParam((uniform Texture2D*)map_specular, xform_specular);
 
   self->edgeColor = edgeColor;
   self->map_edgeColor = make_TextureParam((uniform Texture2D*)map_edgeColor, xform_edgeColor);
@@ -104,6 +130,7 @@ export void* uniform PathTracer_Principled_create()
   uniform affine2f xform = make_AffineSpace2f_identity();
   PathTracer_Principled_set(self,
     make_vec3f(0.9f), NULL, xform,
+    0.0f, NULL, xform,
     0.0f, NULL, xform,
     make_vec3f(1.f), NULL, xform,
     0.1f, NULL, xform);
