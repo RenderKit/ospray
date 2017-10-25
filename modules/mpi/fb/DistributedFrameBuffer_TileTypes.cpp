@@ -69,8 +69,11 @@ namespace ospray {
         break;
       case OSP_FB_SRGBA:
         DFB_accumulate = &ispc::DFB_accumulate_SRGBA;
+        break;
+      default:
+        break;
     }
-    error = DFB_accumulate((ispc::VaryingTile*)&tile
+    error = DFB_accumulate((const ispc::VaryingTile*)&tile
         , (ispc::VaryingTile*)&final
         , (ispc::VaryingTile*)&accum
         , (ispc::VaryingTile*)&variance
@@ -173,7 +176,7 @@ namespace ospray {
         memcpy(&bufferedTile, &tile, sizeof(ospray::Tile));
         tileBuffered = true;
       } else
-        ispc::DFB_accumulate_only((ispc::VaryingTile*)&tile
+        ispc::DFB_accumulate_only((const ispc::VaryingTile*)&tile
             , (ispc::VaryingTile*)&this->accum
             , (ispc::VaryingTile*)&this->variance
             );
@@ -189,6 +192,9 @@ namespace ospray {
           break;
         case OSP_FB_SRGBA:
           DFB_readout = &ispc::DFB_readout_SRGBA;
+          break;
+        default:
+        break;
       }
       auto sz = tile.region.size();
 
@@ -249,7 +255,7 @@ namespace ospray {
       if (numPartsComposited == 0)
         memcpy(&compositedTileData, &tile, sizeof(tile));
       else
-        ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
+        ispc::DFB_zComposite((const ispc::VaryingTile*)&tile,
                              (ispc::VaryingTile*)&this->compositedTileData);
 
       done = (++numPartsComposited == numWorkers);

@@ -20,6 +20,8 @@
 #include "constants.h"
 #include "math.h"
 
+#include "TypeTraits.h"
+
 namespace ospcommon {
 
   template <typename T, int N, int ALIGN = 0>
@@ -36,7 +38,7 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 2> &o) = default;
+    //inline vec_t(const vec_t<T, 2> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s)
     {
@@ -45,8 +47,13 @@ namespace ospcommon {
     {
     }
 
-    template <typename OT>
-    explicit inline vec_t(const vec_t<OT, 2> &o) : x(o.x), y(o.y)
+    #if 0
+    template <typename OT,
+              typename = traits::enable_if_t<!std::is_same<T, OT>::value>>
+    #else
+    template <typename OT, int OA>
+    #endif
+    explicit inline vec_t(const vec_t<OT, 2, OA> &o) : x(o.x), y(o.y)
     {
     }
 
@@ -82,7 +89,7 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 3> &o) = default;
+    //inline vec_t(const vec_t<T, 3> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s), z(s)
     {
@@ -128,7 +135,7 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 3, 1> &o) = default;
+    //inline vec_t(const vec_t<T, 3, 1> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s), z(s)
     {
@@ -136,7 +143,9 @@ namespace ospcommon {
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
     }
-    inline vec_t(const vec_t<T, 3> &o) : x(o.x), y(o.y), z(o.z)
+
+    template <typename OT, int OA>
+    inline vec_t(const vec_t<OT, 3, OA> &o) : x(o.x), y(o.y), z(o.z)
     {
     }
 
@@ -178,7 +187,7 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 4> &o) = default;
+    //inline vec_t(const vec_t<T, 4> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s), z(s), w(s)
     {
@@ -187,11 +196,15 @@ namespace ospcommon {
         : x(x), y(y), z(z), w(w)
     {
     }
-    inline vec_t(const vec_t<T, 3> &o, const T w) : x(o.x), y(o.y), z(o.z), w(w)
+
+    template <typename OT, typename WT>
+    inline vec_t(const vec_t<OT, 3> &o, const WT w)
+        : x(o.x), y(o.y), z(o.z), w(w)
     {
     }
-    template <typename OT>
-    explicit inline vec_t(const vec_t<OT, 4> &o)
+
+    template <typename OT, int OA>
+    explicit inline vec_t(const vec_t<OT, 4, OA> &o)
         : x(o.x), y(o.y), z(o.z), w(o.w)
     {
     }

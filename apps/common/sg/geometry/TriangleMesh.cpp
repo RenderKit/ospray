@@ -30,7 +30,7 @@ namespace ospray {
       return "ospray::sg::TriangleMesh";
     }
 
-    box3f TriangleMesh::computeBounds() const
+    box3f TriangleMesh::bounds() const
     {
       box3f bounds = empty;
       if (hasChild("vertex")) {
@@ -57,33 +57,9 @@ namespace ospray {
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void TriangleMesh::setFromXML(const xml::Node &node,
-                                  const unsigned char *binBasePtr)
+    void TriangleMesh::setFromXML(const xml::Node &, const unsigned char *)
     {
-      std::string fileName = node.getProp("fileName");
-      if (fileName.empty()) {
-        xml::for_each_child_of(node, [&](const xml::Node &child){
-            if (child.name == "vertex") {
-              size_t num = std::stoll(child.getProp("num"));
-              size_t ofs = std::stoll(child.getProp("ofs"));
-
-              auto vertex_buf =
-                std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),
-                                              num,
-                                              false);
-              add(vertex_buf);
-            }
-            else if (child.name == "index") {
-              size_t num = std::stoll(child.getProp("num"));
-              size_t ofs = std::stoll(child.getProp("ofs"));
-              auto index_buf =
-                std::make_shared<DataArray3i>((vec3i*)((char*)binBasePtr+ofs),
-                                              num,
-                                              false);
-              add(index_buf);
-            }
-          });
-      }
+      NOT_IMPLEMENTED;
     }
 
     void TriangleMesh::preCommit(RenderContext &ctx)

@@ -97,7 +97,7 @@ namespace ospray {
     public:
 
       ManagedObject_T(OSP_TYPE object = nullptr);
-      virtual ~ManagedObject_T();
+      virtual ~ManagedObject_T() override;
 
       void set(const std::string &name, const std::string &v) const override;
 

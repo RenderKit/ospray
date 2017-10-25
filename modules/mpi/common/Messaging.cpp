@@ -85,8 +85,8 @@ namespace ospray {
       {
         auto instance =
             make_deleted_unique<ObjectMessageHandler>(
-              [](ObjectMessageHandler *handler){
-                handlerValid = false; delete handler;
+              [](ObjectMessageHandler *_handler){
+                handlerValid = false; delete _handler;
               }
             );
 

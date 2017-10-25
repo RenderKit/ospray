@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+ospray_disable_compiler_warnings()
+
 # this subdirectory demonstrates on how to _use_ demo module from
 # within a simple viewer
 
@@ -22,7 +24,7 @@
 # example) get loaded through ospLoadModule(...), which will make sure
 # the module gets properly oaded on all worker nodes, even if those
 # live on different nodes, accelerator cards, memory spaces, etc.
-OSPRAY_CREATE_APPLICATION(ospBilinearPatchViewer
+ospray_create_application(ospBilinearPatchViewer
   # the actual viewer
   bilinearPatchViewer.cpp
   # helper code to parse demo files

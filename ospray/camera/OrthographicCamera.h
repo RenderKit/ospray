@@ -48,7 +48,7 @@ namespace ospray {
   {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     OrthographicCamera();
-    ~OrthographicCamera() = default;
+    ~OrthographicCamera() override = default;
 
     virtual std::string toString() const override;
     virtual void commit() override;

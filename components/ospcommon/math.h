@@ -44,7 +44,7 @@ namespace ospcommon
   __forceinline int cast_f2i(float f) {
     union { float f; int i; } v; v.f = f; return v.i;
   }
-  
+
   __forceinline float cast_i2f(int i) {
     union { float f; int i; } v; v.i = i; return v.f;
   }
@@ -56,23 +56,23 @@ namespace ospcommon
   __forceinline float sign ( const float x ) { return x<0?-1.0f:1.0f; }
   __forceinline float sqr  ( const float x ) { return x*x; }
 
-  __forceinline float rcp  ( const float x ) 
+  __forceinline float rcp  ( const float x )
   {
     const __m128 a = _mm_set_ss(x);
     const __m128 r = _mm_rcp_ps(a);
     return _mm_cvtss_f32(_mm_mul_ps(r,_mm_sub_ps(_mm_set_ss(2.0f), _mm_mul_ps(r, a))));
   }
 
-  __forceinline float signmsk ( const float x ) { 
+  __forceinline float signmsk ( const float x ) {
     return _mm_cvtss_f32(_mm_and_ps(_mm_set_ss(x),_mm_castsi128_ps(_mm_set1_epi32(0x80000000))));
   }
-  __forceinline float xorf( const float x, const float y ) { 
+  __forceinline float xorf( const float x, const float y ) {
     return _mm_cvtss_f32(_mm_xor_ps(_mm_set_ss(x),_mm_set_ss(y)));
   }
-  __forceinline float andf( const float x, const unsigned y ) { 
+  __forceinline float andf( const float x, const unsigned y ) {
     return _mm_cvtss_f32(_mm_and_ps(_mm_set_ss(x),_mm_castsi128_ps(_mm_set1_epi32(y))));
   }
-  __forceinline float rsqrt( const float x ) { 
+  __forceinline float rsqrt( const float x ) {
     const __m128 a = _mm_set_ss(x);
     const __m128 r = _mm_rsqrt_ps(a);
     const __m128 c = _mm_add_ps(_mm_mul_ps(_mm_set_ps1(1.5f), r),
@@ -177,7 +177,7 @@ namespace ospcommon
   template<> __forceinline float  random() { return rand()/float(RAND_MAX); }
   template<> __forceinline double random() { return rand()/double(RAND_MAX); }
 
-#if _WIN32
+#ifdef _WIN32
   __forceinline double drand48() {
     return double(rand())/double(RAND_MAX);
   }
@@ -192,9 +192,9 @@ namespace ospcommon
   __forceinline int   select(bool s, int   t,   int f) { return s ? t : f; }
   __forceinline float select(bool s, float t, float f) { return s ? t : f; }
 
-  template<typename T> 
+  template<typename T>
     __forceinline T lerp2(const float x0, const float x1, const float x2, const float x3,const T &u, const T &v) {
-    return (1.0f-u)*(1.0f-v)*x0 + u*(1.0f-v)*x1 + (1.0f-u)*v*x2 + u*v*x3; 
+    return (1.0f-u)*(1.0f-v)*x0 + u*(1.0f-v)*x1 + (1.0f-u)*v*x2 + u*v*x3;
   }
 
   // -------------------------------------------------------
@@ -224,47 +224,47 @@ namespace ospcommon
     __forceinline T bitInterleave(const T& xin, const T& yin, const T& zin)
   {
 	T x = xin, y = yin, z = zin;
-    x = (x | (x << 16)) & 0x030000FF; 
-    x = (x | (x <<  8)) & 0x0300F00F; 
-    x = (x | (x <<  4)) & 0x030C30C3; 
-    x = (x | (x <<  2)) & 0x09249249; 
-    
-    y = (y | (y << 16)) & 0x030000FF; 
-    y = (y | (y <<  8)) & 0x0300F00F; 
-    y = (y | (y <<  4)) & 0x030C30C3; 
-    y = (y | (y <<  2)) & 0x09249249; 
-    
-    z = (z | (z << 16)) & 0x030000FF; 
-    z = (z | (z <<  8)) & 0x0300F00F; 
-    z = (z | (z <<  4)) & 0x030C30C3; 
-    z = (z | (z <<  2)) & 0x09249249; 
-    
+    x = (x | (x << 16)) & 0x030000FF;
+    x = (x | (x <<  8)) & 0x0300F00F;
+    x = (x | (x <<  4)) & 0x030C30C3;
+    x = (x | (x <<  2)) & 0x09249249;
+
+    y = (y | (y << 16)) & 0x030000FF;
+    y = (y | (y <<  8)) & 0x0300F00F;
+    y = (y | (y <<  4)) & 0x030C30C3;
+    y = (y | (y <<  2)) & 0x09249249;
+
+    z = (z | (z << 16)) & 0x030000FF;
+    z = (z | (z <<  8)) & 0x0300F00F;
+    z = (z | (z <<  4)) & 0x030C30C3;
+    z = (z | (z <<  2)) & 0x09249249;
+
     return x | (y << 1) | (z << 2);
   }
 
   /*! bit interleave operation for 64bit data types*/
   template<class T>
     __forceinline T bitInterleave64(const T& xin, const T& yin, const T& zin){
-    T x = xin & 0x1fffff; 
-    T y = yin & 0x1fffff; 
-    T z = zin & 0x1fffff; 
+    T x = xin & 0x1fffff;
+    T y = yin & 0x1fffff;
+    T z = zin & 0x1fffff;
 
-    x = (x | x << 32) & 0x1f00000000ffff;  
-    x = (x | x << 16) & 0x1f0000ff0000ff;  
-    x = (x | x << 8) & 0x100f00f00f00f00f; 
-    x = (x | x << 4) & 0x10c30c30c30c30c3; 
+    x = (x | x << 32) & 0x1f00000000ffff;
+    x = (x | x << 16) & 0x1f0000ff0000ff;
+    x = (x | x << 8) & 0x100f00f00f00f00f;
+    x = (x | x << 4) & 0x10c30c30c30c30c3;
     x = (x | x << 2) & 0x1249249249249249;
 
-    y = (y | y << 32) & 0x1f00000000ffff;  
-    y = (y | y << 16) & 0x1f0000ff0000ff;  
-    y = (y | y << 8) & 0x100f00f00f00f00f; 
-    y = (y | y << 4) & 0x10c30c30c30c30c3; 
+    y = (y | y << 32) & 0x1f00000000ffff;
+    y = (y | y << 16) & 0x1f0000ff0000ff;
+    y = (y | y << 8) & 0x100f00f00f00f00f;
+    y = (y | y << 4) & 0x10c30c30c30c30c3;
     y = (y | y << 2) & 0x1249249249249249;
 
-    z = (z | z << 32) & 0x1f00000000ffff;  
-    z = (z | z << 16) & 0x1f0000ff0000ff;  
-    z = (z | z << 8) & 0x100f00f00f00f00f; 
-    z = (z | z << 4) & 0x10c30c30c30c30c3; 
+    z = (z | z << 32) & 0x1f00000000ffff;
+    z = (z | z << 16) & 0x1f0000ff0000ff;
+    z = (z | z << 8) & 0x100f00f00f00f00f;
+    z = (z | z << 4) & 0x10c30c30c30c30c3;
     z = (z | z << 2) & 0x1249249249249249;
 
     return x | (y << 1) | (z << 2);

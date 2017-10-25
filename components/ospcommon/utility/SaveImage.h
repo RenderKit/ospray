@@ -21,32 +21,52 @@
 #include <errno.h>
 
 #include "../malloc.h"
+#include "../vec.h"
 
 namespace ospcommon {
   namespace utility {
 
-    inline void writePPM(const std::string &fileName,
-                         const int sizeX, const int sizeY,
-                         const uint32_t *pixel)
+    template <typename COMP_T, typename PIXEL_T, bool flip>
+    inline void writeImage(const std::string &fileName,
+          const char *const header,
+          const int sizeX, const int sizeY,
+          const PIXEL_T *const pixel)
     {
       FILE *file = fopen(fileName.c_str(), "wb");
-      if(file == nullptr) {
-        throw std::runtime_error("Can't open file for writePPM!");
-      }
+      if (file == nullptr)
+        throw std::runtime_error("Can't open file for writeP[FP]M!");
 
-      fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-      unsigned char *out = (unsigned char *)alloca(3*sizeX);
+      fprintf(file, header, sizeX, sizeY);
+      auto out = STACK_BUFFER(COMP_T, 3*sizeX);
       for (int y = 0; y < sizeY; y++) {
-        auto *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
+        auto *in = (const COMP_T*)&pixel[(flip?sizeY-1-y:y)*sizeX];
         for (int x = 0; x < sizeX; x++) {
           out[3*x + 0] = in[4*x + 0];
           out[3*x + 1] = in[4*x + 1];
           out[3*x + 2] = in[4*x + 2];
         }
-        fwrite(out, 3*sizeX, sizeof(char), file);
+        fwrite(out, 3*sizeX, sizeof(COMP_T), file);
       }
       fprintf(file, "\n");
       fclose(file);
+    }
+
+    inline void writePPM(const std::string &fileName,
+                         const int sizeX, const int sizeY,
+                         const uint32_t *pixel)
+    {
+      writeImage<unsigned char, uint32_t, true>(fileName, "P6\n%i %i\n255\n",
+          sizeX, sizeY, pixel);
+    }
+
+    template <typename T>
+    inline void writePFM(const std::string &fName,
+                         const int sizeX, const int sizeY,
+                         const T *p)
+    {
+      static_assert(std::is_same<T,vec4f>::value||std::is_same<T,vec3fa>::value,
+          "writePFM needs pixels as vec3fa* or vec4f*");
+      writeImage<float, T, false>(fName, "PF\n%i %i\n-1.0\n", sizeX, sizeY, p);
     }
 
   } // ::ospcommon::utility

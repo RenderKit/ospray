@@ -28,7 +28,7 @@ namespace ospray {
 
     struct AutoFree
     {
-      AutoFree(void *s) : s(s) {};
+      AutoFree(void *s) : s(s) {}
       ~AutoFree() { free(s); }
       void *s;
     };
@@ -47,23 +47,23 @@ namespace ospray {
       *urlSep = 0;
       this->formatType = buffer;
 
-      char *fileName = urlSep+3;
-      char *arg = strtok(fileName,":");
-      this->fileName = fileName;
+      char *fName = urlSep+3;
+      char *arg = strtok(fName,":");
+      this->fileName = fName;
 
-      arg = strtok(NULL,":");
-      std::vector<std::string> args;
+      arg = strtok(nullptr,":");
+      std::vector<std::string> local_args;
       while (arg) {
-        args.push_back(arg);
-        arg = strtok(NULL,":");
+        local_args.push_back(arg);
+        arg = strtok(nullptr,":");
       }
 
       // now, parse all name:value pairs
-      for (auto arg_i : args) {
+      for (auto arg_i : local_args) {
         char *s = strdup(arg_i.c_str());
         AutoFree _s(s);
         char *name = strtok(s,"=");
-        char *val  = strtok(NULL,"=");
+        char *val  = strtok(nullptr,"=");
         std::pair<std::string,std::string> newArg(name,val?val:"");
         this->args.push_back(newArg);
       }
@@ -107,7 +107,7 @@ namespace ospray {
 
     using FileExtToImporterMap = std::map<const std::string, ImporterFunction>;
 
-    FileExtToImporterMap importerForExtension;
+    static FileExtToImporterMap importerForExtension;
 
     /*! declare an importer function for a given file extension */
     void declareImporterForFileExtension(const std::string &fileExtension,

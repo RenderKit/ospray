@@ -22,6 +22,13 @@
 namespace ospcommon {
   namespace traits {
 
+    // C++14 traits for C++11 /////////////////////////////////////////////////
+
+    template <bool B, class T = void>
+    using enable_if_t = typename std::enable_if<B, T>::type;
+
+    // Helper operators ///////////////////////////////////////////////////////
+
     template <typename T, typename Arg>
     std::true_type operator==(const T&, const Arg&);
 

@@ -57,6 +57,7 @@ ELSE()
 
     utility/Any.h
     utility/CodeTimer.h
+    utility/DoubleBufferedValue.h
     utility/OnScopeExit.h
     utility/Optional.h
     utility/PseudoURL.cpp
@@ -150,6 +151,7 @@ ELSE()
   OSPRAY_INSTALL_SDK_HEADERS(
     utility/Any.h
     utility/CodeTimer.h
+    utility/DoubleBufferedValue.h
     utility/OnScopeExit.h
     utility/Optional.h
     utility/PseudoURL.h

@@ -161,6 +161,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Velvet.cpp
   render/pathtracer/materials/Metal.ispc
   render/pathtracer/materials/Metal.cpp
+  render/pathtracer/materials/Alloy.ispc
+  render/pathtracer/materials/Alloy.cpp
   render/pathtracer/materials/ThinGlass.ispc
   render/pathtracer/materials/ThinGlass.cpp
   render/pathtracer/materials/Glass.ispc
@@ -305,6 +307,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
   math/random.ih
   math/sampling.ih
   math/vec.ih
+  math/spectrum.h
+  math/spectrum.ih
   DESTINATION math
 )
 

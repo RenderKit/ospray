@@ -84,7 +84,7 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void doAssertion(const char *file, int line,
                                        const char *expr, const char *expl);
   /*! remove specified num arguments from an ac/av arglist */
-  OSPCOMMON_INTERFACE void removeArgs(int &ac, char **&av,
+  OSPCOMMON_INTERFACE void removeArgs(int &ac, const char **&av,
                                       int where, int howMany);
   OSPCOMMON_INTERFACE void loadLibrary(const std::string &name);
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);

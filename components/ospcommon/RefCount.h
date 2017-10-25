@@ -29,7 +29,7 @@ namespace ospcommon
   typedef int atomic_init_t;
 #endif
   typedef std::atomic<atomic_init_t> atomic_t;
-  
+
   static struct NullTy {
   } null MAYBE_UNUSED;
 
@@ -59,22 +59,23 @@ namespace ospcommon
                                "objects!");
       return *this;
     }
-  
+
     virtual void refInc() { refCounter++; }
     virtual void refDec() { if ((--refCounter) == 0) delete this; }
 
   private:
     atomic_t refCounter;
   };
-  
+
   /////////////////////////////////////////////////////////////////////////////
   /// Reference to single object
   /////////////////////////////////////////////////////////////////////////////
 
   template<typename Type>
-  class Ref {
+  class Ref
+  {
   public:
-    Type* const ptr;
+    Type* ptr {nullptr};
 
     ///////////////////////////////////////////////////////////////////////////
     /// Constructors, Assignment & Cast Operators
@@ -97,21 +98,21 @@ namespace ospcommon
     {
       if ( input.ptr ) input.ptr->refInc();
       if (ptr) ptr->refDec();
-      *(Type**)&ptr = input.ptr;
+      ptr = input.ptr;
       return *this;
     }
 
-    __forceinline Ref& operator= ( Type* const input )
+    __forceinline Ref& operator= ( Type* input )
     {
       if ( input ) input->refInc();
       if (ptr) ptr->refDec();
-      *(Type**)&ptr = input;
+      ptr = input;
       return *this;
     }
 
     __forceinline Ref& operator= ( NullTy ) {
       if (ptr) ptr->refDec();
-      *(Type**)&ptr = nullptr;
+      ptr = nullptr;
       return *this;
     }
 

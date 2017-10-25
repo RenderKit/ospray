@@ -75,16 +75,16 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE TriangleMesh : public Geometry
   {
     TriangleMesh();
-    virtual ~TriangleMesh() = default;
+    virtual ~TriangleMesh() override = default;
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;
 
-    const int    *index;  //!< mesh's triangle index array
-    const float  *vertex; //!< mesh's vertex array
-    const float  *normal; //!< mesh's vertex normal array
-    const vec4f  *color;  //!< mesh's vertex color array
-    const vec2f  *texcoord; //!< mesh's vertex texcoord array
-    const uint32 *prim_materialID; //!< per-primitive material ID
+    int    *index;  //!< mesh's triangle index array
+    float  *vertex; //!< mesh's vertex array
+    float  *normal; //!< mesh's vertex normal array
+    vec4f  *color;  //!< mesh's vertex color array
+    vec2f  *texcoord; //!< mesh's vertex texcoord array
+    uint32 *prim_materialID; //!< per-primitive material ID
     Material **materialList; //!< per-primitive material list
     int geom_materialID;
 

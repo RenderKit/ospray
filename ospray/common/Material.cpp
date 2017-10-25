@@ -20,8 +20,8 @@
 
 namespace ospray {
 
-  /*! \brief creates an abstract material class of given type 
-    
+  /*! \brief creates an abstract material class of given type
+
     The respective material type must be a registered material type
     in either ospray proper or any already loaded module. For
     material types specified in special modules, make sure to call
@@ -62,7 +62,7 @@ namespace ospray {
 
     const vec4f transf = getParam4f((texname+"transform").c_str(),
                                     vec4f(1.f, 0.f, 0.f, 1.f));
-    const linear2f transform = (linear2f&)transf;
+    const linear2f transform = (const linear2f&)transf;
     xform *= affine2f(transform);
 
     return xform;

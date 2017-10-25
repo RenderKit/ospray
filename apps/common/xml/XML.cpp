@@ -27,25 +27,26 @@ namespace ospray {
     { std::stringstream ss; ss << v.x << " " << v.y << " " << v.z; return ss.str(); }
 
     /*! checks if given node has given property */
-    bool Node::hasProp(const std::string &name) const
+    bool Node::hasProp(const std::string &propName) const
     {
-      return (properties.find(name) != properties.end());
+      return (properties.find(propName) != properties.end());
     }
 
     /*! return value of property with given name if present, else return 'fallbackValue' */
-    std::string Node::getProp(const std::string &name, const std::string &fallbackValue) const
+    std::string Node::getProp(const std::string &propName,
+                              const std::string &fallbackValue) const
     {
-      if (!hasProp(name)) return fallbackValue;
-      return properties.find(name)->second;
+      if (!hasProp(propName)) return fallbackValue;
+      return properties.find(propName)->second;
     }
 
     /*! return value of property with given name if present; and throw an exception if not */
-    std::string Node::getProp(const std::string &name) const
+    std::string Node::getProp(const std::string &propName) const
     {
-      if (!hasProp(name))
+      if (!hasProp(propName))
         return "";
       // throw std::runtime_error("given xml::Node does have the queried property '"+name+"'");
-      return properties.find(name)->second;
+      return properties.find(propName)->second;
     }
 
     inline bool isWhite(char s) {
@@ -219,12 +220,14 @@ namespace ospray {
           continue;
         if (*s == '<' && s[1] == '/') {
           consume(s,"</");
-          std::string name = "";
-          parseIdentifier(s,name);
-          if (name != node->name)
+          std::string nodeName;
+          parseIdentifier(s, nodeName);
+          if (nodeName != node->name) {
             throw std::runtime_error("invalid XML node - started with'<"
                                      + node->name +
-                                     "...'>, but ended with '</"+name+">");
+                                     "...'>, but ended with '</"+
+                                     nodeName + ">");
+          }
           consume(s,">");
           break;
           // either end of current node

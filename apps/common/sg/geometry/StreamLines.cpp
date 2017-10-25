@@ -33,7 +33,7 @@ namespace ospray {
       return "ospray::sg::StreamLines";
     }
 
-    box3f StreamLines::computeBounds() const
+    box3f StreamLines::bounds() const
     {
       box3f bounds = empty;
       if (hasChild("vertex")) {
@@ -60,8 +60,7 @@ namespace ospray {
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void StreamLines::setFromXML(const xml::Node &node,
-                                 const unsigned char *binBasePtr)
+    void StreamLines::setFromXML(const xml::Node &, const unsigned char *)
     {
       NOT_IMPLEMENTED;
     }

@@ -31,7 +31,7 @@ namespace ospray {
       this->worldBounds = bounds;
 
       for (auto &b : brickVec) {
-        if (b->level >= level.size())
+        if (b->level >= static_cast<int>(level.size()))
           level.resize(b->level+1);
         level[b->level].level = b->level;
         level[b->level].cellWidth = b->cellWidth;
@@ -88,8 +88,8 @@ namespace ospray {
                             std::vector<const AMRData::Brick *> &brick)
     {
       std::set<float> possibleSplits[3];
-      for (int i=0;i<brick.size();i++) {
-        const box3f clipped = intersectionOf(bounds,brick[i]->worldBounds);
+      for (const auto &b : brick) {
+        const box3f clipped = intersectionOf(bounds, b->worldBounds);
         assert(clipped.lower.x != clipped.upper.x);
         assert(clipped.lower.y != clipped.upper.y);
         assert(clipped.lower.z != clipped.upper.z);
@@ -151,19 +151,19 @@ namespace ospray {
 
         std::vector<const AMRData::Brick *> l, r;
         float sum_lo = 0.f, sum_hi = 0.f;
-        for (int i=0;i<brick.size();i++) {
-          const box3f wb = intersectionOf(brick[i]->worldBounds,bounds);
+        for (const auto &b : brick) {
+          const box3f wb = intersectionOf(b->worldBounds,bounds);
           if (wb.empty())
             throw std::runtime_error("empty box!?");
           sum_lo += wb.lower[bestDim];
           sum_hi += wb.upper[bestDim];
           if (wb.lower[bestDim] >= bestPos) {
-            r.push_back(brick[i]);
+            r.push_back(b);
           } else if (wb.upper[bestDim] <= bestPos) {
-            l.push_back(brick[i]);
+            l.push_back(b);
           } else {
-            r.push_back(brick[i]);
-            l.push_back(brick[i]);
+            r.push_back(b);
+            l.push_back(b);
           }
         }
         if (l.empty() || r.empty()) {

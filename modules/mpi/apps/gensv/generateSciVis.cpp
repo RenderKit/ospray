@@ -130,7 +130,7 @@ namespace gensv {
    * GhostFaces for x, y, z.
    */
   std::array<int, 3> computeGhostFaces(const vec3i &brickId, const vec3i &grid) {
-    std::array<int, 3> faces = {NEITHER_FACE, NEITHER_FACE, NEITHER_FACE};
+    std::array<int, 3> faces = {{NEITHER_FACE, NEITHER_FACE, NEITHER_FACE}};
     for (size_t i = 0; i < 3; ++i) {
       if (brickId[i] < grid[i] - 1) {
         faces[i] |= POS_FACE;
@@ -208,6 +208,8 @@ namespace gensv {
     if (dtype == "double") {
       return 8;
     }
+
+    return 0;
   }
 
   LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,

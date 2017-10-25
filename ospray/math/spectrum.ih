@@ -17,9 +17,23 @@
 #pragma once
 
 #include "math/spectrum.h"
+#include "math/vec.ih"
 
 typedef uniform float<SPECTRUM_SAMPLES> spectrum;
 
 extern spectrum spectrum_sRGB_r;
 extern spectrum spectrum_sRGB_g;
 extern spectrum spectrum_sRGB_b;
+
+inline uniform vec3f spectrum_sRGB(const uniform int l) {
+  return make_vec3f(spectrum_sRGB_r[l], spectrum_sRGB_g[l], spectrum_sRGB_b[l]);
+}
+
+// note: result can be <0 or >1
+inline uniform vec3f spectrum2rgb(const spectrum &s) {
+  uniform vec3f rgb = make_vec3f(0.f);
+  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++) 
+    rgb = rgb + s[l] * spectrum_sRGB(l);
+
+  return rgb;
+}

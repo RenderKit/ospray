@@ -19,7 +19,7 @@
 /*! \defgroup ospray_render_obj "Wavefront OBJ" Material-based Renderer
 
   \brief Implements the Wavefront OBJ Material Model
-  
+
   \ingroup ospray_supported_renderers
 
   This renderer implementes a shading model roughly based on the
@@ -53,7 +53,7 @@ namespace ospray {
     struct SciVisRenderer : public Renderer
     {
       SciVisRenderer();
-      virtual ~SciVisRenderer() = default;
+      virtual ~SciVisRenderer() override = default;
       virtual std::string toString() const override;
       virtual void commit() override;
       virtual Material *createMaterial(const char *type) override;

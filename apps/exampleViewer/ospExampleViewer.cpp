@@ -237,13 +237,12 @@ static inline void addPlaneToScene(sg::Node& renderer)
   index->push_back(vec3i{1,2,3});
   index->setName("index");
 
-  auto &plane = world.createChild("plane", "Instance");
-  auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
+  auto &plane = world.createChild("plane", "TriangleMesh");
 
-  auto sg_plane = mesh.nodeAs<sg::TriangleMesh>();
+  auto sg_plane = plane.nodeAs<sg::TriangleMesh>();
   sg_plane->add(position);
   sg_plane->add(index);
-  auto &planeMaterial = mesh["material"];
+  auto &planeMaterial = plane["material"];
   planeMaterial["Kd"] = vec3f(0.5f);
   planeMaterial["Ks"] = vec3f(0.1f);
   planeMaterial["Ns"] = 10.f;
@@ -312,8 +311,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             transform["scale"] = file.transform.scale;
             transform["rotation"] = file.transform.rotation;
             if (files.size() < 2 && animatedFiles.empty()) {
-              auto &rotation =
-                              transform["rotation"].createChild("animator", "Animator");
+              auto &rotation = transform["rotation"].createChild("animator", "Animator");
 
               rotation.traverse("verify");
               rotation.traverse("commit");
@@ -438,8 +436,10 @@ int main(int ac, const char **av)
   renderer["camera"]["dir"] = dir;
   renderer["camera"]["pos"] = viewPort.from;
   renderer["camera"]["up"]  = viewPort.up;
-  renderer["camera"]["fovy"] = viewPort.openingAngle;
-  renderer["camera"]["apertureRadius"] = viewPort.apertureRadius;
+  if (renderer["camera"].hasChild("fovy"))
+    renderer["camera"]["fovy"] = viewPort.openingAngle;
+  if (renderer["camera"].hasChild("apertureRadius"))
+    renderer["camera"]["apertureRadius"] = viewPort.apertureRadius;
   if (renderer["camera"].hasChild("focusdistance"))
     renderer["camera"]["focusdistance"] = length(viewPort.at - viewPort.from);
 
