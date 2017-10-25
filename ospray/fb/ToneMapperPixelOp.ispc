@@ -18,8 +18,8 @@
 #include "math/LinearSpace.ih"
 #include "Tile.ih"
 
-/*! \brief Based on the generic filmic tone mapping operator from
-    [Timothy Lottes. 2016. Advanced Techniques and Optimization of HDR Color Pipelines.]
+/* Based on the generic filmic tone mapping operator from
+   [Lottes, 2016, "Advanced Techniques and Optimization of HDR Color Pipelines"]
 */
 struct ToneMapperPixelOp
 {
