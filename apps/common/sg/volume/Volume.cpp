@@ -80,7 +80,6 @@ namespace ospray {
     // base volume class
     // =======================================================
 
-    /*! \brief returns a std::string with the c++ name of this class */
     Volume::Volume()
     {
       setValue((OSPVolume)nullptr);
