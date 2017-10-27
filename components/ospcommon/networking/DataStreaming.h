@@ -24,7 +24,7 @@
 
 // workaround missing "is_trivially_copyable" in g++ < 5.0
 // From: https://stackoverflow.com/questions/25123458/is-trivially-copyable-is-not-a-member-of-std 
-#if __GNUG__ && __GNUC__ < 5
+#if !__clang__ && __GNUC__ < 5
 #define OSP_IS_TRIVIALLY_COPYABLE(T) std::has_trivial_copy_constructor<T>::value 
 #else
 #define OSP_IS_TRIVIALLY_COPYABLE(T) std::is_trivially_copyable<T>::value
