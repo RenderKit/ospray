@@ -19,6 +19,7 @@
 #include "../common.h"
 #include "../utility/ArrayView.h"
 
+#include <type_traits>
 #include <vector>
 
 namespace ospcommon {
@@ -44,22 +45,26 @@ namespace ospcommon {
 
     /*! generic stream operators into/out of streams, for raw data blocks */
     template<typename T>
-    inline WriteStream &operator<<(WriteStream &buf, const T &rh)
+    inline typename std::enable_if<std::is_trivially_copyable<T>::value, WriteStream>::type
+    &operator<<(WriteStream &buf, const T &rh)
     {
       buf.write((const byte_t*)&rh, sizeof(T));
       return buf;
     }
 
     template<typename T>
-    inline ReadStream &operator>>(ReadStream &buf, T &rh)
+    inline typename std::enable_if<std::is_trivially_copyable<T>::value, ReadStream>::type
+    &operator>>(ReadStream &buf, T &rh)
     {
       buf.read((byte_t*)&rh, sizeof(T));
       return buf;
     }
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors */
+    /*! @{ stream operators into/out of read/write streams, for std::vectors 
+     * of POD types*/
     template<typename T>
-    inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
+    inline typename std::enable_if<std::is_trivially_copyable<T>::value, WriteStream>::type
+    &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
       buf << sz;
@@ -68,12 +73,41 @@ namespace ospcommon {
     }
 
     template<typename T>
-    inline ReadStream &operator>>(ReadStream &buf, std::vector<T> &rh)
+    inline typename std::enable_if<std::is_trivially_copyable<T>::value, ReadStream>::type
+    &operator>>(ReadStream &buf, std::vector<T> &rh)
     {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
       buf.read((byte_t*)rh.data(), sizeof(T)*sz);
+      return buf;
+    }
+    /*! @} */
+
+    /*! @{ stream operators into/out of read/write streams, for std::vectors 
+     * of non-POD types*/
+    template<typename T>
+    inline typename std::enable_if<!std::is_trivially_copyable<T>::value, WriteStream>::type
+    &operator<<(WriteStream &buf, const std::vector<T> &rh)
+    {
+      const size_t sz = rh.size();
+      buf << sz;
+      for (const auto &x : rh) {
+        buf << x;
+      }
+      return buf;
+    }
+
+    template<typename T>
+    inline typename std::enable_if<!std::is_trivially_copyable<T>::value, ReadStream>::type
+    &operator>>(ReadStream &buf, std::vector<T> &rh)
+    {
+      size_t sz;
+      buf >> sz;
+      rh.resize(sz);
+      for (size_t i = 0; i < sz; ++i) {
+        buf >> rh[i];
+      }
       return buf;
     }
     /*! @} */
