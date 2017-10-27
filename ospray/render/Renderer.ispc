@@ -95,6 +95,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         tMax = min(get1f(self->maxDepthTexture, depthTexCoord), infinity);
       }
       vec3f col = make_vec3f(0.f);
+      float alpha = 0.f;
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
       for (uniform uint32 s = 0; s < spp; s++) {
         pixel_du = precomputedHalton2(startSampleID+s);
@@ -115,8 +116,10 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
         self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
+        alpha = alpha + screenSample.alpha;
       }
       col = col * (spp_inv);
+      alpha = alpha * (spp_inv);
       setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
     }
   } else {
