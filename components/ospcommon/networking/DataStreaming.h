@@ -22,14 +22,6 @@
 #include <type_traits>
 #include <vector>
 
-// workaround missing "is_trivially_copyable" in g++ < 5.0
-// From: https://stackoverflow.com/questions/25123458/is-trivially-copyable-is-not-a-member-of-std 
-#if !__clang__ && __GNUG__ && __GNUC__ < 5
-#define OSP_IS_TRIVIALLY_COPYABLE(T) std::has_trivial_copy_constructor<T>::value 
-#else
-#define OSP_IS_TRIVIALLY_COPYABLE(T) std::is_trivially_copyable<T>::value
-#endif
-
 namespace ospcommon {
   namespace networking {
 
@@ -52,27 +44,28 @@ namespace ospcommon {
     };
 
     /*! generic stream operators into/out of streams, for raw data blocks */
-    template<typename T>
-    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), WriteStream>::type
-    &operator<<(WriteStream &buf, const T &rh)
+    template<typename T, typename = ospcommon::traits::can_trivially_copy_t<T>>
+    inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
       buf.write((const byte_t*)&rh, sizeof(T));
       return buf;
     }
 
-    template<typename T>
-    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), ReadStream>::type
-    &operator>>(ReadStream &buf, T &rh)
+    template<typename T, typename = ospcommon::traits::can_trivially_copy_t<T>>
+    inline ReadStream &operator>>(ReadStream &buf, T &rh)
     {
       buf.read((byte_t*)&rh, sizeof(T));
       return buf;
     }
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors 
+    /*! @{ stream operators into/out of read/write streams, for std::vectors
      * of POD types*/
-    template<typename T>
-    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), WriteStream>::type
-    &operator<<(WriteStream &buf, const std::vector<T> &rh)
+    template<
+        typename T,
+        typename = ospcommon::traits::can_trivially_copy_t<T>,
+        typename = void //NOTE: needed to "overload" template lists...
+    >
+    inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
       buf << sz;
@@ -80,9 +73,12 @@ namespace ospcommon {
       return buf;
     }
 
-    template<typename T>
-    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), ReadStream>::type
-    &operator>>(ReadStream &buf, std::vector<T> &rh)
+    template<
+        typename T,
+        typename = ospcommon::traits::can_trivially_copy_t<T>,
+        typename = void //NOTE: needed to "overload" template lists...
+    >
+    inline ReadStream &operator>>(ReadStream &buf, std::vector<T> &rh)
     {
       size_t sz;
       buf >> sz;
@@ -92,36 +88,36 @@ namespace ospcommon {
     }
     /*! @} */
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors 
+    /*! @{ stream operators into/out of read/write streams, for std::vectors
      * of non-POD types*/
-    template<typename T>
-    inline typename std::enable_if<!OSP_IS_TRIVIALLY_COPYABLE(T), WriteStream>::type
-    &operator<<(WriteStream &buf, const std::vector<T> &rh)
+    template<typename T, typename = ospcommon::traits::non_trivial_copy_t<T>>
+    inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
       buf << sz;
-      for (const auto &x : rh) {
+
+      for (const auto &x : rh)
         buf << x;
-      }
+
       return buf;
     }
 
-    template<typename T>
-    inline typename std::enable_if<!OSP_IS_TRIVIALLY_COPYABLE(T), ReadStream>::type
-    &operator>>(ReadStream &buf, std::vector<T> &rh)
+    template<typename T, typename = ospcommon::traits::non_trivial_copy_t<T>>
+    inline ReadStream &operator>>(ReadStream &buf, std::vector<T> &rh)
     {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      for (size_t i = 0; i < sz; ++i) {
+
+      for (size_t i = 0; i < sz; ++i)
         buf >> rh[i];
-      }
+
       return buf;
     }
     /*! @} */
 
     /*! @{ stream operators into/out of read/write streams, for ArrayView<T> */
-    template<typename T>
+    template<typename T, typename = ospcommon::traits::can_trivially_copy_t<T>>
     inline WriteStream &operator<<(WriteStream &buf,
                                    const utility::ArrayView<T> &rh)
     {
