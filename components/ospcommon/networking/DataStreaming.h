@@ -22,6 +22,14 @@
 #include <type_traits>
 #include <vector>
 
+// workaround missing "is_trivially_copyable" in g++ < 5.0
+// From: https://stackoverflow.com/questions/25123458/is-trivially-copyable-is-not-a-member-of-std 
+#if __GNUG__ && __GNUC__ < 5
+#define OSP_IS_TRIVIALLY_COPYABLE(T) std::has_trivial_copy_constructor<T>::value 
+#else
+#define OSP_IS_TRIVIALLY_COPYABLE(T) std::is_trivially_copyable<T>::value
+#endif
+
 namespace ospcommon {
   namespace networking {
 
@@ -45,7 +53,7 @@ namespace ospcommon {
 
     /*! generic stream operators into/out of streams, for raw data blocks */
     template<typename T>
-    inline typename std::enable_if<std::is_trivially_copyable<T>::value, WriteStream>::type
+    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), WriteStream>::type
     &operator<<(WriteStream &buf, const T &rh)
     {
       buf.write((const byte_t*)&rh, sizeof(T));
@@ -53,7 +61,7 @@ namespace ospcommon {
     }
 
     template<typename T>
-    inline typename std::enable_if<std::is_trivially_copyable<T>::value, ReadStream>::type
+    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), ReadStream>::type
     &operator>>(ReadStream &buf, T &rh)
     {
       buf.read((byte_t*)&rh, sizeof(T));
@@ -63,7 +71,7 @@ namespace ospcommon {
     /*! @{ stream operators into/out of read/write streams, for std::vectors 
      * of POD types*/
     template<typename T>
-    inline typename std::enable_if<std::is_trivially_copyable<T>::value, WriteStream>::type
+    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), WriteStream>::type
     &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
@@ -73,7 +81,7 @@ namespace ospcommon {
     }
 
     template<typename T>
-    inline typename std::enable_if<std::is_trivially_copyable<T>::value, ReadStream>::type
+    inline typename std::enable_if<OSP_IS_TRIVIALLY_COPYABLE(T), ReadStream>::type
     &operator>>(ReadStream &buf, std::vector<T> &rh)
     {
       size_t sz;
@@ -87,7 +95,7 @@ namespace ospcommon {
     /*! @{ stream operators into/out of read/write streams, for std::vectors 
      * of non-POD types*/
     template<typename T>
-    inline typename std::enable_if<!std::is_trivially_copyable<T>::value, WriteStream>::type
+    inline typename std::enable_if<!OSP_IS_TRIVIALLY_COPYABLE(T), WriteStream>::type
     &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
@@ -99,7 +107,7 @@ namespace ospcommon {
     }
 
     template<typename T>
-    inline typename std::enable_if<!std::is_trivially_copyable<T>::value, ReadStream>::type
+    inline typename std::enable_if<!OSP_IS_TRIVIALLY_COPYABLE(T), ReadStream>::type
     &operator>>(ReadStream &buf, std::vector<T> &rh)
     {
       size_t sz;
