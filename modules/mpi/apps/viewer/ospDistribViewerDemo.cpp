@@ -127,7 +127,7 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   state->app.fbSize = vec2i(width, height);
   state->app.fbSizeChanged = true;
 }
-void charCallback(GLFWwindow *window, unsigned int c) {
+void charCallback(GLFWwindow *, unsigned int c) {
   ImGuiIO& io = ImGui::GetIO();
   if (c > 0 && c < 0x10000) {
     io.AddInputCharacter((unsigned short)c);

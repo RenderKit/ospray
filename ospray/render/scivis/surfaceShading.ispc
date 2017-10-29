@@ -173,7 +173,8 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > self->super.minContribution) {
           Ray shadowRay;
-          setRay(shadowRay, P, light.dir);
+          setRay(shadowRay, P, light.dir, self->super.epsilon,
+              light.dist - self->super.epsilon, ray.time);
           const float light_alpha = lightAlpha(self, shadowRay,
               self->super.model,
               max_contrib,

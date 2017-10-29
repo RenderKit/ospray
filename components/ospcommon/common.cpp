@@ -39,22 +39,22 @@ namespace ospcommon {
     SYSTEMTIME tp; GetSystemTime(&tp);
     return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
 #else
-    struct timeval tp; gettimeofday(&tp,nullptr); 
-    return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
+    struct timeval tp; gettimeofday(&tp,nullptr);
+    return double(tp.tv_sec) + double(tp.tv_usec)/1E6;
 #endif
   }
 
-  void removeArgs(int &ac, char **&av, int where, int howMany)
+  void removeArgs(int &ac, const char **&av, int where, int howMany)
   {
     for (int i=where+howMany;i<ac;i++)
       av[i-howMany] = av[i];
     ac -= howMany;
   }
 
-  void doAssertion(const char *file, int line, const char *expr, const char *expl) 
+  void doAssertion(const char *file, int line, const char *expr, const char *expl)
   {
     if (expl)
-      fprintf(stderr,"%s:%i: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
+      fprintf(stderr,"%s:%i: Assertion failed: \"%s\":\nAdditional Info: %s\n",
               file, line, expr, expl);
     else
       fprintf(stderr,"%s:%i: Assertion failed: \"%s\".\n", file, line, expr);

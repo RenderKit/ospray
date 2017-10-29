@@ -79,7 +79,7 @@ namespace ospray {
         opacities->push_back(interpolatedAlpha(*alpha, i * dx));
     }
 
-    void TransferFunction::preCommit(RenderContext &ctx)
+    void TransferFunction::preCommit(RenderContext &)
     {
       auto ospTransferFunction = valueAs<OSPTransferFunction>();
       if (!ospTransferFunction) {
@@ -90,14 +90,14 @@ namespace ospray {
       calculateOpacities();
     }
 
-    void TransferFunction::postCommit(RenderContext &ctx)
+    void TransferFunction::postCommit(RenderContext &)
     {
       ospCommit(valueAs<OSPTransferFunction>());
     }
 
-    void TransferFunction::setFromXML(const xml::Node& node,
-                                      const unsigned char *binBasePtr)
+    void TransferFunction::setFromXML(const xml::Node&, const unsigned char *)
     {
+      NOT_IMPLEMENTED;
     }
 
     std::string TransferFunction::toString() const

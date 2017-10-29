@@ -58,7 +58,7 @@ namespace ospray {
       return "ospray::sg::Camera";
     }
 
-    inline void Camera::postCommit(RenderContext &ctx)
+    inline void Camera::postCommit(RenderContext &)
     {
       ospCommit(valueAs<OSPCamera>());
     }

@@ -67,7 +67,7 @@ namespace ospray {
   void PathTracer::generateGeometryLights(const Model *const model
       , const affine3f& xfm
       , const affine3f& rcp_xfm
-      , float *const areaPDF
+      , float *const _areaPDF
       )
   {
     for(size_t i = 0; i < model->geometry.size(); i++) {
@@ -80,20 +80,32 @@ namespace ospray {
         generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
             &(inst->areaPDF[0]));
       } else
-        if (geo->material && geo->material->getIE()
-            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
-          void* light = ispc::GeometryLight_create(geo->getIE()
-              , (const ispc::AffineSpace3f&)xfm
-              , (const ispc::AffineSpace3f&)rcp_xfm
-              , areaPDF+i);
+        if (geo->materialList) {
+          // check whether the geometry has any emissive materials
+          bool hasEmissive = false;
+          for (auto mat : geo->ispcMaterialPtrs) {
+            if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
+              hasEmissive = true;
+              break;
+            }
+          }
 
-          if (light)
-            lightArray.push_back(light);
-          else {
-            postStatusMsg(1) << "#osp:pt Geometry " << geo->toString()
-                             << " does not implement area sampling! "
-                             << "Cannot use importance sampling for that "
-                             << "geometry with emissive material!";
+          if (hasEmissive) {
+            if (ispc::GeometryLight_isSupported(geo->getIE())) {
+              void* light = ispc::GeometryLight_create(geo->getIE()
+                  , (const ispc::AffineSpace3f&)xfm
+                  , (const ispc::AffineSpace3f&)rcp_xfm
+                  , _areaPDF+i);
+
+              // check whether the geometry has any emissive primitives
+              if (light)
+                lightArray.push_back(light);
+            } else {
+              postStatusMsg(1) << "#osp:pt Geometry " << geo->toString()
+                               << " does not implement area sampling! "
+                               << "Cannot use importance sampling for that "
+                               << "geometry with emissive material!";
+            }
           }
         }
     }
@@ -130,7 +142,7 @@ namespace ospray {
     const float maxRadiance = getParam1f("maxContribution",
                                          getParam1f("maxRadiance", inf));
     Texture2D *backplate = (Texture2D*)getParamObject("backplate", nullptr);
-    const vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
+    vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
 
     ispc::PathTracer_set(getIE()
         , rouletteDepth

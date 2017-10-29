@@ -22,7 +22,10 @@ namespace ospray {
 
     Geometry::Geometry(const std::string &type)
     {
-      createChild("material", "Material");
+      auto matList =
+        createChild("materialList", "MaterialList").nodeAs<MaterialList>();
+      matList->push_back(createNode("default", "Material")->nodeAs<Material>());
+
       createChild("type", "string", type);
       setValue((OSPGeometry)nullptr);
     }
@@ -32,7 +35,7 @@ namespace ospray {
       return "ospray::sg::Geometry";
     }
 
-    void Geometry::preCommit(RenderContext &ctx)
+    void Geometry::preCommit(RenderContext &)
     {
       auto ospGeometry = valueAs<OSPGeometry>();
       if (!ospGeometry) {
@@ -44,10 +47,10 @@ namespace ospray {
       }
     }
 
-    void Geometry::postCommit(RenderContext &ctx)
+    void Geometry::postCommit(RenderContext &)
     {
       auto ospGeometry = valueAs<OSPGeometry>();
-      if (hasChild("material")) {
+      if (hasChild("material") && !hasChild("materialList")) {
         ospSetMaterial(ospGeometry, child("material").valueAs<OSPMaterial>());
       }
       ospCommit(ospGeometry);

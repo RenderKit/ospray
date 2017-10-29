@@ -18,7 +18,6 @@
 
 #include "math/sampling.ih"
 #include "math/LinearSpace.ih"
-#include "math/spectrum.ih"
 
 /*! Reflects a viewing vector I at a normal N. Cosine between I
  *  and N is given as input. */
@@ -62,75 +61,4 @@ inline float refract(float cosI, float eta)
 {
   const float sqrCosT = sqrCosT(cosI, eta);
   return sqrt(max(sqrCosT, 0.0f));
-}
-
-//! \brief Computes fresnel coefficient for dielectric medium
-/*! \detailed Computes fresnel coefficient for media interface with
- *  relative refraction index eta. Eta is the outside refraction index
- *  divided by the inside refraction index. Both cosines have to be
- *  positive. */
-inline float fresnelDielectric(float cosI, float cosT, float eta)
-{
-  const float Rper = (eta*cosI -     cosT) * rcpf(eta*cosI +     cosT);
-  const float Rpar = (    cosI - eta*cosT) * rcpf(    cosI + eta*cosT);
-  return 0.5f*(sqr(Rpar) + sqr(Rper));
-}
-
-/*! Computes fresnel coefficient for media interface with relative
- *  refraction index eta. Eta is the outside refraction index
- *  divided by the inside refraction index. The cosine has to be
- *  positive. */
-inline float fresnelDielectric(float cosI, float eta)
-{
-  const float sqrCosT = sqrCosT(cosI, eta);
-  if (sqrCosT < 0.0f) return 1.0f;
-  return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
-}
-
-inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
-{
-  const float sqrCosT = sqrCosT(cosI, eta);
-  if (sqrCosT < 0.0f)
-  {
-    cosT = 0.0f;
-    return 1.0f;
-  }
-  cosT = sqrt(sqrCosT);
-  return fresnelDielectric(cosI, cosT, eta);
-}
-
-/*! Computes fresnel coefficient for conductor medium with complex
- *  refraction index (eta,k). The cosine has to be positive. */
-inline vec3f fresnelConductor(float cosI, vec3f eta, vec3f k)
-{
-  vec3f tmp = sqr(eta) + sqr(k);
-  vec3f Rpar
-    = (tmp * sqr(cosI) - 2.0f*eta*cosI + make_vec3f(1.f))
-    * rcp(tmp * sqr(cosI) + 2.0f*eta*cosI + make_vec3f(1.f));
-  vec3f Rper
-    = (tmp - 2.0f*eta*cosI + make_vec3f(sqr(cosI)))
-    * rcp(tmp + 2.0f*eta*cosI + make_vec3f(sqr(cosI)));
-  return 0.5f * (Rpar + Rper);
-}
-
-inline float fresnelConductor(const float cosI, const uniform float eta, const uniform float k)
-{
-  const uniform float tmp = sqr(eta) + sqr(k);
-  const float Rpar
-    = (tmp * sqr(cosI) - eta*(2.0f*cosI) + 1.f)
-    * rcp(tmp * sqr(cosI) + eta*(2.0f*cosI) + 1.f);
-  const float Rper
-    = (tmp - 2.0f*eta*cosI + sqr(cosI))
-    * rcp(tmp + 2.0f*eta*cosI + sqr(cosI));
-  return 0.5f * (Rpar + Rper);
-}
-
-inline vec3f fresnelConductor(float cosI, spectrum eta, spectrum k)
-{
-  vec3f rgb = make_vec3f(0.f);
-  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++) 
-    rgb = rgb + fresnelConductor(cosI, eta[l], k[l])
-      * make_vec3f(spectrum_sRGB_r[l], spectrum_sRGB_g[l], spectrum_sRGB_b[l]);
-
-  return clamp(rgb);
 }

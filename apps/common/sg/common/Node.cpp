@@ -32,9 +32,11 @@ namespace ospray {
       properties.name = "NULL";
       properties.type = "Node";
       // MSVC 2013 is buggy and ignores {}-initialization of anonymous structs
-#if _MSC_VER <= 1800
+#ifdef _WIN32
+#  if _MSC_VER <= 1800
       properties.parent = nullptr;
       properties.valid = false;
+#  endif
 #endif
       properties.flags = sg::NodeFlags::none;
       markAsModified();
@@ -52,14 +54,12 @@ namespace ospray {
       return "ospray::sg::Node";
     }
 
-    void Node::setFromXML(const xml::Node &node, const unsigned char *binBasePtr)
+    void Node::setFromXML(const xml::Node &, const unsigned char *)
     {
-      throw std::runtime_error(toString() +
-                               ":setFromXML() not implemented for XML node type "
-                               + node.name);
+      NOT_IMPLEMENTED;
     }
 
-    void Node::serialize(sg::Serialization::State &state)
+    void Node::serialize(sg::Serialization::State &)
     {
     }
 
@@ -351,9 +351,6 @@ namespace ospray {
                         const std::shared_ptr<Node> &node)
     {
       properties.children[name] = node;
-#ifndef _WIN32
-# warning "TODO: child node parent needs to be set, which requires multi-parent support"
-#endif
     }
 
     bool Node::hasParent() const
@@ -452,11 +449,11 @@ namespace ospray {
       }
     }
 
-    void Node::preCommit(RenderContext &ctx)
+    void Node::preCommit(RenderContext &)
     {
     }
 
-    void Node::postCommit(RenderContext &ctx)
+    void Node::postCommit(RenderContext &)
     {
     }
 
@@ -466,7 +463,7 @@ namespace ospray {
 
     using CreatorFct = sg::Node*(*)();
 
-    std::map<std::string, CreatorFct> nodeRegistry;
+    static std::map<std::string, CreatorFct> nodeRegistry;
 
     std::shared_ptr<Node> createNode(std::string name,
                                      std::string type,

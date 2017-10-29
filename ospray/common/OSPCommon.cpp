@@ -40,36 +40,13 @@ namespace ospray {
                                   << " (only reporting first occurrence)";
   }
 
-  /*! for debugging. compute a checksum for given area range... */
-  void *computeCheckSum(const void *ptr, size_t numBytes)
-  {
-    long *end = (long *)((char *)ptr + (numBytes - (numBytes%8)));
-    long *mem = (long *)ptr;
-    long sum = 0;
-    long i = 0;
-
-    while (mem < end) {
-      sum += (i+13) * *mem;
-      ++i;
-      ++mem;
-    }
-    return (void *)sum;
-  }
-
-  void removeArgs(int &ac, char **&av, int where, int howMany)
-  {
-    for (int i=where+howMany;i<ac;i++)
-      av[i-howMany] = av[i];
-    ac -= howMany;
-  }
-
   void initFromCommandLine(int *_ac, const char ***_av)
   {
     auto &device = ospray::api::Device::current;
 
     if (_ac && _av) {
       int &ac = *_ac;
-      char ** &av = *(char ***)_av;
+      auto &av = *_av;
       for (int i=1;i<ac;) {
         std::string parm = av[i];
         if (parm == "--osp:debug") {

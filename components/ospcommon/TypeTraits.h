@@ -22,6 +22,34 @@
 namespace ospcommon {
   namespace traits {
 
+    // C++14 traits for C++11 /////////////////////////////////////////////////
+
+    template <bool B, class T = void>
+    using enable_if_t = typename std::enable_if<B, T>::type;
+
+    // Can trivially copy (is POD) ////////////////////////////////////////////
+
+    // workaround missing "is_trivially_copyable" in g++ < 5.0
+#if !__clang__ && __GNUG__ && __GNUC__ < 5
+    template <typename T>
+    using can_trivially_copy_t =
+        enable_if_t<std::has_trivial_copy_constructor<T>::value>;
+
+    template <typename T>
+    using non_trivial_copy_t =
+        enable_if_t<!std::has_trivial_copy_constructor<T>::value>;
+#else
+    template <typename T>
+    using can_trivially_copy_t =
+        enable_if_t<std::is_trivially_copyable<T>::value>;
+
+    template <typename T>
+    using non_trivial_copy_t =
+        enable_if_t<!std::is_trivially_copyable<T>::value>;
+#endif
+
+    // Helper operators ///////////////////////////////////////////////////////
+
     template <typename T, typename Arg>
     std::true_type operator==(const T&, const Arg&);
 

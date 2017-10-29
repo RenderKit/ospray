@@ -24,7 +24,7 @@ namespace ospray {
   /*! \brief A Texture defined through a 2D Image. */
   struct OSPRAY_SDK_INTERFACE Texture2D : public ManagedObject
   {
-    virtual ~Texture2D();
+    virtual ~Texture2D() override;
 
     virtual std::string toString() const override;
 

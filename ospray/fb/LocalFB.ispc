@@ -66,7 +66,7 @@ template_writeTile(RGBA32F, vec4f, cvt_nop);
 //! \brief accumulate tile into BOTH accum buffer AND tile.
 /*! \detailed After this call, the frame buffer will contain 'prev
     accum value + tile value', while the tile will contain '(prev
-    accum value + tile value/numAccums'
+    accum value + tile value)/numAccums'
    return tile error */
 export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
                                             uniform Tile &tile)

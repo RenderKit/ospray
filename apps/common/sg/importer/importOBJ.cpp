@@ -92,6 +92,11 @@ namespace ospray {
       auto sgMaterials =
           createNode("materialList", "MaterialList")->nodeAs<MaterialList>();
 
+      if (mats.empty()) {
+        sgMaterials->push_back(createNode("default", "Material")->nodeAs<Material>());
+        return sgMaterials;
+      }
+
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
         auto &matNode   = *matNodePtr;
@@ -102,7 +107,8 @@ namespace ospray {
             matNode["type"] = param.second;
             std::cout << "Creating material node of type " << param.second
                       << std::endl;
-            addOBJparams = false;
+            if (param.second != "OBJMaterial" && param.second != "default")
+              addOBJparams = false;
           } else {
             std::string paramType;
             ospcommon::utility::Any paramValue;
@@ -203,7 +209,7 @@ namespace ospray {
             createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
-        for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
+        for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
           auto idx0 = shape.mesh.indices[i + 0];
           auto idx1 = shape.mesh.indices[i + 1];
           auto idx2 = shape.mesh.indices[i + 2];

@@ -25,7 +25,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE DirectionalLight : public Light
   {
     DirectionalLight();
-    virtual ~DirectionalLight() = default;
+    virtual ~DirectionalLight() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
 

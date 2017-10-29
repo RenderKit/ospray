@@ -54,7 +54,7 @@ namespace ospray {
 
       /*! return value of property with given name if present; and throw an exception if not */
       std::string getProp(const std::string &name) const;
-      
+
       /*! return value of property with given name if present, else return 'fallbackValue' */
       std::string getProp(const std::string &name, const std::string &fallbackValue) const;
 
@@ -76,7 +76,7 @@ namespace ospray {
       /*! list of child nodes */
       std::vector<std::shared_ptr<Node>> child;
 
-      //! pointer to parent doc 
+      //! pointer to parent doc
       /*! \detailed this points back to the parent xml doc that
           conatined this node. note this is intentionally NOT a ref to
           avoid cyclical dependencies. Ie, do NOT use this unless
@@ -98,8 +98,8 @@ namespace ospray {
       calling the given functor (usually a lambda) with name and
       value.
 
-      use via 
-      xml::for_each_prop(node,[&](const std::string &name, 
+      use via
+      xml::for_each_prop(node,[&](const std::string &name,
                                   const std::string &value){
          doSomthingWith(name,value);
       });
@@ -115,7 +115,7 @@ namespace ospray {
       calling the given functor (usually a lambda) with name and
       value.
 
-      use via 
+      use via
       xml::for_each_child_of(node,[&](const xml::Node &child){
          doSomthingWith(name,value);
       });
@@ -126,7 +126,7 @@ namespace ospray {
       for (auto it = node.child.begin(); it != node.child.end(); it++)
         functor(**it);
     }
-    
+
     /*! parse an XML file with given file name, and return a pointer
       to it.  In case of any error, this function will free all
       already-allocated data, and throw a std::runtime_error
@@ -155,11 +155,12 @@ namespace ospray {
       size_t writeData(const void *ptr, size_t size);
       FILE *xml, *bin;
     private:
-      struct State {
-        bool hasContent;
+      struct State
+      {
+        bool hasContent {false};
         std::string type;
-        State() : hasContent(false), type("") {};
       };
+
       void spaces();
       std::stack<State*> state;
     };

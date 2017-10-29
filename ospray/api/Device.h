@@ -32,12 +32,13 @@ namespace ospray {
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct OSPRAY_SDK_INTERFACE Device : public ManagedObject {
+    struct OSPRAY_SDK_INTERFACE Device : public ManagedObject
+    {
       /*! singleton that points to currently active device */
       static Ref<Device> current;
 
       Device() = default;
-      virtual ~Device();
+      virtual ~Device() override;
 
       /*! \brief creates an abstract device class of given type */
       static Device *createDevice(const char *type);
@@ -79,7 +80,7 @@ namespace ospray {
 
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format,
-                              void *init, int flags) = 0;
+                              const void *init, int flags) = 0;
 
       /*! Copy data into the given volume. */
       virtual int setRegion(OSPVolume object, const void *source,

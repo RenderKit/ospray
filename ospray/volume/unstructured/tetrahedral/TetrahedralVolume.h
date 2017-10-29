@@ -27,7 +27,7 @@ namespace ospray {
   {
    public:
     TetrahedralVolume();
-    ~TetrahedralVolume() = default;
+    ~TetrahedralVolume() override = default;
 
     //! A string description of this class.
     std::string toString() const override;

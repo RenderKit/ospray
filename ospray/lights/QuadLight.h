@@ -25,7 +25,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE QuadLight : public Light
   {
     QuadLight();
-    virtual ~QuadLight() = default;
+    virtual ~QuadLight() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
 

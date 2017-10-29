@@ -23,40 +23,108 @@ namespace ospray {
     {
       createChild("size", "vec2i", size);
       createChild("displayWall", "string", std::string(""));
+
+      // Tone mapping with default parameters set to ACES
+      createChild("toneMapping", "bool", false);
+
+      createChild("exposure", "float", 0.0f,
+                    NodeFlags::required |
+                    NodeFlags::valid_min_max |
+                    NodeFlags::gui_slider).setMinMax(-8.f, 8.f);
+
+      createChild("contrast", "float", 1.6773f,
+                    NodeFlags::required |
+                    NodeFlags::valid_min_max |
+                    NodeFlags::gui_slider).setMinMax(1.f, 5.f);
+
+      createChild("shoulder", "float", 0.9714f,
+                    NodeFlags::required |
+                    NodeFlags::valid_min_max |
+                    NodeFlags::gui_slider).setMinMax(0.9f, 1.f);
+
+      createChild("midIn", "float", 0.18f,
+                    NodeFlags::required |
+                    NodeFlags::valid_min_max |
+                    NodeFlags::gui_slider).setMinMax(0.f, 1.f);
+
+      createChild("midOut", "float", 0.18f,
+                    NodeFlags::required |
+                    NodeFlags::valid_min_max |
+                    NodeFlags::gui_slider).setMinMax(0.f, 1.f);
+
+      createChild("hdrMax", "float", 11.0785f,
+                    NodeFlags::required |
+                    NodeFlags::valid_min_max |
+                    NodeFlags::gui_slider).setMinMax(1.f, 64.f);
+
       createFB();
     }
 
-    void FrameBuffer::postCommit(RenderContext &ctx)
+    void FrameBuffer::postCommit(RenderContext &)
     {
-      std::string displayWall = child("displayWall").valueAs<std::string>();
-      this->displayWallStream = displayWall;
+      // Avoid clearing the framebuffer when only tonemapping parameters have been changed
+      if (lastModified() >= lastCommitted()
+          || child("size").lastModified() >= lastCommitted()
+          || child("displayWall").lastModified() >= lastCommitted()
+          || child("toneMapping").lastModified() >= lastCommitted())
+      {
+        std::string displayWall = child("displayWall").valueAs<std::string>();
+        this->displayWallStream = displayWall;
 
-      destroyFB();
-      createFB();
+        destroyFB();
+        createFB();
 
-      if (displayWall != "") {
-        ospLoadModule("displayWald");
-        OSPPixelOp pixelOp = ospNewPixelOp("display_wald");
-        ospSetString(pixelOp,"streamName",displayWall.c_str());
-        ospCommit(pixelOp);
-        ospSetPixelOp(ospFrameBuffer,pixelOp);
-        std::cout << "-------------------------------------------------------"
+        bool toneMapping = child("toneMapping").valueAs<bool>();
+        if (toneMapping)
+        {
+          toneMapper = ospNewPixelOp("tonemapper");
+          ospCommit(toneMapper);
+          ospSetPixelOp(ospFrameBuffer, toneMapper);
+        }
+        else
+        {
+          toneMapper = nullptr;
+        }
+
+        if (displayWall != "") {
+          ospLoadModule("displayWald");
+          OSPPixelOp pixelOp = ospNewPixelOp("display_wald");
+          ospSetString(pixelOp,"streamName", displayWall.c_str());
+          ospCommit(pixelOp);
+          ospSetPixelOp(ospFrameBuffer,pixelOp);
+          std::cout << "-------------------------------------------------------"
+                    << std::endl;
+          std::cout << "this is the display wall frma ebuferr .. size is "
+                    << size() << std::endl;
+          std::cout << "added display wall pixel op ..." << std::endl;
+
+          std::cout << "created display wall pixelop, and assigned to frame buffer!"
                   << std::endl;
-        std::cout << "this is the display wall frma ebuferr .. size is "
-                  << size() << std::endl;
-        std::cout << "added display wall pixel op ..." << std::endl;
+        }
 
-        std::cout << "created display wall pixelop, and assigned to frame buffer!"
-                << std::endl;
+        ospCommit(ospFrameBuffer);
       }
 
+      if (toneMapper)
+      {
+        float exposure = child("exposure").valueAs<float>();
+        float linearExposure = exp2(exposure);
+        ospSet1f(toneMapper, "exposure", linearExposure);
 
-      ospCommit(ospFrameBuffer);
+        ospSet1f(toneMapper, "contrast", child("contrast").valueAs<float>());
+        ospSet1f(toneMapper, "shoulder", child("shoulder").valueAs<float>());
+        ospSet1f(toneMapper, "midIn", child("midIn").valueAs<float>());
+        ospSet1f(toneMapper, "midOut", child("midOut").valueAs<float>());
+        ospSet1f(toneMapper, "hdrMax", child("hdrMax").valueAs<float>());
+
+        ospCommit(toneMapper);
+      }
     }
 
-    unsigned char *FrameBuffer::map()
+    const unsigned char *FrameBuffer::map()
     {
-      return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
+      return (const unsigned char *)ospMapFrameBuffer(ospFrameBuffer,
+                                                      OSP_FB_COLOR);
     }
 
     void FrameBuffer::unmap(const void *mem)

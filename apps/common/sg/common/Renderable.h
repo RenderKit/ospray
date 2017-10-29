@@ -27,12 +27,13 @@ namespace ospray {
     struct OSPSG_INTERFACE Renderable : public Node
     {
       Renderable();
-      virtual ~Renderable() = default;
+      virtual ~Renderable() override = default;
 
       virtual std::string toString() const override;
 
       virtual box3f bounds() const override;
-      virtual box3f computeBounds() const;
+
+      box3f computeBounds() const;
 
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation, bool& traverseChildren) override;
@@ -42,8 +43,8 @@ namespace ospray {
 
       // Interface for render traversals //
 
-      virtual void preRender(RenderContext &ctx) {}
-      virtual void postRender(RenderContext &ctx) {}
+      virtual void preRender(RenderContext &) {}
+      virtual void postRender(RenderContext &) {}
     };
 
   } // ::ospray::sg

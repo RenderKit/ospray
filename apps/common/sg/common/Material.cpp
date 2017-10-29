@@ -66,7 +66,7 @@ namespace ospray {
       try
       {
         mat = ospNewMaterial(ctx.ospRenderer,
-                                child("type").valueAs<std::string>().c_str());
+                             child("type").valueAs<std::string>().c_str());
       } catch (...) {}
 
       if (!mat)
@@ -92,7 +92,7 @@ namespace ospray {
       ospRenderer = ctx.ospRenderer;
     }
 
-    void Material::postCommit(RenderContext &ctx)
+    void Material::postCommit(RenderContext &)
     {
       auto mat = valueAs<OSPMaterial>();
 
