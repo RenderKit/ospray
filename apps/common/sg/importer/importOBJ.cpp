@@ -92,6 +92,11 @@ namespace ospray {
       auto sgMaterials =
           createNode("materialList", "MaterialList")->nodeAs<MaterialList>();
 
+      if (mats.empty()) {
+        sgMaterials->push_back(createNode("default", "Material")->nodeAs<Material>());
+        return sgMaterials;
+      }
+
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
         auto &matNode   = *matNodePtr;
@@ -102,7 +107,8 @@ namespace ospray {
             matNode["type"] = param.second;
             std::cout << "Creating material node of type " << param.second
                       << std::endl;
-            addOBJparams = false;
+            if (param.second != "OBJMaterial" && param.second != "default")
+              addOBJparams = false;
           } else {
             std::string paramType;
             ospcommon::utility::Any paramValue;

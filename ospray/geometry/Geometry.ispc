@@ -23,6 +23,14 @@ export void Geometry_setMaterialList(void *uniform _geo,
   geo->materialList = (uniform Material *uniform *)_matList;
 }
 
+int32 Geometry_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  return -1;
+}
+
 //! constructor for ispc-side Geometry object
 static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
@@ -33,11 +41,12 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  )
 {
   geometry->cppEquivalent = cppEquivalent;
-  geometry->primitives = 0;
-  geometry->model    = model;
+  geometry->numPrimitives = 0;
+  geometry->model = model;
   geometry->materialList = materialList;
-  geometry->geomID   = geomID;
+  geometry->geomID = geomID;
   geometry->postIntersect = postIntersect;
+  geometry->getMaterialID = Geometry_getMaterialID;
   geometry->sampleArea = NULL;
   geometry->getAreas = NULL;
 }

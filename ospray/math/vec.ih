@@ -610,6 +610,7 @@ __lift_unary_fct(rcp)
 __lift_unary_fct(exp)
 __lift_unary_fct(frac)
 __lift_unary_fct(sqr)
+__lift_unary_fct(sqrt)
 
 #undef __lift_unary_fct
 
@@ -869,6 +870,7 @@ inline varying vec3f pow(const varying vec3f &a, const varying float b)
 
 inline varying vec4f pow(const varying vec4f &a, const varying float b)
 { return make_vec4f(pow(a.x, b), pow(a.y, b), pow(a.z, b), pow(a.w, b)); }
+
 
 inline uniform bool isnan(uniform vec3f v)
 { return isnan(v.x+v.y+v.z); }

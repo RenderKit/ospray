@@ -159,6 +159,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp
+  render/pathtracer/materials/Principled.ispc
+  render/pathtracer/materials/Principled.cpp
   render/pathtracer/materials/Velvet.ispc
   render/pathtracer/materials/Velvet.cpp
   render/pathtracer/materials/Metal.ispc

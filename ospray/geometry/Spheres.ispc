@@ -53,6 +53,35 @@ struct Spheres {
   vec2f     *texcoord;
 };
 
+inline int32 Spheres_getMaterialID(const uniform Spheres *uniform self,
+                                   int32 primID)
+{
+  int32 materialID = -1;
+  if (self->offset_materialID >= 0) {
+    const uniform int32 primsPerPage = (1024*1024*64);
+    if (any(primID >= primsPerPage )) {
+      const int primPageID  = primID / primsPerPage;
+      const int localPrimID = primID % primsPerPage;
+      foreach_unique (primPage in primPageID) {
+        uniform uint8 *uniform pagePtr = self->data
+          + (((int64)primPage)
+             * primsPerPage
+             * self->stride);
+        uniform uint8 *varying spherePtr = pagePtr
+          + self->stride*localPrimID;
+        materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
+      }
+    } else {
+      uniform uint8 *varying spherePtr = self->data
+        + self->stride*primID;
+      materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
+    }
+  } else {
+    materialID = self->materialID;
+  }
+  return materialID;
+}
+
 static void Spheres_postIntersect(uniform Geometry *uniform geometry,
                                   uniform Model *uniform model,
                                   varying DifferentialGeometry &dg,
@@ -83,30 +112,7 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
     dg.st = make_vec2f(0.0f);
   
   if (flags & DG_MATERIALID) {
-    if (self->offset_materialID >= 0) {
-      const uniform int32 primsPerPage = (1024*1024*64);
-      if (any(ray.primID >= primsPerPage )) {
-        const int primPageID  = ray.primID / primsPerPage;
-        const int localPrimID = ray.primID % primsPerPage;
-        foreach_unique(primPage in primPageID) {
-          uniform uint8 *uniform pagePtr   = self->data
-            + (((int64)primPage)
-               * primsPerPage
-               * self->stride);
-          uniform uint8 *varying spherePtr = pagePtr
-            + self->stride*localPrimID;
-          dg.materialID =
-            *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-        }
-      } else {
-        uniform uint8 *varying spherePtr = self->data
-          + self->stride*ray.primID;
-        dg.materialID =
-          *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-      }
-    } else {
-      dg.materialID = self->materialID;
-    }
+    dg.materialID = Spheres_getMaterialID(self, ray.primID);
   }
 }
 
@@ -171,6 +177,15 @@ void Spheres_intersect(uniform Spheres *uniform self,
   }
 }
 
+int32 Spheres_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  const Spheres *const uniform self = (const Spheres *uniform)_self;
+  return Spheres_getMaterialID(self, primID);
+}
+
 SampleAreaRes Spheres_sampleArea(
     const Geometry *uniform const _self
     , const int32 primID
@@ -216,8 +231,10 @@ SampleAreaRes Spheres_sampleArea(
 
 void Spheres_getAreas(
     const Geometry *const uniform _self
+    , const int32 *const uniform primIDs
+    , const uniform int32 numPrims
     , const uniform affine3f &xfm
-    , float *const uniform area
+    , float *const uniform areas
     )
 {
   Spheres *uniform self = (Spheres *uniform)_self;
@@ -234,18 +251,17 @@ void Spheres_getAreas(
   // use average as approximation to closest uniform scaling
   const uniform float scaling = reduce_add(scaling3)/3.f;
 
-  const uniform int32 spheres = self->super.primitives;
   if (self->offset_radius < 0) {
     const uniform float sphereArea = four_pi * sqr(self->radius * scaling);
-    foreach(i = 0 ... spheres)
-      area[i] = sphereArea;
+    foreach (i = 0 ... numPrims)
+      areas[i] = sphereArea;
   } else {
-    const uniform uint8 *uniform radiusPtr = self->data + self->offset_radius;
     const uniform int64 stride = self->stride;
     // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-    for(uniform int32 i = 0; i < spheres; i++, radiusPtr += stride) {
+    for (uniform int32 i = 0; i < numPrims; i++) {
+      const uniform uint8 *uniform radiusPtr = self->data + self->offset_radius + primIDs[i] * stride;
       const uniform float radius = *((float *uniform)radiusPtr);
-      area[i] = four_pi * sqr(radius * scaling);
+      areas[i] = four_pi * sqr(radius * scaling);
     }
   }
 }
@@ -286,7 +302,7 @@ export void SpheresGeometry_set(void  *uniform _self
   
   self->super.model = model;
   self->super.geomID = geomID;
-  self->super.primitives = numSpheres;
+  self->super.numPrimitives = numSpheres;
   self->super.getAreas = Spheres_getAreas;
   self->super.sampleArea = Spheres_sampleArea;
   self->super.materialList = (Material **)materialList;

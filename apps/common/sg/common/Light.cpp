@@ -135,7 +135,7 @@ namespace ospray {
       createChild("dir", "vec3f", vec3f(1.f,0.f,0.f),
                 NodeFlags::required |
                 NodeFlags::valid_min_max).setMinMax(vec3f(-1), vec3f(1));
-      createChild("intensity", "float", 0.3f,
+      createChild("intensity", "float", 1.f,
                 NodeFlags::required |
                 NodeFlags::valid_min_max |
                 NodeFlags::gui_slider).setMinMax(0.f,12.f);

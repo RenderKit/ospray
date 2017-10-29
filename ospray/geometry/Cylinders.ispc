@@ -163,6 +163,20 @@ static void Cylinders_postIntersect(Geometry *uniform _self,
   }
 }
 
+int32 Cylinders_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  const Cylinders *const uniform self = (const Cylinders *uniform)_self;
+  if (self->offset_materialID >= 0) {
+    uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*primID;
+    return *((uniform uint32 *varying)(cylinderPtr+self->offset_materialID));
+  } else {
+    return -1;
+  }
+}
+
 SampleAreaRes Cylinders_sampleArea(
     const Geometry *uniform const _self
     , const int32 primID
@@ -196,8 +210,10 @@ SampleAreaRes Cylinders_sampleArea(
 
 void Cylinders_getAreas(
     const Geometry *const uniform _self
+    , const int32 *const uniform primIDs
+    , const uniform int32 numPrims
     , const uniform affine3f &xfm
-    , float *const uniform area
+    , float *const uniform areas
     )
 {
   Cylinders *uniform self = (Cylinders *uniform)_self;
@@ -215,16 +231,16 @@ void Cylinders_getAreas(
   const uniform float scaling = reduce_add(scaling3)/3.f;
 
   uniform float radius = self->radius;
-  uint8 *uniform cylinderPtr = self->data;
   const uniform int64 stride = self->bytesPerCylinder;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-  for(uniform int32 i = 0; i < self->super.primitives; i++, cylinderPtr += stride) {
+  for (uniform int32 i = 0; i < numPrims; i++) {
+    uint8 *uniform cylinderPtr = self->data + primIDs[i] * stride;
     if (self->offset_radius >= 0)
       radius = *((float *uniform)(cylinderPtr + self->offset_radius));
     const uniform float circ = two_pi * radius * scaling;
     uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
     uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
-    area[i] = circ * length(v0 - v1) * scaling;
+    areas[i] = circ * length(v0 - v1) * scaling;
   }
 }
 
@@ -264,7 +280,8 @@ export void CylindersGeometry_set(void *uniform _self
   
   self->super.model = model;
   self->super.geomID = geomID;
-  self->super.primitives = numCylinders;
+  self->super.numPrimitives = numCylinders;
+  self->super.getMaterialID = Cylinders_getMaterialID;
   self->super.getAreas = Cylinders_getAreas;
   self->super.sampleArea = Cylinders_sampleArea;
   self->super.materialList = (Material **)materialList;

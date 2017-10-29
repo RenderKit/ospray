@@ -43,7 +43,6 @@ namespace ospray {
     Data<vec2f>                 "texcoord"        // texture coordinates
     uint32                      "geom.materialID" // material ID for the whole mesh
     Data<uint32>                "prim.materialID" // per triangle materials, indexing into "materialList"
-    Data<OSPMaterial>           "materialList"    // list of OSPMaterial pointers
     </pre>
 
     The functionality for this geometry is implemented via the
