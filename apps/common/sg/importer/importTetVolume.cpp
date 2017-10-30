@@ -23,6 +23,7 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-destructor-override"
 
 // vtk
+#include <vtkSmartPointer.h>
 #include <vtkCell.h>
 #include <vtkCellData.h>
 #include <vtkCellTypes.h>
@@ -108,7 +109,9 @@ namespace ospray {
         if (pd) {
           for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
             vtkAbstractArray *ad = pd->GetAbstractArray(i);
-            int nDataPoints      = ad->GetNumberOfValues();
+	    int nTuples          = ad->GetNumberOfTuples();
+	    int nComponents      = ad->GetNumberOfComponents();
+            int nDataPoints      = nTuples * nComponents;
 
             auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
 
