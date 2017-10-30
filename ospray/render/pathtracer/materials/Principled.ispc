@@ -20,8 +20,9 @@
 #include "../bsdfs/Lambert.ih"
 #include "../bsdfs/OrenNayar.ih"
 #include "../bsdfs/Conductor.ih"
-#include "../bsdfs/Dielectric.ih"
 #include "../bsdfs/MicrofacetConductor.ih"
+#include "../bsdfs/Dielectric.ih"
+#include "../bsdfs/MicrofacetDielectric.ih"
 #include "../bsdfs/DielectricLayer.ih"
 #include "../bsdfs/MicrofacetDielectricLayer.ih"
 #include "math/spectrum.ih"
@@ -127,7 +128,12 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
     float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                        : self->mediumInside.ior*rcp(self->mediumOutside.ior);
 
-    varying BSDF* uniform dielectricBsdf = Dielectric_create(ctx, frame, eta);
+    varying BSDF* uniform dielectricBsdf;
+    if (roughness < 1e-5f)
+      dielectricBsdf = Dielectric_create(ctx, frame, eta);
+    else
+      dielectricBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness);
+
     MultiBSDF_add(bsdf, dielectricBsdf, transmission, transmission);
   }
   

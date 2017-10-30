@@ -60,7 +60,7 @@ namespace ospray {
 
         Texture2D* roughnessMap = (Texture2D*)getParamObject("roughnessMap");
         affine2f roughnessXform = getTextureTransform("roughnessMap");
-        float roughness = getParamf("roughness", roughnessMap ? 1.f : 0.1f);
+        float roughness = getParamf("roughness", roughnessMap ? 1.f : 0.f);
         
         Texture2D* coatMap = (Texture2D*)getParamObject("coatMap");
         affine2f coatXform = getTextureTransform("coatMap");

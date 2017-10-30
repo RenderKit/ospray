@@ -17,6 +17,7 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "Fresnel.ih"
 #include "GGXDistribution.ih"
 
 // Simplified Weidlich-Wilkie microfacet coating BSDF with the Smith microsurface model.
