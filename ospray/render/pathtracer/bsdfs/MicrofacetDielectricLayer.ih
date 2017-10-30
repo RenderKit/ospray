@@ -19,13 +19,12 @@
 #include "BSDF.ih"
 #include "GGXDistribution.ih"
 
-/* Simplified Weidlich-Wilkie microfacet coating BSDF with the Smith microsurface model.
-   Refraction for all rays and Fresnel for exiting rays are ignored, but absorption is computed
-   from the refracted ray lengths. The advantages are that it does not suffer from energy loss,
-   absorption behaves the same as in the original approach, and it's faster.
-   [Weidlich and Wilkie, 2007, "Arbitrarily Layered Micro-Facet Surfaces"]
-   [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
-*/
+// Simplified Weidlich-Wilkie microfacet coating BSDF with the Smith microsurface model.
+// Refraction for all rays and Fresnel for exiting rays are ignored, but absorption is computed
+// from the refracted ray lengths. The advantages are that it does not suffer from energy loss,
+// absorption behaves the same as in the original approach, and it's faster.
+// [Weidlich and Wilkie, 2007, "Arbitrarily Layered Micro-Facet Surfaces"]
+// [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
 struct MicrofacetDielectricLayer
 {
   BSDF super;
