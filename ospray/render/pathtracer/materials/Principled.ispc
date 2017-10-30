@@ -18,6 +18,7 @@
 #include "texture/TextureParam.ih"
 #include "render/pathtracer/bsdfs/MultiBSDF.ih"
 #include "../bsdfs/Lambert.ih"
+#include "../bsdfs/OrenNayar.ih"
 #include "../bsdfs/Conductor.ih"
 #include "../bsdfs/Dielectric.ih"
 #include "../bsdfs/MicrofacetConductor.ih"
@@ -86,7 +87,11 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   const float diffuse = (1.f - metallic) * (1.f - transmission);
   if (diffuse > 1e-5f) {
     // diffuse
-    varying BSDF* uniform diffuseBsdf = Lambert_create(ctx, frame, baseColor);
+    varying BSDF* uniform diffuseBsdf;
+    if (roughness < 1e-5f)
+      diffuseBsdf = Lambert_create(ctx, frame, baseColor);
+    else
+      diffuseBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
     
     // specular
     const float specular = self->specular * get1f(self->map_specular, dg.st, 1.f);
