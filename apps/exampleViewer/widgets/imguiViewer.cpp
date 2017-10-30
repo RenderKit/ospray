@@ -349,7 +349,7 @@ namespace ospray {
   {
     int styles=0;
     if (!node->isValid()) {
-      ImGui::PushStyleColor(ImGuiCol_Text, ImColor(200, 75, 48,255));
+      ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(200, 75, 48,255));
       styles++;
     }
     std::string text("");
@@ -573,8 +573,11 @@ namespace ospray {
 
     if (!node->isValid())
       ImGui::PopStyleColor(styles--);
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("%s", node->documentation().c_str());
+    if (ImGui::IsItemHovered()) {
+      if (!node->documentation().empty()) {
+	ImGui::SetTooltip("%s", node->documentation().c_str());
+      }
+    }
   }
 
   void ImGuiViewer::setCurrentDeviceParameter(const std::string &param,
