@@ -19,6 +19,7 @@
 #include "render/pathtracer/bsdfs/MultiBSDF.ih"
 #include "../bsdfs/Lambert.ih"
 #include "../bsdfs/Conductor.ih"
+#include "../bsdfs/Dielectric.ih"
 #include "../bsdfs/MicrofacetConductor.ih"
 #include "../bsdfs/DielectricLayer.ih"
 #include "../bsdfs/MicrofacetDielectricLayer.ih"
@@ -37,6 +38,9 @@ struct Principled
   float specular; // dielectric specular reflectivity in [0, 1]; specular = sqr((ior-1)/(ior+1))/0.08
   TextureParam map_specular;
   
+  float transmission;
+  TextureParam map_transmission;
+  
   vec3f edgeColor; // metallic reflectivity at grazing angle (90 deg) / edge tint
   TextureParam map_edgeColor;
   
@@ -54,6 +58,9 @@ struct Principled
   
   float coatRoughness;
   TextureParam map_coatRoughness;
+  
+  Medium mediumInside;
+  Medium mediumOutside;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -72,10 +79,11 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   const vec3f baseColor = self->baseColor * get3f(self->map_baseColor, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color);
   const float metallic = self->metallic * get1f(self->map_metallic, dg.st, 1.f);
   const float roughness = self->roughness * get1f(self->map_roughness, dg.st, 1.f);
+  const float transmission = self->transmission * get1f(self->map_transmission, dg.st, 1.f);
   const float coat = self->coat * get1f(self->map_coat, dg.st, 1.f);
 
   // opaque base: diffuse+specular
-  const float diffuse = 1.f - metallic;
+  const float diffuse = (1.f - metallic) * (1.f - transmission);
   if (diffuse > 1e-5f) {
     // diffuse
     varying BSDF* uniform diffuseBsdf = Lambert_create(ctx, frame, baseColor);
@@ -95,7 +103,8 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   }
     
   // opaque base: conductor
-  if (metallic > 1e-5f) {
+  const float conductor = metallic * (1.f - transmission);
+  if (conductor > 1e-5f) {
     const vec3f edgeColor = self->edgeColor * get3f(self->map_edgeColor, dg.st, make_vec3f(1.f));
     
     Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
@@ -104,7 +113,17 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
       conductorBsdf = Conductor_create(ctx, frame, fresnel);
     else
       conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
-    MultiBSDF_add(bsdf, conductorBsdf, metallic, luminance(baseColor)*metallic);
+
+    MultiBSDF_add(bsdf, conductorBsdf, conductor, luminance(baseColor)*conductor);
+  }
+
+  // transparent base
+  if (transmission > 1e-5f) {
+    float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
+                                                       : self->mediumInside.ior*rcp(self->mediumOutside.ior);
+
+    varying BSDF* uniform dielectricBsdf = Dielectric_create(ctx, frame, eta);
+    MultiBSDF_add(bsdf, dielectricBsdf, transmission, transmission);
   }
   
   // clear coat
@@ -123,6 +142,35 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   return bsdf;
 }
 
+vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform material,
+                                 const DifferentialGeometry& dg,
+                                 const Ray& ray,
+                                 const Medium& currentMedium)
+{
+  const uniform Principled* uniform self = (const uniform Principled* uniform)material;
+
+  const float transmission = self->transmission * get1f(self->map_transmission, dg.st, 1.f);
+  if (transmission < 1e-5f)
+    return make_vec3f(0.f);
+
+  float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
+                                                     : self->mediumInside.ior*rcp(self->mediumOutside.ior);
+
+  float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
+  return make_vec3f((1.0f-fresnelDielectric(cosThetaO, eta)) * transmission);
+}
+
+void Principled_selectNextMedium(const uniform PathTraceMaterial* uniform super,
+                                 Medium& currentMedium)
+{
+  const uniform Principled* uniform self = (const uniform Principled* uniform)super;
+
+  if (eq(currentMedium, self->mediumOutside))
+    currentMedium = self->mediumInside;
+  else
+    currentMedium = self->mediumOutside;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
@@ -131,11 +179,18 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float metallic, void* uniform map_metallic, const uniform affine2f& xform_metallic,
     uniform float specular, void* uniform map_specular, const uniform affine2f& xform_specular,
     const uniform vec3f& edgeColor, void* uniform map_edgeColor, const uniform affine2f& xform_edgeColor,
+    uniform float transmission, void* uniform map_transmission, const uniform affine2f& xform_transmission,
     uniform float roughness, void* uniform map_roughness, const uniform affine2f& xform_roughness,
     uniform float coat, void* uniform map_coat, const uniform affine2f& xform_coat,
     const uniform vec3f& coatColor, void* uniform map_coatColor, const uniform affine2f& xform_coatColor,
     uniform float coatThickness, void* uniform map_coatThickness, const uniform affine2f& xform_coatThickness,
-    uniform float coatRoughness, void* uniform map_coatRoughness, const uniform affine2f& xform_coatRoughness)
+    uniform float coatRoughness, void* uniform map_coatRoughness, const uniform affine2f& xform_coatRoughness,
+    uniform float ior,
+    const uniform vec3f& transmissionColor,
+    uniform float transmissionDepth,
+    uniform float iorOutside,
+    const uniform vec3f& transmissionColorOutside,
+    uniform float transmissionDepthOutside)
 {
   Principled* uniform self = (Principled* uniform)_self;
 
@@ -147,9 +202,12 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   
   self->specular = specular;
   self->map_specular = make_TextureParam((uniform Texture2D*)map_specular, xform_specular);
-
+  
   self->edgeColor = edgeColor;
   self->map_edgeColor = make_TextureParam((uniform Texture2D*)map_edgeColor, xform_edgeColor);
+  
+  self->transmission = transmission;
+  self->map_transmission = make_TextureParam((uniform Texture2D*)map_transmission, xform_transmission);
 
   self->roughness = roughness;
   self->map_roughness = make_TextureParam((uniform Texture2D*)map_roughness, xform_roughness);
@@ -165,22 +223,41 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   
   self->coatRoughness = coatRoughness;
   self->map_coatRoughness = make_TextureParam((uniform Texture2D*)map_coatRoughness, xform_coatRoughness);
+  
+  self->mediumInside.ior = ior;
+  self->mediumInside.attenuation = logf(transmissionColor) / transmissionDepth;
+  
+  self->mediumOutside.ior = iorOutside;
+  self->mediumOutside.attenuation = logf(transmissionColorOutside) / transmissionDepthOutside;
 }
 
 export void* uniform PathTracer_Principled_create()
 {
   Principled* uniform self = uniform new Principled;
-  PathTraceMaterial_Constructor(&self->super, Principled_getBSDF);
+
+  PathTraceMaterial_Constructor(&self->super,
+    Principled_getBSDF,
+    Principled_getTransparency,
+    Principled_selectNextMedium);
+
   uniform affine2f xform = make_AffineSpace2f_identity();
   PathTracer_Principled_set(self,
-    make_vec3f(0.9f), NULL, xform,
+    make_vec3f(0.8f), NULL, xform,
     0.0f, NULL, xform,
     0.0f, NULL, xform,
     make_vec3f(1.f), NULL, xform,
+    0.0f, NULL, xform,
     0.1f, NULL, xform,
     0.0f, NULL, xform,
     make_vec3f(1.f), NULL, xform,
     1.0f, NULL, xform,
-    0.0f, NULL, xform);
+    0.0f, NULL, xform,
+    1.5f,
+    make_vec3f(1.f),
+    1.f,
+    1.f,
+    make_vec3f(1.f),
+    1.f);
+
   return self;
 }
