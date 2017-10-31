@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "texture/TextureParam.ih"
 #include "render/pathtracer/bsdfs/MultiBSDF.ih"
 #include "render/pathtracer/bsdfs/Transmission.ih"
 #include "render/pathtracer/bsdfs/Lambert.ih"
@@ -52,23 +51,8 @@ const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
 
   /*! normal map */
-  vec3f shadingNormal;
-  if (valid(self->map_Bump)) {
-    // get normal from texture
-    vec3f localNormal = getNormal(self->map_Bump, dg.st);
-    // rotate in 2D (tangent space) to account for tc transformations
-    vec2f rotNormal = self->rot_Bump * make_vec2f(localNormal.x, localNormal.y);
-    localNormal.x = rotNormal.x; localNormal.y = rotNormal.y;
-    // transform to world space and align to tangents/texture coordinates
-    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
-    shadingNormal = f * localNormal;
-    // in general f is not ortho-normal, thus need to re-normalize
-    shadingNormal = normalize(shadingNormal);
-  } else {
-    shadingNormal = dg.Ns;
-  }
-
-  varying linear3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(shadingNormal));
+  varying linear3f* uniform shadingFrame =
+    LinearSpace3f_create(ctx, makeShadingFrame(dg, self->map_Bump, self->rot_Bump));
 
   /*! cut-out opacity */
   float d = self->d * get1f(self->map_d, dg.st, 1.f) * dg.color.w;
