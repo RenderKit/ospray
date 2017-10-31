@@ -51,6 +51,7 @@ struct Principled
 
   TextureParam normalMap;
   linear2f normalRot;
+  float normalScale;
   
   float coat; // dielectric clear coat reflectivity in [0, 1]; coat = sqr((ior-1)/(ior+1))/0.08
   TextureParam coatMap;
@@ -66,6 +67,7 @@ struct Principled
 
   TextureParam coatNormalMap;
   linear2f coatNormalRot;
+  float coatNormalScale;
   
   Medium mediumInside;
   Medium mediumOutside;
@@ -83,7 +85,7 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   const uniform Principled* uniform self = (const uniform Principled* uniform)super;
   varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
   varying linear3f* uniform frame =
-    LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot));
+    LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normalScale));
 
   const vec3f baseColor = self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color);
   const float metallic = self->metallic * get1f(self->metallicMap, dg.st, 1.f);
@@ -151,7 +153,7 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
     const float coatThickness = self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f);
     const float coatRoughness = self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f);
     varying linear3f* uniform coatFrame =
-      LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot));
+      LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormalScale));
     
     if (coatRoughness < 1e-5f)
       bsdf = DielectricLayer_create(ctx, coatFrame, bsdf, rcp(coatIor), coatColor, coatThickness);
@@ -201,12 +203,12 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     const uniform vec3f& edgeColor, void* uniform edgeColorMap, const uniform affine2f& edgeColorXform,
     uniform float transmission, void* uniform transmissionMap, const uniform affine2f& transmissionXform,
     uniform float roughness, void* uniform roughnessMap, const uniform affine2f& roughnessXform,
-    void* uniform normalMap, const uniform affine2f& normalXform, const uniform linear2f& normalRot,
+    void* uniform normalMap, const uniform affine2f& normalXform, const uniform linear2f& normalRot, uniform float normalScale,
     uniform float coat, void* uniform coatMap, const uniform affine2f& coatXform,
     const uniform vec3f& coatColor, void* uniform coatColorMap, const uniform affine2f& coatColorXform,
     uniform float coatThickness, void* uniform coatThicknessMap, const uniform affine2f& coatThicknessXform,
     uniform float coatRoughness, void* uniform coatRoughnessMap, const uniform affine2f& coatRoughnessXform,
-    void* uniform coatNormalMap, const uniform affine2f& coatNormalXform, const uniform linear2f& coatNormalRot,
+    void* uniform coatNormalMap, const uniform affine2f& coatNormalXform, const uniform linear2f& coatNormalRot, uniform float coatNormalScale,
     uniform float ior,
     const uniform vec3f& transmissionColor,
     uniform float transmissionDepth,
@@ -236,6 +238,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 
   self->normalMap = make_TextureParam((uniform Texture2D*)normalMap, normalXform);
   self->normalRot = normalRot;
+  self->normalScale = normalScale;
   
   self->coat = coat;
   self->coatMap = make_TextureParam((uniform Texture2D*)coatMap, coatXform);
@@ -251,6 +254,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 
   self->coatNormalMap = make_TextureParam((uniform Texture2D*)coatNormalMap, coatNormalXform);
   self->coatNormalRot = coatNormalRot;
+  self->coatNormalScale = coatNormalScale;
   
   self->mediumInside.ior = ior;
   self->mediumInside.attenuation = logf(transmissionColor) / transmissionDepth;
@@ -276,12 +280,12 @@ export void* uniform PathTracer_Principled_create()
     make_vec3f(1.f), NULL, xform,
     0.f, NULL, xform,
     0.f, NULL, xform,
-    NULL, xform, make_LinearSpace2f_identity(),
+    NULL, xform, make_LinearSpace2f_identity(), 1.f,
     0.f, NULL, xform,
     make_vec3f(1.f), NULL, xform,
     1.f, NULL, xform,
     0.f, NULL, xform,
-    NULL, xform, make_LinearSpace2f_identity(),
+    NULL, xform, make_LinearSpace2f_identity(), 1.f,
     1.5f,
     make_vec3f(1.f),
     1.f,

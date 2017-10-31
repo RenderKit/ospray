@@ -64,12 +64,13 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
 
 inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
                                  const uniform TextureParam& normalMap,
-                                 const uniform linear2f& normalRot)
+                                 const uniform linear2f& normalRot,
+                                 uniform float normalScale = 1.f)
 {
   vec3f shadingNormal;
   if (valid(normalMap)) {
     // get normal from texture
-    vec3f localNormal = getNormal(normalMap, dg.st);
+    vec3f localNormal = getNormal(normalMap, dg.st) * make_vec3f(normalScale, normalScale, 1.f);
     // rotate in 2D (tangent space) to account for tc transformations
     vec2f rotNormal = normalRot * make_vec2f(localNormal.x, localNormal.y);
     localNormal.x = rotNormal.x;
