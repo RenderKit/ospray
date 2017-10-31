@@ -60,7 +60,12 @@ namespace ospray {
 
         Texture2D* roughnessMap = (Texture2D*)getParamObject("roughnessMap");
         affine2f roughnessXform = getTextureTransform("roughnessMap");
-        float roughness = getParamf("roughness", roughnessMap ? 1.f : 0.1f);
+        float roughness = getParamf("roughness", roughnessMap ? 1.f : 0.f);
+
+        Texture2D* normalMap = (Texture2D*)getParamObject("normalMap");
+        affine2f normalXform = getTextureTransform("normalMap");
+        linear2f normalRot   = normalXform.l.orthogonal().transposed();
+        float normalScale = getParamf("normalScale", 1.f);
         
         Texture2D* coatMap = (Texture2D*)getParamObject("coatMap");
         affine2f coatXform = getTextureTransform("coatMap");
@@ -77,6 +82,11 @@ namespace ospray {
         Texture2D* coatRoughnessMap = (Texture2D*)getParamObject("coatRoughnessMap");
         affine2f coatRoughnessXform = getTextureTransform("coatRoughnessMap");
         float coatRoughness = getParamf("coatRoughness", coatRoughnessMap ? 1.f : 0.f);
+
+        Texture2D* coatNormalMap = (Texture2D*)getParamObject("coatNormalMap");
+        affine2f coatNormalXform = getTextureTransform("coatNormalMap");
+        linear2f coatNormalRot   = coatNormalXform.l.orthogonal().transposed();
+        float coatNormalScale = getParamf("coatNormalScale", 1.f);
         
         float ior = getParamf("ior", 1.5f);
         vec3f transmissionColor = getParam3f("transmissionColor", vec3f(1.f));
@@ -93,10 +103,12 @@ namespace ospray {
           (const ispc::vec3f&)edgeColor, edgeColorMap ? edgeColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)edgeColorXform,
           transmission, transmissionMap ? transmissionMap->getIE() : nullptr, (const ispc::AffineSpace2f&)transmissionXform,
           roughness, roughnessMap ? roughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)roughnessXform,
+          normalMap ? normalMap->getIE() : nullptr, (const ispc::AffineSpace2f&)normalXform, (const ispc::LinearSpace2f&)normalRot, normalScale,
           coat, coatMap ? coatMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatXform,
           (const ispc::vec3f&)coatColor, coatColorMap ? coatColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatXform,
           coatThickness, coatThicknessMap ? coatThicknessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThicknessXform,
           coatRoughness, coatRoughnessMap ? coatRoughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughnessXform,
+          coatNormalMap ? coatNormalMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormalXform, (const ispc::LinearSpace2f&)coatNormalRot, coatNormalScale,
           ior,
           (const ispc::vec3f&)transmissionColor,
           transmissionDepth,
