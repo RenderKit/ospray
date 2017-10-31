@@ -72,9 +72,7 @@ namespace ospray {
         float coat = getParamf("coat", coatMap ? 1.f : 0.f);
 
         Texture2D* coatColorMap = (Texture2D*)getParamObject("coatColorMap");
-#if 0 //NOTE(jda) - this is unused, triggering a warning...remove if not needed
         affine2f coatColorXform = getTextureTransform("coatColorMap");
-#endif
         vec3f coatColor = getParam3f("coatColor", vec3f(1.f));
 
         Texture2D* coatThicknessMap = (Texture2D*)getParamObject("coatThicknessMap");
@@ -107,7 +105,7 @@ namespace ospray {
           roughness, roughnessMap ? roughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)roughnessXform,
           normalMap ? normalMap->getIE() : nullptr, (const ispc::AffineSpace2f&)normalXform, (const ispc::LinearSpace2f&)normalRot, normalScale,
           coat, coatMap ? coatMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatXform,
-          (const ispc::vec3f&)coatColor, coatColorMap ? coatColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatXform,
+          (const ispc::vec3f&)coatColor, coatColorMap ? coatColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatColorXform,
           coatThickness, coatThicknessMap ? coatThicknessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThicknessXform,
           coatRoughness, coatRoughnessMap ? coatRoughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughnessXform,
           coatNormalMap ? coatNormalMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormalXform, (const ispc::LinearSpace2f&)coatNormalRot, coatNormalScale,
