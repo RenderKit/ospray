@@ -41,7 +41,7 @@ namespace ospray {
         Texture2D* baseColorMap = (Texture2D*)getParamObject("baseColorMap");
         affine2f baseColorXform = getTextureTransform("baseColorMap");
         vec3f baseColor = getParam3f("baseColor", baseColorMap ? vec3f(1.f) : vec3f(0.8f));
-        
+
         Texture2D* metallicMap = (Texture2D*)getParamObject("metallicMap");
         affine2f metallicXform = getTextureTransform("metallicMap");
         float metallic = getParamf("metallic", metallicMap ? 1.f : 0.f);
@@ -53,7 +53,7 @@ namespace ospray {
         Texture2D* edgeColorMap = (Texture2D*)getParamObject("edgeColorMap");
         affine2f edgeColorXform = getTextureTransform("edgeColorMap");
         vec3f edgeColor = getParam3f("edgeColor", vec3f(1.f));
-        
+
         Texture2D* transmissionMap = (Texture2D*)getParamObject("transmissionMap");
         affine2f transmissionXform = getTextureTransform("transmissionMap");
         float transmission = getParamf("transmission", transmissionMap ? 1.f : 0.f);
@@ -66,19 +66,21 @@ namespace ospray {
         affine2f normalXform = getTextureTransform("normalMap");
         linear2f normalRot   = normalXform.l.orthogonal().transposed();
         float normalScale = getParamf("normalScale", 1.f);
-        
+
         Texture2D* coatMap = (Texture2D*)getParamObject("coatMap");
         affine2f coatXform = getTextureTransform("coatMap");
         float coat = getParamf("coat", coatMap ? 1.f : 0.f);
 
         Texture2D* coatColorMap = (Texture2D*)getParamObject("coatColorMap");
+#if 0 //NOTE(jda) - this is unused, triggering a warning...remove if not needed
         affine2f coatColorXform = getTextureTransform("coatColorMap");
+#endif
         vec3f coatColor = getParam3f("coatColor", vec3f(1.f));
 
         Texture2D* coatThicknessMap = (Texture2D*)getParamObject("coatThicknessMap");
         affine2f coatThicknessXform = getTextureTransform("coatThicknessMap");
         float coatThickness = getParamf("coatThickness", 1.f);
-        
+
         Texture2D* coatRoughnessMap = (Texture2D*)getParamObject("coatRoughnessMap");
         affine2f coatRoughnessXform = getTextureTransform("coatRoughnessMap");
         float coatRoughness = getParamf("coatRoughness", coatRoughnessMap ? 1.f : 0.f);
@@ -87,11 +89,11 @@ namespace ospray {
         affine2f coatNormalXform = getTextureTransform("coatNormalMap");
         linear2f coatNormalRot   = coatNormalXform.l.orthogonal().transposed();
         float coatNormalScale = getParamf("coatNormalScale", 1.f);
-        
+
         float ior = getParamf("ior", 1.5f);
         vec3f transmissionColor = getParam3f("transmissionColor", vec3f(1.f));
         float transmissionDepth = getParamf("transmissionDepth", 1.f);
-        
+
         float iorOutside = getParamf("iorOutside", 1.f);
         vec3f transmissionColorOutside = getParam3f("transmissionColorOutside", vec3f(1.f));
         float transmissionDepthOutside = getParamf("transmissionDepthOutside", 1.f);
