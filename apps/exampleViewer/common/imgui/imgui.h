@@ -891,7 +891,7 @@ struct ImGuiIO
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 namespace ImGui
 {
-    bool                    Begin(const char* name, bool* p_open, const ImVec2& size_on_first_use, float bg_alpha_override = -1.0f, ImGuiWindowFlags flags = 0); // OBSOLETE 1.52+. use SetNextWindowSize() instead if you want to set a window size.
+    IMGUI_API bool                    Begin(const char* name, bool* p_open, const ImVec2& size_on_first_use, float bg_alpha_override = -1.0f, ImGuiWindowFlags flags = 0); // OBSOLETE 1.52+. use SetNextWindowSize() instead if you want to set a window size.
     static inline void      AlignFirstTextHeightToWidgets() { AlignTextToFramePadding(); }     // OBSOLETE 1.52+
     static inline void      SetNextWindowPosCenter(ImGuiCond cond = 0) { SetNextWindowPos(ImVec2(GetIO().DisplaySize.x * 0.5f, GetIO().DisplaySize.y * 0.5f), cond, ImVec2(0.5f, 0.5f)); } // OBSOLETE 1.52+
     static inline bool      IsItemHoveredRect() { return IsItemHovered(ImGuiHoveredFlags_RectOnly); } // OBSOLETE 1.51+
