@@ -73,9 +73,6 @@ namespace ospray {
         + distribModel->othersRegions.size();
 
       beginFrame(dfb);
-      // This renderer doesn't use per frame data, since we sneak in some tile
-      // info in this pointer.
-      assert(!perFrameData);
 
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;

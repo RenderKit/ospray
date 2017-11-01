@@ -448,7 +448,37 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
     if (pixelOp) {
       pixelOp->postAccum(tile->final);
+      if (colorBufferFormat == OSP_FB_RGBA8 || colorBufferFormat == OSP_FB_SRGBA) {
+        uint8_t *colors = reinterpret_cast<uint8_t*>(tile->color);
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) { 
+          colors[i * 4] = clamp(tile->final.r[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 1] = clamp(tile->final.g[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 2] = clamp(tile->final.b[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 3] = clamp(tile->final.a[i] * 255.0, 0.0, 255.0);
+        }
+      } else if (colorBufferFormat == OSP_FB_RGBA32F) {
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) { 
+          tile->color[i] = vec4f(tile->final.r[i], tile->final.g[i],
+              tile->final.b[i], tile->final.a[i]);
+        }
+      }
     }
+
+    // write the final colors into the color buffer
+    // normalize and write final color, and compute error
+    auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
+    switch (colorBufferFormat) {
+      case OSP_FB_RGBA8:
+        DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
+        break;
+      case OSP_FB_SRGBA:
+        DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
+        break;
+      default:
+      break;
+    }
+    
+    DFB_writeTile((ispc::VaryingTile*)&tile->final, &tile->color);
 
     auto msg = [&]{
       MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,

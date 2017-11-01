@@ -183,7 +183,7 @@ void TransferFunction::drawUi()
     }
 
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
-    draw_list->AddRect(canvasPos, canvasPos + canvasSize, ImColor(255, 255, 255));
+    draw_list->AddRect(canvasPos, canvasPos + canvasSize, IM_COL32_WHITE);
 
     const vec2f viewScale(canvasSize.x, -canvasSize.y + 10);
     const vec2f viewOffset(canvasPos.x, canvasPos.y + canvasSize.y - 10);

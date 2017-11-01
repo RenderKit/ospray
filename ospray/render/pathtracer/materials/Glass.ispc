@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "render/pathtracer/bsdfs/Dielectric.ih"
+#include "render/pathtracer/bsdfs/RobustDielectric.ih"
 #include "texture/TextureParam.ih"
 
 struct Glass
@@ -39,8 +39,8 @@ const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* unifo
 
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                      : self->mediumInside.ior*rcp(self->mediumOutside.ior);
-
-  varying BSDF* uniform bsdf = Dielectric_create(ctx, dg, eta);
+                                                     
+  varying BSDF* uniform bsdf = RobustDielectric_create(ctx, dg, eta);
   return bsdf;
 }
 
