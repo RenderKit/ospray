@@ -464,6 +464,22 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
       }
     }
 
+    // write the final colors into the color buffer
+    // normalize and write final color, and compute error
+    auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
+    switch (colorBufferFormat) {
+      case OSP_FB_RGBA8:
+        DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
+        break;
+      case OSP_FB_SRGBA:
+        DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
+        break;
+      default:
+      break;
+    }
+    
+    DFB_writeTile((ispc::VaryingTile*)&tile->final, &tile->color);
+
     auto msg = [&]{
       MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
                                    tile->begin, tile->error);
