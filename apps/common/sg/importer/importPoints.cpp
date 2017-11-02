@@ -84,8 +84,13 @@ namespace ospray {
       return true;
     }
 
-    // for now, let's hardcode the importers - should be moved to a
-    // registry at some point ...
+    /*! importer for a binary set of points, the format of which are
+        controlled through the 'Pseudo-URL' "url" parameter. e.g.,
+        'points://fileName.raw:format=xyzff,radius=.2' means the file
+        is sequence of records with 5 elements, the first three of
+        which are x, y, and z coordinates, and the other two are
+        (unused) floats, with a fixed radius of 0.2 for every
+        sphere */
     void importFileType_points(std::shared_ptr<Node> &world,
                                const FileName &url)
     {
@@ -165,7 +170,7 @@ namespace ospray {
       // the current scene graph works - 'adding' that node (which
       // happens to have the right name) will essentially replace the
       // old value of that node, and thereby assign the 'data' field
-      sphereData->setName("sphereData");
+      sphereData->setName("spheres");
       sphereObject.add(sphereData);
 
       if (!mappedScalarVector.empty()) {

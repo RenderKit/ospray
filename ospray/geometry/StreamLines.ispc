@@ -46,10 +46,20 @@ void StreamLines_bounds(uniform StreamLines *uniform self,
                      max(A,B) + self->radius);
 }
 
-inline bool intersectShiftedSphere(varying Ray &ray,
-                                   const vec3f &A, 
-                                   const uniform float r)
+/*! do a ray-sphere intersection, with the numerical fix of first
+    moving the ray origin to an approximate spher distance, and then
+    re-adding this approximate distance to the computed hit
+    distance */ 
+inline bool intersectSphere_numericalFix(varying Ray &ray,
+                                         /*! center/positoin of the sphere  */
+                                         const vec3f &center, 
+                                         const uniform float r)
 {
+  const float approximateDistance
+    = dot(center-ray.org,ray.dir);// * rsqrtf(dot(ray.dir,ray.dir));
+
+  const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
+  const vec3f A = center - closeOrg;
   const float a = dot(ray.dir,ray.dir);
   const float b = -2.f*dot(ray.dir,A);
   const float c = dot(A,A)-r*r;
@@ -59,8 +69,8 @@ inline bool intersectShiftedSphere(varying Ray &ray,
 
   const float srad = sqrt(radical);
 
-  const float t_in = (- b - srad) *rcpf(2.f*a);
-  const float t_out= (- b + srad) *rcpf(2.f*a);
+  const float t_in = approximateDistance + (- b - srad) * rcpf(2.f*a);
+  const float t_out= approximateDistance + (- b + srad) * rcpf(2.f*a);
 
   if (t_in > ray.t0 && t_in < ray.t) {
     ray.t = t_in;
@@ -72,10 +82,23 @@ inline bool intersectShiftedSphere(varying Ray &ray,
   return false;
 }
 
-inline bool intersectShiftedCylinder(varying Ray &ray,
-                                     const vec3f &A, const vec3f &B,
-                                     const uniform float r)
+/*! do a ray-cylinder intersection, with the numerical fix of first
+    moving the ray origin to an approximate distance, and then
+    re-adding this approximate distance to the computed hit
+    distance. for the approximate distance we use the distance from
+    ray origin to center of the cylinder (projected to the ray) */ 
+inline bool intersectCylinder_numericalFix(varying Ray &ray,
+                                           const vec3f &_A, const vec3f &_B,
+                                           const uniform float r)
 {
+  const vec3f center = 0.5f*(_A+_B);
+  const float approximateDistance
+    = dot(center-ray.org,ray.dir); // * rsqrtf(dot(ray.dir,ray.dir));
+
+  const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
+  const vec3f A = _A - closeOrg;
+  const vec3f B = _B - closeOrg;
+
   const vec3f V = ray.dir;
 
   const vec3f AB = B - A;
@@ -89,8 +112,8 @@ inline bool intersectShiftedCylinder(varying Ray &ray,
 
   // clip to near and far cap of cylinder
   const float rVAB = rcp(dot(V,AB));
-  const float tA = dot(AB,A) * rVAB;
-  const float tB = dot(AB,B) * rVAB;
+  const float tA = approximateDistance + dot(AB,A) * rVAB;
+  const float tB = approximateDistance + dot(AB,B) * rVAB;
   const float tAB0 = max(ray.t0,min(tA,tB));
   const float tAB1 = min(ray.t, max(tA,tB));
 
@@ -102,8 +125,8 @@ inline bool intersectShiftedCylinder(varying Ray &ray,
   
   const float srad = sqrt(radical);
 
-  const float t_in = (- b - srad) *rcpf(2.f*a);
-  const float t_out= (- b + srad) *rcpf(2.f*a);
+  const float t_in = approximateDistance + (- b - srad)*rcpf(2.f*a);
+  const float t_out= approximateDistance + (- b + srad)*rcpf(2.f*a);
 
   if (t_in >= tAB0 && t_in <= tAB1) {
     ray.t = t_in;
@@ -120,18 +143,17 @@ void StreamLines_intersect(uniform StreamLines *uniform self,
                            uniform size_t primID)
 {
   const uniform uint32 idx = self->index[primID];
-  const vec3f A = make_vec3f(self->vertex[idx])   - ray.org;
-  const vec3f B = make_vec3f(self->vertex[idx+1]) - ray.org;
+  const vec3f A = make_vec3f(self->vertex[idx]);
+  const vec3f B = make_vec3f(self->vertex[idx+1]);
 
   bool hit = 0;
-  hit |= intersectShiftedCylinder(ray,A,B,self->radius);
-  hit |= intersectShiftedSphere(ray,A,self->radius);
-  hit |= intersectShiftedSphere(ray,B,self->radius);
-
+  hit |= intersectCylinder_numericalFix(ray,A,B,self->radius);
+  hit |= intersectSphere_numericalFix(ray,A,self->radius);
+  hit |= intersectSphere_numericalFix(ray,B,self->radius);
   if (hit) {
     ray.geomID = self->super.geomID;
     ray.primID = primID;
-    const vec3f P = ray.t * ray.dir;
+    const vec3f P = ray.org + ray.t * ray.dir;
     float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
     s = min(max(s,0.f),1.f);
     const vec3f PonAxis = A + s * (B-A);
