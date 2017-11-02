@@ -129,6 +129,23 @@ void Base::SetFramebuffer() {
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR);
 }
 
+OSPMaterial Base::CreateMaterial(std::string type) {
+  OSPMaterial material = ospNewMaterial(renderer, type.data());
+  EXPECT_TRUE(material);
+
+  if (type == "Glass") {
+    ospSetf(material, "eta", 1.5);
+    ospSet3f(material, "attenuationColor", 0.f, 1.f, 1.f);
+    ospSetf(material, "attenuationDistance", 5.0);
+  } else if (type == "Luminous") {
+    ospSetf(material, "intensity", 3.0);
+  }
+
+  ospCommit(material);
+
+  return material;
+}
+
 void Base::RenderFrame(const uint32_t frameBufferChannels) {
   for (int frame = 0; frame < frames; ++frame)
     ospRenderFrame(framebuffer, renderer, frameBufferChannels);
@@ -162,20 +179,7 @@ void SingleObject::SetUp() {
 }
 
 void SingleObject::SetMaterial() {
-  material = ospNewMaterial(renderer, materialType.data());
-
-  if (materialType == "OBJMaterial") {
-  } else if (materialType == "Glass") {
-    ospSetf(material, "eta", 1.5);
-    ospSet3f(material, "attenuationColor", 0.f, 1.f, 1.f);
-    ospSetf(material, "attenuationDistance", 5.0);
-  } else if (materialType == "Luminous") {
-    ospSetf(material, "intensity", 3.0);
-  } else {
-    FAIL();
-  }
-
-  ospCommit(material);
+  material = CreateMaterial(materialType);
 }
 
 Box::Box() {
@@ -652,6 +656,71 @@ void MTLMirrors::SetUp() {
   OSPLight ambient = ospNewLight(renderer, "ambient");
   ASSERT_TRUE(ambient);
   ospSetf(ambient, "intensity", 0.01f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
+Pipes::Pipes() {
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  materialType = std::get<1>(params);
+  radius = std::get<2>(params);
+
+  frames = 10;
+}
+
+void Pipes::SetUp() {
+  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+
+  ospSet1f(renderer, "epsilon", 0.001f);
+  ospCommit(renderer);
+
+  float cam_pos[] = {-7.f, 2.f, 0.7f};
+  float cam_view[] = {7.f, -2.f, -0.7f};
+  float cam_up[] = {0.f, 0.f, 1.f};
+  ospSet3fv(camera, "pos", cam_pos);
+  ospSet3fv(camera, "dir", cam_view);
+  ospSet3fv(camera, "up", cam_up);
+  ospCommit(camera);
+  ospCommit(renderer);
+
+  float vertex[] = {
+    -2.f,  2.f, -2.f, 0.f,
+     2.f,  2.f, -2.f, 0.f,
+     2.f, -2.f, -2.f, 0.f,
+    -2.f, -2.f, -2.f, 0.f,
+    -1.f, -1.f, -1.f, 0.f,
+     1.f, -1.f, -1.f, 0.f,
+     1.f,  1.f, -1.f, 0.f,
+    -1.f,  1.f, -1.f, 0.f,
+    -1.f,  1.f,  1.f, 0.f,
+     1.f,  1.f,  1.f, 0.f,
+     1.f, -1.f,  1.f, 0.f,
+    -1.f, -1.f,  1.f, 0.f,
+    -2.f, -2.f,  2.f, 0.f,
+     2.f, -2.f,  2.f, 0.f,
+     2.f,  2.f,  2.f, 0.f,
+    -2.f,  2.f,  2.f, 0.f,
+  };
+
+  int index[] =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+  OSPGeometry streamlines = ospNewGeometry("streamlines");
+  ASSERT_TRUE(streamlines);
+  OSPData data = ospNewData(16, OSP_FLOAT3A, vertex);
+  ASSERT_TRUE(data);
+  ospSetData(streamlines, "vertex", data);
+  data = ospNewData(15, OSP_INT, index);
+  ASSERT_TRUE(data);
+  ospSetData(streamlines, "index", data);
+  ospSet1f(streamlines, "radius", radius);
+  ospSetMaterial(streamlines, CreateMaterial(materialType));
+  ospCommit(streamlines);
+
+  AddGeometry(streamlines);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient);
+  ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
   AddLight(ambient);
 }

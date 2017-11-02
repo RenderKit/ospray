@@ -4,6 +4,7 @@ using OSPRayTestScenes::Base;
 using OSPRayTestScenes::SingleObject;
 using OSPRayTestScenes::Box;
 using OSPRayTestScenes::Sierpinski;
+using OSPRayTestScenes::Pipes;
 
 namespace {
 
@@ -172,3 +173,11 @@ TEST_P(Box, basicScene) {
 
 INSTANTIATE_TEST_CASE_P(MaterialPairs, Box, ::testing::Combine(::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values("OBJMaterial", "Glass", "Luminous")));
 
+TEST_P(Pipes, simple) {
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_CASE_P(Scivis, Pipes, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
+
+// Tests disabled due to issues for pathtracer renderer with streamlines
+INSTANTIATE_TEST_CASE_P(DISABLED_Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values(0.1f, 0.4f)));

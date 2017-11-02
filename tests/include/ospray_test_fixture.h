@@ -63,6 +63,8 @@ protected:
   void SetFramebuffer();
   void SetImageTool();
 
+  OSPMaterial CreateMaterial(std::string type);
+
   void RenderFrame(const uint32_t frameBufferChannels = OSP_FB_COLOR | OSP_FB_ACCUM);
 };
 
@@ -146,6 +148,17 @@ private:
   float Ns;
   float d;
   osp::vec3f Tf;
+};
+
+// Fixture for tests rendering few connected cylinder segments. It's parametrized with type of
+// material used and radius of the segments.
+class Pipes : public Base, public ::testing::TestWithParam<std::tuple<const char*, const char*, float>> {
+public:
+  Pipes();
+  virtual void SetUp();
+private:
+  float radius;
+  std::string materialType;
 };
 
 } // namespace OSPRayTestScenes
