@@ -22,22 +22,30 @@
 
 namespace ospray {
   namespace sg {
-    
+
     //! \brief Implements an abstraction of Time
     /*! Abstracts the concept of time to be used for time-stamping
       node's last 'lastupdated' and /lastmodified' time stamps */
     struct OSPSG_INTERFACE TimeStamp
     {
       TimeStamp() = default;
+      TimeStamp(const TimeStamp &);
+      TimeStamp(TimeStamp &&);
+
+      TimeStamp &operator=(const TimeStamp &);
+      TimeStamp &operator=(TimeStamp &&);
+
       operator size_t() const;
-      
+
+      void renew();
+
     private:
 
       static size_t nextValue();
 
       // Data members //
 
-      size_t value {nextValue()};
+      std::atomic<size_t> value {nextValue()};
 
       //! \brief the uint64_t that stores the time value
       static std::atomic<size_t> global;
