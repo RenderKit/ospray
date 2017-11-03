@@ -182,7 +182,7 @@ namespace ospray {
             ospRelease(lightsData);
           lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
           ospCommit(lightsData);
-          lightsBuildTime = TimeStamp();
+          lightsBuildTime.renew();
         }
 
         // complete setup of renderer
@@ -207,7 +207,7 @@ namespace ospray {
 
         }
         ospCommit(ospRenderer);
-        frameMTime = TimeStamp();
+        frameMTime.renew();
       }
 
     }
