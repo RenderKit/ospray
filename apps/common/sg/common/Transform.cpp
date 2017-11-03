@@ -32,7 +32,7 @@ namespace ospray {
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
                                                     vec3f(2*3.15f));
-      createChild("rotationOrder", "string", std::string("xyz"),
+      createChild("rotationOrder", "string", std::string("zyx"),
                   NodeFlags::required |
                   NodeFlags::valid_whitelist |
                   NodeFlags::gui_combo)
@@ -55,7 +55,7 @@ namespace ospray {
       const std::string rotationOrder = child("rotationOrder").valueAs<std::string>();
       const vec3f translation = child("position").valueAs<vec3f>();
       const ospcommon::affine3f userTransform = child("userTransform").valueAs<affine3f>();
-      
+
       ospcommon::affine3f rotationTransform {one};
       for (char axis : rotationOrder) {
         switch (tolower(axis)) {

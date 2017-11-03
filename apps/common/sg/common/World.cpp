@@ -97,7 +97,7 @@ namespace ospray {
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
                                                     vec3f(2*3.15f));
-      createChild("rotationOrder", "string", std::string("xyz"),
+      createChild("rotationOrder", "string", std::string("zyx"),
                   NodeFlags::required |
                   NodeFlags::valid_whitelist |
                   NodeFlags::gui_combo)
