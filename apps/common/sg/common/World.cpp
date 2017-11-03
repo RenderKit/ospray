@@ -93,10 +93,16 @@ namespace ospray {
       createChild("visible", "bool", true);
       createChild("position", "vec3f");
       createChild("rotation", "vec3f", vec3f(0),
-                  NodeFlags::required      |
+                  NodeFlags::required |
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
                                                     vec3f(2*3.15f));
+      createChild("rotationOrder", "string", std::string("xyz"),
+                  NodeFlags::required |
+                  NodeFlags::valid_whitelist |
+                  NodeFlags::gui_combo)
+        .setWhiteList({std::string("xyz"), std::string("xzy"), std::string("yxz"),
+                       std::string("yzx"), std::string("zxy"), std::string("zyx")});
       createChild("scale", "vec3f", vec3f(1.f));
       createChild("model", "Model");
     }
@@ -180,14 +186,22 @@ namespace ospray {
 
     void Instance::updateTransform(RenderContext &ctx)
     {
-      vec3f scale = child("scale").valueAs<vec3f>();
-      vec3f rotation = child("rotation").valueAs<vec3f>();
-      vec3f translation = child("position").valueAs<vec3f>();
+      const vec3f scale = child("scale").valueAs<vec3f>();
+      const vec3f rotation = child("rotation").valueAs<vec3f>();
+      const std::string rotationOrder = child("rotationOrder").valueAs<std::string>();
+      const vec3f translation = child("position").valueAs<vec3f>();
+
+      ospcommon::affine3f rotationTransform {one};
+      for (char axis : rotationOrder) {
+        switch (tolower(axis)) {
+        default:
+        case 'x': rotationTransform = ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x) * rotationTransform; break;
+        case 'y': rotationTransform = ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y) * rotationTransform; break;
+        case 'z': rotationTransform = ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z) * rotationTransform; break;
+        }
+      }
       worldTransform = ctx.currentTransform*baseTransform*ospcommon::affine3f::translate(translation)*
-      ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
-      ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
-      ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
-      ospcommon::affine3f::scale(scale);
+        rotationTransform*ospcommon::affine3f::scale(scale);
     }
 
     void Instance::updateInstance(RenderContext &ctx)
