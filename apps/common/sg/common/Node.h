@@ -333,12 +333,14 @@ namespace ospray {
     template <typename T>
     inline T& Node::valueAs()
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.get<T>();
     }
 
     template <typename T>
     inline const T& Node::valueAs() const
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.get<T>();
     }
 
