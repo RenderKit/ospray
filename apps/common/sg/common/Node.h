@@ -347,6 +347,7 @@ namespace ospray {
     template <typename T>
     inline bool Node::valueIsType() const
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.is<T>();
     }
 
@@ -365,12 +366,14 @@ namespace ospray {
     template <>                                                                \
     inline a& Node::valueAs()                                                  \
     {                                                                          \
+      std::lock_guard<std::mutex> lock{value_mutex};                           \
       return (a&)properties.value.get<OSPObject>();                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
     inline const a& Node::valueAs() const                                      \
     {                                                                          \
+      std::lock_guard<std::mutex> lock{value_mutex};                           \
       return (const a&)properties.value.get<OSPObject>();                      \
     }                                                                          \
                                                                                \
