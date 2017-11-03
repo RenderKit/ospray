@@ -327,6 +327,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             auto bounds = importerNode_ptr->computeBounds();
             auto size = bounds.upper - bounds.lower;
             float maxSize = max(max(size.x,size.y),size.z);
+            if (!isfinitef(maxSize)) maxSize = 0.f; // FIXME: why is maxSize = NaN in some cases?!
             vec3f offset={i*maxSize*1.3f,j*maxSize*1.3f,k*maxSize*1.3f};
             transform["position"] = file.transform.translate + offset;
           }
