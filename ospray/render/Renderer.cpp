@@ -31,6 +31,7 @@ namespace ospray {
 
   void Renderer::commit()
   {
+    autoEpsilon = getParam1i("autoEpsilon", true);
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
     const int32 maxDepth = getParam1i("maxDepth", 20);
@@ -62,6 +63,7 @@ namespace ospray {
       ispc::Renderer_set(getIE()
           , model ? model->getIE() : nullptr
           , camera ? camera->getIE() : nullptr
+          , autoEpsilon
           , epsilon
           , spp
           , maxDepth

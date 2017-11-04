@@ -61,4 +61,6 @@ struct DifferentialGeometry {
 
   uniform Geometry *geometry; /*! pointer to hit-point's geometry */
   uniform Material *material; /*! pointer to hit-point's material */
+
+  float error; //!< intersection error (adaptive epsilon) */
 };
