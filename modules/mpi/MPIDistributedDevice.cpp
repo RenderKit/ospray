@@ -111,7 +111,14 @@ namespace ospray {
         int _ac = 1;
         const char *_av[] = {"ospray_mpi_distributed_device"};
 
-        shouldFinalizeMPI = mpicommon::init(&_ac, _av);
+        MPI_Comm *setComm = static_cast<MPI_Comm*>(getVoidPtr("world_communicator", nullptr));
+        shouldFinalizeMPI = mpicommon::init(&_ac, _av, setComm == nullptr);
+
+        if (setComm) {
+          MPI_CALL(Comm_dup(*setComm, &mpicommon::world.comm));
+          MPI_CALL(Comm_rank(mpicommon::world.comm, &mpicommon::world.rank));
+          MPI_CALL(Comm_size(mpicommon::world.comm, &mpicommon::world.size));
+        }
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 

@@ -166,7 +166,7 @@ namespace ospray {
     */
     void createMPI_RanksBecomeWorkers(int *ac, const char **av)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
           << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
@@ -199,7 +199,7 @@ namespace ospray {
     */
     void createMPI_ListenForWorkers(int *ac, const char **av)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       if (world.rank < 1) {
         postStatusMsg("====================================================\n"
@@ -252,7 +252,7 @@ namespace ospray {
     void createMPI_connectToListener(int *ac, const char **av,
                                      const std::string &host)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       if (world.rank < 1) {
         postStatusMsg("=====================================================\n"
@@ -302,7 +302,7 @@ namespace ospray {
     void createMPI_LaunchWorkerGroup(int *ac, const char **av,
                                      const char *launchCommand)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       Assert(launchCommand);
 
