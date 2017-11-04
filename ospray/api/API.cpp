@@ -591,6 +591,14 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospDeviceSetVoidPtr(OSPDevice _object, const char *id, void *v)
+OSPRAY_CATCH_BEGIN
+{
+  ManagedObject *object = (ManagedObject *)_object;
+  object->findParam(id, true)->set(v);
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospDeviceSetStatusFunc(OSPDevice object, OSPStatusFunc callback)
 OSPRAY_CATCH_BEGIN
 {
