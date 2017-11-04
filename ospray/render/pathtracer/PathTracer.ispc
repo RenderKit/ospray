@@ -39,7 +39,7 @@ inline float misHeuristic(float pdf1, float pdf2)
 inline float getEpsilon(const uniform PathTracer* uniform self,
                         const DifferentialGeometry& dg)
 {
-  return self->super.autoEpsilon ? dg.error : self->super.epsilon;
+  return self->super.autoEpsilon ? dg.epsilon : self->super.epsilon;
 }
 
 // TODO use intersection filters
@@ -112,7 +112,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   DifferentialGeometry lastDg;
   // P and N also used by light eval
   lastDg.P = ray.org;
-  lastDg.error = getIntersectionError(ray.org, 0.f);
+  lastDg.epsilon = getIntersectionError(ray.org, 0.f);
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
@@ -143,7 +143,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       if (shadowCatcherDist <= ray.t && shadowCatcherDist > ray.t0) {
         // "postIntersect" of shadowCatcher plane
         dg.P = ray.org + shadowCatcherDist * ray.dir;
-        dg.error = getIntersectionError(dg.P, shadowCatcherDist);
+        dg.epsilon = getIntersectionError(dg.P, shadowCatcherDist);
         dg.Ns = dg.Ng = make_vec3f(self->shadowCatcherPlane);
         if (dot(ray.dir, dg.Ng) >= 0.f)
           dg.Ns = dg.Ng = neg(dg.Ng);
