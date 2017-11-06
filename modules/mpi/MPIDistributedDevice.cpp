@@ -111,7 +111,7 @@ namespace ospray {
         int _ac = 1;
         const char *_av[] = {"ospray_mpi_distributed_device"};
 
-        MPI_Comm *setComm = static_cast<MPI_Comm*>(getVoidPtr("world_communicator", nullptr));
+        MPI_Comm *setComm = static_cast<MPI_Comm*>(getVoidPtr("worldCommunicator", nullptr));
         shouldFinalizeMPI = mpicommon::init(&_ac, _av, setComm == nullptr);
 
         if (setComm) {
