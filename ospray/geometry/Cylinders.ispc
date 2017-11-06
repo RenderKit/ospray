@@ -76,8 +76,13 @@ void Cylinders_intersect(Cylinders *uniform self,
   }
   uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
   uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
-  const vec3f A = v0 - ray.org;
-  const vec3f B = v1 - ray.org;
+
+  const vec3f center = 0.5f*(v0 + v1);
+  const float approxDist = dot(center - ray.org, ray.dir);
+  const vec3f closeOrg = ray.org + approxDist * ray.dir;
+
+  const vec3f A = v0 - closeOrg;
+  const vec3f B = v1 - closeOrg;
 
   const vec3f V = ray.dir;
   const vec3f AB = B - A;
@@ -91,8 +96,8 @@ void Cylinders_intersect(Cylinders *uniform self,
 
   // clip to near and far cap of cylinder
   const float rVAB = rcp(dot(V,AB));
-  const float tA = dot(AB,A) * rVAB;
-  const float tB = dot(AB,B) * rVAB;
+  const float tA = dot(AB,A) * rVAB + approxDist;
+  const float tB = dot(AB,B) * rVAB + approxDist;
   const float tAB0 = max(ray.t0,min(tA,tB));
   const float tAB1 = min(ray.t, max(tA,tB));
 
@@ -104,8 +109,8 @@ void Cylinders_intersect(Cylinders *uniform self,
   
   const float srad = sqrt(radical);
 
-  const float t_in = (- b - srad) *rcpf(2.f*a);
-  const float t_out= (- b + srad) *rcpf(2.f*a);
+  const float t_in = (- b - srad) *rcpf(2.f*a) + approxDist;
+  const float t_out= (- b + srad) *rcpf(2.f*a) + approxDist;
 
   bool hit = false;
 
@@ -122,7 +127,7 @@ void Cylinders_intersect(Cylinders *uniform self,
     ray.geomID = self->super.geomID;
     // cannot easily be moved to postIntersect
     // we need hit in object-space, in postIntersect it is in world-space
-    const vec3f P = ray.t*ray.dir - A;
+    const vec3f P = ray.org + ray.t*ray.dir - v0;
     const vec3f V = cross(P,AB);
     ray.Ng = cross(AB,V);
     ray.u = (ray.t-tA)*rcp(tB-tA);
