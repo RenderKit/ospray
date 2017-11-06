@@ -47,7 +47,7 @@ void StreamLines_bounds(uniform StreamLines *uniform self,
 }
 
 /*! do a ray-sphere intersection, with the numerical fix of first
-    moving the ray origin to an approximate spher distance, and then
+    moving the ray origin to an approximate sphere distance, and then
     re-adding this approximate distance to the computed hit
     distance */ 
 inline bool intersectSphere_numericalFix(varying Ray &ray,
@@ -55,8 +55,7 @@ inline bool intersectSphere_numericalFix(varying Ray &ray,
                                          const vec3f &center, 
                                          const uniform float r)
 {
-  const float approximateDistance
-    = dot(center-ray.org,ray.dir);// * rsqrtf(dot(ray.dir,ray.dir));
+  const float approximateDistance = dot(center-ray.org,ray.dir);
 
   const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
   const vec3f A = center - closeOrg;
@@ -92,8 +91,7 @@ inline bool intersectCylinder_numericalFix(varying Ray &ray,
                                            const uniform float r)
 {
   const vec3f center = 0.5f*(_A+_B);
-  const float approximateDistance
-    = dot(center-ray.org,ray.dir); // * rsqrtf(dot(ray.dir,ray.dir));
+  const float approximateDistance = dot(center-ray.org,ray.dir);
 
   const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
   const vec3f A = _A - closeOrg;

@@ -18,9 +18,6 @@
 
 #include "sg/geometry/Spheres.h"
 #include "sg/common/Data.h"
-#include "sg/common/World.h"
-// xml parser
-#include "common/xml/XML.h"
 
 namespace ospray {
   namespace sg {
@@ -62,27 +59,6 @@ namespace ospray {
       }
 
       return bounds;
-    }
-
-    //! \brief Initialize this node's value from given XML node
-    /*!
-      \detailed This allows a plug-and-play concept where a XML
-      file can specify all kind of nodes wihout needing to know
-      their actual types: The XML parser only needs to be able to
-      create a proper C++ instance of the given node type (the
-      OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
-      tell the node to parse itself from the given XML content and
-      XML children
-
-      \param node The XML node specifying this node's fields
-
-      \param binBasePtr A pointer to an accompanying binary file (if
-      existant) that contains additional binary data that the xml
-      node fields may point into
-    */
-    void Spheres::setFromXML(const xml::Node &, const unsigned char *)
-    {
-      NOT_IMPLEMENTED;
     }
 
     OSP_REGISTER_SG_NODE(Spheres);
