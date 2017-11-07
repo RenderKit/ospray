@@ -16,17 +16,11 @@
 
 #pragma once
 
-#include <atomic>
-#include <mutex>
-
 #include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
-#include "Imgui3dExport.h"
 
 #include "common/sg/SceneGraph.h"
-
-#include <deque>
 
 namespace ospray {
 
