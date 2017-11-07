@@ -114,7 +114,7 @@ namespace ospray {
          top left front */
        virtual void setWorldBounds(const box3f &worldBounds);
        /*! set window title */
-        void setTitle(const std::string &title);
+       void setTitle(const std::string &title);
        /*! set viewport to given values */
        void setViewPort(const vec3f from, const vec3f at, const vec3f up);
 
@@ -122,6 +122,8 @@ namespace ospray {
        // event handling - override this to change this widgets behavior
        // to input events
        // ------------------------------------------------------------------
+
+       void setMotionSpeed(float speed);
 
        virtual void motion(const vec2i &pos);
        virtual void mouseButton(int button, int action, int mods);
@@ -163,7 +165,7 @@ namespace ospray {
        vec2i windowSize;
        /*! camera speed modifier - affects how many units the camera
           _moves_ with each unit on the screen */
-       float motionSpeed;
+       float motionSpeed {-1.f};
        /*! camera rotation speed modifier - affects how many units the
           camera _rotates_ with each unit on the screen */
        float rotateSpeed;

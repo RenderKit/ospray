@@ -105,7 +105,7 @@ namespace ospray {
                   " if you see speckles or a lack of lighting.");
       child("epsilon").setMinMax(1e-20f, 1e20f);
       createChild("autoEpsilon", "bool", true, NodeFlags::required,
-        "automatically adjust epsilon step by world bounds");
+        "automatically adjust epsilon step");
 
       createChild("oneSidedLighting", "bool", true, NodeFlags::required);
       createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);

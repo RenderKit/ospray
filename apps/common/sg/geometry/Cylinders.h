@@ -22,10 +22,10 @@
 namespace ospray {
   namespace sg {
 
-    // simple spheres, with all of the key info (position and radius)
-    struct OSPSG_INTERFACE Spheres : public sg::Geometry
+    // simple cylinders, with all of the key info (position and radius)
+    struct OSPSG_INTERFACE Cylinders : public sg::Geometry
     {
-      Spheres();
+      Cylinders();
 
       // return bounding box of all primitives
       box3f bounds() const override;

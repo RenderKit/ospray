@@ -59,6 +59,7 @@ bool print = false;
 bool no_defaults = false;
 std::string hdri_light;
 int matrix_i =1, matrix_j=1, matrix_k = 1;
+float motionSpeed = -1.f;
 
 static inline void parseCommandLine(int ac, const char **&av)
 {
@@ -76,6 +77,8 @@ static inline void parseCommandLine(int ac, const char **&av)
       ospLoadModule(av[++i]);
     } else if (arg == "--print") {
       print=true;
+    } else if (arg == "--motionSpeed") {
+      motionSpeed = atof(av[++i]);
     } else if (arg == "--no-defaults") {
       no_defaults=true;
     } else if (arg == "--matrix") {
@@ -445,6 +448,9 @@ int main(int ac, const char **av)
     renderer["camera"]["focusdistance"] = length(viewPort.at - viewPort.from);
 
   window.create("OSPRay Example Viewer App", fullscreen);
+
+  if (motionSpeed > 0.f)
+    window.setMotionSpeed(motionSpeed);
 
   ospray::imgui3D::run();
   return 0;
