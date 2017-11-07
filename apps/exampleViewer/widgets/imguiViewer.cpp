@@ -298,6 +298,8 @@ namespace ospray {
         if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
         if (ImGui::MenuItem("Print View")) printViewport();
 
+        ImGui::InputFloat("Motion Speed", &motionSpeed);
+
         ImGui::EndMenu();
       }
 
