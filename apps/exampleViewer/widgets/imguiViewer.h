@@ -61,6 +61,10 @@ namespace ospray {
     void buildGui() override;
 
     void guiMenu();
+    void guiMenuApp();
+    void guiMenuView();
+    void guiMenuMPI();
+
     void guiRenderStats();
 
     void guiSGTree(std::string name,

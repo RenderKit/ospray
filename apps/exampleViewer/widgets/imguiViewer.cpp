@@ -277,65 +277,78 @@ namespace ospray {
   void ImGuiViewer::guiMenu()
   {
     if (ImGui::BeginMenuBar()) {
-      if (ImGui::BeginMenu("App")) {
-
-        ImGui::Checkbox("Auto-Rotate", &animating);
-
-        bool paused = renderingPaused;
-        if (ImGui::Checkbox("Pause Rendering", &paused))
-          toggleRenderingPaused();
-
-        if (ImGui::MenuItem("Take Screenshot"))
-            saveScreenshot("ospimguiviewer");
-
-        if (ImGui::MenuItem("Quit")) {
-          renderEngine.stop();
-          std::exit(0);
-        }
-
-        ImGui::EndMenu();
-      }
-
-      if (ImGui::BeginMenu("View")) {
-        bool orbitMode = (manipulator == inspectCenterManipulator);
-        bool flyMode   = (manipulator == moveModeManipulator);
-
-        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
-          manipulator = inspectCenterManipulator;
-
-        if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
-
-        if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
-          manipulator = moveModeManipulator;
-
-        if (ImGui::MenuItem("Reset View")) resetView();
-        if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
-        if (ImGui::MenuItem("Print View")) printViewport();
-
-        ImGui::InputFloat("Motion Speed", &motionSpeed);
-
-        ImGui::EndMenu();
-      }
-
-      if (ImGui::BeginMenu("MPI Extras")) {
-        if (ImGui::Checkbox("Use Dynamic Load Balancer",
-                            &useDynamicLoadBalancer)) {
-          setCurrentDeviceParameter("dynamicLoadBalancer",
-                                    useDynamicLoadBalancer);
-          viewPort.modified = true;
-        }
-
-        if (useDynamicLoadBalancer) {
-          if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
-            setCurrentDeviceParameter("preAllocatedTiles",
-                                      numPreAllocatedTiles);
-          }
-        }
-
-        ImGui::EndMenu();
-      }
+      guiMenuApp();
+      guiMenuView();
+      guiMenuMPI();
 
       ImGui::EndMenuBar();
+    }
+  }
+
+  void ImGuiViewer::guiMenuApp()
+  {
+    if (ImGui::BeginMenu("App")) {
+
+      ImGui::Checkbox("Auto-Rotate", &animating);
+
+      bool paused = renderingPaused;
+      if (ImGui::Checkbox("Pause Rendering", &paused))
+        toggleRenderingPaused();
+
+      if (ImGui::MenuItem("Take Screenshot"))
+          saveScreenshot("ospimguiviewer");
+
+      if (ImGui::MenuItem("Quit")) {
+        renderEngine.stop();
+        std::exit(0);
+      }
+
+      ImGui::EndMenu();
+    }
+  }
+
+  void ImGuiViewer::guiMenuView()
+  {
+    if (ImGui::BeginMenu("View")) {
+      bool orbitMode = (manipulator == inspectCenterManipulator);
+      bool flyMode   = (manipulator == moveModeManipulator);
+
+      if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
+        manipulator = inspectCenterManipulator;
+
+      if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
+
+      if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
+        manipulator = moveModeManipulator;
+
+      if (ImGui::MenuItem("Reset View")) resetView();
+      if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
+      if (ImGui::MenuItem("Print View")) printViewport();
+
+      ImGui::InputFloat("Motion Speed", &motionSpeed);
+
+      ImGui::EndMenu();
+    }
+  }
+
+  void ImGuiViewer::guiMenuMPI()
+  {
+    if (ImGui::BeginMenu("MPI Extras")) {
+      if (ImGui::Checkbox("Use Dynamic Load Balancer",
+                          &useDynamicLoadBalancer)) {
+        setCurrentDeviceParameter("dynamicLoadBalancer",
+                                  useDynamicLoadBalancer);
+        viewPort.modified = true;
+      }
+
+      if (useDynamicLoadBalancer) {
+        if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
+          setCurrentDeviceParameter("preAllocatedTiles",
+                                    numPreAllocatedTiles);
+        }
+      }
+
+      ImGui::EndMenu();
     }
   }
 
