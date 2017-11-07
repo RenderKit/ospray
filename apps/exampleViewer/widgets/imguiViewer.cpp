@@ -262,6 +262,20 @@ namespace ospray {
     ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
     ImGui::SetWindowFontScale(0.5f*fontScale);
 
+    guiMenu();
+
+    if (demo_window) ImGui::ShowTestWindow(&demo_window);
+
+    guiRenderStats();
+
+    if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
+      guiSGTree("root", scenegraph, 0);
+
+    ImGui::End();
+  }
+
+  void ImGuiViewer::guiMenu()
+  {
     if (ImGui::BeginMenuBar()) {
       if (ImGui::BeginMenu("App")) {
 
@@ -323,9 +337,10 @@ namespace ospray {
 
       ImGui::EndMenuBar();
     }
+  }
 
-    if (demo_window) ImGui::ShowTestWindow(&demo_window);
-
+  void ImGuiViewer::guiRenderStats()
+  {
     if (ImGui::CollapsingHeader("Rendering Statistics", "Rendering Statistics",
                                 true, false)) {
       ImGui::NewLine();
@@ -338,16 +353,11 @@ namespace ospray {
       ImGui3DWidget::display();
       ImGui::NewLine();
     }
-
-    if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
-      buildGUINode("root", scenegraph, 0);
-
-    ImGui::End();
   }
 
-  void ImGuiViewer::buildGUINode(std::string name,
-                                 std::shared_ptr<sg::Node> node,
-                                 int indent)
+  void ImGuiViewer::guiSGTree(std::string name,
+                              std::shared_ptr<sg::Node> node,
+                              int indent)
   {
     int styles=0;
     if (!node->isValid()) {
@@ -566,7 +576,7 @@ namespace ospray {
           ImGui::PopStyleColor(styles--);
 
         for(auto child : node->children())
-          buildGUINode(child.first, child.second, ++indent);
+          guiSGTree(child.first, child.second, ++indent);
 
         ImGui::TreePop();
       }

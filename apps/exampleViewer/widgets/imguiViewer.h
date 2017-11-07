@@ -59,7 +59,13 @@ namespace ospray {
     void display() override;
 
     void buildGui() override;
-    void buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent);
+
+    void guiMenu();
+    void guiRenderStats();
+
+    void guiSGTree(std::string name,
+                   std::shared_ptr<sg::Node> node,
+                   int indent);
 
     void setCurrentDeviceParameter(const std::string &param, int value);
 
