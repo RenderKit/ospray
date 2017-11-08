@@ -27,6 +27,8 @@ namespace ospray {
     {
       // NOTE: return value means "continue traversal"
       virtual bool visit(Node &node) = 0;
+
+      virtual ~Visitor() = default;
     };
 
   } // ::ospray::sg
