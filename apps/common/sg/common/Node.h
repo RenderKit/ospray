@@ -20,6 +20,7 @@
 #include "Serialization.h"
 #include "RenderContext.h"
 #include "RuntimeError.h"
+#include "../visitor/Visitor.h"
 // stl
 #include <map>
 #include <memory>
@@ -218,6 +219,9 @@ namespace ospray {
       //! Helper overload to use a default constructed RenderContext for root
       //  level traversal
       void traverse(const std::string& operation);
+
+      //! Use a custom provided node visitor to visit each node
+      void traverse(Visitor &visitor);
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,

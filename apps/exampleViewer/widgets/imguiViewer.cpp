@@ -22,6 +22,7 @@
 #include "imguiViewer.h"
 
 #include "common/sg/common/FrameBuffer.h"
+#include "common/sg/visitor/GatherNodesByName.h"
 #include "transferFunction.h"
 
 #include <imgui.h>
@@ -73,6 +74,11 @@ namespace ospray {
   ImGuiViewer::~ImGuiViewer()
   {
     renderEngine.stop();
+  }
+
+  void ImGuiViewer::setInitialSearchBoxText(const std::string &text)
+  {
+    nodeNameForSearch = text;
   }
 
   void ImGuiViewer::mouseButton(int button, int action, int mods)
@@ -262,70 +268,101 @@ namespace ospray {
     ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
     ImGui::SetWindowFontScale(0.5f*fontScale);
 
-    if (ImGui::BeginMenuBar()) {
-      if (ImGui::BeginMenu("App")) {
-
-        ImGui::Checkbox("Auto-Rotate", &animating);
-
-        bool paused = renderingPaused;
-        if (ImGui::Checkbox("Pause Rendering", &paused))
-          toggleRenderingPaused();
-
-        if (ImGui::MenuItem("Take Screenshot"))
-            saveScreenshot("ospimguiviewer");
-
-        if (ImGui::MenuItem("Quit")) {
-          renderEngine.stop();
-          std::exit(0);
-        }
-
-        ImGui::EndMenu();
-      }
-
-      if (ImGui::BeginMenu("View")) {
-        bool orbitMode = (manipulator == inspectCenterManipulator);
-        bool flyMode   = (manipulator == moveModeManipulator);
-
-        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
-          manipulator = inspectCenterManipulator;
-
-        if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
-
-        if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
-          manipulator = moveModeManipulator;
-
-        if (ImGui::MenuItem("Reset View")) resetView();
-        if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
-        if (ImGui::MenuItem("Print View")) printViewport();
-
-        ImGui::InputFloat("Motion Speed", &motionSpeed);
-
-        ImGui::EndMenu();
-      }
-
-      if (ImGui::BeginMenu("MPI Extras")) {
-        if (ImGui::Checkbox("Use Dynamic Load Balancer",
-                            &useDynamicLoadBalancer)) {
-          setCurrentDeviceParameter("dynamicLoadBalancer",
-                                    useDynamicLoadBalancer);
-          viewPort.modified = true;
-        }
-
-        if (useDynamicLoadBalancer) {
-          if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
-            setCurrentDeviceParameter("preAllocatedTiles",
-                                      numPreAllocatedTiles);
-          }
-        }
-
-        ImGui::EndMenu();
-      }
-
-      ImGui::EndMenuBar();
-    }
+    guiMenu();
 
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
+    guiRenderStats();
+    guiFindNode();
+
+    guiSearchSGNodes();
+
+    if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
+      guiSGTree("root", scenegraph, 0);
+
+    ImGui::End();
+  }
+
+  void ImGuiViewer::guiMenu()
+  {
+    if (ImGui::BeginMenuBar()) {
+      guiMenuApp();
+      guiMenuView();
+      guiMenuMPI();
+
+      ImGui::EndMenuBar();
+    }
+  }
+
+  void ImGuiViewer::guiMenuApp()
+  {
+    if (ImGui::BeginMenu("App")) {
+
+      ImGui::Checkbox("Auto-Rotate", &animating);
+
+      bool paused = renderingPaused;
+      if (ImGui::Checkbox("Pause Rendering", &paused))
+        toggleRenderingPaused();
+
+      if (ImGui::MenuItem("Take Screenshot"))
+          saveScreenshot("ospimguiviewer");
+
+      if (ImGui::MenuItem("Quit")) {
+        renderEngine.stop();
+        std::exit(0);
+      }
+
+      ImGui::EndMenu();
+    }
+  }
+
+  void ImGuiViewer::guiMenuView()
+  {
+    if (ImGui::BeginMenu("View")) {
+      bool orbitMode = (manipulator == inspectCenterManipulator);
+      bool flyMode   = (manipulator == moveModeManipulator);
+
+      if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
+        manipulator = inspectCenterManipulator;
+
+      if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
+
+      if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
+        manipulator = moveModeManipulator;
+
+      if (ImGui::MenuItem("Reset View")) resetView();
+      if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
+      if (ImGui::MenuItem("Print View")) printViewport();
+
+      ImGui::InputFloat("Motion Speed", &motionSpeed);
+
+      ImGui::EndMenu();
+    }
+  }
+
+  void ImGuiViewer::guiMenuMPI()
+  {
+    if (ImGui::BeginMenu("MPI Extras")) {
+      if (ImGui::Checkbox("Use Dynamic Load Balancer",
+                          &useDynamicLoadBalancer)) {
+        setCurrentDeviceParameter("dynamicLoadBalancer",
+                                  useDynamicLoadBalancer);
+        viewPort.modified = true;
+      }
+
+      if (useDynamicLoadBalancer) {
+        if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
+          setCurrentDeviceParameter("preAllocatedTiles",
+                                    numPreAllocatedTiles);
+        }
+      }
+
+      ImGui::EndMenu();
+    }
+  }
+
+  void ImGuiViewer::guiRenderStats()
+  {
     if (ImGui::CollapsingHeader("Rendering Statistics", "Rendering Statistics",
                                 true, false)) {
       ImGui::NewLine();
@@ -335,19 +372,52 @@ namespace ospray {
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);
       ImGui::Text("  display pixel time: %.1f ms", lastDisplayTime*1000.f);
       ImGui::Text("Variance: %.3f", renderEngine.getLastVariance());
-      ImGui3DWidget::display();
       ImGui::NewLine();
     }
-
-    if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
-      buildGUINode("root", scenegraph, 0);
-
-    ImGui::End();
   }
 
-  void ImGuiViewer::buildGUINode(std::string name,
-                                 std::shared_ptr<sg::Node> node,
-                                 int indent)
+  void ImGuiViewer::guiFindNode()
+  {
+    if (ImGui::CollapsingHeader("Find Node", "Find Node", true, false)) {
+      ImGui::NewLine();
+
+      std::vector<char> buf(512);
+      *(buf.end() - 1) = '\0';
+      strcpy(buf.data(), nodeNameForSearch.c_str());
+
+      ImGui::Text("Search for node:");
+      ImGui::SameLine();
+
+      if (ImGui::InputText("", buf.data(),
+                           buf.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
+        nodeNameForSearch = std::string(buf.data());
+      }
+
+      if (ImGui::Button("Search")) {
+        sg::GatherNodesByName visitor(nodeNameForSearch);
+        scenegraph->traverse(visitor);
+        collectedNodesFromSearch = visitor.results();
+      }
+
+      ImGui::SameLine();
+      if (nodeNameForSearch.empty()) {
+        ImGui::Text("search for: {invalid value}");
+      } else {
+        const auto verifyTextLabel = std::string("search for: ")
+                                     + nodeNameForSearch;
+        ImGui::Text(verifyTextLabel.c_str());
+      }
+
+      if (ImGui::Button("Clear Last Search"))
+        collectedNodesFromSearch.clear();
+
+      ImGui::NewLine();
+    }
+  }
+
+  void ImGuiViewer::guiSGTree(std::string name,
+                              std::shared_ptr<sg::Node> node,
+                              int indent)
   {
     int styles=0;
     if (!node->isValid()) {
@@ -566,7 +636,7 @@ namespace ospray {
           ImGui::PopStyleColor(styles--);
 
         for(auto child : node->children())
-          buildGUINode(child.first, child.second, ++indent);
+          guiSGTree(child.first, child.second, ++indent);
 
         ImGui::TreePop();
       }
@@ -577,6 +647,20 @@ namespace ospray {
       ImGui::PopStyleColor(styles--);
     if (ImGui::IsItemHovered() && !node->documentation().empty())
       ImGui::SetTooltip("%s", node->documentation().c_str());
+  }
+
+  void ImGuiViewer::guiSearchSGNodes()
+  {
+    if (!collectedNodesFromSearch.empty()) {
+      ImGui::Begin("Nodes found by latest search", nullptr, 0);
+
+      for (auto &node : collectedNodesFromSearch) {
+        guiSGTree("", node, 0);
+        ImGui::Separator();
+      }
+
+      ImGui::End();
+    }
   }
 
   void ImGuiViewer::setCurrentDeviceParameter(const std::string &param,

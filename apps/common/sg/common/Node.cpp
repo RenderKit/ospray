@@ -386,8 +386,7 @@ namespace ospray {
       preTraverse(ctx, operation, traverseChildren);
       ctx.level++;
 
-      if (traverseChildren)
-      {
+      if (traverseChildren) {
         for (auto &child : properties.children)
           child.second->traverse(ctx, operation);
       }
@@ -403,7 +402,20 @@ namespace ospray {
       traverse(ctx, operation);
     }
 
-    void Node::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
+    void Node::traverse(Visitor &visitor)
+    {
+      if (!isValid())
+        return;
+
+      visitor.visit(*this);
+
+      for (auto &child : properties.children)
+        child.second->traverse(visitor);
+    }
+
+    void Node::preTraverse(RenderContext &ctx,
+                           const std::string& operation,
+                           bool& traverseChildren)
     {
       if (operation == "print") {
         for (int i=0;i<ctx.level;i++)
@@ -420,7 +432,7 @@ namespace ospray {
         std::cout << "\"\n";
       } else if (operation == "commit") {
        if (lastModified() >= lastCommitted() ||
-                childrenLastModified() >= lastCommitted())
+           childrenLastModified() >= lastCommitted())
           preCommit(ctx);
         else
           traverseChildren = false;
