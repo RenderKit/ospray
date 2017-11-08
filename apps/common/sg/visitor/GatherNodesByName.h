@@ -47,8 +47,19 @@ namespace ospray {
 
     inline bool GatherNodesByName::visit(Node &node)
     {
-      if (node.name() == this->name)
-        nodes.push_back(node.shared_from_this());
+      if (node.name() == this->name) {
+        auto itr = std::find_if(
+          nodes.begin(),
+          nodes.end(),
+          [&](const std::shared_ptr<Node> &nodeInList) {
+            return nodeInList.get() == &node;
+          }
+        );
+
+        if (itr == nodes.end())
+          nodes.push_back(node.shared_from_this());
+      }
+
       return true;
     }
 
