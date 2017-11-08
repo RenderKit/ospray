@@ -400,9 +400,13 @@ namespace ospray {
       }
 
       ImGui::SameLine();
-      const auto verifyTextLabel = std::string("search for: ")
-                                   + nodeNameForSearch;
-      ImGui::Text(verifyTextLabel.c_str());
+      if (nodeNameForSearch.empty()) {
+        ImGui::Text("search for: {invalid value}");
+      } else {
+        const auto verifyTextLabel = std::string("search for: ")
+                                     + nodeNameForSearch;
+        ImGui::Text(verifyTextLabel.c_str());
+      }
 
       if (ImGui::Button("Clear Last Search"))
         collectedNodesFromSearch.clear();

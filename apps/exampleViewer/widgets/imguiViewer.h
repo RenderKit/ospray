@@ -86,7 +86,7 @@ namespace ospray {
     std::shared_ptr<sg::Node> scenegraph;
     std::shared_ptr<sg::Node> scenegraphDW;
 
-    std::string nodeNameForSearch{"<name>"};
+    std::string nodeNameForSearch;
     std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
 
     AsyncRenderEngine renderEngine;
