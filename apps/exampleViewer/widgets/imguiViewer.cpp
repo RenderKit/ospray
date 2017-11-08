@@ -267,6 +267,7 @@ namespace ospray {
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
     guiRenderStats();
+    guiFindNode();
 
     if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
       guiSGTree("root", scenegraph, 0);
@@ -363,7 +364,34 @@ namespace ospray {
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);
       ImGui::Text("  display pixel time: %.1f ms", lastDisplayTime*1000.f);
       ImGui::Text("Variance: %.3f", renderEngine.getLastVariance());
-      ImGui3DWidget::display();
+      ImGui::NewLine();
+    }
+  }
+
+  void ImGuiViewer::guiFindNode()
+  {
+    if (ImGui::CollapsingHeader("Find Node", "Find Node", true, false)) {
+      ImGui::NewLine();
+
+      static std::string nodeName = "<name>";
+
+      std::vector<char> buf(512);
+      *(buf.end() - 1) = '\0';
+      strcpy(buf.data(), nodeName.c_str());
+
+      ImGui::Text("Search for node:");
+      ImGui::SameLine();
+
+      if (ImGui::InputText("", buf.data(),
+                           buf.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
+        nodeName = std::string(buf.data());
+      }
+
+      if (ImGui::Button("Search")) {
+        std::cout << "TODO: implement a window with the found nodes which"
+                  << " match '" << nodeName << "'" << std::endl;
+      }
+
       ImGui::NewLine();
     }
   }

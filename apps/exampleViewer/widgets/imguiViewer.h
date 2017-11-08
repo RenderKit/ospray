@@ -60,6 +60,7 @@ namespace ospray {
     void guiMenuMPI();
 
     void guiRenderStats();
+    void guiFindNode();
 
     void guiSGTree(std::string name,
                    std::shared_ptr<sg::Node> node,
