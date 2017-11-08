@@ -17,6 +17,7 @@
 #include "common/sg/SceneGraph.h"
 #include "common/sg/Renderer.h"
 #include "common/sg/importer/Importer.h"
+#include "common/sg/visitor/PrintNodes.h"
 #include "ospcommon/FileName.h"
 #include "ospcommon/networking/Socket.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -432,8 +433,10 @@ int main(int ac, const char **av)
   // last, to be able to modify all created SG nodes
   parseCommandLineSG(ac, av, renderer);
 
-  if (print || debug)
-    renderer.traverse("print");
+  if (print || debug) {
+    sg::PrintNodes visitor;
+    renderer.traverse(visitor);
+  }
 
   ospray::ImGuiViewer window(renderer_ptr);
 

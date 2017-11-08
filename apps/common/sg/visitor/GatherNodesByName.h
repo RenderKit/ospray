@@ -29,7 +29,7 @@ namespace ospray {
     {
       GatherNodesByName(const std::string &_name);
 
-      bool visit(Node &node) override;
+      bool visit(Node &node, TraversalContext &ctx) override;
 
       std::vector<std::shared_ptr<Node>> results();
 
@@ -45,7 +45,7 @@ namespace ospray {
     {
     }
 
-    inline bool GatherNodesByName::visit(Node &node)
+    inline bool GatherNodesByName::visit(Node &node, TraversalContext &)
     {
       if (node.name() == this->name) {
         auto itr = std::find_if(

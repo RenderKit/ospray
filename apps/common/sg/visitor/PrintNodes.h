@@ -16,27 +16,44 @@
 
 #pragma once
 
+#include "Visitor.h"
+#include "../common/Node.h"
+
 namespace ospray {
   namespace sg {
 
-    struct Node;
-
-    // Data to track during traversal /////////////////////////////////////////
-
-    struct TraversalContext
+    struct PrintNodes : public Visitor
     {
-      int level{0};
+      PrintNodes() = default;
+
+      bool visit(Node &node, TraversalContext &ctx) override;
     };
 
-    // Base node visitor interface ////////////////////////////////////////////
+    // Inlined definitions ////////////////////////////////////////////////////
 
-    struct Visitor
+    inline bool PrintNodes::visit(Node &node, TraversalContext &ctx)
     {
-      // NOTE: return value means "continue traversal"
-      virtual bool visit(Node &node, TraversalContext &ctx) = 0;
+      for (int i = 0; i < ctx.level; i++)
+        std::cout << "  ";
 
-      virtual ~Visitor() = default;
-    };
+      auto name = node.name();
+      auto type = node.type();
+
+      std::cout << name << " : " << type << "=\"";
+
+      if (type == "string")
+        std::cout << node.valueAs<std::string>();
+      if (type == "float")
+        std::cout << node.valueAs<float>();
+      if (type == "vec3f")
+        std::cout << node.valueAs<vec3f>();
+      if (type == "vec2i")
+        std::cout << node.valueAs<vec2i>();
+
+      std::cout << "\"\n";
+
+      return true;
+    }
 
   } // ::ospray::sg
 } // ::ospray
