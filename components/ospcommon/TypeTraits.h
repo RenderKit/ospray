@@ -131,5 +131,12 @@ namespace ospcommon {
     };
 #endif
 
+    // type 'DERIVED' comes from 'BASE' ///////////////////////////////////////
+
+    template <typename DERIVED, typename BASE>
+    using is_base_of_t =
+      enable_if_t<
+          std::is_base_of<BASE, typename std::decay<DERIVED>::type>::value>;
+
   } // ::ospray::sg::traits
 } // ::ospray

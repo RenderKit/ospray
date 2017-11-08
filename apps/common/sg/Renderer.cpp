@@ -149,9 +149,7 @@ namespace ospray {
       }
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
-        MarkAllAsModified visitor;
-        Node::traverse(visitor);
-
+        Node::traverse(MarkAllAsModified{});
         ospRenderer = ospNewRenderer(rendererType.c_str());
         assert(ospRenderer);
         createdType = rendererType;

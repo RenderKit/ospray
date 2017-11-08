@@ -433,10 +433,8 @@ int main(int ac, const char **av)
   // last, to be able to modify all created SG nodes
   parseCommandLineSG(ac, av, renderer);
 
-  if (print || debug) {
-    sg::PrintNodes visitor;
-    renderer.traverse(visitor);
-  }
+  if (print || debug)
+    renderer.traverse(sg::PrintNodes{});
 
   ospray::ImGuiViewer window(renderer_ptr);
 
