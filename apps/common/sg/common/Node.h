@@ -436,9 +436,7 @@ namespace ospray {
       ctx.level--;
     }
 
-    template <
-      typename VISITOR_T,
-      typename = ospcommon::traits::is_base_of_t<VISITOR_T, Visitor>>
+    template <typename VISITOR_T, typename>
     inline void Node::traverse(VISITOR_T &&visitor)
     {
       TraversalContext ctx;
