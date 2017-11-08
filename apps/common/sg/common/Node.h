@@ -221,6 +221,9 @@ namespace ospray {
       void traverse(const std::string& operation);
 
       //! Use a custom provided node visitor to visit each node
+      void traverse(Visitor &visitor, TraversalContext &ctx);
+
+      //! Helper overload to traverse with a default constructed TravesalContext
       void traverse(Visitor &visitor);
 
       //! called before traversing children

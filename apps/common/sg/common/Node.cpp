@@ -402,37 +402,34 @@ namespace ospray {
       traverse(ctx, operation);
     }
 
-    void Node::traverse(Visitor &visitor)
+    void Node::traverse(Visitor &visitor, TraversalContext &ctx)
     {
       if (!isValid())
         return;
 
-      visitor.visit(*this);
+      visitor.visit(*this, ctx);
+
+      ctx.level++;
 
       for (auto &child : properties.children)
-        child.second->traverse(visitor);
+        child.second->traverse(visitor, ctx);
+
+      ctx.level--;
+    }
+
+    void Node::traverse(Visitor &visitor)
+    {
+      TraversalContext ctx;
+      traverse(visitor, ctx);
     }
 
     void Node::preTraverse(RenderContext &ctx,
                            const std::string& operation,
                            bool& traverseChildren)
     {
-      if (operation == "print") {
-        for (int i=0;i<ctx.level;i++)
-          std::cout << "  ";
-        std::cout << name() << " : " << type() << "=\"";
-        if (type() == "string")
-          std::cout << valueAs<std::string>();
-        if (type() == "float")
-          std::cout << valueAs<float>();
-        if (type() == "vec3f")
-          std::cout << valueAs<vec3f>();
-        if (type() == "vec2i")
-          std::cout << valueAs<vec2i>();
-        std::cout << "\"\n";
-      } else if (operation == "commit") {
-       if (lastModified() >= lastCommitted() ||
-           childrenLastModified() >= lastCommitted())
+      if (operation == "commit") {
+        if (lastModified() >= lastCommitted() ||
+            childrenLastModified() >= lastCommitted())
           preCommit(ctx);
         else
           traverseChildren = false;
