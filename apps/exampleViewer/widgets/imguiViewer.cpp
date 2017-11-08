@@ -379,7 +379,7 @@ namespace ospray {
     if (ImGui::CollapsingHeader("Find Node", "Find Node", true, false)) {
       ImGui::NewLine();
 
-      std::vector<char> buf(512);
+      std::array<char, 512> buf;
       *(buf.end() - 1) = '\0';
       strcpy(buf.data(), nodeNameForSearch.c_str());
 
@@ -392,27 +392,31 @@ namespace ospray {
         collectedNodesFromSearch = visitor.results();
       };
 
-      if (ImGui::InputText("", buf.data(),
-                           buf.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
-        nodeNameForSearch = std::string(buf.data());
+      bool triggerSearch = false;
+
+      ImGui::InputText("", buf.data(), buf.size(),
+                       ImGuiInputTextFlags_EnterReturnsTrue);
+
+      std::string textBoxValue = buf.data();
+
+      if (nodeNameForSearch != textBoxValue) {
+        triggerSearch = true;
+        nodeNameForSearch = textBoxValue;
         doSearch();
       }
 
-      if (ImGui::Button("Search"))
-        doSearch();
-
-      ImGui::SameLine();
       if (nodeNameForSearch.empty()) {
-        ImGui::Text("search for: {invalid value}");
+        ImGui::Text("search for: N/A");
       } else {
         const auto verifyTextLabel = std::string("search for: ")
                                      + nodeNameForSearch;
         ImGui::Text(verifyTextLabel.c_str());
       }
 
-      if (ImGui::Button("Clear Last Search")) {
+      if (ImGui::Button("Clear Search Results")) {
         collectedNodesFromSearch.clear();
         nodeNameForSearch.clear();
+        buf[0] = '\0';
       }
 
       ImGui::NewLine();
