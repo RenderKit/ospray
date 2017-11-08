@@ -22,9 +22,36 @@ namespace ospray {
     //! \brief the uint64_t that stores the time value
     std::atomic<size_t> TimeStamp::global {0};
 
+    TimeStamp::TimeStamp(const TimeStamp &other)
+    {
+      this->value = other.value.load();
+    }
+
+    TimeStamp::TimeStamp(TimeStamp &&other)
+    {
+      this->value = other.value.load();
+    }
+
+    TimeStamp &TimeStamp::operator=(const TimeStamp &other)
+    {
+      this->value = other.value.load();
+      return *this;
+    }
+
+    TimeStamp &TimeStamp::operator=(TimeStamp &&other)
+    {
+      this->value = other.value.load();
+      return *this;
+    }
+
     TimeStamp::operator size_t() const
     {
       return value;
+    }
+
+    void TimeStamp::renew()
+    {
+      value = nextValue();
     }
 
     size_t TimeStamp::nextValue()

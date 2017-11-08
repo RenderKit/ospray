@@ -94,7 +94,7 @@ namespace ospray {
           ospSetPixelOp(ospFrameBuffer,pixelOp);
           std::cout << "-------------------------------------------------------"
                     << std::endl;
-          std::cout << "this is the display wall frma ebuferr .. size is "
+          std::cout << "this is the display wall framebuffer .. size is "
                     << size() << std::endl;
           std::cout << "added display wall pixel op ..." << std::endl;
 

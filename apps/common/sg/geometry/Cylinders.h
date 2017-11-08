@@ -16,39 +16,21 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
-
-#include <atomic>
+#include "sg/common/Node.h"
+#include "sg/geometry/Geometry.h"
 
 namespace ospray {
   namespace sg {
 
-    //! \brief Implements an abstraction of Time
-    /*! Abstracts the concept of time to be used for time-stamping
-      node's last 'lastupdated' and /lastmodified' time stamps */
-    struct OSPSG_INTERFACE TimeStamp
+    // simple cylinders, with all of the key info (position and radius)
+    struct OSPSG_INTERFACE Cylinders : public sg::Geometry
     {
-      TimeStamp() = default;
-      TimeStamp(const TimeStamp &);
-      TimeStamp(TimeStamp &&);
+      Cylinders();
 
-      TimeStamp &operator=(const TimeStamp &);
-      TimeStamp &operator=(TimeStamp &&);
+      // return bounding box of all primitives
+      box3f bounds() const override;
 
-      operator size_t() const;
-
-      void renew();
-
-    private:
-
-      static size_t nextValue();
-
-      // Data members //
-
-      std::atomic<size_t> value {nextValue()};
-
-      //! \brief the uint64_t that stores the time value
-      static std::atomic<size_t> global;
+      OSPGeometry ospGeometry {nullptr};
     };
 
   } // ::ospray::sg

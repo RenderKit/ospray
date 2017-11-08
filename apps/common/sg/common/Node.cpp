@@ -386,8 +386,7 @@ namespace ospray {
       preTraverse(ctx, operation, traverseChildren);
       ctx.level++;
 
-      if (traverseChildren)
-      {
+      if (traverseChildren) {
         for (auto &child : properties.children)
           child.second->traverse(ctx, operation);
       }
@@ -403,24 +402,13 @@ namespace ospray {
       traverse(ctx, operation);
     }
 
-    void Node::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
+    void Node::preTraverse(RenderContext &ctx,
+                           const std::string& operation,
+                           bool& traverseChildren)
     {
-      if (operation == "print") {
-        for (int i=0;i<ctx.level;i++)
-          std::cout << "  ";
-        std::cout << name() << " : " << type() << "=\"";
-        if (type() == "string")
-          std::cout << valueAs<std::string>();
-        if (type() == "float")
-          std::cout << valueAs<float>();
-        if (type() == "vec3f")
-          std::cout << valueAs<vec3f>();
-        if (type() == "vec2i")
-          std::cout << valueAs<vec2i>();
-        std::cout << "\"\n";
-      } else if (operation == "commit") {
-       if (lastModified() >= lastCommitted() ||
-                childrenLastModified() >= lastCommitted())
+      if (operation == "commit") {
+        if (lastModified() >= lastCommitted() ||
+            childrenLastModified() >= lastCommitted())
           preCommit(ctx);
         else
           traverseChildren = false;
@@ -429,8 +417,6 @@ namespace ospray {
           traverseChildren = false;
         properties.valid = computeValid();
         properties.lastVerified = TimeStamp();
-      } else if (operation == "modified") {
-        markAsModified();
       }
     }
 

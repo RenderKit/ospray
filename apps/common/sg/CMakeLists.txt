@@ -70,6 +70,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   geometry/Geometry.cpp
   geometry/Spheres.cpp
+  geometry/Cylinders.cpp
   geometry/StreamLines.cpp
   geometry/TriangleMesh.cpp
 

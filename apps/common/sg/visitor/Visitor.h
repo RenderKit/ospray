@@ -16,39 +16,26 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
-
-#include <atomic>
-
 namespace ospray {
   namespace sg {
 
-    //! \brief Implements an abstraction of Time
-    /*! Abstracts the concept of time to be used for time-stamping
-      node's last 'lastupdated' and /lastmodified' time stamps */
-    struct OSPSG_INTERFACE TimeStamp
+    struct Node;
+
+    // Data to track during traversal /////////////////////////////////////////
+
+    struct TraversalContext
     {
-      TimeStamp() = default;
-      TimeStamp(const TimeStamp &);
-      TimeStamp(TimeStamp &&);
+      int level{0};
+    };
 
-      TimeStamp &operator=(const TimeStamp &);
-      TimeStamp &operator=(TimeStamp &&);
+    // Base node visitor interface ////////////////////////////////////////////
 
-      operator size_t() const;
+    struct Visitor
+    {
+      // NOTE: return value means "continue traversal"
+      virtual bool visit(Node &node, TraversalContext &ctx) = 0;
 
-      void renew();
-
-    private:
-
-      static size_t nextValue();
-
-      // Data members //
-
-      std::atomic<size_t> value {nextValue()};
-
-      //! \brief the uint64_t that stores the time value
-      static std::atomic<size_t> global;
+      virtual ~Visitor() = default;
     };
 
   } // ::ospray::sg

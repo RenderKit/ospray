@@ -16,40 +16,57 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
+#include "Visitor.h"
+#include "../common/Node.h"
 
-#include <atomic>
+#include <string>
+#include <vector>
 
 namespace ospray {
   namespace sg {
 
-    //! \brief Implements an abstraction of Time
-    /*! Abstracts the concept of time to be used for time-stamping
-      node's last 'lastupdated' and /lastmodified' time stamps */
-    struct OSPSG_INTERFACE TimeStamp
+    struct GatherNodesByName : public Visitor
     {
-      TimeStamp() = default;
-      TimeStamp(const TimeStamp &);
-      TimeStamp(TimeStamp &&);
+      GatherNodesByName(const std::string &_name);
 
-      TimeStamp &operator=(const TimeStamp &);
-      TimeStamp &operator=(TimeStamp &&);
+      bool visit(Node &node, TraversalContext &ctx) override;
 
-      operator size_t() const;
-
-      void renew();
+      std::vector<std::shared_ptr<Node>> results();
 
     private:
-
-      static size_t nextValue();
-
-      // Data members //
-
-      std::atomic<size_t> value {nextValue()};
-
-      //! \brief the uint64_t that stores the time value
-      static std::atomic<size_t> global;
+      std::string name;
+      std::vector<std::shared_ptr<Node>> nodes;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    inline GatherNodesByName::GatherNodesByName(const std::string &_name)
+        : name(_name)
+    {
+    }
+
+    inline bool GatherNodesByName::visit(Node &node, TraversalContext &)
+    {
+      if (node.name() == this->name) {
+        auto itr = std::find_if(
+          nodes.begin(),
+          nodes.end(),
+          [&](const std::shared_ptr<Node> &nodeInList) {
+            return nodeInList.get() == &node;
+          }
+        );
+
+        if (itr == nodes.end())
+          nodes.push_back(node.shared_from_this());
+      }
+
+      return true;
+    }
+
+    inline std::vector<std::shared_ptr<Node>> GatherNodesByName::results()
+    {
+      return nodes;// TODO: should this be a move (i.e. reader 'consumes')?
+    }
 
   } // ::ospray::sg
 } // ::ospray

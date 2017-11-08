@@ -33,9 +33,6 @@ namespace ospray {
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm);
 
-      TimeStamp MTime();
-      TimeStamp childMTime();
-
       // Data members //
 
       std::shared_ptr<sg::World> world;      //!< world we're rendering into
@@ -61,16 +58,6 @@ namespace ospray {
         ospRenderer(nullptr),
         level(0)
     {}
-
-    inline TimeStamp RenderContext::MTime()
-    {
-      return _MTime;
-    }
-
-    inline TimeStamp RenderContext::childMTime()
-    {
-      return _childMTime;
-    }
 
   }// ::ospray::sg
 }// ::ospray

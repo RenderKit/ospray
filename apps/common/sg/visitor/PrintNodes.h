@@ -16,40 +16,44 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
-
-#include <atomic>
+#include "Visitor.h"
+#include "../common/Node.h"
 
 namespace ospray {
   namespace sg {
 
-    //! \brief Implements an abstraction of Time
-    /*! Abstracts the concept of time to be used for time-stamping
-      node's last 'lastupdated' and /lastmodified' time stamps */
-    struct OSPSG_INTERFACE TimeStamp
+    struct PrintNodes : public Visitor
     {
-      TimeStamp() = default;
-      TimeStamp(const TimeStamp &);
-      TimeStamp(TimeStamp &&);
+      PrintNodes() = default;
 
-      TimeStamp &operator=(const TimeStamp &);
-      TimeStamp &operator=(TimeStamp &&);
-
-      operator size_t() const;
-
-      void renew();
-
-    private:
-
-      static size_t nextValue();
-
-      // Data members //
-
-      std::atomic<size_t> value {nextValue()};
-
-      //! \brief the uint64_t that stores the time value
-      static std::atomic<size_t> global;
+      bool visit(Node &node, TraversalContext &ctx) override;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    inline bool PrintNodes::visit(Node &node, TraversalContext &ctx)
+    {
+      for (int i = 0; i < ctx.level; i++)
+        std::cout << "  ";
+
+      auto name = node.name();
+      auto type = node.type();
+
+      std::cout << name << " : " << type << "=\"";
+
+      if (type == "string")
+        std::cout << node.valueAs<std::string>();
+      if (type == "float")
+        std::cout << node.valueAs<float>();
+      if (type == "vec3f")
+        std::cout << node.valueAs<vec3f>();
+      if (type == "vec2i")
+        std::cout << node.valueAs<vec2i>();
+
+      std::cout << "\"\n";
+
+      return true;
+    }
 
   } // ::ospray::sg
 } // ::ospray

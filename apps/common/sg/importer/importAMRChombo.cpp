@@ -169,7 +169,6 @@ namespace ospray {
       hid_t attr_ghost = H5Aopen_by_name(
           file, dataAttrName.c_str(), "outputGhost", H5P_DEFAULT, H5P_DEFAULT);
       hid_t ghostType  = H5Aget_type(attr_ghost);
-      assert(ghostSize == sizeof(vec3i));
       H5Aread(attr_ghost, ghostType, &level->numGhostCells);
       H5Aclose(attr_ghost);
     }
@@ -223,7 +222,6 @@ namespace ospray {
 
         hid_t att        = H5Aopen_name(file, compName);
         hid_t ftype      = H5Aget_type(att);
-        assert(type_class == H5T_STRING);
 
         size_t len = H5Tget_size(ftype);
         char *comp = STACK_BUFFER(char, (len + 1));

@@ -20,6 +20,7 @@
 #include "Serialization.h"
 #include "RenderContext.h"
 #include "RuntimeError.h"
+#include "../visitor/Visitor.h"
 // stl
 #include <map>
 #include <memory>
@@ -219,6 +220,16 @@ namespace ospray {
       //  level traversal
       void traverse(const std::string& operation);
 
+      //! Use a custom provided node visitor to visit each node
+      template <typename VISITOR_T>
+      void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
+
+      //! Helper overload to traverse with a default constructed TravesalContext
+      template <
+        typename VISITOR_T,
+        typename = ospcommon::traits::is_base_of_t<VISITOR_T, Visitor>>
+      void traverse(VISITOR_T &&visitor);
+
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation,
@@ -333,18 +344,21 @@ namespace ospray {
     template <typename T>
     inline T& Node::valueAs()
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.get<T>();
     }
 
     template <typename T>
     inline const T& Node::valueAs() const
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.get<T>();
     }
 
     template <typename T>
     inline bool Node::valueIsType() const
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.is<T>();
     }
 
@@ -363,12 +377,14 @@ namespace ospray {
     template <>                                                                \
     inline a& Node::valueAs()                                                  \
     {                                                                          \
+      std::lock_guard<std::mutex> lock{value_mutex};                           \
       return (a&)properties.value.get<OSPObject>();                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
     inline const a& Node::valueAs() const                                      \
     {                                                                          \
+      std::lock_guard<std::mutex> lock{value_mutex};                           \
       return (const a&)properties.value.get<OSPObject>();                      \
     }                                                                          \
                                                                                \
@@ -399,6 +415,33 @@ namespace ospray {
     DECLARE_VALUEAS_SPECIALIZATION(OSPPixelOp)
 
 #undef DECLARE_VALUEAS_SPECIALIZATION
+
+    template <typename VISITOR_T>
+    inline void Node::traverse(VISITOR_T &&visitor, TraversalContext &ctx)
+    {
+      using BASIC_VISITOR_T = typename std::decay<VISITOR_T>::type;
+      static_assert(std::is_base_of<Visitor, BASIC_VISITOR_T>::value,
+                    "VISITOR_T must be a child class of sg::Visitor!");
+
+      if (!isValid())
+        return;
+
+      visitor.visit(*this, ctx);
+
+      ctx.level++;
+
+      for (auto &child : properties.children)
+        child.second->traverse(visitor, ctx);
+
+      ctx.level--;
+    }
+
+    template <typename VISITOR_T, typename>
+    inline void Node::traverse(VISITOR_T &&visitor)
+    {
+      TraversalContext ctx;
+      traverse(std::forward<VISITOR_T>(visitor), ctx);
+    }
 
     // Helper functions ///////////////////////////////////////////////////////
 

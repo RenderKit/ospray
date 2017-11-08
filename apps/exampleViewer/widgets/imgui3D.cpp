@@ -111,6 +111,11 @@ namespace ospray {
       frame.l.vy = normalize(cross(frame.l.vz,frame.l.vx));
     }
 
+    void ImGui3DWidget::setMotionSpeed(float speed)
+    {
+      motionSpeed = speed;
+    }
+
     void ImGui3DWidget::motion(const vec2i &pos)
     {
       currMousePos = pos;
@@ -127,7 +132,6 @@ namespace ospray {
       lastMousePos(-1,-1),
       currMousePos(-1,-1),
       windowSize(-1,-1),
-      motionSpeed(.003f),
       rotateSpeed(.003f),
       frameBufferMode(frameBufferMode),
       fontScale(2.f),
@@ -283,7 +287,8 @@ namespace ospray {
         viewPort.modified = true;
       }
 
-      motionSpeed = length(diag) * .001f;
+      if (motionSpeed < 0.f)
+        motionSpeed = length(diag) * .001f;
     }
 
     void ImGui3DWidget::setTitle(const std::string &title)

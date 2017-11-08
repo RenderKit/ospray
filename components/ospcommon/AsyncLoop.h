@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -46,9 +47,9 @@ namespace ospcommon {
 
   private:
 
-    bool threadShouldBeAlive {true};
-    bool loopShouldBeRunning {false};
-    bool insideLoopBody      {false};
+    std::atomic<bool> threadShouldBeAlive {true};
+    std::atomic<bool> loopShouldBeRunning {false};
+    std::atomic<bool> insideLoopBody      {false};
 
     std::thread             backgroundThread;
     std::condition_variable loopRunningCond;
@@ -68,7 +69,7 @@ namespace ospcommon {
     backgroundThread = std::thread([&,fcn](){
       while (threadShouldBeAlive) {
         std::unique_lock<std::mutex> lock(loopRunningMutex);
-        loopRunningCond.wait(lock, [&] { return loopShouldBeRunning; });
+        loopRunningCond.wait(lock, [&] { return loopShouldBeRunning.load(); });
 
         if (!threadShouldBeAlive)
           return;
@@ -102,7 +103,7 @@ namespace ospcommon {
     if (loopShouldBeRunning) {
       loopShouldBeRunning = false;
       std::unique_lock<std::mutex> lock(loopRunningMutex);
-      loopRunningCond.wait(lock, [&] { return !insideLoopBody; });
+      loopRunningCond.wait(lock, [&] { return !insideLoopBody.load(); });
     }
   }
 

@@ -17,6 +17,7 @@
 #include "Renderer.h"
 
 #include "sg/common/FrameBuffer.h"
+#include "sg/visitor/MarkAllAsModified.h"
 
 namespace ospray {
   namespace sg {
@@ -105,7 +106,7 @@ namespace ospray {
                   " if you see speckles or a lack of lighting.");
       child("epsilon").setMinMax(1e-20f, 1e20f);
       createChild("autoEpsilon", "bool", true, NodeFlags::required,
-        "automatically adjust epsilon step by world bounds");
+        "automatically adjust epsilon step");
 
       createChild("oneSidedLighting", "bool", true, NodeFlags::required);
       createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
@@ -148,7 +149,7 @@ namespace ospray {
       }
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
-        traverse(ctx, "modified");
+        Node::traverse(MarkAllAsModified{});
         ospRenderer = ospNewRenderer(rendererType.c_str());
         assert(ospRenderer);
         createdType = rendererType;
@@ -195,7 +196,7 @@ namespace ospray {
             ospRelease(lightsData);
           lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
           ospCommit(lightsData);
-          lightsBuildTime = TimeStamp();
+          lightsBuildTime.renew();
         }
 
         // complete setup of renderer
@@ -220,7 +221,7 @@ namespace ospray {
 
         }
         ospCommit(ospRenderer);
-        frameMTime = TimeStamp();
+        frameMTime.renew();
       }
 
     }

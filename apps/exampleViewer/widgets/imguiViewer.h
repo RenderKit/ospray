@@ -16,17 +16,11 @@
 
 #pragma once
 
-#include <atomic>
-#include <mutex>
-
 #include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
-#include "Imgui3dExport.h"
 
 #include "common/sg/SceneGraph.h"
-
-#include <deque>
 
 namespace ospray {
 
@@ -45,6 +39,8 @@ namespace ospray {
 
     ~ImGuiViewer();
 
+    void setInitialSearchBoxText(const std::string &text);
+
   protected:
 
     void mouseButton(int button, int action, int mods);
@@ -59,7 +55,20 @@ namespace ospray {
     void display() override;
 
     void buildGui() override;
-    void buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent);
+
+    void guiMenu();
+    void guiMenuApp();
+    void guiMenuView();
+    void guiMenuMPI();
+
+    void guiRenderStats();
+    void guiFindNode();
+
+    void guiSGTree(std::string name,
+                   std::shared_ptr<sg::Node> node,
+                   int indent);
+
+    void guiSearchSGNodes();
 
     void setCurrentDeviceParameter(const std::string &param, int value);
 
@@ -76,6 +85,9 @@ namespace ospray {
 
     std::shared_ptr<sg::Node> scenegraph;
     std::shared_ptr<sg::Node> scenegraphDW;
+
+    std::string nodeNameForSearch;
+    std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
 
     AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;

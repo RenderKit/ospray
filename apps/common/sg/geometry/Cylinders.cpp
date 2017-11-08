@@ -16,30 +16,34 @@
 
 #undef NDEBUG
 
-#include "sg/geometry/Spheres.h"
+#include "sg/geometry/Cylinders.h"
 #include "sg/common/Data.h"
 
 namespace ospray {
   namespace sg {
 
-    Spheres::Spheres() : Geometry("spheres") {}
+    Cylinders::Cylinders() : Geometry("cylinders") {}
 
-    box3f Spheres::bounds() const
+    box3f Cylinders::bounds() const
     {
       box3f bounds = empty;
 
-      if (hasChild("spheres")) {
-        auto spheres = child("spheres").nodeAs<DataBuffer>();
+      if (hasChild("cylinders")) {
+        auto cylinders = child("cylinders").nodeAs<DataBuffer>();
 
-        auto *base = (byte_t*)spheres->base();
+        auto *base = (byte_t*)cylinders->base();
 
-        int sphereBytes = 16;
-        if (hasChild("bytes_per_sphere"))
-          sphereBytes = child("bytes_per_sphere").valueAs<int>();
+        int cylinderBytes = 24;
+        if (hasChild("bytes_per_cylinder"))
+          cylinderBytes = child("bytes_per_cylinder").valueAs<int>();
 
-        int offset_center = 0;
-        if (hasChild("offset_center"))
-          offset_center = child("offset_center").valueAs<int>();
+        int offset_v0 = 0;
+        if (hasChild("offset_v0"))
+          offset_v0 = child("offset_v0").valueAs<int>();
+
+        int offset_v1 = 12;
+        if (hasChild("offset_v1"))
+          offset_v1 = child("offset_v1").valueAs<int>();
 
         int offset_radius = -1;
         if (hasChild("offset_radius"))
@@ -49,19 +53,22 @@ namespace ospray {
         if (hasChild("radius"))
           radius = child("radius").valueAs<float>();
 
-        for (size_t i = 0; i < spheres->numBytes(); i += sphereBytes) {
-          vec3f &center = *(vec3f*)(base + i + offset_center);
+        for (size_t i = 0; i < cylinders->numBytes(); i += cylinderBytes) {
+          vec3f &v0 = *(vec3f*)(base + i + offset_v0);
+          vec3f &v1 = *(vec3f*)(base + i + offset_v1);
           if (offset_radius >= 0)
             radius = *(float*)(base + i + offset_radius);
-          box3f sphereBounds(center - radius, center + radius);
-          bounds.extend(sphereBounds);
+          // TODO less conservative bounds
+          box3f cylinderBounds(ospcommon::min(v0, v1) - radius,
+              ospcommon::max(v0, v1) + radius);
+          bounds.extend(cylinderBounds);
         }
       }
 
       return bounds;
     }
 
-    OSP_REGISTER_SG_NODE(Spheres);
+    OSP_REGISTER_SG_NODE(Cylinders);
 
   }// ::ospray::sg
 }// ::ospray

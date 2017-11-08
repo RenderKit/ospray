@@ -73,6 +73,8 @@ struct Principled
   Medium mediumOutside;
 };
 
+#define EPS 1e-5f
+
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
@@ -87,58 +89,58 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   varying linear3f* uniform frame =
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normalScale));
 
-  const vec3f baseColor = self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color);
-  const float metallic = self->metallic * get1f(self->metallicMap, dg.st, 1.f);
-  const float roughness = self->roughness * get1f(self->roughnessMap, dg.st, 1.f);
-  const float transmission = self->transmission * get1f(self->transmissionMap, dg.st, 1.f);
-  const float coat = self->coat * get1f(self->coatMap, dg.st, 1.f);
+  const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
+  const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
+  const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+  const float transmission = clamp(clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f)));
+  const float coat = max(self->coat * get1f(self->coatMap, dg.st, 1.f), 0.f);
 
-  // opaque base: diffuse+specular
-  const float diffuse = (1.f - metallic) * (1.f - transmission);
-  if (diffuse > 1e-5f) {
+  // plastic (diffuse+specular) base
+  const float plastic = (1.f - metallic) * (1.f - transmission);
+  if (plastic > EPS) {
     // diffuse
-    varying BSDF* uniform diffuseBsdf;
-    if (roughness < 1e-5f)
-      diffuseBsdf = Lambert_create(ctx, frame, baseColor);
+    varying BSDF* uniform plasticBsdf;
+    if (roughness < EPS)
+      plasticBsdf = Lambert_create(ctx, frame, baseColor);
     else
-      diffuseBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+      plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
     
     // specular
-    const float specular = self->specular * get1f(self->specularMap, dg.st, 1.f);
-    if (specular > 1e-5f) {
+    const float specular = max(self->specular * get1f(self->specularMap, dg.st, 1.f), 0.f);
+    if (specular > EPS) {
       const float specularIor = (2.f / (1.f - sqrt(0.08f * specular))) - 1.f;
       
-      if (roughness < 1e-5f)
-        diffuseBsdf = DielectricLayer_create(ctx, frame, diffuseBsdf, rcp(specularIor), make_vec3f(1.f), 1.f);
+      if (roughness < EPS)
+        plasticBsdf = DielectricLayer_create(ctx, frame, plasticBsdf, rcp(specularIor), make_vec3f(1.f), 1.f);
       else
-        diffuseBsdf = MicrofacetDielectricLayer_create(ctx, frame, diffuseBsdf, rcp(specularIor), make_vec3f(1.f), 1.f, roughness);
+        plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf, rcp(specularIor), make_vec3f(1.f), 1.f, roughness);
     }
 
-    MultiBSDF_add(bsdf, diffuseBsdf, diffuse, luminance(baseColor)*diffuse);
+    MultiBSDF_add(bsdf, plasticBsdf, plastic, plastic);
   }
     
-  // opaque base: conductor
+  // conductor base
   const float conductor = metallic * (1.f - transmission);
-  if (conductor > 1e-5f) {
-    const vec3f edgeColor = self->edgeColor * get3f(self->edgeColorMap, dg.st, make_vec3f(1.f));
+  if (conductor > EPS) {
+    const vec3f edgeColor = clamp(self->edgeColor * get3f(self->edgeColorMap, dg.st, make_vec3f(1.f)));
     
     Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
     varying BSDF* uniform conductorBsdf;
-    if (roughness < 1e-5f)
+    if (roughness < EPS)
       conductorBsdf = Conductor_create(ctx, frame, fresnel);
     else
       conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
 
-    MultiBSDF_add(bsdf, conductorBsdf, conductor, luminance(baseColor)*conductor);
+    MultiBSDF_add(bsdf, conductorBsdf, conductor, conductor);
   }
 
-  // transparent base
-  if (transmission > 1e-5f) {
+  // transparent dielectric base
+  if (transmission > EPS) {
     float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                        : self->mediumInside.ior*rcp(self->mediumOutside.ior);
 
     varying BSDF* uniform dielectricBsdf;
-    if (roughness < 1e-5f)
+    if (roughness < EPS)
       dielectricBsdf = Dielectric_create(ctx, frame, eta);
     else
       dielectricBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness);
@@ -147,15 +149,15 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   }
   
   // clear coat
-  if (coat > 1e-5f) {
+  if (coat > EPS) {
     const float coatIor = (2.f / (1.f - sqrt(0.08f * coat))) - 1.f;
-    const vec3f coatColor = self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f));
-    const float coatThickness = self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f);
-    const float coatRoughness = self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f);
+    const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
+    const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
+    const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
     varying linear3f* uniform coatFrame =
       LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormalScale));
     
-    if (coatRoughness < 1e-5f)
+    if (coatRoughness < EPS)
       bsdf = DielectricLayer_create(ctx, coatFrame, bsdf, rcp(coatIor), coatColor, coatThickness);
     else
       bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf, rcp(coatIor), coatColor, coatThickness, coatRoughness);
@@ -172,7 +174,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
   const uniform Principled* uniform self = (const uniform Principled* uniform)material;
 
   const float transmission = self->transmission * get1f(self->transmissionMap, dg.st, 1.f);
-  if (transmission < 1e-5f)
+  if (transmission < EPS)
     return make_vec3f(0.f);
 
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
