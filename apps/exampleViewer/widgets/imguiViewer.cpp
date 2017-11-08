@@ -270,6 +270,8 @@ namespace ospray {
     guiRenderStats();
     guiFindNode();
 
+    guiSearchSGNodes();
+
     if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
       guiSGTree("root", scenegraph, 0);
 
@@ -391,13 +393,14 @@ namespace ospray {
       if (ImGui::Button("Search")) {
         sg::GatherNodesByName visitor(nodeName);
         scenegraph->traverse(visitor);
-        auto nodesFound = visitor.results();
-        std::cout << "Found " << nodesFound.size()
-                  << " nodes with name " << nodeName << std::endl;
+        collectedNodesFromSearch = visitor.results();
       }
 
       ImGui::SameLine();
       ImGui::Text(nodeName.c_str());
+
+      if (ImGui::Button("Clear Last Search"))
+        collectedNodesFromSearch.clear();
 
       ImGui::NewLine();
     }
@@ -635,6 +638,20 @@ namespace ospray {
       ImGui::PopStyleColor(styles--);
     if (ImGui::IsItemHovered() && !node->documentation().empty())
       ImGui::SetTooltip("%s", node->documentation().c_str());
+  }
+
+  void ImGuiViewer::guiSearchSGNodes()
+  {
+    if (!collectedNodesFromSearch.empty()) {
+      ImGui::Begin("Nodes found by latest search", nullptr, 0);
+
+      for (auto &node : collectedNodesFromSearch) {
+        guiSGTree("", node, 0);
+        ImGui::Separator();
+      }
+
+      ImGui::End();
+    }
   }
 
   void ImGuiViewer::setCurrentDeviceParameter(const std::string &param,

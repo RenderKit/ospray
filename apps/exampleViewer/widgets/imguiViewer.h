@@ -66,6 +66,8 @@ namespace ospray {
                    std::shared_ptr<sg::Node> node,
                    int indent);
 
+    void guiSearchSGNodes();
+
     void setCurrentDeviceParameter(const std::string &param, int value);
 
     // Data //
@@ -81,6 +83,8 @@ namespace ospray {
 
     std::shared_ptr<sg::Node> scenegraph;
     std::shared_ptr<sg::Node> scenegraphDW;
+
+    std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
 
     AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
