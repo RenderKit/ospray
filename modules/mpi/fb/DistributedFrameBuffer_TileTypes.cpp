@@ -173,12 +173,12 @@ namespace ospray {
     }
 
     if (done) {
+      auto sz = tile.region.size();
       if ((maxAccumID & 1) == 0) {
         // if maxAccumID is even, variance buffer is one accumulated tile
         // short, which leads to vast over-estimation of variance; thus
         // estimate variance now, when accum buffer is also one (the buffered)
         // tile short
-        auto sz = tile.region.size();
         const float prevErr = DFB_computeErrorForTile(
           (ispc::vec2i&)sz,
           (ispc::VaryingTile*)&accum,
@@ -191,8 +191,23 @@ namespace ospray {
         accumulate(bufferedTile);
         error = prevErr;
       } else {
-        bufferedTile.accumID = maxAccumID; // FIXME: is maxAccumID correct here?
-        accumulate(bufferedTile);
+        // correct normalization is with maxAccumID, which is odd here
+        bufferedTile.accumID = maxAccumID;
+        // but original bufferedTile.accumID is always even and thus won't be
+        // accumulated into variance buffer
+        DFB_accumulateTile((const ispc::VaryingTile*)&bufferedTile
+            , (ispc::VaryingTile*)&final
+            , (ispc::VaryingTile*)&accum
+            , (ispc::VaryingTile*)&variance
+            , dfb->hasAccumBuffer
+            , false // disable accumulation of variance
+            );
+        // but still need to update the error
+        error = DFB_computeErrorForTile((ispc::vec2i&)sz
+            , (ispc::VaryingTile*)&accum
+            , (ispc::VaryingTile*)&variance
+            , maxAccumID
+            );
       }
 
       dfb->tileIsCompleted(this);
