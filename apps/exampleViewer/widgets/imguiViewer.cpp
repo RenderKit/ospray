@@ -22,6 +22,7 @@
 #include "imguiViewer.h"
 
 #include "common/sg/common/FrameBuffer.h"
+#include "common/sg/visitor/GatherNodesByName.h"
 #include "transferFunction.h"
 
 #include <imgui.h>
@@ -388,9 +389,15 @@ namespace ospray {
       }
 
       if (ImGui::Button("Search")) {
-        std::cout << "TODO: implement a window with the found nodes which"
-                  << " match '" << nodeName << "'" << std::endl;
+        sg::GatherNodesByName visitor(nodeName);
+        scenegraph->traverse(visitor);
+        auto nodesFound = visitor.results();
+        std::cout << "Found " << nodesFound.size()
+                  << " nodes with name " << nodeName << std::endl;
       }
+
+      ImGui::SameLine();
+      ImGui::Text(nodeName.c_str());
 
       ImGui::NewLine();
     }
