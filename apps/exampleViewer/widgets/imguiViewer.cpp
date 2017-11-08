@@ -392,17 +392,15 @@ namespace ospray {
         collectedNodesFromSearch = visitor.results();
       };
 
-      bool triggerSearch = false;
-
       ImGui::InputText("", buf.data(), buf.size(),
                        ImGuiInputTextFlags_EnterReturnsTrue);
 
       std::string textBoxValue = buf.data();
 
       if (nodeNameForSearch != textBoxValue) {
-        triggerSearch = true;
         nodeNameForSearch = textBoxValue;
-        doSearch();
+        if (!nodeNameForSearch.empty())
+          doSearch();
       }
 
       if (nodeNameForSearch.empty()) {

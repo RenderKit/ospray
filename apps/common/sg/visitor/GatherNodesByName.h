@@ -19,6 +19,8 @@
 #include "Visitor.h"
 #include "../common/Node.h"
 
+#include "ospcommon/utility/StringManip.h"
+
 #include <string>
 #include <vector>
 
@@ -47,7 +49,7 @@ namespace ospray {
 
     inline bool GatherNodesByName::visit(Node &node, TraversalContext &)
     {
-      if (node.name() == this->name) {
+      if (longestBeginningMatch(node.name(), this->name) == this->name) {
         auto itr = std::find_if(
           nodes.begin(),
           nodes.end(),
