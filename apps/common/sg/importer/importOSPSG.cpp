@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "SceneGraph.h"
+#include "../visitor/PrintNodes.h"
+#include "../visitor/MarkAllAsModified.h"
 // stl
 #include <map>
 // xml
@@ -116,8 +118,12 @@ namespace ospray {
 
       parseXMLNode(*root, binBasePtr, node);
       std::cout << "loaded xml: \n";
-      node->traverse("print");
-      node->traverse("modified");
+
+      PrintNodes printVisitor;
+      node->traverse(printVisitor);
+
+      MarkAllAsModified markVisitor;
+      node->traverse(markVisitor);
     }
 
     void writeNode(const std::string ptrName, const std::shared_ptr<sg::Node> &node, FILE* out, const int indent)

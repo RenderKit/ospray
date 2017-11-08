@@ -438,8 +438,6 @@ namespace ospray {
           traverseChildren = false;
         properties.valid = computeValid();
         properties.lastVerified = TimeStamp();
-      } else if (operation == "modified") {
-        markAsModified();
       }
     }
 
