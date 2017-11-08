@@ -388,16 +388,20 @@ namespace ospray {
       ImGui::Text("Search for node:");
       ImGui::SameLine();
 
-      if (ImGui::InputText("", buf.data(),
-                           buf.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
-        nodeNameForSearch = std::string(buf.data());
-      }
-
-      if (ImGui::Button("Search")) {
+      auto doSearch = [&]() {
         sg::GatherNodesByName visitor(nodeNameForSearch);
         scenegraph->traverse(visitor);
         collectedNodesFromSearch = visitor.results();
+      };
+
+      if (ImGui::InputText("", buf.data(),
+                           buf.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
+        nodeNameForSearch = std::string(buf.data());
+        doSearch();
       }
+
+      if (ImGui::Button("Search"))
+        doSearch();
 
       ImGui::SameLine();
       if (nodeNameForSearch.empty()) {
