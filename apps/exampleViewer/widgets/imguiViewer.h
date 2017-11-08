@@ -39,6 +39,8 @@ namespace ospray {
 
     ~ImGuiViewer();
 
+    void setInitialSearchBoxText(const std::string &text);
+
   protected:
 
     void mouseButton(int button, int action, int mods);
@@ -84,6 +86,7 @@ namespace ospray {
     std::shared_ptr<sg::Node> scenegraph;
     std::shared_ptr<sg::Node> scenegraphDW;
 
+    std::string nodeNameForSearch{"<name>"};
     std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
 
     AsyncRenderEngine renderEngine;

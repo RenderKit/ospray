@@ -76,6 +76,11 @@ namespace ospray {
     renderEngine.stop();
   }
 
+  void ImGuiViewer::setInitialSearchBoxText(const std::string &text)
+  {
+    nodeNameForSearch = text;
+  }
+
   void ImGuiViewer::mouseButton(int button, int action, int mods)
   {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS
@@ -376,28 +381,28 @@ namespace ospray {
     if (ImGui::CollapsingHeader("Find Node", "Find Node", true, false)) {
       ImGui::NewLine();
 
-      static std::string nodeName = "<name>";
-
       std::vector<char> buf(512);
       *(buf.end() - 1) = '\0';
-      strcpy(buf.data(), nodeName.c_str());
+      strcpy(buf.data(), nodeNameForSearch.c_str());
 
       ImGui::Text("Search for node:");
       ImGui::SameLine();
 
       if (ImGui::InputText("", buf.data(),
                            buf.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
-        nodeName = std::string(buf.data());
+        nodeNameForSearch = std::string(buf.data());
       }
 
       if (ImGui::Button("Search")) {
-        sg::GatherNodesByName visitor(nodeName);
+        sg::GatherNodesByName visitor(nodeNameForSearch);
         scenegraph->traverse(visitor);
         collectedNodesFromSearch = visitor.results();
       }
 
       ImGui::SameLine();
-      ImGui::Text(nodeName.c_str());
+      const auto verifyTextLabel = std::string("search for: ")
+                                   + nodeNameForSearch;
+      ImGui::Text(verifyTextLabel.c_str());
 
       if (ImGui::Button("Clear Last Search"))
         collectedNodesFromSearch.clear();

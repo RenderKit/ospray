@@ -60,6 +60,7 @@ bool no_defaults = false;
 std::string hdri_light;
 int matrix_i =1, matrix_j=1, matrix_k = 1;
 float motionSpeed = -1.f;
+std::string initialTextForNodeSearch;
 
 static inline void parseCommandLine(int ac, const char **&av)
 {
@@ -106,6 +107,8 @@ static inline void parseCommandLine(int ac, const char **&av)
       animatedFiles.push_back(std::vector<clFile>());
     } else if (arg == "--file") {
       inAnimation = false;
+    } else if (arg == "--searchText") {
+      initialTextForNodeSearch = av[++i];
     } else if (arg[0] != '-') {
       if (!inAnimation)
         files.push_back(clFile(av[i], currentCLTransform));
@@ -451,6 +454,9 @@ int main(int ac, const char **av)
 
   if (motionSpeed > 0.f)
     window.setMotionSpeed(motionSpeed);
+
+  if (!initialTextForNodeSearch.empty())
+    window.setInitialSearchBoxText(initialTextForNodeSearch);
 
   ospray::imgui3D::run();
   return 0;
