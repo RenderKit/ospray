@@ -55,6 +55,9 @@ namespace ospray {
     if (useDynamicLoadBalancer)
       numPreAllocatedTiles = OSPRAY_DYNAMIC_LOADBALANCER.value();
 
+    auto OSPRAY_CAR_DEMO = utility::getEnvVar<int>("OSPRAY_CAR_DEMO");
+    showCarDemoWidgets = OSPRAY_CAR_DEMO.value_or(false);
+
     //do initial commit to make sure bounds are correctly computed
     scenegraph->traverse("verify");
     scenegraph->traverse("commit");
@@ -272,6 +275,8 @@ namespace ospray {
 
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
+    if (showCarDemoWidgets) guiCarDemo();
+
     guiRenderStats();
     guiFindNode();
 
@@ -356,6 +361,35 @@ namespace ospray {
       }
 
       ImGui::EndMenu();
+    }
+  }
+
+  void ImGuiViewer::guiCarDemo()
+  {
+    if (ImGui::CollapsingHeader("Car Color Picker", "Car Color Picker",
+                                true, false)) {
+      ImGui::NewLine();
+
+      static int colorIndex = 0;
+
+      if (ImGui::Combo("Car Color", &colorIndex, "Blue\0Black\0White\0\0")) {
+        static vec3f coatColors[] = {
+          vec3f(0.0f, 0.0397548f, 0.132437f),
+          vec3f(0.0f, 0.0f,       0.0f     ),
+          vec3f(0.9f, 0.9f,       0.9f     )
+        };
+
+        scenegraph->traverse([](sg::Node &node, sg::TraversalContext&) {
+          auto name = node.name();
+          if (name == "E_EPUP_Exterior_Paint___Exterior_Paint_UpperSG") {
+            node["coatColor"] = coatColors[colorIndex];
+            return false;
+          }
+          return true;
+        });
+      }
+
+      ImGui::NewLine();
     }
   }
 
