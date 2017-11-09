@@ -44,7 +44,7 @@ namespace ospray {
     //            'bool T::visit(Node &node, TraversalContext &ctx)'.
 #ifdef _WIN32
     template <typename T>
-    using has_valid_visit_operator_method = has_operator_method<T>;
+    using has_valid_visit_operator_method = traits::has_operator_method<T>;
 #else
     template <typename T>
     struct has_valid_visit_operator_method
