@@ -115,6 +115,7 @@ static inline void parseCommandLine(int ac, const char **&av)
         files.push_back(clFile(av[i], currentCLTransform));
       else
         animatedFiles.back().push_back(clFile(av[i], currentCLTransform));
+      currentCLTransform = clTransform();
     }
   }
 }
