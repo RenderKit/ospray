@@ -26,12 +26,12 @@ namespace ospray {
     {
       PrintNodes() = default;
 
-      bool visit(Node &node, TraversalContext &ctx) override;
+      bool operator()(Node &node, TraversalContext &ctx) override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    inline bool PrintNodes::visit(Node &node, TraversalContext &ctx)
+    inline bool PrintNodes::operator()(Node &node, TraversalContext &ctx)
     {
       for (int i = 0; i < ctx.level; i++)
         std::cout << "  ";

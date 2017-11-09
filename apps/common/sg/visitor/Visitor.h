@@ -33,10 +33,44 @@ namespace ospray {
     struct Visitor
     {
       // NOTE: return value means "continue traversal"
-      virtual bool visit(Node &node, TraversalContext &ctx) = 0;
+      virtual bool operator()(Node &node, TraversalContext &ctx) = 0;
 
       virtual ~Visitor() = default;
     };
+
+    // Visitor type traits ////////////////////////////////////////////////////
+
+    //NOTE(jda) - This checks at compile time if T implements the method
+    //            'bool T::visit(Node &node, TraversalContext &ctx)'.
+    template <typename T>
+    struct has_valid_visit_operator_method
+    {
+      using TASK_T = typename std::decay<T>::type;
+
+      template <typename P1, typename P2>
+      using t_param    = bool(TASK_T::*)(P1&, P2&) const;
+      using operator_t = decltype(&TASK_T::operator());
+
+      using params_are_valid =
+          std::is_same<t_param<Node, TraversalContext>, operator_t>;
+
+      static const bool value =
+          traits::has_operator_method<T>::value && params_are_valid::value;
+    };
+
+    template <typename VISITOR_T>
+    struct is_valid_visitor
+    {
+      using BASIC_VISITOR_T = typename std::decay<VISITOR_T>::type;
+
+      static const bool value =
+          (std::is_base_of<Visitor, BASIC_VISITOR_T>::value ||
+          has_valid_visit_operator_method<VISITOR_T>::value);
+    };
+
+    template <typename VISITOR_T>
+    using is_valid_visitor_t =
+        traits::enable_if_t<is_valid_visitor<VISITOR_T>::value>;
 
   } // ::ospray::sg
 } // ::ospray

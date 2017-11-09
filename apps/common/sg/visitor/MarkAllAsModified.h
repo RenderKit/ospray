@@ -26,12 +26,12 @@ namespace ospray {
     {
       MarkAllAsModified() = default;
 
-      bool visit(Node &node, TraversalContext &ctx) override;
+      bool operator()(Node &node, TraversalContext &ctx) override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    inline bool MarkAllAsModified::visit(Node &node, TraversalContext &)
+    inline bool MarkAllAsModified::operator()(Node &node, TraversalContext &)
     {
       node.markAsModified();
       return true;

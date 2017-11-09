@@ -225,9 +225,8 @@ namespace ospray {
       void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
 
       //! Helper overload to traverse with a default constructed TravesalContext
-      template <
-        typename VISITOR_T,
-        typename = ospcommon::traits::is_base_of_t<VISITOR_T, Visitor>>
+      //template <typename VISITOR_T, typename = traits::is_class_t<VISITOR_T>>
+      template <typename VISITOR_T, typename = traits::is_class_t<VISITOR_T>>
       void traverse(VISITOR_T &&visitor);
 
       //! called before traversing children
@@ -419,19 +418,19 @@ namespace ospray {
     template <typename VISITOR_T>
     inline void Node::traverse(VISITOR_T &&visitor, TraversalContext &ctx)
     {
-      using BASIC_VISITOR_T = typename std::decay<VISITOR_T>::type;
-      static_assert(std::is_base_of<Visitor, BASIC_VISITOR_T>::value,
-                    "VISITOR_T must be a child class of sg::Visitor!");
+      static_assert(is_valid_visitor<VISITOR_T>::value,
+                    "VISITOR_T must be a child class of sg::Visitor or"
+                    " implement 'bool visit(Node &node, TraversalContext &ctx)'"
+                    "!");
 
-      if (!isValid())
-        return;
-
-      visitor.visit(*this, ctx);
+      bool traverseChildren = visitor(*this, ctx);
 
       ctx.level++;
 
-      for (auto &child : properties.children)
-        child.second->traverse(visitor, ctx);
+      if (traverseChildren) {
+        for (auto &child : properties.children)
+          child.second->traverse(visitor, ctx);
+      }
 
       ctx.level--;
     }

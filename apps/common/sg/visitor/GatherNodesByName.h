@@ -31,7 +31,7 @@ namespace ospray {
     {
       GatherNodesByName(const std::string &_name);
 
-      bool visit(Node &node, TraversalContext &ctx) override;
+      bool operator()(Node &node, TraversalContext &ctx) override;
 
       std::vector<std::shared_ptr<Node>> results();
 
@@ -47,7 +47,7 @@ namespace ospray {
     {
     }
 
-    inline bool GatherNodesByName::visit(Node &node, TraversalContext &)
+    inline bool GatherNodesByName::operator()(Node &node, TraversalContext &)
     {
       if (longestBeginningMatch(node.name(), this->name) == this->name) {
         auto itr = std::find_if(
