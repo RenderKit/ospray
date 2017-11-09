@@ -42,21 +42,32 @@ namespace ospray {
 
     //NOTE(jda) - This checks at compile time if T implements the method
     //            'bool T::visit(Node &node, TraversalContext &ctx)'.
+#ifdef _WIN32
+    template <typename T>
+    using has_valid_visit_operator_method = has_operator_method<T>;
+#else
     template <typename T>
     struct has_valid_visit_operator_method
     {
       using TASK_T = typename std::decay<T>::type;
 
       template <typename P1, typename P2>
-      using t_param    = bool(TASK_T::*)(P1&, P2&) const;
-      using operator_t = decltype(&TASK_T::operator());
+      using t_param       = bool(TASK_T::*)(P1&, P2&);
+      template <typename P1, typename P2>
+      using t_param_const = bool(TASK_T::*)(P1&, P2&) const;
+      using operator_t    = decltype(&TASK_T::operator());
 
       using params_are_valid =
           std::is_same<t_param<Node, TraversalContext>, operator_t>;
 
+      using params_are_valid_and_is_const =
+          std::is_same<t_param_const<Node, TraversalContext>, operator_t>;
+
       static const bool value =
-          traits::has_operator_method<T>::value && params_are_valid::value;
+          traits::has_operator_method<T>::value &&
+          (params_are_valid::value || params_are_valid_and_is_const::value);
     };
+#endif
 
     template <typename VISITOR_T>
     struct is_valid_visitor
