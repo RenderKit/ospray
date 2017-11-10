@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.4.1 (devel) of OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
-more information.
+This is release v1.4.1 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -200,9 +200,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 (3.3MB).
 
 For a deeper explanation of the concepts, design, features and
@@ -1603,10 +1603,7 @@ the real world reflect at most only about 80% of the incoming light. So
 even for a white sheet of paper or white wall paint do better not set
 `Kd` larger than 0.8; otherwise rendering times are unnecessary long and
 the contrast in the final images is low (for example, the corners of a
-white room would hardly be discernible, as can be seen in the figure
-below).
-
-<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to in higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" />
+white room would hardly be discernible).
 
 Note that currently only the path tracer implements colored transparency
 with `Tf`.
@@ -1725,7 +1722,7 @@ create interesting edging effects.
 #### Alloy
 
 The [path tracer](#path-tracer) offers an alloy material, which behaves
-similar to [metal](#metal), but allows for more intuitive and flexible
+similar to [Metal](#metal), but allows for more intuitive and flexible
 control of the color. To create an Alloy material pass the type string
 "`Alloy`" to `ospNewMaterial`. Its parameters are
 
@@ -1743,7 +1740,7 @@ at grazing angles (for real metals this is always 100% white). As in
 [Metal](#metal) the `roughness` parameter controls the variation of
 microfacets and thus how polished the alloy will look. All parameters
 can be textured by passing a [texture](#texture) handle, prefixed with
-"`map_`", [texture transformations](#texture-transformations) are
+"`map_`"; [texture transformations](#texture-transformations) are
 supported as well.
 
 <img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
