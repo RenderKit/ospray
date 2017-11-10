@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.4.1 (devel) of OSPRay. For changes and new features
+This is release v1.4.2 (devel) of OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
 more information.
 
@@ -203,7 +203,7 @@ The following [API
 documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
 document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
-(3.3MB).
+(4.2MB).
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper

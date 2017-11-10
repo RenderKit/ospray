@@ -1,6 +1,23 @@
 Version History
 ---------------
 
+### Changes in v1.4.1:
+
+-   Several cleanups and bug fixes
+    -   Improved precision of ray intersection with streamlines,
+        spheres, and cylinder geometries
+    -   Fixed address overflow in framebuffer, in practice image size is
+        now limited only by available memory
+    -   Fixed several deadlocks and race conditions
+    -   Fix shadow computation in SciVis renderer, objects behind light
+        sources do not occlude anymore
+    -   No more image jittering with MPI rendering when no accumulation
+        buffer is used
+-   Improved path tracer materials
+    -   Also support RGB `eta`/`k` for Metal
+    -   Added Alloy material, a "metal" with textured color
+-   Minimum required Embree version is now v2.15
+
 ### Changes in v1.4.0:
 
 -   New adaptive mesh refinement (AMR) and unstructured tetrahedral
@@ -37,7 +54,7 @@ Version History
 
 ### Changes in v1.3.1:
 
--   Improved robustness of OSPRay CMake find_package config
+-   Improved robustness of OSPRay CMake `find_package` config
     -   Fixed bugs related to CMake configuration when using the OSPRay
         SDK from an install
 -   Fixed issue with Embree library when installing with
@@ -120,7 +137,7 @@ Version History
         and performance
     -   New API function `ospDeviceSetErrorMsgFunc()` to specify a
         callback for handling message outputs from OSPRay
-    -   Add ability to remove user set parameter values with new
+    -   Added ability to remove user set parameter values with new
         `ospRemoveParam()` API function
     -   The MPI device is now provided via a module, removing the need
         for having separately compiled versions of OSPRay with and

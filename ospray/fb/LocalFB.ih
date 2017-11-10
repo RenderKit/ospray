@@ -20,8 +20,6 @@
 #include "fb/FrameBuffer.ih"
 #include "render/util.ih"
 
-#define FB_STRIDE super.size.x
-
 /*! a Local FrameBuffer that stores all pixel values (color, depth,
     accum) in a plain 2D array of pixels (one array per component) */
 struct LocalFB
