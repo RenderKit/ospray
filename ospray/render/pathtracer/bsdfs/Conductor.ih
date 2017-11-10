@@ -17,13 +17,13 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "Fresnel.ih"
 
 struct Conductor
 {
   BSDF super;
 
-  spectrum eta; //!< real part of refraction index
-  spectrum k;   //!< imaginary part of refraction index
+  uniform Fresnel *uniform fresnel;
 };
 
 inline BSDF_EvalRes Conductor_eval(const varying BSDF* uniform super,
@@ -40,20 +40,19 @@ inline BSDF_SampleRes Conductor_sample(const varying BSDF* uniform super,
   res.wi = reflect(wo, getN(super));
   res.pdf = inf;
   res.type = BSDF_SPECULAR_REFLECTION;
-  res.weight = fresnelConductor(dot(wo, getN(super)), self->eta, self->k);
+  res.weight = self->fresnel->eval(self->fresnel, dot(wo, getN(super)));
   return res;
 }
 
 inline varying BSDF* uniform Conductor_create(uniform ShadingContext* uniform
-    ctx, const varying linear3f* uniform frame, spectrum eta, spectrum k)
+    ctx, const varying linear3f* uniform frame, Fresnel* uniform fresnel)
 {
   varying Conductor* uniform self =
     (varying Conductor* uniform)ShadingContext_alloc(ctx, sizeof(Conductor));
 
   BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION, Conductor_eval,
       Conductor_sample, frame);
-  self->eta = eta;
-  self->k = k;
+  self->fresnel = fresnel;
 
   return &self->super;
 }

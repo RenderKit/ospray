@@ -61,7 +61,7 @@ namespace ospray {
   struct RaycastRenderer : public Renderer
   {
     RaycastRenderer();
-    virtual ~RaycastRenderer() = default;
+    virtual ~RaycastRenderer() override = default;
 
     virtual std::string toString() const override;
   };

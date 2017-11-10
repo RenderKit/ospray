@@ -37,7 +37,7 @@ namespace ospray {
     intensity = getParam1f("intensity", 1.f);
     angularDiameter = getParam1f("angularDiameter", .0f);
 
-    const vec3f radiance = color * intensity;
+    vec3f radiance = color * intensity;
     direction = -normalize(direction); // the ispc::DirLight expects direction towards light source
 
     angularDiameter = clamp(angularDiameter, 0.f, 180.f);

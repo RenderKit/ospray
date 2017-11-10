@@ -57,7 +57,7 @@ namespace ospray {
       std::shared_ptr<Texture2D> tex = std::static_pointer_cast<Texture2D>(
         createNode(fileName.name(),"Texture2D"));
 
-#if USE_OPENIMAGEIO
+#ifdef USE_OPENIMAGEIO
       ImageInput *in = ImageInput::open(fileName.str().c_str());
       if (!in) {
         std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
@@ -79,7 +79,7 @@ namespace ospray {
 
         // flip image (because OSPRay's textures have the origin at the lower left corner)
         unsigned char* data = (unsigned char*)tex->data;
-        for (size_t y = 0; y < tex->size.y / 2; y++) {
+        for (int y = 0; y < tex->size.y / 2; y++) {
           unsigned char *src = &data[y * stride];
           unsigned char *dest = &data[(tex->size.y-1-y) * stride];
           for (size_t x = 0; x < stride; x++)
@@ -232,7 +232,7 @@ namespace ospray {
           tex->preferLinear = preferLinear;
           tex->data     = new float[width * height * numChannels];
           if (fread(tex->data, sizeof(float), width * height * numChannels, file)
-              != width * height * numChannels)
+              != size_t(width * height * numChannels))
             throw std::runtime_error("could not fread");
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           float *texels = (float *)tex->data;
@@ -266,8 +266,8 @@ namespace ospray {
         } else {
           tex->data = new unsigned char[tex->size.x*tex->size.y*tex->channels*tex->depth];
           // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
-          for (size_t y=0; y<tex->size.y; y++) {
-            for (size_t x=0; x<tex->size.x; x++) {
+          for (int y = 0; y < tex->size.y; y++) {
+            for (int x = 0; x < tex->size.x; x++) {
               if (hdr) {
                 const float *pixel = &((float*)pixels)[(y*tex->size.x+x)*tex->channels];
                 float *dst = &((float*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
@@ -289,12 +289,11 @@ namespace ospray {
     }
 
     Texture2D::Texture2D()
-      : data(nullptr), texelData(nullptr)
     {
       setValue((OSPTexture2D)nullptr);
     }
 
-    void Texture2D::preCommit(RenderContext &ctx)
+    void Texture2D::preCommit(RenderContext &)
     {
       OSPTextureFormat type = OSP_TEXTURE_R8;
 

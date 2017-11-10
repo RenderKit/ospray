@@ -36,7 +36,7 @@ namespace ospray {
     struct DistributedRaycastRenderer : public Renderer
     {
       DistributedRaycastRenderer();
-      virtual ~DistributedRaycastRenderer() = default;//TODO!
+      virtual ~DistributedRaycastRenderer() override = default;//TODO!
 
       void commit() override;
 

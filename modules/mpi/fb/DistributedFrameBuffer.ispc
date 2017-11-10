@@ -22,7 +22,7 @@ struct DistributedFrameBuffer {
 };
 
 #define template_accumulate(name, dst_fmt, cvt)                              \
-export uniform float DFB_accumulate_##name(VaryingTile *uniform tile,        \
+export uniform float DFB_accumulate_##name(const VaryingTile *uniform tile,  \
                                   VaryingTile    *uniform final,             \
                                   VaryingTile    *uniform accum,             \
                                   VaryingTile    *uniform variance,          \
@@ -119,7 +119,7 @@ template_accumulate(RGBA32F, varying vec4f, soa_to_aos4f);
 // variant that only accumulates (without computing error or final color result)
 // assumption: there is always ACCUM and VARIANCE buffer (otherwise variance
 // will always be inf and WriteMultipleTiles mode won't be used)
-export void DFB_accumulate_only(VaryingTile *uniform tile
+export void DFB_accumulate_only(const VaryingTile *uniform tile
     , VaryingTile *uniform accum
     , VaryingTile *uniform variance
     )
@@ -218,7 +218,7 @@ template_readout(RGBA32F, varying vec4f, soa_to_aos4f);
 
 
 
-export void DFB_zComposite(VaryingTile    *uniform delta,
+export void DFB_zComposite(const VaryingTile *uniform delta,
                            VaryingTile    *uniform current)
 {
   for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
@@ -292,7 +292,7 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
       acc_col = frag_col + (1.f - frag_alpha) * acc_col;
       acc_alpha = frag_alpha + (1.f - frag_alpha) * acc_alpha;
     }
-    
+
     VaryingTile *uniform tile = tileArray[0];
     tile->r[frag] = acc_col.x;
     tile->g[frag] = acc_col.y;

@@ -149,7 +149,9 @@ void Spheres_intersect(uniform Spheres *uniform self,
   }
   uniform vec3f center =
     *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-  const vec3f A = center - ray.org;
+  const float approxDist = dot(center - ray.org, ray.dir);
+  const vec3f closeOrg = ray.org + approxDist * ray.dir;
+  const vec3f A = center - closeOrg;
 
   const float a = dot(ray.dir,ray.dir);
   const float b = 2.f*dot(ray.dir,A);
@@ -160,8 +162,8 @@ void Spheres_intersect(uniform Spheres *uniform self,
 
   const float srad = sqrt(radical);
 
-  const float t_in = (b - srad) *rcpf(2.f*a);
-  const float t_out= (b + srad) *rcpf(2.f*a);
+  const float t_in = (b - srad) *rcpf(2.f*a) + approxDist;
+  const float t_out= (b + srad) *rcpf(2.f*a) + approxDist;
 
   bool hit = false;
   if (t_in > ray.t0 && t_in < ray.t) {

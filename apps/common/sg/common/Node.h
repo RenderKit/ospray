@@ -333,18 +333,21 @@ namespace ospray {
     template <typename T>
     inline T& Node::valueAs()
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.get<T>();
     }
 
     template <typename T>
     inline const T& Node::valueAs() const
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.get<T>();
     }
 
     template <typename T>
     inline bool Node::valueIsType() const
     {
+      std::lock_guard<std::mutex> lock{value_mutex};
       return properties.value.is<T>();
     }
 
@@ -363,12 +366,14 @@ namespace ospray {
     template <>                                                                \
     inline a& Node::valueAs()                                                  \
     {                                                                          \
+      std::lock_guard<std::mutex> lock{value_mutex};                           \
       return (a&)properties.value.get<OSPObject>();                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
     inline const a& Node::valueAs() const                                      \
     {                                                                          \
+      std::lock_guard<std::mutex> lock{value_mutex};                           \
       return (const a&)properties.value.get<OSPObject>();                      \
     }                                                                          \
                                                                                \
@@ -413,9 +418,7 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2f>(const Any& min,
-                               const Any& max,
-                               const Any& value)
+    inline bool compare<vec2f>(const Any& min, const Any& max, const Any& value)
     {
       const vec2f &v1 = min.get<vec2f>();
       const vec2f &v2 = max.get<vec2f>();
@@ -425,9 +428,7 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2i>(const Any& min,
-                               const Any& max,
-                               const Any& value)
+    inline bool compare<vec2i>(const Any& min, const Any& max, const Any& value)
     {
       const vec2i &v1 = min.get<vec2i>();
       const vec2i &v2 = max.get<vec2i>();
@@ -437,9 +438,7 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec3f>(const Any& min,
-                               const Any& max,
-                               const Any& value)
+    inline bool compare<vec3f>(const Any& min, const Any& max, const Any& value)
     {
       const vec3f &v1 = min.get<vec3f>();
       const vec3f &v2 = max.get<vec3f>();
@@ -450,9 +449,7 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<box3f>(const Any& min,
-                               const Any& max,
-                               const Any& value)
+    inline bool compare<box3f>(const Any&, const Any&, const Any&)
     {
       return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
     }
@@ -533,7 +530,7 @@ namespace ospray {
     struct NodeParam : public Node
     {
       NodeParam() : Node() { setValue(T()); }
-      virtual void postCommit(RenderContext &ctx) override
+      virtual void postCommit(RenderContext &) override
       {
         if (hasParent()) {
           //TODO: generalize to other types of ManagedObject

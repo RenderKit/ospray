@@ -85,9 +85,6 @@ namespace ospray {
 
   void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
-  /*! for debugging. compute a checksum for given area range... */
-  OSPRAY_SDK_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
-
 #ifndef Assert
 #ifdef NDEBUG
 # define Assert(expr) /* nothing */

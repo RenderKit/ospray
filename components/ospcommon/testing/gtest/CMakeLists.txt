@@ -1,3 +1,6 @@
+
+ospray_disable_compiler_warnings()
+
 ########################################################################
 # CMake build script for Google Test.
 #

@@ -14,10 +14,12 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/common
+ospray_disable_compiler_warnings()
+
+include_directories(${CMAKE_SOURCE_DIR}/apps/common
                     ${CMAKE_SOURCE_DIR}/apps/exampleViewer)
 
-OSPRAY_CREATE_APPLICATION(ospDistribViewerDemo
+ospray_create_application(ospDistribViewerDemo
   ospDistribViewerDemo.cpp
   arcball.cpp
 LINK

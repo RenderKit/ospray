@@ -21,20 +21,11 @@ namespace ospray {
 
     AnimationController::AnimationController()
     {
-      setValue(0.f);
-      createChild("start","float", 0.0f);
+      setValue(0.f); createChild("start","float", 0.0f);
       createChild("stop","float", 1.0f);
       createChild("time","float", 0.0f);
       createChild("step","float", 0.01f);
       createChild("enabled","bool",false);
-    }
-
-    void AnimationController::preCommit(RenderContext &ctx)
-    {
-    }
-
-    void AnimationController::postCommit(RenderContext &ctx)
-    {
     }
 
     void AnimationController::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)

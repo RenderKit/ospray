@@ -77,7 +77,7 @@ namespace ospray {
       FrameBuffer *fb;
     };
 
-    virtual ~PixelOp() = default;
+    virtual ~PixelOp() override = default;
 
     //! \brief create an instance of this pixel op
     virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) = 0;

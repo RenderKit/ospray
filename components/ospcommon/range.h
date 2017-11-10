@@ -27,18 +27,27 @@ namespace ospcommon {
   using std::min;
   using std::max;
 
+  /*! default implementatoin of 'anyLessThan' for scalar types, so we
+      can make a range<float>s etc. Vec-types will overwrite that and
+      test if _any_ dimension is less */
+  template <typename TA, typename TB>
+  inline bool anyLessThan(const TA &a, const TB &b)
+  {
+     return a < b;
+  }
+
   template <typename T>
   struct range_t
   {
     range_t() : lower(ospcommon::pos_inf), upper(ospcommon::neg_inf){}
-    range_t(const ospcommon::EmptyTy &t)
+    range_t(const ospcommon::EmptyTy &)
         : lower(ospcommon::pos_inf), upper(ospcommon::neg_inf){}
-    range_t(const ospcommon::ZeroTy &t)
+    range_t(const ospcommon::ZeroTy &)
         : lower(ospcommon::zero), upper(ospcommon::zero){}
-    range_t(const ospcommon::OneTy &t)
+    range_t(const ospcommon::OneTy &)
         : lower(ospcommon::zero), upper(ospcommon::one){}
     range_t(const T &t) : lower(t), upper(t){}
-    range_t(const T &lower, const T &upper) : lower(lower), upper(upper){}
+    range_t(const T &_lower, const T &_upper) : lower(_lower), upper(_upper){}
 
     inline T size() const
     {

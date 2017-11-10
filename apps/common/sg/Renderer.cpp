@@ -126,7 +126,7 @@ namespace ospray {
         Node::traverse(ctx,operation);
     }
 
-    void Renderer::postRender(RenderContext &ctx)
+    void Renderer::postRender(RenderContext &)
     {
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
       variance = ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
@@ -182,7 +182,7 @@ namespace ospray {
             ospRelease(lightsData);
           lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
           ospCommit(lightsData);
-          lightsBuildTime = TimeStamp();
+          lightsBuildTime.renew();
         }
 
         // complete setup of renderer
@@ -207,7 +207,7 @@ namespace ospray {
 
         }
         ospCommit(ospRenderer);
-        frameMTime = TimeStamp();
+        frameMTime.renew();
       }
 
     }
@@ -215,7 +215,7 @@ namespace ospray {
     OSPPickResult Renderer::pick(const vec2f &pickPos)
     {
       OSPPickResult result;
-      ospPick(&result, ospRenderer, (osp::vec2f&)pickPos);
+      ospPick(&result, ospRenderer, (const osp::vec2f&)pickPos);
       return result;
     }
 

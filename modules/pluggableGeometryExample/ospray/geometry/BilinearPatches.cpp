@@ -40,7 +40,7 @@ namespace ospray {
       this->ispcEquivalent = ispc::BilinearPatches_create(this);
 
       // note we do _not_ yet do anything else here - the actual input
-      // data isn't available to use until 'commit()' gets called 
+      // data isn't available to use until 'commit()' gets called
     }
 
     /*! destructor - supposed to clean up all alloced memory */
@@ -60,7 +60,7 @@ namespace ospray {
 
       /* assert that some valid input data is available */
       if (!this->patchesData) {
-        
+
         std::cout << "#osp.blp: Warning: no input patches provided "
                   << "for bilinear_patches geometry" << std::endl;
         return;
@@ -74,15 +74,15 @@ namespace ospray {
       // sanity check if a patches data was actually set!
       if (!patchesData)
         return;
-      
+
       // look at the data we were provided with ....
       size_t numPatchesInInput = patchesData->numBytes / sizeof(Patch);
       std::cout << "#osp.blp: found " << numPatchesInInput
                 << " patches in data array" << std::endl;
-      
+
       /* get the acual 'raw' pointer to the data (ispc doesn't konw
          what to do with the 'Data' abstraction calss */
-      const void *patchesDataPointer = patchesData->data;
+      void *patchesDataPointer = patchesData->data;
       ispc::BilinearPatches_finalize(getIE(),model->getIE(),
                                      (float*)patchesDataPointer,
                                      numPatchesInInput);
@@ -91,7 +91,7 @@ namespace ospray {
 
     /*! maybe one of the most important parts of this example: this
         macro 'registers' the BilinearPatches class under the ospray
-        geometry type name of 'bilinear_patches'. 
+        geometry type name of 'bilinear_patches'.
 
         It is _this_ name that one can now (assuming the module has
         been loaded with ospLoadModule(), of course) create geometries
@@ -100,6 +100,6 @@ namespace ospray {
         OSPGeometry geom = ospNewGeometry("bilinear_patches") ;
     */
     OSP_REGISTER_GEOMETRY(BilinearPatches,bilinear_patches);
-    
+
   } // ::ospray::bilinearPatch
 } // ::ospray

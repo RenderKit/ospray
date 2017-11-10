@@ -26,7 +26,7 @@ namespace ospray {
       return "ospray::sg::TetVolume";
     }
 
-    void TetVolume::preCommit(RenderContext &ctx)
+    void TetVolume::preCommit(RenderContext &)
     {
       auto ospVolume = valueAs<OSPVolume>();
 
@@ -56,7 +56,7 @@ namespace ospray {
       auto field      = child("field").nodeAs<DataBuffer>();
 
       ospcommon::box3f bounds;
-      for (int i = 0; i < vertices->size(); ++i)
+      for (size_t i = 0; i < vertices->size(); ++i)
         bounds.extend(vertices->get<vec3f>(i));
       child("bounds") = bounds;
 

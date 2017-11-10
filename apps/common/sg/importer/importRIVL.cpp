@@ -29,9 +29,9 @@ namespace ospray {
     using std::endl;
     using std::string;
 
-    std::vector<std::shared_ptr<sg::Node>> nodeList;
+    static std::vector<std::shared_ptr<sg::Node>> nodeList;
 
-    void *binBasePtr;
+    static void *binBasePtr;
 
     void parseTextureNode(const xml::Node &node)
     {
@@ -42,16 +42,16 @@ namespace ospray {
       nodeList.push_back(txt);
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-      xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
-          if (name == "ofs")
+      xml::for_each_prop(node,[&](const std::string &_name, const std::string &value){
+          if (_name == "ofs")
             ofs = atol(value.c_str());
-          else if (name == "width")
+          else if (_name == "width")
             width = atol(value.c_str());
-          else if (name == "height")
+          else if (_name == "height")
             height = atol(value.c_str());
-          else if (name == "channels")
+          else if (_name == "channels")
             channels = atol(value.c_str());
-          else if (name == "depth")
+          else if (_name == "depth")
             depth = atol(value.c_str());
         });
       assert(ofs != -1 && "Offset not properly parsed for Texture2D nodes");
@@ -236,7 +236,7 @@ namespace ospray {
         });
 
       // parse xfm matrix
-      int numRead = sscanf((char*)node.content.c_str(),
+      int numRead = sscanf((const char*)node.content.c_str(),
                            "%f %f %f\n%f %f %f\n%f %f %f\n%f %f %f",
                            &xfm.l.vx.x,
                            &xfm.l.vx.y,
@@ -334,7 +334,6 @@ namespace ospray {
             mesh->add(primIDList);
           } else if (child.name == "materiallist") {
             char* value = strdup(child.content.c_str());
-            int matCounter=0;
             auto materialListNode =
                 mesh->child("materialList").nodeAs<MaterialList>();
             for(char *s = strtok((char*)value," \t\n\r");
@@ -355,9 +354,9 @@ namespace ospray {
     void parseGroupNode(const xml::Node &node)
     {
       auto group = std::make_shared<sg::Group>();
-      std::stringstream ss;
-      ss << "group_" << nodeList.size();
-      group->setName(ss.str());
+      std::stringstream ss_group;
+      ss_group << "group_" << nodeList.size();
+      group->setName(ss_group.str());
       group->setType("Node");
       nodeList.push_back(group);
       if (!node.content.empty()) {
@@ -373,14 +372,14 @@ namespace ospray {
             continue;
 
           group->children.push_back(child);
-          std::stringstream ss;
-          ss << "child_" << childID;
+          std::stringstream ss_child;
+          ss_child << "child_" << childID;
           if (child->type() == "Model") {
-            auto instance = createNode(ss.str(), "Instance");
+            auto instance = createNode(ss_child.str(), "Instance");
             instance->add(child, "model");
             child = instance;
           }
-          group->add(child, ss.str());
+          group->add(child, ss_child.str());
         }
 
         free(value);

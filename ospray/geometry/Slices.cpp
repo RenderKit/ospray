@@ -44,7 +44,7 @@ namespace ospray {
     Assert(volume);
 
     numPlanes = planesData->numItems;
-    planes    = (const vec4f*)planesData->data;
+    planes    = (vec4f*)planesData->data;
 
     ispc::Slices_set(getIE(), model->getIE(), numPlanes,
                      (ispc::vec4f*)planes, volume->getIE());

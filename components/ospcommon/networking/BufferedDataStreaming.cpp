@@ -42,7 +42,7 @@ namespace ospcommon {
           numAvailable = fabric.get().read((void*&)buffer);
           continue;
         }
-        
+
         memcpy(writePtr,buffer,numWeCanDeliver);
         numStillMissing -= numWeCanDeliver;
         numAvailable    -= numWeCanDeliver;
@@ -65,10 +65,10 @@ namespace ospcommon {
       delete [] buffer;
     }
 
-    void BufferedWriteStream::write(void *mem, size_t size)
+    void BufferedWriteStream::write(const void *mem, size_t size)
     {
       size_t stillToWrite = size;
-      uint8_t *readPtr = (uint8_t*)mem;
+      auto *readPtr = (const uint8_t*)mem;
       while (stillToWrite) {
         size_t numWeCanWrite = std::min(stillToWrite,
                                         size_t(maxBufferSize-numInBuffer));

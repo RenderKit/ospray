@@ -24,7 +24,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE AmbientLight : public Light
   {
     AmbientLight();
-    virtual ~AmbientLight() = default;
+    virtual ~AmbientLight() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
 

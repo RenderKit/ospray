@@ -53,6 +53,7 @@ namespace ospray {
         work this is */
       struct Work
       {
+        virtual ~Work() = default;
         /*! type we use for representing tags */
         using tag_t = size_t;
 
@@ -240,7 +241,7 @@ namespace ospray {
       {
         NewData() = default;
         NewData(ObjectHandle handle, size_t nItems,
-                OSPDataType format, void *initData, int flags);
+                OSPDataType format, const void *initData, int flags);
 
         void run() override;
 

@@ -43,7 +43,7 @@ namespace ospray {
     {
       PatchSGNode() : Geometry("bilinear_patches") {}
 
-      box3f computeBounds() const override
+      box3f bounds() const override
       {
         box3f bounds = empty;
         if (hasChild("vertex")) {

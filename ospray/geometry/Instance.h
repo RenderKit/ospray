@@ -47,7 +47,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Instance : public Geometry
   {
     Instance();
-    virtual ~Instance() = default;
+    virtual ~Instance() override = default;
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;
 

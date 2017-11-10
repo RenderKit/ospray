@@ -27,6 +27,7 @@ namespace ospray {
     struct AMRVolume : public ospray::Volume
     {
       AMRVolume();
+      ~AMRVolume() override = default;
 
       std::string toString() const override;
 

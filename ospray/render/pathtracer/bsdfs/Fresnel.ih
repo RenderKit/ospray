@@ -1,0 +1,218 @@
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "math/sampling.ih"
+#include "math/LinearSpace.ih"
+#include "math/spectrum.ih"
+#include "Optics.ih"
+
+//! \brief Computes fresnel coefficient for dielectric medium
+/*! \detailed Computes fresnel coefficient for media interface with
+ *  relative refraction index eta. Eta is the outside refraction index
+ *  divided by the inside refraction index. Both cosines have to be
+ *  positive. */
+inline float fresnelDielectric(float cosI, float cosT, float eta)
+{
+  const float Rper = (eta*cosI -     cosT) * rcpf(eta*cosI +     cosT);
+  const float Rpar = (    cosI - eta*cosT) * rcpf(    cosI + eta*cosT);
+  return 0.5f*(sqr(Rpar) + sqr(Rper));
+}
+
+/*! Computes fresnel coefficient for media interface with relative
+ *  refraction index eta. Eta is the outside refraction index
+ *  divided by the inside refraction index. The cosine has to be
+ *  positive. */
+inline float fresnelDielectric(const float cosI, const float eta)
+{
+  const float sqrCosT = sqrCosT(cosI, eta);
+  if (sqrCosT < 0.0f) return 1.0f;
+  return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
+}
+
+inline float fresnelDielectricEx(const float cosI, float& cosT, const float eta)
+{
+  const float sqrCosT = sqrCosT(cosI, eta);
+  if (sqrCosT < 0.0f)
+  {
+    cosT = 0.0f;
+    return 1.0f;
+  }
+  cosT = sqrt(sqrCosT);
+  return fresnelDielectric(cosI, cosT, eta);
+}
+
+/*! Computes fresnel coefficient for conductor medium with complex
+ *  refraction index (eta,k). The cosine has to be positive. */
+inline vec3f fresnelConductor(const float cosI, const vec3f eta, const vec3f k)
+{
+  const vec3f tmp = sqr(eta) + sqr(k);
+  const vec3f Rpar
+    = (tmp * sqr(cosI) - 2.0f*eta*cosI + make_vec3f(1.f))
+    * rcp(tmp * sqr(cosI) + 2.0f*eta*cosI + make_vec3f(1.f));
+  const vec3f Rper
+    = (tmp - 2.0f*eta*cosI + make_vec3f(sqr(cosI)))
+    * rcp(tmp + 2.0f*eta*cosI + make_vec3f(sqr(cosI)));
+  return 0.5f * (Rpar + Rper);
+}
+
+inline float fresnelConductor(const float cosI, const uniform float eta, const uniform float k)
+{
+  const uniform float tmp = sqr(eta) + sqr(k);
+  const float Rpar
+    = (tmp * sqr(cosI) - eta*(2.0f*cosI) + 1.f)
+    * rcp(tmp * sqr(cosI) + eta*(2.0f*cosI) + 1.f);
+  const float Rper
+    = (tmp - 2.0f*eta*cosI + sqr(cosI))
+    * rcp(tmp + 2.0f*eta*cosI + sqr(cosI));
+  return 0.5f * (Rpar + Rper);
+}
+
+inline vec3f fresnelConductor(const float cosI, const spectrum eta, const spectrum k)
+{
+  vec3f rgb = make_vec3f(0.f);
+  for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++)
+    rgb = rgb + fresnelConductor(cosI, eta[l], k[l]) * spectrum_sRGB(l);
+
+  return clamp(rgb);
+}
+
+
+// mainly for abstracting the conductor variants
+struct Fresnel;
+
+typedef vec3f (*Fresnel_EvalFunc)(const Fresnel* uniform self, const float cosI);
+
+struct Fresnel
+{
+  uniform Fresnel_EvalFunc eval;
+};
+
+inline void Fresnel_Constructor(Fresnel* uniform self, uniform Fresnel_EvalFunc eval)
+{
+  self->eval = eval;
+}
+
+
+
+
+struct FresnelConductorRGBUniform
+{
+  uniform Fresnel super;
+  uniform vec3f eta;
+  uniform vec3f k;
+};
+
+inline vec3f FresnelConductorRGBUniform_eval(const Fresnel* uniform super, const float cosI) {
+  const FresnelConductorRGBUniform * uniform self =
+    (const FresnelConductorRGBUniform * uniform)super;
+
+  return make_vec3f(
+      fresnelConductor(cosI, self->eta.x, self->k.x),
+      fresnelConductor(cosI, self->eta.y, self->k.y),
+      fresnelConductor(cosI, self->eta.z, self->k.z)
+      );
+}
+
+inline Fresnel* uniform FresnelConductorRGBUniform_create(ShadingContext* uniform ctx,
+    const uniform vec3f &eta, const uniform vec3f &k) {
+  FresnelConductorRGBUniform * uniform self =
+    (FresnelConductorRGBUniform * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBUniform));
+  self->super.eval = &FresnelConductorRGBUniform_eval;
+  self->eta = eta;
+  self->k = k;
+
+  return &self->super;
+}
+
+
+struct FresnelConductorRGBVarying
+{
+  uniform Fresnel super;
+  varying vec3f eta;
+  varying vec3f k;
+};
+
+inline vec3f FresnelConductorRGBVarying_eval(const Fresnel* uniform super, const float cosI) {
+  const FresnelConductorRGBVarying * uniform self =
+    (const FresnelConductorRGBVarying * uniform)super;
+
+  return fresnelConductor(cosI, self->eta, self->k);
+}
+
+inline Fresnel* uniform FresnelConductorRGBVarying_create(ShadingContext* uniform ctx,
+    const vec3f &eta, const vec3f &k) {
+  FresnelConductorRGBVarying * uniform self =
+    (FresnelConductorRGBVarying * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBVarying));
+  self->super.eval = &FresnelConductorRGBVarying_eval;
+  self->eta = eta;
+  self->k = k;
+
+  return &self->super;
+}
+
+
+struct FresnelSchlick
+{
+  uniform Fresnel super;
+  varying vec3f r; // reflectivity at normal incidence (0 deg)
+  varying vec3f g; // reflectivity at grazing angle (90 deg)
+};
+
+inline vec3f FresnelSchlick_eval(const Fresnel* uniform super, const float cosI) {
+  const FresnelSchlick * uniform self = (const FresnelSchlick * uniform)super;
+
+  const float c = 1.f - cosI;
+  return lerp(sqr(sqr(c))*c, self->r, self->g);
+}
+
+inline Fresnel* uniform FresnelSchlick_create(ShadingContext* uniform ctx,
+    const varying vec3f &r, const varying vec3f &g) {
+  FresnelSchlick * uniform self =
+    (FresnelSchlick * uniform)ShadingContext_alloc(ctx, sizeof(FresnelSchlick));
+  self->super.eval = &FresnelSchlick_eval;
+  self->r = r;
+  self->g = g;
+
+  return &self->super;
+}
+
+
+struct FresnelConductorSpectral
+{
+  uniform Fresnel super;
+  uniform spectrum eta;
+  uniform spectrum k;
+};
+
+inline vec3f FresnelConductorSpectral_eval(const Fresnel* uniform super, const float cosI) {
+  const FresnelConductorSpectral * uniform self =
+    (const FresnelConductorSpectral * uniform)super;
+
+  return fresnelConductor(cosI, self->eta, self->k);
+}
+
+inline Fresnel* uniform FresnelConductorSpectral_create(ShadingContext* uniform ctx,
+    const spectrum &eta, const spectrum &k) {
+  FresnelConductorSpectral * uniform self =
+    (FresnelConductorSpectral * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorSpectral));
+  self->super.eval = &FresnelConductorSpectral_eval;
+  self->eta = eta;
+  self->k = k;
+
+  return &self->super;
+}

@@ -60,7 +60,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Cylinders : public Geometry
   {
     Cylinders();
-    virtual ~Cylinders() = default;
+    virtual ~Cylinders() override = default;
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
     /*! \brief integrates this geometry's primitives into the respective

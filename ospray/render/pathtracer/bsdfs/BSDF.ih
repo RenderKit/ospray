@@ -16,9 +16,10 @@
 
 #pragma once
 
-#include "common/DifferentialGeometry.ih"
+#include "math/vec.ih"
+// utilites used by (almost all) implementations
+#include "math/sampling.ih"
 #include "Optics.ih"
-#include "ShadingContext.ih"
 
 #define BSDF_SPECULAR_REFLECTION   (1<<0)  /*!< diffuse light reflection            */
 #define BSDF_DIFFUSE_REFLECTION    (1<<1)  /*!< glossy light reflection             */

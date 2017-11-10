@@ -26,7 +26,7 @@ namespace ospray {
   //!
   struct OSPRAY_SDK_INTERFACE BlockBrickedVolume : public StructuredVolume
   {
-    virtual ~BlockBrickedVolume();
+    virtual ~BlockBrickedVolume() override;
 
     //! A string description of this class.
     virtual std::string toString() const override;
