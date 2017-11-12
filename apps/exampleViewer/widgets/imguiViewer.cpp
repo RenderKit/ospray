@@ -372,17 +372,21 @@ namespace ospray {
 
       static int colorIndex = 0;
 
-      if (ImGui::Combo("Car Color", &colorIndex, "Sequin Blue\0Rubino Red\0Hallmark\0\0")) {
+      if (ImGui::Combo("Car Color", &colorIndex, "Sequin Blue\0Rubino Red\0Hallmark\0Orange Flame\0Portofino\0\0")) {
         static vec3f coatColors[] = {
           vec3f(0.00000f, 0.32343f, 0.49284f),
           vec3f(0.47845f, 0.18909f, 0.20393f),
           vec3f(0.65916f, 0.67632f, 0.67680f),
+          vec3f(0.78399f, 0.34000f, 0.00000f),
+          vec3f(0.40602f, 0.53195f, 0.61532f)
         };
 
         static float flakeRoughnesses[] = {
           0.47f,
           0.47f,
           0.41f,
+          0.49f,
+          0.44f
         };
 
         scenegraph->traverse([](sg::Node &node, sg::TraversalContext&) {
