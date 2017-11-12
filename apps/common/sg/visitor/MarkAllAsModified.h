@@ -19,56 +19,24 @@
 #include "Visitor.h"
 #include "../common/Node.h"
 
-#include "ospcommon/utility/StringManip.h"
-
-#include <string>
-#include <vector>
-
 namespace ospray {
   namespace sg {
 
-    struct GatherNodesByName : public Visitor
+    struct MarkAllAsModified : public Visitor
     {
-      GatherNodesByName(const std::string &_name);
+      MarkAllAsModified() = default;
 
       bool operator()(Node &node, TraversalContext &ctx) override;
-
-      std::vector<std::shared_ptr<Node>> results();
-
-    private:
-      std::string name;
-      std::vector<std::shared_ptr<Node>> nodes;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    inline GatherNodesByName::GatherNodesByName(const std::string &_name)
-        : name(_name)
+    inline bool MarkAllAsModified::operator()(Node &node, TraversalContext &)
     {
-    }
-
-    inline bool GatherNodesByName::operator()(Node &node, TraversalContext &)
-    {
-      if (longestBeginningMatch(node.name(), this->name) == this->name) {
-        auto itr = std::find_if(
-          nodes.begin(),
-          nodes.end(),
-          [&](const std::shared_ptr<Node> &nodeInList) {
-            return nodeInList.get() == &node;
-          }
-        );
-
-        if (itr == nodes.end())
-          nodes.push_back(node.shared_from_this());
-      }
-
+      node.markAsModified();
       return true;
-    }
-
-    inline std::vector<std::shared_ptr<Node>> GatherNodesByName::results()
-    {
-      return nodes;// TODO: should this be a move (i.e. reader 'consumes')?
     }
 
   } // ::ospray::sg
 } // ::ospray
+

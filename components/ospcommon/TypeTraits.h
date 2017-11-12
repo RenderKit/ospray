@@ -131,5 +131,18 @@ namespace ospcommon {
     };
 #endif
 
+    // type 'DERIVED' (decayed) comes from 'BASE' /////////////////////////////
+
+    template <typename DERIVED, typename BASE>
+    using is_base_of_t =
+      enable_if_t<
+          std::is_base_of<BASE, typename std::decay<DERIVED>::type>::value>;
+
+    // type 'T' (decayed) is a class/struct ///////////////////////////////////
+
+    template <typename T>
+    using is_class_t =
+        enable_if_t<std::is_class<typename std::decay<T>::type>::value>;
+
   } // ::ospray::sg::traits
 } // ::ospray

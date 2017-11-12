@@ -55,6 +55,9 @@ namespace ospray {
     if (useDynamicLoadBalancer)
       numPreAllocatedTiles = OSPRAY_DYNAMIC_LOADBALANCER.value();
 
+    auto OSPRAY_CAR_DEMO = utility::getEnvVar<int>("OSPRAY_CAR_DEMO");
+    showCarDemoWidgets = OSPRAY_CAR_DEMO.value_or(false);
+
     //do initial commit to make sure bounds are correctly computed
     scenegraph->traverse("verify");
     scenegraph->traverse("commit");
@@ -272,6 +275,8 @@ namespace ospray {
 
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
+    if (showCarDemoWidgets) guiCarDemo();
+
     guiRenderStats();
     guiFindNode();
 
@@ -359,6 +364,35 @@ namespace ospray {
     }
   }
 
+  void ImGuiViewer::guiCarDemo()
+  {
+    if (ImGui::CollapsingHeader("Car Color Picker", "Car Color Picker",
+                                true, false)) {
+      ImGui::NewLine();
+
+      static int colorIndex = 0;
+
+      if (ImGui::Combo("Car Color", &colorIndex, "Blue\0Black\0White\0\0")) {
+        static vec3f coatColors[] = {
+          vec3f(0.0f, 0.0397548f, 0.132437f),
+          vec3f(0.0f, 0.0f,       0.0f     ),
+          vec3f(0.9f, 0.9f,       0.9f     )
+        };
+
+        scenegraph->traverse([](sg::Node &node, sg::TraversalContext&) {
+          auto name = node.name();
+          if (name == "E_EPUP_Exterior_Paint___Exterior_Paint_UpperSG") {
+            node["coatColor"] = coatColors[colorIndex];
+            return false;
+          }
+          return true;
+        });
+      }
+
+      ImGui::NewLine();
+    }
+  }
+
   void ImGuiViewer::guiRenderStats()
   {
     if (ImGui::CollapsingHeader("Rendering Statistics", "Rendering Statistics",
@@ -379,7 +413,7 @@ namespace ospray {
     if (ImGui::CollapsingHeader("Find Node", "Find Node", true, false)) {
       ImGui::NewLine();
 
-      std::vector<char> buf(512);
+      std::array<char, 512> buf;
       *(buf.end() - 1) = '\0';
       strcpy(buf.data(), nodeNameForSearch.c_str());
 
@@ -392,27 +426,29 @@ namespace ospray {
         collectedNodesFromSearch = visitor.results();
       };
 
-      if (ImGui::InputText("", buf.data(),
-                           buf.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
-        nodeNameForSearch = std::string(buf.data());
-        doSearch();
+      ImGui::InputText("", buf.data(), buf.size(),
+                       ImGuiInputTextFlags_EnterReturnsTrue);
+
+      std::string textBoxValue = buf.data();
+
+      if (nodeNameForSearch != textBoxValue) {
+        nodeNameForSearch = textBoxValue;
+        if (!nodeNameForSearch.empty())
+          doSearch();
       }
 
-      if (ImGui::Button("Search"))
-        doSearch();
-
-      ImGui::SameLine();
       if (nodeNameForSearch.empty()) {
-        ImGui::Text("search for: {invalid value}");
+        ImGui::Text("search for: N/A");
       } else {
         const auto verifyTextLabel = std::string("search for: ")
                                      + nodeNameForSearch;
         ImGui::Text(verifyTextLabel.c_str());
       }
 
-      if (ImGui::Button("Clear Last Search")) {
+      if (ImGui::Button("Clear Search Results")) {
         collectedNodesFromSearch.clear();
         nodeNameForSearch.clear();
+        buf[0] = '\0';
       }
 
       ImGui::NewLine();

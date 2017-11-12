@@ -402,27 +402,6 @@ namespace ospray {
       traverse(ctx, operation);
     }
 
-    void Node::traverse(Visitor &visitor, TraversalContext &ctx)
-    {
-      if (!isValid())
-        return;
-
-      visitor.visit(*this, ctx);
-
-      ctx.level++;
-
-      for (auto &child : properties.children)
-        child.second->traverse(visitor, ctx);
-
-      ctx.level--;
-    }
-
-    void Node::traverse(Visitor &visitor)
-    {
-      TraversalContext ctx;
-      traverse(visitor, ctx);
-    }
-
     void Node::preTraverse(RenderContext &ctx,
                            const std::string& operation,
                            bool& traverseChildren)
@@ -438,8 +417,6 @@ namespace ospray {
           traverseChildren = false;
         properties.valid = computeValid();
         properties.lastVerified = TimeStamp();
-      } else if (operation == "modified") {
-        markAsModified();
       }
     }
 

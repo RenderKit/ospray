@@ -17,6 +17,7 @@
 #include "Renderer.h"
 
 #include "sg/common/FrameBuffer.h"
+#include "sg/visitor/MarkAllAsModified.h"
 
 namespace ospray {
   namespace sg {
@@ -148,7 +149,7 @@ namespace ospray {
       }
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
-        traverse(ctx, "modified");
+        Node::traverse(MarkAllAsModified{});
         ospRenderer = ospNewRenderer(rendererType.c_str());
         assert(ospRenderer);
         createdType = rendererType;

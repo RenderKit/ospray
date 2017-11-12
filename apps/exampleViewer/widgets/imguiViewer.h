@@ -61,6 +61,8 @@ namespace ospray {
     void guiMenuView();
     void guiMenuMPI();
 
+    void guiCarDemo();
+
     void guiRenderStats();
     void guiFindNode();
 
@@ -73,6 +75,8 @@ namespace ospray {
     void setCurrentDeviceParameter(const std::string &param, int value);
 
     // Data //
+
+    bool showCarDemoWidgets{false};
 
     double lastFrameFPS;
     double lastGUITime;

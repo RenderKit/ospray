@@ -221,10 +221,13 @@ namespace ospray {
       void traverse(const std::string& operation);
 
       //! Use a custom provided node visitor to visit each node
-      void traverse(Visitor &visitor, TraversalContext &ctx);
+      template <typename VISITOR_T>
+      void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
 
       //! Helper overload to traverse with a default constructed TravesalContext
-      void traverse(Visitor &visitor);
+      //template <typename VISITOR_T, typename = traits::is_class_t<VISITOR_T>>
+      template <typename VISITOR_T, typename = traits::is_class_t<VISITOR_T>>
+      void traverse(VISITOR_T &&visitor);
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
@@ -411,6 +414,33 @@ namespace ospray {
     DECLARE_VALUEAS_SPECIALIZATION(OSPPixelOp)
 
 #undef DECLARE_VALUEAS_SPECIALIZATION
+
+    template <typename VISITOR_T>
+    inline void Node::traverse(VISITOR_T &&visitor, TraversalContext &ctx)
+    {
+      static_assert(is_valid_visitor<VISITOR_T>::value,
+                    "VISITOR_T must be a child class of sg::Visitor or"
+                    " implement 'bool visit(Node &node, TraversalContext &ctx)'"
+                    "!");
+
+      bool traverseChildren = visitor(*this, ctx);
+
+      ctx.level++;
+
+      if (traverseChildren) {
+        for (auto &child : properties.children)
+          child.second->traverse(visitor, ctx);
+      }
+
+      ctx.level--;
+    }
+
+    template <typename VISITOR_T, typename>
+    inline void Node::traverse(VISITOR_T &&visitor)
+    {
+      TraversalContext ctx;
+      traverse(std::forward<VISITOR_T>(visitor), ctx);
+    }
 
     // Helper functions ///////////////////////////////////////////////////////
 
