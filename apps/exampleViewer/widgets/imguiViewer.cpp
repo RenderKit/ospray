@@ -372,9 +372,9 @@ namespace ospray {
 
       static int colorIndex = 0;
 
-      if (ImGui::Combo("Car Color", &colorIndex, "Blue\0Black\0White\0\0")) {
+      if (ImGui::Combo("Car Color", &colorIndex, "Sequin Blue\0Black\0White\0\0")) {
         static vec3f coatColors[] = {
-          vec3f(0.0f, 0.0397548f, 0.132437f),
+          vec3f(0.00000f, 0.32343f, 0.49284f),
           vec3f(0.0f, 0.0f,       0.0f     ),
           vec3f(0.9f, 0.9f,       0.9f     )
         };
