@@ -62,6 +62,16 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);
                                    // const uniform vec3f emission = { 0.f, 0.f, 0.f }; fails, ISPC issue #1231
 
+inline linear3f makeShadingFrame(const DifferentialGeometry& dg, const vec3f& localNormal)
+{
+  // transform to world space and align to tangents/texture coordinates
+  linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
+  vec3f shadingNormal = f * localNormal;
+  // in general f is not ortho-normal, thus need to re-normalize
+  shadingNormal = normalize(shadingNormal);
+  return frame(shadingNormal);
+}
+
 inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
                                  const uniform TextureParam& normalMap,
                                  const uniform linear2f& normalRot,
