@@ -372,17 +372,24 @@ namespace ospray {
 
       static int colorIndex = 0;
 
-      if (ImGui::Combo("Car Color", &colorIndex, "Sequin Blue\0Black\0White\0\0")) {
+      if (ImGui::Combo("Car Color", &colorIndex, "Sequin Blue\0Rubino Red\0Hallmark\0\0")) {
         static vec3f coatColors[] = {
           vec3f(0.00000f, 0.32343f, 0.49284f),
-          vec3f(0.0f, 0.0f,       0.0f     ),
-          vec3f(0.9f, 0.9f,       0.9f     )
+          vec3f(0.47845f, 0.18909f, 0.20393f),
+          vec3f(0.65916f, 0.67632f, 0.67680f),
+        };
+
+        static float flakeRoughnesses[] = {
+          0.47f,
+          0.47f,
+          0.41f,
         };
 
         scenegraph->traverse([](sg::Node &node, sg::TraversalContext&) {
           auto name = node.name();
           if (name == "E_EPUP_Exterior_Paint___Exterior_Paint_UpperSG") {
             node["coatColor"] = coatColors[colorIndex];
+            node["flakeRoughness"] = flakeRoughnesses[colorIndex];
             return false;
           }
           return true;
