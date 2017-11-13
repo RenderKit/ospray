@@ -94,6 +94,12 @@ namespace ospray {
       float du = (to.x - from.x) * widget->rotateSpeed;
       float dv = (to.y - from.y) * widget->rotateSpeed;
 
+      if (widget->upAnchored) {
+        const float theta = std::acos(dot(cam.up, normalize(cam.from-cam.at)));
+        // prevent instabilities at the poles by enforcing a minimum angle to up
+        dv = clamp(dv, theta-float(pi)+0.05f, theta-0.05f);
+      }
+
       const vec3f pivot = cam.at;
       AffineSpace3fa xfm
         = AffineSpace3fa::translate(pivot)
