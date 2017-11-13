@@ -18,6 +18,7 @@ include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/../common/gl3w
   ${CMAKE_CURRENT_LIST_DIR}/../common/imgui
   ${GLFW_INCLUDE_DIRS}
+  ${TFN_MODULE_ROOT}/src
 )
 
 ospray_create_library(ospray_imgui3d_sg
@@ -27,6 +28,8 @@ ospray_create_library(ospray_imgui3d_sg
   imguiViewer.cpp
   transferFunction.cpp
   cameraManipulator.cpp
+  ${TFN_MODULE_ROOT}/src/TransferFunctionModule.cpp
+  ${TFN_MODULE_ROOT}/src/widgets/TransferFunctionWidget.cpp
 LINK
   ospray
   ospray_common

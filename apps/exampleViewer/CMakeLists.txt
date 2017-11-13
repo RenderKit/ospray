@@ -28,7 +28,6 @@ add_subdirectory(widgets)
 ##############################################################
 # Build app
 ##############################################################
-
 ospray_create_application(ospExampleViewer
   ospExampleViewer.cpp
 LINK
