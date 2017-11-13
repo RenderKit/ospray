@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "math/math.ih"
+#include "MicrofacetDistribution.ih"
 
 // GGX (Trowbridge-Reitz) microfacet distribution
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
@@ -192,8 +192,3 @@ inline vec3f sampleVisible(const GGXDistribution& self,
   return m;
 }
 
-inline float roughnessToAlpha(float roughness)
-{
-  // Roughness is squared for perceptual reasons
-  return max(sqr(roughness), 0.001f);
-}

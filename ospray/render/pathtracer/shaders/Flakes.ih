@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Noise.ih"
-#include "../bsdfs/GGXDistribution.ih"
+#include "../bsdfs/BeckmannDistribution.ih"
 
 struct Flakes
 {
@@ -35,7 +35,7 @@ inline vec3f Flakes_eval(const varying Flakes* uniform self, vec3f p)
   if (self->density <= 0.f || self->spread <= 0.f)
     return N;
 
-  GGXDistribution flakeDistribution = make_GGXDistribution(roughnessToAlpha(self->spread));
+  BeckmannDistribution flakeDistribution = make_BeckmannDistribution(roughnessToAlpha(self->spread));
   float mask = 0.f;
   p = p * self->scale;
 
@@ -82,6 +82,6 @@ inline vec3f Flakes_eval(const varying Flakes* uniform self, vec3f p)
     mask = 1.f;
   }
 
-  return N;
+  return normalize(N);
 }
 
