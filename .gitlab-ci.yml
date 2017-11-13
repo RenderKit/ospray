@@ -233,6 +233,7 @@ build-scan-kw:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 3 day
+  allow_failure: true
 
 
 ### TEST JOBS ###
