@@ -35,7 +35,7 @@ inline vec3f Flakes_eval(const varying Flakes* uniform self, vec3f p)
   if (self->density <= 0.f || self->spread <= 0.f)
     return N;
 
-  BeckmannDistribution flakeDistribution = make_BeckmannDistribution(roughnessToAlpha(self->spread));
+  const BeckmannDistribution flakeDistribution = make_BeckmannDistribution(roughnessToAlpha(self->spread));
   float mask = 0.f;
   p = p * self->scale;
 
