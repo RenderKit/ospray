@@ -28,9 +28,9 @@ static void precomputedHalton_create() {
   precomputedHalton_initialized = true;
 
   foreach (i=0 ... NUM_PRECOMPUTED_HALTON_VALUES) {
-    precomputedHalton[0][i] = radicalInverse2(i);
-    precomputedHalton[1][i] = radicalInverse(i,3);
-    precomputedHalton[2][i] = radicalInverse(i,5);
+    precomputedHalton[0][i] = radicalInverse2(i+1); // start the sequence with 1
+    precomputedHalton[1][i] = radicalInverse(i+1, 3);
+    precomputedHalton[2][i] = radicalInverse(i+1, 5);
   }
 }
 
