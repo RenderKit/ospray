@@ -116,11 +116,11 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
         self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
-        alpha = alpha + screenSample.alpha;
+        alpha += screenSample.alpha;
       }
       col = col * (spp_inv);
-      alpha = alpha * (spp_inv);
-      setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
+      alpha *= spp_inv;
+      setRGBAZ(tile,pixel,col,alpha,screenSample.z);
     }
   } else {
     if (tile.accumID >= 0) {
