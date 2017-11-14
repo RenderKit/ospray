@@ -85,7 +85,7 @@ const varying BSDF* uniform CarPaint_getBSDF(const uniform PathTraceMaterial* un
   flakes.spread = flakeSpread;
   flakes.jitter = 0.75f;
 
-  const vec3f flakeN = Flakes_eval(&flakes, dg.P);
+  const vec3f flakeN = Flakes_eval(flakes, dg.P);
   varying linear3f* uniform flakeFrame = LinearSpace3f_create(ctx, makeShadingFrame(dg, flakeN));
 
   // flakes are made of aluminum
