@@ -48,7 +48,7 @@ static inline const vec3f getAttenuation(const ThinGlass* uniform self,
   return attenuation;
 }
 
-const varying BSDF* uniform ThinGlass_getBSDF(const PathTraceMaterial* uniform super,
+const varying BSDF* varying ThinGlass_getBSDF(const PathTraceMaterial* uniform super,
                                               ShadingContext* uniform ctx,
                                               const DifferentialGeometry& dg,
                                               const Ray& ray,

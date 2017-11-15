@@ -64,14 +64,14 @@ struct CarPaint
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform CarPaint_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* uniform super,
                                              uniform ShadingContext* uniform ctx,
                                              const DifferentialGeometry& dg,
                                              const Ray& ray,
                                              const Medium& currentMedium)
 {
   const uniform CarPaint* uniform self = (const uniform CarPaint* uniform)super;
-  varying BSDF* uniform bsdf;
+  varying BSDF* varying bsdf;
     
   // metallic flake layer
   const float flakeScale = max(self->flakeScale * get1f(self->flakeScaleMap, dg.st, 1.f), 0.f);

@@ -29,7 +29,7 @@ struct Glass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Glass_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,

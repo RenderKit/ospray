@@ -30,7 +30,7 @@ struct MicrofacetDielectricLayer
 {
   BSDF super;
 
-  varying BSDF* uniform substrate;
+  varying BSDF* varying substrate;
   float eta;
   vec3f transmittance;
   float thickness;
@@ -70,7 +70,9 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
 
   // Evaluate the substrate
   // Ignore refraction
-  BSDF_EvalRes substrate = self->substrate->eval(self->substrate, wo, wi);
+  BSDF_EvalRes substrate;
+  foreach_unique (f in self->substrate)
+    substrate = f->eval(f, wo, wi);
 
   // Apply the coating transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
@@ -120,13 +122,15 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
       res.wi = reflect(wo, wh, cosThetaOH);
 
       // Evaluate the substrate
-      substrate = self->substrate->eval(self->substrate, wo, res.wi);
+      foreach_unique (f in self->substrate)
+        substrate = f->eval(f, wo, res.wi);
   }
   else
   {
       // Sample the substrate
       float ss1 = (ss - coatingPickProb) * rcp(substratePickProb); // reallocate sample
-      res = self->substrate->sample(self->substrate, wo, s, ss1);
+      foreach_unique (f in self->substrate)
+        res = f->sample(f, wo, s, ss1);
       if (reduce_max(res.weight) <= 0.f)
         return res;
       substrate.pdf = res.pdf;
@@ -172,7 +176,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 }
 
 inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLayer* uniform self, const varying linear3f* uniform frame,
-                                                  varying BSDF* uniform substrate, float eta, vec3f transmittance, float thickness, float roughness)
+                                                  varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | substrate->type,
                    MicrofacetDielectricLayer_eval, MicrofacetDielectricLayer_sample,
@@ -186,7 +190,7 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
 }
 
 inline varying BSDF* uniform MicrofacetDielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                              varying BSDF* uniform substrate, float eta, vec3f transmittance, float thickness, float roughness)
+                                                              varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness)
 {
   varying MicrofacetDielectricLayer* uniform self = (varying MicrofacetDielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectricLayer));
   MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness);

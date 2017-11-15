@@ -26,7 +26,7 @@
 
 struct PathTraceMaterial;
 
-typedef const varying BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform self,
+typedef const varying BSDF* varying (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform self,
                                                                      uniform ShadingContext* uniform ctx,
                                                                      /*! The point to shade on a surface. */
                                                                      const DifferentialGeometry& dg,
