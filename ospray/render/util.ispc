@@ -29,7 +29,8 @@ static void precomputedHalton_create() {
 
   foreach (i=0 ... NUM_PRECOMPUTED_HALTON_VALUES) {
     precomputedHalton[0][i] = radicalInverse2(i+1); // start the sequence with 1
-    precomputedHalton[1][i] = radicalInverse(i+1, 3);
+    precomputedHalton[1][i] = CranleyPattersonRotation(radicalInverse(i+1, 3),
+        1.f/6.f); // rotate to sample center (0.5) of pixel for i=0
     precomputedHalton[2][i] = radicalInverse(i+1, 5);
   }
 }
