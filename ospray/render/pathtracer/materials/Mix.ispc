@@ -31,7 +31,7 @@ struct Mix
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Mix_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Mix_getBSDF(const uniform PathTraceMaterial* uniform super,
                                         uniform ShadingContext* uniform ctx,
                                         const DifferentialGeometry& dg,
                                         const Ray& ray,

@@ -97,14 +97,14 @@ typedef BSDF_SampleRes (*BSDF_SampleFunc)(const varying BSDF* uniform self,
 
 struct BSDF
 {
-  uniform BSDF_Type type;
+  varying BSDF_Type type;
   uniform BSDF_EvalFunc eval;
   uniform BSDF_SampleFunc sample;
   const varying linear3f* uniform frame;
 };
 
 inline void BSDF_Constructor(varying BSDF* uniform self,
-                             uniform BSDF_Type type,
+                             varying BSDF_Type type,
                              uniform BSDF_EvalFunc eval,
                              uniform BSDF_SampleFunc sample,
                              const varying linear3f* uniform frame)

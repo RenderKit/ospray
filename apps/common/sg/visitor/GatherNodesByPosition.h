@@ -14,35 +14,51 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "render/util.ih"
-#include "math/random.ih"
+#pragma once
 
-uniform float precomputedHalton[3][NUM_PRECOMPUTED_HALTON_VALUES];
-uniform bool  precomputedHalton_initialized = false;
-uniform z_order_t z_order;
+#include "Visitor.h"
+#include "../common/Node.h"
 
-static void precomputedHalton_create() {
-  if (precomputedHalton_initialized) 
-    return;
-  // make race conditions less likely by setting flag immediatley here at beginning
-  precomputedHalton_initialized = true;
+#include "ospcommon/utility/StringManip.h"
 
-  foreach (i=0 ... NUM_PRECOMPUTED_HALTON_VALUES) {
-    precomputedHalton[0][i] = radicalInverse2(i+1); // start the sequence with 1
-    precomputedHalton[1][i] = CranleyPattersonRotation(radicalInverse(i+1, 3),
-        1.f/6.f); // rotate to sample center (0.5) of pixel for i=0
-    precomputedHalton[2][i] = radicalInverse(i+1, 5);
-  }
-}
+#include <string>
+#include <vector>
 
-uniform bool z_order_initialized = false;
+namespace ospray {
+  namespace sg {
 
-void precomputedZOrder_create() {
-  for(uniform uint32 i = 0; i < TILE_SIZE*TILE_SIZE; i++) {
-    deinterleaveZOrder(i, &z_order.xs[i], &z_order.ys[i]);
-    z_order.xyIdx[i] = z_order.xs[i] | (z_order.ys[i] << 16);
-  }
+    struct GatherNodesByPosition : public Visitor
+    {
+      GatherNodesByPosition(const vec3f &);
 
-  z_order_initialized = true;
-}
+      bool operator()(Node &node, TraversalContext &ctx) override;
 
+      std::vector<std::shared_ptr<Node>> results();
+
+    private:
+      vec3f pos;
+      std::vector<std::shared_ptr<Node>> nodes;
+    };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    inline GatherNodesByPosition::GatherNodesByPosition(const vec3f &_pos)
+        : pos(_pos)
+    {
+    }
+
+    inline bool GatherNodesByPosition::operator()(Node &node, TraversalContext &)
+    {
+      if (dynamic_cast<sg::Geometry*>(&node) && node.bounds().contains(pos))
+        nodes.push_back(node.shared_from_this());
+
+      return true;
+    }
+
+    inline std::vector<std::shared_ptr<Node>> GatherNodesByPosition::results()
+    {
+      return nodes;// TODO: should this be a move (i.e. reader 'consumes')?
+    }
+
+  } // ::ospray::sg
+} // ::ospray

@@ -28,7 +28,7 @@ struct DielectricLayer
 {
   BSDF super;
 
-  varying BSDF* uniform substrate;
+  varying BSDF* varying substrate;
   float eta;
   vec3f transmittance;
   float thickness;
@@ -50,7 +50,9 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
 
   // Evaluate the substrate BRDF
   // Ignore refraction
-  BSDF_EvalRes substrate = self->substrate->eval(self->substrate, wo, wi);
+  BSDF_EvalRes substrate;
+  foreach_unique (f in self->substrate)
+    substrate = f->eval(f, wo, wi);
 
   // Apply the coating transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
@@ -86,7 +88,8 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
   } else {
       // Sample the substrate BRDF
       float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
-      res = self->substrate->sample(self->substrate, wo, s, ss1);
+      foreach_unique (f in self->substrate)
+        res = f->sample(f, wo, s, ss1);
       if (reduce_max(res.weight) <= 0.0f) return res;
       float cosThetaI = max(dot(res.wi, getN(super)), 0.0f); // should be positive
 
@@ -102,7 +105,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
 }
 
 inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, const varying linear3f* uniform frame,
-                                        varying BSDF* uniform substrate, float eta, vec3f transmittance, float thickness)
+                                        varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION | substrate->type,
                    DielectricLayer_eval, DielectricLayer_sample,
@@ -115,7 +118,7 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
 }
 
 inline varying BSDF* uniform DielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                    varying BSDF* uniform substrate, float eta, vec3f transmittance, float thickness)
+                                                    varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness)
 {
   varying DielectricLayer* uniform self = (varying DielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(DielectricLayer));
   DielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness);

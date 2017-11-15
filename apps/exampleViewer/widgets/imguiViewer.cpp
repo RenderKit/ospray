@@ -23,6 +23,7 @@
 
 #include "common/sg/common/FrameBuffer.h"
 #include "common/sg/visitor/GatherNodesByName.h"
+#include "common/sg/visitor/GatherNodesByPosition.h"
 #include "transferFunction.h"
 
 #include <imgui.h>
@@ -205,6 +206,10 @@ namespace ospray {
     if (renderEngine.hasNewPickResult()) {
       auto picked = renderEngine.getPickResult();
       if (picked.hit) {
+        sg::GatherNodesByPosition visitor((vec3f&)picked.position);
+        scenegraph->traverse(visitor);
+        collectedNodesFromSearch = visitor.results();
+
         // No conversion operator or ctor??
         viewPort.at.x = picked.position.x;
         viewPort.at.y = picked.position.y;

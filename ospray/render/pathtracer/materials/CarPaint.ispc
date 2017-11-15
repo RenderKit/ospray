@@ -70,14 +70,14 @@ struct CarPaint
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform CarPaint_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* uniform super,
                                              uniform ShadingContext* uniform ctx,
                                              const DifferentialGeometry& dg,
                                              const Ray& ray,
                                              const Medium& currentMedium)
 {
   const uniform CarPaint* uniform self = (const uniform CarPaint* uniform)super;
-  varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
+  varying BSDF* varying bsdf;
     
   const float flakeDensity = clamp(self->flakeDensity * get1f(self->flakeDensityMap, dg.st, 1.f));
   int flakeMask = 0;
@@ -105,13 +105,10 @@ const varying BSDF* uniform CarPaint_getBSDF(const uniform PathTraceMaterial* un
       Fresnel* uniform flakeFresnel = FresnelConductorRGBUniform_create(ctx, flakeEta, flakeK);
 
       const float flakeRoughness = max(self->flakeRoughness * get1f(self->flakeRoughnessMap, dg.st, 1.f), 0.f);
-      varying BSDF* uniform flakeBsdf;
       if (flakeRoughness < EPS)
-        flakeBsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
+        bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
       else
-        flakeBsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, flakeRoughness);
-
-      MultiBSDF_add(bsdf, flakeBsdf, 1.f, 1.f);
+        bsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, flakeRoughness);
     }
   }
 
@@ -122,13 +119,10 @@ const varying BSDF* uniform CarPaint_getBSDF(const uniform PathTraceMaterial* un
     const float baseRoughness = max(self->baseRoughness * get1f(self->baseRoughnessMap, dg.st, 1.f), 0.f);
 
     varying linear3f* uniform baseFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
-    varying BSDF* uniform baseBsdf;
     if (baseRoughness < EPS)
-      baseBsdf = Lambert_create(ctx, baseFrame, baseColor);
+      bsdf = Lambert_create(ctx, baseFrame, baseColor);
     else
-      baseBsdf = OrenNayar_create(ctx, baseFrame, baseColor, baseRoughness);
-
-    MultiBSDF_add(bsdf, baseBsdf, 1.f, 1.f);
+      bsdf = OrenNayar_create(ctx, baseFrame, baseColor, baseRoughness);
   }
  
   // clear coat layer
