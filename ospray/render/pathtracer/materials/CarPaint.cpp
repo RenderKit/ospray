@@ -38,6 +38,14 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
+        Texture2D* baseColorMap = (Texture2D*)getParamObject("baseColorMap");
+        affine2f baseColorXform = getTextureTransform("baseColorMap");
+        vec3f baseColor = getParam3f("baseColor", baseColorMap ? vec3f(1.f) : vec3f(0.8f));
+
+        Texture2D* baseRoughnessMap = (Texture2D*)getParamObject("baseRoughnessMap");
+        affine2f baseRoughnessXform = getTextureTransform("baseRoughnessMap");
+        float baseRoughness = getParamf("baseRoughness", baseRoughnessMap ? 1.f : 0.f);
+
         Texture2D* flakeScaleMap = (Texture2D*)getParamObject("flakeScaleMap");
         affine2f flakeScaleXform = getTextureTransform("flakeScaleMap");
         float flakeScale = getParamf("flakeScale", flakeScaleMap ? 1.f : 100.f);
@@ -76,6 +84,8 @@ namespace ospray {
         float coatNormalScale = getParamf("coatNormalScale", 1.f);
 
         ispc::PathTracer_CarPaint_set(getIE(),
+          (const ispc::vec3f&)baseColor, baseColorMap ? baseColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)baseColorXform,
+          baseRoughness, baseRoughnessMap ? baseRoughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)baseRoughnessXform,
           flakeScale, flakeScaleMap ? flakeScaleMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeScaleXform,
           flakeDensity, flakeDensityMap ? flakeDensityMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeDensityXform,
           flakeSpread, flakeSpreadMap ? flakeSpreadMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeSpreadXform,
