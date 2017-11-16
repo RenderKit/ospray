@@ -174,18 +174,6 @@ build-osx-clang:
     - osx
     - clang
 
-build-windows-msvc:
-  <<: *build_job_shell
-  script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120" "OSPRAY_MODULE_MPI=ON"
-  tags:
-    - msvc
-    - win7
-  artifacts:
-    paths:
-      - build
-    expire_in: 3 day
-
 build-windows-msvc14:
   <<: *build_job_shell
   script:
@@ -213,7 +201,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 17.0" "OSPRAY_MODULE_MPI=ON"
+    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0" "OSPRAY_MODULE_MPI=ON"
   tags:
     - icc
     - win7
