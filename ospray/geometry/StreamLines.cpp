@@ -37,6 +37,8 @@ namespace ospray {
 
   void StreamLines::finalize(Model *model)
   {
+    Geometry::finalize(model);
+
     radius     = getParam1f("radius",0.01f);
     vertexData = getParamData("vertex",nullptr);
     indexData  = getParamData("index",nullptr);

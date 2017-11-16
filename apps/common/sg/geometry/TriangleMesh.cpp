@@ -49,25 +49,6 @@ namespace ospray {
       Geometry::preCommit(ctx);
     }
 
-    void TriangleMesh::postCommit(RenderContext &ctx)
-    {
-      auto materialListNode = child("materialList").nodeAs<MaterialList>();
-      const auto &materialList = materialListNode->nodes;
-      if (!materialList.empty()) {
-        std::vector<OSPObject> mats;
-        for (auto mat : materialList) {
-          auto m = mat->valueAs<OSPObject>();
-          if (m)
-            mats.push_back(m);
-        }
-        auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
-        ospCommit(ospMaterialList);
-        ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
-      }
-
-      Geometry::postCommit(ctx);
-    }
-
     OSP_REGISTER_SG_NODE(TriangleMesh);
 
   } // ::ospray::sg
