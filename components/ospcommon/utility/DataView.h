@@ -14,44 +14,49 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/geometry/StreamLines.h"
-#include "sg/common/Data.h"
+#pragma once
 
-namespace ospray {
-  namespace sg {
+#include "../common.h"
 
-    StreamLines::StreamLines() : Geometry("streamlines")
-    {
-      createChild("radius", "float", 0.01f,
-                  NodeFlags::valid_min_max).setMinMax(1e-20f, 1e20f);
-      createChild("smooth", "bool", false);
-    }
+namespace ospcommon {
+ namespace utility {
 
-    std::string StreamLines::toString() const
-    {
-      return "ospray::sg::StreamLines";
-    }
+  // simple version of ArrayView, but with stride
+  ///////////////////////////////////////////////
 
-    box3f StreamLines::bounds() const
-    {
-      box3f bounds = empty;
-      if (hasChild("vertex")) {
-        auto v = child("vertex").nodeAs<DataBuffer>();
-        for (uint32_t i = 0; i < v->size(); i += 4)
-          bounds.extend(v->get<vec3fa>(i));
-      }
-      return bounds;
-    }
+  template <typename T>
+  struct DataView
+  {
+    DataView() = delete;
+    ~DataView() = default;
 
-    void StreamLines::preCommit(RenderContext &ctx)
-    {
-      if (!hasChild("vertex") || !hasChild("index"))
-        throw std::runtime_error("#osp.sg - error, invalid StreamLines!");
+    explicit DataView(T *data, size_t stride = 1);
 
-      Geometry::preCommit(ctx);
-    }
+    void reset(T *data, size_t stride = 1);
+    T& operator[](size_t index) const;
 
-    OSP_REGISTER_SG_NODE(StreamLines);
+  private:
+    T*     ptr{nullptr};
+    size_t stride{1};
+  };
 
-  } // ::ospray::sg
-} // ::ospray
+  template <typename T>
+  inline DataView<T>::DataView(T *_data, size_t _stride)
+    : ptr(_data), stride(_stride)
+  { }
+
+  template <typename T>
+  inline void DataView<T>::reset(T *_data, size_t _stride)
+  {
+    ptr    = _data;
+    stride = _stride;
+  }
+
+  template <typename T>
+  inline T& DataView<T>::operator[](size_t index) const
+  {
+    return ptr[index*stride];
+  }
+
+ } // ::ospcommon::utility
+} // ::ospcommon

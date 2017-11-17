@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.4.2 (devel) of OSPRay. For changes and new features
+This is release v1.5.0 (devel) of OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
 more information.
 
@@ -70,8 +70,8 @@ before you can build OSPRay you need the following prerequisites:
     Linux development tools. To build the example viewers, you should
     also have some version of OpenGL.
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io). Please obtain a copy of the latest
-    binary release of ISPC (currently 1.9.1) from the [ISPC downloads
+    (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
+    obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.[^1] Alternatively set the CMake variable
@@ -1095,26 +1095,72 @@ linearly interpolated.
 
 ### Streamlines
 
-A geometry consisting of multiple streamlines of constant radius is
-created by calling `ospNewGeometry` with type string "`streamlines`".
-The streamlines are internally assembled from connected (and rounded)
-cylinder segments and are thus perfectly round. The parameters defining
-this geometry are listed in the table below.
+A geometry consisting of multiple streamlines is created by calling
+`ospNewGeometry` with type string "`streamlines`". The streamlines are
+internally assembled either from connected (and rounded) cylinder
+segments, or represented as Bézier curves; they are thus always
+perfectly round. The parameters defining this geometry are listed in the
+table below.
 
-| Type       | Name         | Description                                                  |
-|:-----------|:-------------|:-------------------------------------------------------------|
-| float      | radius       | radius of all streamlines, default 0.01                      |
-| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* streamlines    |
-| vec4f\[\]  | vertex.color | [data](#data) array of corresponding vertex colors (RGBA)    |
-| int32\[\]  | index        | [data](#data) array of indices to the first vertex of a link |
+<table style="width:98%;">
+<caption>Parameters defining a streamlines geometry.</caption>
+<colgroup>
+<col width="24%" />
+<col width="18%" />
+<col width="54%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">radius</td>
+<td align="left">global radius of all streamlines (if per-vertex radius is not used), default 0.01</td>
+</tr>
+<tr class="even">
+<td align="left">bool</td>
+<td align="left">smooth</td>
+<td align="left">enable curve interpolation, default off (always on if per-vertex radius is used)</td>
+</tr>
+<tr class="odd">
+<td align="left">vec3fa[] / vec4f[]</td>
+<td align="left">vertex</td>
+<td align="left"><a href="#data">data</a> array of all vertex position (and optional radius) for <em>all</em> streamlines</td>
+</tr>
+<tr class="even">
+<td align="left">vec4f[]</td>
+<td align="left">vertex.color</td>
+<td align="left"><a href="#data">data</a> array of corresponding vertex colors (RGBA)</td>
+</tr>
+<tr class="odd">
+<td align="left">float[]</td>
+<td align="left">vertex.radius</td>
+<td align="left"><a href="#data">data</a> array of corresponding vertex radius</td>
+</tr>
+<tr class="even">
+<td align="left">int32[]</td>
+<td align="left">index</td>
+<td align="left"><a href="#data">data</a> array of indices to the first vertex of a link</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters defining a streamlines geometry.
 
-Each streamline is specified by a set of (aligned) vec3fa control points
-in `vertex`; all vertices belonging to to the same logical streamline
-are connected via [cylinders](#cylinders) of a fixed radius `radius`,
-with additional [spheres](#spheres) at each vertex to make for a smooth
-transition between the cylinders.
+Each streamline is specified by a set of (aligned) control points in
+`vertex`. If `smooth` is disabled and a constant `radius` is used for
+all streamlines then all vertices belonging to to the same logical
+streamline are connected via [cylinders](#cylinders), with additional
+[spheres](#spheres) at each vertex to create a continuous, closed
+surface. Otherwise, streamlines are represented as Bézier curves,
+smoothly interpolating the vertices. This mode supports per-vertex
+varying radii (either given in `vertex.radius`, or in the 4th component
+of a *vec4f* `vertex`), but is slower and consumes more memory.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of linear segments (or links)
@@ -1378,7 +1424,7 @@ To let the given `renderer` create a new light source of given type
 OSPLight ospNewLight(OSPRenderer renderer, const char *type);
 ```
 
-The call returns `NULL` if that type of camera is not known by the
+The call returns `NULL` if that type of light is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
 light sources[^2] accept the following parameters:
 
@@ -2463,7 +2509,7 @@ at the [OSPRay Demos and Examples](http://www.ospray.org/demos.html)
 page.
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.9.1-linux`
+    be searched in `~/Projects/ispc-v1.9.2-linux`
 
 [^2]: The [HDRI Light](#hdri-light) is an exception, it knows about
     `intensity`, but not about `color`.

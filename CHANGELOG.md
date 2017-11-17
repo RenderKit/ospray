@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v1.5.0:
+
+-   Streamlines now support per-vertex radii and smooth interpolation
+
 ### Changes in v1.4.1:
 
 -   Several cleanups and bug fixes
