@@ -88,11 +88,12 @@ namespace ospray {
   void ImGuiViewer::mouseButton(int button, int action, int mods)
   {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS
-        && (mods & GLFW_MOD_SHIFT))
+        && ((mods & GLFW_MOD_SHIFT) | (mods & GLFW_MOD_CONTROL)))
     {
       const vec2f pos(currMousePos.x / static_cast<float>(windowSize.x),
                       1.f - currMousePos.y / static_cast<float>(windowSize.y));
       renderEngine.pick(pos);
+      lastPickQueryType = (mods & GLFW_MOD_SHIFT) ? PICK_CAMERA : PICK_NODE;
     }
   }
 
@@ -206,15 +207,17 @@ namespace ospray {
     if (renderEngine.hasNewPickResult()) {
       auto picked = renderEngine.getPickResult();
       if (picked.hit) {
-        sg::GatherNodesByPosition visitor((vec3f&)picked.position);
-        scenegraph->traverse(visitor);
-        collectedNodesFromSearch = visitor.results();
-
-        // No conversion operator or ctor??
-        viewPort.at.x = picked.position.x;
-        viewPort.at.y = picked.position.y;
-        viewPort.at.z = picked.position.z;
-        viewPort.modified = true;
+        if (lastPickQueryType == PICK_NODE) {
+          sg::GatherNodesByPosition visitor((vec3f&)picked.position);
+          scenegraph->traverse(visitor);
+          collectedNodesFromSearch = visitor.results();
+        } else {
+          // No conversion operator or ctor??
+          viewPort.at.x = picked.position.x;
+          viewPort.at.y = picked.position.y;
+          viewPort.at.z = picked.position.z;
+          viewPort.modified = true;
+        }
       }
     }
 

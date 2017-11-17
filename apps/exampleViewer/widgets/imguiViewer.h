@@ -43,6 +43,8 @@ namespace ospray {
 
   protected:
 
+    enum PickMode { PICK_CAMERA, PICK_NODE };
+
     void mouseButton(int button, int action, int mods);
     void reshape(const ospcommon::vec2i &newSize) override;
     void keypress(char key) override;
@@ -98,6 +100,8 @@ namespace ospray {
 
     bool useDynamicLoadBalancer{false};
     int  numPreAllocatedTiles{4};
+
+    PickMode lastPickQueryType {PICK_CAMERA};
   };
 
 }// namespace ospray
