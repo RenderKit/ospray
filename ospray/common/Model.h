@@ -38,7 +38,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Model : public ManagedObject
   {
     Model();
-    virtual ~Model() override = default;
+    virtual ~Model() override;
 
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
@@ -57,6 +57,10 @@ namespace ospray {
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle {nullptr};
     box3f bounds;
+
+  private:
+
+    void cleanupEmbreeScene();
   };
 
 } // ::ospray

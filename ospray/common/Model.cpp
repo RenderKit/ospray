@@ -33,6 +33,11 @@ namespace ospray {
     this->ispcEquivalent = ispc::Model_create(this);
   }
 
+  Model::~Model()
+  {
+    cleanupEmbreeScene();
+  }
+
   std::string Model::toString() const
   {
     return "ospray::Model";
@@ -48,6 +53,8 @@ namespace ospray {
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
     ispc::Model_init(getIE(), embreeDevice, geometry.size(), volume.size());
+
+    cleanupEmbreeScene();
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 
     bounds = empty;
@@ -67,6 +74,12 @@ namespace ospray {
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
     
     rtcCommit(embreeSceneHandle);
+  }
+
+  void Model::cleanupEmbreeScene()
+  {
+    if (embreeSceneHandle)
+      rtcDeleteScene(embreeSceneHandle);
   }
 
 } // ::ospray
