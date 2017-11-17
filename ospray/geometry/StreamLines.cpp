@@ -118,13 +118,15 @@ namespace ospray {
           vidx += 4;
         }
       }
-      ispc::StreamLines_setCurve(getIE(),model->getIE(), (ispc::vec3fa*)newvertex,
-                          numVertices, (uint32_t*)newindex, numSegments,
-                          (ispc::vec4f*)color);
+      ispc::StreamLines_setCurve(getIE(),model->getIE(),
+                                 (const ispc::vec3fa*)newvertex, numVertices,
+                                 (const uint32_t*)newindex, numSegments,
+                                 (const ispc::vec4f*)color);
     } else
-      ispc::StreamLines_set(getIE(),model->getIE(), globalRadius, (ispc::vec3fa*)vertex,
-                          numVertices, (uint32_t*)index, numSegments,
-                          (ispc::vec4f*)color);
+      ispc::StreamLines_set(getIE(),model->getIE(), globalRadius,
+                            (const ispc::vec3fa*)vertex,
+                            numVertices, (const uint32_t*)index, numSegments,
+                            (const ispc::vec4f*)color);
   }
 
   OSP_REGISTER_GEOMETRY(StreamLines,streamlines);

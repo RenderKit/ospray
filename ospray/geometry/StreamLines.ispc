@@ -30,10 +30,10 @@
 struct StreamLines {
   uniform Geometry super; //!< inherited geometry fields
   float           radius;
-  uniform vec3fa *vertex;
+  const uniform vec3fa *vertex;
   int32           numVertices;
-  uniform uint32 *index;
-  uniform vec4f  *color;
+  const uniform uint32 *index;
+  const uniform vec4f  *color;
 };
 
 void StreamLines_bounds(uniform StreamLines *uniform self,
@@ -50,10 +50,10 @@ void StreamLines_bounds(uniform StreamLines *uniform self,
 /*! do a ray-sphere intersection, with the numerical fix of first
     moving the ray origin to an approximate sphere distance, and then
     re-adding this approximate distance to the computed hit
-    distance */ 
+    distance */
 inline bool intersectSphere_numericalFix(varying Ray &ray,
                                          /*! center/positoin of the sphere  */
-                                         const vec3f &center, 
+                                         const vec3f &center,
                                          const uniform float r)
 {
   const float approximateDistance = dot(center-ray.org,ray.dir);
@@ -63,7 +63,7 @@ inline bool intersectSphere_numericalFix(varying Ray &ray,
   const float a = dot(ray.dir,ray.dir);
   const float b = -2.f*dot(ray.dir,A);
   const float c = dot(A,A)-r*r;
-  
+
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return false;
 
@@ -86,7 +86,7 @@ inline bool intersectSphere_numericalFix(varying Ray &ray,
     moving the ray origin to an approximate distance, and then
     re-adding this approximate distance to the computed hit
     distance. for the approximate distance we use the distance from
-    ray origin to center of the cylinder (projected to the ray) */ 
+    ray origin to center of the cylinder (projected to the ray) */
 inline bool intersectCylinder_numericalFix(varying Ray &ray,
                                            const vec3f &_A, const vec3f &_B,
                                            const uniform float r)
@@ -101,7 +101,7 @@ inline bool intersectCylinder_numericalFix(varying Ray &ray,
   const vec3f V = ray.dir;
 
   const vec3f AB = B - A;
-  
+
   const vec3f AOxAB = cross(AB,A);
   const vec3f VxAB  = cross(V,AB);
   const float ab2   = dot(AB,AB);
@@ -121,7 +121,7 @@ inline bool intersectCylinder_numericalFix(varying Ray &ray,
   //
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return false;
-  
+
   const float srad = sqrt(radical);
 
   const float t_in = approximateDistance + (- b - srad)*rcpf(2.f*a);
@@ -171,7 +171,7 @@ static void StreamLines_postIntersect(uniform Geometry *uniform self,
 
   if ((flags & DG_COLOR)) {
     uniform StreamLines *uniform self = (uniform StreamLines *uniform)self;
-    uniform vec4f *uniform color = self->color;
+    const uniform vec4f *uniform color = self->color;
     if (color) {
       const varying uint32 index  = self->index[ray.primID];
       dg.color = (1.f-ray.u) * color[index] + ray.u * color[index+1];
@@ -189,7 +189,7 @@ static void StreamLines_postIntersectCurve(uniform Geometry *uniform self,
 
   if ((flags & DG_COLOR)) {
     uniform StreamLines *uniform self = (uniform StreamLines *uniform)self;
-    uniform vec4f *uniform color = self->color;
+    const uniform vec4f *uniform color = self->color;
     if (color)
       foreach_unique (geomID in ray.geomID)
         rtcInterpolate(model->embreeSceneHandle, geomID, ray.primID, ray.u,
@@ -292,15 +292,15 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
   return geom;
 }
 
-export void *uniform 
-StreamLines_set(void *uniform _self,
+export void *uniform
+StreamLines_set(       void *uniform _self,
                        void           *uniform _model,
                        float           uniform radius,
-                       uniform vec3fa *uniform vertex,
+                const  uniform vec3fa *uniform vertex,
                        int32           uniform numVertices,
-                       uniform uint32 *uniform index,
+                const  uniform uint32 *uniform index,
                        int32           uniform numSegments,
-                       uniform vec4f  *uniform color)
+                const  uniform vec4f  *uniform color)
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
@@ -326,14 +326,14 @@ StreamLines_set(void *uniform _self,
                           (uniform RTCOccludedFuncVarying)&StreamLines_intersect);
 }
 
-export void *uniform 
-StreamLines_setCurve(void *uniform _self,
-                       void           *uniform _model,
-                       uniform vec3fa *uniform vertex,
-                       int32           uniform numVertices,
-                       uniform uint32 *uniform index,
-                       int32           uniform numSegments,
-                       uniform vec4f  *uniform color)
+export void *uniform
+StreamLines_setCurve(      void           *uniform _self,
+                           void           *uniform _model,
+                     const uniform vec3fa *uniform vertex,
+                           int32           uniform numVertices,
+                     const uniform uint32 *uniform index,
+                           int32           uniform numSegments,
+                     const uniform vec4f  *uniform color)
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
