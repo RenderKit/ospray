@@ -57,10 +57,6 @@ namespace ospray {
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle {nullptr};
     box3f bounds;
-
-  private:
-
-    void cleanupEmbreeScene();
   };
 
 } // ::ospray
