@@ -31,7 +31,6 @@ variables:
     - devel
     - master
     - release-1.4.x
-    - gtest-devel #TODO - remove it after few runs
 
 .job_template: &test_job
   stage: test-build
@@ -47,7 +46,6 @@ variables:
       - $CI_PROJECT_DIR/build/failed
     expire_in: 1 week
     when: always
-  allow_failure: true
 
 .job_template: &test_job_windows
   <<: *test_job
@@ -59,7 +57,6 @@ variables:
       - failed
     expire_in: 1 week
     when: always
-  allow_failure: true
 
 
 ### BUILD JOBS ###
@@ -314,7 +311,6 @@ benchmark-centos7-gcc:
     when: always
   dependencies:
     - build-centos7-gcc
-  allow_failure: true
 
 test-kw-critical:
   stage: test-src
@@ -325,7 +321,6 @@ test-kw-critical:
     - build-scan-kw
   tags:
     - kw-scan-docker
-  allow_failure: true
 
 
 ### RELEASE JOBS ###
