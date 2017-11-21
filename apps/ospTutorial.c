@@ -18,7 +18,7 @@
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
- *   gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorialC
+ *   gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
  *   cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
  */
@@ -146,7 +146,7 @@ int main(int argc, const char **argv) {
 
   // access framebuffer and write its content as PPM file
   const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
-  writePPM("firstFrameC.ppm", &imgSize, fb);
+  writePPM("firstFrame.ppm", &imgSize, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
 
@@ -155,7 +155,7 @@ int main(int argc, const char **argv) {
     ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
-  writePPM("accumulatedFrameC.ppm", &imgSize, fb);
+  writePPM("accumulatedFrame.ppm", &imgSize, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
   return 0;

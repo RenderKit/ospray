@@ -1344,9 +1344,10 @@ objects rendered by OSPRay.
 ### Path Tracer
 
 The path tracer supports soft shadows, indirect illumination and
-realistic materials. In addition to the [general parameters](#renderer)
-understood by all renderers the path tracer supports the following
-special parameters:
+realistic materials. This renderer is created by passing the type string
+"`pathtracer`" to `ospNewRenderer`. In addition to the [general
+parameters](#renderer) understood by all renderers the path tracer
+supports the following special parameters:
 
 <table style="width:99%;">
 <caption>Special parameters understood by the path tracer.</caption>
@@ -1387,6 +1388,10 @@ special parameters:
 </table>
 
 : Special parameters understood by the path tracer.
+
+The path tracer requires that [materials](#materials) are assigned to
+[geometries](#geometries), otherwise surfaces are treated as completely
+black.
 
 ### Model
 
@@ -2388,14 +2393,15 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build directory
+at `apps/ospTutorial.c`[^6]. On Linux build it in the build directory
 with
 
-    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
+    gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
+    ./libospray.so -Wl,-rpath,. -o ospTutorial
 
-On Windows build it in the build\_directory\\\$Configuration with
+On Windows build it in the "build\_directory\\\$Configuration" with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
+    cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
@@ -2521,4 +2527,6 @@ page.
 [^5]: This is currently not implemented, i.e. all channels of the
     framebuffer are always updated.
 
-[^6]: A C99 version is available at `apps/ospTutorial.c`.
+[^6]: A C++ version that uses the C++ conveniance wrappers of OSPRay's
+    C99 API via `include/ospray/ospray_cpp.h` is available at
+    `apps/ospTutorial.cpp`.
