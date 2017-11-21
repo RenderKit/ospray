@@ -21,6 +21,8 @@ SET(TESTS_SOURCES
     sources/ospray_environment.cpp
     sources/ospray_test_fixture.cpp
     sources/ospray_test_geometry.cpp
+    sources/ospray_test_slices.cpp
+    sources/ospray_test_materials.cpp
     sources/ospray_test_volumetric.cpp
     sources/ospray_test_tools.cpp
 )
@@ -38,7 +40,7 @@ include(ExternalData)
 set(ExternalData_URL_TEMPLATES
   "file:///opt/ospray/test-data/%(algo)/%(hash)"
   "file:///opt/ospray/benchmark-data/%(algo)/%(hash)"
-  "file://N:/OSPRay/test-data/%(algo)/%(hash)"
+  "file:////sdvis-nas/NAS/OSPRay/test-data/%(algo)/%(hash)"
   )
 set(ExternalData_BINARY_ROOT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests/baseline)
 set(ExternalData_SOURCE_ROOT ${CMAKE_SOURCE_DIR}/tests/baseline)

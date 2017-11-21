@@ -65,7 +65,7 @@ TEST_PARAMETERS = {
 def print_headline(line):
     print "=== {} ===".format(line.strip())
 
-# Unless an optimization to the algorithm is made, the score achieved in benchmark should be 
+# Unless an optimization to the algorithm is made, the score achieved in benchmark should be
 # consistent across builds. This funciton compares results of current test with recorded ones.
 def check_score_correctness(stats, baseline_score, test_name):
     if test_name not in baseline_score:
@@ -241,7 +241,7 @@ parser.add_argument("--height", help="height of the image, default {}".format(DE
                     type=int)
 parser.add_argument("--tests",
                     help="takes comma-separated list of tests to run; if not specified, all tests "
-                    "are ran")
+                    "are run")
 parser.add_argument("--tests-list", help="print list of all tests", action="store_true")
 parser.add_argument("--output", help="output file name")
 parser.add_argument("--baseline",

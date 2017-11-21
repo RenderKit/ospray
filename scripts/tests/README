@@ -1,0 +1,23 @@
+Running Tests
+-------------
+
+1. Build OSPRay
+
+Compile OSPRay in a build directory of your choosing. We will refer
+to this directory as ${OSPRAY_BUILD_DIR}.
+
+2. Generate baseline images
+
+In ${OSPRAY_BUILD_DIR}, run the "generate_baseline.sh" script:
+
+% ../scripts/tests/generate_baseline.sh
+
+3. Run regression tests
+
+To verify whether a change to the codebase broke anything, run
+
+% ../scripts/tests/run_tests.sh
+
+This will run all tests and compare their results with baseline
+images generated in step 2.
+

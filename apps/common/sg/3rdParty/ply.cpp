@@ -1439,6 +1439,10 @@ Exit:
     /* create a list to hold all the current elements */
     other->other_data = (OtherData **)
       malloc (sizeof (OtherData *) * other->elem_count);
+    if (other->other_data == nullptr) {
+      fprintf(stderr, "ply_get_other_element: can't alloc memory for other->other_data\n");
+      exit(1);
+    }
 
     /* set up for getting elements */
     other->other_props = ply_get_other_properties (plyfile, elem_name,
