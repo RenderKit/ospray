@@ -203,7 +203,7 @@ build-windows-icc:
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0" "OSPRAY_MODULE_MPI=ON"
   tags:
-    - icc
+    - icc18
     - win7
   artifacts:
     paths:
