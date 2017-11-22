@@ -156,7 +156,7 @@ TEST_P(SingleObject, simpleCylinder) {
 }
 
 // single tube
-TEST_P(SingleObject, simpleStreamlines) {
+TEST_P(SingleObject, DISABLED_simpleStreamlines) {
   OSPGeometry streamlines = ::getStreamline();
   ospSetMaterial(streamlines, GetMaterial());
   ospCommit(streamlines);
