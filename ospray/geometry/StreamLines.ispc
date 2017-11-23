@@ -179,24 +179,6 @@ static void StreamLines_postIntersect(uniform Geometry *uniform self,
   }
 }
 
-static void StreamLines_postIntersectCurve(uniform Geometry *uniform self,
-                                       uniform Model *uniform model,
-                                       varying DifferentialGeometry &dg,
-                                       const varying Ray &ray,
-                                       uniform int64 flags)
-{
-  dg.Ng = dg.Ns = ray.Ng;
-
-  if ((flags & DG_COLOR)) {
-    uniform StreamLines *uniform self = (uniform StreamLines *uniform)self;
-    const uniform vec4f *uniform color = self->color;
-    if (color)
-      foreach_unique (geomID in ray.geomID)
-        rtcInterpolate(model->embreeSceneHandle, geomID, ray.primID, ray.u,
-            ray.v, RTC_USER_VERTEX_BUFFER, &dg.color.x, NULL, NULL, 4);
-  }
-}
-
 // For simplicity streamlines are modelled of segments, each consisting of one
 // cylinder and two spheres. Sampling would put (too much) effort towards the
 // vertices, where often two spheres and two cylinders overlap. Furthermore,
@@ -329,30 +311,29 @@ StreamLines_set(       void *uniform _self,
 export void *uniform
 StreamLines_setCurve(      void           *uniform _self,
                            void           *uniform _model,
-                     const uniform vec3fa *uniform vertex,
+                     const uniform vec3fa *uniform vertexCurve,
                            int32           uniform numVertices,
-                     const uniform uint32 *uniform index,
+                     const uniform uint32 *uniform indexCurve,
                            int32           uniform numSegments,
+                     const uniform uint32 *uniform index,
                      const uniform vec4f  *uniform color)
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
   uniform uint32 geomID = rtcNewBezierCurveGeometry2(model->embreeSceneHandle,
       RTC_GEOMETRY_STATIC, numSegments, numVertices, 1);
-  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_VERTEX_BUFFER, vertex, 0, 16);
-  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_INDEX_BUFFER, index, 0, 4);
-  if (color)
-    rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_USER_VERTEX_BUFFER, color, 0, 16);
+  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_VERTEX_BUFFER, vertexCurve, 0, 16);
+  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_INDEX_BUFFER, indexCurve, 0, 4);
 
   self->super.model = model;
   self->super.geomID = geomID;
-  self->super.numPrimitives = numVertices;
-  self->super.postIntersect = StreamLines_postIntersectCurve;
+  self->super.numPrimitives = numSegments;
+  self->super.postIntersect = StreamLines_postIntersect;
   // TODO implement area sampling of curves for geometry lights
   self->super.getAreas = NULL;
   self->super.sampleArea = NULL;
-  self->vertex = vertex;
+  self->numVertices = 0; // not used by curve
+  self->vertex = NULL; // not used by curve
   self->index = index;
-  self->numVertices = numVertices;
   self->color = color;
 }

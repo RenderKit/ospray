@@ -97,7 +97,8 @@ namespace ospray {
     size_t        numVertices {0};
     const uint32 *index {nullptr};
     size_t        numSegments {0};
-    const vec4f  *color {nullptr};
+    std::vector<vec4f> vertexCurve;
+    std::vector<uint32> indexCurve;
   };
   /*! @} */
 

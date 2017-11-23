@@ -442,6 +442,7 @@ namespace ospcommon {
   binary_operator(operator-=, -=)
   binary_operator(operator*=, *=)
   binary_operator(operator/=, /=)
+  binary_operator(operator%=, %=)
 #undef binary_operator
 
   // -------------------------------------------------------
@@ -700,18 +701,6 @@ namespace ospcommon {
   inline T reduce_max(const vec_t<T, 4, A> &v)
   {
     return max(max(v.x, v.y), max(v.z, v.w));
-  }
-
-  // -------------------------------------------------------
-  // select
-  // -------------------------------------------------------
-  template <typename T, int A>
-  inline vec_t<T, 3, A> select(bool s,
-                               const vec_t<T, 3, A> &a,
-                               const vec_t<T, 3, A> &b)
-  {
-    return vec_t<T, 3, A>(
-        select(s, a.x, b.x), select(s, a.y, b.y), select(s, a.z, b.z));
   }
 
   // -------------------------------------------------------

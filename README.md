@@ -1160,7 +1160,9 @@ streamline are connected via [cylinders](#cylinders), with additional
 surface. Otherwise, streamlines are represented as Bézier curves,
 smoothly interpolating the vertices. This mode supports per-vertex
 varying radii (either given in `vertex.radius`, or in the 4th component
-of a *vec4f* `vertex`), but is slower and consumes more memory.
+of a *vec4f* `vertex`), but is slower and consumes more memory. Also,
+the radius needs to be smaller than the curvature radius of the Bézier
+curve at each location on the curve.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of linear segments (or links)
