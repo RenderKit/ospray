@@ -148,7 +148,7 @@ int main(int argc, const char **argv) {
 
   // access framebuffer and write its content as PPM file
   uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
-  writePPM("firstFrame.ppm", imgSize, fb);
+  writePPM("firstFrameCpp.ppm", imgSize, fb);
   framebuffer.unmap(fb);
 
 
@@ -157,7 +157,7 @@ int main(int argc, const char **argv) {
     renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
-  writePPM("accumulatedFrame.ppm", imgSize, fb);
+  writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
   framebuffer.unmap(fb);
 
   return 0;

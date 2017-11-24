@@ -115,6 +115,7 @@ static inline void parseCommandLine(int ac, const char **&av)
         files.push_back(clFile(av[i], currentCLTransform));
       else
         animatedFiles.back().push_back(clFile(av[i], currentCLTransform));
+      currentCLTransform = clTransform();
     }
   }
 }
@@ -312,9 +313,11 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             ss << fn.name() << "_" << i << "_" << j << "_" << k;
             auto importerNode_ptr = sg::createNode(ss.str(), "Importer")->nodeAs<sg::Importer>();;
             auto &importerNode = *importerNode_ptr;
-            importerNode["fileName"] = fn.str();
 
             auto &transform = world.createChild("transform_"+ss.str(), "Transform");
+            transform.add(importerNode_ptr);
+            importerNode["fileName"] = fn.str();
+
             transform["scale"] = file.transform.scale;
             transform["rotation"] = file.transform.rotation;
             if (files.size() < 2 && animatedFiles.empty()) {
@@ -328,7 +331,6 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
               animation.setChild("rotation", rotation.shared_from_this());
             }
 
-            transform.add(importerNode_ptr);
             renderer.traverse("verify");
             renderer.traverse("commit");
             auto bounds = importerNode_ptr->computeBounds();

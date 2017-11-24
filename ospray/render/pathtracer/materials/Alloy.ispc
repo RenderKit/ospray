@@ -35,7 +35,7 @@ struct Alloy
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Alloy_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Alloy_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,

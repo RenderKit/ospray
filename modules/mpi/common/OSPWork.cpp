@@ -320,10 +320,11 @@ namespace ospray {
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Light *light = nullptr;
+        if (renderer)
           light = renderer->createLight(type.c_str());
 
         // No renderer present or the renderer doesn't intercept this
-        // material type.
+        // light type.
         if (!light) light = Light::createLight(type.c_str());
         handle.assign(light);
       }

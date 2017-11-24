@@ -23,6 +23,7 @@
 
 #include "common/sg/common/FrameBuffer.h"
 #include "common/sg/visitor/GatherNodesByName.h"
+#include "common/sg/visitor/GatherNodesByPosition.h"
 #include "transferFunction.h"
 
 #include <imgui.h>
@@ -87,11 +88,12 @@ namespace ospray {
   void ImGuiViewer::mouseButton(int button, int action, int mods)
   {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS
-        && (mods & GLFW_MOD_SHIFT))
+        && ((mods & GLFW_MOD_SHIFT) | (mods & GLFW_MOD_CONTROL)))
     {
       const vec2f pos(currMousePos.x / static_cast<float>(windowSize.x),
                       1.f - currMousePos.y / static_cast<float>(windowSize.y));
       renderEngine.pick(pos);
+      lastPickQueryType = (mods & GLFW_MOD_SHIFT) ? PICK_CAMERA : PICK_NODE;
     }
   }
 
@@ -205,11 +207,17 @@ namespace ospray {
     if (renderEngine.hasNewPickResult()) {
       auto picked = renderEngine.getPickResult();
       if (picked.hit) {
-        // No conversion operator or ctor??
-        viewPort.at.x = picked.position.x;
-        viewPort.at.y = picked.position.y;
-        viewPort.at.z = picked.position.z;
-        viewPort.modified = true;
+        if (lastPickQueryType == PICK_NODE) {
+          sg::GatherNodesByPosition visitor((vec3f&)picked.position);
+          scenegraph->traverse(visitor);
+          collectedNodesFromSearch = visitor.results();
+        } else {
+          // No conversion operator or ctor??
+          viewPort.at.x = picked.position.x;
+          viewPort.at.y = picked.position.y;
+          viewPort.at.z = picked.position.z;
+          viewPort.modified = true;
+        }
       }
     }
 
@@ -372,17 +380,28 @@ namespace ospray {
 
       static int colorIndex = 0;
 
-      if (ImGui::Combo("Car Color", &colorIndex, "Blue\0Black\0White\0\0")) {
+      if (ImGui::Combo("Car Color", &colorIndex, "Sequin Blue\0Rubino Red\0Hallmark\0Orange Flame\0Portofino\0\0")) {
         static vec3f coatColors[] = {
-          vec3f(0.0f, 0.0397548f, 0.132437f),
-          vec3f(0.0f, 0.0f,       0.0f     ),
-          vec3f(0.9f, 0.9f,       0.9f     )
+          vec3f(0.00000f, 0.32343f, 0.49284f),
+          vec3f(0.47845f, 0.18909f, 0.20393f),
+          vec3f(0.65916f, 0.67632f, 0.67680f),
+          vec3f(0.78399f, 0.34000f, 0.00000f),
+          vec3f(0.40602f, 0.53195f, 0.61532f)
+        };
+
+        static float flakeRoughnesses[] = {
+          0.47f,
+          0.47f,
+          0.41f,
+          0.49f,
+          0.44f
         };
 
         scenegraph->traverse([](sg::Node &node, sg::TraversalContext&) {
           auto name = node.name();
           if (name == "E_EPUP_Exterior_Paint___Exterior_Paint_UpperSG") {
             node["coatColor"] = coatColors[colorIndex];
+            node["flakeRoughness"] = flakeRoughnesses[colorIndex];
             return false;
           }
           return true;

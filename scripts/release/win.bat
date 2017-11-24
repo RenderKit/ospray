@@ -25,8 +25,8 @@ python -c "from urllib import urlretrieve; urlretrieve('http://sdvis.org/ospray/
 
 rem set release settings
 cmake -L ^
--G "Visual Studio 12 2013 Win64" ^
--T "Intel C++ Compiler 17.0" ^
+-G "Visual Studio 14 2015 Win64" ^
+-T "Intel C++ Compiler 18.0" ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_MODULE_MPI=ON ^
 -D OSPRAY_SG_CHOMBO=OFF ^

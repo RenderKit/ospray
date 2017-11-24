@@ -18,8 +18,8 @@
 
 #include "../common.h"
 #include "../utility/ArrayView.h"
+#include "../TypeTraits.h"
 
-#include <type_traits>
 #include <vector>
 
 namespace ospcommon {

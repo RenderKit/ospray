@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 # ISPC versions to look for, in decending order (newest first)
-SET(ISPC_VERSION_WORKING "1.9.1")
+SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
 LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 IF (NOT ISPC_EXECUTABLE)
@@ -25,7 +25,7 @@ IF (NOT ISPC_EXECUTABLE)
   ELSEIF(WIN32)
     SET(ISPC_DIR_SUFFIX "windows")
     IF (MSVC_VERSION LESS 1900)
-      LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2013")
+      MESSAGE(WARNING "MSVC 12 2013 is not supported anymore.")
     ELSE()
       LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
     ENDIF()

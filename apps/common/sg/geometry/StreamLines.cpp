@@ -22,10 +22,9 @@ namespace ospray {
 
     StreamLines::StreamLines() : Geometry("streamlines")
     {
-      createChild("material", "Material");
       createChild("radius", "float", 0.01f,
-                  NodeFlags::required |
                   NodeFlags::valid_min_max).setMinMax(1e-20f, 1e20f);
+      createChild("smooth", "bool", false);
     }
 
     std::string StreamLines::toString() const

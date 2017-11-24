@@ -78,14 +78,15 @@ struct Principled
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* uniform super,
                                                uniform ShadingContext* uniform ctx,
                                                const DifferentialGeometry& dg,
                                                const Ray& ray,
                                                const Medium& currentMedium)
 {
   const uniform Principled* uniform self = (const uniform Principled* uniform)super;
-  varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
+  
+  varying BSDF* uniform baseBsdf = MultiBSDF_create(ctx);
   varying linear3f* uniform frame =
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normalScale));
 
@@ -99,7 +100,7 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
   const float plastic = (1.f - metallic) * (1.f - transmission);
   if (plastic > EPS) {
     // diffuse
-    varying BSDF* uniform plasticBsdf;
+    varying BSDF* varying plasticBsdf;
     if (roughness < EPS)
       plasticBsdf = Lambert_create(ctx, frame, baseColor);
     else
@@ -116,7 +117,7 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
         plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf, rcp(specularIor), make_vec3f(1.f), 1.f, roughness);
     }
 
-    MultiBSDF_add(bsdf, plasticBsdf, plastic, plastic);
+    MultiBSDF_add(baseBsdf, plasticBsdf, plastic, plastic);
   }
     
   // conductor base
@@ -125,13 +126,13 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
     const vec3f edgeColor = clamp(self->edgeColor * get3f(self->edgeColorMap, dg.st, make_vec3f(1.f)));
     
     Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
-    varying BSDF* uniform conductorBsdf;
+    varying BSDF* varying conductorBsdf;
     if (roughness < EPS)
       conductorBsdf = Conductor_create(ctx, frame, fresnel);
     else
       conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
 
-    MultiBSDF_add(bsdf, conductorBsdf, conductor, conductor);
+    MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
   }
 
   // transparent dielectric base
@@ -139,14 +140,16 @@ const varying BSDF* uniform Principled_getBSDF(const uniform PathTraceMaterial* 
     float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                        : self->mediumInside.ior*rcp(self->mediumOutside.ior);
 
-    varying BSDF* uniform dielectricBsdf;
+    varying BSDF* varying dielectricBsdf;
     if (roughness < EPS)
       dielectricBsdf = Dielectric_create(ctx, frame, eta);
     else
       dielectricBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness);
 
-    MultiBSDF_add(bsdf, dielectricBsdf, transmission, transmission);
+    MultiBSDF_add(baseBsdf, dielectricBsdf, transmission, transmission);
   }
+
+  varying BSDF* varying bsdf = baseBsdf;
   
   // clear coat
   if (coat > EPS) {

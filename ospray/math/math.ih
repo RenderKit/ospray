@@ -197,3 +197,9 @@ inline uniform float similar(uniform float a, uniform float b)
   return absf(a - b) <= SIMILAR_EPSILON;
 }
 #undef SIMILAR_EPSILON
+
+
+inline float to_float_unorm(unsigned int a)
+{
+  return (float)a * 2.3283064365386962890625e-10; // a / 2^32
+}

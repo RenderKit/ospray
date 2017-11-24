@@ -33,7 +33,6 @@ namespace ospray {
       box3f bounds() const override;
 
       void preCommit(RenderContext& ctx) override;
-      void postCommit(RenderContext& ctx) override;
     };
 
   } // ::ospray::sg

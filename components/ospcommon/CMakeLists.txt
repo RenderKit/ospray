@@ -57,10 +57,15 @@ ELSE()
 
     utility/Any.h
     utility/CodeTimer.h
+    utility/DataView.h
+    utility/DeletedUniquePtr.h
     utility/DoubleBufferedValue.h
+    utility/getEnvVar.h
     utility/OnScopeExit.h
     utility/Optional.h
     utility/PseudoURL.cpp
+    utility/SaveImage.h
+    utility/StringManip.h
     utility/TransactionalValue.h
 
     AffineSpace.h
@@ -150,11 +155,17 @@ ELSE()
 
   OSPRAY_INSTALL_SDK_HEADERS(
     utility/Any.h
+    utility/ArrayView.h
     utility/CodeTimer.h
+    utility/DataView.h
+    utility/DeletedUniquePtr.h
     utility/DoubleBufferedValue.h
+    utility/getEnvVar.h
     utility/OnScopeExit.h
     utility/Optional.h
     utility/PseudoURL.h
+    utility/SaveImage.h
+    utility/StringManip.h
     utility/TransactionalValue.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility

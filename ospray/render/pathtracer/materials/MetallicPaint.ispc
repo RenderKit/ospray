@@ -35,7 +35,7 @@ struct MetallicPaint
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform MetallicPaint_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying MetallicPaint_getBSDF(const uniform PathTraceMaterial* uniform super,
                                                   uniform ShadingContext* uniform ctx,
                                                   const DifferentialGeometry& dg,
                                                   const Ray& ray,

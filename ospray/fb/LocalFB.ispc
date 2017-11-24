@@ -30,17 +30,16 @@ export void LocalFrameBuffer_writeTile_##name(void *uniform _fb,             \
     /* actually, this should never happen ... */                             \
     return;                                                                  \
                                                                              \
+  color += (uniform uint64)tile.region.lower.y * fb->super.size.x;           \
+  if (depth)                                                                 \
+    depth += (uniform uint64)tile.region.lower.y * fb->super.size.x;         \
   VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;               \
-  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {                              \
-    uniform uint32 iiy=tile.region.lower.y+iy;                               \
-    if (iiy >= tile.region.upper.y) continue;                                \
-                                                                             \
-    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);                    \
-                                                                             \
+  for (uniform uint32 iiy=tile.region.lower.y;iiy<tile.region.upper.y;iiy++){\
+    uniform uint32 chunkID                                                   \
+        = (iiy-tile.region.lower.y)*(TILE_SIZE/programCount);                \
     for (uint32 iix = tile.region.lower.x+programIndex;                      \
          iix<tile.region.upper.x;iix+=programCount,chunkID++) {              \
                                                                              \
-      uint32 pixelID = iiy*fb->FB_STRIDE+iix;                                \
       unmasked {                                                             \
         varying vec4f col = make_vec4f(varyTile->r[chunkID],                 \
                                        varyTile->g[chunkID],                 \
@@ -49,9 +48,13 @@ export void LocalFrameBuffer_writeTile_##name(void *uniform _fb,             \
                                                                              \
         const type cvtCol = cvt(col);                                        \
       }                                                                      \
-      color[pixelID] = cvtCol;                                               \
-      if (depth) fb->depthBuffer[pixelID] = varyTile->z[chunkID];            \
+      color[iix] = cvtCol;                                                   \
+      if (depth)                                                             \
+        depth[iix] = varyTile->z[chunkID];                                   \
     }                                                                        \
+    color += fb->super.size.x;                                               \
+    if (depth)                                                               \
+      depth += fb->super.size.x;                                             \
   }                                                                          \
 }
 
@@ -77,49 +80,48 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
     return inf;
 
   VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
-
   uniform vec4f *uniform variance = fb->varianceBuffer;
+
   const uniform float accScale = rcpf(tile.accumID+1);
   const uniform float accHalfScale = rcpf(tile.accumID/2+1);
   float err = 0.f;
 
-  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
-    uniform uint32 iiy=tile.region.lower.y+iy;
-    if (iiy >= tile.region.upper.y) continue;
+  accum += (uniform uint64)tile.region.lower.y * fb->super.size.x;
+  if (variance)
+    variance += (uniform uint64)tile.region.lower.y * fb->super.size.x;
 
-    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);
+  for (uniform uint32 iiy=tile.region.lower.y; iiy<tile.region.upper.y; iiy++) {
+    uniform uint32 chunkID = (iiy-tile.region.lower.y)*(TILE_SIZE/programCount);
 
     for (uint32 iix = tile.region.lower.x+programIndex;
          iix<tile.region.upper.x;iix+=programCount,chunkID++) {
-
-      uint32 pixelID = iiy*fb->super.size.x+iix;
 
       /* TODO: rather than gathering, replace this code with
           'load4f's and swizzles */
       varying vec4f acc = make_vec4f(0.f);
       if (tile.accumID > 0)
-        acc = accum[pixelID];
+        acc = accum[iix];
       unmasked {
         acc.x += varyTile->r[chunkID];
         acc.y += varyTile->g[chunkID];
         acc.z += varyTile->b[chunkID];
         acc.w += varyTile->a[chunkID];
       }
-      accum[pixelID] = acc;
+      accum[iix] = acc;
       acc = acc * accScale;
 
       // variance buffer accumulates every other frame
       if (variance && (tile.accumID & 1) == 1) {
         varying vec4f vari = make_vec4f(0.f);
         if (tile.accumID > 1)
-          vari = variance[pixelID];
+          vari = variance[iix];
         unmasked {
           vari.x += varyTile->r[chunkID];
           vari.y += varyTile->g[chunkID];
           vari.z += varyTile->b[chunkID];
           vari.w += varyTile->a[chunkID];
         }
-        variance[pixelID] = vari;
+        variance[iix] = vari;
 
         // invert alpha (bright alpha is more important)
         const float den2 = reduce_add(make_vec3f(acc)) + (1.f-acc.w);
@@ -136,6 +138,10 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
         varyTile->a[chunkID] = acc.w;
       }
     }
+
+    accum += fb->super.size.x;
+    if (variance)
+      variance += fb->super.size.x;
   }
 
   const uniform vec2i tileIdx = tile.region.lower/TILE_SIZE;

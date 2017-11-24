@@ -50,6 +50,13 @@ inline void MultiBSDF_add(varying BSDF* uniform super,
   }
 }
 
+inline void MultiBSDF_add(varying BSDF* uniform super,
+                          const varying BSDF* varying bsdf, float weight = 1.f, float importance = 1.f)
+{
+  foreach_unique (f in bsdf)
+    MultiBSDF_add(super, f, weight, importance);
+}
+
 /*! Evaluates all BSDF components. */
 inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
                                    const vec3f& wo, const vec3f& wi)
