@@ -81,10 +81,13 @@ namespace ospray {
                      << "as curve: " << useCurve;
 
     bounds = empty;
-    for (uint32_t i = 0; i < numVertices; i++) {
-      const float radiusI = radius[i];
-      bounds.extend(vertex[i] - radiusI);
-      bounds.extend(vertex[i] + radiusI);
+    // XXX curves may actually have a larger bounding box due to swinging
+    for (uint32_t i = 0; i < numSegments; i++) {
+      const uint32 idx = index[i];
+      bounds.extend(vertex[idx] - radius[idx]);
+      bounds.extend(vertex[idx] + radius[idx]);
+      bounds.extend(vertex[idx+1] - radius[idx+1]);
+      bounds.extend(vertex[idx+1] + radius[idx+1]);
     }
 
     if (useCurve) {
