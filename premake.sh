@@ -273,5 +273,5 @@ cd -
 # save cache
 cat > premake.local.$(hostname).sh <<EOF
 #!/bin/bash
-$(pwd)/premake.sh ${ARGCACHE} --embree-dir ${EMBREE_ROOT} --tbb-dir ${TBB_ROOT} --ispc-dir ${ISPC_ROOT} --icc-dir ${ICC_PATH%/*} --gcc-dir ${GCC_PATH%/*} --cmake-dir ${CMAKEPATH}
+$(pwd)/premake.sh ${ARGCACHE} --embree-dir "${EMBREE_ROOT}" --tbb-dir "${TBB_ROOT}" --ispc-dir "${ISPC_ROOT}" --icc-dir "${ICC_PATH%/*}" --gcc-dir "${GCC_PATH%/*}" --cmake-dir "${CMAKEPATH}"
 EOF
