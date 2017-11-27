@@ -49,8 +49,8 @@ namespace ospcommon
     /*! returns a c-string of the filename */
     OSPCOMMON_INTERFACE const char* c_str() const { return filename.c_str(); }
 
-    /*! returns the path of a filename */
-    OSPCOMMON_INTERFACE FileName path() const;
+    /*! returns the path of a filename with separator at the end */
+    OSPCOMMON_INTERFACE std::string path() const;
 
     /*! returns the file of a filename  */
     OSPCOMMON_INTERFACE std::string base() const;
