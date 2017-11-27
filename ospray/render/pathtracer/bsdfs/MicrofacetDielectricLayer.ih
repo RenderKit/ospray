@@ -112,32 +112,32 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 
   if (ss < coatingPickProb)
   {
-      // Sample the microfacet normal
-      float whPdf;
-      //wh = getFrame(super) * sample(self->distribution, whPdf, s);
-      wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
-      float cosThetaOH = dot(wo, wh);
+    // Sample the microfacet normal
+    float whPdf;
+    //wh = getFrame(super) * sample(self->distribution, whPdf, s);
+    wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
+    float cosThetaOH = dot(wo, wh);
 
-      res.type = BSDF_GLOSSY_REFLECTION;
-      res.wi = reflect(wo, wh, cosThetaOH);
+    res.type = BSDF_GLOSSY_REFLECTION;
+    res.wi = reflect(wo, wh, cosThetaOH);
 
-      // Evaluate the substrate
-      foreach_unique (f in self->substrate)
-        substrate = f->eval(f, wo, res.wi);
+    // Evaluate the substrate
+    foreach_unique (f in self->substrate)
+      substrate = f->eval(f, wo, res.wi);
   }
   else
   {
-      // Sample the substrate
-      float ss1 = (ss - coatingPickProb) * rcp(substratePickProb); // reallocate sample
-      foreach_unique (f in self->substrate)
-        res = f->sample(f, wo, s, ss1);
-      if (reduce_max(res.weight) <= 0.f)
-        return res;
-      substrate.pdf = res.pdf;
-      substrate.value = res.weight * res.pdf;
+    // Sample the substrate
+    float ss1 = (ss - coatingPickProb) * rcp(substratePickProb); // reallocate sample
+    foreach_unique (f in self->substrate)
+      res = f->sample(f, wo, s, ss1);
+    if (reduce_max(res.weight) <= 0.f)
+      return res;
+    substrate.pdf = res.pdf;
+    substrate.value = res.weight * res.pdf;
 
-      // Compute the microfacet normal
-      wh = normalize(res.wi + wo);
+    // Compute the microfacet normal
+    wh = normalize(res.wi + wo);
   }
 
   float cosThetaI = dot(res.wi, getN(super));
