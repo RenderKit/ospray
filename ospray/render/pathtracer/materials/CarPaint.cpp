@@ -58,6 +58,10 @@ namespace ospray {
         affine2f flakeSpreadXform = getTextureTransform("flakeSpreadMap");
         float flakeSpread = getParamf("flakeSpread", flakeSpreadMap ? 1.f : 0.2f);
 
+        Texture2D* flakeJitterMap = (Texture2D*)getParamObject("flakeJitterMap");
+        affine2f flakeJitterXform = getTextureTransform("flakeJitterMap");
+        float flakeJitter = getParamf("flakeJitter", flakeJitterMap ? 1.f : 0.75f);
+
         Texture2D* flakeRoughnessMap = (Texture2D*)getParamObject("flakeRoughnessMap");
         affine2f flakeRoughnessXform = getTextureTransform("flakeRoughnessMap");
         float flakeRoughness = getParamf("flakeRoughness", flakeRoughnessMap ? 1.f : 0.3f);
@@ -89,6 +93,7 @@ namespace ospray {
           flakeScale, flakeScaleMap ? flakeScaleMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeScaleXform,
           flakeDensity, flakeDensityMap ? flakeDensityMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeDensityXform,
           flakeSpread, flakeSpreadMap ? flakeSpreadMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeSpreadXform,
+          flakeJitter, flakeJitterMap ? flakeJitterMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeJitterXform,
           flakeRoughness, flakeRoughnessMap ? flakeRoughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeRoughnessXform,
           coat, coatMap ? coatMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatXform,
           (const ispc::vec3f&)coatColor, coatColorMap ? coatColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatColorXform,

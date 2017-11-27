@@ -45,6 +45,9 @@ struct CarPaint
   float flakeSpread;
   TextureParam flakeSpreadMap;
 
+  float flakeJitter;
+  TextureParam flakeJitterMap;
+
   float flakeRoughness;
   TextureParam flakeRoughnessMap;
   
@@ -86,12 +89,13 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
   if (flakeDensity > EPS) {
     const float flakeScale = max(self->flakeScale * get1f(self->flakeScaleMap, dg.st, 1.f), 0.f);
     const float flakeSpread = max(self->flakeSpread * get1f(self->flakeSpreadMap, dg.st, 1.f), 0.f);
+    const float flakeJitter = clamp(self->flakeJitter * get1f(self->flakeJitterMap, dg.st, 1.f));
 
     Flakes flakes;
     flakes.scale = flakeScale;
     flakes.density = flakeDensity;
     flakes.spread = flakeSpread;
-    flakes.jitter = 0.75f;
+    flakes.jitter = flakeJitter;
 
     const vec3f flakeN = Flakes_eval(flakes, dg.P, flakeMask);
     if (flakeMask) {
@@ -151,6 +155,7 @@ export void* uniform PathTracer_CarPaint_set(void* uniform _self,
     uniform float flakeScale, void* uniform flakeScaleMap, const uniform affine2f& flakeScaleXform,
     uniform float flakeDensity, void* uniform flakeDensityMap, const uniform affine2f& flakeDensityXform,
     uniform float flakeSpread, void* uniform flakeSpreadMap, const uniform affine2f& flakeSpreadXform,
+    uniform float flakeJitter, void* uniform flakeJitterMap, const uniform affine2f& flakeJitterXform,
     uniform float flakeRoughness, void* uniform flakeRoughnessMap, const uniform affine2f& flakeRoughnessXform,
     uniform float coat, void* uniform coatMap, const uniform affine2f& coatXform,
     const uniform vec3f& coatColor, void* uniform coatColorMap, const uniform affine2f& coatColorXform,
@@ -174,6 +179,9 @@ export void* uniform PathTracer_CarPaint_set(void* uniform _self,
 
   self->flakeSpread = flakeSpread;
   self->flakeSpreadMap = make_TextureParam((uniform Texture2D*)flakeSpreadMap, flakeSpreadXform);
+
+  self->flakeJitter = flakeJitter;
+  self->flakeJitterMap = make_TextureParam((uniform Texture2D*)flakeJitterMap, flakeJitterXform);
 
   self->flakeRoughness = flakeRoughness;
   self->flakeRoughnessMap = make_TextureParam((uniform Texture2D*)flakeRoughnessMap, flakeRoughnessXform);
@@ -204,6 +212,7 @@ export void* uniform PathTracer_CarPaint_create()
   uniform affine2f xform = make_AffineSpace2f_identity();
   PathTracer_CarPaint_set(self,
     make_vec3f(0.8f), NULL, xform,
+    0.f, NULL, xform,
     0.f, NULL, xform,
     0.f, NULL, xform,
     0.f, NULL, xform,
