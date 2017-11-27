@@ -256,6 +256,9 @@ extern "C" {
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
 
+  /*! add an untyped void pointer to given Device */
+  OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
+
   /*! status message callback function type */
   typedef void (*OSPStatusFunc)(const char* messageText);
 
