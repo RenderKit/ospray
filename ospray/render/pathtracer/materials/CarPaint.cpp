@@ -60,7 +60,7 @@ namespace ospray {
 
         Texture2D* flakeRoughnessMap = (Texture2D*)getParamObject("flakeRoughnessMap");
         affine2f flakeRoughnessXform = getTextureTransform("flakeRoughnessMap");
-        float flakeRoughness = getParamf("flakeRoughness", flakeRoughnessMap ? 1.f : 0.5f);
+        float flakeRoughness = getParamf("flakeRoughness", flakeRoughnessMap ? 1.f : 0.3f);
 
         Texture2D* coatMap = (Texture2D*)getParamObject("coatMap");
         affine2f coatXform = getTextureTransform("coatMap");

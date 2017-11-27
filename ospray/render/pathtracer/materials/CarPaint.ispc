@@ -83,8 +83,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
   int flakeMask = 0;
 
   // metallic flakes in the clear coat layer
-  if (flakeDensity > EPS)
-  {
+  if (flakeDensity > EPS) {
     const float flakeScale = max(self->flakeScale * get1f(self->flakeScaleMap, dg.st, 1.f), 0.f);
     const float flakeSpread = max(self->flakeSpread * get1f(self->flakeSpreadMap, dg.st, 1.f), 0.f);
 
@@ -95,8 +94,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
     flakes.jitter = 0.75f;
 
     const vec3f flakeN = Flakes_eval(flakes, dg.P, flakeMask);
-    if (flakeMask)
-    {
+    if (flakeMask) {
       varying linear3f* uniform flakeFrame = LinearSpace3f_create(ctx, makeShadingFrame(dg, flakeN));
 
       // flakes are made of aluminum
@@ -113,8 +111,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
   }
 
   // base diffuse layer
-  if (!flakeMask)
-  {
+  if (!flakeMask) {
     const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
     const float baseRoughness = max(self->baseRoughness * get1f(self->baseRoughnessMap, dg.st, 1.f), 0.f);
 
