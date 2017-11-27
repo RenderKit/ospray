@@ -80,25 +80,25 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
   float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
 
   if (ss < F) {
-      // Sample the coating reflection
-      res.type = BSDF_SPECULAR_REFLECTION;
-      res.wi = reflect(wo, getN(super), cosThetaO);
-      res.pdf = inf;
-      res.weight = make_vec3f(1.0f);
+    // Sample the coating reflection
+    res.type = BSDF_SPECULAR_REFLECTION;
+    res.wi = reflect(wo, getN(super), cosThetaO);
+    res.pdf = inf;
+    res.weight = make_vec3f(1.0f);
   } else {
-      // Sample the substrate BRDF
-      float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
-      foreach_unique (f in self->substrate)
-        res = f->sample(f, wo, s, ss1);
-      if (reduce_max(res.weight) <= 0.0f) return res;
-      float cosThetaI = max(dot(res.wi, getN(super)), 0.0f); // should be positive
+    // Sample the substrate BRDF
+    float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
+    foreach_unique (f in self->substrate)
+      res = f->sample(f, wo, s, ss1);
+    if (reduce_max(res.weight) <= 0.0f) return res;
+    float cosThetaI = max(dot(res.wi, getN(super)), 0.0f); // should be positive
 
-      // Apply the coating transmittance
-      float cosThetaI1 = refract(cosThetaI, self->eta); // positive
-      res.weight = res.weight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
+    // Apply the coating transmittance
+    float cosThetaI1 = refract(cosThetaI, self->eta); // positive
+    res.weight = res.weight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
-      // Compute the final reflection
-      res.pdf = (1.0f-F) * res.pdf;
+    // Compute the final reflection
+    res.pdf = (1.0f-F) * res.pdf;
   }
 
   return res;

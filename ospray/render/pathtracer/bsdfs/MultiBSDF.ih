@@ -121,7 +121,8 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     if (eq(res.weight, make_vec3f(0.0f)) | (res.pdf == 0.0f))
       return make_BSDF_SampleRes_zero();
 
-    // XXX why not also eval smooth BSDF when specular one was sampled?
+    // if the sampled BSDF is specular (has a delta distribution), we cannot add the contributions from the other BSDFs
+    // [Pharr et al., 2016, "Physically Based Rendering", 3rd Edition, Section 14.1.6]
     if (res.type & BSDF_SPECULAR)
     {
       // scale by rcp(selection pdf)

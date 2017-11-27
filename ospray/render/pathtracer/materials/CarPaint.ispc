@@ -16,9 +16,9 @@
 
 #include "Material.ih"
 #include "texture/TextureParam.ih"
-//#include "render/pathtracer/bsdfs/MultiBSDF.ih"
-//#include "../bsdfs/Lambert.ih"
-//#include "../bsdfs/OrenNayar.ih"
+#include "render/pathtracer/bsdfs/MultiBSDF.ih"
+#include "../bsdfs/Lambert.ih"
+#include "../bsdfs/OrenNayar.ih"
 #include "../bsdfs/Conductor.ih"
 #include "../bsdfs/MicrofacetConductor.ih"
 #include "../bsdfs/DielectricLayer.ih"
@@ -29,6 +29,12 @@
 struct CarPaint
 {
   PathTraceMaterial super;
+
+  vec3f baseColor;
+  TextureParam baseColorMap;
+
+  float baseRoughness;
+  TextureParam baseRoughnessMap;
   
   float flakeScale;
   TextureParam flakeScaleMap;
@@ -39,7 +45,10 @@ struct CarPaint
   float flakeSpread;
   TextureParam flakeSpreadMap;
 
-  float flakeRoughness; // in [0, 1]; 0==ideally smooth (mirror)
+  float flakeJitter;
+  TextureParam flakeJitterMap;
+
+  float flakeRoughness;
   TextureParam flakeRoughnessMap;
   
   float coat; // dielectric clear coat reflectivity in [0, 1]; coat = sqr((ior-1)/(ior+1))/0.08
@@ -73,33 +82,51 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
   const uniform CarPaint* uniform self = (const uniform CarPaint* uniform)super;
   varying BSDF* varying bsdf;
     
-  // metallic flake layer
-  const float flakeScale = max(self->flakeScale * get1f(self->flakeScaleMap, dg.st, 1.f), 0.f);
   const float flakeDensity = clamp(self->flakeDensity * get1f(self->flakeDensityMap, dg.st, 1.f));
-  const float flakeSpread = max(self->flakeSpread * get1f(self->flakeSpreadMap, dg.st, 1.f), 0.f);
+  int flakeMask = 0;
 
-  Flakes flakes;
-  flakes.scale = flakeScale;
-  flakes.density = flakeDensity;
-  //flakes.layers = 1;
-  flakes.spread = flakeSpread;
-  flakes.jitter = 0.75f;
+  // metallic flakes in the clear coat layer
+  if (flakeDensity > EPS) {
+    const float flakeScale = max(self->flakeScale * get1f(self->flakeScaleMap, dg.st, 1.f), 0.f);
+    const float flakeSpread = max(self->flakeSpread * get1f(self->flakeSpreadMap, dg.st, 1.f), 0.f);
+    const float flakeJitter = clamp(self->flakeJitter * get1f(self->flakeJitterMap, dg.st, 1.f));
 
-  const vec3f flakeN = Flakes_eval(&flakes, dg.P);
-  varying linear3f* uniform flakeFrame = LinearSpace3f_create(ctx, makeShadingFrame(dg, flakeN));
+    Flakes flakes;
+    flakes.scale = flakeScale;
+    flakes.density = flakeDensity;
+    flakes.spread = flakeSpread;
+    flakes.jitter = flakeJitter;
 
-  // flakes are made of aluminum
-  const uniform vec3f flakeEta = make_vec3f(1.69700277f, 0.879832864f, 0.5301736f);
-  const uniform vec3f flakeK = make_vec3f(9.30200672f, 6.27604008f, 4.89433956f);
-  Fresnel* uniform flakeFresnel = FresnelConductorRGBUniform_create(ctx, flakeEta, flakeK);
+    const vec3f flakeN = Flakes_eval(flakes, dg.P, flakeMask);
+    if (flakeMask) {
+      varying linear3f* uniform flakeFrame = LinearSpace3f_create(ctx, makeShadingFrame(dg, flakeN));
 
-  const float flakeRoughness = max(self->flakeRoughness * get1f(self->flakeRoughnessMap, dg.st, 1.f), 0.f);
-  if (flakeRoughness < EPS)
-    bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
-  else
-    bsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, flakeRoughness);
+      // flakes are made of aluminum
+      const uniform vec3f flakeEta = make_vec3f(1.69700277f, 0.879832864f, 0.5301736f);
+      const uniform vec3f flakeK = make_vec3f(9.30200672f, 6.27604008f, 4.89433956f);
+      Fresnel* uniform flakeFresnel = FresnelConductorRGBUniform_create(ctx, flakeEta, flakeK);
+
+      const float flakeRoughness = max(self->flakeRoughness * get1f(self->flakeRoughnessMap, dg.st, 1.f), 0.f);
+      if (flakeRoughness < EPS)
+        bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
+      else
+        bsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, flakeRoughness);
+    }
+  }
+
+  // base diffuse layer
+  if (!flakeMask) {
+    const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
+    const float baseRoughness = max(self->baseRoughness * get1f(self->baseRoughnessMap, dg.st, 1.f), 0.f);
+
+    varying linear3f* uniform baseFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
+    if (baseRoughness < EPS)
+      bsdf = Lambert_create(ctx, baseFrame, baseColor);
+    else
+      bsdf = OrenNayar_create(ctx, baseFrame, baseColor, baseRoughness);
+  }
  
-  // clear coat
+  // clear coat layer
   const float coat = max(self->coat * get1f(self->coatMap, dg.st, 1.f), 0.f);
 
   if (coat > EPS) {
@@ -123,9 +150,12 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
 // External API
 
 export void* uniform PathTracer_CarPaint_set(void* uniform _self,
+    const uniform vec3f& baseColor, void* uniform baseColorMap, const uniform affine2f& baseColorXform,
+    uniform float baseRoughness, void* uniform baseRoughnessMap, const uniform affine2f& baseRoughnessXform,
     uniform float flakeScale, void* uniform flakeScaleMap, const uniform affine2f& flakeScaleXform,
     uniform float flakeDensity, void* uniform flakeDensityMap, const uniform affine2f& flakeDensityXform,
     uniform float flakeSpread, void* uniform flakeSpreadMap, const uniform affine2f& flakeSpreadXform,
+    uniform float flakeJitter, void* uniform flakeJitterMap, const uniform affine2f& flakeJitterXform,
     uniform float flakeRoughness, void* uniform flakeRoughnessMap, const uniform affine2f& flakeRoughnessXform,
     uniform float coat, void* uniform coatMap, const uniform affine2f& coatXform,
     const uniform vec3f& coatColor, void* uniform coatColorMap, const uniform affine2f& coatColorXform,
@@ -135,6 +165,12 @@ export void* uniform PathTracer_CarPaint_set(void* uniform _self,
 {
   CarPaint* uniform self = (CarPaint* uniform)_self;
 
+  self->baseColor = baseColor;
+  self->baseColorMap = make_TextureParam((uniform Texture2D*)baseColorMap, baseColorXform);
+
+  self->baseRoughness = baseRoughness;
+  self->baseRoughnessMap = make_TextureParam((uniform Texture2D*)baseRoughnessMap, baseRoughnessXform);
+
   self->flakeScale = flakeScale;
   self->flakeScaleMap = make_TextureParam((uniform Texture2D*)flakeScaleMap, flakeScaleXform);
 
@@ -143,6 +179,9 @@ export void* uniform PathTracer_CarPaint_set(void* uniform _self,
 
   self->flakeSpread = flakeSpread;
   self->flakeSpreadMap = make_TextureParam((uniform Texture2D*)flakeSpreadMap, flakeSpreadXform);
+
+  self->flakeJitter = flakeJitter;
+  self->flakeJitterMap = make_TextureParam((uniform Texture2D*)flakeJitterMap, flakeJitterXform);
 
   self->flakeRoughness = flakeRoughness;
   self->flakeRoughnessMap = make_TextureParam((uniform Texture2D*)flakeRoughnessMap, flakeRoughnessXform);
@@ -172,6 +211,9 @@ export void* uniform PathTracer_CarPaint_create()
 
   uniform affine2f xform = make_AffineSpace2f_identity();
   PathTracer_CarPaint_set(self,
+    make_vec3f(0.8f), NULL, xform,
+    0.f, NULL, xform,
+    0.f, NULL, xform,
     0.f, NULL, xform,
     0.f, NULL, xform,
     0.f, NULL, xform,
