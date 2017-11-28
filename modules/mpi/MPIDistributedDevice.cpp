@@ -138,14 +138,6 @@ namespace ospray {
 
       masterRank = getParam1i("masterRank", 0);
 
-      std::string mode = getParamString("mode", "distributed");
-
-      if (mode == "distributed") {
-        postStatusMsg() << "#dmpi: device commit() setting mode to " << mode;
-      } else {
-        throw std::runtime_error("#dmpi: bad device mode ['" + mode + "]");
-      }
-
       TiledLoadBalancer::instance =
                       make_unique<staticLoadBalancer::Distributed>();
     }
