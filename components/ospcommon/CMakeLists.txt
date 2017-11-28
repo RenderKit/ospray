@@ -173,12 +173,15 @@ ELSE()
 
   ## Test apps ##
 
+  ADD_LIBRARY(ospray_test_main STATIC testing/catch_main.cpp)
+
   # Any
 
   OSPRAY_CREATE_TEST(test_Any
     utility/tests/test_Any.cpp
   LINK
     ospray_common
+    ospray_test_main
   )
 
   ADD_TEST(NAME Any COMMAND test_Any)
@@ -189,6 +192,7 @@ ELSE()
     utility/tests/test_ArrayView.cpp
   LINK
     ospray_common
+    ospray_test_main
   )
 
   ADD_TEST(NAME ArrayView COMMAND test_ArrayView)
@@ -199,6 +203,7 @@ ELSE()
     utility/tests/test_OnScopeExit.cpp
   LINK
     ospray_common
+    ospray_test_main
   )
 
   ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
@@ -209,6 +214,7 @@ ELSE()
     utility/tests/test_Optional.cpp
   LINK
     ospray_common
+    ospray_test_main
   )
 
   ADD_TEST(NAME Optional COMMAND test_Optional)
@@ -219,6 +225,7 @@ ELSE()
     containers/tests/test_TransactionalBuffer.cpp
   LINK
     ospray_common
+    ospray_test_main
   )
 
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
@@ -229,6 +236,7 @@ ELSE()
       tasking/tests/test_async.cpp
     LINK
       ospray_common
+      ospray_test_main
     )
 
     ADD_TEST(NAME async COMMAND test_async)
@@ -238,6 +246,7 @@ ELSE()
       tasking/tests/test_parallel_for.cpp
     LINK
       ospray_common
+      ospray_test_main
     )
 
     ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
@@ -247,6 +256,7 @@ ELSE()
       tasking/tests/test_schedule.cpp
     LINK
       ospray_common
+      ospray_test_main
     )
 
     ADD_TEST(NAME schedule COMMAND test_schedule)
