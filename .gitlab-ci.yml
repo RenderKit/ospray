@@ -303,6 +303,7 @@ benchmark-centos7-gcc:
     - ../scripts/bench/run_benchmark.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
   tags:
     - docker
+    - ospray-benchmark
   artifacts:
     paths:
       - $CI_PROJECT_DIR/build/bench_output
