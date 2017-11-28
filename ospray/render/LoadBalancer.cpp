@@ -51,7 +51,7 @@ namespace ospray {
       Tile __aligned(64) tile(tileID, fb->size, accumID);
 #endif
 
-      tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
+      tasking::parallel_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
         renderer->renderTile(perFrameData, tile, tIdx);
       });
 

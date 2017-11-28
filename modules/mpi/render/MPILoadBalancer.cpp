@@ -100,7 +100,8 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tid) {
+          tasking::parallel_for(numJobs(renderer->spp, accumID),
+                                [&](size_t tid) {
             renderer->renderTile(perFrameData, tile, tid);
           });
 
@@ -375,7 +376,8 @@ namespace ospray {
 
         while (!frameActive);// PRINT(frameActive); // XXX busy wait for valid perFrameData
 
-        tasking::parallel_for(numJobs(renderer->spp, task.accumId), [&](int tid) {
+        tasking::parallel_for(numJobs(renderer->spp, task.accumId),
+                              [&](size_t tid) {
           renderer->renderTile(perFrameData, tile, tid);
         });
 

@@ -128,7 +128,7 @@ namespace ospray {
                              &accel->level[0],
                              (ispc::box3f &)worldBounds);
 
-      tasking::parallel_for(accel->leaf.size(),[&](int leafID) {
+      tasking::parallel_for(accel->leaf.size(),[&](size_t leafID) {
         ispc::AMRVolume_computeValueRangeOfLeaf(getIE(), leafID);
       });
     }
