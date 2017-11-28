@@ -57,9 +57,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
   uniform FrameBuffer *uniform fb     = self->fb;
   uniform Camera      *uniform camera = self->camera;
 
-  float pixel_du = .5f, pixel_dv = .5f;
-  float lens_du = 0.f,  lens_dv = 0.f;
-  uniform int32 spp = self->spp;
+  const uniform int32 spp = self->spp;
 
   if (spp >= 1) {
     ScreenSample screenSample;
@@ -97,8 +95,8 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
       vec3f col = make_vec3f(0.f);
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
       for (uniform uint32 s = 0; s < spp; s++) {
-        pixel_du = precomputedHalton2(startSampleID+s);
-        pixel_dv = precomputedHalton3(startSampleID+s);
+        const float pixel_du = precomputedHalton2(startSampleID+s);
+        const float pixel_dv = precomputedHalton3(startSampleID+s);
         screenSample.sampleID.z = startSampleID+s;
 
         cameraSample.screen.x = (screenSample.sampleID.x + pixel_du)
@@ -120,10 +118,8 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
       setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
     }
   } else {
-    if (tile.accumID >= 0) {
-      pixel_du = precomputedHalton2(tile.accumID);
-      pixel_dv = precomputedHalton3(tile.accumID);
-    }
+    const float pixel_du = precomputedHalton2(tile.accumID);
+    const float pixel_dv = precomputedHalton3(tile.accumID);
 
     ScreenSample screenSample;
     screenSample.sampleID.z = tile.accumID;
@@ -131,6 +127,9 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
     screenSample.alpha = 0.f;
 
     CameraSample cameraSample;
+    // TODO: fix correlations / better RNG
+    cameraSample.lens.x = precomputedHalton3(tile.accumID);
+    cameraSample.lens.y = precomputedHalton5(tile.accumID);
 
     const uniform int blocks = tile.accumID > 0
                                || spp > 0 ? 1 : min(1 << -2 * spp,

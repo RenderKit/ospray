@@ -448,11 +448,11 @@ ENDIF()
 OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS} COMPONENT lib)
 
 # build ospTutorial, for testing
-ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
-TARGET_LINK_LIBRARIES(ospTutorial ospray ospray_common)
-# C version
-ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
-TARGET_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
+ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
+TARGET_LINK_LIBRARIES(ospTutorial ospray)
+# C++ version
+ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
+TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
 
 ##############################################################
 # Configure find_package files
