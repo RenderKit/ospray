@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.4.2 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.5.0 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -70,8 +70,8 @@ before you can build OSPRay you need the following prerequisites:
     Linux development tools. To build the example viewers, you should
     also have some version of OpenGL.
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io). Please obtain a copy of the latest
-    binary release of ISPC (currently 1.9.1) from the [ISPC downloads
+    (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
+    obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.[^1] Alternatively set the CMake variable
@@ -200,10 +200,10 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
-(3.6MB).
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+(4.2MB).
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -1229,26 +1229,74 @@ linearly interpolated.
 
 ### Streamlines
 
-A geometry consisting of multiple streamlines of constant radius is
-created by calling `ospNewGeometry` with type string "`streamlines`".
-The streamlines are internally assembled from connected (and rounded)
-cylinder segments and are thus perfectly round. The parameters defining
-this geometry are listed in the table below.
+A geometry consisting of multiple streamlines is created by calling
+`ospNewGeometry` with type string "`streamlines`". The streamlines are
+internally assembled either from connected (and rounded) cylinder
+segments, or represented as Bézier curves; they are thus always
+perfectly round. The parameters defining this geometry are listed in the
+table below.
 
-| Type       | Name         | Description                                                  |
-|:-----------|:-------------|:-------------------------------------------------------------|
-| float      | radius       | radius of all streamlines, default 0.01                      |
-| vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* streamlines    |
-| vec4f\[\]  | vertex.color | [data](#data) array of corresponding vertex colors (RGBA)    |
-| int32\[\]  | index        | [data](#data) array of indices to the first vertex of a link |
+<table style="width:97%;">
+<caption>Parameters defining a streamlines geometry.</caption>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 21%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">radius</td>
+<td style="text-align: left;">global radius of all streamlines (if per-vertex radius is not used), default 0.01</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">smooth</td>
+<td style="text-align: left;">enable curve interpolation, default off (always on if per-vertex radius is used)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec3fa[] / vec4f[]</td>
+<td style="text-align: left;">vertex</td>
+<td style="text-align: left;"><a href="#data">data</a> array of all vertex position (and optional radius) for <em>all</em> streamlines</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">vec4f[]</td>
+<td style="text-align: left;">vertex.color</td>
+<td style="text-align: left;"><a href="#data">data</a> array of corresponding vertex colors (RGBA)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">float[]</td>
+<td style="text-align: left;">vertex.radius</td>
+<td style="text-align: left;"><a href="#data">data</a> array of corresponding vertex radius</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">int32[]</td>
+<td style="text-align: left;">index</td>
+<td style="text-align: left;"><a href="#data">data</a> array of indices to the first vertex of a link</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters defining a streamlines geometry.
 
-Each streamline is specified by a set of (aligned) vec3fa control points
-in `vertex`; all vertices belonging to to the same logical streamline
-are connected via [cylinders](#cylinders) of a fixed radius `radius`,
-with additional [spheres](#spheres) at each vertex to make for a smooth
-transition between the cylinders.
+Each streamline is specified by a set of (aligned) control points in
+`vertex`. If `smooth` is disabled and a constant `radius` is used for
+all streamlines then all vertices belonging to to the same logical
+streamline are connected via [cylinders](#cylinders), with additional
+[spheres](#spheres) at each vertex to create a continuous, closed
+surface. Otherwise, streamlines are represented as Bézier curves,
+smoothly interpolating the vertices. This mode supports per-vertex
+varying radii (either given in `vertex.radius`, or in the 4th component
+of a *vec4f* `vertex`), but is slower and consumes more memory. Also,
+the radius needs to be smaller than the curvature radius of the Bézier
+curve at each location on the curve.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of linear segments (or links)
@@ -1574,7 +1622,7 @@ To let the given `renderer` create a new light source of given type
 OSPLight ospNewLight(OSPRenderer renderer, const char *type);
 ```
 
-The call returns `NULL` if that type of camera is not known by the
+The call returns `NULL` if that type of light is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
 light sources[^2] accept the following parameters:
 
@@ -1826,7 +1874,14 @@ the real world reflect at most only about 80% of the incoming light. So
 even for a white sheet of paper or white wall paint do better not set
 `Kd` larger than 0.8; otherwise rendering times are unnecessary long and
 the contrast in the final images is low (for example, the corners of a
-white room would hardly be discernible).
+white room would hardly be discernible, as can be seen in the figure
+below).
+
+<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to in higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" />
+
+If present, the color component of [geometries](#geometries) is also
+used for the diffuse color `Kd` and the alpha component is also used for
+the opacity `d`.
 
 Note that currently only the path tracer implements colored transparency
 with `Tf`.
@@ -1953,18 +2008,19 @@ control of the color. To create an Alloy material pass the type string
 |:------|:----------|----------:|:--------------------------------------------|
 | vec3f | color     |  white 0.9| reflectivity at normal incidence (0 degree) |
 | vec3f | edgeColor |      white| reflectivity at grazing angle (90 degree)   |
-| float | roughness |        0.1| roughness in \[0--1\], 0 is perfect mirror  |
+| float | roughness |        0.1| roughness, in \[0--1\], 0 is perfect mirror |
 
 : Parameters of the Alloy material.
 
 The main appearance of the Alloy material is controlled by the parameter
 `color`, while `edgeColor` influences the tint of reflections when seen
-at grazing angles (for real metals this is always 100% white). As in
-[Metal](#metal) the `roughness` parameter controls the variation of
-microfacets and thus how polished the alloy will look. All parameters
-can be textured by passing a [texture](#texture) handle, prefixed with
-"`map_`"; [texture transformations](#texture-transformations) are
-supported as well.
+at grazing angles (for real metals this is always 100% white). If
+present, the color component of [geometries](#geometries) is also used
+for reflectivity at normal incidence `color`. As in [Metal](#metal) the
+`roughness` parameter controls the variation of microfacets and thus how
+polished the alloy will look. All parameters can be textured by passing
+a [texture](#texture) handle, prefixed with "`map_`"; [texture
+transformations](#texture-transformations) are supported as well.
 
 <img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
 
@@ -2013,16 +2069,48 @@ type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
 For convenience the attenuation is controlled the same way as with the
 [Glass](#glass) material. Additionally, the color due to attenuation can
 be modulated with a [texture](#texture) `map_attenuationColor` ([texture
-transformations](#texture-transformations) are supported as well). The
-`thickness` parameter sets the (virtual) thickness and allows for easy
-exchange of parameters with the (real) [Glass](#glass) material;
-internally just the ratio between `attenuationDistance` and `thickness`
-is used to calculate the resulting attenuation and thus the material
-appearance.
+transformations](#texture-transformations) are supported as well). If
+present, the color component of [geometries](#geometries) is also used
+for the attenuation color. The `thickness` parameter sets the (virtual)
+thickness and allows for easy exchange of parameters with the (real)
+[Glass](#glass) material; internally just the ratio between
+`attenuationDistance` and `thickness` is used to calculate the resulting
+attenuation and thus the material appearance.
 
 <img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" />
 
 <img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" />
+
+#### MetallicPaint
+
+The [path tracer](#path-tracer) offers a metallic paint material,
+consisting of a base coat with optional flakes and a clear coat. To
+create a MetallicPaint material pass the type string "`MetallicPaint`"
+to `ospNewMaterial`. Its parameters are listed in the table below.
+
+| Type  | Name        |    Default| Description                       |
+|:------|:------------|----------:|:----------------------------------|
+| vec3f | baseColor   |  white 0.8| color of base coat                |
+| float | flakeAmount |        0.3| amount of flakes, in \[0--1\]     |
+| vec3f | flakeColor  |  Aluminium| color of metallic flakes          |
+| float | flakeSpread |        0.5| spread of flakes, in \[0--1\]     |
+| float | eta         |        1.5| index of refraction of clear coat |
+
+: Parameters of the MetallicPaint material.
+
+The color of the base coat `baseColor` can be textured by a
+[texture](#texture) `map_baseColor`, which also supports [texture
+transformations](#texture-transformations). If present, the color
+component of [geometries](#geometries) is also used for the color of the
+base coat. parameter `flakeAmount` controls the proportion of flakes in
+the base coat, so when setting it to 1 the `baseColor` will not be
+visible. The shininess of the metallic component is governed by
+`flakeSpread`, which controls the variation of the orientation of the
+flakes, similar to the `roughness` parameter of [Metal](#metal). Note
+that the effect of the metallic flakes is currently only computed on
+average, thus individual flakes are not visible.
+
+<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" />
 
 #### Luminous
 
@@ -2690,7 +2778,7 @@ at the [OSPRay Demos and Examples](http://www.ospray.org/demos.html)
 page.
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.9.1-linux`
+    be searched in `~/Projects/ispc-v1.9.2-linux`
 
 [^2]: The [HDRI Light](#hdri-light) is an exception, it knows about
     `intensity`, but not about `color`.
