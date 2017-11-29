@@ -1,8 +1,0 @@
-/*! \defgroup ospray_supported_functionality OSPRay Supported Functionality 
-  
-  \brief Documents the functionality (in terms of supported renderers,
-  camera types, volume types, etc) in this version of ospray.
-  
-  \ingroup ospray
-  
-*/
