@@ -318,6 +318,12 @@ Volume *SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform
       t1 = min(t1, tClip1);
     }
 
+    if (volume_i->samplingRate >= 1.f) {
+      const float samplingStep = volume_i->samplingStep * rcpf(volume_i->samplingRate);
+      t0 = floor(t0 * rcpf(samplingStep)) * samplingStep;
+      t1 = ceil (t1 * rcpf(samplingStep)) * samplingStep;
+    }
+
     // ray back to world coordinate
     //    rayTransform(ray, volume_i->xfm);
 
