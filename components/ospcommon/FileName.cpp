@@ -66,10 +66,10 @@ namespace ospcommon
   }
 
   /*! returns the path */
-  FileName FileName::path() const {
+  std::string FileName::path() const {
     size_t pos = filename.find_last_of(path_sep);
-    if (pos == std::string::npos) return FileName();
-    return filename.substr(0,pos);
+    if (pos == std::string::npos) return "";	
+    return filename.substr(0,pos+1);
   }
 
   /*! returns the basename */
