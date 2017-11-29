@@ -50,10 +50,6 @@ INCLUDE(ospray_macros)
 INCLUDE(ospray_options)
 INCLUDE(ispc)
 
-IF(NOT WIN32)
-  INCLUDE(cmake/doxygen.cmake)
-ENDIF()
-
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
