@@ -63,6 +63,31 @@ int matrix_i =1, matrix_j=1, matrix_k = 1;
 float motionSpeed = -1.f;
 std::string initialTextForNodeSearch;
 
+int initializeOSPRay(int argc, const char *argv[])
+{
+  int init_error = ospInit(&argc, argv);
+  if (init_error != OSP_NO_ERROR) {
+    std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
+    return init_error;
+  }
+
+  auto device = ospGetCurrentDevice();
+  if (device == nullptr) {
+    std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
+    return 1;
+  }
+
+  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
+  ospDeviceSetErrorFunc(device,
+                        [](OSPError e, const char *msg) {
+                          std::cout << "OSPRAY ERROR [" << e << "]: "
+                                    << msg << std::endl;
+                        });
+
+  ospDeviceCommit(device);
+  return 0;
+}
+
 static inline void parseCommandLine(int ac, const char **&av)
 {
   clTransform currentCLTransform;
@@ -387,26 +412,9 @@ static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
 
 int main(int ac, const char **av)
 {
-  int init_error = ospInit(&ac, av);
-  if (init_error != OSP_NO_ERROR) {
-    std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
-    return init_error;
-  }
-
-  auto device = ospGetCurrentDevice();
-  if (device == nullptr) {
-    std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
-    return 1;
-  }
-
-  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
-  ospDeviceSetErrorFunc(device,
-                        [](OSPError e, const char *msg) {
-                          std::cout << "OSPRAY ERROR [" << e << "]: "
-                                    << msg << std::endl;
-                        });
-
-  ospDeviceCommit(device);
+  int initResult = initializeOSPRay(ac, av);
+  if(initResult != 0)
+    std::exit(initResult);
 
   // access/load symbols/sg::Nodes dynamically
   loadLibrary("ospray_sg");
