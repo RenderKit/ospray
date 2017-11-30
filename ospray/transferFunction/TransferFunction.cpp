@@ -26,6 +26,8 @@ namespace ospray {
     vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));
     ispc::TransferFunction_setValueRange(ispcEquivalent,
                                          (const ispc::vec2f &)valueRange);
+    //! --- 
+    ispc::TransferFunction_setQueryByPos(ispcEquivalent, 0);
   }
 
   std::string TransferFunction::toString() const

@@ -31,7 +31,6 @@ struct TransferFunction {
   varying vec3f (*getColorForValue)(const void *uniform transferFunction, 
                                     varying float value);
 
-
   //! Interpolated color for the given value.
   varying vec3f (*getIntegratedColorForValue)(const void *uniform transferFunction, 
                                     varying float value1, varying float value2);
@@ -51,5 +50,24 @@ struct TransferFunction {
   //! Virtual function to look up the min/max opacity value based on an input range.
   uniform vec2f (*getMinMaxOpacityInRange)(void *uniform transferFunction, 
                                            const uniform vec2f &range);
+
+  //! ----------------------
+  uniform int queryByPos;
+  //! Interpolated color for the given value.
+  varying vec3f (*getColorForPos)(const void *uniform transferFunction, 
+  				  varying vec3f pos);
+
+  //! Interpolated opacity for the given value.
+  varying float (*getOpacityForPos)(const void *uniform transferFunction, 
+  				    varying vec3f pos);
+
+  //! Interpolated color for the given value.
+  varying vec3f (*getIntegratedColorForPos)(const void *uniform transferFunction, 
+  					    varying vec3f pos1, varying vec3f pos2);
+
+  //! Interpolated opacity for the given value.
+  varying float (*getIntegratedOpacityForPos)(const void *uniform transferFunction, 
+  					      varying vec3f pos1, varying vec3f pos2);
+  //! ----------------------
 
 };
