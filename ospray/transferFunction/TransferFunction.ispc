@@ -27,7 +27,7 @@ export void TransferFunction_setValueRange(void *uniform pointer,
 }
 
 export void TransferFunction_setQueryByCoordinate(void *uniform pointer, 
-						  const uniform int flag) 
+						  const uniform bool flag) 
 {
   // Cast to the actual type.
   uniform TransferFunction *uniform transferFunction = (uniform TransferFunction *uniform) pointer;
