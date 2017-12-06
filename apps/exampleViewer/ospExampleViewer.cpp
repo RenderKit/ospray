@@ -52,15 +52,15 @@ int app::OSPExampleViewer::main(int ac, const char **av) {
   // access/load symbols/sg::Nodes dynamically
   loadLibrary("ospray_sg");
 
-  imgui3D::init(&ac, av);
 
   parseCommandLine(ac, av);
+
+  imgui3D::init(&ac, av);
 
   auto renderer_ptr = sg::createNode("renderer", "Renderer");
   auto &renderer = *renderer_ptr;
 
-  auto &win_size = ospray::imgui3D::ImGui3DWidget::defaultInitSize;
-  renderer["frameBuffer"]["size"] = win_size;
+  renderer["frameBuffer"]["size"] = imgui3D::ImGui3DWidget::defaultInitSize;
 
   if (!initialRendererType.empty())
     renderer["rendererType"] = initialRendererType;
