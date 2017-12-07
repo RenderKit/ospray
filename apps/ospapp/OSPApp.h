@@ -26,10 +26,10 @@ class OSPApp {
  protected:
   int initializeOSPRay(int argc, const char *argv[]);
 
-  void parseCommandLine(int ac, const char **&av);
+  int parseCommandLine(int &ac, const char **&av);
   // parse command line arguments containing the format:
-  //  -nodeName:...:nodeName=value,value,value -- changes value
-  //  -nodeName:...:nodeName+=name,type        -- adds new child node
+  //  -sg:nodeName:...:nodeName=value,value,value -- changes value
+  //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
   void parseCommandLineSG(int ac, const char **&av, sg::Node &root);
 
   void addLightsToScene(sg::Node &renderer, bool defaults);
@@ -55,6 +55,15 @@ class OSPApp {
 
   std::string hdri_light;
   int matrix_i = 1, matrix_j = 1, matrix_k = 1;
+
+                int width = 1024;
+                int height = 1024;
+                vec3f up;
+                vec3f pos;
+                vec3f gaze;
+                float fovy = 60.f;
+		float apertureRadius = 0.f;
+
 };
 
 } // namespace ospray

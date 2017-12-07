@@ -479,123 +479,19 @@ namespace ospray {
       glfwTerminate();
     }
 
-    void init(int32_t *ac, const char **av)
+    void init(vec3f vp, vec3f vu, vec3f vi, float fv, float ar, int width, int height)
     {
-      for(int i = 1; i < *ac;i++) {
-        std::string arg(av[i]);
-        if (arg == "-win") {
-          std::string arg2(av[i+1]);
-          size_t pos = arg2.find("x");
-          if (pos != std::string::npos) {
-            arg2.replace(pos, 1, " ");
-            std::stringstream ss(arg2);
-            ss >> ImGui3DWidget::defaultInitSize.x
-               >> ImGui3DWidget::defaultInitSize.y;
-            removeArgs(*ac,av,i,2); --i;
-          } else {
-            ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-            ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-            removeArgs(*ac,av,i,3); --i;
-          }
-          continue;
-        } if (arg == "--1k" || arg == "-1k") {
-          ImGui3DWidget::defaultInitSize.x =
-              ImGui3DWidget::defaultInitSize.y = 1024;
-          removeArgs(*ac,av,i,1); --i;
-          continue;
-        } if (arg == "--size") {
-          ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-          ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-          removeArgs(*ac,av,i,3); --i;
-          continue;
-        } if (arg == "-v" || arg == "--view") {
-          std::ifstream fin(av[i+1]);
-          if (!fin.is_open())
-          {
-            throw std::runtime_error("Failed to open \"" +
-                                     std::string(av[i+1]) +
-                                     "\" for reading");
-          }
-
           if (!viewPortFromCmdLine)
             viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
 
-          auto& fx = viewPortFromCmdLine->from.x;
-          auto& fy = viewPortFromCmdLine->from.y;
-          auto& fz = viewPortFromCmdLine->from.z;
-
-          auto& ax = viewPortFromCmdLine->at.x;
-          auto& ay = viewPortFromCmdLine->at.y;
-          auto& az = viewPortFromCmdLine->at.z;
-
-          auto& ux = viewPortFromCmdLine->up.x;
-          auto& uy = viewPortFromCmdLine->up.y;
-          auto& uz = viewPortFromCmdLine->up.z;
-
-          auto& fov = viewPortFromCmdLine->openingAngle;
-
-          auto token = std::string("");
-          while (fin >> token) {
-            if (token == "-vp")
-              fin >> fx >> fy >> fz;
-            else if (token == "-vu")
-              fin >> ux >> uy >> uz;
-            else if (token == "-vi")
-              fin >> ax >> ay >> az;
-            else if (token == "-fv")
-              fin >> fov;
-            else {
-              throw std::runtime_error("Unrecognized token:  \"" + token +
-                                       '\"');
-            }
-          }
-
-          assert(i+1 < *ac);
-          removeArgs(*ac,av, i, 2); --i;
-          continue;
-        } if (arg == "-vu") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->up.x = atof(av[i+1]);
-          viewPortFromCmdLine->up.y = atof(av[i+2]);
-          viewPortFromCmdLine->up.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-vp") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->from.x = atof(av[i+1]);
-          viewPortFromCmdLine->from.y = atof(av[i+2]);
-          viewPortFromCmdLine->from.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-vi") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->at.x = atof(av[i+1]);
-          viewPortFromCmdLine->at.y = atof(av[i+2]);
-          viewPortFromCmdLine->at.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-fv") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->openingAngle = atof(av[i+1]);
-          assert(i+1 < *ac);
-          removeArgs(*ac,av,i,2); --i;
-          continue;
-        } if (arg == "-ar") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->apertureRadius = atof(av[i+1]);
-          assert(i+1 < *ac);
-          removeArgs(*ac,av,i,2); --i;
-          continue;
-        }
-      }
+	viewPortFromCmdLine->up = vu;
+	viewPortFromCmdLine->from = vp;
+	viewPortFromCmdLine->at = vi;
+	viewPortFromCmdLine->openingAngle = fv;
+	viewPortFromCmdLine->apertureRadius = ar;
+	
+        ImGui3DWidget::defaultInitSize.x = width;
+        ImGui3DWidget::defaultInitSize.y = height;
     }
 
     void ImGui3DWidget::keypress(char key)

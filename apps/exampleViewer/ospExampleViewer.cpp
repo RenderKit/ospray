@@ -55,7 +55,7 @@ int app::OSPExampleViewer::main(int ac, const char **av) {
 
   parseCommandLine(ac, av);
 
-  imgui3D::init(&ac, av);
+  imgui3D::init(pos, up, gaze, fovy, apertureRadius, width, height);
 
   auto renderer_ptr = sg::createNode("renderer", "Renderer");
   auto &renderer = *renderer_ptr;

@@ -41,12 +41,6 @@ namespace app {
 		template <typename T> void outputStats(const T &stats);	
 		size_t numWarmupFrames = 10;
 		size_t numBenchFrames = 100;
-		int width = 1024;
-		int height = 1024;
- 	 	vec3f up;
-		vec3f pos;
-		vec3f gaze;
-		float fovy = 60.f;
 		bool customView = false;
 		std::string imageOutputFile = "";
         };
@@ -133,38 +127,26 @@ void app::OSPBenchmark::setupCamera(sg::Node &renderer) {
 }
 
 void app::OSPBenchmark::parseCommandLine(int ac, const char **&av) {
-  app::OSPApp::parseCommandLine(ac, av);
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "-i" || arg == "--image") {
-      imageOutputFile = av[++i];
+      imageOutputFile = av[i+1];
+	removeArgs(ac,av,i,2); --i;
     } else if (arg == "-w" || arg == "--width") {
-      width = atoi(av[++i]);
+      width = atoi(av[i+1]);
+	removeArgs(ac,av,i,2); --i;
     } else if (arg == "-h" || arg == "--height") {
-      height = atoi(av[++i]);
+      height = atoi(av[i+1]);
+	removeArgs(ac,av,i,2); --i;
     } else if (arg == "-wf" || arg == "--warmup") {
-      numWarmupFrames = atoi(av[++i]);
+      numWarmupFrames = atoi(av[i+1]);
+	removeArgs(ac,av,i,2); --i;
     } else if (arg == "-bf" || arg == "--bench") {
-      numBenchFrames = atoi(av[++i]);
-    } else if (arg == "-vp" || arg == "--eye") {
-      pos.x = atof(av[++i]);
-      pos.y = atof(av[++i]);
-      pos.z = atof(av[++i]);
-      customView = true;
-    } else if (arg == "-vu" || arg == "--up") {
-      up.x = atof(av[++i]);
-      up.y = atof(av[++i]);
-      up.z = atof(av[++i]);
-      customView = true;
-    } else if (arg == "-vi" || arg == "--gaze") {
-      gaze.x = atof(av[++i]);
-      gaze.y = atof(av[++i]);
-      gaze.z = atof(av[++i]);
-      customView = true;
-    } else if (arg == "-fv" || arg == "--fovy") {
-      fovy = atof(av[++i]);
-    }   
+      numBenchFrames = atoi(av[i+1]);
+	removeArgs(ac,av,i,2); --i;
+    } 
   }
+  app::OSPApp::parseCommandLine(ac, av);
 }
 
 

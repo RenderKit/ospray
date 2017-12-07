@@ -45,7 +45,7 @@ namespace ospray {
       cam.modified = true;
     }
 
-    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
+    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort position
       forward/backward on right mouse button */
     void InspectCenter::dragRight(ImGui3DWidget *widget,
                                   const vec2i &to, const vec2i &from)

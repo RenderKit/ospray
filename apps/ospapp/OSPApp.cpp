@@ -16,17 +16,6 @@
 
 #include "OSPApp.h"
 #include "common/sg/SceneGraph.h"
-//#include "common/sg/Renderer.h"
-//#include "common/sg/importer/Importer.h"
-//#include "common/sg/visitor/PrintNodes.h"
-//#include "ospcommon/FileName.h"
-//#include "ospcommon/networking/Socket.h"
-//#include "ospcommon/utility/getEnvVar.h"
-//#include "ospcommon/vec.h"
-//#include "common/sg/common/Animator.h"
-//#include "sg/geometry/TriangleMesh.h"
-//#include "ospcommon/utility/SaveImage.h"
-//#include "sg/common/FrameBuffer.h"
 
 namespace ospray {
 namespace app {
@@ -56,46 +45,91 @@ int OSPApp::initializeOSPRay(int argc, const char *argv[]) {
   return 0;
 }
 
-void OSPApp::parseCommandLine(int ac, const char **&av) {
+int OSPApp::parseCommandLine(int &ac, const char **&av) {
   clTransform currentCLTransform;
   bool inAnimation = false;
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "-r" || arg == "--renderer") {
-      initialRendererType = av[++i];
+      initialRendererType = av[i+1];
+      removeArgs(ac,av,i,2); --i;
     } else if (arg == "-m" || arg == "--module") {
-      ospLoadModule(av[++i]);
+      ospLoadModule(av[i+1]);
+      removeArgs(ac,av,i,2); --i;
     } else if (arg == "--matrix") {
-      matrix_i = atoi(av[++i]);
-      matrix_j = atoi(av[++i]);
-      matrix_k = atoi(av[++i]);
+      matrix_i = atoi(av[i+1]);
+      matrix_j = atoi(av[i+2]);
+      matrix_k = atoi(av[i+3]);
+      removeArgs(ac,av,i,4); --i;
     } else if (arg == "--hdri-light") {
-      hdri_light = av[++i];
+      hdri_light = av[i+1];
+      removeArgs(ac,av,i,2); --i;
     } else if (arg == "--translate") {
-      currentCLTransform.translate.x = atof(av[++i]);
-      currentCLTransform.translate.y = atof(av[++i]);
-      currentCLTransform.translate.z = atof(av[++i]);
+      currentCLTransform.translate.x = atof(av[i+1]);
+      currentCLTransform.translate.y = atof(av[i+2]);
+      currentCLTransform.translate.z = atof(av[i+3]);
+      removeArgs(ac,av,i,4); --i;
     } else if (arg == "--scale") {
-      currentCLTransform.scale.x = atof(av[++i]);
-      currentCLTransform.scale.y = atof(av[++i]);
-      currentCLTransform.scale.z = atof(av[++i]);
+      currentCLTransform.scale.x = atof(av[i+1]);
+      currentCLTransform.scale.y = atof(av[i+2]);
+      currentCLTransform.scale.z = atof(av[i+3]);
+      removeArgs(ac,av,i,4); --i;
     } else if (arg == "--rotate") {
-      currentCLTransform.rotation.x = atof(av[++i]);
-      currentCLTransform.rotation.y = atof(av[++i]);
-      currentCLTransform.rotation.z = atof(av[++i]);
+      currentCLTransform.rotation.x = atof(av[i+1]);
+      currentCLTransform.rotation.y = atof(av[i+2]);
+      currentCLTransform.rotation.z = atof(av[i+3]);
+      removeArgs(ac,av,i,4); --i;
     } else if (arg == "--animation") {
       inAnimation = true;
       animatedFiles.push_back(std::vector<clFile>());
+      removeArgs(ac,av,i,1); --i;
     } else if (arg == "--file") {
       inAnimation = false;
+      removeArgs(ac,av,i,1); --i;
+    } else if (arg == "-w" || arg == "--width") {
+      width = atoi(av[i+1]);
+      removeArgs(ac,av,i,2); --i;
+    } else if (arg == "-h" || arg == "--height") {
+      height = atoi(av[i+1]);
+      removeArgs(ac,av,i,2); --i;
+    } else if (arg == "-vp" || arg == "--eye") {
+      pos.x = atof(av[i+1]);
+      pos.y = atof(av[i+2]);
+      pos.z = atof(av[i+3]);
+      removeArgs(ac,av,i,4); --i;
+    } else if (arg == "-vu" || arg == "--up") {
+      up.x = atof(av[i+1]);
+      up.y = atof(av[i+2]);
+      up.z = atof(av[i+3]);
+      removeArgs(ac,av,i,4); --i;
+    } else if (arg == "-vi" || arg == "--gaze") {
+      gaze.x = atof(av[i+1]);
+      gaze.y = atof(av[i+2]);
+      gaze.z = atof(av[i+3]);
+      removeArgs(ac,av,i,4); --i;
+    } else if (arg == "-fv" || arg == "--fovy") {
+      fovy = atof(av[i+1]);
+      removeArgs(ac,av,i,2); --i;
+    } else if (arg == "-ar") {
+      apertureRadius = atof(av[i+1]);
+      removeArgs(ac,av,i,2); --i;
+    } else if (arg.compare(0, 4, "-sg:") == 0) {
+	// SG parameters are validated by prefix only.
+	// Later different function is used for parsing this type parameters.
+	continue;
     } else if (arg[0] != '-') {
       if (!inAnimation)
         files.push_back(clFile(av[i], currentCLTransform));
       else
         animatedFiles.back().push_back(clFile(av[i], currentCLTransform));
       currentCLTransform = clTransform();
+      removeArgs(ac,av,i,1); --i;
+    } else {
+        std::cerr << "Error: unknown parameter '" << arg << std::endl;
+	return 1;
     }
   }
+  return 0;
 }
 
 void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root) {
@@ -103,10 +137,17 @@ void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root) {
     std::string arg(av[i]);
     size_t f;
     std::string value("");
-    if (arg.size() < 2 || arg[0] != '-')
+
+    // Only parameters started with "-sg:" are allowed
+    if (arg.compare(0, 4, "-sg:") != 0)
       continue;
 
+    // Store original argument before processing
     const std::string orgarg(arg);
+
+    // Remove "-sg:" prefix
+    arg = arg.substr(4, arg.length());
+
     while ((f = arg.find(":")) != std::string::npos ||
            (f = arg.find(",")) != std::string::npos) {
       arg[f] = ' ';
@@ -122,10 +163,9 @@ void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root) {
       if (f != std::string::npos)
         value = arg.substr(f + 1, arg.size());
     }
-
     if (value != "") {
       std::stringstream ss;
-      ss << arg.substr(1, f - 1);
+      ss << arg.substr(0, f);
       std::string child;
       std::reference_wrapper<sg::Node> node_ref = root;
       try {

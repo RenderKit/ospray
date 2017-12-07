@@ -32,7 +32,7 @@ namespace ospray {
     using namespace ospcommon;
 
     /*! initialize everything IMGUI-related */
-    OSPRAY_IMGUI3D_INTERFACE void init(int32_t *ac, const char **av);
+    OSPRAY_IMGUI3D_INTERFACE void init(vec3f vp, vec3f vu, vec3f vi, float fv, float ar, int width, int height);
     /*! switch over to IMGUI for control flow. This func will not return */
     OSPRAY_IMGUI3D_INTERFACE void run();
 
@@ -81,7 +81,6 @@ namespace ospray {
          float openingAngle; //!< in degrees, along Y direction
          float aspect; //!< aspect ratio X:Y
          float apertureRadius;
-         // float focalDistance;
 
          /*! camera frame in which the Y axis is the depth axis, and X
            and Z axes are parallel to the screen X and Y axis. The frame

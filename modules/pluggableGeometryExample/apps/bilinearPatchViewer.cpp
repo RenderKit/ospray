@@ -87,8 +87,8 @@ namespace ospray {
       // access/load symbols/sg::Nodes dynamically
       loadLibrary("ospray_sg");
       ospLoadModule("bilinear_patches");
-
-      ospray::imgui3D::init(&ac,av);
+//TOdo - fix it later
+//      ospray::imgui3D::init(&ac,av);
 
       // parse the commandline; complain about anything we do not
       // recognize
