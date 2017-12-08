@@ -142,7 +142,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
 
     if (volume->transferFunction->queryByCoordinate) {
       sampleOpacity = volume->transferFunction->getOpacityForCoordinate
-	(volume->transferFunction, coordinates);
+	(volume->transferFunction, volume, coordinates);
     } else {
       sample = volume->sample(volume, coordinates);
       if (lastSample == -1.f) { lastSample = sample; }
@@ -177,7 +177,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
     if (!isShadowRay) {
       if (volume->transferFunction->queryByCoordinate) {
 	sampleColor = volume->transferFunction->getColorForCoordinate
-	  (volume->transferFunction, coordinates);
+	  (volume->transferFunction, volume, coordinates);
       } else {
 	sampleColor = volume->transferFunction->getIntegratedColorForValue(
           volume->transferFunction, lastSample, sample);
