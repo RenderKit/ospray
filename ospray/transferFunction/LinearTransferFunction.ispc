@@ -493,3 +493,18 @@ export void LinearTransferFunction_precomputePreIntegratedValues(void *uniform _
   LinearTransferFunction_precomputePreIntegratedOpacityValues(_self);
   self->super.preIntegrationComputed = true;
 }
+
+export void LinearTransferFunction_freeMemory(void *uniform _self)
+{
+  LinearTransferFunction *uniform self
+    = (LinearTransferFunction *uniform) _self;
+  if (self->opacityPITable)
+    delete[] self->opacityPITable;
+
+  if (self->colorPITable)
+    delete[] self->colorPITable;
+
+  if (self->colorValues != NULL)
+    delete[] self->colorValues;
+}
+
