@@ -37,7 +37,7 @@ namespace ospray {
   public:
 
     StructuredVolume() = default;
-    virtual ~StructuredVolume() override = default;
+    virtual ~StructuredVolume() override;
 
     //! A string description of this class.
     virtual std::string toString() const override;
