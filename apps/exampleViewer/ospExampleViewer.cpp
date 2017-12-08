@@ -30,7 +30,7 @@ namespace app {
 	private:
 		int initializeOSPRay(int argc, const char *argv[]);
 		void addPlaneToScene(sg::Node &renderer);
-		void parseCommandLine(int ac, const char **&av);
+		int parseCommandLine(int &ac, const char **&av);
 		bool debug = false;
 		bool fullscreen = false;
 		bool print = false;
@@ -53,7 +53,9 @@ int app::OSPExampleViewer::main(int ac, const char **av) {
   loadLibrary("ospray_sg");
 
 
-  parseCommandLine(ac, av);
+  if(parseCommandLine(ac, av) != 0) {
+	return 1;
+  }
 
   imgui3D::init(pos, up, gaze, fovy, apertureRadius, width, height);
 
@@ -151,26 +153,33 @@ void ospray::app::OSPExampleViewer::addPlaneToScene(sg::Node &renderer) {
   planeMaterial["Ns"] = 10.f;
 }
 
-void app::OSPExampleViewer::parseCommandLine(int ac, const char **&av) {
-  app::OSPApp::parseCommandLine(ac, av);
+int app::OSPExampleViewer::parseCommandLine(int &ac, const char **&av) {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "-np" || arg == "--no-plane") {
       addPlane = false;
+	removeArgs(ac,av,i,1); --i;
     } else  if (arg == "-d" || arg == "--debug") {
       debug = true;
+	removeArgs(ac,av,i,1); --i;
     } else if (arg == "--print") {
       print = true;
+	removeArgs(ac,av,i,1); --i;
     } else if (arg == "--no-defaults") {
       noDefaults = true;
+	removeArgs(ac,av,i,1); --i;
     } else if (arg == "--fullscreen") {
       fullscreen = true;
+	removeArgs(ac,av,i,1); --i;
     } else if (arg == "--motionSpeed") {
-      motionSpeed = atof(av[++i]);
+      motionSpeed = atof(av[i+1]);
+	removeArgs(ac,av,i,2); --i;
     } else if (arg == "--searchText") {
-      initialTextForNodeSearch = av[++i];
+      initialTextForNodeSearch = av[i+1];
+	removeArgs(ac,av,i,2); --i;
     }
   }
+  return app::OSPApp::parseCommandLine(ac, av);
 }
 
 

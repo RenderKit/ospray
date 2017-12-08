@@ -125,7 +125,7 @@ int OSPApp::parseCommandLine(int &ac, const char **&av) {
       currentCLTransform = clTransform();
       removeArgs(ac,av,i,1); --i;
     } else {
-        std::cerr << "Error: unknown parameter '" << arg << std::endl;
+        std::cerr << "Error: unknown parameter '" << arg << "'." <<  std::endl;
 	return 1;
     }
   }
@@ -135,6 +135,7 @@ int OSPApp::parseCommandLine(int &ac, const char **&av) {
 void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root) {
   for (int i = 1; i < ac; i++) {
     std::string arg(av[i]);
+	printf("cmd: %s\n", arg.c_str());
     size_t f;
     std::string value("");
 

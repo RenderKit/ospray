@@ -18,15 +18,6 @@
 #include "pico_bench/pico_bench.h"
 #include "ospapp/OSPApp.h"
 #include "common/sg/SceneGraph.h"
-//#include "common/sg/Renderer.h"
-//#include "common/sg/importer/Importer.h"
-//#include "common/sg/visitor/PrintNodes.h"
-//#include "ospcommon/FileName.h"
-//#include "ospcommon/networking/Socket.h"
-//#include "ospcommon/utility/getEnvVar.h"
-//#include "ospcommon/vec.h"
-//#include "common/sg/common/Animator.h"
-//#include "sg/geometry/TriangleMesh.h"
 #include "ospcommon/utility/SaveImage.h"
 #include "sg/common/FrameBuffer.h"
 
@@ -37,11 +28,10 @@ namespace app {
 		int main(int ac, const char **av);
 	private:
 		void setupCamera(sg::Node &renderer);
- 		void parseCommandLine(int ac, const char **&av);
+ 		int parseCommandLine(int ac, const char **&av);
 		template <typename T> void outputStats(const T &stats);	
 		size_t numWarmupFrames = 10;
 		size_t numBenchFrames = 100;
-		bool customView = false;
 		std::string imageOutputFile = "";
         };
 }
@@ -57,7 +47,8 @@ int app::OSPBenchmark::main(int ac, const char **av) {
   // access/load symbols/sg::Nodes dynamically
   loadLibrary("ospray_sg");
 
-  parseCommandLine(ac, av);
+  if(parseCommandLine(ac, av) != 0)
+	return 1;
 
   auto renderer_ptr = sg::createNode("renderer", "Renderer");
   auto &renderer = *renderer_ptr;
@@ -103,8 +94,8 @@ int app::OSPBenchmark::main(int ac, const char **av) {
 }
 
 void app::OSPBenchmark::setupCamera(sg::Node &renderer) {
+ /* if (false) {
   auto &world = renderer["world"];
-  if (!customView) {
     auto bbox = world.bounds();
     vec3f diag = bbox.size();
     diag = max(diag, vec3f(0.3f * length(diag)));
@@ -113,7 +104,7 @@ void app::OSPBenchmark::setupCamera(sg::Node &renderer) {
 
     pos = gaze - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
     up = vec3f(0.f, 1.f, 0.f);
-  }
+  }*/
 
   auto dir = gaze - pos;
 
@@ -126,7 +117,7 @@ void app::OSPBenchmark::setupCamera(sg::Node &renderer) {
   renderer.traverse("commit");
 }
 
-void app::OSPBenchmark::parseCommandLine(int ac, const char **&av) {
+int app::OSPBenchmark::parseCommandLine(int ac, const char **&av) {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "-i" || arg == "--image") {
@@ -146,7 +137,7 @@ void app::OSPBenchmark::parseCommandLine(int ac, const char **&av) {
 	removeArgs(ac,av,i,2); --i;
     } 
   }
-  app::OSPApp::parseCommandLine(ac, av);
+  return app::OSPApp::parseCommandLine(ac, av);
 }
 
 
