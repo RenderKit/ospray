@@ -31,8 +31,6 @@ namespace ospray {
 
     using namespace ospcommon;
 
-    /*! initialize everything IMGUI-related */
-    OSPRAY_IMGUI3D_INTERFACE void init(vec3f vp, vec3f vu, vec3f vi, float fv, float ar, int width, int height);
     /*! switch over to IMGUI for control flow. This func will not return */
     OSPRAY_IMGUI3D_INTERFACE void run();
 
@@ -59,9 +57,6 @@ namespace ospray {
     */
     struct OSPRAY_IMGUI3D_INTERFACE ImGui3DWidget
     {
-       /*! size we'll create a window at */
-       static vec2i defaultInitSize;
-
        typedef enum {
          FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_DEPTH,FRAMEBUFFER_NONE
        } FrameBufferMode;
@@ -140,7 +135,7 @@ namespace ospray {
        /*! create this window. Note that this just *creates* the window,
          but glut will not do anything else with this window before
          'run' got called */
-       void create(const char *title, bool fullScreen = false);
+       void create(const char *title, const bool fullScreen = false, vec2i windowSize = {1024, 768});
 
        // ------------------------------------------------------------------
        // camera helper code

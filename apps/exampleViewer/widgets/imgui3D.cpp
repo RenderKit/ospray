@@ -72,13 +72,9 @@ namespace ospray {
 
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
-    vec2i ImGui3DWidget::defaultInitSize(1024,768);
-
     bool ImGui3DWidget::animating = false;
 
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
-    /*! viewport as specified on the command line */
-    ImGui3DWidget::ViewPort *viewPortFromCmdLine = nullptr;
 
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
@@ -162,17 +158,6 @@ namespace ospray {
         break;
       }
       Assert2(manipulator != nullptr,"invalid initial manipulator mode");
-
-      if (viewPortFromCmdLine) {
-        viewPort = *viewPortFromCmdLine;
-
-        if (length(viewPort.up) < 1e-3f)
-          viewPort.up = vec3f(0,0,1.f);
-
-        this->worldBounds = worldBounds;
-        computeFrame();
-      }
-
       currButton[0] = currButton[1] = currButton[2] = GLFW_RELEASE;
 
       displayTime=-1.f;
@@ -263,30 +248,7 @@ namespace ospray {
 
     void ImGui3DWidget::setWorldBounds(const box3f &worldBounds)
     {
-      vec3f center = ospcommon::center(worldBounds);
-      vec3f diag   = worldBounds.size();
-      diag         = max(diag,vec3f(0.3f*length(diag)));
-      vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-      vec3f dir    = center - from;
-      vec3f up     = viewPort.up;
-
-      if (!viewPortFromCmdLine) {
-        viewPort.at   = center;
-        viewPort.from = from;
-        viewPort.up   = up;
-
-        if (length(up) < 1e-3f)
-          up = vec3f(0,0,1.f);
-
-        this->worldBounds = worldBounds;
-        viewPort.frame.l.vy = normalize(dir);
-        viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
-        viewPort.frame.p    = from;
-        viewPort.snapFrameUp();
-        viewPort.modified = true;
-      }
-
+      vec3f diag   = max(worldBounds.size(),vec3f(0.3f*length(worldBounds.size())));
       if (motionSpeed < 0.f)
         motionSpeed = length(diag) * .001f;
     }
@@ -298,7 +260,7 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title, bool fullScreen)
+    void ImGui3DWidget::create(const char *title, const bool fullScreen, const vec2i windowSize)
     {
       // Setup window
       auto error_callback = [](int error, const char* description) {
@@ -313,7 +275,7 @@ namespace ospray {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-      auto size = defaultInitSize;
+      auto size = windowSize;
 
       auto defaultSizeFromEnv =
           getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
@@ -477,21 +439,6 @@ namespace ospray {
       // Cleanup
       ImGui_ImplGlfwGL3_Shutdown();
       glfwTerminate();
-    }
-
-    void init(vec3f vp, vec3f vu, vec3f vi, float fv, float ar, int width, int height)
-    {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-
-	viewPortFromCmdLine->up = vu;
-	viewPortFromCmdLine->from = vp;
-	viewPortFromCmdLine->at = vi;
-	viewPortFromCmdLine->openingAngle = fv;
-	viewPortFromCmdLine->apertureRadius = ar;
-	
-        ImGui3DWidget::defaultInitSize.x = width;
-        ImGui3DWidget::defaultInitSize.y = height;
     }
 
     void ImGui3DWidget::keypress(char key)

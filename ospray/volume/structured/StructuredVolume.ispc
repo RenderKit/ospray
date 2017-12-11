@@ -203,3 +203,10 @@ export void *uniform StructuredVolume_createAccelerator(void *uniform _self)
 
   return self->accelerator;
 }
+
+export void *uniform StructuredVolume_destroy(void *uniform _self)
+{
+  StructuredVolume *uniform self = (StructuredVolume *uniform)_self;
+  if (self->accelerator) GridAccelerator_destroy(self->accelerator);
+}
+

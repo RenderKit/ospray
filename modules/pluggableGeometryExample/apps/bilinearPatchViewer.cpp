@@ -87,8 +87,6 @@ namespace ospray {
       // access/load symbols/sg::Nodes dynamically
       loadLibrary("ospray_sg");
       ospLoadModule("bilinear_patches");
-//TOdo - fix it later
-//      ospray::imgui3D::init(&ac,av);
 
       // parse the commandline; complain about anything we do not
       // recognize
@@ -103,7 +101,7 @@ namespace ospray {
       auto renderer_ptr = sg::createNode("renderer", "Renderer");
       auto &renderer = *renderer_ptr;
 
-      auto &win_size = ospray::imgui3D::ImGui3DWidget::defaultInitSize;
+      vec2i win_size = {1024, 768};
       renderer["frameBuffer"]["size"] = win_size;
 
       renderer["rendererType"] = std::string("raycast");
@@ -126,7 +124,7 @@ namespace ospray {
       patchesInstance["model"].add(patchesGeometryNode);
 
       ospray::ImGuiViewer window(renderer_ptr);
-
+	//TODO - it doesn't work anymore - viewPort has to be set first
       auto &viewPort = window.viewPort;
       // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
       auto dir = normalize(viewPort.at - viewPort.from);
@@ -137,8 +135,7 @@ namespace ospray {
       renderer["camera"]["apertureRadius"] = viewPort.apertureRadius;
       if (renderer["camera"].hasChild("focusdistance"))
         renderer["camera"]["focusdistance"] = length(viewPort.at - viewPort.from);
-
-      window.create("OSPRay Example Viewer (module) App");
+      window.create("OSPRay Example Viewer (module) App", false, win_size);
 
       ospray::imgui3D::run();
       return 0;

@@ -16,6 +16,8 @@
 
 #include "OSPApp.h"
 #include "common/sg/SceneGraph.h"
+#include "sg/geometry/TriangleMesh.h"
+#include "common/sg/visitor/PrintNodes.h"
 
 namespace ospray {
 namespace app {
@@ -45,14 +47,79 @@ int OSPApp::initializeOSPRay(int argc, const char *argv[]) {
   return 0;
 }
 
-int OSPApp::parseCommandLine(int &ac, const char **&av) {
+void OSPApp::printHelp() {
+  std::cout << "Help - TODO..." << std::endl;
+}
+
+int OSPApp::main(int argc, const char *argv[]) {
+
+  int result = initializeOSPRay(argc, argv);
+  if(result != 0)
+    return result;
+
+  // access/load symbols/sg::Nodes dynamically
+  loadLibrary("ospray_sg");
+
+  result = parseGeneralCommandLine(argc, argv);
+  switch(result) {
+	// Everything is ok - continue
+	case 0: break;
+	// Everything is done - return without further execution
+	case 2: return 0;
+	// Something went wrong - exit with error	
+	default: return 1;
+  }
+
+  auto rendererPtr = sg::createNode("renderer", "Renderer");
+  auto &renderer = *rendererPtr;
+
+  if (!initialRendererType.empty())
+    renderer["rendererType"] = initialRendererType;
+
+  renderer.createChild("animationcontroller", "AnimationController");
+
+  addLightsToScene(renderer);
+  addImporterNodesToWorld(renderer);
+  addAnimatedImporterNodesToWorld(renderer);
+  addPlaneToScene(renderer);
+  setupCamera(renderer);
+
+  renderer["frameBuffer"]["size"] = vec2i(width, height);
+  renderer.traverse("verify");
+  renderer.traverse("commit");
+
+   // last, to be able to modify all created SG nodes
+  parseCommandLineSG(argc, argv, renderer);
+
+  if (debug) {
+    renderer.traverse(sg::PrintNodes{});
+  }
+
+  render(rendererPtr);
+
+  return 0;
+}
+
+int OSPApp::parseGeneralCommandLine(int &ac, const char **&av) {
+  // Call children command line parsing methods
+  if(parseCommandLine(ac, av) != 0) {
+	return 1;
+  }	
+
   clTransform currentCLTransform;
   bool inAnimation = false;
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
-    if (arg == "-r" || arg == "--renderer") {
+    if (arg == "--help") {
+	printHelp();
+	// We don't want to do anything else so return 2.
+	return 2;	
+    } else if (arg == "-r" || arg == "--renderer") {
       initialRendererType = av[i+1];
       removeArgs(ac,av,i,2); --i;
+    } else  if (arg == "-d" || arg == "--debug") {
+      debug = true;
+      removeArgs(ac,av,i,1); --i;
     } else if (arg == "-m" || arg == "--module") {
       ospLoadModule(av[i+1]);
       removeArgs(ac,av,i,2); --i;
@@ -61,6 +128,18 @@ int OSPApp::parseCommandLine(int &ac, const char **&av) {
       matrix_j = atoi(av[i+2]);
       matrix_k = atoi(av[i+3]);
       removeArgs(ac,av,i,4); --i;
+    } else if (arg == "--add-plane") {
+      addPlane = true;
+      removeArgs(ac,av,i,1); --i;
+    } else if (arg == "--no-plane") {
+      noPlane = true;
+      removeArgs(ac,av,i,1); --i;
+    } else if (arg == "--no-lights") {
+      noDefaultLights = true;
+      removeArgs(ac,av,i,1); --i;
+    } else if (arg == "--add-lights") {
+      addDefaultLights = true;
+      removeArgs(ac,av,i,1); --i;
     } else if (arg == "--hdri-light") {
       hdri_light = av[i+1];
       removeArgs(ac,av,i,2); --i;
@@ -92,22 +171,32 @@ int OSPApp::parseCommandLine(int &ac, const char **&av) {
     } else if (arg == "-h" || arg == "--height") {
       height = atoi(av[i+1]);
       removeArgs(ac,av,i,2); --i;
-    } else if (arg == "-vp" || arg == "--eye") {
-      pos.x = atof(av[i+1]);
-      pos.y = atof(av[i+2]);
-      pos.z = atof(av[i+3]);
+    } else if (arg == "-size") {
+      width = atoi(av[i+1]);
+      height = atoi(av[i+2]);
+      removeArgs(ac,av,i,3); --i;
+    } else if (arg == "-vp") {
+      vec3f posVec;
+      posVec.x = atof(av[i+1]);
+      posVec.y = atof(av[i+2]);
+      posVec.z = atof(av[i+3]);
       removeArgs(ac,av,i,4); --i;
-    } else if (arg == "-vu" || arg == "--up") {
-      up.x = atof(av[i+1]);
-      up.y = atof(av[i+2]);
-      up.z = atof(av[i+3]);
+      pos = posVec;
+    } else if (arg == "-vu") {
+	vec3f upVec;
+	upVec.x = atof(av[i+1]);
+	upVec.y = atof(av[i+2]);
+	upVec.z = atof(av[i+3]);
       removeArgs(ac,av,i,4); --i;
-    } else if (arg == "-vi" || arg == "--gaze") {
-      gaze.x = atof(av[i+1]);
-      gaze.y = atof(av[i+2]);
-      gaze.z = atof(av[i+3]);
+	up = upVec;
+    } else if (arg == "-vi") {
+      vec3f gazeVec;
+      gazeVec.x = atof(av[i+1]);
+      gazeVec.y = atof(av[i+2]);
+      gazeVec.z = atof(av[i+3]);
       removeArgs(ac,av,i,4); --i;
-    } else if (arg == "-fv" || arg == "--fovy") {
+      gaze = gazeVec;
+    } else if (arg == "-fv") {
       fovy = atof(av[i+1]);
       removeArgs(ac,av,i,2); --i;
     } else if (arg == "-ar") {
@@ -126,6 +215,7 @@ int OSPApp::parseCommandLine(int &ac, const char **&av) {
       removeArgs(ac,av,i,1); --i;
     } else {
         std::cerr << "Error: unknown parameter '" << arg << "'." <<  std::endl;
+	printHelp();
 	return 1;
     }
   }
@@ -135,7 +225,6 @@ int OSPApp::parseCommandLine(int &ac, const char **&av) {
 void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root) {
   for (int i = 1; i < ac; i++) {
     std::string arg(av[i]);
-	printf("cmd: %s\n", arg.c_str());
     size_t f;
     std::string value("");
 
@@ -234,10 +323,13 @@ void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root) {
   }
 }
 
-void OSPApp::addLightsToScene(sg::Node &renderer, bool defaults) {
+void OSPApp::addLightsToScene(sg::Node &renderer) {  
+  renderer.traverse("verify");
+  renderer.traverse("commit");
   auto &lights = renderer["lights"];
 
-  if (defaults) {
+  if (noDefaultLights == false &&
+	 (lights.numChildren() <= 0 || addDefaultLights == true)) {
     auto &sun = lights.createChild("sun", "DirectionalLight");
     sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
     sun["direction"] = vec3f(0.462f, -1.f, -.1f);
@@ -263,6 +355,8 @@ void OSPApp::addLightsToScene(sg::Node &renderer, bool defaults) {
     tex->traverse("commit");
     hdri.add(tex);
   }
+  renderer.traverse("verify");
+  renderer.traverse("commit");
 }
 
 void OSPApp::addImporterNodesToWorld(sg::Node &renderer) {
@@ -282,7 +376,6 @@ void OSPApp::addImporterNodesToWorld(sg::Node &renderer) {
             ss << fn.name() << "_" << i << "_" << j << "_" << k;
             auto importerNode_ptr =
                 sg::createNode(ss.str(), "Importer")->nodeAs<sg::Importer>();
-            ;
             auto &importerNode = *importerNode_ptr;
 
             auto &transform =
@@ -321,6 +414,33 @@ void OSPApp::addImporterNodesToWorld(sg::Node &renderer) {
   }
 }
 
+void OSPApp::setupCamera(sg::Node &renderer) {
+  auto &world = renderer["world"];
+  auto bbox = world.bounds();
+  vec3f diag = bbox.size();
+  diag = max(diag, vec3f(0.3f * length(diag)));
+  if(!gaze.isOverridden())
+    gaze = ospcommon::center(bbox);
+
+  if(!pos.isOverridden())
+    pos = gaze.getValue() - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
+  if(!up.isOverridden())
+    up = vec3f(0.f, 1.f, 0.f);
+
+  auto &camera = renderer["camera"];
+  camera["pos"] = pos.getValue();
+  camera["dir"] = normalize(gaze.getValue() - pos.getValue());
+  camera["up"] = up.getValue();
+  if(camera.hasChild("fovy"))
+    camera["fovy"] = fovy.getValue();
+  if(camera.hasChild("apertureRadius"))
+    camera["apertureRadius"] = apertureRadius.getValue();
+  if(camera.hasChild("focusdistance"))
+    camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
+  renderer.traverse("verify");
+  renderer.traverse("commit");
+}
+
 void OSPApp::addAnimatedImporterNodesToWorld(sg::Node &renderer) {
   auto &world = renderer["world"];
   auto &animation = renderer["animationcontroller"];
@@ -357,6 +477,46 @@ void OSPApp::addAnimatedImporterNodesToWorld(sg::Node &renderer) {
     anim_selector["value2"] = int(animatedFile.size());
     animation.setChild("anim_selector", anim_selector.shared_from_this());
   }
+}
+
+void OSPApp::addPlaneToScene(sg::Node &renderer) {
+  auto &world = renderer["world"];
+  if (noPlane == true || (world.numChildren() > 1 && addPlane == false)) {
+	return;
+  }
+  auto bbox = world.bounds();
+  if (bbox.empty()) {
+    bbox.lower = vec3f(-5, 0, -5);
+    bbox.upper = vec3f(5, 10, 5);
+  }
+
+  float ps = bbox.upper.x * 3.f;
+  float py = bbox.lower.y + 0.01f;
+
+  auto position = std::make_shared<sg::DataVector3f>();
+  position->push_back(vec3f{ -ps, py, -ps });
+  position->push_back(vec3f{ -ps, py, ps });
+  position->push_back(vec3f{ ps, py, -ps });
+  position->push_back(vec3f{ ps, py, ps });
+  position->setName("vertex");
+
+  auto index = std::make_shared<sg::DataVector3i>();
+  index->push_back(vec3i{ 0, 1, 2 });
+  index->push_back(vec3i{ 1, 2, 3 });
+  index->setName("index");
+
+  auto &plane = world.createChild("plane", "TriangleMesh");
+
+  auto sg_plane = plane.nodeAs<sg::TriangleMesh>();
+  sg_plane->add(position);
+  sg_plane->add(index);
+  auto &planeMaterial = (*plane["materialList"].nodeAs<sg::MaterialList>())[0];
+  planeMaterial["Kd"] = vec3f(0.5f);
+  planeMaterial["Ks"] = vec3f(0.1f);
+  planeMaterial["Ns"] = 10.f;
+
+  renderer.traverse("verify");
+  renderer.traverse("commit");
 }
 
 } // ::app
