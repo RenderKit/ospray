@@ -32,9 +32,38 @@
 
 namespace ospcommon {
 
-  Library::Library(const std::string& name)
+
+
+  void *loadIsaLibrary(const std::string &name, const std::string ISAname)
   {
     std::string file = name;
+#ifdef _WIN32
+    std::string fullName = file+".dll";
+    lib = LoadLibrary(fullName.c_str());
+#else
+#if defined(__MACOSX__) || defined(__APPLE__)
+    std::string fullName = "lib"+file+".dylib";
+#else
+    std::string fullName = "lib"+file+"_"+ISAname+".so";
+    PRINT(fullName);
+#endif
+    void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    if (!lib)
+      PRINT(dlerror());
+    
+    return lib;
+#endif
+  }
+  
+  Library::Library(const std::string& name)
+  {
+    PING;
+    std::string file = name;
+
+    // try to load isa-specific lib...
+    lib = loadIsaLibrary(name,"AVX");
+    if (lib) return;
+    
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
