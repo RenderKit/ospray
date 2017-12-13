@@ -265,27 +265,48 @@ ENDMACRO()
 MACRO(OSPRAY_CREATE_SIMD_LIBRARY LIBRARY_BASE_NAME)
   OSPRAY_SPLIT_CREATE_ARGS(LIBRARY ${ARGN})
 
-  # -------------------------------------------------------
-  # to be cleaned up, and set somewhere globally!
-  SET(ISALIST sse avx avx2)
-  # the
+  message("ospray supported isas: " ${OSPRAY_SUPPORTED_ISAS})
+  
+  # ------------------------------------------------------------------
+  # this is the list of all isa-specific targets we can in theory
+  # build for. note that skx and knx are different because they use
+  # different isas to be cleaned up, and set somewhere globally!
+  
+  SET(ISALIST sse avx avx2 skx knx)
+
+  # the icc command line flags we have to pass when building
+  # specifically for this isa
   SET(OSPRAY_CXXFLAGS_SSE4 -msse4.2 -DOSPRAY_SIMD_SSE=1)
   SET(OSPRAY_CXXFLAGS_AVX  -mavx -DOSPRAY_SIMD_AVX=1)
   SET(OSPRAY_CXXFLAGS_AVX2 -mavx2 -DOSPRAY_SIMD_AVX2=1)
+  SET(OSPRAY_CXXFLAGS_AVX512SKX -mcore-avx512 -DOSPRAY_SIMD_SKX=1)
+  SET(OSPRAY_CXXFLAGS_AVX512KNX -mavx512 -DOSPRAY_SIMD_KNX=1)
+  
+  # the ispc target tag we have to pass to ispc when building
+  # specifically for this isa
   SET(OSPRAY_ISPC_TARGET_SSE4 sse4)
   SET(OSPRAY_ISPC_TARGET_AVX  avx)
   SET(OSPRAY_ISPC_TARGET_AVX2 avx2)
+  SET(OSPRAY_ISPC_TARGET_AVX512KNX AVX512KNX)
+  SET(OSPRAY_ISPC_TARGET_AVX512SKX AVX512SKX)
+  
+  # the name of the library we'll be generating for that isa
+  SET(OSPRAY_SIMD_LIBNAME_SSE4 sse4)
+  SET(OSPRAY_SIMD_LIBNAME_AVX  avx)
+  SET(OSPRAY_SIMD_LIBNAME_AVX2 avx2)
+  SET(OSPRAY_SIMD_LIBNAME_AVX512KNX knx)
+  SET(OSPRAY_SIMD_LIBNAME_AVX512SKX skx)
   # end 'to be cleaned up'
-  # -------------------------------------------------------
+  # ------------------------------------------------------------------
   
   FOREACH(ISA ${OSPRAY_SUPPORTED_ISAS})
     # hack: prevent ispc from doing multi-target binaries in this module by
     # temporarily setting a single-target ispc target list
-    SET (SAVED_OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST})
+    SET(SAVED_OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST})
     SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_${ISA}})
     SET(OSPRAY_ISPC_TARGET_NAME ${ISA})
 
-    SET(LIBRARY_NAME ${LIBRARY_BASE_NAME}_${ISA})
+    SET(LIBRARY_NAME ${LIBRARY_BASE_NAME}_${OSPRAY_SIMD_LIBNAME_${ISA}})
     OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
     TARGET_COMPILE_OPTIONS(${LIBRARY_NAME} PRIVATE ${OSPRAY_CXXFLAGS_${ISA}})
     TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${LIBRARY_LIBS})
@@ -297,7 +318,7 @@ MACRO(OSPRAY_CREATE_SIMD_LIBRARY LIBRARY_BASE_NAME)
     ENDIF()
 
     # end of hack: restore original ispc target list for multi-target libraries
-    SET (OSPRAY_ISPC_TARGET_LIST ${SAVED_OSPRAY_ISPC_TARGET_LIST})
+    SET(OSPRAY_ISPC_TARGET_LIST ${SAVED_OSPRAY_ISPC_TARGET_LIST})
     SET(OSPRAY_ISPC_TARGET_NAME "")
   ENDFOREACH()
 ENDMACRO()

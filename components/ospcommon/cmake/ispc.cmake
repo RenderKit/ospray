@@ -89,7 +89,6 @@ MACRO (ADD_DEFINITIONS_ISPC)
 ENDMACRO ()
 
 MACRO (OSPRAY_ISPC_COMPILE)
-  message("ospray_ispc_compile OSPRAY_ISPC_TARGET_LIST=${OSPRAY_ISPC_TARGET_LIST} - args = ${ARGN}")
   SET(ISPC_ADDITIONAL_ARGS "")
   # iw: adding 'sse2' here forces ispc to generate multi-isa binaries
   # even if we "want" only a single one - this is required because
@@ -167,8 +166,6 @@ MACRO (OSPRAY_ISPC_COMPILE)
         SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
       ENDFOREACH()
     ENDIF()
-    message("results ${results}")
-    message(" ispc call: -o ${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
 
     ADD_CUSTOM_COMMAND(
       OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h
@@ -193,6 +190,5 @@ MACRO (OSPRAY_ISPC_COMPILE)
     )
   
   SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
-  message("ISPC_OBJECTS ${ISPC_OBJECTS}")
   ENDFOREACH()
 ENDMACRO()

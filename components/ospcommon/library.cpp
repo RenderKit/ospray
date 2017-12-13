@@ -33,8 +33,38 @@
 namespace ospcommon {
 
 
+  /*! helper class that executes a asm 'cpuid' instruction to query
+      cpu capabilities */
+  struct CpuID {
+    CpuID(const uint32_t func, const uint32_t subFunc=0)
+    {
+      __asm__ __volatile__ ("cpuid"
+                            : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                            : "a"(func), "c"(subFunc)
+                            );
+    }
+    uint32_t eax, ebx, ecx, edx;
 
-  void *loadIsaLibrary(const std::string &name, const std::string ISAname)
+    /*! avx512bw - only found in skylake x (and following models like
+        canonlake etc) */
+    static inline bool has_avx512bw() { return CpuID(7).ebx & (1<<30); }
+
+    /*! avx512bw - only found in knights series etc */
+    static inline bool has_avx512er() { return CpuID(7).ebx & (1<<27); }
+
+    /*! avx512f - the common subset of all avx512 machines (both skl and knl) */
+    static inline bool has_avx512f()  { return CpuID(7).ebx & (1<<16); }
+    
+    static inline bool has_avx2()     { return CpuID(7).ebx & (1<<5); }
+    static inline bool has_avx()      { return CpuID(1).ecx & (1<<28); }
+    static inline bool has_sse42()    { return CpuID(1).ecx & (1<<20); }
+  };
+
+  
+
+  void *loadIsaLibrary(const std::string &name,
+                       const std::string desiredISAname,
+                       std::string &foundISAname)
   {
     std::string file = name;
 #ifdef _WIN32
@@ -44,25 +74,55 @@ namespace ospcommon {
 #if defined(__MACOSX__) || defined(__APPLE__)
     std::string fullName = "lib"+file+".dylib";
 #else
-    std::string fullName = "lib"+file+"_"+ISAname+".so";
-    PRINT(fullName);
+    std::string fullName = "lib"+file+"_"+desiredISAname+".so";
 #endif
     void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
-    if (!lib)
-      PRINT(dlerror());
+    if (!lib) {
+      //      PRINT(dlerror());
+      foundISAname = "";
+    } else
+      foundISAname = desiredISAname;
     
     return lib;
 #endif
   }
-  
+
+
+  /*! try loading the most isa-specific lib that is a) supported on
+      this platform, and b) that can be found as a shared
+      library. will return the most isa-specific lib (ie, if both avx
+      and sse are available, and th ecpu supports at least avx (or
+      more), it'll return avx, not sse*/
+  void *tryLoadingMostIsaSpecificLib(const std::string &name, std::string &foundISA)
+  {
+    void *lib = NULL;
+
+    // try KNL:
+    if (CpuID::has_avx512er() && (lib = loadIsaLibrary(name,"knx",foundISA))) return lib;
+    // try SKL:
+    if (CpuID::has_avx512bw() && (lib = loadIsaLibrary(name,"skx",foundISA))) return lib;
+    // try avx2:
+    if (CpuID::has_avx2() && (lib = loadIsaLibrary(name,"avx2",foundISA))) return lib;
+    // try avx1:
+    if (CpuID::has_avx() && (lib = loadIsaLibrary(name,"avx",foundISA))) return lib;
+    // try sse4.2:
+    if (CpuID::has_sse42() && (lib = loadIsaLibrary(name,"sse42",foundISA))) return lib;
+
+    // couldn't find any hardware-specific libs - return null, and let
+    // caller try to load a generic, non-isa specific lib instead
+    return NULL;
+  }
+
   Library::Library(const std::string& name)
   {
-    PING;
     std::string file = name;
 
-    // try to load isa-specific lib...
-    lib = loadIsaLibrary(name,"AVX");
-    if (lib) return;
+    std::string foundISA;
+    lib = tryLoadingMostIsaSpecificLib(name,foundISA);
+    if (lib) {
+      std::cout << "#osp: found isa-speicific lib for library " << name << ", most specific ISA=" << foundISA << std::endl;
+      return;
+    }
     
 #ifdef _WIN32
     std::string fullName = file+".dll";
