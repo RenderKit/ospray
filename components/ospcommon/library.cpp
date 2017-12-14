@@ -54,19 +54,20 @@ namespace ospcommon {
 
     /*! avx512f - the common subset of all avx512 machines (both skl and knl) */
     static inline bool has_avx512f()  { return CpuID(7).ebx & (1<<16); }
-    
+
     static inline bool has_avx2()     { return CpuID(7).ebx & (1<<5); }
     static inline bool has_avx()      { return CpuID(1).ecx & (1<<28); }
     static inline bool has_sse42()    { return CpuID(1).ecx & (1<<20); }
   };
 
-  
+
 
   void *loadIsaLibrary(const std::string &name,
                        const std::string desiredISAname,
                        std::string &foundISAname)
   {
     std::string file = name;
+    void *lib = nullptr;
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
@@ -76,15 +77,14 @@ namespace ospcommon {
 #else
     std::string fullName = "lib"+file+"_"+desiredISAname+".so";
 #endif
-    void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (!lib) {
       //      PRINT(dlerror());
       foundISAname = "";
     } else
       foundISAname = desiredISAname;
-    
-    return lib;
 #endif
+    return lib;
   }
 
 
@@ -123,7 +123,7 @@ namespace ospcommon {
       std::cout << "#osp: found isa-speicific lib for library " << name << ", most specific ISA=" << foundISA << std::endl;
       return;
     }
-    
+
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
