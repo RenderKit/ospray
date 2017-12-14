@@ -40,7 +40,7 @@ namespace ospcommon {
 #ifdef _WIN32
       if (subFunc != 0)
         throw std::runtime_error("windows cpuID doesn't support subfunc parameters");
-      __cpuid(&eax,func);
+      __cpuid((int*)&eax,func);
 #else
       asm volatile ("cpuid"
                     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
