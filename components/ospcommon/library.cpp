@@ -29,20 +29,20 @@
 #  include <dlfcn.h>
 #endif
 
-
 namespace ospcommon {
-
 
   /*! helper class that executes a asm 'cpuid' instruction to query
       cpu capabilities */
-  struct CpuID {
-    CpuID(const uint32_t func, const uint32_t subFunc=0)
+  struct CpuID
+  {
+    CpuID(const uint32_t func, const uint32_t subFunc = 0)
     {
-      __asm__ __volatile__ ("cpuid"
-                            : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-                            : "a"(func), "c"(subFunc)
-                            );
+      asm volatile ("cpuid"
+                    : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                    : "a"(func), "c"(subFunc)
+                    );
     }
+
     uint32_t eax, ebx, ecx, edx;
 
     /*! avx512bw - only found in skylake x (and following models like
@@ -55,12 +55,10 @@ namespace ospcommon {
     /*! avx512f - the common subset of all avx512 machines (both skl and knl) */
     static inline bool has_avx512f()  { return CpuID(7).ebx & (1<<16); }
 
-    static inline bool has_avx2()     { return CpuID(7).ebx & (1<<5); }
+    static inline bool has_avx2()     { return CpuID(7).ebx & (1<<5);  }
     static inline bool has_avx()      { return CpuID(1).ecx & (1<<28); }
     static inline bool has_sse42()    { return CpuID(1).ecx & (1<<20); }
   };
-
-
 
   void *loadIsaLibrary(const std::string &name,
                        const std::string desiredISAname,
