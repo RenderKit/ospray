@@ -37,10 +37,16 @@ namespace ospcommon {
   {
     CpuID(const uint32_t func, const uint32_t subFunc = 0)
     {
+#ifdef _WIN32
+      if (subFunc != 0)
+        throw std::runtime_error("windows cpuID doesn't support subfunc parameters");
+      __cpuid(&eax,func);
+#else
       asm volatile ("cpuid"
                     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
                     : "a"(func), "c"(subFunc)
                     );
+#endif
     }
 
     uint32_t eax, ebx, ecx, edx;
