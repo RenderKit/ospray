@@ -46,7 +46,7 @@ class OSPApp {
  protected:
   virtual void render(const std::shared_ptr<ospray::sg::Node> &) = 0;
   virtual int parseCommandLine(int &ac, const char **&av) = 0;
-  int initializeOSPRay(int argc, const char *argv[]);
+  int initializeOSPRay(int *argc, const char *argv[]);
 
   void addLightsToScene(sg::Node &renderer);
   void addImporterNodesToWorld(sg::Node &renderer);
@@ -86,7 +86,7 @@ class OSPApp {
   std::vector<clFile> files;
   std::vector<std::vector<clFile> > animatedFiles;
   int matrix_i = 1, matrix_j = 1, matrix_k = 1;
-  std::string hdri_light;
+  std::string hdriLightFile;
   bool addDefaultLights = false;
   bool noDefaultLights = false;
   bool debug = false;

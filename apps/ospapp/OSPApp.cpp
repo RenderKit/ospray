@@ -24,8 +24,8 @@ namespace app {
 
 OSPApp::OSPApp() {}
 
-int OSPApp::initializeOSPRay(int argc, const char *argv[]) {
-  int init_error = ospInit(&argc, argv);
+int OSPApp::initializeOSPRay(int *argc, const char *argv[]) {
+  int init_error = ospInit(argc, argv);
   if (init_error != OSP_NO_ERROR) {
     std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
     return init_error;
@@ -47,11 +47,14 @@ int OSPApp::initializeOSPRay(int argc, const char *argv[]) {
   return 0;
 }
 
-void OSPApp::printHelp() { std::cout << "Help - TODO..." << std::endl; }
+void OSPApp::printHelp() { 
+  std::cout << "Help - TODO..." << std::endl;
+  std::cout << "./ospApp [params] -sg:[params] [files]" << std::endl;
+}
 
 int OSPApp::main(int argc, const char *argv[]) {
 
-  int result = initializeOSPRay(argc, argv);
+  int result = initializeOSPRay(&argc, argv);
   if (result != 0)
     return result;
 
@@ -150,7 +153,7 @@ int OSPApp::parseGeneralCommandLine(int &ac, const char **&av) {
       removeArgs(ac, av, i, 1);
       --i;
     } else if (arg == "--hdri-light") {
-      hdri_light = av[i + 1];
+      hdriLightFile = av[i + 1];
       removeArgs(ac, av, i, 2);
       --i;
     } else if (arg == "--translate") {
@@ -364,15 +367,15 @@ void OSPApp::addLightsToScene(sg::Node &renderer) {
     bounce["direction"] = vec3f(-.93, -.54f, -.605f);
     bounce["intensity"] = 0.25f;
 
-    if (hdri_light == "") {
+    if (hdriLightFile == "") {
       auto &ambient = lights.createChild("ambient", "AmbientLight");
       ambient["intensity"] = 0.9f;
       ambient["color"] = vec3f(174.f / 255.f, 218.f / 255.f, 255.f / 255.f);
     }
   }
 
-  if (hdri_light != "") {
-    auto tex = sg::Texture2D::load(hdri_light, false);
+  if (hdriLightFile != "") {
+    auto tex = sg::Texture2D::load(hdriLightFile, false);
     tex->setName("map");
     auto &hdri = lights.createChild("hdri", "HDRILight");
     tex->traverse("verify");

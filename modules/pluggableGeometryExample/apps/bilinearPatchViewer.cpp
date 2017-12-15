@@ -42,7 +42,6 @@ namespace ospray {
     struct PatchSGNode : public sg::Geometry
     {
       PatchSGNode() : Geometry("bilinear_patches") {}
-
       box3f bounds() const override
       {
         box3f bounds = empty;
