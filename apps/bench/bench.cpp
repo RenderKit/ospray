@@ -23,39 +23,41 @@
 
 namespace ospray {
 namespace app {
-        class OSPBenchmark : public OSPApp {
-	private:
-		void render(const std::shared_ptr<ospray::sg::Node>& rendererPtr);
- 		int parseCommandLine(int &ac, const char **&av);
-		template <typename T> void outputStats(const T &stats);	
-		size_t numWarmupFrames = 10;
-		size_t numBenchFrames = 100;
-		std::string imageOutputFile = "";
-        };
+class OSPBenchmark : public OSPApp {
+ private:
+  void render(const std::shared_ptr<ospray::sg::Node> &rendererPtr);
+  int parseCommandLine(int &ac, const char **&av);
+  template <typename T>
+  void outputStats(const T &stats);
+  size_t numWarmupFrames = 10;
+  size_t numBenchFrames = 100;
+  std::string imageOutputFile = "";
+};
 }
 }
 
 using namespace ospray;
-void app::OSPBenchmark::render(const std::shared_ptr<ospray::sg::Node>& renderer) {
-    auto sgFB = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+void
+app::OSPBenchmark::render(const std::shared_ptr<ospray::sg::Node> &renderer) {
+  auto sgFB = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
 
-    for (size_t i = 0; i < numWarmupFrames; ++i)
-      renderer->traverse("render");
+  for (size_t i = 0; i < numWarmupFrames; ++i)
+    renderer->traverse("render");
 
-    auto benchmarker = pico_bench::Benchmarker<std::chrono::milliseconds>{numBenchFrames};
+  auto benchmarker =
+      pico_bench::Benchmarker<std::chrono::milliseconds>{ numBenchFrames };
 
-    auto stats = benchmarker([&]() {
-      renderer->traverse("render");
-      // TODO: measure just ospRenderFrame() time from within ospray_sg
-      // return std::chrono::milliseconds{500};
-    });
+  auto stats = benchmarker([&]() {
+    renderer->traverse("render");
+    // TODO: measure just ospRenderFrame() time from within ospray_sg
+    // return std::chrono::milliseconds{500};
+  });
 
-
-    if (!imageOutputFile.empty()) {
-      auto *srcPB = (const uint32_t*)sgFB->map();
-      utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
-      sgFB->unmap(srcPB);
-    }
+  if (!imageOutputFile.empty()) {
+    auto *srcPB = (const uint32_t *)sgFB->map();
+    utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
+    sgFB->unmap(srcPB);
+  }
 
   outputStats(stats);
 }
@@ -64,33 +66,32 @@ int app::OSPBenchmark::parseCommandLine(int &ac, const char **&av) {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "-i" || arg == "--image") {
-      imageOutputFile = av[i+1];
-	removeArgs(ac,av,i,2); --i;
+      imageOutputFile = av[i + 1];
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "-wf" || arg == "--warmup") {
-      numWarmupFrames = atoi(av[i+1]);
-	removeArgs(ac,av,i,2); --i;
+      numWarmupFrames = atoi(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "-bf" || arg == "--bench") {
-      numBenchFrames = atoi(av[i+1]);
-	removeArgs(ac,av,i,2); --i;
-    } 
+      numBenchFrames = atoi(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
+    }
   }
   return 0;
 }
-
 
 // NOTE(jda) - Issues with template type deduction w/ GCC 7.1 and Clang 4.0,
 //             thus defining the use of operator<<() from pico_bench here before
 //             OSPCommon.h (offending file) gets eventually included through
 //             ospray_sg headers. [blech]
 template <typename T>
-void app::OSPBenchmark::outputStats(const T &stats)
-{
+void app::OSPBenchmark::outputStats(const T &stats) {
   std::cout << stats << std::endl;
 }
 
-int main(int ac, const char **av)
-{
+int main(int ac, const char **av) {
   app::OSPBenchmark ospApp;
   return ospApp.main(ac, av);
 }
-

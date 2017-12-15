@@ -22,24 +22,19 @@ namespace app {
 
 template <class T>
 class CmdLineParam {
-   public:
-	CmdLineParam(T defaultValue) {
-		value = defaultValue;
-	}
-	T getValue() {
-		return value;
-	}
-    CmdLineParam& operator=(const CmdLineParam &other) {
-	value = other.value;
-	overridden = true;
-        return *this;
-    }
-	bool isOverridden() {
-		return overridden;
-	}
-   private:
-	T value;
-	bool overridden = false;
+ public:
+  CmdLineParam(T defaultValue) { value = defaultValue; }
+  T getValue() { return value; }
+  CmdLineParam &operator=(const CmdLineParam &other) {
+    value = other.value;
+    overridden = true;
+    return *this;
+  }
+  bool isOverridden() { return overridden; }
+
+ private:
+  T value;
+  bool overridden = false;
 };
 
 class OSPApp {
@@ -47,8 +42,9 @@ class OSPApp {
   OSPApp();
   int main(int argc, const char *argv[]);
   virtual ~OSPApp() {}
+
  protected:
-  virtual void render(const std::shared_ptr<ospray::sg::Node>&) = 0;
+  virtual void render(const std::shared_ptr<ospray::sg::Node> &) = 0;
   virtual int parseCommandLine(int &ac, const char **&av) = 0;
   int initializeOSPRay(int argc, const char *argv[]);
 
@@ -71,34 +67,33 @@ class OSPApp {
     clTransform transform;
   };
 
-  std::string initialRendererType;
-	int width = 1024;
-	int height = 768;
-	CmdLineParam<vec3f> up = CmdLineParam<vec3f>({0, 1, 0});
-	CmdLineParam<vec3f> pos = CmdLineParam<vec3f>({0, 0, -1});
-	CmdLineParam<vec3f> gaze = CmdLineParam<vec3f>({0, 0, 0});
-	CmdLineParam<float> apertureRadius = CmdLineParam<float>(0.f);
-	CmdLineParam<float> fovy = CmdLineParam<float>(60.f);
-  private:
-   std::vector<clFile> files;
-   std::vector<std::vector<clFile> > animatedFiles;
-   int matrix_i = 1, matrix_j = 1, matrix_k = 1;
-   std::string hdri_light;
-  bool addDefaultLights = false;
-  bool noDefaultLights = false;
-  bool debug = false;
+  int width = 1024;
+  int height = 768;
+  CmdLineParam<vec3f> up = CmdLineParam<vec3f>({ 0, 1, 0 });
+  CmdLineParam<vec3f> pos = CmdLineParam<vec3f>({ 0, 0, -1 });
+  CmdLineParam<vec3f> gaze = CmdLineParam<vec3f>({ 0, 0, 0 });
+  CmdLineParam<float> apertureRadius = CmdLineParam<float>(0.f);
+  CmdLineParam<float> fovy = CmdLineParam<float>(60.f);
 
-  bool addPlane = false;
-  bool noPlane = false;
-
+ private:
   int parseGeneralCommandLine(int &ac, const char **&av);
 
   // parse command line arguments containing the format:
   //  -sg:nodeName:...:nodeName=value,value,value -- changes value
   //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
   void parseCommandLineSG(int ac, const char **&av, sg::Node &root);
-};
 
+  std::vector<clFile> files;
+  std::vector<std::vector<clFile> > animatedFiles;
+  int matrix_i = 1, matrix_j = 1, matrix_k = 1;
+  std::string hdri_light;
+  bool addDefaultLights = false;
+  bool noDefaultLights = false;
+  bool debug = false;
+  bool addPlane = false;
+  bool noPlane = false;
+  std::string initialRendererType;
+};
 
 } // namespace ospray
 } // namespace app

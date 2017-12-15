@@ -47,27 +47,28 @@ int OSPApp::initializeOSPRay(int argc, const char *argv[]) {
   return 0;
 }
 
-void OSPApp::printHelp() {
-  std::cout << "Help - TODO..." << std::endl;
-}
+void OSPApp::printHelp() { std::cout << "Help - TODO..." << std::endl; }
 
 int OSPApp::main(int argc, const char *argv[]) {
 
   int result = initializeOSPRay(argc, argv);
-  if(result != 0)
+  if (result != 0)
     return result;
 
   // access/load symbols/sg::Nodes dynamically
   loadLibrary("ospray_sg");
 
   result = parseGeneralCommandLine(argc, argv);
-  switch(result) {
-	// Everything is ok - continue
-	case 0: break;
-	// Everything is done - return without further execution
-	case 2: return 0;
-	// Something went wrong - exit with error	
-	default: return 1;
+  switch (result) {
+  // Everything is ok - continue
+  case 0:
+    break;
+  // Everything is done - return without further execution
+  case 2:
+    return 0;
+  // Something went wrong - exit with error
+  default:
+    return 1;
   }
 
   auto rendererPtr = sg::createNode("renderer", "Renderer");
@@ -88,7 +89,7 @@ int OSPApp::main(int argc, const char *argv[]) {
   renderer.traverse("verify");
   renderer.traverse("commit");
 
-   // last, to be able to modify all created SG nodes
+  // last, to be able to modify all created SG nodes
   parseCommandLineSG(argc, argv, renderer);
 
   if (debug) {
@@ -102,121 +103,144 @@ int OSPApp::main(int argc, const char *argv[]) {
 
 int OSPApp::parseGeneralCommandLine(int &ac, const char **&av) {
   // Call children command line parsing methods
-  if(parseCommandLine(ac, av) != 0) {
-	return 1;
-  }	
+  if (parseCommandLine(ac, av) != 0) {
+    return 1;
+  }
 
   clTransform currentCLTransform;
   bool inAnimation = false;
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "--help") {
-	printHelp();
-	// We don't want to do anything else so return 2.
-	return 2;	
+      printHelp();
+      // We don't want to do anything else so return 2.
+      return 2;
     } else if (arg == "-r" || arg == "--renderer") {
-      initialRendererType = av[i+1];
-      removeArgs(ac,av,i,2); --i;
-    } else  if (arg == "-d" || arg == "--debug") {
+      initialRendererType = av[i + 1];
+      removeArgs(ac, av, i, 2);
+      --i;
+    } else if (arg == "-d" || arg == "--debug") {
       debug = true;
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "-m" || arg == "--module") {
-      ospLoadModule(av[i+1]);
-      removeArgs(ac,av,i,2); --i;
+      ospLoadModule(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "--matrix") {
-      matrix_i = atoi(av[i+1]);
-      matrix_j = atoi(av[i+2]);
-      matrix_k = atoi(av[i+3]);
-      removeArgs(ac,av,i,4); --i;
+      matrix_i = atoi(av[i + 1]);
+      matrix_j = atoi(av[i + 2]);
+      matrix_k = atoi(av[i + 3]);
+      removeArgs(ac, av, i, 4);
+      --i;
     } else if (arg == "--add-plane") {
       addPlane = true;
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "--no-plane") {
       noPlane = true;
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "--no-lights") {
       noDefaultLights = true;
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "--add-lights") {
       addDefaultLights = true;
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "--hdri-light") {
-      hdri_light = av[i+1];
-      removeArgs(ac,av,i,2); --i;
+      hdri_light = av[i + 1];
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "--translate") {
-      currentCLTransform.translate.x = atof(av[i+1]);
-      currentCLTransform.translate.y = atof(av[i+2]);
-      currentCLTransform.translate.z = atof(av[i+3]);
-      removeArgs(ac,av,i,4); --i;
+      currentCLTransform.translate.x = atof(av[i + 1]);
+      currentCLTransform.translate.y = atof(av[i + 2]);
+      currentCLTransform.translate.z = atof(av[i + 3]);
+      removeArgs(ac, av, i, 4);
+      --i;
     } else if (arg == "--scale") {
-      currentCLTransform.scale.x = atof(av[i+1]);
-      currentCLTransform.scale.y = atof(av[i+2]);
-      currentCLTransform.scale.z = atof(av[i+3]);
-      removeArgs(ac,av,i,4); --i;
+      currentCLTransform.scale.x = atof(av[i + 1]);
+      currentCLTransform.scale.y = atof(av[i + 2]);
+      currentCLTransform.scale.z = atof(av[i + 3]);
+      removeArgs(ac, av, i, 4);
+      --i;
     } else if (arg == "--rotate") {
-      currentCLTransform.rotation.x = atof(av[i+1]);
-      currentCLTransform.rotation.y = atof(av[i+2]);
-      currentCLTransform.rotation.z = atof(av[i+3]);
-      removeArgs(ac,av,i,4); --i;
+      currentCLTransform.rotation.x = atof(av[i + 1]);
+      currentCLTransform.rotation.y = atof(av[i + 2]);
+      currentCLTransform.rotation.z = atof(av[i + 3]);
+      removeArgs(ac, av, i, 4);
+      --i;
     } else if (arg == "--animation") {
       inAnimation = true;
       animatedFiles.push_back(std::vector<clFile>());
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "--file") {
       inAnimation = false;
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "-w" || arg == "--width") {
-      width = atoi(av[i+1]);
-      removeArgs(ac,av,i,2); --i;
+      width = atoi(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "-h" || arg == "--height") {
-      height = atoi(av[i+1]);
-      removeArgs(ac,av,i,2); --i;
+      height = atoi(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "-size") {
-      width = atoi(av[i+1]);
-      height = atoi(av[i+2]);
-      removeArgs(ac,av,i,3); --i;
+      width = atoi(av[i + 1]);
+      height = atoi(av[i + 2]);
+      removeArgs(ac, av, i, 3);
+      --i;
     } else if (arg == "-vp") {
       vec3f posVec;
-      posVec.x = atof(av[i+1]);
-      posVec.y = atof(av[i+2]);
-      posVec.z = atof(av[i+3]);
-      removeArgs(ac,av,i,4); --i;
+      posVec.x = atof(av[i + 1]);
+      posVec.y = atof(av[i + 2]);
+      posVec.z = atof(av[i + 3]);
+      removeArgs(ac, av, i, 4);
+      --i;
       pos = posVec;
     } else if (arg == "-vu") {
-	vec3f upVec;
-	upVec.x = atof(av[i+1]);
-	upVec.y = atof(av[i+2]);
-	upVec.z = atof(av[i+3]);
-      removeArgs(ac,av,i,4); --i;
-	up = upVec;
+      vec3f upVec;
+      upVec.x = atof(av[i + 1]);
+      upVec.y = atof(av[i + 2]);
+      upVec.z = atof(av[i + 3]);
+      removeArgs(ac, av, i, 4);
+      --i;
+      up = upVec;
     } else if (arg == "-vi") {
       vec3f gazeVec;
-      gazeVec.x = atof(av[i+1]);
-      gazeVec.y = atof(av[i+2]);
-      gazeVec.z = atof(av[i+3]);
-      removeArgs(ac,av,i,4); --i;
+      gazeVec.x = atof(av[i + 1]);
+      gazeVec.y = atof(av[i + 2]);
+      gazeVec.z = atof(av[i + 3]);
+      removeArgs(ac, av, i, 4);
+      --i;
       gaze = gazeVec;
     } else if (arg == "-fv") {
-      fovy = atof(av[i+1]);
-      removeArgs(ac,av,i,2); --i;
+      fovy = atof(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "-ar") {
-      apertureRadius = atof(av[i+1]);
-      removeArgs(ac,av,i,2); --i;
+      apertureRadius = atof(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg.compare(0, 4, "-sg:") == 0) {
-	// SG parameters are validated by prefix only.
-	// Later different function is used for parsing this type parameters.
-	continue;
+      // SG parameters are validated by prefix only.
+      // Later different function is used for parsing this type parameters.
+      continue;
     } else if (arg[0] != '-') {
       if (!inAnimation)
         files.push_back(clFile(av[i], currentCLTransform));
       else
         animatedFiles.back().push_back(clFile(av[i], currentCLTransform));
       currentCLTransform = clTransform();
-      removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else {
-        std::cerr << "Error: unknown parameter '" << arg << "'." <<  std::endl;
-	printHelp();
-	return 1;
+      std::cerr << "Error: unknown parameter '" << arg << "'." << std::endl;
+      printHelp();
+      return 1;
     }
   }
   return 0;
@@ -316,20 +340,20 @@ void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root) {
             }
           }
         catch (...) {
-	  std::cerr << "Unexpected exception" << std::endl;
+          std::cerr << "Unexpected exception" << std::endl;
         }
       }
     }
   }
 }
 
-void OSPApp::addLightsToScene(sg::Node &renderer) {  
+void OSPApp::addLightsToScene(sg::Node &renderer) {
   renderer.traverse("verify");
   renderer.traverse("commit");
   auto &lights = renderer["lights"];
 
   if (noDefaultLights == false &&
-	 (lights.numChildren() <= 0 || addDefaultLights == true)) {
+      (lights.numChildren() <= 0 || addDefaultLights == true)) {
     auto &sun = lights.createChild("sun", "DirectionalLight");
     sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
     sun["direction"] = vec3f(0.462f, -1.f, -.1f);
@@ -419,23 +443,24 @@ void OSPApp::setupCamera(sg::Node &renderer) {
   auto bbox = world.bounds();
   vec3f diag = bbox.size();
   diag = max(diag, vec3f(0.3f * length(diag)));
-  if(!gaze.isOverridden())
+  if (!gaze.isOverridden())
     gaze = ospcommon::center(bbox);
 
-  if(!pos.isOverridden())
-    pos = gaze.getValue() - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
-  if(!up.isOverridden())
+  if (!pos.isOverridden())
+    pos = gaze.getValue() -
+          .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
+  if (!up.isOverridden())
     up = vec3f(0.f, 1.f, 0.f);
 
   auto &camera = renderer["camera"];
   camera["pos"] = pos.getValue();
   camera["dir"] = normalize(gaze.getValue() - pos.getValue());
   camera["up"] = up.getValue();
-  if(camera.hasChild("fovy"))
+  if (camera.hasChild("fovy"))
     camera["fovy"] = fovy.getValue();
-  if(camera.hasChild("apertureRadius"))
+  if (camera.hasChild("apertureRadius"))
     camera["apertureRadius"] = apertureRadius.getValue();
-  if(camera.hasChild("focusdistance"))
+  if (camera.hasChild("focusdistance"))
     camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
   renderer.traverse("verify");
   renderer.traverse("commit");
@@ -482,7 +507,7 @@ void OSPApp::addAnimatedImporterNodesToWorld(sg::Node &renderer) {
 void OSPApp::addPlaneToScene(sg::Node &renderer) {
   auto &world = renderer["world"];
   if (noPlane == true || (world.numChildren() > 1 && addPlane == false)) {
-	return;
+    return;
   }
   auto bbox = world.bounds();
   if (bbox.empty()) {

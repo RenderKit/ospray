@@ -22,20 +22,21 @@
 
 namespace ospray {
 namespace app {
-	class OSPExampleViewer : public OSPApp {
-	private:
-		void render(const std::shared_ptr<ospray::sg::Node>&);
-		int parseCommandLine(int &ac, const char **&av);
-		bool fullscreen = false;
-		float motionSpeed = -1.f;
-		std::string initialTextForNodeSearch;
-	};
+class OSPExampleViewer : public OSPApp {
+ private:
+  void render(const std::shared_ptr<ospray::sg::Node> &);
+  int parseCommandLine(int &ac, const char **&av);
+  bool fullscreen = false;
+  float motionSpeed = -1.f;
+  std::string initialTextForNodeSearch;
+};
 }
 }
 
 using namespace ospray;
 
-void app::OSPExampleViewer::render(const std::shared_ptr<ospray::sg::Node>& renderer) {
+void app::OSPExampleViewer::render(
+    const std::shared_ptr<ospray::sg::Node> &renderer) {
   ospray::ImGuiViewer window(renderer);
   window.setViewPort(pos.getValue(), gaze.getValue(), up.getValue());
   window.create("OSPRay Example Viewer App", fullscreen, vec2i(width, height));
@@ -54,18 +55,20 @@ int app::OSPExampleViewer::parseCommandLine(int &ac, const char **&av) {
     const std::string arg = av[i];
     if (arg == "--fullscreen") {
       fullscreen = true;
-	removeArgs(ac,av,i,1); --i;
+      removeArgs(ac, av, i, 1);
+      --i;
     } else if (arg == "--motionSpeed") {
-      motionSpeed = atof(av[i+1]);
-	removeArgs(ac,av,i,2); --i;
+      motionSpeed = atof(av[i + 1]);
+      removeArgs(ac, av, i, 2);
+      --i;
     } else if (arg == "--searchText") {
-      initialTextForNodeSearch = av[i+1];
-	removeArgs(ac,av,i,2); --i;
+      initialTextForNodeSearch = av[i + 1];
+      removeArgs(ac, av, i, 2);
+      --i;
     }
   }
   return 0;
 }
-
 
 int main(int ac, const char **av) {
   app::OSPExampleViewer ospApp;
