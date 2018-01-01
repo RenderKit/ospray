@@ -303,6 +303,7 @@ benchmark-centos7-gcc:
     - ../scripts/bench/run_benchmark.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
   tags:
     - docker
+    - ospray-benchmark
   artifacts:
     paths:
       - $CI_PROJECT_DIR/build/bench_output
@@ -321,6 +322,17 @@ test-kw-critical:
     - build-scan-kw
   tags:
     - kw-scan-docker
+
+source-protex-scan:
+  stage: build
+  image: ospray-protex-centos7
+  script:
+    - /tmp/source-scan-protex.sh
+  dependencies:
+  tags:
+    - protex-scan-docker
+  ## Temporarily allow to fail
+  allow_failure: true
 
 
 ### RELEASE JOBS ###

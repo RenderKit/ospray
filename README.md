@@ -166,8 +166,8 @@ way to configure OSPRay and to create the Visual Studio solution files:
     e.g. "Visual Studio 15 2017 Win64".
 
 -   If the configuration fails because some dependencies could not be
-    found then follow the instructions given in the error message, e.g.
-    set the variable `embree_DIR` to the folder where Embree was
+    found then follow the instructions given in the error message,
+    e.g. set the variable `embree_DIR` to the folder where Embree was
     installed.
 
 -   Optionally change the default build options, and then click
@@ -186,7 +186,7 @@ console. In the Visual Studio command prompt type:
     cmake -G "Visual Studio 12 2013 Win64" [-D VARIABLE=value] ..
     cmake --build . --config Release
 
-Use `-D` to set variables for CMake, e.g. the path to Embree with
+Use `-D` to set variables for CMake, e.g. the path to Embree with
 "`-D embree_DIR=\path\to\embree`".
 
 You can also build only some projects with the `--target` switch.
@@ -207,7 +207,7 @@ document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay D
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
-"[OSPRay – A CPU Ray Tracing Framework for Scientific
+"[OSPRay -- A CPU Ray Tracing Framework for Scientific
 Visualization](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper.pdf)"
 (49MB, or get the [smaller
 version](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper_small.pdf)
@@ -251,70 +251,70 @@ is important to note that the arguments passed to `ospInit()` are
 processed in order they are listed. The following parameters (which are
 prefixed by convention with "`--osp:`") are understood:
 
-<table style="width:98%;">
-<caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
+<table style="width:97%;">
+<caption>Command line parameters accepted by OSPRay’s <code>ospInit</code>.</caption>
 <colgroup>
-<col width="33%" />
-<col width="63%" />
+<col style="width: 36%" />
+<col style="width: 60%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Parameter</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left"><code>--osp:debug</code></td>
-<td align="left">enables various extra checks and debug output, and disables multi-threading</td>
+<td style="text-align: left;"><code>--osp:debug</code></td>
+<td style="text-align: left;">enables various extra checks and debug output, and disables multi-threading</td>
 </tr>
 <tr class="even">
-<td align="left"><code>--osp:numthreads &lt;n&gt;</code></td>
-<td align="left">use <code>n</code> threads instead of per default using all detected hardware threads</td>
+<td style="text-align: left;"><code>--osp:numthreads &lt;n&gt;</code></td>
+<td style="text-align: left;">use <code>n</code> threads instead of per default using all detected hardware threads</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:loglevel &lt;n&gt;</code></td>
-<td align="left">set logging level, default <code>0</code>; increasing <code>n</code> means increasingly verbose log messages</td>
+<td style="text-align: left;"><code>--osp:loglevel &lt;n&gt;</code></td>
+<td style="text-align: left;">set logging level, default <code>0</code>; increasing <code>n</code> means increasingly verbose log messages</td>
 </tr>
 <tr class="even">
-<td align="left"><code>--osp:verbose</code></td>
-<td align="left">shortcut for <code>--osp:loglevel 1</code></td>
+<td style="text-align: left;"><code>--osp:verbose</code></td>
+<td style="text-align: left;">shortcut for <code>--osp:loglevel 1</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:vv</code></td>
-<td align="left">shortcut for <code>--osp:loglevel 2</code></td>
+<td style="text-align: left;"><code>--osp:vv</code></td>
+<td style="text-align: left;">shortcut for <code>--osp:loglevel 2</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>--osp:module:&lt;name&gt;</code></td>
-<td align="left">load a module during initialization; equivalent to calling <code>ospLoadModule(name)</code></td>
+<td style="text-align: left;"><code>--osp:module:&lt;name&gt;</code></td>
+<td style="text-align: left;">load a module during initialization; equivalent to calling <code>ospLoadModule(name)</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:mpi</code></td>
-<td align="left">enables MPI mode for parallel rendering with the <code>mpi_offload</code> device, to be used in conjunction with <code>mpirun</code>; this will automatically load the &quot;mpi&quot; module if it is not yet loaded or linked</td>
+<td style="text-align: left;"><code>--osp:mpi</code></td>
+<td style="text-align: left;">enables MPI mode for parallel rendering with the <code>mpi_offload</code> device, to be used in conjunction with <code>mpirun</code>; this will automatically load the “mpi” module if it is not yet loaded or linked</td>
 </tr>
 <tr class="even">
-<td align="left"><code>--osp:mpi-offload</code></td>
-<td align="left">same as <code>--osp:mpi</code></td>
+<td style="text-align: left;"><code>--osp:mpi-offload</code></td>
+<td style="text-align: left;">same as <code>--osp:mpi</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:mpi-distributed</code></td>
-<td align="left">same as <code>--osp:mpi</code>, but will create an <code>mpi_distributed</code> device instead; Note that this will likely require application changes to work properly</td>
+<td style="text-align: left;"><code>--osp:mpi-distributed</code></td>
+<td style="text-align: left;">same as <code>--osp:mpi</code>, but will create an <code>mpi_distributed</code> device instead; Note that this will likely require application changes to work properly</td>
 </tr>
 <tr class="even">
-<td align="left"><code>--osp:logoutput &lt;dst&gt;</code></td>
-<td align="left">convenience for setting where status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+<td style="text-align: left;"><code>--osp:logoutput &lt;dst&gt;</code></td>
+<td style="text-align: left;">convenience for setting where status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:erroroutput &lt;dst&gt;</code></td>
-<td align="left">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+<td style="text-align: left;"><code>--osp:erroroutput &lt;dst&gt;</code></td>
+<td style="text-align: left;">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>--osp:device:&lt;name&gt;</code></td>
-<td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
+<td style="text-align: left;"><code>--osp:device:&lt;name&gt;</code></td>
+<td style="text-align: left;">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:setaffinity &lt;n&gt;</code></td>
-<td align="left">if <code>1</code>, bind software threads to hardware threads; <code>0</code> disables binding; default is <code>1</code> on KNL and <code>0</code> otherwise</td>
+<td style="text-align: left;"><code>--osp:setaffinity &lt;n&gt;</code></td>
+<td style="text-align: left;">if <code>1</code>, bind software threads to hardware threads; <code>0</code> disables binding; default is <code>1</code> on KNL and <code>0</code> otherwise</td>
 </tr>
 </tbody>
 </table>
@@ -353,50 +353,50 @@ void ospDeviceSetString(OSPDevice, const char *id, const char *val);
 to set parameters on the device. The following parameters can be set on
 all devices:
 
-<table style="width:99%;">
+<table style="width:97%;">
 <caption>Parameters shared by all devices.</caption>
 <colgroup>
-<col width="9%" />
-<col width="16%" />
-<col width="72%" />
+<col style="width: 11%" />
+<col style="width: 18%" />
+<col style="width: 67%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">int</td>
-<td align="left">numThreads</td>
-<td align="left">number of threads which OSPRay should use</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">numThreads</td>
+<td style="text-align: left;">number of threads which OSPRay should use</td>
 </tr>
 <tr class="even">
-<td align="left">int</td>
-<td align="left">logLevel</td>
-<td align="left">logging level</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">logLevel</td>
+<td style="text-align: left;">logging level</td>
 </tr>
 <tr class="odd">
-<td align="left">string</td>
-<td align="left">logOutput</td>
-<td align="left">convenience for setting where status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">logOutput</td>
+<td style="text-align: left;">convenience for setting where status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="even">
-<td align="left">string</td>
-<td align="left">errorOutput</td>
-<td align="left">convenience for setting where error messages go; valid values are <code>cerr</code> and <code>cout</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">errorOutput</td>
+<td style="text-align: left;">convenience for setting where error messages go; valid values are <code>cerr</code> and <code>cout</code></td>
 </tr>
 <tr class="odd">
-<td align="left">int</td>
-<td align="left">debug</td>
-<td align="left">set debug mode; equivalent to logLevel=2 and numThreads=1</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">debug</td>
+<td style="text-align: left;">set debug mode; equivalent to logLevel=2 and numThreads=1</td>
 </tr>
 <tr class="even">
-<td align="left">int</td>
-<td align="left">setAffinity</td>
-<td align="left">bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">setAffinity</td>
+<td style="text-align: left;">bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose</td>
 </tr>
 </tbody>
 </table>
@@ -462,7 +462,7 @@ The following errors are currently used by OSPRay:
 | OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command     |
 | OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)      |
 
-: Possible error codes, i.e. valid named constants of type `OSPError`.
+: Possible error codes, i.e. valid named constants of type `OSPError`.
 
 These error codes are either directly return by some API functions, or
 are recorded to be later queried by the application via
@@ -551,7 +551,7 @@ The commit semantic allow for batching up multiple small changes, and
 specifies exactly when changes to objects will occur. This is important
 to ensure performance and consistency for devices crossing a PCI bus, or
 across a network. In our MPI implementation, for example, we can easily
-guarantee consistency among different nodes by MPI barrier’ing on every
+guarantee consistency among different nodes by MPI barrier'ing on every
 commit.
 
 Note that OSPRay uses reference counting to manage the lifetime of all
@@ -701,19 +701,91 @@ or else an `OSPVolume` handle.
 The common parameters understood by all volume variants are summarized
 in the table below.
 
-| Type  | Name                    |   Default| Description                                                                       |
-|:------|:------------------------|---------:|:----------------------------------------------------------------------------------|
-| vec2f | voxelRange              |          | minimum and maximum of the scalar values                                          |
-| bool  | gradientShadingEnabled  |     false| volume is rendered with surface shading wrt. to normalized gradient               |
-| bool  | preIntegration          |     false| use pre-integration for [transfer function](#transfer-function) lookups           |
-| bool  | singleShade             |      true| shade only at the point of maximum intensity                                      |
-| bool  | adaptiveSampling        |      true| adapt ray step size based on opacity                                              |
-| float | adaptiveScalar          |        15| modifier for adaptive step size                                                   |
-| float | adaptiveMaxSamplingRate |         2| maximum sampling rate for adaptive sampling                                       |
-| float | samplingRate            |     0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
-| vec3f | specular                |  gray 0.3| specular color for shading                                                        |
-| vec3f | volumeClippingBoxLower  |  disabled| lower coordinate (in object-space) to clip the volume values                      |
-| vec3f | volumeClippingBoxUpper  |  disabled| upper coordinate (in object-space) to clip the volume values                      |
+<table style="width:97%;">
+<caption>Configuration parameters shared by all volume types.</caption>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 33%" />
+<col style="width: 14%" />
+<col style="width: 39%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">vec2f</td>
+<td style="text-align: left;">voxelRange</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">minimum and maximum of the scalar values</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">gradientShadingEnabled</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: left;">volume is rendered with surface shading wrt. to normalized gradient</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">preIntegration</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: left;">use pre-integration for <a href="#transfer-function">transfer function</a> lookups</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">singleShade</td>
+<td style="text-align: right;">true</td>
+<td style="text-align: left;">shade only at the point of maximum intensity</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">adaptiveSampling</td>
+<td style="text-align: right;">true</td>
+<td style="text-align: left;">adapt ray step size based on opacity</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">adaptiveScalar</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;">modifier for adaptive step size</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">adaptiveMaxSamplingRate</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">maximum sampling rate for adaptive sampling</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">samplingRate</td>
+<td style="text-align: right;">0.125</td>
+<td style="text-align: left;">sampling rate of the volume (this is the minimum step size for adaptive sampling)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">specular</td>
+<td style="text-align: right;">gray 0.3</td>
+<td style="text-align: left;">specular color for shading</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">volumeClippingBoxLower</td>
+<td style="text-align: right;">disabled</td>
+<td style="text-align: left;">lower coordinate (in object-space) to clip the volume values</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">volumeClippingBoxUpper</td>
+<td style="text-align: right;">disabled</td>
+<td style="text-align: left;">upper coordinate (in object-space) to clip the volume values</td>
+</tr>
+</tbody>
+</table>
 
 : Configuration parameters shared by all volume types.
 
@@ -760,17 +832,79 @@ this function.
 The common parameters understood by both structured volume variants are
 summarized in the table below.
 
-| Type   | Name        |      Default| Description                                       |
-|:-------|:------------|------------:|:--------------------------------------------------|
-| vec3i  | dimensions  |             | number of voxels in each dimension $(x, y, z)$    |
-| string | voxelType   |             | data type of each voxel, currently supported are: |
-|        |             |             | "uchar" (8 bit unsigned integer)                  |
-|        |             |             | "short" (16 bit signed integer)                   |
-|        |             |             | "ushort" (16 bit unsigned integer)                |
-|        |             |             | "float" (32 bit single precision floating point)  |
-|        |             |             | "double" (64 bit double precision floating point) |
-| vec3f  | gridOrigin  |  $(0, 0, 0)$| origin of the grid in world-space                 |
-| vec3f  | gridSpacing |  $(1, 1, 1)$| size of the grid cells in world-space             |
+<table style="width:97%;">
+<caption>Additional configuration parameters for structured volumes.</caption>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 18%" />
+<col style="width: 18%" />
+<col style="width: 47%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">vec3i</td>
+<td style="text-align: left;">dimensions</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">number of voxels in each dimension <span class="math inline">(<em>x</em>, <em>y</em>, <em>z</em>)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">voxelType</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">data type of each voxel, currently supported are:</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“uchar” (8 bit unsigned integer)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“short” (16 bit signed integer)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“ushort” (16 bit unsigned integer)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“float” (32 bit single precision floating point)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“double” (64 bit double precision floating point)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">gridOrigin</td>
+<td style="text-align: right;"><span class="math inline">(0, 0, 0)</span></td>
+<td style="text-align: left;">origin of the grid in world-space</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">gridSpacing</td>
+<td style="text-align: right;"><span class="math inline">(1, 1, 1)</span></td>
+<td style="text-align: left;">size of the grid cells in world-space</td>
+</tr>
+</tbody>
+</table>
 
 : Additional configuration parameters for structured volumes.
 
@@ -799,52 +933,52 @@ Then for each brick, the application should create an `OSPData` array of
 `OSPData` handles, where each handle is the data per-brick. Currently we
 only support `float` voxels.
 
-<table style="width:98%;">
+<table style="width:97%;">
 <caption>Additional configuration parameters for AMR volumes.</caption>
 <colgroup>
-<col width="12%" />
-<col width="17%" />
-<col width="19%" />
-<col width="49%" />
+<col style="width: 13%" />
+<col style="width: 18%" />
+<col style="width: 18%" />
+<col style="width: 46%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="right">Default</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">vec3f</td>
-<td align="left">gridOrigin</td>
-<td align="right"><span class="math inline">(0, 0, 0)</span></td>
-<td align="left">origin of the grid in world-space</td>
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">gridOrigin</td>
+<td style="text-align: right;"><span class="math inline">(0, 0, 0)</span></td>
+<td style="text-align: left;">origin of the grid in world-space</td>
 </tr>
 <tr class="even">
-<td align="left">vec3f</td>
-<td align="left">gridSpacing</td>
-<td align="right"><span class="math inline">(1, 1, 1)</span></td>
-<td align="left">size of the grid cells in world-space</td>
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">gridSpacing</td>
+<td style="text-align: right;"><span class="math inline">(1, 1, 1)</span></td>
+<td style="text-align: left;">size of the grid cells in world-space</td>
 </tr>
 <tr class="odd">
-<td align="left">string</td>
-<td align="left">amrMethod</td>
-<td align="right">current</td>
-<td align="left">sampling method; valid values are &quot;finest&quot;, &quot;current&quot;, or &quot;octant&quot;</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">amrMethod</td>
+<td style="text-align: right;">current</td>
+<td style="text-align: left;">sampling method; valid values are “finest”, “current”, or “octant”</td>
 </tr>
 <tr class="even">
-<td align="left">OSPData</td>
-<td align="left">brickInfo</td>
-<td align="right"></td>
-<td align="left">array of info defining each brick</td>
+<td style="text-align: left;">OSPData</td>
+<td style="text-align: left;">brickInfo</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">array of info defining each brick</td>
 </tr>
 <tr class="odd">
-<td align="left">OSPData</td>
-<td align="left">brickData</td>
-<td align="right"></td>
-<td align="left">array of handles to per-brick voxel data</td>
+<td style="text-align: left;">OSPData</td>
+<td style="text-align: left;">brickData</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">array of handles to per-brick voxel data</td>
 </tr>
 </tbody>
 </table>
@@ -944,64 +1078,64 @@ representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a
 [data](#data) array:
 
-<table style="width:99%;">
+<table style="width:98%;">
 <caption>Parameters defining a spheres geometry.</caption>
 <colgroup>
-<col width="14%" />
-<col width="22%" />
-<col width="13%" />
-<col width="48%" />
+<col style="width: 18%" />
+<col style="width: 25%" />
+<col style="width: 12%" />
+<col style="width: 42%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="right">Default</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">float</td>
-<td align="left">radius</td>
-<td align="right">0.01</td>
-<td align="left">radius of all spheres (if <code>offset_radius</code> is not used)</td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">radius</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: left;">radius of all spheres (if <code>offset_radius</code> is not used)</td>
 </tr>
 <tr class="even">
-<td align="left">OSPData</td>
-<td align="left">spheres</td>
-<td align="right">NULL</td>
-<td align="left">memory holding the spatial <a href="#data">data</a> of all spheres</td>
+<td style="text-align: left;">OSPData</td>
+<td style="text-align: left;">spheres</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;">memory holding the spatial <a href="#data">data</a> of all spheres</td>
 </tr>
 <tr class="odd">
-<td align="left">int</td>
-<td align="left">bytes_per_sphere</td>
-<td align="right">16</td>
-<td align="left">size (in bytes) of each sphere within the <code>spheres</code> array</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">bytes_per_sphere</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">size (in bytes) of each sphere within the <code>spheres</code> array</td>
 </tr>
 <tr class="even">
-<td align="left">int</td>
-<td align="left">offset_center</td>
-<td align="right">0</td>
-<td align="left">offset (in bytes) of each sphere's &quot;vec3f center&quot; position (in object-space) within the <code>spheres</code> array</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">offset_center</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">offset (in bytes) of each sphere’s “vec3f center” position (in object-space) within the <code>spheres</code> array</td>
 </tr>
 <tr class="odd">
-<td align="left">int</td>
-<td align="left">offset_radius</td>
-<td align="right">-1</td>
-<td align="left">offset (in bytes) of each sphere's &quot;float radius&quot; within the <code>spheres</code> array (<code>-1</code> means disabled and use <code>radius</code>)</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">offset_radius</td>
+<td style="text-align: right;">-1</td>
+<td style="text-align: left;">offset (in bytes) of each sphere’s “float radius” within the <code>spheres</code> array (<code>-1</code> means disabled and use <code>radius</code>)</td>
 </tr>
 <tr class="even">
-<td align="left">vec4f[] / vec3f(a)[]</td>
-<td align="left">color</td>
-<td align="right">NULL</td>
-<td align="left"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each sphere</td>
+<td style="text-align: left;">vec4f[] / vec3f(a)[]</td>
+<td style="text-align: left;">color</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each sphere</td>
 </tr>
 <tr class="odd">
-<td align="left">vec2f[]</td>
-<td align="left">texcoord</td>
-<td align="right">NULL</td>
-<td align="left"><a href="#data">data</a> array of texture coordinates, coordinate is constant for each sphere</td>
+<td style="text-align: left;">vec2f[]</td>
+<td style="text-align: left;">texcoord</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;"><a href="#data">data</a> array of texture coordinates, coordinate is constant for each sphere</td>
 </tr>
 </tbody>
 </table>
@@ -1019,77 +1153,77 @@ flexible way of specifying the data of offsets for start position, end
 position and radius within a [data](#data) array. All parameters are
 listed in the table below.
 
-<table style="width:99%;">
+<table style="width:98%;">
 <caption>Parameters defining a cylinders geometry.</caption>
 <colgroup>
-<col width="14%" />
-<col width="25%" />
-<col width="13%" />
-<col width="46%" />
+<col style="width: 18%" />
+<col style="width: 27%" />
+<col style="width: 12%" />
+<col style="width: 39%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="right">Default</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">float</td>
-<td align="left">radius</td>
-<td align="right">0.01</td>
-<td align="left">radius of all cylinders (if <code>offset_radius</code> is not used)</td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">radius</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: left;">radius of all cylinders (if <code>offset_radius</code> is not used)</td>
 </tr>
 <tr class="even">
-<td align="left">OSPData</td>
-<td align="left">cylinders</td>
-<td align="right">NULL</td>
-<td align="left">memory holding the spatial <a href="#data">data</a> of all cylinders</td>
+<td style="text-align: left;">OSPData</td>
+<td style="text-align: left;">cylinders</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;">memory holding the spatial <a href="#data">data</a> of all cylinders</td>
 </tr>
 <tr class="odd">
-<td align="left">int</td>
-<td align="left">bytes_per_cylinder</td>
-<td align="right">24</td>
-<td align="left">size (in bytes) of each cylinder within the <code>cylinders</code> array</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">bytes_per_cylinder</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: left;">size (in bytes) of each cylinder within the <code>cylinders</code> array</td>
 </tr>
 <tr class="even">
-<td align="left">int</td>
-<td align="left">offset_v0</td>
-<td align="right">0</td>
-<td align="left">offset (in bytes) of each cylinder's &quot;vec3f v0&quot; position (the start vertex, in object-space) within the <code>cylinders</code> array</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">offset_v0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">offset (in bytes) of each cylinder’s “vec3f v0” position (the start vertex, in object-space) within the <code>cylinders</code> array</td>
 </tr>
 <tr class="odd">
-<td align="left">int</td>
-<td align="left">offset_v1</td>
-<td align="right">12</td>
-<td align="left">offset (in bytes) of each cylinder's &quot;vec3f v1&quot; position (the end vertex, in object-space) within the <code>cylinders</code> array</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">offset_v1</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">offset (in bytes) of each cylinder’s “vec3f v1” position (the end vertex, in object-space) within the <code>cylinders</code> array</td>
 </tr>
 <tr class="even">
-<td align="left">int</td>
-<td align="left">offset_radius</td>
-<td align="right">-1</td>
-<td align="left">offset (in bytes) of each cylinder's &quot;float radius&quot; within the <code>cylinders</code> array (<code>-1</code> means disabled and use <code>radius</code> instead)</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">offset_radius</td>
+<td style="text-align: right;">-1</td>
+<td style="text-align: left;">offset (in bytes) of each cylinder’s “float radius” within the <code>cylinders</code> array (<code>-1</code> means disabled and use <code>radius</code> instead)</td>
 </tr>
 <tr class="odd">
-<td align="left">vec4f[] / vec3f(a)[]</td>
-<td align="left">color</td>
-<td align="right">NULL</td>
-<td align="left"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each cylinder</td>
+<td style="text-align: left;">vec4f[] / vec3f(a)[]</td>
+<td style="text-align: left;">color</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each cylinder</td>
 </tr>
 <tr class="even">
-<td align="left">OSPData</td>
-<td align="left">texcoord</td>
-<td align="right">NULL</td>
-<td align="left"><a href="#data">data</a> array of texture coordinates, in pairs (each a vec2f at vertex v0 and v1)</td>
+<td style="text-align: left;">OSPData</td>
+<td style="text-align: left;">texcoord</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;"><a href="#data">data</a> array of texture coordinates, in pairs (each a vec2f at vertex v0 and v1)</td>
 </tr>
 </tbody>
 </table>
 
 : Parameters defining a cylinders geometry.
 
-For texturing each cylinder is seen as a 1D primitive, i.e. a line
+For texturing each cylinder is seen as a 1D primitive, i.e. a line
 segment: the 2D texture coordinates at its vertices v0 and v1 are
 linearly interpolated.
 
@@ -1102,50 +1236,50 @@ segments, or represented as Bézier curves; they are thus always
 perfectly round. The parameters defining this geometry are listed in the
 table below.
 
-<table style="width:98%;">
+<table style="width:97%;">
 <caption>Parameters defining a streamlines geometry.</caption>
 <colgroup>
-<col width="24%" />
-<col width="18%" />
-<col width="54%" />
+<col style="width: 23%" />
+<col style="width: 21%" />
+<col style="width: 52%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">float</td>
-<td align="left">radius</td>
-<td align="left">global radius of all streamlines (if per-vertex radius is not used), default 0.01</td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">radius</td>
+<td style="text-align: left;">global radius of all streamlines (if per-vertex radius is not used), default 0.01</td>
 </tr>
 <tr class="even">
-<td align="left">bool</td>
-<td align="left">smooth</td>
-<td align="left">enable curve interpolation, default off (always on if per-vertex radius is used)</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">smooth</td>
+<td style="text-align: left;">enable curve interpolation, default off (always on if per-vertex radius is used)</td>
 </tr>
 <tr class="odd">
-<td align="left">vec3fa[] / vec4f[]</td>
-<td align="left">vertex</td>
-<td align="left"><a href="#data">data</a> array of all vertex position (and optional radius) for <em>all</em> streamlines</td>
+<td style="text-align: left;">vec3fa[] / vec4f[]</td>
+<td style="text-align: left;">vertex</td>
+<td style="text-align: left;"><a href="#data">data</a> array of all vertex position (and optional radius) for <em>all</em> streamlines</td>
 </tr>
 <tr class="even">
-<td align="left">vec4f[]</td>
-<td align="left">vertex.color</td>
-<td align="left"><a href="#data">data</a> array of corresponding vertex colors (RGBA)</td>
+<td style="text-align: left;">vec4f[]</td>
+<td style="text-align: left;">vertex.color</td>
+<td style="text-align: left;"><a href="#data">data</a> array of corresponding vertex colors (RGBA)</td>
 </tr>
 <tr class="odd">
-<td align="left">float[]</td>
-<td align="left">vertex.radius</td>
-<td align="left"><a href="#data">data</a> array of corresponding vertex radius</td>
+<td style="text-align: left;">float[]</td>
+<td style="text-align: left;">vertex.radius</td>
+<td style="text-align: left;"><a href="#data">data</a> array of corresponding vertex radius</td>
 </tr>
 <tr class="even">
-<td align="left">int32[]</td>
-<td align="left">index</td>
-<td align="left"><a href="#data">data</a> array of indices to the first vertex of a link</td>
+<td style="text-align: left;">int32[]</td>
+<td style="text-align: left;">index</td>
+<td style="text-align: left;"><a href="#data">data</a> array of indices to the first vertex of a link</td>
 </tr>
 </tbody>
 </table>
@@ -1160,7 +1294,9 @@ streamline are connected via [cylinders](#cylinders), with additional
 surface. Otherwise, streamlines are represented as Bézier curves,
 smoothly interpolating the vertices. This mode supports per-vertex
 varying radii (either given in `vertex.radius`, or in the 4th component
-of a *vec4f* `vertex`), but is slower and consumes more memory.
+of a *vec4f* `vertex`), but is slower and consumes more memory. Also,
+the radius needs to be smaller than the curvature radius of the Bézier
+curve at each location on the curve.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of linear segments (or links)
@@ -1230,16 +1366,73 @@ The call returns `NULL` if that type of renderer is not known, or else
 an `OSPRenderer` handle to the created renderer. General parameters of
 all renderers are
 
-| Type         | Name              |  Default| Description                                                                   |
-|:-------------|:------------------|--------:|:------------------------------------------------------------------------------|
-| OSPModel     | model             |         | the [model](#model) to render                                                 |
-| OSPCamera    | camera            |         | the [camera](#cameras) to be used for rendering                               |
-| OSPLight\[\] | lights            |         | [data](#data) array with handles of the [lights](#lights)                     |
-| float        | epsilon           |   10^-6^| ray epsilon to avoid self-intersections, relative to scene diameter           |
-| int          | spp               |        1| samples per pixel                                                             |
-| int          | maxDepth          |       20| maximum ray recursion depth                                                   |
-| float        | minContribution   |    0.001| sample contributions below this value will be neglected to speed-up rendering |
-| float        | varianceThreshold |        0| threshold for adaptive accumulation                                           |
+<table style="width:98%;">
+<caption>Parameters understood by all renderers.</caption>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 24%" />
+<col style="width: 12%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">OSPModel</td>
+<td style="text-align: left;">model</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">the <a href="#model">model</a> to render</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">OSPCamera</td>
+<td style="text-align: left;">camera</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">the <a href="#cameras">camera</a> to be used for rendering</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OSPLight[]</td>
+<td style="text-align: left;">lights</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"><a href="#data">data</a> array with handles of the <a href="#lights">lights</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">epsilon</td>
+<td style="text-align: right;">10<sup>-6</sup></td>
+<td style="text-align: left;">ray epsilon to avoid self-intersections, relative to scene diameter</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">spp</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">samples per pixel</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">maxDepth</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: left;">maximum ray recursion depth</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">minContribution</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: left;">sample contributions below this value will be neglected to speed-up rendering</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">varianceThreshold</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">threshold for adaptive accumulation</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters understood by all renderers.
 
@@ -1258,64 +1451,64 @@ created by passing the type string "`scivis`" or "`raytracer`" to
 understood by all renderers the SciVis renderer supports the following
 special parameters:
 
-<table style="width:99%;">
+<table style="width:97%;">
 <caption>Special parameters understood by the SciVis renderer.</caption>
 <colgroup>
-<col width="17%" />
-<col width="28%" />
-<col width="17%" />
-<col width="34%" />
+<col style="width: 18%" />
+<col style="width: 30%" />
+<col style="width: 17%" />
+<col style="width: 30%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="right">Default</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">bool</td>
-<td align="left">shadowsEnabled</td>
-<td align="right">false</td>
-<td align="left">whether to compute (hard) shadows</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">shadowsEnabled</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: left;">whether to compute (hard) shadows</td>
 </tr>
 <tr class="even">
-<td align="left">int</td>
-<td align="left">aoSamples</td>
-<td align="right">0</td>
-<td align="left">number of rays per sample to compute ambient occlusion</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">aoSamples</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">number of rays per sample to compute ambient occlusion</td>
 </tr>
 <tr class="odd">
-<td align="left">float</td>
-<td align="left">aoDistance</td>
-<td align="right">10<sup>20</sup></td>
-<td align="left">maximum distance to consider for ambient occlusion</td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">aoDistance</td>
+<td style="text-align: right;">10<sup>20</sup></td>
+<td style="text-align: left;">maximum distance to consider for ambient occlusion</td>
 </tr>
 <tr class="even">
-<td align="left">bool</td>
-<td align="left">aoTransparencyEnabled</td>
-<td align="right">false</td>
-<td align="left">whether object transparency is respected when computing ambient occlusion (slower)</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">aoTransparencyEnabled</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: left;">whether object transparency is respected when computing ambient occlusion (slower)</td>
 </tr>
 <tr class="odd">
-<td align="left">bool</td>
-<td align="left">oneSidedLighting</td>
-<td align="right">true</td>
-<td align="left">if true back-facing surfaces (wrt. light source) receive no illumination</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">oneSidedLighting</td>
+<td style="text-align: right;">true</td>
+<td style="text-align: left;">if true back-facing surfaces (wrt. light source) receive no illumination</td>
 </tr>
 <tr class="even">
-<td align="left">float / vec3f / vec4f</td>
-<td align="left">bgColor</td>
-<td align="right">black, transparent</td>
-<td align="left">background color and alpha (RGBA)</td>
+<td style="text-align: left;">float / vec3f / vec4f</td>
+<td style="text-align: left;">bgColor</td>
+<td style="text-align: right;">black, transparent</td>
+<td style="text-align: left;">background color and alpha (RGBA)</td>
 </tr>
 <tr class="odd">
-<td align="left">OSPTexture2D</td>
-<td align="left">maxDepthTexture</td>
-<td align="right">NULL</td>
-<td align="left">screen-sized float <a href="#texture">texture</a> with maximum far distance per pixel</td>
+<td style="text-align: left;">OSPTexture2D</td>
+<td style="text-align: left;">maxDepthTexture</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;">screen-sized float <a href="#texture">texture</a> with maximum far distance per pixel</td>
 </tr>
 </tbody>
 </table>
@@ -1327,7 +1520,7 @@ light](#ambient-light). If `aoSamples` is zero (the default) then
 ambient lights cause ambient illumination (without occlusion).
 
 Per default the background of the rendered image will be transparent
-black, i.e. the alpha channel holds the opacity of the rendered objects.
+black, i.e. the alpha channel holds the opacity of the rendered objects.
 This facilitates transparency-aware blending of the image with an
 arbitrary background image by the application. The parameter `bgColor`
 can be used to already blend with a constant background color (and
@@ -1349,40 +1542,40 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-<table style="width:99%;">
+<table style="width:97%;">
 <caption>Special parameters understood by the path tracer.</caption>
 <colgroup>
-<col width="17%" />
-<col width="21%" />
-<col width="13%" />
-<col width="46%" />
+<col style="width: 19%" />
+<col style="width: 23%" />
+<col style="width: 12%" />
+<col style="width: 42%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="right">Default</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">int</td>
-<td align="left">rouletteDepth</td>
-<td align="right">5</td>
-<td align="left">ray recursion depth at which to start Russian roulette termination</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">rouletteDepth</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">ray recursion depth at which to start Russian roulette termination</td>
 </tr>
 <tr class="even">
-<td align="left">float</td>
-<td align="left">maxContribution</td>
-<td align="right">∞</td>
-<td align="left">samples are clamped to this value before they are accumulated into the framebuffer</td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">maxContribution</td>
+<td style="text-align: right;">∞</td>
+<td style="text-align: left;">samples are clamped to this value before they are accumulated into the framebuffer</td>
 </tr>
 <tr class="odd">
-<td align="left">OSPTexture2D</td>
-<td align="left">backplate</td>
-<td align="right">NULL</td>
-<td align="left"><a href="#texture">texture</a> image used as background, replacing visible lights in infinity (e.g. the <a href="#hdri-light">HDRI light</a>)</td>
+<td style="text-align: left;">OSPTexture2D</td>
+<td style="text-align: left;">backplate</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;"><a href="#texture">texture</a> image used as background, replacing visible lights in infinity (e.g. the <a href="#hdri-light">HDRI light</a>)</td>
 </tr>
 </tbody>
 </table>
@@ -1490,45 +1683,45 @@ created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spot light supports the special parameters listed in the table.
 
-<table style="width:98%;">
+<table style="width:97%;">
 <caption>Special parameters accepted by the spot light.</caption>
 <colgroup>
-<col width="13%" />
-<col width="20%" />
-<col width="64%" />
+<col style="width: 14%" />
+<col style="width: 21%" />
+<col style="width: 61%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">vec3f(a)</td>
-<td align="left">position</td>
-<td align="left">the center of the spot light, in world-space</td>
+<td style="text-align: left;">vec3f(a)</td>
+<td style="text-align: left;">position</td>
+<td style="text-align: left;">the center of the spot light, in world-space</td>
 </tr>
 <tr class="even">
-<td align="left">vec3f(a)</td>
-<td align="left">direction</td>
-<td align="left">main emission direction of the spot</td>
+<td style="text-align: left;">vec3f(a)</td>
+<td style="text-align: left;">direction</td>
+<td style="text-align: left;">main emission direction of the spot</td>
 </tr>
 <tr class="odd">
-<td align="left">float</td>
-<td align="left">openingAngle</td>
-<td align="left">full opening angle (in degree) of the spot; outside of this cone is no illumination</td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">openingAngle</td>
+<td style="text-align: left;">full opening angle (in degree) of the spot; outside of this cone is no illumination</td>
 </tr>
 <tr class="even">
-<td align="left">float</td>
-<td align="left">penumbraAngle</td>
-<td align="left">size (angle in degree) of the &quot;penumbra&quot;, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of <code>openingAngle</code></td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">penumbraAngle</td>
+<td style="text-align: left;">size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of <code>openingAngle</code></td>
 </tr>
 <tr class="odd">
-<td align="left">float</td>
-<td align="left">radius</td>
-<td align="left">the size of the spot light, the radius of a disk with normal <code>direction</code></td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">radius</td>
+<td style="text-align: left;">the size of the spot light, the radius of a disk with normal <code>direction</code></td>
 </tr>
 </tbody>
 </table>
@@ -1575,11 +1768,38 @@ illuminating it from infinity. It is created by passing the type string
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
-| Type         | Name | Description                                                                                                      |
-|:-------------|:-----|:-----------------------------------------------------------------------------------------------------------------|
-| vec3f(a)     | up   | up direction of the light in world-space                                                                         |
-| vec3f(a)     | dir  | direction to which the center of the texture will be mapped to (analog to [panoramic camera](#panoramic-camera)) |
-| OSPTexture2D | map  | environment map in latitude / longitude format                                                                   |
+<table style="width:97%;">
+<caption>Special parameters accepted by the HDRI light.</caption>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 9%" />
+<col style="width: 67%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">vec3f(a)</td>
+<td style="text-align: left;">up</td>
+<td style="text-align: left;">up direction of the light in world-space</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">vec3f(a)</td>
+<td style="text-align: left;">dir</td>
+<td style="text-align: left;">direction to which the center of the texture will be mapped to (analog to <a href="#panoramic-camera">panoramic camera</a>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OSPTexture2D</td>
+<td style="text-align: left;">map</td>
+<td style="text-align: left;">environment map in latitude / longitude format</td>
+</tr>
+</tbody>
+</table>
 
 : Special parameters accepted by the HDRI light.
 
@@ -1633,19 +1853,19 @@ format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
 files. To create an OBJ material pass the type string "`OBJMaterial`" to
 `ospNewMaterial`. Its main parameters are
 
-| Type         | Name      |    Default| Description                                        |
-|:-------------|:----------|----------:|:---------------------------------------------------|
-| vec3f        | Kd        |  white 0.8| diffuse color                                      |
-| vec3f        | Ks        |      black| specular color                                     |
-| float        | Ns        |         10| shininess (Phong exponent), usually in \[2–10^4^\] |
-| float        | d         |     opaque| opacity                                            |
-| vec3f        | Tf        |      black| transparency filter color                          |
-| OSPTexture2D | map\_Bump |       NULL| normal map                                         |
+| Type         | Name      |    Default| Description                                         |
+|:-------------|:----------|----------:|:----------------------------------------------------|
+| vec3f        | Kd        |  white 0.8| diffuse color                                       |
+| vec3f        | Ks        |      black| specular color                                      |
+| float        | Ns        |         10| shininess (Phong exponent), usually in \[2--10^4^\] |
+| float        | d         |     opaque| opacity                                             |
+| vec3f        | Tf        |      black| transparency filter color                           |
+| OSPTexture2D | map\_Bump |       NULL| normal map                                          |
 
 : Main parameters of the OBJ material.
 
 In particular when using the path tracer it is important to adhere to
-the principle of energy conservation, i.e. that the amount of light
+the principle of energy conservation, i.e. that the amount of light
 reflected by a surface is not larger than the light arriving. Therefore
 the path tracer issues a warning and renormalizes the color parameters
 if the sum of `Kd`, `Ks`, and `Tf` is larger than one in any color
@@ -1684,7 +1904,7 @@ or invert its green channel.
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with "`map_`". The fetched texels
 are multiplied by the respective parameter value. Texturing requires
-[geometries](#geometries) with texture coordinates, e.g. a [triangle
+[geometries](#geometries) with texture coordinates, e.g. a [triangle
 mesh](#triangle-mesh) with `vertex.texcoord` provided. The color
 textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
 encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
@@ -1700,46 +1920,46 @@ changing roughness and realistic color shifts at edges. To create a
 Metal material pass the type string "`Metal`" to `ospNewMaterial`. Its
 parameters are
 
-<table style="width:98%;">
+<table style="width:97%;">
 <caption>Parameters of the Metal material.</caption>
 <colgroup>
-<col width="12%" />
-<col width="14%" />
-<col width="16%" />
-<col width="55%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 51%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="right">Default</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">vec3f[]</td>
-<td align="left">ior</td>
-<td align="right">Aluminium</td>
-<td align="left"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
+<td style="text-align: left;">vec3f[]</td>
+<td style="text-align: left;">ior</td>
+<td style="text-align: right;">Aluminium</td>
+<td style="text-align: left;"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
 </tr>
 <tr class="even">
-<td align="left">vec3f</td>
-<td align="left">eta</td>
-<td align="right"></td>
-<td align="left">RGB complex refractive index, real part</td>
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">eta</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">RGB complex refractive index, real part</td>
 </tr>
 <tr class="odd">
-<td align="left">vec3f</td>
-<td align="left">k</td>
-<td align="right"></td>
-<td align="left">RGB complex refractive index, imaginary part</td>
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">k</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">RGB complex refractive index, imaginary part</td>
 </tr>
 <tr class="even">
-<td align="left">float</td>
-<td align="left">roughness</td>
-<td align="right">0.1</td>
-<td align="left">roughness in [0–1], 0 is perfect mirror</td>
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">roughness</td>
+<td style="text-align: right;">0.1</td>
+<td style="text-align: left;">roughness in [0–1], 0 is perfect mirror</td>
 </tr>
 </tbody>
 </table>
@@ -1788,7 +2008,7 @@ control of the color. To create an Alloy material pass the type string
 |:------|:----------|----------:|:--------------------------------------------|
 | vec3f | color     |  white 0.9| reflectivity at normal incidence (0 degree) |
 | vec3f | edgeColor |      white| reflectivity at grazing angle (90 degree)   |
-| float | roughness |        0.1| roughness, in \[0–1\], 0 is perfect mirror  |
+| float | roughness |        0.1| roughness, in \[0--1\], 0 is perfect mirror |
 
 : Parameters of the Alloy material.
 
@@ -1807,7 +2027,7 @@ transformations](#texture-transformations) are supported as well.
 #### Glass
 
 The [path tracer](#path-tracer) offers a realistic a glass material,
-supporting refraction and volumetric attenuation (i.e. the transparency
+supporting refraction and volumetric attenuation (i.e. the transparency
 color varies with the geometric thickness). To create a Glass material
 pass the type string "`Glass`" to `ospNewMaterial`. Its parameters are
 
@@ -1830,7 +2050,7 @@ trough a glass of thickness `attenuationDistance`.
 
 The [path tracer](#path-tracer) offers a thin glass material useful for
 objects with just a single surface, most prominently windows. It models
-a very thin, transparent slab, i.e. it behaves as if a second, virtual
+a very thin, transparent slab, i.e. it behaves as if a second, virtual
 surface is parallel to the real geometric surface. The implementation
 accounts for multiple internal reflections between the interfaces
 (including attenuation), but neglects parallax effects due to its
@@ -1871,9 +2091,9 @@ to `ospNewMaterial`. Its parameters are listed in the table below.
 | Type  | Name        |    Default| Description                       |
 |:------|:------------|----------:|:----------------------------------|
 | vec3f | baseColor   |  white 0.8| color of base coat                |
-| float | flakeAmount |        0.3| amount of flakes, in \[0–1\]      |
+| float | flakeAmount |        0.3| amount of flakes, in \[0--1\]     |
 | vec3f | flakeColor  |  Aluminium| color of metallic flakes          |
-| float | flakeSpread |        0.5| spread of flakes, in \[0–1\]      |
+| float | flakeSpread |        0.5| spread of flakes, in \[0--1\]     |
 | float | eta         |        1.5| index of refraction of clear coat |
 
 : Parameters of the MetallicPaint material.
@@ -1921,16 +2141,16 @@ texture. The supported texture formats are:
 
 | Name                  | Description                                                 |
 |:----------------------|:------------------------------------------------------------|
-| OSP\_TEXTURE\_RGBA8   | 8 bit \[0–255\] linear components red, green, blue, alpha   |
+| OSP\_TEXTURE\_RGBA8   | 8 bit \[0--255\] linear components red, green, blue, alpha  |
 | OSP\_TEXTURE\_SRGBA   | 8 bit sRGB gamma encoded color components, and linear alpha |
 | OSP\_TEXTURE\_RGBA32F | 32 bit float components red, green, blue, alpha             |
-| OSP\_TEXTURE\_RGB8    | 8 bit \[0–255\] linear components red, green, blue          |
+| OSP\_TEXTURE\_RGB8    | 8 bit \[0--255\] linear components red, green, blue         |
 | OSP\_TEXTURE\_SRGB    | 8 bit sRGB gamma encoded components red, green, blue        |
 | OSP\_TEXTURE\_RGB32F  | 32 bit float components red, green, blue                    |
-| OSP\_TEXTURE\_R8      | 8 bit \[0–255\] linear single component                     |
+| OSP\_TEXTURE\_R8      | 8 bit \[0--255\] linear single component                    |
 | OSP\_TEXTURE\_R32F    | 32 bit float single component                               |
 
-: Supported texture formats by `ospNewTexture2D`, i.e. valid constants
+: Supported texture formats by `ospNewTexture2D`, i.e. valid constants
 of type `OSPTextureFormat`.
 
 The texel data addressed by `source` starts with the texels in the lower
@@ -1938,9 +2158,9 @@ left corner of the texture image, like in OpenGL. Similar to
 [data](#data) buffers the texel data can be shared by the application by
 specifying the `OSP_TEXTURE_SHARED_BUFFER` flag. Per default a texture
 fetch is filtered by performing bi-linear interpolation of the nearest
-2×2 texels; if instead fetching only the nearest texel is desired (i.e.
-no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag. Both
-texture creating flags can be combined with a bitwise OR.
+2×2 texels; if instead fetching only the nearest texel is desired
+(i.e. no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
+Both texture creating flags can be combined with a bitwise OR.
 
 ### Texture Transformations
 
@@ -1959,7 +2179,7 @@ convention shall be used. The following parameters (prefixed with
 : Parameters to define texture coordinate transformations.
 
 The transformations are applied in the given order. Rotation, scale and
-translation are interpreted "texture centric", i.e. their effect seen by
+translation are interpreted "texture centric", i.e. their effect seen by
 an user are relative to the texture (although the transformations are
 applied to the texture coordinates).
 
@@ -1994,7 +2214,7 @@ corner) and `imageEnd` (upper right corner). This can be used, for
 example, to crop the image, to achieve asymmetrical view frusta, or to
 horizontally flip the image to view scenes which are specified in a
 left-handed coordinate system. Note that values outside the default
-range of \[0–1\] are valid, which is useful to easily realize overscan
+range of \[0--1\] are valid, which is useful to easily realize overscan
 or film gate, or to emulate a shifted sensor.
 
 #### Perspective Camera
@@ -2006,15 +2226,58 @@ rendering, but no motion blur. It is created by passing the type string
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
-| Type  | Name                   | Description                                                            |
-|:------|:-----------------------|:-----------------------------------------------------------------------|
-| float | fovy                   | the field of view (angle in degree) of the frame's height              |
-| float | aspect                 | ratio of width by height of the frame                                  |
-| float | apertureRadius         | size of the aperture, controls the depth of field                      |
-| float | focusDistance          | distance at where the image is sharpest when depth of field is enabled |
-| bool  | architectural          | vertical edges are projected to be parallel                            |
-| int   | stereoMode             | 0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side     |
-| float | interpupillaryDistance | distance between left and right eye when stereo is enabled             |
+<table style="width:97%;">
+<caption>Parameters accepted by the perspective camera.</caption>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 32%" />
+<col style="width: 53%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">fovy</td>
+<td style="text-align: left;">the field of view (angle in degree) of the frame’s height</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">aspect</td>
+<td style="text-align: left;">ratio of width by height of the frame</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">apertureRadius</td>
+<td style="text-align: left;">size of the aperture, controls the depth of field</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">focusDistance</td>
+<td style="text-align: left;">distance at where the image is sharpest when depth of field is enabled</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">architectural</td>
+<td style="text-align: left;">vertical edges are projected to be parallel</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">stereoMode</td>
+<td style="text-align: left;">0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">interpupillaryDistance</td>
+<td style="text-align: left;">distance between left and right eye when stereo is enabled</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters accepted by the perspective camera.
 
@@ -2076,8 +2339,8 @@ by using the [general parameters](#cameras) understood by all cameras.
 
 ### Picking
 
-To get the world-space position of the geometry (if any) seen at \[0–1\]
-normalized screen-space pixel coordinates `screenPos` use
+To get the world-space position of the geometry (if any) seen at
+\[0--1\] normalized screen-space pixel coordinates `screenPos` use
 
 ``` {.cpp}
 void ospPick(OSPPickResult*, OSPRenderer, const vec2f &screenPos);
@@ -2117,12 +2380,12 @@ Valid values are:
 | Name             | Description                                                 |
 |:-----------------|:------------------------------------------------------------|
 | OSP\_FB\_NONE    | framebuffer will not be mapped by the application           |
-| OSP\_FB\_RGBA8   | 8 bit \[0–255\] linear component red, green, blue, alpha    |
+| OSP\_FB\_RGBA8   | 8 bit \[0--255\] linear component red, green, blue, alpha   |
 | OSP\_FB\_SRGBA   | 8 bit sRGB gamma encoded color components, and linear alpha |
 | OSP\_FB\_RGBA32F | 32 bit float components red, green, blue, alpha             |
 
 : Supported color formats of the framebuffer that can be passed to
-`ospNewFrameBuffer`, i.e. valid constants of type
+`ospNewFrameBuffer`, i.e. valid constants of type
 `OSPFrameBufferFormat`.
 
 The parameter `frameBufferChannels` specifies which channels the
@@ -2168,8 +2431,8 @@ void ospFreeFrameBuffer(OSPFrameBuffer);
 Because OSPRay uses reference counting internally the framebuffer may
 not immediately be deleted at this time.
 
-The application can map the given channel of a framebuffer – and thus
-access the stored pixel information – via
+The application can map the given channel of a framebuffer -- and thus
+access the stored pixel information -- via
 
 ``` {.cpp}
 const void *ospMapFrameBuffer(OSPFrameBuffer,
@@ -2232,7 +2495,7 @@ float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
 
 The third parameter specifies what channel(s) of the framebuffer is
 written to[^5]. What to render and how to render it depends on the
-renderer's parameters. If the framebuffer supports accumulation (i.e. it
+renderer's parameters. If the framebuffer supports accumulation (i.e. it
 was created with `OSP_FB_ACCUM`) then successive calls to
 `ospRenderFrame` will progressively refine the rendered image. If
 additionally the framebuffer has an `OSP_FB_VARIANCE` channel then
@@ -2256,7 +2519,7 @@ the following items available in your environment in order to build&run
 OSPRay in MPI mode:
 
 -   An MPI enabled multi-node environment, such as an HPC cluster
--   An MPI implementation you can build against (i.e. Intel MPI,
+-   An MPI implementation you can build against (i.e. Intel MPI,
     MVAPICH2, etc...)
 
 Enabling the MPI Module in your Build
@@ -2305,7 +2568,7 @@ with the thread tasking system. The options for enabling/controlling the
 dynamic load balacing features on the `mpi_offload` device are found in
 the table below, which can be changed while the application is running.
 Please note that these options will likely only pay off for scenes which
-have heavy rendering load (e.g. path tracing a non-trivial scene) and
+have heavy rendering load (e.g. path tracing a non-trivial scene) and
 have a lot of variance in how expensive each tile is to render.
 
 | Type | Name                |  Default| Description                           |
@@ -2321,9 +2584,9 @@ The "distributed" rendering mode is where a MPI distributed application
 frames. In this case, the API expects all calls (both created objects
 and parameters) to be the same on every application rank, except each
 rank can specify arbitrary geometries and volumes. Each renderer will
-have its own limitations on the topology of the data (i.e. overlapping
+have its own limitations on the topology of the data (i.e. overlapping
 data regions, concave data, etc.), but the API calls will only differ
-for scene objects. Thus all other calls (i.e. setting camera, creating
+for scene objects. Thus all other calls (i.e. setting camera, creating
 framebuffer, rendering frame, etc.) will all be assumed to be identical,
 but only rendering a frame and committing the model must be in
 lock-step. This mode targets using all available aggregate memory for
@@ -2406,7 +2669,7 @@ On Windows build it in the "build\_directory\\\$Configuration" with
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
 The first image `firstFrame.ppm` shows the result after one call to
-`ospRenderFrame` – jagged edges and noise in the shadow can be seen.
+`ospRenderFrame` -- jagged edges and noise in the shadow can be seen.
 Calling `ospRenderFrame` multiple times enables progressive refinement,
 resulting in antialiased edges and converged shadows, shown after ten
 frames in the second image `accumulatedFrames.ppm`.
@@ -2426,7 +2689,7 @@ based on a prototype OSPRay scenegraph interface where its nodes are
 displayed in the GUI and can be manipulated interactively. For instance,
 simply run it as `ospExampleViewerSg teapot.obj`.
 
-This application also functions as an OSPRay state debugger – invalid
+This application also functions as an OSPRay state debugger -- invalid
 values will be shown in red up the hierarchy and won't change the viewer
 until corrected. You can also add new nodes where appropriate: for
 example, when "lights" is expanded right clicking on "lights" and typing
@@ -2503,7 +2766,7 @@ communication.
 ### Interactive Viewer
 
 Rank 0 will open an interactive window with GLFW and display the
-rendered image. When the application state needs to update (e.g. camera
+rendered image. When the application state needs to update (e.g. camera
 or transfer function changes), this information is broadcasted out to
 the other nodes to update their scene data.
 
@@ -2524,7 +2787,7 @@ page.
 
 [^4]: respectively $(127, 127, 255)$ for 8 bit textures
 
-[^5]: This is currently not implemented, i.e. all channels of the
+[^5]: This is currently not implemented, i.e. all channels of the
     framebuffer are always updated.
 
 [^6]: A C++ version that uses the C++ conveniance wrappers of OSPRay's

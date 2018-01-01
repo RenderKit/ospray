@@ -42,8 +42,6 @@ namespace ospray {
     {
       FileName fileName = fileNameAbs;
       std::string fileNameBase = fileNameAbs;
-      std::string path = fileNameAbs.path();
-
       /* WARNING: this cache means that every texture ever loaded will
          forever keep at least one refcount - ie, no texture will ever
          auto-die!!! (to fix this we'd have to add a dedicated
@@ -100,7 +98,6 @@ namespace ospray {
               if (fileNameBase.size() > 0) {
                 if (fileNameBase.substr(0,1) == "/") {// Absolute path.
                   fileName = fileNameBase;
-                  path = "";
                 }
               }
           }

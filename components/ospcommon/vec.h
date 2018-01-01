@@ -304,7 +304,10 @@ namespace ospcommon {
     return vec_t<T, 4>(op(v.x), op(v.y), op(v.z), op(v.w)); \
   }
 
-  unary_functor(rcp) unary_functor(abs) unary_functor(sin) unary_functor(cos)
+  unary_functor(rcp)
+  unary_functor(abs)
+  unary_functor(sin)
+  unary_functor(cos)
 #undef unary_functor
 
 // -------------------------------------------------------
@@ -368,9 +371,11 @@ namespace ospcommon {
     return vec_t<T, 4>(a op b.x, a op b.y, a op b.z, a op b.w);             \
   }
 
-      binary_operator(operator+, +) binary_operator(operator-, -)
-          binary_operator(operator*, *) binary_operator(operator/, /)
-              binary_operator(operator%, %)
+  binary_operator(operator+, +)
+  binary_operator(operator-, -)
+  binary_operator(operator*, *)
+  binary_operator(operator/, /)
+  binary_operator(operator%, %)
 #undef binary_operator
 
 // -------------------------------------------------------
@@ -433,19 +438,20 @@ namespace ospcommon {
     return a;                                                             \
   }
 
-                  binary_operator(operator+=, +=)
-                      binary_operator(operator-=, -=)
-                          binary_operator(operator*=, *=)
-                              binary_operator(operator/=, /=)
+  binary_operator(operator+=, +=)
+  binary_operator(operator-=, -=)
+  binary_operator(operator*=, *=)
+  binary_operator(operator/=, /=)
+  binary_operator(operator%=, %=)
 #undef binary_operator
 
-      // -------------------------------------------------------
-      // ternary operators (just for compatibilty with old embree
-      // -------------------------------------------------------
-      template <typename T, int A>
-      inline vec_t<T, 3, A> madd(const vec_t<T, 3, A> &a,
-                                 const vec_t<T, 3, A> &b,
-                                 const vec_t<T, 3, A> &c)
+  // -------------------------------------------------------
+  // ternary operators (just for compatibilty with old embree
+  // -------------------------------------------------------
+  template <typename T, int A>
+  inline vec_t<T, 3, A> madd(const vec_t<T, 3, A> &a,
+                             const vec_t<T, 3, A> &b,
+                             const vec_t<T, 3, A> &c)
   {
     return vec_t<T, 3, A>(
         madd(a.x, b.x, c.x), madd(a.y, b.y, c.y), madd(a.z, b.z, c.z));
@@ -625,14 +631,16 @@ namespace ospcommon {
     return vec_t<T, 4>(f(a.x, b.x), f(a.y, b.y), f(a.z, b.z), f(a.w, b.w)); \
   }
 
-  define_functor(min) define_functor(max) define_functor(divRoundUp)
+  define_functor(min)
+  define_functor(max)
+  define_functor(divRoundUp)
 #undef define_functor
 
-      // -------------------------------------------------------
-      // reductions
-      // -------------------------------------------------------
-      template <typename T, int A>
-      inline T reduce_add(const vec_t<T, 2, A> &v)
+  // -------------------------------------------------------
+  // reductions
+  // -------------------------------------------------------
+  template <typename T, int A>
+  inline T reduce_add(const vec_t<T, 2, A> &v)
   {
     return v.x + v.y;
   }
@@ -693,18 +701,6 @@ namespace ospcommon {
   inline T reduce_max(const vec_t<T, 4, A> &v)
   {
     return max(max(v.x, v.y), max(v.z, v.w));
-  }
-
-  // -------------------------------------------------------
-  // select
-  // -------------------------------------------------------
-  template <typename T, int A>
-  inline vec_t<T, 3, A> select(bool s,
-                               const vec_t<T, 3, A> &a,
-                               const vec_t<T, 3, A> &b)
-  {
-    return vec_t<T, 3, A>(
-        select(s, a.x, b.x), select(s, a.y, b.y), select(s, a.z, b.z));
   }
 
   // -------------------------------------------------------

@@ -100,7 +100,7 @@ OSPGeometry getStreamline() {
                      0.0f, 0.0f, 1.0f, 1.0f,
                      1.0f, 0.0f, 0.0f, 1.0f
                    };
-  int index[] =  { 0, 1, 2};
+  int index[] =  { 0, 1};
   OSPGeometry streamlines = ospNewGeometry("streamlines");
   EXPECT_TRUE(streamlines);
   OSPData data = ospNewData(3, OSP_FLOAT3A, vertex);
@@ -111,7 +111,7 @@ OSPGeometry getStreamline() {
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "vertex.color", data);
-  data = ospNewData(1, OSP_INT3, index);
+  data = ospNewData(2, OSP_INT, index);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "index", data);
@@ -155,8 +155,8 @@ TEST_P(SingleObject, simpleCylinder) {
   PerformRenderTest();
 }
 
-// single tube
-TEST_P(SingleObject, DISABLED_simpleStreamlines) {
+// single streamline
+TEST_P(SingleObject, simpleStreamlines) {
   OSPGeometry streamlines = ::getStreamline();
   ospSetMaterial(streamlines, GetMaterial());
   ospCommit(streamlines);
@@ -180,4 +180,4 @@ TEST_P(Pipes, simple) {
 INSTANTIATE_TEST_CASE_P(Scivis, Pipes, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
 
 // Tests disabled due to issues for pathtracer renderer with streamlines
-INSTANTIATE_TEST_CASE_P(DISABLED_Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values(0.1f, 0.4f)));
+INSTANTIATE_TEST_CASE_P(Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values(0.1f, 0.4f)));

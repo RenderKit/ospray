@@ -5,6 +5,19 @@ Version History
 
 -   Streamlines now support per-vertex radii and smooth interpolation
 
+### Changes in v1.4.2:
+
+-   Several cleanups and bug fixes
+    -   Fixed memory leak where the Embree BVH was never released when an
+        OSPModel was released
+    -   Fixed a crash when API logging was enabled in certain situations
+    -   Fixed a crash in MPI mode when creating lights without a renderer
+    -   Fixed an issue with camera lens samples not initilized when spp <= 0
+    -   Fixed an issue in ospExampleViewer when specifying multiple data files
+-   The C99 tutorial is now indicated as the default; the C++ wrappers do not
+    change the semantics of the API (memory management) so the C99 version
+    should be considered first when learning the API
+
 ### Changes in v1.4.1:
 
 -   Several cleanups and bug fixes

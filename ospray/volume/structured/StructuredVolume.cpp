@@ -22,6 +22,11 @@
 
 namespace ospray {
 
+  StructuredVolume::~StructuredVolume()
+  {
+    if (ispcEquivalent) ispc::StructuredVolume_destroy(ispcEquivalent);
+  }
+
   std::string StructuredVolume::toString() const
   {
     return("ospray::StructuredVolume<" + voxelType + ">");

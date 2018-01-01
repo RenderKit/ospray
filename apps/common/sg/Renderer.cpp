@@ -74,6 +74,14 @@ namespace ospray {
                   " to speed-up rendering.");
       child("minContribution").setMinMax(0.f, 0.1f);
 
+      createChild("maxContribution", "float", 5.f,
+                  NodeFlags::required |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider,
+                  "sample contributions above this value will be ignored."
+                  "  This reduces bright dots appearing in images");
+      child("maxContribution").setMinMax(1e-5f, 1e5f);
+
       createChild("varianceThreshold", "float", 0.f,
                   NodeFlags::required |
                   NodeFlags::valid_min_max |

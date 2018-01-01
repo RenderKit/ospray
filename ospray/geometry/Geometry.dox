@@ -1,8 +1,0 @@
-/*! \defgroup ospray_supported_geometries Supported Geometry Types
-
-  \brief Lists and documents the types of geometries implemented in this version of OSPRay.
-
-  \ingroup ospray_supported_functionality
-  
-*/
-

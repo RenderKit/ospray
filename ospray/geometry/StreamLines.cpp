@@ -67,7 +67,7 @@ namespace ospray {
     colorData = getParamData("vertex.color",getParamData("color"));
     if (colorData && colorData->type != OSP_FLOAT4)
       throw std::runtime_error("'vertex.color' must have data type OSP_FLOAT4");
-    color = colorData ? (vec4f*)colorData->data : nullptr;
+    const ispc::vec4f* color = colorData ? (ispc::vec4f*)colorData->data : nullptr;
 
     radiusData = getParamData("vertex.radius");
     if (radiusData && radiusData->type == OSP_FLOAT) {
@@ -81,52 +81,60 @@ namespace ospray {
                      << "as curve: " << useCurve;
 
     bounds = empty;
-    for (uint32_t i = 0; i < numVertices; i++) {
-      const float radiusI = radius[i];
-      bounds.extend(vertex[i] - radiusI);
-      bounds.extend(vertex[i] + radiusI);
+    // XXX curves may actually have a larger bounding box due to swinging
+    for (uint32_t i = 0; i < numSegments; i++) {
+      const uint32 idx = index[i];
+      bounds.extend(vertex[idx] - radius[idx]);
+      bounds.extend(vertex[idx] + radius[idx]);
+      bounds.extend(vertex[idx+1] - radius[idx+1]);
+      bounds.extend(vertex[idx+1] + radius[idx+1]);
     }
 
     if (useCurve) {
-      numVertices += numSegments*2;
-      vec4f* newvertex = new vec4f[numVertices];
-      uint32_t* newindex = new uint32_t[numSegments];
-      uint32_t vidx = 0;
+      vertexCurve.clear();
+      indexCurve.resize(numSegments);
+      bool middleSegment = false;
+      vec3f tangent;
       for (uint32_t i = 0; i < numSegments; i++) {
         const uint32 idx = index[i];
         const vec3f start = vertex[idx];
         const vec3f end = vertex[idx+1];
+        const float lengthSegment = length(start - end);
         const float startRadius = radius[idx];
         const float endRadius = radius[idx+1];
-        if (i+1 < numSegments && index[i+1] == idx+1) { // inter-link
+
+        indexCurve[i] = vertexCurve.size();
+        if (middleSegment) {
+          vertexCurve.push_back(vec4f(start, startRadius));
+          vertexCurve.push_back(vec4f(start + tangent,
+                lerp(1.f/3, startRadius, endRadius)));
+        } else { // start new curve
+          const vec3f cap =  lerp(1.f+startRadius/lengthSegment, end, start);
+          vertexCurve.push_back(vec4f(cap, 0.f));
+          vertexCurve.push_back(vec4f(start, startRadius));
+        }
+
+        middleSegment = i+1 < numSegments && index[i+1] == idx+1;
+        if (middleSegment) {
           const vec3f next = vertex[idx+2];
-          const vec3f delta = 0.25f*(next - start);
-          const float a = length(start - end);
+          const vec3f delta = (1.f/3)*(next - start);
           const float b = length(next - end);
-          const float r = a/(a+b);
-          newvertex[vidx] = vec4f(start, startRadius);
-          newvertex[vidx+2] = vec4f(end - r*delta, startRadius);
-          newvertex[vidx+3] = vec4f(end, endRadius);
-          newvertex[vidx+4] = vec4f(end + (1.f-r)*delta, endRadius);
-          newindex[i] = vidx;
-          vidx += 3;
-        } else { // end
-          newvertex[vidx] = vec4f(start, startRadius);
-          newvertex[vidx+1] = vec4f(start + (end-start)*(1.f/3), startRadius);
-          newvertex[vidx+2] = vec4f(start + (end-start)*(2.f/3), endRadius);
-          newvertex[vidx+3] = vec4f(end, endRadius);
-          vidx += 4;
+          const float r = lengthSegment/(lengthSegment + b);
+          vertexCurve.push_back(vec4f(end - r*delta,
+                lerp(2.f/3, startRadius, endRadius)));
+          tangent = (1.f-r)*delta;
+        } else { // end curve
+          vertexCurve.push_back(vec4f(end, endRadius));
+          const vec3f cap = lerp(1.f+endRadius/lengthSegment, start, end);
+          vertexCurve.push_back(vec4f(cap, 0.f));
         }
       }
       ispc::StreamLines_setCurve(getIE(),model->getIE(),
-                                 (const ispc::vec3fa*)newvertex, numVertices,
-                                 (const uint32_t*)newindex, numSegments,
-                                 (const ispc::vec4f*)color);
+          (const ispc::vec3fa*)vertexCurve.data(), vertexCurve.size(),
+          indexCurve.data(), numSegments, index, color);
     } else
       ispc::StreamLines_set(getIE(),model->getIE(), globalRadius,
-                            (const ispc::vec3fa*)vertex,
-                            numVertices, (const uint32_t*)index, numSegments,
-                            (const ispc::vec4f*)color);
+          (const ispc::vec3fa*)vertex, numVertices, index, numSegments, color);
   }
 
   OSP_REGISTER_GEOMETRY(StreamLines,streamlines);

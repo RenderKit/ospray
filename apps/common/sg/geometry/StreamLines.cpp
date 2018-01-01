@@ -35,10 +35,16 @@ namespace ospray {
     box3f StreamLines::bounds() const
     {
       box3f bounds = empty;
-      if (hasChild("vertex")) {
-        auto v = child("vertex").nodeAs<DataBuffer>();
-        for (uint32_t i = 0; i < v->size(); i += 4)
-          bounds.extend(v->get<vec3fa>(i));
+      auto vtx = child("vertex").nodeAs<DataBuffer>()->baseAs<vec3fa>();
+      auto idx = child("index").nodeAs<DataBuffer>();
+      // TODO: radius varies potentially per vertex
+      auto radius = child("radius").valueAs<float>();
+      for (uint32_t e = 0; e < idx->size(); e++) {
+        int i = idx->get<int>(e);
+        bounds.extend(vtx[i] - radius);
+        bounds.extend(vtx[i] + radius);
+        bounds.extend(vtx[i+1] - radius);
+        bounds.extend(vtx[i+1] + radius);
       }
       return bounds;
     }

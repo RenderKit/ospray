@@ -100,7 +100,8 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tid) {
+          tasking::parallel_for(numJobs(renderer->spp, accumID),
+                                [&](size_t tid) {
             renderer->renderTile(perFrameData, tile, tid);
           });
 
@@ -121,59 +122,20 @@ namespace ospray {
 
       // staticLoadBalancer::Distributed definitions //////////////////////////
 
-      float Distributed::renderFrame(Renderer *renderer,
-                                     FrameBuffer *fb,
-                                     const uint32 channelFlags)
+      float Distributed::renderFrame(Renderer *, FrameBuffer *, const uint32)
       {
-        auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
-
-        dfb->startNewFrame(renderer->errorThreshold);
-        dfb->beginFrame(); // XXX is called by renderer->beginFrame:
-        auto *perFrameData = renderer->beginFrame(dfb);
-
-        tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
-          const size_t numTiles_x = fb->getNumTiles().x;
-          const size_t tile_y = taskIndex / numTiles_x;
-          const size_t tile_x = taskIndex - tile_y*numTiles_x;
-          const vec2i tileID(tile_x, tile_y);
-          const int32 accumID = fb->accumID(tileID);
-          const bool tileOwner = (taskIndex % numGlobalRanks()) == globalRank();
-
-          if (dfb->tileError(tileID) <= renderer->errorThreshold)
-            return;
-
-#if TILE_SIZE > MAX_TILE_SIZE
-          auto tilePtr = make_unique<Tile>(tileID, dfb->size, accumID);
-          auto &tile   = *tilePtr;
-#else
-          Tile __aligned(64) tile(tileID, dfb->size, accumID);
-#endif
-
-          const int NUM_JOBS = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
-          tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-            renderer->renderTile(perFrameData, tile, tIdx);
-          });
-
-          if (tileOwner) {
-            tile.generation = 0;
-            tile.children = numGlobalRanks() - 1;
-          } else {
-            tile.generation = 1;
-            tile.children = 0;
-          }
-
-          fb->setTile(tile);
-        });
-
-        dfb->waitUntilFinished();
-        renderer->endFrame(nullptr, channelFlags);
-
-        return dfb->endFrame(renderer->errorThreshold);
+        throw std::runtime_error("Distributed renderers must implement their"
+                                 " own renderFrame()! Distributed rendering"
+                                 " algorithms are highly coupled to how"
+                                 " communication between nodes operate. Thus"
+                                 " there isn't a 'default' implementation as"
+                                 " there is with the LocalDevice or "
+                                 " MPIOffloadDevice.");
       }
 
       std::string Distributed::toString() const
       {
-        return "ospray::mpi::staticLoadBalancer::Distributed";
+        return "ospray::mpi::staticLoadBalancer::Distributed[placeholder]";
       }
 
     }// ::ospray::mpi::staticLoadBalancer
@@ -375,7 +337,8 @@ namespace ospray {
 
         while (!frameActive);// PRINT(frameActive); // XXX busy wait for valid perFrameData
 
-        tasking::parallel_for(numJobs(renderer->spp, task.accumId), [&](int tid) {
+        tasking::parallel_for(numJobs(renderer->spp, task.accumId),
+                              [&](size_t tid) {
           renderer->renderTile(perFrameData, tile, tid);
         });
 

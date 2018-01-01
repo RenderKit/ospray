@@ -450,14 +450,14 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
       pixelOp->postAccum(tile->final);
       if (colorBufferFormat == OSP_FB_RGBA8 || colorBufferFormat == OSP_FB_SRGBA) {
         uint8_t *colors = reinterpret_cast<uint8_t*>(tile->color);
-        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) { 
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
           colors[i * 4] = clamp(tile->final.r[i] * 255.0, 0.0, 255.0);
           colors[i * 4 + 1] = clamp(tile->final.g[i] * 255.0, 0.0, 255.0);
           colors[i * 4 + 2] = clamp(tile->final.b[i] * 255.0, 0.0, 255.0);
           colors[i * 4 + 3] = clamp(tile->final.a[i] * 255.0, 0.0, 255.0);
         }
       } else if (colorBufferFormat == OSP_FB_RGBA32F) {
-        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) { 
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
           tile->color[i] = vec4f(tile->final.r[i], tile->final.g[i],
               tile->final.b[i], tile->final.a[i]);
         }
@@ -477,7 +477,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
       default:
       break;
     }
-    
+
     DFB_writeTile((ispc::VaryingTile*)&tile->final, &tile->color);
 
     auto msg = [&]{
@@ -664,7 +664,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
   {
     frameID = -1; // we increment at the start of the frame
     if (!myTiles.empty()) {
-      tasking::parallel_for(myTiles.size(), [&](int taskIndex) {
+      tasking::parallel_for(myTiles.size(), [&](size_t taskIndex) {
         TileData *td = this->myTiles[taskIndex];
         assert(td);
         const auto bytes = TILE_SIZE * TILE_SIZE * sizeof(float);
