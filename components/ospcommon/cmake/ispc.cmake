@@ -90,12 +90,7 @@ ENDMACRO ()
 
 MACRO (OSPRAY_ISPC_COMPILE)
   SET(ISPC_ADDITIONAL_ARGS "")
-  # iw: adding 'sse2' here forces ispc to generate multi-isa binaries
-  # even if we "want" only a single one - this is required because
-  # embree is compiled with multi-isa, and if we use a single-isa
-  # we'll get function symbols that are differently mangled than the
-  # one in embree, so will get link errors...
-  SET(ISPC_TARGETS sse2;${OSPRAY_ISPC_TARGET_LIST})
+  SET(ISPC_TARGETS ${OSPRAY_ISPC_TARGET_LIST})
 
   SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
   STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
@@ -188,7 +183,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
       DEPENDS ${input} ${deps}
       COMMENT "Building ISPC object ${outdir}/${fname}.dev${ISPC_TARGET_EXT}"
     )
-  
-  SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
+
+    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
   ENDFOREACH()
 ENDMACRO()
