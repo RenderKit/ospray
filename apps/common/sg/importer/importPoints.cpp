@@ -79,7 +79,7 @@ namespace ospray {
       for (int i=0;i<N;i++) {
         int rc = fscanf(file,"%f",f+i);
         if (rc == 0) return (i == 0);
-        fscanf(file,"\n");
+        rc = fscanf(file,"\n");
       }
       return true;
     }
