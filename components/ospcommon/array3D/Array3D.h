@@ -196,7 +196,7 @@ namespace ospcommon {
     {
       SubBoxArray3D(const std::shared_ptr<Array3D<value_t>> &actual,
                     const box3i &clipBox)
-          : actual(actual), clipBox(clipBox)
+        : clipBox(clipBox), actual(actual)
       {
         assert(actual);
         assert(clipBox.upper.x <= actual->size().x);
