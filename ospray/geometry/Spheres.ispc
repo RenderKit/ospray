@@ -74,8 +74,8 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
       colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
     } else
       colorID = ray.primID;
-    uint32 colorAddr = self->color_offset+colorID*self->color_stride;
-    dg.color = *((vec4f *)(self->color+colorAddr));
+    const uint64 colorAddr = self->color_offset+((uint64)colorID)*self->color_stride;
+    dg.color = *((vec4f *)((uint64)self->color+colorAddr));
     if (!self->has_alpha)
       dg.color.w = 1.f;
   }
