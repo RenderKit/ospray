@@ -68,8 +68,7 @@ IF (OSPRAY_MODULE_MPI)
   ##############################################################
   # Test apps
   ##############################################################
-  IF (OSPRAY_ENABLE_APPS)
-    ADD_SUBDIRECTORY(apps)
-  ENDIF()
+
+  ADD_SUBDIRECTORY(apps)
 
 ENDIF (OSPRAY_MODULE_MPI)
