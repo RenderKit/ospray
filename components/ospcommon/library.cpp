@@ -108,7 +108,7 @@ namespace ospcommon {
     return sym;
   }
 
-  LibraryRepository::LibraryRepository()
+  void LibraryRepository::addDefaultLibrary()
   {
     // already populate the repo with "virtual" libs, representing the default OSPRay core lib
 #ifdef _WIN32
@@ -132,5 +132,9 @@ namespace ospcommon {
 #else
     repo["ospray"] = new Library(RTLD_DEFAULT);
 #endif
+  }
+
+  LibraryRepository::LibraryRepository()
+  {
   }
 }
