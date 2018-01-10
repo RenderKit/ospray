@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 # ISPC versions to look for, in decending order (newest first)
-SET(ISPC_VERSION_WORKING "1.9.1")
+SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
 LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 IF (NOT ISPC_EXECUTABLE)
@@ -109,10 +109,19 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(ISPC_INCLUDE_DIR_PARMS "-I" ${ISPC_INCLUDE_DIR_PARMS})
   ENDIF()
 
+  #CAUTION: -O0/1 -g with ispc seg faults
+  SET(ISPC_FLAGS_DEBUG -g CACHE STRING "ISPC Debug flags")
+  MARK_AS_ADVANCED(ISPC_FLAGS_DEBUG)
+  SET(ISPC_FLAGS_RELEASE -O3 CACHE STRING "ISPC Release flags")
+  MARK_AS_ADVANCED(ISPC_FLAGS_RELEASE)
+  SET(ISPC_FLAGS_RELWITHDEBINFO -O2 -g CACHE STRING "ISPC Release with Debug symbols flags")
+  MARK_AS_ADVANCED(ISPC_FLAGS_RELWITHDEBINFO)
   IF (WIN32 OR "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    SET(ISPC_OPT_FLAGS -O3)
+    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELEASE})
+  ELSEIF ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_DEBUG})
   ELSE()
-    SET(ISPC_OPT_FLAGS -O2 -g)
+    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELWITHDEBINFO})
   ENDIF()
 
   IF (NOT WIN32)

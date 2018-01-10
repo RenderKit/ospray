@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -20,7 +20,7 @@
 
 SET(OSPRAY_VERSION_MAJOR 1)
 SET(OSPRAY_VERSION_MINOR 4)
-SET(OSPRAY_VERSION_PATCH 2)
+SET(OSPRAY_VERSION_PATCH 3)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
