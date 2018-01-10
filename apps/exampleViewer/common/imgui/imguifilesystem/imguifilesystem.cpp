@@ -1484,13 +1484,17 @@ struct ImGuiFsDrawIconStruct {
     return drawIcon(extType,pOptionalColorOverride);
     }
 };
-static ImGuiFsDrawIconStruct MyImGuiFsDrawIconStruct;
+ImGuiFsDrawIconStruct& MyImGuiFsDrawIconStruct()
+{
+  static ImGuiFsDrawIconStruct singleton;
+  return singleton;
+}
 #ifndef IMGUIFS_NO_EXTRA_METHODS
 int FileGetExtensionType(const char* path) {
-    return MyImGuiFsDrawIconStruct.getExtensionType(strrchr(path,'.'));
+    return MyImGuiFsDrawIconStruct().getExtensionType(strrchr(path,'.'));
 }
 void FileGetExtensionTypesFromFilenames(ImVector<int>& fileExtensionTypesOut,const FilenameStringVector& fileNames)  {
-    MyImGuiFsDrawIconStruct.fillExtensionTypesFromFilenames(fileExtensionTypesOut,fileNames);
+    MyImGuiFsDrawIconStruct().fillExtensionTypesFromFilenames(fileExtensionTypesOut,fileNames);
 }
 #if (defined(__EMSCRIPTEN__) && defined(EMSCRIPTEN_SAVE_SHELL))
 bool FileDownload(const char* path,const char* optionalSaveFileName)    {
@@ -2054,7 +2058,7 @@ const char* ChooseFileMainMethod(Dialog& ist,const char* directory,const bool _i
         if (!isSelectFolderDialog)  {
             if (!fileFilterExtensionString || strlen(fileFilterExtensionString)==0) Directory::GetFiles(I.currentFolder,I.files,&I.fileNames,(Sorting)I.sortingMode);
             else                                        Directory::GetFiles(I.currentFolder,I.files,fileFilterExtensionString,NULL,&I.fileNames,(Sorting)I.sortingMode);
-            if (Dialog::DrawFileIconCallback) MyImGuiFsDrawIconStruct.fillExtensionTypesFromFilenames(I.fileExtensionTypes,I.fileNames);
+            if (Dialog::DrawFileIconCallback) MyImGuiFsDrawIconStruct().fillExtensionTypesFromFilenames(I.fileExtensionTypes,I.fileNames);
         }
         else {
             I.files.clear();I.fileNames.clear();I.fileExtensionTypes.clear();
