@@ -1635,14 +1635,14 @@ format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
 files. To create an OBJ material pass the type string "`OBJMaterial`" to
 `ospNewMaterial`. Its main parameters are
 
-| Type         | Name      |    Default| Description                                         |
-|:-------------|:----------|----------:|:----------------------------------------------------|
-| vec3f        | Kd        |  white 0.8| diffuse color                                       |
-| vec3f        | Ks        |      black| specular color                                      |
-| float        | Ns        |         10| shininess (Phong exponent), usually in \[2--10^4^\] |
-| float        | d         |     opaque| opacity                                             |
-| vec3f        | Tf        |      black| transparency filter color                           |
-| OSPTexture2D | map\_Bump |       NULL| normal map                                          |
+| Type         | Name      |    Default| Description                                        |
+|:-------------|:----------|----------:|:---------------------------------------------------|
+| vec3f        | Kd        |  white 0.8| diffuse color                                      |
+| vec3f        | Ks        |      black| specular color                                     |
+| float        | Ns        |         10| shininess (Phong exponent), usually in \[2–10^4^\] |
+| float        | d         |     opaque| opacity                                            |
+| vec3f        | Tf        |      black| transparency filter color                          |
+| OSPTexture2D | map\_Bump |       NULL| normal map                                         |
 
 : Main parameters of the OBJ material.
 
@@ -1790,7 +1790,7 @@ control of the color. To create an Alloy material pass the type string
 |:------|:----------|----------:|:--------------------------------------------|
 | vec3f | color     |  white 0.9| reflectivity at normal incidence (0 degree) |
 | vec3f | edgeColor |      white| reflectivity at grazing angle (90 degree)   |
-| float | roughness |        0.1| roughness in \[0–1\], 0 is perfect mirror   |
+| float | roughness |        0.1| roughness, in \[0–1\], 0 is perfect mirror  |
 
 : Parameters of the Alloy material.
 
@@ -1873,9 +1873,9 @@ to `ospNewMaterial`. Its parameters are listed in the table below.
 | Type  | Name        |    Default| Description                       |
 |:------|:------------|----------:|:----------------------------------|
 | vec3f | baseColor   |  white 0.8| color of base coat                |
-| float | flakeAmount |        0.3| amount of flakes, in \[0--1\]     |
+| float | flakeAmount |        0.3| amount of flakes, in \[0–1\]      |
 | vec3f | flakeColor  |  Aluminium| color of metallic flakes          |
-| float | flakeSpread |        0.5| spread of flakes, in \[0--1\]     |
+| float | flakeSpread |        0.5| spread of flakes, in \[0–1\]      |
 | float | eta         |        1.5| index of refraction of clear coat |
 
 : Parameters of the MetallicPaint material.
@@ -2387,6 +2387,48 @@ Note that due to the semantic differences the distributed device gives
 the OSPRay API, it is not expected for applications which can already
 use the offload device to correctly use the distributed device without
 changes to the application.
+
+The following additional parameter can be set on the `mpi_distributed`
+device.
+
+<table style="width:97%;">
+<caption>Parameters for the <code>mpi_distributed</code> device.</caption>
+<colgroup>
+<col width="10%" />
+<col width="24%" />
+<col width="62%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>void*</code></td>
+<td align="left">worldCommunicator</td>
+<td align="left">A pointer to the <code>MPI_Comm</code> which should be used as OSPRay's world communicator. This will set how many ranks OSPRay should expect to participate in rendering. The default is <code>MPI_COMM_WORLD</code> where all ranks are expected to participate in rendering.</td>
+</tr>
+</tbody>
+</table>
+
+: Parameters for the `mpi_distributed` device.
+
+By setting the `worldCommunicator` parameter to a different communicator
+than `MPI_COMM_WORLD` the client application can tune how OSPRay is run
+within its processes. The default uses `MPI_COMM_WORLD` and thus expects
+all processes to also participate in rendering, thus if a subset of
+processes do not call collectives like `ospRenderFrame` the application
+would hang.
+
+For example, an MPI parallel application may be run with one process
+per-core, however OSPRay is multithreaded and will perform best when run
+with one process per-node. By splitting `MPI_COMM_WORLD` the application
+can create a communicator with one rank per-node to then run OSPRay on
+one process per-node. The remaining ranks on each node can then
+aggregate their data to the OSPRay process for rendering.
 
 Examples
 ========
