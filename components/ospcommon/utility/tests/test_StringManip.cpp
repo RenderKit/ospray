@@ -14,34 +14,25 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "../../testing/catch.hpp"
 
-#include <algorithm>
-#include <string>
-#include <sstream>
-#include <vector>
+#include "../StringManip.h"
 
-namespace ospcommon {
+TEST_CASE("longestBeginningMatch() correctness", "[]")
+{
+  std::string input1 = "0123456";
+  std::string input2 = "01234";
 
-  /* return a string which is the two inputs match from the beginning of each */
-  inline std::string longestBeginningMatch(const std::string &first,
-                                           const std::string &second)
-  {
-    return std::string(
-      first.begin(),
-      std::mismatch(first.begin(), first.end(), second.begin()).first
-    );
-  }
+  auto output = ospcommon::longestBeginningMatch(input1, input2);
+  REQUIRE(output == "01234");
+}
 
-  /* split a string on a single character delimiter */
-  std::vector<std::string> split(const std::string &input, char delim)
-  {
-    std::stringstream ss(input);
-    std::string item;
-    std::vector<std::string> elems;
-    while (std::getline(ss, item, delim))
-      elems.push_back(std::move(item));
-    return elems;
-  }
+TEST_CASE("split() correctness", "[]")
+{
+  std::string input = "str0,str1,str2";
 
-} // ::ospcommon
+  auto output = ospcommon::split(input, ',');
+  REQUIRE(output[0] == "str0");
+  REQUIRE(output[1] == "str1");
+  REQUIRE(output[2] == "str2");
+}
