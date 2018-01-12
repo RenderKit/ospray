@@ -78,8 +78,6 @@ namespace ospray {
 
     // Data //
 
-    bool showCarDemoWidgets{false};
-
     double lastFrameFPS;
     double lastGUITime;
     double lastDisplayTime;

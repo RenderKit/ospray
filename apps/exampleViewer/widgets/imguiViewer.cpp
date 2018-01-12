@@ -56,9 +56,6 @@ namespace ospray {
     if (useDynamicLoadBalancer)
       numPreAllocatedTiles = OSPRAY_DYNAMIC_LOADBALANCER.value();
 
-    auto OSPRAY_CAR_DEMO = utility::getEnvVar<int>("OSPRAY_CAR_DEMO");
-    showCarDemoWidgets = OSPRAY_CAR_DEMO.value_or(false);
-
     //do initial commit to make sure bounds are correctly computed
     scenegraph->traverse("verify");
     scenegraph->traverse("commit");
@@ -283,8 +280,6 @@ namespace ospray {
 
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
-    if (showCarDemoWidgets) guiCarDemo();
-
     guiRenderStats();
     guiFindNode();
 
@@ -369,46 +364,6 @@ namespace ospray {
       }
 
       ImGui::EndMenu();
-    }
-  }
-
-  void ImGuiViewer::guiCarDemo()
-  {
-    if (ImGui::CollapsingHeader("Car Color Picker", "Car Color Picker",
-                                true, false)) {
-      ImGui::NewLine();
-
-      static int colorIndex = 0;
-
-      if (ImGui::Combo("Car Color", &colorIndex, "Sequin Blue\0Rubino Red\0Hallmark\0Orange Flame\0Portofino\0\0")) {
-        static vec3f coatColors[] = {
-          vec3f(0.00000f, 0.32343f, 0.49284f),
-          vec3f(0.47845f, 0.18909f, 0.20393f),
-          vec3f(0.65916f, 0.67632f, 0.67680f),
-          vec3f(0.78399f, 0.34000f, 0.00000f),
-          vec3f(0.40602f, 0.53195f, 0.61532f)
-        };
-
-        static float flakeRoughnesses[] = {
-          0.47f,
-          0.47f,
-          0.41f,
-          0.49f,
-          0.44f
-        };
-
-        scenegraph->traverse([](sg::Node &node, sg::TraversalContext&) {
-          auto name = node.name();
-          if (name == "E_EPUP_Exterior_Paint___Exterior_Paint_UpperSG") {
-            node["coatColor"] = coatColors[colorIndex];
-            node["flakeRoughness"] = flakeRoughnesses[colorIndex];
-            return false;
-          }
-          return true;
-        });
-      }
-
-      ImGui::NewLine();
     }
   }
 
