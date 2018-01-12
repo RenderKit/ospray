@@ -102,7 +102,7 @@ namespace ospcommon {
     void *lib = NULL;
 
     // try KNL:
-    if (CpuID::has_avx512er() && (lib = loadIsaLibrary(name,"knx",foundISA))) return lib;
+    if (CpuID::has_avx512er() && (lib = loadIsaLibrary(name,"knl",foundISA))) return lib;
     // try SKL:
     if (CpuID::has_avx512bw() && (lib = loadIsaLibrary(name,"skx",foundISA))) return lib;
     // try avx2:
