@@ -548,20 +548,19 @@ namespace ospray {
       }
     } else if (node->type() == "string") {
       std::string value = node->valueAs<std::string>().c_str();
-      char* buf = (char*)malloc(value.size()+1+256);
-      strcpy(buf,value.c_str());
+      std::vector<char> buf(value.size() + 1 + 256);
+      strcpy(buf.data(), value.c_str());
       buf[value.size()] = '\0';
       ImGui::Text(text.c_str());
       ImGui::SameLine();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
                                          << node.get())).str(); //TODO: use unique uuid for every node
-      if (ImGui::InputText(text.c_str(), buf,
+      if (ImGui::InputText(text.c_str(), buf.data(),
                            value.size()+256,
                            ImGuiInputTextFlags_EnterReturnsTrue))
       {
-        node->setValue(std::string(buf));
+        node->setValue(std::string(buf.data()));
       }
-      free(buf);
     } else if (numChildren == 0) {
       text += node->type();
       ImGui::Text(text.c_str());
