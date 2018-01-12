@@ -16,8 +16,9 @@
 // ======================================================================== //
 
 // ospcommon
-#include "ospcommon/utility/SaveImage.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "ospcommon/utility/SaveImage.h"
+#include "ospcommon/utility/StringManip.h"
 
 #include "imguiViewer.h"
 
@@ -452,21 +453,23 @@ namespace ospray {
                               std::shared_ptr<sg::Node> node,
                               int indent)
   {
-    int styles=0;
+    int styles = 0;
     if (!node->isValid()) {
       ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(200, 75, 48,255));
       styles++;
     }
+
     std::string text("");
-    std::string nameLower=name;
-    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-    std::string nodeNameLower=node->name();
-    std::transform(nodeNameLower.begin(), nodeNameLower.end(), nodeNameLower.begin(), ::tolower);
+    std::string nameLower = utility::lowerCase(name);
+    std::string nodeNameLower = utility::lowerCase(node->name());
+
     if (nameLower != nodeNameLower)
-      text += std::string(name+" -> "+node->name()+" : ");
+      text += std::string(name + " -> " + node->name() + " : ");
     else
-      text += std::string(name+" : ");
+      text += std::string(name + " : ");
+
     const int numChildren = node->numChildren();
+
     if (node->type() == "vec3f") {
       ImGui::Text(text.c_str());
       ImGui::SameLine();

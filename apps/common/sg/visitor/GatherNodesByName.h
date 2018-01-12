@@ -49,7 +49,7 @@ namespace ospray {
 
     inline bool GatherNodesByName::operator()(Node &node, TraversalContext &)
     {
-      if (longestBeginningMatch(node.name(), this->name) == this->name) {
+      if (utility::longestBeginningMatch(node.name(), this->name) == this->name) {
         auto itr = std::find_if(
           nodes.begin(),
           nodes.end(),

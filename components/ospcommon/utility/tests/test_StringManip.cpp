@@ -23,7 +23,7 @@ TEST_CASE("longestBeginningMatch() correctness", "[]")
   std::string input1 = "0123456";
   std::string input2 = "01234";
 
-  auto output = ospcommon::longestBeginningMatch(input1, input2);
+  auto output = ospcommon::utility::longestBeginningMatch(input1, input2);
   REQUIRE(output == "01234");
 }
 
@@ -31,8 +31,24 @@ TEST_CASE("split() correctness", "[]")
 {
   std::string input = "str0,str1,str2";
 
-  auto output = ospcommon::split(input, ',');
+  auto output = ospcommon::utility::split(input, ',');
   REQUIRE(output[0] == "str0");
   REQUIRE(output[1] == "str1");
   REQUIRE(output[2] == "str2");
+}
+
+TEST_CASE("lowerCase() correctness", "[]")
+{
+  std::string input = "ABCd";
+
+  auto output = ospcommon::utility::lowerCase(input);
+  REQUIRE(output == "abcd");
+}
+
+TEST_CASE("upperCase() correctness", "[]")
+{
+  std::string input = "abcD";
+
+  auto output = ospcommon::utility::upperCase(input);
+  REQUIRE(output == "ABCD");
 }
