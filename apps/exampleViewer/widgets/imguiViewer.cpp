@@ -439,21 +439,22 @@ namespace ospray {
       ImGui::Text("Search for node:");
       ImGui::SameLine();
 
-      auto doSearch = [&]() {
-        sg::GatherNodesByName visitor(nodeNameForSearch);
-        scenegraph->traverse(visitor);
-        collectedNodesFromSearch = visitor.results();
-      };
-
       ImGui::InputText("", buf.data(), buf.size(),
                        ImGuiInputTextFlags_EnterReturnsTrue);
 
       std::string textBoxValue = buf.data();
 
-      if (nodeNameForSearch != textBoxValue) {
+      bool updateSearchResults = (nodeNameForSearch != textBoxValue);
+      if (updateSearchResults) {
         nodeNameForSearch = textBoxValue;
-        if (!nodeNameForSearch.empty())
-          doSearch();
+        bool doSearch = !nodeNameForSearch.empty();
+        if (doSearch) {
+          sg::GatherNodesByName visitor(nodeNameForSearch);
+          scenegraph->traverse(visitor);
+          collectedNodesFromSearch = visitor.results();
+        } else {
+          collectedNodesFromSearch.clear();
+        }
       }
 
       if (nodeNameForSearch.empty()) {
@@ -464,10 +465,9 @@ namespace ospray {
         ImGui::Text(verifyTextLabel.c_str());
       }
 
-      if (ImGui::Button("Clear Search Results")) {
+      if (ImGui::Button("Clear")) {
         collectedNodesFromSearch.clear();
         nodeNameForSearch.clear();
-        buf[0] = '\0';
       }
 
       ImGui::NewLine();
