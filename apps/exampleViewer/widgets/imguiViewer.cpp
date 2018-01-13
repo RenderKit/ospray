@@ -285,7 +285,7 @@ namespace ospray {
     guiFindNode();
 
     if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
-      guiSGTree("root", scenegraph, 0);
+      guiSGTree("root", scenegraph);
 
     ImGui::End();
   }
@@ -443,39 +443,22 @@ namespace ospray {
       }
     } else {
       for (auto &node : collectedNodesFromSearch) {
-        guiSGTree("", node, 0);
+        guiSGTree("", node);
         ImGui::Separator();
       }
     }
   }
 
-  void ImGuiViewer::guiSGTree(std::string name,
-                              std::shared_ptr<sg::Node> node,
-                              int indent)
+  void ImGuiViewer::guiSingleNode(const std::string &baseText,
+                                  std::shared_ptr<sg::Node> node)
   {
-    int styles = 0;
-    if (!node->isValid()) {
-      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(200, 75, 48,255));
-      styles++;
-    }
-
-    std::string text("");
-    std::string nameLower = utility::lowerCase(name);
-    std::string nodeNameLower = utility::lowerCase(node->name());
-
-    if (nameLower != nodeNameLower)
-      text += std::string(name + " -> " + node->name() + " : ");
-    else
-      text += std::string(name + " : ");
-
-    const int numChildren = node->numChildren();
+    std::string text = baseText;
 
     if (node->type() == "vec3f") {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
       vec3f val = node->valueAs<vec3f>();
-      text = "##"+((std::ostringstream&)(std::ostringstream("")
-                                         << node.get())).str(); //TODO: use unique uuid for every node
+      text = "##" + std::to_string(node->uniqueID());
       if ((node->flags() & sg::NodeFlags::gui_color)) {
         if (ImGui::ColorEdit3(text.c_str(), (float*)&val.x))
           node->setValue(val);
@@ -493,8 +476,7 @@ namespace ospray {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
       vec2f val = node->valueAs<vec2f>();
-      text = "##"+((std::ostringstream&)(std::ostringstream("")
-                                         << node.get())).str(); //TODO: use unique uuid for every node
+      text = "##" + std::to_string(node->uniqueID());
       if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
         node->setValue(val);
       }
@@ -502,8 +484,7 @@ namespace ospray {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
       vec2i val = node->valueAs<vec2i>();
-      text = "##"+((std::ostringstream&)(std::ostringstream("")
-                                         << node.get())).str(); //TODO: use unique uuid for every node
+      text = "##" + std::to_string(node->uniqueID());
       if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
         node->setValue(val);
       }
@@ -511,8 +492,7 @@ namespace ospray {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
       float val = node->valueAs<float>();
-      text = "##"+((std::ostringstream&)(std::ostringstream("")
-                                         << node.get())).str(); //TODO: use unique uuid for every node
+      text = "##" + std::to_string(node->uniqueID());
       if ((node->flags() & sg::NodeFlags::gui_slider)) {
         if (ImGui::SliderFloat(text.c_str(), &val,
                                node->min().get<float>(),
@@ -526,8 +506,7 @@ namespace ospray {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
       bool val = node->valueAs<bool>();
-      text = "##"+((std::ostringstream&)(std::ostringstream("")
-                                         << node.get())).str(); //TODO: use unique uuid for every node
+      text = "##" + std::to_string(node->uniqueID());
       if (ImGui::Checkbox(text.c_str(), &val)) {
         node->setValue(val);
       }
@@ -535,8 +514,7 @@ namespace ospray {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
       int val = node->valueAs<int>();
-      text = "##"+((std::ostringstream&)(std::ostringstream("")
-                                         << node.get())).str(); //TODO: use unique uuid for every node
+      text = "##" + std::to_string(node->uniqueID());
       if ((node->flags() & sg::NodeFlags::gui_slider)) {
         if (ImGui::SliderInt(text.c_str(), &val,
                              node->min().get<int>(),
@@ -553,133 +531,156 @@ namespace ospray {
       buf[value.size()] = '\0';
       ImGui::Text(text.c_str());
       ImGui::SameLine();
-      text = "##"+((std::ostringstream&)(std::ostringstream("")
-                                         << node.get())).str(); //TODO: use unique uuid for every node
+      text = "##" + std::to_string(node->uniqueID());
       if (ImGui::InputText(text.c_str(), buf.data(),
                            value.size()+256,
                            ImGuiInputTextFlags_EnterReturnsTrue))
       {
         node->setValue(std::string(buf.data()));
       }
-    } else if (numChildren == 0) {
+    } else if (node->type() == "TransferFunction") {
+      if (!node->hasChild("transferFunctionWidget")) {
+        std::shared_ptr<sg::TransferFunction> tfn =
+          std::dynamic_pointer_cast<sg::TransferFunction>(node);
+
+        node->createChildWithValue("transferFunctionWidget","Node",
+                                   TransferFunction(tfn));
+      }
+
+      auto &tfnWidget =
+        node->child("transferFunctionWidget").valueAs<TransferFunction>();
+
+      tfnWidget.render();
+      tfnWidget.drawUi();
+    } else if (!node->hasChildren()) {
       text += node->type();
       ImGui::Text(text.c_str());
     }
+  }
 
-    if (numChildren > 0) {
-      text+=node->type();
-      text += "##"+((std::ostringstream&)(std::ostringstream("")
-                                          << node.get())).str(); //TODO: use unique uuid for every node
-      if (ImGui::TreeNodeEx(text.c_str(),
-                            (indent > 1 && numChildren > 20) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
+  void ImGuiViewer::guiNodeContextMenu(const std::string &name,
+                                       std::shared_ptr<sg::Node> node)
+  {
+    if (ImGui::BeginPopupContextItem("item context menu")) {
+      char buf[256];
+      buf[0]='\0';
+      static std::shared_ptr<sg::Node> copiedLink = nullptr;
+      if (ImGui::Button("CopyLink"))
+        copiedLink = node;
+      if (ImGui::Button("PasteLink"))
+      {
+        if (copiedLink)
         {
-          if (ImGui::BeginPopupContextItem("item context menu")) {
-            char buf[256];
-            buf[0]='\0';
-            static std::shared_ptr<sg::Node> copiedLink = nullptr;
-            if (ImGui::Button("CopyLink"))
-              copiedLink = node;
-            if (ImGui::Button("PasteLink"))
-            {
-              if (copiedLink)
-              {
-                copiedLink->setParent(node->parent());
-                node->parent().setChild(name, copiedLink);
-              }
-            }
-            if (ImGui::Button("Add new node..."))
-              ImGui::OpenPopup("Add new node...");
-            if (ImGui::BeginPopup("Add new node..."))
-            {
-              if (ImGui::InputText("node type: ", buf,
-                                   256, ImGuiInputTextFlags_EnterReturnsTrue)) {
-                std::cout << "add node: \"" << buf << "\"\n";
-                try {
-                  static int counter = 0;
-                  std::stringstream ss;
-                  ss << "userDefinedNode" << counter++;
-                  node->add(sg::createNode(ss.str(), buf));
-                }
-                catch (...)
-                {
-                  std::cerr << "invalid node type: " << buf << std::endl;
-                }
-              }
-              ImGui::EndPopup();
-            }
-            if (ImGui::Button("Set to new node..."))
-              ImGui::OpenPopup("Set to new node...");
-            if (ImGui::BeginPopup("Set to new node..."))
-            {
-              if (ImGui::InputText("node type: ", buf,
-                                   256, ImGuiInputTextFlags_EnterReturnsTrue)) {
-                std::cout << "set node: \"" << buf << "\"\n";
-                try {
-                  static int counter = 0;
-                  std::stringstream ss;
-                  ss << "userDefinedNode" << counter++;
-                  auto newNode = sg::createNode(ss.str(), buf);
-                  newNode->setParent(node->parent());
-                  node->parent().setChild(name, newNode);
-                }
-                catch (...)
-                {
-                  std::cerr << "invalid node type: " << buf << std::endl;
-                }
-              }
-              ImGui::EndPopup();
-            }
-            static ImGuiFs::Dialog importdlg;
-            const bool importButtonPressed = ImGui::Button("Import...");
-            const char* importpath = importdlg.chooseFileDialog(importButtonPressed);
-            if (strlen(importpath) > 0)
-            {
-              std::cout << "importing OSPSG file from path: " << importpath << std::endl;
-              sg::loadOSPSG(node, std::string(importpath));
-            }
-
-            static ImGuiFs::Dialog exportdlg;
-            const bool exportButtonPressed = ImGui::Button("Export...");
-            const char* exportpath = exportdlg.saveFileDialog(exportButtonPressed);
-            if (strlen(exportpath) > 0)
-            {
-              std::cout << "writing OSPSG file to path: " << exportpath << std::endl;
-              sg::writeOSPSG(node, std::string(exportpath));
-            }
-
-            ImGui::EndPopup();
+          copiedLink->setParent(node->parent());
+          node->parent().setChild(name, copiedLink);
+        }
+      }
+      if (ImGui::Button("Add new node..."))
+        ImGui::OpenPopup("Add new node...");
+      if (ImGui::BeginPopup("Add new node..."))
+      {
+        if (ImGui::InputText("node type: ", buf,
+                             256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+          std::cout << "add node: \"" << buf << "\"\n";
+          try {
+            static int counter = 0;
+            std::stringstream ss;
+            ss << "userDefinedNode" << counter++;
+            node->add(sg::createNode(ss.str(), buf));
           }
-
-          if (node->type() == "TransferFunction") {
-            if (!node->hasChild("transferFunctionWidget")) {
-              std::shared_ptr<sg::TransferFunction> tfn =
-                std::dynamic_pointer_cast<sg::TransferFunction>(node);
-
-              node->createChildWithValue("transferFunctionWidget","Node",
-                                         TransferFunction(tfn));
-            }
-
-            auto &tfnWidget =
-              node->child("transferFunctionWidget").valueAs<TransferFunction>();
-
-            tfnWidget.render();
-            tfnWidget.drawUi();
+          catch (...)
+          {
+            std::cerr << "invalid node type: " << buf << std::endl;
           }
         }
+        ImGui::EndPopup();
+      }
+      if (ImGui::Button("Set to new node..."))
+        ImGui::OpenPopup("Set to new node...");
+      if (ImGui::BeginPopup("Set to new node..."))
+      {
+        if (ImGui::InputText("node type: ", buf,
+                             256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+          std::cout << "set node: \"" << buf << "\"\n";
+          try {
+            static int counter = 0;
+            std::stringstream ss;
+            ss << "userDefinedNode" << counter++;
+            auto newNode = sg::createNode(ss.str(), buf);
+            newNode->setParent(node->parent());
+            node->parent().setChild(name, newNode);
+          }
+          catch (...)
+          {
+            std::cerr << "invalid node type: " << buf << std::endl;
+          }
+        }
+        ImGui::EndPopup();
+      }
+      static ImGuiFs::Dialog importdlg;
+      const bool importButtonPressed = ImGui::Button("Import...");
+      const char* importpath = importdlg.chooseFileDialog(importButtonPressed);
+      if (strlen(importpath) > 0)
+      {
+        std::cout << "importing OSPSG file from path: " << importpath << std::endl;
+        sg::loadOSPSG(node, std::string(importpath));
+      }
+
+      static ImGuiFs::Dialog exportdlg;
+      const bool exportButtonPressed = ImGui::Button("Export...");
+      const char* exportpath = exportdlg.saveFileDialog(exportButtonPressed);
+      if (strlen(exportpath) > 0)
+      {
+        std::cout << "writing OSPSG file to path: " << exportpath << std::endl;
+        sg::writeOSPSG(node, std::string(exportpath));
+      }
+
+      ImGui::EndPopup();
+    }
+  }
+
+  void ImGuiViewer::guiSGTree(const std::string &name, std::shared_ptr<sg::Node> node)
+  {
+    int styles = 0;
+    if (!node->isValid()) {
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(200, 75, 48,255));
+      styles++;
+    }
+
+    std::string text;
+
+    std::string nameLower = utility::lowerCase(name);
+    std::string nodeNameLower = utility::lowerCase(node->name());
+
+    if (nameLower != nodeNameLower)
+      text += name + " -> " + node->name() + " : ";
+    else
+      text += name + " : ";
+
+    guiSingleNode(text, node);
+
+    const int numChildren = node->numChildren();
+
+    if (numChildren > 0) {
+      text += node->type();
+      text += "##" + std::to_string(node->uniqueID());
+      if (ImGui::TreeNodeEx(text.c_str(),
+                            (numChildren > 20) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
+        guiNodeContextMenu(name, node);
 
         if (!node->isValid())
           ImGui::PopStyleColor(styles--);
 
         for(auto child : node->children())
-          guiSGTree(child.first, child.second, ++indent);
+          guiSGTree(child.first, child.second);
 
         ImGui::TreePop();
       }
-    } else { // generic holder node
     }
 
     if (!node->isValid())
       ImGui::PopStyleColor(styles--);
+
     if (ImGui::IsItemHovered() && !node->documentation().empty())
       ImGui::SetTooltip("%s", node->documentation().c_str());
   }

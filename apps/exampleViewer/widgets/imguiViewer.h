@@ -68,9 +68,12 @@ namespace ospray {
     void guiRenderStats();
     void guiFindNode();
 
-    void guiSGTree(std::string name,
-                   std::shared_ptr<sg::Node> node,
-                   int indent);
+    void guiSingleNode(const std::string &baseText,
+                       std::shared_ptr<sg::Node> node);
+    void guiNodeContextMenu(const std::string &name,
+                            std::shared_ptr<sg::Node> node);
+
+    void guiSGTree(const std::string &name, std::shared_ptr<sg::Node> node);
 
     void guiSearchSGNodes();
 

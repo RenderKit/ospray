@@ -177,6 +177,11 @@ namespace ospray {
       return empty;
     }
 
+    size_t Node::uniqueID() const
+    {
+      return properties.whenCreated;
+    }
+
     // Node stored value (data) interface /////////////////////////////////////
 
     Any Node::value()
@@ -310,6 +315,11 @@ namespace ospray {
     const std::map<std::string, std::shared_ptr<Node>>& Node::children() const
     {
       return properties.children;
+    }
+
+    bool Node::hasChildren() const
+    {
+      return properties.children.size() != 0;
     }
 
     size_t Node::numChildren() const
