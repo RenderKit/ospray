@@ -32,15 +32,15 @@ TEST_CASE("ArgumentList correctness", "[]")
   REQUIRE(args.size() == 4);
   REQUIRE(args[0] != "testApp");
 
-  args.consume(0);
+  args.remove(0);
   REQUIRE(args[0] == "arg2");
   REQUIRE(args[1] == "arg3");
   REQUIRE(args[2] == "arg4");
 
-  args.consume(0, 2);
+  args.remove(0, 2);
   REQUIRE(args[0] == "arg4");
 
-  args.consume(0);
+  args.remove(0);
   REQUIRE(args.empty());
 }
 
@@ -63,7 +63,7 @@ TEST_CASE("ArgumentsParser correctness", "[]")
   ArgumentList args(5, test_arguments);
 
   TestParser parser;
-  parser.parseAndConsume(args);
+  parser.parseAndRemove(args);
 
   REQUIRE(args.size() == 1);
   REQUIRE(args[0] == "arg2");

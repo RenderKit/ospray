@@ -55,8 +55,8 @@ namespace ospcommon {
       /*! return number of arguments still in list */
       bool empty() const;
 
-      /*! consume given number of arguments at given index in list */
-      void consume(int where, int howMany = 1);
+      /*! remove given number of arguments at given index in list */
+      void remove(int where, int howMany = 1);
 
     private:
       std::vector<std::string> arg;
@@ -81,7 +81,7 @@ namespace ospcommon {
         'tryConsume()' for every argument, then takes those that
         _have_ been indicated as 'yes, we rcongized those' from the
         argument list. (usually does not have to be overrriden) */
-      void parseAndConsume(ArgumentList &args);
+      void parseAndRemove(ArgumentList &args);
     };
 
     // ------------------------------------------------------------------
@@ -109,20 +109,20 @@ namespace ospcommon {
       return arg.empty();
     }
 
-    inline void ArgumentList::consume(int where, int howMany)
+    inline void ArgumentList::remove(int where, int howMany)
     {
       for (int i = 0; i < howMany; i++)
         arg.erase(arg.begin() + where, arg.begin() + where + 1);
     }
 
-    inline void ArgumentsParser::parseAndConsume(ArgumentList &argList)
+    inline void ArgumentsParser::parseAndRemove(ArgumentList &argList)
     {
       for (int argID = 0; argID < argList.size(); /*no-op*/) {
         int numConsumed = tryConsume(argList,argID);
         if (numConsumed == 0)
           ++argID;
         else
-          argList.consume(argID,numConsumed);
+          argList.remove(argID, numConsumed);
       }
     }
 
