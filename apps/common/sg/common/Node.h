@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -128,6 +128,9 @@ namespace ospray {
         box3f(empty) */
       virtual box3f bounds() const;
 
+      //! return a unique identifier for each created node
+      size_t uniqueID() const;
+
       // Node stored value (data) interface ///////////////////////////////////
 
       //! get the value (copy) of the node, without template conversion
@@ -180,6 +183,7 @@ namespace ospray {
 
       const std::map<std::string, std::shared_ptr<Node>>& children() const;
 
+      bool hasChildren() const;
       size_t numChildren() const;
 
       void add(std::shared_ptr<Node> node);
@@ -255,6 +259,7 @@ namespace ospray {
         std::vector<Any> blacklist;
         std::map<std::string, std::shared_ptr<Node>> children;
         Any value;
+        TimeStamp whenCreated;
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -79,7 +79,7 @@ namespace ospray {
       for (int i=0;i<N;i++) {
         int rc = fscanf(file,"%f",f+i);
         if (rc == 0) return (i == 0);
-        fscanf(file,"\n");
+        rc = fscanf(file,"\n");
       }
       return true;
     }

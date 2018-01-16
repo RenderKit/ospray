@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -100,8 +100,8 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
       colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
     } else
       colorID = ray.primID;
-    uint32 colorAddr = self->color_offset+colorID*self->color_stride;
-    dg.color = *((vec4f *)(self->color+colorAddr));
+    const uint64 colorAddr = self->color_offset+((uint64)colorID)*self->color_stride;
+    dg.color = *((vec4f *)((uint64)self->color+colorAddr));
     if (!self->has_alpha)
       dg.color.w = 1.f;
   }

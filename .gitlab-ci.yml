@@ -323,6 +323,17 @@ test-kw-critical:
   tags:
     - kw-scan-docker
 
+source-protex-scan:
+  stage: build
+  image: ospray-protex-centos7
+  script:
+    - /tmp/source-scan-protex.sh
+  dependencies:
+  tags:
+    - protex-scan-docker
+  ## Temporarily allow to fail
+  allow_failure: true
+
 
 ### RELEASE JOBS ###
 

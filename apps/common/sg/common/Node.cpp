@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -177,6 +177,11 @@ namespace ospray {
       return empty;
     }
 
+    size_t Node::uniqueID() const
+    {
+      return properties.whenCreated;
+    }
+
     // Node stored value (data) interface /////////////////////////////////////
 
     Any Node::value()
@@ -310,6 +315,11 @@ namespace ospray {
     const std::map<std::string, std::shared_ptr<Node>>& Node::children() const
     {
       return properties.children;
+    }
+
+    bool Node::hasChildren() const
+    {
+      return properties.children.size() != 0;
     }
 
     size_t Node::numChildren() const
