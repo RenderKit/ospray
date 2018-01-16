@@ -17,7 +17,5 @@
 OSPRAY_CREATE_APPLICATION(ospBenchmark
   bench.cpp
 LINK
-  ospray
-  ospray_common
-  ospray_sg
+  ospray_app
 )
