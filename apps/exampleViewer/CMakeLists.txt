@@ -31,10 +31,7 @@ add_subdirectory(widgets)
 
 ospray_create_application(ospExampleViewer
   ospExampleViewer.cpp
-  ../ospapp/OSPApp.cpp
 LINK
-  ospray
-  ospray_common
+  ospray_app
   ospray_imgui3d_sg
-  ospray_sg
 )
