@@ -70,6 +70,8 @@ namespace ospcommon {
       'tryConsume()' */
     struct ArgumentsParser
     {
+      virtual ~ArgumentsParser() = default;
+
       /*! check if given arg is one of ours. if so, consume it (and all
         its successive parameters that depend on it, and return the
         total number of arguments consumed */

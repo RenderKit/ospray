@@ -20,7 +20,8 @@
 
 using ospcommon::utility::ArgumentList;
 
-const char *test_arguments[5] = {"testApp", "arg1", "arg2", "arg3", "arg4"};
+static const char *test_arguments[5] =
+    {"testApp", "arg1", "arg2", "arg3", "arg4"};
 
 TEST_CASE("ArgumentList correctness", "[]")
 {
