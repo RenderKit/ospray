@@ -43,7 +43,7 @@ TEST_CASE("ArgumentList correctness", "[]")
   REQUIRE(args.empty());
 }
 
-struct TestParser : public ospcommon::utility::ArgumentsParser
+struct TestParser final : public ospcommon::utility::ArgumentsParser
 {
   int tryConsume(ArgumentList &argList, int argID) override
   {
