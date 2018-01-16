@@ -21,56 +21,61 @@
 #include "widgets/imguiViewer.h"
 
 namespace ospray {
-namespace app {
-class OSPExampleViewer : public OSPApp {
- private:
-  void render(const std::shared_ptr<ospray::sg::Node> &);
-  int parseCommandLine(int &ac, const char **&av);
-  bool fullscreen = false;
-  float motionSpeed = -1.f;
-  std::string initialTextForNodeSearch;
-};
-}
-}
+  namespace app {
 
-using namespace ospray;
+    class OSPExampleViewer : public OSPApp
+    {
+      void render(const std::shared_ptr<ospray::sg::Node> &) override;
+      int parseCommandLine(int &ac, const char **&av) override;
 
-void app::OSPExampleViewer::render(
-    const std::shared_ptr<ospray::sg::Node> &renderer) {
-  ospray::ImGuiViewer window(renderer);
-  window.setViewPort(pos.getValue(), gaze.getValue(), up.getValue());
-  window.create("OSPRay Example Viewer App", fullscreen, vec2i(width, height));
+      bool fullscreen = false;
+      float motionSpeed = -1.f;
+      std::string initialTextForNodeSearch;
+    };
 
-  if (motionSpeed > 0.f)
-    window.setMotionSpeed(motionSpeed);
+    void OSPExampleViewer::render(
+        const std::shared_ptr<ospray::sg::Node> &renderer)
+    {
+      ospray::ImGuiViewer window(renderer);
+      window.setViewPort(pos.getValue(), gaze.getValue(), up.getValue());
+      window.create("OSPRay Example Viewer App",
+                    fullscreen, vec2i(width, height));
 
-  if (!initialTextForNodeSearch.empty())
-    window.setInitialSearchBoxText(initialTextForNodeSearch);
+      if (motionSpeed > 0.f)
+        window.setMotionSpeed(motionSpeed);
 
-  imgui3D::run();
-}
+      if (!initialTextForNodeSearch.empty())
+        window.setInitialSearchBoxText(initialTextForNodeSearch);
 
-int app::OSPExampleViewer::parseCommandLine(int &ac, const char **&av) {
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--fullscreen") {
-      fullscreen = true;
-      removeArgs(ac, av, i, 1);
-      --i;
-    } else if (arg == "--motionSpeed") {
-      motionSpeed = atof(av[i + 1]);
-      removeArgs(ac, av, i, 2);
-      --i;
-    } else if (arg == "--searchText") {
-      initialTextForNodeSearch = av[i + 1];
-      removeArgs(ac, av, i, 2);
-      --i;
+      imgui3D::run();
     }
-  }
-  return 0;
-}
 
-int main(int ac, const char **av) {
-  app::OSPExampleViewer ospApp;
+    int OSPExampleViewer::parseCommandLine(int &ac, const char **&av)
+    {
+      for (int i = 1; i < ac; i++) {
+        const std::string arg = av[i];
+        if (arg == "--fullscreen") {
+          fullscreen = true;
+          removeArgs(ac, av, i, 1);
+          --i;
+        } else if (arg == "--motionSpeed") {
+          motionSpeed = atof(av[i + 1]);
+          removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "--searchText") {
+          initialTextForNodeSearch = av[i + 1];
+          removeArgs(ac, av, i, 2);
+          --i;
+        }
+      }
+      return 0;
+    }
+
+  } // ::ospray::app
+} // ::ospray
+
+int main(int ac, const char **av)
+{
+  ospray::app::OSPExampleViewer ospApp;
   return ospApp.main(ac, av);
 }
