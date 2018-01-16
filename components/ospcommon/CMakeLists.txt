@@ -186,6 +186,17 @@ ELSE()
 
   ADD_TEST(NAME Any COMMAND test_Any)
 
+  # utility/ArgumentList
+
+  OSPRAY_CREATE_TEST(test_ArgumentList
+    utility/tests/test_ArgumentList.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  ADD_TEST(NAME ArgumentList COMMAND test_ArgumentList)
+
   # utility/ArrayView
 
   OSPRAY_CREATE_TEST(test_ArrayView
