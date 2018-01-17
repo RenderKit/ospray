@@ -57,6 +57,8 @@ namespace ospray {
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(1.f, 64.f);
 
+      createChild("useVarianceBuffer", "bool", true);
+
       createFB();
     }
 
@@ -66,6 +68,7 @@ namespace ospray {
       if (lastModified() >= lastCommitted()
           || child("size").lastModified() >= lastCommitted()
           || child("displayWall").lastModified() >= lastCommitted()
+          || child("useVarianceBuffer").lastModified() >= lastCommitted()
           || child("toneMapping").lastModified() >= lastCommitted())
       {
         std::string displayWall = child("displayWall").valueAs<std::string>();
@@ -161,12 +164,14 @@ namespace ospray {
     void ospray::sg::FrameBuffer::createFB()
     {
       auto fbsize = size();
+
+      auto useVariance = child("useVarianceBuffer").valueAs<bool>();
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
                                          (displayWallStream=="")
                                          ? OSP_FB_SRGBA
                                          : OSP_FB_NONE,
                                          OSP_FB_COLOR | OSP_FB_ACCUM |
-                                         OSP_FB_VARIANCE);
+                                         (useVariance ? OSP_FB_VARIANCE : 0));
       clearAccum();
       setValue(ospFrameBuffer);
     }
