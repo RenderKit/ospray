@@ -1,3 +1,4 @@
+#!/bin/bash
 ## ======================================================================== ##
 ## Copyright 2017-2018 Intel Corporation                                    ##
 ##                                                                          ##
@@ -13,8 +14,6 @@
 ## See the License for the specific language governing permissions and      ##
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
-
-#!/bin/bash
 
 # This script should be called from build directory (OSPRay root should be in ../)
 #

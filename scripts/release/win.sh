@@ -1,3 +1,4 @@
+#!/bin/bash
 ## ======================================================================== ##
 ## Copyright 2015-2018 Intel Corporation                                    ##
 ##                                                                          ##
@@ -13,8 +14,6 @@
 ## See the License for the specific language governing permissions and      ##
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
-
-#!/bin/bash
 
 # to make sure we do not include nor link against wrong TBB
 export CPATH=
