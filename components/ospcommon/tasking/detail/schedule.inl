@@ -20,6 +20,8 @@
 
 #ifdef OSPRAY_TASKING_TBB
 #  include <tbb/task.h>
+#elif defined(OSPRAY_TASKING_OMP)
+#  include <thread>
 #elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
@@ -44,11 +46,14 @@ namespace ospcommon {
         auto *tbb_node =
           new(tbb::task::allocate_root())LocalTBBTask(std::forward<TASK_T>(fcn));
         tbb::task::enqueue(*tbb_node);
+#elif defined(OSPRAY_TASKING_OMP)
+        std::thread thread(fcn);
+        thread.detach();
 #elif defined(OSPRAY_TASKING_CILK)
         cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
         detail::schedule_internal(std::forward<TASK_T>(fcn));
-#else// OpenMP or Debug --> synchronous!
+#else// Debug --> synchronous!
         fcn();
 #endif
       }
