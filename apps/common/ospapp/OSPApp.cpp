@@ -465,6 +465,11 @@ namespace ospray {
       camera["pos"] = pos.getValue();
       camera["dir"] = normalize(gaze.getValue() - pos.getValue());
       camera["up"] = up.getValue();
+
+      // NOTE: Stash computed gaze point in the camera for apps, invalid once
+      //       camera moves unless also updated by the app!
+      camera.createChild("gaze", "vec3f", gaze.getValue());
+
       if (camera.hasChild("fovy"))
         camera["fovy"] = fovy.getValue();
       if (camera.hasChild("apertureRadius"))

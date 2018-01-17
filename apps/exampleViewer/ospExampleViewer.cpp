@@ -37,7 +37,7 @@ namespace ospray {
         const std::shared_ptr<ospray::sg::Node> &renderer)
     {
       ospray::ImGuiViewer window(renderer);
-      window.setViewPort(pos.getValue(), gaze.getValue(), up.getValue());
+
       window.create("OSPRay Example Viewer App",
                     fullscreen, vec2i(width, height));
 
