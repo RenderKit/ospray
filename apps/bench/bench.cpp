@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017 Intel Corporation                                         //
+// Copyright 2016-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,222 +14,88 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include "pico_bench/pico_bench.h"
-
-// NOTE(jda) - Issues with template type deduction w/ GCC 7.1 and Clang 4.0,
-//             thus defining the use of operator<<() from pico_bench here before
-//             OSPCommon.h (offending file) gets eventually included through
-//             ospray_sg headers. [blech]
-template <typename T>
-inline void outputStats(const T &stats)
-{
-  std::cout << stats << std::endl;
-}
-
-#include "ospcommon/FileName.h"
-#include "ospcommon/utility/SaveImage.h"
-
-#include "common/sg/importer/Importer.h"
-#include "common/sg/Renderer.h"
-#include "sg/common/FrameBuffer.h"
+#include "ospapp/OSPApp.h"
 #include "common/sg/SceneGraph.h"
+#include "ospcommon/utility/SaveImage.h"
+#include "sg/common/FrameBuffer.h"
 
 namespace ospray {
+  namespace app {
 
-  using namespace std::chrono;
+    class OSPBenchmark : public OSPApp
+    {
+      void render(const std::shared_ptr<ospray::sg::Node> &) override;
+      int parseCommandLine(int &ac, const char **&av) override;
 
-  void printUsageAndExit()
-  {
-    std::cout << "TODO: usage description..." << std::endl;
-    exit(0);
-  }
+      template <typename T>
+      void outputStats(const T &stats);
+      size_t numWarmupFrames = 10;
+      size_t numBenchFrames = 100;
+      std::string imageOutputFile = "";
+    };
 
-  static std::vector<std::string> files;
-  static std::string imageOutputFile = "";
-  static size_t numWarmupFrames = 10;
-  static size_t numBenchFrames  = 100;
-  static int width  = 1024;
-  static int height = 1024;
+    void OSPBenchmark::render(const std::shared_ptr<ospray::sg::Node> &renderer)
+    {
+      auto sgFB = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
 
-  static vec3f up;
-  static vec3f pos;
-  static vec3f gaze;
-  static float fovy = 60.f;
-  static bool customView = false;
+      for (size_t i = 0; i < numWarmupFrames; ++i)
+        renderer->traverse("render");
 
-  void initializeOSPRay(int argc, const char *argv[])
-  {
-    int init_error = ospInit(&argc, argv);
-    if (init_error != OSP_NO_ERROR) {
-      std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
-      std::exit(init_error);
-    }
+      auto benchmarker =
+          pico_bench::Benchmarker<std::chrono::milliseconds>{ numBenchFrames };
 
-    auto device = ospGetCurrentDevice();
-    if (device == nullptr) {
-      std::cerr << "FATAL ERROR DURING GETTING DEVICE!" << std::endl;
-      std::exit(1);
-    }
+      auto stats = benchmarker([&]() {
+        renderer->traverse("render");
+        // TODO: measure just ospRenderFrame() time from within ospray_sg
+        // return std::chrono::milliseconds{500};
+      });
 
-
-    ospDeviceSetStatusFunc(device,
-                           [](const char *msg) { std::cout << msg; });
-
-    ospDeviceSetErrorFunc(device,
-                          [](OSPError e, const char *msg) {
-                            std::cout << "OSPRAY ERROR [" << e << "]: "
-                                      << msg << std::endl;
-                            std::exit(1);
-                          });
-  }
-
-
-  void parseCommandLine(int argc, const char *argv[])
-  {
-    if (argc <= 1)
-      printUsageAndExit();
-
-    for (int i = 1; i < argc; ++i) {
-      std::string arg = argv[i];
-      if (arg == "--help") {
-        printUsageAndExit();
-      } else if (arg == "-i" || arg == "--image") {
-        imageOutputFile = argv[++i];
-      } else if (arg == "-w" || arg == "--width") {
-        width = atoi(argv[++i]);
-      } else if (arg == "-h" || arg == "--height") {
-        height = atoi(argv[++i]);
-      } else if (arg == "-wf" || arg == "--warmup") {
-        numWarmupFrames = atoi(argv[++i]);
-      } else if (arg == "-bf" || arg == "--bench") {
-        numBenchFrames = atoi(argv[++i]);
-      } else if (arg == "-vp" || arg == "--eye") {
-        pos.x = atof(argv[++i]);
-        pos.y = atof(argv[++i]);
-        pos.z = atof(argv[++i]);
-        customView = true;
-      } else if (arg == "-vu" || arg == "--up") {
-        up.x = atof(argv[++i]);
-        up.y = atof(argv[++i]);
-        up.z = atof(argv[++i]);
-        customView = true;
-      } else if (arg == "-vi" || arg == "--gaze") {
-        gaze.x = atof(argv[++i]);
-        gaze.y = atof(argv[++i]);
-        gaze.z = atof(argv[++i]);
-        customView = true;
-      } else if (arg == "-fv" || arg == "--fovy") {
-        fovy = atof(argv[++i]);
-      } else if (arg[0] != '-') {
-        files.push_back(arg);
+      if (!imageOutputFile.empty()) {
+        auto *srcPB = (const uint32_t *)sgFB->map();
+        utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
+        sgFB->unmap(srcPB);
       }
+
+      outputStats(stats);
     }
-  }
 
-  extern "C" int main(int argc, const char *argv[])
-  {
-    initializeOSPRay(argc, argv);
-
-    // access/load symbols/sg::Nodes dynamically
-    loadLibrary("ospray_sg");
-
-    parseCommandLine(argc, argv);
-
-    // Setup scene nodes //////////////////////////////////////////////////////
-
-    auto renderer_ptr = sg::createNode("renderer", "Renderer");
-    auto &renderer = *renderer_ptr;
-
-    renderer["shadowsEnabled"] = true;
-    renderer["aoSamples"] = 1;
-
-    auto &lights = renderer["lights"];
-
-    auto &sun = lights.createChild("sun", "DirectionalLight");
-    sun["color"] = vec3f(1.f, 232.f/255.f, 166.f/255.f);
-    sun["direction"] = vec3f(0.462f, -1.f, -.1f);
-    sun["intensity"] = 1.5f;
-
-    auto &bounce = lights.createChild("bounce", "DirectionalLight");
-    bounce["color"] = vec3f(127.f/255.f, 178.f/255.f, 255.f/255.f);
-    bounce["direction"] = vec3f(-.93, -.54f, -.605f);
-    bounce["intensity"] = 0.25f;
-
-    auto &ambient = lights.createChild("ambient", "AmbientLight");
-    ambient["intensity"] = 0.9f;
-    ambient["color"] = vec3f(174.f/255.f, 218.f/255.f, 255.f/255.f);
-
-    auto &world = renderer["world"];
-
-    for (auto file : files) {
-      FileName fn = file;
-      if (fn.ext() == "ospsg")
-        sg::loadOSPSG(renderer_ptr,fn.str());
-      else {
-        auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-        auto &importerNode = *importerNode_ptr;
-        importerNode["fileName"] = fn.str();
-        world.add(importerNode_ptr);
+    int OSPBenchmark::parseCommandLine(int &ac, const char **&av)
+    {
+      for (int i = 1; i < ac; i++) {
+        const std::string arg = av[i];
+        if (arg == "-i" || arg == "--image") {
+          imageOutputFile = av[i + 1];
+          removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "-wf" || arg == "--warmup") {
+          numWarmupFrames = atoi(av[i + 1]);
+          removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "-bf" || arg == "--bench") {
+          numBenchFrames = atoi(av[i + 1]);
+          removeArgs(ac, av, i, 2);
+          --i;
+        }
       }
+      return 0;
     }
 
-    auto sgFB = renderer.child("frameBuffer").nodeAs<sg::FrameBuffer>();
-    sgFB->child("size") = vec2i(width, height);
-
-    renderer.traverse("verify");
-    renderer.traverse("commit");
-
-    // Setup camera ///////////////////////////////////////////////////////////
-
-    if (!customView) {
-      auto bbox  = world.bounds();
-      vec3f diag = bbox.size();
-      diag       = max(diag,vec3f(0.3f*length(diag)));
-
-      gaze = ospcommon::center(bbox);
-
-      pos = gaze - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-      up  = vec3f(0.f, 1.f, 0.f);
+    // NOTE(jda) - Issues with template type deduction w/ GCC 7.1 and Clang 4.0,
+    //             thus defining the use of operator<<() from pico_bench here
+    //             before OSPCommon.h (offending file) gets eventually included
+    //             through ospray_sg headers. [blech]
+    template <typename T>
+    void OSPBenchmark::outputStats(const T &stats)
+    {
+      std::cout << stats << std::endl;
     }
 
-    auto dir = gaze - pos;
-
-    auto &camera = renderer["camera"];
-    camera["fovy"] = fovy;
-    camera["pos"]  = pos;
-    camera["dir"]  = dir;
-    camera["up"]   = up;
-
-    renderer.traverse("commit");
-
-    for (size_t i = 0; i < numWarmupFrames; ++i)
-      renderer.traverse("render");
-
-    // Run benchmark //////////////////////////////////////////////////////////
-
-    auto benchmarker = pico_bench::Benchmarker<milliseconds>{numBenchFrames};
-
-    auto stats = benchmarker([&]() {
-      renderer.traverse("render");
-      // TODO: measure just ospRenderFrame() time from within ospray_sg
-      // return milliseconds{500};
-    });
-
-    // Print results //////////////////////////////////////////////////////////
-
-    if (!imageOutputFile.empty()) {
-      auto *srcPB = (const uint32_t*)sgFB->map();
-      utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
-      sgFB->unmap(srcPB);
-    }
-
-    outputStats(stats);
-
-    return 0;
-  }
-
+  } // ::ospray::app
 } // ::ospray
+
+int main(int ac, const char **av)
+{
+  ospray::app::OSPBenchmark ospApp;
+  return ospApp.main(ac, av);
+}

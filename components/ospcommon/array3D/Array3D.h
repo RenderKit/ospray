@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -196,7 +196,7 @@ namespace ospcommon {
     {
       SubBoxArray3D(const std::shared_ptr<Array3D<value_t>> &actual,
                     const box3i &clipBox)
-          : actual(actual), clipBox(clipBox)
+        : clipBox(clipBox), actual(actual)
       {
         assert(actual);
         assert(clipBox.upper.x <= actual->size().x);

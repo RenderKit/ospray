@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,8 +31,6 @@ namespace ospray {
 
     using namespace ospcommon;
 
-    /*! initialize everything IMGUI-related */
-    OSPRAY_IMGUI3D_INTERFACE void init(int32_t *ac, const char **av);
     /*! switch over to IMGUI for control flow. This func will not return */
     OSPRAY_IMGUI3D_INTERFACE void run();
 
@@ -59,9 +57,6 @@ namespace ospray {
     */
     struct OSPRAY_IMGUI3D_INTERFACE ImGui3DWidget
     {
-       /*! size we'll create a window at */
-       static vec2i defaultInitSize;
-
        typedef enum {
          FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_DEPTH,FRAMEBUFFER_NONE
        } FrameBufferMode;
@@ -81,7 +76,6 @@ namespace ospray {
          float openingAngle; //!< in degrees, along Y direction
          float aspect; //!< aspect ratio X:Y
          float apertureRadius;
-         // float focalDistance;
 
          /*! camera frame in which the Y axis is the depth axis, and X
            and Z axes are parallel to the screen X and Y axis. The frame
@@ -141,7 +135,7 @@ namespace ospray {
        /*! create this window. Note that this just *creates* the window,
          but glut will not do anything else with this window before
          'run' got called */
-       void create(const char *title, bool fullScreen = false);
+       void create(const char *title, const bool fullScreen = false, vec2i windowSize = {1024, 768});
 
        // ------------------------------------------------------------------
        // camera helper code

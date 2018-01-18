@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -68,17 +68,18 @@ namespace ospray {
     void guiRenderStats();
     void guiFindNode();
 
-    void guiSGTree(std::string name,
-                   std::shared_ptr<sg::Node> node,
-                   int indent);
+    void guiSingleNode(const std::string &baseText,
+                       std::shared_ptr<sg::Node> node);
+    void guiNodeContextMenu(const std::string &name,
+                            std::shared_ptr<sg::Node> node);
+
+    void guiSGTree(const std::string &name, std::shared_ptr<sg::Node> node);
 
     void guiSearchSGNodes();
 
     void setCurrentDeviceParameter(const std::string &param, int value);
 
     // Data //
-
-    bool showCarDemoWidgets{false};
 
     double lastFrameFPS;
     double lastGUITime;

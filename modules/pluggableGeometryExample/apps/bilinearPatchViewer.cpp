@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,7 +42,6 @@ namespace ospray {
     struct PatchSGNode : public sg::Geometry
     {
       PatchSGNode() : Geometry("bilinear_patches") {}
-
       box3f bounds() const override
       {
         box3f bounds = empty;
@@ -88,8 +87,6 @@ namespace ospray {
       loadLibrary("ospray_sg");
       ospLoadModule("bilinear_patches");
 
-      ospray::imgui3D::init(&ac,av);
-
       // parse the commandline; complain about anything we do not
       // recognize
       CommandLine args(ac,av);
@@ -103,7 +100,7 @@ namespace ospray {
       auto renderer_ptr = sg::createNode("renderer", "Renderer");
       auto &renderer = *renderer_ptr;
 
-      auto &win_size = ospray::imgui3D::ImGui3DWidget::defaultInitSize;
+      vec2i win_size = {1024, 768};
       renderer["frameBuffer"]["size"] = win_size;
 
       renderer["rendererType"] = std::string("raycast");
@@ -126,7 +123,7 @@ namespace ospray {
       patchesInstance["model"].add(patchesGeometryNode);
 
       ospray::ImGuiViewer window(renderer_ptr);
-
+	//TODO - it doesn't work anymore - viewPort has to be set first
       auto &viewPort = window.viewPort;
       // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
       auto dir = normalize(viewPort.at - viewPort.from);
@@ -137,8 +134,7 @@ namespace ospray {
       renderer["camera"]["apertureRadius"] = viewPort.apertureRadius;
       if (renderer["camera"].hasChild("focusdistance"))
         renderer["camera"]["focusdistance"] = length(viewPort.at - viewPort.from);
-
-      window.create("OSPRay Example Viewer (module) App");
+      window.create("OSPRay Example Viewer (module) App", false, win_size);
 
       ospray::imgui3D::run();
       return 0;

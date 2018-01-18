@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -72,13 +72,9 @@ namespace ospray {
 
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
-    vec2i ImGui3DWidget::defaultInitSize(1024,768);
-
     bool ImGui3DWidget::animating = false;
 
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
-    /*! viewport as specified on the command line */
-    ImGui3DWidget::ViewPort *viewPortFromCmdLine = nullptr;
 
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
@@ -162,17 +158,6 @@ namespace ospray {
         break;
       }
       Assert2(manipulator != nullptr,"invalid initial manipulator mode");
-
-      if (viewPortFromCmdLine) {
-        viewPort = *viewPortFromCmdLine;
-
-        if (length(viewPort.up) < 1e-3f)
-          viewPort.up = vec3f(0,0,1.f);
-
-        this->worldBounds = worldBounds;
-        computeFrame();
-      }
-
       currButton[0] = currButton[1] = currButton[2] = GLFW_RELEASE;
 
       displayTime=-1.f;
@@ -263,30 +248,7 @@ namespace ospray {
 
     void ImGui3DWidget::setWorldBounds(const box3f &worldBounds)
     {
-      vec3f center = ospcommon::center(worldBounds);
-      vec3f diag   = worldBounds.size();
-      diag         = max(diag,vec3f(0.3f*length(diag)));
-      vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-      vec3f dir    = center - from;
-      vec3f up     = viewPort.up;
-
-      if (!viewPortFromCmdLine) {
-        viewPort.at   = center;
-        viewPort.from = from;
-        viewPort.up   = up;
-
-        if (length(up) < 1e-3f)
-          up = vec3f(0,0,1.f);
-
-        this->worldBounds = worldBounds;
-        viewPort.frame.l.vy = normalize(dir);
-        viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
-        viewPort.frame.p    = from;
-        viewPort.snapFrameUp();
-        viewPort.modified = true;
-      }
-
+      vec3f diag   = max(worldBounds.size(),vec3f(0.3f*length(worldBounds.size())));
       if (motionSpeed < 0.f)
         motionSpeed = length(diag) * .001f;
     }
@@ -298,7 +260,7 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title, bool fullScreen)
+    void ImGui3DWidget::create(const char *title, const bool fullScreen, const vec2i windowSize)
     {
       // Setup window
       auto error_callback = [](int error, const char* description) {
@@ -313,7 +275,7 @@ namespace ospray {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-      auto size = defaultInitSize;
+      auto size = windowSize;
 
       auto defaultSizeFromEnv =
           getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
@@ -477,125 +439,6 @@ namespace ospray {
       // Cleanup
       ImGui_ImplGlfwGL3_Shutdown();
       glfwTerminate();
-    }
-
-    void init(int32_t *ac, const char **av)
-    {
-      for(int i = 1; i < *ac;i++) {
-        std::string arg(av[i]);
-        if (arg == "-win") {
-          std::string arg2(av[i+1]);
-          size_t pos = arg2.find("x");
-          if (pos != std::string::npos) {
-            arg2.replace(pos, 1, " ");
-            std::stringstream ss(arg2);
-            ss >> ImGui3DWidget::defaultInitSize.x
-               >> ImGui3DWidget::defaultInitSize.y;
-            removeArgs(*ac,av,i,2); --i;
-          } else {
-            ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-            ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-            removeArgs(*ac,av,i,3); --i;
-          }
-          continue;
-        } if (arg == "--1k" || arg == "-1k") {
-          ImGui3DWidget::defaultInitSize.x =
-              ImGui3DWidget::defaultInitSize.y = 1024;
-          removeArgs(*ac,av,i,1); --i;
-          continue;
-        } if (arg == "--size") {
-          ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-          ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-          removeArgs(*ac,av,i,3); --i;
-          continue;
-        } if (arg == "-v" || arg == "--view") {
-          std::ifstream fin(av[i+1]);
-          if (!fin.is_open())
-          {
-            throw std::runtime_error("Failed to open \"" +
-                                     std::string(av[i+1]) +
-                                     "\" for reading");
-          }
-
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-
-          auto& fx = viewPortFromCmdLine->from.x;
-          auto& fy = viewPortFromCmdLine->from.y;
-          auto& fz = viewPortFromCmdLine->from.z;
-
-          auto& ax = viewPortFromCmdLine->at.x;
-          auto& ay = viewPortFromCmdLine->at.y;
-          auto& az = viewPortFromCmdLine->at.z;
-
-          auto& ux = viewPortFromCmdLine->up.x;
-          auto& uy = viewPortFromCmdLine->up.y;
-          auto& uz = viewPortFromCmdLine->up.z;
-
-          auto& fov = viewPortFromCmdLine->openingAngle;
-
-          auto token = std::string("");
-          while (fin >> token) {
-            if (token == "-vp")
-              fin >> fx >> fy >> fz;
-            else if (token == "-vu")
-              fin >> ux >> uy >> uz;
-            else if (token == "-vi")
-              fin >> ax >> ay >> az;
-            else if (token == "-fv")
-              fin >> fov;
-            else {
-              throw std::runtime_error("Unrecognized token:  \"" + token +
-                                       '\"');
-            }
-          }
-
-          assert(i+1 < *ac);
-          removeArgs(*ac,av, i, 2); --i;
-          continue;
-        } if (arg == "-vu") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->up.x = atof(av[i+1]);
-          viewPortFromCmdLine->up.y = atof(av[i+2]);
-          viewPortFromCmdLine->up.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-vp") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->from.x = atof(av[i+1]);
-          viewPortFromCmdLine->from.y = atof(av[i+2]);
-          viewPortFromCmdLine->from.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-vi") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->at.x = atof(av[i+1]);
-          viewPortFromCmdLine->at.y = atof(av[i+2]);
-          viewPortFromCmdLine->at.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-fv") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->openingAngle = atof(av[i+1]);
-          assert(i+1 < *ac);
-          removeArgs(*ac,av,i,2); --i;
-          continue;
-        } if (arg == "-ar") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->apertureRadius = atof(av[i+1]);
-          assert(i+1 < *ac);
-          removeArgs(*ac,av,i,2); --i;
-          continue;
-        }
-      }
     }
 
     void ImGui3DWidget::keypress(char key)

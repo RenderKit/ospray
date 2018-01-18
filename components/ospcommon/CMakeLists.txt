@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -175,7 +175,7 @@ ELSE()
 
   ADD_LIBRARY(ospray_test_main STATIC testing/catch_main.cpp)
 
-  # Any
+  # utility/Any
 
   OSPRAY_CREATE_TEST(test_Any
     utility/tests/test_Any.cpp
@@ -186,7 +186,18 @@ ELSE()
 
   ADD_TEST(NAME Any COMMAND test_Any)
 
-  # ArrayView
+  # utility/ArgumentList
+
+  OSPRAY_CREATE_TEST(test_ArgumentList
+    utility/tests/test_ArgumentList.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  ADD_TEST(NAME ArgumentList COMMAND test_ArgumentList)
+
+  # utility/ArrayView
 
   OSPRAY_CREATE_TEST(test_ArrayView
     utility/tests/test_ArrayView.cpp
@@ -208,7 +219,7 @@ ELSE()
 
   ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
 
-  # Optional
+  # utility/Optional
 
   OSPRAY_CREATE_TEST(test_Optional
     utility/tests/test_Optional.cpp
@@ -218,6 +229,17 @@ ELSE()
   )
 
   ADD_TEST(NAME Optional COMMAND test_Optional)
+
+  # utility/StringManip
+
+  OSPRAY_CREATE_TEST(test_StringManip
+    utility/tests/test_StringManip.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  ADD_TEST(NAME StringManip COMMAND test_StringManip)
 
   # containers/TransactionalBuffer
 

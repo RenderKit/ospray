@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,17 +18,49 @@
 
 #include <algorithm>
 #include <string>
+#include <sstream>
+#include <vector>
 
 namespace ospcommon {
+  namespace utility {
 
-  // TODO: description!
-  inline std::string longestBeginningMatch(const std::string &first,
-                                           const std::string &second)
-  {
-    return std::string(
-      first.begin(),
-      std::mismatch(first.begin(), first.end(), second.begin()).first
-    );
-  }
+    /* return a string which is the two inputs match from the beginning of
+       each */
+    inline std::string longestBeginningMatch(const std::string &first,
+                                             const std::string &second)
+    {
+      return std::string(
+        first.begin(),
+        std::mismatch(first.begin(), first.end(), second.begin()).first
+      );
+    }
 
+    /* split a string on a single character delimiter */
+    std::vector<std::string> split(const std::string &input, char delim)
+    {
+      std::stringstream ss(input);
+      std::string item;
+      std::vector<std::string> elems;
+      while (std::getline(ss, item, delim))
+        elems.push_back(std::move(item));
+      return elems;
+    }
+
+    /* return lower case version of the input string */
+    std::string lowerCase(const std::string &str)
+    {
+      std::string retval = str;
+      std::transform(retval.begin(), retval.end(), retval.begin(), ::tolower);
+      return retval;
+    }
+
+    /* return upper case version of the input string */
+    std::string upperCase(const std::string &str)
+    {
+      std::string retval = str;
+      std::transform(retval.begin(), retval.end(), retval.begin(), ::toupper);
+      return retval;
+    }
+
+  } // ::ospcommon::utility
 } // ::ospcommon
