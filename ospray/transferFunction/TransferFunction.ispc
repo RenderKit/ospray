@@ -25,3 +25,13 @@ export void TransferFunction_setValueRange(void *uniform pointer,
   // Set the transfer function value range.
   transferFunction->valueRange = value;
 }
+
+export void TransferFunction_setQueryByCoordinate(void *uniform pointer, 
+						  const uniform bool flag) 
+{
+  // Cast to the actual type.
+  uniform TransferFunction *uniform transferFunction = (uniform TransferFunction *uniform) pointer;
+
+  // Set the transfer function value range.
+  transferFunction->queryByCoordinate = flag;
+}
