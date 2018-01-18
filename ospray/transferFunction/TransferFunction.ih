@@ -26,11 +26,11 @@ struct TransferFunction {
   vec2f valueRange;
   uniform bool preIntegration;
   uniform bool preIntegrationComputed;
+  uniform bool queryByCoordinate;
 
   //! Interpolated color for the given value.
   varying vec3f (*getColorForValue)(const void *uniform transferFunction, 
                                     varying float value);
-
 
   //! Interpolated color for the given value.
   varying vec3f (*getIntegratedColorForValue)(const void *uniform transferFunction, 
@@ -52,4 +52,15 @@ struct TransferFunction {
   uniform vec2f (*getMinMaxOpacityInRange)(void *uniform transferFunction, 
                                            const uniform vec2f &range);
 
+  // ======================================================================== //
+  //! Interpolated color for the given volume coordinate.
+  varying vec3f (*getColorForCoordinate)(const void *uniform transferFunction,
+					 void *uniform volume,
+					 const varying vec3f coordinate);
+
+  //! Interpolated opacity for the given value.
+  varying float (*getOpacityForCoordinate)(const void *uniform transferFunction,
+					   void *uniform volume,
+					   const varying vec3f coordinate);
+  // ======================================================================== //
 };

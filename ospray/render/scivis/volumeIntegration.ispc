@@ -131,18 +131,25 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
 
   tBegin = tBegin + renderer->volumeEpsilon;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity) {
+
     // Sample the volume at the hit point in world coordinates.
     const vec3f coordinates = ray.org + ray.t0 * ray.dir;
-    const float sample      = volume->sample(volume, coordinates);
-    if (lastSample == -1.f)
-      lastSample = sample;
-
+    float sample;
     // Look up the color associated with the volume sample.
     // Look up the opacity associated with the volume sample.
     vec3f sampleColor;
     float sampleOpacity;
-    sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(
-        volume->transferFunction, lastSample, sample);
+
+    if (volume->transferFunction->queryByCoordinate) {
+      sampleOpacity = volume->transferFunction->getOpacityForCoordinate
+	(volume->transferFunction, volume, coordinates);
+    } else {
+      sample = volume->sample(volume, coordinates);
+      if (lastSample == -1.f) { lastSample = sample; }
+      sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue
+	(volume->transferFunction, lastSample, sample);
+    }
+
     if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack &&
         ray.t0 > tSkipped)  // adaptive backtack
     {
@@ -168,10 +175,14 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
     }
 
     if (!isShadowRay) {
-      sampleColor = volume->transferFunction->getIntegratedColorForValue(
+      if (volume->transferFunction->queryByCoordinate) {
+	sampleColor = volume->transferFunction->getColorForCoordinate
+	  (volume->transferFunction, volume, coordinates);
+      } else {
+	sampleColor = volume->transferFunction->getIntegratedColorForValue(
           volume->transferFunction, lastSample, sample);
-      lastSample = sample;
-
+	lastSample = sample;
+      }
       // Compute gradient shading, if enabled.
       if (volume->gradientShadingEnabled) {
         if (volume->singleShade &&
