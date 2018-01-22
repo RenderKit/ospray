@@ -225,8 +225,10 @@ OSPRAY_CATCH_BEGIN
   }
 
   // no device created on cmd line, yet, so default to localdevice
-  if (!deviceIsSet())
+  if (!deviceIsSet()) {
+    loadDefaultLibrary();
     currentDevice = new ospray::api::LocalDevice;
+  }
 
   ospray::initFromCommandLine(_ac,&_av);
 

@@ -47,6 +47,9 @@ namespace ospcommon {
       /* returns address of a symbol from any library in the repo */
       void* getSymbol(const std::string& sym) const;
 
+      /* add the default library to the repo */
+      void addDefaultLibrary();
+
     private:
       static LibraryRepository* instance;
       LibraryRepository();

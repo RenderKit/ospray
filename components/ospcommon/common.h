@@ -87,6 +87,7 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void removeArgs(int &ac, const char **&av,
                                       int where, int howMany);
   OSPCOMMON_INTERFACE void loadLibrary(const std::string &name);
+  OSPCOMMON_INTERFACE void loadDefaultLibrary();
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
 #ifdef _WIN32
