@@ -154,8 +154,7 @@ namespace ospcommon {
     }
 
     template <typename T, int A>
-    inline void aligned_allocator<T, A>::aligned_allocator<T, A>::destroy(
-        T *const p) const
+    inline void aligned_allocator<T, A>::destroy(T *const p) const
     {
       p->~T();
     }
