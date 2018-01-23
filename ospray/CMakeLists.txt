@@ -419,6 +419,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
 
+
 SET(OSPRAY_LIBS
   ospray_common
   ${CMAKE_THREAD_LIBS_INIT}

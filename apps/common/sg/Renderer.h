@@ -23,13 +23,17 @@ namespace ospray {
 
     class FrameBuffer;
 
+    /*! renderer renders the scene into the framebuffer on render call.
+     * child render calls are made during commit to cache rendering.
+     * verify and commit must be called before rendered
+    */
     struct OSPSG_INTERFACE Renderer : public Renderable
     {
       Renderer();
       virtual std::string toString() const override;
 
-      // renderer renders the scene into the framebuffer on render call.
-      //  It will call render on model when commit when model modified
+      void renderFrame(std::shared_ptr<FrameBuffer> fb, int flags=0);
+
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
       void preRender(RenderContext &ctx) override;
@@ -53,4 +57,3 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
-

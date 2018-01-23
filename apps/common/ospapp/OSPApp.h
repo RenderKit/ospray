@@ -101,7 +101,7 @@ namespace ospray {
       bool addDefaultLights = false;
       bool noDefaultLights = false;
       bool debug = false;
-      bool addPlane = false;
+      bool addPlane = true;
       bool noPlane = false;
       std::string initialRendererType;
     };
