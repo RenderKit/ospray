@@ -14,40 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "aligned_allocator.h"
 
-#include "common.h"
+namespace ospcommon {
+  namespace container {
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+    template <typename T>
+    using AlignedVector = std::vector<T, aligned_allocator<T>>;
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-
-  template <typename T>
-   __forceinline T* alignedMalloc(size_t nElements, size_t align = 64)
-  {
-    return (T*)alignedMalloc(nElements*sizeof(T), align);
-  }
-
-  inline bool isAligned(void *ptr, int alignment = 64)
-  {
-    return reinterpret_cast<size_t>(ptr) % alignment == 0;
-  }
-
-// NOTE(jda) - can't use function wrapped alloca solution as Clang won't inline
-//             a function containing alloca()...but it works with gcc/icc
-#if 0
-  template<typename T>
-  __forceinline T* stackBuffer(size_t nElements)
-  {
-    return static_cast<T*>(alloca(sizeof(T) * nElements));
-  }
-#else
-#  define STACK_BUFFER(TYPE, nElements) (TYPE*)alloca(sizeof(TYPE)*nElements)
-#endif
-}
-
+  }  // namespace container
+}  // namespace ospcommon

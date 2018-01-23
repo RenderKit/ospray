@@ -252,6 +252,17 @@ ELSE()
 
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
 
+  # containers/AlignedVector
+
+  OSPRAY_CREATE_TEST(test_AlignedVector
+    containers/tests/test_AlignedVector.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  ADD_TEST(NAME AlignedVector COMMAND test_AlignedVector)
+
   IF(NOT WIN32)
     # tasking/async
     OSPRAY_CREATE_TEST(test_async

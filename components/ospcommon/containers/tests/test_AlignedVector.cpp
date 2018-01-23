@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,40 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "../../testing/catch.hpp"
 
-#include "common.h"
+#include "../AlignedVector.h"
 
-namespace ospcommon
+using ospcommon::container::AlignedVector;
+
+TEST_CASE("Interface Tests", "[all]")
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+  AlignedVector<int> aligned_vec;
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  aligned_vec.resize(500);
 
-  template <typename T>
-   __forceinline T* alignedMalloc(size_t nElements, size_t align = 64)
-  {
-    return (T*)alignedMalloc(nElements*sizeof(T), align);
-  }
-
-  inline bool isAligned(void *ptr, int alignment = 64)
-  {
-    return reinterpret_cast<size_t>(ptr) % alignment == 0;
-  }
-
-// NOTE(jda) - can't use function wrapped alloca solution as Clang won't inline
-//             a function containing alloca()...but it works with gcc/icc
-#if 0
-  template<typename T>
-  __forceinline T* stackBuffer(size_t nElements)
-  {
-    return static_cast<T*>(alloca(sizeof(T) * nElements));
-  }
-#else
-#  define STACK_BUFFER(TYPE, nElements) (TYPE*)alloca(sizeof(TYPE)*nElements)
-#endif
+  REQUIRE(ospcommon::isAligned(aligned_vec.data()));
 }
-
