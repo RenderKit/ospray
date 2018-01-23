@@ -50,6 +50,8 @@ namespace ospcommon {
       /* add the default library to the repo */
       void addDefaultLibrary();
 
+      bool libraryExists(const std::string &name) const;
+
     private:
       static LibraryRepository* instance;
       LibraryRepository();

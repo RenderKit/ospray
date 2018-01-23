@@ -19,6 +19,7 @@
 #include "common/OSPCommon.h"
 #include "common/Util.h"
 // ospcommon
+#include "ospcommon/library.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
@@ -60,6 +61,14 @@ namespace ospray {
 
     Device *Device::createDevice(const char *type)
     {
+      // NOTE(jda) - If a user is manually creating the device (i.e. not using
+      //             ospInit() to do it), then we need to check if there's a
+      //             valid library for core ospray in our main symbol lookup
+      //             table.
+      auto &repo = *LibraryRepository::getInstance();
+      if (!repo.libraryExists("ospray"))
+        repo.addDefaultLibrary();
+
       return createInstanceHelper<Device, OSP_DEVICE>(type);
     }
 

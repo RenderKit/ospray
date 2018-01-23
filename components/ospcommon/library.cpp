@@ -227,6 +227,11 @@ namespace ospcommon {
 #endif
   }
 
+  bool LibraryRepository::libraryExists(const std::string &name) const
+  {
+    return repo.find(name) != repo.end();
+  }
+
   LibraryRepository::LibraryRepository()
   {
   }
