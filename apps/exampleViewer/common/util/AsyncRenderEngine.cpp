@@ -72,12 +72,9 @@ namespace ospray {
       }
 
       fps.start();
-//      scenegraph->traverse("render");
-//      if (scenegraphDW)
-//        scenegraphDW->traverse("render");
       scenegraph->nodeAs<sg::Renderer>()->renderFrame(sgFB.nodeAs<sg::FrameBuffer>(), OSP_FB_COLOR | OSP_FB_ACCUM);
-//      if (scenegraphDW)
-//        scenegraphDW->nodeAs<sg::Renderer>()->renderFrame(dwFB, OSP_FB_COLOR, OSP_FB_ACCUM);
+      if (scenegraphDW)
+        scenegraphDW->nodeAs<sg::Renderer>()->renderFrame(scenegraphDW->child("frameBuffer").nodeAs<sg::FrameBuffer>(), OSP_FB_COLOR | OSP_FB_ACCUM);
       once = true;
       fps.stop();
 

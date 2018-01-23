@@ -37,7 +37,6 @@ namespace ospray {
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
       void preRender(RenderContext &ctx) override;
-      void postRender(RenderContext &ctx) override;
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
       OSPPickResult pick(const vec2f &pickPos);

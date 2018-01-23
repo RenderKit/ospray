@@ -144,12 +144,6 @@ namespace ospray {
         Node::traverse(ctx,operation);
     }
 
-    void Renderer::postRender(RenderContext &)
-    {
-//      auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
-//      variance = ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
-    }
-
     void Renderer::preRender(RenderContext& ctx)
     {
       ctx.ospRenderer = ospRenderer;
