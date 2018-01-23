@@ -25,14 +25,14 @@ namespace ospray {
       createChild("displayWall", "string", std::string(""));
 
       // Tone mapping with default parameters set to ACES
-      createChild("toneMapping", "bool", false);
+      createChild("toneMapping", "bool", true);
 
       createChild("exposure", "float", 0.0f,
                     NodeFlags::required |
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(-8.f, 8.f);
 
-      createChild("contrast", "float", 1.6773f,
+      createChild("contrast", "float", 1.4773f,
                     NodeFlags::required |
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(1.f, 5.f);
@@ -42,17 +42,17 @@ namespace ospray {
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(0.9f, 1.f);
 
-      createChild("midIn", "float", 0.18f,
+      createChild("midIn", "float", 0.468f,
                     NodeFlags::required |
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(0.f, 1.f);
 
-      createChild("midOut", "float", 0.18f,
+      createChild("midOut", "float", 0.278f,
                     NodeFlags::required |
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(0.f, 1.f);
 
-      createChild("hdrMax", "float", 11.0785f,
+      createChild("hdrMax", "float", 1.5785f,
                     NodeFlags::required |
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(1.f, 64.f);
