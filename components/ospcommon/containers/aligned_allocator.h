@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
+
 #include <stddef.h>   // Required for size_t and ptrdiff_t and nullptr
 #include <new>        // Required for placement new and std::bad_alloc
 #include <stdexcept>  // Required for std::length_error
