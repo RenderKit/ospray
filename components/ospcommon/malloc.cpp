@@ -21,7 +21,9 @@
 #  include "tbb/scalable_allocator.h"
 #endif
 
+#ifdef _WIN32
 #include <malloc.h>
+#endif
 
 namespace ospcommon
 {
