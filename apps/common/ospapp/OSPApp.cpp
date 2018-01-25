@@ -142,7 +142,7 @@ namespace ospray {
           removeArgs(ac, av, i, 1);
           --i;
         } else if (arg == "--no-plane") {
-          noPlane = true;
+          addPlane = false;
           removeArgs(ac, av, i, 1);
           --i;
         } else if (arg == "--no-lights") {
@@ -364,12 +364,12 @@ namespace ospray {
         auto &sun = lights.createChild("sun", "DirectionalLight");
         sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
         sun["direction"] = vec3f(0.462f, -1.f, -.1f);
-        sun["intensity"] = 1.5f;
+        sun["intensity"] = 3.0f;
 
         auto &bounce = lights.createChild("bounce", "DirectionalLight");
         bounce["color"] = vec3f(127.f / 255.f, 178.f / 255.f, 255.f / 255.f);
         bounce["direction"] = vec3f(-.93, -.54f, -.605f);
-        bounce["intensity"] = 0.25f;
+        bounce["intensity"] = 1.25f;
 
         if (hdriLightFile == "") {
           auto &ambient = lights.createChild("ambient", "AmbientLight");
@@ -523,7 +523,7 @@ namespace ospray {
     void OSPApp::addPlaneToScene(sg::Node &renderer)
     {
       auto &world = renderer["world"];
-      if (noPlane == true || (world.numChildren() > 1 && addPlane == false)) {
+      if (world.numChildren() > 1 && addPlane == false) {
         return;
       }
       auto bbox = world.bounds();

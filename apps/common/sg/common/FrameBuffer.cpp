@@ -24,7 +24,7 @@ namespace ospray {
       createChild("size", "vec2i", size);
       createChild("displayWall", "string", std::string(""));
 
-      createChild("toneMapping", "bool", false);
+      createChild("toneMapping", "bool", true);
 
       createChild("exposure", "float", 0.0f,
                     NodeFlags::required |
