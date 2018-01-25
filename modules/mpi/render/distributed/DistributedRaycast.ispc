@@ -159,7 +159,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     (uniform DistributedRaycastRenderer *uniform)_self;
 
   uniform RegionInfo *uniform regionInfo = (uniform RegionInfo *uniform)perFrameData;
-  if (regionInfo && regionInfo->currentRegion == 0) {
+  if (self->myRegions && regionInfo && regionInfo->currentRegion == 0) {
     DistributedRaycastRenderer_testRegions(self, regionInfo, sample);
   }
 
@@ -231,7 +231,9 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
   self->myRegions = NULL;
+  self->numMyRegions = 0;
   self->othersRegions = NULL;
+  self->numOthersRegions = 0;
 
   return self;
 }
