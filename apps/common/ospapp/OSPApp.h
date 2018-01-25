@@ -54,7 +54,7 @@ namespace ospray {
 
      protected:
 
-      virtual void render(const std::shared_ptr<ospray::sg::Node> &) = 0;
+      virtual void render(const std::shared_ptr<sg::Node> &) = 0;
       virtual int parseCommandLine(int &ac, const char **&av) = 0;
 
       int initializeOSPRay(int *argc, const char *argv[]);

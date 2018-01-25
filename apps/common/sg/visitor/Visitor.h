@@ -42,7 +42,8 @@ namespace ospray {
 
     //NOTE(jda) - This checks at compile time if T implements the method
     //            'bool T::visit(Node &node, TraversalContext &ctx)'.
-#ifdef _WIN32
+//#ifdef _WIN32
+#if 1
     template <typename T>
     using has_valid_visit_operator_method = traits::has_operator_method<T>;
 #else

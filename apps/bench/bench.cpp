@@ -31,7 +31,7 @@ namespace ospray {
 
     private:
 
-      void render(const std::shared_ptr<ospray::sg::Node> &) override;
+      void render(const std::shared_ptr<sg::Node> &) override;
       int parseCommandLine(int &ac, const char **&av) override;
 
       template <typename T>
@@ -48,7 +48,7 @@ namespace ospray {
                         //             options
     }
 
-    void OSPBenchmark::render(const std::shared_ptr<ospray::sg::Node> &root)
+    void OSPBenchmark::render(const std::shared_ptr<sg::Node> &root)
     {
       auto renderer = root->nodeAs<sg::Renderer>();
       auto fb       = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();

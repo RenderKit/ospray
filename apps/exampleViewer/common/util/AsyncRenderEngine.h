@@ -27,7 +27,7 @@
 #include "ospcommon/utility/DoubleBufferedValue.h"
 #include "ospcommon/utility/TransactionalValue.h"
 
-#include "sg/common/Node.h"
+#include "sg/Renderer.h"
 
 // ospImGui util
 #include "ImguiUtilExport.h"
@@ -40,8 +40,8 @@ namespace ospray {
   {
   public:
 
-    AsyncRenderEngine(std::shared_ptr<sg::Node> sgRenderer,
-                      std::shared_ptr<sg::Node> sgRendererDW);
+    AsyncRenderEngine(std::shared_ptr<sg::Renderer> sgRenderer,
+                      std::shared_ptr<sg::Renderer> sgRendererDW);
     ~AsyncRenderEngine();
 
     // Properties //
@@ -85,8 +85,8 @@ namespace ospray {
 
     int numOsprayThreads {-1};
 
-    std::shared_ptr<sg::Node> scenegraph;
-    std::shared_ptr<sg::Node> scenegraphDW;
+    std::shared_ptr<sg::Renderer> scenegraph;
+    std::shared_ptr<sg::Renderer> scenegraphDW;
 
     ospcommon::utility::TransactionalValue<vec2i> fbSize;
     ospcommon::utility::TransactionalValue<vec2f> pickPos;

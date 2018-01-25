@@ -21,11 +21,14 @@
 
 namespace ospray {
 
-  AsyncRenderEngine::AsyncRenderEngine(std::shared_ptr<sg::Node> sgRenderer,
-                                       std::shared_ptr<sg::Node> sgRendererDW)
+  AsyncRenderEngine::AsyncRenderEngine(
+      std::shared_ptr<sg::Renderer> sgRenderer,
+      std::shared_ptr<sg::Renderer> sgRendererDW)
     : scenegraph(sgRenderer), scenegraphDW(sgRendererDW)
   {
-    backgroundThread = make_unique<AsyncLoop>([&](){
+    auto sgFB = scenegraph->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+
+    backgroundThread = make_unique<AsyncLoop>([&, sgFB](){
 
       if (commitDeviceOnAsyncLoopThread) {
         auto *device = ospGetCurrentDevice();
@@ -36,14 +39,12 @@ namespace ospray {
       }
       static sg::TimeStamp lastFTime;
 
-      auto &sgFB = scenegraph->child("frameBuffer");
-
       static bool once = false;  //TODO: initial commit as timestamp cannot
                                  //      be set to 0
       static int counter = 0;
-      if (sgFB.childrenLastModified() > lastFTime || !once) {
-        auto &size = sgFB["size"];
-        nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
+      if (sgFB->childrenLastModified() > lastFTime || !once) {
+        auto size = sgFB->child("size").valueAs<vec2i>();
+        nPixels = size.x * size.y;
         pixelBuffers.front().resize(nPixels);
         pixelBuffers.back().resize(nPixels);
         lastFTime = sg::TimeStamp();
@@ -64,28 +65,31 @@ namespace ospray {
 
         lastRTime = sg::TimeStamp();
       }
+
       if (scenegraph->hasChild("animationcontroller"))
         scenegraph->child("animationcontroller").traverse("animate");
 
-      if (pickPos.update()) {
-        pickResult = scenegraph->nodeAs<sg::Renderer>()->pick(pickPos.ref());
-      }
+      if (pickPos.update())
+        pickResult = scenegraph->pick(pickPos.ref());
 
       fps.start();
-      scenegraph->nodeAs<sg::Renderer>()->renderFrame(sgFB.nodeAs<sg::FrameBuffer>(), OSP_FB_COLOR | OSP_FB_ACCUM);
-      if (scenegraphDW)
-        scenegraphDW->nodeAs<sg::Renderer>()->renderFrame(scenegraphDW->child("frameBuffer").nodeAs<sg::FrameBuffer>(), OSP_FB_COLOR | OSP_FB_ACCUM);
+      scenegraph->renderFrame(sgFB, OSP_FB_COLOR | OSP_FB_ACCUM);
+
+      if (scenegraphDW) {
+        auto dwFB =
+            scenegraphDW->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+        scenegraphDW->renderFrame(dwFB, OSP_FB_COLOR | OSP_FB_ACCUM);
+      }
+
       once = true;
       fps.stop();
 
-      auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
-
-      auto *srcPB = (uint32_t*)sgFBptr->map();
+      auto *srcPB = (uint32_t*)sgFB->map();
       auto *dstPB = (uint32_t*)pixelBuffers.back().data();
 
       memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
 
-      sgFBptr->unmap(srcPB);
+      sgFB->unmap(srcPB);
 
       if (fbMutex.try_lock()) {
         pixelBuffers.swap();

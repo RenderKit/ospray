@@ -21,6 +21,7 @@
 #include "imgui3D.h"
 
 #include "common/sg/SceneGraph.h"
+#include "common/sg/Renderer.h"
 
 namespace ospray {
 
@@ -34,8 +35,8 @@ namespace ospray {
 
     ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph);
 
-    ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph,
-                const std::shared_ptr<sg::Node> &scenegraphDW);
+    ImGuiViewer(const std::shared_ptr<sg::Renderer> &scenegraph,
+                const std::shared_ptr<sg::Renderer> &scenegraphDW);
 
     ~ImGuiViewer();
 

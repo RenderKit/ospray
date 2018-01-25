@@ -36,6 +36,10 @@ namespace ospray {
 
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
+
+      // NOTE(jda) - why does this overload NOT show up from the base Node???
+      void traverse(const std::string &operation);
+
       void preRender(RenderContext &ctx) override;
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;

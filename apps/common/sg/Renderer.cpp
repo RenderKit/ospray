@@ -143,6 +143,11 @@ namespace ospray {
         Node::traverse(ctx,operation);
     }
 
+    void Renderer::traverse(const std::string& operation)
+    {
+      Node::traverse(operation);
+    }
+
     void Renderer::preRender(RenderContext& ctx)
     {
       ctx.ospRenderer = ospRenderer;
