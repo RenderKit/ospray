@@ -18,6 +18,8 @@
 #include "ospapp/OSPApp.h"
 #include "common/sg/SceneGraph.h"
 #include "ospcommon/utility/SaveImage.h"
+
+#include "sg/Renderer.h"
 #include "sg/common/FrameBuffer.h"
 
 namespace ospray {
@@ -46,25 +48,27 @@ namespace ospray {
                         //             options
     }
 
-    void OSPBenchmark::render(const std::shared_ptr<ospray::sg::Node> &renderer)
+    void OSPBenchmark::render(const std::shared_ptr<ospray::sg::Node> &root)
     {
+      auto renderer = root->nodeAs<sg::Renderer>();
+      auto fb       = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+
       for (size_t i = 0; i < numWarmupFrames; ++i)
-        renderer->traverse("render");
+        renderer->renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 
       auto benchmarker =
           pico_bench::Benchmarker<std::chrono::milliseconds>{ numBenchFrames };
 
       auto stats = benchmarker([&]() {
-        renderer->traverse("render");
+        renderer->renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
         // TODO: measure just ospRenderFrame() time from within ospray_sg
         // return std::chrono::milliseconds{500};
       });
 
       if (!imageOutputFile.empty()) {
-        auto sgFB = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
-        auto *srcPB = (const uint32_t *)sgFB->map();
+        auto *srcPB = (const uint32_t *)fb->map();
         utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
-        sgFB->unmap(srcPB);
+        fb->unmap(srcPB);
       }
 
       outputStats(stats);

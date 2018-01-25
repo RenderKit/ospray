@@ -47,6 +47,7 @@ namespace ospray {
                                           std::string("primID"),
                                           std::string("geomID"),
                                           std::string("instID"),
+                                          std::string("testFrame"),
                                           std::string("pathtracer"),
                                           std::string("pt")});
       createChild("world",
