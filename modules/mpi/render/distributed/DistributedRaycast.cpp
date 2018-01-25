@@ -58,13 +58,16 @@ namespace ospray {
                                                   const uint32 channelFlags)
     {
       using namespace mpicommon;
+      DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
+      if (!distribModel) {
+        return renderNonDistrib(fb, channelFlags);
+      }
 
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
       dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
       dfb->startNewFrame(errorThreshold);
       dfb->beginFrame();
 
-      DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
       ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
           (ispc::box3f*)distribModel->myRegions.data(),
           distribModel->myRegions.size(),
@@ -142,6 +145,43 @@ namespace ospray {
       endFrame(nullptr, channelFlags);
 
       return dfb->endFrame(errorThreshold);
+    }
+
+    // TODO WILL: This is only for benchmarking the compositing using
+    // the same rendering code path. Remove it once we're done! Or push
+    // it behind some ifdefs!
+    float DistributedRaycastRenderer::renderNonDistrib(FrameBuffer *fb,
+                                                       const uint32 channelFlags)
+    {
+      fb->beginFrame();
+
+      beginFrame(fb);
+
+      tasking::parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
+        const size_t numTiles_x = fb->getNumTiles().x;
+        const size_t tile_y = taskIndex / numTiles_x;
+        const size_t tile_x = taskIndex - tile_y*numTiles_x;
+        const vec2i tileID(tile_x, tile_y);
+        const int32 accumID = fb->accumID(tileID);
+
+        if (fb->tileError(tileID) <= errorThreshold) {
+          return;
+        }
+
+        Tile __aligned(64) tile(tileID, fb->size, accumID);
+
+        // We use the task of rendering the first region to also fill out the block visiblility list
+        const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
+        tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
+          renderTile(NULL, tile, tIdx);
+        });
+
+        fb->setTile(tile);
+      });
+
+      endFrame(nullptr, channelFlags);
+
+      return fb->endFrame(errorThreshold);
     }
 
     std::string DistributedRaycastRenderer::toString() const
