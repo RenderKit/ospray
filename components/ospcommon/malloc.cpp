@@ -21,164 +21,36 @@
 #  include "tbb/scalable_allocator.h"
 #endif
 
-////////////////////////////////////////////////////////////////////////////////
-/// Windows Platform
-////////////////////////////////////////////////////////////////////////////////
-
-#ifdef _WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <malloc.h>
 
 namespace ospcommon
 {
-  void* os_malloc(size_t bytes, const int additional_flags) 
-  {
-    int flags = MEM_COMMIT|MEM_RESERVE|additional_flags;
-    char* ptr = (char*) VirtualAlloc(nullptr,bytes,flags,PAGE_READWRITE);
-    if (ptr == nullptr) throw std::bad_alloc();
-    return ptr;
-  }
-
-  void* os_reserve(size_t bytes)
-  {
-    char* ptr = (char*) VirtualAlloc(nullptr,bytes,MEM_RESERVE,PAGE_READWRITE);
-    if (ptr == nullptr) throw std::bad_alloc();
-    return ptr;
-  }
-
-  void os_commit (void* ptr, size_t bytes) {
-    VirtualAlloc(ptr,bytes,MEM_COMMIT,PAGE_READWRITE);
-  }
-
-  size_t os_shrink(void* ptr, size_t bytesNew, size_t bytesOld) 
-  {
-    size_t pageSize = 4096;
-    bytesNew = (bytesNew+pageSize-1) & ~(pageSize-1);
-    assert(bytesNew <= bytesOld);
-    if (bytesNew < bytesOld)
-      VirtualFree((char*)ptr+bytesNew,bytesOld-bytesNew,MEM_DECOMMIT);
-    return bytesNew;
-  }
-
-  void os_free(void* ptr, size_t bytes) {
-    if (bytes == 0) return;
-    VirtualFree(ptr,0,MEM_RELEASE);
-  }
-}
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-/// Unix Platform
-////////////////////////////////////////////////////////////////////////////////
-
-#if defined(__UNIX__)
-
-#include <sys/mman.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define USE_HUGE_PAGES 0
-
-namespace ospcommon
-{
-  void* os_malloc(size_t bytes, const int additional_flags)
-  {
-    int flags = MAP_PRIVATE | MAP_ANON | additional_flags;
-#if USE_HUGE_PAGES
-    if (bytes > 16*4096) {
-      flags |= MAP_HUGETLB;
-      bytes = (bytes+2*1024*1024-1)&ssize_t(-2*1024*1024);
-    } else {
-      bytes = (bytes+4095)&ssize_t(-4096);
-    }
-#endif
-    char* ptr = (char*) mmap(0, bytes, PROT_READ | PROT_WRITE, flags, -1, 0);
-    if (ptr == nullptr || ptr == MAP_FAILED) throw std::bad_alloc();
-    return ptr;
-  }
-
-  void* os_reserve(size_t bytes)
-  {
-    int flags = MAP_PRIVATE | MAP_ANON | MAP_NORESERVE;
-#if USE_HUGE_PAGES
-    if (bytes > 16*4096) {
-      flags |= MAP_HUGETLB;
-      bytes = (bytes+2*1024*1024-1)&ssize_t(-2*1024*1024);
-    } else {
-      bytes = (bytes+4095)&ssize_t(-4096);
-    }
-#endif
-
-    char* ptr = (char*) mmap(0, bytes, PROT_READ | PROT_WRITE, flags, -1, 0);
-    if (ptr == nullptr || ptr == MAP_FAILED) throw std::bad_alloc();
-    return ptr;
-  }
-
-  void os_commit (void* ptr, size_t bytes)
-  {
-    (void)ptr;
-    (void)bytes;
-  }
-
-  size_t os_shrink(void* ptr, size_t bytesNew, size_t bytesOld) 
-  {
-    size_t pageSize = 4096;
-#if USE_HUGE_PAGES
-    if (bytesOld > 16*4096) pageSize = 2*1024*1024;
-#endif
-    bytesNew = (bytesNew+pageSize-1) & ~(pageSize-1);
-    assert(bytesNew <= bytesOld);
-    if (bytesNew < bytesOld)
-      if (munmap((char*)ptr+bytesNew,bytesOld-bytesNew) == -1)
-        throw std::bad_alloc();
-
-    return bytesNew;
-  }
-
-  void os_free(void* ptr, size_t bytes) 
-  {
-    if (bytes == 0)
-      return;
-
-#if USE_HUGE_PAGES
-    if (bytes > 16*4096) {
-      bytes = (bytes+2*1024*1024-1)&ssize_t(-2*1024*1024);
-    } else {
-      bytes = (bytes+4095)&ssize_t(-4096);
-    }
-#endif
-    if (munmap(ptr,bytes) == -1)
-      throw std::bad_alloc();
-  }
-}
-
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-/// All Platforms
-////////////////////////////////////////////////////////////////////////////////
-  
-namespace ospcommon
-{
-  void* alignedMalloc(size_t size, size_t align) 
+  void* alignedMalloc(size_t size, size_t align)
   {
     assert((align & (align-1)) == 0);
-//#if defined(TASKING_TBB) // FIXME: have to disable this for now as the TBB allocator itself seems to access some uninitialized value when using valgrind
-//    return scalable_aligned_malloc(size,align);
-//#else
-    return _mm_malloc(size,align);
-//#endif
+    // FIXME: have to disable this for now as the TBB  allocator itself seems
+    //        to access some uninitialized value when using valgrind
+#if 0//defined(TASKING_TBB)
+    return scalable_aligned_malloc(size,align);
+#else
+#  ifdef _WIN32
+    return _aligned_malloc(size, align);
+#  else // __UNIX__
+    return _mm_malloc(size, align);
+#  endif
+#endif
   }
-  
-  void alignedFree(void* ptr) 
+
+  void alignedFree(void* ptr)
   {
-//#if defined(TASKING_TBB)
-//    scalable_aligned_free(ptr);
-//#else
+#if 0//defined(TASKING_TBB)
+    scalable_aligned_free(ptr);
+#else
+#  ifdef _WIN32
+    return _aligned_free(ptr);
+#  else // __UNIX__
     _mm_free(ptr);
-//#endif
+#  endif
+#endif
   }
 }
