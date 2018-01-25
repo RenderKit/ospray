@@ -189,9 +189,6 @@ namespace ospray {
     if (useDynamicLoadBalancer)
       numPreAllocatedTiles = OSPRAY_DYNAMIC_LOADBALANCER.value();
 
-    //do initial commit to make sure bounds are correctly computed
-    scenegraph->traverse("verify");
-    scenegraph->traverse("commit");
     auto bbox = scenegraph->child("world").bounds();
     if (bbox.empty()) {
       bbox.lower = vec3f(-5,0,-5);

@@ -23,8 +23,12 @@
 namespace ospray {
   namespace app {
 
-    class OSPBenchmark : public OSPApp
+    struct OSPBenchmark : public OSPApp
     {
+      OSPBenchmark();
+
+    private:
+
       void render(const std::shared_ptr<ospray::sg::Node> &) override;
       int parseCommandLine(int &ac, const char **&av) override;
 
@@ -35,10 +39,15 @@ namespace ospray {
       std::string imageOutputFile = "";
     };
 
+    OSPBenchmark::OSPBenchmark()
+    {
+      addPlane = false; // NOTE(jda) - override default behavior, can still
+                        //             force on/off via standard command-line
+                        //             options
+    }
+
     void OSPBenchmark::render(const std::shared_ptr<ospray::sg::Node> &renderer)
     {
-      auto sgFB = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
-
       for (size_t i = 0; i < numWarmupFrames; ++i)
         renderer->traverse("render");
 
@@ -52,6 +61,7 @@ namespace ospray {
       });
 
       if (!imageOutputFile.empty()) {
+        auto sgFB = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
         auto *srcPB = (const uint32_t *)sgFB->map();
         utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
         sgFB->unmap(srcPB);

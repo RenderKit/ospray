@@ -15,6 +15,9 @@
 // ======================================================================== //
 
 #pragma once
+
+#include "ospcommon/utility/getEnvVar.h"
+
 #include "common/sg/SceneGraph.h"
 
 namespace ospray {
@@ -86,13 +89,6 @@ namespace ospray {
       CmdLineParam<float> apertureRadius = CmdLineParam<float>(0.f);
       CmdLineParam<float> fovy = CmdLineParam<float>(60.f);
 
-     private:
-      int parseGeneralCommandLine(int &ac, const char **&av);
-
-      // parse command line arguments containing the format:
-      //  -sg:nodeName:...:nodeName=value,value,value -- changes value
-      //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
-      void parseCommandLineSG(int ac, const char **&av, sg::Node &root);
 
       std::vector<clFile> files;
       std::vector<std::vector<clFile> > animatedFiles;
@@ -101,8 +97,18 @@ namespace ospray {
       bool addDefaultLights = false;
       bool noDefaultLights = false;
       bool debug = false;
-      bool addPlane = true;
       std::string initialRendererType;
+
+      bool addPlane =
+          utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(1);
+
+     private:
+      void parseGeneralCommandLine(int &ac, const char **&av);
+
+      // parse command line arguments containing the format:
+      //  -sg:nodeName:...:nodeName=value,value,value -- changes value
+      //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
+      void parseCommandLineSG(int ac, const char **&av, sg::Node &root);
     };
 
   } // ::ospray::app
