@@ -18,7 +18,7 @@
 
 #include "../AlignedVector.h"
 
-using ospcommon::container::AlignedVector;
+using ospcommon::containers::AlignedVector;
 
 TEST_CASE("Interface Tests", "[all]")
 {

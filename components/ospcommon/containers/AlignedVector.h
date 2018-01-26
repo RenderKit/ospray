@@ -17,9 +17,10 @@
 #pragma once
 
 #include "aligned_allocator.h"
+#include <vector>
 
 namespace ospcommon {
-  namespace container {
+  namespace containers {
 
     template <typename T>
     using AlignedVector = std::vector<T, aligned_allocator<T>>;

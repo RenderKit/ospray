@@ -23,7 +23,7 @@
 #include "../malloc.h"
 
 namespace ospcommon {
-  namespace container {
+  namespace containers {
 
     // NOTE(jda) - aligned_allocator implementation loosely based off of Stephen
     //             T. Lavavej's "Mallocator" example:
