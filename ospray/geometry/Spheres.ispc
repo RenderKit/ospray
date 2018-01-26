@@ -19,6 +19,7 @@
 #include "math/box.ih"
 #include "common/Ray.ih"
 #include "common/Model.ih"
+#include "common/safe_gather.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
 // embree
@@ -28,7 +29,7 @@
 
 struct Spheres {
   /*! inherit from "Geometry" class: */
-  Geometry   super; 
+  Geometry   super;
 
   /*! data array that contains the sphere data (possibly but not
       necessarily including the color, which could be in color);
@@ -38,8 +39,8 @@ struct Spheres {
   int        offset_center;
   int        offset_radius;
   int        offset_materialID;
-  int        offset_colorID; 
-  
+  int        offset_colorID;
+
   float      radius;
   float      epsilon;
 
@@ -49,8 +50,10 @@ struct Spheres {
   int        color_stride;
   int        color_offset;
   bool       has_alpha; // 4th color component is valid
- 
+
   vec2f     *texcoord;
+
+  bool huge_mesh;
 };
 
 inline int32 Spheres_getMaterialID(const uniform Spheres *uniform self,
@@ -100,17 +103,24 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
       colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
     } else
       colorID = ray.primID;
-    const uint64 colorAddr = self->color_offset+((uint64)colorID)*self->color_stride;
-    dg.color = *((vec4f *)((uint64)self->color+colorAddr));
-    if (!self->has_alpha)
-      dg.color.w = 1.f;
+    if (self->has_alpha) {
+      dg.color = gather_vec4f(self->huge_mesh,
+                              (uniform vec4f*)self->color + self->color_offset,
+                              colorID);
+    } else {
+      vec3f c = gather_vec3f(self->huge_mesh,
+                             (float* uniform)self->color + self->color_offset,
+                             3,
+                             colorID);
+      dg.color = make_vec4f(c.x, c.y, c.z, 1.f);
+    }
   }
 
   if (flags & DG_TEXCOORD && self->texcoord)
     dg.st = self->texcoord[ray.primID];
   else
     dg.st = make_vec2f(0.0f);
-  
+
   if (flags & DG_MATERIALID) {
     dg.materialID = Spheres_getMaterialID(self, ray.primID);
   }
@@ -150,7 +160,7 @@ void Spheres_intersect(uniform Spheres *uniform self,
   const float a = dot(ray.dir,ray.dir);
   const float b = 2.f*dot(ray.dir,A);
   const float c = dot(A,A)-radius*radius;
-  
+
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return;
 
@@ -292,13 +302,14 @@ export void SpheresGeometry_set(void  *uniform _self
     , uniform int offset_radius
     , uniform int offset_materialID
     , uniform int offset_colorID
+    , uniform bool huge_mesh
     )
 {
   uniform Spheres *uniform self = (uniform Spheres *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
 
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSpheres);
-  
+
   self->super.model = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numSpheres;
@@ -319,6 +330,8 @@ export void SpheresGeometry_set(void  *uniform _self
   self->offset_radius     = offset_radius;
   self->offset_materialID = offset_materialID;
   self->offset_colorID    = offset_colorID;
+
+  self->huge_mesh = huge_mesh;
 
   self->epsilon = log(self->radius);
   if (self->epsilon < 0.f)
