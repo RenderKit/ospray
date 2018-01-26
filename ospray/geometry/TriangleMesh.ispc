@@ -17,6 +17,7 @@
 // ospray
 #include "TriangleMesh.ih"
 #include "common/Model.ih"
+#include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
@@ -24,63 +25,6 @@
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_geometry.isph"
 #include "embree2/rtcore_geometry_user.isph"
-
-
-
-// special 64-bit safe code:
-#define BITS 20
-
-#define __define_gather(T)                                                     \
-inline T gather_##T(const uniform bool huge,                                   \
-                      const T *uniform const base,                             \
-                      const varying int index)                                 \
-{                                                                              \
-  T v;                                                                         \
-  if (huge) {                                                                  \
-    const int index_lo = index & ((1<<BITS)-1);                                \
-    const int index_hi = index - index_lo;                                     \
-    foreach_unique(hi in index_hi)                                             \
-      v = (base+hi)[index_lo];                                                 \
-  } else                                                                       \
-    v = base[index];                                                           \
-  return v;                                                                    \
-}
-
-#define __define_gather_vec3_stride(T, S)                                      \
-inline vec3##S gather_vec3##S(const uniform bool huge,                         \
-                                const T *uniform const base,                   \
-                                const uniform int stride,                      \
-                                const varying int index)                       \
-{                                                                              \
-  vec3##S v;                                                                   \
-  if (huge) {                                                                  \
-    const int index_lo = index & ((1<<BITS)-1);                                \
-    const int index_hi = index - index_lo;                                     \
-    /* varying offset of lower bits */                                         \
-    const varying int scaledIndexLo = stride * index_lo;                       \
-    foreach_unique(hi in index_hi) {                                           \
-      /* uniform offset for upper bits */                                      \
-      uniform int64 scaledIndexHi = (int64)hi * stride;                        \
-      /* properly shifted base address (shifted by 64-bits) */                 \
-      const T *uniform base_hi = base + scaledIndexHi;                         \
-                                                                               \
-      v.x = base_hi[scaledIndexLo+0];                                          \
-      v.y = base_hi[scaledIndexLo+1];                                          \
-      v.z = base_hi[scaledIndexLo+2];                                          \
-    }                                                                          \
-  } else {                                                                     \
-    const varying int scaledIndex = stride * index;                            \
-    v.x = base[scaledIndex+0];                                                 \
-    v.y = base[scaledIndex+1];                                                 \
-    v.z = base[scaledIndex+2];                                                 \
-  }                                                                            \
-  return v;                                                                    \
-}                                                                              \
-
-__define_gather(vec2f);
-__define_gather(vec4f);
-__define_gather_vec3_stride(float, f);
-__define_gather_vec3_stride(int, i);
 
 static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
                                        uniform Model    *uniform model,
