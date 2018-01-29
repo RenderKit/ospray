@@ -26,7 +26,6 @@ namespace ospray {
     {
       createChild("rendererType", "string", std::string("scivis"),
                   NodeFlags::required |
-                  NodeFlags::valid_whitelist |
                   NodeFlags::gui_combo,
                   "scivis: standard whitted style ray tracer. "
                   "pathtracer/pt: photo-realistic path tracer");
@@ -164,12 +163,26 @@ namespace ospray {
       }
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
-        Node::traverse(MarkAllAsModified{});
-        ospRenderer = ospNewRenderer(rendererType.c_str());
-        assert(ospRenderer);
-        createdType = rendererType;
-        ospCommit(ospRenderer);
-        setValue((OSPObject)ospRenderer);
+        auto setRenderer = [&](OSPRenderer handle, const std::string &rType) {
+          Node::traverse(MarkAllAsModified{});
+          ospRenderer = handle;
+          createdType = rType;
+          ospCommit(ospRenderer);
+          setValue(ospRenderer);
+        };
+
+        auto potentialRenderer = ospNewRenderer(rendererType.c_str());
+        if (potentialRenderer != nullptr) {
+          setRenderer(potentialRenderer, rendererType);
+        } else if (ospRenderer == nullptr) {
+          //NOTE(jda) - default to scivs!
+          setRenderer(ospNewRenderer("scivis"), "scivis");
+          child("rendererType").setValue(std::string("scivis"));
+        } else {
+          //NOTE(jda) - revert rendererType back to name of currently valid
+          //            renderer
+          child("rendererType").setValue(createdType);
+        }
       }
       ctx.ospRenderer = ospRenderer;
     }
@@ -181,7 +194,8 @@ namespace ospray {
         for (const auto& c : children()) {
           // ignore changes to the frame buffer/tone mapper
           if (c.second->lastModified() > frameMTime
-              || (c.second->childrenLastModified() > frameMTime && c.first != "frameBuffer"))
+              || (c.second->childrenLastModified() > frameMTime
+              && c.first != "frameBuffer"))
           {
             modified = true;
             break;
