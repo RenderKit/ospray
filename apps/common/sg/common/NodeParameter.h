@@ -111,6 +111,18 @@ namespace ospray {
     }
 
     template <>
+    inline bool valueInRange<box2f>(const Any&, const Any&, const Any&)
+    {
+      return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
+    }
+
+    template <>
+    inline bool valueInRange<box2i>(const Any&, const Any&, const Any&)
+    {
+      return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
+    }
+
+    template <>
     inline bool valueInRange<box3f>(const Any&, const Any&, const Any&)
     {
       return true;// NOTE(jda) - this is wrong, was incorrect before refactoring

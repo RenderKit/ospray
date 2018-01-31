@@ -26,13 +26,13 @@ namespace ospray {
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3i);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3fa);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec4f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box2f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box2i);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3i>, vec3i);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3fa>, vec3fa);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec4f>, vec4f);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<box2f>, box2f);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<box2i>, box2i);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3i);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3i>, box3i);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<std::string>, string);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPObject>, OSPObject);
 
