@@ -26,7 +26,7 @@ namespace ospray {
     // Compare //
 
     template <typename T>
-    inline bool compare(const Any& min, const Any& max, const Any& value)
+    inline bool valueInRange(const Any& min, const Any& max, const Any& value)
     {
       if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
         return false;
@@ -34,7 +34,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2f>(const Any& min, const Any& max, const Any& value)
+    inline bool valueInRange<vec2f>(const Any& min,
+                                    const Any& max,
+                                    const Any& value)
     {
       const vec2f &v1 = min.get<vec2f>();
       const vec2f &v2 = max.get<vec2f>();
@@ -44,7 +46,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec2i>(const Any& min, const Any& max, const Any& value)
+    inline bool valueInRange<vec2i>(const Any& min,
+                                    const Any& max,
+                                    const Any& value)
     {
       const vec2i &v1 = min.get<vec2i>();
       const vec2i &v2 = max.get<vec2i>();
@@ -54,7 +58,9 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<vec3f>(const Any& min, const Any& max, const Any& value)
+    inline bool valueInRange<vec3f>(const Any& min,
+                                    const Any& max,
+                                    const Any& value)
     {
       const vec3f &v1 = min.get<vec3f>();
       const vec3f &v2 = max.get<vec3f>();
@@ -65,7 +71,53 @@ namespace ospray {
     }
 
     template <>
-    inline bool compare<box3f>(const Any&, const Any&, const Any&)
+    inline bool valueInRange<vec3i>(const Any& min,
+                                    const Any& max,
+                                    const Any& value)
+    {
+      const vec3i &v1 = min.get<vec3i>();
+      const vec3i &v2 = max.get<vec3i>();
+      const vec3i &v  = value.get<vec3i>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y ||
+               v1.z > v.z || v2.z < v.z);
+    }
+
+    template <>
+    inline bool valueInRange<vec3fa>(const Any& min,
+                                     const Any& max,
+                                     const Any& value)
+    {
+      const vec3fa &v1 = min.get<vec3fa>();
+      const vec3fa &v2 = max.get<vec3fa>();
+      const vec3fa &v  = value.get<vec3fa>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y ||
+               v1.z > v.z || v2.z < v.z);
+    }
+
+    template <>
+    inline bool valueInRange<vec4f>(const Any& min,
+                                    const Any& max,
+                                    const Any& value)
+    {
+      const vec4f &v1 = min.get<vec4f>();
+      const vec4f &v2 = max.get<vec4f>();
+      const vec4f &v  = value.get<vec4f>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y ||
+               v1.z > v.z || v2.z < v.z ||
+               v1.w > v.w || v2.w < v.w);
+    }
+
+    template <>
+    inline bool valueInRange<box3f>(const Any&, const Any&, const Any&)
+    {
+      return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
+    }
+
+    template <>
+    inline bool valueInRange<box3i>(const Any&, const Any&, const Any&)
     {
       return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
     }
@@ -92,20 +144,6 @@ namespace ospray {
     }
 
     template <>
-    inline void commitNodeValue<vec2i>(Node &n)
-    {
-      ospSet2iv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec2i>().x);
-    }
-
-    template <>
-    inline void commitNodeValue<vec3i>(Node &n)
-    {
-      ospSet3iv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec3i>().x);
-    }
-
-    template <>
     inline void commitNodeValue<float>(Node &n)
     {
       ospSet1f(n.parent().valueAs<OSPObject>(),
@@ -120,6 +158,13 @@ namespace ospray {
     }
 
     template <>
+    inline void commitNodeValue<vec2i>(Node &n)
+    {
+      ospSet2iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2i>().x);
+    }
+
+    template <>
     inline void commitNodeValue<vec3f>(Node &n)
     {
       ospSet3fv(n.parent().valueAs<OSPObject>(),
@@ -127,10 +172,68 @@ namespace ospray {
     }
 
     template <>
+    inline void commitNodeValue<vec3i>(Node &n)
+    {
+      ospSet3iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3i>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<vec3fa>(Node &n)
+    {
+      ospSet3fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3fa>().x);
+    }
+
+    template <>
     inline void commitNodeValue<vec4f>(Node &n)
     {
       ospSet4fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec4f>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<box2f>(Node &n)
+    {
+      auto parent = n.parent().valueAs<OSPObject>();
+      auto name   = n.name();
+      auto value  = n.valueAs<box2f>();
+
+      ospSet2fv(parent, (name + ".upper").c_str(), &value.upper.x);
+      ospSet2fv(parent, (name + ".lower").c_str(), &value.lower.x);
+    }
+
+    template <>
+    inline void commitNodeValue<box2i>(Node &n)
+    {
+      auto parent = n.parent().valueAs<OSPObject>();
+      auto name   = n.name();
+      auto value  = n.valueAs<box2i>();
+
+      ospSet2iv(parent, (name + ".upper").c_str(), &value.upper.x);
+      ospSet2iv(parent, (name + ".lower").c_str(), &value.lower.x);
+    }
+
+    template <>
+    inline void commitNodeValue<box3f>(Node &n)
+    {
+      auto parent = n.parent().valueAs<OSPObject>();
+      auto name   = n.name();
+      auto value  = n.valueAs<box3f>();
+
+      ospSet3fv(parent, (name + ".upper").c_str(), &value.upper.x);
+      ospSet3fv(parent, (name + ".lower").c_str(), &value.lower.x);
+    }
+
+    template <>
+    inline void commitNodeValue<box3i>(Node &n)
+    {
+      auto parent = n.parent().valueAs<OSPObject>();
+      auto name   = n.name();
+      auto value  = n.valueAs<box3i>();
+
+      ospSet3iv(parent, (name + ".upper").c_str(), &value.upper.x);
+      ospSet3iv(parent, (name + ".lower").c_str(), &value.lower.x);
     }
 
     template <>
@@ -163,7 +266,7 @@ namespace ospray {
             !(flags() & NodeFlags::valid_min_max))
           return true;
 
-        return compare<T>(min(), max(), value());
+        return valueInRange<T>(min(), max(), value());
       }
     };
 
