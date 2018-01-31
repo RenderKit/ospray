@@ -85,6 +85,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
+  common/NodeParameter.cpp
   common/Renderable.cpp
   common/RenderContext.h
   common/Serialization.cpp

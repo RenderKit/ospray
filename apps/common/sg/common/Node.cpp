@@ -494,16 +494,6 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(Node);
-    //OSPRay types
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<float>, float);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<int>, int);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<bool>, bool);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<std::string>, string);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPObject>, OSPObject);
 
   } // ::ospray::sg
 } // ::ospray
