@@ -32,7 +32,6 @@ LINK
   ospray_imgui_util_sg
   ospray_imgui3d_sg
   ospray_sg
-  ospray_tfn
   gensv
   ${GLFW_LIBRARY}
 )

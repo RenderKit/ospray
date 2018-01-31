@@ -352,7 +352,7 @@ int main(int argc, char **argv) {
       const auto tfcnTimeStamp = transferFcn->childrenLastModified();
 
       ImGui_ImplGlfwGL3_NewFrame();
-      tfnWidget->drawUi();
+      tfnWidget->drawUI();
       ImGui::Render();
 
       glfwSwapBuffers(window);

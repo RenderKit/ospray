@@ -148,7 +148,7 @@ namespace ospray {
 
     if (show_editor) {
       tfnWidget.render();
-      tfnWidget.drawUi();
+      tfnWidget.drawUI();
     }
   }
 
