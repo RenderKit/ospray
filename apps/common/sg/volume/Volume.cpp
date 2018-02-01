@@ -86,7 +86,7 @@ namespace ospray {
 
       createChild("transferFunction", "TransferFunction");
       createChild("gradientShadingEnabled", "bool", true);
-      createChild("preIntegration", "bool", true);
+      createChild("preIntegration", "bool", false);
       createChild("singleShade", "bool", true);
       createChild("voxelRange", "vec2f",
                   vec2f(std::numeric_limits<float>::infinity(),
@@ -94,8 +94,8 @@ namespace ospray {
       createChild("adaptiveSampling", "bool", true);
       createChild("adaptiveScalar", "float", 15.f);
       createChild("adaptiveBacktrack", "float", 0.03f);
-      createChild("samplingRate", "float", 0.125f);
-      createChild("adaptiveMaxSamplingRate", "float", 2.f);
+      createChild("samplingRate", "float", 0.06f);
+      createChild("adaptiveMaxSamplingRate", "float", 0.5f);
       createChild("volumeClippingBoxLower", "vec3f", vec3f(0.f));
       createChild("volumeClippingBoxUpper", "vec3f", vec3f(0.f));
       createChild("specular", "vec3f", vec3f(0.3f));
