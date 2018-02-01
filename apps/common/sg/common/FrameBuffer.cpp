@@ -56,6 +56,10 @@ namespace ospray {
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(1.f, 64.f);
 
+      createChild("format", "string", std::string("srgba"), NodeFlags::required |
+                  NodeFlags::valid_whitelist).setWhiteList(
+        {std::string("rgba8"), std::string("srgba")});
+
       createChild("useVarianceBuffer", "bool", true);
 
       createFB();
@@ -163,11 +167,15 @@ namespace ospray {
     void ospray::sg::FrameBuffer::createFB()
     {
       auto fbsize = size();
+      auto format = OSP_FB_SRGBA;
+      if (child("format").valueAs<std::string>() == "rgba8")
+          format = OSP_FB_RGBA8;
+      //TODO: check other formats here
 
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
                                          (displayWallStream=="")
-                                         ? OSP_FB_SRGBA
+                                         ? format
                                          : OSP_FB_NONE,
                                          OSP_FB_COLOR | OSP_FB_ACCUM |
                                          (useVariance ? OSP_FB_VARIANCE : 0));

@@ -103,6 +103,7 @@ namespace ospray {
         renderer["spp"] = -1;
         renderer["frameBuffer"]["toneMapping"] = false;
         renderer["frameBuffer"]["useVarianceBuffer"] = false;
+        renderer["frameBuffer"]["format"] = std::string("rgba8");
         addPlane = false;
       }
 
