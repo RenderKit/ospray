@@ -98,8 +98,7 @@ namespace ospray {
 
       renderer.createChild("animationcontroller", "AnimationController");
 
-      if (fast)
-      {
+      if (fast) {
         renderer["spp"] = -1;
         renderer["shadowsEnabled"] = false;
         renderer["aoTransparencyEnabled"] = false;
@@ -393,8 +392,7 @@ namespace ospray {
 
       if (noDefaultLights == false &&
           (lights.numChildren() <= 0 || addDefaultLights == true)) {
-        if (!fast)
-        {
+        if (!fast) {
           auto &sun = lights.createChild("sun", "DirectionalLight");
           sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
           sun["direction"] = vec3f(0.462f, -1.f, -.1f);
@@ -408,7 +406,7 @@ namespace ospray {
 
         if (hdriLightFile == "") {
           auto &ambient = lights.createChild("ambient", "AmbientLight");
-          ambient["intensity"] = 0.9f;
+          ambient["intensity"] = fast ? 2.0f : 0.9f;
           ambient["color"] = vec3f(174.f / 255.f, 218.f / 255.f, 255.f / 255.f);
         }
       }
