@@ -98,6 +98,8 @@ namespace ospray {
       bool noDefaultLights = false;
       bool debug = false;
       std::string initialRendererType;
+      bool fast = false;
+      box3f bboxWithoutPlane;
 
       bool addPlane =
           utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(1);

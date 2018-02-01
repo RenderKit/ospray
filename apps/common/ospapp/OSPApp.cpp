@@ -50,6 +50,33 @@ namespace ospray {
     {
       std::cout << "Help - TODO..." << std::endl;
       std::cout << "./ospApp [params] -sg:[params] [files]" << std::endl;
+      std::cout << "params..." << std::endl
+                << "\t" << "-f --fast //prioritizes performance over advanced rendering features" << std::endl
+                << "\t" << "-sg:node:...:node=value //modify a node value" << std::endl
+                << "\t" << "-sg:node:...:node+=name,type //modify a node value" << std::endl
+                << "\t" << "-r --renderer //renderer type.  scivis, pathtracer, ao1, raycast" << std::endl
+                << "\t" << "-d --debug //debug output" << std::endl
+                << "\t" << "-m --module //load custom ospray module" << std::endl
+                << "\t" << "--matrix int int int //create an array of load models of dimensions xyz" << std::endl
+                << "\t" << "--add-plane //add a ground plane (default for non-fast mode)" << std::endl
+                << "\t" << "--no-plane //remove ground plane" << std::endl
+                << "\t" << "--no-lights //no default lights" << std::endl
+                << "\t" << "--add-lights //default lights" << std::endl
+                << "\t" << "--hdri-light filename //add an hdri light" << std::endl
+                << "\t" << "--translate float float float //translate transform" << std::endl
+                << "\t" << "--scale float float float //scale transform" << std::endl
+                << "\t" << "--rotate float float float //rotate transform" << std::endl
+                << "\t" << "--animation //adds subsequent import files to a timeseries" << std::endl
+                << "\t" << "--file //adds subsequent import files without a timeseries" << std::endl
+                << "\t" << "-w int //window width" << std::endl
+                << "\t" << "-h int //window height" << std::endl
+                << "\t" << "--size int int //window width height" << std::endl
+                << "\t" << "-vp float float float //camera position xyz" << std::endl
+                << "\t" << "-vu float float float //camera up xyz" << std::endl
+                << "\t" << "-vi float float float //camera direction xyz" << std::endl
+                << "\t" << "-vf float //camera field of view" << std::endl
+                << "\t" << "-ar float //camera aperture radius" << std::endl
+                << std::endl;
     }
 
     int OSPApp::main(int argc, const char *argv[])
@@ -70,6 +97,14 @@ namespace ospray {
         renderer["rendererType"] = initialRendererType;
 
       renderer.createChild("animationcontroller", "AnimationController");
+
+      if (fast)
+      {
+        renderer["spp"] = -1;
+        renderer["frameBuffer"]["toneMapping"] = false;
+        renderer["frameBuffer"]["useVarianceBuffer"] = false;
+        addPlane = false;
+      }
 
       addLightsToScene(renderer);
       addImporterNodesToWorld(renderer);
@@ -171,6 +206,8 @@ namespace ospray {
           animatedFiles.push_back(std::vector<clFile>());
           removeArgs(ac, av, i, 1);
           --i;
+        } else if (arg == "--fast" || arg == "-f") {
+          fast=true;
         } else if (arg == "--file") {
           inAnimation = false;
           removeArgs(ac, av, i, 1);
@@ -183,7 +220,7 @@ namespace ospray {
           height = atoi(av[i + 1]);
           removeArgs(ac, av, i, 2);
           --i;
-        } else if (arg == "-size") {
+        } else if (arg == "--size") {
           width = atoi(av[i + 1]);
           height = atoi(av[i + 2]);
           removeArgs(ac, av, i, 3);
@@ -351,15 +388,18 @@ namespace ospray {
 
       if (noDefaultLights == false &&
           (lights.numChildren() <= 0 || addDefaultLights == true)) {
-        auto &sun = lights.createChild("sun", "DirectionalLight");
-        sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
-        sun["direction"] = vec3f(0.462f, -1.f, -.1f);
-        sun["intensity"] = 3.0f;
+        if (!fast)
+        {
+          auto &sun = lights.createChild("sun", "DirectionalLight");
+          sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
+          sun["direction"] = vec3f(0.462f, -1.f, -.1f);
+          sun["intensity"] = 3.0f;
 
-        auto &bounce = lights.createChild("bounce", "DirectionalLight");
-        bounce["color"] = vec3f(127.f / 255.f, 178.f / 255.f, 255.f / 255.f);
-        bounce["direction"] = vec3f(-.93, -.54f, -.605f);
-        bounce["intensity"] = 1.25f;
+          auto &bounce = lights.createChild("bounce", "DirectionalLight");
+          bounce["color"] = vec3f(127.f / 255.f, 178.f / 255.f, 255.f / 255.f);
+          bounce["direction"] = vec3f(-.93, -.54f, -.605f);
+          bounce["intensity"] = 1.25f;
+        }
 
         if (hdriLightFile == "") {
           auto &ambient = lights.createChild("ambient", "AmbientLight");
@@ -405,6 +445,14 @@ namespace ospray {
                 transform.add(importerNode_ptr);
                 importerNode["fileName"] = fn.str();
 
+                if (fast)
+                {
+                    if (importerNode.hasChildRecursive("gradientShadingEnabled"))
+                      importerNode.childRecursive("gradientShadingEnabled") = false;
+                    if (importerNode.hasChildRecursive("adaptiveMaxSamplingRate"))
+                      importerNode.childRecursive("adaptiveMaxSamplingRate") = 0.2f;
+                }
+
                 transform["scale"] = file.transform.scale;
                 transform["rotation"] = file.transform.rotation;
                 if (files.size() < 2 && animatedFiles.empty()) {
@@ -439,7 +487,9 @@ namespace ospray {
     void OSPApp::setupCamera(sg::Node &renderer)
     {
       auto &world = renderer["world"];
-      auto bbox = world.bounds();
+      auto bbox = bboxWithoutPlane;
+      if (bbox.empty())
+        bbox = world.bounds();
       vec3f diag = bbox.size();
       diag = max(diag, vec3f(0.3f * length(diag)));
       if (!gaze.isOverridden())
@@ -521,6 +571,7 @@ namespace ospray {
         bbox.lower = vec3f(-5, 0, -5);
         bbox.upper = vec3f(5, 10, 5);
       }
+      bboxWithoutPlane = bbox;
 
       float ps = bbox.upper.x * 3.f;
       float py = bbox.lower.y + 0.01f;
