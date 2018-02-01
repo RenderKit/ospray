@@ -101,6 +101,10 @@ namespace ospray {
       if (fast)
       {
         renderer["spp"] = -1;
+        renderer["shadowsEnabled"] = false;
+        renderer["aoTransparencyEnabled"] = false;
+        renderer["minContribution"] = 0.1f;
+        renderer["maxDepth"] = 3;
         renderer["frameBuffer"]["toneMapping"] = false;
         renderer["frameBuffer"]["useVarianceBuffer"] = false;
         renderer["frameBuffer"]["format"] = std::string("rgba8");
