@@ -48,7 +48,6 @@ namespace ospray {
 
     void OSPApp::printHelp()
     {
-      std::cout << "Help - TODO..." << std::endl;
       std::cout << "./ospApp [params] -sg:[params] [files]" << std::endl;
       std::cout << "params..." << std::endl
                 << "\t" << "-f --fast //prioritizes performance over advanced rendering features" << std::endl
@@ -211,7 +210,9 @@ namespace ospray {
           removeArgs(ac, av, i, 1);
           --i;
         } else if (arg == "--fast" || arg == "-f") {
-          fast=true;
+          fast = true;
+        } else if (arg == "--no-fast" || arg == "-nf") {
+          fast = false;
         } else if (arg == "--file") {
           inAnimation = false;
           removeArgs(ac, av, i, 1);
