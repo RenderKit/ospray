@@ -566,7 +566,7 @@ namespace ospray {
     void OSPApp::addPlaneToScene(sg::Node &renderer)
     {
       auto &world = renderer["world"];
-      if (world.numChildren() > 1 && addPlane == false) {
+      if (addPlane == false) {
         return;
       }
       auto bbox = world.bounds();
