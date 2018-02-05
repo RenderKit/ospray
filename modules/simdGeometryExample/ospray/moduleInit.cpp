@@ -23,7 +23,7 @@
 namespace ospray {
   
   /*! though not required, it is good practice to put any module into
-    its own namespace (isnide of ospray:: ). Unlike for the naming of
+    its own namespace (inside of ospray:: ). Unlike for the naming of
     library and init function, the naming for this namespace doesn't
     particularlly matter. E.g., 'bilinearPatch', 'module_blp',
     'bilinar_patch' etc would all work equally well. */
