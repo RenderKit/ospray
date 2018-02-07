@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "sg/common/Material.h"
-#include "sg/common/World.h"
+#include "sg/common/Model.h"
 #include "ospray/ospray.h"
 
 namespace ospray {

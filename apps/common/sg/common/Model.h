@@ -43,62 +43,22 @@ namespace ospray {
       OSPModel stashedModel{nullptr};
     };
 
-    /*! a world node */
-    struct OSPSG_INTERFACE World : public Model
-    {
-      World() = default;
-      virtual ~World() override = default;
+//    /*! a world node */
+//    struct OSPSG_INTERFACE World : public Model
+//    {
+//      World() = default;
+//      virtual ~World() override = default;
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
+//      /*! \brief returns a std::string with the c++ name of this class */
+//      virtual std::string toString() const override;
 
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
+//      virtual void preCommit(RenderContext &ctx) override;
+//      virtual void postCommit(RenderContext &ctx) override;
 
-    protected:
+//    protected:
 
-      std::shared_ptr<sg::World> stashedWorld;
-    };
-
-
-    struct OSPSG_INTERFACE Instance : public World
-    {
-      Instance();
-      ~Instance() override = default;
-
-      /*! \brief return bounding box in world coordinates.
-
-      This function can be used by the viewer(s) for calibrating
-      camera motion, setting default camera position, etc. Nodes
-      for which that does not apply can simpy return
-      box3f(embree::empty) */
-      box3f bounds() const override;
-
-      //Instance caches renders.  It will render children during commit, and add
-         //cached rendered children during render call.
-      void traverse(RenderContext &ctx, const std::string& operation) override;
-      void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
-      void preRender(RenderContext &ctx) override;
-      void postRender(RenderContext &ctx) override;
-
-    private:
-
-      OSPGeometry ospInstance {nullptr};
-      //currently, nested instances do not appear to work in OSPRay.  To get around this,
-      // instanced can be manually turned off for parent instancegroups.
-      bool instanced {true};
-      ospcommon::affine3f baseTransform{ospcommon::one};
-
-      void updateInstance(RenderContext &ctx);
-      void updateTransform(RenderContext &ctx);
-      bool instanceDirty{true};
-      ospcommon::affine3f cachedTransform{ospcommon::one};
-      ospcommon::affine3f worldTransform{ospcommon::one};
-      //    computed from baseTransform*position*rotation*scale
-      ospcommon::affine3f oldTransform{ospcommon::one};
-
-    };
+//      std::shared_ptr<sg::World> stashedWorld;
+//    };
 
   } // ::ospray::sg
 } // ::ospray

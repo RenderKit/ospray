@@ -14,66 +14,62 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../common/Model.h"
+#include "sg/common/Model.h"
 
 namespace ospray {
   namespace sg {
 
-    struct ImportedModel : public sg::Model
+    Model::Model()
     {
-      ImportedModel();
-      virtual ~ImportedModel() override = default;
-      virtual std::string toString() const override;
-
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
-
-      // Data //
-
-      ospcommon::box3f bbox;
-    };
-
-    ImportedModel::ImportedModel()
-    {
-      setValue((OSPObject)nullptr);
+      setValue(ospNewModel());
     }
 
-    std::string ImportedModel::toString() const
+    std::string Model::toString() const
     {
-      return "ospray::sg::ImportedModel";
+      return "ospray::sg::Model";
     }
 
-    void ImportedModel::preCommit(RenderContext &ctx)
+    void Model::traverse(RenderContext &ctx, const std::string& operation)
     {
+      if (operation == "render") {
+        preRender(ctx);
+        postRender(ctx);
+      }
+      else
+        Node::traverse(ctx,operation);
+    }
+
+    void Model::preCommit(RenderContext &ctx)
+    {
+      auto model = ospModel();
+      if (model)
+        ospRelease(model);
+      model = ospNewModel();
+      setValue(model);
       stashedModel = ctx.currentOSPModel;
-      ctx.currentOSPModel = ospModel();
+      ctx.currentOSPModel = model;
     }
 
-    void ImportedModel::postCommit(RenderContext &ctx)
+    void Model::postCommit(RenderContext &ctx)
     {
-      ctx.currentOSPModel = stashedModel;
-    }
+      auto model = ospModel();
+      ctx.currentOSPModel = model;
 
-    OSP_REGISTER_SG_NODE(ImportedModel);
+      //instancegroup caches render calls in commit.
+      for (auto child : properties.children)
+        child.second->traverse(ctx, "render");
 
-    void importOSPModel(Node &world, OSPModel model,
-                        const ospcommon::box3f &bbox)
-    {
       ospCommit(model);
-
-      auto instanceNode = createNode("appModel_instance", "Instance");
-
-      auto modelNodePtr = createNode("appModel", "ImportedModel");
-      auto &modelNode = *modelNodePtr;
-
-      modelNode = (OSPObject)model;
-      modelNode["bounds"] = bbox;
-
-      instanceNode->setChild("model", modelNodePtr);
-      modelNode.setParent(instanceNode);
-
-      world.add(instanceNode);
+      ctx.currentOSPModel = stashedModel;
+      child("bounds") = computeBounds();
     }
+
+    OSPModel Model::ospModel()
+    {
+      return (OSPModel)valueAs<OSPObject>();
+    }
+
+    OSP_REGISTER_SG_NODE(Model);
 
   } // ::ospray::sg
 } // ::ospray

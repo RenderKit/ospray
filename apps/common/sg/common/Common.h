@@ -50,7 +50,7 @@ namespace ospray {
     /*! base node for every scene graph node */
     struct Node;
     /*! c++ wrapper for an ospray model */
-    struct World;
+    struct Model;
     /*! c++ wrapper for an ospray light source */
     struct Light;
     /*! c++ wrapper for an ospray camera */

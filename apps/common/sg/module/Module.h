@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray::sg
-#include "../common/World.h"
+#include "../common/Model.h"
 
 /*! \file sg/module/Module.h Defines the interface for writing
     ospray::sg modules */

@@ -50,7 +50,7 @@ namespace ospray {
                                           std::string("pathtracer"),
                                           std::string("pt")});
       createChild("world",
-                  "World").setDocumentation("model containing scene objects");
+                  "Model").setDocumentation("model containing scene objects");
       createChild("camera", "PerspectiveCamera");
       createChild("frameBuffer", "FrameBuffer");
       createChild("lights");
@@ -185,6 +185,7 @@ namespace ospray {
         }
       }
       ctx.ospRenderer = ospRenderer;
+      ctx.world = child("world").nodeAs<sg::Model>();
     }
 
     void Renderer::postCommit(RenderContext &ctx)

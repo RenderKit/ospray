@@ -72,7 +72,7 @@ namespace ospray {
         Serialization *serialization;
       };
 
-      void serialize(std::shared_ptr<sg::World> world,
+      void serialize(std::shared_ptr<sg::Model> world,
                      Serialization::Mode mode);
       
       /*! clear all old objects */

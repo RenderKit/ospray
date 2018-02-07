@@ -92,7 +92,8 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/TimeStamp.cpp
   common/Texture2D.cpp
   common/Transform.cpp
-  common/World.cpp
+  common/Model.cpp
+  common/Instance.cpp
   common/Animator.cpp
   common/Animator.h
   common/AnimationController.h

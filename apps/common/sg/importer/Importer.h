@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray::sg
-#include "../common/World.h"
+#include "../common/Model.h"
 #include "ospcommon/FileName.h"
 
 namespace ospray {
@@ -54,11 +54,11 @@ namespace ospray {
 
     struct OSPSG_INTERFACE ImportState
     {
-      ImportState(std::shared_ptr<sg::World> world)
+      ImportState(std::shared_ptr<sg::Model> world)
         : world(world)
       {}
 
-      std::shared_ptr<sg::World> world;
+      std::shared_ptr<sg::Model> world;
     };
 
     struct OSPSG_INTERFACE Importer : public sg::Renderable
@@ -82,7 +82,7 @@ namespace ospray {
     /*! import a given file. throws a sg::RuntimeError if this could
      *  not be done */
     OSPSG_INTERFACE
-    void importFile(std::shared_ptr<sg::World> &world,
+    void importFile(std::shared_ptr<sg::Model> &world,
                     const FileName &fileName);
 
     /*! create a world from an already existing OSPModel */

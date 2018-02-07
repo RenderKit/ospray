@@ -15,12 +15,12 @@
 // ======================================================================== //
 
 #include "Serialization.h"
-#include "World.h"
+#include "Model.h"
 
 namespace ospray {
   namespace sg {
 
-    void Serialization::serialize(std::shared_ptr<sg::World> world,
+    void Serialization::serialize(std::shared_ptr<sg::Model> world,
                                   Serialization::Mode)
     {
       clear();

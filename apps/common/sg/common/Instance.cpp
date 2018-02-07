@@ -14,81 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/World.h"
+#include "sg/common/Instance.h"
+#include "sg/common/Model.h"
 
 namespace ospray {
   namespace sg {
 
-    Model::Model()
-    {
-      setValue(ospNewModel());
-    }
-
-    std::string Model::toString() const
-    {
-      return "ospray::sg::Model";
-    }
-
-    void Model::traverse(RenderContext &ctx, const std::string& operation)
-    {
-      if (operation == "render") {
-        preRender(ctx);
-        postRender(ctx);
-      }
-      else
-        Node::traverse(ctx,operation);
-    }
-
-    void Model::preCommit(RenderContext &ctx)
-    {
-      auto model = ospModel();
-      if (model)
-        ospRelease(model);
-      model = ospNewModel();
-      setValue(model);
-      stashedModel = ctx.currentOSPModel;
-      ctx.currentOSPModel = model;
-    }
-
-    void Model::postCommit(RenderContext &ctx)
-    {
-      auto model = ospModel();
-      ctx.currentOSPModel = model;
-
-      //instancegroup caches render calls in commit.
-      for (auto child : properties.children)
-        child.second->traverse(ctx, "render");
-
-      ospCommit(model);
-      ctx.currentOSPModel = stashedModel;
-      child("bounds") = computeBounds();
-    }
-
-    OSPModel Model::ospModel()
-    {
-      return (OSPModel)valueAs<OSPObject>();
-    }
-
-    std::string World::toString() const
-    {
-      return "ospray::sg::World";
-    }
-
-    void World::preCommit(RenderContext &ctx)
-    {
-      stashedWorld = ctx.world;
-      ctx.world = this->nodeAs<sg::World>();
-      Model::preCommit(ctx);
-    }
-
-    void World::postCommit(RenderContext &ctx)
-    {
-      Model::postCommit(ctx);
-      ctx.world = stashedWorld;
-    }
-
     Instance::Instance()
-      : World()
+      : Renderable()
     {
       createChild("visible", "bool", true);
       createChild("position", "vec3f");
@@ -221,8 +154,6 @@ namespace ospray {
       instanceDirty=false;
     }
 
-    OSP_REGISTER_SG_NODE(Model);
-    OSP_REGISTER_SG_NODE(World);
     OSP_REGISTER_SG_NODE(Instance);
 
   } // ::ospray::sg
