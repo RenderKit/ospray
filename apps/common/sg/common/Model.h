@@ -43,23 +43,6 @@ namespace ospray {
       OSPModel stashedModel{nullptr};
     };
 
-//    /*! a world node */
-//    struct OSPSG_INTERFACE World : public Model
-//    {
-//      World() = default;
-//      virtual ~World() override = default;
-
-//      /*! \brief returns a std::string with the c++ name of this class */
-//      virtual std::string toString() const override;
-
-//      virtual void preCommit(RenderContext &ctx) override;
-//      virtual void postCommit(RenderContext &ctx) override;
-
-//    protected:
-
-//      std::shared_ptr<sg::World> stashedWorld;
-//    };
-
   } // ::ospray::sg
 } // ::ospray
 
