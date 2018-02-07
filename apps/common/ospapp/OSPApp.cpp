@@ -408,7 +408,8 @@ namespace ospray {
         if (hdriLightFile == "") {
           auto &ambient = lights.createChild("ambient", "AmbientLight");
           ambient["intensity"] = fast ? 2.0f : 0.9f;
-          ambient["color"] = vec3f(174.f / 255.f, 218.f / 255.f, 255.f / 255.f);
+          ambient["color"] = fast ?
+              vec3f(1.f) : vec3f(174.f / 255.f, 218.f / 255.f, 255.f / 255.f);
         }
       }
 
