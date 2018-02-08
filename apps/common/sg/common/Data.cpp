@@ -31,6 +31,7 @@ namespace ospray {
     OSP_REGISTER_SG_NODE(DataVector4i);
     OSP_REGISTER_SG_NODE(DataVectorOSP);
     OSP_REGISTER_SG_NODE(DataVectorRAW);
+    OSP_REGISTER_SG_NODE(DataVectorAffine3f);
 
   } // ::ospray::sg
 } // ::ospray

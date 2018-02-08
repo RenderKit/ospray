@@ -168,6 +168,7 @@ namespace ospray {
     using DataVector4i  = DataVectorT<vec4i, OSP_INT4>;
     using DataVectorOSP = DataVectorT<OSPObject, OSP_OBJECT>;
     using DataVectorRAW = DataVectorT<byte_t, OSP_RAW>;
+    using DataVectorAffine3f = DataVectorT<ospcommon::affine3f, OSP_RAW>;
 
     template<typename T>
     std::shared_ptr<T> make_shared_aligned(void *data, size_t num)

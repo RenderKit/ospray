@@ -18,10 +18,15 @@
 
 #include "SceneGraph.h"
 #include "sg/common/Texture2D.h"
+#include "sg/common/Instance.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "common/sg/visitor/PrintNodes.h"
+
 // stl
 #include <map>
 #include <iostream>
+
+#define USE_INSTANCE_GROUP 1 // use binary offsets for large numbers of instances
 
 namespace ospray {
   namespace sg {
@@ -187,9 +192,10 @@ namespace ospray {
         s = NEXT_TOK;
         int32_t w = atol(s);
         mat->createChildWithValue(paramName, "vec4i",vec4i(x,y,z,w));
+      } else if (!paramType.compare("string")) {
+        //TODO: ignoring strings for now
       } else {
-        //error!
-        throw std::runtime_error("unknown parameter type '" + paramType + "' when parsing RIVL materials.");
+        std::cerr << "unknown parameter type '" << paramType << "' when parsing RIVL materials." << std::endl;
       }
       free(value);
     }
@@ -259,11 +265,17 @@ namespace ospray {
       auto xfNode = createNode(ss.str(), "Transform");
       if (child->type() == "Model")
       {
+#if USE_INSTANCE_GROUP
+        xfNode->add(child, "model");
+#else
         auto instance = createNode(ss.str(), "Instance");
         instance->add(child, "model");
         child = instance;
+        xfNode->add(child);
+#endif
       }
-      xfNode->add(child);
+      else
+        xfNode->add(child);
       xfNode->child("userTransform").setValue(xfm);
       nodeList.push_back(xfNode);
     }
@@ -347,7 +359,7 @@ namespace ospray {
             }
             free(value);
           } else {
-            throw std::runtime_error("unknown child node type '"+child.name+"' for mesh node");
+            std::cerr << "unknown child node type '" << child.name << "' for mesh node" << std::endl;
           }
         });
     }
@@ -387,6 +399,60 @@ namespace ospray {
       }
     }
 
+    void parseInstanceGroupNode(const xml::Node &node)
+    {
+      std::stringstream ss_group;
+      ss_group << "group_" << nodeList.size();
+      auto group = sg::createNode(ss_group.str(), "InstanceGroup");
+      nodeList.push_back(group);
+      auto models = group->createChild("models", "ModelList").nodeAs<ModelList>();
+      auto transforms = group->createChild("transforms", "DataVectorAffine3f").nodeAs<DataVectorAffine3f>();
+      auto indices = group->createChild("indices", "DataVector2i").nodeAs<DataVector2i>();
+
+      int nodeCounter=0;
+      int modelCounter=0;
+      std::map<int, int> nodeToModelMap;
+      std::map<std::shared_ptr<sg::Node>, int> modelPtrToModelIDMap;
+      for (auto node : nodeList)
+      {
+        if (node->type() == "Model")
+        {
+          models->push_back(node->nodeAs<sg::Model>());
+          nodeToModelMap[nodeCounter] = modelCounter;
+          modelPtrToModelIDMap[node] = modelCounter;
+          modelCounter++;
+        }
+        nodeCounter++;
+      }
+      if (!node.content.empty()) {
+        char *value = strdup(node.content.c_str());
+
+        for(char *s = strtok((char*)value," \t\n\r");
+            s;
+            s=strtok(nullptr," \t\n\r")) {
+          size_t childID = atoi(s);
+          auto child = nodeList[childID];
+
+          if(!child)
+            continue;
+
+          if (child->type() == "Model") {
+            indices->push_back(vec2i{nodeToModelMap[childID], -1});
+          }
+          else if (child->type() == "Transform") {
+            if (child->hasChild("model"))
+            {
+              //TODO: nested transforms...
+              transforms->push_back(child->child("userTransform").valueAs<affine3f>());
+              indices->push_back(vec2i{modelPtrToModelIDMap[child->child("model").shared_from_this()], transforms->size()-1});
+            }
+          }
+        }
+
+        free(value);
+      }
+    }
+
     void parseBGFscene(std::shared_ptr<sg::Node> world, const xml::Node &root)
     {
       if (root.name != "BGFscene")
@@ -418,7 +484,11 @@ namespace ospray {
             // -------------------------------------------------------
           } else if (node.name == "Group") {
             // -------------------------------------------------------
+#if USE_INSTANCE_GROUP
+            parseInstanceGroupNode(node);
+#else
             parseGroupNode(node);
+#endif
             lastNode = nodeList.back();
           } else {
             nodeList.push_back({});

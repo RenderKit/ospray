@@ -46,7 +46,7 @@ namespace ospray {
       camera motion, setting default camera position, etc. Nodes
       for which that does not apply can simpy return
       box3f(empty) */
-    box3f Instance::bounds() const
+    box3f Instance::computeBounds() const
     {
       box3f cbounds = child("model").bounds();
       if (cbounds.empty())
@@ -92,7 +92,7 @@ namespace ospray {
     {
       if (instanced)
         ctx.currentTransform = oldTransform;
-      child("bounds").setValue(computeBounds());
+      Renderable::postCommit(ctx);
     }
 
     void Instance::preRender(RenderContext &ctx)
@@ -154,7 +154,108 @@ namespace ospray {
       instanceDirty=false;
     }
 
+    InstanceGroup::InstanceGroup()
+      : Renderable()
+    {
+      createChild("visible", "bool", true);
+    }
+
+        /*! \brief return bounding box in world coordinates.
+
+      This function can be used by the viewer(s) for calibrating
+      camera motion, setting default camera position, etc. Nodes
+      for which that does not apply can simpy return
+      box3f(empty) */
+    box3f InstanceGroup::computeBounds() const
+    {
+      box3f bounds = ospcommon::empty;
+      if (!(hasChild("models") && hasChild("transforms") && hasChild("indices")))
+        return bounds;
+      auto& indices = child("indices").nodeAs<DataVector2i>()->v;
+      auto models = child("models").nodeAs<ModelList>();
+      auto& transforms = child("transforms").nodeAs<DataVectorAffine3f>()->v;
+      for (auto index : indices)
+      {
+        const box3f& cbounds = models->item(index.x).bounds();
+        ospcommon::affine3f transform = ospcommon::one;
+        if (index.y >= 0)
+          transform = transforms[index.y];
+        if (cbounds.empty())
+          continue;
+        const vec3f lo = cbounds.lower;
+        const vec3f hi = cbounds.upper;
+        bounds.extend(xfmPoint(transform,vec3f(lo.x,lo.y,lo.z)));
+        bounds.extend(xfmPoint(transform,vec3f(hi.x,lo.y,lo.z)));
+        bounds.extend(xfmPoint(transform,vec3f(lo.x,hi.y,lo.z)));
+        bounds.extend(xfmPoint(transform,vec3f(hi.x,hi.y,lo.z)));
+        bounds.extend(xfmPoint(transform,vec3f(lo.x,lo.y,hi.z)));
+        bounds.extend(xfmPoint(transform,vec3f(hi.x,lo.y,hi.z)));
+        bounds.extend(xfmPoint(transform,vec3f(lo.x,hi.y,hi.z)));
+        bounds.extend(xfmPoint(transform,vec3f(hi.x,hi.y,hi.z)));
+      }
+      return bounds;
+    }
+
+    void InstanceGroup::preCommit(RenderContext &ctx)
+    {
+        instanceDirty=true;
+    }
+
+    void InstanceGroup::postCommit(RenderContext &ctx)
+    {
+      child("bounds").setValue(computeBounds());
+    }
+
+    void InstanceGroup::preRender(RenderContext &ctx)
+    {
+        if (instanceDirty)
+          updateInstances(ctx);
+    }
+
+    void InstanceGroup::postRender(RenderContext &ctx)
+    {
+      if (child("visible").value() == true
+        && ctx.world && ctx.world->ospModel())
+      {
+        for (auto instance : ospInstances)
+          ospAddGeometry(ctx.world->ospModel(), instance);
+      }
+    }
+
+    void InstanceGroup::updateTransform(RenderContext &ctx)
+    {
+      //TODO: update transform with world transform
+    }
+
+    void InstanceGroup::updateInstances(RenderContext &ctx)
+    {
+      updateTransform(ctx);
+
+      ospInstances.resize(0);
+
+      if (!(hasChild("models") && hasChild("transforms") && hasChild("indices")))
+        return;
+      auto& indices = child("indices").nodeAs<DataVector2i>()->v;
+      auto models = child("models").nodeAs<ModelList>();
+      auto& transforms = child("transforms").nodeAs<DataVectorAffine3f>()->v;
+      for (auto index : indices)
+      {
+        auto model = models->item(index.x).valueAs<OSPModel>();
+        ospcommon::affine3f transform = ospcommon::one;
+        if (index.y >= 0)
+          transform = transforms[index.y];
+        if (model)
+        {
+          ospInstances.push_back(ospNewInstance(model,(osp::affine3f&)transform));
+          ospCommit(ospInstances.back());
+        }
+      }
+      instanceDirty=false;
+    }
+
     OSP_REGISTER_SG_NODE(Instance);
+    OSP_REGISTER_SG_NODE(InstanceGroup);
+    OSP_REGISTER_SG_NODE(ModelList);
 
   } // ::ospray::sg
 } // ::ospray
