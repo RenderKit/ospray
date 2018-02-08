@@ -56,10 +56,7 @@ namespace ospray {
                     NodeFlags::valid_min_max |
                     NodeFlags::gui_slider).setMinMax(1.f, 64.f);
 
-      createChild("format", "string", std::string("srgba"), NodeFlags::required
-                  | NodeFlags::valid_whitelist).setWhiteList(
-        {std::string("rgba8"), std::string("srgba")});
-
+      createChild("useSRGB", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
 
       createFB();
@@ -72,7 +69,7 @@ namespace ospray {
           || child("size").lastModified() >= lastCommitted()
           || child("displayWall").lastModified() >= lastCommitted()
           || child("useVarianceBuffer").lastModified() >= lastCommitted()
-          || child("format").lastModified() >= lastCommitted()
+          || child("useSRGB").lastModified() >= lastCommitted()
           || child("toneMapping").lastModified() >= lastCommitted())
       {
         std::string displayWall = child("displayWall").valueAs<std::string>();
@@ -164,12 +161,9 @@ namespace ospray {
     void ospray::sg::FrameBuffer::createFB()
     {
       auto fbsize = size();
-      auto format = OSP_FB_SRGBA;
-      auto formatString = child("format").valueAs<std::string>();
-      if (formatString == "rgba8")
-          format = OSP_FB_RGBA8;
-      else if (formatString == "srgba")
-          format = OSP_FB_SRGBA;
+      auto useSRGB = child("useSRGB").valueAs<bool>();
+
+      auto format = useSRGB ? OSP_FB_SRGBA : OSP_FB_RGBA8;
 
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
