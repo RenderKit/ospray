@@ -105,7 +105,7 @@ namespace ospray {
         renderer["maxDepth"] = 3;
         renderer["frameBuffer"]["toneMapping"] = false;
         renderer["frameBuffer"]["useVarianceBuffer"] = false;
-        renderer["frameBuffer"]["format"] = std::string("rgba8");
+        renderer["frameBuffer"]["useSRGB"] = false;
         addPlane = false;
       }
 
