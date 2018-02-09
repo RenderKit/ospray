@@ -35,10 +35,13 @@ namespace ospray {
     struct OSPSG_INTERFACE DataBuffer : public Node
     {
       DataBuffer(OSPDataType type)
-        : type(type), data(nullptr)
+        : type(type)
       {}
 
-      virtual ~DataBuffer() override = default;
+      virtual ~DataBuffer() override
+      {
+        if(data) ospRelease(data);
+      }
 
       virtual std::string toString() const override
       { return "DataBuffer<abstract>"; }
@@ -82,7 +85,7 @@ namespace ospray {
       size_t numBytes() const { return size() * bytesPerElement(); }
 
       OSPDataType type;
-      OSPData     data;
+      OSPData     data {nullptr};
     };
 
     // -------------------------------------------------------
