@@ -220,7 +220,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName, true)->set(s);
+      object->findParam(bufName, true)->set(std::string(s));
     }
 
     /*! assign (named) string parameter to an object */

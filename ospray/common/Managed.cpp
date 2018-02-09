@@ -71,14 +71,6 @@ namespace ospray {
       data.get<ManagedObject*>()->refDec();
   }
 
-  void *ManagedObject::getVoidPtr(const char *name, void *valIfNotFound)
-  {
-    Param *param = findParam(name);
-    if (!param) return valIfNotFound;
-    if (!param->data.is<void*>()) return valIfNotFound;
-    return param->data.get<void*>();
-  }
-
   ManagedObject::Param *ManagedObject::findParam(const char *name,
                                                  bool addIfNotExist)
   {
@@ -108,6 +100,9 @@ namespace ospray {
   }
 
   define_getparam(ManagedObject *, Object)
+  define_getparam(std::string,     String)
+  define_getparam(void*,           VoidPtr)
+
   define_getparam(int32,  1i)
   define_getparam(vec3i,  3i)
   define_getparam(vec3f,  3f)
@@ -118,15 +113,6 @@ namespace ospray {
   define_getparam(float,  f)
 
 #undef define_getparam
-
-  const char *ManagedObject::getParamString(const char *name,
-                                            const char *valIfNotFound)
-  {
-    Param *param = findParam(name);
-    if (!param) return valIfNotFound;
-    if (!param->data.is<std::string>()) return valIfNotFound;
-    return param->data.get<std::string>().c_str();
-  }
 
   void ManagedObject::removeParam(const char *name)
   {
