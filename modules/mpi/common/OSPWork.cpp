@@ -246,7 +246,7 @@ namespace ospray {
       {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
-        obj->findParam(name.c_str(), true)->set(val.c_str());
+        obj->findParam(name.c_str(), true)->set(val);
       }
 
       template<>
@@ -257,7 +257,7 @@ namespace ospray {
 
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-          obj->findParam(name.c_str(), true)->set(val.c_str());
+          obj->findParam(name.c_str(), true)->set(val);
         }
       }
 

@@ -35,7 +35,7 @@ namespace ospray {
     struct OSPRAY_SDK_INTERFACE Device : public ManagedObject
     {
       /*! singleton that points to currently active device */
-      static Ref<Device> current;
+      static std::shared_ptr<Device> current;
 
       Device() = default;
       virtual ~Device() override;

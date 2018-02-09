@@ -177,18 +177,18 @@ namespace ospray {
 
     Data *getParamData(const char *name, Data *valIfNotFound = nullptr);
 
-    vec4f  getParam4f(const char *name, const vec4f  valIfNotFound);
-    vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
-    vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
-    vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
-    vec2f  getParam2f(const char *name, const vec2f  valIfNotFound);
-    int32  getParam1i(const char *name, const int32  valIfNotFound);
-    float  getParam1f(const char *name, const float  valIfNotFound);
-    float  getParamf (const char *name, const float  valIfNotFound);
+    vec4f  getParam4f(const char *name, vec4f  valIfNotFound);
+    vec3fa getParam3f(const char *name, vec3fa valIfNotFound);
+    vec3f  getParam3f(const char *name, vec3f  valIfNotFound);
+    vec3i  getParam3i(const char *name, vec3i  valIfNotFound);
+    vec2f  getParam2f(const char *name, vec2f  valIfNotFound);
+    int32  getParam1i(const char *name, int32  valIfNotFound);
+    float  getParam1f(const char *name, float  valIfNotFound);
+    float  getParamf (const char *name, float  valIfNotFound);
 
-    void *getParamVoidPtr(const char *name, void * const valIfNotFound);
+    void *getParamVoidPtr(const char *name, void * valIfNotFound);
     std::string getParamString(const char *name,
-                               const std::string valIfNotFound = "");
+                               std::string valIfNotFound = "");
     /*! @} */
 
     // ------------------------------------------------------------------
