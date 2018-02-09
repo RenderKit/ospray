@@ -196,12 +196,12 @@ namespace ospray {
       return bounds;
     }
 
-    void InstanceGroup::preCommit(RenderContext &ctx)
+    void InstanceGroup::preCommit(RenderContext &)
     {
         instanceDirty=true;
     }
 
-    void InstanceGroup::postCommit(RenderContext &ctx)
+    void InstanceGroup::postCommit(RenderContext &)
     {
       child("bounds").setValue(computeBounds());
     }
@@ -222,7 +222,7 @@ namespace ospray {
       }
     }
 
-    void InstanceGroup::updateTransform(RenderContext &ctx)
+    void InstanceGroup::updateTransform(RenderContext &)
     {
       //TODO: update transform with world transform
     }

@@ -444,7 +444,7 @@ namespace ospray {
             {
               //TODO: nested transforms...
               transforms->push_back(child->child("userTransform").valueAs<affine3f>());
-              indices->push_back(vec2i{modelPtrToModelIDMap[child->child("model").shared_from_this()], transforms->size()-1});
+              indices->push_back(vec2i{modelPtrToModelIDMap[child->child("model").shared_from_this()], static_cast<int>(transforms->size())-1});
             }
           }
         }
