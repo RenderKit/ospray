@@ -62,23 +62,6 @@ namespace maml {
     outbox.push_back(msg);
   }
 
-  void Context::processInboxTask()
-  {
-    while(tasksAreRunning)
-      processInboxMessages();
-  }
-
-  void Context::mpiSendAndRecieveTask()
-  {
-    while(tasksAreRunning) {
-      sendMessagesFromOutbox();
-      pollForAndRecieveMessages();
-
-      waitOnSomeSendRequests();
-      waitOnSomeRecvRequests();
-    }
-  }
-
   void Context::processInboxMessages()
   {
     if (!inbox.empty()) {
@@ -205,38 +188,32 @@ namespace maml {
     if (!isRunning()) {
       tasksAreRunning = true;
 
+      auto launchMethod = AsyncLoop::LaunchMethod::AUTO;
+
       auto MAML_SPAWN_THREADS = getEnvVar<int>("MAML_SPAWN_THREADS");
-
-      useTaskingSystem = !MAML_SPAWN_THREADS.value_or(numTaskingThreads() < 4);
-
-      if (useTaskingSystem) {
-        sendReceiveFuture = ospcommon::tasking::async([&](){
-          mpiSendAndRecieveTask();
-        });
-
-        processInboxFuture = ospcommon::tasking::async([&](){
-          processInboxTask();
-        });
-      } else {
-        if (!sendReceiveThread.get()) {
-          sendReceiveThread = make_unique<AsyncLoop>([&](){
-            sendMessagesFromOutbox();
-            pollForAndRecieveMessages();
-
-            waitOnSomeSendRequests();
-            waitOnSomeRecvRequests();
-          });
-        }
-
-        if (!processInboxThread.get()) {
-          processInboxThread = make_unique<AsyncLoop>([&](){
-            processInboxMessages();
-          });
-        }
-
-        sendReceiveThread->start();
-        processInboxThread->start();
+      if (MAML_SPAWN_THREADS) {
+        launchMethod = MAML_SPAWN_THREADS.value() ?
+            AsyncLoop::LaunchMethod::THREAD : AsyncLoop::LaunchMethod::TASK;
       }
+
+      if (!sendReceiveThread.get()) {
+        sendReceiveThread = make_unique<AsyncLoop>([&](){
+          sendMessagesFromOutbox();
+          pollForAndRecieveMessages();
+
+          waitOnSomeSendRequests();
+          waitOnSomeRecvRequests();
+        }, launchMethod);
+      }
+
+      if (!processInboxThread.get()) {
+        processInboxThread = make_unique<AsyncLoop>([&](){
+          processInboxMessages();
+        }, launchMethod);
+      }
+
+      sendReceiveThread->start();
+      processInboxThread->start();
     }
   }
 
@@ -253,18 +230,8 @@ namespace maml {
   void Context::stop()
   {
     tasksAreRunning = false;
-
-    if (useTaskingSystem) {
-      if (sendReceiveFuture.valid())
-        sendReceiveFuture.wait();
-
-      if (processInboxFuture.valid())
-        processInboxFuture.wait();
-    } else {
-      sendReceiveThread->stop();
-      processInboxThread->stop();
-    }
-
+    sendReceiveThread->stop();
+    processInboxThread->stop();
     flushRemainingMessages();
   }
 

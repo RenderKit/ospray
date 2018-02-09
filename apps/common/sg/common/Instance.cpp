@@ -110,9 +110,9 @@ namespace ospray {
     void Instance::postRender(RenderContext &ctx)
     {
       if (instanced && child("visible").value() == true
-        && ctx.world && ctx.world->ospModel() && ospInstance)
+        && ctx.world && ctx.world->valueAs<OSPModel>() && ospInstance)
       {
-        ospAddGeometry(ctx.world->ospModel(), ospInstance);
+        ospAddGeometry(ctx.world->valueAs<OSPModel>(), ospInstance);
       }
       ctx.currentTransform = oldTransform;
     }
@@ -196,12 +196,12 @@ namespace ospray {
       return bounds;
     }
 
-    void InstanceGroup::preCommit(RenderContext &ctx)
+    void InstanceGroup::preCommit(RenderContext &)
     {
         instanceDirty=true;
     }
 
-    void InstanceGroup::postCommit(RenderContext &ctx)
+    void InstanceGroup::postCommit(RenderContext &)
     {
       child("bounds").setValue(computeBounds());
     }
@@ -215,14 +215,14 @@ namespace ospray {
     void InstanceGroup::postRender(RenderContext &ctx)
     {
       if (child("visible").value() == true
-        && ctx.world && ctx.world->ospModel())
+        && ctx.world && ctx.world->valueAs<OSPModel>())
       {
         for (auto instance : ospInstances)
-          ospAddGeometry(ctx.world->ospModel(), instance);
+          ospAddGeometry(ctx.world->valueAs<OSPModel>(), instance);
       }
     }
 
-    void InstanceGroup::updateTransform(RenderContext &ctx)
+    void InstanceGroup::updateTransform(RenderContext &)
     {
       //TODO: update transform with world transform
     }

@@ -132,9 +132,9 @@ namespace ospray {
       auto ospVolume = valueAs<OSPVolume>();
 
       if (ospVolume) {
-        ospAddVolume(ctx.world->ospModel(), ospVolume);
+        ospAddVolume(ctx.world->valueAs<OSPModel>(), ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() && isosurfacesGeometry)
-          ospAddGeometry(ctx.world->ospModel(), isosurfacesGeometry);
+          ospAddGeometry(ctx.world->valueAs<OSPModel>(), isosurfacesGeometry);
       }
     }
 

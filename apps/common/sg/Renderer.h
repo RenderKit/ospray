@@ -30,6 +30,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Renderer : public Renderable
     {
       Renderer();
+      ~Renderer() override;
       virtual std::string toString() const override;
 
       void renderFrame(std::shared_ptr<FrameBuffer> fb, int flags=0);

@@ -103,9 +103,6 @@ namespace maml {
 
     bool tasksAreRunning {false};
 
-    std::future<void> sendReceiveFuture;
-    std::future<void> processInboxFuture;
-
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
 

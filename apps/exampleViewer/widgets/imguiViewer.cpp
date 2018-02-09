@@ -462,16 +462,16 @@ namespace ospray {
   void ImGuiViewer::guiMenuView()
   {
     if (ImGui::BeginMenu("View")) {
-      bool orbitMode = (manipulator == inspectCenterManipulator);
-      bool flyMode   = (manipulator == moveModeManipulator);
+      bool orbitMode = (manipulator == inspectCenterManipulator.get());
+      bool flyMode   = (manipulator == moveModeManipulator.get());
 
       if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
-        manipulator = inspectCenterManipulator;
+        manipulator = inspectCenterManipulator.get();
 
       if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
 
       if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
-        manipulator = moveModeManipulator;
+        manipulator = moveModeManipulator.get();
 
       if (ImGui::MenuItem("Reset View")) resetView();
       if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;

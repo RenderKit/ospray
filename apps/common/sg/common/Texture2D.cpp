@@ -28,6 +28,47 @@ OIIO_NAMESPACE_USING
 namespace ospray {
   namespace sg {
 
+    Texture2D::Texture2D()
+    {
+      setValue((OSPTexture2D)nullptr);
+    }
+
+    Texture2D::~Texture2D()
+    {
+      if (data) alignedFree(data);
+    }
+
+    void Texture2D::preCommit(RenderContext &)
+    {
+      OSPTextureFormat type = OSP_TEXTURE_R8;
+
+      if (depth == 1) {
+        if( channels == 1 ) type = OSP_TEXTURE_R8;
+        if( channels == 3 )
+          type = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+        if( channels == 4 )
+          type = preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
+      } else if (depth == 4) {
+        if( channels == 1 ) type = OSP_TEXTURE_R32F;
+        if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
+        if( channels == 4 ) type = OSP_TEXTURE_RGBA32F;
+      }
+
+      void* dat = data;
+      if (!dat && texelData)
+        dat = texelData->base();
+      if (!dat)
+      {
+        setValue((OSPTexture2D)nullptr);
+        std::cout << "Texture2D: image data null\n";
+        return;
+      }
+
+      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, 0);
+      setValue(ospTexture2D);
+      ospCommit(ospTexture2D);
+    }
+
     std::string Texture2D::toString() const
     {
       return "ospray::viewer::sg::Texture2D";
@@ -69,7 +110,7 @@ namespace ospray {
         tex->depth = hdr ? 4 : 1;
         tex->preferLinear = preferLinear;
         const size_t stride = tex->size.x * tex->channels * tex->depth;
-        tex->data = new unsigned char[tex->size.y * stride];
+        tex->data = alignedMalloc(sizeof(unsigned char) * tex->size.y * stride);
 
         in->read_image(hdr ? TypeDesc::FLOAT : TypeDesc::UINT8, tex->data);
         in->close();
@@ -148,7 +189,6 @@ namespace ospray {
           if (maxVal != 255)
             throw std::runtime_error("#osp:miniSG: could not parse P6 PPM file '"+fileName.str()+"': currently supporting only maxVal=255 formats."
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
-          // tex = new Texture2D;
           tex->size.x   = width;
           tex->size.y   = height;
           tex->channels = 3;
@@ -156,7 +196,7 @@ namespace ospray {
           tex->preferLinear = preferLinear;
 
           unsigned int dataSize = tex->size.x * tex->size.y * tex->channels * tex->depth;
-          tex->data     = new unsigned char[dataSize];
+          tex->data = alignedMalloc(sizeof(unsigned char) * dataSize);
           rc = fread(tex->data,dataSize,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           unsigned char *texels = (unsigned char *)tex->data;
@@ -227,7 +267,7 @@ namespace ospray {
           tex->channels = numChannels;
           tex->depth    = sizeof(float);
           tex->preferLinear = preferLinear;
-          tex->data     = new float[width * height * numChannels];
+          tex->data     = alignedMalloc(sizeof(float) * width * height * numChannels);
           if (fread(tex->data, sizeof(float), width * height * numChannels, file)
               != size_t(width * height * numChannels))
             throw std::runtime_error("could not fread");
@@ -261,7 +301,7 @@ namespace ospray {
         if (!pixels) {
           std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
         } else {
-          tex->data = new unsigned char[tex->size.x*tex->size.y*tex->channels*tex->depth];
+          tex->data = alignedMalloc(sizeof(unsigned char) * tex->size.x*tex->size.y*tex->channels*tex->depth);
           // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
           for (int y = 0; y < tex->size.y; y++) {
             for (int x = 0; x < tex->size.x; x++) {
@@ -283,42 +323,6 @@ namespace ospray {
 #endif
       textureCache[fileName.str()] = tex;
       return tex;
-    }
-
-    Texture2D::Texture2D()
-    {
-      setValue((OSPTexture2D)nullptr);
-    }
-
-    void Texture2D::preCommit(RenderContext &)
-    {
-      OSPTextureFormat type = OSP_TEXTURE_R8;
-
-      if (depth == 1) {
-        if( channels == 1 ) type = OSP_TEXTURE_R8;
-        if( channels == 3 )
-          type = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
-        if( channels == 4 )
-          type = preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
-      } else if (depth == 4) {
-        if( channels == 1 ) type = OSP_TEXTURE_R32F;
-        if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
-        if( channels == 4 ) type = OSP_TEXTURE_RGBA32F;
-      }
-
-      void* dat = data;
-      if (!dat && texelData)
-        dat = texelData->base();
-      if (!dat)
-      {
-        setValue((OSPTexture2D)nullptr);
-        std::cout << "Texture2D: image data null\n";
-        return;
-      }
-
-      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, 0);
-      setValue(ospTexture2D);
-      ospCommit(ospTexture2D);
     }
 
     OSP_REGISTER_SG_NODE(Texture2D);

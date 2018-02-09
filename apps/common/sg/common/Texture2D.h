@@ -30,6 +30,7 @@ namespace ospray {
     {
       /*! constructor */
       Texture2D();
+      ~Texture2D() override;
 
       virtual void preCommit(RenderContext &ctx) override;
 

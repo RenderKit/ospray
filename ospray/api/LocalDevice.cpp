@@ -82,7 +82,6 @@ namespace ospray {
                                              hasDepthBuffer,
                                              hasAccumBuffer,
                                              hasVarianceBuffer);
-      fb->refInc();
       return (OSPFrameBuffer)fb;
     }
 
@@ -132,7 +131,6 @@ namespace ospray {
     OSPModel LocalDevice::newModel()
     {
       Model *model = new Model;
-      model->refInc();
       return (OSPModel)model;
     }
 
@@ -211,7 +209,6 @@ namespace ospray {
                                  const void *init, int flags)
     {
       Data *data = new Data(nitems,format,init,flags);
-      data->refInc();
       return (OSPData)data;
     }
 
@@ -223,7 +220,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName, true)->set(s);
+      object->findParam(bufName, true)->set(std::string(s));
     }
 
     /*! assign (named) string parameter to an object */
@@ -365,7 +362,6 @@ namespace ospray {
         else
           return nullptr;
       }
-      pixelOp->refInc();
       return (OSPPixelOp)pixelOp;
     }
 
@@ -392,7 +388,6 @@ namespace ospray {
         else
           return nullptr;
       }
-      renderer->refInc();
       return (OSPRenderer)renderer;
     }
 
@@ -402,7 +397,6 @@ namespace ospray {
       Assert(type != nullptr && "invalid render type identifier");
       Geometry *geometry = Geometry::createInstance(type);
       if (!geometry) return nullptr;
-      geometry->refInc();
       return (OSPGeometry)geometry;
     }
 
@@ -420,7 +414,6 @@ namespace ospray {
       if (renderer) {
         Material *material = renderer->createMaterial(type);
         if (material) {
-          material->refInc();
           return (OSPMaterial)material;
         }
       }
@@ -431,7 +424,6 @@ namespace ospray {
       //
       Material *material = Material::createMaterial(type);
       if (!material) return nullptr;
-      material->refInc();
       return (OSPMaterial)material;
     }
 
@@ -448,7 +440,6 @@ namespace ospray {
         else
           return nullptr;
       }
-      camera->refInc();
       return (OSPCamera)camera;
     }
 
@@ -465,7 +456,6 @@ namespace ospray {
         else
           return nullptr;
       }
-      volume->refInc();
       return (OSPVolume)volume;
     }
 
@@ -482,7 +472,6 @@ namespace ospray {
         else
           return nullptr;
       }
-      transferFunction->refInc();
       return (OSPTransferFunction)transferFunction;
     }
 
@@ -492,7 +481,6 @@ namespace ospray {
       if (renderer) {
         Light *light = renderer->createLight(type);
         if (light) {
-          light->refInc();
           return (OSPLight)light;
         }
       }
@@ -501,7 +489,6 @@ namespace ospray {
       // that name
       Light *light = Light::createLight(type);
       if (!light) return nullptr;
-      light->refInc();
       return (OSPLight)light;
     }
 
@@ -514,7 +501,6 @@ namespace ospray {
       Assert(size.y > 0 &&
              "Height must be greater than 0 in LocalDevice::newTexture2D");
       Texture2D *tx = Texture2D::createTexture(size, type, data, flags);
-      if(tx) tx->refInc();
       return (OSPTexture2D)tx;
     }
 

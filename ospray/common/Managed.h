@@ -16,6 +16,8 @@
 
 #pragma once
 
+// ospcommon
+#include "ospcommon/utility/Any.h"
 // ospray
 #include "ospray/OSPDataType.h"
 #include "common/OSPCommon.h"
@@ -134,72 +136,16 @@ namespace ospray {
     struct OSPRAY_SDK_INTERFACE Param
     {
       Param(const char *name);
-      ~Param() { clear(); }
+      ~Param();
 
-      /*! clear parameter to 'invalid type and value'; free/de-refcount data if
-       *  reqd' */
-      void clear();
+      using OSP_PTR = ManagedObject*;
 
-      /*! set parameter to a 'pointer to object' type, and given pointer */
-      void set(ManagedObject *ptr);
-
-      //! set parameter to a 'c-string' type
-      /* \internal this function creates and keeps a *copy* of the passed
-       *  string! */
-      void set(const char *s);
-
-      //! set parameter to a 'c-string' type
-      /* \internal this function does *not* copy whatever data this
-         pointer points to (it doesn't have the info to do so), so
-         this pointer belongs to the application, and it can not be
-         used remotely */
-      void set(void *v);
-
-      /*! set parameter to given value and type
-        @{ */
-      void set(const float  &v) { clear(); type = OSP_FLOAT; u_float = v; }
-      void set(const int    &v) { clear(); type = OSP_INT;   u_int   = v; }
-      void set(const uint32 &v) { clear(); type = OSP_UINT;  u_uint  = v; }
-
-      void set(const vec2f  &v) { clear(); type = OSP_FLOAT2;  u_vec2f  = v; }
-      void set(const vec3f  &v) { clear(); type = OSP_FLOAT3;  u_vec3f  = v; }
-      void set(const vec3fa &v) { clear(); type = OSP_FLOAT3A; u_vec3fa = v; }
-      void set(const vec4f  &v) { clear(); type = OSP_FLOAT4;  u_vec4f  = v; }
-
-      void set(const vec2i &v) { clear(); type = OSP_INT2; u_vec2i = v; }
-      void set(const vec3i &v) { clear(); type = OSP_INT3; u_vec3i = v; }
-      void set(const vec4i &v) { clear(); type = OSP_INT4; u_vec4i = v; }
-
-      void set(const vec2ui &v) { clear(); type = OSP_UINT2; u_vec2ui = v; }
-      void set(const vec3ui &v) { clear(); type = OSP_UINT3; u_vec3ui = v; }
-      void set(const vec4ui &v) { clear(); type = OSP_UINT4; u_vec4ui = v; }
+      template <typename T>
+      void set(const T &v) { data = v; }
       /*! @} */
 
-      union {
-        float    u_float;
-        int      u_int;
-        uint32_t u_uint;
-        int64_t  u_int64;
+      utility::Any data;
 
-        vec2f  u_vec2f;
-        vec3f  u_vec3f;
-        vec3fa u_vec3fa;
-        vec4f  u_vec4f;
-
-        vec2i u_vec2i;
-        vec3i u_vec3i;
-        vec4i u_vec4i;
-
-        vec2ui u_vec2ui;
-        vec3ui u_vec3ui;
-        vec4ui u_vec4ui;
-
-        ManagedObject *ptr;
-        std::string   *s;
-      };
-
-      /*! actual type of this parameter */
-      OSPDataType type;
       /*! name under which this parameter is registered */
       std::string name;
     };
@@ -231,18 +177,18 @@ namespace ospray {
 
     Data *getParamData(const char *name, Data *valIfNotFound = nullptr);
 
-    vec4f  getParam4f(const char *name, const vec4f  valIfNotFound);
-    vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
-    vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
-    vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
-    vec2f  getParam2f(const char *name, const vec2f  valIfNotFound);
-    int32  getParam1i(const char *name, const int32  valIfNotFound);
-    float  getParam1f(const char *name, const float  valIfNotFound);
-    float  getParamf (const char *name, const float  valIfNotFound);
+    vec4f  getParam4f(const char *name, vec4f  valIfNotFound);
+    vec3fa getParam3f(const char *name, vec3fa valIfNotFound);
+    vec3f  getParam3f(const char *name, vec3f  valIfNotFound);
+    vec3i  getParam3i(const char *name, vec3i  valIfNotFound);
+    vec2f  getParam2f(const char *name, vec2f  valIfNotFound);
+    int32  getParam1i(const char *name, int32  valIfNotFound);
+    float  getParam1f(const char *name, float  valIfNotFound);
+    float  getParamf (const char *name, float  valIfNotFound);
 
-    void *getVoidPtr(const char *name, void *valIfNotFound);
-    const char *getParamString(const char *name,
-                               const char *valIfNotFound = "");
+    void *getParamVoidPtr(const char *name, void * valIfNotFound);
+    std::string getParamString(const char *name,
+                               std::string valIfNotFound = "");
     /*! @} */
 
     // ------------------------------------------------------------------
@@ -334,6 +280,14 @@ namespace ospray {
   inline void ManagedObject::set(const char *name, const T &t)
   {
     findParam(name, true)->set(t);
+  }
+
+  template <>
+  inline
+  void ManagedObject::Param::set(const ManagedObject::Param::OSP_PTR &object)
+  {
+    if (object) object->refInc();
+    data = object;
   }
 
 #define OSP_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \

@@ -123,8 +123,7 @@ namespace ospray {
     {}
 
     ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
-                                 ManipulatorMode initialManipulator,
-                                 int allowedManipulators) :
+                                 ManipulatorMode initialManipulator) :
       lastMousePos(-1,-1),
       currMousePos(-1,-1),
       windowSize(-1,-1),
@@ -143,18 +142,15 @@ namespace ospray {
       worldBounds.lower = vec3f(-1);
       worldBounds.upper = vec3f(+1);
 
-      if (allowedManipulators & INSPECT_CENTER_MODE) {
-        inspectCenterManipulator = new InspectCenter(this);
-      }
-      if (allowedManipulators & MOVE_MODE) {
-        moveModeManipulator = new MoveMode(this);
-      }
+      inspectCenterManipulator = ospcommon::make_unique<InspectCenter>(this);
+      moveModeManipulator = ospcommon::make_unique<MoveMode>(this);
+
       switch(initialManipulator) {
       case MOVE_MODE:
-        manipulator = moveModeManipulator;
+        manipulator = moveModeManipulator.get();
         break;
       case INSPECT_CENTER_MODE:
-        manipulator = inspectCenterManipulator;
+        manipulator = inspectCenterManipulator.get();
         break;
       }
       Assert2(manipulator != nullptr,"invalid initial manipulator mode");
@@ -193,7 +189,7 @@ namespace ospray {
     {
       if (animating) {
         auto *hack =
-            (InspectCenter*)ImGui3DWidget::activeWindow->inspectCenterManipulator;
+            ImGui3DWidget::activeWindow->inspectCenterManipulator.get();
         hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
@@ -474,11 +470,11 @@ namespace ospray {
         showGui = !showGui;
         break;
       case 'I':
-        manipulator = inspectCenterManipulator;
+        manipulator = inspectCenterManipulator.get();
         break;
       case 'M':
       case 'F':
-        manipulator = moveModeManipulator;
+        manipulator = moveModeManipulator.get();
         break;
       case 'A':
         ImGui3DWidget::animating = !ImGui3DWidget::animating;

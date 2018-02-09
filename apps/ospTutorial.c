@@ -102,20 +102,24 @@ int main(int argc, const char **argv) {
   OSPData data = ospNewData(4, OSP_FLOAT3A, vertex, 0); // OSP_FLOAT3 format is also supported for vertex positions
   ospCommit(data);
   ospSetData(mesh, "vertex", data);
+  ospRelease(data); // we are done using this handle
 
   data = ospNewData(4, OSP_FLOAT4, color, 0);
   ospCommit(data);
   ospSetData(mesh, "vertex.color", data);
+  ospRelease(data); // we are done using this handle
 
   data = ospNewData(2, OSP_INT3, index, 0); // OSP_INT4 format is also supported for triangle indices
   ospCommit(data);
   ospSetData(mesh, "index", data);
+  ospRelease(data); // we are done using this handle
 
   ospCommit(mesh);
 
 
   OSPModel world = ospNewModel();
   ospAddGeometry(world, mesh);
+  ospRelease(mesh); // we are done using this handle
   ospCommit(world);
 
 
@@ -136,7 +140,6 @@ int main(int argc, const char **argv) {
   ospSetObject(renderer, "lights", lights);
   ospCommit(renderer);
 
-
   // create and setup framebuffer
   OSPFrameBuffer framebuffer = ospNewFrameBuffer(&imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
@@ -149,7 +152,6 @@ int main(int argc, const char **argv) {
   writePPM("firstFrame.ppm", &imgSize, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
-
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
     ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
@@ -157,6 +159,14 @@ int main(int argc, const char **argv) {
   fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
   writePPM("accumulatedFrame.ppm", &imgSize, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
+
+  // final cleanups
+  ospRelease(renderer);
+  ospRelease(camera);
+  ospRelease(lights);
+  ospRelease(light);
+  ospRelease(framebuffer);
+  ospRelease(world);
 
   return 0;
 }

@@ -36,7 +36,7 @@ namespace ospcommon
   class RefCount
   {
   public:
-    inline RefCount(atomic_init_t val = 0) : refCounter(val) {}
+    inline RefCount(atomic_init_t val = 1) : refCounter(val) {}
     virtual ~RefCount() {}
 
     /*! dummy copy-constructor and assignment operator because if they

@@ -59,7 +59,6 @@ namespace ospray {
       numOccurrances[T]++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
     }
-    material->refInc();
     return material;
   }
 

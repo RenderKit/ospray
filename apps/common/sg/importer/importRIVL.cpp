@@ -468,6 +468,7 @@ namespace ospray {
             {
               transforms->push_back(transform);
               indices->push_back(vec2i{modelPtrToModelIDMap[grandChild.sgNode], transforms->size()-1});
+              //TODO: nested transforms...
             }
           }
         }
