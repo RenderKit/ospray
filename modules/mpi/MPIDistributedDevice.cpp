@@ -47,7 +47,6 @@ namespace ospray {
     inline API_TYPE createLocalObject(const char *type)
     {
       auto *instance = OSPRAY_TYPE::createInstance(type);
-      instance->refInc();
       return (API_TYPE)instance;
     }
 
