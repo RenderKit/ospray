@@ -33,18 +33,18 @@ namespace ospcommon {
     namespace detail {
 
       template<typename TASK_T>
-      inline void schedule_impl(TASK_T&& fcn)
+      inline void schedule_impl(TASK_T fcn)
       {
 #ifdef OSPRAY_TASKING_TBB
         struct LocalTBBTask : public tbb::task
         {
           TASK_T func;
           tbb::task* execute() override { func(); return nullptr; }
-          LocalTBBTask(TASK_T&& f) : func(std::forward<TASK_T>(f)) {}
+          LocalTBBTask(TASK_T f) : func(std::move(f)) {}
         };
 
         auto *tbb_node =
-          new(tbb::task::allocate_root())LocalTBBTask(std::forward<TASK_T>(fcn));
+          new(tbb::task::allocate_root())LocalTBBTask(std::move(fcn));
         tbb::task::enqueue(*tbb_node);
 #elif defined(OSPRAY_TASKING_OMP)
         std::thread thread(fcn);
@@ -52,7 +52,7 @@ namespace ospcommon {
 #elif defined(OSPRAY_TASKING_CILK)
         cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
-        detail::schedule_internal(std::forward<TASK_T>(fcn));
+        detail::schedule_internal(std::move(fcn));
 #else// Debug --> synchronous!
         fcn();
 #endif
