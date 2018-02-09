@@ -21,7 +21,7 @@ namespace ospray {
 
     Model::Model()
     {
-      setValue(ospNewModel());
+      setValue((OSPModel)nullptr);
     }
 
     std::string Model::toString() const
@@ -41,7 +41,7 @@ namespace ospray {
 
     void Model::preCommit(RenderContext &ctx)
     {
-      auto model = ospModel();
+      auto model = valueAs<OSPModel>();
       if (model)
         ospRelease(model);
       model = ospNewModel();
@@ -52,7 +52,7 @@ namespace ospray {
 
     void Model::postCommit(RenderContext &ctx)
     {
-      auto model = ospModel();
+      auto model = valueAs<OSPModel>();
       ctx.currentOSPModel = model;
 
       //instancegroup caches render calls in commit.
@@ -62,11 +62,6 @@ namespace ospray {
       ospCommit(model);
       ctx.currentOSPModel = stashedModel;
       child("bounds") = computeBounds();
-    }
-
-    OSPModel Model::ospModel()
-    {
-      return (OSPModel)valueAs<OSPObject>();
     }
 
     OSP_REGISTER_SG_NODE(Model);

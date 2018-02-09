@@ -114,7 +114,6 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/Importer.cpp
   importer/importPoints.cpp
   importer/importOSP.cpp
-  importer/importOSPModel.cpp
   importer/importOSPSG.cpp
   importer/importOSX.cpp
   importer/importOBJ.cpp

@@ -110,9 +110,9 @@ namespace ospray {
     void Instance::postRender(RenderContext &ctx)
     {
       if (instanced && child("visible").value() == true
-        && ctx.world && ctx.world->ospModel() && ospInstance)
+        && ctx.world && ctx.world->valueAs<OSPModel>() && ospInstance)
       {
-        ospAddGeometry(ctx.world->ospModel(), ospInstance);
+        ospAddGeometry(ctx.world->valueAs<OSPModel>(), ospInstance);
       }
       ctx.currentTransform = oldTransform;
     }
@@ -215,10 +215,10 @@ namespace ospray {
     void InstanceGroup::postRender(RenderContext &ctx)
     {
       if (child("visible").value() == true
-        && ctx.world && ctx.world->ospModel())
+        && ctx.world && ctx.world->valueAs<OSPModel>())
       {
         for (auto instance : ospInstances)
-          ospAddGeometry(ctx.world->ospModel(), instance);
+          ospAddGeometry(ctx.world->valueAs<OSPModel>(), instance);
       }
     }
 

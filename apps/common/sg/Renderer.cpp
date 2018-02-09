@@ -120,6 +120,12 @@ namespace ospray {
       createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
     }
 
+    Renderer::~Renderer()
+    {
+      if (lightsData)
+        ospRelease(lightsData);
+    }
+
     void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb, int flags)
     {
       RenderContext ctx;

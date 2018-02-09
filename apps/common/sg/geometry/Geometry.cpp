@@ -68,6 +68,7 @@ namespace ospray {
         auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
         ospCommit(ospMaterialList);
         ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
+        ospRelease(ospMaterialList);
       }
 
       ospCommit(ospGeometry);

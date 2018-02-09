@@ -36,8 +36,6 @@ namespace ospray {
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
 
-      OSPModel ospModel();
-
     protected:
 
       OSPModel stashedModel{nullptr};
