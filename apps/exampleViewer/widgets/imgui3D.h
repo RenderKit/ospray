@@ -94,15 +94,14 @@ namespace ospray {
        };
 
        // static InspectCenter INSPECT_CENTER;
-       Manipulator *inspectCenterManipulator;
-       Manipulator *moveModeManipulator;
+       std::unique_ptr<InspectCenter> inspectCenterManipulator;
+       std::unique_ptr<MoveMode>      moveModeManipulator;
 
        /*! current manipulator */
        Manipulator *manipulator;
 
        ImGui3DWidget(FrameBufferMode frameBufferMode,
-                    ManipulatorMode initialManipulator=INSPECT_CENTER_MODE,
-                    int allowedManipulators=INSPECT_CENTER_MODE|MOVE_MODE);
+                     ManipulatorMode initialManipulator=INSPECT_CENTER_MODE);
 
        /*! set a default camera position that views given bounds from the
          top left front */

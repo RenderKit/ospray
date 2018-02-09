@@ -103,22 +103,24 @@ int main(int argc, const char **argv) {
   ospray::cpp::Data data(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions
   data.commit();
   mesh.set("vertex", data);
+  data.release(); // we are done using this handle
 
   data = ospray::cpp::Data(4, OSP_FLOAT4, color);
   data.commit();
   mesh.set("vertex.color", data);
+  data.release(); // we are done using this handle
 
   data = ospray::cpp::Data(2, OSP_INT3, index); // OSP_INT4 format is also supported for triangle indices
   data.commit();
   mesh.set("index", data);
+  data.release(); // we are done using this handle
 
   mesh.commit();
 
-
   ospray::cpp::Model world;
   world.addGeometry(mesh);
+  mesh.release(); // we are done using this handle
   world.commit();
-
 
   // create renderer
   ospray::cpp::Renderer renderer("scivis"); // choose Scientific Visualization renderer
@@ -159,6 +161,14 @@ int main(int argc, const char **argv) {
   fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
   writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
   framebuffer.unmap(fb);
+
+  // final cleanups
+  renderer.release();
+  camera.release();
+  lights.release();
+  light.release();
+  framebuffer.release();
+  world.release();
 
   return 0;
 }

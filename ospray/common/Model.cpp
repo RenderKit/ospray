@@ -37,6 +37,8 @@ namespace ospray {
   {
     if (embreeSceneHandle)
       rtcDeleteScene(embreeSceneHandle);
+
+    ispc::Model_cleanup(getIE());
   }
 
   std::string Model::toString() const
@@ -70,9 +72,9 @@ namespace ospray {
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
 
-    for (size_t i=0; i<volume.size(); i++) 
+    for (size_t i=0; i<volume.size(); i++)
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
-    
+
     rtcCommit(embreeSceneHandle);
   }
 
