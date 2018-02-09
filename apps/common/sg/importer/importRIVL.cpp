@@ -34,7 +34,19 @@ namespace ospray {
     using std::endl;
     using std::string;
 
-    static std::vector<std::shared_ptr<sg::Node>> nodeList;
+    struct RIVLNode
+    {
+      RIVLNode() = default;
+      RIVLNode(std::shared_ptr<sg::Node> node)
+        : sgNode(node) {}
+      std::shared_ptr<sg::Node> sgNode;
+      int nodeID{-1};
+      int childID{-1};
+      int transformID{-1};
+    };
+
+    static std::vector<RIVLNode> nodeList;
+    static std::vector<affine3f> transformList;
 
     static void *binBasePtr;
 
@@ -44,7 +56,7 @@ namespace ospray {
       ss << "rivlTexture_" << nodeList.size();
       const std::string name = ss.str();
       auto txt = createNode(name, "Texture2D")->nodeAs<sg::Texture2D>();
-      nodeList.push_back(txt);
+      nodeList.push_back(RIVLNode(txt));
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
       xml::for_each_prop(node,[&](const std::string &_name, const std::string &value){
@@ -112,7 +124,7 @@ namespace ospray {
         char *s = strtok(tokenBuffer, " \t\n\r");
         while (s) {
           int texID = atoi(s);
-          auto tex = nodeList[texID]->nodeAs<Texture2D>();
+          auto tex = nodeList[texID].sgNode->nodeAs<Texture2D>();
           mat->textures.push_back(tex);
           s = strtok(nullptr, " \t\n\r");
         }
@@ -142,9 +154,12 @@ namespace ospray {
       {
         //TODO: lookup id into textures
         int texID = atoi(s);
+        if (texID < mat->textures.size())
+        {
           auto tex = mat->textures[texID]->nodeAs<Texture2D>();
           s = strtok(nullptr, " \t\n\r");
           mat->setChild(paramName, tex);
+        }
       }
       else if (!paramType.compare("float")) {
         mat->createChildWithValue(paramName,"float",(float)atof(s));
@@ -203,7 +218,7 @@ namespace ospray {
     void parseMaterialNode(const xml::Node &node)
     {
       std::shared_ptr<sg::Material> mat = std::make_shared<sg::Material>();
-      nodeList.push_back(mat);
+      nodeList.push_back(RIVLNode(mat));
 
       static int counter=0;
       std::stringstream name(node.getProp("name"));
@@ -225,7 +240,7 @@ namespace ospray {
 
     void parseTransformNode(const xml::Node &node)
     {
-      std::shared_ptr<sg::Node> child;
+      RIVLNode child;
       affine3f xfm;
       int id=0;
       size_t childID=0;
@@ -235,7 +250,7 @@ namespace ospray {
           if (name == "child") {
             childID = atoi(value.c_str());
             child = nodeList[childID];
-            assert(child);
+            assert(child.sgNode);
           } else if (name == "id") {
             id = atoi(value.c_str());
           }
@@ -262,22 +277,30 @@ namespace ospray {
 
       std::stringstream ss;
       ss << "transform_" << id;
-      auto xfNode = createNode(ss.str(), "Transform");
-      if (child->type() == "Model")
-      {
 #if USE_INSTANCE_GROUP
-        xfNode->add(child, "model");
+      RIVLNode rnode;
+      rnode.transformID = transformList.size();
+      rnode.childID = childID;
+      transformList.push_back(xfm);
+      nodeList.push_back(rnode);
 #else
+      auto xfNode = createNode(ss.str(), "Transform");
+      if (child.sgNode && child.sgNode->type() == "Model")
+      {
         auto instance = createNode(ss.str(), "Instance");
-        instance->add(child, "model");
+        instance->add(child.sgNode, "model");
         child = instance;
         xfNode->add(child);
-#endif
       }
       else
-        xfNode->add(child);
-      xfNode->child("userTransform").setValue(xfm);
-      nodeList.push_back(xfNode);
+      {
+        if (child.sgNode)
+          xfNode->add(child.sgNode);
+      }
+      if (child.sgNode)
+        xfNode->child("userTransform").setValue(xfm);
+      nodeList.push_back(RIVLNode(xfNode));
+#endif
     }
 
     void parseMeshNode(const xml::Node &node)
@@ -353,7 +376,7 @@ namespace ospray {
                 s;
                 s = strtok(nullptr," \t\n\r")) {
               size_t matID = atoi(s);
-              auto mat = nodeList[matID]->nodeAs<sg::Material>();
+              auto mat = nodeList[matID].sgNode->nodeAs<sg::Material>();
               mesh->add(mat, "material");
               materialListNode->push_back(mat);
             }
@@ -371,7 +394,7 @@ namespace ospray {
       ss_group << "group_" << nodeList.size();
       group->setName(ss_group.str());
       group->setType("Node");
-      nodeList.push_back(group);
+      nodeList.push_back(RIVLNode(group));
       if (!node.content.empty()) {
         char *value = strdup(node.content.c_str());
 
@@ -381,18 +404,18 @@ namespace ospray {
           size_t childID = atoi(s);
           auto child = nodeList[childID];
 
-          if(!child)
+          if(!child.sgNode)
             continue;
 
-          group->children.push_back(child);
+          group->children.push_back(child.sgNode);
           std::stringstream ss_child;
           ss_child << "child_" << childID;
-          if (child->type() == "Model") {
+          if (child.sgNode->type() == "Model") {
             auto instance = createNode(ss_child.str(), "Instance");
-            instance->add(child, "model");
+            instance->add(child.sgNode, "model");
             child = instance;
           }
-          group->add(child, ss_child.str());
+          group->add(child.sgNode, ss_child.str());
         }
 
         free(value);
@@ -404,7 +427,7 @@ namespace ospray {
       std::stringstream ss_group;
       ss_group << "group_" << nodeList.size();
       auto group = sg::createNode(ss_group.str(), "InstanceGroup");
-      nodeList.push_back(group);
+      nodeList.push_back(RIVLNode(group));
       auto models = group->createChild("models", "ModelList").nodeAs<ModelList>();
       auto transforms = group->createChild("transforms", "DataVectorAffine3f").nodeAs<DataVectorAffine3f>();
       auto indices = group->createChild("indices", "DataVector2i").nodeAs<DataVector2i>();
@@ -415,11 +438,11 @@ namespace ospray {
       std::map<std::shared_ptr<sg::Node>, int> modelPtrToModelIDMap;
       for (auto node : nodeList)
       {
-        if (node->type() == "Model")
+        if (node.sgNode && node.sgNode->type() == "Model")
         {
-          models->push_back(node->nodeAs<sg::Model>());
+          models->push_back(node.sgNode->nodeAs<sg::Model>());
           nodeToModelMap[nodeCounter] = modelCounter;
-          modelPtrToModelIDMap[node] = modelCounter;
+          modelPtrToModelIDMap[node.sgNode] = modelCounter;
           modelCounter++;
         }
         nodeCounter++;
@@ -433,18 +456,18 @@ namespace ospray {
           size_t childID = atoi(s);
           auto child = nodeList[childID];
 
-          if(!child)
-            continue;
-
-          if (child->type() == "Model") {
-            indices->push_back(vec2i{nodeToModelMap[childID], -1});
+          if(child.sgNode)
+          {
+            if (child.sgNode->type() == "Model")
+              indices->push_back(vec2i{nodeToModelMap[childID], -1});
           }
-          else if (child->type() == "Transform") {
-            if (child->hasChild("model"))
+          else if (child.transformID >= 0) {
+            auto grandChild = nodeList[child.childID];
+            auto transform = transformList[child.transformID];
+            if (grandChild.sgNode && grandChild.sgNode->type() == "Model")
             {
-              //TODO: nested transforms...
-              transforms->push_back(child->child("userTransform").valueAs<affine3f>());
-              indices->push_back(vec2i{modelPtrToModelIDMap[child->child("model").shared_from_this()], transforms->size()-1});
+              transforms->push_back(transform);
+              indices->push_back(vec2i{modelPtrToModelIDMap[grandChild.sgNode], transforms->size()-1});
             }
           }
         }
@@ -460,8 +483,19 @@ namespace ospray {
       if (root.child.empty())
         throw std::runtime_error("emply RIVL model !?");
 
-      std::shared_ptr<sg::Node> lastNode;
+      RIVLNode lastNode;
+      size_t nodeCounter=0;
+      size_t numNodes = root.child.size();
+      size_t increment = numNodes/size_t(10);
+      int incrementer = 0;
+      std::cout << "mapping RIVL scene state to OSPSG... \n";
+      nodeList.reserve(numNodes);
       xml::for_each_child_of(root,[&](const xml::Node &node){
+          if (nodeCounter++ > (increment*incrementer+1))
+          {
+            std::cout << incrementer*10 << "%\n";
+            incrementer++;
+          }
           if (node.name == "text") {
             // -------------------------------------------------------
           } else if (node.name == "Texture2D") {
@@ -494,7 +528,11 @@ namespace ospray {
             nodeList.push_back({});
           }
         });
-      world->add(lastNode);
+      if (lastNode.sgNode)
+        world->add(lastNode.sgNode);
+      std::cout << "100% Completed\n";
+      nodeList.resize(0);
+      transformList.resize(0);
     }
 
     void importRIVL(std::shared_ptr<sg::Node> world,
