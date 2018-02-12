@@ -142,7 +142,7 @@ namespace ospray {
       if (fileName.str() == loadedFileName)
         return;
 
-      std::cout << "attempting importing file: " << fileName.str() << std::endl;
+      std::cout << "attempting file import: " << fileName.str() << std::endl;
 
       if (loadedFileName != "" || fileName.str() == "")
         return; //TODO: support dynamic re-loading, need to clear children first
@@ -168,8 +168,12 @@ namespace ospray {
           importFileType_points(wsg,fileName);
           loadedFileName = fileName;
           return;
-        } else
-          std::cout << "Found a URL-style file type specified, but didn't recognize file type '" << fu->formatType<< "' ... reverting to loading by file extension" << std::endl;
+        } else {
+          std::cout << "Found a URL-style file type specified, but didn't recognize file type '"
+                    << fu->formatType
+                    << "' ... reverting to loading by file extension"
+                    << std::endl;
+        }
       }
 
       auto ext = fileName.ext();

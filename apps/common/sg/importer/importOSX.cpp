@@ -164,11 +164,14 @@ namespace ospray {
     {
       osx::StreamLines streamLines;
       osx::Triangles   triangles;
+      std::cout << "parsing OSX input file... \n";
       parseOSX(&streamLines, &triangles, fileName);
+      std::cout << "...finished parsing...\n";
 
       auto name = fileName.str();
 
       if (!streamLines.index.empty()) {
+        std::cout << "...adding found streamlines to the scene...\n";
         auto slNode = createNode(name + "_streamlines",
                                  "StreamLines")->nodeAs<StreamLines>();
 
@@ -204,6 +207,7 @@ namespace ospray {
       }
 
       if (!triangles.index.empty()) {
+        std::cout << "...adding found triangles to the scene...\n";
         auto slNode = createNode(name + "_triangles",
                                  "TriangleMesh")->nodeAs<StreamLines>();
         slNode->remove("material");
@@ -229,6 +233,8 @@ namespace ospray {
 
         world->add(instance);
       }
+
+      std::cout << "...finished import!\n";
     }
 
   } // ::ospray::sg

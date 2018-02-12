@@ -159,15 +159,19 @@ namespace ospray {
 
       std::string err;
       const std::string containingPath = fileName.path();
-      bool ret            = tinyobj::LoadObj(&attrib,
+
+      std::cout << "parsing OBJ input file... \n";
+      bool ret = tinyobj::LoadObj(&attrib,
                                   &shapes,
                                   &materials,
                                   &err,
                                   fileName.c_str(),
                                   containingPath.c_str());
 
+#if 0 // NOTE(jda) - enable if you want to see warnings from TinyOBJ
       if (!err.empty())
         std::cerr << "#ospsg: obj parsing warning(s)...\n" << err << std::endl;
+#endif
 
       if (!ret) {
         std::cerr << "#ospsg: FATAL error parsing obj file, no geometry added"
@@ -180,6 +184,13 @@ namespace ospray {
       std::string base_name = fileName.name() + '_';
       int shapeId           = 0;
 
+      std::cout << "...adding found triangle groups to the scene...\n";
+
+      size_t shapeCounter = 0;
+      size_t numShapes    = shapes.size();
+      size_t increment    = numShapes / size_t(10);
+      int    incrementer  = 0;
+
 #if !USE_INSTANCES
       auto objInstance = createNode("instance", "Instance");
       world->add(objInstance);
@@ -191,6 +202,9 @@ namespace ospray {
             PRINT(numVertsInFace);
           }
         }
+
+        if (shapeCounter++ > (increment * incrementer + 1))
+          std::cout << incrementer++ * 10 << "%\n";
 
         auto name = base_name + std::to_string(shapeId++) + '_' + shape.name;
         auto mesh = createNode(name, "TriangleMesh")->nodeAs<TriangleMesh>();
@@ -285,7 +299,10 @@ namespace ospray {
 #else
         (*objInstance)["model"].add(mesh);
 #endif
+
       }
+
+      std::cout << "...finished import!\n";
     }
   }  // ::ospray::sg
 }  // ::ospray
