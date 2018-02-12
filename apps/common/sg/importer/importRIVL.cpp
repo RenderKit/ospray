@@ -154,8 +154,7 @@ namespace ospray {
       {
         //TODO: lookup id into textures
         int texID = atoi(s);
-        if (texID < mat->textures.size())
-        {
+        if (texID < static_cast<int>(mat->textures.size())) {
           auto tex = mat->textures[texID]->nodeAs<Texture2D>();
           s = strtok(nullptr, " \t\n\r");
           mat->setChild(paramName, tex);
