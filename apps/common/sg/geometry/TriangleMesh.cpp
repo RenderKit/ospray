@@ -20,7 +20,13 @@
 namespace ospray {
   namespace sg {
 
-    TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
+    // Static definitions /////////////////////////////////////////////////////
+
+    std::string TriangleMesh::geometry_type = "trianglemesh";
+
+    // TriangleMesh definitions ///////////////////////////////////////////////
+
+    TriangleMesh::TriangleMesh() : Geometry(TriangleMesh::geometry_type)
     {
     }
 

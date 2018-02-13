@@ -33,6 +33,16 @@ namespace ospray {
       box3f bounds() const override;
 
       void preCommit(RenderContext& ctx) override;
+
+      // NOTE(jda) - Experimental modules may want to make custom triangle
+      //             meshes, which mimic everything this ("normal") TriangleMesh
+      //             does _except_ for the string type given to ospNewGeometry.
+      //             If a custom app assigns a different value to this, then
+      //             something other than the default "triangles" geometry
+      //             will be created --> in other words, this string is what
+      //             is passed to the base Geometry. THIS NEEDS TO BE REVISED
+      //             AND IS NOT A PREMENANT SOLUTION!
+      static std::string geometry_type;
     };
 
   } // ::ospray::sg
