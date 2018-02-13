@@ -39,7 +39,7 @@ namespace ospray {
       RIVLNode() = default;
       RIVLNode(std::shared_ptr<sg::Node> node)
         : sgNode(node) {}
-      std::shared_ptr<sg::Node> sgNode;
+      std::shared_ptr<sg::Node> sgNode{nullptr};
       int nodeID{-1};
       int childID{-1};
       int transformID{-1};
@@ -460,15 +460,31 @@ namespace ospray {
           {
             if (child.sgNode->type() == "Model")
               indices->push_back(vec2i{nodeToModelMap[childID], -1});
+            else if (child.sgNode->type() == "InstanceGroup")
+              group->add(child.sgNode);
           }
           else if (child.transformID >= 0) {
             auto grandChild = nodeList[child.childID];
             auto transform = transformList[child.transformID];
-            if (grandChild.sgNode && grandChild.sgNode->type() == "Model")
+            while (grandChild.transformID >= 0)
             {
-              transforms->push_back(transform);
-              indices->push_back(vec2i{modelPtrToModelIDMap[grandChild.sgNode], transforms->size()-1});
-              //TODO: nested transforms...
+              transform = transform*transformList[grandChild.transformID];
+              grandChild = nodeList[grandChild.childID];
+            }
+            if (grandChild.sgNode)
+            {
+              if (grandChild.sgNode->type() == "Model")
+              {
+                transforms->push_back(transform);
+                indices->push_back(vec2i{modelPtrToModelIDMap[grandChild.sgNode], transforms->size()-1});
+                //TODO: nested transforms...
+              }
+              else if (grandChild.sgNode->type() == "InstanceGroup")
+              {
+                group->createChild("transform", "Transform");
+                group->child("transform")["userTransform"] = transform;
+                group->child("transform").add(grandChild.sgNode);
+              }
             }
           }
         }

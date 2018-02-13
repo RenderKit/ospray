@@ -177,9 +177,9 @@ namespace ospray {
       for (auto index : indices)
       {
         const box3f& cbounds = models->item(index.x).bounds();
-        ospcommon::affine3f transform = ospcommon::one;
+        ospcommon::affine3f transform = worldTransform;
         if (index.y >= 0)
-          transform = transforms[index.y];
+          transform = transform*transforms[index.y];
         if (cbounds.empty())
           continue;
         const vec3f lo = cbounds.lower;
@@ -193,12 +193,35 @@ namespace ospray {
         bounds.extend(xfmPoint(transform,vec3f(lo.x,hi.y,hi.z)));
         bounds.extend(xfmPoint(transform,vec3f(hi.x,hi.y,hi.z)));
       }
+      for (auto child : children())
+      {
+        auto renderable = std::dynamic_pointer_cast<sg::Renderable>(child.second);
+        if (renderable)
+        {
+          const box3f& cbounds = renderable->bounds();
+          if (!cbounds.empty())
+          {
+            const vec3f lo = cbounds.lower;
+            const vec3f hi = cbounds.upper;
+            bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,lo.y,lo.z)));
+            bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,lo.y,lo.z)));
+            bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,hi.y,lo.z)));
+            bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,hi.y,lo.z)));
+            bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,lo.y,hi.z)));
+            bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,lo.y,hi.z)));
+            bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,hi.y,hi.z)));
+            bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,hi.y,hi.z)));
+          }
+        }
+      }
       return bounds;
     }
 
-    void InstanceGroup::preCommit(RenderContext &)
+    void InstanceGroup::preCommit(RenderContext &ctx)
     {
-        instanceDirty=true;
+      instanceDirty=true;
+      if (ctx.currentTransform != cachedTransform)
+        updateTransform(ctx);
     }
 
     void InstanceGroup::postCommit(RenderContext &)
@@ -208,8 +231,10 @@ namespace ospray {
 
     void InstanceGroup::preRender(RenderContext &ctx)
     {
-        if (instanceDirty)
-          updateInstances(ctx);
+      if (ctx.currentTransform != cachedTransform)
+        instanceDirty = true;
+      if (instanceDirty)
+        updateInstances(ctx);
     }
 
     void InstanceGroup::postRender(RenderContext &ctx)
@@ -222,16 +247,18 @@ namespace ospray {
       }
     }
 
-    void InstanceGroup::updateTransform(RenderContext &)
+    void InstanceGroup::updateTransform(RenderContext &ctx)
     {
       //TODO: update transform with world transform
+      worldTransform = ctx.currentTransform;
+      instanceDirty=true;
     }
 
     void InstanceGroup::updateInstances(RenderContext &ctx)
     {
-      updateTransform(ctx);
-
       ospInstances.resize(0);
+      if (ctx.currentTransform != cachedTransform)
+        updateTransform(ctx);
 
       if (!(hasChild("models") && hasChild("transforms") && hasChild("indices")))
         return;
@@ -241,9 +268,9 @@ namespace ospray {
       for (auto index : indices)
       {
         auto model = models->item(index.x).valueAs<OSPModel>();
-        ospcommon::affine3f transform = ospcommon::one;
+        ospcommon::affine3f transform = worldTransform;
         if (index.y >= 0)
-          transform = transforms[index.y];
+          transform = transform*transforms[index.y];
         if (model)
         {
           ospInstances.push_back(ospNewInstance(model,(osp::affine3f&)transform));
@@ -251,6 +278,7 @@ namespace ospray {
         }
       }
       instanceDirty=false;
+      cachedTransform = worldTransform;
     }
 
     OSP_REGISTER_SG_NODE(Instance);

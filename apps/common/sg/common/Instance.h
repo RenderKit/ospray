@@ -95,7 +95,8 @@ namespace ospray {
 
       bool instanceDirty{true};
       std::vector<OSPGeometry> ospInstances;
-
+      ospcommon::affine3f cachedTransform{ospcommon::one};
+      ospcommon::affine3f worldTransform{ospcommon::one};
     };
 
     using ModelList = NodeList<Model>;
