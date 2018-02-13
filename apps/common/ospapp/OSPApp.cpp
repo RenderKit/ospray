@@ -450,12 +450,11 @@ namespace ospray {
                 transform.add(importerNode_ptr);
                 importerNode["fileName"] = fn.str();
 
-                if (fast)
-                {
-                    if (importerNode.hasChildRecursive("gradientShadingEnabled"))
-                      importerNode.childRecursive("gradientShadingEnabled") = false;
-                    if (importerNode.hasChildRecursive("adaptiveMaxSamplingRate"))
-                      importerNode.childRecursive("adaptiveMaxSamplingRate") = 0.2f;
+                if (fast) {
+                  if (importerNode.hasChildRecursive("gradientShadingEnabled"))
+                    importerNode.childRecursive("gradientShadingEnabled") = false;
+                  if (importerNode.hasChildRecursive("adaptiveMaxSamplingRate"))
+                    importerNode.childRecursive("adaptiveMaxSamplingRate") = 0.2f;
                 }
 
                 transform["scale"] = file.transform.scale;

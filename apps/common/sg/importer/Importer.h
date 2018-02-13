@@ -68,6 +68,16 @@ namespace ospray {
       virtual void setChildrenModified(TimeStamp t) override;
 
       std::string loadedFileName;
+
+    private:
+
+      void importURL(std::shared_ptr<Node> world,
+                     const FileName &fileName,
+                     const FormatURL &fu) const;
+      void importRegistry(std::shared_ptr<Node> world,
+                          const FileName &fileName) const;
+      void importDefaultExtensions(std::shared_ptr<Node> world,
+                                   const FileName &filename) const;
     };
 
     /*! prototype for any scene graph importer function */
@@ -84,11 +94,6 @@ namespace ospray {
     OSPSG_INTERFACE
     void importFile(std::shared_ptr<sg::Model> &world,
                     const FileName &fileName);
-
-    /*! create a world from an already existing OSPModel */
-    OSPSG_INTERFACE
-    void importOSPModel(Node &world, OSPModel model,
-                        const ospcommon::box3f &bbox);
 
     /*! import an OBJ wavefront model, and add its contents to the given
         world */
