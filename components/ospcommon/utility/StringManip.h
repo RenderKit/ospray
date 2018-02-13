@@ -35,8 +35,15 @@ namespace ospcommon {
       );
     }
 
+    inline bool beginsWith(const std::string &inputString,
+                           const std::string &startsWithString)
+    {
+      auto startingMatch = longestBeginningMatch(inputString, startsWithString);
+      return startingMatch.size() == startsWithString.size();
+    }
+
     /* split a string on a single character delimiter */
-    std::vector<std::string> split(const std::string &input, char delim)
+    inline std::vector<std::string> split(const std::string &input, char delim)
     {
       std::stringstream ss(input);
       std::string item;
@@ -47,7 +54,7 @@ namespace ospcommon {
     }
 
     /* return lower case version of the input string */
-    std::string lowerCase(const std::string &str)
+    inline std::string lowerCase(const std::string &str)
     {
       std::string retval = str;
       std::transform(retval.begin(), retval.end(), retval.begin(), ::tolower);
@@ -55,7 +62,7 @@ namespace ospcommon {
     }
 
     /* return upper case version of the input string */
-    std::string upperCase(const std::string &str)
+    inline std::string upperCase(const std::string &str)
     {
       std::string retval = str;
       std::transform(retval.begin(), retval.end(), retval.begin(), ::toupper);
