@@ -154,8 +154,7 @@ namespace ospray {
       {
         //TODO: lookup id into textures
         int texID = atoi(s);
-        if (texID < mat->textures.size())
-        {
+        if (texID < static_cast<int>(mat->textures.size())) {
           auto tex = mat->textures[texID]->nodeAs<Texture2D>();
           s = strtok(nullptr, " \t\n\r");
           mat->setChild(paramName, tex);
@@ -476,7 +475,8 @@ namespace ospray {
               if (grandChild.sgNode->type() == "Model")
               {
                 transforms->push_back(transform);
-                indices->push_back(vec2i{modelPtrToModelIDMap[grandChild.sgNode], transforms->size()-1});
+                indices->push_back(vec2i{modelPtrToModelIDMap[grandChild.sgNode],
+                                       static_cast<int>(transforms->size()-1)});
                 //TODO: nested transforms...
               }
               else if (grandChild.sgNode->type() == "InstanceGroup")
@@ -501,18 +501,18 @@ namespace ospray {
         throw std::runtime_error("emply RIVL model !?");
 
       RIVLNode lastNode;
-      size_t nodeCounter=0;
+      size_t nodeCounter = 0;
       size_t numNodes = root.child.size();
       size_t increment = numNodes/size_t(10);
       int incrementer = 0;
       std::cout << "mapping RIVL scene state to OSPSG... \n";
       nodeList.reserve(numNodes);
       xml::for_each_child_of(root,[&](const xml::Node &node){
-          if (nodeCounter++ > (increment*incrementer+1))
-          {
+          if (nodeCounter++ > (increment*incrementer+1)) {
             std::cout << incrementer*10 << "%\n";
             incrementer++;
           }
+
           if (node.name == "text") {
             // -------------------------------------------------------
           } else if (node.name == "Texture2D") {
@@ -547,7 +547,7 @@ namespace ospray {
         });
       if (lastNode.sgNode)
         world->add(lastNode.sgNode);
-      std::cout << "100% Completed\n";
+      std::cout << "...finished import!\n";
       nodeList.resize(0);
       transformList.resize(0);
     }

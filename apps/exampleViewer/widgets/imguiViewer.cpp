@@ -408,14 +408,14 @@ namespace ospray {
   {
     ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
 
-    static bool demo_window = false;
-
     ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
     ImGui::SetWindowFontScale(0.5f*fontScale);
 
     guiMenu();
 
-    if (demo_window) ImGui::ShowTestWindow(&demo_window);
+#if 0 // NOTE(jda) - enable to see ImGui example window
+    ImGui::ShowTestWindow(&demo_window);
+#endif
 
     guiRenderStats();
     guiFindNode();
@@ -701,7 +701,7 @@ namespace ospray {
       text += node->type() + "##" + std::to_string(node->uniqueID());
       if (ImGui::TreeNodeEx(text.c_str(),
                             (node->numChildren() > 20) ?
-                              0 : ImGuiTreeNodeFlags_DefaultOpen)) {
+                             0 : ImGuiTreeNodeFlags_DefaultOpen)) {
         guiNodeContextMenu(name, node);
 
         if (!node->isValid())

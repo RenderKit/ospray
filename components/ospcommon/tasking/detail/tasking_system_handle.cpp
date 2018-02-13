@@ -72,6 +72,8 @@ namespace ospcommon {
         return threads;
 #elif defined(OSPRAY_TASKING_INTERNAL)
         return detail::numThreadsTaskSystemInternal();
+#else
+        return 0;
 #endif
       }
 
