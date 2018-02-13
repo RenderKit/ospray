@@ -572,6 +572,8 @@ namespace ospray {
       parseBGFscene(world,root_element);
     }
 
+    OSPSG_REGISTER_IMPORT_FUNCTION(importRIVL, rivl);
+
   } // ::ospray::sg
 } // ::ospray
 

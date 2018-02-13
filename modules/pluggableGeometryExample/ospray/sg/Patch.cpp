@@ -14,7 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Patch.h"
+#include <stdexcept>
+#include <vector>
+
+#include "ospcommon/vec.h"
+#include "ospcommon/box.h"
+
+#include "common/sg/common/Data.h"
+#include "common/sg/geometry/Geometry.h"
+#include "common/sg/importer/Importer.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
@@ -29,7 +37,42 @@ namespace ospray {
 
     // use ospcommon for vec3f etc
     using namespace ospcommon;
-    
+    // for all scene graph stuff
+    using namespace sg;
+
+    struct Patch
+    {
+      Patch(const vec3f &v00,
+            const vec3f &v01,
+            const vec3f &v10,
+            const vec3f &v11)
+        : v00(v00), v01(v01), v10(v10), v11(v11)
+      {}
+
+      vec3f v00, v01, v10, v11;
+    };
+
+    struct PatchSGNode : public sg::Geometry
+    {
+      PatchSGNode() : Geometry("bilinear_patches") {}
+
+      std::string toString() const override
+      {
+        return "ospray::bilinearPatch::PatchSGNode";
+      }
+
+      box3f bounds() const override
+      {
+        box3f bounds = empty;
+        if (hasChild("vertices")) {
+          auto v = child("vertices").nodeAs<sg::DataBuffer>();
+          for (uint32_t i = 0; i < v->size(); i++)
+            bounds.extend(v->get<vec3f>(i));
+        }
+        return bounds;
+      }
+    };
+
     /*! parse a '.patch' file, and add its contents to the given list of
         patches */
     void readPatchesFromFile(std::vector<Patch> &patches,
@@ -63,44 +106,36 @@ namespace ospray {
           ++numPatchesRead;
         }
       }
-      std::cout << "#osp:blp: done parsing " << patchFileName
-                << " (" << numPatchesRead << " patches)" << std::endl;
     }
-    
-    /*! create a list of patches from the list of given file names
-        (each fiename is supposed to a patch file. if no patches could
-        be read, create a simple test case. 'bounds' will be the world
-        bouding box of all control points in the returned patch
-        list */
-    std::vector<Patch> readPatchesFromFiles(const std::vector<std::string> &fileNames,
-                                            box3f &bounds)
+
+    void importPatches(const std::shared_ptr<Node> &world,
+                       const FileName &fileName)
     {
       std::vector<Patch> patches;
-      for (auto fileName : fileNames) 
-        readPatchesFromFile(patches,fileName);
+      readPatchesFromFile(patches, fileName);
 
-      if (patches.empty()) {
-        std::cout << "#osp.blp: no input files specified - creating default path" << std::endl;
-        patches.push_back(Patch(vec3f(0.f,1.f,0.f),
-                                vec3f(0.f,0.f,1.f),
-                                vec3f(1.f,0.f,0.f),
-                                vec3f(1.f,1.f,1.f)));
-      }
+      if (patches.empty())
+        return;
 
-      bounds = empty;
-      for (auto patch : patches) {
-        bounds.extend(patch.v00);
-        bounds.extend(patch.v01);
-        bounds.extend(patch.v10);
-        bounds.extend(patch.v11);
-      }
-      std::cout << "##################################################################" << std::endl;
-      std::cout << "#osp:blp: done parsing input files" << std::endl;
-      std::cout << "#osp:blp: found a total of  " << patches.size() << " patches ..." << std::endl;
-      std::cout << "#osp:blp: ... with world bounds of " << bounds << std::endl;
-      std::cout << "##################################################################" << std::endl;
-      return patches;
+      auto &instance = world->createChild("patches_instance", "Instance");
+
+      auto patchesGeometryNode = std::make_shared<PatchSGNode>();
+      patchesGeometryNode->setName("loaded_example_patches");
+      patchesGeometryNode->setType("PatchSGNode");
+
+      auto *vertices = reinterpret_cast<vec3f*>(patches.data());
+
+      auto patchArrayNode =
+          std::make_shared<sg::DataArray3f>(vertices, patches.size() * 4);
+
+      patchArrayNode->setName("vertices");
+      patchArrayNode->setType("DataArray3f");
+      patchesGeometryNode->add(patchArrayNode);
+      instance["model"].add(patchesGeometryNode);
     }
-    
+
+    OSPSG_REGISTER_IMPORT_FUNCTION(importPatches, bilinearPatchExample);
+    OSPSG_REGISTER_IMPORT_FUNCTION(importPatches, bilinear_patches);
+
   } // ::ospray::bilinearPatch
 } // ::ospray

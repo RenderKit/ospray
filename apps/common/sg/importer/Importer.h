@@ -74,8 +74,11 @@ namespace ospray {
       void importURL(std::shared_ptr<Node> world,
                      const FileName &fileName,
                      const FormatURL &fu) const;
-      void importRegistry(std::shared_ptr<Node> world,
-                          const FileName &fileName) const;
+      void importRegistryGenerator(std::shared_ptr<Node> world,
+                                   const std::string &type) const;
+      void importRegistryFileLoader(std::shared_ptr<Node> world,
+                                    const std::string &type,
+                                    const FileName &fileName) const;
       void importDefaultExtensions(std::shared_ptr<Node> world,
                                    const FileName &filename) const;
     };
@@ -147,6 +150,19 @@ namespace ospray {
     OSPSG_INTERFACE
     void writeOSPSG(const std::shared_ptr<Node> &world,
                     const std::string &fileName);
+
+
+    // Macro to register importers ////////////////////////////////////////////
+
+#define OSPSG_REGISTER_IMPORT_FUNCTION(function, name)                         \
+    extern "C" OSPSG_INTERFACE                                                 \
+        void ospray_sg_import_##name(std::shared_ptr<Node> world,              \
+                                     const FileName fileName)                  \
+    {                                                                          \
+      function(world, fileName);                                               \
+    }                                                                          \
+    /* additional declaration to avoid "extra ;" -Wpedantic warnings */        \
+    void ospray_sg_import_##name()
 
   } // ::ospray::sg
 } // ::ospray

@@ -304,5 +304,8 @@ namespace ospray {
 
       std::cout << "...finished import!\n";
     }
+
+    OSPSG_REGISTER_IMPORT_FUNCTION(importOBJ, obj);
+
   }  // ::ospray::sg
 }  // ::ospray

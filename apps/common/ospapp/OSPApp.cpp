@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospcommon/utility/StringManip.h"
+
 #include "OSPApp.h"
 #include "common/sg/SceneGraph.h"
 #include "sg/geometry/TriangleMesh.h"
@@ -266,7 +268,7 @@ namespace ospray {
           // SG parameters are validated by prefix only.
           // Later different function is used for parsing this type parameters.
           continue;
-        } else if (arg[0] != '-') {
+        } else if (arg[0] != '-' || utility::beginsWith(arg, "--import:")) {
           if (!inAnimation)
             files.push_back(clFile(av[i], currentCLTransform));
           else
