@@ -123,13 +123,17 @@ namespace ospray {
       patchesGeometryNode->setName("loaded_example_patches");
       patchesGeometryNode->setType("PatchSGNode");
 
-      auto *vertices = reinterpret_cast<vec3f*>(patches.data());
+      auto patchArrayNode = std::make_shared<sg::DataVector3f>();
 
-      auto patchArrayNode =
-          std::make_shared<sg::DataArray3f>(vertices, patches.size() * 4);
+      for (auto &p : patches) {
+        patchArrayNode->push_back(p.v00);
+        patchArrayNode->push_back(p.v01);
+        patchArrayNode->push_back(p.v10);
+        patchArrayNode->push_back(p.v11);
+      }
 
       patchArrayNode->setName("vertices");
-      patchArrayNode->setType("DataArray3f");
+      patchArrayNode->setType("DataVector3f");
       patchesGeometryNode->add(patchArrayNode);
       instance["model"].add(patchesGeometryNode);
     }

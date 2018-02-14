@@ -39,6 +39,15 @@ namespace ospray {
 
   // Functions to make ImGui widgets for SG nodes /////////////////////////////
 
+  static void sgWidget_box3f(const std::string &text,
+                             std::shared_ptr<sg::Node> node)
+  {
+    box3f val = node->valueAs<box3f>();
+    ImGui::NewLine();
+    ImGui::Text("lower: (%f, %f, %f)", val.lower.x, val.lower.y, val.lower.z);
+    ImGui::Text("upper: (%f, %f, %f)", val.upper.x, val.upper.y, val.upper.z);
+  }
+
   static void sgWidget_vec3f(const std::string &text,
                              std::shared_ptr<sg::Node> node)
   {
@@ -161,7 +170,9 @@ namespace ospray {
         {"float", sgWidget_float},
         {"int", sgWidget_int},
         {"vec2i", sgWidget_vec2i},
+        {"vec2f", sgWidget_vec2i},
         {"vec3f", sgWidget_vec3f},
+        {"box3f", sgWidget_box3f},
         {"string", sgWidget_string},
         {"bool", sgWidget_bool},
         {"TransferFunction", sgWidget_TransferFunction}
@@ -414,6 +425,7 @@ namespace ospray {
     guiMenu();
 
 #if 0 // NOTE(jda) - enable to see ImGui example window
+    static bool demo_window = true;
     ImGui::ShowTestWindow(&demo_window);
 #endif
 
