@@ -74,9 +74,9 @@ namespace ospray {
       {
         using namespace mpicommon;
         const bool asyncWasRunning = asyncMessagingEnabled();
-		if (asyncWasRunning) {
-			disableAsyncMessaging();
-		}
+        if (asyncWasRunning) {
+          disableAsyncMessaging();
+        }
 
         MPIBcastFabric fabric(world, rootGlobalRank, rootGlobalRank);
 
