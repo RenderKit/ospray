@@ -43,9 +43,9 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     box3f val = node->valueAs<box3f>();
-    ImGui::NewLine();
-    ImGui::Text("lower: (%f, %f, %f)", val.lower.x, val.lower.y, val.lower.z);
-    ImGui::Text("upper: (%f, %f, %f)", val.upper.x, val.upper.y, val.upper.z);
+    ImGui::Text("(%f, %f, %f)", val.lower.x, val.lower.y, val.lower.z);
+    ImGui::SameLine();
+    ImGui::Text("(%f, %f, %f)", val.upper.x, val.upper.y, val.upper.z);
   }
 
   static void sgWidget_vec3f(const std::string &text,
