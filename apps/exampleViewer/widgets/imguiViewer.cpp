@@ -170,7 +170,7 @@ namespace ospray {
         {"float", sgWidget_float},
         {"int", sgWidget_int},
         {"vec2i", sgWidget_vec2i},
-        {"vec2f", sgWidget_vec2i},
+        {"vec2f", sgWidget_vec2f},
         {"vec3f", sgWidget_vec3f},
         {"box3f", sgWidget_box3f},
         {"string", sgWidget_string},
