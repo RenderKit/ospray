@@ -50,7 +50,7 @@ OSPRAY_CREATE_LIBRARY(ospray_module_bilinear_patches
   geometry/BilinearPatches.ispc
 
   # pieces for loading data into the OSPRay example viewer app
-  sg/Patch.cpp
+#  sg/Patch.cpp
 
   # and finally, the module init code (not doing much, but must be there)
   moduleInit.cpp

@@ -32,4 +32,7 @@ IF (OSPRAY_MODULE_BILINEAR_PATCH)
   #
   ADD_SUBDIRECTORY(ospray)
 
+  # add sg plugin for '.patches' files
+  ADD_SUBDIRECTORY(sg)
+
 ENDIF (OSPRAY_MODULE_BILINEAR_PATCH)
