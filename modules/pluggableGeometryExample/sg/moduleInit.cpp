@@ -145,7 +145,7 @@ namespace ospray {
       /*! module registry function that initalizes this module with the
         scene graph - in our case, we register a importer for '*.patches'
         files */
-      extern "C" void ospray_init_module_sg_bilinear_patches()
+      extern "C" OSPRAY_DLLEXPORT void ospray_init_module_sg_bilinear_patches()
       {
         ospLoadModule("bilinear_patches");
         ospray::sg::declareImporterForFileExtension("patches",importPatches);
