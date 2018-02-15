@@ -59,6 +59,7 @@ ELSE()
     utility/CodeTimer.h
     utility/DataView.h
     utility/DeletedUniquePtr.h
+    utility/demangle.cpp
     utility/DoubleBufferedValue.h
     utility/getEnvVar.h
     utility/OnScopeExit.h
@@ -159,6 +160,7 @@ ELSE()
     utility/CodeTimer.h
     utility/DataView.h
     utility/DeletedUniquePtr.h
+    utility/demangle.h
     utility/DoubleBufferedValue.h
     utility/getEnvVar.h
     utility/OnScopeExit.h

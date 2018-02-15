@@ -21,6 +21,7 @@
 
 #include "../common.h"
 #include "../TypeTraits.h"
+#include "demangle.h"
 
 namespace ospcommon {
   namespace utility {
@@ -162,9 +163,10 @@ namespace ospcommon {
       else {
         std::stringstream msg;
         msg << "Incorrect type queried for Any!" << '\n';
-        msg << "  queried type == " << typeid(T).name() << '\n';
-        msg << "  current type == " << currentValue->valueTypeID().name()
-            << '\n';
+        msg << "  queried type == "
+            << nameOf<T>() << '\n';
+        msg << "  current type == "
+            << demangle(currentValue->valueTypeID().name()) << '\n';
         throw std::runtime_error(msg.str());
       }
     }
@@ -180,9 +182,10 @@ namespace ospcommon {
       else {
         std::stringstream msg;
         msg << "Incorrect type queried for Any!" << '\n';
-        msg << "  queried type == " << typeid(T).name() << '\n';
-        msg << "  current type == " << currentValue->valueTypeID().name()
-            << '\n';
+        msg << "  queried type == "
+            << nameOf<T>() << '\n';
+        msg << "  current type == "
+            << demangle(currentValue->valueTypeID().name()) << '\n';
         throw std::runtime_error(msg.str());
       }
     }
@@ -203,7 +206,7 @@ namespace ospcommon {
     {
       std::stringstream retval;
       retval << "Any : (currently holds value of type) --> "
-             << currentValue->valueTypeID().name();
+             << demangle(currentValue->valueTypeID().name());
       return retval.str();
     }
 
