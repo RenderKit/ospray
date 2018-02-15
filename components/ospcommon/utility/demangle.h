@@ -19,10 +19,12 @@
 #include <string>
 #include <typeinfo>
 
+#include "../common.h"
+
 namespace ospcommon {
   namespace utility {
 
-    std::string demangle(const char* name);
+    OSPCOMMON_INTERFACE std::string demangle(const char* name);
 
     template <class T>
     inline std::string nameOf()
