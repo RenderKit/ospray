@@ -62,8 +62,8 @@ namespace ospray {
     vec3f *vertices{nullptr};
     float *field{nullptr};  // Attribute value at each vertex.
 
-    int nTetrahedra;
-    vec4i *tetrahedra{nullptr};
+    int nCells;
+    vec4i *indices{nullptr};
 
     std::vector<vec3f> faceNormals;
 

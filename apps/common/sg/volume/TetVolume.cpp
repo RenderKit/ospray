@@ -46,13 +46,13 @@ namespace ospray {
 
       if (!hasChild("vertices"))
         throw std::runtime_error("#osp:sg TetVolume -> no 'vertices' array!");
-      else if (!hasChild("tetrahedra"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'tetrahedra' array!");
+      else if (!hasChild("indices"))
+        throw std::runtime_error("#osp:sg TetVolume -> no 'indices' array!");
       else if (!hasChild("field"))
         throw std::runtime_error("#osp:sg TetVolume -> no 'field' array!");
 
       auto vertices   = child("vertices").nodeAs<DataBuffer>();
-      auto tetrahedra = child("tetrahedra").nodeAs<DataBuffer>();
+      auto indices    = child("indices").nodeAs<DataBuffer>();
       auto field      = child("field").nodeAs<DataBuffer>();
 
       ospcommon::box3f bounds;

@@ -25,7 +25,7 @@ bool intersectAndSampleTet(void *uniform userData,
 {
   TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
 
-  vec4i t = self->tetrahedra[id];  // The 4 corner indices of the tetrahedron.
+  vec4i t = self->indices[2 * id + 1];  // The 4 corner indices of the tetrahedron.
 
   vec3f p0 = self->vertices[t.x];
   vec3f p1 = self->vertices[t.y];
@@ -70,6 +70,195 @@ bool intersectAndSampleTet(void *uniform userData,
   return true;
 }
 
+//----------------------------------------------------------------------------
+// Compute iso-parametric interpolation functions
+//
+void HexInterpolationFunctions(float pcoords[3], float sf[8])
+{
+  float rm, sm, tm;
+
+  rm = 1.f - pcoords[0];
+  sm = 1.f - pcoords[1];
+  tm = 1.f - pcoords[2];
+
+  sf[0] = rm * sm * tm;
+  sf[1] = pcoords[0] * sm * tm;
+  sf[2] = pcoords[0] *pcoords[1] * tm;
+  sf[3] = rm * pcoords[1] * tm;
+  sf[4] = rm * sm * pcoords[2];
+  sf[5] = pcoords[0] * sm * pcoords[2];
+  sf[6] = pcoords[0] * pcoords[1] * pcoords[2];
+  sf[7] = rm * pcoords[1] * pcoords[2];
+}
+
+//----------------------------------------------------------------------------
+void HexInterpolationDerivs(float pcoords[3], float derivs[24])
+{
+  float rm, sm, tm;
+
+  rm = 1.f - pcoords[0];
+  sm = 1.f - pcoords[1];
+  tm = 1.f - pcoords[2];
+
+  // r-derivatives
+  derivs[0] = -sm * tm;
+  derivs[1] = sm * tm;
+  derivs[2] = pcoords[1] * tm;
+  derivs[3] = -pcoords[1] * tm;
+  derivs[4] = -sm * pcoords[2];
+  derivs[5] = sm * pcoords[2];
+  derivs[6] = pcoords[1] * pcoords[2];
+  derivs[7] = -pcoords[1] * pcoords[2];
+
+  // s-derivatives
+  derivs[8] = -rm * tm;
+  derivs[9] = -pcoords[0] * tm;
+  derivs[10] = pcoords[0] * tm;
+  derivs[11] = rm * tm;
+  derivs[12] = -rm * pcoords[2];
+  derivs[13] = -pcoords[0] * pcoords[2];
+  derivs[14] = pcoords[0] * pcoords[2];
+  derivs[15] = rm * pcoords[2];
+
+  // t-derivatives
+  derivs[16] = -rm * sm;
+  derivs[17] = -pcoords[0] * sm;
+  derivs[18] = -pcoords[0] * pcoords[1];
+  derivs[19] = -rm * pcoords[1];
+  derivs[20] = rm * sm;
+  derivs[21] = pcoords[0] * sm;
+  derivs[22] = pcoords[0] * pcoords[1];
+  derivs[23] = rm * pcoords[1];
+}
+
+static const float HEX_DIVERGED = 1.e6;
+static const int HEX_MAX_ITERATION = 10;
+static const float HEX_CONVERGED = 1.e-05;
+static const float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
+
+bool intersectAndSampleHex(void *uniform userData,
+                           uniform uint64 id,
+                           float &result,
+                           vec3f samplePos,
+                           float range_lo,
+                           float range_hi)
+{
+  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+
+  float params[3] = { 0.5, 0.5, 0.5 };
+  float pcoords[3];
+  float derivs[24];
+  float weights[8];
+
+  uniform vec4i lower = self->indices[2 * id];
+  uniform vec4i upper = self->indices[2 * id + 1];
+
+  // should precompute these
+  uniform const int diagonals[4][2] = { { 0, 2}, { 1, 3}, {2, 0}, {3, 1} };
+  uniform float longestDiagonal = 0;
+  for (uniform int i = 0; i < 4; i++) {
+      uniform vec3f p0 = self->vertices[(&lower.x)[diagonals[i][0]]];
+      uniform vec3f p1 = self->vertices[(&upper.x)[diagonals[i][1]]];
+      uniform float dist = distance(p0, p1);
+      if (longestDiagonal < dist)
+         longestDiagonal = dist;
+  }
+
+  uniform float volumeBound = pow(longestDiagonal, 3);
+  uniform float determinantTolerance =
+      1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
+
+  //  set initial position for Newton's method
+  pcoords[0] = pcoords[1] = pcoords[2] = 0.5;
+
+  //  enter iteration loop
+  bool converged = false;
+  for (uniform int iteration = 0; !converged && (iteration < HEX_MAX_ITERATION); iteration++) {
+    //  calculate element interpolation functions and derivatives
+    HexInterpolationFunctions(pcoords, weights);
+    HexInterpolationDerivs(pcoords, derivs);
+
+    //  calculate newton functions
+    vec3f fcol = make_vec3f(0.f, 0.f, 0.f);
+    vec3f rcol = make_vec3f(0.f, 0.f, 0.f);
+    vec3f scol = make_vec3f(0.f, 0.f, 0.f);
+    vec3f tcol = make_vec3f(0.f, 0.f, 0.f);
+    for (uniform int i = 0; i < 8; i++) {
+      vec3f pt =
+        i < 4 ? self->vertices[(&lower.x)[i]] : self->vertices[(&upper.x)[i - 4]];
+
+      fcol = fcol + pt * weights[i];
+      rcol = rcol + pt * derivs[i];
+      scol = scol + pt * derivs[i + 8];
+      tcol = tcol + pt * derivs[i + 16];
+    }
+
+    fcol = fcol - samplePos;
+
+    // compute determinants and generate improvements
+    float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    if (absf(d) < determinantTolerance) {
+      return false;
+    }
+
+    pcoords[0] = params[0] - det(make_LinearSpace3f(fcol, scol, tcol)) / d;
+    pcoords[1] = params[1] - det(make_LinearSpace3f(rcol, fcol, tcol)) / d;
+    pcoords[2] = params[2] - det(make_LinearSpace3f(rcol, scol, fcol)) / d;
+
+    // convergence/divergence test - if neither, repeat
+    if (((absf(pcoords[0] - params[0])) < HEX_CONVERGED) &&
+        ((absf(pcoords[1] - params[1])) < HEX_CONVERGED) &&
+        ((absf(pcoords[2] - params[2])) < HEX_CONVERGED)) {
+      converged = true;
+    } else if ((absf(pcoords[0]) > HEX_DIVERGED) ||
+               (absf(pcoords[1]) > HEX_DIVERGED) ||
+               (absf(pcoords[2]) > HEX_DIVERGED)) {
+      return false;
+    } else {
+      params[0] = pcoords[0];
+      params[1] = pcoords[1];
+      params[2] = pcoords[2];
+    }
+  }
+
+  if (!converged) {
+    return false;
+  }
+
+  float lowerlimit = 0.0 - HEX_OUTSIDE_CELL_TOLERANCE;
+  float upperlimit = 1.0 + HEX_OUTSIDE_CELL_TOLERANCE;
+  if (pcoords[0] >= lowerlimit && pcoords[0] <= upperlimit &&
+      pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
+      pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit) {
+    // evaluation
+    result = 0.f;
+    HexInterpolationFunctions(pcoords, weights);
+    for (int i = 0; i < 8; i++) {
+      int idx = i < 4 ? (&lower.x)[i] : (&upper.x)[i - 4];
+      result += weights[i] * self->field[idx];
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+bool intersectAndSampleCell(void *uniform userData,
+                           uniform uint64 id,
+                           float &result,
+                           vec3f samplePos,
+                           float range_lo,
+                           float range_hi)
+{
+    TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+
+    if (self->indices[2 * id].x == -1)
+        intersectAndSampleTet(userData, id, result, samplePos, range_lo, range_hi);
+    else
+        intersectAndSampleHex(userData, id, result, samplePos, range_lo, range_hi);
+}
+
 inline varying float TetrahedralVolume_sample(
     void *uniform _self, const varying vec3f &worldCoordinates)
 {
@@ -78,7 +267,7 @@ inline varying float TetrahedralVolume_sample(
 
   float results = 0;
 
-  traverse(self->bvh, _self, intersectAndSampleTet, results, worldCoordinates);
+  traverse(self->bvh, _self, intersectAndSampleCell, results, worldCoordinates);
 
   return results;
 }
@@ -183,11 +372,11 @@ TetrahedralVolume_createInstance(void *uniform cppEquivalent)
 
 export void TetrahedralVolume_set(void *uniform _self,
                                   const uniform int &_nVertices,
-                                  const uniform int &_nTetrahedra,
+                                  const uniform int &_nCells,
                                   const uniform box3f &_bbox,
                                   const vec3f *uniform _vertices,
                                   const vec3f *uniform _faceNormals,
-                                  const vec4i *uniform _tetrahedra,
+                                  const vec4i *uniform _indices,
                                   const float *uniform _field,
                                   uniform int64 rootRef,
                                   const void *uniform _bvhNode,
@@ -199,9 +388,9 @@ export void TetrahedralVolume_set(void *uniform _self,
       (uniform TetrahedralVolume * uniform) _self;
 
   self->nVertices   = _nVertices;
-  self->nTetrahedra = _nTetrahedra;
+  self->nCells      = _nCells;
   self->vertices    = _vertices;
-  self->tetrahedra  = _tetrahedra;
+  self->indices     = _indices;
   self->field       = _field;
 
   // Set inherited member variables.

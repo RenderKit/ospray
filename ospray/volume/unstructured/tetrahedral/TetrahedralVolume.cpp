@@ -58,13 +58,22 @@ namespace ospray {
 
   box4f TetrahedralVolume::getTetBBox(size_t id)
   {
-    auto t = tetrahedra[id];
-
     box4f tetBox;
 
-    for (int i = 0; i < 4; i++) {
-      const auto &v = vertices[t[i]];
-      const float f = field[t[i]];
+    int maxIdx = indices[2 * id][0] == -1 ? 4 : 8;
+
+    for (int i = 0; i < maxIdx; i++) {
+      size_t idx;
+      if (maxIdx == 4) {
+        idx = indices[2 * id + 1][i];
+      } else {
+        if (i < 4)
+          idx = indices[2 * id][i];
+        else
+          idx = indices[2 * id + 1][i - 4];
+      }
+      const auto &v = vertices[idx];
+      const float f = field[idx];
       const auto p  = vec4f(v.x, v.y, v.z, f);
 
       if (i == 0)
@@ -79,20 +88,21 @@ namespace ospray {
   void TetrahedralVolume::finish()
   {
     Data *verticesData   = getParamData("vertices", nullptr);
-    Data *tetrahedraData = getParamData("tetrahedra", nullptr);
+    Data *indicesData    = getParamData("indices", nullptr);
     Data *fieldData      = getParamData("field", nullptr);
 
-    if (!verticesData || !tetrahedraData || !fieldData) {
+    if (!verticesData || !indicesData || !fieldData) {
       throw std::runtime_error(
           "#osp: missing correct data arrays in "
           " TetrahedralVolume!");
     }
 
     nVertices   = verticesData->size();
-    nTetrahedra = tetrahedraData->size();
+
+    nCells = indicesData->size() / 2;
+    indices = (vec4i *)indicesData->data;
 
     vertices   = (vec3f *)verticesData->data;
-    tetrahedra = (vec4i *)tetrahedraData->data;
     field      = (float *)fieldData->data;
 
     buildBvhAndCalculateBounds();
@@ -103,11 +113,11 @@ namespace ospray {
 
     TetrahedralVolume_set(ispcEquivalent,
                           nVertices,
-                          nTetrahedra,
+                          nCells,
                           (const ispc::box3f &)bbox,
                           (const ispc::vec3f *)vertices,
                           (const ispc::vec3f *)faceNormals.data(),
-                          (const ispc::vec4i *)tetrahedra,
+                          (const ispc::vec4i *)indices,
                           (const float *)field,
                           bvh.rootRef(),
                           bvh.nodePtr(),
@@ -121,10 +131,10 @@ namespace ospray {
 
   void TetrahedralVolume::buildBvhAndCalculateBounds()
   {
-    std::vector<int64> primID(nTetrahedra);
-    std::vector<box4f> primBounds(nTetrahedra);
+    std::vector<int64> primID(nCells);
+    std::vector<box4f> primBounds(nCells);
 
-    for (int i = 0; i < nTetrahedra; i++) {
+    for (int i = 0; i < nCells; i++) {
       primID[i]   = i;
       auto bounds = getTetBBox(i);
       if (i == 0) {
@@ -137,17 +147,17 @@ namespace ospray {
       primBounds[i] = bounds;
     }
 
-    bvh.build(primBounds.data(), primID.data(), nTetrahedra);
+    bvh.build(primBounds.data(), primID.data(), nCells);
   }
 
   void TetrahedralVolume::calculateFaceNormals()
   {
-    const auto numNormals = nTetrahedra * 4;
+    const auto numNormals = nCells * 4;
     faceNormals.resize(numNormals);
 
     tasking::parallel_for(numNormals / 4, [&](int taskIndex) {
       const int i   = taskIndex * 4;
-      const auto &t = tetrahedra[i / 4];
+      const vec4i &t = indices[2 * (i / 4) + 1];
 
       // The corners of each triangle in the tetrahedron.
       const int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};

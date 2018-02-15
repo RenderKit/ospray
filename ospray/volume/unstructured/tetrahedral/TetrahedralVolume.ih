@@ -29,8 +29,8 @@ struct TetrahedralVolume
   uniform int nVertices;
   const vec3f *uniform vertices;
 
-  uniform int nTetrahedra;
-  const vec4i *uniform tetrahedra;  // indices into vertices array.
+  uniform int nCells;
+  const vec4i *uniform indices;     // indices into vertices array.
   const float *uniform field;       // Attribute value at each vertex.
   const vec3f *uniform faceNormals;
 
