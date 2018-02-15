@@ -52,15 +52,6 @@ namespace ospray {
     };
 
 
-    struct OSPSG_INTERFACE ImportState
-    {
-      ImportState(std::shared_ptr<sg::Model> world)
-        : world(world)
-      {}
-
-      std::shared_ptr<sg::Model> world;
-    };
-
     struct OSPSG_INTERFACE Importer : public sg::Renderable
     {
       Importer();
@@ -84,8 +75,8 @@ namespace ospray {
     };
 
     /*! prototype for any scene graph importer function */
-    using ImporterFunction = void (*)(const FileName &fileName,
-                                      sg::ImportState &importerState);
+    using ImporterFunction = void (*)(std::shared_ptr<Node> world,
+                                      const FileName &fileName);
 
     /*! declare an importer function for a given file extension */
     OSPSG_INTERFACE
@@ -125,8 +116,8 @@ namespace ospray {
                                    const FileName &fileName);
 
     /*! chombo amr */
-    OSPSG_INTERFACE void importAMR(const FileName &fileName,
-                                   sg::ImportState &importerState);
+    OSPSG_INTERFACE void importAMR(std::shared_ptr<Node> world, 
+                                   const FileName &fileName);
 
     OSPSG_INTERFACE
     std::shared_ptr<sg::Node> loadOSP(const std::string &fileName);

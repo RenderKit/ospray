@@ -112,21 +112,22 @@ namespace ospray {
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer)
     {
+      std::cout << "#sg: declaring importer for '." << fileExtension << "' files" << std::endl;
       importerForExtension[fileExtension] = importer;
     }
 
-    /*! import a given file. throws a sg::RuntimeError if this could not be done */
-    void importFile(std::shared_ptr<sg::Model> &world, const FileName &fileName)
-    {
-      ImporterFunction importer = importerForExtension[fileName.ext()];
-      if (importer) {
-        ImportState state(world);
-        importer(fileName,state);
-      } else {
-        throw sg::RuntimeError("unknown file format (fileName was '"
-                               + fileName.str() + "')");
-      }
-    }
+    // /*! import a given file. throws a sg::RuntimeError if this could not be done */
+    // void importFile(std::shared_ptr<sg::Model> &world, const FileName &fileName)
+    // {
+    //   ImporterFunction importer = importerForExtension[fileName.ext()];
+    //   if (importer) {
+    //     ImportState state(world);
+    //     importer(fileName,state);
+    //   } else {
+    //     throw sg::RuntimeError("unknown file format (fileName was '"
+    //                            + fileName.str() + "')");
+    //   }
+    // }
 
     Importer::Importer()
     {
@@ -270,6 +271,13 @@ namespace ospray {
       }
     }
 
+    inline bool hasImporterForExtension(const std::string &fileExtension)
+    {
+      PING; PRINT(fileExtension);
+      return importerForExtension.find(fileExtension)
+        != importerForExtension.end();
+    }
+
     void Importer::importDefaultExtensions(std::shared_ptr<Node> world,
                                            const FileName &fileName) const
     {
@@ -291,6 +299,10 @@ namespace ospray {
       } else if (ext == "vtu" || ext == "vtk" || ext == "off") {
         sg::importTetVolume(world, fileName);
 #endif
+      } else if (hasImporterForExtension(fileName.ext())) {
+        std::cout << "#sg: found importer for extension '" << fileName.ext() << "'" << std::endl;
+        ImporterFunction importer = importerForExtension[fileName.ext()];
+        importer(world,fileName);
       } else {
         std::cout << "unsupported file format\n";
         return;

@@ -47,7 +47,7 @@ namespace ospray {
 #define OSP_SG_REGISTER_MODULE(moduleName)            \
     extern "C" void ospray_sg_##moduleName##_init()
 
-  }
-}
+  } // ::ospray::sg
+} // ::ospray
 
 

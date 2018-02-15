@@ -20,6 +20,7 @@
 #include "common/sg/SceneGraph.h"
 #include "sg/geometry/TriangleMesh.h"
 #include "common/sg/visitor/PrintNodes.h"
+#include "sg/module/Module.h"
 
 namespace ospray {
   namespace app {
@@ -160,6 +161,10 @@ namespace ospray {
           --i;
         } else if (arg == "-m" || arg == "--module") {
           ospLoadModule(av[i + 1]);
+          removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "-m" || arg == "--sg:module") {
+          sg::loadModule(av[i+1]);
           removeArgs(ac, av, i, 2);
           --i;
         } else if (arg == "--matrix") {
