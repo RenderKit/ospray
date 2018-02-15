@@ -119,30 +119,34 @@ namespace ospray {
         if (patches.empty())
           return;
 
+        auto &instance = world->createChild("patches_instance", "Instance");
+
         auto patchesGeometryNode = std::make_shared<PatchSGNode>();
         patchesGeometryNode->setName("loaded_example_patches");
         patchesGeometryNode->setType("PatchSGNode");
 
-        auto *vertices = reinterpret_cast<vec3f*>(patches.data());
+        auto patchArrayNode = std::make_shared<sg::DataVector3f>();
 
-        auto patchArrayNode =
-          std::make_shared<sg::DataArray3f>(vertices, patches.size() * 4);
+        for (auto &p : patches) {
+          patchArrayNode->push_back(p.v00);
+          patchArrayNode->push_back(p.v01);
+          patchArrayNode->push_back(p.v10);
+          patchArrayNode->push_back(p.v11);
+        }
 
         patchArrayNode->setName("vertices");
-        patchArrayNode->setType("DataArray3f");
-
+        patchArrayNode->setType("DataVector3f");
         patchesGeometryNode->add(patchArrayNode);
-        world->add(patchesGeometryNode);
-        std::cout << "#sg: successfully imported " << fileName << std::endl;
+        instance["model"].add(patchesGeometryNode);
       }
 
-
+      OSPSG_REGISTER_IMPORT_FUNCTION(importPatches, patches);
 
       /*! module registry function that initalizes this module with the
         scene graph - in our case, we register a importer for '*.patches'
         files */
-      extern "C" void ospray_sg_bilinear_patches_init()
-      {      
+      extern "C" void ospray_init_module_sg_bilinear_patches()
+      {
         ospLoadModule("bilinear_patches");
         ospray::sg::declareImporterForFileExtension("patches",importPatches);
       }
