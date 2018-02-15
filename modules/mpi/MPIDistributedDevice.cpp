@@ -263,7 +263,7 @@ namespace ospray {
                                          const char *s)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(s);
+      object->findParam(bufName, true)->set(std::string(s));
     }
 
     int MPIDistributedDevice::loadModule(const char *name)
