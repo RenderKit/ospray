@@ -196,8 +196,10 @@ namespace ospray {
       }
     }
 
-    void Importer::importRegistryGenerator(std::shared_ptr<Node> world,
-                                           const std::string &type) const
+    // TODO: Implement a registry for data "generators" which don't require
+    //       an input file.
+    void Importer::importRegistryGenerator(std::shared_ptr<Node> /*world*/,
+                                           const std::string &/*type*/) const
     {
       #if 0
       // Function pointer type for creating a concrete instance of a subtype of
