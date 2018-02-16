@@ -49,7 +49,7 @@ namespace ospray {
         name of the module and shared library containing this module
         (see comments regarding library name in CMakeLists.txt)
     */
-    extern "C"  OSPRAY_DLLEXPORT void ospray_init_module_bilinear_patches()
+    extern "C" void ospray_init_module_bilinear_patches()
     {
       std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;
       /* nothing to do, actually - this is only an example */

@@ -116,7 +116,7 @@ namespace ospray {
                                    const FileName &fileName);
 
     /*! chombo amr */
-    OSPSG_INTERFACE void importAMR(std::shared_ptr<Node> world, 
+    OSPSG_INTERFACE void importAMR(std::shared_ptr<Node> world,
                                    const FileName &fileName);
 
     OSPSG_INTERFACE
@@ -146,9 +146,8 @@ namespace ospray {
     // Macro to register importers ////////////////////////////////////////////
 
 #define OSPSG_REGISTER_IMPORT_FUNCTION(function, name)                         \
-    extern "C" OSPSG_INTERFACE                                                 \
-        void ospray_sg_import_##name(std::shared_ptr<Node> world,              \
-                                     const FileName fileName)                  \
+    extern "C" void ospray_sg_import_##name(std::shared_ptr<Node> world,       \
+                                            const FileName fileName)           \
     {                                                                          \
       function(world, fileName);                                               \
     }                                                                          \
