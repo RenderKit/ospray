@@ -332,6 +332,7 @@ source-protex-scan:
   tags:
     - protex-scan-docker
   ## Temporarily allow to fail
+  when: manual
   allow_failure: true
 
 
