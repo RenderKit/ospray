@@ -48,7 +48,7 @@ namespace ospray {
     if (!vertexData)
       throw std::runtime_error("streamlines must have 'vertex' array");
     if (vertexData->type != OSP_FLOAT4 && vertexData->type != OSP_FLOAT3A)
-      throw std::runtime_error("'vertex' must have data type OSP_FLOAT4 or OSP_FLOAT3A");
+      throw std::runtime_error("streamlines 'vertex' must be type OSP_FLOAT4 or OSP_FLOAT3A");
     vertex = (vec3fa*)vertexData->data;
     numVertices = vertexData->numItems;
     if (vertexData->type == OSP_FLOAT4) {
@@ -58,9 +58,9 @@ namespace ospray {
 
     indexData  = getParamData("index",nullptr);
     if (!indexData)
-      throw std::runtime_error("streamlinee must have 'index' array");
+      throw std::runtime_error("streamlines must have 'index' array");
     if (indexData->type != OSP_INT)
-      throw std::runtime_error("'index' must have data type OSP_INT");
+      throw std::runtime_error("streamlines 'index' array must be type OSP_INT");
     index = (uint32*)indexData->data;
     numSegments = indexData->numItems;
 
