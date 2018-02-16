@@ -25,6 +25,8 @@ namespace ospray {
     /*! a plain old structured volume */
     struct OSPSG_INTERFACE TetVolume : public Volume
     {
+      TetVolume();
+
       std::string toString() const override;
 
       void preCommit(RenderContext &ctx) override;

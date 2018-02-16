@@ -20,6 +20,7 @@
 
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 // auto-generated .h file.
 #include "TetrahedralVolume_ispc.h"
@@ -41,6 +42,17 @@ namespace ospray {
     updateEditableParameters();
     if (!finished)
       finish();
+
+    auto methodStringFromEnv =
+      utility::getEnvVar<std::string>("OSPRAY_HEX_METHOD");
+    std::string methodString =
+      methodStringFromEnv.value_or(getParamString("hexMethod","planar"));
+    if (methodString == "planar") {
+      ispc::TetrahedralVolume_method_planar(ispcEquivalent);
+    } else if (methodString == "nonplanar") {
+      ispc::TetrahedralVolume_method_nonplanar(ispcEquivalent);
+    }
+
     Volume::commit();
   }
 
@@ -152,31 +164,55 @@ namespace ospray {
 
   void TetrahedralVolume::calculateFaceNormals()
   {
-    const auto numNormals = nCells * 4;
+    const auto numNormals = nCells * 6;
     faceNormals.resize(numNormals);
 
-    tasking::parallel_for(numNormals / 4, [&](int taskIndex) {
-      const int i   = taskIndex * 4;
-      const vec4i &t = indices[2 * (i / 4) + 1];
+    tasking::parallel_for(numNormals / 6, [&](int taskIndex) {
+      const int i   = taskIndex * 6;
 
-      // The corners of each triangle in the tetrahedron.
-      const int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
+      if (indices[2 * taskIndex].x == -1) {
+        // tetrahedron cell
+        const vec4i &t = indices[2 * taskIndex + 1];
 
-      for (int j = 0; j < 4; j++) {
-        const int t0 = t[faces[j][0]];
-        const int t1 = t[faces[j][1]];
-        const int t2 = t[faces[j][2]];
+        // The corners of each triangle in the tetrahedron.
+        const int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
 
-        const auto &p0 = vertices[t0];
-        const auto &p1 = vertices[t1];
-        const auto &p2 = vertices[t2];
+        for (int j = 0; j < 4; j++) {
+          const int t0 = t[faces[j][0]];
+          const int t1 = t[faces[j][1]];
+          const int t2 = t[faces[j][2]];
 
-        const auto q0 = p1 - p0;
-        const auto q1 = p2 - p0;
+          const auto &p0 = vertices[t0];
+          const auto &p1 = vertices[t1];
+          const auto &p2 = vertices[t2];
 
-        const auto norm = normalize(cross(q0, q1));
+          const auto q0 = p1 - p0;
+          const auto q1 = p2 - p0;
 
-        faceNormals[i + j] = norm;
+          const auto norm = normalize(cross(q0, q1));
+
+          faceNormals[i + j] = norm;
+        }
+      } else {
+        // hexahedron cell
+        const vec4i &lower = indices[2 * taskIndex];
+        const vec4i &upper = indices[2 * taskIndex + 1];
+
+        const auto v0 = vertices[lower.x];
+        const auto v1 = vertices[lower.y];
+        const auto v2 = vertices[lower.z];
+        const auto v3 = vertices[lower.w];
+        const auto v4 = vertices[upper.x];
+        const auto v5 = vertices[upper.y];
+        const auto v6 = vertices[upper.z];
+        const auto v7 = vertices[upper.w];
+
+        faceNormals[i + 0] = normalize(cross(v2 - v0, v1 - v0));
+        faceNormals[i + 1] = normalize(cross(v5 - v0, v4 - v0));
+        faceNormals[i + 2] = normalize(cross(v7 - v0, v3 - v0));
+        faceNormals[i + 3] = normalize(cross(v5 - v6, v1 - v6));
+        faceNormals[i + 4] = normalize(cross(v7 - v6, v4 - v6));
+        faceNormals[i + 5] = normalize(cross(v2 - v6, v3 - v6));
       }
     });
   }

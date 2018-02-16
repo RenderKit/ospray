@@ -21,6 +21,13 @@
 namespace ospray {
   namespace sg {
 
+    TetVolume::TetVolume()
+    {
+      createChild("hexMethod", "string", std::string("planar"))
+        .setWhiteList({std::string("planar"),
+              std::string("nonplanar")});
+    }
+
     std::string TetVolume::toString() const
     {
       return "ospray::sg::TetVolume";

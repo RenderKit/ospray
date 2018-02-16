@@ -32,10 +32,10 @@ bool intersectAndSampleTet(void *uniform userData,
   vec3f p2 = self->vertices[t.z];
   vec3f p3 = self->vertices[t.w];
 
-  uniform vec3f norm0 = self->faceNormals[(id * 4) + 0];
-  uniform vec3f norm1 = self->faceNormals[(id * 4) + 1];
-  uniform vec3f norm2 = self->faceNormals[(id * 4) + 2];
-  uniform vec3f norm3 = self->faceNormals[(id * 4) + 3];
+  uniform vec3f norm0 = self->faceNormals[(id * 6) + 0];
+  uniform vec3f norm1 = self->faceNormals[(id * 6) + 1];
+  uniform vec3f norm2 = self->faceNormals[(id * 6) + 2];
+  uniform vec3f norm3 = self->faceNormals[(id * 6) + 3];
 
   // Distance from the world point to the faces.
   float d0 = dot(norm0, p1 - samplePos);
@@ -136,12 +136,12 @@ static const int HEX_MAX_ITERATION = 10;
 static const float HEX_CONVERGED = 1.e-05;
 static const float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
-bool intersectAndSampleHex(void *uniform userData,
-                           uniform uint64 id,
-                           float &result,
-                           vec3f samplePos,
-                           float range_lo,
-                           float range_hi)
+bool intersectAndSampleHexNonplanar(void *uniform userData,
+                                    uniform uint64 id,
+                                    float &result,
+                                    vec3f samplePos,
+                                    float range_lo,
+                                    float range_hi)
 {
   TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
 
@@ -244,6 +244,46 @@ bool intersectAndSampleHex(void *uniform userData,
   return false;
 }
 
+bool intersectAndSampleHexPlanar(void *uniform userData,
+                                 uniform uint64 id,
+                                 float &result,
+                                 vec3f samplePos,
+                                 float range_lo,
+                                 float range_hi)
+{
+  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+
+  uniform vec4i lower = self->indices[2 * id];
+  uniform vec4i upper = self->indices[2 * id + 1];
+
+  float dist[6];
+  for (uniform int planeID = 0; planeID < 6; planeID++) {
+    dist[planeID] =
+      dot(samplePos - self->vertices[planeID < 3 ? lower.x : upper.z],
+          self->faceNormals[(id * 6) + planeID]);
+    if (dist[planeID] >= 0.f)
+      return false;
+  }
+
+  float u0 = dist[4] / (dist[0] + dist[4]);
+  float v0 = dist[5] / (dist[1] + dist[5]);
+  float w0 = dist[3] / (dist[2] + dist[3]);
+  float u1 = 1.f - u0;
+  float v1 = 1.f - v0;
+  float w1 = 1.f - w0;
+  result =
+    u0 * v0 * w0 * self->field[lower.x] +
+    u0 * v0 * w1 * self->field[lower.y] +
+    u0 * v1 * w1 * self->field[lower.z] +
+    u0 * v1 * w0 * self->field[lower.w] +
+    u1 * v0 * w0 * self->field[upper.x] +
+    u1 * v0 * w1 * self->field[upper.y] +
+    u1 * v1 * w1 * self->field[upper.z] +
+    u1 * v1 * w0 * self->field[upper.w];
+
+  return true;
+}
+
 bool intersectAndSampleCell(void *uniform userData,
                            uniform uint64 id,
                            float &result,
@@ -251,12 +291,16 @@ bool intersectAndSampleCell(void *uniform userData,
                            float range_lo,
                            float range_hi)
 {
-    TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
 
-    if (self->indices[2 * id].x == -1)
-        intersectAndSampleTet(userData, id, result, samplePos, range_lo, range_hi);
-    else
-        intersectAndSampleHex(userData, id, result, samplePos, range_lo, range_hi);
+  if (self->indices[2 * id].x == -1) {
+    intersectAndSampleTet(userData, id, result, samplePos, range_lo, range_hi);
+  } else {
+    if (self->hexMethod == PLANAR)
+      intersectAndSampleHexPlanar(userData, id, result, samplePos, range_lo, range_hi);
+    else if (self->hexMethod == NONPLANAR)
+      intersectAndSampleHexNonplanar(userData, id, result, samplePos, range_lo, range_hi);
+  }
 }
 
 inline varying float TetrahedralVolume_sample(
@@ -368,6 +412,20 @@ TetrahedralVolume_createInstance(void *uniform cppEquivalent)
   TetrahedralVolume_Constructor(self, cppEquivalent);
 
   return self;
+}
+
+export void
+TetrahedralVolume_method_planar(void *uniform _self)
+{
+  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  self->hexMethod = PLANAR;
+}
+
+export void
+TetrahedralVolume_method_nonplanar(void *uniform _self)
+{
+  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  self->hexMethod = NONPLANAR;
 }
 
 export void TetrahedralVolume_set(void *uniform _self,

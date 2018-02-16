@@ -35,4 +35,6 @@ struct TetrahedralVolume
   const vec3f *uniform faceNormals;
 
   uniform MinMaxBVH2 bvh;
+
+  uniform enum {PLANAR, NONPLANAR} hexMethod;
 };
