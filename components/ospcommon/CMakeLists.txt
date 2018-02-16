@@ -177,17 +177,6 @@ ELSE()
 
   ADD_LIBRARY(ospray_test_main STATIC testing/catch_main.cpp)
 
-  # utility/Any
-
-  OSPRAY_CREATE_TEST(test_Any
-    utility/tests/test_Any.cpp
-  LINK
-    ospray_common
-    ospray_test_main
-  )
-
-  ADD_TEST(NAME Any COMMAND test_Any)
-
   # utility/ArgumentList
 
   OSPRAY_CREATE_TEST(test_ArgumentList
@@ -255,6 +244,17 @@ ELSE()
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
 
   IF(NOT WIN32)
+
+    # utility/Any
+
+    OSPRAY_CREATE_TEST(test_Any
+      utility/tests/test_Any.cpp
+    LINK
+      ospray_common
+      ospray_test_main
+    )
+
+    ADD_TEST(NAME Any COMMAND test_Any)
 
     # containers/AlignedVector
 
