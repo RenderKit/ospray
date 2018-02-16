@@ -312,6 +312,7 @@ benchmark-centos7-gcc:
     when: always
   dependencies:
     - build-centos7-gcc
+  when: manual
 
 test-kw-critical:
   stage: test-src
