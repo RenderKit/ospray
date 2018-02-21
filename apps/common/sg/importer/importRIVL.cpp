@@ -503,12 +503,12 @@ namespace ospray {
       RIVLNode lastNode;
       size_t nodeCounter = 0;
       size_t numNodes = root.child.size();
-      size_t increment = numNodes/size_t(10);
+      float increment = float(numNodes)/10.f;
       int incrementer = 0;
       std::cout << "mapping RIVL scene state to OSPSG... \n";
       nodeList.reserve(numNodes);
       xml::for_each_child_of(root,[&](const xml::Node &node){
-          if (nodeCounter++ > (increment*incrementer+1)) {
+          if (nodeCounter++ >= (increment*float(incrementer))) {
             std::cout << incrementer*10 << "%\n";
             incrementer++;
           }
@@ -546,7 +546,15 @@ namespace ospray {
           }
         });
       if (lastNode.sgNode)
-        world->add(lastNode.sgNode);
+      {
+        if (lastNode.sgNode->type() == "Model")
+        {
+          world->createChild("rivlInstance", "Instance");
+          world->child("rivlInstance").setChild("model", lastNode.sgNode);
+        }
+        else
+          world->add(lastNode.sgNode);
+      }
       std::cout << "...finished import!\n";
       nodeList.resize(0);
       transformList.resize(0);
