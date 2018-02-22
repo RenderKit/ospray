@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "../../../common/OSPCommon.ih"
-#include "../../Volume.ih"
-#include "../MinMaxBVH2.ih"
+#include "../../common/OSPCommon.ih"
+#include "../Volume.ih"
+#include "MinMaxBVH2.ih"
 
 struct UnstructuredVolume
 {

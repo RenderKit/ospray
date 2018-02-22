@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // sg
-#include "TetVolume.h"
+#include "UnstructuredVolume.h"
 #include "../common/Data.h"
 
 namespace ospray {

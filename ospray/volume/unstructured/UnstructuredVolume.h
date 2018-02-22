@@ -17,9 +17,9 @@
 #pragma once
 
 // ospray
-#include "../../../common/OSPCommon.h"
-#include "../../Volume.h"
-#include "../MinMaxBVH2.h"
+#include "../../common/OSPCommon.h"
+#include "../Volume.h"
+#include "MinMaxBVH2.h"
 
 namespace ospray {
 

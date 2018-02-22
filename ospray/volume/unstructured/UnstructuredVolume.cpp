@@ -15,15 +15,15 @@
 // ======================================================================== //
 
 // ospray
-#include "TetrahedralVolume.h"
-#include "../../../common/Data.h"
+#include "UnstructuredVolume.h"
+#include "../../common/Data.h"
 
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/utility/getEnvVar.h"
 
 // auto-generated .h file.
-#include "TetrahedralVolume_ispc.h"
+#include "UnstructuredVolume_ispc.h"
 
 namespace ospray {
 

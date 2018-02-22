@@ -31,7 +31,7 @@ if(OSPRAY_SG_VTK)
 
   include(${VTK_USE_FILE})
 
-  set(SG_VTK_SRCS importer/importTetVolume.cpp)
+  set(SG_VTK_SRCS importer/importUnstructuredVolume.cpp)
 
   add_definitions(-DOSPRAY_APPS_SG_VTK=1)
 endif()
@@ -103,7 +103,7 @@ ospray_create_library(ospray_sg SHARED
 
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
-  volume/TetVolume.cpp
+  volume/UnstructuredVolume.cpp
   volume/AMRVolume.cpp
 
   module/Module.cpp
@@ -221,7 +221,7 @@ ospray_install_sdk_headers(
 
 ospray_install_sdk_headers(
   volume/AMRVolume.h
-  volume/TetVolume.h
+  volume/UnstructuredVolume.h
   volume/Volume.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/volume

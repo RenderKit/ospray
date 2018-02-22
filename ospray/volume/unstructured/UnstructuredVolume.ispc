@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "TetrahedralVolume.ih"
+#include "UnstructuredVolume.ih"
 
 bool intersectAndSampleTet(void *uniform userData,
                            uniform uint64 id,
