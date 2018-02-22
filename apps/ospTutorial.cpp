@@ -126,7 +126,7 @@ int main(int argc, const char **argv) {
   ospray::cpp::Renderer renderer("scivis"); // choose Scientific Visualization renderer
 
   // create and setup light for Ambient Occlusion
-  ospray::cpp::Light light = renderer.newLight("ambient");
+  ospray::cpp::Light light("scivis", "ambient");
   light.commit();
   auto lightHandle = light.handle();
   ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);

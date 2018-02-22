@@ -156,6 +156,7 @@ namespace ospray {
     void Renderer::preRender(RenderContext& ctx)
     {
       ctx.ospRenderer = ospRenderer;
+      ctx.ospRendererType = child("rendererType").valueAs<std::string>();
     }
 
     void Renderer::preCommit(RenderContext &ctx)
@@ -191,6 +192,7 @@ namespace ospray {
         }
       }
       ctx.ospRenderer = ospRenderer;
+      ctx.ospRendererType = rendererType;
       ctx.world = child("world").nodeAs<sg::Model>();
     }
 

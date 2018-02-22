@@ -65,8 +65,8 @@ namespace ospray {
       OSPMaterial mat = nullptr;
       try
       {
-        mat = ospNewMaterial(ctx.ospRenderer,
-                             child("type").valueAs<std::string>().c_str());
+        mat = ospNewMaterial2(ctx.ospRendererType.c_str(),
+                              child("type").valueAs<std::string>().c_str());
       } catch (...) {}
 
       if (!mat)
@@ -76,7 +76,9 @@ namespace ospray {
         static OSPMaterial defaultMaterial = nullptr;
         static OSPRenderer defaultMaterialRenderer = nullptr;
         if (!defaultMaterial || defaultMaterialRenderer != ctx.ospRenderer) {
-          defaultMaterial = ospNewMaterial(ctx.ospRenderer, "default");
+          defaultMaterial =
+            ospNewMaterial2(ctx.ospRendererType.c_str(), "default");
+
           defaultMaterialRenderer = ctx.ospRenderer;
           const float kd[] = {.7f, .7f, .7f};
           const float ks[] = {.3f, .3f, .3f};

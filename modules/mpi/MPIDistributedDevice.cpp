@@ -373,6 +373,11 @@ namespace ospray {
       NOT_IMPLEMENTED;
     }
 
+    OSPMaterial MPIDistributedDevice::newMaterial(const char *, const char *)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     OSPTransferFunction
     MPIDistributedDevice::newTransferFunction(const char *type)
     {
@@ -395,6 +400,16 @@ namespace ospray {
         return nullptr;
       }
     }
+
+    OSPLight MPIDistributedDevice::newLight(const char *renderer_type,
+                                            const char *light_type)
+    {
+      auto renderer = newRenderer(renderer_type);
+      auto light = newLight(renderer, light_type);
+      release(renderer);
+      return light;
+    }
+
 
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)

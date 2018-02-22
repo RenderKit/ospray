@@ -45,7 +45,9 @@ namespace ospray {
         registerWorkUnit<NewPixelOp>(registry);
 
         registerWorkUnit<NewMaterial>(registry);
+        registerWorkUnit<NewMaterial2>(registry);
         registerWorkUnit<NewLight>(registry);
+        registerWorkUnit<NewLight2>(registry);
 
         registerWorkUnit<NewData>(registry);
         registerWorkUnit<NewTexture2d>(registry);
@@ -314,6 +316,22 @@ namespace ospray {
         handle.assign(material);
       }
 
+      void NewMaterial2::run()
+      {
+        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
+
+        Material *material = nullptr;
+        if (renderer)
+          material = renderer->createMaterial(materialType.c_str());
+
+        // No renderer present or the renderer doesn't intercept this
+        // material type.
+        if (!material)
+          material = Material::createMaterial(materialType.c_str());
+
+        handle.assign(material);
+      }
+
       // ospNewLight //////////////////////////////////////////////////////////
 
       void NewLight::run()
@@ -326,6 +344,22 @@ namespace ospray {
         // No renderer present or the renderer doesn't intercept this
         // light type.
         if (!light) light = Light::createLight(type.c_str());
+        handle.assign(light);
+      }
+
+      void NewLight2::run()
+      {
+        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
+
+        Light *light = nullptr;
+        if (renderer)
+          light = renderer->createLight(lightType.c_str());
+
+        // No renderer present or the renderer doesn't intercept this
+        // light type.
+        if (!light)
+          light = Light::createLight(lightType.c_str());
+
         handle.assign(light);
       }
 

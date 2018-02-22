@@ -41,6 +41,7 @@ namespace ospray {
       float time {0.f};
 
       OSPRenderer ospRenderer {nullptr};
+      std::string ospRendererType;
       int level {0};
 
 

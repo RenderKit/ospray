@@ -147,6 +147,10 @@ namespace ospray {
       /*! have given renderer create a new material */
       OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) override;
 
+      /*! have given renderer create a new material */
+      OSPMaterial newMaterial(const char *renderer_type,
+                              const char *material_type) override;
+
       /*! create a new camera object (out of list of registered cameras) */
       OSPCamera newCamera(const char *type) override;
 
@@ -158,6 +162,10 @@ namespace ospray {
 
       /*! have given renderer create a new Light */
       OSPLight newLight(OSPRenderer _renderer, const char *type) override;
+
+      /*! have given renderer create a new Light */
+      OSPLight newLight(const char *renderer_type,
+                        const char *light_type) override;
 
       /*! create a new Texture2D object */
       OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
