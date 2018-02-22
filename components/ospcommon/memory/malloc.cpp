@@ -14,24 +14,48 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "malloc.h"
+#include "../intrinsics.h"
+#if defined(TASKING_TBB)
+#  define __TBB_NO_IMPLICIT_LINKAGE 1
+#  include "tbb/scalable_allocator.h"
+#endif
 
-#include <functional>
-#include <memory>
-#include <utility>
+#ifdef _WIN32
+#include <malloc.h>
+#endif
 
 namespace ospcommon {
-  namespace utility {
+  namespace memory {
 
-    template <typename T>
-    using DeletedUniquePtr = std::unique_ptr<T, std::function<void(T*)>>;
-
-    template <typename T, typename DELETE_FCN, typename ...Args>
-    inline DeletedUniquePtr<T> make_deleted_unique(DELETE_FCN&& deleter,
-                                                   Args&& ...args)
+    void* alignedMalloc(size_t size, size_t align)
     {
-      return DeletedUniquePtr<T>(new T(std::forward<Args>(args)...), deleter);
+      assert((align & (align-1)) == 0);
+      // FIXME: have to disable this for now as the TBB  allocator itself seems
+      //        to access some uninitialized value when using valgrind
+#if 0//defined(TASKING_TBB)
+      return scalable_aligned_malloc(size,align);
+#else
+#  ifdef _WIN32
+      return _aligned_malloc(size, align);
+#  else // __UNIX__
+      return _mm_malloc(size, align);
+#  endif
+#endif
     }
 
-  } // ::ospcommon::utility
+  void alignedFree(void* ptr)
+  {
+#if 0//defined(TASKING_TBB)
+      scalable_aligned_free(ptr);
+#else
+#  ifdef _WIN32
+      return _aligned_free(ptr);
+#  else // __UNIX__
+      _mm_free(ptr);
+#  endif
+#endif
+    }
+
+  } // ::ospcommon::memory
 } // ::ospcommon

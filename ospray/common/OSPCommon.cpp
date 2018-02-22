@@ -24,13 +24,13 @@ namespace ospray {
   /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
   extern "C" void *malloc64(size_t size)
   {
-    return ospcommon::alignedMalloc(size);
+    return alignedMalloc(size);
   }
 
   /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
   extern "C" void free64(void *ptr)
   {
-    return ospcommon::alignedFree(ptr);
+    return alignedFree(ptr);
   }
 
   WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel)

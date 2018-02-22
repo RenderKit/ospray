@@ -17,7 +17,7 @@
 #include "Context.h"
 #include <iostream>
 
-#include "ospcommon/malloc.h"
+#include "ospcommon/memory/malloc.h"
 #include "ospcommon/tasking/async.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
 #include "ospcommon/utility/getEnvVar.h"

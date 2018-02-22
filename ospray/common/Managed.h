@@ -105,7 +105,7 @@ namespace ospray {
     </dl>
 
    */
-  struct OSPRAY_SDK_INTERFACE ManagedObject : public RefCount
+  struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount
   {
     /*! \brief constructor */
     ManagedObject() = default;
