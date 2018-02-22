@@ -23,11 +23,11 @@
 
 namespace ospray {
 
-  class TetrahedralVolume : public Volume
+  class UnstructuredVolume : public Volume
   {
    public:
-    TetrahedralVolume();
-    ~TetrahedralVolume() override = default;
+    UnstructuredVolume();
+    ~UnstructuredVolume() override = default;
 
     //! A string description of this class.
     std::string toString() const override;

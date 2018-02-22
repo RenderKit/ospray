@@ -27,17 +27,17 @@
 
 namespace ospray {
 
-  TetrahedralVolume::TetrahedralVolume()
+  UnstructuredVolume::UnstructuredVolume()
   {
-    ispcEquivalent = ispc::TetrahedralVolume_createInstance(this);
+    ispcEquivalent = ispc::UnstructuredVolume_createInstance(this);
   }
 
-  std::string TetrahedralVolume::toString() const
+  std::string UnstructuredVolume::toString() const
   {
-    return std::string("ospray::TetrahedralVolume");
+    return std::string("ospray::UnstructuredVolume");
   }
 
-  void TetrahedralVolume::commit()
+  void UnstructuredVolume::commit()
   {
     updateEditableParameters();
     if (!finished)
@@ -48,27 +48,27 @@ namespace ospray {
     std::string methodString =
       methodStringFromEnv.value_or(getParamString("hexMethod","planar"));
     if (methodString == "planar") {
-      ispc::TetrahedralVolume_method_planar(ispcEquivalent);
+      ispc::UnstructuredVolume_method_planar(ispcEquivalent);
     } else if (methodString == "nonplanar") {
-      ispc::TetrahedralVolume_method_nonplanar(ispcEquivalent);
+      ispc::UnstructuredVolume_method_nonplanar(ispcEquivalent);
     }
 
     Volume::commit();
   }
 
-  int TetrahedralVolume::setRegion(const void *, const vec3i &, const vec3i &)
+  int UnstructuredVolume::setRegion(const void *, const vec3i &, const vec3i &)
   {
     return 0;
   }
 
-  void TetrahedralVolume::computeSamples(float **,
+  void UnstructuredVolume::computeSamples(float **,
                                          const vec3f *,
                                          const size_t &)
   {
     NOT_IMPLEMENTED;
   }
 
-  box4f TetrahedralVolume::getTetBBox(size_t id)
+  box4f UnstructuredVolume::getTetBBox(size_t id)
   {
     box4f tetBox;
 
@@ -97,7 +97,7 @@ namespace ospray {
     return tetBox;
   }
 
-  void TetrahedralVolume::finish()
+  void UnstructuredVolume::finish()
   {
     Data *verticesData   = getParamData("vertices", nullptr);
     Data *indicesData    = getParamData("indices", nullptr);
@@ -106,7 +106,7 @@ namespace ospray {
     if (!verticesData || !indicesData || !fieldData) {
       throw std::runtime_error(
           "#osp: missing correct data arrays in "
-          " TetrahedralVolume!");
+          " UnstructuredVolume!");
     }
 
     nVertices   = verticesData->size();
@@ -123,7 +123,7 @@ namespace ospray {
     float samplingRate = getParam1f("samplingRate", 1.f);
     float samplingStep = calculateSamplingStep();
 
-    TetrahedralVolume_set(ispcEquivalent,
+    UnstructuredVolume_set(ispcEquivalent,
                           nVertices,
                           nCells,
                           (const ispc::box3f &)bbox,
@@ -141,7 +141,7 @@ namespace ospray {
     finished = true;
   }
 
-  void TetrahedralVolume::buildBvhAndCalculateBounds()
+  void UnstructuredVolume::buildBvhAndCalculateBounds()
   {
     std::vector<int64> primID(nCells);
     std::vector<box4f> primBounds(nCells);
@@ -162,7 +162,7 @@ namespace ospray {
     bvh.build(primBounds.data(), primID.data(), nCells);
   }
 
-  void TetrahedralVolume::calculateFaceNormals()
+  void UnstructuredVolume::calculateFaceNormals()
   {
     const auto numNormals = nCells * 6;
     faceNormals.resize(numNormals);
@@ -217,7 +217,7 @@ namespace ospray {
     });
   }
 
-  float TetrahedralVolume::calculateSamplingStep()
+  float UnstructuredVolume::calculateSamplingStep()
   {
     float dx = bbox.upper.x - bbox.lower.x;
     float dy = bbox.upper.y - bbox.lower.y;
@@ -229,6 +229,6 @@ namespace ospray {
     return getParam1f("samplingStep", samplingStep);
   }
 
-  OSP_REGISTER_VOLUME(TetrahedralVolume, tetrahedral_volume);
+  OSP_REGISTER_VOLUME(UnstructuredVolume, unstructured_volume);
 
 }  // ::ospray

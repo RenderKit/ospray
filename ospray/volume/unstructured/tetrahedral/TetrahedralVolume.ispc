@@ -23,7 +23,7 @@ bool intersectAndSampleTet(void *uniform userData,
                            float range_lo,
                            float range_hi)
 {
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
 
   vec4i t = self->indices[2 * id + 1];  // The 4 corner indices of the tetrahedron.
 
@@ -143,7 +143,7 @@ bool intersectAndSampleHexNonplanar(void *uniform userData,
                                     float range_lo,
                                     float range_hi)
 {
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
 
   float params[3] = { 0.5, 0.5, 0.5 };
   float pcoords[3];
@@ -251,7 +251,7 @@ bool intersectAndSampleHexPlanar(void *uniform userData,
                                  float range_lo,
                                  float range_hi)
 {
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
 
   uniform vec4i lower = self->indices[2 * id];
   uniform vec4i upper = self->indices[2 * id + 1];
@@ -291,7 +291,7 @@ bool intersectAndSampleCell(void *uniform userData,
                            float range_lo,
                            float range_hi)
 {
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) userData;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
 
   if (self->indices[2 * id].x == -1) {
     intersectAndSampleTet(userData, id, result, samplePos, range_lo, range_hi);
@@ -303,11 +303,11 @@ bool intersectAndSampleCell(void *uniform userData,
   }
 }
 
-inline varying float TetrahedralVolume_sample(
+inline varying float UnstructuredVolume_sample(
     void *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
 
   float results = 0;
 
@@ -316,11 +316,11 @@ inline varying float TetrahedralVolume_sample(
   return results;
 }
 
-inline varying vec3f TetrahedralVolume_computeGradient(
+inline varying vec3f UnstructuredVolume_computeGradient(
     void *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
 
   // Gradient step in each dimension (world coordinates).
   const uniform vec3f gradientStep = make_vec3f(self->super.samplingStep);
@@ -356,11 +356,11 @@ inline varying vec3f TetrahedralVolume_computeGradient(
 }
 
 // ray.time is set to interval length of intersected sample
-inline void TetrahedralVolume_stepRay(
+inline void UnstructuredVolume_stepRay(
     void *uniform _self, varying Ray &ray, const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
 
   // The recommended step size for ray casting based volume renderers.
   const varying float step = self->super.samplingStep / samplingRate;
@@ -373,14 +373,14 @@ inline void TetrahedralVolume_stepRay(
   ray.instID = 1;
 }
 
-inline void TetrahedralVolume_intersectIsosurface(void *uniform _self,
+inline void UnstructuredVolume_intersectIsosurface(void *uniform _self,
                                                   uniform float *uniform
                                                       isovalues,
                                                   uniform int numIsovalues,
                                                   varying Ray &ray)
 {
   // Cast to the actual Volume subtype.
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
 
   // The nominal step size for ray casting based volume renderers, not
   // considering the sampling rate.
@@ -392,43 +392,43 @@ inline void TetrahedralVolume_intersectIsosurface(void *uniform _self,
     return;
 }
 
-void TetrahedralVolume_Constructor(TetrahedralVolume *uniform self,
+void UnstructuredVolume_Constructor(UnstructuredVolume *uniform self,
                                    void *uniform cppEquivalent)
 {
   Volume_Constructor(&self->super, cppEquivalent);
 
   // Set the ispc functions.
-  self->super.sample              = TetrahedralVolume_sample;
-  self->super.computeGradient     = TetrahedralVolume_computeGradient;
-  self->super.stepRay             = TetrahedralVolume_stepRay;
-  self->super.intersectIsosurface = TetrahedralVolume_intersectIsosurface;
+  self->super.sample              = UnstructuredVolume_sample;
+  self->super.computeGradient     = UnstructuredVolume_computeGradient;
+  self->super.stepRay             = UnstructuredVolume_stepRay;
+  self->super.intersectIsosurface = UnstructuredVolume_intersectIsosurface;
 }
 
 export void *uniform
-TetrahedralVolume_createInstance(void *uniform cppEquivalent)
+UnstructuredVolume_createInstance(void *uniform cppEquivalent)
 {
-  TetrahedralVolume *uniform self = uniform new uniform TetrahedralVolume;
+  UnstructuredVolume *uniform self = uniform new uniform UnstructuredVolume;
 
-  TetrahedralVolume_Constructor(self, cppEquivalent);
+  UnstructuredVolume_Constructor(self, cppEquivalent);
 
   return self;
 }
 
 export void
-TetrahedralVolume_method_planar(void *uniform _self)
+UnstructuredVolume_method_planar(void *uniform _self)
 {
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
   self->hexMethod = PLANAR;
 }
 
 export void
-TetrahedralVolume_method_nonplanar(void *uniform _self)
+UnstructuredVolume_method_nonplanar(void *uniform _self)
 {
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
   self->hexMethod = NONPLANAR;
 }
 
-export void TetrahedralVolume_set(void *uniform _self,
+export void UnstructuredVolume_set(void *uniform _self,
                                   const uniform int &_nVertices,
                                   const uniform int &_nCells,
                                   const uniform box3f &_bbox,
@@ -442,8 +442,8 @@ export void TetrahedralVolume_set(void *uniform _self,
                                   const uniform float samplingRate,
                                   const uniform float samplingStep)
 {
-  uniform TetrahedralVolume *uniform self =
-      (uniform TetrahedralVolume * uniform) _self;
+  uniform UnstructuredVolume *uniform self =
+      (uniform UnstructuredVolume * uniform) _self;
 
   self->nVertices   = _nVertices;
   self->nCells      = _nCells;

@@ -23,9 +23,9 @@ namespace ospray {
   namespace sg {
 
     /*! a plain old structured volume */
-    struct OSPSG_INTERFACE TetVolume : public Volume
+    struct OSPSG_INTERFACE UnstructuredVolume : public Volume
     {
-      TetVolume();
+      UnstructuredVolume();
 
       std::string toString() const override;
 

@@ -171,13 +171,13 @@ namespace ospray {
       }
     };
 
-    void importTetVolume(const std::shared_ptr<Node> &world,
-                         const FileName &fileName)
+    void importUnstructuredVolume(const std::shared_ptr<Node> &world,
+                                  const FileName &fileName)
     {
       TetMesh mesh;
       mesh.loadFile(fileName);
 
-      auto &v = world->createChild("tetrahedral_volume", "TetVolume");
+      auto &v = world->createChild("unstructured_volume", "UnstructuredVolume");
 
       v.add(mesh.vertices);
       v.add(mesh.indices);

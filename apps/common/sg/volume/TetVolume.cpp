@@ -21,19 +21,19 @@
 namespace ospray {
   namespace sg {
 
-    TetVolume::TetVolume()
+    UnstructuredVolume::UnstructuredVolume()
     {
       createChild("hexMethod", "string", std::string("planar"))
         .setWhiteList({std::string("planar"),
               std::string("nonplanar")});
     }
 
-    std::string TetVolume::toString() const
+    std::string UnstructuredVolume::toString() const
     {
-      return "ospray::sg::TetVolume";
+      return "ospray::sg::UnstructuredVolume";
     }
 
-    void TetVolume::preCommit(RenderContext &)
+    void UnstructuredVolume::preCommit(RenderContext &)
     {
       auto ospVolume = valueAs<OSPVolume>();
 
@@ -49,14 +49,14 @@ namespace ospray {
         return;
       }
 
-      setValue(ospNewVolume("tetrahedral_volume"));
+      setValue(ospNewVolume("unstructured_volume"));
 
       if (!hasChild("vertices"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'vertices' array!");
+        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'vertices' array!");
       else if (!hasChild("indices"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'indices' array!");
+        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'indices' array!");
       else if (!hasChild("field"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'field' array!");
+        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'field' array!");
 
       auto vertices   = child("vertices").nodeAs<DataBuffer>();
       auto indices    = child("indices").nodeAs<DataBuffer>();
@@ -81,7 +81,7 @@ namespace ospray {
         child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
     }
 
-    OSP_REGISTER_SG_NODE(TetVolume);
+    OSP_REGISTER_SG_NODE(UnstructuredVolume);
 
   } // ::ospray::sg
 } // ::ospray

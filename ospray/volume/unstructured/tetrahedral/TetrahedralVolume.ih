@@ -20,7 +20,7 @@
 #include "../../Volume.ih"
 #include "../MinMaxBVH2.ih"
 
-struct TetrahedralVolume
+struct UnstructuredVolume
 {
   //! Fields common to all Volume subtypes (must be the first entry of this
   //! struct).
