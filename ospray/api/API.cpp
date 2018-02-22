@@ -479,7 +479,6 @@ extern "C" OSPMaterial ospNewMaterial2(const char *renderer_type,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  Assert2(type != nullptr, "invalid material type identifier in ospNewMaterial");
   auto material = currentDevice().newMaterial(renderer_type, material_type);
   if (material == nullptr) {
     postStatusMsg(1) << "#ospray: could not create material '"
@@ -507,7 +506,6 @@ extern "C" OSPLight ospNewLight2(const char *renderer_type,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  Assert2(type != nullptr, "invalid light type identifier in ospNewLight");
   OSPLight light = currentDevice().newLight(renderer_type, light_type);
   if (light == nullptr) {
     postStatusMsg(1) << "#ospray: could not create light '"
