@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Light.h"
+#include "Light.h"
 
 namespace ospray {
   namespace sg {

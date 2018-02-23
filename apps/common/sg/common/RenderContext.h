@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
-#include "sg/common/TimeStamp.h"
+#include "Common.h"
+#include "TimeStamp.h"
 
 namespace ospray {
   namespace sg {

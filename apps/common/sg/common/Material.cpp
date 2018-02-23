@@ -14,9 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Material.h"
-#include "sg/common/Model.h"
 #include "ospray/ospray.h"
+
+#include "Material.h"
+#include "Model.h"
 
 namespace ospray {
   namespace sg {

@@ -18,8 +18,9 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+
 #include "Volume.h"
-#include "sg/common/Model.h"
+#include "../common/Model.h"
 
 namespace ospray {
   namespace sg {

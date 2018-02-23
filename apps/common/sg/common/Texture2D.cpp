@@ -22,7 +22,8 @@
 OIIO_NAMESPACE_USING
 #endif
 
-#include "sg/common/Texture2D.h"
+#include "Texture2D.h"
+
 #include "ospray/common/OSPCommon.h"
 
 namespace ospray {

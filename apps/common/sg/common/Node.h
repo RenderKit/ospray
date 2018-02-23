@@ -24,13 +24,12 @@
 // stl
 #include <map>
 #include <memory>
+#include <mutex>
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
 #include "ospcommon/utility/Any.h"
 #include "ospcommon/vec.h"
-
-#include <mutex>
 
 namespace ospray {
   namespace sg {

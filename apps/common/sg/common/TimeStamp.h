@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
+#include "Common.h"
 
 #include <atomic>
 

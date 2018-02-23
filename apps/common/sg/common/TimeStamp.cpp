@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/TimeStamp.h"
+#include "TimeStamp.h"
 
 namespace ospray {
   namespace sg {

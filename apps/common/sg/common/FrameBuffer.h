@@ -17,7 +17,7 @@
 #pragma once
 
 // sg components
-#include "sg/common/Node.h"
+#include "Node.h"
 
 namespace ospray {
   namespace sg {

@@ -16,8 +16,8 @@
 
 #include "Renderer.h"
 
-#include "sg/common/FrameBuffer.h"
-#include "sg/visitor/MarkAllAsModified.h"
+#include "common/FrameBuffer.h"
+#include "visitor/MarkAllAsModified.h"
 
 namespace ospray {
   namespace sg {
