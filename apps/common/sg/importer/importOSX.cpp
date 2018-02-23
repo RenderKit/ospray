@@ -127,9 +127,9 @@ namespace ospray {
       {
         std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fn);
         assert(doc);
-        if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay")
+        if (doc->child.size() != 1 || doc->child[0].name != "OSPRay")
           throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");
-        const xml::Node &root_element = *doc->child[0];
+        const xml::Node &root_element = doc->child[0];
         xml::for_each_child_of(root_element,[&](const xml::Node &node){
           if (node.name == "Model") {
             const xml::Node &model_node = node;

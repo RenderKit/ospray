@@ -71,6 +71,8 @@ ELSE()
     utility/StringManip.h
     utility/TransactionalValue.h
 
+    xml/XML.cpp
+
     AffineSpace.h
     box.h
     constants.h
@@ -177,6 +179,12 @@ ELSE()
     utility/TransactionalValue.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    xml/XML.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/xml
   )
 
   ## Test apps ##

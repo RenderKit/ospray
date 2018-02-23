@@ -129,7 +129,6 @@ ospray_create_library(ospray_sg SHARED
 LINK
   ospray
   ospray_common
-  ospray_xml
   ${HDF5_LIBRARIES}
   ${VTK_LIBRARIES}
   ${OPENIMAGEIO_LIBRARIES}

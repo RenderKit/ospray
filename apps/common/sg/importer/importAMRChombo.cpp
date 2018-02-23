@@ -302,23 +302,12 @@ namespace ospray {
 
   namespace sg {
 
-    //! parse Chombo hdf5 file into world node
-    void importAMRChombo(std::shared_ptr<sg::Node> &world,
-                         const FileName &fileName,
-                         const std::string &desiredComponent,
-                         const range1f *clampRange)
-    {
-      auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
-      parseAMRChomboFile(node, fileName, desiredComponent, clampRange);
-      world->add(node);
-    }
-
     //! parse Chombo hdf5 file into AMRVolume node
     void parseAMRChomboFile(std::shared_ptr<sg::AMRVolume> &node,
                             const FileName &fileName,
-                            const std::string &desiredComponent,
-                            const range1f *clampRange,
-                            int maxLevel)
+                            const std::string &desiredComponent = "",
+                            const range1f *clampRange = nullptr,
+                            int maxLevel = 1 << 30)
     {
       amr::AMR *amr = ospray::amr::AMR::parse(fileName.str(), maxLevel);
       assert(!amr->level.empty());
@@ -376,6 +365,16 @@ namespace ospray {
       }
       ospLogF(1) << "found " << node->brickInfo.size() << " bricks"
                  << std::endl;
+    }
+
+    // Import HDF5 CHOMBO files ///////////////////////////////////////////////
+
+    void importCHOMBO(std::shared_ptr<Node> world, const FileName &fileName)
+    {
+      auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
+      parseAMRChomboFile(node, fileName);
+      // TODO: value range?
+      world->add(node);
     }
 
   }  // ::ospray::sg

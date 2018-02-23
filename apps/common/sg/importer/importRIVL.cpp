@@ -574,10 +574,10 @@ namespace ospray {
         std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
       }
       std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName);
-      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene")
+      if (doc->child.size() != 1 || doc->child[0].name != "BGFscene")
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
-      const xml::Node &root_element = *doc->child[0];
-      parseBGFscene(world,root_element);
+      const xml::Node &root_element = doc->child[0];
+      parseBGFscene(world, root_element);
     }
 
     OSPSG_REGISTER_IMPORT_FUNCTION(importRIVL, rivl);

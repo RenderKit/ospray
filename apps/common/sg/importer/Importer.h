@@ -115,12 +115,11 @@ namespace ospray {
     OSPSG_INTERFACE void importXYZ(const std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
+#ifdef OSPRAY_APPS_SG_CHOMBO
     /*! chombo amr */
-    OSPSG_INTERFACE void importAMR(std::shared_ptr<Node> world,
-                                   const FileName &fileName);
-
-    OSPSG_INTERFACE
-    std::shared_ptr<sg::Node> loadOSP(const std::string &fileName);
+    OSPSG_INTERFACE void importCHOMBO(std::shared_ptr<Node> world,
+                                      const FileName &fileName);
+#endif
 
     OSPSG_INTERFACE
     void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName);

@@ -20,8 +20,6 @@
 #include "ospray/common/OSPCommon.h"
 // ospray::sg
 #include "Node.h"
-// xml
-#include "../../xml/XML.h"
 
 namespace ospray {
   namespace sg {
