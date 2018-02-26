@@ -299,7 +299,7 @@ namespace ospray {
         sg::importXYZ(world, fileName);
 #ifdef OSPRAY_APPS_SG_VTK
       } else if (ext == "vtu" || ext == "vtk" || ext == "off") {
-        sg::importTetVolume(world, fileName);
+        sg::importUnstructuredVolume(world, fileName);
 #endif
       } else if (hasImporterForExtension(fileName.ext())) {
         std::cout << "#sg: found importer for extension '" << fileName.ext() << "'" << std::endl;

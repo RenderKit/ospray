@@ -14,10 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Node.h"
-#include "sg/common/Data.h"
-#include "sg/common/Texture2D.h"
-#include "sg/common/RenderContext.h"
+#include "Node.h"
 
 namespace ospray {
   namespace sg {

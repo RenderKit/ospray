@@ -15,18 +15,25 @@
 // ======================================================================== //
 
 // sg
-#include "TetVolume.h"
+#include "UnstructuredVolume.h"
 #include "../common/Data.h"
 
 namespace ospray {
   namespace sg {
 
-    std::string TetVolume::toString() const
+    UnstructuredVolume::UnstructuredVolume()
     {
-      return "ospray::sg::TetVolume";
+      createChild("hexMethod", "string", std::string("planar"))
+        .setWhiteList({std::string("planar"),
+              std::string("nonplanar")});
     }
 
-    void TetVolume::preCommit(RenderContext &)
+    std::string UnstructuredVolume::toString() const
+    {
+      return "ospray::sg::UnstructuredVolume";
+    }
+
+    void UnstructuredVolume::preCommit(RenderContext &)
     {
       auto ospVolume = valueAs<OSPVolume>();
 
@@ -42,17 +49,17 @@ namespace ospray {
         return;
       }
 
-      setValue(ospNewVolume("tetrahedral_volume"));
+      setValue(ospNewVolume("unstructured_volume"));
 
       if (!hasChild("vertices"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'vertices' array!");
-      else if (!hasChild("tetrahedra"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'tetrahedra' array!");
+        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'vertices' array!");
+      else if (!hasChild("indices"))
+        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'indices' array!");
       else if (!hasChild("field"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'field' array!");
+        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'field' array!");
 
       auto vertices   = child("vertices").nodeAs<DataBuffer>();
-      auto tetrahedra = child("tetrahedra").nodeAs<DataBuffer>();
+      auto indices    = child("indices").nodeAs<DataBuffer>();
       auto field      = child("field").nodeAs<DataBuffer>();
 
       ospcommon::box3f bounds;
@@ -74,7 +81,7 @@ namespace ospray {
         child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
     }
 
-    OSP_REGISTER_SG_NODE(TetVolume);
+    OSP_REGISTER_SG_NODE(UnstructuredVolume);
 
   } // ::ospray::sg
 } // ::ospray

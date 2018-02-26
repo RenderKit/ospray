@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/AnimationController.h"
+#include "AnimationController.h"
 
 namespace ospray {
   namespace sg {

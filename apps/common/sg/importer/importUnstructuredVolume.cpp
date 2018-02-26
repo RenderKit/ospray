@@ -59,13 +59,13 @@ namespace ospray {
         vertices =
             createNode("vertices", "DataVector3f")->nodeAs<DataVector3f>();
         field = createNode("field", "DataVector1f")->nodeAs<DataVector1f>();
-        tetrahedra =
-            createNode("tetrahedra", "DataVector4i")->nodeAs<DataVector4i>();
+        indices =
+            createNode("indices", "DataVector4i")->nodeAs<DataVector4i>();
       }
 
       std::shared_ptr<DataVector3f> vertices;
       std::shared_ptr<DataVector1f> field;
-      std::shared_ptr<DataVector4i> tetrahedra;
+      std::shared_ptr<DataVector4i> indices;
 
       template <class TReader>
       vtkDataSet *readVTKFile(const FileName &fileName)
@@ -97,10 +97,22 @@ namespace ospray {
           vtkCell *cell = dataSet->GetCell(i);
 
           if (cell->GetCellType() == VTK_TETRA) {
-            tetrahedra->push_back(vec4i(cell->GetPointId(0),
-                                        cell->GetPointId(1),
-                                        cell->GetPointId(2),
-                                        cell->GetPointId(3)));
+            indices->push_back(vec4i(-1, -1, -1, -1));
+            indices->push_back(vec4i(cell->GetPointId(0),
+                                     cell->GetPointId(1),
+                                     cell->GetPointId(2),
+                                     cell->GetPointId(3)));
+          }
+
+          if (cell->GetCellType() == VTK_HEXAHEDRON) {
+            indices->push_back(vec4i(cell->GetPointId(0),
+                                     cell->GetPointId(1),
+                                     cell->GetPointId(2),
+                                     cell->GetPointId(3)));
+            indices->push_back(vec4i(cell->GetPointId(4),
+                                     cell->GetPointId(5),
+                                     cell->GetPointId(6),
+                                     cell->GetPointId(7)));
           }
         }
 
@@ -141,7 +153,8 @@ namespace ospray {
         int c0, c1, c2, c3;
         for (int i = 0; i < nTetrahedra; i++) {
           in >> c0 >> c1 >> c2 >> c3;
-          tetrahedra->push_back(vec4i(c0, c1, c2, c3));
+          indices->push_back(vec4i(-1, -1, -1, -1));
+          indices->push_back(vec4i(c0, c1, c2, c3));
         }
       }
 
@@ -158,16 +171,16 @@ namespace ospray {
       }
     };
 
-    void importTetVolume(const std::shared_ptr<Node> &world,
-                         const FileName &fileName)
+    void importUnstructuredVolume(const std::shared_ptr<Node> &world,
+                                  const FileName &fileName)
     {
       TetMesh mesh;
       mesh.loadFile(fileName);
 
-      auto &v = world->createChild("tetrahedral_volume", "TetVolume");
+      auto &v = world->createChild("unstructured_volume", "UnstructuredVolume");
 
       v.add(mesh.vertices);
-      v.add(mesh.tetrahedra);
+      v.add(mesh.indices);
       v.add(mesh.field);
     }
 

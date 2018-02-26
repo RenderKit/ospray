@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "sg/common/NodeList.h"
-#include "sg/common/Texture2D.h"
+#include "NodeList.h"
+#include "Texture2D.h"
 
 namespace ospray {
   namespace sg {

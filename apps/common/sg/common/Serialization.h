@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
+#include "Common.h"
 // ospcommon
 #include "ospcommon/AffineSpace.h"
 // std
@@ -34,26 +34,26 @@ namespace ospray {
          instances and record each and every occurrence of any object
          (ie, an instanced object will appear multiple times in the
          output, each with one instantiation info */
-        DO_FOLLOW_INSTANCES, 
+        DO_FOLLOW_INSTANCES,
         /*! when serializing the scene graph, record each instanced
             object only ONCE, and list all its instantiations in its
             instantiation vector */
         DONT_FOLLOW_INSTANCES
       };
-      
+
       struct OSPSG_INTERFACE Instantiation
       {
         std::shared_ptr<Instantiation> parentWorld;
         affine3f xfm {one};
       };
-      
+
       /*! describes one object that we encountered */
       struct OSPSG_INTERFACE Object
       {
         /*! the node itself - this is intentionally NOT a shared_ptr
             since nodes call this with 'this', for which we have no
             shared_ptr info */
-        std::shared_ptr<sg::Node> node;  
+        std::shared_ptr<sg::Node> node;
 
         /*! the instantiation info when we traversed this node. May be
           NULL if object isn't instanced (or only instanced once) */
@@ -74,7 +74,7 @@ namespace ospray {
 
       void serialize(std::shared_ptr<sg::Model> world,
                      Serialization::Mode mode);
-      
+
       /*! clear all old objects */
       void clear() { object.clear(); }
 
@@ -84,7 +84,7 @@ namespace ospray {
           serializing the entire scene graph */
       std::vector<std::shared_ptr<Serialization::Object> > object;
     };
-    
+
   } // ::ospray::sg
 } // ::ospray
 

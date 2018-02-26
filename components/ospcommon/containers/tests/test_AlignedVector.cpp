@@ -26,5 +26,5 @@ TEST_CASE("Interface Tests", "[all]")
 
   aligned_vec.resize(500);
 
-  REQUIRE(ospcommon::isAligned(aligned_vec.data()));
+  REQUIRE(ospcommon::memory::isAligned(aligned_vec.data()));
 }

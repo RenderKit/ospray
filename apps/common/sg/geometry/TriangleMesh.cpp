@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/geometry/TriangleMesh.h"
-#include "sg/common/Data.h"
+#include "TriangleMesh.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {

@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Geometry.h"
-#include "sg/common/Model.h"
+#include "../common/Model.h"
 
 namespace ospray {
   namespace sg {

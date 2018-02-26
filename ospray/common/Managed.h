@@ -105,7 +105,7 @@ namespace ospray {
     </dl>
 
    */
-  struct OSPRAY_SDK_INTERFACE ManagedObject : public RefCount
+  struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount
   {
     /*! \brief constructor */
     ManagedObject() = default;
@@ -142,7 +142,6 @@ namespace ospray {
 
       template <typename T>
       void set(const T &v) { data = v; }
-      /*! @} */
 
       utility::Any data;
 
@@ -275,6 +274,10 @@ namespace ospray {
   {
     return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound);
   }
+
+  // OSPRay's parameters cannot be bool, explicitely use int instead
+  template <>
+  inline void ManagedObject::Param::set(const bool &v) { set<int>(v); }
 
   template<typename T>
   inline void ManagedObject::set(const char *name, const T &t)

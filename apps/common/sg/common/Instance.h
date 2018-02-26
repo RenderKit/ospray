@@ -17,10 +17,9 @@
 #pragma once
 
 #include "Renderable.h"
-#include "Serialization.h"
-#include <sg/common/Data.h>
-#include <sg/common/Model.h>
-#include <sg/common/NodeList.h>
+#include "Data.h"
+#include "Model.h"
+#include "NodeList.h"
 
 namespace ospray {
   namespace sg {

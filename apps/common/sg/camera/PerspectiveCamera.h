@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "sg/camera/Camera.h"
+#include "Camera.h"
 
 namespace ospray {
   namespace sg {

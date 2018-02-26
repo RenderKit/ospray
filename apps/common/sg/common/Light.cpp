@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Light.h"
+#include "Light.h"
 
 namespace ospray {
   namespace sg {
@@ -32,7 +32,7 @@ namespace ospray {
     void Light::preCommit(RenderContext &ctx)
     {
       if (!valueAs<OSPLight>())
-        setValue(ospNewLight(ctx.ospRenderer, type.c_str()));
+        setValue(ospNewLight2(ctx.ospRendererType.c_str(), type.c_str()));
     }
 
     void Light::postCommit(RenderContext &)

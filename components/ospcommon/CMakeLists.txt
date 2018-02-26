@@ -33,7 +33,6 @@ ELSE()
     common.cpp
     FileName.cpp
     sysinfo.cpp
-    malloc.cpp
     library.cpp
     thread.cpp
     vec.cpp
@@ -41,6 +40,10 @@ ELSE()
     array3D/Array3D.cpp
 
     containers/TransactionalBuffer.h
+
+    memory/DeletedUniquePtr.h
+    memory/malloc.cpp
+    memory/RefCount.h
 
     networking/BufferedDataStreaming.cpp
     networking/DataStreaming.h
@@ -58,7 +61,6 @@ ELSE()
     utility/Any.h
     utility/CodeTimer.h
     utility/DataView.h
-    utility/DeletedUniquePtr.h
     utility/demangle.cpp
     utility/DoubleBufferedValue.h
     utility/getEnvVar.h
@@ -77,7 +79,6 @@ ELSE()
     math.h
     platform.h
     Quaternion.h
-    RefCount.h
     TypeTraits.h
     vec.h
   LINK
@@ -101,12 +102,10 @@ ELSE()
     intrinsics.h
     library.h
     LinearSpace.h
-    malloc.h
     math.h
     platform.h
     Quaternion.h
     range.h
-    RefCount.h
     sysinfo.h
     thread.h
     TypeTraits.h
@@ -126,6 +125,14 @@ ELSE()
     containers/TransactionalBuffer.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    memory/DeletedUniquePtr.h
+    memory/malloc.h
+    memory/RefCount.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/memory
   )
 
   OSPRAY_INSTALL_SDK_HEADERS(
@@ -159,7 +166,6 @@ ELSE()
     utility/ArrayView.h
     utility/CodeTimer.h
     utility/DataView.h
-    utility/DeletedUniquePtr.h
     utility/demangle.h
     utility/DoubleBufferedValue.h
     utility/getEnvVar.h

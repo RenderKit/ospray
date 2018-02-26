@@ -14,40 +14,48 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "common.h"
-
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
-
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-
-  template <typename T>
-   __forceinline T* alignedMalloc(size_t nElements, size_t align = 64)
-  {
-    return (T*)alignedMalloc(nElements*sizeof(T), align);
-  }
-
-  inline bool isAligned(void *ptr, int alignment = 64)
-  {
-    return reinterpret_cast<size_t>(ptr) % alignment == 0;
-  }
-
-// NOTE(jda) - can't use function wrapped alloca solution as Clang won't inline
-//             a function containing alloca()...but it works with gcc/icc
-#if 0
-  template<typename T>
-  __forceinline T* stackBuffer(size_t nElements)
-  {
-    return static_cast<T*>(alloca(sizeof(T) * nElements));
-  }
-#else
-#  define STACK_BUFFER(TYPE, nElements) (TYPE*)alloca(sizeof(TYPE)*nElements)
+#include "malloc.h"
+#include "../intrinsics.h"
+#if defined(TASKING_TBB)
+#  define __TBB_NO_IMPLICIT_LINKAGE 1
+#  include "tbb/scalable_allocator.h"
 #endif
-}
 
+#ifdef _WIN32
+#include <malloc.h>
+#endif
+
+namespace ospcommon {
+  namespace memory {
+
+    void* alignedMalloc(size_t size, size_t align)
+    {
+      assert((align & (align-1)) == 0);
+      // FIXME: have to disable this for now as the TBB  allocator itself seems
+      //        to access some uninitialized value when using valgrind
+#if 0//defined(TASKING_TBB)
+      return scalable_aligned_malloc(size,align);
+#else
+#  ifdef _WIN32
+      return _aligned_malloc(size, align);
+#  else // __UNIX__
+      return _mm_malloc(size, align);
+#  endif
+#endif
+    }
+
+  void alignedFree(void* ptr)
+  {
+#if 0//defined(TASKING_TBB)
+      scalable_aligned_free(ptr);
+#else
+#  ifdef _WIN32
+      return _aligned_free(ptr);
+#  else // __UNIX__
+      _mm_free(ptr);
+#  endif
+#endif
+    }
+
+  } // ::ospcommon::memory
+} // ::ospcommon

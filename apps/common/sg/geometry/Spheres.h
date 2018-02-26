@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
-#include "sg/geometry/Geometry.h"
+#include "Geometry.h"
 
 namespace ospray {
   namespace sg {

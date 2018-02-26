@@ -20,7 +20,7 @@
 #include <new>        // Required for placement new and std::bad_alloc
 #include <stdexcept>  // Required for std::length_error
 
-#include "../malloc.h"
+#include "../memory/malloc.h"
 
 namespace ospcommon {
   namespace containers {
@@ -133,7 +133,7 @@ namespace ospcommon {
             "aligned_allocator<T>::allocate() – Integer overflow.");
       }
 
-      void *const pv = alignedMalloc(n * sizeof(T), A);
+      void *const pv = memory::alignedMalloc(n * sizeof(T), A);
 
       if (pv == nullptr)
         throw std::bad_alloc();
@@ -145,7 +145,7 @@ namespace ospcommon {
     inline void aligned_allocator<T, A>::deallocate(T *const p,
                                                     const size_t) const
     {
-      alignedFree(p);
+      memory::alignedFree(p);
     }
 
     template <typename T, int A>

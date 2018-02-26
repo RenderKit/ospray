@@ -224,6 +224,10 @@ if(OSPRAY_MPI_ENABLED)
   )
 endif()
 
+set(OSPRAY_SG_LIBRARIES
+  ${LIBRARY_PATH_PREFIX}ospray_sg${LIBRARY_SUFFIX}
+)
+
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
 

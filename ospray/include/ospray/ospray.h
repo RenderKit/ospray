@@ -313,10 +313,16 @@ extern "C" {
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
   //! let given renderer create a new material of given type
-  OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
+
+  //! let given renderer create a new material of given type
+  OSPRAY_INTERFACE OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
 
   //! let given renderer create a new light of given type
-  OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
+
+  //! let given renderer create a new light of given type
+  OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
 
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot

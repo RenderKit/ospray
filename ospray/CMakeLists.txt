@@ -207,8 +207,8 @@ SET(OSPRAY_SOURCES
 
   volume/unstructured/MinMaxBVH2.cpp
   volume/unstructured/MinMaxBVH2.ispc
-  volume/unstructured/tetrahedral/TetrahedralVolume.cpp
-  volume/unstructured/tetrahedral/TetrahedralVolume.ispc
+  volume/unstructured/UnstructuredVolume.cpp
+  volume/unstructured/UnstructuredVolume.ispc
 
   volume/amr/AMRAccel.cpp
   volume/amr/AMRData.cpp

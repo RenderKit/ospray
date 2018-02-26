@@ -400,7 +400,7 @@ namespace ospray {
       return (OSPGeometry)geometry;
     }
 
-      /*! have given renderer create a new material */
+    /*! have given renderer create a new material */
     OSPMaterial LocalDevice::newMaterial(OSPRenderer _renderer,
                                          const char *type)
     {
@@ -425,6 +425,16 @@ namespace ospray {
       Material *material = Material::createMaterial(type);
       if (!material) return nullptr;
       return (OSPMaterial)material;
+    }
+
+    /*! have given renderer create a new material */
+    OSPMaterial LocalDevice::newMaterial(const char *renderer_type,
+                                         const char *material_type)
+    {
+      auto renderer = newRenderer(renderer_type);
+      auto material = newMaterial(renderer, material_type);
+      release(renderer);
+      return material;
     }
 
     /*! create a new camera object (out of list of registered cameras) */
@@ -476,7 +486,8 @@ namespace ospray {
     }
 
     /*! have given renderer create a new Light */
-    OSPLight LocalDevice::newLight(OSPRenderer _renderer, const char *type) {
+    OSPLight LocalDevice::newLight(OSPRenderer _renderer, const char *type)
+    {
       Renderer  *renderer = (Renderer *)_renderer;
       if (renderer) {
         Light *light = renderer->createLight(type);
@@ -490,6 +501,15 @@ namespace ospray {
       Light *light = Light::createLight(type);
       if (!light) return nullptr;
       return (OSPLight)light;
+    }
+
+    OSPLight LocalDevice::newLight(const char *renderer_type,
+                                   const char *light_type)
+    {
+      auto renderer = newRenderer(renderer_type);
+      auto light = newLight(renderer, light_type);
+      release(renderer);
+      return light;
     }
 
     /*! create a new Texture2D object */

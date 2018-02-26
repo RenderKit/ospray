@@ -17,17 +17,17 @@
 #pragma once
 
 // ospray
-#include "../../../common/OSPCommon.h"
-#include "../../Volume.h"
-#include "../MinMaxBVH2.h"
+#include "../../common/OSPCommon.h"
+#include "../Volume.h"
+#include "MinMaxBVH2.h"
 
 namespace ospray {
 
-  class TetrahedralVolume : public Volume
+  class UnstructuredVolume : public Volume
   {
    public:
-    TetrahedralVolume();
-    ~TetrahedralVolume() override = default;
+    UnstructuredVolume();
+    ~UnstructuredVolume() override = default;
 
     //! A string description of this class.
     std::string toString() const override;
@@ -62,8 +62,8 @@ namespace ospray {
     vec3f *vertices{nullptr};
     float *field{nullptr};  // Attribute value at each vertex.
 
-    int nTetrahedra;
-    vec4i *tetrahedra{nullptr};
+    int nCells;
+    vec4i *indices{nullptr};
 
     std::vector<vec3f> faceNormals;
 

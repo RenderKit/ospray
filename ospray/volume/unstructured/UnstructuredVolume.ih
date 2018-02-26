@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "../../../common/OSPCommon.ih"
-#include "../../Volume.ih"
-#include "../MinMaxBVH2.ih"
+#include "../../common/OSPCommon.ih"
+#include "../Volume.ih"
+#include "MinMaxBVH2.ih"
 
-struct TetrahedralVolume
+struct UnstructuredVolume
 {
   //! Fields common to all Volume subtypes (must be the first entry of this
   //! struct).
@@ -29,10 +29,12 @@ struct TetrahedralVolume
   uniform int nVertices;
   const vec3f *uniform vertices;
 
-  uniform int nTetrahedra;
-  const vec4i *uniform tetrahedra;  // indices into vertices array.
+  uniform int nCells;
+  const vec4i *uniform indices;     // indices into vertices array.
   const float *uniform field;       // Attribute value at each vertex.
   const vec3f *uniform faceNormals;
 
   uniform MinMaxBVH2 bvh;
+
+  uniform enum {PLANAR, NONPLANAR} hexMethod;
 };

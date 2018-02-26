@@ -38,8 +38,8 @@ typedef int ssize_t;
 
 // ospcommon
 #include "ospcommon/AffineSpace.h"
-#include "ospcommon/RefCount.h"
-#include "ospcommon/malloc.h"
+#include "ospcommon/memory/RefCount.h"
+#include "ospcommon/memory/malloc.h"
 
 // ospray
 #include "ospray/OSPDataType.h"
@@ -67,6 +67,7 @@ typedef int ssize_t;
 namespace ospray {
 
   using namespace ospcommon;
+  using namespace ospcommon::memory;
 
   /*! basic types */
   using int64  = std::int64_t;

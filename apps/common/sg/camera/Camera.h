@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
-#include "sg/common/Serialization.h"
+#include "../common/Node.h"
+#include "../common/Serialization.h"
 
 namespace ospray {
   namespace sg {

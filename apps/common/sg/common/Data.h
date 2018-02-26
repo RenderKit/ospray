@@ -19,13 +19,9 @@
 // ospray
 #include "ospray/common/OSPCommon.h"
 // ospray::sg
-#include "sg/common/TimeStamp.h"
-#include "sg/common/Serialization.h"
-#include "sg/common/RuntimeError.h"
-// stl
-#include <map>
+#include "Node.h"
 // xml
-#include "common/xml/XML.h"
+#include "../../xml/XML.h"
 
 namespace ospray {
   namespace sg {

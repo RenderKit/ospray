@@ -24,13 +24,13 @@ namespace ospray {
   /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
   extern "C" void *malloc64(size_t size)
   {
-    return ospcommon::alignedMalloc(size);
+    return alignedMalloc(size);
   }
 
   /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
   extern "C" void free64(void *ptr)
   {
-    return ospcommon::alignedFree(ptr);
+    return alignedFree(ptr);
   }
 
   WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel)
@@ -61,34 +61,59 @@ namespace ospray {
           device->findParam("logLevel", true)->set(2);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
-          device->findParam("logLevel", true)->set(atoi(av[i+1]));
-          removeArgs(ac,av,i,2);
-        } else if (parm == "--osp:logoutput") {
-          std::string dst = av[i+1];
-
-          if (dst == "cout" || dst == "cerr")
-            device->findParam("logOutput", true)->set(av[i+1]);
-          else
-            postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
-
-          removeArgs(ac,av,i,2);
-        } else if (parm == "--osp:erroroutput") {
-          std::string dst = av[i+1];
-
-          if (dst == "cout" || dst == "cerr")
-            device->findParam("errorOutput", true)->set(av[i+1]);
-          else {
-            postStatusMsg("You must use 'cout' or 'cerr' for"
-                          " --osp:erroroutput!");
+          if (i+1<ac) {
+            device->findParam("logLevel", true)->set(atoi(av[i+1]));
+            removeArgs(ac,av,i,2);
+          } else {
+            postStatusMsg("<n> argument required for --osp:loglevel!");
+            removeArgs(ac,av,i,1);
           }
+        } else if (parm == "--osp:logoutput") {
+          if (i+1<ac) {
+            std::string dst = av[i+1];
 
-          removeArgs(ac,av,i,2);
+            if (dst == "cout" || dst == "cerr")
+              device->findParam("logOutput", true)->set(av[i+1]);
+            else
+              postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
+
+            removeArgs(ac,av,i,2);
+          } else {
+            postStatusMsg("<dst> argument required for --osp:logoutput!");
+            removeArgs(ac,av,i,1);
+          }
+        } else if (parm == "--osp:erroroutput") {
+          if (i+1<ac) {
+            std::string dst = av[i+1];
+
+            if (dst == "cout" || dst == "cerr")
+              device->findParam("errorOutput", true)->set(av[i+1]);
+            else {
+              postStatusMsg("You must use 'cout' or 'cerr' for"
+                            " --osp:erroroutput!");
+            }
+
+            removeArgs(ac,av,i,2);
+          } else {
+            postStatusMsg("<dst> argument required for --osp:erroroutput!");
+            removeArgs(ac,av,i,1);
+          }
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          device->findParam("numThreads", true)->set(atoi(av[i+1]));
-          removeArgs(ac,av,i,2);
+          if (i+1<ac) {
+            device->findParam("numThreads", true)->set(atoi(av[i+1]));
+            removeArgs(ac,av,i,2);
+          } else {
+            postStatusMsg("<n> argument required for --osp:numthreads");
+            removeArgs(ac,av,i,1);
+          }
         } else if (parm == "--osp:setaffinity" || parm == "--osp:affinity") {
-          device->findParam("setAffinity", true)->set(atoi(av[i+1]));
-          removeArgs(ac,av,i,2);
+          if (i+1<ac) {
+            device->findParam("setAffinity", true)->set(atoi(av[i+1]));
+            removeArgs(ac,av,i,2);
+          } else {
+            postStatusMsg("<n> argument required for --osp:setaffinity!");
+            removeArgs(ac,av,i,1);
+          }
         } else {
           ++i;
         }

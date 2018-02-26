@@ -474,6 +474,20 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
+extern "C" OSPMaterial ospNewMaterial2(const char *renderer_type,
+                                       const char *material_type)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  auto material = currentDevice().newMaterial(renderer_type, material_type);
+  if (material == nullptr) {
+    postStatusMsg(1) << "#ospray: could not create material '"
+                     << material_type << "'";
+  }
+  return material;
+}
+OSPRAY_CATCH_END(nullptr)
+
 extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
 OSPRAY_CATCH_BEGIN
 {
@@ -482,6 +496,20 @@ OSPRAY_CATCH_BEGIN
   OSPLight light = currentDevice().newLight(renderer, type);
   if (light == nullptr) {
     postStatusMsg(1) << "#ospray: could not create light '" << type << "'";
+  }
+  return light;
+}
+OSPRAY_CATCH_END(nullptr)
+
+extern "C" OSPLight ospNewLight2(const char *renderer_type,
+                                 const char *light_type)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  OSPLight light = currentDevice().newLight(renderer_type, light_type);
+  if (light == nullptr) {
+    postStatusMsg(1) << "#ospray: could not create light '"
+                     << light_type << "'";
   }
   return light;
 }

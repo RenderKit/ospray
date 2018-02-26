@@ -16,21 +16,41 @@
 
 #pragma once
 
-// sg
-#include "Volume.h"
+#include "../common.h"
 
-namespace ospray {
-  namespace sg {
+namespace ospcommon {
+  namespace memory {
 
-    /*! a plain old structured volume */
-    struct OSPSG_INTERFACE TetVolume : public Volume
+#define ALIGN_PTR(ptr,alignment) \
+  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+
+      /*! aligned allocation */
+      OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
+      OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+
+      template <typename T>
+       __forceinline T* alignedMalloc(size_t nElements, size_t align = 64)
+      {
+        return (T*)alignedMalloc(nElements*sizeof(T), align);
+      }
+
+      inline bool isAligned(void *ptr, int alignment = 64)
+      {
+        return reinterpret_cast<size_t>(ptr) % alignment == 0;
+      }
+
+    // NOTE(jda) - can't use function wrapped alloca solution as Clang won't
+    //             inline  a function containing alloca()...but works w/ gcc+icc
+#if 0
+    template<typename T>
+    __forceinline T* stackBuffer(size_t nElements)
     {
-      std::string toString() const override;
+      return static_cast<T*>(alloca(sizeof(T) * nElements));
+    }
+#else
+#  define STACK_BUFFER(TYPE, nElements) (TYPE*)alloca(sizeof(TYPE)*nElements)
+#endif
 
-      void preCommit(RenderContext &ctx) override;
+  } // ::ospcommon::memory
+} // ::ospcommon
 
-      std::string fileName;
-    };
-
-  } // ::ospray::sg
-} // ::ospray

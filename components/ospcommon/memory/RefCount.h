@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "platform.h"
+#include "../platform.h"
 #include <atomic> // c++11 ...
 
 /*! iw: TODO: move to c++11-style refcoutned object instead of this
     homebrewed one */
-namespace ospcommon
-{
+namespace ospcommon {
+  namespace memory {
 #ifdef __X86_64__
   typedef long long atomic_init_t;
 #else
@@ -77,13 +77,10 @@ namespace ospcommon
   public:
     Type* ptr {nullptr};
 
-    ///////////////////////////////////////////////////////////////////////////
-    /// Constructors, Assignment & Cast Operators
-    ///////////////////////////////////////////////////////////////////////////
-
     __forceinline Ref( void ) : ptr(nullptr) {}
     __forceinline Ref(NullTy) : ptr(nullptr) {}
-    __forceinline Ref( const Ref& input ) : ptr(input.ptr) { if ( ptr ) ptr->refInc(); }
+    __forceinline Ref( const Ref& input ) : ptr(input.ptr)
+    { if ( ptr ) ptr->refInc(); }
 
     __forceinline Ref( Type* const input ) : ptr(input) {
       if ( ptr )
@@ -124,23 +121,61 @@ namespace ospcommon
     __forceinline       Type* operator ->( void )       { return  ptr; }
 
     template<typename TypeOut>
-    __forceinline       Ref<TypeOut> cast()       { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
+    __forceinline       Ref<TypeOut> cast()
+    { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
     template<typename TypeOut>
-    __forceinline const Ref<TypeOut> cast() const { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
+    __forceinline const Ref<TypeOut> cast() const
+    { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
 
     template<typename TypeOut>
-    __forceinline       Ref<TypeOut> dynamicCast()       { return Ref<TypeOut>(dynamic_cast<TypeOut*>(ptr)); }
+    __forceinline       Ref<TypeOut> dynamicCast()
+    { return Ref<TypeOut>(dynamic_cast<TypeOut*>(ptr)); }
     template<typename TypeOut>
-    __forceinline const Ref<TypeOut> dynamicCast() const { return Ref<TypeOut>(dynamic_cast<TypeOut*>(ptr)); }
+    __forceinline const Ref<TypeOut> dynamicCast() const
+    { return Ref<TypeOut>(dynamic_cast<TypeOut*>(ptr)); }
   };
 
-  template<typename Type> __forceinline  bool operator < ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr <  b.ptr ; }
+  template<typename Type>
+  __forceinline bool operator<(const Ref<Type>& a, const Ref<Type>& b)
+  {
+    return a.ptr <  b.ptr ;
+  }
 
-  template<typename Type> __forceinline  bool operator ==( const Ref<Type>& a, NullTy             ) { return a.ptr == nullptr  ; }
-  template<typename Type> __forceinline  bool operator ==( NullTy            , const Ref<Type>& b ) { return nullptr  == b.ptr ; }
-  template<typename Type> __forceinline  bool operator ==( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr == b.ptr ; }
+  template<typename Type>
+  __forceinline  bool operator==(const Ref<Type>& a, NullTy)
+  {
+    return a.ptr == nullptr;
+  }
 
-  template<typename Type> __forceinline  bool operator !=( const Ref<Type>& a, NullTy             ) { return a.ptr != nullptr  ; }
-  template<typename Type> __forceinline  bool operator !=( NullTy            , const Ref<Type>& b ) { return nullptr  != b.ptr ; }
-  template<typename Type> __forceinline  bool operator !=( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr != b.ptr ; }
-}
+  template<typename Type>
+  __forceinline  bool operator==(NullTy, const Ref<Type>& b)
+  {
+    return nullptr  == b.ptr;
+  }
+
+  template<typename Type>
+  __forceinline  bool operator==(const Ref<Type>& a, const Ref<Type>& b)
+  {
+    return a.ptr == b.ptr;
+  }
+
+  template<typename Type>
+  __forceinline  bool operator!=(const Ref<Type>& a, NullTy)
+  {
+    return a.ptr != nullptr;
+  }
+
+  template<typename Type>
+  __forceinline  bool operator!=(NullTy, const Ref<Type>& b)
+  {
+    return nullptr  != b.ptr;
+  }
+
+  template<typename Type>
+  __forceinline  bool operator!=(const Ref<Type>& a, const Ref<Type>& b)
+  {
+    return a.ptr != b.ptr;
+  }
+
+  } // ::ospcommon::memory
+} // ::ospcommon
