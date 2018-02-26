@@ -440,7 +440,19 @@ namespace ospray {
       for (auto file : files) {
         FileName fn = file.file;
         if (fn.ext() == "ospsg")
+        {
+          auto& cam = renderer["camera"];
+          auto dirTS = cam["dir"].lastModified();
+          auto posTS = cam["pos"].lastModified();
+          auto upTS = cam["up"].lastModified();
           sg::loadOSPSG(renderer.shared_from_this(), fn.str());
+          if (cam["dir"].lastModified() > dirTS)
+            gaze = (cam["pos"].valueAs<vec3f>() + cam["dir"].valueAs<vec3f>());
+          if (cam["pos"].lastModified() > posTS)
+            pos = cam["pos"].valueAs<vec3f>();
+          if (cam["up"].lastModified() > upTS)
+            up = cam["up"].valueAs<vec3f>();
+        }
         else {
           // create material array
           for (int i = 0; i < matrix_i; i++) {
