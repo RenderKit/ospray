@@ -50,7 +50,7 @@ namespace ospray {
       for (int i=1;i<ac;) {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
-          device->findParam("debug", true)->set(1);
+          device->findParam("debug", true)->set(true);
           // per default enable logging to cout; may be overridden later
           device->msg_fcn = [](const char *msg){ std::cout << msg; };
           removeArgs(ac,av,i,1);
