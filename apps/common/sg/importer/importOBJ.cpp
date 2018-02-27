@@ -105,21 +105,28 @@ namespace ospray {
         for (auto &param : mat.unknown_parameter) {
           if (param.first == "type") {
             matNode["type"] = param.second;
-            std::cout << "Creating material node of type " << param.second
-                      << std::endl;
             if (param.second != "OBJMaterial" && param.second != "default")
               addOBJparams = false;
           } else {
             std::string paramType;
             ospcommon::utility::Any paramValue;
-            parseParameterString(param.second, paramType, paramValue);
-            try {
-              matNode.createChildWithValue(param.first, paramType, paramValue);
-            } catch (const std::runtime_error &) {
-              // NOTE(jda) - silently move on if parsed node type doesn't exist
-              // maybe it's a texture, try it
+            if (param.first.find("Map") != std::string::npos)
+            {
               addTextureIfNeeded(matNode, param.first,
                                  param.second, containingPath);
+            }
+            else
+            {
+              parseParameterString(param.second, paramType, paramValue);
+              try {
+                matNode.createChildWithValue(param.first, paramType, paramValue);
+              } catch (const std::runtime_error &) {
+                // NOTE(jda) - silently move on if parsed node type doesn't exist
+                // maybe it's a texture, try it
+                std::cout << "attemptoing to load param as texture: " << param.first << " " << param.second << std::endl;
+                addTextureIfNeeded(matNode, param.first,
+                                   param.second, containingPath);
+              }
             }
           }
         }
