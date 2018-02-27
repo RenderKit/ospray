@@ -147,7 +147,6 @@ namespace ospray {
       brickInfoNode->postCommit(ctx);
 
       child("voxelRange") = valueRange.toVec2f();
-      child("transferFunction")["valueRange"] = valueRange.toVec2f();
     }
 
     OSP_REGISTER_SG_NODE(AMRVolume);
