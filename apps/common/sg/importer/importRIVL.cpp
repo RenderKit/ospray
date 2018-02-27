@@ -59,7 +59,7 @@ namespace ospray {
       nodeList.push_back(RIVLNode(txt));
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-      for (const auto& nameAndValue : node.properties) {
+      for (const auto &nameAndValue : node.properties) {
         auto &_name = nameAndValue.first;
         auto &value = nameAndValue.second;
         if (_name == "ofs")
@@ -247,7 +247,7 @@ namespace ospray {
       size_t childID=0;
 
       // find child ID
-      for (const auto nameAndValue : node.properties) {
+      for (const auto &nameAndValue : node.properties) {
         const auto &name  = nameAndValue.first;
         const auto &value = nameAndValue.second;
         if (name == "child") {
