@@ -18,17 +18,18 @@
 #pragma clang diagnostic ignored "-Wextended-offsetof"
 
 #include "SceneGraph.h"
-#include "sg/volume/AMRVolume.h"
-#include "sg/volume/Volume.h"
+#include "../volume/AMRVolume.h"
+#include "../volume/Volume.h"
 // hdf
+#include "hdf5.h"
+// ospcommon
 #include "ospcommon/range.h"
 #include "ospcommon/box.h"
 
-#include "hdf5.h"
+// core ospray
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
-
-  //! namespace amr declares various functions for loading AMR data
   namespace amr {
 
     //! stores AMR Level data

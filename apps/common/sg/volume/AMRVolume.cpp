@@ -21,6 +21,8 @@
 #include "ospcommon/utility/ArrayView.h"
 // sg
 #include "../importer/Importer.h"
+// core ospray
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {

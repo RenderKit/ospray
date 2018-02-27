@@ -15,9 +15,16 @@
 // ======================================================================== //
 
 #include "Data.h"
+// core ospray
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {
+
+    std::string DataBuffer::arrayTypeAsString() const
+    {
+      return stringForType(type);
+    }
 
     OSP_REGISTER_SG_NODE(DataVector1uc);
     OSP_REGISTER_SG_NODE(DataVector1f);

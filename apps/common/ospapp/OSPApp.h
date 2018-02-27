@@ -23,6 +23,8 @@
 namespace ospray {
   namespace app {
 
+    using namespace ospcommon;
+
     template <class T>
     class CmdLineParam
     {
