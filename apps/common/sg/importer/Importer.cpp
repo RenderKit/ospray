@@ -306,7 +306,8 @@ namespace ospray {
         sg::importCHOMBO(world, fileName);
 #endif
       } else if (hasImporterForExtension(fileName.ext())) {
-        std::cout << "#sg: found importer for extension '" << fileName.ext() << "'" << std::endl;
+        std::cout << "#sg: found importer for extension '"
+                  << fileName.ext() << "'" << std::endl;
         ImporterFunction importer = importerForExtension[fileName.ext()];
         importer(world,fileName);
       } else {

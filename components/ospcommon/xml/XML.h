@@ -85,39 +85,6 @@ namespace ospcommon {
       FileName fileName;
     };
 
-    /*! iterator that iterates through all properties of a given node,
-      calling the given functor (usually a lambda) with name and
-      value.
-
-      use via
-      xml::for_each_prop(node,[&](const std::string &name,
-                                  const std::string &value){
-         doSomthingWith(name,value);
-      });
-    */
-    template<typename Lambda>
-    inline void for_each_prop(const Node &node, const Lambda &functor)
-    {
-      for (auto it = node.properties.begin(); it != node.properties.end(); it++)
-        functor(it->first, it->second);
-    }
-
-    /*! iterator that iterates through all properties of a given node,
-      calling the given functor (usually a lambda) with name and
-      value.
-
-      use via
-      xml::for_each_child_of(node,[&](const xml::Node &child){
-         doSomthingWith(name,value);
-      });
-    */
-    template<typename Lambda>
-    inline void for_each_child_of(const Node &node, const Lambda &functor)
-    {
-      for (auto it = node.child.begin(); it != node.child.end(); it++)
-        functor(*it);
-    }
-
     /*! parse an XML file with given file name, and return a pointer
       to it.  In case of any error, this function will free all
       already-allocated data, and throw a std::runtime_error
