@@ -34,9 +34,6 @@
 // ospray API
 #include "ospray/ospray.h"
 
-// core ospray
-#include "ospray/common/OSPCommon.h"
-
 namespace ospray {
   namespace sg {
 

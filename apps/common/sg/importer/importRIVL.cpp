@@ -59,18 +59,20 @@ namespace ospray {
       nodeList.push_back(RIVLNode(txt));
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-      xml::for_each_prop(node,[&](const std::string &_name, const std::string &value){
-          if (_name == "ofs")
-            ofs = atol(value.c_str());
-          else if (_name == "width")
-            width = atol(value.c_str());
-          else if (_name == "height")
-            height = atol(value.c_str());
-          else if (_name == "channels")
-            channels = atol(value.c_str());
-          else if (_name == "depth")
-            depth = atol(value.c_str());
-        });
+      for (const auto &nameAndValue : node.properties) {
+        auto &_name = nameAndValue.first;
+        auto &value = nameAndValue.second;
+        if (_name == "ofs")
+          ofs = atol(value.c_str());
+        else if (_name == "width")
+          width = atol(value.c_str());
+        else if (_name == "height")
+          height = atol(value.c_str());
+        else if (_name == "channels")
+          channels = atol(value.c_str());
+        else if (_name == "depth")
+          depth = atol(value.c_str());
+      }
       assert(ofs != -1 && "Offset not properly parsed for Texture2D nodes");
       assert(width != -1 && "Width not properly parsed for Texture2D nodes");
       assert(height != -1 && "Height not properly parsed for Texture2D nodes");
@@ -229,12 +231,12 @@ namespace ospray {
       mat->setName(name.str());
       mat->child("type") = node.getProp("type");
 
-      xml::for_each_child_of(node,[&](const xml::Node &child){
-          if (!child.name.compare("textures"))
-            parseMaterialTextures(mat,child);
-          else if (!child.name.compare("param"))
-            parseMaterialParam(mat,child);
-        });
+      for (const auto &child : node.child) {
+        if (!child.name.compare("textures"))
+          parseMaterialTextures(mat,child);
+        else if (!child.name.compare("param"))
+          parseMaterialParam(mat,child);
+      }
     }
 
     void parseTransformNode(const xml::Node &node)
@@ -245,15 +247,17 @@ namespace ospray {
       size_t childID=0;
 
       // find child ID
-      xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
-          if (name == "child") {
-            childID = atoi(value.c_str());
-            child = nodeList[childID];
-            assert(child.sgNode);
-          } else if (name == "id") {
-            id = atoi(value.c_str());
-          }
-        });
+      for (const auto &nameAndValue : node.properties) {
+        const auto &name  = nameAndValue.first;
+        const auto &value = nameAndValue.second;
+        if (name == "child") {
+          childID = atoi(value.c_str());
+          child = nodeList[childID];
+          assert(child.sgNode);
+        } else if (name == "id") {
+          id = atoi(value.c_str());
+        }
+      }
 
       // parse xfm matrix
       int numRead = sscanf((const char*)node.content.c_str(),
@@ -316,74 +320,74 @@ namespace ospray {
       model->add(mesh);
       nodeList.push_back(model);
 
-      xml::for_each_child_of(node, [&](const xml::Node &child){
-          assert(binBasePtr);
-          if (child.name == "text") {
-          } else if (child.name == "vertex") {
-            size_t ofs = std::stoll(child.getProp("ofs"));
-            size_t num = std::stoll(child.getProp("num"));
-            if (!binBasePtr)
-              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            auto vertex =
-              make_shared_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
-            vertex->setName("vertex");
-            mesh->add(vertex);
-          } else if (child.name == "normal") {
-            size_t ofs = std::stoll(child.getProp("ofs"));
-            size_t num = std::stoll(child.getProp("num"));
-            if (!binBasePtr)
-              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            auto normal =
-              std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),
-                                            num, false);
-            normal->setName("normal");
-            mesh->add(normal);
-          } else if (child.name == "texcoord") {
-            size_t ofs = std::stoll(child.getProp("ofs"));
-            size_t num = std::stoll(child.getProp("num"));
-            if (!binBasePtr)
-              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            auto texcoord =
-              std::make_shared<DataArray2f>((vec2f*)((char*)binBasePtr+ofs),
-                                            num, false);
-            texcoord->setName("texcoord");
-            mesh->add(texcoord);
-          } else if (child.name == "prim") {
-            size_t ofs = std::stoll(child.getProp("ofs"));
-            size_t num = std::stoll(child.getProp("num"));
-            if (!binBasePtr)
-              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            auto index =
-              make_shared_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
-            index->setName("index");
-            mesh->add(index);
+      for (const auto &child : node.child) {
+        assert(binBasePtr);
+        if (child.name == "text") {
+        } else if (child.name == "vertex") {
+          size_t ofs = std::stoll(child.getProp("ofs"));
+          size_t num = std::stoll(child.getProp("num"));
+          if (!binBasePtr)
+            throw std::runtime_error("xml file mapping to binary file, but binary file not present");
+          auto vertex =
+            make_shared_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
+          vertex->setName("vertex");
+          mesh->add(vertex);
+        } else if (child.name == "normal") {
+          size_t ofs = std::stoll(child.getProp("ofs"));
+          size_t num = std::stoll(child.getProp("num"));
+          if (!binBasePtr)
+            throw std::runtime_error("xml file mapping to binary file, but binary file not present");
+          auto normal =
+            std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),
+                                          num, false);
+          normal->setName("normal");
+          mesh->add(normal);
+        } else if (child.name == "texcoord") {
+          size_t ofs = std::stoll(child.getProp("ofs"));
+          size_t num = std::stoll(child.getProp("num"));
+          if (!binBasePtr)
+            throw std::runtime_error("xml file mapping to binary file, but binary file not present");
+          auto texcoord =
+            std::make_shared<DataArray2f>((vec2f*)((char*)binBasePtr+ofs),
+                                          num, false);
+          texcoord->setName("texcoord");
+          mesh->add(texcoord);
+        } else if (child.name == "prim") {
+          size_t ofs = std::stoll(child.getProp("ofs"));
+          size_t num = std::stoll(child.getProp("num"));
+          if (!binBasePtr)
+            throw std::runtime_error("xml file mapping to binary file, but binary file not present");
+          auto index =
+            make_shared_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
+          index->setName("index");
+          mesh->add(index);
 
-            auto primIDList =
-              createNode("prim.materialID",
-                         "DataVector1i")->nodeAs<DataVector1i>();
+          auto primIDList =
+            createNode("prim.materialID",
+                       "DataVector1i")->nodeAs<DataVector1i>();
 
-            for(size_t i = 0; i < index->size(); i++)
-              primIDList->v.push_back((*index)[i].w >> 16);
+          for(size_t i = 0; i < index->size(); i++)
+            primIDList->v.push_back((*index)[i].w >> 16);
 
-            mesh->add(primIDList);
-          } else if (child.name == "materiallist") {
-            char* value = strdup(child.content.c_str());
-            auto materialListNode =
-                mesh->child("materialList").nodeAs<MaterialList>();
-            materialListNode->clear();
-            for(char *s = strtok((char*)value," \t\n\r");
-                s;
-                s = strtok(nullptr," \t\n\r")) {
-              size_t matID = atoi(s);
-              auto mat = nodeList[matID].sgNode->nodeAs<sg::Material>();
-              mesh->add(mat, "material");
-              materialListNode->push_back(mat);
-            }
-            free(value);
-          } else {
-            std::cerr << "unknown child node type '" << child.name << "' for mesh node" << std::endl;
+          mesh->add(primIDList);
+        } else if (child.name == "materiallist") {
+          char* value = strdup(child.content.c_str());
+          auto materialListNode =
+              mesh->child("materialList").nodeAs<MaterialList>();
+          materialListNode->clear();
+          for(char *s = strtok((char*)value," \t\n\r");
+              s;
+              s = strtok(nullptr," \t\n\r")) {
+            size_t matID = atoi(s);
+            auto mat = nodeList[matID].sgNode->nodeAs<sg::Material>();
+            mesh->add(mat, "material");
+            materialListNode->push_back(mat);
           }
-        });
+          free(value);
+        } else {
+          std::cerr << "unknown child node type '" << child.name << "' for mesh node" << std::endl;
+        }
+      }
     }
 
     void parseGroupNode(const xml::Node &node)
@@ -507,44 +511,44 @@ namespace ospray {
       int incrementer = 0;
       std::cout << "mapping RIVL scene state to OSPSG... \n";
       nodeList.reserve(numNodes);
-      xml::for_each_child_of(root,[&](const xml::Node &node){
-          if (nodeCounter++ >= (increment*float(incrementer))) {
-            std::cout << incrementer*10 << "%\n";
-            incrementer++;
-          }
+      for (const auto &node: root.child) {
+        if (nodeCounter++ >= (increment*float(incrementer))) {
+          std::cout << incrementer*10 << "%\n";
+          incrementer++;
+        }
 
-          if (node.name == "text") {
-            // -------------------------------------------------------
-          } else if (node.name == "Texture2D") {
-            // -------------------------------------------------------
-            parseTextureNode(node);
-            // -------------------------------------------------------
-          } else if (node.name == "Material") {
-            // -------------------------------------------------------
-            parseMaterialNode(node);
-            // -------------------------------------------------------
-          } else if (node.name == "Transform") {
-            // -------------------------------------------------------
-            parseTransformNode(node);
-            lastNode = nodeList.back();
-            // -------------------------------------------------------
-          } else if (node.name == "Mesh") {
-            // -------------------------------------------------------
-            parseMeshNode(node);
-            lastNode = nodeList.back();
-            // -------------------------------------------------------
-          } else if (node.name == "Group") {
-            // -------------------------------------------------------
+        if (node.name == "text") {
+          // -------------------------------------------------------
+        } else if (node.name == "Texture2D") {
+          // -------------------------------------------------------
+          parseTextureNode(node);
+          // -------------------------------------------------------
+        } else if (node.name == "Material") {
+          // -------------------------------------------------------
+          parseMaterialNode(node);
+          // -------------------------------------------------------
+        } else if (node.name == "Transform") {
+          // -------------------------------------------------------
+          parseTransformNode(node);
+          lastNode = nodeList.back();
+          // -------------------------------------------------------
+        } else if (node.name == "Mesh") {
+          // -------------------------------------------------------
+          parseMeshNode(node);
+          lastNode = nodeList.back();
+          // -------------------------------------------------------
+        } else if (node.name == "Group") {
+          // -------------------------------------------------------
 #if USE_INSTANCE_GROUP
-            parseInstanceGroupNode(node);
+          parseInstanceGroupNode(node);
 #else
-            parseGroupNode(node);
+          parseGroupNode(node);
 #endif
-            lastNode = nodeList.back();
-          } else {
-            nodeList.push_back({});
-          }
-        });
+          lastNode = nodeList.back();
+        } else {
+          nodeList.push_back({});
+        }
+      }
       if (lastNode.sgNode)
       {
         if (lastNode.sgNode->type() == "Model")
@@ -574,10 +578,10 @@ namespace ospray {
         std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
       }
       std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName);
-      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene")
+      if (doc->child.size() != 1 || doc->child[0].name != "BGFscene")
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
-      const xml::Node &root_element = *doc->child[0];
-      parseBGFscene(world,root_element);
+      const xml::Node &root_element = doc->child[0];
+      parseBGFscene(world, root_element);
     }
 
     OSPSG_REGISTER_IMPORT_FUNCTION(importRIVL, rivl);

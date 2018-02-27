@@ -19,8 +19,6 @@
 #include "../visitor/MarkAllAsModified.h"
 // stl
 #include <map>
-// xml
-#include "common/xml/XML.h"
 
 namespace ospray {
   namespace sg {
@@ -63,26 +61,26 @@ namespace ospray {
           sgNode->nodeAs<DataVector3f>()->push_back(val);
         }
       }
-      for (auto child : node.child)
+      for (const auto &child : node.child)
       {
-        if (sgNode->hasChild(child->name))
+        if (sgNode->hasChild(child.name))
         {
-          parseXMLNode(*child, binBasePtr, sgNode->child(child->name).shared_from_this());
+          parseXMLNode(child, binBasePtr, sgNode->child(child.name).shared_from_this());
         }
         else
         {
-          const std::string& cname = child->name;
-          const std::string ctype = child->getProp("type");
-          const std::string cname2 = child->getProp("nodeName"); // for node references
+          const std::string& cname = child.name;
+          const std::string ctype = child.getProp("type");
+          const std::string cname2 = child.getProp("nodeName"); // for node references
           if (cname2 != "")
           {
             auto newNode = sg::createNode(cname2,ctype);
             sgNode->setChild(cname, newNode);
             newNode->setParent(sgNode);
-            parseXMLNode(*child, binBasePtr, newNode);
+            parseXMLNode(child, binBasePtr, newNode);
           }
           else
-            sgNode->add(parseXMLNode(*child, binBasePtr, sg::createNode(cname,ctype)));
+            sgNode->add(parseXMLNode(child, binBasePtr, sg::createNode(cname,ctype)));
         }
       }
       return sgNode;
@@ -97,26 +95,26 @@ namespace ospray {
         throw std::runtime_error("ospray xml input file does not contain any nodes!?");
       const std::string binFileName = fileName+"bin";
       const unsigned char * const binBasePtr = mapFile(binFileName);
-      std::shared_ptr<xml::Node> root = doc->child[0];
+      const xml::Node &root = doc->child[0];
 
       std::shared_ptr<Node> node = world;
-      if (root->name != world->name())
+      if (root.name != world->name())
       {
         try
         {
-          node = world->childRecursive(root->name).shared_from_this();
+          node = world->childRecursive(root.name).shared_from_this();
         }
         catch (const std::runtime_error &)
         {
-          std::string type = root->getProp("type");
+          std::string type = root.getProp("type");
           if (type == "")
             type = "Node";
-          node = sg::createNode(root->name, type);
+          node = sg::createNode(root.name, type);
           world->add(node);
         }
       }
 
-      parseXMLNode(*root, binBasePtr, node);
+      parseXMLNode(root, binBasePtr, node);
       std::cout << "loaded xml: \n";
 
       node->traverse(PrintNodes{});
@@ -178,7 +176,7 @@ namespace ospray {
     }
 
     void writeOSPSG(const std::shared_ptr<sg::Node> &root,
-                                   const std::string &fileName)
+                    const std::string &fileName)
     {
       FILE *file = fopen(fileName.c_str(),"w");
       if (!file) {

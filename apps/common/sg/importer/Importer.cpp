@@ -301,8 +301,13 @@ namespace ospray {
       } else if (ext == "vtu" || ext == "vtk" || ext == "off") {
         sg::importUnstructuredVolume(world, fileName);
 #endif
+#ifdef OSPRAY_APPS_SG_CHOMBO
+      } else if (ext == "hdf5") {
+        sg::importCHOMBO(world, fileName);
+#endif
       } else if (hasImporterForExtension(fileName.ext())) {
-        std::cout << "#sg: found importer for extension '" << fileName.ext() << "'" << std::endl;
+        std::cout << "#sg: found importer for extension '"
+                  << fileName.ext() << "'" << std::endl;
         ImporterFunction importer = importerForExtension[fileName.ext()];
         importer(world,fileName);
       } else {

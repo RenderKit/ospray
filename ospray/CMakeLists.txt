@@ -388,13 +388,9 @@ OSPRAY_INSTALL_SDK_HEADERS(
 OSPRAY_INSTALL_SDK_HEADERS(
   volume/unstructured/MinMaxBVH2.h
   volume/unstructured/MinMaxBVH2.ih
+  volume/unstructured/UnstructuredVolume.h
+  volume/unstructured/UnstructuredVolume.ih
   DESTINATION volume/unstructured
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/unstructured/tetrahedral/TetrahedralVolume.h
-  volume/unstructured/tetrahedral/TetrahedralVolume.ih
-  DESTINATION volume/unstructured/tetrahedral
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(

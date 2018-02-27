@@ -36,10 +36,6 @@ namespace ospray {
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 
-      //! \brief Initialize this node's value from given corresponding XML node
-      void setFromXML(const xml::Node &node,
-                      const unsigned char *binBasePtr) override;
-
      private:
 
       float interpolatedAlpha(const DataBuffer &alpha, float x);
