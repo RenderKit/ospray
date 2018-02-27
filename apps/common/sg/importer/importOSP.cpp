@@ -58,8 +58,11 @@ namespace ospray {
     }
 
     static void importRAW2AMRVolume(std::shared_ptr<Node> world,
+                                    const std::string &originalFileName,
                                     const xml::Node &xmlNode)
     {
+      FileName orgFile(originalFileName);
+
       auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
       std::string fileName;
       int brickSize = -1;
@@ -68,7 +71,7 @@ namespace ospray {
         if (child.name == "brickSize")
           brickSize = std::atoi(child.content.c_str());
         else if (child.name == "fileName")
-          fileName = child.content;
+          fileName = orgFile.path() + child.content;
       }
 
       if (fileName == "") {
@@ -102,7 +105,7 @@ namespace ospray {
         if (nameLower == "volume" || nameLower == "structuredvolume")
           importStructuredVolume(world, node);
         else if (nameLower == "amr" || nameLower == "amrvolume")
-          importRAW2AMRVolume(world, node);
+          importRAW2AMRVolume(world, fileName, node);
         else
           std::cout << "#importOSG: unknown xml tag '" << node.name << "'\n";
       }
