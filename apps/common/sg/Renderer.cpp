@@ -129,6 +129,8 @@ namespace ospray {
     void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb, int flags)
     {
       RenderContext ctx;
+      traverse(ctx, "verify");
+      traverse(ctx, "commit");
       traverse(ctx, "render");
       variance = ospRenderFrame(fb->valueAs<OSPFrameBuffer>(), ospRenderer, flags);
     }
