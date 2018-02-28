@@ -410,7 +410,7 @@ namespace ospray {
           bounce["color"] = vec3f(202.f / 255.f, 216.f / 255.f, 255.f / 255.f);
           bounce["direction"] = vec3f(-.93, -.54f, -.605f);
           bounce["intensity"] = 1.25f;
-          sun["angularDiameter"] = 3.0f;
+          bounce["angularDiameter"] = 3.0f;
         }
 
         if (hdriLightFile == "") {

@@ -712,7 +712,7 @@ namespace ospray {
     if (node->hasChildren()) {
       text += node->type() + "##" + std::to_string(node->uniqueID());
       if (ImGui::TreeNodeEx(text.c_str(),
-                            (node->numChildren() > 20) ?
+                            (node->numChildren() > 25) ?
                              0 : ImGuiTreeNodeFlags_DefaultOpen)) {
         guiNodeContextMenu(name, node);
 
