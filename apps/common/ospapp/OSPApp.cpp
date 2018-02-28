@@ -402,21 +402,23 @@ namespace ospray {
           (lights.numChildren() <= 0 || addDefaultLights == true)) {
         if (!fast) {
           auto &sun = lights.createChild("sun", "DirectionalLight");
-          sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
+          sun["color"] = vec3f(1.f, 247.f / 255.f, 201.f / 255.f);
           sun["direction"] = vec3f(0.462f, -1.f, -.1f);
           sun["intensity"] = 3.0f;
+          sun["angularDiameter"] = 0.8f;
 
           auto &bounce = lights.createChild("bounce", "DirectionalLight");
-          bounce["color"] = vec3f(127.f / 255.f, 178.f / 255.f, 255.f / 255.f);
+          bounce["color"] = vec3f(202.f / 255.f, 216.f / 255.f, 255.f / 255.f);
           bounce["direction"] = vec3f(-.93, -.54f, -.605f);
           bounce["intensity"] = 1.25f;
+          sun["angularDiameter"] = 3.0f;
         }
 
         if (hdriLightFile == "") {
           auto &ambient = lights.createChild("ambient", "AmbientLight");
           ambient["intensity"] = fast ? 1.25f : 0.9f;
           ambient["color"] = fast ?
-              vec3f(1.f) : vec3f(174.f / 255.f, 218.f / 255.f, 255.f / 255.f);
+              vec3f(1.f) : vec3f(217.f / 255.f, 230.f / 255.f, 255.f / 255.f);
         }
       }
 
@@ -618,8 +620,8 @@ namespace ospray {
       sg_plane->add(index);
       auto &planeMaterial =
           (*plane["materialList"].nodeAs<sg::MaterialList>())[0];
-      planeMaterial["Kd"] = vec3f(0.5f);
-      planeMaterial["Ks"] = vec3f(0.1f);
+      planeMaterial["Kd"] = vec3f(0.3f);
+      planeMaterial["Ks"] = vec3f(0.0f);
       planeMaterial["Ns"] = 10.f;
 
       renderer.traverse("verify");
