@@ -285,7 +285,12 @@ namespace ospray {
     {
       auto ext = fileName.ext();
 
-      if (ext == "obj") {
+      if (hasImporterForExtension(ext)) {
+        std::cout << "#sg: found importer for extension '" << ext << "'"
+                  << std::endl;
+        ImporterFunction importer = importerForExtension[ext];
+        importer(world,fileName);
+      } else if (ext == "obj") {
         sg::importOBJ(world, fileName);
       } else if (ext == "ply") {
         sg::importPLY(world, fileName);
@@ -305,11 +310,6 @@ namespace ospray {
       } else if (ext == "hdf5") {
         sg::importCHOMBO(world, fileName);
 #endif
-      } else if (hasImporterForExtension(fileName.ext())) {
-        std::cout << "#sg: found importer for extension '"
-                  << fileName.ext() << "'" << std::endl;
-        ImporterFunction importer = importerForExtension[fileName.ext()];
-        importer(world,fileName);
       } else {
         std::cout << "unsupported file format\n";
         return;
