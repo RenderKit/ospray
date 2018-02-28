@@ -28,7 +28,7 @@
 #include "embree2/rtcore.isph"
 
 // ------------------------------------------------------------------
-//! The gradient at the given sample location in world coordinates.
+//! The current level at the given sample location in world coordinates.
 static varying float AMR_level(void *uniform _self, const varying vec3f &pos)
 {
   AMRVolume *uniform self = (AMRVolume *uniform) _self;
@@ -66,6 +66,8 @@ static varying vec3f AMR_gradient(void *uniform _self, const varying vec3f &pos)
   return(gradient / gradientStep);
 }
 
+// adaptively step the ray based on the log of the
+// current AMR level cell size.
 // ray.time is set to interval length of intersected sample
 inline void AMR_stepRay(void *uniform _volume,
                         varying Ray &ray,
