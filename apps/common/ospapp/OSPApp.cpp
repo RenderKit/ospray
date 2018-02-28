@@ -108,7 +108,6 @@ namespace ospray {
         renderer["maxDepth"] = 3;
         renderer["frameBuffer"]["toneMapping"] = false;
         renderer["frameBuffer"]["useVarianceBuffer"] = false;
-        renderer["frameBuffer"]["useSRGB"] = false;
         addPlane = false;
       }
 
