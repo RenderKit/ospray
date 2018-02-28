@@ -374,7 +374,7 @@ namespace ospray {
     {
       auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
       parseAMRChomboFile(node, fileName);
-      // TODO: value range?
+      node->child("transferFunction")["valueRange"] = node->valueRange.toVec2f();
       world->add(node);
     }
 

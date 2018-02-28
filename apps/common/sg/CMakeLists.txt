@@ -166,6 +166,7 @@ ospray_install_sdk_headers(
   common/Light.h
   common/Material.h
   common/Model.h
+  common/Node.h
   common/NodeList.h
   common/NodeParameter.h
   common/Renderable.h
