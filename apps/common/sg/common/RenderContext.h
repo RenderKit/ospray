@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Common.h"
-#include "TimeStamp.h"
+#include "ospcommon/utility/TimeStamp.h"
 
 namespace ospray {
   namespace sg {
@@ -45,8 +45,8 @@ namespace ospray {
       int level {0};
 
 
-      TimeStamp _MTime;
-      TimeStamp _childMTime;
+      utility::TimeStamp _MTime;
+      utility::TimeStamp _childMTime;
     };
 
     // Inlined RenderContext definitions //////////////////////////////////////

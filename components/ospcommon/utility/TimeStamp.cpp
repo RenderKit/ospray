@@ -14,42 +14,49 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "TimeStamp.h"
 
-#include "Common.h"
+namespace ospcommon {
+  namespace utility {
 
-#include <atomic>
+    std::atomic<size_t> TimeStamp::global {0};
 
-namespace ospray {
-  namespace sg {
-
-    //! \brief Implements an abstraction of Time
-    /*! Abstracts the concept of time to be used for time-stamping
-      node's last 'lastupdated' and /lastmodified' time stamps */
-    struct OSPSG_INTERFACE TimeStamp
+    TimeStamp::TimeStamp(const TimeStamp &other)
     {
-      TimeStamp() = default;
-      TimeStamp(const TimeStamp &);
-      TimeStamp(TimeStamp &&);
+      this->value = other.value.load();
+    }
 
-      TimeStamp &operator=(const TimeStamp &);
-      TimeStamp &operator=(TimeStamp &&);
+    TimeStamp::TimeStamp(TimeStamp &&other)
+    {
+      this->value = other.value.load();
+    }
 
-      operator size_t() const;
+    TimeStamp &TimeStamp::operator=(const TimeStamp &other)
+    {
+      this->value = other.value.load();
+      return *this;
+    }
 
-      void renew();
+    TimeStamp &TimeStamp::operator=(TimeStamp &&other)
+    {
+      this->value = other.value.load();
+      return *this;
+    }
 
-    private:
+    TimeStamp::operator size_t() const
+    {
+      return value;
+    }
 
-      static size_t nextValue();
+    void TimeStamp::renew()
+    {
+      value = nextValue();
+    }
 
-      // Data members //
-
-      std::atomic<size_t> value {nextValue()};
-
-      //! \brief the uint64_t that stores the time value
-      static std::atomic<size_t> global;
-    };
+    size_t TimeStamp::nextValue()
+    {
+      return global++;
+    }
 
   } // ::ospray::sg
 } // ::ospray

@@ -69,6 +69,7 @@ ELSE()
     utility/PseudoURL.cpp
     utility/SaveImage.h
     utility/StringManip.h
+    utility/TimeStamp.cpp
     utility/TransactionalValue.h
 
     xml/XML.cpp
@@ -177,6 +178,7 @@ ELSE()
     utility/SaveImage.h
     utility/StringManip.h
     utility/TransactionalValue.h
+    utility/TimeStamp.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
   )
