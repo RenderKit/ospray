@@ -53,6 +53,9 @@ namespace ospcommon {
       template<typename T>
       Any& operator=(T rhs);
 
+      bool operator==(const Any &rhs) const;
+      bool operator!=(const Any &rhs) const;
+
       template<typename T>
       T& get();
 
@@ -67,10 +70,6 @@ namespace ospcommon {
       std::string toString() const;
 
     private:
-
-      // Friends //
-
-      friend bool operator==(const Any &lhs, const Any &rhs);
 
       // Helper types //
 
@@ -150,6 +149,16 @@ namespace ospcommon {
       );
 
       return *this;
+    }
+
+    inline bool Any::operator==(const Any &rhs) const
+    {
+      return currentValue->isSame(rhs.currentValue.get());
+    }
+
+    inline bool Any::operator!=(const Any &rhs) const
+    {
+      return !(*this == rhs);
     }
 
     template<typename T>
@@ -254,18 +263,6 @@ namespace ospcommon {
     inline void *Any::handle<T>::data()
     {
       return &value;
-    }
-
-    // Comparison functions ///////////////////////////////////////////////////
-
-    inline bool operator==(const Any &lhs, const Any &rhs)
-    {
-      return lhs.currentValue->isSame(rhs.currentValue.get());
-    }
-
-    inline bool operator!=(const Any &lhs, const Any &rhs)
-    {
-      return !(lhs == rhs);
     }
 
   } // ::ospcommon::utility
