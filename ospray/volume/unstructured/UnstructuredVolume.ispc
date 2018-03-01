@@ -25,12 +25,12 @@ bool intersectAndSampleTet(void *uniform userData,
 {
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
 
-  vec4i t = self->indices[2 * id + 1];  // The 4 corner indices of the tetrahedron.
+  uniform vec4i t = self->indices[2 * id + 1];  // The 4 corner indices of the tetrahedron.
 
-  vec3f p0 = self->vertices[t.x];
-  vec3f p1 = self->vertices[t.y];
-  vec3f p2 = self->vertices[t.z];
-  vec3f p3 = self->vertices[t.w];
+  uniform vec3f p0 = self->vertices[t.x];
+  uniform vec3f p1 = self->vertices[t.y];
+  uniform vec3f p2 = self->vertices[t.z];
+  uniform vec3f p3 = self->vertices[t.w];
 
   uniform vec3f norm0 = self->faceNormals[(id * 6) + 0];
   uniform vec3f norm1 = self->faceNormals[(id * 6) + 1];
@@ -47,10 +47,10 @@ bool intersectAndSampleTet(void *uniform userData,
     return false;
 
   // Distance of tetrahedron corners to their opposite faces.
-  float h0 = dot(norm0, p1 - p0);
-  float h1 = dot(norm1, p2 - p1);
-  float h2 = dot(norm2, p3 - p2);
-  float h3 = dot(norm3, p0 - p3);
+  uniform float h0 = dot(norm0, p1 - p0);
+  uniform float h1 = dot(norm1, p2 - p1);
+  uniform float h2 = dot(norm2, p3 - p2);
+  uniform float h3 = dot(norm3, p0 - p3);
 
   // Local coordinates = ratio of distances.
   float z0 = d0 / h0;
@@ -59,10 +59,10 @@ bool intersectAndSampleTet(void *uniform userData,
   float z3 = d3 / h3;
 
   // Field/attribute values at the tetrahedron corners.
-  float v0 = self->field[t.x];
-  float v1 = self->field[t.y];
-  float v2 = self->field[t.z];
-  float v3 = self->field[t.w];
+  uniform float v0 = self->field[t.x];
+  uniform float v1 = self->field[t.y];
+  uniform float v2 = self->field[t.z];
+  uniform float v3 = self->field[t.w];
 
   // Interpolated field/attribute value at the world position.
   result = z0 * v0 + z1 * v1 + z2 * v2 + z3 * v3;
