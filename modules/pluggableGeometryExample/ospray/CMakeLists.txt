@@ -57,5 +57,5 @@ OSPRAY_CREATE_LIBRARY(ospray_module_bilinear_patches
 
   # this depends on ospray core:
   LINK
-  ospray
+  ospray_module_ispc
 )

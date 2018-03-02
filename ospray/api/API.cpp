@@ -27,7 +27,7 @@
 #include "common/Material.h"
 #include "volume/Volume.h"
 #include "transferFunction/TransferFunction.h"
-#include "LocalDevice.h"
+#include "Device.h"
 
 #ifdef _WIN32
 #  include <process.h> // for getpid
@@ -226,8 +226,8 @@ OSPRAY_CATCH_BEGIN
 
   // no device created on cmd line, yet, so default to localdevice
   if (!deviceIsSet()) {
-    loadDefaultLibrary();
-    currentDevice = std::make_shared<ospray::api::LocalDevice>();
+    ospLoadModule("ispc");
+    currentDevice.reset(Device::createDevice("default"));
   }
 
   ospray::initFromCommandLine(_ac,&_av);

@@ -609,3 +609,6 @@ namespace ospray {
   } // ::ospray::api
 } // ::ospray
 
+extern "C" OSPRAY_DLLEXPORT void ospray_init_module_ispc()
+{
+}
