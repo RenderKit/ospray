@@ -319,6 +319,7 @@ namespace ospray {
       assert(rootLevelBounds.lower == vec3i(0));
 
       node->child("bounds") = amr->getWorldBounds();
+      (*node)["voxelType"] = std::string("uchar");
 
       node->componentID = -1;
       for (size_t i = 0; i < amr->component.size(); i++) {

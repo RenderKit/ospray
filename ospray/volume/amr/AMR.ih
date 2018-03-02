@@ -50,6 +50,7 @@ inline float min(float a, float b, float c, float d,
   return min(min(min(a,b),min(c,d)),min(min(e,f),min(g,h)));
 }
 
+//! "templated" voxel get functions for different data types
 #define template_AMR_getVoxel(type)                                              \
 /* --------------------------------------------------------------------------\
 // versions for pure 32-bit addressing. volume *MUST* be smaller than 2G     \
