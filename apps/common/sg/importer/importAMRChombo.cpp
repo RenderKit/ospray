@@ -80,6 +80,8 @@ namespace ospray {
       //! array of component names
       std::vector<std::string> component;
 
+      std::string voxelType="float"; // for now only floats are created by importer
+
       static AMR *parse(const std::string &fileName, int maxLevel = 1 << 30);
       box3f getWorldBounds() const;
     };
@@ -319,7 +321,7 @@ namespace ospray {
       assert(rootLevelBounds.lower == vec3i(0));
 
       node->child("bounds") = amr->getWorldBounds();
-      (*node)["voxelType"] = std::string("uchar");
+      (*node)["voxelType"] = amr->voxelType;
 
       node->componentID = -1;
       for (size_t i = 0; i < amr->component.size(); i++) {
