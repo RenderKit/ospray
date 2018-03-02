@@ -439,7 +439,7 @@ namespace ospray {
     extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
+      return new InternalClassName;                                     \
     }                                                                   \
     /* Extra declaration to avoid "extra ;" pedantic warnings */        \
     ospray::sg::Node* ospray_create_sg_node__##Name()
