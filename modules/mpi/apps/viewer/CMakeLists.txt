@@ -16,8 +16,6 @@
 
 ospray_disable_compiler_warnings()
 
-find_package(GLFW REQUIRED)
-
 include_directories(${CMAKE_SOURCE_DIR}/apps/common
                     ${CMAKE_SOURCE_DIR}/apps/exampleViewer
                     ${GLFW_INCLUDE_DIRS})
