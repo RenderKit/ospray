@@ -29,9 +29,17 @@ namespace ospcommon {
     inline std::string longestBeginningMatch(const std::string &first,
                                              const std::string &second)
     {
+      // NOTE(jda) - If length of the second string is shorter than the first,
+      //             then we can only iterate through the first string the
+      //             number of characters of the second string.
+      auto maxMatchLength = std::min(first.size(), second.size());
+      auto start1 = first.begin();
+      auto start2 = second.begin();
+      auto end    = first.begin() + maxMatchLength;
+
       return std::string(
-        first.begin(),
-        std::mismatch(first.begin(), first.end(), second.begin()).first
+        start1,
+        std::mismatch(start1, end, start2).first
       );
     }
 
