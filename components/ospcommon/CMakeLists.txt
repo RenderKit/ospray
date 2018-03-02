@@ -189,69 +189,19 @@ ELSE()
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/xml
   )
 
-  ## Test apps ##
+  ## Build Test Apps ##
 
   ADD_LIBRARY(ospray_test_main STATIC testing/catch_main.cpp)
 
-  # utility/ArgumentList
-
-  OSPRAY_CREATE_TEST(test_ArgumentList
-    utility/tests/test_ArgumentList.cpp
+  # containers/AlignedVector
+  OSPRAY_CREATE_TEST(test_AlignedVector
+    containers/tests/test_AlignedVector.cpp
   LINK
     ospray_common
     ospray_test_main
   )
-
-  ADD_TEST(NAME ArgumentList COMMAND test_ArgumentList)
-
-  # utility/ArrayView
-
-  OSPRAY_CREATE_TEST(test_ArrayView
-    utility/tests/test_ArrayView.cpp
-  LINK
-    ospray_common
-    ospray_test_main
-  )
-
-  # utility/ArrayView
-
-  ADD_TEST(NAME ArrayView COMMAND test_ArrayView)
-
-  # utility/OnScopeExit
-
-  OSPRAY_CREATE_TEST(test_OnScopeExit
-    utility/tests/test_OnScopeExit.cpp
-  LINK
-    ospray_common
-    ospray_test_main
-  )
-
-  ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
-
-  # utility/Optional
-
-  OSPRAY_CREATE_TEST(test_Optional
-    utility/tests/test_Optional.cpp
-  LINK
-    ospray_common
-    ospray_test_main
-  )
-
-  ADD_TEST(NAME Optional COMMAND test_Optional)
-
-  # utility/StringManip
-
-  OSPRAY_CREATE_TEST(test_StringManip
-    utility/tests/test_StringManip.cpp
-  LINK
-    ospray_common
-    ospray_test_main
-  )
-
-  ADD_TEST(NAME StringManip COMMAND test_StringManip)
 
   # containers/TransactionalBuffer
-
   OSPRAY_CREATE_TEST(test_TransactionalBuffer
     containers/tests/test_TransactionalBuffer.cpp
   LINK
@@ -259,72 +209,100 @@ ELSE()
     ospray_test_main
   )
 
+  # tasking/async
+  OSPRAY_CREATE_TEST(test_async
+    tasking/tests/test_async.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # tasking/parallel_for
+  OSPRAY_CREATE_TEST(test_parallel_for
+    tasking/tests/test_parallel_for.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # tasking/schedule
+  OSPRAY_CREATE_TEST(test_schedule
+    tasking/tests/test_schedule.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/Any
+  OSPRAY_CREATE_TEST(test_Any
+    utility/tests/test_Any.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/ArgumentList
+  OSPRAY_CREATE_TEST(test_ArgumentList
+    utility/tests/test_ArgumentList.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/ArrayView
+  OSPRAY_CREATE_TEST(test_ArrayView
+    utility/tests/test_ArrayView.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/Observers
+  OSPRAY_CREATE_TEST(test_Observers
+    utility/tests/test_Observers.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/OnScopeExit
+  OSPRAY_CREATE_TEST(test_OnScopeExit
+    utility/tests/test_OnScopeExit.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/Optional
+  OSPRAY_CREATE_TEST(test_Optional
+    utility/tests/test_Optional.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/StringManip
+  OSPRAY_CREATE_TEST(test_StringManip
+    utility/tests/test_StringManip.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  ## Add Test Apps to CTest ##
+
+  ADD_TEST(NAME ArgumentList        COMMAND test_ArgumentList       )
+  ADD_TEST(NAME ArrayView           COMMAND test_ArrayView          )
+  ADD_TEST(NAME OnScopeExit         COMMAND test_OnScopeExit        )
+  ADD_TEST(NAME Optional            COMMAND test_Optional           )
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
-
-  IF(NOT WIN32)
-
-    # utility/Any
-
-    OSPRAY_CREATE_TEST(test_Any
-      utility/tests/test_Any.cpp
-    LINK
-      ospray_common
-      ospray_test_main
-    )
-
-    ADD_TEST(NAME Any COMMAND test_Any)
-
-    # utility/Observers
-
-    OSPRAY_CREATE_TEST(test_Observers
-      utility/tests/test_Observers.cpp
-    LINK
-      ospray_common
-      ospray_test_main
-    )
-
-    ADD_TEST(NAME Observers COMMAND test_Observers)
-
-    # containers/AlignedVector
-
-    OSPRAY_CREATE_TEST(test_AlignedVector
-      containers/tests/test_AlignedVector.cpp
-    LINK
-      ospray_common
-      ospray_test_main
-    )
-
-    ADD_TEST(NAME AlignedVector COMMAND test_AlignedVector)
-
-    # tasking/async
-    OSPRAY_CREATE_TEST(test_async
-      tasking/tests/test_async.cpp
-    LINK
-      ospray_common
-      ospray_test_main
-    )
-
-    ADD_TEST(NAME async COMMAND test_async)
-
-    # tasking/parallel_for
-    OSPRAY_CREATE_TEST(test_parallel_for
-      tasking/tests/test_parallel_for.cpp
-    LINK
-      ospray_common
-      ospray_test_main
-    )
-
-    ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
-
-    # tasking/schedule
-    OSPRAY_CREATE_TEST(test_schedule
-      tasking/tests/test_schedule.cpp
-    LINK
-      ospray_common
-      ospray_test_main
-    )
-
-    ADD_TEST(NAME schedule COMMAND test_schedule)
+  ADD_TEST(NAME StringManip         COMMAND test_StringManip        )
+  IF(NOT WIN32) # Tests which are broken on Windows with unknown fixes (for now)
+    ADD_TEST(NAME Any               COMMAND test_Any                )
+    ADD_TEST(NAME AlignedVector     COMMAND test_AlignedVector      )
+    ADD_TEST(NAME Observers         COMMAND test_Observers          )
+    ADD_TEST(NAME async             COMMAND test_async              )
+    ADD_TEST(NAME parallel_for      COMMAND test_parallel_for       )
+    ADD_TEST(NAME schedule          COMMAND test_schedule           )
   ENDIF()
-
 ENDIF()
