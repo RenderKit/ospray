@@ -213,17 +213,6 @@ ELSE()
     ospray_test_main
   )
 
-  # utility/Observers
-
-  OSPRAY_CREATE_TEST(test_Observers
-    utility/tests/test_Observers.cpp
-  LINK
-    ospray_common
-    ospray_test_main
-  )
-
-  ADD_TEST(NAME Observers COMMAND test_Observers)
-
   # utility/ArrayView
 
   ADD_TEST(NAME ArrayView COMMAND test_ArrayView)
@@ -284,6 +273,17 @@ ELSE()
     )
 
     ADD_TEST(NAME Any COMMAND test_Any)
+
+    # utility/Observers
+
+    OSPRAY_CREATE_TEST(test_Observers
+      utility/tests/test_Observers.cpp
+    LINK
+      ospray_common
+      ospray_test_main
+    )
+
+    ADD_TEST(NAME Observers COMMAND test_Observers)
 
     # containers/AlignedVector
 
