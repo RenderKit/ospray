@@ -36,6 +36,7 @@ namespace ospray {
                          std::string("octant"),
                          std::string("finest"),
                          std::string("finestLevel")});
+      createChild("voxelType", "string", "unspecified");
     }
 
     AMRVolume::~AMRVolume()

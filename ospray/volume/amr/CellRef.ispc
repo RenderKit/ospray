@@ -18,21 +18,6 @@
 #include "FindStack.ih"
 #include "../amr/AMR.ih"
 
-#define template_getVoxel(type)                                              \
-/* --------------------------------------------------------------------------\
-// versions for pure 32-bit addressing. volume *MUST* be smaller than 2G     \
-// ------------------------------------------------------------------------*/\
-inline void AMR_getVoxel_##type##_32(void *uniform data,                     \
-                                     const varying uint32 index)             \
-{                                                                            \
-  /* Cast to the actual voxel type. */                                       \
-  const type *uniform voxelData = (const type *uniform)self->voxelData;      \
-  const uint32 addr = index.x +                                              \
-      self->super.dimensions.x*(index.y + self->super.dimensions.y*index.z); \
-                                                                             \
-  /* The voxel value at the given index. */                                  \
-  value = voxelData[addr];                                                   \
-}                                                                            \
 
   /* packet-based variant of findCell kernel */
 extern CellRef findCell(const AMR *uniform self,
@@ -115,7 +100,7 @@ extern CellRef findLeafCell(const AMR *uniform self,
         CellRef ret;
         const uint32 idx = (int)(f_bc.x + brick->f_dims.x*(f_bc.y+brick->f_dims.y*(f_bc.z)));
         ret.pos = brick->bounds.lower + f_bc*brick->cellWidth;
-        ret.value = AMR_getVoxel(brick, idx);
+        ret.value = self->getVoxel((void*)brick->value, idx);
         ret.width = brick->cellWidth;
         return ret;
       } else {

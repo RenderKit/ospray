@@ -64,6 +64,7 @@ namespace ospray {
       // contain multiple components)
       int componentID{0};
       range1f valueRange;
+      std::string voxelType = "undefined";
       std::vector<OSPData> brickData;
       std::vector<BrickInfo> brickInfo;
       std::vector<float *> brickPtrs;
