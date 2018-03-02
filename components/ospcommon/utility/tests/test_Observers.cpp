@@ -14,50 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "TimeStamp.h"
+#include "../../testing/catch.hpp"
 
-namespace ospray {
-  namespace sg {
+#include "../Observer.h"
 
-    //! \brief the uint64_t that stores the time value
-    std::atomic<size_t> TimeStamp::global {0};
+using namespace ospcommon::utility;
 
-    TimeStamp::TimeStamp(const TimeStamp &other)
-    {
-      this->value = other.value.load();
-    }
+TEST_CASE("Observable/Observer interfaces", "[]")
+{
+  Observable at;
 
-    TimeStamp::TimeStamp(TimeStamp &&other)
-    {
-      this->value = other.value.load();
-    }
+  Observer look1(at);
+  Observer look2(at);
 
-    TimeStamp &TimeStamp::operator=(const TimeStamp &other)
-    {
-      this->value = other.value.load();
-      return *this;
-    }
+  REQUIRE(!look1.wasNotified());
+  REQUIRE(!look2.wasNotified());
 
-    TimeStamp &TimeStamp::operator=(TimeStamp &&other)
-    {
-      this->value = other.value.load();
-      return *this;
-    }
+  at.notifyObservers();
 
-    TimeStamp::operator size_t() const
-    {
-      return value;
-    }
+  REQUIRE(look1.wasNotified());
+  REQUIRE(look2.wasNotified());
 
-    void TimeStamp::renew()
-    {
-      value = nextValue();
-    }
-
-    size_t TimeStamp::nextValue()
-    {
-      return global++;
-    }
-
-  } // ::ospray::sg
-} // ::ospray
+  REQUIRE(!look1.wasNotified());
+  REQUIRE(!look2.wasNotified());
+}

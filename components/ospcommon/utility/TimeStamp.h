@@ -16,47 +16,36 @@
 
 #pragma once
 
-#include "SceneGraph.h"
+#include "../common.h"
 
-namespace ospray {
-  namespace sg {
+#include <atomic>
 
-    class FrameBuffer;
+namespace ospcommon {
+  namespace utility {
 
-    /*! renderer renders the scene into the framebuffer on render call.
-     * child render calls are made during commit to cache rendering.
-     * verify and commit must be called before rendered
-    */
-    struct OSPSG_INTERFACE Renderer : public Renderable
+    struct OSPCOMMON_INTERFACE TimeStamp
     {
-      Renderer();
-      ~Renderer() override;
-      virtual std::string toString() const override;
+      TimeStamp() = default;
+      TimeStamp(const TimeStamp &);
+      TimeStamp(TimeStamp &&);
 
-      void renderFrame(std::shared_ptr<FrameBuffer> fb, int flags = 0, bool verifyCommit = true);
+      TimeStamp &operator=(const TimeStamp &);
+      TimeStamp &operator=(TimeStamp &&);
 
-      virtual void traverse(RenderContext &ctx,
-                            const std::string& operation) override;
+      operator size_t() const;
 
-      // NOTE(jda) - why does this overload NOT show up from the base Node???
-      void traverse(const std::string &operation);
-
-      void preRender(RenderContext &ctx) override;
-      void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
-      OSPPickResult pick(const vec2f &pickPos);
-      float getLastVariance() const;
+      void renew();
 
     private:
 
+      static size_t nextValue();
+
       // Data members //
 
-      OSPRenderer ospRenderer {nullptr};
-      OSPData lightsData {nullptr};
-      TimeStamp lightsBuildTime;
-      TimeStamp frameMTime;
-      float variance {inf};
-      std::string createdType = "none";
+      std::atomic<size_t> value {nextValue()};
+
+      //! \brief the uint64_t that stores the time value
+      static std::atomic<size_t> global;
     };
 
   } // ::ospray::sg

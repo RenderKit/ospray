@@ -89,7 +89,6 @@ ospray_create_library(ospray_sg SHARED
   common/Renderable.cpp
   common/RenderContext.h
   common/Serialization.cpp
-  common/TimeStamp.cpp
   common/Texture2D.cpp
   common/Transform.cpp
   common/Model.cpp
@@ -166,6 +165,7 @@ ospray_install_sdk_headers(
   common/Light.h
   common/Material.h
   common/Model.h
+  common/Node.h
   common/NodeList.h
   common/NodeParameter.h
   common/Renderable.h
@@ -174,7 +174,6 @@ ospray_install_sdk_headers(
   common/Selector.h
   common/Serialization.h
   common/Texture2D.h
-  common/TimeStamp.h
   common/Transform.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/common

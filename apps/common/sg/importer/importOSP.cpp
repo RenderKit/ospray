@@ -87,6 +87,29 @@ namespace ospray {
       world->add(node);
     }
 
+#ifdef OSPRAY_APPS_SG_CHOMBO
+    static void importCHOMBOFromOSP(std::shared_ptr<Node> world,
+                                    const std::string &originalFileName,
+                                    const xml::Node &xmlNode)
+    {
+      FileName orgFile(originalFileName);
+
+      std::string fileName;
+
+      for (const auto &child : xmlNode.child) {
+        if (child.name == "fileName")
+          fileName = orgFile.path() + child.content;
+      }
+
+      if (fileName == "") {
+        throw std::runtime_error("no child element 'fileName' specified "
+                                 "for AMR volume!");
+      }
+
+      importCHOMBO(world, fileName);
+    }
+#endif
+
     void loadOSP(std::shared_ptr<Node> world, const std::string &fileName)
     {
       std::cout << "#osp:sg: starting to read OSPRay XML file '" << fileName
@@ -106,6 +129,10 @@ namespace ospray {
           importStructuredVolume(world, node);
         else if (nameLower == "amr" || nameLower == "amrvolume")
           importRAW2AMRVolume(world, fileName, node);
+#ifdef OSPRAY_APPS_SG_CHOMBO
+        else if (nameLower == "chombo" || nameLower == "chombovolume")
+          importCHOMBOFromOSP(world, fileName, node);
+#endif
         else
           std::cout << "#importOSG: unknown xml tag '" << node.name << "'\n";
       }

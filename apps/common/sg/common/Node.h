@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "TimeStamp.h"
 #include "Serialization.h"
 #include "RenderContext.h"
 #include "RuntimeError.h"
@@ -27,13 +26,15 @@
 #include <mutex>
 // ospcommon
 #include "ospcommon/utility/Any.h"
+#include "ospcommon/utility/TimeStamp.h"
 #include "ospcommon/xml/XML.h"
 #include "ospcommon/vec.h"
 
 namespace ospray {
   namespace sg {
 
-    using Any = ospcommon::utility::Any;
+    using Any       = ospcommon::utility::Any;
+    using TimeStamp = ospcommon::utility::TimeStamp;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
@@ -438,7 +439,7 @@ namespace ospray {
     extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
+      return new InternalClassName;                                     \
     }                                                                   \
     /* Extra declaration to avoid "extra ;" pedantic warnings */        \
     ospray::sg::Node* ospray_create_sg_node__##Name()

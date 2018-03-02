@@ -100,6 +100,7 @@ namespace ospray {
       }
 
       child("bounds") = bounds;
+      child("transferFunction")["valueRange"] = valueRange.toVec2f();
       ospLogF(1) << "read file; found " << brickInfo.size() << " bricks"
                  << std::endl;
 

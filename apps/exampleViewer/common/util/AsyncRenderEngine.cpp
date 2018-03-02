@@ -73,12 +73,12 @@ namespace ospray {
         pickResult = scenegraph->pick(pickPos.ref());
 
       fps.start();
-      scenegraph->renderFrame(sgFB, OSP_FB_COLOR | OSP_FB_ACCUM);
+      scenegraph->renderFrame(sgFB, OSP_FB_COLOR | OSP_FB_ACCUM, false);
 
       if (scenegraphDW) {
         auto dwFB =
             scenegraphDW->child("frameBuffer").nodeAs<sg::FrameBuffer>();
-        scenegraphDW->renderFrame(dwFB, OSP_FB_COLOR | OSP_FB_ACCUM);
+        scenegraphDW->renderFrame(dwFB, OSP_FB_COLOR | OSP_FB_ACCUM, false);
       }
 
       once = true;

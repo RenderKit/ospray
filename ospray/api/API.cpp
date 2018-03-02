@@ -71,7 +71,7 @@ inline std::string toString(OSPObject obj)
   } catch (const std::bad_alloc &) {                                          \
     handleError(OSP_OUT_OF_MEMORY, "OSPRay was unable to allocate memory");   \
     return a;                                                                 \
-  } catch (const std::runtime_error &e) {                                     \
+  } catch (const std::exception &e) {                                         \
     handleError(OSP_UNKNOWN_ERROR, e.what());                                 \
     return a;                                                                 \
   } catch (...) {                                                             \
