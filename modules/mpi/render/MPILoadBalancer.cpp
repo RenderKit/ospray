@@ -129,7 +129,7 @@ namespace ospray {
                                  " algorithms are highly coupled to how"
                                  " communication between nodes operate. Thus"
                                  " there isn't a 'default' implementation as"
-                                 " there is with the LocalDevice or "
+                                 " there is with the ISPCDevice or "
                                  " MPIOffloadDevice.");
       }
 

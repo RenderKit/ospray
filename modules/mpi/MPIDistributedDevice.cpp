@@ -120,7 +120,7 @@ namespace ospray {
           MPI_CALL(Comm_size(mpicommon::world.comm, &mpicommon::world.size));
         }
 
-        auto &embreeDevice = api::LocalDevice::embreeDevice;
+        auto &embreeDevice = api::ISPCDevice::embreeDevice;
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 

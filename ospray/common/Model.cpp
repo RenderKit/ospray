@@ -24,7 +24,7 @@ namespace ospray {
 
   extern "C" void *ospray_getEmbreeDevice()
   {
-    return api::LocalDevice::embreeDevice;
+    return api::ISPCDevice::embreeDevice;
   }
 
   Model::Model()

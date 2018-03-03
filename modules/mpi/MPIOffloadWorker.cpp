@@ -114,7 +114,7 @@ namespace ospray {
 
       auto embreeDevice =
           rtcNewDevice(generateEmbreeDeviceCfg(*device).c_str());
-      api::LocalDevice::embreeDevice = embreeDevice;
+      api::ISPCDevice::embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 

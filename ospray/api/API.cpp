@@ -224,7 +224,7 @@ OSPRAY_CATCH_BEGIN
     }
   }
 
-  // no device created on cmd line, yet, so default to localdevice
+  // no device created on cmd line, yet, so default to ISPCDevice
   if (!deviceIsSet()) {
     ospLoadModule("ispc");
     currentDevice.reset(Device::createDevice("default"));

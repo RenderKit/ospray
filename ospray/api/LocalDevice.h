@@ -22,16 +22,16 @@
 #include "embree2/rtcore.h"
 
 
-/*! \file localdevice.h Implements the "local" device for local rendering */
+/*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
 namespace ospray {
   namespace api {
 
-    struct LocalDevice : public Device
+    struct ISPCDevice : public Device
     {
 
-      LocalDevice()  = default;
-      ~LocalDevice() override;
+      ISPCDevice()  = default;
+      ~ISPCDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
 

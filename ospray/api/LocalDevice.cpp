@@ -37,9 +37,9 @@ namespace ospray {
 
   namespace api {
 
-    RTCDevice LocalDevice::embreeDevice = nullptr;
+    RTCDevice ISPCDevice::embreeDevice = nullptr;
 
-    LocalDevice::~LocalDevice()
+    ISPCDevice::~ISPCDevice()
     {
       try {
         if (embreeDevice) {
@@ -57,7 +57,7 @@ namespace ospray {
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
-    void LocalDevice::commit()
+    void ISPCDevice::commit()
     {
       Device::commit();
 
@@ -83,7 +83,7 @@ namespace ospray {
     }
 
     OSPFrameBuffer
-    LocalDevice::frameBufferCreate(const vec2i &size,
+    ISPCDevice::frameBufferCreate(const vec2i &size,
                                    const OSPFrameBufferFormat mode,
                                    const uint32 channels)
     {
@@ -112,7 +112,7 @@ namespace ospray {
         if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
       */
-    void LocalDevice::frameBufferClear(OSPFrameBuffer _fb,
+    void ISPCDevice::frameBufferClear(OSPFrameBuffer _fb,
                                        const uint32 fbChannelFlags)
     {
       LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
@@ -121,7 +121,7 @@ namespace ospray {
 
 
     /*! map frame buffer */
-    const void *LocalDevice::frameBufferMap(OSPFrameBuffer _fb,
+    const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,
                                             OSPFrameBufferChannel channel)
     {
       LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
@@ -133,7 +133,7 @@ namespace ospray {
     }
 
     /*! unmap previously mapped frame buffer */
-    void LocalDevice::frameBufferUnmap(const void *mapped,
+    void ISPCDevice::frameBufferUnmap(const void *mapped,
                                        OSPFrameBuffer _fb)
     {
       Assert2(_fb != nullptr, "invalid framebuffer");
@@ -142,39 +142,39 @@ namespace ospray {
     }
 
     /*! create a new model */
-    OSPModel LocalDevice::newModel()
+    OSPModel ISPCDevice::newModel()
     {
       Model *model = new Model;
       return (OSPModel)model;
     }
 
     /*! finalize a newly specified model */
-    void LocalDevice::commit(OSPObject _object)
+    void ISPCDevice::commit(OSPObject _object)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert2(object,"null object in LocalDevice::commit()");
+      Assert2(object,"null object in ISPCDevice::commit()");
       object->commit();
     }
 
     /*! add a new geometry to a model */
-    void LocalDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
+    void ISPCDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert2(model,"null model in LocalDevice::addModel()");
+      Assert2(model,"null model in ISPCDevice::addModel()");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(geometry,"null geometry in LocalDevice::addGeometry()");
+      Assert2(geometry,"null geometry in ISPCDevice::addGeometry()");
 
       model->geometry.push_back(geometry);
     }
 
-    void LocalDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
+    void ISPCDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert2(model, "null model in LocalDevice::removeGeometry");
+      Assert2(model, "null model in ISPCDevice::removeGeometry");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(geometry, "null geometry in LocalDevice::removeGeometry");
+      Assert2(geometry, "null geometry in ISPCDevice::removeGeometry");
 
       auto it = std::find_if(model->geometry.begin(),
                              model->geometry.end(),
@@ -188,24 +188,24 @@ namespace ospray {
     }
 
     /*! add a new volume to a model */
-    void LocalDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    void ISPCDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
       Model *model = (Model *) _model;
-      Assert2(model, "null model in LocalDevice::addVolume()");
+      Assert2(model, "null model in ISPCDevice::addVolume()");
 
       Volume *volume = (Volume *) _volume;
-      Assert2(volume, "null volume in LocalDevice::addVolume()");
+      Assert2(volume, "null volume in ISPCDevice::addVolume()");
 
       model->volume.push_back(volume);
     }
 
-    void LocalDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    void ISPCDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
       Model *model = (Model *)_model;
-      Assert2(model, "null model in LocalDevice::removeVolume");
+      Assert2(model, "null model in ISPCDevice::removeVolume");
 
       Volume *volume = (Volume *)_volume;
-      Assert2(volume, "null volume in LocalDevice::removeVolume");
+      Assert2(volume, "null volume in ISPCDevice::removeVolume");
 
       auto it = std::find_if(model->volume.begin(),
                              model->volume.end(),
@@ -219,7 +219,7 @@ namespace ospray {
     }
 
     /*! create a new data buffer */
-    OSPData LocalDevice::newData(size_t nitems, OSPDataType format,
+    OSPData ISPCDevice::newData(size_t nitems, OSPDataType format,
                                  const void *init, int flags)
     {
       Data *data = new Data(nitems,format,init,flags);
@@ -227,7 +227,7 @@ namespace ospray {
     }
 
     /*! assign (named) string parameter to an object */
-    void LocalDevice::setString(OSPObject _object,
+    void ISPCDevice::setString(OSPObject _object,
                                 const char *bufName,
                                 const char *s)
     {
@@ -238,7 +238,7 @@ namespace ospray {
     }
 
     /*! assign (named) string parameter to an object */
-    void LocalDevice::setVoidPtr(OSPObject _object,
+    void ISPCDevice::setVoidPtr(OSPObject _object,
                                  const char *bufName,
                                  void *v)
     {
@@ -248,7 +248,7 @@ namespace ospray {
       object->findParam(bufName, true)->set(v);
     }
 
-    void LocalDevice::removeParam(OSPObject _object, const char *name)
+    void ISPCDevice::removeParam(OSPObject _object, const char *name)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
@@ -257,7 +257,7 @@ namespace ospray {
     }
 
     /*! assign (named) int parameter to an object */
-    void LocalDevice::setInt(OSPObject _object,
+    void ISPCDevice::setInt(OSPObject _object,
                              const char *bufName,
                              const int f)
     {
@@ -268,7 +268,7 @@ namespace ospray {
       object->findParam(bufName, true)->set(f);
     }
     /*! assign (named) float parameter to an object */
-    void LocalDevice::setFloat(OSPObject _object,
+    void ISPCDevice::setFloat(OSPObject _object,
                                const char *bufName,
                                const float f)
     {
@@ -281,7 +281,7 @@ namespace ospray {
     }
 
     /*! Copy data into the given volume. */
-    int LocalDevice::setRegion(OSPVolume handle, const void *source,
+    int ISPCDevice::setRegion(OSPVolume handle, const void *source,
                                const vec3i &index, const vec3i &count)
     {
       Volume *volume = (Volume *) handle;
@@ -290,7 +290,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec2f parameter to an object */
-    void LocalDevice::setVec2f(OSPObject _object,
+    void ISPCDevice::setVec2f(OSPObject _object,
                                const char *bufName,
                                const vec2f &v)
     {
@@ -302,7 +302,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec3f parameter to an object */
-    void LocalDevice::setVec3f(OSPObject _object,
+    void ISPCDevice::setVec3f(OSPObject _object,
                                const char *bufName,
                                const vec3f &v)
     {
@@ -314,7 +314,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec3f parameter to an object */
-    void LocalDevice::setVec4f(OSPObject _object,
+    void ISPCDevice::setVec4f(OSPObject _object,
                                const char *bufName,
                                const vec4f &v)
     {
@@ -326,7 +326,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec2f parameter to an object */
-    void LocalDevice::setVec2i(OSPObject _object,
+    void ISPCDevice::setVec2i(OSPObject _object,
                                const char *bufName,
                                const vec2i &v)
     {
@@ -338,7 +338,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec3i parameter to an object */
-    void LocalDevice::setVec3i(OSPObject _object,
+    void ISPCDevice::setVec3i(OSPObject _object,
                                const char *bufName,
                                const vec3i &v)
     {
@@ -350,7 +350,7 @@ namespace ospray {
     }
 
     /*! assign (named) data item as a parameter to an object */
-    void LocalDevice::setObject(OSPObject _target,
+    void ISPCDevice::setObject(OSPObject _target,
                                 const char *bufName,
                                 OSPObject _value)
     {
@@ -364,7 +364,7 @@ namespace ospray {
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */
-    OSPPixelOp LocalDevice::newPixelOp(const char *type)
+    OSPPixelOp ISPCDevice::newPixelOp(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
       PixelOp *pixelOp = PixelOp::createInstance(type);
@@ -380,7 +380,7 @@ namespace ospray {
     }
 
     /*! set a frame buffer's pixel op object */
-    void LocalDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
+    void ISPCDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
       FrameBuffer *fb = (FrameBuffer*)_fb;
       PixelOp *po = (PixelOp*)_op;
@@ -390,7 +390,7 @@ namespace ospray {
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
-    OSPRenderer LocalDevice::newRenderer(const char *type)
+    OSPRenderer ISPCDevice::newRenderer(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
       Renderer *renderer = Renderer::createInstance(type);
@@ -406,7 +406,7 @@ namespace ospray {
     }
 
     /*! create a new geometry object (out of list of registered geometrys) */
-    OSPGeometry LocalDevice::newGeometry(const char *type)
+    OSPGeometry ISPCDevice::newGeometry(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
       Geometry *geometry = Geometry::createInstance(type);
@@ -415,7 +415,7 @@ namespace ospray {
     }
 
     /*! have given renderer create a new material */
-    OSPMaterial LocalDevice::newMaterial(OSPRenderer _renderer,
+    OSPMaterial ISPCDevice::newMaterial(OSPRenderer _renderer,
                                          const char *type)
     {
       Assert2(type != nullptr, "invalid material type identifier");
@@ -442,7 +442,7 @@ namespace ospray {
     }
 
     /*! have given renderer create a new material */
-    OSPMaterial LocalDevice::newMaterial(const char *renderer_type,
+    OSPMaterial ISPCDevice::newMaterial(const char *renderer_type,
                                          const char *material_type)
     {
       auto renderer = newRenderer(renderer_type);
@@ -452,7 +452,7 @@ namespace ospray {
     }
 
     /*! create a new camera object (out of list of registered cameras) */
-    OSPCamera LocalDevice::newCamera(const char *type)
+    OSPCamera ISPCDevice::newCamera(const char *type)
     {
       Assert(type != nullptr && "invalid camera type identifier");
       Camera *camera = Camera::createInstance(type);
@@ -468,7 +468,7 @@ namespace ospray {
     }
 
     /*! create a new volume object (out of list of registered volumes) */
-    OSPVolume LocalDevice::newVolume(const char *type)
+    OSPVolume ISPCDevice::newVolume(const char *type)
     {
       Assert(type != nullptr && "invalid volume type identifier");
       Volume *volume = Volume::createInstance(type);
@@ -484,7 +484,7 @@ namespace ospray {
     }
 
     /*! create a new volume object (out of list of registered volumes) */
-    OSPTransferFunction LocalDevice::newTransferFunction(const char *type)
+    OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
     {
       Assert(type != nullptr && "invalid transfer function type identifier");
       auto *transferFunction = TransferFunction::createInstance(type);
@@ -500,7 +500,7 @@ namespace ospray {
     }
 
     /*! have given renderer create a new Light */
-    OSPLight LocalDevice::newLight(OSPRenderer _renderer, const char *type)
+    OSPLight ISPCDevice::newLight(OSPRenderer _renderer, const char *type)
     {
       Renderer  *renderer = (Renderer *)_renderer;
       if (renderer) {
@@ -517,7 +517,7 @@ namespace ospray {
       return (OSPLight)light;
     }
 
-    OSPLight LocalDevice::newLight(const char *renderer_type,
+    OSPLight ISPCDevice::newLight(const char *renderer_type,
                                    const char *light_type)
     {
       auto renderer = newRenderer(renderer_type);
@@ -527,25 +527,25 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D LocalDevice::newTexture2D(const vec2i &size,
+    OSPTexture2D ISPCDevice::newTexture2D(const vec2i &size,
         const OSPTextureFormat type, void *data, const uint32 flags)
     {
       Assert(size.x > 0 &&
-             "Width must be greater than 0 in LocalDevice::newTexture2D");
+             "Width must be greater than 0 in ISPCDevice::newTexture2D");
       Assert(size.y > 0 &&
-             "Height must be greater than 0 in LocalDevice::newTexture2D");
+             "Height must be greater than 0 in ISPCDevice::newTexture2D");
       Texture2D *tx = Texture2D::createTexture(size, type, data, flags);
       return (OSPTexture2D)tx;
     }
 
     /*! load module */
-    int LocalDevice::loadModule(const char *name)
+    int ISPCDevice::loadModule(const char *name)
     {
       return loadLocalModule(name);
     }
 
     /*! call a renderer to render a frame buffer */
-    float LocalDevice::renderFrame(OSPFrameBuffer _fb,
+    float ISPCDevice::renderFrame(OSPFrameBuffer _fb,
                                    OSPRenderer    _renderer,
                                    const uint32   fbChannelFlags)
     {
@@ -576,7 +576,7 @@ namespace ospray {
       create a new material, assign it to a geometry, and immediately
       after this assignation release it; the material will
       stay 'alive' as long as the given geometry requires it. */
-    void LocalDevice::release(OSPObject _obj)
+    void ISPCDevice::release(OSPObject _obj)
     {
       if (!_obj) return;
       ManagedObject *obj = (ManagedObject *)_obj;
@@ -584,7 +584,7 @@ namespace ospray {
     }
 
     //! assign given material to given geometry
-    void LocalDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
+    void ISPCDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {
       Geometry *geometry = (Geometry*)_geometry;
       Material *material = (Material*)_material;
@@ -593,7 +593,7 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
-    OSPPickResult LocalDevice::pick(OSPRenderer _renderer,
+    OSPPickResult ISPCDevice::pick(OSPRenderer _renderer,
                                     const vec2f &screenPos)
     {
       Assert(_renderer != nullptr && "invalid renderer handle");
@@ -602,7 +602,7 @@ namespace ospray {
       return renderer->pick(screenPos);
     }
 
-    void LocalDevice::sampleVolume(float **results,
+    void ISPCDevice::sampleVolume(float **results,
                                    OSPVolume _volume,
                                    const vec3f *worldCoordinates,
                                    const size_t &count)
@@ -615,10 +615,10 @@ namespace ospray {
       volume->computeSamples(results, worldCoordinates, count);
     }
 
-    OSP_REGISTER_DEVICE(LocalDevice, local_device);
-    OSP_REGISTER_DEVICE(LocalDevice, local);
-    OSP_REGISTER_DEVICE(LocalDevice, default_device);
-    OSP_REGISTER_DEVICE(LocalDevice, default);
+    OSP_REGISTER_DEVICE(ISPCDevice, local_device);
+    OSP_REGISTER_DEVICE(ISPCDevice, local);
+    OSP_REGISTER_DEVICE(ISPCDevice, default_device);
+    OSP_REGISTER_DEVICE(ISPCDevice, default);
 
   } // ::ospray::api
 } // ::ospray
