@@ -31,7 +31,7 @@ namespace ospray {
     {
 
       LocalDevice()  = default;
-      ~LocalDevice() override = default;
+      ~LocalDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -211,6 +211,12 @@ namespace ospray {
                         OSPVolume volume,
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
+
+      // Public Data //
+
+      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
+      //             safely assume that a device exists.
+      static RTCDevice embreeDevice;
     };
 
   } // ::ospray::api

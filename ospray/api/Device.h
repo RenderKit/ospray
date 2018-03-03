@@ -28,7 +28,6 @@
     "devices" that implement the OSPRay API */
 
 namespace ospray {
-  /*! encapsulates everything related to the implementing public ospray api */
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
@@ -38,7 +37,7 @@ namespace ospray {
       static std::shared_ptr<Device> current;
 
       Device() = default;
-      virtual ~Device() override;
+      virtual ~Device() override = default;
 
       /*! \brief creates an abstract device class of given type */
       static Device *createDevice(const char *type);
@@ -226,9 +225,6 @@ namespace ospray {
 
       // Public Data //
 
-      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
-      //             safely assume that a device exists.
-      static RTCDevice embreeDevice;
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};

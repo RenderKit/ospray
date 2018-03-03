@@ -37,6 +37,20 @@ namespace ospray {
 
   namespace api {
 
+    RTCDevice LocalDevice::embreeDevice = nullptr;
+
+    LocalDevice::~LocalDevice()
+    {
+      try {
+        if (embreeDevice) {
+          rtcDeleteDevice(embreeDevice);
+          embreeDevice = nullptr;
+        }
+      } catch (...) {
+        // silently move on, sometimes a pthread mutex lock fails in Embree
+      }
+    }
+
     static void embreeErrorFunc(void *, const RTCError code, const char* str)
     {
       postStatusMsg() << "#osp: embree internal error " << code << " : " << str;

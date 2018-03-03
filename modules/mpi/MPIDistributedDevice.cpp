@@ -21,6 +21,7 @@
 #include "ospray/common/Data.h"
 #include "ospray/lights/Light.h"
 #include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/api/LocalDevice.h"
 //mpiCommon
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi
@@ -118,6 +119,8 @@ namespace ospray {
           MPI_CALL(Comm_rank(mpicommon::world.comm, &mpicommon::world.rank));
           MPI_CALL(Comm_size(mpicommon::world.comm, &mpicommon::world.size));
         }
+
+        auto &embreeDevice = api::LocalDevice::embreeDevice;
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 

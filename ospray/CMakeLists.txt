@@ -455,7 +455,6 @@ OSPRAY_CREATE_LIBRARY(ospray
   ${OSPRAY_SOURCES}
 LINK
   ${OSPRAY_LIBS}
-  ${EMBREE_LIBRARIES}#NOTE(jda) - want to remove this, move to ispc module
 COMPONENT
   lib
 )
@@ -465,7 +464,7 @@ OSPRAY_CREATE_LIBRARY(ospray_module_ispc
 LINK
   ${OSPRAY_LIBS}
   ospray
-  #${EMBREE_LIBRARIES}
+  ${EMBREE_LIBRARIES}
 COMPONENT
   lib
 )
