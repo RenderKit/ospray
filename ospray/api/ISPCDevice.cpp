@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "LocalDevice.h"
+#include "ISPCDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Util.h"

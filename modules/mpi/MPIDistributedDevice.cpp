@@ -21,7 +21,7 @@
 #include "ospray/common/Data.h"
 #include "ospray/lights/Light.h"
 #include "ospray/transferFunction/TransferFunction.h"
-#include "ospray/api/LocalDevice.h"
+#include "ospray/api/ISPCDevice.h"
 //mpiCommon
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi

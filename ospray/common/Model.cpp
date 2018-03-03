@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospray
-#include "api/LocalDevice.h"
+#include "api/ISPCDevice.h"
 #include "Model.h"
 // ispc exports
 #include "Model_ispc.h"

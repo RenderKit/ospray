@@ -17,7 +17,7 @@
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/MPIBcastFabric.h"
 #include "mpi/MPIOffloadDevice.h"
-#include "api/LocalDevice.h"
+#include "api/ISPCDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"

@@ -17,7 +17,7 @@
 #include <iterator>
 #include <algorithm>
 // ospray
-#include "api/LocalDevice.h"
+#include "api/ISPCDevice.h"
 #include "DistributedModel.h"
 #include "mpiCommon/MPICommon.h"
 #include "Messaging.h"

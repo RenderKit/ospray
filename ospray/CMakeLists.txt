@@ -69,7 +69,7 @@ SET(OSPRAY_SOURCES
 )
 
 SET(OSPRAY_ISPC_DEVICE_SOURCES
-  api/LocalDevice.cpp
+  api/ISPCDevice.cpp
 
   common/ospray.rc
   common/ObjectHandle.cpp
@@ -232,7 +232,7 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
 
 OSPRAY_INSTALL_SDK_HEADERS(
   api/Device.h
-  api/LocalDevice.h
+  api/ISPCDevice.h
   DESTINATION api
 )
 
