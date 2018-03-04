@@ -45,6 +45,7 @@ typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMa
                                                        const Medium& currentMedium);
 
 typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial* uniform self,
+                                                       const DifferentialGeometry& dg,
                                                        Medium& currentMedium);
 
 struct PathTraceMaterial

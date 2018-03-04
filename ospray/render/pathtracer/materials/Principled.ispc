@@ -188,6 +188,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
 }
 
 void Principled_selectNextMedium(const uniform PathTraceMaterial* uniform super,
+                                 const DifferentialGeometry& dg,
                                  Medium& currentMedium)
 {
   const uniform Principled* uniform self = (const uniform Principled* uniform)super;
@@ -217,9 +218,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float ior,
     const uniform vec3f& transmissionColor,
     uniform float transmissionDepth,
-    uniform float iorOutside,
-    const uniform vec3f& transmissionColorOutside,
-    uniform float transmissionDepthOutside)
+    uniform float outsideIor,
+    const uniform vec3f& outsideTransmissionColor,
+    uniform float outsideTransmissionDepth)
 {
   Principled* uniform self = (Principled* uniform)_self;
 
@@ -264,8 +265,8 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->mediumInside.ior = ior;
   self->mediumInside.attenuation = logf(transmissionColor) / transmissionDepth;
   
-  self->mediumOutside.ior = iorOutside;
-  self->mediumOutside.attenuation = logf(transmissionColorOutside) / transmissionDepthOutside;
+  self->mediumOutside.ior = outsideIor;
+  self->mediumOutside.attenuation = logf(outsideTransmissionColor) / outsideTransmissionDepth;
 }
 
 export void* uniform PathTracer_Principled_create()

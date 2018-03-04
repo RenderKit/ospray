@@ -84,7 +84,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
     /*! Tracking medium if we hit a medium interface. */
     foreach_unique(m in material)
       if (m != NULL)
-        m->selectNextMedium(m, medium);
+        m->selectNextMedium(m, dg, medium);
 
     shadowRay.t0 = shadowRay.t + getEpsilon(self, dg);
     shadowRay.t = tOriginal;
@@ -354,7 +354,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     if (fs.type & BSDF_TRANSMISSION) {
       foreach_unique(m in material) {
         if (m != NULL)
-          m->selectNextMedium(m, currentMedium);
+          m->selectNextMedium(m, dg, currentMedium);
       }
     }
 

@@ -59,6 +59,7 @@ vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
 }
 
 void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
+                            const DifferentialGeometry& dg,
                             Medium& currentMedium)
 {
   const uniform Glass* uniform self = (const uniform Glass* uniform)super;
@@ -76,7 +77,7 @@ export void PathTracer_Glass_set(
   void* uniform _self,
   const uniform float iorInside,
   const uniform vec3f & attenuationColorInside,
-  const uniform float iorOutside,
+  const uniform float outsideIor,
   const uniform vec3f & attenuationColorOutside,
   const uniform float attenuationDistance)
 {
@@ -84,7 +85,7 @@ export void PathTracer_Glass_set(
 
   self->mediumInside.ior           = iorInside;
   self->mediumInside.attenuation   = logf(attenuationColorInside) / attenuationDistance;
-  self->mediumOutside.ior          = iorOutside;
+  self->mediumOutside.ior          = outsideIor;
   self->mediumOutside.attenuation  = logf(attenuationColorOutside) / attenuationDistance;
 }
 
