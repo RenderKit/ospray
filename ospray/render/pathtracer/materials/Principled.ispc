@@ -33,6 +33,9 @@ struct Principled
 
   vec3f baseColor;
   TextureParam baseColorMap;
+
+  vec3f edgeColor; // metallic reflectivity at grazing angle (90 deg) / edge tint
+  TextureParam edgeColorMap;
   
   float metallic;
   TextureParam metallicMap;
@@ -42,9 +45,6 @@ struct Principled
   
   float transmission;
   TextureParam transmissionMap;
-  
-  vec3f edgeColor; // metallic reflectivity at grazing angle (90 deg) / edge tint
-  TextureParam edgeColorMap;
   
   float roughness; // in [0, 1]; 0==ideally smooth (mirror)
   TextureParam roughnessMap;
@@ -203,9 +203,9 @@ void Principled_selectNextMedium(const uniform PathTraceMaterial* uniform super,
 
 export void* uniform PathTracer_Principled_set(void* uniform _self,
     const uniform vec3f& baseColor, void* uniform baseColorMap, const uniform affine2f& baseColorXform,
+    const uniform vec3f& edgeColor, void* uniform edgeColorMap, const uniform affine2f& edgeColorXform,
     uniform float metallic, void* uniform metallicMap, const uniform affine2f& metallicXform,
     uniform float specular, void* uniform specularMap, const uniform affine2f& specularXform,
-    const uniform vec3f& edgeColor, void* uniform edgeColorMap, const uniform affine2f& edgeColorXform,
     uniform float transmission, void* uniform transmissionMap, const uniform affine2f& transmissionXform,
     uniform float roughness, void* uniform roughnessMap, const uniform affine2f& roughnessXform,
     void* uniform normalMap, const uniform affine2f& normalXform, const uniform linear2f& normalRot, uniform float normalScale,
@@ -225,15 +225,15 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 
   self->baseColor = baseColor;
   self->baseColorMap = make_TextureParam((uniform Texture2D*)baseColorMap, baseColorXform);
+
+  self->edgeColor = edgeColor;
+  self->edgeColorMap = make_TextureParam((uniform Texture2D*)edgeColorMap, edgeColorXform);
   
   self->metallic = metallic;
   self->metallicMap = make_TextureParam((uniform Texture2D*)metallicMap, metallicXform);
   
   self->specular = specular;
   self->specularMap = make_TextureParam((uniform Texture2D*)specularMap, specularXform);
-  
-  self->edgeColor = edgeColor;
-  self->edgeColorMap = make_TextureParam((uniform Texture2D*)edgeColorMap, edgeColorXform);
   
   self->transmission = transmission;
   self->transmissionMap = make_TextureParam((uniform Texture2D*)transmissionMap, transmissionXform);
@@ -280,9 +280,9 @@ export void* uniform PathTracer_Principled_create()
   uniform affine2f xform = make_AffineSpace2f_identity();
   PathTracer_Principled_set(self,
     make_vec3f(0.8f), NULL, xform,
-    0.f, NULL, xform,
-    0.f, NULL, xform,
     make_vec3f(1.f), NULL, xform,
+    0.f, NULL, xform,
+    0.f, NULL, xform,
     0.f, NULL, xform,
     0.f, NULL, xform,
     NULL, xform, make_LinearSpace2f_identity(), 1.f,

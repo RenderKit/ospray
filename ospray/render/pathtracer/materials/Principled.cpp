@@ -42,6 +42,10 @@ namespace ospray {
         affine2f baseColorXform = getTextureTransform("baseColorMap");
         vec3f baseColor = getParam3f("baseColor", baseColorMap ? vec3f(1.f) : vec3f(0.8f));
 
+        Texture2D* edgeColorMap = (Texture2D*)getParamObject("edgeColorMap");
+        affine2f edgeColorXform = getTextureTransform("edgeColorMap");
+        vec3f edgeColor = getParam3f("edgeColor", vec3f(1.f));
+
         Texture2D* metallicMap = (Texture2D*)getParamObject("metallicMap");
         affine2f metallicXform = getTextureTransform("metallicMap");
         float metallic = getParamf("metallic", metallicMap ? 1.f : 0.f);
@@ -49,10 +53,6 @@ namespace ospray {
         Texture2D* specularMap = (Texture2D*)getParamObject("specularMap");
         affine2f specularXform = getTextureTransform("specularMap");
         float specular = getParamf("specular", specularMap ? 1.f : 0.f);
-
-        Texture2D* edgeColorMap = (Texture2D*)getParamObject("edgeColorMap");
-        affine2f edgeColorXform = getTextureTransform("edgeColorMap");
-        vec3f edgeColor = getParam3f("edgeColor", vec3f(1.f));
 
         Texture2D* transmissionMap = (Texture2D*)getParamObject("transmissionMap");
         affine2f transmissionXform = getTextureTransform("transmissionMap");
@@ -92,15 +92,15 @@ namespace ospray {
         vec3f transmissionColor = getParam3f("transmissionColor", vec3f(1.f));
         float transmissionDepth = getParamf("transmissionDepth", 1.f);
 
-        float iorOutside = getParamf("iorOutside", 1.f);
-        vec3f transmissionColorOutside = getParam3f("transmissionColorOutside", vec3f(1.f));
-        float transmissionDepthOutside = getParamf("transmissionDepthOutside", 1.f);
+        float outsideIor = getParamf("outsideIor", 1.f);
+        vec3f outsideTransmissionColor = getParam3f("outsideTransmissionColor", vec3f(1.f));
+        float outsideTransmissionDepth = getParamf("outsideTransmissionDepth", 1.f);
 
         ispc::PathTracer_Principled_set(getIE(),
           (const ispc::vec3f&)baseColor, baseColorMap ? baseColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)baseColorXform,
+          (const ispc::vec3f&)edgeColor, edgeColorMap ? edgeColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)edgeColorXform,
           metallic, metallicMap ? metallicMap->getIE() : nullptr, (const ispc::AffineSpace2f&)metallicXform,
           specular, specularMap ? specularMap->getIE() : nullptr, (const ispc::AffineSpace2f&)specularXform,
-          (const ispc::vec3f&)edgeColor, edgeColorMap ? edgeColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)edgeColorXform,
           transmission, transmissionMap ? transmissionMap->getIE() : nullptr, (const ispc::AffineSpace2f&)transmissionXform,
           roughness, roughnessMap ? roughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)roughnessXform,
           normalMap ? normalMap->getIE() : nullptr, (const ispc::AffineSpace2f&)normalXform, (const ispc::LinearSpace2f&)normalRot, normalScale,
@@ -112,9 +112,9 @@ namespace ospray {
           ior,
           (const ispc::vec3f&)transmissionColor,
           transmissionDepth,
-          iorOutside,
-          (const ispc::vec3f&)transmissionColorOutside,
-          transmissionDepthOutside);
+          outsideIor,
+          (const ispc::vec3f&)outsideTransmissionColor,
+          outsideTransmissionDepth);
       }
     };
 
