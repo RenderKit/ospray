@@ -65,6 +65,7 @@ namespace ospray {
       void addImporterNodesToWorld(sg::Node &renderer);
       void addAnimatedImporterNodesToWorld(sg::Node &renderer);
       void setupCamera(sg::Node &renderer);
+      void setupToneMapping(sg::Node &renderer);
       void addPlaneToScene(sg::Node &renderer);
       void printHelp();
 
@@ -98,6 +99,7 @@ namespace ospray {
       std::string hdriLightFile;
       bool addDefaultLights = false;
       bool noDefaultLights = false;
+      bool aces = false;
       bool debug = false;
       std::string initialRendererType;
       box3f bboxWithoutPlane;
