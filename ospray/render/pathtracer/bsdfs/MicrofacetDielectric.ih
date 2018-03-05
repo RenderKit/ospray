@@ -33,7 +33,7 @@ struct MicrofacetDielectric
 };
 
 inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
-                                              const vec3f& wo, const vec3f& wi)
+                                              const vec3f& wo, const vec3f& wi, unsigned int& lcg)
 {
   const varying MicrofacetDielectric* uniform self = (const varying MicrofacetDielectric* uniform)super;
   BSDF_EvalRes res;
@@ -99,7 +99,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
 }
 
 inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform super,
-                                                  const vec3f& wo, const vec2f& s, float ss)
+                                                  const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
 {
   const varying MicrofacetDielectric* uniform self = (const varying MicrofacetDielectric* uniform)super;
   BSDF_SampleRes res;

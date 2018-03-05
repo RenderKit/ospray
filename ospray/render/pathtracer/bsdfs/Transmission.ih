@@ -29,13 +29,13 @@ struct Transmission
 };
 
 inline BSDF_EvalRes Transmission_eval(const varying BSDF* uniform super,
-                                      const vec3f& wo, const vec3f& wi)
+                                      const vec3f& wo, const vec3f& wi, unsigned int& lcg)
 {
   return make_BSDF_EvalRes_zero();
 }
 
 inline BSDF_SampleRes Transmission_sample(const varying BSDF* uniform super,
-                                          const vec3f& wo, const vec2f& s, float ss)
+                                          const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
 {
   const varying Transmission* uniform self = (const varying Transmission* uniform)super;
   BSDF_SampleRes res;

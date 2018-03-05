@@ -26,13 +26,13 @@ struct Reflection
 };
 
 inline BSDF_EvalRes Reflection_eval(const varying BSDF* uniform super,
-                                    const vec3f& wo, const vec3f& wi)
+                                    const vec3f& wo, const vec3f& wi, unsigned int& lcg)
 {
   return make_BSDF_EvalRes_zero();
 }
 
 inline BSDF_SampleRes Reflection_sample(const varying BSDF* uniform super,
-                                        const vec3f& wo, const vec2f& s, float ss)
+                                        const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
 {
   const varying Reflection* uniform self = (const varying Reflection* uniform)super;
   BSDF_SampleRes res;

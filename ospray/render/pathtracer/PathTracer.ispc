@@ -297,7 +297,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         BSDF_EvalRes fe;
         foreach_unique(f in bsdf) {
           if (f != NULL)
-            fe = f->eval(f, wo, ls.dir);
+            fe = f->eval(f, wo, ls.dir, lcg);
         }
 
         // skip when zero contribution from material
@@ -328,7 +328,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     BSDF_SampleRes fs;
     foreach_unique(f in bsdf)
       if (f != NULL)
-        fs = f->sample(f, wo, s, ss.x);
+        fs = f->sample(f, wo, s, ss.x, lcg);
 
     // terminate path when zero contribution from material
     if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)

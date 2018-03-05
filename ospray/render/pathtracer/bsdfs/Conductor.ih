@@ -27,13 +27,13 @@ struct Conductor
 };
 
 inline BSDF_EvalRes Conductor_eval(const varying BSDF* uniform super,
-                                   const vec3f& wo, const vec3f& wi)
+                                   const vec3f& wo, const vec3f& wi, unsigned int& lcg)
 {
   return make_BSDF_EvalRes_zero();
 }
 
 inline BSDF_SampleRes Conductor_sample(const varying BSDF* uniform super,
-                                       const vec3f& wo, const vec2f& s, float ss)
+                                       const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
 {
   const varying Conductor* uniform self = (const varying Conductor* uniform)super;
   BSDF_SampleRes res;
