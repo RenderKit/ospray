@@ -60,7 +60,7 @@ const varying BSDF* varying MetallicPaint_getBSDF(const uniform PathTraceMateria
     MultiBSDF_add(bsdf, MicrofacetConductor_create(ctx, shadingFrame, fresnel, self->flakeSpread), 1.f, luminance(r));
   }
 
-  bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);
+  bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f, 1.0f);
 
   return bsdf;
 }

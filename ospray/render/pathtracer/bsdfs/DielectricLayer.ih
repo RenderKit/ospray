@@ -32,6 +32,7 @@ struct DielectricLayer
   float eta;
   vec3f transmittance;
   float thickness;
+  float reflectionWeight;
 };
 
 inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
@@ -46,7 +47,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
 
   // Fresnel term
   float cosThetaO1; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
+  float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaO1, self->eta, self->reflectionWeight);
 
   // Evaluate the substrate BRDF
   // Ignore refraction
@@ -77,7 +78,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
 
   // Fresnel term
   float cosThetaO1; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
+  float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaO1, self->eta, self->reflectionWeight);
 
   if (ss < F) {
     // Sample the coating reflection
@@ -105,7 +106,8 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
 }
 
 inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, const varying linear3f* uniform frame,
-                                        varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness)
+                                        varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness,
+                                        float reflectionWeight)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION | substrate->type,
                    DielectricLayer_eval, DielectricLayer_sample,
@@ -115,12 +117,14 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
   self->eta = eta;
   self->transmittance = transmittance;
   self->thickness = thickness;
+  self->reflectionWeight = reflectionWeight;
 }
 
 inline varying BSDF* uniform DielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                    varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness)
+                                                    varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness,
+                                                    float reflectionWeight)
 {
   varying DielectricLayer* uniform self = (varying DielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(DielectricLayer));
-  DielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness);
+  DielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, reflectionWeight);
   return &self->super;
 }

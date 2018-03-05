@@ -68,5 +68,26 @@ namespace ospray {
     return xform;
   }
 
+  MaterialParam1f Material::getMaterialParam1f(const char *name, float valIfNotFound)
+  {
+    const std::string mapName = std::string(name) + "Map";
+    MaterialParam1f param;
+    param.map = (Texture2D*)getParamObject(mapName.c_str());
+    param.xform = getTextureTransform(mapName.c_str());
+    param.rot = param.xform.l.orthogonal().transposed();
+    param.factor = getParam1f(name, param.map ? 1.f : valIfNotFound);
+    return param;
+  }
+
+  MaterialParam3f Material::getMaterialParam3f(const char *name, vec3f valIfNotFound)
+  {
+    const std::string mapName = std::string(name) + "Map";
+    MaterialParam3f param;
+    param.map = (Texture2D*)getParamObject(mapName.c_str());
+    param.xform = getTextureTransform(mapName.c_str());
+    param.rot = param.xform.l.orthogonal().transposed();
+    param.factor = getParam3f(name, param.map ? vec3f(1.f) : valIfNotFound);
+    return param;
+  }
 
 } // ::ospray

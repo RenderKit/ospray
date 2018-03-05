@@ -29,6 +29,7 @@ struct MicrofacetDielectric
 
   float eta;
   GGXDistribution distribution;
+  float reflectionWeight;
 };
 
 inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
@@ -70,7 +71,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
 
   // Fresnel term
   float cosThetaTH; // positive
-  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta);
+  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
 
   float value;
   if (evalReflection)
@@ -116,7 +117,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
 
   // Fresnel term
   float cosThetaTH; // positive
-  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta);
+  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
 
   // Sample the reflection or the transmission
   float cosThetaI;
@@ -161,8 +162,8 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
 
 inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* uniform self,
                                              const varying linear3f* uniform frame,
-                                             float eta,
-                                             float roughness)
+                                             float eta, float roughness,
+                                             float reflectionWeight)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR,
                    MicrofacetDielectric_eval, MicrofacetDielectric_sample,
@@ -170,15 +171,16 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
 
   self->eta = eta;
   self->distribution = make_GGXDistribution(roughnessToAlpha(roughness));
+  self->reflectionWeight = reflectionWeight;
 }
 
 inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext* uniform ctx,
                                                          const varying linear3f* uniform frame,
-                                                         float eta,
-                                                         float roughness)
+                                                         float eta, float roughness,
+                                                         float reflectionWeight)
 {
   varying MicrofacetDielectric* uniform self =
     (varying MicrofacetDielectric* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectric));
-  MicrofacetDielectric_Constructor(self, frame, eta, roughness);
+  MicrofacetDielectric_Constructor(self, frame, eta, roughness, reflectionWeight);
   return &self->super;
 }

@@ -25,6 +25,7 @@ struct Dielectric
   BSDF super;
 
   float eta;
+  float reflectionWeight;
 };
 
 inline BSDF_EvalRes Dielectric_eval(const varying BSDF* uniform super,
@@ -43,7 +44,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
 
   // Fresnel term
   float cosThetaT; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+  float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaT, self->eta, self->reflectionWeight);
   res.pdf = inf;
 
   // Sample the reflection or the transmission
@@ -64,19 +65,22 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
 
 inline void Dielectric_Constructor(varying Dielectric* uniform self,
                                    const varying linear3f* uniform frame,
-                                   float eta)
+                                   float eta,
+                                   float reflectionWeight)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR,
                    Dielectric_eval, Dielectric_sample,
                    frame);
   self->eta = eta;
+  self->reflectionWeight = reflectionWeight;
 }
 
 inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx,
                                                const varying linear3f* uniform frame,
-                                               float eta)
+                                               float eta,
+                                               float reflectionWeight)
 {
   varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));
-  Dielectric_Constructor(self, frame, eta);
+  Dielectric_Constructor(self, frame, eta, reflectionWeight);
   return &self->super;
 }

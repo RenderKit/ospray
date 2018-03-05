@@ -35,6 +35,7 @@ struct MicrofacetDielectricLayer
   vec3f transmittance;
   float thickness;
   GGXDistribution distribution;
+  float reflectionWeight;
 };
 
 inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform super,
@@ -53,7 +54,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   float cosThetaOH = dot(wo, wh);
 
   // Fresnel term
-  float F = fresnelDielectric(cosThetaOH, self->eta);
+  float F = fresnelDielectricWeighted(cosThetaOH, self->eta, self->reflectionWeight);
 
   // Evaluate the coating reflection
   float cosThetaH = dot(wh, getN(super));
@@ -85,7 +86,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   substrate.value = substrate.value * (1.f-F);
 
   // Compute the total reflection
-  float coatingPickProb = fresnelDielectric(cosThetaO, self->eta); // have to use the macronormal for sampling
+  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->reflectionWeight); // have to use the macronormal for sampling
   float substratePickProb = 1.f - coatingPickProb;
 
   res.pdf = coatingPickProb * coating.pdf + substratePickProb * substrate.pdf;
@@ -107,7 +108,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   vec3f wh;
   BSDF_EvalRes substrate;
 
-  float coatingPickProb = fresnelDielectric(cosThetaO, self->eta); // only the macronormal is available yet
+  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->reflectionWeight); // only the macronormal is available yet
   float substratePickProb = 1.f - coatingPickProb;
 
   if (ss < coatingPickProb)
@@ -146,7 +147,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   float cosThetaOH = dot(wo, wh);
 
   // Fresnel term
-  float F = fresnelDielectric(cosThetaOH, self->eta);
+  float F = fresnelDielectricWeighted(cosThetaOH, self->eta, self->reflectionWeight);
 
   // Apply the coating transmittance
   float cosThetaO1 = refract(cosThetaO, self->eta); // positive
@@ -185,7 +186,8 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 }
 
 inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLayer* uniform self, const varying linear3f* uniform frame,
-                                                  varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness)
+                                                  varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness,
+                                                  float reflectionWeight)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | substrate->type,
                    MicrofacetDielectricLayer_eval, MicrofacetDielectricLayer_sample,
@@ -196,12 +198,14 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
   self->transmittance = transmittance;
   self->thickness = thickness;
   self->distribution = make_GGXDistribution(roughnessToAlpha(roughness));
+  self->reflectionWeight = reflectionWeight;
 }
 
 inline varying BSDF* uniform MicrofacetDielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                              varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness)
+                                                              varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness,
+                                                              float reflectionWeight)
 {
   varying MicrofacetDielectricLayer* uniform self = (varying MicrofacetDielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectricLayer));
-  MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness);
+  MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness, reflectionWeight);
   return &self->super;
 }

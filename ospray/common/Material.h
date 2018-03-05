@@ -20,6 +20,21 @@
 
 namespace ospray {
 
+  struct Texture2D;
+
+  /*! \brief helper structure to store a uniform or textured material parameter */
+  template <typename T>
+  struct MaterialParam
+  {
+    T factor;
+    Texture2D* map;
+    affine2f xform;
+    linear2f rot;
+  };
+
+  using MaterialParam1f = MaterialParam<float>;
+  using MaterialParam3f = MaterialParam<vec3f>;
+
   /*! \brief implements the basic abstraction for anything that is a 'material'.
 
     Note that different renderers will probably define different materials, so the same "logical" material (such a as a "diffuse gray" material) may look differently */
@@ -46,6 +61,10 @@ namespace ospray {
        applied to the texture coordinates).
      */
     affine2f getTextureTransform(const char* texture_name);
+
+    /*! \brief helper function to get a uniform or texture material parameter */
+    MaterialParam1f getMaterialParam1f(const char *name, float valIfNotFound);
+    MaterialParam3f getMaterialParam3f(const char *name, vec3f valIfNotFound);
 
     /*! \brief creates an abstract material class of given type
 
