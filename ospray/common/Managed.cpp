@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Managed.h"
-#include "OSPCommon_ispc.h"
 
 namespace ospray {
 
@@ -23,7 +22,7 @@ namespace ospray {
   ManagedObject::~ManagedObject()
   {
     // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check
-    ispc::delete_uniform(ispcEquivalent);
+    alignedFree(ispcEquivalent);
     ispcEquivalent = nullptr;
   }
 

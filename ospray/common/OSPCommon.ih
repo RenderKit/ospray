@@ -33,13 +33,6 @@ typedef unsigned int8  uint8;
 #define PRINTU(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
 #define PRINT3U(x) print(#x"[%] = (%, %, %)\n", count_trailing_zeros(lanemask()), extract(get(x,0), count_trailing_zeros(lanemask())), extract(get(x,1), count_trailing_zeros(lanemask())), extract(get(x,2), count_trailing_zeros(lanemask())))
 
-/*! ispc copy of embree error handling callback */
-void error_handler(const RTCError code, const int8* str);
-
-
-/*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
-export void delete_uniform(void *uniform uptr);
-
 /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
 extern "C" void *uniform malloc64(uniform uint64 size);
 extern "C" void free64(void *uniform ptr);
