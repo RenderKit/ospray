@@ -31,7 +31,7 @@ namespace ospray {
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct OSPRAY_SDK_INTERFACE Device : public ManagedObject
+    struct OSPRAY_CORE_INTERFACE Device : public ManagedObject
     {
       /*! singleton that points to currently active device */
       static std::shared_ptr<Device> current;
@@ -255,10 +255,10 @@ namespace ospray {
 
     // Shorthand functions to query current API device //
 
-    OSPRAY_SDK_INTERFACE bool    deviceIsSet();
-    OSPRAY_SDK_INTERFACE Device& currentDevice();
+    OSPRAY_CORE_INTERFACE bool    deviceIsSet();
+    OSPRAY_CORE_INTERFACE Device& currentDevice();
 
-    OSPRAY_SDK_INTERFACE
+    OSPRAY_CORE_INTERFACE
     std::string generateEmbreeDeviceCfg(const Device &device);
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

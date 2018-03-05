@@ -105,7 +105,7 @@ namespace ospray {
     </dl>
 
    */
-  struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount
+  struct OSPRAY_CORE_INTERFACE ManagedObject : public memory::RefCount
   {
     /*! \brief constructor */
     ManagedObject() = default;
@@ -133,7 +133,7 @@ namespace ospray {
 
     /*! \brief container for _any_ sort of parameter an app can assign
         to an ospray object */
-    struct OSPRAY_SDK_INTERFACE Param
+    struct OSPRAY_CORE_INTERFACE Param
     {
       Param(const char *name);
       ~Param();
