@@ -285,6 +285,8 @@ namespace ospray {
         sg::importOSX(world, fileName);
       } else if (ext == "xml") {
         sg::importRIVL(world, fileName);
+      } else if (ext == "x3d") {
+        sg::importX3D(world, fileName);
       } else if (ext == "xyz" || ext == "xyz2" || ext == "xyz3") {
         sg::importXYZ(world, fileName);
 #ifdef OSPRAY_APPS_SG_VTK
