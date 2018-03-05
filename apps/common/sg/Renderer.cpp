@@ -57,7 +57,6 @@ namespace ospray {
 
       createChild("bgColor", "vec3f", vec3f(0.15f, 0.15f, 0.15f),
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_color);
 
       createChild("spp", "int", 1,
@@ -68,7 +67,6 @@ namespace ospray {
 
       createChild("minContribution", "float", 0.001f,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_slider,
                   "sample contributions below this value will be neglected"
                   " to speed-up rendering.");
@@ -76,7 +74,6 @@ namespace ospray {
 
       createChild("maxContribution", "float", 5.f,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_slider,
                   "sample contributions above this value will be ignored."
                   "  This reduces bright dots appearing in images");
@@ -84,7 +81,6 @@ namespace ospray {
 
       createChild("varianceThreshold", "float", 0.f,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_slider,
                   "the percent (%) threshold of pixel difference to enable"
                   " tile rendering early termination.");
@@ -93,23 +89,22 @@ namespace ospray {
       //TODO: move these to seperate SciVisRenderer
       createChild("shadowsEnabled", "bool", true);
       createChild("maxDepth", "int", 5,
-                  NodeFlags::required | NodeFlags::hint_min_max,
+                  NodeFlags::required | NodeFlags::valid_min_max,
                   "maximum number of ray bounces").setMinMax(0,999);
       createChild("aoSamples", "int", 1,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_slider,
                   "AO samples per frame.").setMinMax(0,128);
 
       createChild("aoDistance", "float", 10000.f,
-                  NodeFlags::required | NodeFlags::hint_min_max,
+                  NodeFlags::required,
                   "maximum distance ao rays will trace to."
                   " Useful if you do not want a large interior of a"
                   " building to be completely black from occlusion.");
       child("aoDistance").setMinMax(1e-20f, 1e20f);
 
       createChild("epsilon", "float", 1e-3f,
-                  NodeFlags::required | NodeFlags::hint_min_max,
+                  NodeFlags::required | NodeFlags::valid_min_max,
                   "epsilon step for secondary ray generation.  Adjust"
                   " if you see speckles or a lack of lighting.");
       child("epsilon").setMinMax(1e-20f, 1e20f);

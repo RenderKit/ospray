@@ -29,19 +29,15 @@ namespace ospray {
       vec3f ks(.3f);
       createChild("d", "float", 1.f,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_color).setMinMax(0.f, 1.f);
       createChild("Kd", "vec3f", kd,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("Ks", "vec3f", ks,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("Ns", "float", 10.f,
                   NodeFlags::required |
-                  NodeFlags::hint_min_max |
                   NodeFlags::gui_slider).setMinMax(2.f, 1000.f);
       setValue((OSPMaterial)nullptr);
     }
