@@ -46,7 +46,7 @@ struct Principled
   float ior;
   TextureParam iorMap; // currently this is ignored for transmission
 
-  float transmission;
+  float transmission; // specular transmission in [0, 1]
   TextureParam transmissionMap;
 
   float roughness; // in [0, 1]; 0==ideally smooth (mirror)
