@@ -27,7 +27,7 @@
 namespace ospray {
   namespace api {
 
-    struct ISPCDevice : public Device
+    struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     {
 
       ISPCDevice()  = default;

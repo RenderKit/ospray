@@ -117,6 +117,13 @@ namespace ospray {
 #endif
 #endif
 
+  extern "C" {
+    /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
+    OSPRAY_CORE_INTERFACE void *malloc64(size_t size);
+    /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
+    OSPRAY_CORE_INTERFACE void free64(void *ptr);
+  }
+
   /*! size of OSPDataType */
   OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
 
