@@ -374,10 +374,10 @@ inline void UnstructuredVolume_stepRay(
 }
 
 inline void UnstructuredVolume_intersectIsosurface(void *uniform _self,
-                                                  uniform float *uniform
-                                                      isovalues,
-                                                  uniform int numIsovalues,
-                                                  varying Ray &ray)
+                                                   uniform float *uniform isovalues,
+                                                   uniform int numIsovalues,
+                                                   uniform size_t geomID,
+                                                   varying Ray &ray)
 {
   // Cast to the actual Volume subtype.
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
