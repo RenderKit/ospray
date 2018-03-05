@@ -24,7 +24,7 @@ namespace ospray {
     {
       createChild("aspect", "float", 1.f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max).setMinMax(1e-31f, 1e31f);
+                      NodeFlags::hint_min_max).setMinMax(1e-31f, 1e31f);
       createChild("height", "float", 1.f, NodeFlags::required);
     }
 

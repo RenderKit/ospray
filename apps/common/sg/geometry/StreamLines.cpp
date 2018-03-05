@@ -23,7 +23,7 @@ namespace ospray {
     StreamLines::StreamLines() : Geometry("streamlines")
     {
       createChild("radius", "float", 0.01f,
-                  NodeFlags::valid_min_max).setMinMax(1e-20f, 1e20f);
+                  NodeFlags::hint_min_max).setMinMax(1e-20f, 1e20f);
       createChild("smooth", "bool", false);
     }
 

@@ -24,14 +24,14 @@ namespace ospray {
     {
       createChild("aspect", "float", 1.f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max).setMinMax(1e-31f, 1e31f);
+                      NodeFlags::hint_min_max).setMinMax(1e-31f, 1e31f);
       createChild("fovy", "float", 60.f,
-                      NodeFlags::required | NodeFlags::valid_min_max |
+                      NodeFlags::required | NodeFlags::hint_min_max |
                       NodeFlags::gui_slider).setMinMax(.1f, 360.f);
       createChild("apertureRadius", "float", 0.f,
-                      NodeFlags::valid_min_max).setMinMax(0.f, 1e31f);
+                      NodeFlags::hint_min_max).setMinMax(0.f, 1e31f);
       createChild("focusDistance", "float", 1.f,
-                      NodeFlags::valid_min_max).setMinMax(0.f, 1e31f);
+                      NodeFlags::hint_min_max).setMinMax(0.f, 1e31f);
     }
 
     OSP_REGISTER_SG_NODE(PerspectiveCamera);
