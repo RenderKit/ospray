@@ -58,6 +58,9 @@ MACRO(OSPRAY_FIX_ISPC_TARGET_LIST)
   ENDIF()
 ENDMACRO()
 
+OPTION(OSPRAY_SUPPORT_DOUBLES
+  "Include support for building 'real is double' libraries" OFF)
+
 ## Macro configure ISA targets for ispc ##
 MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
 
@@ -322,13 +325,20 @@ MACRO(OSPRAY_CREATE_SIMD_LIBRARY LIBRARY_BASE_NAME)
     SET(OSPRAY_CXXFLAGS_AVX512SKX   -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl -mf16c -mavx2 -mfma -mlzcnt -mbmi -mbmi2 -DOSPRAY_SIMD_SKX=2)
     SET(OSPRAY_CXXFLAGS_AVX512KNL  -mavx512f -mavx512pf -mavx512er -mavx512cd -mf16c -mavx2 -mfma -mlzcnt -mbmi -mbmi2 -DOSPRAY_SIMD_KNX=1)
   ELSEIF (OSPRAY_COMPILER_CLANG)
-    # get rid of "XXX is not defined, will evaluate to 0" warning - that's what we _want_
+    # get rid of "XXX is not defined, will evaluate to 0" warning -
+    # that's what we _want_
     SET(OSPRAY_CXXFLAGS_COMMON ${OSPRAY_CXXFLAGS_COMMON} -Wno-undef)
+
+    # get rid of the tsimd 'annymous types' and 'anonymous structs'
+    # warnings - shuld get fixed in tsimd
+    SET(OSPRAY_CXXFLAGS_COMMON ${OSPRAY_CXXFLAGS_COMMON} -Wno-gnu-anonymous-struct -Wno-source-uses-openmp -Wno-nested-anon-types)
+
     # at least temporarily, ignore un-used parameters (should
     # eventually turn back on, but not while we have lots of dummy api
     # functions...)
     SET(OSPRAY_CXXFLAGS_COMMON ${OSPRAY_CXXFLAGS_COMMON} -Wno-unused-parameter)
 
+    SET(OSPRAY_CXXFLAGS_COMMON ${OSPRAY_CXXFLAGS_COMMON} -openmp)
     # define isa-specific flags
     SET(OSPRAY_CXXFLAGS_SCALAR -DOSPRAY_SIMD_NONE=1 -DOSPRAY_SCALAR=1)
     SET(OSPRAY_CXXFLAGS_NATIVE -march=native -DOSPRAY_SIMD_NATIVE=1 )
@@ -373,20 +383,22 @@ MACRO(OSPRAY_CREATE_SIMD_LIBRARY LIBRARY_BASE_NAME)
     ENDIF()
 
     # ----------- double -----------
-    SET(LIBRARY_NAME ${LIBRARY_BASE_NAME}_${OSPRAY_SIMD_LIBNAME_${ISA}})
-    OSPRAY_ADD_LIBRARY(${LIBRARY_NAME}_double SHARED ${LIBRARY_SOURCES})
-    TARGET_COMPILE_OPTIONS(${LIBRARY_NAME}_double PRIVATE ${OSPRAY_CXXFLAGS_COMMON} ${OSPRAY_CXXFLAGS_${ISA}} -DOSPRAY_USE_DOUBLES=1)
-    TARGET_LINK_LIBRARIES(${LIBRARY_NAME}_double ${LIBRARY_LIBS})
-    OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME}_double)
-    IF(${LIBRARY_EXCLUDE_FROM_ALL})
-      SET_TARGET_PROPERTIES(${LIBRARY_NAME}_double PROPERTIES EXCLUDE_FROM_ALL TRUE)
-    ELSE()
-      OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME}_double ${LIBRARY_COMPONENT})
-    ENDIF()
+    IF (OSPRAY_SUPPORT_DOUBLES)
+      SET(LIBRARY_NAME ${LIBRARY_BASE_NAME}_${OSPRAY_SIMD_LIBNAME_${ISA}})
+      OSPRAY_ADD_LIBRARY(${LIBRARY_NAME}_double SHARED ${LIBRARY_SOURCES})
+      TARGET_COMPILE_OPTIONS(${LIBRARY_NAME}_double PRIVATE ${OSPRAY_CXXFLAGS_COMMON} ${OSPRAY_CXXFLAGS_${ISA}} -DOSPRAY_USE_DOUBLES=1)
+      TARGET_LINK_LIBRARIES(${LIBRARY_NAME}_double ${LIBRARY_LIBS})
+      OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME}_double)
+      IF(${LIBRARY_EXCLUDE_FROM_ALL})
+	SET_TARGET_PROPERTIES(${LIBRARY_NAME}_double PROPERTIES EXCLUDE_FROM_ALL TRUE)
+      ELSE()
+	OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME}_double ${LIBRARY_COMPONENT})
+      ENDIF()
 
-    # end of hack: restore original ispc target list for multi-target libraries
-    SET(OSPRAY_ISPC_TARGET_LIST ${SAVED_OSPRAY_ISPC_TARGET_LIST})
-    SET(OSPRAY_ISPC_TARGET_NAME "")
+      # end of hack: restore original ispc target list for multi-target libraries
+      SET(OSPRAY_ISPC_TARGET_LIST ${SAVED_OSPRAY_ISPC_TARGET_LIST})
+      SET(OSPRAY_ISPC_TARGET_NAME "")
+    ENDIF()
   ENDFOREACH()
 
   # end of hack: restore original ispc target list for multi-target libraries
