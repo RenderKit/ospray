@@ -19,8 +19,6 @@
 // ospray
 #include "common/OSPCommon.h"
 #include "common/Managed.h"
-// // embree
-// #include "embree2/rtcore.h"
 // std
 #include <functional>
 
