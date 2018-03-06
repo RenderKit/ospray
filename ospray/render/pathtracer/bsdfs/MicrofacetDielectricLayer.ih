@@ -61,7 +61,6 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   float cosThetaIH = dot(wi, wh);
 
   float whPdf;
-  //float D = eval(self->distribution, cosThetaH, whPdf);
   float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
   float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
@@ -123,7 +122,6 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   {
     // Sample the microfacet normal
     float whPdf;
-    //wh = getFrame(super) * sample(self->distribution, whPdf, s);
     wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
     float cosThetaOH = dot(wo, wh);
 
@@ -189,7 +187,6 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     float cosThetaIH = dot(res.wi, wh);
 
     float whPdf;
-    //float D = eval(self->distribution, cosThetaH, whPdf);
     float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
     float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 

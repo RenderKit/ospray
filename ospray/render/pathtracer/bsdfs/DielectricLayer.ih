@@ -55,7 +55,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   foreach_unique (f in self->substrate)
     substrate = f->eval(f, wo, wi, lcg);
 
-  // Apply the coating transmittance
+  // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float cosThetaI1 = refract(cosThetaI, self->eta); // positive
   substrate.value = substrate.value * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
@@ -88,17 +88,19 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
     res.weight = make_vec3f(1.0f);
   } else {
     // Sample the substrate BRDF
+    // Ignore refraction
     float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
     foreach_unique (f in self->substrate)
       res = f->sample(f, wo, s, ss1, lcg);
     if (reduce_max(res.weight) <= 0.0f) return res;
     float cosThetaI = max(dot(res.wi, getN(super)), 0.0f); // should be positive
 
-    // Apply the coating transmittance
+    // Apply the coating medium transmittance
     float cosThetaI1 = refract(cosThetaI, self->eta); // positive
     res.weight = res.weight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
     // Compute the final reflection
+    // Ignore Fresnel for the exiting ray
     res.pdf = (1.0f-F) * res.pdf;
   }
 
