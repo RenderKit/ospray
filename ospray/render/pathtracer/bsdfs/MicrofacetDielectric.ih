@@ -28,7 +28,7 @@ struct MicrofacetDielectric
   BSDF super;
 
   float eta;
-  GGXDistribution distribution;
+  GGXDistribution microfacet;
   float reflectionWeight;
 };
 
@@ -89,9 +89,8 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   }
 
   float whPdf;
-  //float D = eval(self->distribution, cosThetaH, whPdf);
-  float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-  float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float D = evalVisible(self->microfacet, cosThetaH, cosThetaO, cosThetaOH, whPdf);
+  float G = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   res.pdf *= whPdf;
   res.value = make_vec3f(value * D * G);
@@ -110,8 +109,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
 
   // Sample the microfacet normal
   float whPdf;
-  //vec3f wh = getFrame(super) * sample(self->distribution, whPdf, s);
-  vec3f wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
+  vec3f wh = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whPdf, s);
 
   float cosThetaOH = dot(wo, wh);
 
@@ -149,14 +147,11 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
       weight = rcp(sqr(self->eta));
   }
 
-  //float cosThetaH = dot(wh, getN(super));
   float cosThetaIH = dot(res.wi, wh);
-
-  float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float G = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   res.pdf *= whPdf;
-  //res.weight = make_vec3f(weight * G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
-  res.weight = make_vec3f(weight * (G * rcp_safe(evalG1(self->distribution, cosThetaO, cosThetaOH))));
+  res.weight = make_vec3f(weight * (G * rcp_safe(evalG1(self->microfacet, cosThetaO, cosThetaOH))));
   return res;
 }
 
@@ -170,7 +165,7 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
                    frame);
 
   self->eta = eta;
-  self->distribution = make_GGXDistribution(roughnessToAlpha(roughness));
+  self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
   self->reflectionWeight = reflectionWeight;
 }
 

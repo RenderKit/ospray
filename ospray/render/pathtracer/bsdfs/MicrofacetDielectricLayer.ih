@@ -34,7 +34,7 @@ struct MicrofacetDielectricLayer
   float eta;
   vec3f transmittance;
   float thickness;
-  GGXDistribution distribution;
+  GGXDistribution microfacet;
   float reflectionWeight;
 };
 
@@ -61,8 +61,8 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   float cosThetaIH = dot(wi, wh);
 
   float whPdf;
-  float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-  float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float D = evalVisible(self->microfacet, cosThetaH, cosThetaO, cosThetaOH, whPdf);
+  float G = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   BSDF_EvalRes coating;
   coating.pdf = whPdf * rcp(4.f*cosThetaOH);
@@ -82,11 +82,11 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
 
   // Compute the transmittance through the rough coating surface, which requires sampling a microfacet normal
   float whtPdf;
-  vec3f wht = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
+  vec3f wht = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
   float cosThetaOHt = dot(wo, wht);
   float cosThetaIHt = dot(wi, wht);
-  float Gt = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
-  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->distribution, cosThetaO, cosThetaOHt)));
+  float Gt = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
+  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->microfacet, cosThetaO, cosThetaOHt)));
 
   // Compute the final substrate reflection
   // Ignore Fresnel for the exiting ray
@@ -122,7 +122,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   {
     // Sample the microfacet normal
     float whPdf;
-    wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
+    wh = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whPdf, s);
     float cosThetaOH = dot(wo, wh);
 
     res.type = BSDF_GLOSSY_REFLECTION;
@@ -164,11 +164,11 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 
   // Compute the transmittance through the rough coating surface, which requires sampling a microfacet normal
   float whtPdf;
-  vec3f wht = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
+  vec3f wht = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
   float cosThetaOHt = dot(wo, wht);
   float cosThetaIHt = dot(res.wi, wht);
-  float Gt = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
-  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->distribution, cosThetaO, cosThetaOHt)));
+  float Gt = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
+  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->microfacet, cosThetaO, cosThetaOHt)));
 
   // Compute the final substrate reflection
   // Ignore Fresnel for the exiting ray
@@ -187,8 +187,8 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     float cosThetaIH = dot(res.wi, wh);
 
     float whPdf;
-    float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-    float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+    float D = evalVisible(self->microfacet, cosThetaH, cosThetaO, cosThetaOH, whPdf);
+    float G = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
     BSDF_EvalRes coating;
     coating.pdf = whPdf * rcp(4.f*cosThetaOH);
@@ -213,7 +213,7 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
   self->eta = eta;
   self->transmittance = transmittance;
   self->thickness = thickness;
-  self->distribution = make_GGXDistribution(roughnessToAlpha(roughness));
+  self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
   self->reflectionWeight = reflectionWeight;
 }
 
