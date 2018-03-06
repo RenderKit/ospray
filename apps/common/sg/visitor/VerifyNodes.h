@@ -37,7 +37,7 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    inline bool VerifyNodes::operator()(Node &node, TraversalContext &ctx)
+    inline bool VerifyNodes::operator()(Node &node, TraversalContext &)
     {
       bool traverseChildren =
           node.properties.valid &&
