@@ -82,7 +82,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
 
   // Compute the transmittance through the rough coating surface, which requires sampling a microfacet normal
   float whtPdf;
-  vec3f wht = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
+  vec3f wht = getFrame(super) * sampleVisibleUH(self->microfacet, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
   float cosThetaOHt = dot(wo, wht);
   float cosThetaIHt = dot(wi, wht);
   float Gt = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
@@ -122,7 +122,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   {
     // Sample the microfacet normal
     float whPdf;
-    wh = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whPdf, s);
+    wh = getFrame(super) * sampleVisibleUH(self->microfacet, transposed(getFrame(super)) * wo, whPdf, s);
     float cosThetaOH = dot(wo, wh);
 
     res.type = BSDF_GLOSSY_REFLECTION;
@@ -164,7 +164,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 
   // Compute the transmittance through the rough coating surface, which requires sampling a microfacet normal
   float whtPdf;
-  vec3f wht = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
+  vec3f wht = getFrame(super) * sampleVisibleUH(self->microfacet, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
   float cosThetaOHt = dot(wo, wht);
   float cosThetaIHt = dot(res.wi, wht);
   float Gt = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);

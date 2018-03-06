@@ -109,7 +109,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
 
   // Sample the microfacet normal
   float whPdf;
-  vec3f wh = getFrame(super) * sampleVisible(self->microfacet, transposed(getFrame(super)) * wo, whPdf, s);
+  vec3f wh = getFrame(super) * sampleVisibleUH(self->microfacet, transposed(getFrame(super)) * wo, whPdf, s);
 
   float cosThetaOH = dot(wo, wh);
 

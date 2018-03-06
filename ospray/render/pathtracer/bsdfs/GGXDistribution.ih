@@ -22,6 +22,7 @@
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
 // [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
 // [Heitz and d'Eon, 2014, "Importance Sampling Microfacet-Based BSDFs using the Distribution of Visible Normals"]
+// [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals"]
 struct GGXDistribution
 {
   float alpha;
@@ -117,7 +118,7 @@ inline float evalVisible(const GGXDistribution& self,
   return D;
 }
 
-// Visible normal sampling code for the alpha=1 case
+// Visible normal sampling for the alpha=1 case
 inline vec2f sampleVisible11(const GGXDistribution& self,
                              float thetaI, const vec2f& s)
 {
@@ -159,6 +160,8 @@ inline vec2f sampleVisible11(const GGXDistribution& self,
   return slope;
 }
 
+// Visible normal sampling
+// [Heitz and d'Eon, 2014, "Importance Sampling Microfacet-Based BSDFs using the Distribution of Visible Normals"]
 inline vec3f sampleVisible(const GGXDistribution& self,
                            vec3f wo, float& pdf, const vec2f& s)
 {
@@ -186,6 +189,36 @@ inline vec3f sampleVisible(const GGXDistribution& self,
 
   // Compute normal
   vec3f N = normalize(make_vec3f(-slope.x, -slope.y, 1.f));
+
+  // Compute pdf
+  pdf = evalG1(self, wo.z, dot(wo, N)) * abs(dot(wo, N)) * eval(self, N.z) / abs(wo.z);
+  return N;
+}
+
+// Faster visible normal sampling, but wo must be in the upper hemisphere
+// [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals"]
+inline vec3f sampleVisibleUH(const GGXDistribution& self,
+                             vec3f wo, float& pdf, const vec2f& s)
+{
+  // Stretch wo
+  vec3f V = normalize(make_vec3f(self.alpha * wo.x, self.alpha * wo.y, wo.z));
+
+  // Orthonormal basis
+  vec3f T1 = (V.z < 0.9999f) ? normalize(cross(V, make_vec3f(0,0,1))) : make_vec3f(1,0,0);
+  vec3f T2 = cross(T1, V);
+
+  // Sample point with polar coordinates (r, phi)
+  float a = 1.0 / (1.0 + V.z);
+  float r = sqrt(s.x);
+  float phi = (s.y<a) ? s.y/a * pi : pi + (s.y-a)/(1.f-a) * pi;
+  float P1 = r*cos(phi);
+  float P2 = r*sin(phi)*((s.y<a) ? 1.f : V.z);
+
+  // Compute normal
+  vec3f N = P1*T1 + P2*T2 + sqrt(max(0.f, 1.f - P1*P1 - P2*P2))*V;
+
+  // Unstretch
+  N = normalize(make_vec3f(self.alpha*N.x, self.alpha*N.y, max(0.f, N.z)));
 
   // Compute pdf
   pdf = evalG1(self, wo.z, dot(wo, N)) * abs(dot(wo, N)) * eval(self, N.z) / abs(wo.z);
