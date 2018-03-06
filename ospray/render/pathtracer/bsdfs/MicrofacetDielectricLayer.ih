@@ -75,15 +75,23 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   foreach_unique (f in self->substrate)
     substrate = f->eval(f, wo, wi, lcg);
 
-  // Apply the coating transmittance
+  // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float cosThetaO1 = refract(cosThetaO, self->eta); // positive
   float cosThetaI1 = refract(cosThetaI, self->eta); // positive
   substrate.value = substrate.value * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
+  // Compute the transmittance through the rough coating surface, which requires sampling a microfacet normal
+  float whtPdf;
+  vec3f wht = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
+  float cosThetaOHt = dot(wo, wht);
+  float cosThetaIHt = dot(wi, wht);
+  float Gt = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
+  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->distribution, cosThetaO, cosThetaOHt)));
+
   // Compute the final substrate reflection
   // Ignore Fresnel for the exiting ray
-  substrate.value = substrate.value * (1.f-F);
+  substrate.value = substrate.value * T;
 
   // Compute the total reflection
   float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->reflectionWeight); // have to use the macronormal for sampling
@@ -123,12 +131,14 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     res.wi = reflect(wo, wh, cosThetaOH);
 
     // Evaluate the substrate
+    // Ignore refraction
     foreach_unique (f in self->substrate)
       substrate = f->eval(f, wo, res.wi, lcg);
   }
   else
   {
     // Sample the substrate
+    // Ignore refraction
     float ss1 = (ss - coatingPickProb) * rcp(substratePickProb); // reallocate sample
     foreach_unique (f in self->substrate)
       res = f->sample(f, wo, s, ss1, lcg);
@@ -149,13 +159,22 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   // Fresnel term
   float F = fresnelDielectricWeighted(cosThetaOH, self->eta, self->reflectionWeight);
 
-  // Apply the coating transmittance
+  // Apply the coating medium transmittance
   float cosThetaO1 = refract(cosThetaO, self->eta); // positive
   float cosThetaI1 = refract(cosThetaI, self->eta); // positive
   substrate.value = substrate.value * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
+  // Compute the transmittance through the rough coating surface, which requires sampling a microfacet normal
+  float whtPdf;
+  vec3f wht = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whtPdf, LCG_getFloat2(lcg));
+  float cosThetaOHt = dot(wo, wht);
+  float cosThetaIHt = dot(res.wi, wht);
+  float Gt = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
+  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->distribution, cosThetaO, cosThetaOHt)));
+
   // Compute the final substrate reflection
-  substrate.value = substrate.value * (1.f-F);
+  // Ignore Fresnel for the exiting ray
+  substrate.value = substrate.value * T;
 
   if (res.type & BSDF_SPECULAR)
   {
