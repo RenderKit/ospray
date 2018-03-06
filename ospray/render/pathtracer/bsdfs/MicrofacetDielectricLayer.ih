@@ -63,7 +63,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   float whPdf;
   //float D = eval(self->distribution, cosThetaH, whPdf);
   float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   BSDF_EvalRes coating;
   coating.pdf = whPdf * rcp(4.f*cosThetaOH);
@@ -172,7 +172,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     float whPdf;
     //float D = eval(self->distribution, cosThetaH, whPdf);
     float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-    float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+    float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
     BSDF_EvalRes coating;
     coating.pdf = whPdf * rcp(4.f*cosThetaOH);

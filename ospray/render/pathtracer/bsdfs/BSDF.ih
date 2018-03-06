@@ -19,6 +19,7 @@
 #include "math/vec.ih"
 // utilites used by (almost all) implementations
 #include "math/sampling.ih"
+#include "math/random.ih"
 #include "Optics.ih"
 
 #define BSDF_SPECULAR_REFLECTION   (1<<0)  /*!< diffuse light reflection            */

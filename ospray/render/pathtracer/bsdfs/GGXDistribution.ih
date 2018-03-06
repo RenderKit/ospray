@@ -80,8 +80,8 @@ inline vec3f sample(const GGXDistribution& self,
 // Smith Lambda function [Heitz, 2014]
 // \Lambda(\omega_o) = \frac{-1 + \sqrt{1+\frac{1}{a^2}}}{2}
 // a = \frac{1}{\alpha \tan\theta_o}
-inline float Lambda(const GGXDistribution& self,
-                    float cosTheta)
+inline float evalLambda(const GGXDistribution& self,
+                        float cosTheta)
 {
   float alpha2 = sqr(self.alpha);
   float cosTheta2 = sqr(cosTheta);
@@ -89,31 +89,31 @@ inline float Lambda(const GGXDistribution& self,
   return 0.5f * (-1.f + sqrt(1.f+alpha2*tanTheta2));
 }
 
-inline float G1(const GGXDistribution& self,
-                float cosThetaO, float cosThetaOH)
+inline float evalG1(const GGXDistribution& self,
+                    float cosThetaO, float cosThetaOH)
 {
   if (cosThetaO * cosThetaOH <= 0.f)
     return 0.f;
 
-  return rcp(1.f + Lambda(self, cosThetaO));
+  return rcp(1.f + evalLambda(self, cosThetaO));
 }
 
 // Smith's height-correlated masking-shadowing function
 // [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
-inline float G2(const GGXDistribution& self,
-                float cosThetaO, float cosThetaI, float cosThetaOH, float cosThetaIH)
+inline float evalG2(const GGXDistribution& self,
+                    float cosThetaO, float cosThetaI, float cosThetaOH, float cosThetaIH)
 {
   if (cosThetaO * cosThetaOH <= 0.f || cosThetaI * cosThetaIH <= 0.f)
     return 0.f;
 
-  return rcp(1.f + Lambda(self, cosThetaO) + Lambda(self, cosThetaI));
+  return rcp(1.f + evalLambda(self, cosThetaO) + evalLambda(self, cosThetaI));
 }
 
 inline float evalVisible(const GGXDistribution& self,
                          float cosThetaH, float cosThetaO, float cosThetaOH, float& pdf)
 {
   float D = eval(self, cosThetaH);
-  pdf = G1(self, cosThetaO, cosThetaOH) * abs(cosThetaOH) * D / abs(cosThetaO);
+  pdf = evalG1(self, cosThetaO, cosThetaOH) * abs(cosThetaOH) * D / abs(cosThetaO);
   return D;
 }
 
@@ -188,7 +188,7 @@ inline vec3f sampleVisible(const GGXDistribution& self,
   vec3f m = normalize(make_vec3f(-slope.x, -slope.y, 1.f));
 
   // Compute pdf
-  pdf = G1(self, wo.z, dot(wo, m)) * abs(dot(wo, m)) * eval(self, m.z) / abs(wo.z);
+  pdf = evalG1(self, wo.z, dot(wo, m)) * abs(dot(wo, m)) * eval(self, m.z) / abs(wo.z);
   return m;
 }
 

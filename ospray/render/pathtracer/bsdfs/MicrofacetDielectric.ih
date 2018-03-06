@@ -91,7 +91,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   float whPdf;
   //float D = eval(self->distribution, cosThetaH, whPdf);
   float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   res.pdf *= whPdf;
   res.value = make_vec3f(value * D * G);
@@ -152,11 +152,11 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   //float cosThetaH = dot(wh, getN(super));
   float cosThetaIH = dot(res.wi, wh);
 
-  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float G = evalG2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   res.pdf *= whPdf;
   //res.weight = make_vec3f(weight * G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
-  res.weight = make_vec3f(weight * (G * rcp_safe(G1(self->distribution, cosThetaO, cosThetaOH))));
+  res.weight = make_vec3f(weight * (G * rcp_safe(evalG1(self->distribution, cosThetaO, cosThetaOH))));
   return res;
 }
 
