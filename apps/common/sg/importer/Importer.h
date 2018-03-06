@@ -94,6 +94,11 @@ namespace ospray {
     OSPSG_INTERFACE void importOBJ(const std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
+    /*! import an X3D model, as forexample a ParaView contour exported
+      using ParaView's X3D exporter */
+    OSPSG_INTERFACE void importX3D(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
+
     /*! import an OSX streamlines model, and add its contents to the given
         world */
     OSPSG_INTERFACE void importOSX(const std::shared_ptr<Node> &world,

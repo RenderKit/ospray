@@ -36,7 +36,7 @@ namespace ospray {
 
   using namespace ospcommon;
 
-  enum class ExecState {STOPPED, RUNNING, INVALID};
+  enum class ExecState {STOPPED, STARTED, RUNNING, INVALID};
 
   class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngine
   {

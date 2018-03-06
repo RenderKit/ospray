@@ -25,6 +25,7 @@
 // stl
 #include <vector>
 #include <set>
+#include <memory>
 
 namespace ospray {
 
@@ -105,7 +106,9 @@ namespace ospray {
     </dl>
 
    */
-  struct OSPRAY_CORE_INTERFACE ManagedObject : public memory::RefCount
+  struct OSPRAY_CORE_INTERFACE ManagedObject
+    : public memory::RefCount, 
+      public std::enable_shared_from_this<ManagedObject>
   {
     /*! \brief constructor */
     ManagedObject() = default;
