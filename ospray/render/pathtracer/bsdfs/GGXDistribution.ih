@@ -163,16 +163,16 @@ inline vec3f sampleVisible(const GGXDistribution& self,
                            vec3f wo, float& pdf, const vec2f& s)
 {
   // Stretch wo
-  wo = normalize(make_vec3f(self.alpha * wo.x, self.alpha * wo.y, wo.z));
+  vec3f V = normalize(make_vec3f(self.alpha * wo.x, self.alpha * wo.y, wo.z));
 
   // Compute polar coordinates
-  bool valid = wo.z < 0.99999f;
-  float theta = valid ? acos(wo.z) : 0.f;
-  float phi = valid ? atan2(wo.y, wo.x) : 0.f;
+  bool valid = V.z < 0.99999f;
+  float theta = valid ? acos(V.z) : 0.f;
+  float phi = valid ? atan2(V.y, V.x) : 0.f;
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
 
-  // Sample P22_{wo}(slope.x, slope.y, 1, 1)
+  // Sample P22_{V}(slope.x, slope.y, 1, 1)
   vec2f slope = sampleVisible11(self, theta, s);
 
   // Rotate
@@ -185,10 +185,10 @@ inline vec3f sampleVisible(const GGXDistribution& self,
   slope.y *= self.alpha;
 
   // Compute normal
-  vec3f m = normalize(make_vec3f(-slope.x, -slope.y, 1.f));
+  vec3f N = normalize(make_vec3f(-slope.x, -slope.y, 1.f));
 
   // Compute pdf
-  pdf = evalG1(self, wo.z, dot(wo, m)) * abs(dot(wo, m)) * eval(self, m.z) / abs(wo.z);
-  return m;
+  pdf = evalG1(self, wo.z, dot(wo, N)) * abs(dot(wo, N)) * eval(self, N.z) / abs(wo.z);
+  return N;
 }
 
