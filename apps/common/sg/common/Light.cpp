@@ -69,6 +69,7 @@ namespace ospray {
 
       createChild("intensity", "float", 3.f,
                       NodeFlags::required |
+                      NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,12.f);
 
       createChild("angularDiameter", "float", 0.53f,

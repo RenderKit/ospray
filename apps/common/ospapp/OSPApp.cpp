@@ -118,7 +118,7 @@ namespace ospray {
       setupCamera(renderer);
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
-      renderer.traverse("verify");
+      renderer.traverse(sg::Node::VerifyNodes{});
       renderer.traverse("commit");
 
       // last, to be able to modify all created SG nodes
@@ -128,7 +128,7 @@ namespace ospray {
         renderer.traverse(sg::PrintNodes{});
 
       // recommit in case any command line options modified the scene graph
-      renderer.traverse("verify");
+      renderer.traverse(sg::Node::VerifyNodes{});
       renderer.traverse("commit");
 
       render(rendererPtr);

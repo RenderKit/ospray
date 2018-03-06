@@ -33,7 +33,11 @@ namespace ospray {
     struct Visitor
     {
       // NOTE: return value means "continue traversal"
+      // functor called before children
       virtual bool operator()(Node &node, TraversalContext &ctx) = 0;
+
+      // postChildren called after children have been traversed
+      virtual void postChildren(Node &, TraversalContext &) {}
 
       virtual ~Visitor() = default;
     };

@@ -137,7 +137,7 @@ namespace ospray {
     {
       RenderContext ctx;
       if (verifyCommit) {
-        traverse(ctx, "verify");
+        Node::traverse<sg::Node::VerifyNodes>(sg::Node::VerifyNodes{});
         traverse(ctx, "commit");
       }
       traverse(ctx, "render");
