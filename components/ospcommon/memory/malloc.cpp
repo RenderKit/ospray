@@ -14,34 +14,48 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "OSPCommon.ih"
+#include "malloc.h"
+#include "../intrinsics.h"
+#if defined(TASKING_TBB)
+#  define __TBB_NO_IMPLICIT_LINKAGE 1
+#  include "tbb/scalable_allocator.h"
+#endif
 
-//embree
-#include "embree2/rtcore.isph"
+#ifdef _WIN32
+#include <malloc.h>
+#endif
 
-//extern "C" void abort ();
-//extern "C" void exit(uniform int);
-//extern "C" uniform int puts ( const uniform int8* uniform str );
-//extern "C" uniform int putchar ( uniform int character );
+namespace ospcommon {
+  namespace memory {
 
-void error_handler(const RTCError code, const int8* str)
-{
-  print("Embree: ");
-  switch (code) {
-  case RTC_UNKNOWN_ERROR    : print("RTC_UNKNOWN_ERROR"); break;
-  case RTC_INVALID_ARGUMENT : print("RTC_INVALID_ARGUMENT"); break;
-  case RTC_INVALID_OPERATION: print("RTC_INVALID_OPERATION"); break;
-  case RTC_OUT_OF_MEMORY    : print("RTC_OUT_OF_MEMORY"); break;
-  case RTC_UNSUPPORTED_CPU  : print("RTC_UNSUPPORTED_CPU"); break;
-  default                   : print("invalid error code"); break;
-  }
-  if (str) { 
-    print("(%)", str);
-  }
-  assert(0);
-}
+    void* alignedMalloc(size_t size, size_t align)
+    {
+      assert((align & (align-1)) == 0);
+      // FIXME: have to disable this for now as the TBB  allocator itself seems
+      //        to access some uninitialized value when using valgrind
+#if 0//defined(TASKING_TBB)
+      return scalable_aligned_malloc(size,align);
+#else
+#  ifdef _WIN32
+      return _aligned_malloc(size, align);
+#  else // __UNIX__
+      return _mm_malloc(size, align);
+#  endif
+#endif
+    }
 
-export void delete_uniform(void *uniform uptr)
-{
-  delete uptr;
-}
+  void alignedFree(void* ptr)
+  {
+#if 0//defined(TASKING_TBB)
+      scalable_aligned_free(ptr);
+#else
+#  ifdef _WIN32
+      return _aligned_free(ptr);
+#  else // __UNIX__
+      _mm_free(ptr);
+#  endif
+#endif
+    }
+
+  } // ::ospcommon::memory
+} // ::ospcommon

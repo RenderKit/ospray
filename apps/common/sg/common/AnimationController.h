@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
-#include "sg/common/Serialization.h"
-#include "sg/camera/Camera.h"
+#include "Node.h"
+#include "../camera/Camera.h"
 
 #include <cfloat>
 

@@ -27,6 +27,14 @@ TEST_CASE("longestBeginningMatch() correctness", "[]")
   REQUIRE(output == "01234");
 }
 
+TEST_CASE("beginsWith() correctness", "[]")
+{
+  std::string input = "0123456";
+
+  REQUIRE(ospcommon::utility::beginsWith(input, "012"));
+  REQUIRE(!ospcommon::utility::beginsWith(input, "12"));
+}
+
 TEST_CASE("split() correctness", "[]")
 {
   std::string input = "str0,str1,str2";

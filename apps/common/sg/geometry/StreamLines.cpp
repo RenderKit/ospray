@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/geometry/StreamLines.h"
-#include "sg/common/Data.h"
+#include "StreamLines.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {

@@ -18,17 +18,18 @@
 #pragma clang diagnostic ignored "-Wextended-offsetof"
 
 #include "SceneGraph.h"
-#include "sg/volume/AMRVolume.h"
-#include "sg/volume/Volume.h"
+#include "../volume/AMRVolume.h"
+#include "../volume/Volume.h"
 // hdf
+#include "hdf5.h"
+// ospcommon
 #include "ospcommon/range.h"
 #include "ospcommon/box.h"
 
-#include "hdf5.h"
+// core ospray
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
-
-  //! namespace amr declares various functions for loading AMR data
   namespace amr {
 
     //! stores AMR Level data
@@ -78,6 +79,8 @@ namespace ospray {
       std::vector<Level *> level;
       //! array of component names
       std::vector<std::string> component;
+
+      std::string voxelType="float"; // for now only floats are created by importer
 
       static AMR *parse(const std::string &fileName, int maxLevel = 1 << 30);
       box3f getWorldBounds() const;
@@ -302,23 +305,12 @@ namespace ospray {
 
   namespace sg {
 
-    //! parse Chombo hdf5 file into world node
-    void importAMRChombo(std::shared_ptr<sg::Node> &world,
-                         const FileName &fileName,
-                         const std::string &desiredComponent,
-                         const range1f *clampRange)
-    {
-      auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
-      parseAMRChomboFile(node, fileName, desiredComponent, clampRange);
-      world->add(node);
-    }
-
     //! parse Chombo hdf5 file into AMRVolume node
     void parseAMRChomboFile(std::shared_ptr<sg::AMRVolume> &node,
                             const FileName &fileName,
-                            const std::string &desiredComponent,
-                            const range1f *clampRange,
-                            int maxLevel)
+                            const std::string &desiredComponent = "",
+                            const range1f *clampRange = nullptr,
+                            int maxLevel = 1 << 30)
     {
       amr::AMR *amr = ospray::amr::AMR::parse(fileName.str(), maxLevel);
       assert(!amr->level.empty());
@@ -329,6 +321,7 @@ namespace ospray {
       assert(rootLevelBounds.lower == vec3i(0));
 
       node->child("bounds") = amr->getWorldBounds();
+      (*node)["voxelType"] = amr->voxelType;
 
       node->componentID = -1;
       for (size_t i = 0; i < amr->component.size(); i++) {
@@ -376,6 +369,16 @@ namespace ospray {
       }
       ospLogF(1) << "found " << node->brickInfo.size() << " bricks"
                  << std::endl;
+    }
+
+    // Import HDF5 CHOMBO files ///////////////////////////////////////////////
+
+    void importCHOMBO(std::shared_ptr<Node> world, const FileName &fileName)
+    {
+      auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
+      parseAMRChomboFile(node, fileName);
+      node->child("transferFunction")["valueRange"] = node->valueRange.toVec2f();
+      world->add(node);
     }
 
   }  // ::ospray::sg

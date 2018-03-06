@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
+#include "Node.h"
 
 #include <type_traits>
 

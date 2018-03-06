@@ -16,11 +16,7 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
-#include "sg/common/Serialization.h"
-#include "sg/camera/Camera.h"
-
-#include <cfloat>
+#include "Node.h"
 
 namespace ospray {
   namespace sg {

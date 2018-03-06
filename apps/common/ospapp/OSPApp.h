@@ -23,6 +23,8 @@
 namespace ospray {
   namespace app {
 
+    using namespace ospcommon;
+
     template <class T>
     class CmdLineParam
     {
@@ -98,9 +100,13 @@ namespace ospray {
       bool noDefaultLights = false;
       bool debug = false;
       std::string initialRendererType;
+      box3f bboxWithoutPlane;
 
       bool addPlane =
           utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(1);
+
+      bool fast =
+          utility::getEnvVar<int>("OSPRAY_APPS_FAST_MODE").value_or(0);
 
      private:
       void parseGeneralCommandLine(int &ac, const char **&av);

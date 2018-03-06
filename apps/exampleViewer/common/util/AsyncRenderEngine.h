@@ -34,7 +34,9 @@
 
 namespace ospray {
 
-  enum class ExecState {STOPPED, RUNNING, INVALID};
+  using namespace ospcommon;
+
+  enum class ExecState {STOPPED, STARTED, RUNNING, INVALID};
 
   class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngine
   {
@@ -46,7 +48,7 @@ namespace ospray {
 
     // Properties //
 
-    void setFbSize(const ospcommon::vec2i &size);
+    void setFbSize(const vec2i &size);
 
     // Method to say that an objects needs to be comitted before next frame //
 
@@ -79,7 +81,7 @@ namespace ospray {
 
     // Data //
 
-    std::unique_ptr<ospcommon::AsyncLoop> backgroundThread;
+    std::unique_ptr<AsyncLoop> backgroundThread;
 
     std::atomic<ExecState> state{ExecState::INVALID};
 
@@ -88,21 +90,21 @@ namespace ospray {
     std::shared_ptr<sg::Renderer> scenegraph;
     std::shared_ptr<sg::Renderer> scenegraphDW;
 
-    ospcommon::utility::TransactionalValue<vec2i> fbSize;
-    ospcommon::utility::TransactionalValue<vec2f> pickPos;
-    ospcommon::utility::TransactionalValue<OSPPickResult> pickResult;
+    utility::TransactionalValue<vec2i> fbSize;
+    utility::TransactionalValue<vec2f> pickPos;
+    utility::TransactionalValue<OSPPickResult> pickResult;
 
     sg::TimeStamp lastRTime;
 
     int nPixels {0};
 
     std::mutex fbMutex;
-    ospcommon::utility::DoubleBufferedValue<std::vector<uint32_t>> pixelBuffers;
+    utility::DoubleBufferedValue<std::vector<uint32_t>> pixelBuffers;
 
     std::atomic<bool> newPixels {false};
 
     bool commitDeviceOnAsyncLoopThread {true};
 
-    ospcommon::utility::CodeTimer fps;
+    utility::CodeTimer fps;
   };
 }// namespace ospray

@@ -17,37 +17,27 @@
 #pragma once
 
 // ospcomon
-#include "ospcommon/common.h"
-#include "ospcommon/vec.h"
-#include "ospcommon/FileName.h"
+#include "../common.h"
+#include "../vec.h"
+#include "../FileName.h"
+
 // stl
 #include <stack>
-#include <vector>
 #include <memory>
 #include <map>
+#include <vector>
 
-#ifdef _WIN32
-#  ifdef ospray_xml_EXPORTS
-#    define OSPRAY_XML_INTERFACE __declspec(dllexport)
-#  else
-#    define OSPRAY_XML_INTERFACE __declspec(dllimport)
-#  endif
-#else
-#  define OSPRAY_XML_INTERFACE
-#endif
-
-namespace ospray {
+namespace ospcommon {
   namespace xml {
 
     struct Node;
-    using ospcommon::FileName;
     struct XMLDoc;
 
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
-    struct OSPRAY_XML_INTERFACE Node {
-      //! constructor
-      Node(XMLDoc *doc) : name(""), content(""), doc(doc) {}
+    struct OSPCOMMON_INTERFACE Node
+    {
+      Node(XMLDoc *doc) : doc(doc) {}
 
       /*! checks if given node has given property */
       bool hasProp(const std::string &name) const;
@@ -74,7 +64,7 @@ namespace ospray {
       std::map<std::string,std::string> properties;
 
       /*! list of child nodes */
-      std::vector<std::shared_ptr<Node>> child;
+      std::vector<Node> child;
 
       //! pointer to parent doc
       /*! \detailed this points back to the parent xml doc that
@@ -82,11 +72,12 @@ namespace ospray {
           avoid cyclical dependencies. Ie, do NOT use this unless
           you're sure that the XMLDoc node that contained the given
           node is still around! */
-      XMLDoc *doc;
+      XMLDoc *doc {nullptr};
     };
 
     /*! a entire xml document */
-    struct OSPRAY_XML_INTERFACE XMLDoc : public Node {
+    struct OSPCOMMON_INTERFACE XMLDoc : public Node
+    {
       //! constructor
       XMLDoc() : Node(this) {}
 
@@ -94,47 +85,15 @@ namespace ospray {
       FileName fileName;
     };
 
-    /*! iterator that iterates through all properties of a given node,
-      calling the given functor (usually a lambda) with name and
-      value.
-
-      use via
-      xml::for_each_prop(node,[&](const std::string &name,
-                                  const std::string &value){
-         doSomthingWith(name,value);
-      });
-    */
-    template<typename Lambda>
-    inline void for_each_prop(const Node &node, const Lambda &functor)
-    {
-      for (auto it = node.properties.begin(); it != node.properties.end(); it++)
-        functor(it->first,it->second);
-    }
-
-    /*! iterator that iterates through all properties of a given node,
-      calling the given functor (usually a lambda) with name and
-      value.
-
-      use via
-      xml::for_each_child_of(node,[&](const xml::Node &child){
-         doSomthingWith(name,value);
-      });
-    */
-    template<typename Lambda>
-    inline void for_each_child_of(const Node &node, const Lambda &functor)
-    {
-      for (auto it = node.child.begin(); it != node.child.end(); it++)
-        functor(**it);
-    }
-
     /*! parse an XML file with given file name, and return a pointer
       to it.  In case of any error, this function will free all
       already-allocated data, and throw a std::runtime_error
       exception */
-    OSPRAY_XML_INTERFACE std::shared_ptr<XMLDoc> readXML(const std::string &fn);
+    OSPCOMMON_INTERFACE std::shared_ptr<XMLDoc> readXML(const std::string &fn);
 
     /*! helper class for writing sg nodes in XML format */
-    struct Writer {
+    struct Writer
+    {
       Writer(FILE *xml, FILE *bin);
 
       /*! write document header, may only be called once */

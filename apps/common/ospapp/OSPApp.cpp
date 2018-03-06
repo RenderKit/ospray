@@ -14,10 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospcommon/utility/StringManip.h"
+
 #include "OSPApp.h"
 #include "common/sg/SceneGraph.h"
 #include "sg/geometry/TriangleMesh.h"
 #include "common/sg/visitor/PrintNodes.h"
+#include "sg/module/Module.h"
 
 namespace ospray {
   namespace app {
@@ -48,8 +51,34 @@ namespace ospray {
 
     void OSPApp::printHelp()
     {
-      std::cout << "Help - TODO..." << std::endl;
       std::cout << "./ospApp [params] -sg:[params] [files]" << std::endl;
+      std::cout << "params..." << std::endl
+                << "\t" << "-f --fast //prioritizes performance over advanced rendering features" << std::endl
+                << "\t" << "-sg:node:...:node=value //modify a node value" << std::endl
+                << "\t" << "-sg:node:...:node+=name,type //modify a node value" << std::endl
+                << "\t" << "-r --renderer //renderer type.  scivis, pathtracer, ao1, raycast" << std::endl
+                << "\t" << "-d --debug //debug output" << std::endl
+                << "\t" << "-m --module //load custom ospray module" << std::endl
+                << "\t" << "--matrix int int int //create an array of load models of dimensions xyz" << std::endl
+                << "\t" << "--add-plane //add a ground plane (default for non-fast mode)" << std::endl
+                << "\t" << "--no-plane //remove ground plane" << std::endl
+                << "\t" << "--no-lights //no default lights" << std::endl
+                << "\t" << "--add-lights //default lights" << std::endl
+                << "\t" << "--hdri-light filename //add an hdri light" << std::endl
+                << "\t" << "--translate float float float //translate transform" << std::endl
+                << "\t" << "--scale float float float //scale transform" << std::endl
+                << "\t" << "--rotate float float float //rotate transform" << std::endl
+                << "\t" << "--animation //adds subsequent import files to a timeseries" << std::endl
+                << "\t" << "--file //adds subsequent import files without a timeseries" << std::endl
+                << "\t" << "-w int //window width" << std::endl
+                << "\t" << "-h int //window height" << std::endl
+                << "\t" << "--size int int //window width height" << std::endl
+                << "\t" << "-vp float float float //camera position xyz" << std::endl
+                << "\t" << "-vu float float float //camera up xyz" << std::endl
+                << "\t" << "-vi float float float //camera direction xyz" << std::endl
+                << "\t" << "-vf float //camera field of view" << std::endl
+                << "\t" << "-ar float //camera aperture radius" << std::endl
+                << std::endl;
     }
 
     int OSPApp::main(int argc, const char *argv[])
@@ -71,6 +100,17 @@ namespace ospray {
 
       renderer.createChild("animationcontroller", "AnimationController");
 
+      if (fast) {
+        renderer["spp"] = -1;
+        renderer["shadowsEnabled"] = false;
+        renderer["aoTransparencyEnabled"] = false;
+        renderer["minContribution"] = 0.1f;
+        renderer["maxDepth"] = 3;
+        renderer["frameBuffer"]["toneMapping"] = false;
+        renderer["frameBuffer"]["useVarianceBuffer"] = false;
+        addPlane = false;
+      }
+
       addLightsToScene(renderer);
       addImporterNodesToWorld(renderer);
       addAnimatedImporterNodesToWorld(renderer);
@@ -78,7 +118,7 @@ namespace ospray {
       setupCamera(renderer);
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
-      renderer.traverse("verify");
+      renderer.traverse(sg::Node::VerifyNodes{});
       renderer.traverse("commit");
 
       // last, to be able to modify all created SG nodes
@@ -88,7 +128,7 @@ namespace ospray {
         renderer.traverse(sg::PrintNodes{});
 
       // recommit in case any command line options modified the scene graph
-      renderer.traverse("verify");
+      renderer.traverse(sg::Node::VerifyNodes{});
       renderer.traverse("commit");
 
       render(rendererPtr);
@@ -120,6 +160,10 @@ namespace ospray {
           --i;
         } else if (arg == "-m" || arg == "--module") {
           ospLoadModule(av[i + 1]);
+          removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "-m" || arg == "--sg:module") {
+          sg::loadModule(av[i+1]);
           removeArgs(ac, av, i, 2);
           --i;
         } else if (arg == "--matrix") {
@@ -171,6 +215,10 @@ namespace ospray {
           animatedFiles.push_back(std::vector<clFile>());
           removeArgs(ac, av, i, 1);
           --i;
+        } else if (arg == "--fast" || arg == "-f") {
+          fast = true;
+        } else if (arg == "--no-fast" || arg == "-nf") {
+          fast = false;
         } else if (arg == "--file") {
           inAnimation = false;
           removeArgs(ac, av, i, 1);
@@ -183,7 +231,7 @@ namespace ospray {
           height = atoi(av[i + 1]);
           removeArgs(ac, av, i, 2);
           --i;
-        } else if (arg == "-size") {
+        } else if (arg == "--size") {
           width = atoi(av[i + 1]);
           height = atoi(av[i + 2]);
           removeArgs(ac, av, i, 3);
@@ -224,7 +272,7 @@ namespace ospray {
           // SG parameters are validated by prefix only.
           // Later different function is used for parsing this type parameters.
           continue;
-        } else if (arg[0] != '-') {
+        } else if (arg[0] != '-' || utility::beginsWith(arg, "--import:")) {
           if (!inAnimation)
             files.push_back(clFile(av[i], currentCLTransform));
           else
@@ -351,20 +399,25 @@ namespace ospray {
 
       if (noDefaultLights == false &&
           (lights.numChildren() <= 0 || addDefaultLights == true)) {
-        auto &sun = lights.createChild("sun", "DirectionalLight");
-        sun["color"] = vec3f(1.f, 232.f / 255.f, 166.f / 255.f);
-        sun["direction"] = vec3f(0.462f, -1.f, -.1f);
-        sun["intensity"] = 3.0f;
+        if (!fast) {
+          auto &sun = lights.createChild("sun", "DirectionalLight");
+          sun["color"] = vec3f(1.f, 247.f / 255.f, 201.f / 255.f);
+          sun["direction"] = vec3f(0.462f, -1.f, -.1f);
+          sun["intensity"] = 3.0f;
+          sun["angularDiameter"] = 0.8f;
 
-        auto &bounce = lights.createChild("bounce", "DirectionalLight");
-        bounce["color"] = vec3f(127.f / 255.f, 178.f / 255.f, 255.f / 255.f);
-        bounce["direction"] = vec3f(-.93, -.54f, -.605f);
-        bounce["intensity"] = 1.25f;
+          auto &bounce = lights.createChild("bounce", "DirectionalLight");
+          bounce["color"] = vec3f(202.f / 255.f, 216.f / 255.f, 255.f / 255.f);
+          bounce["direction"] = vec3f(-.93, -.54f, -.605f);
+          bounce["intensity"] = 1.25f;
+          bounce["angularDiameter"] = 3.0f;
+        }
 
         if (hdriLightFile == "") {
           auto &ambient = lights.createChild("ambient", "AmbientLight");
-          ambient["intensity"] = 0.9f;
-          ambient["color"] = vec3f(174.f / 255.f, 218.f / 255.f, 255.f / 255.f);
+          ambient["intensity"] = fast ? 1.25f : 0.9f;
+          ambient["color"] = fast ?
+              vec3f(1.f) : vec3f(217.f / 255.f, 230.f / 255.f, 255.f / 255.f);
         }
       }
 
@@ -388,7 +441,19 @@ namespace ospray {
       for (auto file : files) {
         FileName fn = file.file;
         if (fn.ext() == "ospsg")
+        {
+          auto& cam = renderer["camera"];
+          auto dirTS = cam["dir"].lastModified();
+          auto posTS = cam["pos"].lastModified();
+          auto upTS = cam["up"].lastModified();
           sg::loadOSPSG(renderer.shared_from_this(), fn.str());
+          if (cam["dir"].lastModified() > dirTS)
+            gaze = (cam["pos"].valueAs<vec3f>() + cam["dir"].valueAs<vec3f>());
+          if (cam["pos"].lastModified() > posTS)
+            pos = cam["pos"].valueAs<vec3f>();
+          if (cam["up"].lastModified() > upTS)
+            up = cam["up"].valueAs<vec3f>();
+        }
         else {
           // create material array
           for (int i = 0; i < matrix_i; i++) {
@@ -404,6 +469,13 @@ namespace ospray {
                     world.createChild("transform_" + ss.str(), "Transform");
                 transform.add(importerNode_ptr);
                 importerNode["fileName"] = fn.str();
+
+                if (fast) {
+                  if (importerNode.hasChildRecursive("gradientShadingEnabled"))
+                    importerNode.childRecursive("gradientShadingEnabled") = false;
+                  if (importerNode.hasChildRecursive("adaptiveMaxSamplingRate"))
+                    importerNode.childRecursive("adaptiveMaxSamplingRate") = 0.2f;
+                }
 
                 transform["scale"] = file.transform.scale;
                 transform["rotation"] = file.transform.rotation;
@@ -439,7 +511,9 @@ namespace ospray {
     void OSPApp::setupCamera(sg::Node &renderer)
     {
       auto &world = renderer["world"];
-      auto bbox = world.bounds();
+      auto bbox = bboxWithoutPlane;
+      if (bbox.empty())
+        bbox = world.bounds();
       vec3f diag = bbox.size();
       diag = max(diag, vec3f(0.3f * length(diag)));
       if (!gaze.isOverridden())
@@ -513,7 +587,7 @@ namespace ospray {
     void OSPApp::addPlaneToScene(sg::Node &renderer)
     {
       auto &world = renderer["world"];
-      if (world.numChildren() > 1 && addPlane == false) {
+      if (addPlane == false) {
         return;
       }
       auto bbox = world.bounds();
@@ -521,6 +595,7 @@ namespace ospray {
         bbox.lower = vec3f(-5, 0, -5);
         bbox.upper = vec3f(5, 10, 5);
       }
+      bboxWithoutPlane = bbox;
 
       float ps = bbox.upper.x * 3.f;
       float py = bbox.lower.y + 0.01f;
@@ -544,8 +619,8 @@ namespace ospray {
       sg_plane->add(index);
       auto &planeMaterial =
           (*plane["materialList"].nodeAs<sg::MaterialList>())[0];
-      planeMaterial["Kd"] = vec3f(0.5f);
-      planeMaterial["Ks"] = vec3f(0.1f);
+      planeMaterial["Kd"] = vec3f(0.3f);
+      planeMaterial["Ks"] = vec3f(0.0f);
       planeMaterial["Ns"] = 10.f;
 
       renderer.traverse("verify");

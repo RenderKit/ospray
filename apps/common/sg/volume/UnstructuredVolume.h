@@ -16,39 +16,22 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
-
-#include <atomic>
+// sg
+#include "Volume.h"
 
 namespace ospray {
   namespace sg {
 
-    //! \brief Implements an abstraction of Time
-    /*! Abstracts the concept of time to be used for time-stamping
-      node's last 'lastupdated' and /lastmodified' time stamps */
-    struct OSPSG_INTERFACE TimeStamp
+    /*! a plain old structured volume */
+    struct OSPSG_INTERFACE UnstructuredVolume : public Volume
     {
-      TimeStamp() = default;
-      TimeStamp(const TimeStamp &);
-      TimeStamp(TimeStamp &&);
+      UnstructuredVolume();
 
-      TimeStamp &operator=(const TimeStamp &);
-      TimeStamp &operator=(TimeStamp &&);
+      std::string toString() const override;
 
-      operator size_t() const;
+      void preCommit(RenderContext &ctx) override;
 
-      void renew();
-
-    private:
-
-      static size_t nextValue();
-
-      // Data members //
-
-      std::atomic<size_t> value {nextValue()};
-
-      //! \brief the uint64_t that stores the time value
-      static std::atomic<size_t> global;
+      std::string fileName;
     };
 
   } // ::ospray::sg

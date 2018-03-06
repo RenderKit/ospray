@@ -49,9 +49,8 @@ IF (OSPRAY_MODULE_MPI)
 
   LINK
 
-    ospray
+    ospray_module_ispc
     ospray_mpi_common
-    ospray_common
     ospray_mpi_maml
   )
 
@@ -62,7 +61,7 @@ IF (OSPRAY_MODULE_MPI)
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
     mpi_offload_worker_main.cpp
   LINK
-    ospray
+    ospray_module_ispc
   )
 
   ##############################################################

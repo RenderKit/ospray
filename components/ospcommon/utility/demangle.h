@@ -16,23 +16,21 @@
 
 #pragma once
 
-#include "../../../common/OSPCommon.ih"
-#include "../../Volume.ih"
-#include "../MinMaxBVH2.ih"
+#include <string>
+#include <typeinfo>
 
-struct TetrahedralVolume
-{
-  //! Fields common to all Volume subtypes (must be the first entry of this
-  //! struct).
-  Volume super;
+#include "../common.h"
 
-  uniform int nVertices;
-  const vec3f *uniform vertices;
+namespace ospcommon {
+  namespace utility {
 
-  uniform int nTetrahedra;
-  const vec4i *uniform tetrahedra;  // indices into vertices array.
-  const float *uniform field;       // Attribute value at each vertex.
-  const vec3f *uniform faceNormals;
+    OSPCOMMON_INTERFACE std::string demangle(const char* name);
 
-  uniform MinMaxBVH2 bvh;
-};
+    template <class T>
+    inline std::string nameOf()
+    {
+      return demangle(typeid(T).name());
+    }
+
+  } // ::ospcommon::utility
+} // ::ospcommon

@@ -310,10 +310,10 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
       self->super.super.sample = SSV_sample_uint8_32;
     } else if (voxelType == OSP_SHORT) {
       self->super.getVoxel = SSV_getVoxel_int16_32;
-      self->super.super.sample = SSV_sample_float_32;
+      self->super.super.sample = SSV_sample_int16_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_32;
-      self->super.super.sample = SSV_sample_float_32;
+      self->super.super.sample = SSV_sample_uint16_32;
     } else if (voxelType == OSP_FLOAT) {
       self->super.getVoxel = SSV_getVoxel_float_32;
       self->super.super.sample = SSV_sample_float_32;

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "../malloc.h"
+#include "../memory/malloc.h"
 #include "../vec.h"
 
 namespace ospcommon {

@@ -14,14 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 ## VTK support ##
 
-OPTION(OSPRAY_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
+option(OSPRAY_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
 
-IF(OSPRAY_SG_VTK)
-  FIND_PACKAGE(VTK COMPONENTS REQUIRED
+if(OSPRAY_SG_VTK)
+  find_package(VTK COMPONENTS REQUIRED
     vtkIOLegacy
     vtkIOXML
     vtkIOXMLParser
@@ -29,41 +29,41 @@ IF(OSPRAY_SG_VTK)
     vtksys
   )
 
-  INCLUDE(${VTK_USE_FILE})
+  include(${VTK_USE_FILE})
 
-  SET(SG_VTK_SRCS importer/importTetVolume.cpp)
+  set(SG_VTK_SRCS importer/importUnstructuredVolume.cpp)
 
-  ADD_DEFINITIONS(-DOSPRAY_APPS_SG_VTK=1)
-ENDIF()
+  add_definitions(-DOSPRAY_APPS_SG_VTK=1)
+endif()
 
 ## Chombo AMR loader support ##
 
-OPTION(OSPRAY_SG_CHOMBO "AMR Chombo Reader (requires HDF5)" OFF)
+option(OSPRAY_SG_CHOMBO "AMR Chombo Reader (requires HDF5)" OFF)
 
-IF (OSPRAY_SG_CHOMBO)
-  FIND_PACKAGE(HDF5 REQUIRED)
-  IF (HDF5_FOUND)
-    INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIRS})
-  ENDIF()
-  SET(CHOMBO_SRCS importer/importAMRChombo.cpp)
-  ADD_DEFINITIONS(-DOSPRAY_APPS_SG_CHOMBO=1)
-ENDIF()
+if(OSPRAY_SG_CHOMBO)
+  find_package(HDF5 REQUIRED)
+  if(HDF5_FOUND)
+    include_directories(${HDF5_INCLUDE_DIRS})
+  endif()
+  set(CHOMBO_SRCS importer/importAMRChombo.cpp)
+  add_definitions(-DOSPRAY_APPS_SG_CHOMBO=1)
+endif()
 
 ## OpenImageIO support ##
 
-OPTION(OSPRAY_SG_OPENIMAGEIO "Enable OpenImageIO support" OFF)
+option(OSPRAY_SG_OPENIMAGEIO "Enable OpenImageIO support" OFF)
 
-IF(OSPRAY_SG_OPENIMAGEIO)
-  FIND_PACKAGE(OpenImageIO 1.6.5)
-  IF (OPENIMAGEIO_FOUND)
-    ADD_DEFINITIONS(-DUSE_OPENIMAGEIO)
-    INCLUDE_DIRECTORIES(${OPENIMAGEIO_INCLUDE_DIRS})
-  ELSE()
-    MESSAGE(STATUS "OpenImageIO not found. Using stb_image instead.")
-  ENDIF()
-ENDIF()
+if(OSPRAY_SG_OPENIMAGEIO)
+  find_package(OpenImageIO 1.6.5)
+  if (OPENIMAGEIO_FOUND)
+    add_definitions(-DUSE_OPENIMAGEIO)
+    include_directories(${OPENIMAGEIO_INCLUDE_DIRS})
+  else()
+    message(STATUS "OpenImageIO not found. Using stb_image instead.")
+  endif()
+endif()
 
-OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
+ospray_create_library(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
   Renderer.cpp
@@ -85,13 +85,14 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
+  common/NodeParameter.cpp
   common/Renderable.cpp
   common/RenderContext.h
   common/Serialization.cpp
-  common/TimeStamp.cpp
   common/Texture2D.cpp
   common/Transform.cpp
-  common/World.cpp
+  common/Model.cpp
+  common/Instance.cpp
   common/Animator.cpp
   common/Animator.h
   common/AnimationController.h
@@ -101,7 +102,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
-  volume/TetVolume.cpp
+  volume/UnstructuredVolume.cpp
   volume/AMRVolume.cpp
 
   module/Module.cpp
@@ -112,7 +113,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/Importer.cpp
   importer/importPoints.cpp
   importer/importOSP.cpp
-  importer/importOSPModel.cpp
+  importer/importX3D.cpp
   importer/importOSPSG.cpp
   importer/importOSX.cpp
   importer/importOBJ.cpp
@@ -128,8 +129,99 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 LINK
   ospray
   ospray_common
-  ospray_xml
   ${HDF5_LIBRARIES}
   ${VTK_LIBRARIES}
   ${OPENIMAGEIO_LIBRARIES}
+)
+
+## Install headers in SDK ##
+
+set(OSPRAY_SG_SDK_INSTALL_LOC
+  ../sg #NOTE: this is "next" to the SDK/ directory
+)
+
+ospray_install_sdk_headers(
+  Renderer.h
+  SceneGraph.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}
+)
+
+ospray_install_sdk_headers(
+  camera/Camera.h
+  camera/OrthographicCamera.h
+  camera/PanoramicCamera.h
+  camera/PerspectiveCamera.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/camera
+)
+
+ospray_install_sdk_headers(
+  common/AnimationController.h
+  common/Animator.h
+  common/Common.h
+  common/Data.h
+  common/FrameBuffer.h
+  common/Instance.h
+  common/Light.h
+  common/Material.h
+  common/Model.h
+  common/Node.h
+  common/NodeList.h
+  common/NodeParameter.h
+  common/Renderable.h
+  common/RenderContext.h
+  common/RuntimeError.h
+  common/Selector.h
+  common/Serialization.h
+  common/Texture2D.h
+  common/Transform.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/common
+)
+
+ospray_install_sdk_headers(
+  geometry/Cylinders.h
+  geometry/Geometry.h
+  geometry/Spheres.h
+  geometry/StreamLines.h
+  geometry/TriangleMesh.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/geometry
+)
+
+ospray_install_sdk_headers(
+  importer/Importer.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/importer
+)
+
+ospray_install_sdk_headers(
+  module/Module.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/module
+)
+
+ospray_install_sdk_headers(
+  transferFunction/TransferFunction.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/transferFunction
+)
+
+ospray_install_sdk_headers(
+  visitor/GatherNodesByName.h
+  visitor/GatherNodesByPosition.h
+  visitor/MarkAllAsModified.h
+  visitor/PrintNodes.h
+  visitor/Visitor.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/visitor
+)
+
+ospray_install_sdk_headers(
+  volume/AMRVolume.h
+  volume/UnstructuredVolume.h
+  volume/Volume.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/volume
 )

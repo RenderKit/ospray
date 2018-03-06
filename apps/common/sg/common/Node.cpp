@@ -14,10 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Node.h"
-#include "sg/common/Data.h"
-#include "sg/common/Texture2D.h"
-#include "sg/common/RenderContext.h"
+#include "Node.h"
+
+#include "ospcommon/utility/StringManip.h"
 
 namespace ospray {
   namespace sg {
@@ -52,11 +51,6 @@ namespace ospray {
     std::string Node::toString() const
     {
       return "ospray::sg::Node";
-    }
-
-    void Node::setFromXML(const xml::Node &, const unsigned char *)
-    {
-      NOT_IMPLEMENTED;
     }
 
     void Node::serialize(sg::Serialization::State &)
@@ -236,16 +230,11 @@ namespace ospray {
       if (itr != properties.children.end())
         return true;
 
-      std::string name_lower = name;
-      std::transform(name_lower.begin(), name_lower.end(),
-                     name_lower.begin(), ::tolower);
+      std::string name_lower = utility::lowerCase(name);
 
       auto &c = properties.children;
       itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
-        std::string node_lower = n.first;
-        std::transform(node_lower.begin(), node_lower.end(),
-                       node_lower.begin(), ::tolower);
-        return node_lower == name_lower;
+        return utility::lowerCase(n.first) == name_lower;
       });
 
       return itr != properties.children.end();
@@ -257,16 +246,11 @@ namespace ospray {
       if (itr != properties.children.end())
         return *itr->second;
 
-      std::string name_lower = name;
-      std::transform(name_lower.begin(), name_lower.end(),
-                     name_lower.begin(), ::tolower);
+      std::string name_lower = utility::lowerCase(name);
 
       auto &c = properties.children;
       itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
-        std::string node_lower = n.first;
-        std::transform(node_lower.begin(), node_lower.end(),
-                       node_lower.begin(), ::tolower);
-        return node_lower == name_lower;
+        return utility::lowerCase(n.first) == name_lower;
       });
 
       if (itr == properties.children.end()) {
@@ -494,16 +478,6 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(Node);
-    //OSPRay types
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<float>, float);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<int>, int);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<bool>, bool);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<std::string>, string);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPObject>, OSPObject);
 
   } // ::ospray::sg
 } // ::ospray

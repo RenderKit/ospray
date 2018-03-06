@@ -16,22 +16,32 @@
 
 #pragma once
 
-#include <functional>
-#include <memory>
-#include <utility>
+#include "Renderable.h"
+#include "Serialization.h"
+#include "../camera/Camera.h"
 
-namespace ospcommon {
-  namespace utility {
+namespace ospray {
+  namespace sg {
 
-    template <typename T>
-    using DeletedUniquePtr = std::unique_ptr<T, std::function<void(T*)>>;
-
-    template <typename T, typename DELETE_FCN, typename ...Args>
-    inline DeletedUniquePtr<T> make_deleted_unique(DELETE_FCN&& deleter,
-                                                   Args&& ...args)
+    struct OSPSG_INTERFACE Model : public Renderable
     {
-      return DeletedUniquePtr<T>(new T(std::forward<Args>(args)...), deleter);
-    }
+      Model();
+      virtual ~Model() override = default;
+      virtual std::string toString() const override;
 
-  } // ::ospcommon::utility
-} // ::ospcommon
+      //commit caches renders.  It will render children during commit, and add
+      //cached rendered children during render call.
+      virtual void traverse(RenderContext &ctx,
+                            const std::string& operation) override;
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+
+    protected:
+
+      OSPModel stashedModel{nullptr};
+    };
+
+  } // ::ospray::sg
+} // ::ospray
+
+

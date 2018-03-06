@@ -14,10 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
-#include "sg/geometry/Spheres.h"
-#include "sg/common/Data.h"
+#include "Spheres.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {

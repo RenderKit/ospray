@@ -49,15 +49,8 @@ namespace ospray {
 
     // Device definitions /////////////////////////////////////////////////////
 
-    Ref<Device> Device::current = nullptr;
-
-    RTCDevice Device::embreeDevice = nullptr;
+    std::shared_ptr<Device> Device::current;
     uint32_t Device::logLevel = 0;
-
-    Device::~Device()
-    {
-      if (embreeDevice) rtcDeleteDevice(embreeDevice);
-    }
 
     Device *Device::createDevice(const char *type)
     {
@@ -151,7 +144,7 @@ namespace ospray {
 
     bool deviceIsSet()
     {
-      return Device::current.ptr != nullptr;
+      return Device::current.get() != nullptr;
     }
 
     Device &currentDevice()

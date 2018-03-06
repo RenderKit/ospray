@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray::sg
-#include "../common/World.h"
+#include "../common/Model.h"
 
 /*! \file sg/module/Module.h Defines the interface for writing
     ospray::sg modules */
@@ -47,7 +47,7 @@ namespace ospray {
 #define OSP_SG_REGISTER_MODULE(moduleName)            \
     extern "C" void ospray_sg_##moduleName##_init()
 
-  }
-}
+  } // ::ospray::sg
+} // ::ospray
 
 

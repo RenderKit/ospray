@@ -14,50 +14,43 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/TimeStamp.h"
+#pragma once
 
-namespace ospray {
-  namespace sg {
+#include "../common.h"
 
-    //! \brief the uint64_t that stores the time value
-    std::atomic<size_t> TimeStamp::global {0};
+namespace ospcommon {
+  namespace memory {
 
-    TimeStamp::TimeStamp(const TimeStamp &other)
+#define ALIGN_PTR(ptr,alignment) \
+  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+
+      /*! aligned allocation */
+      OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
+      OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+
+      template <typename T>
+       __forceinline T* alignedMalloc(size_t nElements, size_t align = 64)
+      {
+        return (T*)alignedMalloc(nElements*sizeof(T), align);
+      }
+
+      inline bool isAligned(void *ptr, int alignment = 64)
+      {
+        return reinterpret_cast<size_t>(ptr) % alignment == 0;
+      }
+
+    // NOTE(jda) - can't use function wrapped alloca solution as Clang won't
+    //             inline  a function containing alloca()...but works w/ gcc+icc
+#if 0
+    template<typename T>
+    __forceinline T* stackBuffer(size_t nElements)
     {
-      this->value = other.value.load();
+      return static_cast<T*>(alloca(sizeof(T) * nElements));
     }
+#else
+#  define STACK_BUFFER(TYPE, nElements) (TYPE*)alloca(sizeof(TYPE)*nElements)
+#endif
 
-    TimeStamp::TimeStamp(TimeStamp &&other)
-    {
-      this->value = other.value.load();
-    }
+  } // ::ospcommon::memory
+} // ::ospcommon
 
-    TimeStamp &TimeStamp::operator=(const TimeStamp &other)
-    {
-      this->value = other.value.load();
-      return *this;
-    }
-
-    TimeStamp &TimeStamp::operator=(TimeStamp &&other)
-    {
-      this->value = other.value.load();
-      return *this;
-    }
-
-    TimeStamp::operator size_t() const
-    {
-      return value;
-    }
-
-    void TimeStamp::renew()
-    {
-      value = nextValue();
-    }
-
-    size_t TimeStamp::nextValue()
-    {
-      return global++;
-    }
-
-  } // ::ospray::sg
-} // ::ospray

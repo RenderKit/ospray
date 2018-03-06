@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Light.h"
+#include "Light.h"
 
 namespace ospray {
   namespace sg {
@@ -32,7 +32,7 @@ namespace ospray {
     void Light::preCommit(RenderContext &ctx)
     {
       if (!valueAs<OSPLight>())
-        setValue(ospNewLight(ctx.ospRenderer, type.c_str()));
+        setValue(ospNewLight2(ctx.ospRendererType.c_str(), type.c_str()));
     }
 
     void Light::postCommit(RenderContext &)
@@ -50,11 +50,9 @@ namespace ospray {
     {
       createChild("color", "vec3f", vec3f(.7f,.8f,1.f),
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("intensity", "float", 0.2f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,12.f);
     }
 
@@ -67,17 +65,14 @@ namespace ospray {
 
       createChild("color", "vec3f", vec3f(1.f),
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
 
       createChild("intensity", "float", 3.f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,12.f);
 
       createChild("angularDiameter", "float", 0.53f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,4.f);
     }
 
@@ -86,20 +81,17 @@ namespace ospray {
     {
       createChild("color", "vec3f", vec3f(1.f),
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
 
       createChild("position", "vec3f", vec3f(0.f),
-                      NodeFlags::required | NodeFlags::valid_min_max);
+                      NodeFlags::required);
 
       createChild("intensity", "float", 3.f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,999.f);
 
       createChild("radius", "float", 0.0f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,4.f);
     }
 
@@ -108,36 +100,31 @@ namespace ospray {
     {
       createChild("color", "vec3f", vec3f(1.f),
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
 
       createChild("intensity", "float", 1.f,
                       NodeFlags::required |
-                      NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,999.f);
 
       createChild("position", "vec3f", vec3f(0.f),
-                      NodeFlags::required | NodeFlags::valid_min_max);
+                      NodeFlags::required);
 
       createChild("edge1", "vec3f", vec3f(0.f, 1.f, 0.f),
-                      NodeFlags::required | NodeFlags::valid_min_max);
+                      NodeFlags::required);
 
       createChild("edge2", "vec3f", vec3f(0.f, 0.f, 1.f),
-                      NodeFlags::required | NodeFlags::valid_min_max);
+                      NodeFlags::required);
     }
 
     HDRILight::HDRILight()
       : Light("hdri")
     {
       createChild("up", "vec3f", vec3f(0.f,1.f,0.f),
-                NodeFlags::required |
-                NodeFlags::valid_min_max).setMinMax(vec3f(-1), vec3f(1));
+                NodeFlags::required).setMinMax(vec3f(-1), vec3f(1));
       createChild("dir", "vec3f", vec3f(1.f,0.f,0.f),
-                NodeFlags::required |
-                NodeFlags::valid_min_max).setMinMax(vec3f(-1), vec3f(1));
+                NodeFlags::required).setMinMax(vec3f(-1), vec3f(1));
       createChild("intensity", "float", 1.f,
                 NodeFlags::required |
-                NodeFlags::valid_min_max |
                 NodeFlags::gui_slider).setMinMax(0.f,12.f);
     }
 

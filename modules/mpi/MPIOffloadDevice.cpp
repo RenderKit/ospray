@@ -724,6 +724,16 @@ namespace ospray {
       return (OSPMaterial)(int64)handle;
     }
 
+    /*! have given renderer create a new material */
+    OSPMaterial MPIOffloadDevice::newMaterial(const char *renderer_type,
+                                              const char *material_type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewMaterial2 work(renderer_type, material_type, handle);
+      processWork(work);
+      return (OSPMaterial)(int64)handle;
+    }
+
     /*! create a new transfer function object (out of list of
         registered transfer function types) */
     OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *type)
@@ -739,6 +749,16 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
       work::NewLight work(type, _renderer, handle);
+      processWork(work);
+      return (OSPLight)(int64)handle;
+    }
+
+    /*! have given renderer create a new Light */
+    OSPLight MPIOffloadDevice::newLight(const char *renderer_type,
+                                        const char *light_type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewLight2 work(renderer_type, light_type, handle);
       processWork(work);
       return (OSPLight)(int64)handle;
     }
@@ -827,10 +847,10 @@ namespace ospray {
     {
       ManagedObject *object = ((ObjectHandle&)_object).lookup();
       ManagedObject::Param *param = object->findParam(name);
-      bool foundParameter = (param != nullptr && param->type == OSP_STRING);
+      bool foundParameter = (param != nullptr && param->data.is<std::string>());
       if (foundParameter) {
         *value = new char[2048];
-        strncpy(*value, param->s->c_str(), 2048);
+        strncpy(*value, param->data.get<std::string>().c_str(), 2048);
         return true;
       }
       return false;

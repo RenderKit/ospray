@@ -14,23 +14,57 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-// sg
-#include "Volume.h"
+#include "Model.h"
 
 namespace ospray {
   namespace sg {
 
-    /*! a plain old structured volume */
-    struct OSPSG_INTERFACE TetVolume : public Volume
+    Model::Model()
     {
-      std::string toString() const override;
+      setValue((OSPModel)nullptr);
+    }
 
-      void preCommit(RenderContext &ctx) override;
+    std::string Model::toString() const
+    {
+      return "ospray::sg::Model";
+    }
 
-      std::string fileName;
-    };
+    void Model::traverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (operation == "render") {
+        preRender(ctx);
+        postRender(ctx);
+      }
+      else
+        Node::traverse(ctx,operation);
+    }
+
+    void Model::preCommit(RenderContext &ctx)
+    {
+      auto model = valueAs<OSPModel>();
+      if (model)
+        ospRelease(model);
+      model = ospNewModel();
+      setValue(model);
+      stashedModel = ctx.currentOSPModel;
+      ctx.currentOSPModel = model;
+    }
+
+    void Model::postCommit(RenderContext &ctx)
+    {
+      auto model = valueAs<OSPModel>();
+      ctx.currentOSPModel = model;
+
+      //instancegroup caches render calls in commit.
+      for (auto child : properties.children)
+        child.second->traverse(ctx, "render");
+
+      ospCommit(model);
+      ctx.currentOSPModel = stashedModel;
+      child("bounds") = computeBounds();
+    }
+
+    OSP_REGISTER_SG_NODE(Model);
 
   } // ::ospray::sg
 } // ::ospray

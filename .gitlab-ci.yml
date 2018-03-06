@@ -312,6 +312,7 @@ benchmark-centos7-gcc:
     when: always
   dependencies:
     - build-centos7-gcc
+  when: manual
 
 test-kw-critical:
   stage: test-src
@@ -332,6 +333,7 @@ source-protex-scan:
   tags:
     - protex-scan-docker
   ## Temporarily allow to fail
+  when: manual
   allow_failure: true
 
 

@@ -44,14 +44,14 @@ namespace ospcommon {
     };
 
     /*! generic stream operators into/out of streams, for raw data blocks */
-    template<typename T, typename = ospcommon::traits::can_trivially_copy_t<T>>
+    template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
       buf.write((const byte_t*)&rh, sizeof(T));
       return buf;
     }
 
-    template<typename T, typename = ospcommon::traits::can_trivially_copy_t<T>>
+    template<typename T>
     inline ReadStream &operator>>(ReadStream &buf, T &rh)
     {
       buf.read((byte_t*)&rh, sizeof(T));
@@ -59,38 +59,8 @@ namespace ospcommon {
     }
 
     /*! @{ stream operators into/out of read/write streams, for std::vectors
-     * of POD types*/
-    template<
-        typename T,
-        typename = ospcommon::traits::can_trivially_copy_t<T>,
-        typename = void //NOTE: needed to "overload" template lists...
-    >
-    inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
-    {
-      const size_t sz = rh.size();
-      buf << sz;
-      buf.write((const byte_t*)rh.data(), sizeof(T)*sz);
-      return buf;
-    }
-
-    template<
-        typename T,
-        typename = ospcommon::traits::can_trivially_copy_t<T>,
-        typename = void //NOTE: needed to "overload" template lists...
-    >
-    inline ReadStream &operator>>(ReadStream &buf, std::vector<T> &rh)
-    {
-      size_t sz;
-      buf >> sz;
-      rh.resize(sz);
-      buf.read((byte_t*)rh.data(), sizeof(T)*sz);
-      return buf;
-    }
-    /*! @} */
-
-    /*! @{ stream operators into/out of read/write streams, for std::vectors
      * of non-POD types*/
-    template<typename T, typename = ospcommon::traits::non_trivial_copy_t<T>>
+    template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
@@ -102,7 +72,7 @@ namespace ospcommon {
       return buf;
     }
 
-    template<typename T, typename = ospcommon::traits::non_trivial_copy_t<T>>
+    template<typename T>
     inline ReadStream &operator>>(ReadStream &buf, std::vector<T> &rh)
     {
       size_t sz;
@@ -117,7 +87,7 @@ namespace ospcommon {
     /*! @} */
 
     /*! @{ stream operators into/out of read/write streams, for ArrayView<T> */
-    template<typename T, typename = ospcommon::traits::can_trivially_copy_t<T>>
+    template<typename T>
     inline WriteStream &operator<<(WriteStream &buf,
                                    const utility::ArrayView<T> &rh)
     {

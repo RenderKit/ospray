@@ -14,10 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
-#include "sg/geometry/Cylinders.h"
-#include "sg/common/Data.h"
+#include "Cylinders.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {

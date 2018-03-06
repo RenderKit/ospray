@@ -17,7 +17,7 @@
 #include "XML.h"
 #include <sstream>
 
-namespace ospray {
+namespace ospcommon {
   namespace xml {
 
     std::string toString(const float f)
@@ -49,7 +49,7 @@ namespace ospray {
       return properties.find(propName)->second;
     }
 
-    inline bool isWhite(char s) {
+    static bool isWhite(char s) {
       return
         s == ' ' ||
         s == '\t' ||
@@ -57,7 +57,7 @@ namespace ospray {
         s == '\r';
     }
 
-    inline void expect(char *&s, const char w)
+    static void expect(char *&s, const char w)
     {
       if (*s != w) {
         std::stringstream err;
@@ -67,7 +67,7 @@ namespace ospray {
       }
     }
 
-    inline void expect(char *&s, const char w0, const char w1)
+    static void expect(char *&s, const char w0, const char w1)
     {
       if (*s != w0 && *s != w1) {
         std::stringstream err;
@@ -77,13 +77,13 @@ namespace ospray {
       }
     }
 
-    inline void consume(char *&s, const char w)
+    static void consume(char *&s, const char w)
     {
       expect(s,w);
       ++s;
     }
 
-    inline void consumeComment(char *&s)
+    static void consumeComment(char *&s)
     {
       consume(s,'<');
       consume(s,'!');
@@ -95,7 +95,7 @@ namespace ospray {
       consume(s,'>');
     }
 
-    inline void consume(char *&s, const char *word)
+    static void consume(char *&s, const char *word)
     {
       const char *in = word;
       while (*word) {
@@ -110,7 +110,7 @@ namespace ospray {
       }
     }
 
-    inline std::string makeString(const char *begin, const char *end)
+    static std::string makeString(const char *begin, const char *end)
     {
       if (!begin || !end)
         throw std::runtime_error("invalid substring in osp::xml::makeString");
@@ -125,7 +125,7 @@ namespace ospray {
       return s;
     }
 
-    void parseString(char *&s, std::string &value)
+    static void parseString(char *&s, std::string &value)
     {
       if (*s == '"') {
         consume(s,'"');
@@ -150,7 +150,7 @@ namespace ospray {
       }
     }
 
-    bool parseIdentifier(char *&s, std::string &identifier)
+    static bool parseIdentifier(char *&s, std::string &identifier)
     {
       if (isalpha(*s) || *s == '_') {
         char *begin = s;
@@ -165,12 +165,12 @@ namespace ospray {
       return false;
     }
 
-    inline void skipWhites(char *&s)
+    static void skipWhites(char *&s)
     {
       while (isWhite(*s)) ++s;
     }
 
-    bool parseProp(char *&s, std::string &name, std::string &value)
+    static bool parseProp(char *&s, std::string &name, std::string &value)
     {
       if (!parseIdentifier(s,name))
         return false;
@@ -182,7 +182,7 @@ namespace ospray {
       return true;
     }
 
-    bool skipComment(char *&s)
+    static bool skipComment(char *&s)
     {
       if (*s == '<' && s[1] == '!') {
         consumeComment(s);
@@ -191,19 +191,19 @@ namespace ospray {
       return false;
     }
 
-    std::shared_ptr<Node> parseNode(char *&s, XMLDoc *doc)
+    static Node parseNode(char *&s, XMLDoc *doc)
     {
       consume(s,'<');
-      std::shared_ptr<Node> node = std::make_shared<Node>(doc);
+      Node node(doc);
 
-      if (!parseIdentifier(s,node->name))
+      if (!parseIdentifier(s, node.name))
         throw std::runtime_error("XML error: could not parse node name");
 
       skipWhites(s);
 
       std::string name, value;
       while (parseProp(s,name,value)) {
-        node->properties[name] = value;
+        node.properties[name] = value;
         skipWhites(s);
       }
 
@@ -222,9 +222,9 @@ namespace ospray {
           consume(s,"</");
           std::string nodeName;
           parseIdentifier(s, nodeName);
-          if (nodeName != node->name) {
+          if (nodeName != node.name) {
             throw std::runtime_error("invalid XML node - started with'<"
-                                     + node->name +
+                                     + node.name +
                                      "...'>, but ended with '</"+
                                      nodeName + ">");
           }
@@ -233,15 +233,14 @@ namespace ospray {
           // either end of current node
         } else if (*s == '<') {
           // child node
-          std::shared_ptr<Node> child = parseNode(s, doc);
-          node->child.push_back(child);
+          node.child.push_back(parseNode(s, doc));
         } else if (*s == 0) {
           std::cout << "#osp:xml: warning: xml file ended with still-open"
-            " nodes (this typically indicates a partial xml file)"
+                       " nodes (this typically indicates a partial xml file)"
                     << std::endl;
           return node;
         } else {
-          if (node->content != "") {
+          if (node.content != "") {
             throw std::runtime_error("invalid XML node - two different"
                                      " contents!?");
           }
@@ -250,13 +249,13 @@ namespace ospray {
           while (*s != '<' && *s != 0) ++s;
           char *end = s;
           while (isspace(end[-1])) --end;
-          node->content = makeString(begin,end);
+          node.content = makeString(begin,end);
         }
       }
       return node;
     }
 
-    bool parseHeader(char *&s)
+    static bool parseHeader(char *&s)
     {
       consume(s,"<?xml");
       if (*s == '?' && s[1] == '>') {
@@ -291,8 +290,7 @@ namespace ospray {
           continue;
         }
 
-        std::shared_ptr<Node> node = parseNode(s, doc.get());
-        doc->child.push_back(node);
+        doc->child.push_back(parseNode(s, doc.get()));
         skipWhites(s);
       }
 
@@ -392,5 +390,5 @@ namespace ospray {
       assert(xml);
     }
 
-  } // ::ospray::xml
-} // ::ospray
+  } // ::ospcommon::xml
+} // ::ospcommon

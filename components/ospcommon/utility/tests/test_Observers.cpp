@@ -14,45 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "malloc.h"
-#include "intrinsics.h"
-#if defined(TASKING_TBB)
-#  define __TBB_NO_IMPLICIT_LINKAGE 1
-#  include "tbb/scalable_allocator.h"
-#endif
+#include "../../testing/catch.hpp"
 
-#ifdef _WIN32
-#include <malloc.h>
-#endif
+#include "../Observer.h"
 
-namespace ospcommon
+using namespace ospcommon::utility;
+
+TEST_CASE("Observable/Observer interfaces", "[]")
 {
-  void* alignedMalloc(size_t size, size_t align)
-  {
-    assert((align & (align-1)) == 0);
-    // FIXME: have to disable this for now as the TBB  allocator itself seems
-    //        to access some uninitialized value when using valgrind
-#if 0//defined(TASKING_TBB)
-    return scalable_aligned_malloc(size,align);
-#else
-#  ifdef _WIN32
-    return _aligned_malloc(size, align);
-#  else // __UNIX__
-    return _mm_malloc(size, align);
-#  endif
-#endif
-  }
+  Observable at;
 
-  void alignedFree(void* ptr)
-  {
-#if 0//defined(TASKING_TBB)
-    scalable_aligned_free(ptr);
-#else
-#  ifdef _WIN32
-    return _aligned_free(ptr);
-#  else // __UNIX__
-    _mm_free(ptr);
-#  endif
-#endif
-  }
+  Observer look1(at);
+  Observer look2(at);
+
+  REQUIRE(!look1.wasNotified());
+  REQUIRE(!look2.wasNotified());
+
+  at.notifyObservers();
+
+  REQUIRE(look1.wasNotified());
+  REQUIRE(look2.wasNotified());
+
+  REQUIRE(!look1.wasNotified());
+  REQUIRE(!look2.wasNotified());
 }

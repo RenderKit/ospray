@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Geometry.h"
-#include "sg/common/World.h"
+#include "../common/Model.h"
 
 namespace ospray {
   namespace sg {
@@ -68,6 +68,7 @@ namespace ospray {
         auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
         ospCommit(ospMaterialList);
         ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
+        ospRelease(ospMaterialList);
       }
 
       ospCommit(ospGeometry);

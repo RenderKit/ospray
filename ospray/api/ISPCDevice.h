@@ -22,16 +22,16 @@
 #include "embree2/rtcore.h"
 
 
-/*! \file localdevice.h Implements the "local" device for local rendering */
+/*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
 namespace ospray {
   namespace api {
 
-    struct LocalDevice : public Device
+    struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     {
 
-      LocalDevice()  = default;
-      ~LocalDevice() override = default;
+      ISPCDevice()  = default;
+      ~ISPCDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -147,6 +147,10 @@ namespace ospray {
       /*! have given renderer create a new material */
       OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) override;
 
+      /*! have given renderer create a new material */
+      OSPMaterial newMaterial(const char *renderer_type,
+                              const char *material_type) override;
+
       /*! create a new camera object (out of list of registered cameras) */
       OSPCamera newCamera(const char *type) override;
 
@@ -158,6 +162,10 @@ namespace ospray {
 
       /*! have given renderer create a new Light */
       OSPLight newLight(OSPRenderer _renderer, const char *type) override;
+
+      /*! have given renderer create a new Light */
+      OSPLight newLight(const char *renderer_type,
+                        const char *light_type) override;
 
       /*! create a new Texture2D object */
       OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
@@ -203,6 +211,12 @@ namespace ospray {
                         OSPVolume volume,
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
+
+      // Public Data //
+
+      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
+      //             safely assume that a device exists.
+      static RTCDevice embreeDevice;
     };
 
   } // ::ospray::api

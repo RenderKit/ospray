@@ -29,7 +29,6 @@ namespace ospray {
       createChild("position", "vec3f");
       createChild("rotation", "vec3f", vec3f(0),
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
                                                     vec3f(2*3.15f));
       createChild("rotationOrder", "string", std::string("zyx"),
@@ -48,7 +47,31 @@ namespace ospray {
       return "ospray::sg::Transform";
     }
 
+    void Transform::preCommit(RenderContext &ctx)
+    {
+      updateTransform(ctx.currentTransform);
+      preRender(ctx);
+    }
+
+    void Transform::postCommit(RenderContext& ctx)
+    {
+      postRender(ctx);
+      Renderable::postCommit(ctx);
+    }
+
     void Transform::preRender(RenderContext &ctx)
+    {
+      if (ctx.currentTransform != cachedTransform)
+        updateTransform(ctx.currentTransform);
+      ctx.currentTransform = worldTransform;
+    }
+
+    void Transform::postRender(RenderContext &ctx)
+    {
+      ctx.currentTransform = cachedTransform;
+    }
+
+    void Transform::updateTransform(const ospcommon::affine3f& transform)
     {
       const vec3f scale = child("scale").valueAs<vec3f>();
       const vec3f rotation = child("rotation").valueAs<vec3f>();
@@ -65,16 +88,9 @@ namespace ospray {
         case 'z': rotationTransform = ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z) * rotationTransform; break;
         }
       }
-      worldTransform = ctx.currentTransform*userTransform*ospcommon::affine3f::translate(translation)*
+      worldTransform = transform*userTransform*ospcommon::affine3f::translate(translation)*
         rotationTransform*ospcommon::affine3f::scale(scale);
-
-      oldTransform = ctx.currentTransform;
-      ctx.currentTransform = worldTransform;
-    }
-
-    void Transform::postRender(RenderContext &ctx)
-    {
-      ctx.currentTransform = oldTransform;
+      cachedTransform = transform;
     }
 
     //OSPRay common

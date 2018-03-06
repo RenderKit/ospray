@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Selector.h"
+#include "Selector.h"
 
 namespace ospray {
   namespace sg {

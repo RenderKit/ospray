@@ -185,20 +185,38 @@ namespace ospray {
 
         void run() override;
 
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         { b << (int64)rendererHandle << (int64)handle << type; }
 
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
         void deserialize(ReadStream &b) override
         { b >> rendererHandle.i64 >> handle.i64 >> type; }
 
-        // const static size_t TAG = NewRendererObjectTag<T>::TAG;
         std::string  type;
         ObjectHandle rendererHandle;
+        ObjectHandle handle;
+      };
+
+      struct NewMaterial2 : public Work
+      {
+        NewMaterial2() = default;
+        NewMaterial2(const char *renderer_type,
+                     const char *material_type,
+                     ObjectHandle handle)
+          : rendererType(renderer_type),
+            materialType(material_type),
+            handle(handle)
+        {}
+
+        void run() override;
+
+        void serialize(WriteStream &b) const override
+        { b << (int64)handle << rendererType << materialType; }
+
+        void deserialize(ReadStream &b) override
+        { b >> handle.i64 >> rendererType >> materialType; }
+
+        std::string  rendererType;
+        std::string  materialType;
         ObjectHandle handle;
       };
 
@@ -211,31 +229,38 @@ namespace ospray {
 
         void run() override;
 
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         { b << (int64)rendererHandle << (int64)handle << type; }
 
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
         void deserialize(ReadStream &b) override
         { b >> rendererHandle.i64 >> handle.i64 >> type; }
 
-        // const static size_t TAG = NewRendererObjectTag<T>::TAG;
         std::string  type;
         ObjectHandle rendererHandle;
         ObjectHandle handle;
       };
 
-      // TODO: I don't do any of the sending back # of failures to
-      // the "master", what would make sense to do in master/worker
-      // and collaborative modes? Right now it will just throw and abort
-      // template<>
-      // void NewRendererObject<Material>::run();
-      // template<>
-      // void NewRendererObject<Light>::run();
+      struct NewLight2 : public Work
+      {
+        NewLight2() = default;
+        NewLight2(const char *renderer_type,
+                  const char *light_type,
+                  ObjectHandle handle)
+          : rendererType(renderer_type), lightType(light_type), handle(handle)
+        {}
 
+        void run() override;
+
+        void serialize(WriteStream &b) const override
+        { b << (int64)handle << rendererType << lightType; }
+
+        void deserialize(ReadStream &b) override
+        { b >> handle.i64 >> rendererType >> lightType; }
+
+        std::string  rendererType;
+        std::string  lightType;
+        ObjectHandle handle;
+      };
 
       struct NewData : public Work
       {

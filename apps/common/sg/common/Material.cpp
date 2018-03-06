@@ -14,9 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Material.h"
-#include "sg/common/World.h"
 #include "ospray/ospray.h"
+
+#include "Material.h"
+#include "Model.h"
 
 namespace ospray {
   namespace sg {
@@ -28,19 +29,15 @@ namespace ospray {
       vec3f ks(.3f);
       createChild("d", "float", 1.f,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_color).setMinMax(0.f, 1.f);
       createChild("Kd", "vec3f", kd,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("Ks", "vec3f", ks,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("Ns", "float", 10.f,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_slider).setMinMax(2.f, 1000.f);
       setValue((OSPMaterial)nullptr);
     }
@@ -65,8 +62,8 @@ namespace ospray {
       OSPMaterial mat = nullptr;
       try
       {
-        mat = ospNewMaterial(ctx.ospRenderer,
-                             child("type").valueAs<std::string>().c_str());
+        mat = ospNewMaterial2(ctx.ospRendererType.c_str(),
+                              child("type").valueAs<std::string>().c_str());
       } catch (...) {}
 
       if (!mat)
@@ -76,7 +73,9 @@ namespace ospray {
         static OSPMaterial defaultMaterial = nullptr;
         static OSPRenderer defaultMaterialRenderer = nullptr;
         if (!defaultMaterial || defaultMaterialRenderer != ctx.ospRenderer) {
-          defaultMaterial = ospNewMaterial(ctx.ospRenderer, "default");
+          defaultMaterial =
+            ospNewMaterial2(ctx.ospRendererType.c_str(), "default");
+
           defaultMaterialRenderer = ctx.ospRenderer;
           const float kd[] = {.7f, .7f, .7f};
           const float ks[] = {.3f, .3f, .3f};

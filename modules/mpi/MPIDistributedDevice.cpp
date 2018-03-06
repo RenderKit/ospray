@@ -21,6 +21,7 @@
 #include "ospray/common/Data.h"
 #include "ospray/lights/Light.h"
 #include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/api/ISPCDevice.h"
 //mpiCommon
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi
@@ -47,7 +48,6 @@ namespace ospray {
     inline API_TYPE createLocalObject(const char *type)
     {
       auto *instance = OSPRAY_TYPE::createInstance(type);
-      instance->refInc();
       return (API_TYPE)instance;
     }
 
@@ -111,7 +111,7 @@ namespace ospray {
         int _ac = 1;
         const char *_av[] = {"ospray_mpi_distributed_device"};
 
-        MPI_Comm *setComm = static_cast<MPI_Comm*>(getVoidPtr("worldCommunicator", nullptr));
+        MPI_Comm *setComm = static_cast<MPI_Comm*>(getParamVoidPtr("worldCommunicator", nullptr));
         shouldFinalizeMPI = mpicommon::init(&_ac, _av, setComm == nullptr);
 
         if (setComm) {
@@ -119,6 +119,8 @@ namespace ospray {
           MPI_CALL(Comm_rank(mpicommon::world.comm, &mpicommon::world.rank));
           MPI_CALL(Comm_size(mpicommon::world.comm, &mpicommon::world.size));
         }
+
+        auto &embreeDevice = api::ISPCDevice::embreeDevice;
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
@@ -264,7 +266,7 @@ namespace ospray {
                                          const char *s)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(s);
+      object->findParam(bufName, true)->set(std::string(s));
     }
 
     int MPIDistributedDevice::loadModule(const char *name)
@@ -374,6 +376,11 @@ namespace ospray {
       NOT_IMPLEMENTED;
     }
 
+    OSPMaterial MPIDistributedDevice::newMaterial(const char *, const char *)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     OSPTransferFunction
     MPIDistributedDevice::newTransferFunction(const char *type)
     {
@@ -396,6 +403,16 @@ namespace ospray {
         return nullptr;
       }
     }
+
+    OSPLight MPIDistributedDevice::newLight(const char *renderer_type,
+                                            const char *light_type)
+    {
+      auto renderer = newRenderer(renderer_type);
+      auto light = newLight(renderer, light_type);
+      release(renderer);
+      return light;
+    }
+
 
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)

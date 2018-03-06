@@ -14,40 +14,49 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "TimeStamp.h"
 
-#include "common.h"
+namespace ospcommon {
+  namespace utility {
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+    std::atomic<size_t> TimeStamp::global {0};
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+    TimeStamp::TimeStamp(const TimeStamp &other)
+    {
+      this->value = other.value.load();
+    }
 
-  template <typename T>
-   __forceinline T* alignedMalloc(size_t nElements, size_t align = 64)
-  {
-    return (T*)alignedMalloc(nElements*sizeof(T), align);
-  }
+    TimeStamp::TimeStamp(TimeStamp &&other)
+    {
+      this->value = other.value.load();
+    }
 
-  inline bool isAligned(void *ptr, int alignment = 64)
-  {
-    return reinterpret_cast<size_t>(ptr) % alignment == 0;
-  }
+    TimeStamp &TimeStamp::operator=(const TimeStamp &other)
+    {
+      this->value = other.value.load();
+      return *this;
+    }
 
-// NOTE(jda) - can't use function wrapped alloca solution as Clang won't inline
-//             a function containing alloca()...but it works with gcc/icc
-#if 0
-  template<typename T>
-  __forceinline T* stackBuffer(size_t nElements)
-  {
-    return static_cast<T*>(alloca(sizeof(T) * nElements));
-  }
-#else
-#  define STACK_BUFFER(TYPE, nElements) (TYPE*)alloca(sizeof(TYPE)*nElements)
-#endif
-}
+    TimeStamp &TimeStamp::operator=(TimeStamp &&other)
+    {
+      this->value = other.value.load();
+      return *this;
+    }
 
+    TimeStamp::operator size_t() const
+    {
+      return value;
+    }
+
+    void TimeStamp::renew()
+    {
+      value = nextValue();
+    }
+
+    size_t TimeStamp::nextValue()
+    {
+      return global++;
+    }
+
+  } // ::ospray::sg
+} // ::ospray

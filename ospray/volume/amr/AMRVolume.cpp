@@ -115,6 +115,25 @@ namespace ospray {
       const vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
       const vec3f gridOrigin  = getParam3f("gridOrigin", vec3f(0.f));
 
+      voxelType =  getParamString("voxelType", "unspecified");
+      auto voxelTypeID = getVoxelType();
+
+      switch (voxelTypeID) {
+      case OSP_UCHAR:
+        break;
+      case OSP_SHORT:
+        break;
+      case OSP_USHORT:
+        break;
+      case OSP_FLOAT:
+        break;
+      case OSP_DOUBLE:
+        break;
+      default:
+        throw std::runtime_error("amrVolume unsupported voxel type '"
+                                 + voxelType + "'");
+      }
+
       ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep,
                           (const ispc::vec3f&)gridOrigin,
                           (const ispc::vec3f&)gridSpacing);
@@ -126,12 +145,19 @@ namespace ospray {
                              &accel->leaf[0],
                              accel->level.size(),
                              &accel->level[0],
+                             voxelTypeID,
                              (ispc::box3f &)worldBounds);
 
       tasking::parallel_for(accel->leaf.size(),[&](size_t leafID) {
         ispc::AMRVolume_computeValueRangeOfLeaf(getIE(), leafID);
       });
     }
+
+  OSPDataType AMRVolume::getVoxelType()
+  {
+    return (voxelType == "") ? typeForString(getParamString("voxelType", "unspecified")):
+                      typeForString(voxelType.c_str());
+  }
 
     OSP_REGISTER_VOLUME(AMRVolume, AMRVolume);
     OSP_REGISTER_VOLUME(AMRVolume, amr_volume);
