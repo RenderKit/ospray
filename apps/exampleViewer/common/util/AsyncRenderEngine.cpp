@@ -51,18 +51,6 @@ namespace ospray {
         lastFTime = sg::TimeStamp();
       }
 
-      if (scenegraph->childrenLastModified() > lastRTime || !once) {
-        scenegraph->traverse("verify");
-        scenegraph->traverse("commit");
-
-        if (scenegraphDW) {
-          scenegraphDW->traverse("verify");
-          scenegraphDW->traverse("commit");
-        }
-
-        lastRTime = sg::TimeStamp();
-      }
-
       if (scenegraph->hasChild("animationcontroller"))
         scenegraph->child("animationcontroller").traverse("animate");
 
@@ -70,12 +58,12 @@ namespace ospray {
         pickResult = scenegraph->pick(pickPos.ref());
 
       fps.start();
-      scenegraph->renderFrame(sgFB, OSP_FB_COLOR | OSP_FB_ACCUM, false);
+      scenegraph->renderFrame(sgFB, OSP_FB_COLOR | OSP_FB_ACCUM, true);
 
       if (scenegraphDW) {
         auto dwFB =
             scenegraphDW->child("frameBuffer").nodeAs<sg::FrameBuffer>();
-        scenegraphDW->renderFrame(dwFB, OSP_FB_COLOR | OSP_FB_ACCUM, false);
+        scenegraphDW->renderFrame(dwFB, OSP_FB_COLOR | OSP_FB_ACCUM, true);
       }
 
       once = true;
