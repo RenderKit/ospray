@@ -18,6 +18,7 @@
 
 #include "common/FrameBuffer.h"
 #include "visitor/MarkAllAsModified.h"
+#include "visitor/VerifyNodes.h"
 
 namespace ospray {
   namespace sg {
@@ -137,7 +138,7 @@ namespace ospray {
     {
       RenderContext ctx;
       if (verifyCommit) {
-        Node::traverse<sg::Node::VerifyNodes>(sg::Node::VerifyNodes{});
+        Node::traverse(VerifyNodes{});
         traverse(ctx, "commit");
       }
       traverse(ctx, "render");

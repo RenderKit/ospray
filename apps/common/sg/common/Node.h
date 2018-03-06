@@ -96,36 +96,6 @@ namespace ospray {
 
       bool isValid() const;
 
-      //Visitor node used to set nodes to valid
-      struct VerifyNodes : public Visitor
-      {
-        VerifyNodes() = default;
-        VerifyNodes(bool errorOut) : errorOnInvalid(errorOut) {}
-
-        virtual bool operator()(Node &node, TraversalContext &) override
-        {
-          bool traverseChildren = true;
-          if (node.properties.valid && node.childrenLastModified() < node.properties.lastVerified)
-            traverseChildren = false;
-          node.properties.valid = node.computeValid();
-          node.properties.lastVerified = TimeStamp();
-
-          return traverseChildren;
-        }
-
-        virtual void postChildren(Node &node, TraversalContext &) override
-        {
-          for (const auto &child : node.properties.children) {
-            if (child.second->flags() & NodeFlags::required)
-              node.properties.valid &= child.second->isValid();
-          }
-          if (errorOnInvalid && !node.properties.valid)
-            throw std::runtime_error(node.name() + " was marked invalid");
-        }
-
-        bool errorOnInvalid = true;
-      };
-
       virtual bool computeValid();
       virtual bool computeValidMinMax();
 
@@ -282,6 +252,10 @@ namespace ospray {
       // NOTE(jda) - The mutex is 'mutable' because const methods still need
       //             to be able to lock the mutex
       mutable std::mutex value_mutex;
+
+    private:
+
+      friend struct VerifyNodes;
     };
 
     OSPSG_INTERFACE std::shared_ptr<Node>
