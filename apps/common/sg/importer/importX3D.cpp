@@ -87,7 +87,7 @@ namespace ospray {
     }
 
     void parseIndexedFaceSet(const std::shared_ptr<Node> model,
-                             const affine3f &xfm, const xml::Node &root)
+                             const affine3f &/*xfm*/, const xml::Node &root)
     {
       std::string name = "x3d mesh";
       auto mesh = createNode(name, "TriangleMesh")->nodeAs<TriangleMesh>();
