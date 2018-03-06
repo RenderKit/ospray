@@ -621,15 +621,6 @@ namespace ospray {
     if (ImGui::BeginPopupContextItem("item context menu")) {
       char buf[256];
       buf[0]='\0';
-      static std::shared_ptr<sg::Node> copiedLink = nullptr;
-      if (ImGui::Button("CopyLink"))
-        copiedLink = node;
-      if (ImGui::Button("PasteLink")) {
-        if (copiedLink) {
-          copiedLink->setParent(node->parent());
-          node->parent().setChild(name, copiedLink);
-        }
-      }
       if (ImGui::Button("Add new node..."))
         ImGui::OpenPopup("Add new node...");
       if (ImGui::BeginPopup("Add new node...")) {
