@@ -86,7 +86,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   float cosThetaOHt = dot(wo, wht);
   float cosThetaIHt = dot(wi, wht);
   float Gt = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
-  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->microfacet, cosThetaO, cosThetaOHt)));
+  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp_safe(evalG1(self->microfacet, cosThetaO, cosThetaOHt)));
 
   // Compute the final substrate reflection
   // Ignore Fresnel for the exiting ray
@@ -168,7 +168,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   float cosThetaOHt = dot(wo, wht);
   float cosThetaIHt = dot(res.wi, wht);
   float Gt = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOHt, cosThetaIHt);
-  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp(evalG1(self->microfacet, cosThetaO, cosThetaOHt)));
+  float T = (1.f-fresnelDielectricWeighted(cosThetaOHt, self->eta, self->reflectionWeight)) * (Gt * rcp_safe(evalG1(self->microfacet, cosThetaO, cosThetaOHt)));
 
   // Compute the final substrate reflection
   // Ignore Fresnel for the exiting ray
