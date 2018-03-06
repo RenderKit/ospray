@@ -120,7 +120,7 @@ namespace ospray {
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
       renderer.traverse(sg::VerifyNodes{});
-      renderer.traverse("commit");
+      renderer.commit();
 
       // last, to be able to modify all created SG nodes
       parseCommandLineSG(argc, argv, renderer);
@@ -130,7 +130,7 @@ namespace ospray {
 
       // recommit in case any command line options modified the scene graph
       renderer.traverse(sg::VerifyNodes{});
-      renderer.traverse("commit");
+      renderer.commit();
 
       render(rendererPtr);
 
@@ -395,7 +395,7 @@ namespace ospray {
     void OSPApp::addLightsToScene(sg::Node &renderer)
     {
       renderer.traverse("verify");
-      renderer.traverse("commit");
+      renderer.commit();
       auto &lights = renderer["lights"];
 
       if (noDefaultLights == false &&
@@ -427,11 +427,11 @@ namespace ospray {
         tex->setName("map");
         auto &hdri = lights.createChild("hdri", "HDRILight");
         tex->traverse("verify");
-        tex->traverse("commit");
+        tex->commit();
         hdri.add(tex);
       }
       renderer.traverse("verify");
-      renderer.traverse("commit");
+      renderer.commit();
     }
 
     void OSPApp::addImporterNodesToWorld(sg::Node &renderer)
@@ -485,7 +485,7 @@ namespace ospray {
                       transform["rotation"].createChild("animator", "Animator");
 
                   rotation.traverse("verify");
-                  rotation.traverse("commit");
+                  rotation.commit();
                   rotation.child("value1") = vec3f(0.f, 0.f, 0.f);
                   rotation.child("value2") = vec3f(0.f, 2.f * 3.14f, 0.f);
 
@@ -493,7 +493,7 @@ namespace ospray {
                 }
 
                 renderer.traverse("verify");
-                renderer.traverse("commit");
+                renderer.commit();
                 auto bounds = importerNode_ptr->computeBounds();
                 auto size = bounds.upper - bounds.lower;
                 float maxSize = max(max(size.x, size.y), size.z);
@@ -542,7 +542,7 @@ namespace ospray {
       if (camera.hasChild("focusdistance"))
         camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
       renderer.traverse("verify");
-      renderer.traverse("commit");
+      renderer.commit();
     }
 
     void OSPApp::addAnimatedImporterNodesToWorld(sg::Node &renderer)
@@ -579,7 +579,7 @@ namespace ospray {
             "anim_" + animatedFile[0].file, "Animator");
 
         anim_selector.traverse("verify");
-        anim_selector.traverse("commit");
+        anim_selector.commit();
         anim_selector["value2"] = int(animatedFile.size());
         animation.setChild("anim_selector", anim_selector.shared_from_this());
       }
@@ -625,7 +625,7 @@ namespace ospray {
       planeMaterial["Ns"] = 10.f;
 
       renderer.traverse("verify");
-      renderer.traverse("commit");
+      renderer.commit();
     }
 
   } // ::ospray::app

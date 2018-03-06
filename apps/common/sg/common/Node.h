@@ -204,14 +204,6 @@ namespace ospray {
       //  level traversal
       void traverse(const std::string& operation);
 
-      //! Use a custom provided node visitor to visit each node
-      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
-      void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
-
-      //! Helper overload to traverse with a default constructed TravesalContext
-      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
-      void traverse(VISITOR_T &&visitor);
-
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation,
@@ -221,10 +213,22 @@ namespace ospray {
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation);
 
-      //! called before committing children during traversal
+      //! Use a custom provided node visitor to visit each node
+      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
+      void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
+
+      //! Helper overload to traverse with a default constructed TravesalContext
+      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
+      void traverse(VISITOR_T &&visitor);
+
+      //! Invoke a "commit" traversal of the scene graph (and possibly
+      //  its children)
+      virtual void commit();
+
+      //! Called before committing children during traversal
       virtual void preCommit(RenderContext &ctx);
 
-      //! called after committing children during traversal
+      //! Called after committing children during traversal
       virtual void postCommit(RenderContext &ctx);
 
     protected:

@@ -429,6 +429,11 @@ namespace ospray {
       }
     }
 
+    void Node::commit()
+    {
+      traverse("commit");
+    }
+
     void Node::preCommit(RenderContext &)
     {
     }
