@@ -213,6 +213,7 @@ ospray_install_sdk_headers(
   visitor/GatherNodesByPosition.h
   visitor/MarkAllAsModified.h
   visitor/PrintNodes.h
+  visitor/VerifyNodes.h
   visitor/Visitor.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/visitor
