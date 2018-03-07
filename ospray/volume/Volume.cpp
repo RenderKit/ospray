@@ -77,10 +77,8 @@ namespace ospray {
     // Make the volume bounding box visible to the application.
     ispc::box3f boundingBox;
     ispc::Volume_getBoundingBox(&boundingBox,ispcEquivalent);
-    set("boundingBoxMin",
-        vec3f(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z));
-    set("boundingBoxMax",
-        vec3f(boundingBox.upper.x, boundingBox.upper.y, boundingBox.upper.z));
+    setParam("boundingBoxMin", boundingBox.lower);
+    setParam("boundingBoxMax", boundingBox.upper);
   }
 
   void Volume::updateEditableParameters()
@@ -133,7 +131,7 @@ namespace ospray {
                                                vec3f(0.f)));
     ispc::Volume_setVolumeClippingBox(ispcEquivalent,
                                       (const ispc::box3f &)volumeClippingBox);
-    
+
     // Set affine transformation
     AffineSpace3f xfm;
     xfm.l.vx = getParam3f("xfm.l.vx",vec3f(1.f,0.f,0.f));
@@ -142,7 +140,7 @@ namespace ospray {
     xfm.p    = getParam3f("xfm.p",   vec3f(0.f,0.f,0.f));
     AffineSpace3f rcp_xfm = rcp(xfm);
     ispc::Volume_setAffineTransformations(ispcEquivalent,
-					  (ispc::AffineSpace3f&)xfm, 
+					  (ispc::AffineSpace3f&)xfm,
 					  (ispc::AffineSpace3f&)rcp_xfm);
   }
 

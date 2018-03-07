@@ -34,10 +34,8 @@ namespace ospcommon {
           to an ospray object */
       struct OSPCOMMON_INTERFACE Param
       {
-        Param(const char *name);
+        Param(const std::string &name);
         ~Param() = default;
-
-        using OSP_PTR = ParameterizedObject*;
 
         template <typename T>
         void set(const T &v) { data = v; }
@@ -49,23 +47,25 @@ namespace ospcommon {
       };
 
       /*! \brief check if a given parameter is available */
-      bool hasParam(const char *name);
+      bool hasParam(const std::string &name);
 
       /*! set a parameter with given name to given value, create param if not
        *  existing */
       template<typename T>
-      void setParam(const char *name, const T &t);
+      void setParam(const std::string &name, const T &t);
 
       template<typename T>
-      T getParam(const char *name, T valIfNotFound);
+      T getParam(const std::string &name, T valIfNotFound);
 
-      void removeParam(const char *name);
+      void removeParam(const std::string &name);
 
-    private:
+    protected:
 
       /*! \brief find a given parameter, or add it if not exists (and so
        *         specified) */
-      Param *findParam(const char *name, bool addIfNotExist = false);
+      Param *findParam(const std::string &name, bool addIfNotExist = false);
+
+    private:
 
       // Data members //
 
@@ -79,19 +79,21 @@ namespace ospcommon {
 
     // Inlined ParameterizedObject definitions //////////////////////////////////
 
-    inline bool ParameterizedObject::hasParam(const char *name)
+    inline bool ParameterizedObject::hasParam(const std::string &name)
     {
       return findParam(name, false) != nullptr;
     }
 
     template<typename T>
-    inline void ParameterizedObject::setParam(const char *name, const T &t)
+    inline void ParameterizedObject::setParam(const std::string &name,
+                                              const T &t)
     {
       findParam(name, true)->set(t);
     }
 
     template<typename T>
-    inline T ParameterizedObject::getParam(const char *name, T valIfNotFound)
+    inline T ParameterizedObject::getParam(const std::string &name,
+                                           T valIfNotFound)
     {
       Param *param = findParam(name);
       if (!param) return valIfNotFound;

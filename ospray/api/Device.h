@@ -16,6 +16,8 @@
 
 #pragma once
 
+// ospcommon
+#include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "common/OSPCommon.h"
 #include "common/Managed.h"
@@ -29,7 +31,7 @@ namespace ospray {
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct OSPRAY_CORE_INTERFACE Device : public ManagedObject
+    struct OSPRAY_CORE_INTERFACE Device : public utility::ParameterizedObject
     {
       /*! singleton that points to currently active device */
       static std::shared_ptr<Device> current;
@@ -218,7 +220,7 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      virtual void commit() override;
+      virtual void commit();
       bool isCommitted();
 
       // Public Data //

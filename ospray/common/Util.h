@@ -16,18 +16,18 @@
 
 #pragma once
 
-#include "OSPCommon.h"
+#include "Managed.h"
 
 #include <map>
 
 namespace ospray {
 
-  template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
-  inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
+  template <typename T, OSPDataType OSP_TYPE = OSP_UNKNOWN>
+  inline T *objectFactory(const std::string &type)
   {
     // Function pointer type for creating a concrete instance of a subtype of
     // this class.
-    using creationFunctionPointer = OSPRAY_CLASS*(*)();
+    using creationFunctionPointer = T*(*)();
 
     // Function pointers corresponding to each subtype.
     static std::map<std::string, creationFunctionPointer> symbolRegistry;
@@ -58,14 +58,27 @@ namespace ospray {
     // Create a concrete instance of the requested subtype.
     auto *object = symbolRegistry[type] ? (*symbolRegistry[type])() : nullptr;
 
+    if (object == nullptr) {
+      symbolRegistry.erase(type);
+      throw std::runtime_error("Could not find " + type_string + " of type: "
+        + type + ".  Make sure you have the correct OSPRay libraries linked.");
+    }
+
+    return object;
+  }
+
+  template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
+  inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
+  {
+    static_assert(std::is_base_of<ManagedObject, OSPRAY_CLASS>::value,
+                  "createInstanceHelper<>() is only for OSPRay classes, not"
+                  " generic types!");
+
+    auto *object = objectFactory<OSPRAY_CLASS, OSP_TYPE>(type);
+
     // Denote the subclass type in the ManagedObject base class.
     if (object) {
       object->managedObjectType = OSP_TYPE;
-    }
-    else {
-      symbolRegistry.erase(type);
-      throw std::runtime_error("Could not find " + type_string + " of type: " 
-        + type + ".  Make sure you have the correct OSPRay libraries linked.");
     }
 
     return object;

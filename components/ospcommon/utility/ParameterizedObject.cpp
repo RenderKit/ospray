@@ -21,11 +21,11 @@
 namespace ospcommon {
   namespace utility {
 
-    ParameterizedObject::Param::Param(const char *_name) : name(_name)
+    ParameterizedObject::Param::Param(const std::string &_name) : name(_name)
     {
     }
 
-    void ParameterizedObject::removeParam(const char *name)
+    void ParameterizedObject::removeParam(const std::string &name)
     {
       auto foundParam =
           std::find_if(paramList.begin(), paramList.end(),
@@ -39,7 +39,7 @@ namespace ospcommon {
     }
 
     ParameterizedObject::Param *
-    ParameterizedObject::findParam(const char *name, bool addIfNotExist)
+    ParameterizedObject::findParam(const std::string &name, bool addIfNotExist)
     {
       auto foundParam =
           std::find_if(paramList.begin(), paramList.end(),
