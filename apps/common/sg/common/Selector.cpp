@@ -40,7 +40,7 @@ namespace ospray {
              if (child.second->name() != "index" && child.second->name() != "bounds")
              {
                if (i++ == index)
-                 child.second->traverse(ctx, "render");
+                 child.second->finalize(ctx);
              }
            }
          }

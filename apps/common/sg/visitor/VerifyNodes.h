@@ -40,8 +40,8 @@ namespace ospray {
     inline bool VerifyNodes::operator()(Node &node, TraversalContext &)
     {
       bool traverseChildren =
-          node.properties.valid &&
-          (node.childrenLastModified() < node.properties.lastVerified);
+          !(node.properties.valid &&
+          (node.childrenLastModified() < node.properties.lastVerified));
       node.properties.valid = node.computeValid();
       node.properties.lastVerified = TimeStamp();
 

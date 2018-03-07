@@ -394,7 +394,7 @@ namespace ospray {
 
     void OSPApp::addLightsToScene(sg::Node &renderer)
     {
-      renderer.traverse("verify");
+      renderer.verify();
       renderer.commit();
       auto &lights = renderer["lights"];
 
@@ -426,11 +426,11 @@ namespace ospray {
         auto tex = sg::Texture2D::load(hdriLightFile, false);
         tex->setName("map");
         auto &hdri = lights.createChild("hdri", "HDRILight");
-        tex->traverse("verify");
+        tex->verify();
         tex->commit();
         hdri.add(tex);
       }
-      renderer.traverse("verify");
+      renderer.verify();
       renderer.commit();
     }
 
@@ -484,7 +484,7 @@ namespace ospray {
                   auto &rotation =
                       transform["rotation"].createChild("animator", "Animator");
 
-                  rotation.traverse("verify");
+                  rotation.verify();
                   rotation.commit();
                   rotation.child("value1") = vec3f(0.f, 0.f, 0.f);
                   rotation.child("value2") = vec3f(0.f, 2.f * 3.14f, 0.f);
@@ -492,7 +492,7 @@ namespace ospray {
                   animation.setChild("rotation", rotation.shared_from_this());
                 }
 
-                renderer.traverse("verify");
+                renderer.verify();
                 renderer.commit();
                 auto bounds = importerNode_ptr->computeBounds();
                 auto size = bounds.upper - bounds.lower;
@@ -541,7 +541,7 @@ namespace ospray {
         camera["apertureRadius"] = apertureRadius.getValue();
       if (camera.hasChild("focusdistance"))
         camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
-      renderer.traverse("verify");
+      renderer.verify();
       renderer.commit();
     }
 
@@ -578,7 +578,7 @@ namespace ospray {
         auto &anim_selector = selector["index"].createChild(
             "anim_" + animatedFile[0].file, "Animator");
 
-        anim_selector.traverse("verify");
+        anim_selector.verify();
         anim_selector.commit();
         anim_selector["value2"] = int(animatedFile.size());
         animation.setChild("anim_selector", anim_selector.shared_from_this());
@@ -624,7 +624,7 @@ namespace ospray {
       planeMaterial["Ks"] = vec3f(0.0f);
       planeMaterial["Ns"] = 10.f;
 
-      renderer.traverse("verify");
+      renderer.verify();
       renderer.commit();
     }
 
