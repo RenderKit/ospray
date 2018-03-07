@@ -66,6 +66,7 @@ else()
     utility/getEnvVar.h
     utility/OnScopeExit.h
     utility/Optional.h
+    utility/ParameterizedObject.cpp
     utility/PseudoURL.cpp
     utility/SaveImage.h
     utility/StringManip.h
@@ -174,6 +175,7 @@ else()
     utility/getEnvVar.h
     utility/OnScopeExit.h
     utility/Optional.h
+    utility/ParameterizedObject.h
     utility/PseudoURL.h
     utility/SaveImage.h
     utility/StringManip.h
@@ -281,6 +283,14 @@ else()
     ospray_test_main
   )
 
+  # utility/ParameterizedObject
+  ospray_create_test(test_ParameterizedObject
+    utility/tests/test_ParameterizedObject.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
   # utility/StringManip
   ospray_create_test(test_StringManip
     utility/tests/test_StringManip.cpp
@@ -295,6 +305,7 @@ else()
   add_test(NAME ArrayView           COMMAND test_ArrayView          )
   add_test(NAME OnScopeExit         COMMAND test_OnScopeExit        )
   add_test(NAME Optional            COMMAND test_Optional           )
+  add_test(NAME ParameterizedObject COMMAND test_ParameterizedObject)
   add_test(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
   add_test(NAME StringManip         COMMAND test_StringManip        )
   if(NOT WIN32) # Tests which are broken on Windows with unknown fixes (for now)
