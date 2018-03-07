@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospray
-#include "api/Device.h"
+#include "api/ISPCDevice.h"
 #include "Model.h"
 // ispc exports
 #include "Model_ispc.h"
@@ -24,7 +24,7 @@ namespace ospray {
 
   extern "C" void *ospray_getEmbreeDevice()
   {
-    return api::Device::current->embreeDevice;
+    return api::ISPCDevice::embreeDevice;
   }
 
   Model::Model()
@@ -37,6 +37,8 @@ namespace ospray {
   {
     if (embreeSceneHandle)
       rtcDeleteScene(embreeSceneHandle);
+
+    ispc::Model_cleanup(getIE());
   }
 
   std::string Model::toString() const
@@ -70,9 +72,9 @@ namespace ospray {
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
 
-    for (size_t i=0; i<volume.size(); i++) 
+    for (size_t i=0; i<volume.size(); i++)
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
-    
+
     rtcCommit(embreeSceneHandle);
   }
 

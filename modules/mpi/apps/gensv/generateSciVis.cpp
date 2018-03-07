@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright 2017-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include <random>
 #include <array>
 #include "mpiCommon/MPICommon.h"
@@ -142,26 +158,15 @@ namespace gensv {
     return faces;
   }
 
-  /* Generate this rank's volume data. The volumes are placed in
-   * cells of the grid computed in 'computeGrid' based on the number
-   * of ranks with each rank owning a specific cell in the gridding.
-   * The coloring is based on color-mapping the ranks id.
-   * The region occupied by the volume is then used to be the rank's
-   * overall region bounds and will be the bounding box for the
-   * generated geometry as well.
-   */
-  LoadedVolume makeVolume() {
-    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
-    auto myRank   = mpicommon::globalRank();
-
+  LoadedVolume makeBrick(const size_t brickNum, const size_t numBricks) {
     LoadedVolume vol;
-    vol.tfcn.set("valueRange", vec2f(0, numRanks - 1));
+    vol.tfcn.set("valueRange", vec2f(0, numBricks - 1));
     vol.tfcn.commit();
 
     const vec3i volumeDims(128);
-    const vec3i grid = computeGrid(numRanks);
+    const vec3i grid = computeGrid(numBricks);
     const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
-    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+    const vec3i brickId(brickNum % grid.x, (brickNum / grid.x) % grid.y, brickNum / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
     const std::array<int, 3> ghosts = computeGhostFaces(brickId, grid);
     vec3i ghostDims(0);
@@ -188,13 +193,28 @@ namespace gensv {
 
     std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z, 0);
     for (size_t i = 0; i < volumeData.size(); ++i) {
-      volumeData[i] = myRank;
+      volumeData[i] = brickNum;
     }
     vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
     vol.volume.commit();
 
     vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
     return vol;
+  }
+
+  LoadedVolume makeVolume() {
+    return makeBrick(mpicommon::globalRank(), mpicommon::numGlobalRanks());
+  }
+
+  std::vector<LoadedVolume> makeVolumes(const size_t firstBrick,
+                                        const size_t numMine,
+                                        const size_t numBricks)
+  {
+    std::vector<LoadedVolume> volumes;
+    for (size_t i = firstBrick; i < firstBrick + numMine; ++i) {
+      volumes.push_back(makeBrick(i, numBricks));
+    }
+    return volumes;
   }
 
   size_t sizeForDtype(const std::string &dtype)

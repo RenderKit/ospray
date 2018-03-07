@@ -1,5 +1,6 @@
+#!/bin/bash
 ## ======================================================================== ##
-## Copyright 2015-2017 Intel Corporation                                    ##
+## Copyright 2015-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -13,8 +14,6 @@
 ## See the License for the specific language governing permissions and      ##
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
-
-#!/bin/bash
 
 # to make sure we do not include nor link against wrong TBB
 export CPATH=
@@ -33,8 +32,8 @@ wget -O readme.pdf --progress=dot:mega -c http://sdvis.org/ospray/download/OSPRa
 
 # set release settings
 cmake -L \
--G "Visual Studio 12 2013 Win64" \
--T "Intel C++ Compiler 17.0" \
+-G "Visual Studio 14 2015 Win64" \
+-T "Intel C++ Compiler 18.0" \
 -D OSPRAY_BUILD_ISA=ALL \
 -D OSPRAY_MODULE_MPI=ON \
 -D OSPRAY_SG_CHOMBO=OFF \

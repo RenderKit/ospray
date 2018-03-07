@@ -73,9 +73,6 @@ namespace ospray {
         + distribModel->othersRegions.size();
 
       beginFrame(dfb);
-      // This renderer doesn't use per frame data, since we sneak in some tile
-      // info in this pointer.
-      assert(!perFrameData);
 
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;
@@ -117,7 +114,7 @@ namespace ospray {
           std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
           std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
           std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
-          std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, 1.0);
+          std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, bgColor.w);
           std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
           fb->setTile(tile);
         }

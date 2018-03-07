@@ -38,8 +38,8 @@ typedef int ssize_t;
 
 // ospcommon
 #include "ospcommon/AffineSpace.h"
-#include "ospcommon/RefCount.h"
-#include "ospcommon/malloc.h"
+#include "ospcommon/memory/RefCount.h"
+#include "ospcommon/memory/malloc.h"
 
 // ospray
 #include "ospray/OSPDataType.h"
@@ -50,6 +50,9 @@ typedef int ssize_t;
 #include <cstdint> // for int64_t etc
 #include <sstream>
 
+// NOTE(jda) - This one file is shared between the core OSPRay library and the
+//             ispc module...thus we have to define 2 different EXPORTS macros
+//             here. This needs to be split between the libraries!
 #ifdef _WIN32
 #  ifdef ospray_EXPORTS
 #    define OSPRAY_INTERFACE __declspec(dllexport)
@@ -61,12 +64,26 @@ typedef int ssize_t;
 #  define OSPRAY_INTERFACE
 #  define OSPRAY_DLLEXPORT
 #endif
-#define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
+#define OSPRAY_CORE_INTERFACE OSPRAY_INTERFACE
+
+#ifdef _WIN32
+#  ifdef ospray_module_ispc_EXPORTS
+#    define OSPRAY_MODULE_ISPC_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_MODULE_ISPC_INTERFACE __declspec(dllimport)
+#  endif
+#  define OSPRAY_MODULE_ISPC_DLLEXPORT __declspec(dllexport)
+#else
+#  define OSPRAY_MODULE_ISPC_INTERFACE
+#  define OSPRAY_MODULE_ISPC_DLLEXPORT
+#endif
+#define OSPRAY_SDK_INTERFACE OSPRAY_MODULE_ISPC_INTERFACE
 
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
   using namespace ospcommon;
+  using namespace ospcommon::memory;
 
   /*! basic types */
   using int64  = std::int64_t;
@@ -100,22 +117,29 @@ namespace ospray {
 #endif
 #endif
 
+  extern "C" {
+    /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
+    OSPRAY_CORE_INTERFACE void *malloc64(size_t size);
+    /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
+    OSPRAY_CORE_INTERFACE void free64(void *ptr);
+  }
+
   /*! size of OSPDataType */
-  OSPRAY_SDK_INTERFACE size_t sizeOf(const OSPDataType);
+  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! Convert a type string to an OSPDataType. */
-  OSPRAY_SDK_INTERFACE OSPDataType typeForString(const char *string);
+  OSPRAY_CORE_INTERFACE OSPDataType typeForString(const char *string);
   /*! Convert a type string to an OSPDataType. */
   inline OSPDataType typeForString(const std::string &s)
   { return typeForString(s.c_str()); }
 
   /*! Convert a type string to an OSPDataType. */
-  OSPRAY_SDK_INTERFACE std::string stringForType(OSPDataType type);
+  OSPRAY_CORE_INTERFACE std::string stringForType(OSPDataType type);
 
   /*! size of OSPTextureFormat */
-  OSPRAY_SDK_INTERFACE size_t sizeOf(const OSPTextureFormat);
+  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
-  OSPRAY_SDK_INTERFACE OSPError loadLocalModule(const std::string &name);
+  OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
 
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.
@@ -127,19 +151,19 @@ namespace ospray {
        ...
     }
   */
-  struct OSPRAY_SDK_INTERFACE WarnOnce
+  struct OSPRAY_CORE_INTERFACE WarnOnce
   {
     WarnOnce(const std::string &message, uint32_t postAtLogLevel = 0);
   private:
     const std::string s;
   };
 
-  OSPRAY_SDK_INTERFACE uint32_t logLevel();
+  OSPRAY_CORE_INTERFACE uint32_t logLevel();
 
-  OSPRAY_SDK_INTERFACE void postStatusMsg(const std::stringstream &msg,
+  OSPRAY_CORE_INTERFACE void postStatusMsg(const std::stringstream &msg,
                                           uint32_t postAtLogLevel = 0);
 
-  OSPRAY_SDK_INTERFACE void postStatusMsg(const std::string &msg,
+  OSPRAY_CORE_INTERFACE void postStatusMsg(const std::string &msg,
                                           uint32_t postAtLogLevel = 0);
 
   // use postStatusMsg to output any information, which will use OSPRay's
@@ -175,13 +199,13 @@ namespace ospray {
     this->str(other.str());
   }
 
-  OSPRAY_SDK_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
+  OSPRAY_CORE_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
 
   /////////////////////////////////////////////////////////////////////////////
 
-  OSPRAY_SDK_INTERFACE void handleError(OSPError e, const std::string &message);
+  OSPRAY_CORE_INTERFACE void handleError(OSPError e, const std::string &message);
 
-  OSPRAY_SDK_INTERFACE void postTraceMsg(const std::string &message);
+  OSPRAY_CORE_INTERFACE void postTraceMsg(const std::string &message);
 
   //! log status message at loglevel x
   #define ospLog(x) StatusMsgStream(x) << "(" << x << "): "
@@ -192,7 +216,7 @@ namespace ospray {
 
   // RTTI hash ID lookup helper functions ///////////////////////////////////
 
-  OSPRAY_SDK_INTERFACE size_t translatedHash(size_t v);
+  OSPRAY_CORE_INTERFACE size_t translatedHash(size_t v);
 
   template <typename T>
   inline size_t typeIdOf()

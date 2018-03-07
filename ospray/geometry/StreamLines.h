@@ -88,16 +88,17 @@ namespace ospray {
 
     // Data members //
 
-    Ref<Data> vertexData;  //!< refcounted data array for vertex data
+    Ref<Data> vertexData; //!< refcounted data array for vertex data
     Ref<Data> indexData; //!< refcounted data array for segment data
-    Ref<Data> colorData;  //!< refcounted data array for vertex color data
+    Ref<Data> colorData; //!< refcounted data array for vertex color data
+    Ref<Data> radiusData; //!< refcounted data array for vertex radius data
 
-    vec3fa *vertex {nullptr};
-    size_t  numVertices {0};
-    uint32 *index {nullptr};
-    size_t  numSegments {0};
-    vec4f  *color {nullptr};
-    float   radius {0.f};
+    const vec3fa *vertex {nullptr};
+    size_t        numVertices {0};
+    const uint32 *index {nullptr};
+    size_t        numSegments {0};
+    std::vector<vec4f> vertexCurve;
+    std::vector<uint32> indexCurve;
   };
   /*! @} */
 

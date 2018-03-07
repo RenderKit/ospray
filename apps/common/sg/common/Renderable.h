@@ -33,7 +33,7 @@ namespace ospray {
 
       virtual box3f bounds() const override;
 
-      box3f computeBounds() const;
+      virtual box3f computeBounds() const;
 
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation, bool& traverseChildren) override;

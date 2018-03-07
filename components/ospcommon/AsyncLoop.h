@@ -23,6 +23,9 @@
 
 #include "TypeTraits.h"
 
+#include "tasking/schedule.h"
+#include "tasking/tasking_system_handle.h"
+
 namespace ospcommon {
 
   /*! This calls a given function in a continuous loop on a background
@@ -37,8 +40,10 @@ namespace ospcommon {
   {
   public:
 
+    enum LaunchMethod { AUTO = 0, THREAD = 1, TASK = 2 };
+
     template <typename LOOP_BODY_FCN>
-    AsyncLoop(LOOP_BODY_FCN &&fcn);
+    AsyncLoop(LOOP_BODY_FCN &&fcn, LaunchMethod m = AUTO);
 
     ~AsyncLoop();
 
@@ -59,14 +64,14 @@ namespace ospcommon {
   // Inlined members //////////////////////////////////////////////////////////
 
   template <typename LOOP_BODY_FCN>
-  inline AsyncLoop::AsyncLoop(LOOP_BODY_FCN &&fcn)
+  inline AsyncLoop::AsyncLoop(LOOP_BODY_FCN &&fcn, AsyncLoop::LaunchMethod m)
   {
     static_assert(traits::has_operator_method<LOOP_BODY_FCN>::value,
                   "ospcommon::AsyncLoop() requires the implementation of "
                   "method 'void LOOP_BODY_FCN::operator()' in order to "
                   "construct the loop instance.");
 
-    backgroundThread = std::thread([&,fcn](){
+    auto mainLoop = [&,fcn]() {
       while (threadShouldBeAlive) {
         std::unique_lock<std::mutex> lock(loopRunningMutex);
         loopRunningCond.wait(lock, [&] { return loopShouldBeRunning.load(); });
@@ -75,10 +80,18 @@ namespace ospcommon {
           return;
 
         insideLoopBody = true;
-        fcn();
+        if(loopShouldBeRunning) fcn();
         insideLoopBody = false;
       }
-    });
+    };
+
+    if (m == AUTO)
+      m = tasking::numTaskingThreads() > 4 ? TASK : THREAD;
+
+    if (m == THREAD)
+      backgroundThread = std::thread(mainLoop);
+    else // m == TASK
+      tasking::schedule(mainLoop);
   }
 
   inline AsyncLoop::~AsyncLoop()

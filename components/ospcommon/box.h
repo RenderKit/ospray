@@ -23,7 +23,7 @@ namespace ospcommon {
 
   // box declaration //////////////////////////////////////////////////////////
 
-  template <typename T, int N, int ALIGN = 0>
+  template <typename T, int N, bool ALIGN = false>
   using box_t = range_t<vec_t<T, N, ALIGN>>;
 
   // box free functions ///////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ namespace ospcommon {
     return b.size().product();
   }
 
-  template <typename scalar_t, int A>
+  template <typename scalar_t, bool A>
   inline scalar_t area(const box_t<scalar_t, 3, A> &b)
   {
     const auto size = b.size();
@@ -42,7 +42,7 @@ namespace ospcommon {
   }
 
   /*! return the volume of the 3D box - undefined for empty boxes */
-  template <typename scalar_t, int A>
+  template <typename scalar_t, bool A>
   inline scalar_t volume(const box_t<scalar_t, 3, A> &b)
   {
     return b.size().product();
@@ -52,7 +52,7 @@ namespace ospcommon {
       ie, the case where boxes just barely touch side-by side (even if
       they do not have any actual overlapping _volume_!) then this is
       still true */
-  template <typename scalar_t, int A>
+  template <typename scalar_t, bool A>
   inline bool touchingOrOverlapping(const box_t<scalar_t, 3, A> &a,
                                     const box_t<scalar_t, 3, A> &b)
   {
@@ -74,7 +74,7 @@ namespace ospcommon {
   }
 
   /*! compute the intersection of two boxes */
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline box_t<T, N, A> intersectionOf(const box_t<T, N, A> &a,
                                        const box_t<T, N, A> &b)
   {
@@ -88,7 +88,7 @@ namespace ospcommon {
   }
 
   /*! returns the center of the box (not valid for empty boxes) */
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline vec_t<T, N, A> center(const box_t<T, N, A> &b)
   {
     return b.center();
@@ -97,13 +97,13 @@ namespace ospcommon {
   // -------------------------------------------------------
   // comparison operator
   // -------------------------------------------------------
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline bool operator==(const box_t<T, N, A> &a, const box_t<T, N, A> &b)
   {
     return a.lower == b.lower && a.upper == b.upper;
   }
 
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline bool operator!=(const box_t<T, N, A> &a, const box_t<T, N, A> &b)
   {
     return !(a == b);
@@ -112,7 +112,7 @@ namespace ospcommon {
   // -------------------------------------------------------
   // output operator
   // -------------------------------------------------------
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline std::ostream &operator<<(std::ostream &o, const box_t<T, N, A> &b)
   {
     o << "[" << b.lower << ":" << b.upper << "]";

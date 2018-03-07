@@ -36,7 +36,8 @@ inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
 
   float cosThetaO = dot(wo, getN(super));
   float cosThetaI = dot(wi, getN(super));
-  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f) return make_BSDF_EvalRes_zero();
+  if (cosThetaO <= 0.f || cosThetaI <= 0.f)
+    return make_BSDF_EvalRes_zero();
 
   vec3f wh = normalize(wi + wo);
   float cosThetaH = dot(wh, getN(super));
@@ -49,8 +50,8 @@ inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
   float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
   float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
-  res.pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
-  res.value = F * (D * G * rcp(4.0f*cosThetaO));
+  res.pdf = whPdf * rcp(4.f*abs(cosThetaOH));
+  res.value = F * (D * G * rcp(4.f*cosThetaO));
   return res;
 }
 
@@ -61,7 +62,8 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
   BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.0f) return make_BSDF_SampleRes_zero();
+  if (cosThetaO <= 0.f)
+    return make_BSDF_SampleRes_zero();
 
   float whPdf;
   //vec3f wh = getFrame(super) * sample(self->distribution, whPdf, s);
@@ -69,7 +71,8 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
 
   res.wi = reflect(wo, wh);
   float cosThetaI = dot(res.wi, getN(super));
-  if (cosThetaI <= 0.0f) return make_BSDF_SampleRes_zero();
+  if (cosThetaI <= 0.f)
+    return make_BSDF_SampleRes_zero();
   //float cosThetaH = dot(wh, getN(super));
   float cosThetaOH = dot(wo, wh);
   float cosThetaIH = dot(res.wi, wh);
@@ -78,7 +81,7 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
   float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   res.type = BSDF_GLOSSY_REFLECTION;
-  res.pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
+  res.pdf = whPdf * rcp(4.f*abs(cosThetaOH));
   res.weight = F * (G * rcp_safe(G1(self->distribution, cosThetaO, cosThetaOH)));
 
   return res;

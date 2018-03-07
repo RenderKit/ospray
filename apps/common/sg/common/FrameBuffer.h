@@ -17,7 +17,7 @@
 #pragma once
 
 // sg components
-#include "sg/common/Node.h"
+#include "Node.h"
 
 namespace ospray {
   namespace sg {
@@ -52,6 +52,7 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
+      OSPPixelOp toneMapper {nullptr};
       std::string displayWallStream;
     };
 

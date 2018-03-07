@@ -22,3 +22,4 @@ ospray-doc
 /modules/*
 !/modules/mpi
 !/modules/pluggableGeometryExample
+!/modules/simdGeometryExample

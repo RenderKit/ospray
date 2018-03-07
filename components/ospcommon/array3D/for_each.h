@@ -37,6 +37,15 @@ namespace ospcommon {
       return idx.x + size_t(dims.x) * (idx.y + size_t(dims.y) * idx.z);
     }
 
+    /*! reverse mapping form a cell index to the cell coordinates, for
+        a given volume size 'dims' */
+    inline vec3i coordsOf(const size_t idx, const vec3i &dims)
+    {
+      return vec3i(idx % dims.x,
+                   (idx / dims.x) % dims.y,
+                   (idx / dims.x) / dims.y);
+    }
+
     /*! iterate through all indices in [lower,upper), EXCLUSING the
         'upper' value */
     template <typename Functor>

@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include <cmath>
 #include <algorithm>
 #include <iostream>
@@ -183,7 +199,7 @@ void TransferFunction::drawUi()
     }
 
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
-    draw_list->AddRect(canvasPos, canvasPos + canvasSize, ImColor(255, 255, 255));
+    draw_list->AddRect(canvasPos, canvasPos + canvasSize, IM_COL32_WHITE);
 
     const vec2f viewScale(canvasSize.x, -canvasSize.y + 10);
     const vec2f viewOffset(canvasPos.x, canvasPos.y + canvasSize.y - 10);

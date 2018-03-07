@@ -12,6 +12,7 @@
 //    misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 
+#include <string>
 #ifdef _WIN32
 #	include <windows.h>
 #endif //_WIN32

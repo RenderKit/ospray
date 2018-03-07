@@ -28,5 +28,38 @@ to run the benchmarks at 1024x768, you would run:
 % ../scripts/bench/run_benchmark.py --width 1024 --height 768
 
 The images rendered for each benchmark are saved into a directory (which
-is created if it doesn't exist) "test_images", where each image is saved
-as a .ppm file.
+is created if it doesn't exist) "bench_output", where each image is saved
+as a .ppm file. Statistics like average time it took to render a frame
+are printed to standard output, but can also be saved to a file by
+passing a filename to the script like this:
+
+% ../scripts/bench/run_benchmark.py --output STATS.csv
+
+By default, all test cases will be run. You can change it by passing a
+comma-separated list of test names to the script, for example:
+
+% ../scripts/bench/run_benchmark.py --tests NAME1,NAME2,NAME3
+
+To print all valid names, run the script with --tests-list argument.
+
+You can pass a path to directory with baseline images as an argument.
+If you do, after running the test case, the script will compare
+provided image with the rendered one, failing the test case if they
+differ too much. For example:
+
+% ../scripts/bench/run_benchmark.py --reference directory_with_images
+
+Same goes for statistics - you can pass a path to a file that was
+generated using --output option. Benchmark will fail if average times
+spent on rendering single frame differ greatly. For example:
+
+% ../scripts/bench/run_benchmark.py --baseline file_with_stats
+
+Finally, you can chose between running tests using scivis renderer,
+pathtracer, or both of them:
+
+% ../scripts/bench/run_benchmark.py --renderer RENDERER
+
+where RENDERER is either "both", "scivis" or "pt". The default
+value is "both".
+

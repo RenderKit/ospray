@@ -22,11 +22,11 @@
   per patch. */
 
 // ospcomon: vec3f, box3f, etcpp - generic helper stuff
-#include <ospcommon/vec.h>
-#include <ospcommon/box.h>
+#include "ospcommon/vec.h"
+#include "ospcommon/box.h"
 // ospray: everything that's related to the ospray ray tracing core
-#include <ospray/geometry/Geometry.h>
-#include <ospray/common/Model.h>
+#include "ospray/geometry/Geometry.h"
+#include "ospray/common/Model.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */

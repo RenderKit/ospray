@@ -19,27 +19,39 @@
 #include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp    {
 
-class Light : public ManagedObject_T<OSPLight>
-{
-public:
+    class Light : public ManagedObject_T<OSPLight>
+    {
+    public:
 
-  Light(const Light &copy);
-  Light(OSPLight existing);
-};
+      Light(const std::string &renderer_type, const std::string &light_type);
+      Light(const Light &copy);
+      Light(OSPLight existing);
+    };
 
-// Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
-inline Light::Light(const Light &copy) :
-  ManagedObject_T<OSPLight>(copy.handle())
-{
-}
+    inline Light::Light(const std::string &renderer_type,
+                        const std::string &light_type)
+    {
+      auto c = ospNewLight2(renderer_type.c_str(), light_type.c_str());
+      if (c) {
+        ospObject = c;
+      } else {
+        throw std::runtime_error("Failed to create OSPLight!");
+      }
+    }
 
-inline Light::Light(OSPLight existing) :
-  ManagedObject_T<OSPLight>(existing)
-{
-}
+    inline Light::Light(const Light &copy) :
+      ManagedObject_T<OSPLight>(copy.handle())
+    {
+    }
 
-}// namespace cpp
+    inline Light::Light(OSPLight existing) :
+      ManagedObject_T<OSPLight>(existing)
+    {
+    }
+
+  }// namespace cpp
 }// namespace ospray

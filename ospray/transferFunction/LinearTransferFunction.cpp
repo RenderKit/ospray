@@ -19,6 +19,11 @@
 
 namespace ospray {
 
+  LinearTransferFunction::~LinearTransferFunction()
+  {
+    if (ispcEquivalent)
+      ispc::LinearTransferFunction_freeMemory(ispcEquivalent);
+  }
   void LinearTransferFunction::commit()
   {
     // Create the equivalent ISPC transfer function.

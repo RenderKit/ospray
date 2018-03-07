@@ -43,7 +43,6 @@ namespace ospray {
     Data<vec2f>                 "texcoord"        // texture coordinates
     uint32                      "geom.materialID" // material ID for the whole mesh
     Data<uint32>                "prim.materialID" // per triangle materials, indexing into "materialList"
-    Data<OSPMaterial>           "materialList"    // list of OSPMaterial pointers
     </pre>
 
     The functionality for this geometry is implemented via the
@@ -85,7 +84,6 @@ namespace ospray {
     vec4f  *color;  //!< mesh's vertex color array
     vec2f  *texcoord; //!< mesh's vertex texcoord array
     uint32 *prim_materialID; //!< per-primitive material ID
-    Material **materialList; //!< per-primitive material list
     int geom_materialID;
 
     Ref<Data> indexData;  /*!< triangle indices (A,B,C,materialID) */
@@ -94,12 +92,9 @@ namespace ospray {
     Ref<Data> colorData;  /*!< vertex color array (vec3fa) */
     Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
     Ref<Data> prim_materialIDData;  /*!< data array for per-prim material ID (uint32) */
-    Ref<Data> materialListData; /*!< data array for per-prim materials */
 
     #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
     uint32 eMesh{RTC_INVALID_ID};   /*!< embree triangle mesh handle */
-
-    std::vector<void*> ispcMaterialPtrs; /*!< pointers to ISPC equivalent materials */
   };
 
 } // ::ospray

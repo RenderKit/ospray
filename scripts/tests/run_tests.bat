@@ -1,6 +1,6 @@
 @echo off
 rem ======================================================================== rem
-rem Copyright 2015-2017 Intel Corporation                                    rem
+rem Copyright 2015-2018 Intel Corporation                                    rem
 rem                                                                          rem
 rem Licensed under the Apache License, Version 2.0 (the "License");          rem
 rem you may not use this file except in compliance with the License.         rem
@@ -20,8 +20,15 @@ setlocal
 echo Running tests
 md failed
 
+cd build
+del CMakeCache.txt
+cmake -G "Visual Studio 15 2017 Win64" ..
+cmake --build . --config Release --target ospray_test_data -- /m /nologo
+cd ..
+
 set OSP_LIBS=build\Release
-set BASELINE_DIR=\\sdvis-nas\NAS\OSPRay\test-data\img\
+set EMBREE_DIR=C:\Program Files\Intel\Embree v2.16.1 x64
+set BASELINE_DIR=build\regression_tests\baseline\
 
 set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
 

@@ -1,0 +1,81 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+// ospray
+#include "../math/LinearSpace.ih"
+#include "../math/sampling.ih"
+
+// special 64-bit safe code:
+#define BITS 20
+
+#define __define_gather(T)                                                     \
+inline T gather_##T(const uniform bool huge,                                   \
+                    const T *uniform const base,                               \
+                    const varying int index)                                   \
+{                                                                              \
+  T v;                                                                         \
+  if (huge) {                                                                  \
+    const int index_lo = index & ((1<<BITS)-1);                                \
+    const int index_hi = index - index_lo;                                     \
+    foreach_unique(hi in index_hi)                                             \
+      v = (base+hi)[index_lo];                                                 \
+  } else                                                                       \
+    v = base[index];                                                           \
+  return v;                                                                    \
+}
+
+#define __define_gather_vec3_stride(T, S)                                      \
+inline vec3##S gather_vec3##S(const uniform bool huge,                         \
+                              const T *uniform const base,                     \
+                              const uniform int stride,                        \
+                              const varying int index)                         \
+{                                                                              \
+  vec3##S v;                                                                   \
+  if (huge) {                                                                  \
+    const int index_lo = index & ((1<<BITS)-1);                                \
+    const int index_hi = index - index_lo;                                     \
+    /* varying offset of lower bits */                                         \
+    const varying int scaledIndexLo = stride * index_lo;                       \
+    foreach_unique(hi in index_hi) {                                           \
+      /* uniform offset for upper bits */                                      \
+      uniform int64 scaledIndexHi = (int64)hi * stride;                        \
+      /* properly shifted base address (shifted by 64-bits) */                 \
+      const T *uniform base_hi = base + scaledIndexHi;                         \
+                                                                               \
+      v.x = base_hi[scaledIndexLo+0];                                          \
+      v.y = base_hi[scaledIndexLo+1];                                          \
+      v.z = base_hi[scaledIndexLo+2];                                          \
+    }                                                                          \
+  } else {                                                                     \
+    const varying int scaledIndex = stride * index;                            \
+    v.x = base[scaledIndex+0];                                                 \
+    v.y = base[scaledIndex+1];                                                 \
+    v.z = base[scaledIndex+2];                                                 \
+  }                                                                            \
+  return v;                                                                    \
+}                                                                              \
+
+__define_gather(float);
+__define_gather(int32);
+__define_gather(uint32);
+
+__define_gather(vec2f);
+__define_gather(vec4f);
+
+__define_gather_vec3_stride(float, f);
+__define_gather_vec3_stride(int, i);

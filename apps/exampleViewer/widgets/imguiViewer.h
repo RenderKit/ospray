@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,17 +16,12 @@
 
 #pragma once
 
-#include <atomic>
-#include <mutex>
-
 #include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
-#include "Imgui3dExport.h"
 
 #include "common/sg/SceneGraph.h"
-
-#include <deque>
+#include "common/sg/Renderer.h"
 
 namespace ospray {
 
@@ -40,12 +35,16 @@ namespace ospray {
 
     ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph);
 
-    ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph,
-                const std::shared_ptr<sg::Node> &scenegraphDW);
+    ImGuiViewer(const std::shared_ptr<sg::Renderer> &scenegraph,
+                const std::shared_ptr<sg::Renderer> &scenegraphDW);
 
     ~ImGuiViewer();
 
+    void setInitialSearchBoxText(const std::string &text);
+
   protected:
+
+    enum PickMode { PICK_CAMERA, PICK_NODE };
 
     void mouseButton(int button, int action, int mods);
     void reshape(const ospcommon::vec2i &newSize) override;
@@ -59,7 +58,25 @@ namespace ospray {
     void display() override;
 
     void buildGui() override;
-    void buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent);
+
+    void guiMenu();
+    void guiMenuApp();
+    void guiMenuView();
+    void guiMenuMPI();
+
+    void guiCarDemo();
+
+    void guiRenderStats();
+    void guiFindNode();
+
+    void guiSingleNode(const std::string &baseText,
+                       std::shared_ptr<sg::Node> node);
+    void guiNodeContextMenu(const std::string &name,
+                            std::shared_ptr<sg::Node> node);
+
+    void guiSGTree(const std::string &name, std::shared_ptr<sg::Node> node);
+
+    void guiSearchSGNodes();
 
     void setCurrentDeviceParameter(const std::string &param, int value);
 
@@ -77,11 +94,16 @@ namespace ospray {
     std::shared_ptr<sg::Node> scenegraph;
     std::shared_ptr<sg::Node> scenegraphDW;
 
+    std::string nodeNameForSearch;
+    std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
+
     AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
 
     bool useDynamicLoadBalancer{false};
     int  numPreAllocatedTiles{4};
+
+    PickMode lastPickQueryType {PICK_CAMERA};
   };
 
 }// namespace ospray

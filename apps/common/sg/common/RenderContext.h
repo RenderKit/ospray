@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
-#include "sg/common/TimeStamp.h"
+#include "Common.h"
+#include "ospcommon/utility/TimeStamp.h"
 
 namespace ospray {
   namespace sg {
@@ -35,17 +35,18 @@ namespace ospray {
 
       // Data members //
 
-      std::shared_ptr<sg::World> world;      //!< world we're rendering into
+      std::shared_ptr<sg::Model> world;      //!< world we're rendering into
       OSPModel currentOSPModel{nullptr};
       affine3f currentTransform{ospcommon::one};
       float time {0.f};
 
       OSPRenderer ospRenderer {nullptr};
+      std::string ospRendererType;
       int level {0};
 
 
-      TimeStamp _MTime;
-      TimeStamp _childMTime;
+      utility::TimeStamp _MTime;
+      utility::TimeStamp _childMTime;
     };
 
     // Inlined RenderContext definitions //////////////////////////////////////

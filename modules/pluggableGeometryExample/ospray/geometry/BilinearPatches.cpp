@@ -56,7 +56,7 @@ namespace ospray {
       control points */
     void BilinearPatches::commit()
     {
-      this->patchesData = getParamData("patches");
+      this->patchesData = getParamData("vertices");
 
       /* assert that some valid input data is available */
       if (!this->patchesData) {
@@ -75,10 +75,10 @@ namespace ospray {
       if (!patchesData)
         return;
 
+      Geometry::finalize(model);
+
       // look at the data we were provided with ....
       size_t numPatchesInInput = patchesData->numBytes / sizeof(Patch);
-      std::cout << "#osp.blp: found " << numPatchesInInput
-                << " patches in data array" << std::endl;
 
       /* get the acual 'raw' pointer to the data (ispc doesn't konw
          what to do with the 'Data' abstraction calss */
@@ -99,7 +99,7 @@ namespace ospray {
 
         OSPGeometry geom = ospNewGeometry("bilinear_patches") ;
     */
-    OSP_REGISTER_GEOMETRY(BilinearPatches,bilinear_patches);
+    OSP_REGISTER_GEOMETRY(BilinearPatches, bilinear_patches);
 
   } // ::ospray::bilinearPatch
 } // ::ospray

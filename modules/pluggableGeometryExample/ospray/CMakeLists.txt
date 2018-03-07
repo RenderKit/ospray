@@ -43,16 +43,19 @@ OSPRAY_CREATE_LIBRARY(ospray_module_bilinear_patches
   # parameters in ospCommit(), creating and registering the object,
   # building accel strcutures, etc
   geometry/BilinearPatches.cpp
-  
+
   # the ispc file that contains the plugins for all vector code - ie,
   # for ray-primitive intersection and 'postIntersect' (reporting info
   # on a previously computed ray-prim intersection)
   geometry/BilinearPatches.ispc
 
+  # pieces for loading data into the OSPRay example viewer app
+#  sg/Patch.cpp
+
   # and finally, the module init code (not doing much, but must be there)
   moduleInit.cpp
-  
+
   # this depends on ospray core:
   LINK
-  ospray
+  ospray_module_ispc
 )

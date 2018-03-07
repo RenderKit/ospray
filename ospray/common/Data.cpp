@@ -38,6 +38,14 @@ namespace ospray {
     }
 
     managedObjectType = OSP_DATA;
+
+    if (type == OSP_OBJECT) {
+      Data **child = (Data **)data;
+      for (uint32_t i = 0; i < numItems; i++) {
+        if (child[i])
+          child[i]->refInc();
+      }
+    }
   }
 
   Data::~Data()

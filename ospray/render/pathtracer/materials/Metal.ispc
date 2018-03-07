@@ -36,7 +36,7 @@ struct Metal
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Metal_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,

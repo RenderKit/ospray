@@ -17,6 +17,7 @@
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/MPIBcastFabric.h"
 #include "mpi/MPIOffloadDevice.h"
+#include "api/ISPCDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -113,7 +114,7 @@ namespace ospray {
 
       auto embreeDevice =
           rtcNewDevice(generateEmbreeDeviceCfg(*device).c_str());
-      device->embreeDevice = embreeDevice;
+      api::ISPCDevice::embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 

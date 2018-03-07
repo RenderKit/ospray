@@ -31,12 +31,17 @@ namespace ospray {
       Transform();
       std::string toString() const override;
 
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
       void preRender(RenderContext &ctx) override;
       void postRender(RenderContext &ctx) override;
 
       //! \brief the actual (affine) transformation matrix
-      ospcommon::affine3f worldTransform;  // computed transform
-      ospcommon::affine3f oldTransform{ospcommon::one};
+      ospcommon::affine3f worldTransform{ospcommon::one};  // computed transform
+      ospcommon::affine3f cachedTransform{ospcommon::one};  // computed transform
+
+    protected:
+      void updateTransform(const ospcommon::affine3f& transform);
     };
 
   } // ::ospray::sg

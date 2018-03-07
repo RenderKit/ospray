@@ -30,13 +30,13 @@ namespace ospcommon {
     //             later with a hint enum, using a default value for the
     //             priority to not require specifying it.
     template<typename TASK_T>
-    inline void schedule(TASK_T&& fcn)
+    inline void schedule(TASK_T fcn)
     {
       static_assert(traits::has_operator_method<TASK_T>::value,
                     "ospcommon::tasking::schedule() requires the "
                     "implementation of method 'void TASK_T::operator()'.");
 
-      detail::schedule_impl(std::forward<TASK_T>(fcn));
+      detail::schedule_impl(std::move(fcn));
     }
 
   } // ::ospcommon::tasking

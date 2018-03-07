@@ -24,15 +24,16 @@
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
+#include "embree2/rtcore_geometry.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
 struct StreamLines {
   uniform Geometry super; //!< inherited geometry fields
   float           radius;
-  uniform vec3fa *vertex;
+  const uniform vec3fa *vertex;
   int32           numVertices;
-  uniform uint32 *index;
-  uniform vec4f  *color;
+  const uniform uint32 *index;
+  const uniform vec4f  *color;
 };
 
 void StreamLines_bounds(uniform StreamLines *uniform self,
@@ -47,23 +48,22 @@ void StreamLines_bounds(uniform StreamLines *uniform self,
 }
 
 /*! do a ray-sphere intersection, with the numerical fix of first
-    moving the ray origin to an approximate spher distance, and then
+    moving the ray origin to an approximate sphere distance, and then
     re-adding this approximate distance to the computed hit
-    distance */ 
+    distance */
 inline bool intersectSphere_numericalFix(varying Ray &ray,
                                          /*! center/positoin of the sphere  */
-                                         const vec3f &center, 
+                                         const vec3f &center,
                                          const uniform float r)
 {
-  const float approximateDistance
-    = dot(center-ray.org,ray.dir);// * rsqrtf(dot(ray.dir,ray.dir));
+  const float approximateDistance = dot(center-ray.org,ray.dir);
 
   const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
   const vec3f A = center - closeOrg;
   const float a = dot(ray.dir,ray.dir);
   const float b = -2.f*dot(ray.dir,A);
   const float c = dot(A,A)-r*r;
-  
+
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return false;
 
@@ -86,14 +86,13 @@ inline bool intersectSphere_numericalFix(varying Ray &ray,
     moving the ray origin to an approximate distance, and then
     re-adding this approximate distance to the computed hit
     distance. for the approximate distance we use the distance from
-    ray origin to center of the cylinder (projected to the ray) */ 
+    ray origin to center of the cylinder (projected to the ray) */
 inline bool intersectCylinder_numericalFix(varying Ray &ray,
                                            const vec3f &_A, const vec3f &_B,
                                            const uniform float r)
 {
   const vec3f center = 0.5f*(_A+_B);
-  const float approximateDistance
-    = dot(center-ray.org,ray.dir); // * rsqrtf(dot(ray.dir,ray.dir));
+  const float approximateDistance = dot(center-ray.org,ray.dir);
 
   const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
   const vec3f A = _A - closeOrg;
@@ -102,7 +101,7 @@ inline bool intersectCylinder_numericalFix(varying Ray &ray,
   const vec3f V = ray.dir;
 
   const vec3f AB = B - A;
-  
+
   const vec3f AOxAB = cross(AB,A);
   const vec3f VxAB  = cross(V,AB);
   const float ab2   = dot(AB,AB);
@@ -122,7 +121,7 @@ inline bool intersectCylinder_numericalFix(varying Ray &ray,
   //
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return false;
-  
+
   const float srad = sqrt(radical);
 
   const float t_in = approximateDistance + (- b - srad)*rcpf(2.f*a);
@@ -172,7 +171,7 @@ static void StreamLines_postIntersect(uniform Geometry *uniform self,
 
   if ((flags & DG_COLOR)) {
     uniform StreamLines *uniform self = (uniform StreamLines *uniform)self;
-    uniform vec4f *uniform color = self->color;
+    const uniform vec4f *uniform color = self->color;
     if (color) {
       const varying uint32 index  = self->index[ray.primID];
       dg.color = (1.f-ray.u) * color[index] + ray.u * color[index+1];
@@ -226,8 +225,10 @@ SampleAreaRes StreamLines_sampleArea(
 
 void StreamLines_getAreas(
     const Geometry *const uniform _self
+    , const int32 *const uniform primIDs
+    , const uniform int32 numPrims
     , const uniform affine3f &xfm
-    , float *const uniform area
+    , float *const uniform areas
     )
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
@@ -247,24 +248,22 @@ void StreamLines_getAreas(
   // spheres at vertices
   const uniform float sphereArea = four_pi * sqr(self->radius * scaling);
   const uniform int32 spheres = self->numVertices;
-  // initialize with zero per default (i.e. deactivate sampling)
-  foreach(i = 0 ... spheres)
-    area[i] = 0.f;
 
   // cylinders for segments; area of a cylinder with unit-length
   const uniform float cyl1Area = two_pi * self->radius * sqr(scaling);
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-  for(uniform int32 i = spheres; i < self->super.primitives; i++) {
-    const uniform uint32 idx = self->index[i - spheres];
-    const uniform vec3f v0 = make_vec3f(self->vertex[idx]);
-    const uniform vec3f v1 = make_vec3f(self->vertex[idx+1]);
-    area[i] = cyl1Area * length(v0 - v1);
-    // only set area for spheres which are actually part of a segment
-    area[idx] = sphereArea;
-    area[idx+1] = sphereArea;
+  for (uniform int32 i = 0; i < numPrims; i++) {
+    const uniform int32 primID = primIDs[i];
+    if (primID < spheres) { // sphere
+      areas[i] = sphereArea;
+    } else { // cylinder
+      const uniform uint32 idx = self->index[primID - spheres];
+      const uniform vec3f v0 = make_vec3f(self->vertex[idx]);
+      const uniform vec3f v1 = make_vec3f(self->vertex[idx+1]);
+      areas[i] = cyl1Area * length(v0 - v1);
+    }
   }
 }
-
 
 export void *uniform StreamLines_create(void *uniform cppEquivalent)
 {
@@ -275,15 +274,15 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
   return geom;
 }
 
-export void *uniform 
-StreamLines_set(void *uniform _self,
+export void *uniform
+StreamLines_set(       void *uniform _self,
                        void           *uniform _model,
                        float           uniform radius,
-                       uniform vec3fa *uniform vertex,
+                const  uniform vec3fa *uniform vertex,
                        int32           uniform numVertices,
-                       uniform uint32 *uniform index,
+                const  uniform uint32 *uniform index,
                        int32           uniform numSegments,
-                       uniform vec4f  *uniform color)
+                const  uniform vec4f  *uniform color)
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
@@ -294,7 +293,7 @@ StreamLines_set(void *uniform _self,
   self->vertex = vertex;
   self->index = index;
   // XXX different representation for area sampling, see above
-  self->super.primitives = numVertices + numSegments;
+  self->super.numPrimitives = numVertices + numSegments;
   self->super.getAreas = StreamLines_getAreas;
   self->super.sampleArea = StreamLines_sampleArea;
   self->numVertices = numVertices;
@@ -307,4 +306,34 @@ StreamLines_set(void *uniform _self,
                           (uniform RTCIntersectFuncVarying)&StreamLines_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                           (uniform RTCOccludedFuncVarying)&StreamLines_intersect);
+}
+
+export void *uniform
+StreamLines_setCurve(      void           *uniform _self,
+                           void           *uniform _model,
+                     const uniform vec3fa *uniform vertexCurve,
+                           int32           uniform numVertices,
+                     const uniform uint32 *uniform indexCurve,
+                           int32           uniform numSegments,
+                     const uniform uint32 *uniform index,
+                     const uniform vec4f  *uniform color)
+{
+  StreamLines *uniform self = (StreamLines *uniform)_self;
+  Model *uniform model = (Model *uniform)_model;
+  uniform uint32 geomID = rtcNewBezierCurveGeometry2(model->embreeSceneHandle,
+      RTC_GEOMETRY_STATIC, numSegments, numVertices, 1);
+  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_VERTEX_BUFFER, vertexCurve, 0, 16);
+  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_INDEX_BUFFER, indexCurve, 0, 4);
+
+  self->super.model = model;
+  self->super.geomID = geomID;
+  self->super.numPrimitives = numSegments;
+  self->super.postIntersect = StreamLines_postIntersect;
+  // TODO implement area sampling of curves for geometry lights
+  self->super.getAreas = NULL;
+  self->super.sampleArea = NULL;
+  self->numVertices = 0; // not used by curve
+  self->vertex = NULL; // not used by curve
+  self->index = index;
+  self->color = color;
 }

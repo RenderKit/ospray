@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,6 +22,7 @@
 
 #include "ospcommon/utility/CodeTimer.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "ospcommon/utility/SaveImage.h"
 #include "ospray/version.h"
 
 #include <stdio.h>
@@ -64,39 +65,16 @@ namespace ospray {
                                const uint32_t *pixel,
                                const uint32_t sizeX, const uint32_t sizeY)
     {
-      FILE *file = fopen(fileName,"wb");
-      if (!file) {
-        std::cerr << "#osp:glut3D: Warning - could not create screenshot file '"
-                  << fileName << "'" << std::endl;
-        return;
-      }
-      fprintf(file,"P6\n%i %i\n255\n",sizeX,sizeY);
-      unsigned char *out = (unsigned char *)alloca(3*sizeX);
-      for (size_t y = 0; y < sizeY; y++) {
-        const unsigned char *in =
-            (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-        for (size_t x = 0; x < sizeX; x++) {
-          out[3*x+0] = in[4*x+0];
-          out[3*x+1] = in[4*x+1];
-          out[3*x+2] = in[4*x+2];
-        }
-        fwrite(out, 3*sizeX, sizeof(char), file);
-      }
-      fprintf(file,"\n");
-      fclose(file);
-      std::cout << "#osp:glut3D: saved framebuffer to file "
-                << fileName << std::endl;
+      utility::writePPM(fileName, sizeX, sizeY, pixel);
+      std::cout << "#osp:glut3D: saved framebuffer to file " << fileName
+        << std::endl;
     }
 
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
-    vec2i ImGui3DWidget::defaultInitSize(1024,768);
-
     bool ImGui3DWidget::animating = false;
 
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
-    /*! viewport as specified on the command line */
-    ImGui3DWidget::ViewPort *viewPortFromCmdLine = nullptr;
 
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
@@ -129,6 +107,11 @@ namespace ospray {
       frame.l.vy = normalize(cross(frame.l.vz,frame.l.vx));
     }
 
+    void ImGui3DWidget::setMotionSpeed(float speed)
+    {
+      motionSpeed = speed;
+    }
+
     void ImGui3DWidget::motion(const vec2i &pos)
     {
       currMousePos = pos;
@@ -140,12 +123,10 @@ namespace ospray {
     {}
 
     ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
-                                 ManipulatorMode initialManipulator,
-                                 int allowedManipulators) :
+                                 ManipulatorMode initialManipulator) :
       lastMousePos(-1,-1),
       currMousePos(-1,-1),
       windowSize(-1,-1),
-      motionSpeed(.003f),
       rotateSpeed(.003f),
       frameBufferMode(frameBufferMode),
       fontScale(2.f),
@@ -161,32 +142,18 @@ namespace ospray {
       worldBounds.lower = vec3f(-1);
       worldBounds.upper = vec3f(+1);
 
-      if (allowedManipulators & INSPECT_CENTER_MODE) {
-        inspectCenterManipulator = new InspectCenter(this);
-      }
-      if (allowedManipulators & MOVE_MODE) {
-        moveModeManipulator = new MoveMode(this);
-      }
+      inspectCenterManipulator = ospcommon::make_unique<InspectCenter>(this);
+      moveModeManipulator = ospcommon::make_unique<MoveMode>(this);
+
       switch(initialManipulator) {
       case MOVE_MODE:
-        manipulator = moveModeManipulator;
+        manipulator = moveModeManipulator.get();
         break;
       case INSPECT_CENTER_MODE:
-        manipulator = inspectCenterManipulator;
+        manipulator = inspectCenterManipulator.get();
         break;
       }
       Assert2(manipulator != nullptr,"invalid initial manipulator mode");
-
-      if (viewPortFromCmdLine) {
-        viewPort = *viewPortFromCmdLine;
-
-        if (length(viewPort.up) < 1e-3f)
-          viewPort.up = vec3f(0,0,1.f);
-
-        this->worldBounds = worldBounds;
-        computeFrame();
-      }
-
       currButton[0] = currButton[1] = currButton[2] = GLFW_RELEASE;
 
       displayTime=-1.f;
@@ -222,7 +189,7 @@ namespace ospray {
     {
       if (animating) {
         auto *hack =
-            (InspectCenter*)ImGui3DWidget::activeWindow->inspectCenterManipulator;
+            ImGui3DWidget::activeWindow->inspectCenterManipulator.get();
         hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
@@ -277,31 +244,9 @@ namespace ospray {
 
     void ImGui3DWidget::setWorldBounds(const box3f &worldBounds)
     {
-      vec3f center = ospcommon::center(worldBounds);
-      vec3f diag   = worldBounds.size();
-      diag         = max(diag,vec3f(0.3f*length(diag)));
-      vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-      vec3f dir    = center - from;
-      vec3f up     = viewPort.up;
-
-      if (!viewPortFromCmdLine) {
-        viewPort.at   = center;
-        viewPort.from = from;
-        viewPort.up   = up;
-
-        if (length(up) < 1e-3f)
-          up = vec3f(0,0,1.f);
-
-        this->worldBounds = worldBounds;
-        viewPort.frame.l.vy = normalize(dir);
-        viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
-        viewPort.frame.p    = from;
-        viewPort.snapFrameUp();
-        viewPort.modified = true;
-      }
-
-      motionSpeed = length(diag) * .001f;
+      vec3f diag   = max(worldBounds.size(),vec3f(0.3f*length(worldBounds.size())));
+      if (motionSpeed < 0.f)
+        motionSpeed = length(diag) * .001f;
     }
 
     void ImGui3DWidget::setTitle(const std::string &title)
@@ -311,7 +256,7 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title, bool fullScreen)
+    void ImGui3DWidget::create(const char *title, const bool fullScreen, const vec2i windowSize)
     {
       // Setup window
       auto error_callback = [](int error, const char* description) {
@@ -326,7 +271,7 @@ namespace ospray {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-      auto size = defaultInitSize;
+      auto size = windowSize;
 
       auto defaultSizeFromEnv =
           getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
@@ -439,9 +384,9 @@ namespace ospray {
           ImGui::End();
         } else {
           ImFont* font = ImGui::GetFont();
-          ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.3,.3,.3,1.f));
+          ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.9,.9,.9,1.f));
           ImGui::SetWindowFontScale(currentWidget->fontScale*1.0f);
-          font->Scale = 5.f;
+          font->Scale = 6.f;
           ImGui::Text("%s", ("OSPRay v" + std::string(OSPRAY_VERSION)).c_str());
           font->Scale = 1.f;
           ImGui::SetWindowFontScale(currentWidget->fontScale*0.7f);
@@ -449,7 +394,7 @@ namespace ospray {
 
           std::stringstream ss;
           ss << 1.f/currentWidget->renderTime;
-          ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.8,.8,.8,1.f));
+          ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.5,.5,.5,1.f));
           ImGui::Text("%s", ("fps: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
           ImGui::PopStyleColor(1);
@@ -492,125 +437,6 @@ namespace ospray {
       glfwTerminate();
     }
 
-    void init(int32_t *ac, const char **av)
-    {
-      for(int i = 1; i < *ac;i++) {
-        std::string arg(av[i]);
-        if (arg == "-win") {
-          std::string arg2(av[i+1]);
-          size_t pos = arg2.find("x");
-          if (pos != std::string::npos) {
-            arg2.replace(pos, 1, " ");
-            std::stringstream ss(arg2);
-            ss >> ImGui3DWidget::defaultInitSize.x
-               >> ImGui3DWidget::defaultInitSize.y;
-            removeArgs(*ac,av,i,2); --i;
-          } else {
-            ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-            ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-            removeArgs(*ac,av,i,3); --i;
-          }
-          continue;
-        } if (arg == "--1k" || arg == "-1k") {
-          ImGui3DWidget::defaultInitSize.x =
-              ImGui3DWidget::defaultInitSize.y = 1024;
-          removeArgs(*ac,av,i,1); --i;
-          continue;
-        } if (arg == "--size") {
-          ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-          ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
-          removeArgs(*ac,av,i,3); --i;
-          continue;
-        } if (arg == "-v" || arg == "--view") {
-          std::ifstream fin(av[i+1]);
-          if (!fin.is_open())
-          {
-            throw std::runtime_error("Failed to open \"" +
-                                     std::string(av[i+1]) +
-                                     "\" for reading");
-          }
-
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-
-          auto& fx = viewPortFromCmdLine->from.x;
-          auto& fy = viewPortFromCmdLine->from.y;
-          auto& fz = viewPortFromCmdLine->from.z;
-
-          auto& ax = viewPortFromCmdLine->at.x;
-          auto& ay = viewPortFromCmdLine->at.y;
-          auto& az = viewPortFromCmdLine->at.z;
-
-          auto& ux = viewPortFromCmdLine->up.x;
-          auto& uy = viewPortFromCmdLine->up.y;
-          auto& uz = viewPortFromCmdLine->up.z;
-
-          auto& fov = viewPortFromCmdLine->openingAngle;
-
-          auto token = std::string("");
-          while (fin >> token) {
-            if (token == "-vp")
-              fin >> fx >> fy >> fz;
-            else if (token == "-vu")
-              fin >> ux >> uy >> uz;
-            else if (token == "-vi")
-              fin >> ax >> ay >> az;
-            else if (token == "-fv")
-              fin >> fov;
-            else {
-              throw std::runtime_error("Unrecognized token:  \"" + token +
-                                       '\"');
-            }
-          }
-
-          assert(i+1 < *ac);
-          removeArgs(*ac,av, i, 2); --i;
-          continue;
-        } if (arg == "-vu") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->up.x = atof(av[i+1]);
-          viewPortFromCmdLine->up.y = atof(av[i+2]);
-          viewPortFromCmdLine->up.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-vp") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->from.x = atof(av[i+1]);
-          viewPortFromCmdLine->from.y = atof(av[i+2]);
-          viewPortFromCmdLine->from.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-vi") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->at.x = atof(av[i+1]);
-          viewPortFromCmdLine->at.y = atof(av[i+2]);
-          viewPortFromCmdLine->at.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,av,i,4); --i;
-          continue;
-        } if (arg == "-fv") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->openingAngle = atof(av[i+1]);
-          assert(i+1 < *ac);
-          removeArgs(*ac,av,i,2); --i;
-          continue;
-        } if (arg == "-ar") {
-          if (!viewPortFromCmdLine)
-            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
-          viewPortFromCmdLine->apertureRadius = atof(av[i+1]);
-          assert(i+1 < *ac);
-          removeArgs(*ac,av,i,2); --i;
-          continue;
-        }
-      }
-    }
-
     void ImGui3DWidget::keypress(char key)
     {
       switch (key) {
@@ -644,11 +470,11 @@ namespace ospray {
         showGui = !showGui;
         break;
       case 'I':
-        manipulator = inspectCenterManipulator;
+        manipulator = inspectCenterManipulator.get();
         break;
       case 'M':
       case 'F':
-        manipulator = moveModeManipulator;
+        manipulator = moveModeManipulator.get();
         break;
       case 'A':
         ImGui3DWidget::animating = !ImGui3DWidget::animating;

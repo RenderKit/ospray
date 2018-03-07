@@ -26,7 +26,7 @@ struct Luminous
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform 
+const varying BSDF* varying 
 Luminous_getBSDF(const uniform PathTraceMaterial* uniform _self
     , uniform ShadingContext* uniform ctx
     , const DifferentialGeometry& dg

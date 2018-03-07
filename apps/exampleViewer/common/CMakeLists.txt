@@ -18,7 +18,6 @@ if (NOT WIN32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
-if (1)
 ##############################################################
 # Find or build GLFW
 ##############################################################
@@ -26,8 +25,6 @@ if (1)
 find_package(GLFW)
 
 if (NOT GLFW_FOUND)
-  message(STATUS "Building GLFW from included source")
-
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
   set(GLFW_INSTALL    OFF CACHE BOOL "" FORCE)
 
@@ -49,12 +46,12 @@ if (NOT GLFW_FOUND)
   set(GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/common/glfw/include PARENT_SCOPE)
   set(GLFW_LIBRARY glfw PARENT_SCOPE)
   set(GLFW_LIBRARIES ${GLFW_LIBRARY} PARENT_SCOPE)
+  message(STATUS "GLFW not found! Building GLFW in the OSPRay source tree")
 else()
   set(GLFW_INCLUDE_DIRS ${GLFW_INCLUDE_DIRS} PARENT_SCOPE)
   set(GLFW_LIBRARY ${GLFW_LIBRARY} PARENT_SCOPE)
   set(GLFW_LIBRARIES ${GLFW_LIBRARY} PARENT_SCOPE)
   message(STATUS "Using GLFW found in the environment")
-endif()
 endif()
 
 IF (USE_STATIC_RUNTIME)

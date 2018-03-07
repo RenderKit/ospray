@@ -14,12 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
-// scene graph
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
-#include "sg/geometry/Spheres.h"
 
 namespace ospray {
   namespace sg {

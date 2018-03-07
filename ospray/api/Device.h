@@ -16,11 +16,11 @@
 
 #pragma once
 
+// ospcommon
+#include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "common/OSPCommon.h"
 #include "common/Managed.h"
-// embree
-#include "embree2/rtcore.h"
 // std
 #include <functional>
 
@@ -28,17 +28,16 @@
     "devices" that implement the OSPRay API */
 
 namespace ospray {
-  /*! encapsulates everything related to the implementing public ospray api */
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct OSPRAY_SDK_INTERFACE Device : public ManagedObject
+    struct OSPRAY_CORE_INTERFACE Device : public utility::ParameterizedObject
     {
       /*! singleton that points to currently active device */
-      static Ref<Device> current;
+      static std::shared_ptr<Device> current;
 
       Device() = default;
-      virtual ~Device() override;
+      virtual ~Device() override = default;
 
       /*! \brief creates an abstract device class of given type */
       static Device *createDevice(const char *type);
@@ -144,12 +143,20 @@ namespace ospray {
       virtual OSPMaterial newMaterial(OSPRenderer _renderer,
                                       const char *type) = 0;
 
+      /*! have given renderer create a new material */
+      virtual OSPMaterial newMaterial(const char *renderer_type,
+                                      const char *material_type) = 0;
+
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(const vec2i &size,
           const OSPTextureFormat, void *data, const uint32 flags) = 0;
 
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
+
+      /*! have given renderer create a new Light */
+      virtual OSPLight newLight(const char *renderer_type,
+                                const char *light_type) = 0;
 
       /*! clear the specified channel(s) in 'fbChannelFlags'
 
@@ -213,14 +220,11 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      virtual void commit() override;
+      virtual void commit();
       bool isCommitted();
 
       // Public Data //
 
-      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
-      //             safely assume that a device exists.
-      static RTCDevice embreeDevice;
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
@@ -251,10 +255,10 @@ namespace ospray {
 
     // Shorthand functions to query current API device //
 
-    OSPRAY_SDK_INTERFACE bool    deviceIsSet();
-    OSPRAY_SDK_INTERFACE Device& currentDevice();
+    OSPRAY_CORE_INTERFACE bool    deviceIsSet();
+    OSPRAY_CORE_INTERFACE Device& currentDevice();
 
-    OSPRAY_SDK_INTERFACE
+    OSPRAY_CORE_INTERFACE
     std::string generateEmbreeDeviceCfg(const Device &device);
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
