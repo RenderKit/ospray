@@ -160,7 +160,7 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
                                              float eta, float roughness,
                                              float reflectionWeight)
 {
-  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+  BSDF_Constructor(&self->super, BSDF_GLOSSY,
                    MicrofacetDielectric_eval, MicrofacetDielectric_sample,
                    frame);
 
