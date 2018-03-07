@@ -100,7 +100,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
   const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
   const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
   const float transmission = clamp(clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f)));
-  const float coat = max(self->coat * get1f(self->coatMap, dg.st, 1.f), 0.f);
+  const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
 
   // dielectric base
   const float dielectric = (1.f - metallic);
@@ -298,7 +298,8 @@ export void* uniform PathTracer_Principled_create()
 
   PathTraceMaterial_Constructor(&self->super,
     Principled_getBSDF,
-    Principled_getTransparency,
+    //Principled_getTransparency,
+    NULL,
     Principled_selectNextMedium);
 
   uniform affine2f xform = make_AffineSpace2f_identity();
