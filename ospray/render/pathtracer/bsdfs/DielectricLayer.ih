@@ -20,9 +20,9 @@
 #include "Fresnel.ih"
 
 // Simplified Weidlich-Wilkie smooth coating BSDF.
-// Refraction for all rays and Fresnel for exiting rays are ignored, but absorption is computed
-// from the refracted ray lengths. The advantages are that it does not suffer from energy loss,
-// absorption behaves the same as in the original approach, and it's faster.
+// Refraction for all rays and Fresnel for exiting reflection rays are ignored, but absorption
+// is computed from the refracted ray lengths. The advantages are that it does not suffer from
+// energy loss, absorption behaves the same as in the original approach, and it's faster.
 // [Weidlich and Wilkie, 2007, "Arbitrarily Layered Micro-Facet Surfaces"]
 struct DielectricLayer
 {
@@ -42,14 +42,15 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
+  if (cosThetaO <= 0.f)
+    return make_BSDF_EvalRes_zero();
   float cosThetaI = dot(wi, getN(super));
-  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f) return make_BSDF_EvalRes_zero();
 
   // Fresnel term
   float cosThetaO1; // positive
   float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaO1, self->eta, self->reflectionWeight);
 
-  // Evaluate the substrate BRDF
+  // Evaluate the substrate
   // Ignore refraction
   BSDF_EvalRes substrate;
   foreach_unique (f in self->substrate)
@@ -57,13 +58,14 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
 
   // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
-  float cosThetaI1 = refract(cosThetaI, self->eta); // positive
-  substrate.value = substrate.value * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
+  float lengthO1 = rcp(cosThetaO1);
+  float lengthI1 = (cosThetaI > 0.f) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
+  substrate.value = substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1));
 
-  // Compute the final subtrate reflection
-  // Ignore Fresnel for the exiting ray
-  res.pdf = (1.0f-F) * substrate.pdf;
-  res.value = (1.0f-F) * substrate.value;
+  // Compute the final substrate reflection/transmission
+  // Ignore Fresnel for the exiting reflection ray
+  res.pdf = (1.f-F) * substrate.pdf;
+  res.value = (1.f-F) * substrate.value;
   return res;
 }
 
@@ -74,34 +76,40 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
   BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.0f) return make_BSDF_SampleRes_zero();
+  if (cosThetaO <= 0.f)
+    return make_BSDF_SampleRes_zero();
 
   // Fresnel term
   float cosThetaO1; // positive
   float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaO1, self->eta, self->reflectionWeight);
 
-  if (ss < F) {
-    // Sample the coating reflection
+  if (ss < F)
+  {
+    // Sample the coating
     res.type = BSDF_SPECULAR_REFLECTION;
     res.wi = reflect(wo, getN(super), cosThetaO);
     res.pdf = inf;
-    res.weight = make_vec3f(1.0f);
-  } else {
-    // Sample the substrate BRDF
+    res.weight = make_vec3f(1.f);
+  }
+  else
+  {
+    // Sample the substrate
     // Ignore refraction
-    float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
+    float ss1 = (ss - F) * rcp(1.f-F); // reallocate sample
     foreach_unique (f in self->substrate)
       res = f->sample(f, wo, s, ss1, lcg);
-    if (reduce_max(res.weight) <= 0.0f) return res;
-    float cosThetaI = max(dot(res.wi, getN(super)), 0.0f); // should be positive
+    if (reduce_max(res.weight) <= 0.f)
+      return res;
+    float cosThetaI = dot(res.wi, getN(super));
 
     // Apply the coating medium transmittance
-    float cosThetaI1 = refract(cosThetaI, self->eta); // positive
-    res.weight = res.weight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
+    float lengthO1 = rcp(cosThetaO1);
+    float lengthI1 = (cosThetaI > 0.f) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
+    res.weight = res.weight * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1));
 
-    // Compute the final reflection
-    // Ignore Fresnel for the exiting ray
-    res.pdf = (1.0f-F) * res.pdf;
+    // Compute the final reflection/transmission
+    // Ignore Fresnel for the exiting reflection ray
+    res.pdf = (1.f-F) * res.pdf;
   }
 
   return res;
