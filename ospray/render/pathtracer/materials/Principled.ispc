@@ -99,12 +99,11 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
   const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
   const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
   const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
-  const float transmission = clamp(clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f)));
-  const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
 
   // dielectric base
   const float dielectric = (1.f - metallic);
   if (dielectric > EPS) {
+    const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
     const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
 
     // opaque dielectric base
@@ -167,6 +166,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
   varying BSDF* varying bsdf = baseBsdf;
   
   // clear coat
+  const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
   if (coat > EPS) {
     float coatIor = max(self->coatIor * get1f(self->coatIorMap, dg.st, 1.f), 0.f);
     if (coatIor < 1.f) coatIor = rcp(coatIor);
@@ -188,19 +188,55 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
 vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform material,
                                  const DifferentialGeometry& dg,
                                  const Ray& ray,
-                                 const Medium& currentMedium)
+                                 const Medium& currentMedium,
+                                 unsigned int& lcg)
 {
   const uniform Principled* uniform self = (const uniform Principled* uniform)material;
 
-  const float transmission = self->transmission * get1f(self->transmissionMap, dg.st, 1.f);
+  const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
   if (transmission < EPS)
     return make_vec3f(0.f);
 
-  float eta = eq(currentMedium, self->outsideMedium) ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                                                     : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+  // dielectric base
+  const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
+  const float dielectric = (1.f - metallic);
+  if (dielectric > EPS) {
+    // transparent dielectric base
+    const float transparent = dielectric * transmission;
+    if (transparent > EPS) {
+      const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+      const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
+      const float eta = eq(currentMedium, self->outsideMedium) ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
+                                                               : self->insideMedium.ior*rcp(self->outsideMedium.ior);
 
-  float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
-  return make_vec3f((1.0f-fresnelDielectric(cosThetaO, eta)) * transmission);
+      const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
+
+      vec3f T;
+      if (roughness < EPS)
+        T = Dielectric_getTransparency(cosThetaO, eta, specular);
+      else
+        T = MicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, specular, lcg);
+
+      // clear coat
+      const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
+      if (coat > EPS) {
+        float coatIor = max(self->coatIor * get1f(self->coatIorMap, dg.st, 1.f), 0.f);
+        if (coatIor < 1.f) coatIor = rcp(coatIor);
+        const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
+        const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
+        const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
+        
+        if (coatRoughness < EPS)
+          T = T * DielectricLayer_getTransparency(cosThetaO, rcp(coatIor), coatColor, coatThickness, coat);
+        else
+          T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO, rcp(coatIor), coatColor, coatThickness, coatRoughness, coat, lcg);
+      }
+
+      return T;
+    }
+  }
+
+  return make_vec3f(0.f);
 }
 
 void Principled_selectNextMedium(const uniform PathTraceMaterial* uniform super,

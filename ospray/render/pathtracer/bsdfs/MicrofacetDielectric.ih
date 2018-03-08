@@ -211,9 +211,10 @@ inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext*
 }
 
 // Helper function for transparent shadow rays
-inline float MicrofacetDielectric_getTransparency(float cosThetaO, float eta, float roughness,
+inline vec3f MicrofacetDielectric_getTransparency(float cosThetaO, float eta, float roughness,
                                                   float reflectionWeight, unsigned int& lcg)
 {
   GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
-  return MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
+  float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
+  return make_vec3f(T);
 }

@@ -63,6 +63,12 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   return res;
 }
 
+// Computes the transmittance through a smooth dielectric surface
+inline float Dielectric_transmittance(float cosThetaO, float eta, float reflectionWeight)
+{
+  return 1.f - fresnelDielectricWeighted(cosThetaO, eta, reflectionWeight);
+}
+
 inline void Dielectric_Constructor(varying Dielectric* uniform self,
                                    const varying linear3f* uniform frame,
                                    float eta,
@@ -86,7 +92,7 @@ inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform c
 }
 
 // Helper function for transparent shadow rays
-inline float Dielectric_getTransparency(float cosThetaO, float eta, float reflectionWeight)
+inline vec3f Dielectric_getTransparency(float cosThetaO, float eta, float reflectionWeight)
 {
-  return 1.f - fresnelDielectricWeighted(cosThetaO, eta, reflectionWeight);
+  return make_vec3f(Dielectric_transmittance(cosThetaO, eta, reflectionWeight));
 }

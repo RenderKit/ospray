@@ -64,7 +64,8 @@ const varying BSDF* varying ThinGlass_getBSDF(const PathTraceMaterial* uniform s
 vec3f ThinGlass_getTransparency(const PathTraceMaterial* uniform material,
                                 const DifferentialGeometry& dg,
                                 const Ray& ray,
-                                const Medium& currentMedium)
+                                const Medium& currentMedium,
+                                unsigned int& lcg)
 {
   const ThinGlass* uniform self = (const ThinGlass* uniform)material;
 

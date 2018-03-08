@@ -46,7 +46,8 @@ inline float getEpsilon(const uniform PathTracer* uniform self,
 vec3f transparentShadow(const uniform PathTracer* uniform self,
                         vec3f lightContrib,
                         Ray &shadowRay,
-                        Medium medium)
+                        Medium medium,
+                        unsigned int &lcg)
 {
   uniform int maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
@@ -66,7 +67,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
     vec3f transparency;
     foreach_unique(m in material)
       if (m != NULL)
-        transparency = m->getTransparency(m, dg, shadowRay, medium);
+        transparency = m->getTransparency(m, dg, shadowRay, medium, lcg);
 
     lightContrib = lightContrib * transparency;
 
@@ -174,7 +175,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
-          shaded = shaded + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
+          shaded = shaded + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium, lcg);
         }
         // order of args important to filter NaNs (in case unshaded.X is zero)
         const vec3f ratio = min(Lw * shaded * rcp(unshaded), Lw);
@@ -318,7 +319,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         }
 
         const vec3f unshadedLightContrib = nextLw * ls.weight * misHeuristic(ls.pdf, fe.pdf);
-        L = L + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
+        L = L + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium, lcg);
       }
     }
 

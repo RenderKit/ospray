@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include "BSDF.ih"
-#include "Fresnel.ih"
+#include "Dielectric.ih"
 
 // Simplified Weidlich-Wilkie smooth coating BSDF.
 // Refraction for all rays and Fresnel for exiting reflection rays are ignored, but absorption
@@ -137,4 +136,19 @@ inline varying BSDF* uniform DielectricLayer_create(uniform ShadingContext* unif
   varying DielectricLayer* uniform self = (varying DielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(DielectricLayer));
   DielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, reflectionWeight);
   return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline vec3f DielectricLayer_getTransparency(float cosThetaO, float eta, vec3f transmittance, float thickness,
+                                             float reflectionWeight)
+{
+  // Apply the coating medium transmittance
+  // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
+  float lengthO1 = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
+  vec3f value = pow(transmittance, thickness * lengthO1);
+
+  // Compute the final transmittance
+  float T = Dielectric_transmittance(cosThetaO, eta, reflectionWeight);
+  value = value * T;
+  return value;
 }

@@ -42,7 +42,9 @@ typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMa
                                                        /*! The ray arriving at the point to shade. */
                                                        const Ray& ray,
                                                        /*! The medium this ray travels inside. */
-                                                       const Medium& currentMedium);
+                                                       const Medium& currentMedium,
+                                                       /*! Random number generator. */
+                                                       unsigned int& lcg);
 
 typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial* uniform self,
                                                        const DifferentialGeometry& dg,

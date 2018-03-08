@@ -224,3 +224,20 @@ inline varying BSDF* uniform MicrofacetDielectricLayer_create(uniform ShadingCon
   MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness, reflectionWeight);
   return &self->super;
 }
+
+// Helper function for transparent shadow rays
+inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO, float eta, vec3f transmittance, float thickness, float roughness,
+                                                       float reflectionWeight, unsigned int& lcg)
+{
+  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
+
+  // Apply the coating medium transmittance
+  // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
+  float lengthO1 = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
+  vec3f value = pow(transmittance, thickness * lengthO1);
+
+  // Compute the final transmittance
+  float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
+  value = value * T;
+  return value;
+}

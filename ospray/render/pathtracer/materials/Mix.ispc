@@ -54,17 +54,18 @@ const varying BSDF* varying Mix_getBSDF(const uniform PathTraceMaterial* uniform
 vec3f Mix_getTransparency(const uniform PathTraceMaterial* uniform super,
                           const DifferentialGeometry& dg,
                           const Ray& ray,
-                          const Medium& currentMedium)
+                          const Medium& currentMedium,
+                          unsigned int& lcg)
 {
   const Mix* uniform self = (const Mix* uniform)super;
 
   vec3f t1 = make_vec3f(0.f);
   if (self->mat1)
-    t1 = self->mat1->getTransparency(self->mat1, dg, ray, currentMedium);
+    t1 = self->mat1->getTransparency(self->mat1, dg, ray, currentMedium, lcg);
 
   vec3f t2 = make_vec3f(0.f);
   if (self->mat2)
-    t2 = self->mat2->getTransparency(self->mat2, dg, ray, currentMedium);
+    t2 = self->mat2->getTransparency(self->mat2, dg, ray, currentMedium, lcg);
 
   float factor = self->factor * clamp(get1f(self->map_factor, dg.st, 1.f));
   return lerp(factor, t1, t2);
