@@ -56,6 +56,8 @@ namespace ospray {
         MaterialParam1f coatRoughness = getMaterialParam1f("coatRoughness", 0.f);
         MaterialParam1f coatNormal = getMaterialParam1f("coatNormal", 1.f);
 
+        MaterialParam1f opacity = getMaterialParam1f("opacity", 1.f);
+
         float outsideIor = getParamf("outsideIor", 1.f);
         vec3f outsideTransmissionColor = getParam3f("outsideTransmissionColor", vec3f(1.f));
         float outsideTransmissionDepth = getParamf("outsideTransmissionDepth", 1.f);
@@ -77,6 +79,7 @@ namespace ospray {
           coatThickness.factor, coatThickness.map ? coatThickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThickness.xform,
           coatRoughness.factor, coatRoughness.map ? coatRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughness.xform,
           coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot,
+          opacity.factor, opacity.map ? opacity.map->getIE() : nullptr, (const ispc::AffineSpace2f&)opacity.xform,
           outsideIor,
           (const ispc::vec3f&)outsideTransmissionColor,
           outsideTransmissionDepth);

@@ -25,6 +25,7 @@
 #include "../bsdfs/MicrofacetDielectric.ih"
 #include "../bsdfs/DielectricLayer.ih"
 #include "../bsdfs/MicrofacetDielectricLayer.ih"
+#include "../bsdfs/Transmission.ih"
 #include "math/spectrum.ih"
 
 struct Principled
@@ -74,6 +75,9 @@ struct Principled
   float coatNormal; // scale
   TextureParam coatNormalMap;
   linear2f coatNormalRot;
+
+  float opacity; // cut-out opacity in [0, 1]
+  TextureParam opacityMap;
   
   Medium insideMedium;
   Medium outsideMedium;
@@ -91,147 +95,93 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
                                                const Medium& currentMedium)
 {
   const uniform Principled* uniform self = (const uniform Principled* uniform)super;
+  varying BSDF* varying bsdf = NULL;
   
-  varying BSDF* uniform baseBsdf = MultiBSDF_create(ctx);
   varying linear3f* uniform frame =
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
 
-  const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
-  const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
-  const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
-  const bool outside = eq(currentMedium, self->outsideMedium);
-
-  // dielectric base
-  const float dielectric = (1.f - metallic);
-  if (dielectric > EPS)
+  // cut-out opacity
+  const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg.st, 1.f));
+  if (opacity > EPS)
   {
-    const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
-    const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
+    varying BSDF* uniform baseBsdf = MultiBSDF_create(ctx);
 
-    // opaque dielectric base
-    const float opaque = dielectric * (1.f - transmission);
-    if (opaque > EPS)
+    const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
+    const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
+    const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+    const bool outside = eq(currentMedium, self->outsideMedium);
+
+    // dielectric base
+    const float dielectric = (1.f - metallic);
+    if (dielectric > EPS)
     {
-      // diffuse
-      varying BSDF* varying opaqueBsdf;
-      if (roughness < EPS)
-        opaqueBsdf = Lambert_create(ctx, frame, baseColor);
-      else
-        opaqueBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
-      
-      // specular
-      if (specular > EPS)
-      {
-        float ior = max(self->ior * get1f(self->iorMap, dg.st, 1.f), 0.f);
-        if (ior < 1.f) ior = rcp(ior);
+      const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
+      const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
 
-        if (abs(ior-1.f) > EPS)
+      // solid dielectric base
+      const float solid = dielectric * (1.f - transmission);
+      if (solid > EPS)
+      {
+        // diffuse
+        varying BSDF* varying solidBsdf;
+        if (roughness < EPS)
+          solidBsdf = Lambert_create(ctx, frame, baseColor);
+        else
+          solidBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+        
+        // specular
+        if (specular > EPS)
         {
-          if (roughness < EPS)
-            opaqueBsdf = DielectricLayer_create(ctx, frame, opaqueBsdf, rcp(ior), make_vec3f(1.f), 1.f, specular);
-          else
-            opaqueBsdf = MicrofacetDielectricLayer_create(ctx, frame, opaqueBsdf, rcp(ior), make_vec3f(1.f), 1.f, roughness, specular);
+          float ior = max(self->ior * get1f(self->iorMap, dg.st, 1.f), 0.f);
+          if (ior < 1.f) ior = rcp(ior);
+
+          if (abs(ior-1.f) > EPS)
+          {
+            if (roughness < EPS)
+              solidBsdf = DielectricLayer_create(ctx, frame, solidBsdf, rcp(ior), make_vec3f(1.f), 1.f, specular);
+            else
+              solidBsdf = MicrofacetDielectricLayer_create(ctx, frame, solidBsdf, rcp(ior), make_vec3f(1.f), 1.f, roughness, specular);
+          }
         }
+
+        MultiBSDF_add(baseBsdf, solidBsdf, solid, solid);
       }
 
-      MultiBSDF_add(baseBsdf, opaqueBsdf, opaque, opaque);
+      // refractive dielectric base
+      const float refractive = dielectric * transmission;
+      if (refractive > EPS)
+      {
+        const float eta = outside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
+                                  : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+
+        varying BSDF* varying refractiveBsdf;
+        if (roughness < EPS)
+          refractiveBsdf = Dielectric_create(ctx, frame, eta, specular);
+        else
+          refractiveBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, specular);
+
+        MultiBSDF_add(baseBsdf, refractiveBsdf, refractive, refractive);
+      }
     }
-
-    // transparent dielectric base
-    const float transparent = dielectric * transmission;
-    if (transparent > EPS)
-    {
-      const float eta = outside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                                : self->insideMedium.ior*rcp(self->outsideMedium.ior);
-
-      varying BSDF* varying transparentBsdf;
-      if (roughness < EPS)
-        transparentBsdf = Dielectric_create(ctx, frame, eta, specular);
-      else
-        transparentBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, specular);
-
-      MultiBSDF_add(baseBsdf, transparentBsdf, transparent, transparent);
-    }
-  }
-    
-  // conductor base
-  const float conductor = metallic;
-  if (conductor > EPS)
-  {
-    const vec3f edgeColor = clamp(self->edgeColor * get3f(self->edgeColorMap, dg.st, make_vec3f(1.f)));
-    
-    Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
-    varying BSDF* varying conductorBsdf;
-    if (roughness < EPS)
-      conductorBsdf = Conductor_create(ctx, frame, fresnel);
-    else
-      conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
-
-    MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
-  }
-
-  varying BSDF* varying bsdf = baseBsdf;
-  
-  // clear coat
-  const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
-  if (coat > EPS)
-  {
-    float coatIor = max(self->coatIor * get1f(self->coatIorMap, dg.st, 1.f), 0.f);
-    if (coatIor < 1.f) coatIor = rcp(coatIor);
-    if (abs(coatIor-1.f) > EPS)
-    {
-      const float coatEta = outside ? self->outsideMedium.ior*rcp(coatIor)
-                                    : coatIor*rcp(self->outsideMedium.ior);
-      const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
-      const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
-      const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
-      varying linear3f* uniform coatFrame =
-        LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
       
-      if (coatRoughness < EPS)
-        bsdf = DielectricLayer_create(ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coat);
+    // conductor base
+    const float conductor = metallic;
+    if (conductor > EPS)
+    {
+      const vec3f edgeColor = clamp(self->edgeColor * get3f(self->edgeColorMap, dg.st, make_vec3f(1.f)));
+      
+      Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
+      varying BSDF* varying conductorBsdf;
+      if (roughness < EPS)
+        conductorBsdf = Conductor_create(ctx, frame, fresnel);
       else
-        bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coatRoughness, coat);
+        conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
+
+      MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
     }
-  }
 
-  return bsdf;
-}
-
-vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform material,
-                                 const DifferentialGeometry& dg,
-                                 const Ray& ray,
-                                 const Medium& currentMedium,
-                                 unsigned int& lcg)
-{
-  const uniform Principled* uniform self = (const uniform Principled* uniform)material;
-
-  // early exit
-  const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
-  if (transmission < EPS)
-    return make_vec3f(0.f);
-
-  // transparent dielectric base
-  const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
-  const float dielectric = (1.f - metallic);
-  const float transparent = dielectric * transmission;
-  const bool outside = eq(currentMedium, self->outsideMedium);
-
-  if (transparent > EPS)
-  {
-    const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
-    const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
-    const float eta = outside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                              : self->insideMedium.ior*rcp(self->outsideMedium.ior);
-
-    const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
-
-    vec3f T;
-    if (roughness < EPS)
-      T = Dielectric_getTransparency(cosThetaO, eta, specular);
-    else
-      T = MicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, specular, lcg);
-
+    bsdf = baseBsdf;
+    
     // clear coat
     const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
     if (coat > EPS)
@@ -245,18 +195,107 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
         const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
         const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
+        varying linear3f* uniform coatFrame =
+          LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
         
         if (coatRoughness < EPS)
-          T = T * DielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coat);
+          bsdf = DielectricLayer_create(ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coat);
         else
-          T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coatRoughness, coat, lcg);
+          bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coatRoughness, coat);
       }
     }
-
-    return T;
   }
 
-  return make_vec3f(0.f);
+  // cut-out transparency
+  const float transparency = 1.f - opacity;
+  if (transparency > EPS)
+  {
+    varying BSDF* uniform transparencyBsdf = Transmission_create(ctx, frame, make_vec3f(transparency));
+
+    if (bsdf)
+    {
+      varying BSDF* uniform mixBsdf = MultiBSDF_create(ctx);
+      MultiBSDF_add(mixBsdf, bsdf, opacity, opacity);
+      MultiBSDF_add(mixBsdf, transparencyBsdf, 1.f, transparency);
+      bsdf = mixBsdf;
+    }
+    else
+    {
+      bsdf = transparencyBsdf;
+    }
+  }
+
+  return bsdf;
+}
+
+vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform material,
+                                 const DifferentialGeometry& dg,
+                                 const Ray& ray,
+                                 const Medium& currentMedium,
+                                 unsigned int& lcg)
+{
+  const uniform Principled* uniform self = (const uniform Principled* uniform)material;
+  vec3f T = make_vec3f(0.f);
+
+  const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg.st, 1.f));
+  const float transparency = 1.f - opacity;
+  const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
+
+  // early exit
+  if (transparency <= EPS && transmission <= EPS)
+    return T;
+
+  // cut-out opacity
+  if (opacity > EPS)
+  {
+    // refractive dielectric base
+    const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
+    const float dielectric = (1.f - metallic);
+    const float refractive = dielectric * transmission;
+
+    if (refractive > EPS)
+    {
+      const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+      const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
+
+      const bool outside = eq(currentMedium, self->outsideMedium);
+      const float eta = outside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
+                                : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+
+      const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
+
+      if (roughness < EPS)
+        T = Dielectric_getTransparency(cosThetaO, eta, specular);
+      else
+        T = MicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, specular, lcg);
+
+      // clear coat
+      const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
+      if (coat > EPS)
+      {
+        float coatIor = max(self->coatIor * get1f(self->coatIorMap, dg.st, 1.f), 0.f);
+        if (coatIor < 1.f) coatIor = rcp(coatIor);
+        if (abs(coatIor-1.f) > EPS)
+        {
+          const float coatEta = outside ? self->outsideMedium.ior*rcp(coatIor)
+                                        : coatIor*rcp(self->outsideMedium.ior);
+          const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
+          const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
+          const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
+          
+          if (coatRoughness < EPS)
+            T = T * DielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coat);
+          else
+            T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coatRoughness, coat, lcg);
+        }
+      }
+    }
+  }
+
+  // cut-out transparency
+  T = T * opacity + transparency;
+  
+  return T;
 }
 
 void Principled_selectNextMedium(const uniform PathTraceMaterial* uniform super,
@@ -291,6 +330,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float coatThickness, void* uniform coatThicknessMap, const uniform affine2f& coatThicknessXform,
     uniform float coatRoughness, void* uniform coatRoughnessMap, const uniform affine2f& coatRoughnessXform,
     uniform float coatNormal, void* uniform coatNormalMap, const uniform affine2f& coatNormalXform, const uniform linear2f& coatNormalRot,
+    uniform float opacity, void* uniform opacityMap, const uniform affine2f& opacityXform,
     uniform float outsideIor,
     const uniform vec3f& outsideTransmissionColor,
     uniform float outsideTransmissionDepth)
@@ -340,6 +380,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->coatNormal = coatNormal;
   self->coatNormalMap = make_TextureParam((uniform Texture2D*)coatNormalMap, coatNormalXform);
   self->coatNormalRot = coatNormalRot;
+
+  self->opacity = opacity;
+  self->opacityMap = make_TextureParam((uniform Texture2D*)opacityMap, opacityXform);
   
   self->insideMedium.ior = ior;
   self->insideMedium.attenuation = logf(transmissionColor) / transmissionDepth;
@@ -354,8 +397,7 @@ export void* uniform PathTracer_Principled_create()
 
   PathTraceMaterial_Constructor(&self->super,
     Principled_getBSDF,
-    //Principled_getTransparency,
-    NULL,
+    Principled_getTransparency,
     Principled_selectNextMedium);
 
   uniform affine2f xform = make_AffineSpace2f_identity();
@@ -376,6 +418,7 @@ export void* uniform PathTracer_Principled_create()
     1.f, NULL, xform, // coatThickness
     0.f, NULL, xform, // coatRoughness
     1.f, NULL, xform, make_LinearSpace2f_identity(), // coatNormal
+    1.f, NULL, xform, // opacity
     1.f, // outsideIor
     make_vec3f(1.f), // outsideTransmissionColor
     1.f // outsideTransmissionDepth
