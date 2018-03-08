@@ -37,10 +37,14 @@ namespace ospray {
       virtual bool operator()(Node &node, TraversalContext &ctx) = 0;
 
       // postChildren called after children have been traversed
-      virtual void postChildren(Node &, TraversalContext &) {}
+      virtual void postChildren(Node &, TraversalContext &);
 
       virtual ~Visitor() = default;
     };
+
+    inline void Visitor::postChildren(Node &, TraversalContext &)
+    {
+    }
 
     // Visitor type traits ////////////////////////////////////////////////////
 

@@ -16,8 +16,8 @@
 
 // ospray
 #include "Device.h"
+#include "objectFactory.h"
 #include "common/OSPCommon.h"
-#include "common/Util.h"
 // ospcommon
 #include "ospcommon/library.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -62,7 +62,7 @@ namespace ospray {
       if (!repo.libraryExists("ospray"))
         repo.addDefaultLibrary();
 
-      return createInstanceHelper<Device, OSP_DEVICE>(type);
+      return objectFactory<Device, OSP_DEVICE>(type);
     }
 
     void Device::commit()
@@ -76,10 +76,10 @@ namespace ospray {
       }
 
       auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
-      debugMode = OSPRAY_DEBUG.value_or(getParam1i("debug", 0));
+      debugMode = OSPRAY_DEBUG.value_or(getParam<int>("debug", 0));
 
       auto OSPRAY_TRACE_API = utility::getEnvVar<int>("OSPRAY_TRACE_API");
-      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam1i("traceApi", 0));
+      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam<int>("traceApi", 0));
 
       if (traceAPI) {
         auto streamPtr =
@@ -92,15 +92,18 @@ namespace ospray {
       }
 
       auto OSPRAY_LOG_LEVEL = utility::getEnvVar<int>("OSPRAY_LOG_LEVEL");
-      logLevel = OSPRAY_LOG_LEVEL.value_or(getParam1i("logLevel", 0));
+      logLevel = OSPRAY_LOG_LEVEL.value_or(getParam<int>("logLevel", 0));
 
       auto OSPRAY_THREADS = utility::getEnvVar<int>("OSPRAY_THREADS");
-      numThreads = OSPRAY_THREADS.value_or(getParam1i("numThreads", -1));
+      numThreads = OSPRAY_THREADS.value_or(getParam<int>("numThreads", -1));
 
       auto OSPRAY_LOG_OUTPUT =
           utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
 
-      auto dst = OSPRAY_LOG_OUTPUT.value_or(getParamString("logOutput"));
+      auto dst = OSPRAY_LOG_OUTPUT.value_or(
+        getParam<std::string>("logOutput", "none")
+      );
+
       if (dst == "cout")
         installStatusMsgFunc(*this, std::cout);
       else if (dst == "cerr")
@@ -111,7 +114,10 @@ namespace ospray {
       auto OSPRAY_ERROR_OUTPUT =
           utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
 
-      dst = OSPRAY_ERROR_OUTPUT.value_or(getParamString("errorOutput"));
+      dst = OSPRAY_ERROR_OUTPUT.value_or(
+        getParam<std::string>("errorOutput", "none")
+      );
+
       if (dst == "cout")
         installErrorMsgFunc(*this, std::cout);
       else if (dst == "cerr")
@@ -130,7 +136,7 @@ namespace ospray {
                                                             AFFINITIZE;
       }
 
-      threadAffinity = getParam1i("setAffinity", threadAffinity);
+      threadAffinity = getParam<int>("setAffinity", threadAffinity);
 
       tasking::initTaskingSystem(numThreads);
 

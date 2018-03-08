@@ -14,44 +14,49 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Selector.h"
+#pragma once
+
+#include "Visitor.h"
+#include "../common/Node.h"
 
 namespace ospray {
   namespace sg {
 
-    Selector::Selector()
+    //Visitor node used to set nodes to valid
+    struct VerifyNodes : public Visitor
     {
-      setValue(0.f);
-      createChild("index", "int", 0);
+      VerifyNodes(bool errorOut = true) : errorOnInvalid(errorOut) {}
+
+      bool operator()(Node &node, TraversalContext &) override;
+      void postChildren(Node &node, TraversalContext &) override;
+
+    private:
+
+      bool errorOnInvalid = true;
+    };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    inline bool VerifyNodes::operator()(Node &node, TraversalContext &)
+    {
+      bool traverseChildren =
+          !(node.properties.valid &&
+          (node.childrenLastModified() < node.properties.lastVerified));
+      node.properties.valid = node.computeValid();
+      node.properties.lastVerified = TimeStamp();
+
+      return traverseChildren;
     }
 
-    void Selector::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
+    inline void VerifyNodes::postChildren(Node &node, TraversalContext &)
     {
-      if (operation == "render")
-      {
-        traverseChildren = false;
-         const int index = child("index").valueAs<int>();
-         const int numChildren = properties.children.size();
-         if (index < numChildren - 2 && index >= 0)
-         {
-           int i = 0;
-           for(auto &child : properties.children)
-           {
-             if (child.second->name() != "index" && child.second->name() != "bounds")
-             {
-               if (i++ == index)
-                 child.second->finalize(ctx);
-             }
-           }
-         }
+      for (const auto &child : node.properties.children) {
+        if (child.second->flags() & NodeFlags::required)
+          node.properties.valid &= child.second->isValid();
       }
-      else
-      {
-        Node::preTraverse(ctx,operation, traverseChildren);
-      }
+      if (errorOnInvalid && !node.properties.valid)
+        throw std::runtime_error(node.name() + " was marked invalid");
     }
-
-    OSP_REGISTER_SG_NODE(Selector);
 
   } // ::ospray::sg
 } // ::ospray

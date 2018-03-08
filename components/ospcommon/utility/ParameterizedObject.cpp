@@ -14,32 +14,48 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "ParameterizedObject.h"
 
-#include "embree2/rtcore.isph"
+#include <algorithm>
 
-#include "OSPConfig.h"
+namespace ospcommon {
+  namespace utility {
 
-typedef unsigned int64 uint64;
-typedef unsigned int32 uint32;
-typedef unsigned int16 uint16;
-typedef unsigned int8  uint8;
+    ParameterizedObject::Param::Param(const std::string &_name) : name(_name)
+    {
+    }
 
-#define LOG(x)
+    void ParameterizedObject::removeParam(const std::string &name)
+    {
+      auto foundParam =
+          std::find_if(paramList.begin(), paramList.end(),
+            [&](const std::shared_ptr<Param> &p) {
+              return p->name == name;
+            });
 
-#define PRINT(x) print(#x" = %\n", x)
-#define PRINT3(x) print(#x" = (%, %, %)\n", get(x,0), get(x,1), get(x,2))
-// prints first unmasked element
-#define PRINTU(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
-#define PRINT3U(x) print(#x"[%] = (%, %, %)\n", count_trailing_zeros(lanemask()), extract(get(x,0), count_trailing_zeros(lanemask())), extract(get(x,1), count_trailing_zeros(lanemask())), extract(get(x,2), count_trailing_zeros(lanemask())))
+      if (foundParam != paramList.end()) {
+        paramList.erase(foundParam);
+      }
+    }
 
-/*! ispc copy of embree error handling callback */
-void error_handler(const RTCError code, const int8* str);
+    ParameterizedObject::Param *
+    ParameterizedObject::findParam(const std::string &name, bool addIfNotExist)
+    {
+      auto foundParam =
+          std::find_if(paramList.begin(), paramList.end(),
+            [&](const std::shared_ptr<Param> &p) {
+              return p->name == name;
+            });
 
+      if (foundParam != paramList.end())
+        return foundParam->get();
+      else if (addIfNotExist) {
+        paramList.push_back(std::make_shared<Param>(name));
+        return paramList[paramList.size()-1].get();
+      }
+      else
+        return nullptr;
+    }
 
-/*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
-export void delete_uniform(void *uniform uptr);
-
-/*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
-extern "C" void *uniform malloc64(uniform uint64 size);
-extern "C" void free64(void *uniform ptr);
+  } // ::ospcommon::utility
+} // ::ospcommon
