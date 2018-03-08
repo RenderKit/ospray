@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "Node.h"
+#include "../visitor/VerifyNodes.h"
 
 #include "ospcommon/utility/StringManip.h"
 
@@ -369,12 +370,28 @@ namespace ospray {
 
     // Traversal interface ////////////////////////////////////////////////////
 
+    void Node::verify()
+    {
+      traverse(VerifyNodes{false});
+    }
+
+    void Node::commit()
+    {
+      traverse("commit");
+    }
+
+    void Node::finalize(RenderContext &ctx)
+    {
+      traverse(ctx, "render");
+    }
+
+    void Node::animate()
+    {
+      traverse("animate");
+    }
+
     void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
-      //TODO: make child m time propagate
-      if (operation != "verify" && operation != "print" && !isValid())
-        return;
-
       ctx._childMTime = TimeStamp();
       bool traverseChildren = true;
       preTraverse(ctx, operation, traverseChildren);
@@ -406,11 +423,6 @@ namespace ospray {
           preCommit(ctx);
         else
           traverseChildren = false;
-      } else if (operation == "verify") {
-        if (properties.valid && childrenLastModified() < properties.lastVerified)
-          traverseChildren = false;
-        properties.valid = computeValid();
-        properties.lastVerified = TimeStamp();
       }
     }
 
@@ -421,17 +433,7 @@ namespace ospray {
            childrenLastModified() >= lastCommitted())) {
         postCommit(ctx);
         markAsCommitted();
-      } else if (operation == "verify") {
-        for (const auto &child : properties.children) {
-          if (child.second->flags() & NodeFlags::required)
-            properties.valid &= child.second->isValid();
-        }
       }
-    }
-
-    void Node::commit()
-    {
-      traverse("commit");
     }
 
     void Node::preCommit(RenderContext &)

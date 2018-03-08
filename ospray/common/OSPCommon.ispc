@@ -14,32 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "OSPCommon.ih"
 
+//embree
 #include "embree2/rtcore.isph"
 
-#include "OSPConfig.h"
+//extern "C" void abort ();
+//extern "C" void exit(uniform int);
+//extern "C" uniform int puts ( const uniform int8* uniform str );
+//extern "C" uniform int putchar ( uniform int character );
 
-typedef unsigned int64 uint64;
-typedef unsigned int32 uint32;
-typedef unsigned int16 uint16;
-typedef unsigned int8  uint8;
+void error_handler(const RTCError code, const int8* str)
+{
+  print("Embree: ");
+  switch (code) {
+  case RTC_UNKNOWN_ERROR    : print("RTC_UNKNOWN_ERROR"); break;
+  case RTC_INVALID_ARGUMENT : print("RTC_INVALID_ARGUMENT"); break;
+  case RTC_INVALID_OPERATION: print("RTC_INVALID_OPERATION"); break;
+  case RTC_OUT_OF_MEMORY    : print("RTC_OUT_OF_MEMORY"); break;
+  case RTC_UNSUPPORTED_CPU  : print("RTC_UNSUPPORTED_CPU"); break;
+  default                   : print("invalid error code"); break;
+  }
+  if (str) { 
+    print("(%)", str);
+  }
+  assert(0);
+}
 
-#define LOG(x)
-
-#define PRINT(x) print(#x" = %\n", x)
-#define PRINT3(x) print(#x" = (%, %, %)\n", get(x,0), get(x,1), get(x,2))
-// prints first unmasked element
-#define PRINTU(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
-#define PRINT3U(x) print(#x"[%] = (%, %, %)\n", count_trailing_zeros(lanemask()), extract(get(x,0), count_trailing_zeros(lanemask())), extract(get(x,1), count_trailing_zeros(lanemask())), extract(get(x,2), count_trailing_zeros(lanemask())))
-
-/*! ispc copy of embree error handling callback */
-void error_handler(const RTCError code, const int8* str);
-
-
-/*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
-export void delete_uniform(void *uniform uptr);
-
-/*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
-extern "C" void *uniform malloc64(uniform uint64 size);
-extern "C" void free64(void *uniform ptr);
+export void delete_uniform(void *uniform uptr)
+{
+  delete uptr;
+}

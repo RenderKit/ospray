@@ -393,12 +393,12 @@ namespace ospray {
       int _ac = 2;
       const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
 
-      std::string mode = getParamString("mpiMode", "mpi");
+      std::string mode = getParam<std::string>("mpiMode", "mpi");
 
       if (mode == "mpi") {
         createMPI_RanksBecomeWorkers(&_ac,_av);
       } else if(mode == "mpi-launch") {
-        std::string launchCommand = getParamString("launchCommand", "");
+        std::string launchCommand = getParam<std::string>("launchCommand", "");
 
         if (launchCommand.empty()) {
           throw std::runtime_error("You must provide the launchCommand "
@@ -410,7 +410,7 @@ namespace ospray {
         createMPI_ListenForWorkers(&_ac,_av);
       } else if (mode == "mpi-connect") {
         std::string portName =
-            getParamString("portName", "");
+            getParam<std::string>("portName", "");
 
         if (portName.empty()) {
           throw std::runtime_error("You must provide the port name string "
@@ -448,14 +448,14 @@ namespace ospray {
           getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
 
       auto useDynamicLoadBalancer =
-          getParam1i("dynamicLoadBalancer",
+          getParam<int>("dynamicLoadBalancer",
                      OSPRAY_DYNAMIC_LOADBALANCER.value_or(false));
 
       auto OSPRAY_PREALLOCATED_TILES =
           utility::getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
 
       auto preAllocatedTiles =
-          OSPRAY_PREALLOCATED_TILES.value_or(getParam1i("preAllocatedTiles",4));
+          OSPRAY_PREALLOCATED_TILES.value_or(getParam<int>("preAllocatedTiles",4));
 
       work::SetLoadBalancer slbWork(ObjectHandle(),
                                     useDynamicLoadBalancer,
@@ -846,11 +846,9 @@ namespace ospray {
                                     char **value)
     {
       ManagedObject *object = ((ObjectHandle&)_object).lookup();
-      ManagedObject::Param *param = object->findParam(name);
-      bool foundParameter = (param != nullptr && param->data.is<std::string>());
-      if (foundParameter) {
+      if (object->hasParam(name)) {
         *value = new char[2048];
-        strncpy(*value, param->data.get<std::string>().c_str(), 2048);
+        strncpy(*value, object->getParam<std::string>(name, "").c_str(), 2048);
         return true;
       }
       return false;

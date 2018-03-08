@@ -196,6 +196,32 @@ namespace ospray {
 
       // Traversal interface //////////////////////////////////////////////////
 
+      //! Use a custom provided node visitor to visit each node
+      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
+      void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
+
+      //! Helper overload to traverse with a default constructed TravesalContext
+      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
+      void traverse(VISITOR_T &&visitor);
+
+      //! Invoke a "verify" traversal of the scene graph (and possibly
+      //  its children)
+      void verify();
+
+      //! Invoke a "commit" traversal of the scene graph (and possibly
+      //  its children)
+      void commit();
+
+      //! Invoke a "finalize" traversal of the scene graph (and possibly
+      //  its children)
+      void finalize(RenderContext &ctx);
+
+      //! Invoke a "animate" traversal of the scene graph (and possibly
+      //  its children)
+      void animate();
+
+    protected:
+
       //! traverse this node and children with given operation, such as
       //  print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
@@ -213,25 +239,11 @@ namespace ospray {
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation);
 
-      //! Use a custom provided node visitor to visit each node
-      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
-      void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
-
-      //! Helper overload to traverse with a default constructed TravesalContext
-      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
-      void traverse(VISITOR_T &&visitor);
-
-      //! Invoke a "commit" traversal of the scene graph (and possibly
-      //  its children)
-      virtual void commit();
-
       //! Called before committing children during traversal
       virtual void preCommit(RenderContext &ctx);
 
       //! Called after committing children during traversal
       virtual void postCommit(RenderContext &ctx);
-
-    protected:
 
       struct
       {

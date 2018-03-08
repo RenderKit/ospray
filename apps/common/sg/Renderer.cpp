@@ -262,7 +262,7 @@ namespace ospray {
 
         if (child("world").childrenLastModified() > frameMTime)
         {
-          child("world").traverse(ctx, "render");
+          child("world").finalize(ctx);
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
           if (child("autoEpsilon").valueAs<bool>()) {
             const box3f bounds = child("world")["bounds"].valueAs<box3f>();

@@ -18,6 +18,7 @@
 
 // ospcommon
 #include "ospcommon/utility/Any.h"
+#include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "ospray/OSPDataType.h"
 #include "common/OSPCommon.h"
@@ -105,9 +106,12 @@ namespace ospray {
     </dl>
 
    */
-  struct OSPRAY_CORE_INTERFACE ManagedObject : public memory::RefCount
+  struct OSPRAY_SDK_INTERFACE ManagedObject
+    : public memory::RefCount,
+      public utility::ParameterizedObject
   {
-    /*! \brief constructor */
+    using OSP_PTR = ManagedObject*;
+
     ManagedObject() = default;
 
     /*! \brief destructor, frees the ISPC-side allocated memory pointed to by
@@ -127,43 +131,6 @@ namespace ospray {
     /*! return the ISPC equivalent of this class */
     void *getIE() const;
 
-    // ------------------------------------------------------------------
-    // everything related to finding/getting/setting parameters
-    // ------------------------------------------------------------------
-
-    /*! \brief container for _any_ sort of parameter an app can assign
-        to an ospray object */
-    struct OSPRAY_CORE_INTERFACE Param
-    {
-      Param(const char *name);
-      ~Param();
-
-      using OSP_PTR = ManagedObject*;
-
-      template <typename T>
-      void set(const T &v) { data = v; }
-
-      utility::Any data;
-
-      /*! name under which this parameter is registered */
-      std::string name;
-    };
-
-    /*! \brief find a given parameter, or add it if not exists (and so
-     *         specified) */
-    Param *findParam(const char *name, bool addIfNotExist = false);
-
-    /*! \brief check if a given parameter is available */
-    bool hasParam(const char *name);
-
-    void removeParam(const char *name);
-
-    /*! set a parameter with given name to given value, create param if not
-     *  existing */
-    template<typename T>
-    void set(const char *name, const T &t);
-
-    /*! @{ */
     /*! \brief find the named parameter, and return its object value if
         available; else return 'default' value
 
@@ -188,7 +155,6 @@ namespace ospray {
     void *getParamVoidPtr(const char *name, void * valIfNotFound);
     std::string getParamString(const char *name,
                                std::string valIfNotFound = "");
-    /*! @} */
 
     // ------------------------------------------------------------------
     // functions to allow objects (called a 'listener') to track
@@ -239,12 +205,6 @@ namespace ospray {
        dies */
     std::set<ManagedObject *> objectsListeningForChanges;
 
-    /*! \brief list of parameters attached to this object */
-    // NOTE(jda) - Use std::shared_ptr because copy/move of a ManagedObject
-    //             would end up copying parameters, where destruction of each
-    //             copy should only result in freeing the parameters *once*
-    std::vector<std::shared_ptr<Param>> paramList;
-
     /*! \brief a global ID that can be used for referencing an object remotely*/
     id_t ID {(id_t)-1};
 
@@ -264,33 +224,10 @@ namespace ospray {
     return ispcEquivalent;
   }
 
-  inline bool ManagedObject::hasParam(const char *name)
-  {
-    return findParam(name,false) != nullptr;
-  }
-
   inline Data*
   ManagedObject::getParamData(const char *name, Data *valIfNotFound)
   {
     return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound);
-  }
-
-  // OSPRay's parameters cannot be bool, explicitely use int instead
-  template <>
-  inline void ManagedObject::Param::set(const bool &v) { set<int>(v); }
-
-  template<typename T>
-  inline void ManagedObject::set(const char *name, const T &t)
-  {
-    findParam(name, true)->set(t);
-  }
-
-  template <>
-  inline
-  void ManagedObject::Param::set(const ManagedObject::Param::OSP_PTR &object)
-  {
-    if (object) object->refInc();
-    data = object;
   }
 
 #define OSP_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
@@ -303,3 +240,26 @@ namespace ospray {
   Object *ospray_create_##object_name##__##external_name()
 
 } // ::ospray
+
+// Specializations for ISPCDevice /////////////////////////////////////////////
+
+namespace ospcommon {
+  namespace utility {
+
+    // OSPRay's parameters cannot be bool, explicitely use int instead
+    template <>
+    inline void ParameterizedObject::Param::set(const bool &v)
+    {
+      set<int>(v);
+    }
+
+    template <>
+    inline void
+    ParameterizedObject::Param::set(const ospray::ManagedObject::OSP_PTR &object)
+    {
+      if (object) object->refInc();
+      data = object;
+    }
+
+  } // ::ospcommon::utility
+} // ::ospcommon
