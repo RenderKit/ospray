@@ -33,7 +33,7 @@ struct MicrofacetDielectricLayer
   vec3f transmittance;
   float thickness;
   GGXDistribution microfacet;
-  float reflectionWeight;
+  float weight;
 };
 
 inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform super,
@@ -56,14 +56,14 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
   float lengthI1 = (cosThetaI > 0.f) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
-  substrate.value = substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1));
+  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
 
   // Compute the final substrate reflection/transmission
   // Ignore Fresnel for the exiting reflection ray
-  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->reflectionWeight, LCG_getFloat2(lcg));
+  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->weight, LCG_getFloat2(lcg));
   substrate.value = substrate.value * T;
 
-  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->reflectionWeight); // have to use the macronormal for sampling
+  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->weight); // have to use the macronormal for sampling
   float substratePickProb = 1.f - coatingPickProb;
 
   if (cosThetaI > 0.f)
@@ -73,7 +73,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
     float cosThetaOH = dot(wo, wh);
 
     // Fresnel term
-    float F = fresnelDielectricWeighted(cosThetaOH, self->eta, self->reflectionWeight);
+    float F = fresnelDielectricWeighted(cosThetaOH, self->eta, self->weight);
 
     // Evaluate the coating reflection
     float cosThetaH = dot(wh, getN(super));
@@ -115,7 +115,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   vec3f wh;
   BSDF_EvalRes substrate;
 
-  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->reflectionWeight); // only the macronormal is available yet
+  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->weight); // only the macronormal is available yet
   float substratePickProb = 1.f - coatingPickProb;
 
   if (ss < coatingPickProb)
@@ -156,11 +156,11 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
   float lengthI1 = (cosThetaI > 0.f) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
-  substrate.value = substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1));
+  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
 
   // Compute the final substrate reflection/transmission
   // Ignore Fresnel for the exiting reflection ray
-  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->reflectionWeight, LCG_getFloat2(lcg));
+  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->weight, LCG_getFloat2(lcg));
   substrate.value = substrate.value * T;
 
   if (res.type & BSDF_SPECULAR)
@@ -179,7 +179,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   else
   {
     // Fresnel term
-    float F = fresnelDielectricWeighted(cosThetaOH, self->eta, self->reflectionWeight);
+    float F = fresnelDielectricWeighted(cosThetaOH, self->eta, self->weight);
 
     // Evaluate the coating reflection
     float cosThetaH = dot(wh, getN(super));
@@ -202,7 +202,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 
 inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLayer* uniform self, const varying linear3f* uniform frame,
                                                   varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness,
-                                                  float reflectionWeight)
+                                                  float weight)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | substrate->type,
                    MicrofacetDielectricLayer_eval, MicrofacetDielectricLayer_sample,
@@ -213,31 +213,31 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
   self->transmittance = transmittance;
   self->thickness = thickness;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
-  self->reflectionWeight = reflectionWeight;
+  self->weight = weight;
 }
 
 inline varying BSDF* uniform MicrofacetDielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                                               varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness,
-                                                              float reflectionWeight)
+                                                              float weight)
 {
   varying MicrofacetDielectricLayer* uniform self = (varying MicrofacetDielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectricLayer));
-  MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness, reflectionWeight);
+  MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness, weight);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
 inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO, float eta, vec3f transmittance, float thickness, float roughness,
-                                                       float reflectionWeight, unsigned int& lcg)
+                                                       float weight, unsigned int& lcg)
 {
   GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
 
   // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float lengthO1 = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
-  vec3f value = pow(transmittance, thickness * lengthO1);
+  vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
 
   // Compute the final transmittance
-  float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
+  float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, weight, LCG_getFloat2(lcg));
   value = value * T;
   return value;
 }
