@@ -155,6 +155,36 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   return res;
 }
 
+// Computes the transmittance through a rough dielectric surface, which requires sampling a microfacet normal
+inline float MicrofacetDielectric_transmittance(float cosThetaO, float eta, const GGXDistribution& microfacet,
+                                                float reflectionWeight, const vec2f& s)
+{
+  // Make an outgoing vector
+  vec3f wo = make_vec3f(cos2sin(cosThetaO), 0.f, cosThetaO);
+
+  // Sample the microfacet normal
+  float whPdf;
+  vec3f wh = sampleVisibleUH(microfacet, wo, whPdf, s);
+
+  float cosThetaOH = dot(wo, wh);
+
+  // Fresnel term
+  float cosThetaTH; // positive
+  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, eta, reflectionWeight);
+
+  // Sample the transmission
+  // cosThetaTH = -cosThetaIH
+  vec3f wi = refract(wo, wh, cosThetaOH, cosThetaTH, eta);
+  float cosThetaI = wi.z;
+  if (cosThetaI >= 0.f)
+    return 0.f;
+
+  float cosThetaIH = dot(wi, wh);
+  float G = evalG2(microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+
+  return (1.f-F) * (G * rcp_safe(evalG1(microfacet, cosThetaO, cosThetaOH)));
+}
+
 inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* uniform self,
                                              const varying linear3f* uniform frame,
                                              float eta, float roughness,
@@ -178,4 +208,12 @@ inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext*
     (varying MicrofacetDielectric* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectric));
   MicrofacetDielectric_Constructor(self, frame, eta, roughness, reflectionWeight);
   return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline float MicrofacetDielectric_getTransparency(float cosThetaO, float eta, float roughness,
+                                                  float reflectionWeight, unsigned int& lcg)
+{
+  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
+  return MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
 }

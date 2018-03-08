@@ -16,9 +16,7 @@
 
 #pragma once
 
-#include "BSDF.ih"
-#include "Fresnel.ih"
-#include "GGXDistribution.ih"
+#include "MicrofacetDielectric.ih"
 
 // Simplified Weidlich-Wilkie microfacet coating BSDF with the Smith microsurface model.
 // Refraction for all rays and Fresnel for exiting reflection rays are ignored, but absorption
@@ -37,35 +35,6 @@ struct MicrofacetDielectricLayer
   GGXDistribution microfacet;
   float reflectionWeight;
 };
-
-// Computes the transmittance through the rough coating surface, which requires sampling a microfacet normal
-inline float MicrofacetDielectricLayer_microfacetTransmittance(const varying BSDF* uniform super,
-                                                               const vec3f& wo, float cosThetaO, unsigned int& lcg)
-{
-  const varying MicrofacetDielectricLayer* uniform self = (const varying MicrofacetDielectricLayer* uniform)super;
-
-  // Sample the microfacet normal
-  float whPdf;
-  vec3f wh = getFrame(super) * sampleVisibleUH(self->microfacet, transposed(getFrame(super)) * wo, whPdf, LCG_getFloat2(lcg));
-
-  float cosThetaOH = dot(wo, wh);
-
-  // Fresnel term
-  float cosThetaTH; // positive
-  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
-
-  // Sample the transmission
-  // cosThetaTH = -cosThetaIH
-  vec3f wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
-  float cosThetaI = dot(wi, getN(super));
-  if (cosThetaI >= 0.f)
-    return 0.f;
-
-  float cosThetaIH = dot(wi, wh);
-  float G = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
-
-  return (1.f-F) * (G * rcp_safe(evalG1(self->microfacet, cosThetaO, cosThetaOH)));
-}
 
 inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform super,
                                                    const vec3f& wo, const vec3f& wi, unsigned int& lcg)
@@ -91,7 +60,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
 
   // Compute the final substrate reflection/transmission
   // Ignore Fresnel for the exiting reflection ray
-  float T = MicrofacetDielectricLayer_microfacetTransmittance(super, wo, cosThetaO, lcg);
+  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->reflectionWeight, LCG_getFloat2(lcg));
   substrate.value = substrate.value * T;
 
   float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->reflectionWeight); // have to use the macronormal for sampling
@@ -191,7 +160,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 
   // Compute the final substrate reflection/transmission
   // Ignore Fresnel for the exiting reflection ray
-  float T = MicrofacetDielectricLayer_microfacetTransmittance(super, wo, cosThetaO, lcg);
+  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->reflectionWeight, LCG_getFloat2(lcg));
   substrate.value = substrate.value * T;
 
   if (res.type & BSDF_SPECULAR)

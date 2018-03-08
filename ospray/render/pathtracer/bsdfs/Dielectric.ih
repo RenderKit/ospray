@@ -84,3 +84,9 @@ inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform c
   Dielectric_Constructor(self, frame, eta, reflectionWeight);
   return &self->super;
 }
+
+// Helper function for transparent shadow rays
+inline float Dielectric_getTransparency(float cosThetaO, float eta, float reflectionWeight)
+{
+  return 1.f - fresnelDielectricWeighted(cosThetaO, eta, reflectionWeight);
+}
