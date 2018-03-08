@@ -47,14 +47,6 @@ inline std::string getPidString()
   return s;
 }
 
-inline std::string toString(OSPObject obj)
-{
-  if (obj)
-    return ((ospray::ManagedObject*)obj)->toString();
-  else
-    return "nullptr";
-}
-
 #define ASSERT_DEVICE() if (!deviceIsSet())                                   \
     throw std::runtime_error("OSPRay not yet initialized "                    \
                              "(most likely this means you tried to "          \
@@ -606,7 +598,7 @@ extern "C" void ospDeviceSetString(OSPDevice _object,
                                    const char *s)
 OSPRAY_CATCH_BEGIN
 {
-  ManagedObject *object = (ManagedObject *)_object;
+  Device *object = (Device *)_object;
   object->setParam<std::string>(id, s);
 }
 OSPRAY_CATCH_END()
@@ -614,7 +606,7 @@ OSPRAY_CATCH_END()
 extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
 OSPRAY_CATCH_BEGIN
 {
-  ManagedObject *object = (ManagedObject *)_object;
+  Device *object = (Device *)_object;
   object->setParam(id, x);
 }
 OSPRAY_CATCH_END()
@@ -622,7 +614,7 @@ OSPRAY_CATCH_END()
 extern "C" void ospDeviceSetVoidPtr(OSPDevice _object, const char *id, void *v)
 OSPRAY_CATCH_BEGIN
 {
-  ManagedObject *object = (ManagedObject *)_object;
+  Device *object = (Device *)_object;
   object->setParam(id, v);
 }
 OSPRAY_CATCH_END()

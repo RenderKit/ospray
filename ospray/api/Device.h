@@ -20,7 +20,6 @@
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "common/OSPCommon.h"
-#include "common/Managed.h"
 // std
 #include <functional>
 
