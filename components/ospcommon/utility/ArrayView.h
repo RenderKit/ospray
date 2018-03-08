@@ -17,10 +17,8 @@
 #pragma once
 
 #include "../common.h"
-#include "../TypeTraits.h"
 
 #include <array>
-#include <iterator>
 #include <vector>
 
 namespace ospcommon {

@@ -1,4 +1,4 @@
-# ======================================================================== ##
+## ======================================================================== ##
 ## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
@@ -17,7 +17,5 @@
 OSPRAY_CREATE_APPLICATION(ospBenchmark
   bench.cpp
 LINK
-  ospray
-  ospray_common
-  ospray_sg
+  ospray_app
 )

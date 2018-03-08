@@ -14,15 +14,20 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/geometry/TriangleMesh.h"
-#include "sg/common/World.h"
+#include "TriangleMesh.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {
 
-    TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
+    // Static definitions /////////////////////////////////////////////////////
+
+    std::string TriangleMesh::geometry_type = "trianglemesh";
+
+    // TriangleMesh definitions ///////////////////////////////////////////////
+
+    TriangleMesh::TriangleMesh() : Geometry(TriangleMesh::geometry_type)
     {
-      createChild("materialList", "MaterialList");
     }
 
     std::string TriangleMesh::toString() const
@@ -41,53 +46,15 @@ namespace ospray {
       return bounds;
     }
 
-    //! \brief Initialize this node's value from given XML node
-    /*!
-      \detailed This allows a plug-and-play concept where a XML
-      file can specify all kind of nodes wihout needing to know
-      their actual types: The XML parser only needs to be able to
-      create a proper C++ instance of the given node type (the
-      OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
-      tell the node to parse itself from the given XML content and
-      XML children
-
-      \param node The XML node specifying this node's fields
-
-      \param binBasePtr A pointer to an accompanying binary file (if
-      existant) that contains additional binary data that the xml
-      node fields may point into
-    */
-    void TriangleMesh::setFromXML(const xml::Node &, const unsigned char *)
-    {
-      NOT_IMPLEMENTED;
-    }
-
     void TriangleMesh::preCommit(RenderContext &ctx)
     {
       // NOTE(jda) - how many buffers to we minimally _have_ to have?
-      if (!hasChild("vertex") || !hasChild("index"))
-        throw std::runtime_error("#osp.sg - error, invalid TriangleMesh!");
+      if (!hasChild("vertex"))
+          throw std::runtime_error("#osp.sg - error, TriangleMesh has no 'vertex' field!");
+      if (!hasChild("index"))
+          throw std::runtime_error("#osp.sg - error, TriangleMesh has no 'index' field!");
 
       Geometry::preCommit(ctx);
-    }
-
-    void TriangleMesh::postCommit(RenderContext &ctx)
-    {
-      auto materialListNode = child("materialList").nodeAs<MaterialList>();
-      const auto &materialList = materialListNode->nodes;
-      if (!materialList.empty()) {
-        std::vector<OSPObject> mats;
-        for (auto mat : materialList) {
-          auto m = mat->valueAs<OSPObject>();
-          if (m)
-            mats.push_back(m);
-        }
-        auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
-        ospCommit(ospMaterialList);
-        ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
-      }
-
-      Geometry::postCommit(ctx);
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

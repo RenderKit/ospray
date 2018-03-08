@@ -22,6 +22,11 @@
 
 namespace ospray {
 
+  StructuredVolume::~StructuredVolume()
+  {
+    if (ispcEquivalent) ispc::StructuredVolume_destroy(ispcEquivalent);
+  }
+
   std::string StructuredVolume::toString() const
   {
     return("ospray::StructuredVolume<" + voxelType + ">");
@@ -126,8 +131,8 @@ namespace ospray {
   void StructuredVolume::finish()
   {
     // Make the voxel value range visible to the application.
-    if (findParam("voxelRange") == NULL)
-      set("voxelRange", voxelRange);
+    if (!hasParam("voxelRange"))
+      setParam("voxelRange", voxelRange);
     else
       voxelRange = getParam2f("voxelRange", voxelRange);
 

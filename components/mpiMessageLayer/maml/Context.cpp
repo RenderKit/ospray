@@ -1,23 +1,23 @@
-// ************************************************************************** //
-// Copyright 2016 Ingo Wald                                                   //
-//                                                                            //
-// Licensed under the Apache License, Version 2.0 (the "License");            //
-// you may not use this file except in compliance with the License.           //
-// You may obtain a copy of the License at                                    //
-//                                                                            //
-// http://www.apache.org/licenses/LICENSE-2.0                                 //
-//                                                                            //
-// Unless required by applicable law or agreed to in writing, software        //
-// distributed under the License is distributed on an "AS IS" BASIS,          //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   //
-// See the License for the specific language governing permissions and        //
-// limitations under the License.                                             //
-// ************************************************************************** //
+// ======================================================================== //
+// Copyright 2016-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #include "Context.h"
 #include <iostream>
 
-#include "ospcommon/malloc.h"
+#include "ospcommon/memory/malloc.h"
 #include "ospcommon/tasking/async.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -60,23 +60,6 @@ namespace maml {
   void Context::send(std::shared_ptr<Message> msg)
   {
     outbox.push_back(msg);
-  }
-
-  void Context::processInboxTask()
-  {
-    while(tasksAreRunning)
-      processInboxMessages();
-  }
-
-  void Context::mpiSendAndRecieveTask()
-  {
-    while(tasksAreRunning) {
-      sendMessagesFromOutbox();
-      pollForAndRecieveMessages();
-
-      waitOnSomeSendRequests();
-      waitOnSomeRecvRequests();
-    }
   }
 
   void Context::processInboxMessages()
@@ -205,38 +188,32 @@ namespace maml {
     if (!isRunning()) {
       tasksAreRunning = true;
 
+      auto launchMethod = AsyncLoop::LaunchMethod::AUTO;
+
       auto MAML_SPAWN_THREADS = getEnvVar<int>("MAML_SPAWN_THREADS");
-
-      useTaskingSystem = !MAML_SPAWN_THREADS.value_or(numTaskingThreads() < 4);
-
-      if (useTaskingSystem) {
-        sendReceiveFuture = ospcommon::tasking::async([&](){
-          mpiSendAndRecieveTask();
-        });
-
-        processInboxFuture = ospcommon::tasking::async([&](){
-          processInboxTask();
-        });
-      } else {
-        if (!sendReceiveThread.get()) {
-          sendReceiveThread = make_unique<AsyncLoop>([&](){
-            sendMessagesFromOutbox();
-            pollForAndRecieveMessages();
-
-            waitOnSomeSendRequests();
-            waitOnSomeRecvRequests();
-          });
-        }
-
-        if (!processInboxThread.get()) {
-          processInboxThread = make_unique<AsyncLoop>([&](){
-            processInboxMessages();
-          });
-        }
-
-        sendReceiveThread->start();
-        processInboxThread->start();
+      if (MAML_SPAWN_THREADS) {
+        launchMethod = MAML_SPAWN_THREADS.value() ?
+            AsyncLoop::LaunchMethod::THREAD : AsyncLoop::LaunchMethod::TASK;
       }
+
+      if (!sendReceiveThread.get()) {
+        sendReceiveThread = make_unique<AsyncLoop>([&](){
+          sendMessagesFromOutbox();
+          pollForAndRecieveMessages();
+
+          waitOnSomeSendRequests();
+          waitOnSomeRecvRequests();
+        }, launchMethod);
+      }
+
+      if (!processInboxThread.get()) {
+        processInboxThread = make_unique<AsyncLoop>([&](){
+          processInboxMessages();
+        }, launchMethod);
+      }
+
+      sendReceiveThread->start();
+      processInboxThread->start();
     }
   }
 
@@ -253,18 +230,8 @@ namespace maml {
   void Context::stop()
   {
     tasksAreRunning = false;
-
-    if (useTaskingSystem) {
-      if (sendReceiveFuture.valid())
-        sendReceiveFuture.wait();
-
-      if (processInboxFuture.valid())
-        processInboxFuture.wait();
-    } else {
-      sendReceiveThread->stop();
-      processInboxThread->stop();
-    }
-
+    sendReceiveThread->stop();
+    processInboxThread->stop();
     flushRemainingMessages();
   }
 

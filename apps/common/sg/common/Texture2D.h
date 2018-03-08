@@ -17,8 +17,8 @@
 #pragma once
 
 // sg
-#include "sg/common/Node.h"
-#include "sg/common/Data.h"
+#include "Node.h"
+#include "Data.h"
 // ospcommon
 #include "ospcommon/FileName.h"
 
@@ -30,6 +30,7 @@ namespace ospray {
     {
       /*! constructor */
       Texture2D();
+      ~Texture2D() override;
 
       virtual void preCommit(RenderContext &ctx) override;
 

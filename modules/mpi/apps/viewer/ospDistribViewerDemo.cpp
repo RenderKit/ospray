@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright 2017-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include <random>
 #include <algorithm>
 #include <array>
@@ -142,6 +158,7 @@ int main(int argc, char **argv) {
   float varianceThreshold = 0.0f;
   FileName transferFcnFile;
   bool appInitMPI = false;
+  size_t nlocalBricks = 1;
 
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
@@ -164,6 +181,8 @@ int main(int argc, char **argv) {
       transferFcnFile = argv[++i];
     } else if (arg == "-appMPI") {
       appInitMPI = true;
+    } else if (arg == "-nlocal-bricks") {
+      nlocalBricks = std::stol(argv[++i]);
     }
   }
   if (!volumeFile.empty()) {
@@ -177,6 +196,10 @@ int main(int argc, char **argv) {
     }
     if (valueRange == vec2f(-1)) {
       std::cerr << "Error: -range X Y is required to set transfer function range\n";
+      return 1;
+    }
+    if (nlocalBricks != 1) {
+      std::cerr << "Error: -nlocal-bricks only makes supported for generated volumes\n";
       return 1;
     }
   }
@@ -202,41 +225,50 @@ int main(int argc, char **argv) {
 
   AppState app;
   Model model;
-  gensv::LoadedVolume volume;
+  std::vector<gensv::LoadedVolume> volumes;
   box3f worldBounds;
   float sphereRadius = 0.005;
   if (!volumeFile.empty()) {
-    volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange);
+    volumes.push_back(gensv::loadVolume(volumeFile, dimensions, dtype,
+                                        valueRange));
 
     // Translate the volume to center it
     const vec3f upper = vec3f(dimensions);
     const vec3i halfLength = dimensions / 2;
     worldBounds = box3f(vec3f(-halfLength), vec3f(halfLength));
-    volume.bounds.lower -= vec3f(halfLength);
-    volume.bounds.upper -= vec3f(halfLength);
-    volume.volume.set("gridOrigin", volume.ghostGridOrigin - vec3f(halfLength));
+    volumes[0].bounds.lower -= vec3f(halfLength);
+    volumes[0].bounds.upper -= vec3f(halfLength);
+    volumes[0].volume.set("gridOrigin", volumes[0].ghostGridOrigin - vec3f(halfLength));
 
     // Pick a nice sphere radius for a consisten voxel size to
     // sphere size ratio
     sphereRadius *= dimensions.x;
   } else {
-    volume = gensv::makeVolume();
+    volumes = gensv::makeVolumes(rank * nlocalBricks, nlocalBricks,
+                                 worldSize * nlocalBricks);
     // Translate the volume to center it
     worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
-    volume.bounds.lower -= vec3f(0.5f);
-    volume.bounds.upper -= vec3f(0.5f);
-    volume.volume.set("gridOrigin", volume.ghostGridOrigin - vec3f(0.5f));
+    for (auto &v : volumes) {
+      v.bounds.lower -= vec3f(0.5f);
+      v.bounds.upper -= vec3f(0.5f);
+      v.volume.set("gridOrigin", v.ghostGridOrigin - vec3f(0.5f));
+    }
   }
-  volume.volume.commit();
-  model.addVolume(volume.volume);
-  if (nSpheres != 0) {
-    auto spheres = gensv::makeSpheres(volume.bounds, nSpheres, sphereRadius);
-    model.addGeometry(spheres);
+
+  std::vector<box3f> regions;
+  for (auto &v : volumes) {
+    v.volume.commit();
+    model.addVolume(v.volume);
+
+    if (nSpheres != 0) {
+      auto spheres = gensv::makeSpheres(v.bounds, nSpheres, sphereRadius);
+      model.addGeometry(spheres);
+    }
+    regions.push_back(v.bounds);
   }
 
   Arcball arcballCamera(worldBounds);
 
-  std::vector<box3f> regions{volume.bounds};
   ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3, regions.data());
   model.set("regions", regionData);
   model.commit();
@@ -252,7 +284,7 @@ int main(int argc, char **argv) {
   // Should just do 1 set here, which is read?
   renderer.set("model", model);
   renderer.set("camera", camera);
-  renderer.set("bgColor", vec3f(0.02));
+  renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));
   renderer.set("varianceThreshold", varianceThreshold);
   renderer.commit();
   assert(renderer);
@@ -388,9 +420,11 @@ int main(int argc, char **argv) {
       colorData.commit();
       alphaData.commit();
 
-      volume.tfcn.set("colors", colorData);
-      volume.tfcn.set("opacities", alphaData);
-      volume.tfcn.commit();
+      for (auto &v : volumes) {
+        v.tfcn.set("colors", colorData);
+        v.tfcn.set("opacities", alphaData);
+        v.tfcn.commit();
+      }
 
       fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
       app.tfcnChanged = false;
@@ -408,5 +442,4 @@ int main(int argc, char **argv) {
   }
   return 0;
 }
-
 

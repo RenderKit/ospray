@@ -1,0 +1,51 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "math/random.ih"
+
+// Hash function used in noise functions
+inline unsigned int noiseHash(const vec3ui& v, unsigned int seed)
+{
+  unsigned int hash = seed;
+  hash = MurmurHash3_mix(hash, v.x);
+  hash = MurmurHash3_mix(hash, v.y);
+  hash = MurmurHash3_mix(hash, v.z);
+  hash ^= 3*4;
+  hash = MurmurHash3_finalize(hash);
+  return hash;
+}
+
+inline unsigned int cellNoise1ui(const vec3f& v)
+{
+  const vec3ui key = intbits(floor(v));
+  return noiseHash(key, 0x537e6612);
+}
+
+inline float cellNoise1f(const vec3f& v)
+{
+  const vec3ui key = intbits(floor(v));
+  return to_float_unorm(noiseHash(key, 0x537e6612));
+}
+
+inline vec3f cellNoise3f(const vec3f& v)
+{
+  const vec3ui key = intbits(floor(v));
+  return make_vec3f(to_float_unorm(noiseHash(key, 0xf7acd0ce)),
+                    to_float_unorm(noiseHash(key, 0x6e2bf582)),
+                    to_float_unorm(noiseHash(key, 0xc6ae6d0d)));
+}

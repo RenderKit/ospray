@@ -187,10 +187,18 @@ namespace ospcommon
   }
 #endif
 
-  /*! selects */
-  __forceinline bool  select(bool s, bool  t , bool f) { return s ? t : f; }
-  __forceinline int   select(bool s, int   t,   int f) { return s ? t : f; }
-  __forceinline float select(bool s, float t, float f) { return s ? t : f; }
+  template <typename T>
+  inline T select(const bool s, const T &t, const T &f)
+  {
+    return s ? t : f;
+  }
+
+  template <typename T>
+  inline T lerp(const float factor, const T &a, const T &b)
+  {
+     return (1.f - factor)*a + factor*b;
+  }
+
 
   template<typename T>
     __forceinline T lerp2(const float x0, const float x1, const float x2, const float x3,const T &u, const T &v) {

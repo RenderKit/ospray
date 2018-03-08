@@ -14,220 +14,128 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
-// header
-#include "SceneGraph.h"
 #include "Importer.h"
-// stl
-#include <map>
-// xml
-#include "common/xml/XML.h"
+
+#include "../volume/AMRVolume.h"
+
+#include "ospcommon/utility/StringManip.h"
 
 namespace ospray {
   namespace sg {
 
-    /*! create a node of given type if registered (and tell it to
-      parse itself from that xml node), or throw an exception if
-      unkown node type */
-    std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node,
-                                             const unsigned char *binBasePtr)
-    {
-      std::string name = "untitled";
-      if (node.hasProp("name"))
-        name = node.getProp("name");
-
-      std::shared_ptr<sg::Node> newNode = createNode(name, node.name);
-      if (!newNode.get())
-        throw std::runtime_error("could not create scene graph node");
-
-      newNode->setFromXML(node,binBasePtr);
-
-      return newNode;
-    }
-
-    // ==================================================================
-    // XLM parser
-    // ==================================================================
-
-    std::shared_ptr<sg::Node> parseNode(const xml::Node &node);
-
-    bool parseParam(std::shared_ptr<sg::Node> target, const xml::Node &node)
-    {
-      const std::string name = node.getProp("name");
-
-      if (name.empty()) {
-        return false;
-      } else if (node.name == "data") {
-        assert(node.child.size() == 1);
-        std::shared_ptr<sg::Node> value = parseNode(*node.child[0]);
-        assert(value != nullptr);
-        std::shared_ptr<sg::DataBuffer> dataNode =
-            std::dynamic_pointer_cast<sg::DataBuffer>(value);
-        assert(dataNode);
-        target->createChildWithValue(name,"data",dataNode);
-        return true;
-      } else if (node.name == "object") {
-        assert(node.child.size() == 1);
-        std::shared_ptr<sg::Node> value = parseNode(*node.child[0]);
-        assert(value);
-        target->createChildWithValue(name,"object",value);
-        return true;
-      } else if (node.name == "int") {
-        target->createChildWithValue(name,"int",std::stoi(node.content));
-        return true;
-      } else if (node.name == "float") {
-        target->createChildWithValue(name,"float",std::stof(node.content));
-        return true;
-      }
-
-      return false;
-    }
-
-    std::shared_ptr<sg::Info> parseInfoNode(const xml::Node &node)
-    {
-      assert(node.name == "Info");
-      std::shared_ptr<Info> info = std::make_shared<Info>();
-      for (auto c : node.child) {
-        if (c->name == "acks")
-          info->acks = c->content;
-        else if (c->name == "description")
-          info->description = c->content;
-        else if (c->name == "permissions")
-          info->permissions = c->content;
-        else
-          throw std::runtime_error("unknown node type '"+c->name
-                                   +"' in ospray::sg::Info node");
-      }
-      return info;
-    }
-
-    void parseWorldNode(std::shared_ptr<sg::Node> world,
-                        const xml::Node &node,
-                        const unsigned char *binBasePtr)
-    {
-      for (auto c : node.child) {
-        std::shared_ptr<sg::Node> newNode = createNodeFrom(*c,binBasePtr);
-        world->add(newNode);
-      }
-    }
-
-#if 1
-    std::shared_ptr<sg::DataBuffer> parseDataNode(const xml::Node &)
-    {
-      NOTIMPLEMENTED;
-    }
-#else
-    std::shared_ptr<sg::DataBuffer> parseDataNode(const xml::Node &node)
-    {
-      assert(node.name == "Data");
-      Data *data = new Data;
-      assert(node.child.empty());
-      size_t num = atol(node.getProp("num").c_str());
-      size_t ofs = atol(node.getProp("ofs").c_str());
-      return data;
-    }
-#endif
-
-    std::shared_ptr<sg::Node> parseNode(const xml::Node &node)
-    {
-      if (node.name == "Data")
-        return parseDataNode(node);
-      if (node.name == "Info")
-        return parseInfoNode(node);
-      std::cerr << "Warning: unknown sg::Node type '" << node.name << "'"
-                << std::endl;
-      return std::shared_ptr<sg::Node>();
-    }
-
-    void importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc,
-                                   std::shared_ptr<sg::Node> world)
+    static void importStructuredVolume(std::shared_ptr<Node> world,
+                                       const xml::Node &xmlNode)
     {
       using SVFF = StructuredVolumeFromFile;
       auto volume = createNode("volume",
                                "StructuredVolumeFromFile")->nodeAs<SVFF>();
 
       vec3i dimensions(-1);
-      std::string fileName = "";
+      std::string volumeFileName = "";
       std::string voxelType = "";
-      xml::for_each_child_of(*doc->child[0],[&](const xml::Node &child){
-          if (child.name == "dimensions")
-            dimensions = toVec3i(child.content.c_str());
-          else if (child.name == "voxelType")
-            voxelType = child.content;
-          else if (child.name == "filename")
-            fileName = child.content;
-          else if (child.name == "samplingRate") {
-            // Silently ignore
-          } else {
-            throw std::runtime_error("unknown old-style osp file "
-                                     "component volume::" + child.name);
-          }
-        });
 
-      volume->fileNameOfCorrespondingXmlDoc = doc->fileName;
-      volume->fileName = fileName;
+      for (const auto &child : xmlNode.child) {
+        if (child.name == "dimensions")
+          dimensions = toVec3i(child.content.c_str());
+        else if (child.name == "voxelType")
+          voxelType = child.content;
+        else if (child.name == "filename")
+          volumeFileName = child.content;
+        else if (child.name == "samplingRate") {
+          // Silently ignore
+        } else {
+          throw std::runtime_error("unknown old-style osp file "
+                                   "component volume::" + child.name);
+        }
+      }
+
+      volume->fileNameOfCorrespondingXmlDoc = xmlNode.doc->fileName;
+      volume->fileName = volumeFileName;
       volume->dimensions = dimensions;
       volume->voxelType = voxelType;
 
       world->add(volume);
     }
 
-    void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName)
+    static void importRAW2AMRVolume(std::shared_ptr<Node> world,
+                                    const std::string &originalFileName,
+                                    const xml::Node &xmlNode)
     {
-      std::shared_ptr<xml::XMLDoc> doc;
-      // std::shared_ptr<xml::XMLDoc> doc = NULL;
+      FileName orgFile(originalFileName);
+
+      auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
+      std::string fileName;
+      int brickSize = -1;
+
+      for (const auto &child : xmlNode.child) {
+        if (child.name == "brickSize")
+          brickSize = std::atoi(child.content.c_str());
+        else if (child.name == "fileName")
+          fileName = orgFile.path() + child.content;
+      }
+
+      if (fileName == "") {
+        throw std::runtime_error("no child element 'fileName' specified "
+                                 "for AMR volume!");
+      } else if (brickSize == -1) {
+        throw std::runtime_error("no child element 'brickSize' specified "
+                                 "for AMR volume!");
+      }
+
+      node->parseRaw2AmrFile(fileName, brickSize);
+
+      world->add(node);
+    }
+
+#ifdef OSPRAY_APPS_SG_CHOMBO
+    static void importCHOMBOFromOSP(std::shared_ptr<Node> world,
+                                    const std::string &originalFileName,
+                                    const xml::Node &xmlNode)
+    {
+      FileName orgFile(originalFileName);
+
+      std::string fileName;
+
+      for (const auto &child : xmlNode.child) {
+        if (child.name == "fileName")
+          fileName = orgFile.path() + child.content;
+      }
+
+      if (fileName == "") {
+        throw std::runtime_error("no child element 'fileName' specified "
+                                 "for AMR volume!");
+      }
+
+      importCHOMBO(world, fileName);
+    }
+#endif
+
+    void loadOSP(std::shared_ptr<Node> world, const std::string &fileName)
+    {
       std::cout << "#osp:sg: starting to read OSPRay XML file '" << fileName
                 << "'" << std::endl;
-      doc = xml::readXML(fileName);
+
+      auto doc = xml::readXML(fileName);
+
       std::cout << "#osp:sg: XML file read, starting to parse content..."
                 << std::endl;
-      assert(doc);
 
       if (doc->child.empty())
         throw std::runtime_error("ospray xml input file does not contain any nodes!?");
 
-      /* TEMPORARY FIX while we transition old volumeViewer .osp files
-         (that are not in scene graph format) to actual scene graph */
-      if (doc->child[0]->name == "volume") {
-        importOSPVolumeViewerFile(doc, world);
-        return;
+      for (const auto &node : doc->child) {
+        auto nameLower = utility::lowerCase(node.name);
+        if (nameLower == "volume" || nameLower == "structuredvolume")
+          importStructuredVolume(world, node);
+        else if (nameLower == "amr" || nameLower == "amrvolume")
+          importRAW2AMRVolume(world, fileName, node);
+#ifdef OSPRAY_APPS_SG_CHOMBO
+        else if (nameLower == "chombo" || nameLower == "chombovolume")
+          importCHOMBOFromOSP(world, fileName, node);
+#endif
+        else
+          std::cout << "#importOSG: unknown xml tag '" << node.name << "'\n";
       }
-
-      const std::string binFileName = fileName+"bin";
-      const unsigned char * const binBasePtr = mapFile(binFileName);
-
-      if (!doc)
-        throw std::runtime_error("could not parse "+fileName);
-
-      if (doc->child.size() != 1)
-      {
-        throw std::runtime_error(
-          "not an ospray xml file (empty XML document; no 'ospray' child node)'");
-      }
-      if ((doc->child[0]->name != "ospray" && doc->child[0]->name != "OSPRay") )
-      {
-        throw std::runtime_error("not an ospray xml file (document root node is '"
-          +doc->child[0]->name+"', should be 'ospray'");
-      }
-
-      std::shared_ptr<xml::Node> root = doc->child[0];
-
-      if (root->child.size() == 1 && root->child[0]->name == "World") {
-        parseWorldNode(world,*root->child[0],binBasePtr);
-      } else {
-        parseWorldNode(world,*root,binBasePtr);
-      }
-
-      std::cout << "#osp:sg: done parsing OSP file" << std::endl;
-    }
-
-    std::shared_ptr<sg::Node> loadOSP(const std::string &fileName)
-    {
-      auto world = createNode("world", "World");
-      loadOSP(std::static_pointer_cast<sg::Node>(world), fileName);
-
-      return std::static_pointer_cast<sg::Node>(world);
     }
 
   } // ::ospray::sg

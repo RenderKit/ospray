@@ -121,7 +121,6 @@ namespace ospray {
         // note that by construction the last brick must be the onoe
         // we're looking for (all on a lower level must be earlier in
         // the list)
-        assert(nodeID < this->node.size());
 
         makeLeaf(nodeID,bounds,brick);
       } else {

@@ -95,11 +95,6 @@ namespace ospray {
       ospCommit(valueAs<OSPTransferFunction>());
     }
 
-    void TransferFunction::setFromXML(const xml::Node&, const unsigned char *)
-    {
-      NOT_IMPLEMENTED;
-    }
-
     std::string TransferFunction::toString() const
     {
       return "ospray::sg::TransferFunction";

@@ -61,7 +61,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
   while(1) {
 
     // Advance the ray.
-    volume->intersectIsosurface(volume, self->isovalues, self->super.primitives, rayCopy);
+    volume->intersectIsosurface(volume, self->isovalues, self->super.numPrimitives, rayCopy);
 
     if (rayCopy.t0 > rayCopy.t)
       return;
@@ -74,7 +74,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
     int isovalueID;
 
     if (!isnan(sample0+sample)) {
-      for (uniform int i=0; i<self->super.primitives; i++) {
+      for (uniform int i=0; i<self->super.numPrimitives; i++) {
         if ((self->isovalues[i] - sample0) * (self->isovalues[i] - sample) <= 0.f) {
           const float rcpSamp = rcpf(sample - sample0);
           float tIso = infinity;
@@ -150,7 +150,7 @@ export void *uniform Isosurfaces_set(void          *uniform _isosurfaces,
 
   isosurfaces->super.model = model;
   isosurfaces->super.geomID = geomID;
-  isosurfaces->super.primitives = numIsovalues;
+  isosurfaces->super.numPrimitives = numIsovalues;
   isosurfaces->isovalues = isovalues;
   isosurfaces->volume = volume;
 

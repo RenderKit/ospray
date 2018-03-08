@@ -34,6 +34,7 @@ public:
 
   void set(const std::string &name, const std::string &v) const;
   void set(const std::string &name, int v) const;
+  void set(const std::string &name, void *v) const;
 
   void commit() const;
 
@@ -76,6 +77,11 @@ inline void Device::set(const std::string &name, const std::string &v) const
 inline void Device::set(const std::string &name, int v) const
 {
   ospDeviceSet1i(ospHandle, name.c_str(), v);
+}
+
+inline void Device::set(const std::string &name, void *v) const
+{
+  ospDeviceSetVoidPtr(ospHandle, name.c_str(), v);
 }
 
 inline void Device::commit() const

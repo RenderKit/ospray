@@ -217,25 +217,11 @@ namespace ospray {
 
       ofstream osp(outFileBase + ".osp");
       osp << "<?xml?>" << endl;
-      osp << "<ospray>" << endl;
-      osp << "<TransferFunction name=\"xf\">" << endl;
-      osp << "    <alpha>" << endl;
-      osp << "      0 0" << endl;
-      osp << "      0.3 0" << endl;
-      osp << "      0.3 1" << endl;
-      osp << "      0.8 1" << endl;
-      osp << "      0.8 0" << endl;
-      osp << "      1 0" << endl;
-      osp << "    </alpha>" << endl;
-      osp << "  </TransferFunction>" << endl;
-      osp << "	<AMRVolume" << endl;
-      osp << "	fileName=\"" << ospcommon::FileName(outFileBase).base() << "\""
-          << endl;
-      osp << "        transferFunction=\"xf\"" << endl;
-      osp << "        brickSize=\"" << BS << "\"" << endl;
-      osp << "	clamp=\"0 100000\"" << endl;
-      osp << "	/>" << endl;
-      osp << "</ospray>" << endl;
+      osp << "<AMRVolume>" << endl;
+      osp << "  <fileName>" << ospcommon::FileName(outFileBase).base() << "</fileName>" << endl;
+      osp << "  <brickSize>" << BS << "</brickSize>" << endl;
+      osp << "  <clamp>0 100000</clamp>" << endl;
+      osp << "</AMRVolume>" << endl;
 
       makeAMR(in, numLevels, BS, RF, threshold);
 

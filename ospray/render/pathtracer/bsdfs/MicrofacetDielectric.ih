@@ -1,0 +1,184 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+#include "Fresnel.ih"
+#include "GGXDistribution.ih"
+
+// Microfacet dielectric BSDF with the Smith microsurface model.
+// [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
+// FIXME: improve robustness
+struct MicrofacetDielectric
+{
+  BSDF super;
+
+  float eta;
+  GGXDistribution distribution;
+};
+
+inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
+                                              const vec3f& wo, const vec3f& wi)
+{
+  const varying MicrofacetDielectric* uniform self = (const varying MicrofacetDielectric* uniform)super;
+  BSDF_EvalRes res;
+
+  float cosThetaO = dot(wo, getN(super));
+  if (cosThetaO <= 0.f)
+    return make_BSDF_EvalRes_zero();
+  float cosThetaI = dot(wi, getN(super));
+  bool evalReflection = cosThetaI > 0.f;
+
+  // Compute the microfacet normal
+  vec3f wh;
+
+  if (evalReflection)
+  {
+      // Reflection
+      wh = wi + wo;
+  }
+  else
+  {
+      // Transmission
+      wh = self->eta*wo + wi;
+  }
+
+  wh = normalize(wh);
+  float cosThetaH = dot(wh, getN(super));
+  if (cosThetaH < 0.f)
+  {
+      wh = neg(wh);
+      cosThetaH = -cosThetaH;
+  }
+
+  float cosThetaOH = dot(wo, wh);
+  float cosThetaIH = dot(wi, wh);
+
+  // Fresnel term
+  float cosThetaTH; // positive
+  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta);
+
+  float value;
+  if (evalReflection)
+  {
+      // Reflection
+      res.pdf = F * rcp(4.f*abs(cosThetaOH));
+      value = F * rcp(4.f*cosThetaO);
+  }
+  else
+  {
+      // Transmission
+      // cosThetaTH = -cosThetaIH
+      res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
+      value = (1.f-F) * cosThetaTH * abs(cosThetaOH) * rcp(cosThetaO*sqr(self->eta*cosThetaOH - cosThetaTH)) * rcp(sqr(self->eta));
+  }
+
+  float whPdf;
+  //float D = eval(self->distribution, cosThetaH, whPdf);
+  float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
+  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+
+  res.pdf *= whPdf;
+  res.value = make_vec3f(value * D * G);
+  return res;
+}
+
+inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform super,
+                                                  const vec3f& wo, const vec2f& s, float ss)
+{
+  const varying MicrofacetDielectric* uniform self = (const varying MicrofacetDielectric* uniform)super;
+  BSDF_SampleRes res;
+
+  float cosThetaO = dot(wo, getN(super));
+  if (cosThetaO <= 0.f)
+    return make_BSDF_SampleRes_zero();
+
+  // Sample the microfacet normal
+  float whPdf;
+  //vec3f wh = getFrame(super) * sample(self->distribution, whPdf, s);
+  vec3f wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
+
+  float cosThetaOH = dot(wo, wh);
+
+  // Fresnel term
+  float cosThetaTH; // positive
+  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta);
+
+  // Sample the reflection or the transmission
+  float cosThetaI;
+  float weight;
+
+  if (ss <= F)
+  {
+      // Reflection
+      res.wi = reflect(wo, wh, cosThetaOH);
+      cosThetaI = dot(res.wi, getN(super));
+      if (cosThetaI <= 0.f)
+        return make_BSDF_SampleRes_zero();
+
+      res.type = BSDF_GLOSSY_REFLECTION;
+      res.pdf = F * rcp(4.f*abs(cosThetaOH));
+      weight = 1.f;
+  }
+  else
+  {
+      // Transmission
+      // cosThetaTH = -cosThetaIH
+      res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
+      cosThetaI = dot(res.wi, getN(super));
+      if (cosThetaI >= 0.f)
+        return make_BSDF_SampleRes_zero();
+
+      res.type = BSDF_GLOSSY_TRANSMISSION;
+      res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
+      weight = rcp(sqr(self->eta));
+  }
+
+  //float cosThetaH = dot(wh, getN(super));
+  float cosThetaIH = dot(res.wi, wh);
+
+  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+
+  res.pdf *= whPdf;
+  //res.weight = make_vec3f(weight * G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
+  res.weight = make_vec3f(weight * (G * rcp_safe(G1(self->distribution, cosThetaO, cosThetaOH))));
+  return res;
+}
+
+inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* uniform self,
+                                             const varying linear3f* uniform frame,
+                                             float eta,
+                                             float roughness)
+{
+  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+                   MicrofacetDielectric_eval, MicrofacetDielectric_sample,
+                   frame);
+
+  self->eta = eta;
+  self->distribution = make_GGXDistribution(roughnessToAlpha(roughness));
+}
+
+inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext* uniform ctx,
+                                                         const varying linear3f* uniform frame,
+                                                         float eta,
+                                                         float roughness)
+{
+  varying MicrofacetDielectric* uniform self =
+    (varying MicrofacetDielectric* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectric));
+  MicrofacetDielectric_Constructor(self, frame, eta, roughness);
+  return &self->super;
+}

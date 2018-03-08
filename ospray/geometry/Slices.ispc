@@ -99,7 +99,7 @@ export void *uniform Slices_set(void          *uniform _slices,
 
   slices->super.model  = model;
   slices->super.geomID = geomID;
-  slices->super.primitives = numPlanes;
+  slices->super.numPrimitives = numPlanes;
   slices->planes = planes;
   slices->volume = volume;
 

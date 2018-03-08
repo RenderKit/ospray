@@ -59,7 +59,6 @@ namespace ospray {
       numOccurrances[T]++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
     }
-    material->refInc();
     return material;
   }
 
@@ -80,20 +79,32 @@ namespace ospray {
         generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
             &(inst->areaPDF[0]));
       } else
-        if (geo->material && geo->material->getIE()
-            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
-          void* light = ispc::GeometryLight_create(geo->getIE()
-              , (const ispc::AffineSpace3f&)xfm
-              , (const ispc::AffineSpace3f&)rcp_xfm
-              , _areaPDF+i);
+        if (geo->materialList) {
+          // check whether the geometry has any emissive materials
+          bool hasEmissive = false;
+          for (auto mat : geo->ispcMaterialPtrs) {
+            if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
+              hasEmissive = true;
+              break;
+            }
+          }
 
-          if (light)
-            lightArray.push_back(light);
-          else {
-            postStatusMsg(1) << "#osp:pt Geometry " << geo->toString()
-                             << " does not implement area sampling! "
-                             << "Cannot use importance sampling for that "
-                             << "geometry with emissive material!";
+          if (hasEmissive) {
+            if (ispc::GeometryLight_isSupported(geo->getIE())) {
+              void* light = ispc::GeometryLight_create(geo->getIE()
+                  , (const ispc::AffineSpace3f&)xfm
+                  , (const ispc::AffineSpace3f&)rcp_xfm
+                  , _areaPDF+i);
+
+              // check whether the geometry has any emissive primitives
+              if (light)
+                lightArray.push_back(light);
+            } else {
+              postStatusMsg(1) << "#osp:pt Geometry " << geo->toString()
+                               << " does not implement area sampling! "
+                               << "Cannot use importance sampling for that "
+                               << "geometry with emissive material!";
+            }
           }
         }
     }

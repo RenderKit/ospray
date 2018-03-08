@@ -18,6 +18,7 @@
 
 #include "../common.h"
 #include "../utility/ArrayView.h"
+#include "../TypeTraits.h"
 
 #include <vector>
 
@@ -57,13 +58,17 @@ namespace ospcommon {
       return buf;
     }
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors */
+    /*! @{ stream operators into/out of read/write streams, for std::vectors
+     * of non-POD types*/
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((const byte_t*)rh.data(), sizeof(T)*sz);
+
+      for (const auto &x : rh)
+        buf << x;
+
       return buf;
     }
 
@@ -73,7 +78,10 @@ namespace ospcommon {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      buf.read((byte_t*)rh.data(), sizeof(T)*sz);
+
+      for (size_t i = 0; i < sz; ++i)
+        buf >> rh[i];
+
       return buf;
     }
     /*! @} */

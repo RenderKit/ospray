@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,13 +20,13 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "../malloc.h"
+#include "../memory/malloc.h"
 #include "../vec.h"
 
 namespace ospcommon {
   namespace utility {
 
-    template <typename COMP_T, typename PIXEL_T, bool flip>
+    template <typename COMP_T, int N_COMP, typename PIXEL_T, bool FLIP>
     inline void writeImage(const std::string &fileName,
           const char *const header,
           const int sizeX, const int sizeY,
@@ -37,15 +37,13 @@ namespace ospcommon {
         throw std::runtime_error("Can't open file for writeP[FP]M!");
 
       fprintf(file, header, sizeX, sizeY);
-      auto out = STACK_BUFFER(COMP_T, 3*sizeX);
+      auto out = STACK_BUFFER(COMP_T, N_COMP*sizeX);
       for (int y = 0; y < sizeY; y++) {
-        auto *in = (const COMP_T*)&pixel[(flip?sizeY-1-y:y)*sizeX];
-        for (int x = 0; x < sizeX; x++) {
-          out[3*x + 0] = in[4*x + 0];
-          out[3*x + 1] = in[4*x + 1];
-          out[3*x + 2] = in[4*x + 2];
-        }
-        fwrite(out, 3*sizeX, sizeof(COMP_T), file);
+        auto *in = (const COMP_T*)&pixel[(FLIP?sizeY-1-y:y)*sizeX];
+        for (int x = 0; x < sizeX; x++)
+          for (int c = 0; c < N_COMP; c++)
+            out[N_COMP*x + c] = in[4*x + (N_COMP==1?3:c)];
+        fwrite(out, N_COMP*sizeX, sizeof(COMP_T), file);
       }
       fprintf(file, "\n");
       fclose(file);
@@ -55,7 +53,15 @@ namespace ospcommon {
                          const int sizeX, const int sizeY,
                          const uint32_t *pixel)
     {
-      writeImage<unsigned char, uint32_t, true>(fileName, "P6\n%i %i\n255\n",
+      writeImage<unsigned char, 3, uint32_t, true>(fileName, "P6\n%i %i\n255\n",
+          sizeX, sizeY, pixel);
+    }
+
+    inline void writePGM(const std::string &fileName,
+                         const int sizeX, const int sizeY,
+                         const uint32_t *pixel)
+    {
+      writeImage<unsigned char, 1, uint32_t, true>(fileName, "P5\n%i %i\n255\n",
           sizeX, sizeY, pixel);
     }
 
@@ -66,7 +72,7 @@ namespace ospcommon {
     {
       static_assert(std::is_same<T,vec4f>::value||std::is_same<T,vec3fa>::value,
           "writePFM needs pixels as vec3fa* or vec4f*");
-      writeImage<float, T, false>(fName, "PF\n%i %i\n-1.0\n", sizeX, sizeY, p);
+      writeImage<float, 3, T, false>(fName, "PF\n%i %i\n-1.0\n", sizeX, sizeY, p);
     }
 
   } // ::ospcommon::utility

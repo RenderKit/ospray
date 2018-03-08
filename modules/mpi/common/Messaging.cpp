@@ -16,7 +16,7 @@
 
 #include "Messaging.h"
 // ospcommon
-#include "ospcommon/utility/DeletedUniquePtr.h"
+#include "ospcommon/memory/DeletedUniquePtr.h"
 // stl
 #include <unordered_map>
 
@@ -25,8 +25,8 @@ namespace ospray {
     namespace messaging {
 
       using namespace mpicommon;
-      using ospcommon::utility::DeletedUniquePtr;
-      using ospcommon::utility::make_deleted_unique;
+      using ospcommon::memory::DeletedUniquePtr;
+      using ospcommon::memory::make_deleted_unique;
 
       // Internal maml message handler for all of OSPRay //////////////////////
 

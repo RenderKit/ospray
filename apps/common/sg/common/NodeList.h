@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
+#include "Node.h"
 
 #include <type_traits>
 
@@ -35,13 +35,23 @@ namespace ospray {
                     "NodeList<> can only be instantiated with sg::Node or"
                     " a derived sg::Node type!");
 
+      void clear();
       void push_back(const NODE_T &node);
       void push_back(const std::shared_ptr<NODE_T> &node);
+
+      NODE_T& item(size_t i) const;
+      NODE_T& operator[](size_t i) const;
 
       std::vector<std::shared_ptr<NODE_T>> nodes;
     };
 
     // Inlined members ////////////////////////////////////////////////////////
+
+    template <typename NODE_T>
+    inline void NodeList<NODE_T>::clear()
+    {
+      nodes.clear();
+    }
 
     template <typename NODE_T>
     inline void NodeList<NODE_T>::push_back(const NODE_T &node)
@@ -55,6 +65,18 @@ namespace ospray {
     {
       nodes.push_back(node);
       add(node);
+    }
+
+    template <typename NODE_T>
+    inline NODE_T& NodeList<NODE_T>::item(size_t i) const
+    {
+      return *(nodes[i]);
+    }
+
+    template <typename NODE_T>
+    inline NODE_T& NodeList<NODE_T>::operator[](size_t i) const
+    {
+      return item(i);
     }
 
   } // ::ospray::sg

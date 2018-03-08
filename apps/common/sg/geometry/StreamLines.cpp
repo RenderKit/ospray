@@ -14,18 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/geometry/StreamLines.h"
-#include "sg/common/World.h"
+#include "StreamLines.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {
 
     StreamLines::StreamLines() : Geometry("streamlines")
     {
-      createChild("material", "Material");
       createChild("radius", "float", 0.01f,
-                  NodeFlags::required |
                   NodeFlags::valid_min_max).setMinMax(1e-20f, 1e20f);
+      createChild("smooth", "bool", false);
     }
 
     std::string StreamLines::toString() const
@@ -36,33 +35,18 @@ namespace ospray {
     box3f StreamLines::bounds() const
     {
       box3f bounds = empty;
-      if (hasChild("vertex")) {
-        auto v = child("vertex").nodeAs<DataBuffer>();
-        for (uint32_t i = 0; i < v->size(); i += 4)
-          bounds.extend(v->get<vec3fa>(i));
+      auto vtx = child("vertex").nodeAs<DataBuffer>()->baseAs<vec3fa>();
+      auto idx = child("index").nodeAs<DataBuffer>();
+      // TODO: radius varies potentially per vertex
+      auto radius = child("radius").valueAs<float>();
+      for (uint32_t e = 0; e < idx->size(); e++) {
+        int i = idx->get<int>(e);
+        bounds.extend(vtx[i] - radius);
+        bounds.extend(vtx[i] + radius);
+        bounds.extend(vtx[i+1] - radius);
+        bounds.extend(vtx[i+1] + radius);
       }
       return bounds;
-    }
-
-    //! \brief Initialize this node's value from given XML node
-    /*!
-      \detailed This allows a plug-and-play concept where a XML
-      file can specify all kind of nodes wihout needing to know
-      their actual types: The XML parser only needs to be able to
-      create a proper C++ instance of the given node type (the
-      OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
-      tell the node to parse itself from the given XML content and
-      XML children
-
-      \param node The XML node specifying this node's fields
-
-      \param binBasePtr A pointer to an accompanying binary file (if
-      existant) that contains additional binary data that the xml
-      node fields may point into
-    */
-    void StreamLines::setFromXML(const xml::Node &, const unsigned char *)
-    {
-      NOT_IMPLEMENTED;
     }
 
     void StreamLines::preCommit(RenderContext &ctx)

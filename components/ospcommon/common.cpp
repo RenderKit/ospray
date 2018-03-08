@@ -66,6 +66,11 @@ namespace ospcommon {
     LibraryRepository::getInstance()->add(name);
   }
 
+  void loadDefaultLibrary()
+  {
+    LibraryRepository::getInstance()->addDefaultLibrary();
+  }
+
   void *getSymbol(const std::string& name)
   {
     return LibraryRepository::getInstance()->getSymbol(name);

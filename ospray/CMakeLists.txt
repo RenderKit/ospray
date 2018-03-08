@@ -44,16 +44,39 @@ INCLUDE_DIRECTORIES_ISPC(
 SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
-  api/LocalDevice.cpp
+
+  common/OSPCommon.cpp
+
+  include/ospray/ospray.h
+  include/ospray/OSPDataType.h
+  include/ospray/OSPTexture.h
+
+  include/ospray/ospray_cpp/Camera.h
+  include/ospray/ospray_cpp/Data.h
+  include/ospray/ospray_cpp/FrameBuffer.h
+  include/ospray/ospray_cpp/Geometry.h
+  include/ospray/ospray_cpp/Light.h
+  include/ospray/ospray_cpp/ManagedObject.h
+  include/ospray/ospray_cpp/Material.h
+  include/ospray/ospray_cpp/Model.h
+  include/ospray/ospray_cpp/PixelOp.h
+  include/ospray/ospray_cpp/Renderer.h
+  include/ospray/ospray_cpp/Texture2D.h
+  include/ospray/ospray_cpp/TransferFunction.h
+  include/ospray/ospray_cpp/Volume.h
+)
+
+SET(OSPRAY_ISPC_DEVICE_SOURCES
+
+  api/ISPCDevice.cpp
 
   common/ospray.rc
-  common/OSPCommon.ispc
-  common/OSPCommon.cpp
-  common/Managed.cpp
   common/ObjectHandle.cpp
   common/Data.cpp
+  common/Managed.cpp
   common/Model.ispc
   common/Model.cpp
+  common/OSPCommon.ispc
   common/Material.cpp
   common/Util.h
 
@@ -62,6 +85,8 @@ SET(OSPRAY_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/PixelOp.cpp
+  fb/ToneMapperPixelOp.cpp
+  fb/ToneMapperPixelOp.ispc
   fb/Tile.h
   fb/TileError.cpp
 
@@ -90,24 +115,6 @@ SET(OSPRAY_SOURCES
   geometry/Slices.cpp
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
-
-  include/ospray/ospray.h
-  include/ospray/OSPDataType.h
-  include/ospray/OSPTexture.h
-
-  include/ospray/ospray_cpp/Camera.h
-  include/ospray/ospray_cpp/Data.h
-  include/ospray/ospray_cpp/FrameBuffer.h
-  include/ospray/ospray_cpp/Geometry.h
-  include/ospray/ospray_cpp/Light.h
-  include/ospray/ospray_cpp/ManagedObject.h
-  include/ospray/ospray_cpp/Material.h
-  include/ospray/ospray_cpp/Model.h
-  include/ospray/ospray_cpp/PixelOp.h
-  include/ospray/ospray_cpp/Renderer.h
-  include/ospray/ospray_cpp/Texture2D.h
-  include/ospray/ospray_cpp/TransferFunction.h
-  include/ospray/ospray_cpp/Volume.h
 
   lights/Light.ispc
   lights/Light.cpp
@@ -157,6 +164,10 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp
+  render/pathtracer/materials/Principled.ispc
+  render/pathtracer/materials/Principled.cpp
+  render/pathtracer/materials/CarPaint.ispc
+  render/pathtracer/materials/CarPaint.cpp
   render/pathtracer/materials/Velvet.ispc
   render/pathtracer/materials/Velvet.cpp
   render/pathtracer/materials/Metal.ispc
@@ -201,8 +212,8 @@ SET(OSPRAY_SOURCES
 
   volume/unstructured/MinMaxBVH2.cpp
   volume/unstructured/MinMaxBVH2.ispc
-  volume/unstructured/tetrahedral/TetrahedralVolume.cpp
-  volume/unstructured/tetrahedral/TetrahedralVolume.ispc
+  volume/unstructured/UnstructuredVolume.cpp
+  volume/unstructured/UnstructuredVolume.ispc
 
   volume/amr/AMRAccel.cpp
   volume/amr/AMRData.cpp
@@ -222,7 +233,8 @@ SET(OSPRAY_SOURCES
 
 OSPRAY_INSTALL_SDK_HEADERS(
   api/Device.h
-  api/LocalDevice.h
+  api/ISPCDevice.h
+  api/objectFactory.h
   DESTINATION api
 )
 
@@ -382,13 +394,9 @@ OSPRAY_INSTALL_SDK_HEADERS(
 OSPRAY_INSTALL_SDK_HEADERS(
   volume/unstructured/MinMaxBVH2.h
   volume/unstructured/MinMaxBVH2.ih
+  volume/unstructured/UnstructuredVolume.h
+  volume/unstructured/UnstructuredVolume.ih
   DESTINATION volume/unstructured
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/unstructured/tetrahedral/TetrahedralVolume.h
-  volume/unstructured/tetrahedral/TetrahedralVolume.ih
-  DESTINATION volume/unstructured/tetrahedral
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
@@ -413,11 +421,11 @@ OSPRAY_INSTALL_SDK_HEADERS(
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
 
+
 SET(OSPRAY_LIBS
   ospray_common
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-  ${EMBREE_LIBRARIES}
 )
 
 IF (WIN32)
@@ -437,15 +445,31 @@ IF (WIN32)
     STRING(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
   ENDFOREACH()
 
-  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray.def.in "${OSPRAY_DEF}")
+  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in "${OSPRAY_DEF}")
 
   # changes ospray.def only if content changed, avoids unnecessary re-linking
-  CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/ospray.def.in ospray.def COPYONLY)
+  CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in ospray_module_ispc.def COPYONLY)
 
-  LIST(APPEND OSPRAY_SOURCES ospray.def)
+  LIST(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
 ENDIF()
 
-OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS} COMPONENT lib)
+OSPRAY_CREATE_LIBRARY(ospray
+  ${OSPRAY_SOURCES}
+LINK
+  ${OSPRAY_LIBS}
+COMPONENT
+  lib
+)
+
+OSPRAY_CREATE_LIBRARY(ospray_module_ispc
+  ${OSPRAY_ISPC_DEVICE_SOURCES}
+LINK
+  ${OSPRAY_LIBS}
+  ospray
+  ${EMBREE_LIBRARIES}
+COMPONENT
+  lib
+)
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)

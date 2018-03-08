@@ -45,7 +45,9 @@ namespace ospray {
         registerWorkUnit<NewPixelOp>(registry);
 
         registerWorkUnit<NewMaterial>(registry);
+        registerWorkUnit<NewMaterial2>(registry);
         registerWorkUnit<NewLight>(registry);
+        registerWorkUnit<NewLight2>(registry);
 
         registerWorkUnit<NewData>(registry);
         registerWorkUnit<NewTexture2d>(registry);
@@ -246,7 +248,7 @@ namespace ospray {
       {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
-        obj->findParam(name.c_str(), true)->set(val.c_str());
+        obj->setParam(name, val);
       }
 
       template<>
@@ -257,7 +259,7 @@ namespace ospray {
 
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-          obj->findParam(name.c_str(), true)->set(val.c_str());
+          obj->setParam(name, val);
         }
       }
 
@@ -314,6 +316,22 @@ namespace ospray {
         handle.assign(material);
       }
 
+      void NewMaterial2::run()
+      {
+        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
+
+        Material *material = nullptr;
+        if (renderer)
+          material = renderer->createMaterial(materialType.c_str());
+
+        // No renderer present or the renderer doesn't intercept this
+        // material type.
+        if (!material)
+          material = Material::createMaterial(materialType.c_str());
+
+        handle.assign(material);
+      }
+
       // ospNewLight //////////////////////////////////////////////////////////
 
       void NewLight::run()
@@ -324,8 +342,24 @@ namespace ospray {
           light = renderer->createLight(type.c_str());
 
         // No renderer present or the renderer doesn't intercept this
-        // material type.
+        // light type.
         if (!light) light = Light::createLight(type.c_str());
+        handle.assign(light);
+      }
+
+      void NewLight2::run()
+      {
+        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
+
+        Light *light = nullptr;
+        if (renderer)
+          light = renderer->createLight(lightType.c_str());
+
+        // No renderer present or the renderer doesn't intercept this
+        // light type.
+        if (!light)
+          light = Light::createLight(lightType.c_str());
+
         handle.assign(light);
       }
 
@@ -362,9 +396,6 @@ namespace ospray {
         // it), so let's assert that nobody accidentally uses it.
         assert(format != OSP_STRING);
 
-        Data *ospdata = new Data(nItems, format, dataView.data());
-        handle.assign(ospdata);
-
         if (format == OSP_OBJECT ||
             format == OSP_CAMERA  ||
             format == OSP_DATA ||
@@ -385,13 +416,16 @@ namespace ospray {
              what the core expects are pointers; to make the core
              happy we translate all data items back to pointers at
              this stage */
-          ObjectHandle   *asHandle = (ObjectHandle*)ospdata->data;
-          ManagedObject **asObjPtr = (ManagedObject**)ospdata->data;
+          ObjectHandle   *asHandle = (ObjectHandle*)dataView.data();
+          ManagedObject **asObjPtr = (ManagedObject**)dataView.data();
           for (size_t i = 0; i < nItems; ++i) {
             if (asHandle[i] != NULL_HANDLE)
               asObjPtr[i] = asHandle[i].lookup();
           }
         }
+
+        Data *ospdata = new Data(nItems, format, dataView.data());
+        handle.assign(ospdata);
       }
 
       void NewData::serialize(WriteStream &b) const

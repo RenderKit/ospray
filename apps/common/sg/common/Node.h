@@ -16,25 +16,25 @@
 
 #pragma once
 
-#include "TimeStamp.h"
 #include "Serialization.h"
 #include "RenderContext.h"
 #include "RuntimeError.h"
+#include "../visitor/Visitor.h"
 // stl
 #include <map>
 #include <memory>
-// xml
-#include "../../../common/xml/XML.h"
+#include <mutex>
 // ospcommon
 #include "ospcommon/utility/Any.h"
+#include "ospcommon/utility/TimeStamp.h"
+#include "ospcommon/xml/XML.h"
 #include "ospcommon/vec.h"
-
-#include <mutex>
 
 namespace ospray {
   namespace sg {
 
-    using Any = ospcommon::utility::Any;
+    using Any       = ospcommon::utility::Any;
+    using TimeStamp = ospcommon::utility::TimeStamp;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
@@ -47,8 +47,8 @@ namespace ospray {
       valid_whitelist = 1 << 3, //! validity determined by whitelist
       valid_blacklist = 1 << 4,  //! validity determined by blacklist
       gui_slider = 1 << 5,
-      gui_color = 1<<6,
-      gui_combo = 1<<7
+      gui_color = 1 << 6,
+      gui_combo = 1 << 7
     };
 
     // Base Node class definition /////////////////////////////////////////////
@@ -68,25 +68,6 @@ namespace ospray {
       Node& operator=(Node &&) = delete;
 
       virtual std::string toString() const;
-
-      //! \brief Initialize this node's value from given XML node
-      /*!
-        \detailed This allows a plug-and-play concept where a XML
-        file can specify all kind of nodes wihout needing to know
-        their actual types: The XML parser only needs to be able to
-        create a proper C++ instance of the given node type (the
-        OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
-        tell the node to parse itself from the given XML content and
-        XML children
-
-        \param node The XML node specifying this node's fields
-
-        \param binBasePtr A pointer to an accompanying binary file (if
-        existant) that contains additional binary data that the xml
-        node fields may point into
-      */
-      virtual void setFromXML(const xml::Node &node,
-                              const unsigned char *binBasePtr);
 
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
@@ -126,6 +107,9 @@ namespace ospray {
         for which that does not apply can simpy return
         box3f(empty) */
       virtual box3f bounds() const;
+
+      //! return a unique identifier for each created node
+      size_t uniqueID() const;
 
       // Node stored value (data) interface ///////////////////////////////////
 
@@ -179,6 +163,7 @@ namespace ospray {
 
       const std::map<std::string, std::shared_ptr<Node>>& children() const;
 
+      bool hasChildren() const;
       size_t numChildren() const;
 
       void add(std::shared_ptr<Node> node);
@@ -211,6 +196,32 @@ namespace ospray {
 
       // Traversal interface //////////////////////////////////////////////////
 
+      //! Use a custom provided node visitor to visit each node
+      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
+      void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
+
+      //! Helper overload to traverse with a default constructed TravesalContext
+      template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
+      void traverse(VISITOR_T &&visitor);
+
+      //! Invoke a "verify" traversal of the scene graph (and possibly
+      //  its children)
+      void verify();
+
+      //! Invoke a "commit" traversal of the scene graph (and possibly
+      //  its children)
+      void commit();
+
+      //! Invoke a "finalize" traversal of the scene graph (and possibly
+      //  its children)
+      void finalize(RenderContext &ctx);
+
+      //! Invoke a "animate" traversal of the scene graph (and possibly
+      //  its children)
+      void animate();
+
+    protected:
+
       //! traverse this node and children with given operation, such as
       //  print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
@@ -228,13 +239,11 @@ namespace ospray {
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation);
 
-      //! called before committing children during traversal
+      //! Called before committing children during traversal
       virtual void preCommit(RenderContext &ctx);
 
-      //! called after committing children during traversal
+      //! Called after committing children during traversal
       virtual void postCommit(RenderContext &ctx);
-
-    protected:
 
       struct
       {
@@ -245,6 +254,7 @@ namespace ospray {
         std::vector<Any> blacklist;
         std::map<std::string, std::shared_ptr<Node>> children;
         Any value;
+        TimeStamp whenCreated;
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
@@ -258,6 +268,10 @@ namespace ospray {
       // NOTE(jda) - The mutex is 'mutable' because const methods still need
       //             to be able to lock the mutex
       mutable std::mutex value_mutex;
+
+    private:
+
+      friend struct VerifyNodes;
     };
 
     OSPSG_INTERFACE std::shared_ptr<Node>
@@ -405,151 +419,34 @@ namespace ospray {
 
 #undef DECLARE_VALUEAS_SPECIALIZATION
 
-    // Helper functions ///////////////////////////////////////////////////////
-
-    // Compare //
-
-    template <typename T>
-    inline bool compare(const Any& min, const Any& max, const Any& value)
+    template <typename VISITOR_T, typename>
+    inline void Node::traverse(VISITOR_T &&visitor, TraversalContext &ctx)
     {
-      if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
-        return false;
-      return true;
-    }
+      static_assert(is_valid_visitor<VISITOR_T>::value,
+                    "VISITOR_T must be a child class of sg::Visitor or"
+                    " implement 'bool visit(Node &node, TraversalContext &ctx)'"
+                    "!");
 
-    template <>
-    inline bool compare<vec2f>(const Any& min, const Any& max, const Any& value)
-    {
-      const vec2f &v1 = min.get<vec2f>();
-      const vec2f &v2 = max.get<vec2f>();
-      const vec2f &v  = value.get<vec2f>();
-      return !(v1.x > v.x || v2.x < v.x ||
-               v1.y > v.y || v2.y < v.y);
-    }
+      bool traverseChildren = visitor(*this, ctx);
 
-    template <>
-    inline bool compare<vec2i>(const Any& min, const Any& max, const Any& value)
-    {
-      const vec2i &v1 = min.get<vec2i>();
-      const vec2i &v2 = max.get<vec2i>();
-      const vec2i &v  = value.get<vec2i>();
-      return !(v1.x > v.x || v2.x < v.x ||
-               v1.y > v.y || v2.y < v.y);
-    }
+      ctx.level++;
 
-    template <>
-    inline bool compare<vec3f>(const Any& min, const Any& max, const Any& value)
-    {
-      const vec3f &v1 = min.get<vec3f>();
-      const vec3f &v2 = max.get<vec3f>();
-      const vec3f &v  = value.get<vec3f>();
-      return !(v1.x > v.x || v2.x < v.x ||
-               v1.y > v.y || v2.y < v.y ||
-               v1.z > v.z || v2.z < v.z);
-    }
-
-    template <>
-    inline bool compare<box3f>(const Any&, const Any&, const Any&)
-    {
-      return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
-    }
-
-    // Commit //
-
-    template <typename T>
-    inline void commitNodeValue(Node &)
-    {
-    }
-
-    template <>
-    inline void commitNodeValue<bool>(Node &n)
-    {
-      ospSet1i(n.parent().valueAs<OSPObject>(),
-               n.name().c_str(), n.valueAs<bool>());
-    }
-
-    template <>
-    inline void commitNodeValue<int>(Node &n)
-    {
-      ospSet1i(n.parent().valueAs<OSPObject>(),
-               n.name().c_str(), n.valueAs<int>());
-    }
-
-    template <>
-    inline void commitNodeValue<vec2i>(Node &n)
-    {
-      ospSet2iv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec2i>().x);
-    }
-
-    template <>
-    inline void commitNodeValue<vec3i>(Node &n)
-    {
-      ospSet3iv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec3i>().x);
-    }
-
-    template <>
-    inline void commitNodeValue<float>(Node &n)
-    {
-      ospSet1f(n.parent().valueAs<OSPObject>(),
-               n.name().c_str(), n.valueAs<float>());
-    }
-
-    template <>
-    inline void commitNodeValue<vec2f>(Node &n)
-    {
-      ospSet2fv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec2f>().x);
-    }
-
-    template <>
-    inline void commitNodeValue<vec3f>(Node &n)
-    {
-      ospSet3fv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec3f>().x);
-    }
-
-    template <>
-    inline void commitNodeValue<vec4f>(Node &n)
-    {
-      ospSet4fv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec4f>().x);
-    }
-
-    template <>
-    inline void commitNodeValue<std::string>(Node &n)
-    {
-      ospSetString(n.parent().valueAs<OSPObject>(),
-                   n.name().c_str(), n.valueAs<std::string>().c_str());
-    }
-
-    // Helper parameter node wrapper //////////////////////////////////////////
-
-    template <typename T>
-    struct NodeParam : public Node
-    {
-      NodeParam() : Node() { setValue(T()); }
-      virtual void postCommit(RenderContext &) override
-      {
-        if (hasParent()) {
-          //TODO: generalize to other types of ManagedObject
-
-          //NOTE(jda) - OMG the syntax for the 'if' is strange...
-          if (parent().value().template is<OSPObject>())
-            commitNodeValue<T>(*this);
-        }
+      if (traverseChildren) {
+        for (auto &child : properties.children)
+          child.second->traverse(visitor, ctx);
       }
 
-      virtual bool computeValidMinMax() override
-      {
-        if (properties.minmax.size() < 2 ||
-            !(flags() & NodeFlags::valid_min_max))
-          return true;
+      ctx.level--;
 
-        return compare<T>(min(), max(), value());
-      }
-    };
+      visitor.postChildren(*this, ctx);
+    }
+
+    template <typename VISITOR_T, typename>
+    inline void Node::traverse(VISITOR_T &&visitor)
+    {
+      TraversalContext ctx;
+      traverse(std::forward<VISITOR_T>(visitor), ctx);
+    }
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"
@@ -564,7 +461,7 @@ namespace ospray {
     extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
+      return new InternalClassName;                                     \
     }                                                                   \
     /* Extra declaration to avoid "extra ;" pedantic warnings */        \
     ospray::sg::Node* ospray_create_sg_node__##Name()

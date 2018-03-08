@@ -166,7 +166,7 @@ namespace ospray {
     */
     void createMPI_RanksBecomeWorkers(int *ac, const char **av)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
           << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
@@ -199,7 +199,7 @@ namespace ospray {
     */
     void createMPI_ListenForWorkers(int *ac, const char **av)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       if (world.rank < 1) {
         postStatusMsg("====================================================\n"
@@ -252,7 +252,7 @@ namespace ospray {
     void createMPI_connectToListener(int *ac, const char **av,
                                      const std::string &host)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       if (world.rank < 1) {
         postStatusMsg("=====================================================\n"
@@ -302,7 +302,7 @@ namespace ospray {
     void createMPI_LaunchWorkerGroup(int *ac, const char **av,
                                      const char *launchCommand)
     {
-      mpi::init(ac,av);
+      mpi::init(ac,av,true);
 
       Assert(launchCommand);
 
@@ -393,12 +393,12 @@ namespace ospray {
       int _ac = 2;
       const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
 
-      std::string mode = getParamString("mpiMode", "mpi");
+      std::string mode = getParam<std::string>("mpiMode", "mpi");
 
       if (mode == "mpi") {
         createMPI_RanksBecomeWorkers(&_ac,_av);
       } else if(mode == "mpi-launch") {
-        std::string launchCommand = getParamString("launchCommand", "");
+        std::string launchCommand = getParam<std::string>("launchCommand", "");
 
         if (launchCommand.empty()) {
           throw std::runtime_error("You must provide the launchCommand "
@@ -410,7 +410,7 @@ namespace ospray {
         createMPI_ListenForWorkers(&_ac,_av);
       } else if (mode == "mpi-connect") {
         std::string portName =
-            getParamString("portName", "");
+            getParam<std::string>("portName", "");
 
         if (portName.empty()) {
           throw std::runtime_error("You must provide the port name string "
@@ -448,14 +448,14 @@ namespace ospray {
           getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
 
       auto useDynamicLoadBalancer =
-          getParam1i("dynamicLoadBalancer",
+          getParam<int>("dynamicLoadBalancer",
                      OSPRAY_DYNAMIC_LOADBALANCER.value_or(false));
 
       auto OSPRAY_PREALLOCATED_TILES =
           utility::getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
 
       auto preAllocatedTiles =
-          OSPRAY_PREALLOCATED_TILES.value_or(getParam1i("preAllocatedTiles",4));
+          OSPRAY_PREALLOCATED_TILES.value_or(getParam<int>("preAllocatedTiles",4));
 
       work::SetLoadBalancer slbWork(ObjectHandle(),
                                     useDynamicLoadBalancer,
@@ -724,6 +724,16 @@ namespace ospray {
       return (OSPMaterial)(int64)handle;
     }
 
+    /*! have given renderer create a new material */
+    OSPMaterial MPIOffloadDevice::newMaterial(const char *renderer_type,
+                                              const char *material_type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewMaterial2 work(renderer_type, material_type, handle);
+      processWork(work);
+      return (OSPMaterial)(int64)handle;
+    }
+
     /*! create a new transfer function object (out of list of
         registered transfer function types) */
     OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *type)
@@ -739,6 +749,16 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
       work::NewLight work(type, _renderer, handle);
+      processWork(work);
+      return (OSPLight)(int64)handle;
+    }
+
+    /*! have given renderer create a new Light */
+    OSPLight MPIOffloadDevice::newLight(const char *renderer_type,
+                                        const char *light_type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewLight2 work(renderer_type, light_type, handle);
       processWork(work);
       return (OSPLight)(int64)handle;
     }
@@ -826,11 +846,9 @@ namespace ospray {
                                     char **value)
     {
       ManagedObject *object = ((ObjectHandle&)_object).lookup();
-      ManagedObject::Param *param = object->findParam(name);
-      bool foundParameter = (param != nullptr && param->type == OSP_STRING);
-      if (foundParameter) {
+      if (object->hasParam(name)) {
         *value = new char[2048];
-        strncpy(*value, param->s->c_str(), 2048);
+        strncpy(*value, object->getParam<std::string>(name, "").c_str(), 2048);
         return true;
       }
       return false;

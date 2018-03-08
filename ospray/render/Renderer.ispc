@@ -93,6 +93,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         tMax = min(get1f(self->maxDepthTexture, depthTexCoord), infinity);
       }
       vec3f col = make_vec3f(0.f);
+      float alpha = 0.f;
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
       for (uniform uint32 s = 0; s < spp; s++) {
         const float pixel_du = precomputedHalton2(startSampleID+s);
@@ -113,9 +114,11 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
         self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
+        alpha += screenSample.alpha;
       }
       col = col * (spp_inv);
-      setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
+      alpha *= spp_inv;
+      setRGBAZ(tile,pixel,col,alpha,screenSample.z);
     }
   } else {
     const float pixel_du = precomputedHalton2(tile.accumID);
@@ -181,6 +184,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 export void Renderer_set(void *uniform _self
     , void *uniform _model
     , void *uniform _camera
+    , const uniform bool autoEpsilon
     , const uniform float epsilon
     , const uniform int32 spp
     , const uniform int32 maxDepth
@@ -198,7 +202,7 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->beginFrame   = Renderer_default_beginFrame;
   self->endFrame     = Renderer_default_endFrame;
   self->fb = NULL;
-  Renderer_set(self, NULL, NULL, 1e-6f, 1, 20, 0.001f, make_vec4f(0.f), NULL);
+  Renderer_set(self, NULL, NULL, true, 1e-6f, 1, 20, 0.001f, make_vec4f(0.f), NULL);
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -243,6 +247,7 @@ export void Renderer_endFrame(void *uniform _self, void *uniform perFrameData)
 export void Renderer_set(void *uniform _self
     , void *uniform _model
     , void *uniform _camera
+    , const uniform bool autoEpsilon
     , const uniform float epsilon
     , const uniform int32 spp
     , const uniform int32 maxDepth
@@ -254,6 +259,7 @@ export void Renderer_set(void *uniform _self
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->model  = (uniform Model *uniform)_model;
   self->camera = (uniform Camera *uniform)_camera;
+  self->autoEpsilon = autoEpsilon;
   self->epsilon = epsilon;
   self->spp = spp;
   self->maxDepth = maxDepth;

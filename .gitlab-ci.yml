@@ -30,8 +30,7 @@ variables:
   only:
     - devel
     - master
-    - release-1.4.x
-    - gtest-devel #TODO - remove it after few runs
+    - release-1.5.x
 
 .job_template: &test_job
   stage: test-build
@@ -47,7 +46,6 @@ variables:
       - $CI_PROJECT_DIR/build/failed
     expire_in: 1 week
     when: always
-  allow_failure: true
 
 .job_template: &test_job_windows
   <<: *test_job
@@ -59,7 +57,6 @@ variables:
       - failed
     expire_in: 1 week
     when: always
-  allow_failure: true
 
 
 ### BUILD JOBS ###
@@ -174,18 +171,6 @@ build-osx-clang:
     - osx
     - clang
 
-build-windows-msvc:
-  <<: *build_job_shell
-  script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120" "OSPRAY_MODULE_MPI=ON"
-  tags:
-    - msvc
-    - win7
-  artifacts:
-    paths:
-      - build
-    expire_in: 3 day
-
 build-windows-msvc14:
   <<: *build_job_shell
   script:
@@ -213,9 +198,9 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 17.0" "OSPRAY_MODULE_MPI=ON"
+    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0" "OSPRAY_MODULE_MPI=ON"
   tags:
-    - icc
+    - icc18
     - win7
   artifacts:
     paths:
@@ -318,6 +303,7 @@ benchmark-centos7-gcc:
     - ../scripts/bench/run_benchmark.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
   tags:
     - docker
+    - ospray-benchmark
   artifacts:
     paths:
       - $CI_PROJECT_DIR/build/bench_output
@@ -326,7 +312,7 @@ benchmark-centos7-gcc:
     when: always
   dependencies:
     - build-centos7-gcc
-  allow_failure: true
+  when: manual
 
 test-kw-critical:
   stage: test-src
@@ -337,6 +323,17 @@ test-kw-critical:
     - build-scan-kw
   tags:
     - kw-scan-docker
+
+source-protex-scan:
+  stage: build
+  image: ospray-protex-centos7
+  script:
+    - /tmp/source-scan-protex.sh
+  dependencies:
+  tags:
+    - protex-scan-docker
+  ## Temporarily allow to fail
+  when: manual
   allow_failure: true
 
 
