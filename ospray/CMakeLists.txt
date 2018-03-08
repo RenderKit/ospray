@@ -45,6 +45,7 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
 
+  common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Managed.cpp
 
