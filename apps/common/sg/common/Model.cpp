@@ -56,8 +56,8 @@ namespace ospray {
       ctx.currentOSPModel = model;
 
       //instancegroup caches render calls in commit.
-      for (auto child : properties.children)
-        child.second->traverse(ctx, "render");
+      for (auto &child : properties.children)
+        child.second->finalize(ctx);
 
       ospCommit(model);
       ctx.currentOSPModel = stashedModel;

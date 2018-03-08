@@ -3,7 +3,32 @@ Version History
 
 ### Changes in v1.5.0:
 
+-   TetrahedralVolume now generalized to take both tet and hex data, now called
+    `UnstructuredVolume`
+-   New function for creating materials (`ospNewMaterial2`) which takes the
+    renderer type string, not a renderer instance (the old version is now
+    deprecated)
+-   New `tonemapper` PixelOp for tone mapping final frames
 -   Streamlines now support per-vertex radii and smooth interpolation
+-   `ospray_sg` headers are now installed alongside the SDK
+-   Core OSPRay ispc device now implemented as a module
+    -   Devices which implement the public API are no longer required to link
+        the dependencies to core OSPRay (e.g. Embree v2.x)
+    -   By default, `ospInit` will load the ispc module if a device was not
+        created via `--osp:mpi` or `--osp:device:[name]`
+-   MPI devices can now accept an existing world communicator instead of always
+    creating their own
+-   Added ability to control ISPC specific optimization flags via CMake options
+    -   See the various `ISPC_FLAGS_*` variables to control which flags get used
+-   Enhancements to sample applications
+    -   `ospray_sg` (and thus `ospExampleViewer`/`ospBenchmark`) can now be
+        extended with new scene data importers via modules or the SDK
+    -   Updated ospTutorial examples to properly call ospRelease()
+    -   New options in the ospExampleViewer GUI to showcase new features
+        -   SRGB frame buffers, tone mapping, etc.
+-   General bug fixes
+    -   Fixes to geometries with multiple emissive materials
+    -   Improvements to precision of ray-sphere intersections
 
 ### Changes in v1.4.3:
 

@@ -52,7 +52,7 @@ namespace ospray {
       }
 
       if (scenegraph->hasChild("animationcontroller"))
-        scenegraph->child("animationcontroller").traverse("animate");
+        scenegraph->child("animationcontroller").animate();
 
       if (pickPos.update())
         pickResult = scenegraph->pick(pickPos.ref());

@@ -549,7 +549,7 @@ namespace ospray {
         {
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          obj->findParam(name.c_str(), true)->set(val);
+          obj->setParam(name, val);
         }
 
         void runOnMaster() override
@@ -559,7 +559,7 @@ namespace ospray {
 
           ManagedObject *obj = handle.lookup();
           if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-            obj->findParam(name.c_str(), true)->set(val);
+            obj->setParam(name, val);
           }
         }
 
@@ -639,7 +639,7 @@ namespace ospray {
             param = val.lookup();
             Assert(param);
           }
-          obj->findParam(name.c_str(), true)->set(param);
+          obj->setParam(name.c_str(), param);
         }
 
         /*! serializes itself on the given serial buffer - will write

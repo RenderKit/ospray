@@ -50,19 +50,19 @@ namespace ospray {
       for (int i=1;i<ac;) {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
-          device->findParam("debug", true)->set(true);
+          device->setParam("debug", true);
           // per default enable logging to cout; may be overridden later
           device->msg_fcn = [](const char *msg){ std::cout << msg; };
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
-          device->findParam("logLevel", true)->set(1);
+          device->setParam("logLevel", 1);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:vv") {
-          device->findParam("logLevel", true)->set(2);
+          device->setParam("logLevel", 2);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
           if (i+1<ac) {
-            device->findParam("logLevel", true)->set(atoi(av[i+1]));
+            device->setParam("logLevel", atoi(av[i+1]));
             removeArgs(ac,av,i,2);
           } else {
             postStatusMsg("<n> argument required for --osp:loglevel!");
@@ -73,7 +73,7 @@ namespace ospray {
             std::string dst = av[i+1];
 
             if (dst == "cout" || dst == "cerr")
-              device->findParam("logOutput", true)->set(av[i+1]);
+              device->setParam("logOutput", dst);
             else
               postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
 
@@ -87,7 +87,7 @@ namespace ospray {
             std::string dst = av[i+1];
 
             if (dst == "cout" || dst == "cerr")
-              device->findParam("errorOutput", true)->set(av[i+1]);
+              device->setParam("errorOutput", dst);
             else {
               postStatusMsg("You must use 'cout' or 'cerr' for"
                             " --osp:erroroutput!");
@@ -100,7 +100,7 @@ namespace ospray {
           }
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
           if (i+1<ac) {
-            device->findParam("numThreads", true)->set(atoi(av[i+1]));
+            device->setParam("numThreads", atoi(av[i+1]));
             removeArgs(ac,av,i,2);
           } else {
             postStatusMsg("<n> argument required for --osp:numthreads");
@@ -108,7 +108,7 @@ namespace ospray {
           }
         } else if (parm == "--osp:setaffinity" || parm == "--osp:affinity") {
           if (i+1<ac) {
-            device->findParam("setAffinity", true)->set(atoi(av[i+1]));
+            device->setParam("setAffinity", atoi(av[i+1]));
             removeArgs(ac,av,i,2);
           } else {
             postStatusMsg("<n> argument required for --osp:setaffinity!");

@@ -14,32 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "../../testing/catch.hpp"
 
-#include "embree2/rtcore.isph"
+#include "../ParameterizedObject.h"
 
-#include "OSPConfig.h"
+using ospcommon::utility::ParameterizedObject;
 
-typedef unsigned int64 uint64;
-typedef unsigned int32 uint32;
-typedef unsigned int16 uint16;
-typedef unsigned int8  uint8;
+TEST_CASE("ParameterizedObject correctness", "[]")
+{
+  ParameterizedObject obj;
 
-#define LOG(x)
+  auto name = "test_int";
 
-#define PRINT(x) print(#x" = %\n", x)
-#define PRINT3(x) print(#x" = (%, %, %)\n", get(x,0), get(x,1), get(x,2))
-// prints first unmasked element
-#define PRINTU(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
-#define PRINT3U(x) print(#x"[%] = (%, %, %)\n", count_trailing_zeros(lanemask()), extract(get(x,0), count_trailing_zeros(lanemask())), extract(get(x,1), count_trailing_zeros(lanemask())), extract(get(x,2), count_trailing_zeros(lanemask())))
+  obj.setParam(name, 5);
 
-/*! ispc copy of embree error handling callback */
-void error_handler(const RTCError code, const int8* str);
+  REQUIRE(obj.hasParam(name));
+  REQUIRE(obj.getParam<int>(name, 4) == 5);
+  REQUIRE(obj.getParam<short>(name, 4) == 4);
 
+  obj.removeParam(name);
 
-/*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
-export void delete_uniform(void *uniform uptr);
-
-/*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
-extern "C" void *uniform malloc64(uniform uint64 size);
-extern "C" void free64(void *uniform ptr);
+  REQUIRE(!obj.hasParam(name));
+  REQUIRE(obj.getParam<int>(name, 4) == 4);
+  REQUIRE(obj.getParam<short>(name, 4) == 4);
+}
