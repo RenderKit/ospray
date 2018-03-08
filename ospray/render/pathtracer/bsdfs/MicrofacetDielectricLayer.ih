@@ -19,8 +19,8 @@
 #include "MicrofacetDielectric.ih"
 
 // Simplified Weidlich-Wilkie microfacet coating BSDF with the Smith microsurface model.
-// Refraction for all rays and Fresnel for exiting reflection rays are ignored, but absorption
-// is computed from the refracted ray lengths. The advantages are that it does not suffer from
+// Refraction for all rays and Fresnel for exiting rays are ignored, but absorption is
+// computed from the refracted ray lengths. The advantages are that it does not suffer from
 // energy loss, absorption behaves the same as in the original approach, and it's faster.
 // [Weidlich and Wilkie, 2007, "Arbitrarily Layered Micro-Facet Surfaces"]
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
@@ -29,6 +29,7 @@ struct MicrofacetDielectricLayer
   BSDF super;
 
   varying BSDF* varying substrate;
+  bool outside;
   float eta;
   vec3f transmittance;
   float thickness;
@@ -55,18 +56,21 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
-  float lengthI1 = (cosThetaI > 0.f) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
+  float lengthI1 = (cosThetaI > 0.f && self->outside) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
   substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
 
   // Compute the final substrate reflection/transmission
-  // Ignore Fresnel for the exiting reflection ray
-  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->weight, LCG_getFloat2(lcg));
-  substrate.value = substrate.value * T;
+  // Ignore Fresnel for the exiting ray
+  if (self->outside)
+  {
+    float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->weight, LCG_getFloat2(lcg));
+    substrate.value = substrate.value * T;
+  }
 
-  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->weight); // have to use the macronormal for sampling
+  float coatingPickProb = self->outside ? fresnelDielectricWeighted(cosThetaO, self->eta, self->weight) : 0.f; // have to use the macronormal for sampling
   float substratePickProb = 1.f - coatingPickProb;
 
-  if (cosThetaI > 0.f)
+  if (cosThetaI > 0.f && self->outside)
   {
     // Compute the microfacet normal
     vec3f wh = normalize(wi + wo);
@@ -115,7 +119,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   vec3f wh;
   BSDF_EvalRes substrate;
 
-  float coatingPickProb = fresnelDielectricWeighted(cosThetaO, self->eta, self->weight); // only the macronormal is available yet
+  float coatingPickProb = self->outside ? fresnelDielectricWeighted(cosThetaO, self->eta, self->weight) : 0.f; // only the macronormal is available yet
   float substratePickProb = 1.f - coatingPickProb;
 
   if (ss < coatingPickProb)
@@ -155,13 +159,16 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
-  float lengthI1 = (cosThetaI > 0.f) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
+  float lengthI1 = (cosThetaI > 0.f && self->outside) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
   substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
 
   // Compute the final substrate reflection/transmission
-  // Ignore Fresnel for the exiting reflection ray
-  float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->weight, LCG_getFloat2(lcg));
-  substrate.value = substrate.value * T;
+  // Ignore Fresnel for the exiting ray
+  if (self->outside)
+  {
+    float T = MicrofacetDielectric_transmittance(cosThetaO, self->eta, self->microfacet, self->weight, LCG_getFloat2(lcg));
+    substrate.value = substrate.value * T;
+  }
 
   if (res.type & BSDF_SPECULAR)
   {
@@ -169,7 +176,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     res.weight = substrate.value * rcp(substratePickProb);
     return res;
   }
-  else if (cosThetaI <= 0.f)
+  else if (cosThetaI <= 0.f || !self->outside)
   {
     // If we sampled transmission, we just have to return the substrate transmission
     res.pdf = substratePickProb * substrate.pdf;
@@ -209,7 +216,8 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
                    frame);
 
   self->substrate = substrate;
-  self->eta = eta;
+  self->outside = eta < 1.f;
+  self->eta = self->outside ? eta : rcp(eta);
   self->transmittance = transmittance;
   self->thickness = thickness;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
@@ -231,13 +239,19 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO, float et
 {
   GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
 
+  bool outside = eta < 1.f;
+  if (!outside) eta = rcp(eta);
+
   // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float lengthO1 = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
   vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
 
   // Compute the final transmittance
-  float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, weight, LCG_getFloat2(lcg));
-  value = value * T;
+  if (outside)
+  {
+    float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, weight, LCG_getFloat2(lcg));
+    value = value * T;
+  }
   return value;
 }
