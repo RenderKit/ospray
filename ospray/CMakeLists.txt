@@ -234,6 +234,7 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
 OSPRAY_INSTALL_SDK_HEADERS(
   api/Device.h
   api/ISPCDevice.h
+  api/objectFactory.h
   DESTINATION api
 )
 

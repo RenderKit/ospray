@@ -20,13 +20,7 @@
 
 //ospray
 #include "common/OSPCommon.h"
-#include "common/Util.h"
 #include "include/ospray/ospray.h"
-#include "render/Renderer.h"
-#include "camera/Camera.h"
-#include "common/Material.h"
-#include "volume/Volume.h"
-#include "transferFunction/TransferFunction.h"
 #include "Device.h"
 
 #ifdef _WIN32
