@@ -106,7 +106,7 @@ namespace ospray {
     </dl>
 
    */
-  struct OSPRAY_CORE_INTERFACE ManagedObject
+  struct OSPRAY_SDK_INTERFACE ManagedObject
     : public memory::RefCount,
       public utility::ParameterizedObject
   {
