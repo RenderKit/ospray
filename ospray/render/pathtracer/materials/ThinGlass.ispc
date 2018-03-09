@@ -16,7 +16,7 @@
 
 #include "Material.ih"
 #include "texture/TextureParam.ih"
-#include "../bsdfs/ThinDielectric.ih"
+#include "../bsdfs/RobustThinDielectric.ih"
 
 struct ThinGlass
 {
@@ -58,7 +58,7 @@ const varying BSDF* varying ThinGlass_getBSDF(const PathTraceMaterial* uniform s
 
 
   varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
-  return ThinDielectric_create(ctx, frame, self->eta, getAttenuation(self, dg));
+  return RobustThinDielectric_create(ctx, frame, self->eta, getAttenuation(self, dg));
 }
 
 vec3f ThinGlass_getTransparency(const PathTraceMaterial* uniform material,
@@ -77,7 +77,7 @@ vec3f ThinGlass_getTransparency(const PathTraceMaterial* uniform material,
   // attenuation (Beer's law) when crossing the slab once
   const vec3f A = expf(getAttenuation(self, dg) * length);
 
-  // total transmission (see ThinDielectric)
+  // total transmission (see RobustThinDielectric)
   return A * sqr(1.f - R) * rcp(1.f - sqr(R*A));
 }
 

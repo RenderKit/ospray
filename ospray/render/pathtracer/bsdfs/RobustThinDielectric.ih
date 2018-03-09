@@ -19,12 +19,12 @@
 #include "BSDF.ih"
 #include "Fresnel.ih"
 
-// ThinDielectric models a very thin, transparent slab, i.e. it assumes two
+// RobustThinDielectric models a very thin, transparent slab, i.e. it assumes two
 // parallel interfaces with unit-distrance with a (potentially) attenuating
 // medium inbetween
 // it accounts for multiple internal reflections between the interfaces, but
 // neglects parallaxe effects due to its thickness
-struct ThinDielectric
+struct RobustThinDielectric
 {
   BSDF super;
 
@@ -34,17 +34,17 @@ struct ThinDielectric
                      // i.e. wrt. the natural base e
 };
 
-inline BSDF_EvalRes ThinDielectric_eval(const varying BSDF* uniform super,
+inline BSDF_EvalRes RobustThinDielectric_eval(const varying BSDF* uniform super,
                                         const vec3f& wo, const vec3f& wi, unsigned int& lcg)
 {
   return make_BSDF_EvalRes_zero();
 }
 
 
-inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
+inline BSDF_SampleRes RobustThinDielectric_sample(const varying BSDF* uniform super,
                                             const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
 {
-  const varying ThinDielectric* uniform self = (const varying ThinDielectric* uniform)super;
+  const varying RobustThinDielectric* uniform self = (const varying RobustThinDielectric* uniform)super;
   BSDF_SampleRes res;
 
   const float cosThetaO = max(dot(wo, getN(super)), 0.0f);
@@ -88,20 +88,20 @@ inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
   return res;
 }
 
-inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self, const varying linear3f* uniform frame,
-                                       uniform float eta, vec3f attenuation)
+inline void RobustThinDielectric_Constructor(varying RobustThinDielectric* uniform self, const varying linear3f* uniform frame,
+                                             uniform float eta, vec3f attenuation)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR,
-                   ThinDielectric_eval, ThinDielectric_sample,
+                   RobustThinDielectric_eval, RobustThinDielectric_sample,
                    frame);
   self->eta = eta;
   self->attenuation = attenuation;
 }
 
-inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                   uniform float eta, vec3f attenuation)
+inline varying BSDF* uniform RobustThinDielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                                         uniform float eta, vec3f attenuation)
 {
-  varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));
-  ThinDielectric_Constructor(self, frame, eta, attenuation);
+  varying RobustThinDielectric* uniform self = (varying RobustThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(RobustThinDielectric));
+  RobustThinDielectric_Constructor(self, frame, eta, attenuation);
   return &self->super;
 }
