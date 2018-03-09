@@ -87,21 +87,22 @@ namespace ospray {
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");
     const OSPDataType ospVoxelType = getVoxelType();
-    exitOnCondition(ospVoxelType == OSP_UNKNOWN, "unrecognized voxel type");
+    if(ospVoxelType == OSP_UNKNOWN)
+      throw std::runtime_error("unrecognized voxel type");
 
     // Get the volume dimensions.
     vec3i dimensions = getParam3i("dimensions", vec3i(0));
-    exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
+    if(reduce_min(dimensions) <= 0)
+      throw std::runtime_error("invalid volume dimensions");
 
     // Get the voxel data.
     voxelData = (Data *)getParamObject("voxelData", nullptr);
 
-    if (voxelData) {
-      warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER),
-                      "The voxel data buffer was not created with the "
-                      "OSP_DATA_SHARED_BUFFER flag; "
-                      "Use another volume type (e.g. BlockBrickedVolume) for "
-                      "better performance");
+    if (voxelData && !(voxelData->flags & OSP_DATA_SHARED_BUFFER)) {
+      postStatusMsg(1)
+        << "WARNING: The voxel data buffer was not created with"
+        << " the OSP_DATA_SHARED_BUFFER flag; Use another volume type"
+        << " (e.g. BlockBrickedVolume) for better performance";
     }
 
     // The voxel count.
