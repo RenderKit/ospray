@@ -1,0 +1,110 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "Dielectric.ih"
+
+// Thin dielectric slab with unit thickness, which ignores refraction.
+struct ThinDielectric
+{
+  BSDF super;
+
+  float eta;
+  vec3f attenuation;
+  float reflectionWeight;
+};
+
+inline BSDF_EvalRes ThinDielectric_eval(const varying BSDF* uniform super,
+                                        const vec3f& wo, const vec3f& wi, unsigned int& lcg)
+{
+  return make_BSDF_EvalRes_zero();
+}
+
+inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
+                                            const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
+{
+  const varying ThinDielectric* uniform self = (const varying ThinDielectric* uniform)super;
+  BSDF_SampleRes res;
+
+  float cosThetaO = max(dot(wo, getN(super)), 0.f);
+
+  // Fresnel term
+  float cosThetaT; // positive
+  float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaT, self->eta, self->reflectionWeight);
+  res.pdf = inf;
+
+  // Sample the reflection or the transmission
+  if (ss <= F)
+  {
+    // Reflection
+    res.wi = reflect(wo, getN(super), cosThetaO);
+    res.type = BSDF_SPECULAR_REFLECTION;
+    res.weight = make_vec3f(1.f);
+  }
+  else
+  {
+    // Transmission
+    // Compute attenuation for crossing the slab once
+    float length = rcp(cosThetaT);
+    vec3f A = expf(self->attenuation * length);
+
+    res.wi = neg(wo);
+    res.type = BSDF_SPECULAR_TRANSMISSION;
+    res.weight = A;
+  }
+
+  return res;
+}
+
+inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self,
+                                       const varying linear3f* uniform frame,
+                                       float eta,
+                                       vec3f attenuation,
+                                       float reflectionWeight)
+{
+  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+                   ThinDielectric_eval, ThinDielectric_sample,
+                   frame);
+  self->eta = eta;
+  self->attenuation = attenuation;
+  self->reflectionWeight = reflectionWeight;
+}
+
+inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx,
+                                                   const varying linear3f* uniform frame,
+                                                   float eta,
+                                                   vec3f attenuation,
+                                                   float reflectionWeight)
+{
+  varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));
+  ThinDielectric_Constructor(self, frame, eta, attenuation, reflectionWeight);
+  return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline vec3f ThinDielectric_getTransparency(float cosThetaO, float eta, vec3f attenuation, float reflectionWeight)
+{
+  // Fresnel term
+  float cosThetaT; // positive
+  float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaT, eta, reflectionWeight);
+
+  // Compute attenuation for crossing the slab once
+  float length = rcp(cosThetaT);
+  vec3f A = expf(attenuation * length);
+
+  return (1.f-F) * A;
+}

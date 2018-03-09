@@ -40,7 +40,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   const varying Dielectric* uniform self = (const varying Dielectric* uniform)super;
   BSDF_SampleRes res;
 
-  float cosThetaO = max(dot(wo, getN(super)), 0.0f);
+  float cosThetaO = max(dot(wo, getN(super)), 0.f);
 
   // Fresnel term
   float cosThetaT; // positive
@@ -48,12 +48,15 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   res.pdf = inf;
 
   // Sample the reflection or the transmission
-  if (ss <= F) {
+  if (ss <= F)
+  {
     // Reflection
     res.wi = reflect(wo, getN(super), cosThetaO);
     res.type = BSDF_SPECULAR_REFLECTION;
-    res.weight = make_vec3f(1.0f);
-  } else {
+    res.weight = make_vec3f(1.f);
+  }
+  else
+  {
     // Transmission
     res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
     res.type = BSDF_SPECULAR_TRANSMISSION;

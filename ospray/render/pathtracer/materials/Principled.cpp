@@ -44,7 +44,7 @@ namespace ospray {
         MaterialParam1f specular = getMaterialParam1f("specular", 1.f);
         MaterialParam1f ior = getMaterialParam1f("ior", 1.52f);
         MaterialParam1f transmission = getMaterialParam1f("transmission", 0.f);
-        vec3f transmissionColor = getParam3f("transmissionColor", vec3f(1.f));
+        MaterialParam3f transmissionColor = getMaterialParam3f("transmissionColor", vec3f(1.f));
         float transmissionDepth = getParam1f("transmissionDepth", 1.f);
         MaterialParam1f roughness = getMaterialParam1f("roughness", 0.5f);
         MaterialParam1f normal = getMaterialParam1f("normal", 1.f);
@@ -58,6 +58,9 @@ namespace ospray {
 
         MaterialParam1f opacity = getMaterialParam1f("opacity", 1.f);
 
+        bool thin = getParam1i("thin", 0);
+        MaterialParam1f thickness = getMaterialParam1f("thickness", 1.f);
+
         float outsideIor = getParamf("outsideIor", 1.f);
         vec3f outsideTransmissionColor = getParam3f("outsideTransmissionColor", vec3f(1.f));
         float outsideTransmissionDepth = getParamf("outsideTransmissionDepth", 1.f);
@@ -69,7 +72,7 @@ namespace ospray {
           specular.factor, specular.map ? specular.map->getIE() : nullptr, (const ispc::AffineSpace2f&)specular.xform,
           ior.factor, ior.map ? ior.map->getIE() : nullptr, (const ispc::AffineSpace2f&)ior.xform,
           transmission.factor, transmission.map ? transmission.map->getIE() : nullptr, (const ispc::AffineSpace2f&)transmission.xform,
-          (const ispc::vec3f&)transmissionColor,
+          (const ispc::vec3f&)transmissionColor.factor, transmissionColor.map ? transmissionColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)transmissionColor.xform,
           transmissionDepth,
           roughness.factor, roughness.map ? roughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)roughness.xform,
           normal.factor, normal.map ? normal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)normal.xform, (const ispc::LinearSpace2f&)normal.rot,
@@ -80,6 +83,8 @@ namespace ospray {
           coatRoughness.factor, coatRoughness.map ? coatRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughness.xform,
           coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot,
           opacity.factor, opacity.map ? opacity.map->getIE() : nullptr, (const ispc::AffineSpace2f&)opacity.xform,
+          thin,
+          thickness.factor, thickness.map ? thickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)thickness.xform,
           outsideIor,
           (const ispc::vec3f&)outsideTransmissionColor,
           outsideTransmissionDepth);
