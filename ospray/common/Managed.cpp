@@ -98,8 +98,8 @@ namespace ospray {
   {
     if (!condition)
       return;
-    emitMessage("ERROR", message);
-    exit(1);
+
+    throw std::runtime_error(message);
   }
 
   void ManagedObject::warnOnCondition(bool condition,
