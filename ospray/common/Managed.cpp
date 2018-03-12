@@ -86,29 +86,4 @@ namespace ospray {
       object->dependencyGotChanged(this);
   }
 
-  void ManagedObject::emitMessage(const std::string &kind,
-                                  const std::string &message) const
-  {
-    postStatusMsg() << "  " << toString()
-                   << "  " << kind << ": " << message + '.';
-  }
-
-  void ManagedObject::exitOnCondition(bool condition,
-                                      const std::string &message) const
-  {
-    if (!condition)
-      return;
-    emitMessage("ERROR", message);
-    exit(1);
-  }
-
-  void ManagedObject::warnOnCondition(bool condition,
-                                      const std::string &message) const
-  {
-    if (!condition)
-      return;
-
-    emitMessage("WARNING", message);
-  }
-
 } // ::ospray

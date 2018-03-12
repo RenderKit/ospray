@@ -27,7 +27,7 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
   {
-    LinearTransferFunction() = default;
+    LinearTransferFunction();
     virtual ~LinearTransferFunction() override;
 
     virtual void commit() override;
@@ -41,10 +41,6 @@ namespace ospray {
 
     //! Data array that stores the opacity map.
     Ref<Data> opacityValues;
-
-    //! Create the equivalent ISPC transfer function.
-    void createEquivalentISPC();
-
   };
 
 } // ::ospray
