@@ -28,7 +28,7 @@ struct DielectricLayer
   BSDF super;
 
   varying BSDF* varying substrate;
-  bool outside;
+  bool fromOutside;
   float eta;
   vec3f transmittance;
   float thickness;
@@ -49,7 +49,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   // Fresnel term
   float cosThetaO1; // positive
   float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaO1, self->eta, self->weight);
-  if (!self->outside) F = 0.f;
+  if (!self->fromOutside) F = 0.f;
 
   // Evaluate the substrate
   // Ignore refraction
@@ -60,7 +60,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float lengthO1 = rcp(cosThetaO1);
-  float lengthI1 = (cosThetaI > 0.f && self->outside) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
+  float lengthI1 = (cosThetaI > 0.f && self->fromOutside) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
   substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
 
   // Compute the final substrate reflection/transmission
@@ -83,7 +83,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
   // Fresnel term
   float cosThetaO1; // positive
   float F = fresnelDielectricWeightedEx(cosThetaO, cosThetaO1, self->eta, self->weight);
-  if (!self->outside) F = 0.f;
+  if (!self->fromOutside) F = 0.f;
 
   if (ss < F)
   {
@@ -106,7 +106,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
 
     // Apply the coating medium transmittance
     float lengthO1 = rcp(cosThetaO1);
-    float lengthI1 = (cosThetaI > 0.f && self->outside) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
+    float lengthI1 = (cosThetaI > 0.f && self->fromOutside) ? rcp(refract(cosThetaI, self->eta)) : 0.f; // rcp(cosThetaI1)
     res.weight = lerp(self->weight, res.weight, res.weight * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
 
     // Compute the final reflection/transmission
@@ -126,8 +126,8 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
                    frame);
 
   self->substrate = substrate;
-  self->outside = eta < 1.f;
-  self->eta = self->outside ? eta : rcp(eta);
+  self->fromOutside = eta < 1.f;
+  self->eta = self->fromOutside ? eta : rcp(eta);
   self->transmittance = transmittance;
   self->thickness = thickness;
   self->weight = weight;
@@ -146,8 +146,8 @@ inline varying BSDF* uniform DielectricLayer_create(uniform ShadingContext* unif
 inline vec3f DielectricLayer_getTransparency(float cosThetaO, float eta, vec3f transmittance, float thickness,
                                              float weight)
 {
-  bool outside = eta < 1.f;
-  if (!outside) eta = rcp(eta);
+  bool fromOutside = eta < 1.f;
+  if (!fromOutside) eta = rcp(eta);
 
   // Apply the coating medium transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
@@ -155,7 +155,7 @@ inline vec3f DielectricLayer_getTransparency(float cosThetaO, float eta, vec3f t
   vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
 
   // Compute the final transmittance
-  if (outside)
+  if (fromOutside)
   {
     float T = Dielectric_transmittance(cosThetaO, eta, weight);
     value = value * T;

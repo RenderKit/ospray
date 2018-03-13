@@ -18,7 +18,8 @@
 
 #include "Dielectric.ih"
 
-// Thin dielectric slab with unit thickness, which ignores refraction.
+// Thin microfacet dielectric BSDF.
+// It represents a transparent slab with unit thickness, and ignores refraction.
 struct ThinDielectric
 {
   BSDF super;
@@ -48,7 +49,8 @@ inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
   res.pdf = inf;
 
   // Sample the reflection or the transmission
-  if (ss <= F)
+  bool doReflection = (ss <= F);
+  if (doReflection)
   {
     // Reflection
     res.wi = reflect(wo, getN(super), cosThetaO);
@@ -72,8 +74,7 @@ inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
 
 inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self,
                                        const varying linear3f* uniform frame,
-                                       float eta,
-                                       vec3f attenuation,
+                                       float eta, vec3f attenuation,
                                        float reflectionWeight)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR,
@@ -86,8 +87,7 @@ inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self,
 
 inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx,
                                                    const varying linear3f* uniform frame,
-                                                   float eta,
-                                                   vec3f attenuation,
+                                                   float eta, vec3f attenuation,
                                                    float reflectionWeight)
 {
   varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));

@@ -42,28 +42,28 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   if (cosThetaO <= 0.f)
     return make_BSDF_EvalRes_zero();
   float cosThetaI = dot(wi, getN(super));
-  bool evalReflection = cosThetaI > 0.f;
+  bool isReflection = cosThetaI > 0.f;
 
   // Compute the microfacet normal
   vec3f wh;
 
-  if (evalReflection)
+  if (isReflection)
   {
-      // Reflection
-      wh = wi + wo;
+    // Reflection
+    wh = wo + wi;
   }
   else
   {
-      // Transmission
-      wh = self->eta*wo + wi;
+    // Transmission
+    wh = self->eta*wo + wi;
   }
 
   wh = normalize(wh);
   float cosThetaH = dot(wh, getN(super));
   if (cosThetaH < 0.f)
   {
-      wh = neg(wh);
-      cosThetaH = -cosThetaH;
+    wh = neg(wh);
+    cosThetaH = -cosThetaH;
   }
 
   float cosThetaOH = dot(wo, wh);
@@ -74,18 +74,18 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
 
   float value;
-  if (evalReflection)
+  if (isReflection)
   {
-      // Reflection
-      res.pdf = F * rcp(4.f*abs(cosThetaOH));
-      value = F * rcp(4.f*cosThetaO);
+    // Reflection
+    res.pdf = F * rcp(4.f*abs(cosThetaOH));
+    value = F * rcp(4.f*cosThetaO);
   }
   else
   {
-      // Transmission
-      // cosThetaTH = -cosThetaIH
-      res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
-      value = (1.f-F) * cosThetaTH * abs(cosThetaOH) * rcp(cosThetaO*sqr(self->eta*cosThetaOH - cosThetaTH)) * rcp(sqr(self->eta));
+    // Transmission
+    // cosThetaTH = -cosThetaIH
+    res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
+    value = (1.f-F) * cosThetaTH * abs(cosThetaOH) * rcp(cosThetaO*sqr(self->eta*cosThetaOH - cosThetaTH)) * rcp(sqr(self->eta));
   }
 
   float whPdf;
@@ -121,30 +121,31 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   float cosThetaI;
   float weight;
 
-  if (ss <= F)
+  bool doReflection = (ss <= F);
+  if (doReflection)
   {
-      // Reflection
-      res.wi = reflect(wo, wh, cosThetaOH);
-      cosThetaI = dot(res.wi, getN(super));
-      if (cosThetaI <= 0.f)
-        return make_BSDF_SampleRes_zero();
+    // Reflection
+    res.wi = reflect(wo, wh, cosThetaOH);
+    cosThetaI = dot(res.wi, getN(super));
+    if (cosThetaI <= 0.f)
+      return make_BSDF_SampleRes_zero();
 
-      res.type = BSDF_GLOSSY_REFLECTION;
-      res.pdf = F * rcp(4.f*abs(cosThetaOH));
-      weight = 1.f;
+    res.type = BSDF_GLOSSY_REFLECTION;
+    res.pdf = F * rcp(4.f*abs(cosThetaOH));
+    weight = 1.f;
   }
   else
   {
-      // Transmission
-      // cosThetaTH = -cosThetaIH
-      res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
-      cosThetaI = dot(res.wi, getN(super));
-      if (cosThetaI >= 0.f)
-        return make_BSDF_SampleRes_zero();
+    // Transmission
+    // cosThetaTH = -cosThetaIH
+    res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
+    cosThetaI = dot(res.wi, getN(super));
+    if (cosThetaI >= 0.f)
+      return make_BSDF_SampleRes_zero();
 
-      res.type = BSDF_GLOSSY_TRANSMISSION;
-      res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
-      weight = rcp(sqr(self->eta));
+    res.type = BSDF_GLOSSY_TRANSMISSION;
+    res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
+    weight = rcp(sqr(self->eta));
   }
 
   float cosThetaIH = dot(res.wi, wh);

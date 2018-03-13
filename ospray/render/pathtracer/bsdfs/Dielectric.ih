@@ -48,7 +48,8 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   res.pdf = inf;
 
   // Sample the reflection or the transmission
-  if (ss <= F)
+  bool doReflection = (ss <= F);
+  if (doReflection)
   {
     // Reflection
     res.wi = reflect(wo, getN(super), cosThetaO);
