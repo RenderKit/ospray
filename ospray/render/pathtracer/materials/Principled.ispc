@@ -28,6 +28,7 @@
 #include "../bsdfs/ThinDielectric.ih"
 #include "../bsdfs/ThinMicrofacetDielectric.ih"
 #include "../bsdfs/Transmission.ih"
+#include "../bsdfs/LambertTransmission.ih"
 #include "math/spectrum.ih"
 
 struct Principled
@@ -95,6 +96,10 @@ struct Principled
   // solid or thin mode flag
   bool thin;
 
+  // diffuse transmission in [0, 2] (thin only)
+  float backlight;
+  TextureParam backlightMap;
+
   // thickness (thin only)
   float thickness;
   TextureParam thicknessMap;
@@ -145,12 +150,49 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       const float solid = dielectric * (1.f - transmission);
       if (solid > EPS)
       {
+        varying BSDF* varying solidBsdf = NULL;
+
         // diffuse
-        varying BSDF* varying solidBsdf;
-        if (roughness < EPS)
-          solidBsdf = Lambert_create(ctx, frame, baseColor);
+        if (!self->thin)
+        {
+          // solid
+          if (roughness < EPS)
+            solidBsdf = Lambert_create(ctx, frame, baseColor);
+          else
+            solidBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+        }
         else
-          solidBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+        {
+          // thin
+          const float backlight = clamp(self->backlight * get1f(self->backlightMap, dg.st, 1.f), 0.f, 2.f);
+          const float diffuseTransmission = backlight * 0.5f;
+          const float diffuseReflection = 1.f - diffuseTransmission;
+
+          if (diffuseReflection > EPS)
+          {
+            if (roughness < EPS)
+              solidBsdf = Lambert_create(ctx, frame, baseColor);
+            else
+              solidBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+          }
+
+          if (diffuseTransmission > EPS)
+          {
+            varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, frame, baseColor);
+
+            if (solidBsdf)
+            {
+              varying BSDF* uniform mixBsdf = MultiBSDF_create(ctx);
+              MultiBSDF_add(mixBsdf, solidBsdf, diffuseReflection, diffuseReflection);
+              MultiBSDF_add(mixBsdf, diffuseTransmissionBsdf, diffuseTransmission, diffuseTransmission);
+              solidBsdf = mixBsdf;
+            }
+            else
+            {
+              solidBsdf = diffuseTransmissionBsdf;
+            }
+          }
+        }
         
         // specular
         if (specular > EPS && abs(ior-1.f) > EPS)
@@ -390,6 +432,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float coatNormal, void* uniform coatNormalMap, const uniform affine2f& coatNormalXform, const uniform linear2f& coatNormalRot,
     uniform float opacity, void* uniform opacityMap, const uniform affine2f& opacityXform,
     uniform bool thin,
+    uniform float backlight, void* uniform backlightMap, const uniform affine2f& backlightXform,
     uniform float thickness, void* uniform thicknessMap, const uniform affine2f& thicknessXform,
     uniform float outsideIor,
     const uniform vec3f& outsideTransmissionColor,
@@ -451,6 +494,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 
   self->thin = thin;
 
+  self->backlight = backlight;
+  self->backlightMap = make_TextureParam((uniform Texture2D*)backlightMap, backlightXform);
+
   self->thickness = thickness;
   self->thicknessMap = make_TextureParam((uniform Texture2D*)thicknessMap, thicknessXform);
   
@@ -490,6 +536,7 @@ export void* uniform PathTracer_Principled_create()
     1.f, NULL, xform, make_LinearSpace2f_identity(), // coatNormal
     1.f, NULL, xform, // opacity
     false, // thin
+    0.f, NULL, xform, // backlight
     1.f, NULL, xform, // thickness
     1.f, // outsideIor
     make_vec3f(1.f), // outsideTransmissionColor
