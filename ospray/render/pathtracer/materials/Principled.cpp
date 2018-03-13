@@ -58,7 +58,7 @@ namespace ospray {
 
         MaterialParam1f opacity = getMaterialParam1f("opacity", 1.f);
 
-        bool thin = getParam1i("thin", 0);
+        bool thin = getParam1i("thin", 0) || (getParam1f("thin", 0.f) > 0.f);
         MaterialParam1f thickness = getMaterialParam1f("thickness", 1.f);
 
         float outsideIor = getParamf("outsideIor", 1.f);

@@ -26,6 +26,7 @@
 #include "../bsdfs/DielectricLayer.ih"
 #include "../bsdfs/MicrofacetDielectricLayer.ih"
 #include "../bsdfs/ThinDielectric.ih"
+#include "../bsdfs/ThinMicrofacetDielectric.ih"
 #include "../bsdfs/Transmission.ih"
 #include "math/spectrum.ih"
 
@@ -128,7 +129,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
     const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
     const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
-    const bool outside = self->thin ? true : eq(currentMedium, self->outsideMedium);
+    const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
 
     // dielectric base
     const float dielectric = (1.f - metallic);
@@ -172,8 +173,8 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         if (!self->thin)
         {
           // solid
-          const float eta = outside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                                    : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+          const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
+                                        : self->insideMedium.ior*rcp(self->outsideMedium.ior);
 
           if (roughness < EPS)
             refractiveBsdf = Dielectric_create(ctx, frame, eta, specular);
@@ -188,7 +189,10 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
           const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
 
-          refractiveBsdf = ThinDielectric_create(ctx, frame, eta, attenuation, specular);
+          if (roughness < EPS)
+            refractiveBsdf = ThinDielectric_create(ctx, frame, eta, attenuation, specular);
+          else
+            refractiveBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, attenuation, specular);
         }
 
         MultiBSDF_add(baseBsdf, refractiveBsdf, refractive, refractive);
@@ -221,8 +225,8 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       if (coatIor < 1.f) coatIor = rcp(coatIor);
       if (abs(coatIor-1.f) > EPS)
       {
-        const float coatEta = outside ? self->outsideMedium.ior*rcp(coatIor)
-                                      : coatIor*rcp(self->outsideMedium.ior);
+        const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
+                                          : coatIor*rcp(self->outsideMedium.ior);
         const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
         const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
         const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
@@ -288,15 +292,15 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
     {
       const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
       const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
-      const bool outside = self->thin ? true : eq(currentMedium, self->outsideMedium);
+      const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
 
       const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
 
       if (!self->thin)
       {
         // solid
-        const float eta = outside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                                  : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+        const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
+                                      : self->insideMedium.ior*rcp(self->outsideMedium.ior);
 
         if (roughness < EPS)
           T = Dielectric_getTransparency(cosThetaO, eta, specular);
@@ -314,7 +318,10 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
         const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
 
-        T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation, specular);
+        if (roughness < EPS)
+          T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation, specular);
+        else
+          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, attenuation, specular, lcg);
       }
 
       // clear coat
@@ -325,8 +332,8 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         if (coatIor < 1.f) coatIor = rcp(coatIor);
         if (abs(coatIor-1.f) > EPS)
         {
-          const float coatEta = outside ? self->outsideMedium.ior*rcp(coatIor)
-                                        : coatIor*rcp(self->outsideMedium.ior);
+          const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
+                                            : coatIor*rcp(self->outsideMedium.ior);
           const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
           const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
           const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
