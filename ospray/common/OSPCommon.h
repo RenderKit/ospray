@@ -79,6 +79,15 @@ typedef int ssize_t;
 #endif
 #define OSPRAY_SDK_INTERFACE OSPRAY_MODULE_ISPC_INTERFACE
 
+#define OSP_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
+  extern "C" OSPRAY_DLLEXPORT                                                  \
+      Object *ospray_create_##object_name##__##external_name()                 \
+  {                                                                            \
+    return new InternalClass;                                                  \
+  } \
+  /* additional declaration to avoid "extra ;" -Wpedantic warnings */          \
+  Object *ospray_create_##object_name##__##external_name()
+
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
