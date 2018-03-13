@@ -359,9 +359,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       }
     }
 
-    // keep lastBsdfPdf and lastDg when there was a Dirac transmission
+    // keep lastBsdfPdf and lastDg when there was a specular or glossy transmission
     // to better combine MIS with transparent shadows
-    if (fs.type & ~BSDF_SPECULAR_TRANSMISSION) {
+    if (fs.type & ~(BSDF_SPECULAR_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION)) {
       lastBsdfPdf = fs.pdf;
       lastDg = dg;
     }
