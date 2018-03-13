@@ -18,7 +18,7 @@
 
 #include "Dielectric.ih"
 
-// Thin microfacet dielectric BSDF.
+// Thin dielectric BSDF.
 // It represents a transparent slab with unit thickness, and ignores refraction.
 struct ThinDielectric
 {
