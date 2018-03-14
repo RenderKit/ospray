@@ -41,12 +41,13 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> tfn) : 
 	    const std::array<float, 2>& r)
 	{
 	    int sampleNum = this->transferFcn->child("numSamples").valueAs<int>();
+	    if (r[1] > r[0]) {
+	      this->transferFcn->child("valueRange").setValue(ospcommon::vec2f(r[0], r[1]));
+	    }
 	    auto colors =
-	    ospray::sg::createNode("colors", "DataVector3f")
-	    ->nodeAs<ospray::sg::DataVector3f>();
+	    ospray::sg::createNode("colors", "DataVector3f")->nodeAs<ospray::sg::DataVector3f>();
 	    auto alpha  =
-	    ospray::sg::createNode("alpha", "DataVector2f")
-	    ->nodeAs<ospray::sg::DataVector2f>();
+	    ospray::sg::createNode("alpha", "DataVector2f")->nodeAs<ospray::sg::DataVector2f>();
 	    colors->v.resize(sampleNum);
 	    alpha->v.resize(sampleNum);
 	    std::copy(c.data(), c.data() + c.size(),
@@ -56,6 +57,7 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> tfn) : 
 	    this->transferFcn->add(colors);
 	    this->transferFcn->add(alpha);
 	    colors->markAsModified();
+	    alpha->markAsModified();
 	});
 }
     
@@ -67,12 +69,13 @@ TransferFunction::TransferFunction(const TransferFunction &t) : transferFcn(t.tr
 	    const std::array<float, 2>& r)
 	{
 	    int sampleNum = this->transferFcn->child("numSamples").valueAs<int>();
+	    if (r[1] > r[0]) {
+	      this->transferFcn->child("valueRange").setValue(ospcommon::vec2f(r[0], r[1]));
+	    }
 	    auto colors =
-	    ospray::sg::createNode("colors", "DataVector3f")
-	    ->nodeAs<ospray::sg::DataVector3f>();
+	    ospray::sg::createNode("colors", "DataVector3f")->nodeAs<ospray::sg::DataVector3f>();
 	    auto alpha  =
-	    ospray::sg::createNode("alpha", "DataVector2f")
-	    ->nodeAs<ospray::sg::DataVector2f>();
+	    ospray::sg::createNode("alpha", "DataVector2f")->nodeAs<ospray::sg::DataVector2f>();
 	    colors->v.resize(sampleNum);
 	    alpha->v.resize(sampleNum);
 	    std::copy(c.data(), c.data() + c.size(),
@@ -82,6 +85,7 @@ TransferFunction::TransferFunction(const TransferFunction &t) : transferFcn(t.tr
 	    this->transferFcn->add(colors);
 	    this->transferFcn->add(alpha);
 	    colors->markAsModified();
+	    alpha->markAsModified();
 	});
 }
 
@@ -101,12 +105,13 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
 	  const std::array<float, 2>& r)
       {
 	  int sampleNum = this->transferFcn->child("numSamples").valueAs<int>();
+	  if (r[1] > r[0]) {
+	    this->transferFcn->child("valueRange").setValue(ospcommon::vec2f(r[0], r[1]));
+	  }
 	  auto colors =
-	  ospray::sg::createNode("colors", "DataVector3f")
-	  ->nodeAs<ospray::sg::DataVector3f>();
+	  ospray::sg::createNode("colors", "DataVector3f")->nodeAs<ospray::sg::DataVector3f>();
 	  auto alpha  =
-	  ospray::sg::createNode("alpha", "DataVector2f")
-	  ->nodeAs<ospray::sg::DataVector2f>();
+	  ospray::sg::createNode("alpha", "DataVector2f")->nodeAs<ospray::sg::DataVector2f>();
 	  colors->v.resize(sampleNum);
 	  alpha->v.resize(sampleNum);
 	  std::copy(c.data(), c.data() + c.size(),
@@ -116,6 +121,7 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
 	  this->transferFcn->add(colors);
 	  this->transferFcn->add(alpha);
 	  colors->markAsModified();
+	  alpha->markAsModified();
       });
 
   return *this;
