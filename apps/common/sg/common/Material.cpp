@@ -60,11 +60,8 @@ namespace ospray {
       }
 
       OSPMaterial mat = nullptr;
-      try
-      {
-        mat = ospNewMaterial2(ctx.ospRendererType.c_str(),
-                              child("type").valueAs<std::string>().c_str());
-      } catch (...) {}
+      mat = ospNewMaterial2(ctx.ospRendererType.c_str(),
+                            child("type").valueAs<std::string>().c_str());
 
       if (!mat)
       {

@@ -18,6 +18,7 @@
 
 #include "common/FrameBuffer.h"
 #include "visitor/MarkAllAsModified.h"
+#include "visitor/VerifyNodes.h"
 
 namespace ospray {
   namespace sg {
@@ -125,6 +126,8 @@ namespace ospray {
       backplate->data = malloc(sizeof(unsigned char) * backplate->size.y * stride);
       vec3f bgColor = child("bgColor").valueAs<vec3f>();
       memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
+      createChild("useBackplate", "bool", true, NodeFlags::none, "use\
+           backplate for path tracer");
     }
 
     Renderer::~Renderer()
@@ -137,7 +140,7 @@ namespace ospray {
     {
       RenderContext ctx;
       if (verifyCommit) {
-        Node::traverse<sg::Node::VerifyNodes>(sg::Node::VerifyNodes{});
+        Node::traverse(VerifyNodes{});
         traverse(ctx, "commit");
       }
       traverse(ctx, "render");
@@ -261,7 +264,7 @@ namespace ospray {
 
         if (child("world").childrenLastModified() > frameMTime)
         {
-          child("world").traverse(ctx, "render");
+          child("world").finalize(ctx);
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
           if (child("autoEpsilon").valueAs<bool>()) {
             const box3f bounds = child("world")["bounds"].valueAs<box3f>();
@@ -277,6 +280,10 @@ namespace ospray {
           }
 
         }
+
+        if (!child("useBackplate").valueAs<bool>())
+          ospSetObject(ospRenderer, "backplate", nullptr);
+
         ospCommit(ospRenderer);
         frameMTime.renew();
       }

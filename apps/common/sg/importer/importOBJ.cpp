@@ -123,7 +123,8 @@ namespace ospray {
               } catch (const std::runtime_error &) {
                 // NOTE(jda) - silently move on if parsed node type doesn't exist
                 // maybe it's a texture, try it
-                std::cout << "attemptoing to load param as texture: " << param.first << " " << param.second << std::endl;
+                std::cout << "attempting to load param as texture: "
+                          << param.first << " " << param.second << std::endl;
                 addTextureIfNeeded(matNode, param.first,
                                    param.second, containingPath);
               }

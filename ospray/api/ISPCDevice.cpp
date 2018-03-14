@@ -234,7 +234,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName, true)->set(std::string(s));
+      object->setParam<std::string>(bufName, s);
     }
 
     /*! assign (named) string parameter to an object */
@@ -245,7 +245,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     void ISPCDevice::removeParam(OSPObject _object, const char *name)
@@ -258,31 +258,30 @@ namespace ospray {
 
     /*! assign (named) int parameter to an object */
     void ISPCDevice::setInt(OSPObject _object,
-                             const char *bufName,
-                             const int f)
+                            const char *bufName,
+                            const int f)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, true)->set(f);
+      object->setParam(bufName, f);
     }
     /*! assign (named) float parameter to an object */
     void ISPCDevice::setFloat(OSPObject _object,
-                               const char *bufName,
-                               const float f)
+                              const char *bufName,
+                              const float f)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      ManagedObject::Param *param = object->findParam(bufName, true);
-      param->set(f);
+      object->setParam(bufName, f);
     }
 
     /*! Copy data into the given volume. */
     int ISPCDevice::setRegion(OSPVolume handle, const void *source,
-                               const vec3i &index, const vec3i &count)
+                              const vec3i &index, const vec3i &count)
     {
       Volume *volume = (Volume *) handle;
       Assert(volume != nullptr && "invalid volume object handle");
@@ -291,68 +290,68 @@ namespace ospray {
 
     /*! assign (named) vec2f parameter to an object */
     void ISPCDevice::setVec2f(OSPObject _object,
-                               const char *bufName,
-                               const vec2f &v)
+                              const char *bufName,
+                              const vec2f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     /*! assign (named) vec3f parameter to an object */
     void ISPCDevice::setVec3f(OSPObject _object,
-                               const char *bufName,
-                               const vec3f &v)
+                              const char *bufName,
+                              const vec3f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     /*! assign (named) vec3f parameter to an object */
     void ISPCDevice::setVec4f(OSPObject _object,
-                               const char *bufName,
-                               const vec4f &v)
+                              const char *bufName,
+                              const vec4f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     /*! assign (named) vec2f parameter to an object */
     void ISPCDevice::setVec2i(OSPObject _object,
-                               const char *bufName,
-                               const vec2i &v)
+                              const char *bufName,
+                              const vec2i &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     /*! assign (named) vec3i parameter to an object */
     void ISPCDevice::setVec3i(OSPObject _object,
-                               const char *bufName,
-                               const vec3i &v)
+                              const char *bufName,
+                              const vec3i &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     /*! assign (named) data item as a parameter to an object */
     void ISPCDevice::setObject(OSPObject _target,
-                                const char *bufName,
-                                OSPObject _value)
+                               const char *bufName,
+                               OSPObject _value)
     {
       ManagedObject *target = (ManagedObject *)_target;
       ManagedObject *value  = (ManagedObject *)_value;
@@ -360,7 +359,7 @@ namespace ospray {
       Assert(target != nullptr  && "invalid target object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      target->set(bufName,value);
+      target->setParam(bufName, value);
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */

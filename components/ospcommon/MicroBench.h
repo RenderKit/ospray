@@ -14,32 +14,47 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "common.h"
 
-#include "embree2/rtcore.isph"
+namespace ospcommon {
 
-#include "OSPConfig.h"
+  /*! flag that will glbally turn off all microbenches */
+// #define ALLOW_MICRO_BENCHES 1
 
-typedef unsigned int64 uint64;
-typedef unsigned int32 uint32;
-typedef unsigned int16 uint16;
-typedef unsigned int8  uint8;
+  struct MicroBench {
+#if ALLOW_MICRO_BENCHES
+    template<typename Lambda>
+    MicroBench(const char *name, const Lambda &func) {
+      static size_t numTimesCalled = 0;
 
-#define LOG(x)
+      ++numTimesCalled;
+      static size_t t_first = 0;
+      static size_t t_in    = 0;
+      static double s_first;
+      size_t t_enter = __rdtsc();
+      if (t_first == 0) { t_first = t_enter; s_first = getSysTime(); }
+      func();
+      size_t t_now = __rdtsc();
+      size_t t_leave = t_now;
+      size_t t_this  = t_leave - t_enter;
+      t_in += t_this;
+        
+      static size_t t_lastPing = t_first;
+      if (t_now-t_lastPing > 10000000000ULL) {
+        size_t t_total = t_leave - t_first;
+        double s_now = getSysTime();
+        printf("pct time in %s: %.2f (%.1f secs in; num times called %li)\n",
+               name,t_in*100.f/t_total,s_now-s_first,numTimesCalled);
+        t_lastPing = t_now;
+      }
+    }
+#else
+    template<typename Lambda>
+    inline MicroBench(const char *, const Lambda &func) {
+      func();
+    }
+#endif
 
-#define PRINT(x) print(#x" = %\n", x)
-#define PRINT3(x) print(#x" = (%, %, %)\n", get(x,0), get(x,1), get(x,2))
-// prints first unmasked element
-#define PRINTU(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
-#define PRINT3U(x) print(#x"[%] = (%, %, %)\n", count_trailing_zeros(lanemask()), extract(get(x,0), count_trailing_zeros(lanemask())), extract(get(x,1), count_trailing_zeros(lanemask())), extract(get(x,2), count_trailing_zeros(lanemask())))
+  };
 
-/*! ispc copy of embree error handling callback */
-void error_handler(const RTCError code, const int8* str);
-
-
-/*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
-export void delete_uniform(void *uniform uptr);
-
-/*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
-extern "C" void *uniform malloc64(uniform uint64 size);
-extern "C" void free64(void *uniform ptr);
+} // ::ospray

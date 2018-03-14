@@ -111,7 +111,8 @@ namespace ospray {
         int _ac = 1;
         const char *_av[] = {"ospray_mpi_distributed_device"};
 
-        MPI_Comm *setComm = static_cast<MPI_Comm*>(getParamVoidPtr("worldCommunicator", nullptr));
+        auto *setComm =
+          static_cast<MPI_Comm*>(getParam<void*>("worldCommunicator", nullptr));
         shouldFinalizeMPI = mpicommon::init(&_ac, _av, setComm == nullptr);
 
         if (setComm) {
@@ -138,7 +139,7 @@ namespace ospray {
 
       Device::commit();
 
-      masterRank = getParam1i("masterRank", 0);
+      masterRank = getParam<int>("masterRank", 0);
 
       TiledLoadBalancer::instance =
                       make_unique<staticLoadBalancer::Distributed>();
@@ -245,7 +246,7 @@ namespace ospray {
                                           void *v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     void MPIDistributedDevice::removeParam(OSPObject _object, const char *name)
@@ -266,7 +267,7 @@ namespace ospray {
                                          const char *s)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(std::string(s));
+      object->setParam<std::string>(bufName, s);
     }
 
     int MPIDistributedDevice::loadModule(const char *name)
@@ -279,7 +280,7 @@ namespace ospray {
                                         const float f)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(f);
+      object->setParam(bufName, f);
     }
 
     void MPIDistributedDevice::setInt(OSPObject _object,
@@ -287,7 +288,7 @@ namespace ospray {
                                       const int i)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(i);
+      object->setParam(bufName, i);
     }
 
     void MPIDistributedDevice::setVec2f(OSPObject _object,
@@ -295,7 +296,7 @@ namespace ospray {
                                         const vec2f &v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     void MPIDistributedDevice::setVec3f(OSPObject _object,
@@ -303,7 +304,7 @@ namespace ospray {
                                         const vec3f &v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     void MPIDistributedDevice::setVec4f(OSPObject _object,
@@ -311,7 +312,7 @@ namespace ospray {
                                         const vec4f &v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     void MPIDistributedDevice::setVec2i(OSPObject _object,
@@ -319,7 +320,7 @@ namespace ospray {
                                         const vec2i &v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     void MPIDistributedDevice::setVec3i(OSPObject _object,
@@ -327,7 +328,7 @@ namespace ospray {
                                         const vec3i &v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
-      object->findParam(bufName, true)->set(v);
+      object->setParam(bufName, v);
     }
 
     void MPIDistributedDevice::setObject(OSPObject _object,
@@ -336,7 +337,7 @@ namespace ospray {
     {
       auto *object = lookupObject<ManagedObject>(_object);
       auto *value  = lookupObject<ManagedObject>(_value);
-      object->set(bufName, value);
+      object->setParam(bufName, value);
     }
 
     OSPPixelOp MPIDistributedDevice::newPixelOp(const char *type)

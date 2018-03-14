@@ -94,8 +94,6 @@ namespace ospray {
     utility::TransactionalValue<vec2f> pickPos;
     utility::TransactionalValue<OSPPickResult> pickResult;
 
-    sg::TimeStamp lastRTime;
-
     int nPixels {0};
 
     std::mutex fbMutex;

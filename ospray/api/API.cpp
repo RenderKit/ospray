@@ -20,13 +20,7 @@
 
 //ospray
 #include "common/OSPCommon.h"
-#include "common/Util.h"
 #include "include/ospray/ospray.h"
-#include "render/Renderer.h"
-#include "camera/Camera.h"
-#include "common/Material.h"
-#include "volume/Volume.h"
-#include "transferFunction/TransferFunction.h"
 #include "Device.h"
 
 #ifdef _WIN32
@@ -45,14 +39,6 @@ inline std::string getPidString()
   char s[100];
   sprintf(s, "(pid %i)", getpid());
   return s;
-}
-
-inline std::string toString(OSPObject obj)
-{
-  if (obj)
-    return ((ospray::ManagedObject*)obj)->toString();
-  else
-    return "nullptr";
 }
 
 #define ASSERT_DEVICE() if (!deviceIsSet())                                   \
@@ -120,9 +106,9 @@ OSPRAY_CATCH_BEGIN
                  "make sure that mpd is running");
 
     currentDevice.reset(createMpiDevice("mpi_offload"));
-    currentDevice->findParam("mpiMode", true)->set("mpi-launch");
-    currentDevice->findParam("launchCommand", true)
-                 ->set(OSP_MPI_LAUNCH.value().c_str());
+    currentDevice->setParam<std::string>("mpiMode", "mpi-launch");
+    currentDevice->setParam<std::string>("launchCommand",
+                                         OSP_MPI_LAUNCH.value());
   }
 
   if (_ac && _av) {
@@ -182,12 +168,10 @@ OSPRAY_CATCH_BEGIN
       if (av == "--osp:mpi-launch") {
         if (i+2 > *_ac)
           throw std::runtime_error("--osp:mpi-launch expects an argument");
-        const char *launchCommand = strdup(_av[i+1]);
-        removeArgs(*_ac,_av,i,2);
-
         currentDevice.reset(createMpiDevice("mpi_offload"));
-        currentDevice->findParam("mpiMode", true)->set("mpi-launch");
-        currentDevice->findParam("launchCommand", true)->set(launchCommand);
+        currentDevice->setParam<std::string>("mpiMode", "mpi-launch");
+        currentDevice->setParam<std::string>("launchCommand", _av[i+1]);
+        removeArgs(*_ac,_av,i,2);
         --i;
         continue;
       }
@@ -201,9 +185,9 @@ OSPRAY_CATCH_BEGIN
         removeArgs(*_ac,_av,i,1);
 
         currentDevice.reset(createMpiDevice("mpi_offload"));
-        currentDevice->findParam("mpiMode", true)->set("mpi-listen");
-        currentDevice->findParam("fileNameToStorePortIn", true)
-                     ->set(fileNameToStorePortIn?fileNameToStorePortIn:"");
+        currentDevice->setParam<std::string>("mpiMode", "mpi-listen");
+        currentDevice->setParam<std::string>("fileNameToStorePortIn",
+                                fileNameToStorePortIn?fileNameToStorePortIn:"");
         --i;
         continue;
       }
@@ -216,8 +200,8 @@ OSPRAY_CATCH_BEGIN
         if (!currentDevice)
           currentDevice.reset(createMpiDevice("mpi_offload"));
 
-        currentDevice->findParam("mpiMode", true)->set("mpi-connect");
-        currentDevice->findParam("portName", true)->set(portName.c_str());
+        currentDevice->setParam<std::string>("mpiMode", "mpi-connect");
+        currentDevice->setParam<std::string>("portName", portName);
         --i;
         continue;
       }
@@ -608,24 +592,24 @@ extern "C" void ospDeviceSetString(OSPDevice _object,
                                    const char *s)
 OSPRAY_CATCH_BEGIN
 {
-  ManagedObject *object = (ManagedObject *)_object;
-  object->findParam(id, true)->set(s);
+  Device *object = (Device *)_object;
+  object->setParam<std::string>(id, s);
 }
 OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
 OSPRAY_CATCH_BEGIN
 {
-  ManagedObject *object = (ManagedObject *)_object;
-  object->findParam(id, true)->set(x);
+  Device *object = (Device *)_object;
+  object->setParam(id, x);
 }
 OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSetVoidPtr(OSPDevice _object, const char *id, void *v)
 OSPRAY_CATCH_BEGIN
 {
-  ManagedObject *object = (ManagedObject *)_object;
-  object->findParam(id, true)->set(v);
+  Device *object = (Device *)_object;
+  object->setParam(id, v);
 }
 OSPRAY_CATCH_END()
 
