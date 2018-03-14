@@ -36,11 +36,9 @@ namespace ospray {
 TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> tfn) : transferFcn(tfn) 
 {
     widget = new tfn::tfn_widget::TransferFunctionWidget(
-	[&]()
-	{
-	    return this->transferFcn->child("numSamples").valueAs<int>();
-	},
-	[&](const std::vector<float>& c, const std::vector<float>& a)
+	[&](const std::vector<float>& c,
+	    const std::vector<float>& a,
+	    const std::array<float, 2>& r)
 	{
 	    int sampleNum = this->transferFcn->child("numSamples").valueAs<int>();
 	    auto colors =
@@ -64,11 +62,9 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> tfn) : 
 TransferFunction::TransferFunction(const TransferFunction &t) : transferFcn(t.transferFcn)
 {
     widget = new tfn::tfn_widget::TransferFunctionWidget(
-	[&]()
-	{
-	    return this->transferFcn->child("numSamples").valueAs<int>();
-	},
-	[&](const std::vector<float>& c, const std::vector<float>& a)
+	[&](const std::vector<float>& c, 
+	    const std::vector<float>& a,
+	    const std::array<float, 2>& r)
 	{
 	    int sampleNum = this->transferFcn->child("numSamples").valueAs<int>();
 	    auto colors =
@@ -100,11 +96,9 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
     return *this;
   transferFcn = t.transferFcn;
   widget = new tfn::tfn_widget::TransferFunctionWidget(
-      [&]()
-      {
-	  return this->transferFcn->child("numSamples").valueAs<int>();
-      },
-      [&](const std::vector<float>& c, const std::vector<float>& a)
+      [&](const std::vector<float>& c, 
+	  const std::vector<float>& a,
+	  const std::array<float, 2>& r)
       {
 	  int sampleNum = this->transferFcn->child("numSamples").valueAs<int>();
 	  auto colors =
@@ -134,7 +128,7 @@ bool TransferFunction::drawUI()
 
 void TransferFunction::render()
 {
-  static_cast<tfn::tfn_widget::TransferFunctionWidget*>(widget)->render();
+  static_cast<tfn::tfn_widget::TransferFunctionWidget*>(widget)->render(this->transferFcn->child("numSamples").valueAs<int>());
 }
 
 void TransferFunction::load(const ospcommon::FileName &fileName)
