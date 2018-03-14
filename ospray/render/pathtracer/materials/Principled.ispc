@@ -500,10 +500,10 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->thickness = thickness;
   self->thicknessMap = make_TextureParam((uniform Texture2D*)thicknessMap, thicknessXform);
   
-  self->insideMedium.ior = ior;
+  self->insideMedium.ior = max(ior >= 1.f ? ior : rcp(ior), 0.f);
   self->insideMedium.attenuation = logf(transmissionColor) / transmissionDepth;
   
-  self->outsideMedium.ior = outsideIor;
+  self->outsideMedium.ior = max(outsideIor >= 1.f ? outsideIor : rcp(outsideIor), 0.f);
   self->outsideMedium.attenuation = logf(outsideTransmissionColor) / outsideTransmissionDepth;
 }
 
