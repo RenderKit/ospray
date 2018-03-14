@@ -97,6 +97,11 @@ namespace ospray {
                      OSPObject value) override;
 
       /*! assign (named) float parameter to an object */
+      void setBool(OSPObject object,
+                   const char *bufName,
+                   const bool b) override;
+
+      /*! assign (named) float parameter to an object */
       void setFloat(OSPObject object,
                     const char *bufName,
                     const float f) override;

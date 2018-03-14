@@ -275,6 +275,14 @@ namespace ospray {
       return loadLocalModule(name);
     }
 
+    void MPIDistributedDevice::setBool(OSPObject _object,
+                                       const char *bufName,
+                                       const bool b)
+    {
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->setParam(bufName, b);
+    }
+
     void MPIDistributedDevice::setFloat(OSPObject _object,
                                         const char *bufName,
                                         const float f)

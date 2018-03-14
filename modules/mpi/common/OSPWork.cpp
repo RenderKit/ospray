@@ -73,6 +73,7 @@ namespace ospray {
         registerWorkUnit<SetParam<OSPObject>>(registry);
         registerWorkUnit<SetParam<std::string>>(registry);
         registerWorkUnit<SetParam<int>>(registry);
+        registerWorkUnit<SetParam<bool>>(registry);
         registerWorkUnit<SetParam<float>>(registry);
         registerWorkUnit<SetParam<vec2f>>(registry);
         registerWorkUnit<SetParam<vec2i>>(registry);

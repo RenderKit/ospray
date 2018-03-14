@@ -597,6 +597,14 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospDeviceSet1b(OSPDevice _object, const char *id, int32_t x)
+OSPRAY_CATCH_BEGIN
+{
+  Device *object = (Device *)_object;
+  object->setParam(id, static_cast<bool>(x));
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
 OSPRAY_CATCH_BEGIN
 {
@@ -656,6 +664,14 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().setString(_object, id, s);
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSet1b(OSPObject _object, const char *id, int x)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setBool(_object, id, static_cast<bool>(x));
 }
 OSPRAY_CATCH_END()
 

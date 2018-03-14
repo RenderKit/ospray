@@ -591,6 +591,15 @@ namespace ospray {
     }
 
     /*! assign (named) float parameter to an object */
+    void MPIOffloadDevice::setBool(OSPObject _object,
+                                   const char *bufName,
+                                   const bool b)
+    {
+      work::SetParam<bool> work((ObjectHandle&)_object, bufName, b);
+      processWork(work);
+    }
+
+    /*! assign (named) float parameter to an object */
     void MPIOffloadDevice::setFloat(OSPObject _object,
                                     const char *bufName,
                                     const float f)

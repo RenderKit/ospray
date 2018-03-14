@@ -91,6 +91,9 @@ namespace ospray {
       virtual void setObject(OSPObject object, const char *bufName, OSPObject obj) = 0;
 
       /*! assign (named) float parameter to an object */
+      virtual void setBool(OSPObject object, const char *bufName, const bool f) = 0;
+
+      /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f) = 0;
 
       /*! assign (named) vec2f parameter to an object */

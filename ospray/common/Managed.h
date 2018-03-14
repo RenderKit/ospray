@@ -227,13 +227,6 @@ namespace ospray {
 namespace ospcommon {
   namespace utility {
 
-    // OSPRay's parameters cannot be bool, explicitely use int instead
-    template <>
-    inline void ParameterizedObject::Param::set(const bool &v)
-    {
-      set<int>(v);
-    }
-
     template <>
     inline void
     ParameterizedObject::Param::set(const ospray::ManagedObject::OSP_PTR &object)
