@@ -146,20 +146,20 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       float ior = max(self->ior * get1f(self->iorMap, dg.st, 1.f), 0.f);
       if (ior < 1.f) ior = rcp(ior);
 
-      // solid dielectric base
-      const float solid = dielectric * (1.f - transmission);
-      if (solid > EPS)
+      // plastic base
+      const float plastic = dielectric * (1.f - transmission);
+      if (plastic > EPS)
       {
-        varying BSDF* varying solidBsdf = NULL;
+        varying BSDF* varying plasticBsdf = NULL;
 
         // diffuse
         if (!self->thin)
         {
           // solid
           if (roughness < EPS)
-            solidBsdf = Lambert_create(ctx, frame, baseColor);
+            plasticBsdf = Lambert_create(ctx, frame, baseColor);
           else
-            solidBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+            plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
         }
         else
         {
@@ -168,28 +168,30 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           const float diffuseTransmission = backlight * 0.5f;
           const float diffuseReflection = 1.f - diffuseTransmission;
 
+          // reflection
           if (diffuseReflection > EPS)
           {
             if (roughness < EPS)
-              solidBsdf = Lambert_create(ctx, frame, baseColor);
+              plasticBsdf = Lambert_create(ctx, frame, baseColor);
             else
-              solidBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+              plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
           }
 
+          // transmission
           if (diffuseTransmission > EPS)
           {
             varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, frame, baseColor);
 
-            if (solidBsdf)
+            if (plasticBsdf)
             {
               varying BSDF* uniform mixBsdf = MultiBSDF_create(ctx);
-              MultiBSDF_add(mixBsdf, solidBsdf, diffuseReflection, diffuseReflection);
+              MultiBSDF_add(mixBsdf, plasticBsdf, diffuseReflection, diffuseReflection);
               MultiBSDF_add(mixBsdf, diffuseTransmissionBsdf, diffuseTransmission, diffuseTransmission);
-              solidBsdf = mixBsdf;
+              plasticBsdf = mixBsdf;
             }
             else
             {
-              solidBsdf = diffuseTransmissionBsdf;
+              plasticBsdf = diffuseTransmissionBsdf;
             }
           }
         }
@@ -198,19 +200,19 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         if (specular > EPS && abs(ior-1.f) > EPS)
         {
           if (roughness < EPS)
-            solidBsdf = DielectricLayer_create(ctx, frame, solidBsdf, rcp(ior), make_vec3f(1.f), 1.f, specular);
+            plasticBsdf = DielectricLayer_create(ctx, frame, plasticBsdf, rcp(ior), make_vec3f(1.f), 1.f, specular);
           else
-            solidBsdf = MicrofacetDielectricLayer_create(ctx, frame, solidBsdf, rcp(ior), make_vec3f(1.f), 1.f, roughness, specular);
+            plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf, rcp(ior), make_vec3f(1.f), 1.f, roughness, specular);
         }
 
-        MultiBSDF_add(baseBsdf, solidBsdf, solid, solid);
+        MultiBSDF_add(baseBsdf, plasticBsdf, plastic, plastic);
       }
 
-      // refractive dielectric base
-      const float refractive = dielectric * transmission;
-      if (refractive > EPS)
+      // glass base
+      const float glass = dielectric * transmission;
+      if (glass > EPS)
       {
-        varying BSDF* varying refractiveBsdf;
+        varying BSDF* varying glassBsdf;
 
         if (!self->thin)
         {
@@ -219,9 +221,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
                                         : self->insideMedium.ior*rcp(self->outsideMedium.ior);
 
           if (roughness < EPS)
-            refractiveBsdf = Dielectric_create(ctx, frame, eta, specular);
+            glassBsdf = Dielectric_create(ctx, frame, eta, specular);
           else
-            refractiveBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, specular);
+            glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, specular);
         }
         else
         {
@@ -232,29 +234,28 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
 
           if (roughness < EPS)
-            refractiveBsdf = ThinDielectric_create(ctx, frame, eta, attenuation, specular);
+            glassBsdf = ThinDielectric_create(ctx, frame, eta, attenuation, specular);
           else
-            refractiveBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, attenuation, specular);
+            glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, attenuation, specular);
         }
 
-        MultiBSDF_add(baseBsdf, refractiveBsdf, refractive, refractive);
+        MultiBSDF_add(baseBsdf, glassBsdf, glass, glass);
       }
     }
       
-    // conductor base
-    const float conductor = metallic;
-    if (conductor > EPS)
+    // metal base
+    if (metallic > EPS)
     {
       const vec3f edgeColor = clamp(self->edgeColor * get3f(self->edgeColorMap, dg.st, make_vec3f(1.f)));
       
       Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
-      varying BSDF* varying conductorBsdf;
+      varying BSDF* varying metalBsdf;
       if (roughness < EPS)
-        conductorBsdf = Conductor_create(ctx, frame, fresnel);
+        metalBsdf = Conductor_create(ctx, frame, fresnel);
       else
-        conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
+        metalBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
 
-      MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
+      MultiBSDF_add(baseBsdf, metalBsdf, metallic, metallic);
     }
 
     bsdf = baseBsdf;
