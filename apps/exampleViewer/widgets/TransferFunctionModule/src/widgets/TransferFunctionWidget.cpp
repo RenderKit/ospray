@@ -155,7 +155,9 @@ bool TransferFunctionWidget::drawUI() {
   }
   // TODO: save function is not implemented
   // if (ImGui::Button("save")) { save(tfn_text_buffer.data()); }
-  if (ImGui::InputFloat2("value range", valueRange.data())) {
+  if (ImGui::DragFloat2("value range", valueRange.data(),
+			(defaultRange[1] - defaultRange[0]) / 1000.f,
+                        defaultRange[0], defaultRange[1])) {
     tfn_changed = true;
   }
   //------------ Transfer Function -------------------
