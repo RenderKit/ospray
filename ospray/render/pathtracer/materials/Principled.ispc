@@ -153,46 +153,32 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         varying BSDF* varying plasticBsdf = NULL;
 
         // diffuse
-        if (!self->thin)
+        const float backlight = self->thin ? clamp(self->backlight * get1f(self->backlightMap, dg.st, 1.f), 0.f, 2.f) : 0.f;
+        const float diffuseTransmission = backlight * 0.5f;
+        const float diffuseReflection = 1.f - diffuseTransmission;
+
+        if (diffuseReflection > EPS)
         {
-          // solid
           if (roughness < EPS)
             plasticBsdf = Lambert_create(ctx, frame, baseColor);
           else
             plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
         }
-        else
+
+        if (diffuseTransmission > EPS)
         {
-          // thin
-          const float backlight = clamp(self->backlight * get1f(self->backlightMap, dg.st, 1.f), 0.f, 2.f);
-          const float diffuseTransmission = backlight * 0.5f;
-          const float diffuseReflection = 1.f - diffuseTransmission;
+          varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, frame, baseColor);
 
-          // reflection
-          if (diffuseReflection > EPS)
+          if (plasticBsdf)
           {
-            if (roughness < EPS)
-              plasticBsdf = Lambert_create(ctx, frame, baseColor);
-            else
-              plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+            varying BSDF* uniform mixBsdf = MultiBSDF_create(ctx);
+            MultiBSDF_add(mixBsdf, plasticBsdf, diffuseReflection, diffuseReflection);
+            MultiBSDF_add(mixBsdf, diffuseTransmissionBsdf, diffuseTransmission, diffuseTransmission);
+            plasticBsdf = mixBsdf;
           }
-
-          // transmission
-          if (diffuseTransmission > EPS)
+          else
           {
-            varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, frame, baseColor);
-
-            if (plasticBsdf)
-            {
-              varying BSDF* uniform mixBsdf = MultiBSDF_create(ctx);
-              MultiBSDF_add(mixBsdf, plasticBsdf, diffuseReflection, diffuseReflection);
-              MultiBSDF_add(mixBsdf, diffuseTransmissionBsdf, diffuseTransmission, diffuseTransmission);
-              plasticBsdf = mixBsdf;
-            }
-            else
-            {
-              plasticBsdf = diffuseTransmissionBsdf;
-            }
+            plasticBsdf = diffuseTransmissionBsdf;
           }
         }
         
