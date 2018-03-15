@@ -1,6 +1,6 @@
 webpages := $(addprefix www/, $(addsuffix .html, index news demos documentation gallery downloads related_projects pvospray displaywall fiu_comparison legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, demos getting_ospray readme_head))
-tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api mpi examples))
+tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api mpi scenegraph examples))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectual stereo orthographic panoramic) $(addprefix material_, OBJ Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow rm_volume_ao_shadows rm_volume heptane_bubbly_osp mag_pt rm_volume2 dns_small code GLuRayPage))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
 
@@ -90,7 +90,7 @@ www/pvospray.html: pvospray.md
 www/displaywall.html: displaywall.md
 www/fiu_comparison.html: fiu_comparison.md
 www/legal.html: legal.md
-www/documentation.html: documentation.md tmp/api_html.md mpi.md examples.md scenegraph.md
+www/documentation.html: documentation.md tmp/api_html.md mpi.md scenegraph.md examples.md
 
 
 ### images
@@ -114,7 +114,7 @@ convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g'
 tmp/api.md: api.md links_local.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md compilation.md documentation.md tmp/api.md mpi.md examples.md links_local.md tmp/images_web.md
+../README.md: tmp/readme_head.md overview.md compilation.md documentation.md tmp/api.md mpi.md scenegraph.md examples.md links_local.md tmp/images_web.md
 	$(PANDOC) $+ -t markdown+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
@@ -126,6 +126,9 @@ tmp/%.tex: filter-latex.py %.md links_local.md tmp/images_local_pdf.md
 	$(markdown2tex)
 
 tmp/api.tex: filter-latex.py api.md links_local.md tmp/images_local_pdf.md
+	$(markdown2tex) --indented-code-classes=cpp
+
+tmp/scenegraph.tex: filter-latex.py scenegraph.md links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
 ../readme.pdf: readme.tex $(tmptexfiles) $(wildcard intel-spec.cls) preamble.tex tmp/version $(images) $(images_fig2pdf)

@@ -11,4 +11,5 @@
 [path tracer]: documentation.html#path-tracer
 [point light]: documentation.html#point-light-sphere-light
 [Compiling OSPRay]: documentation.html#compiling-ospray
+[scenegraph]: documentation.html#scenegraph
 [Parallel Rendering with MPI]: documentation.html#parallel-rendering-with-mpi
