@@ -29,73 +29,79 @@ frames in the second image `accumulatedFrames.ppm`.
 
 ![After accumulating ten frames.][imgTutorial2]
 
-# Example Viewer
 
-![Example of using ospExampleViewer with a scenegraph][imgExampleViewer]
+Example Viewer
+--------------
 
-OSPRay includes an exemplary viewer application
-`ospExampleViewer`, showcasing most features of OSPRay which can be
-run as './ospExampleViewer [options] <filename>'. The Example
-Viewer uses the ImGui library for user interface controls and is
-based on a prototype OSPRay scenegraph interface where nodes can
-be viewed and edited interactively.
-Updates to scenegraph nodes update OSPRay state automatically
-through the scenegraph viewer which
-is enabled by pressing 'g'.
+![Screenshot of using ospExampleViewer with a scenegraph.][imgExampleViewer]
+
+OSPRay includes an exemplary viewer application `ospExampleViewer`,
+showcasing most features of OSPRay which can be run as
+`./ospExampleViewer [options] <filename>`. The Example Viewer uses the
+ImGui library for user interface controls and is based on a prototype
+OSPRay [scenegraph] interface where nodes can be viewed and edited
+interactively. Updates to scenegraph nodes update OSPRay state
+automatically through the scenegraph viewer which is enabled by pressing
+'g'.
 
 ### Exploring the Scene
-The GUI shows the entire state of the program under the root scenegraph node.
-Expanding nodes down to explore and edit the scene is possible, for example a
-material parameter may be found under renderer->world->mesh->material->Kd.
-Updates to values will be automatically propagated to the next render. Individual
-nodes can be easily found using the "Find Node" section, which will find nodes
-with a given name based on the input string.  Scene objects can also be selected
-with the mouse by shift-left clicking in the viewer.
 
-Click on nodes to expand their children,
-whose values can be set by dragging or double clicking and typing in values.
-You can also add new nodes where appropriate: for
-example, when "lights" is expanded right clicking on "lights" and selecting
-create new node and typing
-in a light type, such as "PointLight", will add it to the scene. Similarly,
-right clicking on "world" and creating an "Importer" node will add a new
-scene importer from a file. Changing the filename to an appropriate file
-will load the scene and propagate the resulting state.  Exporting
-and importing the scenegraph is only partially supported at the moment through
-"ospsg" files.  Currently, any nodes with Data members will break this functionality,
-however right clicking and selecting export on the camera or lights nodes for instance
-will save out their respective state which can be imported on the command line.
-ExampleViewer also functions as an OSPRay state debugger – invalid
-values will be shown in red up the hierarchy and won't change the viewer
-until corrected.
+The GUI shows the entire state of the program under the root scenegraph
+node. Expanding nodes down to explore and edit the scene is possible,
+for example a material parameter may be found under
+renderer→world→mesh→material→Kd. Updates to values will be automatically
+propagated to the next render. Individual nodes can be easily found
+using the "Find Node" section, which will find nodes with a given name
+based on the input string. Scene objects can also be selected with the
+mouse by shift-left clicking in the viewer.
+
+Click on nodes to expand their children, whose values can be set by
+dragging or double clicking and typing in values. You can also add new
+nodes where appropriate: for example, when "lights" is expanded right
+clicking on "lights" and selecting create new node and typing in a light
+type, such as "PointLight", will add it to the scene. Similarly, right
+clicking on "world" and creating an "Importer" node will add a new scene
+importer from a file. Changing the filename to an appropriate file will
+load the scene and propagate the resulting state. Exporting and
+importing the scenegraph is only partially supported at the moment
+through "ospsg" files. Currently, any nodes with Data members will break
+this functionality, however right clicking and selecting export on the
+camera or lights nodes for instance will save out their respective state
+which can be imported on the command line. ExampleViewer also functions
+as an OSPRay state debugger – invalid values will be shown in red up the
+hierarchy and won't change the viewer until corrected.
 
 ### Volume Rendering
-Volumes are loaded into the viewer just as a mesh is.  Volume appearance is modified
-according to the transfer function, which will show up in a popup window on the GUI after
-pressing 'g'.  Click and drag across the transfer function to set opacity values, and selecting
-near the bottom of the editable transfer function widget sets the opacity to zero.  The colors
-themselves can only be modified by selecting from the dropdown menu 'ColorMap' or
-importing and exporting json colors.  The range that the transfer function operates
-on can be modified on the scenegraph viewer.
+
+Volumes are loaded into the viewer just as a mesh is. Volume appearance
+is modified according to the transfer function, which will show up in a
+popup window on the GUI after pressing 'g'. Click and drag across the
+transfer function to set opacity values, and selecting near the bottom
+of the editable transfer function widget sets the opacity to zero. The
+colors themselves can only be modified by selecting from the dropdown
+menu 'ColorMap' or importing and exporting json colors. The range that
+the transfer function operates on can be modified on the scenegraph
+viewer.
 
 ### ExampleViewer Controls
 * 'g' - toggle scenegraph display
 * 'q' - quit
 * Left click and drag to rotate
-* Right click and drag or mouse wheel to zoom in
-and out.
+* Right click and drag or mouse wheel to zoom in and out.
 * Mouse-Wheel click will pan the camera.
-* Control-Left clicking on an object will select a model and all of its children
-which will be displayed in the
-* Shift-Left click on an object will zoom into that part of the scene and set
-the focal distance.
+* Control-Left clicking on an object will select a model and all of its
+  children which will be displayed in the
+* Shift-Left click on an object will zoom into that part of the scene
+  and set the focal distance.
 
 ### CommandLine Options
-* Running './ospExampleViewer -help' will bring up a list of commandline options.
-These options allow you to load files, run animations, modify any scenegraph state,
-and many other functions.  See the demos page for examples.
-* Supported file importers currently include: obj, ply, x3d, vtu, osp, ospsg, xml (rivl),
-points, xyz.
+
+* Running `./ospExampleViewer -help` will bring up a list of
+  commandline options. These options allow you to load files, run
+  animations, modify any scenegraph state, and many other functions. See
+  the [demos] page for examples.
+* Supported file importers currently include: `obj`, `ply`, `x3d`,
+  `vtu`, `osp`, `ospsg`, `xml` (rivl), `points`, `xyz`.
 
 
 Distributed Viewer
