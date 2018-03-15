@@ -146,13 +146,11 @@ namespace ospcommon {
     {
     }
 
-#if 0
     template <typename OT,
               typename = traits::is_valid_vec_constructor_type_t<T, OT>>
     inline vec_t(const OT &s) : x(s), y(s), z(s)
     {
     }
-#endif
 
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
@@ -202,13 +200,11 @@ namespace ospcommon {
     {
     }
 
-#if 0
     template <typename OT,
               typename = traits::is_valid_vec_constructor_type_t<T, OT>>
     inline vec_t(const OT &s) : x(s), y(s), z(s)
     {
     }
-#endif
 
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
