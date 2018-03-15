@@ -69,6 +69,10 @@ struct Principled
   float anisotropy;
   TextureParam anisotropyMap;
 
+  // anisotropic rotation in [0, 1];
+  float rotation;
+  TextureParam rotationMap;
+
   float normal; // scale
   TextureParam normalMap;
   linear2f normalRot;
@@ -128,6 +132,13 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
   
   varying linear3f* uniform frame =
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
+  const float rotation = clamp(self->rotation * get1f(self->rotationMap, dg.st, 1.f));
+  if (rotation > 0.f)
+  {
+    const float theta = 2.f * pi * rotation;
+    frame->vx = rotate(frame->vx, frame->vz, theta);
+    frame->vy = cross(frame->vz, frame->vx);
+  }
 
   // cut-out opacity
   const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg.st, 1.f));
@@ -432,6 +443,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float transmissionDepth,
     uniform float roughness, void* uniform roughnessMap, const uniform affine2f& roughnessXform,
     uniform float anisotropy, void* uniform anisotropyMap, const uniform affine2f& anisotropyXform,
+    uniform float rotation, void* uniform rotationMap, const uniform affine2f& rotationXform,
     uniform float normal, void* uniform normalMap, const uniform affine2f& normalXform, const uniform linear2f& normalRot,
     uniform float coat, void* uniform coatMap, const uniform affine2f& coatXform,
     uniform float coatIor, void* uniform coatIorMap, const uniform affine2f& coatIorXform,
@@ -477,6 +489,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 
   self->anisotropy = anisotropy;
   self->anisotropyMap = make_TextureParam((uniform Texture2D*)anisotropyMap, anisotropyXform);
+
+  self->rotation = rotation;
+  self->rotationMap = make_TextureParam((uniform Texture2D*)rotationMap, rotationXform);
 
   self->normal = normal;
   self->normalMap = make_TextureParam((uniform Texture2D*)normalMap, normalXform);
@@ -540,6 +555,7 @@ export void* uniform PathTracer_Principled_create()
     1.f, // transmissionDepth
     0.5f, NULL, xform, // roughness
     0.f, NULL, xform, // anisotropy
+    0.f, NULL, xform, // rotation
     1.f, NULL, xform, make_LinearSpace2f_identity(), // normal
     0.f, NULL, xform, // coat
     1.5f, NULL, xform, // coatIor
