@@ -88,9 +88,14 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
     value = (1.f-F) * cosThetaTH * abs(cosThetaOH) * rcp(cosThetaO*sqr(self->eta*cosThetaOH - cosThetaTH)) * rcp(sqr(self->eta));
   }
 
+  linear3f toLocal = transposed(getFrame(super));
+  vec3f wo0 = toLocal * wo;
+  vec3f wi0 = toLocal * wi;
+  vec3f wh0 = toLocal * wh;
+
   float whPdf;
-  float D = evalVisible(self->microfacet, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-  float G = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
+  float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
   res.pdf *= whPdf;
   res.value = make_vec3f(value * D * G);
@@ -107,9 +112,13 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   if (cosThetaO <= 0.f)
     return make_BSDF_SampleRes_zero();
 
+  linear3f toGlobal = getFrame(super);
+  linear3f toLocal = transposed(getFrame(super));
+  vec3f wo0 = toLocal * wo;
+
   // Sample the microfacet normal
   float whPdf;
-  vec3f wh = getFrame(super) * sampleVisibleUH(self->microfacet, transposed(getFrame(super)) * wo, whPdf, s);
+  vec3f wh = toGlobal * sampleVisibleUH(self->microfacet, wo0, whPdf, s);
 
   float cosThetaOH = dot(wo, wh);
 
@@ -149,10 +158,12 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   }
 
   float cosThetaIH = dot(res.wi, wh);
-  float G = evalG2(self->microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  vec3f wi0 = toLocal * res.wi;
+
+  float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
   res.pdf *= whPdf;
-  res.weight = make_vec3f(weight * (G * rcp_safe(evalG1(self->microfacet, cosThetaO, cosThetaOH))));
+  res.weight = make_vec3f(weight * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH))));
   return res;
 }
 
@@ -181,9 +192,9 @@ inline float MicrofacetDielectric_transmittance(float cosThetaO, float eta, cons
     return 0.f;
 
   float cosThetaIH = dot(wi, wh);
-  float G = evalG2(microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+  float G = evalG2(microfacet, wo, wi, cosThetaOH, cosThetaIH);
 
-  return (1.f-F) * (G * rcp_safe(evalG1(microfacet, cosThetaO, cosThetaOH)));
+  return (1.f-F) * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
 }
 
 inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* uniform self,
@@ -196,7 +207,7 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
                    frame);
 
   self->eta = eta;
-  self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
+  self->microfacet = make_GGXDistribution(make_vec2f(roughnessToAlpha(roughness)));
   self->reflectionWeight = reflectionWeight;
 }
 
@@ -215,7 +226,7 @@ inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext*
 inline vec3f MicrofacetDielectric_getTransparency(float cosThetaO, float eta, float roughness,
                                                   float reflectionWeight, unsigned int& lcg)
 {
-  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness));
+  GGXDistribution microfacet = make_GGXDistribution(make_vec2f(roughnessToAlpha(roughness)));
   float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
   return make_vec3f(T);
 }
