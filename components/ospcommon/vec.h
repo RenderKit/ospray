@@ -26,11 +26,17 @@ namespace ospcommon {
 
   struct vec_base {}; // NOTE: only for identifying vec_t types at compile-time
 
-// -------------------------------------------------------
-// type traits relevant to vec_t<> type compile-time logic
-// -------------------------------------------------------
+  // -------------------------------------------------------
+  // type traits relevant to vec_t<> type compile-time logic
+  // -------------------------------------------------------
 
   namespace traits {
+
+    template <typename T>
+    struct is_vec
+    {
+      const static bool value = std::is_base_of<vec_base, T>::value;
+    };
 
     template <typename VEC_TYPE, typename SCALAR_TYPE>
     struct is_valid_scalar_for_binary_op
@@ -42,12 +48,27 @@ namespace ospcommon {
 
       const static bool value =
           std::is_constructible<vec_element_t, scalar_t>::value &&
-          !std::is_base_of<vec_base, scalar_t>::value;
+          !is_vec<scalar_t>::value;
     };
 
     template <typename VEC_TYPE, typename SCALAR_TYPE>
     using is_valid_scalar_for_binary_op_t =
       enable_if_t<is_valid_scalar_for_binary_op<VEC_TYPE, SCALAR_TYPE>::value>;
+
+    template <typename VEC_ELEMENT_T, typename TYPE_IN_QUESTION>
+    struct is_valid_vec_constructor_type
+    {
+      const static bool value =
+          std::is_constructible<VEC_ELEMENT_T, TYPE_IN_QUESTION>::value &&
+          !std::is_same<TYPE_IN_QUESTION, VEC_ELEMENT_T>::value &&
+          !is_vec<TYPE_IN_QUESTION>::value;
+    };
+
+    template <typename VEC_ELEMENT_T, typename TYPE_IN_QUESTION>
+    using is_valid_vec_constructor_type_t =
+        enable_if_t<
+          is_valid_vec_constructor_type<VEC_ELEMENT_T, TYPE_IN_QUESTION>::value
+        >;
 
   } // ::ospcommon::traits
 
@@ -69,6 +90,12 @@ namespace ospcommon {
     inline vec_t() = default;
 
     inline vec_t(scalar_t s) : x(s), y(s)
+    {
+    }
+
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s)
     {
     }
 
@@ -119,6 +146,14 @@ namespace ospcommon {
     {
     }
 
+#if 0
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s), z(s)
+    {
+    }
+#endif
+
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
     }
@@ -166,6 +201,14 @@ namespace ospcommon {
     inline vec_t(scalar_t s) : x(s), y(s), z(s)
     {
     }
+
+#if 0
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s), z(s)
+    {
+    }
+#endif
 
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
@@ -218,6 +261,14 @@ namespace ospcommon {
     inline vec_t(scalar_t s) : x(s), y(s), z(s), w(s)
     {
     }
+
+#if 0
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s), z(s), w(s)
+    {
+    }
+#endif
 
     inline vec_t(scalar_t x, scalar_t y, scalar_t z, scalar_t w)
         : x(x), y(y), z(z), w(w)
