@@ -47,6 +47,7 @@ namespace ospray {
         MaterialParam3f transmissionColor = getMaterialParam3f("transmissionColor", vec3f(1.f));
         float transmissionDepth = getParam1f("transmissionDepth", 1.f);
         MaterialParam1f roughness = getMaterialParam1f("roughness", 0.5f);
+        MaterialParam1f anisotropy = getMaterialParam1f("anisotropy", 0.f);
         MaterialParam1f normal = getMaterialParam1f("normal", 1.f);
 
         MaterialParam1f coat = getMaterialParam1f("coat", 0.f);
@@ -76,6 +77,7 @@ namespace ospray {
           (const ispc::vec3f&)transmissionColor.factor, transmissionColor.map ? transmissionColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)transmissionColor.xform,
           transmissionDepth,
           roughness.factor, roughness.map ? roughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)roughness.xform,
+          anisotropy.factor, anisotropy.map ? anisotropy.map->getIE() : nullptr, (const ispc::AffineSpace2f&)anisotropy.xform,
           normal.factor, normal.map ? normal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)normal.xform, (const ispc::LinearSpace2f&)normal.rot,
           coat.factor, coat.map ? coat.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coat.xform,
           coatIor.factor, coatIor.map ? coatIor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatIor.xform,

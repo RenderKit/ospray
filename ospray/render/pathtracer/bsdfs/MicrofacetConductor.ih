@@ -24,8 +24,8 @@ struct MicrofacetConductor
 {
   BSDF super;
 
+  Fresnel* uniform fresnel;
   GGXDistribution microfacet;
-  Fresnel *uniform fresnel;
 };
 
 inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
@@ -94,17 +94,22 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
   return res;
 }
 
-inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext*
-    uniform ctx, const varying linear3f* uniform frame,
-    Fresnel* uniform fresnel, float roughness)
+inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform self,
+                                            const varying linear3f* uniform frame,
+                                            Fresnel* uniform fresnel, const vec2f& alpha)
+{
+  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
+                   MicrofacetConductor_eval, MicrofacetConductor_sample,
+                   frame);
+  self->fresnel = fresnel;
+  self->microfacet = make_GGXDistribution(alpha);
+}
+
+inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx,
+                                                        const varying linear3f* uniform frame,
+                                                        Fresnel* uniform fresnel, const vec2f& alpha)
 {
   varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
-
-  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
-      MicrofacetConductor_eval, MicrofacetConductor_sample, frame);
-
-  self->microfacet = make_GGXDistribution(make_vec2f(roughnessToAlpha(roughness)));
-  self->fresnel = fresnel;
-
+  MicrofacetConductor_Constructor(self, frame, fresnel, alpha);
   return &self->super;
 }

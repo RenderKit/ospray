@@ -194,7 +194,7 @@ inline float ThinMicrofacetDielectric_transmittance(float cosThetaO, float eta, 
 
 inline void ThinMicrofacetDielectric_Constructor(varying ThinMicrofacetDielectric* uniform self,
                                                  const varying linear3f* uniform frame,
-                                                 float eta, float roughness, vec3f attenuation,
+                                                 float eta, const vec2f& alpha, vec3f attenuation,
                                                  float reflectionWeight)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY,
@@ -202,28 +202,28 @@ inline void ThinMicrofacetDielectric_Constructor(varying ThinMicrofacetDielectri
                    frame);
 
   self->eta = eta;
-  self->microfacet = make_GGXDistribution(make_vec2f(roughnessToAlpha(roughness)));
+  self->microfacet = make_GGXDistribution(alpha);
   self->attenuation = attenuation;
   self->reflectionWeight = reflectionWeight;
 }
 
 inline varying BSDF* uniform ThinMicrofacetDielectric_create(uniform ShadingContext* uniform ctx,
                                                              const varying linear3f* uniform frame,
-                                                             float eta, float roughness, vec3f attenuation,
+                                                             float eta, const vec2f& alpha, vec3f attenuation,
                                                              float reflectionWeight)
 {
   varying ThinMicrofacetDielectric* uniform self =
     (varying ThinMicrofacetDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinMicrofacetDielectric));
-  ThinMicrofacetDielectric_Constructor(self, frame, eta, roughness, attenuation, reflectionWeight);
+  ThinMicrofacetDielectric_Constructor(self, frame, eta, alpha, attenuation, reflectionWeight);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
 inline vec3f ThinMicrofacetDielectric_getTransparency(float cosThetaO,
-                                                      float eta, float roughness, vec3f attenuation,
+                                                      float eta, const vec2f& alpha, vec3f attenuation,
                                                       float reflectionWeight, unsigned int& lcg)
 {
-  GGXDistribution microfacet = make_GGXDistribution(make_vec2f(roughnessToAlpha(roughness)));
+  GGXDistribution microfacet = make_GGXDistribution(alpha);
   float T = ThinMicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
 
   // Compute attenuation for crossing the slab once

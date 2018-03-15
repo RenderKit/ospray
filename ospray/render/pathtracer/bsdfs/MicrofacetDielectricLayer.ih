@@ -219,7 +219,8 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
 }
 
 inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLayer* uniform self, const varying linear3f* uniform frame,
-                                                  varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness,
+                                                  varying BSDF* varying substrate,
+                                                  float eta, vec3f transmittance, float thickness, const vec2f& alpha,
                                                   float weight)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | substrate->type,
@@ -231,24 +232,26 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
   self->eta = self->fromOutside ? eta : rcp(eta);
   self->transmittance = transmittance;
   self->thickness = thickness;
-  self->microfacet = make_GGXDistribution(make_vec2f(roughnessToAlpha(roughness)));
+  self->microfacet = make_GGXDistribution(alpha);
   self->weight = weight;
 }
 
 inline varying BSDF* uniform MicrofacetDielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                              varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness,
+                                                              varying BSDF* varying substrate,
+                                                              float eta, vec3f transmittance, float thickness, const vec2f& alpha,
                                                               float weight)
 {
   varying MicrofacetDielectricLayer* uniform self = (varying MicrofacetDielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectricLayer));
-  MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness, weight);
+  MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, alpha, weight);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
-inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO, float eta, vec3f transmittance, float thickness, float roughness,
+inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO,
+                                                       float eta, vec3f transmittance, float thickness, const vec2f& alpha,
                                                        float weight, unsigned int& lcg)
 {
-  GGXDistribution microfacet = make_GGXDistribution(make_vec2f(roughnessToAlpha(roughness)));
+  GGXDistribution microfacet = make_GGXDistribution(alpha);
 
   bool fromOutside = eta < 1.f;
   if (!fromOutside) eta = rcp(eta);

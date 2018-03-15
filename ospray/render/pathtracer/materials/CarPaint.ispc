@@ -110,7 +110,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
       if (flakeRoughness < EPS)
         bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
       else
-        bsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, flakeRoughness);
+        bsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, make_vec2f(roughnessToAlpha(flakeRoughness)));
     }
   }
 
@@ -123,7 +123,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
     if (baseRoughness < EPS)
       bsdf = Lambert_create(ctx, baseFrame, baseColor);
     else
-      bsdf = OrenNayar_create(ctx, baseFrame, baseColor, baseRoughness);
+      bsdf = OrenNayar_create(ctx, baseFrame, baseColor, roughnessToAlpha(baseRoughness));
   }
  
   // clear coat layer
@@ -138,9 +138,14 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
       LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormalScale));
     
     if (coatRoughness < EPS)
+    {
       bsdf = DielectricLayer_create(ctx, coatFrame, bsdf, rcp(coatIor), coatColor, coatThickness, 1.f);
+    }
     else
-      bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf, rcp(coatIor), coatColor, coatThickness, coatRoughness, 1.f);
+    {
+      bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf,
+        rcp(coatIor), coatColor, coatThickness, make_vec2f(roughnessToAlpha(coatRoughness)), 1.f);
+    }
   }
 
   return bsdf;

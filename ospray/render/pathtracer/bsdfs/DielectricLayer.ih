@@ -134,7 +134,8 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
 }
 
 inline varying BSDF* uniform DielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                    varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness,
+                                                    varying BSDF* varying substrate,
+                                                    float eta, vec3f transmittance, float thickness,
                                                     float weight)
 {
   varying DielectricLayer* uniform self = (varying DielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(DielectricLayer));
@@ -143,7 +144,8 @@ inline varying BSDF* uniform DielectricLayer_create(uniform ShadingContext* unif
 }
 
 // Helper function for transparent shadow rays
-inline vec3f DielectricLayer_getTransparency(float cosThetaO, float eta, vec3f transmittance, float thickness,
+inline vec3f DielectricLayer_getTransparency(float cosThetaO,
+                                             float eta, vec3f transmittance, float thickness,
                                              float weight)
 {
   bool fromOutside = eta < 1.f;

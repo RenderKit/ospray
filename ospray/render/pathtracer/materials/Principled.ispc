@@ -61,9 +61,13 @@ struct Principled
 
   float transmissionDepth;
 
-  // roughness in [0, 1]; 0==ideally smooth (mirror)
+  // roughness in [0, 1]; 0 = ideally smooth (mirror)
   float roughness;
   TextureParam roughnessMap;
+
+  // degree of anisotropy in [0, 1]; 0 = isotropic, 1 = maximally anisotropic
+  float anisotropy;
+  TextureParam anisotropyMap;
 
   float normal; // scale
   TextureParam normalMap;
@@ -134,6 +138,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
     const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
     const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+    const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
     const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
 
     // dielectric base
@@ -162,7 +167,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           if (roughness < EPS)
             plasticBsdf = Lambert_create(ctx, frame, baseColor);
           else
-            plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+            plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughnessToAlpha(roughness));
         }
 
         if (diffuseTransmission > EPS)
@@ -186,9 +191,14 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         if (specular > EPS && abs(ior-1.f) > EPS)
         {
           if (roughness < EPS)
+          {
             plasticBsdf = DielectricLayer_create(ctx, frame, plasticBsdf, rcp(ior), make_vec3f(1.f), 1.f, specular);
+          }
           else
-            plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf, rcp(ior), make_vec3f(1.f), 1.f, roughness, specular);
+          {
+            plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf,
+              rcp(ior), make_vec3f(1.f), 1.f, roughnessToAlpha(roughness, anisotropy), specular);
+          }
         }
 
         MultiBSDF_add(baseBsdf, plasticBsdf, plastic, plastic);
@@ -209,7 +219,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           if (roughness < EPS)
             glassBsdf = Dielectric_create(ctx, frame, eta, specular);
           else
-            glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, specular);
+            glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughnessToAlpha(roughness, anisotropy), specular);
         }
         else
         {
@@ -222,7 +232,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           if (roughness < EPS)
             glassBsdf = ThinDielectric_create(ctx, frame, eta, attenuation, specular);
           else
-            glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, attenuation, specular);
+            glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughnessToAlpha(roughness, anisotropy), attenuation, specular);
         }
 
         MultiBSDF_add(baseBsdf, glassBsdf, glass, glass);
@@ -239,7 +249,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       if (roughness < EPS)
         metalBsdf = Conductor_create(ctx, frame, fresnel);
       else
-        metalBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness);
+        metalBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughnessToAlpha(roughness, anisotropy));
 
       MultiBSDF_add(baseBsdf, metalBsdf, metallic, metallic);
     }
@@ -263,9 +273,14 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
         
         if (coatRoughness < EPS)
+        {
           bsdf = DielectricLayer_create(ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coat);
+        }
         else
-          bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coatRoughness, coat);
+        {
+          bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf,
+            coatEta, coatColor, coatThickness, make_vec2f(roughnessToAlpha(coatRoughness)), coat);
+        }
       }
     }
   }
@@ -320,6 +335,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
     if (refractive > EPS)
     {
       const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+      const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
       const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
       const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
 
@@ -334,7 +350,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         if (roughness < EPS)
           T = Dielectric_getTransparency(cosThetaO, eta, specular);
         else
-          T = MicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, specular, lcg);
+          T = MicrofacetDielectric_getTransparency(cosThetaO, eta, roughnessToAlpha(roughness, anisotropy), specular, lcg);
       }
       else
       {
@@ -350,7 +366,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         if (roughness < EPS)
           T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation, specular);
         else
-          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, attenuation, specular, lcg);
+          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughnessToAlpha(roughness, anisotropy), attenuation, specular, lcg);
       }
 
       // clear coat
@@ -368,9 +384,14 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
           const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
           
           if (coatRoughness < EPS)
+          {
             T = T * DielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coat);
+          }
           else
-            T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coatRoughness, coat, lcg);
+          {
+            T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO,
+              coatEta, coatColor, coatThickness, make_vec2f(roughnessToAlpha(coatRoughness)), coat, lcg);
+          }
         }
       }
     }
@@ -410,6 +431,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     const uniform vec3f& transmissionColor, void* uniform transmissionColorMap, const uniform affine2f& transmissionColorXform,
     uniform float transmissionDepth,
     uniform float roughness, void* uniform roughnessMap, const uniform affine2f& roughnessXform,
+    uniform float anisotropy, void* uniform anisotropyMap, const uniform affine2f& anisotropyXform,
     uniform float normal, void* uniform normalMap, const uniform affine2f& normalXform, const uniform linear2f& normalRot,
     uniform float coat, void* uniform coatMap, const uniform affine2f& coatXform,
     uniform float coatIor, void* uniform coatIorMap, const uniform affine2f& coatIorXform,
@@ -452,6 +474,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 
   self->roughness = roughness;
   self->roughnessMap = make_TextureParam((uniform Texture2D*)roughnessMap, roughnessXform);
+
+  self->anisotropy = anisotropy;
+  self->anisotropyMap = make_TextureParam((uniform Texture2D*)anisotropyMap, anisotropyXform);
 
   self->normal = normal;
   self->normalMap = make_TextureParam((uniform Texture2D*)normalMap, normalXform);
@@ -514,6 +539,7 @@ export void* uniform PathTracer_Principled_create()
     make_vec3f(1.f), NULL, xform, // transmissionColor
     1.f, // transmissionDepth
     0.5f, NULL, xform, // roughness
+    0.f, NULL, xform, // anisotropy
     1.f, NULL, xform, make_LinearSpace2f_identity(), // normal
     0.f, NULL, xform, // coat
     1.5f, NULL, xform, // coatIor

@@ -43,9 +43,14 @@ const varying BSDF* varying Plastic_getBSDF(const uniform PathTraceMaterial* uni
   varying BSDF* varying bsdf = Lambert_create(ctx, shadingFrame, _pigmentColor);
 
   if (self->roughness == 0.0f)
+  {
     bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f, 1.0f);
+  }
   else
-    bsdf = MicrofacetDielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f, self->roughness, 1.0f);
+  {
+    bsdf = MicrofacetDielectricLayer_create(ctx, shadingFrame, bsdf,
+      self->eta, make_vec3f(1.0f), 1.0f, make_vec2f(roughnessToAlpha(self->roughness)), 1.0f);
+  }
 
   return bsdf;
 }

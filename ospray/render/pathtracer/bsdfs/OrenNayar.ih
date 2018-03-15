@@ -65,24 +65,22 @@ inline BSDF_SampleRes OrenNayar_sample(const varying BSDF* uniform super,
 
 inline void OrenNayar_Constructor(varying OrenNayar* uniform self, 
                                   const varying linear3f* uniform frame,
-                                  const vec3f& R,
-                                  float roughness)
+                                  const vec3f& R, float alpha)
 {
   BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
                    OrenNayar_eval, OrenNayar_sample,
                    frame);
 
   self->R = R;
-  const float sigma = roughnessToAlpha(roughness) * (1.f/sqrt(2.f)); // convert roughness
+  const float sigma = alpha * (1.f/sqrt(2.f)); // convert roughness
   self->sigma2 = sqr(sigma);
 }
 
 inline varying BSDF* uniform OrenNayar_create(uniform ShadingContext* uniform ctx, 
                                               const varying linear3f* uniform frame,
-                                              const vec3f& R,
-                                              float roughness)
+                                              const vec3f& R, float alpha)
 {
   varying OrenNayar* uniform self = (varying OrenNayar* uniform)ShadingContext_alloc(ctx, sizeof(OrenNayar));
-  OrenNayar_Constructor(self, frame, R, roughness);
+  OrenNayar_Constructor(self, frame, R, alpha);
   return &self->super;
 }
