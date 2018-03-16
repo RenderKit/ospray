@@ -3,12 +3,12 @@ process_version := $(addprefix tmp/, $(addsuffix .md, demos getting_ospray readm
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api mpi scenegraph examples))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectual stereo orthographic panoramic) $(addprefix material_, OBJ Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow rm_volume_ao_shadows rm_volume heptane_bubbly_osp mag_pt rm_volume2 dns_small code GLuRayPage))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
-
-images := $(images_jpg) $(images_png)
 images_fig := spot_light quad_light hdri_light
+
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images)) $(images_fig2png)
+webimages := $(addprefix www/, $(images_jpg) $(images_png)) $(images_fig2png)
+pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf)
 
 PANDOC := pandoc
 PDMINVERSION := 1190200
@@ -22,7 +22,7 @@ www: $(webpages) www/stylesheet.css $(webimages)
 doc: ../README.md
 pdf: ../readme.pdf
 
-.PHONY: all www doc pdf images
+.PHONY: all www doc pdf clean realclean
 
 
 tmp/version: ../cmake/ospray_options.cmake $(wildcard ../.git/HEAD)
@@ -131,7 +131,7 @@ tmp/api.tex: filter-latex.py api.md links_local.md tmp/images_local_pdf.md
 tmp/scenegraph.tex: filter-latex.py scenegraph.md links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
-../readme.pdf: readme.tex $(tmptexfiles) $(wildcard intel-spec.cls) preamble.tex tmp/version $(images) $(images_fig2pdf)
+../readme.pdf: readme.tex $(tmptexfiles) $(wildcard intel-spec.cls) preamble.tex tmp/version $(pdfimages)
 	md5s=0;\
 	auxf="tmp/`basename $< tex`aux";\
 	newmd5s=`md5sum $$auxf 2> /dev/null`;\
@@ -148,4 +148,7 @@ tmp/scenegraph.tex: filter-latex.py scenegraph.md links_local.md tmp/images_loca
 ########################################################################
 
 clean:
-	rm -rf www tmp changelog.md
+	rm -rf www tmp changelog.md __pycache__
+
+realclean: clean
+	rm -irf fonts images intel-spec.cls 
