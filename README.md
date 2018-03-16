@@ -963,15 +963,18 @@ A traditional triangle mesh (indexed face set) geometry is created by
 calling `ospNewGeometry` with type string "`triangles`". Once created, a
 triangle mesh recognizes the following parameters:
 
-| Type                   | Name            | Description                                              |
-|:-----------------------|:----------------|:---------------------------------------------------------|
-| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                  |
-| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                    |
-| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)          |
-| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
-| vec3i(a)\[\]           | index           | [data](#data) array of triangle indices (into vertex.\*) |
+| Type                   | Name            | Description                                                        |
+|:-----------------------|:----------------|:-------------------------------------------------------------------|
+| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                            |
+| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                              |
+| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)                    |
+| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates                  |
+| vec3i(a)\[\]           | index           | [data](#data) array of triangle indices (into the vertex array(s)) |
 
 : Parameters defining a triangle mesh geometry.
+
+The `vertex` and `index` arrays are mandatory to creat a valid triangle
+mesh.
 
 ### Spheres
 
@@ -1675,14 +1678,14 @@ format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
 files. To create an OBJ material pass the type string "`OBJMaterial`" to
 `ospNewMaterial2`. Its main parameters are
 
-| Type         | Name      |    Default| Description                                         |
-|:-------------|:----------|----------:|:----------------------------------------------------|
-| vec3f        | Kd        |  white 0.8| diffuse color                                       |
-| vec3f        | Ks        |      black| specular color                                      |
-| float        | Ns        |         10| shininess (Phong exponent), usually in \[2--10^4^\] |
-| float        | d         |     opaque| opacity                                             |
-| vec3f        | Tf        |      black| transparency filter color                           |
-| OSPTexture2D | map\_Bump |       NULL| normal map                                          |
+| Type         | Name      |    Default| Description                                        |
+|:-------------|:----------|----------:|:---------------------------------------------------|
+| vec3f        | Kd        |  white 0.8| diffuse color                                      |
+| vec3f        | Ks        |      black| specular color                                     |
+| float        | Ns        |         10| shininess (Phong exponent), usually in \[2–10^4^\] |
+| float        | d         |     opaque| opacity                                            |
+| vec3f        | Tf        |      black| transparency filter color                          |
+| OSPTexture2D | map\_Bump |       NULL| normal map                                         |
 
 : Main parameters of the OBJ material.
 
@@ -2174,7 +2177,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | Name              | Description                                                                                     |
 |:------------------|:------------------------------------------------------------------------------------------------|
 | OSP\_FB\_COLOR    | RGB color including alpha                                                                       |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane)                                     |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float             |
 | OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                  |
 | OSP\_FB\_VARIANCE | estimate of the current variance if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
 

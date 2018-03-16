@@ -635,9 +635,12 @@ triangle mesh recognizes the following parameters:
   vec3f(a)[]         vertex.normal    [data] array of vertex normals
   vec4f[] / vec3fa[] vertex.color     [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
-  vec3i(a)[]         index            [data] array of triangle indices (into vertex.*)
+  vec3i(a)[]         index            [data] array of triangle indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a triangle mesh geometry.
+
+The `vertex` and `index` arrays are mandatory to creat a valid triangle
+mesh.
 
 ### Spheres
 
@@ -1637,7 +1640,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   Name             Description
   ---------------- -----------------------------------------------------------
   OSP_FB_COLOR     RGB color including alpha
-  OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane)
+  OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float
   OSP_FB_ACCUM     accumulation buffer for progressive refinement
   OSP_FB_VARIANCE  estimate of the current variance if OSP_FB_ACCUM is also present, see [rendering]
   ---------------- -----------------------------------------------------------
