@@ -2,7 +2,7 @@ Documentation
 =============
 
 The following [API documentation][OSPRayReadme] of OSPRay can also be
-found as a [pdf document][OSPRayReadme] (4.2MB).
+found as a [pdf document][OSPRayReadme].
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper

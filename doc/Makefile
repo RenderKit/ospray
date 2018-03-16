@@ -36,6 +36,12 @@ replace_version = sed -e "s/<OSPRAY_VERSION>/`cat tmp/version`/g" $< > $@
 tmp/%.md: %.md tmp/version
 	$(replace_version)
 
+tmp/links.md: links.md
+	if [[ -d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel" ]] ; then \
+	  sed -e "s/OSPRay_readme.pdf/OSPRay_readme_devel.pdf/g" $< > $@;\
+	  else cp $< $@ ;\
+	fi
+
 tmp/images_web.md: images.md
 	sed -e "s/\.fig/.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
 
@@ -59,7 +65,7 @@ $(webimages): | wwwimgdir
 wwwimgdir:
 	@mkdir -p www/images
 
-$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_html.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
+$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_html.md tmp/scenegraph_html.md tmp/links.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
 
@@ -69,7 +75,7 @@ tmpdir:
 
 markdown2web = $(PANDOC) -smart --email-obfuscation=none -f markdown $(filter-out webtemplate.html,$+) --template webtemplate -V select_$(basename $(@F)) -o $@
 
-$(webpages): links_web.md tmp/images_local_png.md webtemplate.html
+$(webpages): tmp/links.md tmp/images_local_png.md webtemplate.html
 
 www/%.html:
 	$(markdown2web)
@@ -77,7 +83,10 @@ www/%.html:
 www/stylesheet.css: stylesheet.css
 	cp $< $@
 
-tmp/api_html.md: api.md links_local.md tmp/images_local_png.md
+tmp/api_html.md: api.md tmp/links.md tmp/images_local_png.md
+	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
+
+tmp/scenegraph_html.md: scenegraph.md tmp/links.md tmp/images_local_png.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
 www/index.html: teaser.html overview.md changelog.md
@@ -90,7 +99,7 @@ www/pvospray.html: pvospray.md
 www/displaywall.html: displaywall.md
 www/fiu_comparison.html: fiu_comparison.md
 www/legal.html: legal.md
-www/documentation.html: documentation.md tmp/api_html.md mpi.md scenegraph.md examples.md
+www/documentation.html: documentation.md tmp/api_html.md mpi.md tmp/scenegraph_html.md examples.md
 
 
 ### images
@@ -116,10 +125,10 @@ tmp/%.pdf: %.fig
 
 convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g'
 
-tmp/api.md: api.md links_local.md tmp/images_web.md
+tmp/api.md: api.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md compilation.md documentation.md tmp/api.md mpi.md scenegraph.md examples.md links_local.md tmp/images_web.md
+../README.md: tmp/readme_head.md overview.md compilation.md documentation.md tmp/api.md mpi.md scenegraph.md examples.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ -t markdown+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
@@ -127,13 +136,13 @@ tmp/api.md: api.md links_local.md tmp/images_web.md
 
 markdown2tex = $(PANDOC) --columns=72 --top-level-division=chapter --filter $+ -o $@
 
-tmp/%.tex: filter-latex.py %.md links_local.md tmp/images_local_pdf.md
+tmp/%.tex: filter-latex.py %.md tmp/links.md tmp/images_local_pdf.md
 	$(markdown2tex)
 
-tmp/api.tex: filter-latex.py api.md links_local.md tmp/images_local_pdf.md
+tmp/api.tex: filter-latex.py api.md tmp/links.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
-tmp/scenegraph.tex: filter-latex.py scenegraph.md links_local.md tmp/images_local_pdf.md
+tmp/scenegraph.tex: filter-latex.py scenegraph.md tmp/links.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
 ../readme.pdf: readme.tex $(tmptexfiles) $(wildcard intel-spec.cls) preamble.tex tmp/version $(pdfimages)

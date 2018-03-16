@@ -1,9 +1,9 @@
 
 [Embree]: https://embree.github.io/
-[news/updates]: http://www.ospray.org/news.html
-[getting OSPRay]: http://www.ospray.org/downloads.html
-[OSPRay Demos and Examples]: http://www.ospray.org/demos.html
-[OSPRayReadme]: http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation"
+[news/updates]: https://www.ospray.org/news.html
+[getting OSPRay]: https://www.ospray.org/downloads.html
+[OSPRay Demos and Examples]: https://www.ospray.org/demos.html
+[OSPRayReadme]: http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation"
 [gensv/generateSciVis.cpp]: https://github.com/ospray/ospray/blob/devel/modules/mpi/apps/gensv/generateSciVis.cpp#L213
 
 [tutorial]: #tutorial

@@ -581,7 +581,7 @@ four counterclockwise.
   vec3f[]  vertices    [data] array of vertex positions
   float[]  field       [data] array of vertex data values to be sampled
   vec4i[]  intices     [data] array of tetrahedra indices (into vertices and field)
-  string   hexMethod   'planar' (default) or 'nonplanar'
+  string   hexMethod   "planar" (default) or "nonplanar"
   -------- ----------- ------------------------------------------------------------
   : Additional configuration parameters for tetrahedral volumes.
 
