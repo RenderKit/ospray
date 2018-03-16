@@ -148,7 +148,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
 
     const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
     const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
-    const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+    const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
     const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
     const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
 
@@ -279,7 +279,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
                                           : coatIor*rcp(self->outsideMedium.ior);
         const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
         const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
-        const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
+        const float coatRoughness = clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f));
         varying linear3f* uniform coatFrame =
           LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
         
@@ -345,7 +345,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
 
     if (refractive > EPS)
     {
-      const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+      const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
       const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
       const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
       const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
@@ -392,7 +392,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
                                             : coatIor*rcp(self->outsideMedium.ior);
           const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
           const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
-          const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
+          const float coatRoughness = clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f));
           
           if (coatRoughness < EPS)
           {
