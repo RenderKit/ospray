@@ -96,6 +96,11 @@ www/documentation.html: documentation.md tmp/api_html.md mpi.md scenegraph.md ex
 ### images
 ########################################################################
 
+# try to download images if not linked; images may not be up to date
+images/%:
+	@mkdir -p images
+	wget https://ospray.github.io/$@ -O $@
+
 www/images/%: images/%
 	cp $< $@
 

@@ -18,5 +18,4 @@
 [imgMaterialMetallicPaint]: material_MetallicPaint.jpg { width=60% }
 [imgMaterialLuminous]: material_Luminous.jpg { width=60% }
 [imgColoredWindow]: ColoredWindow.jpg { width=60% }
-[imgExampleViewer]: exampleViewerGUI.jpg
-
+[imgExampleViewer]: exampleViewer.jpg

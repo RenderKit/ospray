@@ -2680,7 +2680,7 @@ Example Viewer
 --------------
 
 ![Screenshot of using ospExampleViewer with a
-scenegraph.](https://ospray.github.io/images/exampleViewerGUI.jpg)
+scenegraph.](https://ospray.github.io/images/exampleViewer.jpg)
 
 OSPRay includes an exemplary viewer application `ospExampleViewer`,
 showcasing most features of OSPRay which can be run as
