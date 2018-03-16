@@ -25,11 +25,13 @@ pdf: ../readme.pdf
 .PHONY: all www doc pdf clean realclean
 
 
+if_is_devel_then = if [[ "${CI_BUILD_REF_NAME}" == "devel" || (-d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel") ]] ; then
+
 tmp/version: ../cmake/ospray_options.cmake $(wildcard ../.git/HEAD)
 	sed -n $< -e "s/^SET(OSPRAY_VERSION_MAJOR \([0-9]\+\))/\1./ip" | tr -d '\n' > $@
 	sed -n $< -e "s/^SET(OSPRAY_VERSION_MINOR \([0-9]\+\))/\1./ip" | tr -d '\n' >> $@
 	sed -n $< -e "s/^SET(OSPRAY_VERSION_PATCH \([0-9]\+\))/\1/ip" | tr -d '\n' >> $@
-	if [[ -d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel" ]] ; then echo " (devel)"; else echo; fi >> $@
+	$(if_is_devel_then) echo " (devel)"; else echo; fi >> $@
 
 replace_version = sed -e "s/<OSPRAY_VERSION>/`cat tmp/version`/g" $< > $@
 
@@ -37,7 +39,7 @@ tmp/%.md: %.md tmp/version
 	$(replace_version)
 
 tmp/links.md: links.md
-	if [[ -d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel" ]] ; then \
+	$(if_is_devel_then) \
 	  sed -e "s/OSPRay_readme.pdf/OSPRay_readme_devel.pdf/g" $< > $@;\
 	  else cp $< $@ ;\
 	fi

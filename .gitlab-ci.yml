@@ -2,6 +2,7 @@ stages:
   - build
   - test-src
   - test-build
+  - docu
   - deploy
 
 variables:
@@ -27,6 +28,7 @@ variables:
     - release
   dependencies:
     - test-centos6-gcc
+    - pdf
   only:
     - devel
     - master
@@ -335,6 +337,41 @@ source-protex-scan:
   ## Temporarily allow to fail
   when: manual
   allow_failure: true
+
+
+### Documentation ###
+
+.job_template: &doc-defaults
+  stage: docu
+  tags:
+    - docker
+  image: ospray/docker-images:docu
+
+pdf:
+  <<: *doc-defaults
+  script:
+    - cd doc
+    - make pdf
+  only:
+    - devel
+    - release-1.5.x
+    - master
+  artifacts:
+    paths:
+      - readme.pdf
+    expire_in: 1 week
+
+web:
+  <<: *doc-defaults
+  script:
+    - cd doc
+    - make www
+  only:
+    - master
+  artifacts:
+    paths:
+      - doc/www/*
+    expire_in: 1 week
 
 
 ### RELEASE JOBS ###
