@@ -7,7 +7,7 @@ images_fig := spot_light quad_light hdri_light
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images_jpg) $(images_png)) $(images_fig2png)
+webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf)
 
 PANDOC := pandoc
@@ -22,8 +22,10 @@ www: $(webpages) www/stylesheet.css $(webimages)
 doc: ../README.md
 pdf: ../readme.pdf
 
-.PHONY: all www doc pdf clean realclean
+.PHONY: all www doc pdf clean realclean submodule
 
+submodule:
+	git submodule update --init --remote
 
 if_is_devel_then = if [[ "${CI_BUILD_REF_NAME}" == "devel" || (-d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel") ]] ; then
 
@@ -107,19 +109,23 @@ www/documentation.html: documentation.md tmp/api_html.md mpi.md tmp/scenegraph_h
 ### images
 ########################################################################
 
-# try to download images if not linked; images may not be up to date
-images/%:
-	@mkdir -p images
-	wget https://ospray.github.io/$@ -O $@
-
-www/images/%: images/%
-	cp $< $@
-
 www/images/%.png: %.fig
 	fig2dev -L png -S 4 $+ $@
 
 tmp/%.pdf: %.fig
 	fig2dev -L pdf $+ $@
+
+www/images/%: images/%
+	cp $< $@
+
+# try to download images if not linked; images may not be up to date
+images/%:
+	if [[ -d ospray-doc ]] ; then \
+	  ln -fs ospray-doc/images ;\
+	else \
+	  mkdir -p images ;\
+	  wget https://ospray.github.io/$@ -O $@ ;\
+	fi
 
 
 ### markdown
@@ -147,7 +153,7 @@ tmp/api.tex: filter-latex.py api.md tmp/links.md tmp/images_local_pdf.md
 tmp/scenegraph.tex: filter-latex.py scenegraph.md tmp/links.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
-../readme.pdf: readme.tex $(tmptexfiles) $(wildcard intel-spec.cls) preamble.tex tmp/version $(pdfimages)
+../readme.pdf: readme.tex $(tmptexfiles) $(wildcard ospray-doc/intel-spec.cls) preamble.tex tmp/version $(pdfimages)
 	md5s=0;\
 	auxf="tmp/`basename $< tex`aux";\
 	newmd5s=`md5sum $$auxf 2> /dev/null`;\
@@ -167,4 +173,4 @@ clean:
 	rm -rf www tmp changelog.md __pycache__
 
 realclean: clean
-	rm -irf fonts images intel-spec.cls 
+	rm -irf images

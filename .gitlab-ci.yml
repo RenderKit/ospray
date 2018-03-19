@@ -2,7 +2,6 @@ stages:
   - build
   - test-src
   - test-build
-  - docu
   - deploy
 
 variables:
@@ -342,10 +341,12 @@ source-protex-scan:
 ### Documentation ###
 
 .job_template: &doc-defaults
-  stage: docu
+  stage: build
   tags:
     - docker
   image: ospray/docker-images:docu
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
 
 pdf:
   <<: *doc-defaults
