@@ -125,7 +125,11 @@ inline void StructuredVolume_stepRay(void *uniform _volume, varying Ray &ray, co
   GridAccelerator_stepRay(volume->accelerator, step, ray);
 }
 
-inline void StructuredVolume_intersectIsosurface(void *uniform _volume, uniform float *uniform isovalues, uniform int numIsovalues, varying Ray &ray)
+inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
+                                                 uniform float *uniform isovalues,
+                                                 uniform int numIsovalues,
+                                                 uniform size_t geomID,
+                                                 varying Ray &ray)
 {
   // Cast to the actual Volume subtype.
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
@@ -133,8 +137,64 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume, uniform 
   // The nominal step size for ray casting based volume renderers, not considering the sampling rate.
   const uniform float step = volume->super.samplingStep;
 
-  // Compute the next hit point using a spatial acceleration structure.
-  GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalues, numIsovalues, ray);
+  float tBox0, tBox1;
+  intersectBox(ray, volume->super.boundingBox, tBox0, tBox1);
+
+  // Operate on a copy of the ray.
+  Ray rayCopy = ray;
+  rayCopy.t0 = max(ray.t0, tBox0) + ray.time; // use ray.time as a ray offset
+  rayCopy.t = min(ray.t, tBox1);
+
+  // Sample the volume at the current point in world coordinates.
+  float t0 = rayCopy.t0;
+  float sample0 = volume->super.sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
+
+  while(1) {
+
+    // Advance the ray.
+    // Compute the next hit point using a spatial acceleration structure.
+    GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalues, numIsovalues, rayCopy);
+    //    volume->intersectIsosurface(volume, self->isovalues, self->super.numPrimitives, rayCopy);
+
+    if (rayCopy.t0 > rayCopy.t)
+      return;
+
+    const float t = rayCopy.t0;
+    const float sample = volume->super.sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
+
+    // Find t value and isovalue index for the first isosurface intersection.
+    float tHit = infinity;
+    int isovalueID;
+
+    if (!isnan(sample0+sample)) {
+      for (uniform int i=0; i<numIsovalues; i++) {
+        if ((isovalues[i] - sample0) * (isovalues[i] - sample) <= 0.f) {
+          const float rcpSamp = rcpf(sample - sample0);
+          float tIso = infinity;
+          if (!isnan(rcpSamp)) {
+            tIso = t0 + (isovalues[i] - sample0) * rcpf(sample - sample0) * (t - t0);
+          }
+
+          if (tIso < tHit) {
+            tHit = tIso;
+            isovalueID = i;
+          }
+        }
+      }
+
+      // If we found a hit, update ray information and return.
+      if (tHit <= rayCopy.t) {
+        ray.geomID = geomID;
+        ray.primID = isovalueID;
+        ray.t = tHit;
+        return;
+      }
+    }
+
+    t0 = t;
+    sample0 = sample;
+  }
+
 }
 
 inline void StructuredVolume_transformLocalToWorld(StructuredVolume *uniform volume, const varying vec3f &localCoordinates, varying vec3f &worldCoordinates)
