@@ -115,8 +115,6 @@ namespace ospray {
       addLightsToScene(renderer);
       addImporterNodesToWorld(renderer);
       addAnimatedImporterNodesToWorld(renderer);
-      addPlaneToScene(renderer);
-      setupCamera(renderer);
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
       renderer.traverse(sg::VerifyNodes{});
@@ -125,12 +123,16 @@ namespace ospray {
       // last, to be able to modify all created SG nodes
       parseCommandLineSG(argc, argv, renderer);
 
-      if (debug)
-        renderer.traverse(sg::PrintNodes{});
-
       // recommit in case any command line options modified the scene graph
       renderer.traverse(sg::VerifyNodes{});
       renderer.commit();
+
+      // after parseCommandLineSG (may have changed world bounding box)
+      addPlaneToScene(renderer);
+      setupCamera(renderer);
+
+      if (debug)
+        renderer.traverse(sg::PrintNodes{});
 
       render(rendererPtr);
 
