@@ -77,7 +77,7 @@ namespace ospray {
 
       auto *field_array = field->baseAs<float>();
       auto minMax = std::minmax_element(field_array,
-                                        field_array + field->size() - 1);
+                                        field_array + field->size());
       vec2f voxelRange(*minMax.first, *minMax.second);
 
       child("voxelRange") = voxelRange;
