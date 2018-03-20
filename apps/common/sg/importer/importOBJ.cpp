@@ -128,7 +128,8 @@ namespace ospray {
               } catch (const std::runtime_error &) {
                 // NOTE(jda) - silently move on if parsed node type doesn't exist
                 // maybe it's a texture, try it
-                std::cout << "attemptoing to load param as texture: " << param.first << " " << param.second << std::endl;
+                std::cout << "attempting to load param as texture: "
+                          << param.first << " " << param.second << std::endl;
                 addTextureIfNeeded(matNode, param.first,
                                    param.second, containingPath);
               }
@@ -141,6 +142,7 @@ namespace ospray {
           matNode["Kd"] = vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
           matNode["Ks"] =
             vec3f(mat.specular[0], mat.specular[1], mat.specular[2]);
+          matNode["Ns"] = mat.shininess;
 
           addTextureIfNeeded(
               matNode, "map_Kd", mat.diffuse_texname, containingPath);

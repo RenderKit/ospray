@@ -27,10 +27,11 @@ variables:
     - release
   dependencies:
     - test-centos6-gcc
+    - pdf
   only:
     - devel
     - master
-    - release-1.4.x
+    - release-1.5.x
 
 .job_template: &test_job
   stage: test-build
@@ -335,6 +336,43 @@ source-protex-scan:
   ## Temporarily allow to fail
   when: manual
   allow_failure: true
+
+
+### Documentation ###
+
+.job_template: &doc-defaults
+  stage: build
+  tags:
+    - docker
+  image: ospray/docker-images:docu
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+
+pdf:
+  <<: *doc-defaults
+  script:
+    - cd doc
+    - make pdf
+  only:
+    - devel
+    - release-1.5.x
+    - master
+  artifacts:
+    paths:
+      - readme.pdf
+    expire_in: 1 week
+
+web:
+  <<: *doc-defaults
+  script:
+    - cd doc
+    - make www
+  only:
+    - master
+  artifacts:
+    paths:
+      - doc/www/*
+    expire_in: 1 week
 
 
 ### RELEASE JOBS ###

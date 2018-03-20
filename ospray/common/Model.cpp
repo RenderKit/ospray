@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospray
-#include "api/Device.h"
+#include "api/ISPCDevice.h"
 #include "Model.h"
 // ispc exports
 #include "Model_ispc.h"
@@ -24,7 +24,7 @@ namespace ospray {
 
   extern "C" void *ospray_getEmbreeDevice()
   {
-    return api::Device::current->embreeDevice;
+    return api::ISPCDevice::embreeDevice;
   }
 
   Model::Model()

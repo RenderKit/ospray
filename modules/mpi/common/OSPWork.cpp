@@ -73,6 +73,7 @@ namespace ospray {
         registerWorkUnit<SetParam<OSPObject>>(registry);
         registerWorkUnit<SetParam<std::string>>(registry);
         registerWorkUnit<SetParam<int>>(registry);
+        registerWorkUnit<SetParam<bool>>(registry);
         registerWorkUnit<SetParam<float>>(registry);
         registerWorkUnit<SetParam<vec2f>>(registry);
         registerWorkUnit<SetParam<vec2i>>(registry);
@@ -248,7 +249,7 @@ namespace ospray {
       {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
-        obj->findParam(name.c_str(), true)->set(val);
+        obj->setParam(name, val);
       }
 
       template<>
@@ -259,7 +260,7 @@ namespace ospray {
 
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-          obj->findParam(name.c_str(), true)->set(val);
+          obj->setParam(name, val);
         }
       }
 

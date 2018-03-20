@@ -59,44 +59,10 @@ namespace ospray {
     UNUSED(object);
   }
 
-  ManagedObject::Param::Param(const char *_name)
-    : name(_name)
-  {
-    Assert(_name);
-  }
-
-  ManagedObject::Param::~Param()
-  {
-    if (data.is<ManagedObject*>())
-      data.get<ManagedObject*>()->refDec();
-  }
-
-  ManagedObject::Param *ManagedObject::findParam(const char *name,
-                                                 bool addIfNotExist)
-  {
-    auto foundParam =
-        std::find_if(paramList.begin(), paramList.end(),
-          [&](const std::shared_ptr<Param> &p) {
-            return p->name == name;
-          });
-
-    if (foundParam != paramList.end())
-      return foundParam->get();
-    else if (addIfNotExist) {
-      paramList.push_back(std::make_shared<Param>(name));
-      return paramList[paramList.size()-1].get();
-    }
-    else
-      return nullptr;
-  }
-
 #define define_getparam(T,ABB)                                      \
   T ManagedObject::getParam##ABB(const char *name, T valIfNotFound) \
   {                                                                 \
-    Param *param = findParam(name);                                 \
-    if (!param) return valIfNotFound;                               \
-    if (!param->data.is<T>()) return valIfNotFound;                 \
-    return param->data.get<T>();                                    \
+    return getParam<T>(name, valIfNotFound);                        \
   }
 
   define_getparam(ManagedObject *, Object)
@@ -114,48 +80,10 @@ namespace ospray {
 
 #undef define_getparam
 
-  void ManagedObject::removeParam(const char *name)
-  {
-    auto foundParam =
-        std::find_if(paramList.begin(), paramList.end(),
-          [&](const std::shared_ptr<Param> &p) {
-            return p->name == name;
-          });
-
-    if (foundParam != paramList.end()) {
-      paramList.erase(foundParam);
-    }
-  }
-
   void ManagedObject::notifyListenersThatObjectGotChanged()
   {
     for (auto *object : objectsListeningForChanges)
       object->dependencyGotChanged(this);
-  }
-
-  void ManagedObject::emitMessage(const std::string &kind,
-                                  const std::string &message) const
-  {
-    postStatusMsg() << "  " << toString()
-                   << "  " << kind << ": " << message + '.';
-  }
-
-  void ManagedObject::exitOnCondition(bool condition,
-                                      const std::string &message) const
-  {
-    if (!condition)
-      return;
-    emitMessage("ERROR", message);
-    exit(1);
-  }
-
-  void ManagedObject::warnOnCondition(bool condition,
-                                      const std::string &message) const
-  {
-    if (!condition)
-      return;
-
-    emitMessage("WARNING", message);
   }
 
 } // ::ospray

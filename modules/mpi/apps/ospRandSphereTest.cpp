@@ -185,7 +185,8 @@ namespace ospRandSphereTest {
 
   void initialize_ospray()
   {
-    ospray::cpp::Device device;
+    ospLoadModule("ispc");
+    ospray::cpp::Device device(nullptr);
 
     if (runDistributed) {
       ospLoadModule("mpi");

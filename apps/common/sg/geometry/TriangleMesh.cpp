@@ -49,8 +49,10 @@ namespace ospray {
     void TriangleMesh::preCommit(RenderContext &ctx)
     {
       // NOTE(jda) - how many buffers to we minimally _have_ to have?
-      if (!hasChild("vertex") || !hasChild("index"))
-        throw std::runtime_error("#osp.sg - error, invalid TriangleMesh!");
+      if (!hasChild("vertex"))
+          throw std::runtime_error("#osp.sg - error, TriangleMesh has no 'vertex' field!");
+      if (!hasChild("index"))
+          throw std::runtime_error("#osp.sg - error, TriangleMesh has no 'index' field!");
 
       Geometry::preCommit(ctx);
     }

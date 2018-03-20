@@ -27,6 +27,7 @@ failedDir("failed")
 
 {
   ParsArgs(argc, argv);
+  ospLoadModule("ispc");
   device = ospNewDevice(GetDeviceType().c_str());
   if(device == NULL) {
     std::cout << "Faild to init the ospray device"

@@ -16,11 +16,10 @@
 
 #pragma once
 
+// ospcommon
+#include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "common/OSPCommon.h"
-#include "common/Managed.h"
-// embree
-#include "embree2/rtcore.h"
 // std
 #include <functional>
 
@@ -28,17 +27,16 @@
     "devices" that implement the OSPRay API */
 
 namespace ospray {
-  /*! encapsulates everything related to the implementing public ospray api */
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct OSPRAY_SDK_INTERFACE Device : public ManagedObject
+    struct OSPRAY_CORE_INTERFACE Device : public utility::ParameterizedObject
     {
       /*! singleton that points to currently active device */
       static std::shared_ptr<Device> current;
 
       Device() = default;
-      virtual ~Device() override;
+      virtual ~Device() override = default;
 
       /*! \brief creates an abstract device class of given type */
       static Device *createDevice(const char *type);
@@ -91,6 +89,9 @@ namespace ospray {
 
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject object, const char *bufName, OSPObject obj) = 0;
+
+      /*! assign (named) float parameter to an object */
+      virtual void setBool(OSPObject object, const char *bufName, const bool f) = 0;
 
       /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f) = 0;
@@ -221,14 +222,11 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      virtual void commit() override;
+      virtual void commit();
       bool isCommitted();
 
       // Public Data //
 
-      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
-      //             safely assume that a device exists.
-      static RTCDevice embreeDevice;
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
@@ -259,10 +257,10 @@ namespace ospray {
 
     // Shorthand functions to query current API device //
 
-    OSPRAY_SDK_INTERFACE bool    deviceIsSet();
-    OSPRAY_SDK_INTERFACE Device& currentDevice();
+    OSPRAY_CORE_INTERFACE bool    deviceIsSet();
+    OSPRAY_CORE_INTERFACE Device& currentDevice();
 
-    OSPRAY_SDK_INTERFACE
+    OSPRAY_CORE_INTERFACE
     std::string generateEmbreeDeviceCfg(const Device &device);
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

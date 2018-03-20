@@ -22,16 +22,16 @@
 #include "embree2/rtcore.h"
 
 
-/*! \file localdevice.h Implements the "local" device for local rendering */
+/*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
 namespace ospray {
   namespace api {
 
-    struct LocalDevice : public Device
+    struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     {
 
-      LocalDevice()  = default;
-      ~LocalDevice() override = default;
+      ISPCDevice()  = default;
+      ~ISPCDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -95,6 +95,11 @@ namespace ospray {
       void setObject(OSPObject target,
                      const char *bufName,
                      OSPObject value) override;
+
+      /*! assign (named) float parameter to an object */
+      void setBool(OSPObject object,
+                   const char *bufName,
+                   const bool b) override;
 
       /*! assign (named) float parameter to an object */
       void setFloat(OSPObject object,
@@ -211,6 +216,12 @@ namespace ospray {
                         OSPVolume volume,
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
+
+      // Public Data //
+
+      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
+      //             safely assume that a device exists.
+      static RTCDevice embreeDevice;
     };
 
   } // ::ospray::api

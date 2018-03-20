@@ -58,7 +58,7 @@ namespace ospray {
 
       // Make the voxel value range visible to the application.
       if (findParam("voxelRange") == nullptr)
-        set("voxelRange", voxelRange);
+        setParam("voxelRange", voxelRange);
       else
         voxelRange = getParam2f("voxelRange", voxelRange);
 

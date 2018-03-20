@@ -256,6 +256,9 @@ extern "C" {
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
 
+  /*! add 1-bool parameter to given Device */
+  OSPRAY_INTERFACE void ospDeviceSet1b(OSPDevice, const char *id, int32_t x);
+
   /*! add an untyped void pointer to given Device */
   OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
 
@@ -526,6 +529,9 @@ extern "C" {
 
   /*! add a data array to another object */
   OSPRAY_INTERFACE void ospSetData(OSPObject, const char *id, OSPData);
+
+  /*! add 1-bool parameter to given object, value is of type 'int' for C99 compatibility */
+  OSPRAY_INTERFACE void ospSet1b(OSPObject, const char *id, int x);
 
   /*! add 1-float parameter to given object */
   OSPRAY_INTERFACE void ospSetf(OSPObject, const char *id, float x);

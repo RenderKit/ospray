@@ -43,64 +43,13 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
                            varying Ray &ray,
                            uniform size_t primID)
 {
-  // Volume of interest.
   uniform Volume *uniform volume = self->volume;
 
-  float tBox0, tBox1;
-  intersectBox(ray, self->volume->boundingBox, tBox0, tBox1);
-
-  // Operate on a copy of the ray.
-  Ray rayCopy = ray;
-  rayCopy.t0 = max(ray.t0, tBox0) + ray.time; // use ray.time as a ray offset
-  rayCopy.t = min(ray.t, tBox1);
-
-  // Sample the volume at the current point in world coordinates.
-  float t0 = rayCopy.t0;
-  float sample0 = volume->sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
-
-  while(1) {
-
-    // Advance the ray.
-    volume->intersectIsosurface(volume, self->isovalues, self->super.numPrimitives, rayCopy);
-
-    if (rayCopy.t0 > rayCopy.t)
-      return;
-
-    const float t = rayCopy.t0;
-    const float sample = volume->sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
-
-    // Find t value and isovalue index for the first isosurface intersection.
-    float tHit = infinity;
-    int isovalueID;
-
-    if (!isnan(sample0+sample)) {
-      for (uniform int i=0; i<self->super.numPrimitives; i++) {
-        if ((self->isovalues[i] - sample0) * (self->isovalues[i] - sample) <= 0.f) {
-          const float rcpSamp = rcpf(sample - sample0);
-          float tIso = infinity;
-          if (!isnan(rcpSamp)) {
-            tIso = t0 + (self->isovalues[i] - sample0) * rcpf(sample - sample0) * (t - t0);
-          }
-
-          if (tIso < tHit) {
-            tHit = tIso;
-            isovalueID = i;
-          }
-        }
-      }
-
-      // If we found a hit, update ray information and return.
-      if (tHit <= rayCopy.t) {
-        ray.geomID = self->super.geomID;
-        ray.primID = isovalueID;
-        ray.t = tHit;
-        return;
-      }
-    }
-
-    t0 = t;
-    sample0 = sample;
-  }
+  volume->intersectIsosurface(volume,
+                              self->isovalues,
+                              self->super.numPrimitives,
+                              self->super.geomID,
+                              ray);
 }
 
 static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,

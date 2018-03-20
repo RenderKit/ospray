@@ -113,6 +113,7 @@ ospray_create_library(ospray_sg SHARED
   importer/Importer.cpp
   importer/importPoints.cpp
   importer/importOSP.cpp
+  importer/importX3D.cpp
   importer/importOSPSG.cpp
   importer/importOSX.cpp
   importer/importOBJ.cpp
@@ -212,6 +213,7 @@ ospray_install_sdk_headers(
   visitor/GatherNodesByPosition.h
   visitor/MarkAllAsModified.h
   visitor/PrintNodes.h
+  visitor/VerifyNodes.h
   visitor/Visitor.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/visitor

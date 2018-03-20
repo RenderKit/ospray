@@ -47,8 +47,8 @@ namespace ospray {
       valid_whitelist = 1 << 3, //! validity determined by whitelist
       valid_blacklist = 1 << 4,  //! validity determined by blacklist
       gui_slider = 1 << 5,
-      gui_color = 1<<6,
-      gui_combo = 1<<7
+      gui_color = 1 << 6,
+      gui_combo = 1 << 7
     };
 
     // Base Node class definition /////////////////////////////////////////////
@@ -196,14 +196,6 @@ namespace ospray {
 
       // Traversal interface //////////////////////////////////////////////////
 
-      //! traverse this node and children with given operation, such as
-      //  print,commit,render or custom operations
-      virtual void traverse(RenderContext &ctx, const std::string& operation);
-
-      //! Helper overload to use a default constructed RenderContext for root
-      //  level traversal
-      void traverse(const std::string& operation);
-
       //! Use a custom provided node visitor to visit each node
       template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
       void traverse(VISITOR_T &&visitor, TraversalContext &ctx);
@@ -211,6 +203,32 @@ namespace ospray {
       //! Helper overload to traverse with a default constructed TravesalContext
       template <typename VISITOR_T, typename = is_valid_visitor_t<VISITOR_T>>
       void traverse(VISITOR_T &&visitor);
+
+      //! Invoke a "verify" traversal of the scene graph (and possibly
+      //  its children)
+      void verify();
+
+      //! Invoke a "commit" traversal of the scene graph (and possibly
+      //  its children)
+      void commit();
+
+      //! Invoke a "finalize" traversal of the scene graph (and possibly
+      //  its children)
+      void finalize(RenderContext &ctx);
+
+      //! Invoke a "animate" traversal of the scene graph (and possibly
+      //  its children)
+      void animate();
+
+    protected:
+
+      //! traverse this node and children with given operation, such as
+      //  print,commit,render or custom operations
+      virtual void traverse(RenderContext &ctx, const std::string& operation);
+
+      //! Helper overload to use a default constructed RenderContext for root
+      //  level traversal
+      void traverse(const std::string& operation);
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
@@ -221,13 +239,11 @@ namespace ospray {
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation);
 
-      //! called before committing children during traversal
+      //! Called before committing children during traversal
       virtual void preCommit(RenderContext &ctx);
 
-      //! called after committing children during traversal
+      //! Called after committing children during traversal
       virtual void postCommit(RenderContext &ctx);
-
-    protected:
 
       struct
       {
@@ -252,6 +268,10 @@ namespace ospray {
       // NOTE(jda) - The mutex is 'mutable' because const methods still need
       //             to be able to lock the mutex
       mutable std::mutex value_mutex;
+
+    private:
+
+      friend struct VerifyNodes;
     };
 
     OSPSG_INTERFACE std::shared_ptr<Node>
@@ -417,6 +437,8 @@ namespace ospray {
       }
 
       ctx.level--;
+
+      visitor.postChildren(*this, ctx);
     }
 
     template <typename VISITOR_T, typename>

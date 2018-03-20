@@ -49,7 +49,15 @@ namespace ospray {
         return;
       }
 
-      setValue(ospNewVolume("unstructured_volume"));
+      ospVolume = ospNewVolume("unstructured_volume");
+
+      if (!ospVolume)
+        THROW_SG_ERROR("could not allocate volume");
+
+      isosurfacesGeometry = ospNewGeometry("isosurfaces");
+      ospSetObject(isosurfacesGeometry, "volume", ospVolume);
+
+      setValue(ospVolume);
 
       if (!hasChild("vertices"))
         throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'vertices' array!");

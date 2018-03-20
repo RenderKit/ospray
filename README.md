@@ -183,7 +183,7 @@ console. In the Visual Studio command prompt type:
     cd path\to\ospray
     mkdir build
     cd build
-    cmake -G "Visual Studio 12 2013 Win64" [-D VARIABLE=value] ..
+    cmake -G "Visual Studio 15 2017 Win64" [-D VARIABLE=value] ..
     cmake --build . --config Release
 
 Use `-D` to set variables for CMake, e.g. the path to Embree with
@@ -254,7 +254,7 @@ prefixed by convention with "`--osp:`") are understood:
 <table style="width:97%;">
 <caption>Command line parameters accepted by OSPRay’s <code>ospInit</code>.</caption>
 <colgroup>
-<col style="width: 36%" />
+<col style="width: 37%" />
 <col style="width: 60%" />
 </colgroup>
 <thead>
@@ -342,12 +342,8 @@ information). Once a device is created, you can call
 
 ``` {.cpp}
 void ospDeviceSet1i(OSPDevice, const char *id, int val);
-```
-
-or
-
-``` {.cpp}
 void ospDeviceSetString(OSPDevice, const char *id, const char *val);
+void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *val);
 ```
 
 to set parameters on the device. The following parameters can be set on
@@ -805,7 +801,7 @@ only support `float` voxels.
 <col style="width: 13%" />
 <col style="width: 18%" />
 <col style="width: 18%" />
-<col style="width: 46%" />
+<col style="width: 45%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -835,6 +831,42 @@ only support `float` voxels.
 <td style="text-align: left;">sampling method; valid values are “finest”, “current”, or “octant”</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">voxelType</td>
+<td style="text-align: right;">undefined</td>
+<td style="text-align: left;">data type of each voxel, currently supported are:</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“uchar” (8 bit unsigned integer)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“short” (16 bit signed integer)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“ushort” (16 bit unsigned integer)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“float” (32 bit single precision floating point)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;">“double” (64 bit double precision floating point)</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">OSPData</td>
 <td style="text-align: left;">brickInfo</td>
 <td style="text-align: right;"></td>
@@ -855,12 +887,13 @@ Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
 like the structured volume equivalent, but they only modify the root
 (coarsest level) of refinement.
 
-### Unstructured Tetrahedral Volumes
+### Unstructured Volumes
 
-Unstructured tetrahedral volumes are defined by three arrays: vertices,
-corresponding field values, and tetrahedra indices. A tetrahedral volume
-type is created by passing the type string "`tetrahedral_volume`" to
-`ospNewVolume`.
+Unstructured volumes can contain tetrahedral or hexahedral cell types,
+and are defined by three arrays: vertices, corresponding field values,
+and eight indices per cell (first four are -1 for tetrahedral cells). An
+unstructred volume type is created by passing the type string
+"`unstructured_volume`" to `ospNewVolume`.
 
 Similar to [triangle mesh](#triangle-mesh), each tetrahedron is formed
 by a group of indices into the vertices. For each vertex, the
@@ -869,11 +902,17 @@ rendering. Note that the index order for each tetrahedron does not
 matter, as OSPRay internally calculates vertex normals to ensure proper
 sampling and interpolation.
 
-| Type      | Name       | Description                                                         |
-|:----------|:-----------|:--------------------------------------------------------------------|
-| vec3f\[\] | vertices   | [data](#data) array of vertex positions                             |
-| float\[\] | field      | [data](#data) array of vertex data values to be sampled             |
-| vec4i\[\] | tetrahedra | [data](#data) array of tetrahedra indices (into vertices and field) |
+For hexahedral cells, each hexahedron is formed by a group of eight
+indices into the vertics and data value. Vertex ordering is the same as
+VTK\_HEXAHEDRON - four bottom vertices counterclockwise, then top four
+counterclockwise.
+
+| Type      | Name      | Description                                                         |
+|:----------|:----------|:--------------------------------------------------------------------|
+| vec3f\[\] | vertices  | [data](#data) array of vertex positions                             |
+| float\[\] | field     | [data](#data) array of vertex data values to be sampled             |
+| vec4i\[\] | intices   | [data](#data) array of tetrahedra indices (into vertices and field) |
+| string    | hexMethod | 'planar' (default) or 'nonplanar'                                   |
 
 : Additional configuration parameters for tetrahedral volumes.
 
@@ -924,15 +963,18 @@ A traditional triangle mesh (indexed face set) geometry is created by
 calling `ospNewGeometry` with type string "`triangles`". Once created, a
 triangle mesh recognizes the following parameters:
 
-| Type                   | Name            | Description                                              |
-|:-----------------------|:----------------|:---------------------------------------------------------|
-| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                  |
-| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                    |
-| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)          |
-| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
-| vec3i(a)\[\]           | index           | [data](#data) array of triangle indices (into vertex.\*) |
+| Type                   | Name            | Description                                                        |
+|:-----------------------|:----------------|:-------------------------------------------------------------------|
+| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                            |
+| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                              |
+| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)                    |
+| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates                  |
+| vec3i(a)\[\]           | index           | [data](#data) array of triangle indices (into the vertex array(s)) |
 
 : Parameters defining a triangle mesh geometry.
+
+The `vertex` and `index` arrays are mandatory to creat a valid triangle
+mesh.
 
 ### Spheres
 
@@ -950,7 +992,7 @@ of specifying the data of center position and radius within a
 <col style="width: 18%" />
 <col style="width: 25%" />
 <col style="width: 12%" />
-<col style="width: 42%" />
+<col style="width: 41%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1023,7 +1065,7 @@ listed in the table below.
 <caption>Parameters defining a cylinders geometry.</caption>
 <colgroup>
 <col style="width: 18%" />
-<col style="width: 27%" />
+<col style="width: 28%" />
 <col style="width: 12%" />
 <col style="width: 39%" />
 </colgroup>
@@ -1105,7 +1147,7 @@ table below.
 <table style="width:97%;">
 <caption>Parameters defining a streamlines geometry.</caption>
 <colgroup>
-<col style="width: 23%" />
+<col style="width: 24%" />
 <col style="width: 21%" />
 <col style="width: 52%" />
 </colgroup>
@@ -1357,7 +1399,7 @@ supports the following special parameters:
 <col style="width: 19%" />
 <col style="width: 23%" />
 <col style="width: 12%" />
-<col style="width: 42%" />
+<col style="width: 41%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1497,7 +1539,7 @@ the spot light supports the special parameters listed in the table.
 <colgroup>
 <col style="width: 14%" />
 <col style="width: 21%" />
-<col style="width: 61%" />
+<col style="width: 60%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1614,12 +1656,13 @@ their distinctive look. To let the given renderer create a new material
 of given type `type` call
 
 ``` {.cpp}
-OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
+OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
 ```
 
 The call returns `NULL` if the material type is not known by the
-renderer, or else an `OSPMaterial` handle to the created material. The
-handle can then be used to assign the material to a given geometry with
+renderer type, or else an `OSPMaterial` handle to the created material.
+The handle can then be used to assign the material to a given geometry
+with
 
 ``` {.cpp}
 void ospSetMaterial(OSPGeometry, OSPMaterial);
@@ -1633,7 +1676,7 @@ offers widely used common properties like diffuse and specular
 reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
 files. To create an OBJ material pass the type string "`OBJMaterial`" to
-`ospNewMaterial`. Its main parameters are
+`ospNewMaterial2`. Its main parameters are
 
 | Type         | Name      |    Default| Description                                        |
 |:-------------|:----------|----------:|:---------------------------------------------------|
@@ -1699,7 +1742,7 @@ textures support [texture transformations](#texture-transformations).
 
 The [path tracer](#path-tracer) offers a physical metal, supporting
 changing roughness and realistic color shifts at edges. To create a
-Metal material pass the type string "`Metal`" to `ospNewMaterial`. Its
+Metal material pass the type string "`Metal`" to `ospNewMaterial2`. Its
 parameters are
 
 <table style="width:97%;">
@@ -1784,7 +1827,7 @@ create interesting edging effects.
 The [path tracer](#path-tracer) offers an alloy material, which behaves
 similar to [Metal](#metal), but allows for more intuitive and flexible
 control of the color. To create an Alloy material pass the type string
-"`Alloy`" to `ospNewMaterial`. Its parameters are
+"`Alloy`" to `ospNewMaterial2`. Its parameters are
 
 | Type  | Name      |    Default| Description                                 |
 |:------|:----------|----------:|:--------------------------------------------|
@@ -1811,7 +1854,7 @@ transformations](#texture-transformations) are supported as well.
 The [path tracer](#path-tracer) offers a realistic a glass material,
 supporting refraction and volumetric attenuation (i.e. the transparency
 color varies with the geometric thickness). To create a Glass material
-pass the type string "`Glass`" to `ospNewMaterial`. Its parameters are
+pass the type string "`Glass`" to `ospNewMaterial2`. Its parameters are
 
 | Type  | Name                |  Default| Description                        |
 |:------|:--------------------|--------:|:-----------------------------------|
@@ -1837,7 +1880,7 @@ surface is parallel to the real geometric surface. The implementation
 accounts for multiple internal reflections between the interfaces
 (including attenuation), but neglects parallax effects due to its
 (virtual) thickness. To create a such a thin glass material pass the
-type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
+type string "`ThinGlass`" to `ospNewMaterial2`. Its parameters are
 
 | Type  | Name                |  Default| Description                        |
 |:------|:--------------------|--------:|:-----------------------------------|
@@ -1868,7 +1911,7 @@ attenuation and thus the material appearance.
 The [path tracer](#path-tracer) offers a metallic paint material,
 consisting of a base coat with optional flakes and a clear coat. To
 create a MetallicPaint material pass the type string "`MetallicPaint`"
-to `ospNewMaterial`. Its parameters are listed in the table below.
+to `ospNewMaterial2`. Its parameters are listed in the table below.
 
 | Type  | Name        |    Default| Description                       |
 |:------|:------------|----------:|:----------------------------------|
@@ -1899,8 +1942,8 @@ average, thus individual flakes are not visible.
 The [path tracer](#path-tracer) supports the Luminous material which
 emits light uniformly in all directions and which can thus be used to
 turn any geometric object into a light source. It is created by passing
-the type string "`Luminous`" to `ospNewMaterial`. The amount of constant
-radiance that is emitted is determined by combining the general
+the type string "`Luminous`" to `ospNewMaterial2`. The amount of
+constant radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
 
 <img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" />
@@ -2134,7 +2177,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | Name              | Description                                                                                     |
 |:------------------|:------------------------------------------------------------------------------------------------|
 | OSP\_FB\_COLOR    | RGB color including alpha                                                                       |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane)                                     |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float             |
 | OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                  |
 | OSP\_FB\_VARIANCE | estimate of the current variance if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
 
@@ -2204,10 +2247,10 @@ present) to `inf`.
 
 ### Pixel Operation {#pixel-operation .unnumbered}
 
-A pixel operation are functions that are applied to every pixel that
-gets written into a framebuffer. Examples include post-processing,
-filtering, blending, tone mapping, or sending tiles to a display wall.
-To create a new pixel operation of given type `type` use
+Pixel operations are functions that are applied to every pixel that gets
+written into a framebuffer. Examples include post-processing, filtering,
+blending, tone mapping, or sending tiles to a display wall. To create a
+new pixel operation of given type `type` use
 
 ``` {.cpp}
 OSPPixelOp ospNewPixelOp(const char *type);
@@ -2221,6 +2264,24 @@ To set a pixel operation to the given framebuffer use
 ``` {.cpp}
 void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
 ```
+
+#### Tone Mapper
+
+The tone mapper is a pixel operation which implements a generic filmic
+tone mapping operator. It approximates the Academy Color Encoding System
+(ACES) by default. The tone mapper is created by passing the type string
+"`tonemapper`" to `ospNewPixelOp`. The tone mapping curve can be
+customized using the parameters listed in the table below.
+
+| Type  | Name     | Default | Description                                                              |
+|:------|:---------|:--------|:-------------------------------------------------------------------------|
+| float | contrast | 1.6773  | contrast (toe of the curve); typically is in \[1-2\]                     |
+| float | shoulder | 0.9714  | highlight compression (shoulder of the curve); typically is in \[0.9-1\] |
+| float | midIn    | 0.18    | mid-level anchor input; default is 18% gray                              |
+| float | midOut   | 0.18    | mid-level anchor output; default is 18% gray                             |
+| float | hdrMax   | 11.0785 | maximum HDR input that is not clipped                                    |
+
+: Parameters accepted by the tone mapper.
 
 Rendering
 ---------
@@ -2394,22 +2455,22 @@ device.
 <table style="width:97%;">
 <caption>Parameters for the <code>mpi_distributed</code> device.</caption>
 <colgroup>
-<col width="10%" />
-<col width="24%" />
-<col width="62%" />
+<col style="width: 10%" />
+<col style="width: 24%" />
+<col style="width: 62%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="left">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left"><code>void*</code></td>
-<td align="left">worldCommunicator</td>
-<td align="left">A pointer to the <code>MPI_Comm</code> which should be used as OSPRay's world communicator. This will set how many ranks OSPRay should expect to participate in rendering. The default is <code>MPI_COMM_WORLD</code> where all ranks are expected to participate in rendering.</td>
+<td style="text-align: left;"><code>void*</code></td>
+<td style="text-align: left;">worldCommunicator</td>
+<td style="text-align: left;">A pointer to the <code>MPI_Comm</code> which should be used as OSPRay’s world communicator. This will set how many ranks OSPRay should expect to participate in rendering. The default is <code>MPI_COMM_WORLD</code> where all ranks are expected to participate in rendering.</td>
 </tr>
 </tbody>
 </table>
@@ -2429,6 +2490,161 @@ with one process per-node. By splitting `MPI_COMM_WORLD` the application
 can create a communicator with one rank per-node to then run OSPRay on
 one process per-node. The remaining ranks on each node can then
 aggregate their data to the OSPRay process for rendering.
+
+Scenegraph
+==========
+
+**WARNING: USE AT YOUR OWN RISK. The Scenegraph is currently in Alpha
+mode and will change frequently. It is not yet recommended for critical
+production work.**
+
+The scenegraph is the basis of our exampleViewer which consists of a
+superset of OSPRay objects represented in a graph hierarchy (currently a
+tree). This graph functions as a hierarchical specification for scene
+properties and a self-managed update graph. The scenegraph
+infrastructure includes many convenience functions for templated
+traversals, queries of state and child state, automated updates, and
+timestamped modifications to underlying state.
+
+The scenegraph nodes closely follow the dependencies of existing OSPRay
+API internals, ie a sg::Renderer has a "model" child, which in turn has
+a "TriangleMesh", which in turn has a child named "vertex" similar to
+how you may set the "vertex" parameter on the osp::TriangleMesh which in
+turn is added to an OSPModel object which is set as the model on the
+OSPRenderer. The scenegraph is a supserset of OSPRay functionality so
+there isn't a direct 1:1 mapping between the scenegraph hierarchy in all
+cases, however it is kept as close as possible. This makes the scene
+graph viewer in ospExampleViewer a great way to understand OSPRay state.
+
+Hierarchy Structure
+-------------------
+
+The root of the scenegraph is based on sg::Renderer. The scenegraph can
+be created by
+
+    auto renderer = sg::createNode("renderer", "Renderer");
+
+which automatically creates child nodes for necessary OSPRay state. To
+update and commit all state and render a single function is provided
+which can be called with:
+
+    renderer.renderFrame(renderer["frameBuffer"].nodeAs<sg::FrameBuffer>);
+
+Values can be set using:
+
+    renderer["spp"] = 16;
+
+The explore the full set of nodes, simply launch the exampleViewer and
+traverse through the GUI representation of all scenegraph nodes.
+
+Traversals
+----------
+
+The scenegraph contains a set of builtin traversals as well as modular
+visitor functors for implementing custom passes over the scenegraph. The
+required traversals are handled for you by default within the
+renderFrame function on the renderer. For any given node there are two
+phases to a traversal operation, pre and post traversal of the nodes
+children. preTraversal initializes node state and objects and sets the
+current traversal context with appropriate state. For instance,
+sg::Model will create a new OSPModel object, set its value to that
+object, and set sg::RenderContext.currentOSPModel to its own value.
+After preTraversal is finished, the children of sg::Model are processed
+in a similar fashion and now use the modified context. In postTraversal,
+sg::Model will commit the changes that its children have potentially set
+and it will pop its modifications from the current context. This
+behavior is replicated for every scenegraph node and enables children to
+act on parent state without specific implementations from the parent
+node. An example of this are the sg::NodeParam nodes which are
+containers for values to be set on OSPObjects, such as a float value.
+This is put on the scenegraph with a call to:
+
+    renderer["lights"]["sun"].createChild("intensity", "float", 0.3f);
+
+This call accesses the child named "lights" on the renderer, and in turn
+the child named "sun". This child then gets its own child of a newly
+created node with the name "intensity" of type "float" with a value of
+0.3f. When committed, this node will call ospSet1f with the node value
+on the current OSPObject on the context which is set by the parent. If
+you were to create a custom light called "MyLight" and had a float
+parameter called "flickerFreq", a similar line would be used without
+requiring any additional changes in the scenegraph internals beyond
+registering the new light class. Known parameters such as floats will
+also show up in the exampleViewerGUI without requiring any additional
+code beyond adding them to the scenegraph and the internal
+implementation in OSPRay.
+
+The base passes required to utilize the scenegraph include verification,
+commit, and render traversals. Every node in the scenegraph has a valid
+state which needs to be set before operating on the node. Nodes may have
+custom qualifications for validity, but by default they are set through
+valid\_ flags on the scenegraph Node for things like whitelists and
+range checks. Once verified, Commit traverses the scenegraph and commits
+scenegraph state to OSPRay. Commits are timestamped, so re-committing
+will only have any affect if a dependent child has been modified
+requiring a new commit. Because of this, each node does not have to
+track if it is valid or if anything in the scene has been modified, as
+commit will only be called on that node if those are already true. By
+default invalid nodes with throw exceptions, however this can be turned
+off which enables the program to keep running. In the exampleViewer GUI,
+invalid nodes will be marked in red but the previously committed state
+will keep rendering until the invalid state is corrected.
+
+For examples of implementing custom traversals, see the sg/visitors
+folder. Here is an example of a visitor that collects all nodes with a
+given name:
+
+    struct GatherNodesByName : public Visitor
+    {
+      GatherNodesByName(const std::string &_name);
+
+      bool operator()(Node &node, TraversalContext &ctx) override;
+
+      std::vector<std::shared_ptr<Node>> results();
+
+    private:
+      std::string name;
+      std::vector<std::shared_ptr<Node>> nodes;
+    };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    inline GatherNodesByName::GatherNodesByName(const std::string &_name)
+        : name(_name)
+    {
+    }
+
+    inline bool GatherNodesByName::operator()(Node &node, TraversalContext &)
+    {
+      if (utility::longestBeginningMatch(node.name(), this->name) == this->name) {
+        auto itr = std::find_if(
+          nodes.begin(),
+          nodes.end(),
+          [&](const std::shared_ptr<Node> &nodeInList) {
+            return nodeInList.get() == &node;
+          }
+        );
+
+        if (itr == nodes.end())
+          nodes.push_back(node.shared_from_this());
+      }
+
+      return true;
+    }
+
+    inline std::vector<std::shared_ptr<Node>> GatherNodesByName::results()
+    {
+      return nodes;// TODO: should this be a move (i.e. reader 'consumes')?
+    }
+
+Thread Safety
+-------------
+
+The scenegraph is only thread safe for accessing and setting values on
+nodes. More advanced operations like adding or removing nodes are not
+thread safe. At some point we hope to add transactions to handle these,
+but for now the scenegraph nodes must be added/removed on the same
+thread that is committing and rendering.
 
 Examples
 ========
@@ -2463,23 +2679,77 @@ frames.](https://ospray.github.io/images/tutorial_accumulatedframe.png)
 Example Viewer
 --------------
 
-OSPRay also includes an exemplary viewer application
-`ospExampleViewerSg`, showcasing all features of OSPRay. The Example
-Viewer uses the ImGui library for user interface controls. The viewer is
-based on a prototype OSPRay scenegraph interface where its nodes are
-displayed in the GUI and can be manipulated interactively. For instance,
-simply run it as `ospExampleViewerSg teapot.obj`.
+![Screenshot of using ospExampleViewer with a
+scenegraph.](https://ospray.github.io/images/exampleViewer.jpg)
 
-This application also functions as an OSPRay state debugger – invalid
-values will be shown in red up the hierarchy and won't change the viewer
-until corrected. You can also add new nodes where appropriate: for
-example, when "lights" is expanded right clicking on "lights" and typing
-in a light type, such as "point", will add it to the scene. Similarly,
-right clicking on "world" and creating an "Importer" node will add a new
-scene importer from a file. Changing the filename to an appropriate file
-will load the scene and propagate the resulting state.
+OSPRay includes an exemplary viewer application `ospExampleViewer`,
+showcasing most features of OSPRay which can be run as
+`./ospExampleViewer [options] <filename>`. The Example Viewer uses the
+ImGui library for user interface controls and is based on a prototype
+OSPRay [scenegraph](#scenegraph) interface where nodes can be viewed and
+edited interactively. Updates to scenegraph nodes update OSPRay state
+automatically through the scenegraph viewer which is enabled by pressing
+'g'.
 
-<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" width="80.0%" />
+### Exploring the Scene
+
+The GUI shows the entire state of the program under the root scenegraph
+node. Expanding nodes down to explore and edit the scene is possible,
+for example a material parameter may be found under
+renderer→world→mesh→material→Kd. Updates to values will be automatically
+propagated to the next render. Individual nodes can be easily found
+using the "Find Node" section, which will find nodes with a given name
+based on the input string. Scene objects can also be selected with the
+mouse by shift-left clicking in the viewer.
+
+Click on nodes to expand their children, whose values can be set by
+dragging or double clicking and typing in values. You can also add new
+nodes where appropriate: for example, when "lights" is expanded right
+clicking on "lights" and selecting create new node and typing in a light
+type, such as "PointLight", will add it to the scene. Similarly, right
+clicking on "world" and creating an "Importer" node will add a new scene
+importer from a file. Changing the filename to an appropriate file will
+load the scene and propagate the resulting state. Exporting and
+importing the scenegraph is only partially supported at the moment
+through "ospsg" files. Currently, any nodes with Data members will break
+this functionality, however right clicking and selecting export on the
+camera or lights nodes for instance will save out their respective state
+which can be imported on the command line. ExampleViewer also functions
+as an OSPRay state debugger – invalid values will be shown in red up the
+hierarchy and won't change the viewer until corrected.
+
+### Volume Rendering
+
+Volumes are loaded into the viewer just as a mesh is. Volume appearance
+is modified according to the transfer function, which will show up in a
+popup window on the GUI after pressing 'g'. Click and drag across the
+transfer function to set opacity values, and selecting near the bottom
+of the editable transfer function widget sets the opacity to zero. The
+colors themselves can only be modified by selecting from the dropdown
+menu 'ColorMap' or importing and exporting json colors. The range that
+the transfer function operates on can be modified on the scenegraph
+viewer.
+
+### ExampleViewer Controls
+
+-   'g' - toggle scenegraph display
+-   'q' - quit
+-   Left click and drag to rotate
+-   Right click and drag or mouse wheel to zoom in and out.
+-   Mouse-Wheel click will pan the camera.
+-   Control-Left clicking on an object will select a model and all of
+    its children which will be displayed in the
+-   Shift-Left click on an object will zoom into that part of the scene
+    and set the focal distance.
+
+### CommandLine Options
+
+-   Running `./ospExampleViewer -help` will bring up a list of
+    commandline options. These options allow you to load files, run
+    animations, modify any scenegraph state, and many other functions.
+    See the [demos](#demos) page for examples.
+-   Supported file importers currently include: `obj`, `ply`, `x3d`,
+    `vtu`, `osp`, `ospsg`, `xml` (rivl), `points`, `xyz`.
 
 Distributed Viewer
 ------------------
@@ -2571,6 +2841,6 @@ page.
 [^5]: This is currently not implemented, i.e. all channels of the
     framebuffer are always updated.
 
-[^6]: A C++ version that uses the C++ conveniance wrappers of OSPRay's
+[^6]: A C++ version that uses the C++ convenience wrappers of OSPRay's
     C99 API via `include/ospray/ospray_cpp.h` is available at
     `apps/ospTutorial.cpp`.

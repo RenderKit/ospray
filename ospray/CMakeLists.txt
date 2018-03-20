@@ -44,16 +44,39 @@ INCLUDE_DIRECTORIES_ISPC(
 SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
-  api/LocalDevice.cpp
 
   common/ospray.rc
-  common/OSPCommon.ispc
   common/OSPCommon.cpp
-  common/Managed.cpp
+
+  include/ospray/ospray.h
+  include/ospray/OSPDataType.h
+  include/ospray/OSPTexture.h
+
+  include/ospray/ospray_cpp/Camera.h
+  include/ospray/ospray_cpp/Data.h
+  include/ospray/ospray_cpp/FrameBuffer.h
+  include/ospray/ospray_cpp/Geometry.h
+  include/ospray/ospray_cpp/Light.h
+  include/ospray/ospray_cpp/ManagedObject.h
+  include/ospray/ospray_cpp/Material.h
+  include/ospray/ospray_cpp/Model.h
+  include/ospray/ospray_cpp/PixelOp.h
+  include/ospray/ospray_cpp/Renderer.h
+  include/ospray/ospray_cpp/Texture2D.h
+  include/ospray/ospray_cpp/TransferFunction.h
+  include/ospray/ospray_cpp/Volume.h
+)
+
+SET(OSPRAY_ISPC_DEVICE_SOURCES
+
+  api/ISPCDevice.cpp
+
   common/ObjectHandle.cpp
   common/Data.cpp
+  common/Managed.cpp
   common/Model.ispc
   common/Model.cpp
+  common/OSPCommon.ispc
   common/Material.cpp
   common/Util.h
 
@@ -92,24 +115,6 @@ SET(OSPRAY_SOURCES
   geometry/Slices.cpp
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
-
-  include/ospray/ospray.h
-  include/ospray/OSPDataType.h
-  include/ospray/OSPTexture.h
-
-  include/ospray/ospray_cpp/Camera.h
-  include/ospray/ospray_cpp/Data.h
-  include/ospray/ospray_cpp/FrameBuffer.h
-  include/ospray/ospray_cpp/Geometry.h
-  include/ospray/ospray_cpp/Light.h
-  include/ospray/ospray_cpp/ManagedObject.h
-  include/ospray/ospray_cpp/Material.h
-  include/ospray/ospray_cpp/Model.h
-  include/ospray/ospray_cpp/PixelOp.h
-  include/ospray/ospray_cpp/Renderer.h
-  include/ospray/ospray_cpp/Texture2D.h
-  include/ospray/ospray_cpp/TransferFunction.h
-  include/ospray/ospray_cpp/Volume.h
 
   lights/Light.ispc
   lights/Light.cpp
@@ -228,7 +233,8 @@ SET(OSPRAY_SOURCES
 
 OSPRAY_INSTALL_SDK_HEADERS(
   api/Device.h
-  api/LocalDevice.h
+  api/ISPCDevice.h
+  api/objectFactory.h
   DESTINATION api
 )
 
@@ -420,7 +426,6 @@ SET(OSPRAY_LIBS
   ospray_common
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-  ${EMBREE_LIBRARIES}
 )
 
 IF (WIN32)
@@ -440,15 +445,31 @@ IF (WIN32)
     STRING(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
   ENDFOREACH()
 
-  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray.def.in "${OSPRAY_DEF}")
+  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in "${OSPRAY_DEF}")
 
   # changes ospray.def only if content changed, avoids unnecessary re-linking
-  CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/ospray.def.in ospray.def COPYONLY)
+  CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in ospray_module_ispc.def COPYONLY)
 
-  LIST(APPEND OSPRAY_SOURCES ospray.def)
+  LIST(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
 ENDIF()
 
-OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS} COMPONENT lib)
+OSPRAY_CREATE_LIBRARY(ospray
+  ${OSPRAY_SOURCES}
+LINK
+  ${OSPRAY_LIBS}
+COMPONENT
+  lib
+)
+
+OSPRAY_CREATE_LIBRARY(ospray_module_ispc
+  ${OSPRAY_ISPC_DEVICE_SOURCES}
+LINK
+  ${OSPRAY_LIBS}
+  ospray
+  ${EMBREE_LIBRARIES}
+COMPONENT
+  lib
+)
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)

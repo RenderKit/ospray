@@ -17,7 +17,7 @@
 #include <iterator>
 #include <algorithm>
 // ospray
-#include "api/Device.h"
+#include "api/ISPCDevice.h"
 #include "DistributedModel.h"
 #include "mpiCommon/MPICommon.h"
 #include "Messaging.h"
@@ -30,7 +30,7 @@ namespace ospray {
 
     extern "C" void *ospray_getEmbreeDevice()
     {
-      return api::Device::current->embreeDevice;
+      return api::ISPCDevice::embreeDevice;
     }
 
     DistributedModel::DistributedModel()

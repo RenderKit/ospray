@@ -18,6 +18,7 @@
 
 #include "common/FrameBuffer.h"
 #include "visitor/MarkAllAsModified.h"
+#include "visitor/VerifyNodes.h"
 
 namespace ospray {
   namespace sg {
@@ -57,7 +58,6 @@ namespace ospray {
 
       createChild("bgColor", "vec3f", vec3f(0.15f, 0.15f, 0.15f),
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_color);
 
       createChild("spp", "int", 1,
@@ -68,7 +68,6 @@ namespace ospray {
 
       createChild("minContribution", "float", 0.001f,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_slider,
                   "sample contributions below this value will be neglected"
                   " to speed-up rendering.");
@@ -76,7 +75,6 @@ namespace ospray {
 
       createChild("maxContribution", "float", 5.f,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_slider,
                   "sample contributions above this value will be ignored."
                   "  This reduces bright dots appearing in images");
@@ -84,7 +82,6 @@ namespace ospray {
 
       createChild("varianceThreshold", "float", 0.f,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_slider,
                   "the percent (%) threshold of pixel difference to enable"
                   " tile rendering early termination.");
@@ -97,12 +94,11 @@ namespace ospray {
                   "maximum number of ray bounces").setMinMax(0,999);
       createChild("aoSamples", "int", 1,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max |
                   NodeFlags::gui_slider,
                   "AO samples per frame.").setMinMax(0,128);
 
       createChild("aoDistance", "float", 10000.f,
-                  NodeFlags::required | NodeFlags::valid_min_max,
+                  NodeFlags::required,
                   "maximum distance ao rays will trace to."
                   " Useful if you do not want a large interior of a"
                   " building to be completely black from occlusion.");
@@ -130,6 +126,8 @@ namespace ospray {
       backplate->data = malloc(sizeof(unsigned char) * backplate->size.y * stride);
       vec3f bgColor = child("bgColor").valueAs<vec3f>();
       memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
+      createChild("useBackplate", "bool", true, NodeFlags::none, "use\
+           backplate for path tracer");
     }
 
     Renderer::~Renderer()
@@ -142,7 +140,7 @@ namespace ospray {
     {
       RenderContext ctx;
       if (verifyCommit) {
-        traverse(ctx, "verify");
+        Node::traverse(VerifyNodes{});
         traverse(ctx, "commit");
       }
       traverse(ctx, "render");
@@ -266,7 +264,7 @@ namespace ospray {
 
         if (child("world").childrenLastModified() > frameMTime)
         {
-          child("world").traverse(ctx, "render");
+          child("world").finalize(ctx);
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
           if (child("autoEpsilon").valueAs<bool>()) {
             const box3f bounds = child("world")["bounds"].valueAs<box3f>();
@@ -282,6 +280,10 @@ namespace ospray {
           }
 
         }
+
+        if (!child("useBackplate").valueAs<bool>())
+          ospSetObject(ospRenderer, "backplate", nullptr);
+
         ospCommit(ospRenderer);
         frameMTime.renew();
       }

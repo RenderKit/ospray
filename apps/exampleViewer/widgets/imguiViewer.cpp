@@ -621,15 +621,6 @@ namespace ospray {
     if (ImGui::BeginPopupContextItem("item context menu")) {
       char buf[256];
       buf[0]='\0';
-      static std::shared_ptr<sg::Node> copiedLink = nullptr;
-      if (ImGui::Button("CopyLink"))
-        copiedLink = node;
-      if (ImGui::Button("PasteLink")) {
-        if (copiedLink) {
-          copiedLink->setParent(node->parent());
-          node->parent().setChild(name, copiedLink);
-        }
-      }
       if (ImGui::Button("Add new node..."))
         ImGui::OpenPopup("Add new node...");
       if (ImGui::BeginPopup("Add new node...")) {
@@ -693,7 +684,7 @@ namespace ospray {
   {
     int styles = 0;
     if (!node->isValid()) {
-      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(200, 75, 48,255));
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f,0.06f, 0.02f,1.f));
       styles++;
     }
 
@@ -709,6 +700,9 @@ namespace ospray {
 
     guiSingleNode(text, node);
 
+    if (!node->isValid())
+      ImGui::PopStyleColor(styles--);
+
     if (node->hasChildren()) {
       text += node->type() + "##" + std::to_string(node->uniqueID());
       if (ImGui::TreeNodeEx(text.c_str(),
@@ -716,18 +710,12 @@ namespace ospray {
                              0 : ImGuiTreeNodeFlags_DefaultOpen)) {
         guiNodeContextMenu(name, node);
 
-        if (!node->isValid())
-          ImGui::PopStyleColor(styles--);
-
         for(auto child : node->children())
           guiSGTree(child.first, child.second);
 
         ImGui::TreePop();
       }
     }
-
-    if (!node->isValid())
-      ImGui::PopStyleColor(styles--);
 
     if (ImGui::IsItemHovered() && !node->documentation().empty())
       ImGui::SetTooltip("%s", node->documentation().c_str());

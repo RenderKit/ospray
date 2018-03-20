@@ -51,9 +51,10 @@ void StreamLines_bounds(uniform StreamLines *uniform self,
     moving the ray origin to an approximate sphere distance, and then
     re-adding this approximate distance to the computed hit
     distance */
-inline bool intersectSphere_numericalFix(varying Ray &ray,
+inline void intersectSphere_numericalFix(varying Ray &ray,
                                          /*! center/positoin of the sphere  */
                                          const vec3f &center,
+                                         float &t_in, float &t_out,
                                          const uniform float r)
 {
   const float approximateDistance = dot(center-ray.org,ray.dir);
@@ -65,21 +66,12 @@ inline bool intersectSphere_numericalFix(varying Ray &ray,
   const float c = dot(A,A)-r*r;
 
   const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return false;
+  if (radical < 0.f)
+    return;
 
   const float srad = sqrt(radical);
-
-  const float t_in = approximateDistance + (- b - srad) * rcpf(2.f*a);
-  const float t_out= approximateDistance + (- b + srad) * rcpf(2.f*a);
-
-  if (t_in > ray.t0 && t_in < ray.t) {
-    ray.t = t_in;
-    return true;
-  } else if (t_out > ray.t0 && t_out < ray.t) {
-    ray.t = t_out;
-    return true;
-  }
-  return false;
+  t_in = min(t_in, approximateDistance + (- b - srad) * rcpf(2.f*a));
+  t_out= max(t_out, approximateDistance + (- b + srad) * rcpf(2.f*a));
 }
 
 /*! do a ray-cylinder intersection, with the numerical fix of first
@@ -87,8 +79,9 @@ inline bool intersectSphere_numericalFix(varying Ray &ray,
     re-adding this approximate distance to the computed hit
     distance. for the approximate distance we use the distance from
     ray origin to center of the cylinder (projected to the ray) */
-inline bool intersectCylinder_numericalFix(varying Ray &ray,
+inline void intersectCylinder_numericalFix(varying Ray &ray,
                                            const vec3f &_A, const vec3f &_B,
+                                           float &t_in, float &t_out,
                                            const uniform float r)
 {
   const vec3f center = 0.5f*(_A+_B);
@@ -109,32 +102,22 @@ inline bool intersectCylinder_numericalFix(varying Ray &ray,
   const float b     = 2 * dot(VxAB,AOxAB);
   const float c     = dot(AOxAB,AOxAB) - (sqr(r) * ab2);
 
-  // clip to near and far cap of cylinder
-  const float rVAB = rcp(dot(V,AB));
-  const float tA = approximateDistance + dot(AB,A) * rVAB;
-  const float tB = approximateDistance + dot(AB,B) * rVAB;
-  const float tAB0 = max(ray.t0,min(tA,tB));
-  const float tAB1 = min(ray.t, max(tA,tB));
-
   // ------------------------------------------------------------------
   // abc formula: t0,1 = (-b +- sqrt(b^2-4*a*c)) / 2a
   //
   const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return false;
+  if (radical < 0.f)
+    return;
 
   const float srad = sqrt(radical);
 
-  const float t_in = approximateDistance + (- b - srad)*rcpf(2.f*a);
-  const float t_out= approximateDistance + (- b + srad)*rcpf(2.f*a);
+  // clip to near and far cap of cylinder
+  const float rVAB = rcp(dot(V,AB));
+  const float tA = dot(AB,A) * rVAB;
+  const float tB = dot(AB,B) * rVAB;
 
-  if (t_in >= tAB0 && t_in <= tAB1) {
-    ray.t = t_in;
-    return true;
-  } else if (t_out >= tAB0 && t_out <= tAB1) {
-    ray.t = t_out;
-    return true;
-  }
-  return false;
+  t_in = approximateDistance + max((- b - srad)*rcpf(2.f*a), min(tA,tB));
+  t_out= approximateDistance + min((- b + srad)*rcpf(2.f*a), max(tA,tB));
 }
 
 void StreamLines_intersect(uniform StreamLines *uniform self,
@@ -145,10 +128,22 @@ void StreamLines_intersect(uniform StreamLines *uniform self,
   const vec3f A = make_vec3f(self->vertex[idx]);
   const vec3f B = make_vec3f(self->vertex[idx+1]);
 
-  bool hit = 0;
-  hit |= intersectCylinder_numericalFix(ray,A,B,self->radius);
-  hit |= intersectSphere_numericalFix(ray,A,self->radius);
-  hit |= intersectSphere_numericalFix(ray,B,self->radius);
+  float t_in=inf, t_out=-inf;
+  intersectCylinder_numericalFix(ray,A,B,t_in,t_out,self->radius);
+  intersectSphere_numericalFix(ray,A,t_in,t_out,self->radius);
+  intersectSphere_numericalFix(ray,B,t_in,t_out,self->radius);
+
+  bool hit = false;
+  if (t_in < t_out) {
+    if (t_in > ray.t0 && t_in < ray.t) {
+      ray.t = t_in;
+      hit = true;
+    } else if (t_out > ray.t0 && t_out < ray.t) {
+      ray.t = t_out;
+      hit = true;
+    }
+  }
+
   if (hit) {
     ray.geomID = self->super.geomID;
     ray.primID = primID;

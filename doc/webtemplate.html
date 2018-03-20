@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+    <title>OSPRay$if(select_news)$ News$endif$$if(select_demos)$ Demos$endif$$if(select_documentation)$ Documentation$endif$$if(select_gallery)$ Gallery$endif$$if(select_downloads)$ Download$endif$$if(select_related_projects)$ &ndash; RelatedProjects$endif$</title>
+    <script type="text/javascript">
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-57290480-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheet.css">
+$if(highlighting-css)$
+    <style type="text/css">
+$highlighting-css$
+div.sourceCode { overflow-x: initial; }
+    </style>
+$endif$
+  </head>
+
+  <body>
+    <div id="header">
+      <div id="header-github">
+        <a id="forkme-banner" href="https://github.com/ospray/OSPRay">View on GitHub</a>
+      </div>
+      <div id="header-title">
+        OSPRay
+              <div id="header-subtitle">
+        A Ray Tracing Based Rendering Engine for High-Fidelity Visualization
+      </div>
+      </div>
+
+      <div id="header-navbar">
+        <ul>
+          <li$if(select_index)$ id="selected"$endif$><a href="index.html">Overview</a></li>
+	  <li$if(select_news)$ id="selected"$endif$><a href="news.html">News</a></li>
+	  <li$if(select_demos)$ id="selected"$endif$><a href="demos.html">Demos</a></li>
+	  <li$if(select_documentation)$ id="selected"$endif$><a href="documentation.html">Documentation</a></li>
+	  <li$if(select_gallery)$ id="selected"$endif$><a href="gallery.html">Gallery</a></li>
+	  <li$if(select_downloads)$ id="selected"$endif$><a href="downloads.html">Downloads</a></li>
+	  <li><a href="https://github.com/ospray/OSPRay/wiki">Wiki</a></li>
+	  <li><a href="https://github.com/ospray/OSPRay/issues">Bugs/Issues</a></li>
+	  <li$if(select_related_projects)$ id="selected"$endif$><a href="related_projects.html">Related Projects</a></li>
+	</ul>
+      </div>
+      <div id="header-spacing"></div>
+    </div>
+
+    <div id="content-wrap">
+      <div id="content">
+
+$body$
+
+      </div>
+    </div>
+
+$if(select_legal)$
+$else$
+      <div id="footer">
+        © 2013–2018 Intel Corporation <a href="legal.html">Disclaimer and Legal Information</a>
+      </div>
+$endif$
+  </body>
+</html>
