@@ -45,6 +45,7 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
 
+  common/ospray.rc
   common/OSPCommon.cpp
 
   include/ospray/ospray.h
@@ -70,7 +71,6 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
 
   api/ISPCDevice.cpp
 
-  common/ospray.rc
   common/ObjectHandle.cpp
   common/Data.cpp
   common/Managed.cpp
