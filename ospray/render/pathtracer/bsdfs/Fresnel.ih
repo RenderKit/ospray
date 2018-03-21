@@ -20,6 +20,7 @@
 #include "math/LinearSpace.ih"
 #include "math/spectrum.ih"
 #include "Optics.ih"
+#include "ShadingContext.ih"
 
 //! \brief Computes fresnel coefficient for dielectric medium
 /*! \detailed Computes fresnel coefficient for media interface with

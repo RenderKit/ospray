@@ -31,6 +31,9 @@
 #include "../bsdfs/LambertTransmission.ih"
 #include "math/spectrum.ih"
 
+#include "../bsdfs/MicrofacetAlbedo.ih"
+#include "../bsdfs/MicrofacetAlbedoTables.ih"
+
 struct Principled
 {
   PathTraceMaterial super;
@@ -537,6 +540,10 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 export void* uniform PathTracer_Principled_create()
 {
   Principled* uniform self = uniform new Principled;
+
+  MicrofacetDielectricAlbedoTable_precompute();
+  //print("%\n", MicrofacetDielectricAlbedo_integrate(0.2f, rcp(1.5f), 0.4f));
+  //print("%\n", MicrofacetDielectricAlbedoTable_eval(0.2f, rcp(1.5f), 0.4f));
 
   PathTraceMaterial_Constructor(&self->super,
     Principled_getBSDF,
