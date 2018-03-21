@@ -28,8 +28,10 @@ namespace ospray {
                                  const T *voxel, size_t num)
     {
       for (size_t i = 0; i < num; ++i) {
-        voxelRange.x = std::min(voxelRange.x, static_cast<float>(voxel[i]));
-        voxelRange.y = std::max(voxelRange.y, static_cast<float>(voxel[i]));
+        if (!std::isnan(static_cast<float>(voxel[i]))) {
+          voxelRange.x = std::min(voxelRange.x, static_cast<float>(voxel[i]));
+          voxelRange.y = std::max(voxelRange.y, static_cast<float>(voxel[i]));
+        }
       }
     }
 
