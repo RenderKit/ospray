@@ -49,7 +49,7 @@ const varying BSDF* varying Plastic_getBSDF(const uniform PathTraceMaterial* uni
   else
   {
     bsdf = MicrofacetDielectricLayer_create(ctx, shadingFrame, bsdf,
-      self->eta, make_vec3f(1.0f), 1.0f, make_vec2f(roughnessToAlpha(self->roughness)), 1.0f);
+      self->eta, make_vec3f(1.0f), 1.0f, self->roughness, 0.f, 1.0f);
   }
 
   return bsdf;

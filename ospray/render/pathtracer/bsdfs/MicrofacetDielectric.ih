@@ -199,7 +199,7 @@ inline float MicrofacetDielectric_transmittance(float cosThetaO, float eta, cons
 
 inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* uniform self,
                                              const varying linear3f* uniform frame,
-                                             float eta, const vec2f& alpha,
+                                             float eta, float roughness, float anisotropy,
                                              float reflectionWeight)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY,
@@ -207,26 +207,26 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
                    frame);
 
   self->eta = eta;
-  self->microfacet = make_GGXDistribution(alpha);
+  self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->reflectionWeight = reflectionWeight;
 }
 
 inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext* uniform ctx,
                                                          const varying linear3f* uniform frame,
-                                                         float eta, const vec2f& alpha,
+                                                         float eta, float roughness, float anisotropy,
                                                          float reflectionWeight)
 {
   varying MicrofacetDielectric* uniform self =
     (varying MicrofacetDielectric* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectric));
-  MicrofacetDielectric_Constructor(self, frame, eta, alpha, reflectionWeight);
+  MicrofacetDielectric_Constructor(self, frame, eta, roughness, anisotropy, reflectionWeight);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
-inline vec3f MicrofacetDielectric_getTransparency(float cosThetaO, float eta, const vec2f& alpha,
+inline vec3f MicrofacetDielectric_getTransparency(float cosThetaO, float eta, float roughness, float anisotropy,
                                                   float reflectionWeight, unsigned int& lcg)
 {
-  GGXDistribution microfacet = make_GGXDistribution(alpha);
+  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
   return make_vec3f(T);
 }

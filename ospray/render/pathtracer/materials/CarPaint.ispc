@@ -110,7 +110,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
       if (flakeRoughness < EPS)
         bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
       else
-        bsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, make_vec2f(roughnessToAlpha(flakeRoughness)));
+        bsdf = MicrofacetConductor_create(ctx, flakeFrame, flakeFresnel, flakeRoughness, 0.f);
     }
   }
 
@@ -144,7 +144,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
     else
     {
       bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf,
-        rcp(coatIor), coatColor, coatThickness, make_vec2f(roughnessToAlpha(coatRoughness)), 1.f);
+        rcp(coatIor), coatColor, coatThickness, coatRoughness, 0.f, 1.f);
     }
   }
 

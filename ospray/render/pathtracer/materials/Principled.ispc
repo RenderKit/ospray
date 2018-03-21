@@ -208,7 +208,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           else
           {
             plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf,
-              rcp(ior), make_vec3f(1.f), 1.f, roughnessToAlpha(roughness, anisotropy), specular);
+              rcp(ior), make_vec3f(1.f), 1.f, roughness, anisotropy, specular);
           }
         }
 
@@ -230,7 +230,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           if (roughness < EPS)
             glassBsdf = Dielectric_create(ctx, frame, eta, specular);
           else
-            glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughnessToAlpha(roughness, anisotropy), specular);
+            glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy, specular);
         }
         else
         {
@@ -243,7 +243,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           if (roughness < EPS)
             glassBsdf = ThinDielectric_create(ctx, frame, eta, attenuation, specular);
           else
-            glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughnessToAlpha(roughness, anisotropy), attenuation, specular);
+            glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy, attenuation, specular);
         }
 
         MultiBSDF_add(baseBsdf, glassBsdf, glass, glass);
@@ -260,7 +260,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       if (roughness < EPS)
         metalBsdf = Conductor_create(ctx, frame, fresnel);
       else
-        metalBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughnessToAlpha(roughness, anisotropy));
+        metalBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness, anisotropy);
 
       MultiBSDF_add(baseBsdf, metalBsdf, metallic, metallic);
     }
@@ -290,7 +290,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         else
         {
           bsdf = MicrofacetDielectricLayer_create(ctx, coatFrame, bsdf,
-            coatEta, coatColor, coatThickness, make_vec2f(roughnessToAlpha(coatRoughness)), coat);
+            coatEta, coatColor, coatThickness, coatRoughness, 0.f, coat);
         }
       }
     }
@@ -361,7 +361,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         if (roughness < EPS)
           T = Dielectric_getTransparency(cosThetaO, eta, specular);
         else
-          T = MicrofacetDielectric_getTransparency(cosThetaO, eta, roughnessToAlpha(roughness, anisotropy), specular, lcg);
+          T = MicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, specular, lcg);
       }
       else
       {
@@ -377,7 +377,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         if (roughness < EPS)
           T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation, specular);
         else
-          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughnessToAlpha(roughness, anisotropy), attenuation, specular, lcg);
+          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, attenuation, specular, lcg);
       }
 
       // clear coat
@@ -401,7 +401,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
           else
           {
             T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO,
-              coatEta, coatColor, coatThickness, make_vec2f(roughnessToAlpha(coatRoughness)), coat, lcg);
+              coatEta, coatColor, coatThickness, coatRoughness, 0.f, coat, lcg);
           }
         }
       }
