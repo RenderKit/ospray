@@ -59,12 +59,14 @@ namespace ospray {
         vertices =
             createNode("vertices", "DataVector3f")->nodeAs<DataVector3f>();
         field = createNode("field", "DataVector1f")->nodeAs<DataVector1f>();
+        cellField = createNode("cellField", "DataVector1f")->nodeAs<DataVector1f>();
         indices =
             createNode("indices", "DataVector4i")->nodeAs<DataVector4i>();
       }
 
       std::shared_ptr<DataVector3f> vertices;
       std::shared_ptr<DataVector1f> field;
+      std::shared_ptr<DataVector1f> cellField;
       std::shared_ptr<DataVector4i> indices;
 
       template <class TReader>
@@ -77,6 +79,24 @@ namespace ospray {
 
         reader->GetOutput()->Register(reader);
         return vtkDataSet::SafeDownCast(reader->GetOutput());
+      }
+
+      void readFieldData(vtkDataSetAttributes *data, std::shared_ptr<DataVector1f> field)
+      {
+        if (data) {
+          for (int i = 0; i < 1 /* data->GetNumberOfArrays() */; i++) {
+            vtkAbstractArray *ad = data->GetAbstractArray(i);
+            int nDataPoints      = data->GetNumberOfTuples()
+                                   * data->GetNumberOfComponents();
+
+            auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
+
+            for (int j = 0; j < nDataPoints; j++) {
+              float val = static_cast<float>(array->GetTuple1(j));
+              field->push_back(val);
+            }
+          }
+        }
       }
 
       template <class TReader>
@@ -116,22 +136,8 @@ namespace ospray {
           }
         }
 
-        // Now check for point data
-        vtkPointData *pd = dataSet->GetPointData();
-        if (pd) {
-          for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
-            vtkAbstractArray *ad = pd->GetAbstractArray(i);
-            int nDataPoints      = ad->GetNumberOfTuples()
-                                   * ad->GetNumberOfComponents();
-
-            auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
-
-            for (int j = 0; j < nDataPoints; j++) {
-              float val = static_cast<float>(array->GetTuple1(j));
-              field->push_back(val);
-            }
-          }
-        }
+        readFieldData(dataSet->GetPointData(), field);
+        readFieldData(dataSet->GetCellData(), cellField);
 
         return true;
       }
@@ -181,7 +187,10 @@ namespace ospray {
 
       v.add(mesh.vertices);
       v.add(mesh.indices);
-      v.add(mesh.field);
+      if (mesh.field->size())
+        v.add(mesh.field);
+      if (mesh.cellField->size())
+        v.add(mesh.cellField);
     }
 
   }  // ::ospray::sg

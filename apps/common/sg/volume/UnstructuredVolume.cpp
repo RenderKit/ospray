@@ -54,8 +54,11 @@ namespace ospray {
       if (!ospVolume)
         THROW_SG_ERROR("could not allocate volume");
 
-      isosurfacesGeometry = ospNewGeometry("isosurfaces");
-      ospSetObject(isosurfacesGeometry, "volume", ospVolume);
+      // unclear how to define isosurfaces for cell-valued volumes
+      if (hasChild("field")) {
+        isosurfacesGeometry = ospNewGeometry("isosurfaces");
+        ospSetObject(isosurfacesGeometry, "volume", ospVolume);
+      }
 
       setValue(ospVolume);
 
@@ -63,12 +66,13 @@ namespace ospray {
         throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'vertices' array!");
       else if (!hasChild("indices"))
         throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'indices' array!");
-      else if (!hasChild("field"))
-        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'field' array!");
+      else if (!hasChild("field") && !hasChild("cellField"))
+        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'field' or 'cellField' array!");
 
       auto vertices   = child("vertices").nodeAs<DataBuffer>();
       auto indices    = child("indices").nodeAs<DataBuffer>();
-      auto field      = child("field").nodeAs<DataBuffer>();
+      auto field  =
+        (hasChild("cellField") ? child("cellField") : child("field")).nodeAs<DataBuffer>();
 
       ospcommon::box3f bounds;
       for (size_t i = 0; i < vertices->size(); ++i)

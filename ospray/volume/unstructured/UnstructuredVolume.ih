@@ -32,6 +32,7 @@ struct UnstructuredVolume
   uniform int nCells;
   const vec4i *uniform indices;     // indices into vertices array.
   const float *uniform field;       // Attribute value at each vertex.
+  const float *uniform cellField;   // Attribute value at each cell.
   const vec3f *uniform faceNormals;
 
   uniform MinMaxBVH2 bvh;

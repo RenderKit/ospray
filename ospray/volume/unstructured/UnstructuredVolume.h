@@ -61,6 +61,7 @@ namespace ospray {
     int nVertices;
     vec3f *vertices{nullptr};
     float *field{nullptr};  // Attribute value at each vertex.
+    float *cellField{nullptr};  // Attribute value at each cell.
 
     int nCells;
     vec4i *indices{nullptr};
