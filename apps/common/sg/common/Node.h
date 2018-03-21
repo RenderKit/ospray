@@ -84,6 +84,7 @@ namespace ospray {
       Any         max()           const;
       NodeFlags   flags()         const;
       std::string documentation() const;
+      std::vector<Any> whitelist() const;
 
       void setName(const std::string &v);
       void setType(const std::string &v);

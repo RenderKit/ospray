@@ -127,13 +127,30 @@ namespace ospray {
                               std::shared_ptr<sg::Node> node)
   {
     std::string value = node->valueAs<std::string>().c_str();
-    std::vector<char> buf(value.size() + 1 + 256);
-    strcpy(buf.data(), value.c_str());
-    buf[value.size()] = '\0';
-    if (ImGui::InputText(text.c_str(), buf.data(),
-                         value.size()+256,
-                         ImGuiInputTextFlags_EnterReturnsTrue)) {
-      node->setValue(std::string(buf.data()));
+    auto whitelist = node->whitelist();
+    if (!whitelist.empty()) {
+        int val = -1;
+
+        std::string list;
+        for (auto it = whitelist.begin(); it != whitelist.end(); ++it) {
+            auto option = *it;
+            if (option.get<std::string>() == value)
+                val = std::distance(whitelist.begin(), it);
+            list += option.get<std::string>();
+            list.push_back('\0');
+        }
+
+        ImGui::Combo(text.c_str(), &val, list.c_str(), whitelist.size());
+        node->setValue(whitelist[val]);
+    } else {
+        std::vector<char> buf(value.size() + 1 + 256);
+        strcpy(buf.data(), value.c_str());
+        buf[value.size()] = '\0';
+        if (ImGui::InputText(text.c_str(), buf.data(),
+                             value.size()+256,
+                             ImGuiInputTextFlags_EnterReturnsTrue)) {
+            node->setValue(std::string(buf.data()));
+        }
     }
   }
 
