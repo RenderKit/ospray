@@ -18,42 +18,32 @@
 
 #include "parallel_for.h"
 
-#include <array>
-#include <vector>
+#include <iterator>
 
 namespace ospcommon {
   namespace tasking {
 
-    template<typename ELEMENT_T, typename TASK_T>
-    inline void parallel_foreach(std::vector<ELEMENT_T> &v, TASK_T&& f)
+    template<typename ITERATOR_T, typename TASK_T>
+    inline void parallel_foreach(ITERATOR_T begin, ITERATOR_T end, TASK_T&& f)
     {
-      parallel_for(v.size(), [&](size_t i){
-        f(v[i]);
-      });
+      using ITERATOR_KIND =
+          typename std::iterator_traits<ITERATOR_T>::iterator_category;
+
+      static_assert(std::is_same<ITERATOR_KIND,
+                                 std::random_access_iterator_tag>::value,
+                    "ospcommon::tasking::parallel_foreach() requires random-"
+                    "access iterators!");
+
+      const size_t count = std::distance(begin, end);
+      auto *v = &(*begin);
+
+      parallel_for(count, [&](size_t i){ f(v[i]); });
     }
 
-    template<typename ELEMENT_T, typename TASK_T>
-    inline void parallel_foreach(const std::vector<ELEMENT_T> &v, TASK_T&& f)
+    template<typename CONTAINER_T, typename TASK_T>
+    inline void parallel_foreach(CONTAINER_T &&c, TASK_T&& f)
     {
-      parallel_for(v.size(), [&](size_t i){
-        f(v[i]);
-      });
-    }
-
-    template<typename ELEMENT_T, size_t N, typename TASK_T>
-    inline void parallel_foreach(std::array<ELEMENT_T, N> &v, TASK_T&& f)
-    {
-      parallel_for(N, [&](size_t i){
-        f(v[i]);
-      });
-    }
-
-    template<typename ELEMENT_T, size_t N, typename TASK_T>
-    inline void parallel_foreach(const std::array<ELEMENT_T, N> &v, TASK_T&& f)
-    {
-      parallel_for(N, [&](size_t i){
-        f(v[i]);
-      });
+      parallel_foreach(std::begin(c), std::end(c), std::forward<TASK_T>(f));
     }
 
   } // ::ospcommon::tasking
