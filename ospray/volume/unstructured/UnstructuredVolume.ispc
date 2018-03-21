@@ -311,7 +311,7 @@ inline varying float UnstructuredVolume_sample(
   // Cast to the actual Volume subtype.
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
 
-  float results = 0;
+  float results = floatbits(0xffffffff);  /* NaN */
 
   traverse(self->bvh, _self, intersectAndSampleCell, results, worldCoordinates);
 
