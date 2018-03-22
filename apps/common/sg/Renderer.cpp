@@ -90,7 +90,7 @@ namespace ospray {
       //TODO: move these to seperate SciVisRenderer
       createChild("shadowsEnabled", "bool", true);
       createChild("maxDepth", "int", 5,
-                  NodeFlags::required | NodeFlags::valid_min_max,
+                  NodeFlags::required | NodeFlags::gui_slider | NodeFlags::valid_min_max,
                   "maximum number of ray bounces").setMinMax(0,999);
       createChild("aoSamples", "int", 1,
                   NodeFlags::required |
