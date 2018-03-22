@@ -104,6 +104,9 @@ namespace ospray {
                              node->min().get<float>(),
                              node->max().get<float>()))
         node->setValue(val);
+    } else if (node->flags() & sg::NodeFlags::valid_min_max) {
+      if (ImGui::DragFloat(text.c_str(), &val, .01f, node->min().get<float>(), node->max().get<float>()))
+        node->setValue(val);
     } else if (ImGui::DragFloat(text.c_str(), &val, .01f)) {
       node->setValue(val);
     }
@@ -133,8 +136,10 @@ namespace ospray {
                            node->min().get<int>(),
                            node->max().get<int>()))
         node->setValue(val);
-    }
-    else if (ImGui::DragInt(text.c_str(), &val)) {
+    } else if (node->flags() & sg::NodeFlags::valid_min_max) {
+      if (ImGui::DragInt(text.c_str(), &val, .01f, node->min().get<int>(), node->max().get<int>()))
+        node->setValue(val);
+    } else if (ImGui::DragInt(text.c_str(), &val)) {
       node->setValue(val);
     }
   }
