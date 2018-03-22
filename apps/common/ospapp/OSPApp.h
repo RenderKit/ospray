@@ -103,7 +103,7 @@ namespace ospray {
       box3f bboxWithoutPlane;
 
       bool addPlane =
-          utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(1);
+          utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(0);
 
       bool fast =
           utility::getEnvVar<int>("OSPRAY_APPS_FAST_MODE").value_or(0);
