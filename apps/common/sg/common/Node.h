@@ -48,7 +48,8 @@ namespace ospray {
       valid_blacklist = 1 << 4,  //! validity determined by blacklist
       gui_slider = 1 << 5,
       gui_color = 1 << 6,
-      gui_combo = 1 << 7
+      gui_combo = 1 << 7,
+      gui_readonly = 1 << 8
     };
 
     // Base Node class definition /////////////////////////////////////////////

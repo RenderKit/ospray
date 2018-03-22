@@ -52,17 +52,18 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     vec3f val = node->valueAs<vec3f>();
-    if ((node->flags() & sg::NodeFlags::gui_color)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("(%f, %f, %f)", val.x, val.y, val.z);
+    } else if (nodeFlags & sg::NodeFlags::gui_color) {
       if (ImGui::ColorEdit3(text.c_str(), (float*)&val.x))
         node->setValue(val);
-    }
-    else if ((node->flags() & sg::NodeFlags::gui_slider)) {
+    } else if (nodeFlags & sg::NodeFlags::gui_slider) {
       if (ImGui::SliderFloat3(text.c_str(), &val.x,
                               node->min().get<vec3f>().x,
                               node->max().get<vec3f>().x))
         node->setValue(val);
-    }
-    else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
+    } else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
       node->setValue(val);
     }
   }
@@ -71,7 +72,10 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     vec2f val = node->valueAs<vec2f>();
-    if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("(%f, %f)", val.x, val.y);
+    } else if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
       node->setValue(val);
     }
   }
@@ -80,7 +84,10 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     vec2i val = node->valueAs<vec2i>();
-    if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("(%i, %i)", val.x, val.y);
+    } else if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
       node->setValue(val);
     }
   }
@@ -89,7 +96,10 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     float val = node->valueAs<float>();
-    if ((node->flags() & sg::NodeFlags::gui_slider)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("%f", val);
+    } else if ((node->flags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderFloat(text.c_str(), &val,
                              node->min().get<float>(),
                              node->max().get<float>()))
@@ -103,7 +113,10 @@ namespace ospray {
                             std::shared_ptr<sg::Node> node)
   {
     bool val = node->valueAs<bool>();
-    if (ImGui::Checkbox(text.c_str(), &val)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text(val ? "true" : "false");
+    } else if (ImGui::Checkbox(text.c_str(), &val)) {
       node->setValue(val);
     }
   }
@@ -112,7 +125,10 @@ namespace ospray {
                            std::shared_ptr<sg::Node> node)
   {
     int val = node->valueAs<int>();
-    if ((node->flags() & sg::NodeFlags::gui_slider)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("%i", val);
+    } else if ((node->flags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderInt(text.c_str(), &val,
                            node->min().get<int>(),
                            node->max().get<int>()))
@@ -129,28 +145,28 @@ namespace ospray {
     std::string value = node->valueAs<std::string>().c_str();
     auto whitelist = node->whitelist();
     if (!whitelist.empty()) {
-        int val = -1;
+      int val = -1;
 
-        std::string list;
-        for (auto it = whitelist.begin(); it != whitelist.end(); ++it) {
-            auto option = *it;
-            if (option.get<std::string>() == value)
-                val = std::distance(whitelist.begin(), it);
-            list += option.get<std::string>();
-            list.push_back('\0');
-        }
+      std::string list;
+      for (auto it = whitelist.begin(); it != whitelist.end(); ++it) {
+          auto option = *it;
+          if (option.get<std::string>() == value)
+              val = std::distance(whitelist.begin(), it);
+          list += option.get<std::string>();
+          list.push_back('\0');
+      }
 
-        ImGui::Combo(text.c_str(), &val, list.c_str(), whitelist.size());
-        node->setValue(whitelist[val]);
+      ImGui::Combo(text.c_str(), &val, list.c_str(), whitelist.size());
+      node->setValue(whitelist[val]);
     } else {
-        std::vector<char> buf(value.size() + 1 + 256);
-        strcpy(buf.data(), value.c_str());
-        buf[value.size()] = '\0';
-        if (ImGui::InputText(text.c_str(), buf.data(),
-                             value.size()+256,
-                             ImGuiInputTextFlags_EnterReturnsTrue)) {
-            node->setValue(std::string(buf.data()));
-        }
+      std::vector<char> buf(value.size() + 1 + 256);
+      strcpy(buf.data(), value.c_str());
+      buf[value.size()] = '\0';
+      if (ImGui::InputText(text.c_str(), buf.data(),
+                           value.size()+256,
+                           ImGuiInputTextFlags_EnterReturnsTrue)) {
+          node->setValue(std::string(buf.data()));
+      }
     }
   }
 

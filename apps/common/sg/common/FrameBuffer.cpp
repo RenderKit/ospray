@@ -21,7 +21,7 @@ namespace ospray {
 
     FrameBuffer::FrameBuffer(vec2i size)
     {
-      createChild("size", "vec2i", size);
+      createChild("size", "vec2i", size, NodeFlags::gui_readonly);
       createChild("displayWall", "string", std::string(""));
 
       createChild("toneMapping", "bool", true);
