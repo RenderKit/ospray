@@ -27,7 +27,7 @@ namespace ospray {
                       NodeFlags::valid_min_max).setMinMax(1e-31f, 1e31f);
       createChild("fovy", "float", 60.f,
                       NodeFlags::required |
-                      NodeFlags::gui_slider).setMinMax(.1f, 360.f);
+                      NodeFlags::gui_slider).setMinMax(.1f, 180.f);
       createChild("apertureRadius", "float", 0.f,
                       NodeFlags::valid_min_max).setMinMax(0.f, 1e31f);
       createChild("focusDistance", "float", 1.f,
