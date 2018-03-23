@@ -34,14 +34,12 @@ inline float MicrofacetDielectricAlbedo_sample(float cosThetaO, float eta, const
   float cosThetaOH = dot(wo, wh);
 
   // Fresnel term
-  float cosThetaTH; // positive
-  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, eta);
+  float F = fresnelDielectric(cosThetaOH, eta);
 
-  // Sample the transmission
-  // cosThetaTH = -cosThetaIH
-  vec3f wi = refract(wo, wh, cosThetaOH, cosThetaTH, eta);
+  // Sample the reflection
+  vec3f wi = reflect(wo, wh, cosThetaOH);
   float cosThetaI = wi.z;
-  if (cosThetaI >= 0.f)
+  if (cosThetaI <= 0.f)
     return 0.f;
 
   float cosThetaIH = dot(wi, wh);
