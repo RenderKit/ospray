@@ -31,25 +31,20 @@ namespace ospray {
                   "scivis: standard whitted style ray tracer. "
                   "pathtracer/pt: photo-realistic path tracer");
       child("rendererType").setWhiteList({std::string("scivis"),
-                                          std::string("sv"),
-                                          std::string("raytracer"),
-                                          std::string("rt"),
+                                          std::string("pathtracer"),
                                           std::string("ao"),
-                                          std::string("ao1"),
-                                          std::string("ao2"),
-                                          std::string("ao4"),
-                                          std::string("ao8"),
-                                          std::string("ao16"),
-                                          std::string("dvr"),
                                           std::string("raycast"),
+                                          std::string("raycast_vertexColor"),
+                                          std::string("raycast_dPds"),
+                                          std::string("raycast_dPdt"),
                                           std::string("raycast_Ng"),
                                           std::string("raycast_Ns"),
+                                          std::string("backfacing_Ng"),
+                                          std::string("backfacing_Ns"),
                                           std::string("primID"),
                                           std::string("geomID"),
                                           std::string("instID"),
-                                          std::string("testFrame"),
-                                          std::string("pathtracer"),
-                                          std::string("pt")});
+                                          std::string("testFrame")});
       createChild("world",
                   "Model").setDocumentation("model containing scene objects");
       createChild("camera", "PerspectiveCamera");

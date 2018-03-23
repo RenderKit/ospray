@@ -31,7 +31,7 @@ namespace ospray {
     ispcEquivalent = ISPC_CREATE(this);
   }
 
-  //! \brief common function to help printf-debugging 
+  //! \brief common function to help printf-debugging
   /*! \detailed Every derived class should overrride this! */
   template<void *(*ISPC_CREATE)(void*)>
   std::string RaycastRenderer<ISPC_CREATE>::toString() const
@@ -89,7 +89,7 @@ namespace ospray {
       shading with a material color based on interpolated dg.color
       (usually, vertex colors) */
   using RaycastRenderer_eyeLight_vertexColor = RaycastRenderer<ispc::RaycastRenderer_create_eyeLight_vertexColor>;
-  OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_vertexColor,eyeLight_vertexColor);
+  OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_vertexColor,raycast_vertexColor);
 
   /*! \brief Instantion of Ray Cast Renderer that highlights backfacing
    * surfaces (wrt. geometry normal / triangle orientation) in pink */
