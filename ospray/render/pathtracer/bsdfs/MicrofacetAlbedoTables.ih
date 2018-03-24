@@ -21,7 +21,7 @@
 extern uniform float* uniform MicrofacetDielectricAlbedoTable_directional; // 3D table (cosThetaO, eta, roughness)
 extern uniform float* uniform MicrofacetDielectricAlbedoTable_average;     // 2D table (eta, roughness)
 
-void MicrofacetDielectricAlbedoTable_precompute();
+void precomputeMicrofacetAlbedoTables();
 
 // x should be between [0..size-1]
 inline float interpLinear1D(float x, const uniform float* uniform f, uniform int size)

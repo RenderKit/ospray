@@ -32,7 +32,7 @@ static inline uniform float MicrofacetAlbedoTable_integrateAverage(const uniform
   return min(2.f * (totalSum / size), 1.f);
 }
 
-void MicrofacetDielectricAlbedoTable_precompute()
+static void MicrofacetDielectricAlbedoTable_precompute()
 {
   if (MicrofacetDielectricAlbedoTable_directional)
     return;
@@ -65,4 +65,9 @@ void MicrofacetDielectricAlbedoTable_precompute()
       averageValues++;
     }
   }
+}
+
+void precomputeMicrofacetAlbedoTables()
+{
+  MicrofacetDielectricAlbedoTable_precompute();
 }

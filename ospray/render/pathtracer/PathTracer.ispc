@@ -22,6 +22,7 @@
 #include "geometry/Instance.ih"
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
+#include "bsdfs/MicrofacetAlbedoTables.ih"
 
 #define MAX_ROULETTE_CONT_PROB 0.95f
 #define PDF_CULLING 0.0f
@@ -507,6 +508,8 @@ export void* uniform PathTracer_create(void *uniform cppE)
   self->super.renderTile = PathTracer_renderTile;
 
   PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
+
+  precomputeMicrofacetAlbedoTables();
   precomputeZOrder();
 
   return self;
