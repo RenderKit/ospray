@@ -121,6 +121,15 @@ OSPRAY_CATCH_BEGIN
         return OSP_INVALID_ARGUMENT;
       }
 
+      if (av == "--osp:stream") {
+        removeArgs(*_ac,_av,i,1);
+        loadLocalModule("stream");
+        currentDevice.reset(Device::createDevice("stream"));
+
+        --i;
+        continue;
+      }
+
       auto moduleSwitch = av.substr(0, 13);
       if (moduleSwitch == "--osp:module:") {
         removeArgs(*_ac,_av,i,1);
