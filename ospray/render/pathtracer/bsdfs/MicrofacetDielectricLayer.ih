@@ -56,7 +56,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   foreach_unique (f in self->substrate)
     substrate = f->eval(f, wo, wi, lcg);
 
-  // Apply the coating medium transmittance
+  // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
   float lengthI1 = rcp(refract(abs(cosThetaI), self->eta)); // rcp(cosThetaI1)
@@ -172,7 +172,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   float cosThetaI = dot(res.wi, getN(super));
   float cosThetaOH = dot(wo, wh);
 
-  // Apply the coating medium transmittance
+  // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
   float lengthI1 = rcp(refract(abs(cosThetaI), self->eta)); // rcp(cosThetaI1)
@@ -263,7 +263,7 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO,
   GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   if (eta > 1.f) eta = rcp(eta);
 
-  // Apply the coating medium transmittance
+  // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
   vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * (lengthO1 * 2.f)));
