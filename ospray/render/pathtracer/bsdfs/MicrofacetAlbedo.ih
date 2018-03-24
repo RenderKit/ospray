@@ -63,5 +63,5 @@ inline float MicrofacetDielectricAlbedo_integrate(float cosThetaO, float eta, fl
     }
   }
 
-  return sum / (n*n);
+  return min(sum / (n*n), 1.f);
 }

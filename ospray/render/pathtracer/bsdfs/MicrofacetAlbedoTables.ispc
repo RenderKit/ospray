@@ -17,32 +17,52 @@
 #include "MicrofacetAlbedo.ih"
 #include "MicrofacetAlbedoTables.ih"
 
-uniform float* uniform MicrofacetDielectricAlbedoTable_values = NULL;
-uniform float* uniform MicrofacetDielectricAlbedoTable_avgValues = NULL;
+uniform float* uniform MicrofacetDielectricAlbedoTable_directional = NULL;
+uniform float* uniform MicrofacetDielectricAlbedoTable_average = NULL;
+
+static inline uniform float MicrofacetAlbedoTable_integrateAverage(const uniform float* uniform f, uniform int size)
+{
+  float sum = 0.f;
+  foreach (i = 0 ... size)
+  {
+    const float cosThetaO = (float)i / (size-1);
+    sum += f[i] * cosThetaO;
+  }
+  uniform float totalSum = reduce_add(sum);
+  return min(2.f * (totalSum / size), 1.f);
+}
 
 void MicrofacetDielectricAlbedoTable_precompute()
 {
-  if (MicrofacetDielectricAlbedoTable_values) return;
+  if (MicrofacetDielectricAlbedoTable_directional)
+    return;
 
   uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
-  MicrofacetDielectricAlbedoTable_values = uniform new float[size*size*size];
-  uniform float* uniform values = MicrofacetDielectricAlbedoTable_values;
+  MicrofacetDielectricAlbedoTable_directional = uniform new float[size*size*size];
+  MicrofacetDielectricAlbedoTable_average = uniform new float[size*size];
 
-  uniform int offset = 0;
+  uniform float* uniform directionalValues = MicrofacetDielectricAlbedoTable_directional;
+  uniform float* uniform averageValues = MicrofacetDielectricAlbedoTable_average;
+
   for (uniform int k = 0; k < size; k++)
   {
     for (uniform int j = 0; j < size; j++)
     {
+      // compute the direction albedo for each cosThetaO
       foreach (i = 0 ... size)
       {
         const float cosThetaO = (float)i / (size-1);
         const float eta = (float)j / (size-1);
         const float roughness = (float)k / (size-1);
 
-        const float value = MicrofacetDielectricAlbedo_integrate(cosThetaO, eta, roughness);
-        values[offset+i] = value;
+        directionalValues[i] = MicrofacetDielectricAlbedo_integrate(cosThetaO, eta, roughness);
       }
-      offset += size;
+
+      // compute the average albedo
+      *averageValues = MicrofacetAlbedoTable_integrateAverage(directionalValues, size);
+
+      directionalValues += size;
+      averageValues++;
     }
   }
 }
