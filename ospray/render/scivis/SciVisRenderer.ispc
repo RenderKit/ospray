@@ -185,7 +185,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         // Reset geometry ray.
         // TODO WILL: Because the compute geom sample is now going
         // to set t to infinity, this ray is going to be sent off the back!
-        geometryRay.t0 = geometryRay.t + renderer->volumeEpsilon;
+        geometryRay.t0 = geometryRay.t + renderer->super.epsilon;
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;
@@ -193,6 +193,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
         // Update ray offset for use with isosurface geometries based on current
         // volume (this value ignored elsewhere).
+        // Why is this done?
         geometryRay.time = volume ? -rayOffset * volume->samplingStep : 0.f;
 
         // Trace next geometry ray.
