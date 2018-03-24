@@ -76,6 +76,21 @@ inline float fresnelDielectricWeightedEx(float cosI, float& cosT, float eta, flo
   return fresnelDielectric(cosI, cosT, eta) * weight;
 }
 
+// F_{\mathit{avg}} = 2 \int_0^1 F(\mu) \mu d\mu
+// \mu = \cos(\theta)
+// Fit from [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+inline float fresnelDielectricAverage(float eta)
+{
+  const float invEta = rcp(eta);
+
+  if (invEta >= 1.f)
+    return (invEta - 1.f) / (4.08567f + 1.00071f*invEta);
+
+  const float invEta2 = sqr(invEta);
+  const float invEta3 = invEta2 * invEta;
+  return 0.997118f + 0.1014f*invEta - 0.965241f*invEta2 - 0.130607f*invEta3;
+}
+
 /*! Computes fresnel coefficient for conductor medium with complex
  *  refraction index (eta,k). The cosine has to be positive. */
 inline vec3f fresnelConductor(float cosI, vec3f eta, vec3f k)
