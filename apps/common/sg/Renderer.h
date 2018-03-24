@@ -33,7 +33,9 @@ namespace ospray {
       ~Renderer() override;
       virtual std::string toString() const override;
 
-      void renderFrame(std::shared_ptr<FrameBuffer> fb, int flags = 0, bool verifyCommit = true);
+      void renderFrame(std::shared_ptr<FrameBuffer> fb,
+                       int flags = 0,
+                       bool verifyCommit = true);
 
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
@@ -46,6 +48,11 @@ namespace ospray {
       void postCommit(RenderContext &ctx) override;
       OSPPickResult pick(const vec2f &pickPos);
       float getLastVariance() const;
+
+      // Global whitelist values for rendererType //
+
+      static std::vector<std::string> globalRendererTypeWhiteList();
+      static void setGlobalRendererTypeWhiteList(std::vector<std::string> list);
 
     private:
 
