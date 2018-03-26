@@ -49,6 +49,7 @@ struct Principled
   float specular;
   TextureParam specularMap;
 
+  // index of refraction in [1, 3]
   float ior;
   TextureParam iorMap; // currently ignored for solid transmission
 
@@ -81,6 +82,7 @@ struct Principled
   float coat;
   TextureParam coatMap;
 
+  // dielectric clear coat index of refraction in [1, 3]
   float coatIor;
   TextureParam coatIorMap;
   
@@ -159,8 +161,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
       const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
 
-      float ior = max(self->ior * get1f(self->iorMap, dg.st, 1.f), 0.f);
+      float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
       if (ior < 1.f) ior = rcp(ior);
+      ior = clamp(ior, 1.f, 3.f); // clamp to common range due to LUTs
 
       // plastic base
       const float plastic = dielectric * (1.f - transmission);
@@ -271,8 +274,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
     if (coat > EPS)
     {
-      float coatIor = max(self->coatIor * get1f(self->coatIorMap, dg.st, 1.f), 0.f);
+      float coatIor = self->coatIor * get1f(self->coatIorMap, dg.st, 1.f);
       if (coatIor < 1.f) coatIor = rcp(coatIor);
+      coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
       if (abs(coatIor-1.f) > EPS)
       {
         const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
@@ -366,8 +370,9 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
       else
       {
         // thin
-        float ior = max(self->ior * get1f(self->iorMap, dg.st, 1.f), 0.f);
+        float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
         if (ior < 1.f) ior = rcp(ior);
+        ior = clamp(ior, 1.f, 3.f); // clamp to common range due to LUTs
 
         const float eta = rcp(ior);
         const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
@@ -384,8 +389,9 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
       const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
       if (coat > EPS)
       {
-        float coatIor = max(self->coatIor * get1f(self->coatIorMap, dg.st, 1.f), 0.f);
+        float coatIor = self->coatIor * get1f(self->coatIorMap, dg.st, 1.f);
         if (coatIor < 1.f) coatIor = rcp(coatIor);
+        coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
         if (abs(coatIor-1.f) > EPS)
         {
           const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
@@ -527,10 +533,10 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->thickness = thickness;
   self->thicknessMap = make_TextureParam((uniform Texture2D*)thicknessMap, thicknessXform);
   
-  self->insideMedium.ior = max(ior >= 1.f ? ior : rcp(ior), 0.f);
+  self->insideMedium.ior = clamp(ior >= 1.f ? ior : rcp(ior), 1.f, 3.f);
   self->insideMedium.attenuation = logf(transmissionColor) / transmissionDepth;
   
-  self->outsideMedium.ior = max(outsideIor >= 1.f ? outsideIor : rcp(outsideIor), 0.f);
+  self->outsideMedium.ior = clamp(outsideIor >= 1.f ? outsideIor : rcp(outsideIor), 1.f, 3.f);
   self->outsideMedium.attenuation = logf(outsideTransmissionColor) / outsideTransmissionDepth;
 }
 

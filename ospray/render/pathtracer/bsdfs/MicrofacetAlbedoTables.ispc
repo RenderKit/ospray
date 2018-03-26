@@ -37,7 +37,10 @@ static void MicrofacetDielectricReflectionAlbedoTable_precompute()
   if (MicrofacetDielectricReflectionAlbedoTable_directional)
     return;
 
-  uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
+  const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
+  const uniform float minEta = rcp(MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR);
+  const uniform float maxEta = rcp(MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR);
+
   MicrofacetDielectricReflectionAlbedoTable_directional = uniform new float[size*size*size];
   MicrofacetDielectricReflectionAlbedoTable_average = uniform new float[size*size];
 
@@ -52,7 +55,7 @@ static void MicrofacetDielectricReflectionAlbedoTable_precompute()
       foreach (i = 0 ... size)
       {
         const float cosThetaO = (float)i / (size-1);
-        const float eta = (float)j / (size-1);
+        const float eta = lerp((float)j / (size-1), minEta, maxEta);
         const float roughness = (float)k / (size-1);
 
         directionalValues[i] = MicrofacetDielectricReflectionAlbedo_integrate(cosThetaO, eta, roughness);
