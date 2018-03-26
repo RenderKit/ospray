@@ -62,7 +62,9 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(cosThetaO1);
   float lengthI1 = rcp(cosThetaI1);
-  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
+  float length = lengthO1 + lengthI1;
+  if (cosThetaI <= 0.f) length *= 0.5f; // for transmission, use the average length
+  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * length));
 
   // Energy conservation
   float T;
@@ -116,7 +118,9 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
     // Use refracted angles for computing the absorption path length
     float lengthO1 = rcp(cosThetaO1);
     float lengthI1 = rcp(cosThetaI1);
-    res.weight = lerp(self->weight, res.weight, res.weight * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
+    float length = lengthO1 + lengthI1;
+    if (cosThetaI <= 0.f) length *= 0.5f; // for transmission, use the average length
+    res.weight = lerp(self->weight, res.weight, res.weight * pow(self->transmittance, self->thickness * length));
 
     // Energy conservation
     float T;
@@ -172,7 +176,7 @@ inline vec3f DielectricLayer_getTransparency(float cosThetaO,
   // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(cosThetaO1);
-  vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * (lengthO1 * 2.f)));
+  vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
 
   // Energy conservation
   float T = 1.f - F; // for generic (non-diffuse) substrates [Kulla and Conty, 2017]

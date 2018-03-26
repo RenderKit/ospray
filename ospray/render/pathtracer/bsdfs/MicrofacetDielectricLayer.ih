@@ -60,7 +60,9 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
   float lengthI1 = rcp(refract(abs(cosThetaI), self->eta)); // rcp(cosThetaI1)
-  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
+  float length = lengthO1 + lengthI1;
+  if (cosThetaI <= 0.f) length *= 0.5f; // for transmission, use the average length
+  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * length));
 
   // Energy conservation
   float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, self->eta, self->roughness) * self->weight;
@@ -176,7 +178,9 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
   float lengthI1 = rcp(refract(abs(cosThetaI), self->eta)); // rcp(cosThetaI1)
-  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * (lengthO1 + lengthI1)));
+  float length = lengthO1 + lengthI1;
+  if (cosThetaI <= 0.f) length *= 0.5f; // for transmission, use the average length
+  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * length));
 
   // Energy conservation
   float Ei = MicrofacetDielectricAlbedoTable_eval(abs(cosThetaI), self->eta, self->roughness) * self->weight;
@@ -266,7 +270,7 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO,
   // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
   float lengthO1 = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
-  vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * (lengthO1 * 2.f)));
+  vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
 
   // Energy conservation
   float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, eta, roughness) * weight;
