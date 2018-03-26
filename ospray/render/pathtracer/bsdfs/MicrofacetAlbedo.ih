@@ -19,7 +19,7 @@
 #include "Fresnel.ih"
 #include "GGXDistribution.ih"
 
-inline float MicrofacetDielectricAlbedo_sample(float cosThetaO, float eta, const GGXDistribution& microfacet, const vec2f& s)
+inline float MicrofacetDielectricReflectionAlbedo_sample(float cosThetaO, float eta, const GGXDistribution& microfacet, const vec2f& s)
 {
   // Handle edge cases
   cosThetaO = max(cosThetaO, 1e-6f);
@@ -48,7 +48,7 @@ inline float MicrofacetDielectricAlbedo_sample(float cosThetaO, float eta, const
   return F * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
 }
 
-inline float MicrofacetDielectricAlbedo_integrate(float cosThetaO, float eta, float roughness, uniform int numSamples = 1024)
+inline float MicrofacetDielectricReflectionAlbedo_integrate(float cosThetaO, float eta, float roughness, uniform int numSamples = 1024)
 {
   GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
 
@@ -59,7 +59,7 @@ inline float MicrofacetDielectricAlbedo_integrate(float cosThetaO, float eta, fl
     for (uniform int j = 0; j < n; j++)
     {
       vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
-      sum += MicrofacetDielectricAlbedo_sample(cosThetaO, eta, microfacet, s);
+      sum += MicrofacetDielectricReflectionAlbedo_sample(cosThetaO, eta, microfacet, s);
     }
   }
 

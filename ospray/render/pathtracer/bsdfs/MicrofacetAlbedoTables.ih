@@ -20,21 +20,21 @@
 
 #define MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE 16
 
-extern uniform float* uniform MicrofacetDielectricAlbedoTable_directional; // 3D table (cosThetaO, eta, roughness)
-extern uniform float* uniform MicrofacetDielectricAlbedoTable_average;     // 2D table (eta, roughness)
+extern uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_directional; // 3D table (cosThetaO, eta, roughness)
+extern uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_average;     // 2D table (eta, roughness)
 
 void precomputeMicrofacetAlbedoTables();
 
-inline float MicrofacetDielectricAlbedoTable_eval(float cosThetaO, float eta, float roughness)
+inline float MicrofacetDielectricReflectionAlbedoTable_eval(float cosThetaO, float eta, float roughness)
 {
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
   const vec3f p = make_vec3f(cosThetaO, eta, roughness) * (size-1);
-  return interp3DLinear(p, MicrofacetDielectricAlbedoTable_directional, make_vec3i(size));
+  return interp3DLinear(p, MicrofacetDielectricReflectionAlbedoTable_directional, make_vec3i(size));
 }
 
-inline float MicrofacetDielectricAlbedoTable_evalAverage(float eta, float roughness)
+inline float MicrofacetDielectricReflectionAlbedoTable_evalAverage(float eta, float roughness)
 {
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
   const vec2f p = make_vec2f(eta, roughness) * (size-1);
-  return interp2DLinear(p, MicrofacetDielectricAlbedoTable_average, make_vec2i(size));
+  return interp2DLinear(p, MicrofacetDielectricReflectionAlbedoTable_average, make_vec2i(size));
 }

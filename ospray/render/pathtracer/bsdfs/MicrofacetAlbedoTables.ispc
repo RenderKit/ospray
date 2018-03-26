@@ -17,8 +17,8 @@
 #include "MicrofacetAlbedo.ih"
 #include "MicrofacetAlbedoTables.ih"
 
-uniform float* uniform MicrofacetDielectricAlbedoTable_directional = NULL;
-uniform float* uniform MicrofacetDielectricAlbedoTable_average = NULL;
+uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_directional = NULL;
+uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_average = NULL;
 
 static inline uniform float MicrofacetAlbedoTable_integrateAverage(const uniform float* uniform f, uniform int size)
 {
@@ -32,17 +32,17 @@ static inline uniform float MicrofacetAlbedoTable_integrateAverage(const uniform
   return min(2.f * (totalSum / size), 1.f);
 }
 
-static void MicrofacetDielectricAlbedoTable_precompute()
+static void MicrofacetDielectricReflectionAlbedoTable_precompute()
 {
-  if (MicrofacetDielectricAlbedoTable_directional)
+  if (MicrofacetDielectricReflectionAlbedoTable_directional)
     return;
 
   uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
-  MicrofacetDielectricAlbedoTable_directional = uniform new float[size*size*size];
-  MicrofacetDielectricAlbedoTable_average = uniform new float[size*size];
+  MicrofacetDielectricReflectionAlbedoTable_directional = uniform new float[size*size*size];
+  MicrofacetDielectricReflectionAlbedoTable_average = uniform new float[size*size];
 
-  uniform float* uniform directionalValues = MicrofacetDielectricAlbedoTable_directional;
-  uniform float* uniform averageValues = MicrofacetDielectricAlbedoTable_average;
+  uniform float* uniform directionalValues = MicrofacetDielectricReflectionAlbedoTable_directional;
+  uniform float* uniform averageValues = MicrofacetDielectricReflectionAlbedoTable_average;
 
   for (uniform int k = 0; k < size; k++)
   {
@@ -55,7 +55,7 @@ static void MicrofacetDielectricAlbedoTable_precompute()
         const float eta = (float)j / (size-1);
         const float roughness = (float)k / (size-1);
 
-        directionalValues[i] = MicrofacetDielectricAlbedo_integrate(cosThetaO, eta, roughness);
+        directionalValues[i] = MicrofacetDielectricReflectionAlbedo_integrate(cosThetaO, eta, roughness);
       }
 
       // compute the average albedo
@@ -69,5 +69,5 @@ static void MicrofacetDielectricAlbedoTable_precompute()
 
 void precomputeMicrofacetAlbedoTables()
 {
-  MicrofacetDielectricAlbedoTable_precompute();
+  MicrofacetDielectricReflectionAlbedoTable_precompute();
 }
