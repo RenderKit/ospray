@@ -16,6 +16,7 @@
 
 // sg
 #include "SceneGraph.h"
+#include "../common/NodeList.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wextra-semi"
@@ -58,16 +59,21 @@ namespace ospray {
       {
         vertices =
             createNode("vertices", "DataVector3f")->nodeAs<DataVector3f>();
-        field = createNode("field", "DataVector1f")->nodeAs<DataVector1f>();
-        cellField = createNode("cellField", "DataVector1f")->nodeAs<DataVector1f>();
         indices =
             createNode("indices", "DataVector4i")->nodeAs<DataVector4i>();
+
+        vertexFields = std::make_shared<NodeList<DataVector1f>>();
+        cellFields = std::make_shared<NodeList<DataVector1f>>();
       }
 
       std::shared_ptr<DataVector3f> vertices;
-      std::shared_ptr<DataVector1f> field;
-      std::shared_ptr<DataVector1f> cellField;
       std::shared_ptr<DataVector4i> indices;
+
+      std::shared_ptr<NodeList<DataVector1f>> vertexFields;
+      std::shared_ptr<NodeList<DataVector1f>> cellFields;
+
+      std::vector<sg::Any> vertexFieldNames;
+      std::vector<sg::Any> cellFieldNames;
 
       template <class TReader>
       vtkDataSet *readVTKFile(const FileName &fileName)
@@ -81,21 +87,28 @@ namespace ospray {
         return vtkDataSet::SafeDownCast(reader->GetOutput());
       }
 
-      void readFieldData(vtkDataSetAttributes *data, std::shared_ptr<DataVector1f> field)
+      void readFieldData(vtkDataSetAttributes *data,
+                         std::shared_ptr<NodeList<DataVector1f>> fields,
+                         std::vector<sg::Any> &names)
       {
-        if (data) {
-          for (int i = 0; i < 1 /* data->GetNumberOfArrays() */; i++) {
-            vtkAbstractArray *ad = data->GetAbstractArray(i);
-            int nDataPoints      = data->GetNumberOfTuples()
-                                   * data->GetNumberOfComponents();
+        if (!data || !data->GetNumberOfArrays())
+          return;
 
-            auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
+        for (int i = 0; i < data->GetNumberOfArrays(); i++) {
+          vtkAbstractArray *ad = data->GetAbstractArray(i);
+          int nDataPoints      = ad->GetSize() * ad->GetNumberOfComponents();
 
-            for (int j = 0; j < nDataPoints; j++) {
-              float val = static_cast<float>(array->GetTuple1(j));
-              field->push_back(val);
-            }
+          auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
+
+          auto field = createNode(std::to_string(i), "DataVector1f")->nodeAs<DataVector1f>();
+
+          for (int j = 0; j < nDataPoints; j++) {
+            float val = static_cast<float>(array->GetTuple1(j));
+            field->push_back(val);
           }
+
+          fields->push_back(field);
+          names.push_back(std::string(ad->GetName()));
         }
       }
 
@@ -136,8 +149,8 @@ namespace ospray {
           }
         }
 
-        readFieldData(dataSet->GetPointData(), field);
-        readFieldData(dataSet->GetCellData(), cellField);
+        readFieldData(dataSet->GetPointData(), vertexFields, vertexFieldNames);
+        readFieldData(dataSet->GetCellData(), cellFields, cellFieldNames);
 
         return true;
       }
@@ -149,12 +162,17 @@ namespace ospray {
 
         in >> nPoints >> nTetrahedra;
 
+        auto field = createNode("field", "DataVector1f")->nodeAs<DataVector1f>();
+
         float x, y, z, val;
         for (int i = 0; i < nPoints; i++) {
           in >> x >> y >> z >> val;
           vertices->push_back(vec3f(x, y, z));
           field->push_back(val);
         }
+
+        vertexFields->push_back(field);
+        vertexFieldNames.push_back(std::string("OFF/VTX"));
 
         int c0, c1, c2, c3;
         for (int i = 0; i < nTetrahedra; i++) {
@@ -187,10 +205,13 @@ namespace ospray {
 
       v.add(mesh.vertices);
       v.add(mesh.indices);
-      if (mesh.field->size())
-        v.add(mesh.field);
-      if (mesh.cellField->size())
-        v.add(mesh.cellField);
+      v.add(mesh.vertexFields, "vertexFields");
+      v.add(mesh.cellFields, "cellFields");
+
+      if (!mesh.vertexFieldNames.empty())
+        v.createChild("vertexFieldName", "string", mesh.vertexFieldNames[0]).setWhiteList(mesh.vertexFieldNames);
+      if (!mesh.cellFieldNames.empty())
+          v.createChild("cellFieldName", "string", mesh.cellFieldNames[0]).setWhiteList(mesh.cellFieldNames);
     }
 
   }  // ::ospray::sg

@@ -40,6 +40,16 @@ namespace ospray {
   void UnstructuredVolume::commit()
   {
     updateEditableParameters();
+
+    if (getParamData("field", nullptr) != oldField ||
+        getParamData("cellField", nullptr) != oldCellField) {
+      oldField = getParamData("field", nullptr);
+      oldCellField = getParamData("cellField", nullptr);
+
+      // rebuild BVH, resync ISPC, etc...
+      finished = false;
+    }
+
     if (!finished)
       finish();
 
