@@ -94,7 +94,9 @@ ADD_SUBDIRECTORY(modules)
 ##############################################################
 # Google Test
 ##############################################################
-ADD_SUBDIRECTORY(tests)
+IF (OSPRAY_ENABLE_TESTING)
+  ADD_SUBDIRECTORY(tests)
+ENDIF()
 
 ##############################################################
 # add target for running clang-format
