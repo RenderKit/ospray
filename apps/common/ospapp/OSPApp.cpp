@@ -407,7 +407,7 @@ namespace ospray {
           sun["color"] = vec3f(1.f, 247.f / 255.f, 201.f / 255.f);
           sun["direction"] = vec3f(0.462f, -1.f, -.1f);
           sun["intensity"] = 3.0f;
-          sun["angularDiameter"] = 0.8f;
+          sun["angularDiameter"] = 0.53f;
 
           auto &bounce = lights.createChild("bounce", "DirectionalLight");
           bounce["color"] = vec3f(202.f / 255.f, 216.f / 255.f, 255.f / 255.f);
