@@ -264,7 +264,6 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO,
                                                        float eta, vec3f transmittance, float thickness, float roughness, float anisotropy,
                                                        float weight, unsigned int& lcg)
 {
-  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   if (eta > 1.f) eta = rcp(eta);
 
   // Apply the coating medium absorption
