@@ -81,14 +81,14 @@ inline float fresnelDielectricWeightedEx(float cosI, float& cosT, float eta, flo
 // Fit from [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
 inline float fresnelDielectricAverage(float eta)
 {
-  const float invEta = rcp(eta);
+  const float rcpEta = rcp(eta);
 
-  if (invEta >= 1.f)
-    return (invEta - 1.f) / (4.08567f + 1.00071f*invEta);
+  if (rcpEta >= 1.f)
+    return (rcpEta - 1.f) / (4.08567f + 1.00071f*rcpEta);
 
-  const float invEta2 = sqr(invEta);
-  const float invEta3 = invEta2 * invEta;
-  return 0.997118f + 0.1014f*invEta - 0.965241f*invEta2 - 0.130607f*invEta3;
+  const float rcpEta2 = sqr(rcpEta);
+  const float rcpEta3 = rcpEta2 * rcpEta;
+  return 0.997118f + 0.1014f*rcpEta - 0.965241f*rcpEta2 - 0.130607f*rcpEta3;
 }
 
 /*! Computes fresnel coefficient for conductor medium with complex
