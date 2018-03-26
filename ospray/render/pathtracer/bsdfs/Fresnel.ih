@@ -45,13 +45,6 @@ inline float fresnelDielectric(float cosI, float eta)
   return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
 }
 
-inline float fresnelDielectricWeighted(float cosI, float eta, float weight)
-{
-  const float sqrCosT = sqrCosT(cosI, eta);
-  if (sqrCosT < 0.0f) return 1.0f;
-  return fresnelDielectric(cosI, sqrt(sqrCosT), eta) * weight;
-}
-
 inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
 {
   const float sqrCosT = sqrCosT(cosI, eta);
@@ -62,18 +55,6 @@ inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
   }
   cosT = sqrt(sqrCosT);
   return fresnelDielectric(cosI, cosT, eta);
-}
-
-inline float fresnelDielectricWeightedEx(float cosI, float& cosT, float eta, float weight)
-{
-  const float sqrCosT = sqrCosT(cosI, eta);
-  if (sqrCosT < 0.0f)
-  {
-    cosT = 0.0f;
-    return 1.0f;
-  }
-  cosT = sqrt(sqrCosT);
-  return fresnelDielectric(cosI, cosT, eta) * weight;
 }
 
 // F_{\mathit{avg}} = 2 \int_0^1 F(\mu) \mu d\mu

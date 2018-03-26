@@ -19,6 +19,7 @@
 #include "BSDF.ih"
 #include "Fresnel.ih"
 #include "GGXDistribution.ih"
+#include "MicrofacetAlbedoTables.ih"
 
 // Microfacet dielectric BSDF with the Smith microsurface model.
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
@@ -71,7 +72,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
 
   // Fresnel term
   float cosThetaTH; // positive
-  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
+  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta) * self->reflectionWeight;
 
   float value;
   if (isReflection)
@@ -124,7 +125,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
 
   // Fresnel term
   float cosThetaTH; // positive
-  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
+  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta) * self->reflectionWeight;
 
   // Sample the reflection or the transmission
   float cosThetaI;
@@ -167,36 +168,6 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   return res;
 }
 
-// Computes the transmittance through a rough dielectric surface, which requires sampling a microfacet normal
-inline float MicrofacetDielectric_transmittance(float cosThetaO, float eta, const GGXDistribution& microfacet,
-                                                float reflectionWeight, const vec2f& s)
-{
-  // Make an outgoing vector
-  vec3f wo = make_vec3f(cos2sin(cosThetaO), 0.f, cosThetaO);
-
-  // Sample the microfacet normal
-  float whPdf;
-  vec3f wh = sampleVisibleUH(microfacet, wo, whPdf, s);
-
-  float cosThetaOH = dot(wo, wh);
-
-  // Fresnel term
-  float cosThetaTH; // positive
-  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, eta, reflectionWeight);
-
-  // Sample the transmission
-  // cosThetaTH = -cosThetaIH
-  vec3f wi = refract(wo, wh, cosThetaOH, cosThetaTH, eta);
-  float cosThetaI = wi.z;
-  if (cosThetaI >= 0.f)
-    return 0.f;
-
-  float cosThetaIH = dot(wi, wh);
-  float G = evalG2(microfacet, wo, wi, cosThetaOH, cosThetaIH);
-
-  return (1.f-F) * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
-}
-
 inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* uniform self,
                                              const varying linear3f* uniform frame,
                                              float eta, float roughness, float anisotropy,
@@ -226,7 +197,6 @@ inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext*
 inline vec3f MicrofacetDielectric_getTransparency(float cosThetaO, float eta, float roughness, float anisotropy,
                                                   float reflectionWeight, unsigned int& lcg)
 {
-  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
-  float T = MicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
+  float T = 1.f - MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness) * reflectionWeight;
   return make_vec3f(T);
 }

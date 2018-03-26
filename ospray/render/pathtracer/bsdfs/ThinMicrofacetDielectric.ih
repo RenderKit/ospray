@@ -70,7 +70,7 @@ inline BSDF_EvalRes ThinMicrofacetDielectric_eval(const varying BSDF* uniform su
 
   // Fresnel term
   float cosThetaTH; // positive
-  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
+  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta) * self->reflectionWeight;
 
   if (isReflection)
   {
@@ -125,7 +125,7 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(const varying BSDF* unifor
 
   // Fresnel term
   float cosThetaTH; // positive
-  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, self->eta, self->reflectionWeight);
+  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta) * self->reflectionWeight;
 
   // Sample the reflection
   res.wi = reflect(wo, wh, cosThetaOH);
@@ -163,35 +163,6 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(const varying BSDF* unifor
   return res;
 }
 
-// Computes the transmittance through a thin rough dielectric surface, which requires sampling a microfacet normal
-inline float ThinMicrofacetDielectric_transmittance(float cosThetaO, float eta, const GGXDistribution& microfacet,
-                                                    float reflectionWeight, const vec2f& s)
-{
-  // Make an outgoing vector
-  vec3f wo = make_vec3f(cos2sin(cosThetaO), 0.f, cosThetaO);
-
-  // Sample the microfacet normal
-  float whPdf;
-  vec3f wh = sampleVisibleUH(microfacet, wo, whPdf, s);
-
-  float cosThetaOH = dot(wo, wh);
-
-  // Fresnel term
-  float cosThetaTH; // positive
-  float F = fresnelDielectricWeightedEx(cosThetaOH, cosThetaTH, eta, reflectionWeight);
-
-  // Sample the transmission, but ignore refraction (reflect the direction to the other side)
-  vec3f wi = reflect(wo, wh, cosThetaOH);
-  float cosThetaI = wi.z;
-  if (cosThetaI <= 0.f)
-    return 0.f;
-
-  float cosThetaIH = dot(wi, wh);
-  float G = evalG2(microfacet, wo, wi, cosThetaOH, cosThetaIH);
-
-  return (1.f-F) * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
-}
-
 inline void ThinMicrofacetDielectric_Constructor(varying ThinMicrofacetDielectric* uniform self,
                                                  const varying linear3f* uniform frame,
                                                  float eta, float roughness, float anisotropy, vec3f attenuation,
@@ -223,8 +194,7 @@ inline vec3f ThinMicrofacetDielectric_getTransparency(float cosThetaO,
                                                       float eta, float roughness, float anisotropy, vec3f attenuation,
                                                       float reflectionWeight, unsigned int& lcg)
 {
-  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
-  float T = ThinMicrofacetDielectric_transmittance(cosThetaO, eta, microfacet, reflectionWeight, LCG_getFloat2(lcg));
+  float T = 1.f - MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness) * reflectionWeight;
 
   // Compute attenuation for crossing the slab once
   float length = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)

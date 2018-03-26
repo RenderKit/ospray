@@ -19,6 +19,8 @@
 
 uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_directional = NULL;
 uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_average = NULL;
+uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_directional = NULL;
+uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_average = NULL;
 
 static inline uniform float MicrofacetAlbedoTable_integrateAverage(const uniform float* uniform f, uniform int size)
 {
@@ -41,11 +43,47 @@ static void MicrofacetDielectricReflectionAlbedoTable_precompute()
   const uniform float minEta = rcp(MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR);
   const uniform float maxEta = rcp(MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR);
 
-  MicrofacetDielectricReflectionAlbedoTable_directional = uniform new float[size*size*size];
-  MicrofacetDielectricReflectionAlbedoTable_average = uniform new float[size*size];
+  uniform float* uniform directionalValues =
+    MicrofacetDielectricReflectionAlbedoTable_directional = uniform new float[size*size*size];
+  uniform float* uniform averageValues =
+    MicrofacetDielectricReflectionAlbedoTable_average = uniform new float[size*size];
 
-  uniform float* uniform directionalValues = MicrofacetDielectricReflectionAlbedoTable_directional;
-  uniform float* uniform averageValues = MicrofacetDielectricReflectionAlbedoTable_average;
+  for (uniform int k = 0; k < size; k++)
+  {
+    for (uniform int j = 0; j < size; j++)
+    {
+      // compute the direction albedo for each cosThetaO
+      foreach (i = 0 ... size)
+      {
+        const float cosThetaO = (float)i / (size-1);
+        const float eta = lerp((float)j / (size-1), minEta, maxEta);
+        const float roughness = (float)k / (size-1);
+
+        directionalValues[i] = MicrofacetDielectricReflectionAlbedo_integrate(cosThetaO, eta, roughness);
+      }
+
+      // compute the average albedo
+      *averageValues = MicrofacetAlbedoTable_integrateAverage(directionalValues, size);
+
+      directionalValues += size;
+      averageValues++;
+    }
+  }
+}
+
+static void MicrofacetDielectricReflectionRcpEtaAlbedoTable_precompute()
+{
+  if (MicrofacetDielectricReflectionRcpEtaAlbedoTable_directional)
+    return;
+
+  const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
+  const uniform float minEta = MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR;
+  const uniform float maxEta = MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR;
+
+  uniform float* uniform directionalValues =
+    MicrofacetDielectricReflectionRcpEtaAlbedoTable_directional = uniform new float[size*size*size];
+  uniform float* uniform averageValues =
+    MicrofacetDielectricReflectionRcpEtaAlbedoTable_average = uniform new float[size*size];
 
   for (uniform int k = 0; k < size; k++)
   {
@@ -73,4 +111,5 @@ static void MicrofacetDielectricReflectionAlbedoTable_precompute()
 void precomputeMicrofacetAlbedoTables()
 {
   MicrofacetDielectricReflectionAlbedoTable_precompute();
+  MicrofacetDielectricReflectionRcpEtaAlbedoTable_precompute();
 }
