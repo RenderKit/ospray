@@ -87,7 +87,7 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
   vec3f wo0 = toLocal * wo;
 
   float whPdf;
-  vec3f wh = toGlobal * sampleVisibleUH(self->microfacet, wo0, whPdf, s);
+  vec3f wh = toGlobal * sampleVisible(self->microfacet, wo0, whPdf, s);
 
   res.wi = reflect(wo, wh);
   float cosThetaI = dot(res.wi, getN(super));

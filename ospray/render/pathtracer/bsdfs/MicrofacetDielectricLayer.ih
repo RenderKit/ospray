@@ -144,7 +144,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   {
     // Sample the microfacet normal
     float whPdf;
-    wh = toGlobal * sampleVisibleUH(self->microfacet, wo0, whPdf, s);
+    wh = toGlobal * sampleVisible(self->microfacet, wo0, whPdf, s);
     float cosThetaOH = dot(wo, wh);
 
     res.type = BSDF_GLOSSY_REFLECTION;

@@ -29,7 +29,7 @@ inline float MicrofacetAlbedo_sample(float cosThetaO, const GGXDistribution& mic
 
   // Sample the microfacet normal
   float whPdf;
-  vec3f wh = sampleVisibleUH(microfacet, wo, whPdf, s);
+  vec3f wh = sampleVisible(microfacet, wo, whPdf, s);
 
   float cosThetaOH = dot(wo, wh);
 
@@ -55,7 +55,7 @@ inline float MicrofacetDielectricReflectionAlbedo_sample(float cosThetaO, float 
 
   // Sample the microfacet normal
   float whPdf;
-  vec3f wh = sampleVisibleUH(microfacet, wo, whPdf, s);
+  vec3f wh = sampleVisible(microfacet, wo, whPdf, s);
 
   float cosThetaOH = dot(wo, wh);
 
