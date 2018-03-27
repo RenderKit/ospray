@@ -19,13 +19,20 @@
 #include "BSDF.ih"
 #include "GGXDistribution.ih"
 #include "Fresnel.ih"
+#include "MicrofacetAlbedoTables.ih"
 
+// Microfacet conductor BRDF with the Smith microsurface model and approximate multiple scattering.
+// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+// [Jakob et al., 2014, "A Comprehensive Framework for Rendering Layered Materials", Extended Technical Report]
 struct MicrofacetConductor
 {
   BSDF super;
 
   Fresnel* uniform fresnel;
   GGXDistribution microfacet;
+  float roughness;
+  float Eavg;
+  vec3f Favg;
 };
 
 inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
@@ -54,8 +61,14 @@ inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
   float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
   float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
+  // Energy compensation [Kulla and Conty, 2017]
+  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
+  float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+  vec3f fms = self->Favg * (1.f - self->Eavg) * rcp(1.f - self->Favg * self->Eavg);
+  fms = fms * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+
   res.pdf = whPdf * rcp(4.f*abs(cosThetaOH));
-  res.value = F * (D * G * rcp(4.f*cosThetaO));
+  res.value = F * (D * G * rcp(4.f*cosThetaO)) + fms;
   return res;
 }
 
@@ -87,9 +100,15 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
   vec3f F = self->fresnel->eval(self->fresnel, cosThetaOH);
   float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
+  // Energy compensation [Kulla and Conty, 2017]
+  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
+  float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+  vec3f fms = self->Favg * (1.f - self->Eavg) * rcp(1.f - self->Favg * self->Eavg);
+  fms = fms * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+
   res.type = BSDF_GLOSSY_REFLECTION;
   res.pdf = whPdf * rcp(4.f*abs(cosThetaOH));
-  res.weight = F * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH)));
+  res.weight = F * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH))) + fms * rcp(res.pdf);
 
   return res;
 }
@@ -103,6 +122,9 @@ inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform
                    frame);
   self->fresnel = fresnel;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
+  self->roughness = roughness;
+  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  self->Favg = fresnel->evalAvg(fresnel);
 }
 
 inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx,
