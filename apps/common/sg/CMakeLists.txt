@@ -111,6 +111,7 @@ ospray_create_library(ospray_sg SHARED
 
   # scene graph importers
   importer/Importer.cpp
+  importer/generateSpheres.cpp
   importer/importPoints.cpp
   importer/importOSP.cpp
   importer/importX3D.cpp

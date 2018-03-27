@@ -275,7 +275,9 @@ namespace ospray {
           // SG parameters are validated by prefix only.
           // Later different function is used for parsing this type parameters.
           continue;
-        } else if (arg[0] != '-' || utility::beginsWith(arg, "--import:")) {
+        } else if (arg[0] != '-' ||
+                   utility::beginsWith(arg, "--import:") ||
+                   utility::beginsWith(arg, "--generate:")) {
           if (!inAnimation)
             files.push_back(clFile(av[i], currentCLTransform));
           else
