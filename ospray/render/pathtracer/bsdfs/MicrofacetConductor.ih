@@ -108,7 +108,7 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
 
   res.type = BSDF_GLOSSY_REFLECTION;
   res.pdf = whPdf * rcp(4.f*abs(cosThetaOH));
-  res.weight = F * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH))) + fms * rcp(res.pdf);
+  res.weight = F * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH))) + (fms * rcp(res.pdf));
 
   return res;
 }

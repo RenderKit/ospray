@@ -45,12 +45,11 @@ static void MicrofacetAlbedoTable_precompute()
 
   for (uniform int j = 0; j < size; j++)
   {
+    const float roughness = (float)j / (size-1);
     // compute the direction albedo for each cosThetaO
     foreach (i = 0 ... size)
     {
       const float cosThetaO = (float)i / (size-1);
-      const float roughness = (float)j / (size-1);
-
       dirPtr[i] = MicrofacetAlbedo_integrate(cosThetaO, roughness);
     }
 
@@ -72,15 +71,14 @@ static void MicrofacetDielectricReflectionAlbedoTable_precompute(uniform int siz
 
   for (uniform int k = 0; k < size; k++)
   {
+    const float roughness = (float)k / (size-1);
     for (uniform int j = 0; j < size; j++)
     {
+      const float eta = lerp((float)j / (size-1), minEta, maxEta);
       // compute the direction albedo for each cosThetaO
       foreach (i = 0 ... size)
       {
         const float cosThetaO = (float)i / (size-1);
-        const float eta = lerp((float)j / (size-1), minEta, maxEta);
-        const float roughness = (float)k / (size-1);
-
         dirPtr[i] = MicrofacetDielectricReflectionAlbedo_integrate(cosThetaO, eta, roughness);
       }
 
