@@ -141,48 +141,6 @@ inline float evalVisible(const GGXDistribution& self,
   return D;
 }
 
-// Visible normal sampling for the alpha=1 case
-inline vec2f sampleVisible11(const GGXDistribution& self,
-                             float thetaI, const vec2f& s)
-{
-  vec2f slope;
-
-  // Special case (normal incidence)
-  if (thetaI < 1e-4f)
-  {
-    float sinPhi, cosPhi;
-    float r = sqrt_safe(s.x / (1 - s.x));
-    sincos(2.f * pi * s.y, &sinPhi, &cosPhi);
-    return make_vec2f(r * cosPhi, r * sinPhi);
-  }
-
-  // Precomputations
-  float tanThetaI = tan(thetaI);
-  float a = rcp(tanThetaI);
-  float G1 = 2.f / (1.f + sqrt_safe(1.f + rcp(a*a)));
-
-  // Sample X component
-  float A = 2.f * s.x / G1 - 1.f;
-  float tmp = rcp(A*A - 1.f);
-  tmp = min(tmp, 1e10f);
-  float B = tanThetaI;
-  float D = sqrt_safe(B*B*tmp*tmp - (A*A - B*B) * tmp);
-  float slopeX1 = B * tmp - D;
-  float slopeX2 = B * tmp + D;
-  slope.x = (A < 0.f || slopeX2 > rcp(tanThetaI)) ? slopeX1 : slopeX2;
-
-  // Sample Y component
-  float S = (s.y > 0.5f) ? 1.f : -1.f;
-  float sy = S * 2.f * (s.y - 0.5f);
-
-  float z = (sy * (sy * (sy * 0.27385f - 0.73369f) + 0.46341f)) /
-    (sy * (sy * (sy * 0.093073f + 0.309420f) - 1.f) + 0.597999f);
-
-  slope.y = S * z * sqrt(1.f + slope.x*slope.x);
-
-  return slope;
-}
-
 // Fast visible normal sampling (wo must be in the upper hemisphere)
 // [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals"]
 inline vec3f sampleVisible(const GGXDistribution& self,
