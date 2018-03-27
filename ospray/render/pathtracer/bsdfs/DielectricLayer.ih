@@ -148,7 +148,7 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
   self->eta = (eta <= 1.f) ? eta : rcp(eta);
   self->transmittance = transmittance;
   self->thickness = thickness;
-  self->Favg = fresnelDielectricAverage(eta) * weight;
+  self->Favg = fresnelDielectricAvg(eta) * weight;
   self->weight = weight;
 }
 

@@ -60,7 +60,7 @@ inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
 // F_{\mathit{avg}} = 2 \int_0^1 F(\mu) \mu d\mu
 // \mu = \cos(\theta)
 // Fit from [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
-inline float fresnelDielectricAverage(float eta)
+inline float fresnelDielectricAvg(float eta)
 {
   const float rcpEta = rcp(eta);
 
