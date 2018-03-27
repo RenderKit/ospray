@@ -71,7 +71,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   if (self->substrate->type & ~BSDF_DIFFUSE)
     T = min(1.f - F, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   else
-    T = (1.f - F) * (1.f - Fi) / (1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    T = (1.f - F) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
   substrate.value = substrate.value * T;
 
   substrate.pdf *= (1.f - F);
@@ -104,7 +104,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
   {
     // Sample the substrate
     // Ignore refraction
-    float ss1 = (ss - F) * rcp(1.f-F); // reallocate sample
+    float ss1 = (ss - F) * rcp(1.f - F); // reallocate sample
     foreach_unique (f in self->substrate)
       res = f->sample(f, wo, s, ss1, lcg);
     if (reduce_max(res.weight) <= 0.f)
@@ -127,8 +127,8 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
     if (self->substrate->type & ~BSDF_DIFFUSE)
       T = min(1.f - F, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
     else
-      T = (1.f - F) * (1.f - Fi) / (1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
-    res.weight = res.weight * (T / (1.f - F));
+      T = (1.f - F) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    res.weight = res.weight * (T * rcp(1.f - F));
 
     res.pdf *= (1.f - F);
   }

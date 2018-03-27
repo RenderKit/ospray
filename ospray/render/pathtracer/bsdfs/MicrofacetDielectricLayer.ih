@@ -71,7 +71,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   if (self->substrate->type & ~BSDF_DIFFUSE)
     T = min(1.f - Eo, 1.f - Ei); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   else
-    T = (1.f - Eo) * (1.f - Ei) / (1.f - self->Eavg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    T = (1.f - Eo) * (1.f - Ei) * rcp(1.f - self->Eavg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
   substrate.value = substrate.value * T;
 
   float coatingPickProb = Eo;
@@ -188,7 +188,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   if (self->substrate->type & ~BSDF_DIFFUSE)
     T = min(1.f - Eo, 1.f - Ei); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   else
-    T = (1.f - Eo) * (1.f - Ei) / (1.f - self->Eavg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    T = (1.f - Eo) * (1.f - Ei) * rcp(1.f - self->Eavg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
   substrate.value = substrate.value * T;
 
   if (res.type & BSDF_SPECULAR)
