@@ -31,7 +31,10 @@ if(OSPRAY_SG_VTK)
 
   include(${VTK_USE_FILE})
 
-  set(SG_VTK_SRCS importer/importUnstructuredVolume.cpp)
+  set(SG_VTK_SRCS
+    importer/importUnstructuredVolume.cpp
+    importer/generateVTKWaveletVolume.cpp
+  )
 
   add_definitions(-DOSPRAY_APPS_SG_VTK=1)
 endif()
