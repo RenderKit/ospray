@@ -14,6 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/utility/StringManip.h"
+// sg
 #include "../common/Data.h"
 #include "Importer.h"
 
@@ -31,24 +35,25 @@ namespace ospray {
 
       vec3i dims(100, 100, 100);
 
-#if 0
-      int numSpheres = 1e6;
-      float radius   = 0.002f;
-
       for (auto &p : params) {
-        if (p.first == "numSpheres")
-          numSpheres = std::atoi(p.second.c_str());
-        else if (p.first == "radius")
-          radius = std::atof(p.second.c_str());
-        else {
+        if (p.first == "dimensions") {
+          auto string_dims = ospcommon::utility::split(p.second, 'x');
+          if (string_dims.size() != 3) {
+            std::cout << "WARNING: ignoring incorrect 'dimensions' parameter,"
+                      << " it must be of the form 'dimensions=XxYxZ'"
+                      << std::endl;
+            continue;
+          }
+
+          dims = vec3i(std::atoi(string_dims[0].c_str()),
+                       std::atoi(string_dims[1].c_str()),
+                       std::atoi(string_dims[2].c_str()));
+        } else {
           std::cout << "WARNING: unknown spheres generator parameter '"
                     << p.first << "' with value '" << p.second << "'"
                     << std::endl;
         }
       }
-#else
-      (void)params;
-#endif
 
       // generate volume data
 
