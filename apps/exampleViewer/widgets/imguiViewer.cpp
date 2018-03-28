@@ -68,6 +68,13 @@ namespace ospray {
     }
   }
 
+  static void sgWidget_vec3i(const std::string &text,
+                             std::shared_ptr<sg::Node> node)
+  {
+    vec3i val = node->valueAs<vec3i>();
+    ImGui::Text("(%i, %i, %i)", val.x, val.y, val.z);
+  }
+
   static void sgWidget_vec2f(const std::string &text,
                              std::shared_ptr<sg::Node> node)
   {
@@ -147,30 +154,35 @@ namespace ospray {
   static void sgWidget_string(const std::string &text,
                               std::shared_ptr<sg::Node> node)
   {
-    std::string value = node->valueAs<std::string>().c_str();
-    auto whitelist = node->whitelist();
-    if (!whitelist.empty()) {
-      int val = -1;
-
-      std::string list;
-      for (auto it = whitelist.begin(); it != whitelist.end(); ++it) {
-          auto option = *it;
-          if (option.get<std::string>() == value)
-              val = std::distance(whitelist.begin(), it);
-          list += option.get<std::string>();
-          list.push_back('\0');
-      }
-
-      ImGui::Combo(text.c_str(), &val, list.c_str(), whitelist.size());
-      node->setValue(whitelist[val]);
+    auto value = node->valueAs<std::string>();
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text(value.c_str());
     } else {
-      std::vector<char> buf(value.size() + 1 + 256);
-      strcpy(buf.data(), value.c_str());
-      buf[value.size()] = '\0';
-      if (ImGui::InputText(text.c_str(), buf.data(),
-                           value.size()+256,
-                           ImGuiInputTextFlags_EnterReturnsTrue)) {
-          node->setValue(std::string(buf.data()));
+      auto whitelist = node->whitelist();
+      if (!whitelist.empty()) {
+        int val = -1;
+
+        std::string list;
+        for (auto it = whitelist.begin(); it != whitelist.end(); ++it) {
+            auto option = *it;
+            if (option.get<std::string>() == value)
+                val = std::distance(whitelist.begin(), it);
+            list += option.get<std::string>();
+            list.push_back('\0');
+        }
+
+        ImGui::Combo(text.c_str(), &val, list.c_str(), whitelist.size());
+        node->setValue(whitelist[val]);
+      } else {
+        std::vector<char> buf(value.size() + 1 + 256);
+        strcpy(buf.data(), value.c_str());
+        buf[value.size()] = '\0';
+        if (ImGui::InputText(text.c_str(), buf.data(),
+                             value.size()+256,
+                             ImGuiInputTextFlags_EnterReturnsTrue)) {
+            node->setValue(std::string(buf.data()));
+        }
       }
     }
   }
@@ -210,6 +222,7 @@ namespace ospray {
         {"vec2i", sgWidget_vec2i},
         {"vec2f", sgWidget_vec2f},
         {"vec3f", sgWidget_vec3f},
+        {"vec3i", sgWidget_vec3i},
         {"box3f", sgWidget_box3f},
         {"string", sgWidget_string},
         {"bool", sgWidget_bool},

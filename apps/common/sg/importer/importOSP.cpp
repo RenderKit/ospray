@@ -51,8 +51,9 @@ namespace ospray {
 
       volume->fileNameOfCorrespondingXmlDoc = xmlNode.doc->fileName;
       volume->fileName = volumeFileName;
-      volume->dimensions = dimensions;
-      volume->voxelType = voxelType;
+
+      volume->child("dimensions") = dimensions;
+      volume->child("voxelType") = voxelType;
 
       world->add(volume);
     }

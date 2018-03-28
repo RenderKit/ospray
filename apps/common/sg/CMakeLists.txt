@@ -111,6 +111,7 @@ ospray_create_library(ospray_sg SHARED
 
   # scene graph importers
   importer/Importer.cpp
+  importer/generateBasicVolume.cpp
   importer/generateRandomSpheres.cpp
   importer/importPoints.cpp
   importer/importOSP.cpp
