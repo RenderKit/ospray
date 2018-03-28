@@ -22,8 +22,8 @@
 namespace ospray {
   namespace sg {
 
-    void generateSpheres(const std::shared_ptr<Node> &world,
-                         const std::vector<string_pair> &params)
+    void generateRandomSpheres(const std::shared_ptr<Node> &world,
+                               const std::vector<string_pair> &params)
     {
       auto spheres_node = createNode("generated_spheres", "Spheres");
 
@@ -82,7 +82,8 @@ namespace ospray {
       world->add(spheres_node);
     }
 
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateSpheres, spheres);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateRandomSpheres, randomSpheres);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateRandomSpheres, spheres);
 
   }  // ::ospray::sg
 }  // ::ospray
