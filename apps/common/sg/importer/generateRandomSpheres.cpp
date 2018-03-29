@@ -47,9 +47,12 @@ namespace ospray {
         }
       }
 
-      // generate spheres themselves
+      // generate sphere data
 
-      auto *spheres = new vec3f[numSpheres];
+      auto spheres = std::make_shared<DataVector3f>();
+      spheres->setName("spheres");
+
+      spheres->v.resize(numSpheres);
 
       std::mt19937 rng;
       rng.seed(0);
@@ -57,20 +60,14 @@ namespace ospray {
                                                       sceneUpperBound);
 
       for (int i = 0; i < numSpheres; ++i) {
-        auto &s = spheres[i];
+        auto &s = spheres->v[i];
 
         s.x = vert_dist(rng);
         s.y = vert_dist(rng);
         s.z = vert_dist(rng);
       }
 
-      // create data nodes
-
-      auto sphere_data = std::make_shared<DataArray3f>(spheres, numSpheres);
-
-      sphere_data->setName("spheres");
-
-      spheres_node->add(sphere_data);
+      spheres_node->add(spheres);
 
       // spheres attribute nodes
 
