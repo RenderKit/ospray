@@ -19,6 +19,10 @@
 
 uniform float* uniform MicrofacetAlbedoTable_dir = NULL;
 uniform float* uniform MicrofacetAlbedoTable_avg = NULL;
+uniform float* uniform MicrofacetDielectricAlbedoTable_dir = NULL;
+uniform float* uniform MicrofacetDielectricAlbedoTable_avg = NULL;
+uniform float* uniform MicrofacetDielectricRcpEtaAlbedoTable_dir = NULL;
+uniform float* uniform MicrofacetDielectricRcpEtaAlbedoTable_avg = NULL;
 uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_dir = NULL;
 uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_avg = NULL;
 uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir = NULL;
@@ -61,11 +65,16 @@ static void MicrofacetAlbedoTable_precompute()
   }
 }
 
-static void MicrofacetDielectricReflectionAlbedoTable_precompute(uniform int size,
-                                                                 uniform float minEta, uniform float maxEta,
-                                                                 uniform float* uniform dirValues,
-                                                                 uniform float* uniform avgValues)
+typedef float (*MicrofacetDielectricAlbedo_IntegrateFunc)(float cosThetaO, float eta, float roughness, uniform int numSamples);
+
+static void MicrofacetDielectricAlbedoTable_precompute(MicrofacetDielectricAlbedo_IntegrateFunc func,
+                                                       uniform int size,
+                                                       uniform float minEta, uniform float maxEta,
+                                                       uniform float* uniform dirValues,
+                                                       uniform float* uniform avgValues)
 {
+  const uniform int numSamples = 1024;
+
   uniform float* uniform dirPtr = dirValues;
   uniform float* uniform avgPtr = avgValues;
 
@@ -79,11 +88,15 @@ static void MicrofacetDielectricReflectionAlbedoTable_precompute(uniform int siz
       foreach (i = 0 ... size)
       {
         const float cosThetaO = (float)i / (size-1);
-        dirPtr[i] = MicrofacetDielectricReflectionAlbedo_integrate(cosThetaO, eta, roughness);
+        dirPtr[i] = func(cosThetaO, eta, roughness, numSamples);
+
+        //print("% ", dirPtr[i]);
       }
 
       // compute the average albedo
       *avgPtr = MicrofacetAlbedoTable_integrateAvg(dirPtr, size);
+      if (*avgPtr > 1.f)
+        print("% ", *avgPtr);
 
       dirPtr += size;
       avgPtr++;
@@ -91,32 +104,46 @@ static void MicrofacetDielectricReflectionAlbedoTable_precompute(uniform int siz
   }
 }
 
-static void MicrofacetDielectricReflectionAlbedoTable_precompute()
+static void MicrofacetDielectricAlbedoTable_precompute()
 {
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
   const uniform float minEta = rcp(MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR);
   const uniform float maxEta = rcp(MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR);
 
+  MicrofacetDielectricAlbedoTable_dir = uniform new float[size*size*size];
+  MicrofacetDielectricAlbedoTable_avg = uniform new float[size*size];
+  MicrofacetDielectricAlbedoTable_precompute(&MicrofacetDielectricAlbedo_integrate,
+                                             size, minEta, maxEta,
+                                             MicrofacetDielectricAlbedoTable_dir,
+                                             MicrofacetDielectricAlbedoTable_avg);
+
   MicrofacetDielectricReflectionAlbedoTable_dir = uniform new float[size*size*size];
   MicrofacetDielectricReflectionAlbedoTable_avg = uniform new float[size*size];
-
-  MicrofacetDielectricReflectionAlbedoTable_precompute(size, minEta, maxEta,
-                                                       MicrofacetDielectricReflectionAlbedoTable_dir,
-                                                       MicrofacetDielectricReflectionAlbedoTable_avg);
+  MicrofacetDielectricAlbedoTable_precompute(&MicrofacetDielectricReflectionAlbedo_integrate,
+                                             size, minEta, maxEta,
+                                             MicrofacetDielectricReflectionAlbedoTable_dir,
+                                             MicrofacetDielectricReflectionAlbedoTable_avg);
 }
 
-static void MicrofacetDielectricReflectionRcpEtaAlbedoTable_precompute()
+static void MicrofacetDielectricRcpEtaAlbedoTable_precompute()
 {
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
   const uniform float minEta = MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR;
   const uniform float maxEta = MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR;
 
+  MicrofacetDielectricRcpEtaAlbedoTable_dir = uniform new float[size*size*size];
+  MicrofacetDielectricRcpEtaAlbedoTable_avg = uniform new float[size*size];
+  MicrofacetDielectricAlbedoTable_precompute(&MicrofacetDielectricAlbedo_integrate,
+                                             size, minEta, maxEta,
+                                             MicrofacetDielectricRcpEtaAlbedoTable_dir,
+                                             MicrofacetDielectricRcpEtaAlbedoTable_avg);
+
   MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir = uniform new float[size*size*size];
   MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg = uniform new float[size*size];
-
-  MicrofacetDielectricReflectionAlbedoTable_precompute(size, minEta, maxEta,
-                                                       MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir,
-                                                       MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg);
+  MicrofacetDielectricAlbedoTable_precompute(&MicrofacetDielectricReflectionAlbedo_integrate,
+                                             size, minEta, maxEta,
+                                             MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir,
+                                             MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg);
 }
 
 void precomputeMicrofacetAlbedoTables()
@@ -125,6 +152,6 @@ void precomputeMicrofacetAlbedoTables()
     return;
 
   MicrofacetAlbedoTable_precompute();
-  MicrofacetDielectricReflectionAlbedoTable_precompute();
-  MicrofacetDielectricReflectionRcpEtaAlbedoTable_precompute();
+  MicrofacetDielectricAlbedoTable_precompute();
+  MicrofacetDielectricRcpEtaAlbedoTable_precompute();
 }

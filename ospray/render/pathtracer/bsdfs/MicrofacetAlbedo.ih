@@ -45,6 +45,50 @@ inline float MicrofacetAlbedo_sample(float cosThetaO, const GGXDistribution& mic
   return G * rcp_safe(evalG1(microfacet, wo, cosThetaOH));
 }
 
+inline float MicrofacetDielectricAlbedo_sample(float cosThetaO, float eta, const GGXDistribution& microfacet, const vec2f& s)
+{
+  // Handle edge cases
+  cosThetaO = max(cosThetaO, 1e-6f);
+
+  // Make an outgoing vector
+  vec3f wo = make_vec3f(cos2sin(cosThetaO), 0.f, cosThetaO);
+
+  // Sample the microfacet normal
+  float whPdf;
+  vec3f wh = sampleVisible(microfacet, wo, whPdf, s);
+
+  float cosThetaOH = dot(wo, wh);
+
+  // Fresnel term
+  float cosThetaTH; // positive
+  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, eta);
+
+  float weight = 0.f;
+
+  // Sample the reflection
+  vec3f wi = reflect(wo, wh, cosThetaOH);
+  float cosThetaI = wi.z;
+  if (cosThetaI > 0.f)
+  {
+    float cosThetaIH = dot(wi, wh);
+    float G = evalG2(microfacet, wo, wi, cosThetaOH, cosThetaIH);
+    weight += F * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
+  }
+
+  // Sample the transmission
+  // cosThetaTH = -cosThetaIH
+  wi = refract(wo, wh, cosThetaOH, cosThetaTH, eta);
+  cosThetaI = wi.z;
+  if (cosThetaI < 0.f)
+  {
+    float cosThetaIH = dot(wi, wh);
+    float G = evalG2(microfacet, wo, wi, cosThetaOH, cosThetaIH);
+    weight += (1.f-F) * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
+  }
+
+  return weight;
+}
+
 inline float MicrofacetDielectricReflectionAlbedo_sample(float cosThetaO, float eta, const GGXDistribution& microfacet, const vec2f& s)
 {
   // Handle edge cases
@@ -86,6 +130,24 @@ inline float MicrofacetAlbedo_integrate(float cosThetaO, float roughness, unifor
     {
       vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
       sum += MicrofacetAlbedo_sample(cosThetaO, microfacet, s);
+    }
+  }
+
+  return min(sum / (n*n), 1.f);
+}
+
+inline float MicrofacetDielectricAlbedo_integrate(float cosThetaO, float eta, float roughness, uniform int numSamples = 1024)
+{
+  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
+
+  uniform int n = sqrt((uniform float)numSamples);
+  float sum = 0.f;
+  for (uniform int i = 0; i < n; i++)
+  {
+    for (uniform int j = 0; j < n; j++)
+    {
+      vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
+      sum += MicrofacetDielectricAlbedo_sample(cosThetaO, eta, microfacet, s);
     }
   }
 

@@ -61,7 +61,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
     // Transmission
     res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
     res.type = BSDF_SPECULAR_TRANSMISSION;
-    res.weight = make_vec3f(rcp(sqr(self->eta))); // solid angle compression
+    res.weight = make_vec3f(sqr(self->eta)); // solid angle compression
   }
 
   return res;
@@ -92,5 +92,6 @@ inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform c
 // Helper function for transparent shadow rays
 inline vec3f Dielectric_getTransparency(float cosThetaO, float eta, float reflectionWeight)
 {
-  return make_vec3f(1.f - fresnelDielectric(cosThetaO, eta) * reflectionWeight);
+  //return make_vec3f(1.f - fresnelDielectric(cosThetaO, eta) * reflectionWeight);
+  return make_vec3f(0.f);
 }

@@ -21,8 +21,10 @@
 #include "GGXDistribution.ih"
 #include "MicrofacetAlbedoTables.ih"
 
-// Microfacet dielectric BSDF with the Smith microsurface model.
+// Microfacet dielectric BSDF with the Smith microsurface model and approximate multiple scattering.
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
+// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+// [Jakob et al., 2014, "A Comprehensive Framework for Rendering Layered Materials", Extended Technical Report]
 // FIXME: improve robustness
 struct MicrofacetDielectric
 {
@@ -30,6 +32,10 @@ struct MicrofacetDielectric
 
   float eta;
   GGXDistribution microfacet;
+  float roughness;
+  float EavgEta, EavgRcpEta;
+  float FavgEta, FavgRcpEta;
+  float fmsRatio;
   float reflectionWeight;
 };
 
@@ -74,10 +80,20 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   float cosThetaTH; // positive
   float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta) * self->reflectionWeight;
 
+  // Energy compensation [Kulla and Conty, 2017]
+  float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, self->eta, self->roughness) * self->reflectionWeight;
+  float fms, fmsPdf;
+
+  float ratio = self->fmsRatio * (1.f - self->FavgEta);
+
   float value;
   if (isReflection)
   {
     // Reflection
+    float Ei = MicrofacetDielectricAlbedoTable_eval(cosThetaI, self->eta, self->roughness) * self->reflectionWeight;
+    fms = ratio * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgEta)) * cosThetaI;
+    fmsPdf = ratio * cosineSampleHemispherePDF(cosThetaI);
+
     res.pdf = F * rcp(4.f*abs(cosThetaOH));
     value = F * rcp(4.f*cosThetaO);
   }
@@ -85,8 +101,12 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   {
     // Transmission
     // cosThetaTH = -cosThetaIH
+    float Ei = MicrofacetDielectricAlbedoTable_eval(abs(cosThetaI), rcp(self->eta), self->roughness) * self->reflectionWeight;
+    fms = (1.f - ratio) * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI) * sqr(self->eta);
+    fmsPdf = (1.f - ratio) * cosineSampleHemispherePDF(abs(cosThetaI));
+
     res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
-    value = (1.f-F) * cosThetaTH * abs(cosThetaOH) * rcp(cosThetaO*sqr(self->eta*cosThetaOH - cosThetaTH)) * rcp(sqr(self->eta));
+    value = (1.f-F) * cosThetaTH * abs(cosThetaOH) * rcp(cosThetaO*sqr(self->eta*cosThetaOH - cosThetaTH)) * sqr(self->eta);
   }
 
   linear3f toLocal = transposed(getFrame(super));
@@ -99,7 +119,8 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
   res.pdf *= whPdf;
-  res.value = make_vec3f(value * D * G);
+  res.pdf = Eo * res.pdf + (1.f - Eo) * fmsPdf;
+  res.value = make_vec3f(value * D * G + fms);
   return res;
 }
 
@@ -113,58 +134,68 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   if (cosThetaO <= 0.f)
     return make_BSDF_SampleRes_zero();
 
-  linear3f toGlobal = getFrame(super);
-  linear3f toLocal = transposed(getFrame(super));
-  vec3f wo0 = toLocal * wo;
+  // Energy compensation [Kulla and Conty, 2017]
+  float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, self->eta, self->roughness) * self->reflectionWeight;
+  float fms;
 
-  // Sample the microfacet normal
-  float whPdf;
-  vec3f wh = toGlobal * sampleVisible(self->microfacet, wo0, whPdf, s);
-
-  float cosThetaOH = dot(wo, wh);
-
-  // Fresnel term
-  float cosThetaTH; // positive
-  float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta) * self->reflectionWeight;
-
-  // Sample the reflection or the transmission
-  float cosThetaI;
-  float weight;
-
-  bool doReflection = (ss <= F);
-  if (doReflection)
+  if (ss <= Eo)
+  //if (0)
   {
-    // Reflection
-    res.wi = reflect(wo, wh, cosThetaOH);
-    cosThetaI = dot(res.wi, getN(super));
-    if (cosThetaI <= 0.f)
-      return make_BSDF_SampleRes_zero();
+    linear3f toGlobal = getFrame(super);
+    linear3f toLocal = transposed(getFrame(super));
+    vec3f wo0 = toLocal * wo;
 
-    res.type = BSDF_GLOSSY_REFLECTION;
-    res.pdf = F * rcp(4.f*abs(cosThetaOH));
-    weight = 1.f;
+    // Sample the microfacet normal
+    float whPdf;
+    vec3f wh = toGlobal * sampleVisible(self->microfacet, wo0, whPdf, s);
+
+    float cosThetaOH = dot(wo, wh);
+
+    // Fresnel term
+    float cosThetaTH; // positive
+    float F = fresnelDielectricEx(cosThetaOH, cosThetaTH, self->eta) * self->reflectionWeight;
+
+    // Sample the reflection or the transmission
+    float cosThetaI;
+    float weight;
+
+    bool doReflection = (LCG_getFloat(lcg) <= F);
+    if (doReflection)
+    {
+      // Reflection
+      res.type = BSDF_GLOSSY_REFLECTION;
+      res.wi = reflect(wo, wh, cosThetaOH);
+    }
+    else
+    {
+      // Transmission
+      // cosThetaTH = -cosThetaIH
+      res.type = BSDF_GLOSSY_TRANSMISSION;
+      res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
+    }
   }
   else
   {
-    // Transmission
-    // cosThetaTH = -cosThetaIH
-    res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
-    cosThetaI = dot(res.wi, getN(super));
-    if (cosThetaI >= 0.f)
-      return make_BSDF_SampleRes_zero();
+    float ratio = self->fmsRatio * (1.f - self->FavgEta);
 
-    res.type = BSDF_GLOSSY_TRANSMISSION;
-    res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
-    weight = rcp(sqr(self->eta));
+    bool doReflection = (LCG_getFloat(lcg) <= ratio);
+    if (doReflection)
+    {
+      // Reflection
+      res.type = BSDF_DIFFUSE_REFLECTION;
+      res.wi = getFrame(super) * cosineSampleHemisphere(s);
+    }
+    else
+    {
+      // Transmission
+      res.type = BSDF_DIFFUSE_TRANSMISSION;
+      res.wi = neg(getFrame(super) * cosineSampleHemisphere(s));
+    }
   }
 
-  float cosThetaIH = dot(res.wi, wh);
-  vec3f wi0 = toLocal * res.wi;
-
-  float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
-
-  res.pdf *= whPdf;
-  res.weight = make_vec3f(weight * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH))));
+  BSDF_EvalRes eval = MicrofacetDielectric_eval(super, wo, res.wi, lcg);
+  res.weight = eval.value * rcp(eval.pdf);
+  res.pdf = eval.pdf;
   return res;
 }
 
@@ -179,6 +210,17 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
 
   self->eta = eta;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
+
+  // Energy compensation [Kulla and Conty, 2017]
+  self->roughness = roughness;
+  self->EavgEta = MicrofacetDielectricAlbedoTable_evalAvg(eta, roughness) * reflectionWeight;
+  self->EavgRcpEta = MicrofacetDielectricAlbedoTable_evalAvg(rcp(eta), roughness) * reflectionWeight;
+  self->FavgEta = fresnelDielectricAvg(eta) * reflectionWeight;
+  self->FavgRcpEta = fresnelDielectricAvg(rcp(eta)) * reflectionWeight;
+  float a = (1.f - self->FavgEta) * rcp(1.f - self->EavgRcpEta);
+  float b = (1.f - self->FavgRcpEta) * rcp(1.f - self->EavgEta) * rcp(sqr(eta));
+  self->fmsRatio = b * rcp(a + b);
+
   self->reflectionWeight = reflectionWeight;
 }
 
@@ -197,6 +239,7 @@ inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext*
 inline vec3f MicrofacetDielectric_getTransparency(float cosThetaO, float eta, float roughness, float anisotropy,
                                                   float reflectionWeight, unsigned int& lcg)
 {
-  float T = 1.f - MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness) * reflectionWeight;
-  return make_vec3f(T);
+  //float T = 1.f - MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness) * reflectionWeight;
+  //return make_vec3f(T);
+  return make_vec3f(0.f);
 }
