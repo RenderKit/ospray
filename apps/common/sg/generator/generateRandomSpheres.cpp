@@ -14,76 +14,73 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
-#include "ospcommon/utility/StringManip.h"
-// sg
 #include "../common/Data.h"
-#include "Importer.h"
+#include "Generator.h"
 
 #include <random>
 
 namespace ospray {
   namespace sg {
 
-    void generateBasicVolume(const std::shared_ptr<Node> &world,
+    void generateRandomSpheres(const std::shared_ptr<Node> &world,
                                const std::vector<string_pair> &params)
     {
-      auto volume_node = createNode("basic_volume", "StructuredVolume");
+      auto spheres_node = createNode("generated_spheres", "Spheres");
 
       // get generator parameters
 
-      vec3i dims(100, 100, 100);
+      const float sceneLowerBound = 0.f;
+      const float sceneUpperBound = 1.f;
+
+      int numSpheres = 1e6;
+      float radius   = 0.002f;
 
       for (auto &p : params) {
-        if (p.first == "dimensions") {
-          auto string_dims = ospcommon::utility::split(p.second, 'x');
-          if (string_dims.size() != 3) {
-            std::cout << "WARNING: ignoring incorrect 'dimensions' parameter,"
-                      << " it must be of the form 'dimensions=XxYxZ'"
-                      << std::endl;
-            continue;
-          }
-
-          dims = vec3i(std::atoi(string_dims[0].c_str()),
-                       std::atoi(string_dims[1].c_str()),
-                       std::atoi(string_dims[2].c_str()));
-        } else {
+        if (p.first == "numSpheres")
+          numSpheres = std::atoi(p.second.c_str());
+        else if (p.first == "radius")
+          radius = std::atof(p.second.c_str());
+        else {
           std::cout << "WARNING: unknown spheres generator parameter '"
                     << p.first << "' with value '" << p.second << "'"
                     << std::endl;
         }
       }
 
-      // generate volume data
+      // generate sphere data
 
-      auto numVoxels = dims.product();
+      auto spheres = std::make_shared<DataVector3f>();
+      spheres->setName("spheres");
 
-      float *voxels = new float[numVoxels];
+      spheres->v.resize(numSpheres);
 
-      for (int i = 0; i < numVoxels; ++i)
-        voxels[i] = float(i);
+      std::mt19937 rng;
+      rng.seed(0);
+      std::uniform_real_distribution<float> vert_dist(sceneLowerBound,
+                                                      sceneUpperBound);
 
-      // create data nodes
+      for (int i = 0; i < numSpheres; ++i) {
+        auto &s = spheres->v[i];
 
-      auto voxel_data = std::make_shared<DataArray1f>(voxels, numVoxels);
+        s.x = vert_dist(rng);
+        s.y = vert_dist(rng);
+        s.z = vert_dist(rng);
+      }
 
-      voxel_data->setName("voxelData");
+      spheres_node->add(spheres);
 
-      volume_node->add(voxel_data);
+      // spheres attribute nodes
 
-      // volume attributes
+      spheres_node->createChild("radius", "float", radius);
+      spheres_node->createChild("bytes_per_sphere", "int", int(sizeof(vec3f)));
 
-      volume_node->child("voxelType")  = std::string("float");
-      volume_node->child("dimensions") = dims;
+      // finally add to world
 
-      // add volume to world
-
-      world->add(volume_node);
+      world->add(spheres_node);
     }
 
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateBasicVolume, basic_volume);
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateBasicVolume, volume);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateRandomSpheres, randomSpheres);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateRandomSpheres, spheres);
 
   }  // ::ospray::sg
 }  // ::ospray

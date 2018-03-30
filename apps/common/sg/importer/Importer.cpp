@@ -152,11 +152,6 @@ namespace ospray {
         auto type = splitValues[1];
         auto file = splitValues[2];
         importRegistryFileLoader(wsg, type, FileName(file));
-      } else if (utility::beginsWith(fileName, "--generate:")) {
-        auto splitValues = utility::split(fileName, ':');
-        auto type = splitValues[1];
-        std::string params = splitValues.size() > 2 ? splitValues[2] : "";
-        importRegistryGenerator(wsg, type, params);
       } else {
         importDefaultExtensions(wsg, fileName);
       }
@@ -177,42 +172,6 @@ namespace ospray {
                   << fu.formatType
                   << "' ... reverting to loading by file extension"
                   << std::endl;
-      }
-    }
-
-    // TODO: Implement a registry for data "generators" which don't require
-    //       an input file.
-    void Importer::importRegistryGenerator(std::shared_ptr<Node> world,
-                                           const std::string &type,
-                                           const std::string &params) const
-    {
-      using importFunction = void(*)(std::shared_ptr<Node>,
-                                     const std::vector<string_pair> &);
-
-      static std::map<std::string, importFunction> symbolRegistry;
-
-      if (symbolRegistry.count(type) == 0) {
-        std::string creationFunctionName = "ospray_sg_generate_" + type;
-        symbolRegistry[type] =
-            (importFunction)getSymbol(creationFunctionName);
-      }
-
-      auto fcn = symbolRegistry[type];
-
-      if (fcn) {
-        std::vector<string_pair> parameters;
-        auto splitValues = utility::split(params, ',');
-        for (auto &value : splitValues) {
-          auto splitParam = utility::split(value, '=');
-          if (splitParam.size() == 2)
-            parameters.emplace_back(splitParam[0], splitParam[1]);
-        }
-
-        fcn(world, parameters);
-      } else {
-        symbolRegistry.erase(type);
-        throw std::runtime_error("Could not find sg generator of type: "
-          + type + ".  Make sure you have the correct libraries loaded.");
       }
     }
 

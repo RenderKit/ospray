@@ -65,9 +65,6 @@ namespace ospray {
       void importURL(std::shared_ptr<Node> world,
                      const FileName &fileName,
                      const FormatURL &fu) const;
-      void importRegistryGenerator(std::shared_ptr<Node> world,
-                                   const std::string &type,
-                                   const std::string &params) const;
       void importRegistryFileLoader(std::shared_ptr<Node> world,
                                     const std::string &type,
                                     const FileName &fileName) const;
@@ -83,12 +80,6 @@ namespace ospray {
     OSPSG_INTERFACE
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer);
-
-    /*! import a given file. throws a sg::RuntimeError if this could
-     *  not be done */
-    OSPSG_INTERFACE
-    void importFile(std::shared_ptr<sg::Model> &world,
-                    const FileName &fileName);
 
     /*! import an OBJ wavefront model, and add its contents to the given
         world */
@@ -155,18 +146,6 @@ namespace ospray {
                                             const FileName fileName)           \
     {                                                                          \
       function(world, fileName);                                               \
-    }                                                                          \
-    /* additional declaration to avoid "extra ;" -Wpedantic warnings */        \
-    void ospray_sg_import_##name()
-
-    using string_pair = std::pair<std::string, std::string>;
-
-#define OSPSG_REGISTER_GENERATE_FUNCTION(function, name)                       \
-    extern "C" void ospray_sg_generate_##name(                                 \
-      std::shared_ptr<Node> world,                                             \
-      const std::vector<string_pair> &params)                                  \
-    {                                                                          \
-      function(world, params);                                               \
     }                                                                          \
     /* additional declaration to avoid "extra ;" -Wpedantic warnings */        \
     void ospray_sg_import_##name()

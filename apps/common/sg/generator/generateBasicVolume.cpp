@@ -19,23 +19,21 @@
 #include "ospcommon/utility/StringManip.h"
 // sg
 #include "../common/Data.h"
-#include "Importer.h"
-// vtk
-#include <vtkImageData.h>
-#include <vtkRTAnalyticSource.h>
-#include <vtkSmartPointer.h>
+#include "Generator.h"
+
+#include <random>
 
 namespace ospray {
   namespace sg {
 
-    void generateVTKWaveletVolume(const std::shared_ptr<Node> &world,
-                                  const std::vector<string_pair> &params)
+    void generateBasicVolume(const std::shared_ptr<Node> &world,
+                               const std::vector<string_pair> &params)
     {
-      auto volume_node = createNode("wavelet", "StructuredVolume");
+      auto volume_node = createNode("basic_volume", "StructuredVolume");
 
       // get generator parameters
 
-      vec3i dims(256, 256, 256);
+      vec3i dims(100, 100, 100);
 
       for (auto &p : params) {
         if (p.first == "dimensions") {
@@ -59,51 +57,16 @@ namespace ospray {
 
       // generate volume data
 
-      auto halfDims = dims / 2;
-
-      vtkSmartPointer<vtkRTAnalyticSource> wavelet = vtkRTAnalyticSource::New();
-      wavelet->SetWholeExtent(-halfDims.x, halfDims.x-1,
-                              -halfDims.y, halfDims.y-1,
-                              -halfDims.z, halfDims.z-1);
-
-      wavelet->SetCenter(0, 0, 0);
-      wavelet->SetMaximum(255);
-      wavelet->SetStandardDeviation(.5);
-      wavelet->SetXFreq(60);
-      wavelet->SetYFreq(30);
-      wavelet->SetZFreq(40);
-      wavelet->SetXMag(10);
-      wavelet->SetYMag(18);
-      wavelet->SetZMag(5);
-      wavelet->SetSubsampleRate(1);
-
-      wavelet->Update();
-
-      auto imageData = wavelet->GetOutput();
-
-      // validate expected outputs
-
-      std::string voxelType = imageData->GetScalarTypeAsString();
-
-      if (voxelType != "float")
-        throw std::runtime_error("wavelet not floats? got '" + voxelType + "'");
-
-      auto dimentionality = imageData->GetDataDimension();
-
-      if (dimentionality != 3)
-        throw std::runtime_error("wavelet not 3 dimentional?");
-
-      // import data into sg nodes
-
-      dims = vec3i(imageData->GetDimensions()[0],
-                   imageData->GetDimensions()[1],
-                   imageData->GetDimensions()[2]);
-
       auto numVoxels = dims.product();
 
-      auto *voxels_ptr = (float*)imageData->GetScalarPointer();
+      float *voxels = new float[numVoxels];
 
-      auto voxel_data = std::make_shared<DataArray1f>(voxels_ptr, numVoxels);
+      for (int i = 0; i < numVoxels; ++i)
+        voxels[i] = float(i);
+
+      // create data nodes
+
+      auto voxel_data = std::make_shared<DataArray1f>(voxels, numVoxels);
 
       voxel_data->setName("voxelData");
 
@@ -111,17 +74,16 @@ namespace ospray {
 
       // volume attributes
 
-      volume_node->child("voxelType")  = voxelType;
+      volume_node->child("voxelType")  = std::string("float");
       volume_node->child("dimensions") = dims;
-
-      volume_node->createChild("stashed_vtk_source", "Node", wavelet);
 
       // add volume to world
 
       world->add(volume_node);
     }
 
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateVTKWaveletVolume, vtkWavelet);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateBasicVolume, basic_volume);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateBasicVolume, volume);
 
   }  // ::ospray::sg
 }  // ::ospray
