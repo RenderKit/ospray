@@ -28,16 +28,20 @@ uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_avg = NULL;
 uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir = NULL;
 uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg = NULL;
 
-static inline uniform float MicrofacetAlbedoTable_integrateAvg(const uniform float* uniform f, uniform int size)
+static inline uniform float MicrofacetAlbedoTable_integrateAvg(const uniform float* uniform f, uniform int size, uniform int numSamples = 1024)
 {
+  // Trapezoidal rule
+  const uniform int n = numSamples+1;
   float sum = 0.f;
-  foreach (i = 0 ... size)
+  foreach (i = 0 ... n)
   {
-    const float cosThetaO = (float)i / (size-1);
-    sum += f[i] * cosThetaO;
+    const float cosThetaO = (float)i / (n-1);
+    const float x = cosThetaO * (size-1);
+    sum += interp1DLinear(x, f, size) * cosThetaO * ((i == 0 || i == n-1) ? 0.5f : 1.f);
   }
+
   uniform float totalSum = reduce_add(sum);
-  return min(2.f * (totalSum / size), 1.f);
+  return min(2.f * (totalSum / (n-1)), 1.f);
 }
 
 static void MicrofacetAlbedoTable_precompute()
@@ -89,14 +93,10 @@ static void MicrofacetDielectricAlbedoTable_precompute(MicrofacetDielectricAlbed
       {
         const float cosThetaO = (float)i / (size-1);
         dirPtr[i] = func(cosThetaO, eta, roughness, numSamples);
-
-        //print("% ", dirPtr[i]);
       }
 
       // compute the average albedo
       *avgPtr = MicrofacetAlbedoTable_integrateAvg(dirPtr, size);
-      if (*avgPtr > 1.f)
-        print("% ", *avgPtr);
 
       dirPtr += size;
       avgPtr++;
