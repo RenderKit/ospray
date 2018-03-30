@@ -355,6 +355,9 @@ namespace ospray {
     case 'r':
       resetView();
       break;
+    case 'd':
+      resetDefaultView();
+      break;
     case 'p':
       printViewport();
       break;
@@ -374,6 +377,28 @@ namespace ospray {
     auto oldAspect = viewPort.aspect;
     viewPort = originalView;
     viewPort.aspect = oldAspect;
+  }
+
+  void ImGuiViewer::resetDefaultView()
+  {
+    auto &renderer = *scenegraph;
+
+    auto &world = renderer["world"];
+    auto bbox = world.bounds();
+    vec3f diag = bbox.size();
+    diag = max(diag, vec3f(0.3f * length(diag)));
+
+    auto gaze = ospcommon::center(bbox);
+    auto pos = gaze - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
+    auto up = vec3f(0.f, 1.f, 0.f);
+
+    auto &camera = renderer["camera"];
+    camera["pos"] = pos;
+    camera["dir"] = normalize(gaze - pos);
+    camera["up"] = up;
+
+    setViewPort(pos, gaze, up);
+    originalView = viewPort;
   }
 
   void ImGuiViewer::printViewport()
@@ -537,6 +562,7 @@ namespace ospray {
         manipulator = moveModeManipulator.get();
 
       if (ImGui::MenuItem("Reset View")) resetView();
+      if (ImGui::MenuItem("Create Default View")) resetDefaultView();
       if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
       if (ImGui::MenuItem("Print View")) printViewport();
 
