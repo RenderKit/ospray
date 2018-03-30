@@ -84,15 +84,13 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, self->eta, self->roughness) * self->reflectionWeight;
   float fms, fmsPdf;
 
-  float ratio = self->FavgEta;
-
   float value;
   if (isReflection)
   {
     // Reflection
     float Ei = MicrofacetDielectricAlbedoTable_eval(cosThetaI, self->eta, self->roughness) * self->reflectionWeight;
-    fms = ratio * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgEta)) * cosThetaI;
-    fmsPdf = ratio * cosineSampleHemispherePDF(cosThetaI);
+    fms = self->fmsRatio * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgEta)) * cosThetaI;
+    fmsPdf = self->fmsRatio * cosineSampleHemispherePDF(cosThetaI);
 
     res.pdf = F * rcp(4.f*abs(cosThetaOH));
     value = F * rcp(4.f*cosThetaO);
@@ -102,8 +100,8 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
     // Transmission
     // cosThetaTH = -cosThetaIH
     float Ei = MicrofacetDielectricAlbedoTable_eval(abs(cosThetaI), rcp(self->eta), self->roughness) * self->reflectionWeight;
-    fms = (1.f - ratio) * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI);
-    fmsPdf = (1.f - ratio) * cosineSampleHemispherePDF(abs(cosThetaI));
+    fms = (1.f - self->fmsRatio) * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI);
+    fmsPdf = (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
 
     res.pdf = (1.f-F) * cosThetaTH * rcp(sqr(self->eta*cosThetaOH - cosThetaTH));
     value = (1.f-F) * cosThetaTH * abs(cosThetaOH) * rcp(cosThetaO*sqr(self->eta*cosThetaOH - cosThetaTH));
@@ -271,9 +269,8 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   else
   {
     res.pdf = 1.f - Eo;
-    float ratio = self->FavgEta;
 
-    bool doReflection = (ss <= ratio);
+    bool doReflection = (ss <= self->fmsRatio);
     if (doReflection)
     {
       // Reflection
@@ -281,7 +278,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
       res.wi = getFrame(super) * cosineSampleHemisphere(s);
       float cosThetaI = dot(res.wi, getN(super));
       float Ei = MicrofacetDielectricAlbedoTable_eval(cosThetaI, self->eta, self->roughness) * self->reflectionWeight;
-      res.pdf *= ratio * cosineSampleHemispherePDF(cosThetaI);
+      res.pdf *= self->fmsRatio * cosineSampleHemispherePDF(cosThetaI);
       res.weight = make_vec3f((1.f - Ei) * rcp(1.f - self->EavgEta));
     }
     else
@@ -291,7 +288,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
       res.wi = neg(getFrame(super) * cosineSampleHemisphere(s));
       float cosThetaI = dot(res.wi, getN(super));
       float Ei = MicrofacetDielectricAlbedoTable_eval(abs(cosThetaI), rcp(self->eta), self->roughness) * self->reflectionWeight;
-      res.pdf *= (1.f - ratio) * cosineSampleHemispherePDF(abs(cosThetaI));
+      res.pdf *= (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
       res.weight = make_vec3f((1.f - Ei) * rcp(1.f - self->EavgRcpEta));
     }
 
@@ -319,7 +316,9 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
   self->FavgRcpEta = fresnelDielectricAvg(rcp(eta)) * reflectionWeight;
   float a = (1.f - self->FavgEta) * rcp(1.f - self->EavgRcpEta);
   float b = (1.f - self->FavgRcpEta) * rcp(1.f - self->EavgEta) * rcp(sqr(eta));
-  self->fmsRatio = b * rcp(a + b);
+  float x = b * rcp(a + b);
+  //self->fmsRatio = 1.f * x * (1.f - self->FavgEta);
+  self->fmsRatio = self->FavgEta;
 
   self->reflectionWeight = reflectionWeight;
 }
