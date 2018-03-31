@@ -61,6 +61,9 @@ namespace ospray {
 
       ospCommit(model);
       ctx.currentOSPModel = stashedModel;
+
+      // reset bounding box
+      child("bounds") = box3f(empty);
       child("bounds") = computeBounds();
     }
 

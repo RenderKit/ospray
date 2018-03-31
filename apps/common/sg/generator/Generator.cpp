@@ -50,6 +50,8 @@ namespace ospray {
       std::cout << "generating data with '" << lastType << "' generator"
                 << std::endl;
 
+      child("bounds") = box3f(empty);
+
       remove("data");
       auto wsg = createChild("data", "Transform").shared_from_this();
 
