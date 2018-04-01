@@ -143,6 +143,9 @@ namespace ospcommon {
     std::string fullName = "lib"+file+".so";
 #endif
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    if (lib == nullptr) {
+      PRINT(dlerror());
+    }
 #endif
 
     // iw: do NOT use this 'hack' that tries to find the
@@ -169,9 +172,8 @@ namespace ospcommon {
       // to log out the error that occurred when calling LoadLibrary
       throw std::runtime_error("could not open module lib "+name);
 #else
-      const char* error = dlerror();
-      throw std::runtime_error("could not open module lib "+name
-          +" due to "+error);
+      // dlerror() is cleared after each call and will return null at this point.
+      throw std::runtime_error("could not open module lib "+name);
 #endif
     }
   }

@@ -47,6 +47,11 @@ bool intersectAndSampleTet(void *uniform userData,
   if (!assumeInside && !(d0 > 0 && d1 > 0 && d2 > 0 && d3 > 0))
     return false;
 
+  if (self->cellField) {
+    result = self->cellField[id];
+    return true;
+  }
+
   // Distance of tetrahedron corners to their opposite faces.
   uniform float h0 = dot(norm0, p1 - p0);
   uniform float h1 = dot(norm1, p2 - p1);
@@ -232,11 +237,15 @@ bool intersectAndSampleHexNonplanar(void *uniform userData,
       pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
       pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit) {
     // evaluation
-    result = 0.f;
-    HexInterpolationFunctions(pcoords, weights);
-    for (int i = 0; i < 8; i++) {
-      int idx = i < 4 ? (&lower.x)[i] : (&upper.x)[i - 4];
-      result += weights[i] * self->field[idx];
+    if (self->cellField) {
+      result = self->cellField[id];
+    } else {
+      result = 0.f;
+      HexInterpolationFunctions(pcoords, weights);
+      for (int i = 0; i < 8; i++) {
+        int idx = i < 4 ? (&lower.x)[i] : (&upper.x)[i - 4];
+        result += weights[i] * self->field[idx];
+      }
     }
 
     return true;
@@ -265,6 +274,11 @@ bool intersectAndSampleHexPlanar(void *uniform userData,
           self->faceNormals[(id * 6) + planeID]);
     if (!assumeInside && dist[planeID] >= 0.f)
       return false;
+  }
+
+  if (self->cellField) {
+    result = self->cellField[id];
+    return true;
   }
 
   float u0 = dist[4] / (dist[0] + dist[4]);
@@ -311,7 +325,7 @@ inline varying float UnstructuredVolume_sample(
   // Cast to the actual Volume subtype.
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
 
-  float results = 0;
+  float results = floatbits(0xffffffff);  /* NaN */
 
   traverse(self->bvh, _self, intersectAndSampleCell, results, worldCoordinates);
 
@@ -554,6 +568,15 @@ UnstructuredVolume_method_nonplanar(void *uniform _self)
   self->hexMethod = NONPLANAR;
 }
 
+export void
+UnstructuredVolume_disableCellGradient(void *uniform _self)
+{
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
+
+  if (self->cellField)
+    self->super.gradientShadingEnabled = false;
+}
+
 export void UnstructuredVolume_set(void *uniform _self,
                                   const uniform int &_nVertices,
                                   const uniform int &_nCells,
@@ -562,6 +585,7 @@ export void UnstructuredVolume_set(void *uniform _self,
                                   const vec3f *uniform _faceNormals,
                                   const vec4i *uniform _indices,
                                   const float *uniform _field,
+                                  const float *uniform _cellField,
                                   uniform int64 rootRef,
                                   const void *uniform _bvhNode,
                                   const int64 *uniform _bvhPrimID,
@@ -576,6 +600,7 @@ export void UnstructuredVolume_set(void *uniform _self,
   self->vertices    = _vertices;
   self->indices     = _indices;
   self->field       = _field;
+  self->cellField   = _cellField;
 
   // Set inherited member variables.
   self->super.boundingBox  = _bbox;

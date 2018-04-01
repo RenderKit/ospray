@@ -45,6 +45,7 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
 
+  common/ospray.rc
   common/OSPCommon.cpp
 
   include/ospray/ospray.h
@@ -70,7 +71,6 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
 
   api/ISPCDevice.cpp
 
-  common/ospray.rc
   common/ObjectHandle.cpp
   common/Data.cpp
   common/Managed.cpp
@@ -461,15 +461,20 @@ COMPONENT
   lib
 )
 
-OSPRAY_CREATE_LIBRARY(ospray_module_ispc
-  ${OSPRAY_ISPC_DEVICE_SOURCES}
-LINK
-  ${OSPRAY_LIBS}
-  ospray
-  ${EMBREE_LIBRARIES}
-COMPONENT
-  lib
-)
+OPTION(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
+MARK_AS_ADVANCED(OSPRAY_BUILD_ISPC_DEVICE)
+
+IF(OSPRAY_BUILD_ISPC_DEVICE)
+  OSPRAY_CREATE_LIBRARY(ospray_module_ispc
+    ${OSPRAY_ISPC_DEVICE_SOURCES}
+  LINK
+    ${OSPRAY_LIBS}
+    ospray
+    ${EMBREE_LIBRARIES}
+  COMPONENT
+    lib
+  )
+ENDIF()
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)

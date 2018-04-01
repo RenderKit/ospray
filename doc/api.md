@@ -564,6 +564,9 @@ and eight indices per cell (first four are -1 for tetrahedral
 cells). An unstructred volume type is created by passing the type
 string "`unstructured_volume`" to `ospNewVolume`.
 
+Field values can be specified per-vertex ('field') or per-cell
+('cellField').  If both values are set, cellField takes precedence.
+
 Similar to [triangle mesh], each tetrahedron is formed by a group of
 indices into the vertices. For each vertex, the corresponding (by array
 index) data value will be used for sampling when rendering. Note that
@@ -580,6 +583,7 @@ four counterclockwise.
   -------- ----------- ------------------------------------------------------------
   vec3f[]  vertices    [data] array of vertex positions
   float[]  field       [data] array of vertex data values to be sampled
+  float[]  cellField   [data] array of cell data values to be sampled
   vec4i[]  intices     [data] array of tetrahedra indices (into vertices and field)
   string   hexMethod   "planar" (default) or "nonplanar"
   -------- ----------- ------------------------------------------------------------

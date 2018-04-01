@@ -120,11 +120,15 @@ www/images/%: images/%
 
 # try to download images if not linked; images may not be up to date
 images/%:
-	if [[ -d ospray-doc ]] ; then \
+	if [[ -d ospray-doc/images ]] ; then \
 	  ln -fs ospray-doc/images ;\
 	else \
-	  mkdir -p images ;\
-	  wget https://ospray.github.io/$@ -O $@ ;\
+	  if [[ -x "`which wget 2> /dev/null`" ]] ; then \
+	    mkdir -p images ;\
+	    wget https://ospray.github.io/$@ -O $@ ;\
+	  else \
+	    curl https://ospray.github.io/$@ --create-dirs -Lo $@ ;\
+	  fi \
 	fi
 
 

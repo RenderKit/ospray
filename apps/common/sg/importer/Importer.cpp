@@ -149,16 +149,9 @@ namespace ospray {
         importURL(wsg, fileName, *fu);
       } else if (utility::beginsWith(fileName, "--import:")) {
         auto splitValues = utility::split(fileName, ':');
-        bool isGenerator = (splitValues.size() == 2);
-
         auto type = splitValues[1];
-
-        if (isGenerator)
-          importRegistryGenerator(wsg, type);
-        else {
-          auto file = splitValues[2];
-          importRegistryFileLoader(wsg, type, FileName(file));
-        }
+        auto file = splitValues[2];
+        importRegistryFileLoader(wsg, type, FileName(file));
       } else {
         importDefaultExtensions(wsg, fileName);
       }
@@ -180,58 +173,6 @@ namespace ospray {
                   << "' ... reverting to loading by file extension"
                   << std::endl;
       }
-    }
-
-    // TODO: Implement a registry for data "generators" which don't require
-    //       an input file.
-    void Importer::importRegistryGenerator(std::shared_ptr<Node> /*world*/,
-                                           const std::string &/*type*/) const
-    {
-      #if 0
-      // Function pointer type for creating a concrete instance of a subtype of
-      // this class.
-      using importFunction = void(*)(std::shared_ptr<Node>, const FileName &);
-
-      // Function pointers corresponding to each subtype.
-      static std::map<std::string, importFunction> symbolRegistry;
-
-      // Find the creation function for the subtype if not already known.
-      if (symbolRegistry.count(type) == 0) {
-        postStatusMsg(2) << "#ospray: trying to look up "
-                         << type_string << " type '" << type
-                         << "' for the first time";
-
-        // Construct the name of the creation function to look for.
-        std::string creationFunctionName = "ospray_create_" + type_string
-                                           +  "__" + type;
-
-        // Look for the named function.
-        symbolRegistry[type] =
-            (creationFunctionPointer)getSymbol(creationFunctionName);
-
-        // The named function may not be found if the requested subtype is not
-        // known.
-        if (!symbolRegistry[type]) {
-          postStatusMsg(1) << "  WARNING: unrecognized " << type_string
-                           << " type '" << type << "'.";
-        }
-      }
-
-      // Create a concrete instance of the requested subtype.
-      auto *object = symbolRegistry[type] ? (*symbolRegistry[type])() : nullptr;
-
-      // Denote the subclass type in the ManagedObject base class.
-      if (object) {
-        object->managedObjectType = OSP_TYPE;
-      }
-      else {
-        symbolRegistry.erase(type);
-        throw std::runtime_error("Could not find " + type_string + " of type: "
-          + type + ".  Make sure you have the correct OSPRay libraries linked.");
-      }
-
-      return object;
-      #endif
     }
 
     void Importer::importRegistryFileLoader(std::shared_ptr<Node> world,

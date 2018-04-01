@@ -31,7 +31,10 @@ if(OSPRAY_SG_VTK)
 
   include(${VTK_USE_FILE})
 
-  set(SG_VTK_SRCS importer/importUnstructuredVolume.cpp)
+  set(SG_VTK_SRCS
+    importer/importUnstructuredVolume.cpp
+    generator/generateVTKWaveletVolume.cpp
+  )
 
   add_definitions(-DOSPRAY_APPS_SG_VTK=1)
 endif()
@@ -108,6 +111,11 @@ ospray_create_library(ospray_sg SHARED
   module/Module.cpp
 
   3rdParty/ply.cpp
+
+  # scene graph generators
+  generator/generateBasicVolume.cpp
+  generator/generateRandomSpheres.cpp
+  generator/Generator.cpp
 
   # scene graph importers
   importer/Importer.cpp

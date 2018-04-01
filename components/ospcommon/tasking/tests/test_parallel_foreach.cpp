@@ -14,28 +14,29 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "../../testing/catch.hpp"
+#include "../parallel_foreach.h"
 
-// sg
-#include "Volume.h"
+#include <algorithm>
+#include <vector>
 
-namespace ospray {
-  namespace sg {
+using ospcommon::tasking::parallel_foreach;
 
-    /*! a plain old structured volume */
-    struct OSPSG_INTERFACE UnstructuredVolume : public Volume
-    {
-      UnstructuredVolume();
+TEST_CASE("parallel_foreach")
+{
+  const size_t N_ELEMENTS = 1e8;
 
-      std::string toString() const override;
+  const int bad_value  = 0;
+  const int good_value = 1;
 
-      void preCommit(RenderContext &ctx) override;
+  std::vector<int> v(N_ELEMENTS);
+  std::fill(v.begin(), v.end(), bad_value);
 
-      std::string fileName;
+  parallel_foreach(v, [&](int &value) {
+    value = good_value;
+  });
 
-      TimeStamp vertexFieldTime;
-      TimeStamp cellFieldTime;
-    };
+  auto found = std::find(v.begin(), v.end(), bad_value);
 
-  } // ::ospray::sg
-} // ::ospray
+  REQUIRE(found == v.end());
+}

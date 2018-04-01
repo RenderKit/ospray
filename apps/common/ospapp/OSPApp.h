@@ -63,6 +63,7 @@ namespace ospray {
 
       void addLightsToScene(sg::Node &renderer);
       void addImporterNodesToWorld(sg::Node &renderer);
+      void addGeneratorNodesToWorld(sg::Node &renderer);
       void addAnimatedImporterNodesToWorld(sg::Node &renderer);
       void setupCamera(sg::Node &renderer);
       void addPlaneToScene(sg::Node &renderer);
@@ -83,6 +84,12 @@ namespace ospray {
         clTransform transform;
       };
 
+      struct clGeneratorCfg
+      {
+        std::string type;
+        std::string params;
+      };
+
       int width = 1024;
       int height = 768;
       CmdLineParam<vec3f> up = CmdLineParam<vec3f>({ 0, 1, 0 });
@@ -93,6 +100,7 @@ namespace ospray {
 
 
       std::vector<clFile> files;
+      std::vector<clGeneratorCfg> generators;
       std::vector<std::vector<clFile> > animatedFiles;
       int matrix_i = 1, matrix_j = 1, matrix_k = 1;
       std::string hdriLightFile;
@@ -103,7 +111,7 @@ namespace ospray {
       box3f bboxWithoutPlane;
 
       bool addPlane =
-          utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(1);
+          utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(0);
 
       bool fast =
           utility::getEnvVar<int>("OSPRAY_APPS_FAST_MODE").value_or(0);

@@ -14,60 +14,37 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Model.h"
+#pragma once
 
-namespace ospray {
-  namespace sg {
+#include "parallel_for.h"
 
-    Model::Model()
+#include <iterator>
+
+namespace ospcommon {
+  namespace tasking {
+
+    template<typename ITERATOR_T, typename TASK_T>
+    inline void parallel_foreach(ITERATOR_T begin, ITERATOR_T end, TASK_T&& f)
     {
-      setValue((OSPModel)nullptr);
+      using ITERATOR_KIND =
+          typename std::iterator_traits<ITERATOR_T>::iterator_category;
+
+      static_assert(std::is_same<ITERATOR_KIND,
+                                 std::random_access_iterator_tag>::value,
+                    "ospcommon::tasking::parallel_foreach() requires random-"
+                    "access iterators!");
+
+      const size_t count = std::distance(begin, end);
+      auto *v = &(*begin);
+
+      parallel_for(count, [&](size_t i){ f(v[i]); });
     }
 
-    std::string Model::toString() const
+    template<typename CONTAINER_T, typename TASK_T>
+    inline void parallel_foreach(CONTAINER_T &&c, TASK_T&& f)
     {
-      return "ospray::sg::Model";
+      parallel_foreach(std::begin(c), std::end(c), std::forward<TASK_T>(f));
     }
 
-    void Model::traverse(RenderContext &ctx, const std::string& operation)
-    {
-      if (operation == "render") {
-        preRender(ctx);
-        postRender(ctx);
-      }
-      else
-        Node::traverse(ctx,operation);
-    }
-
-    void Model::preCommit(RenderContext &ctx)
-    {
-      auto model = valueAs<OSPModel>();
-      if (model)
-        ospRelease(model);
-      model = ospNewModel();
-      setValue(model);
-      stashedModel = ctx.currentOSPModel;
-      ctx.currentOSPModel = model;
-    }
-
-    void Model::postCommit(RenderContext &ctx)
-    {
-      auto model = valueAs<OSPModel>();
-      ctx.currentOSPModel = model;
-
-      //instancegroup caches render calls in commit.
-      for (auto &child : properties.children)
-        child.second->finalize(ctx);
-
-      ospCommit(model);
-      ctx.currentOSPModel = stashedModel;
-
-      // reset bounding box
-      child("bounds") = box3f(empty);
-      child("bounds") = computeBounds();
-    }
-
-    OSP_REGISTER_SG_NODE(Model);
-
-  } // ::ospray::sg
-} // ::ospray
+  } // ::ospcommon::tasking
+} //::ospcommon

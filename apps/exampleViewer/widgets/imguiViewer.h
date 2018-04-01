@@ -51,6 +51,7 @@ namespace ospray {
     void keypress(char key) override;
 
     void resetView();
+    void resetDefaultView();
     void printViewport();
     void saveScreenshot(const std::string &basename);
     void toggleRenderingPaused();

@@ -36,12 +36,6 @@ ENDIF()
 
 SET(EMBREE_VERSION_REQUIRED 2.15.0)
 
-OPTION(OSPRAY_ENABLE_TESTING OFF)
-
-IF (OSPRAY_ENABLE_TESTING)
-  ENABLE_TESTING()
-ENDIF()
-
 SET(OSPRAY_VERSION
   ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
 )
@@ -112,6 +106,16 @@ INCLUDE(GNUInstallDirs)
 
 # Must be before ISA config and package
 INCLUDE(configure_embree)
+
+
+OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
+
+OPTION(OSPRAY_ENABLE_TESTING ON)
+
+IF (OSPRAY_ENABLE_TESTING)
+  ENABLE_TESTING()
+ENDIF()
 
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
