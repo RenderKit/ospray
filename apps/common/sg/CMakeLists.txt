@@ -114,6 +114,7 @@ ospray_create_library(ospray_sg SHARED
 
   # scene graph generators
   generator/generateBasicVolume.cpp
+  generator/generateGridOfSpheres.cpp
   generator/generateRandomSpheres.cpp
   generator/Generator.cpp
 
