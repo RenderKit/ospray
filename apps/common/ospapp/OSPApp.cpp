@@ -22,6 +22,7 @@
 #include "sg/visitor/PrintNodes.h"
 #include "sg/visitor/VerifyNodes.h"
 #include "sg/module/Module.h"
+#include "sg/generator/Generator.h"
 
 namespace ospray {
   namespace app {
@@ -114,17 +115,18 @@ namespace ospray {
 
       addLightsToScene(renderer);
       addImporterNodesToWorld(renderer);
+      addGeneratorNodesToWorld(renderer);
       addAnimatedImporterNodesToWorld(renderer);
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
-      renderer.traverse(sg::VerifyNodes{});
+      renderer.verify();
       renderer.commit();
 
       // last, to be able to modify all created SG nodes
       parseCommandLineSG(argc, argv, renderer);
 
       // recommit in case any command line options modified the scene graph
-      renderer.traverse(sg::VerifyNodes{});
+      renderer.verify();
       renderer.commit();
 
       // after parseCommandLineSG (may have changed world bounding box)
@@ -283,6 +285,13 @@ namespace ospray {
           currentCLTransform = clTransform();
           removeArgs(ac, av, i, 1);
           --i;
+        } else if (arg[0] != '-' || utility::beginsWith(arg, "--generate:")) {
+          auto splitValues = utility::split(arg, ':');
+          auto type = splitValues[1];
+          std::string params = splitValues.size() > 2 ? splitValues[2] : "";
+          generators.push_back({type, params});
+          removeArgs(ac, av, i, 1);
+          --i;
         } else {
           std::cerr << "Error: unknown parameter '" << arg << "'." << std::endl;
           printHelp();
@@ -407,7 +416,7 @@ namespace ospray {
           sun["color"] = vec3f(1.f, 247.f / 255.f, 201.f / 255.f);
           sun["direction"] = vec3f(0.462f, -1.f, -.1f);
           sun["intensity"] = 3.0f;
-          sun["angularDiameter"] = 0.8f;
+          sun["angularDiameter"] = 0.53f;
 
           auto &bounce = lights.createChild("bounce", "DirectionalLight");
           bounce["color"] = vec3f(202.f / 255.f, 216.f / 255.f, 255.f / 255.f);
@@ -508,6 +517,28 @@ namespace ospray {
             }
           }
         }
+      }
+    }
+
+    void OSPApp::addGeneratorNodesToWorld(sg::Node &renderer)
+    {
+      auto &world = renderer["world"];
+
+      for (const auto &g : generators) {
+        auto generatorNode =
+          world.createChild("generator", "Generator").nodeAs<sg::Generator>();
+
+        generatorNode->child("generatorType") = g.type;
+        generatorNode->child("parameters")    = g.params;
+
+        if (fast) {
+          if (generatorNode->hasChildRecursive("gradientShadingEnabled"))
+            generatorNode->childRecursive("gradientShadingEnabled") = false;
+          if (generatorNode->hasChildRecursive("adaptiveMaxSamplingRate"))
+            generatorNode->childRecursive("adaptiveMaxSamplingRate") = 0.2f;
+        }
+
+        generatorNode->generateData();
       }
     }
 

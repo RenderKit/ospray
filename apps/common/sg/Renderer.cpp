@@ -53,7 +53,10 @@ namespace ospray {
 
     Renderer::Renderer()
     {
-      createChild("rendererType", "string", std::string("scivis"),
+      std::string defaultRendererType =
+          globalWhiteList.empty() ? "scivis" : globalWhiteList[0];
+
+      createChild("rendererType", "string", defaultRendererType,
                   NodeFlags::required |
                   NodeFlags::gui_combo,
                   "scivis: standard whitted style ray tracer. "
