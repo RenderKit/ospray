@@ -189,6 +189,12 @@ ospray_install_sdk_headers(
 )
 
 ospray_install_sdk_headers(
+  generator/Generator.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/generator
+)
+
+ospray_install_sdk_headers(
   geometry/Cylinders.h
   geometry/Geometry.h
   geometry/Spheres.h
