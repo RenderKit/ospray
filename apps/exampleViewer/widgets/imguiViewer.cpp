@@ -536,7 +536,7 @@ namespace ospray {
         toggleRenderingPaused();
 
       if (ImGui::MenuItem("Take Screenshot"))
-          saveScreenshot("ospimguiviewer");
+          saveScreenshot("ospexampleviewer");
 
       if (ImGui::MenuItem("Quit")) {
         renderEngine.stop();
