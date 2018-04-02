@@ -748,8 +748,10 @@ namespace ospray {
       const bool exportButtonPressed = ImGui::Button("Export...");
       const char* exportpath = exportdlg.saveFileDialog(exportButtonPressed);
       if (strlen(exportpath) > 0) {
-        std::cout << "writing OSPSG file to path: " << exportpath << std::endl;
-        sg::writeOSPSG(node, std::string(exportpath));
+        // Make sure that the file has the .ospsg suffix
+        FileName exportfile = FileName(exportpath).setExt(".ospsg");
+        std::cout << "writing OSPSG file to path: " << exportfile << std::endl;
+        sg::writeOSPSG(node, exportfile);
       }
 
       ImGui::EndPopup();
