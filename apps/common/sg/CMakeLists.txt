@@ -114,6 +114,7 @@ ospray_create_library(ospray_sg SHARED
 
   # scene graph generators
   generator/generateBasicVolume.cpp
+  generator/generateGridOfSpheres.cpp
   generator/generateRandomSpheres.cpp
   generator/Generator.cpp
 
@@ -186,6 +187,12 @@ ospray_install_sdk_headers(
   common/Transform.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/common
+)
+
+ospray_install_sdk_headers(
+  generator/Generator.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/generator
 )
 
 ospray_install_sdk_headers(

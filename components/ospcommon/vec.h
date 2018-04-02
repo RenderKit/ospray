@@ -425,52 +425,64 @@ namespace ospcommon {
   template <typename T,                                                        \
             typename U = T,                                                    \
             typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 2>, U>>\
-  inline vec_t<T, 2> name(const vec_t<T, 2> &a, const U &b)                    \
+  inline auto name(const vec_t<T, 2> &a, const U &b)                           \
+      -> vec_t<decltype(T() op U()), 2>                                        \
   {                                                                            \
-    return vec_t<T, 2>(a.x op T(b), a.y op T(b));                              \
+    using result_t = vec_t<decltype(T() op U()), 2>;                           \
+    return result_t(a.x op b, a.y op b);                                       \
   }                                                                            \
                                                                                \
   template <typename T,                                                        \
             bool A,                                                            \
             typename U = T,                                                    \
             typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 3, A>, U>> \
-  inline vec_t<T, 3, A> name(const vec_t<T, 3, A> &a, const U &b)              \
+  inline auto name(const vec_t<T, 3, A> &a, const U &b)                        \
+      -> vec_t<decltype(T() op U()), 3, A>                                     \
   {                                                                            \
-    return vec_t<T, 3, A>(a.x op T(b), a.y op T(b), a.z op T(b));              \
+    using result_t = vec_t<decltype(T() op U()), 3, A>;                        \
+    return result_t(a.x op b, a.y op b, a.z op b);                             \
   }                                                                            \
                                                                                \
   template <typename T,                                                        \
             typename U = T,                                                    \
             typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 4>, U>>\
-  inline vec_t<T, 4> name(const vec_t<T, 4> &a, const U &b)                    \
+  inline auto name(const vec_t<T, 4> &a, const U &b)                           \
+      -> vec_t<decltype(T() op U()), 4>                                        \
   {                                                                            \
-    return vec_t<T, 4>(a.x op T(b), a.y op T(b), a.z op T(b), a.w op T(b));    \
+    using result_t = vec_t<decltype(T() op U()), 4>;                           \
+    return result_t(a.x op b, a.y op b, a.z op b, a.w op b);                   \
   }                                                                            \
                                                                                \
   /* "scalar op vec" (SFINAE out scalar types which are ill-formed) */         \
   template <typename T,                                                        \
             typename U = T,                                                     \
             typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 2>, U>> \
-  inline vec_t<T, 2> name(const U &a, const vec_t<T, 2> &b)                    \
+  inline auto name(const U &a, const vec_t<T, 2> &b)                           \
+      -> vec_t<decltype(U() op T()), 2>                                        \
   {                                                                            \
-    return vec_t<T, 2>(T(a) op b.x, T(a) op b.y);                              \
+    using result_t = vec_t<decltype(U() op T()), 2>;                           \
+    return result_t(a op b.x, a op b.y);                                       \
   }                                                                            \
                                                                                \
   template <typename T,                                                        \
             bool A,                                                            \
             typename U = T,                                                    \
             typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 3, A>, U>> \
-  inline vec_t<T, 3, A> name(const U &a, const vec_t<T, 3, A> &b)              \
+  inline auto name(const U &a, const vec_t<T, 3, A> &b)                        \
+      -> vec_t<decltype(U() op T()), 3, A>                                     \
   {                                                                            \
-    return vec_t<T, 3, A>(T(a) op b.x, a op b.y, T(a) op b.z);                 \
+    using result_t = vec_t<decltype(U() op T()), 3, A>;                        \
+    return result_t(a op b.x, a op b.y, a op b.z);                             \
   }                                                                            \
                                                                                \
   template <typename T,                                                        \
             typename U = T,                                                    \
             typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 4>, U>>\
-  inline vec_t<T, 4> name(const U &a, const vec_t<T, 4> &b)                    \
+  inline auto name(const U &a, const vec_t<T, 4> &b)                           \
+      -> vec_t<decltype(U() op T()), 4>                                        \
   {                                                                            \
-    return vec_t<T, 4>(T(a) op b.x, T(a) op b.y, T(a) op b.z, T(a) op b.w);    \
+    using result_t = vec_t<decltype(U() op T()), 4>;                           \
+    return result_t(a op b.x, a op b.y, a op b.z, a op b.w);                   \
   }
 
   binary_operator(operator+, +)
