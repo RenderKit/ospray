@@ -23,6 +23,41 @@
 namespace ospray {
   namespace sg {
 
+    // Helper type ////////////////////////////////////////////////////////////
+
+    // TODO: generalize to more than just 3D (2D + 4D)
+    struct multidim_index_sequence
+    {
+      multidim_index_sequence(const vec3i &_dims) : dims(_dims) {}
+
+      size_t flatten(const vec3i &coords)
+      {
+        return coords.x + dims.x * (coords.y + dims.y * coords.z);
+      }
+
+      vec3i reshape(size_t i)
+      {
+        size_t z = i / (dims.x * dims.y);
+        i -= (z * dims.x * dims.y);
+        size_t y = i / dims.x;
+        size_t x = i % dims.x;
+        return vec3i(x, y, z);
+      }
+
+      size_t total_indices()
+      {
+        return dims.product();
+      }
+
+      // TODO: iterators...
+
+    private:
+
+      vec3ul dims{0};
+    };
+
+    // Generator function /////////////////////////////////////////////////////
+
     void generateGridOfSpheres(const std::shared_ptr<Node> &world,
                                const std::vector<string_pair> &params)
     {
@@ -54,39 +89,27 @@ namespace ospray {
 
       // generate sphere data
 
-      const auto numSpheres = dims.product();
-      const auto inv_dims = 1.f / dims;
+      const auto numSpheres  = dims.product();
+      const auto inv_dims    = 1.f / dims;
+      const auto min_inv_dim = reduce_min(inv_dims);
 
       auto sphere_centers = std::make_shared<DataVector3f>();
       sphere_centers->setName("spheres");
 
       sphere_centers->v.resize(numSpheres);
 
-      vec3f current(0.f);
+      multidim_index_sequence dims_converter(dims);
 
-      for (int i = 0; i < numSpheres; ++i) {
+      for (size_t i = 0; i < dims_converter.total_indices(); ++i) {
         auto &c = sphere_centers->v[i];
-
-        c = current;
-
-        current.x += inv_dims.x;
-        if (current.x > 1.f) {
-          current.x = 0.f;
-          current.y += inv_dims.x;
-          if (current.y > 1.f) {
-            current.y = 0.f;
-            current.z += inv_dims.x;
-            if (current.z > 1.f)
-              current.z = 0.f;
-          }
-        }
+        c = dims_converter.reshape(i) * min_inv_dim;
       }
 
       spheres_node->add(sphere_centers);
 
       // spheres attribute nodes
 
-      spheres_node->createChild("radius", "float", inv_dims.x / 5.f);
+      spheres_node->createChild("radius", "float", min_inv_dim / 5.f);
       spheres_node->createChild("bytes_per_sphere", "int", int(sizeof(vec3f)));
 
       // finally add to world
