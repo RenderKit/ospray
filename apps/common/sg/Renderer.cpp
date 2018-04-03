@@ -73,8 +73,7 @@ namespace ospray {
       createChild("frameBuffer", "FrameBuffer");
       createChild("lights");
 
-      createChild("bgColor", "vec3f", vec3f(0.85f, 0.85f, 0.85f),
-      // createChild("bgColor", "vec3f", vec3f(0.15f, 0.15f, 0.15f),
+      createChild("bgColor", "vec3f", vec3f(0.15f, 0.15f, 0.15f),
                   NodeFlags::required |
                   NodeFlags::gui_color);
 
