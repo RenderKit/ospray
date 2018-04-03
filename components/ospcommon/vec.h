@@ -33,6 +33,9 @@ namespace ospcommon {
   namespace traits {
 
     template <typename T>
+    using is_arithmetic_t = enable_if_t<std::is_arithmetic<T>::value>;
+
+    template <typename T>
     struct is_vec
     {
       const static bool value = std::is_base_of<vec_base, T>::value;
@@ -385,7 +388,7 @@ namespace ospcommon {
 #undef unary_functor
 
 // -------------------------------------------------------
-// binary operators, same type
+// binary arithmetic operators
 // -------------------------------------------------------
 
 # define binary_operator(name, op)                                             \
@@ -493,20 +496,20 @@ namespace ospcommon {
 #undef binary_operator
 
 // -------------------------------------------------------
-// binary operators, same type
+// binary arithmetic assignment operators
 // -------------------------------------------------------
 #define binary_operator(name, op)                                         \
   /* "vec op vec" */                                                      \
-  template <typename T>                                                   \
-  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const vec_t<T, 2> &b)          \
+  template <typename T, typename U>                                       \
+  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const vec_t<U, 2> &b)          \
   {                                                                       \
     a.x op b.x;                                                           \
     a.y op b.y;                                                           \
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T, bool A, bool B>                                   \
-  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b) \
+  template <typename T, typename U, bool A, bool B>                       \
+  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const vec_t<U, 3, B> &b) \
   {                                                                       \
     a.x op b.x;                                                           \
     a.y op b.y;                                                           \
@@ -514,8 +517,8 @@ namespace ospcommon {
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T>                                                   \
-  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const vec_t<T, 4> &b)          \
+  template <typename T, typename U>                                       \
+  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const vec_t<U, 4> &b)          \
   {                                                                       \
     a.x op b.x;                                                           \
     a.y op b.y;                                                           \
@@ -525,16 +528,21 @@ namespace ospcommon {
   }                                                                       \
                                                                           \
   /* "vec op scalar" */                                                   \
-  template <typename T>                                                   \
-  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const T &b)                    \
+  template <typename T,                                                   \
+            typename U,                                                   \
+            typename = traits::is_arithmetic_t<U>>                        \
+  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const U &b)                    \
   {                                                                       \
     a.x op b;                                                             \
     a.y op b;                                                             \
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T, bool A>                                           \
-  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const T &b)              \
+  template <typename T,                                                   \
+            typename U,                                                   \
+            bool A,                                                       \
+            typename = traits::is_arithmetic_t<U>>                        \
+  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const U &b)              \
   {                                                                       \
     a.x op b;                                                             \
     a.y op b;                                                             \
@@ -542,8 +550,10 @@ namespace ospcommon {
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T>                                                   \
-  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const T &b)                    \
+  template <typename T,                                                   \
+            typename U,                                                   \
+            typename = traits::is_arithmetic_t<U>>                        \
+  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const U &b)                    \
   {                                                                       \
     a.x op b;                                                             \
     a.y op b;                                                             \
