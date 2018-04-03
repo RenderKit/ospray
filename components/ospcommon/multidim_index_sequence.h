@@ -29,11 +29,11 @@ namespace ospcommon {
 
     multidim_index_sequence(const vec_t<int, NDIMS> &_dims);
 
-    size_t flatten(const vec_t<int, NDIMS> &coords);
+    size_t flatten(const vec_t<int, NDIMS> &coords) const;
 
-    vec_t<int, NDIMS> reshape(size_t i);
+    vec_t<int, NDIMS> reshape(size_t i) const;
 
-    size_t total_indices();
+    size_t total_indices() const;
 
     // TODO: iterators...
 
@@ -55,19 +55,19 @@ namespace ospcommon {
   }
 
   template <>
-  inline size_t index_sequence_2D::flatten(const vec2i &coords)
+  inline size_t index_sequence_2D::flatten(const vec2i &coords) const
   {
     return coords.x + dims.x * coords.y;
   }
 
   template <>
-  inline size_t index_sequence_3D::flatten(const vec3i &coords)
+  inline size_t index_sequence_3D::flatten(const vec3i &coords) const
   {
     return coords.x + dims.x * (coords.y + dims.y * coords.z);
   }
 
   template <>
-  inline vec2i index_sequence_2D::reshape(size_t i)
+  inline vec2i index_sequence_2D::reshape(size_t i) const
   {
     size_t y = i / dims.x;
     size_t x = i % dims.x;
@@ -75,7 +75,7 @@ namespace ospcommon {
   }
 
   template <>
-  inline vec3i index_sequence_3D::reshape(size_t i)
+  inline vec3i index_sequence_3D::reshape(size_t i) const
   {
     size_t z = i / (dims.x * dims.y);
     i -= (z * dims.x * dims.y);
@@ -85,7 +85,7 @@ namespace ospcommon {
   }
 
   template <int NDIMS>
-  inline size_t multidim_index_sequence<NDIMS>::total_indices()
+  inline size_t multidim_index_sequence<NDIMS>::total_indices() const
   {
     return dims.product();
   }
