@@ -27,14 +27,11 @@ namespace ospcommon {
                   "ospcommon::multidim_index_sequence is currently limited to"
                   " only 2 or 3 dimensions. (NDIMS == 2 || NDIMS == 3)");
 
-    using vec_index_t = vec_t<int   , NDIMS>;
-    using vec_store_t = vec_t<size_t, NDIMS>;
+    multidim_index_sequence(const vec_t<int, NDIMS> &_dims);
 
-    multidim_index_sequence(const vec_index_t &_dims);
+    size_t flatten(const vec_t<int, NDIMS> &coords);
 
-    size_t flatten(const vec_index_t &coords);
-
-    vec_index_t reshape(size_t i);
+    vec_t<int, NDIMS> reshape(size_t i);
 
     size_t total_indices();
 
@@ -42,7 +39,7 @@ namespace ospcommon {
 
   private:
 
-    vec_store_t dims{0};
+    vec_t<size_t, NDIMS> dims{0};
   };
 
   using index_sequence_2D = multidim_index_sequence<2>;
@@ -52,8 +49,10 @@ namespace ospcommon {
 
   template <int NDIMS>
   inline multidim_index_sequence<NDIMS>::multidim_index_sequence(
-    const multidim_index_sequence<NDIMS>::vec_index_t &_dims
-  ) : dims(_dims) {}
+    const vec_t<int, NDIMS> &_dims
+  ) : dims(_dims)
+  {
+  }
 
   template <>
   inline size_t index_sequence_2D::flatten(const vec2i &coords)
@@ -68,21 +67,21 @@ namespace ospcommon {
   }
 
   template <>
-  inline index_sequence_2D::vec_index_t index_sequence_2D::reshape(size_t i)
+  inline vec2i index_sequence_2D::reshape(size_t i)
   {
     size_t y = i / dims.x;
     size_t x = i % dims.x;
-    return vec_index_t(x, y);
+    return vec2i(x, y);
   }
 
   template <>
-  inline index_sequence_3D::vec_index_t index_sequence_3D::reshape(size_t i)
+  inline vec3i index_sequence_3D::reshape(size_t i)
   {
     size_t z = i / (dims.x * dims.y);
     i -= (z * dims.x * dims.y);
     size_t y = i / dims.x;
     size_t x = i % dims.x;
-    return vec_index_t(x, y, z);
+    return vec3i(x, y, z);
   }
 
   template <int NDIMS>
