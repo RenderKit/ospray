@@ -16,47 +16,13 @@
 
 // ospcommon
 #include "ospcommon/utility/StringManip.h"
+#include "ospcommon/multidim_index_sequence.h"
 // sg
 #include "../common/Data.h"
 #include "Generator.h"
 
 namespace ospray {
   namespace sg {
-
-    // Helper type ////////////////////////////////////////////////////////////
-
-    // TODO: generalize to more than just 3D (2D + 4D)
-    struct multidim_index_sequence
-    {
-      multidim_index_sequence(const vec3i &_dims) : dims(_dims) {}
-
-      size_t flatten(const vec3i &coords)
-      {
-        return coords.x + dims.x * (coords.y + dims.y * coords.z);
-      }
-
-      vec3i reshape(size_t i)
-      {
-        size_t z = i / (dims.x * dims.y);
-        i -= (z * dims.x * dims.y);
-        size_t y = i / dims.x;
-        size_t x = i % dims.x;
-        return vec3i(x, y, z);
-      }
-
-      size_t total_indices()
-      {
-        return dims.product();
-      }
-
-      // TODO: iterators...
-
-    private:
-
-      vec3ul dims{0};
-    };
-
-    // Generator function /////////////////////////////////////////////////////
 
     void generateGridOfSpheres(const std::shared_ptr<Node> &world,
                                const std::vector<string_pair> &params)
@@ -98,7 +64,7 @@ namespace ospray {
 
       sphere_centers->v.resize(numSpheres);
 
-      multidim_index_sequence dims_converter(dims);
+      index_sequence_3D dims_converter(dims);
 
       for (size_t i = 0; i < dims_converter.total_indices(); ++i) {
         auto &c = sphere_centers->v[i];
