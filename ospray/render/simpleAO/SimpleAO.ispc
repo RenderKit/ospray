@@ -31,14 +31,6 @@ struct SimpleAO
   uniform float aoRayLength;
 };
 
-inline vec3f getShadingNormal(const Ray &ray)
-{
-  vec3f N = ray.Ng;
-  float f = rcp(sqrt(dot(N,N)));
-  if (dot(N,ray.dir) >= 0.f) f = -f;
-  return f*N;
-}
-
 void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
 {
   biNorm0 = make_vec3f(1.f,0.f,0.f);
@@ -46,20 +38,6 @@ void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
     biNorm0 = make_vec3f(0.f,1.f,0.f);
   biNorm1 = normalize(cross(biNorm0,gNormal));
   biNorm0 = normalize(cross(biNorm1,gNormal));
-}
-
-inline float rotate(float x, float dx)
-{
-  x += dx;
-  if (x >= 1.f) x -= 1.f;
-  return x;
-}
-
-inline uniform float rotate(uniform float x, uniform float dx)
-{
-  x += dx;
-  if (x >= 1.f) x -= 1.f;
-  return x;
 }
 
 inline vec3f getRotatedHaltonDir(const vec3f &gNormal,
@@ -76,24 +54,6 @@ inline vec3f getRotatedHaltonDir(const vec3f &gNormal,
   const float x = cos((2.f*M_PI)*r.x)*w;
   const float y = sin((2.f*M_PI)*r.x)*w;
   const float z = sqrt(r.y)+epsilon;
-  return x*biNorm0+y*biNorm1+z*gNormal;
-}
-
-inline vec3f getRandomDir(varying RandomTEA* uniform rng,
-                          const vec3f biNorm0,
-                          const vec3f biNorm1,
-                          const vec3f gNormal,
-                          const float rot_x, const float rot_y,
-                          const uniform float epsilon)
-{
-  const vec2f rn = RandomTEA__getFloats(rng);
-  const float r0 = rotate(rn.x, rot_x);
-  const float r1 = rotate(rn.y, rot_y);
-
-  const float w = sqrt(1.f-r1);
-  const float x = cos((2.f*M_PI)*r0)*w;
-  const float y = sin((2.f*M_PI)*r0)*w;
-  const float z = sqrt(r1)+epsilon;
   return x*biNorm0+y*biNorm1+z*gNormal;
 }
 
@@ -161,7 +121,6 @@ inline void shade_ao(uniform SimpleAO *uniform self,
   alpha = 1.f;
   return;
 }
-
 
 void SimpleAO_renderSample(uniform Renderer *uniform _self,
                            void *uniform perFrameData,
