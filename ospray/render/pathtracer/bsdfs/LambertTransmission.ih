@@ -26,7 +26,7 @@ struct LambertTransmission
 };
 
 inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF* uniform super,
-                                             const vec3f& wo, const vec3f& wi, unsigned int& lcg)
+                                             const vec3f& wo, const vec3f& wi)
 {
   const varying LambertTransmission* uniform self = (const varying LambertTransmission* uniform)super;
   BSDF_EvalRes res;
@@ -37,7 +37,7 @@ inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF* uniform super,
 }
 
 inline BSDF_SampleRes LambertTransmission_sample(const varying BSDF* uniform super,
-                                                 const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
+                                                 const vec3f& wo, const vec2f& s, float ss)
 {
   const varying LambertTransmission* uniform self = (const varying LambertTransmission* uniform)super;
   const vec3f localDir = cosineSampleHemisphere(s);

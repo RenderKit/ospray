@@ -31,7 +31,7 @@ struct ThinMicrofacetDielectric
 };
 
 inline BSDF_EvalRes ThinMicrofacetDielectric_eval(const varying BSDF* uniform super,
-                                                  const vec3f& wo, const vec3f& wi, unsigned int& lcg)
+                                                  const vec3f& wo, const vec3f& wi)
 {
   const varying ThinMicrofacetDielectric* uniform self = (const varying ThinMicrofacetDielectric* uniform)super;
   BSDF_EvalRes res;
@@ -103,7 +103,7 @@ inline BSDF_EvalRes ThinMicrofacetDielectric_eval(const varying BSDF* uniform su
 }
 
 inline BSDF_SampleRes ThinMicrofacetDielectric_sample(const varying BSDF* uniform super,
-                                                      const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
+                                                      const vec3f& wo, const vec2f& s, float ss)
 {
   const varying ThinMicrofacetDielectric* uniform self = (const varying ThinMicrofacetDielectric* uniform)super;
   BSDF_SampleRes res;
@@ -187,8 +187,7 @@ inline varying BSDF* uniform ThinMicrofacetDielectric_create(uniform ShadingCont
 
 // Helper function for transparent shadow rays
 inline vec3f ThinMicrofacetDielectric_getTransparency(float cosThetaO,
-                                                      float eta, float roughness, float anisotropy, vec3f attenuation,
-                                                      unsigned int& lcg)
+                                                      float eta, float roughness, float anisotropy, vec3f attenuation)
 {
   float T = 1.f - MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness);
 

@@ -85,8 +85,7 @@ const varying BSDF* varying OBJ_getBSDF(const uniform PathTraceMaterial* uniform
 vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform super,
                           const DifferentialGeometry& dg,
                           const Ray& ray,
-                          const Medium& currentMedium,
-                          unsigned int& lcg)
+                          const Medium& currentMedium)
 {
   uniform const OBJ* uniform self = (uniform const OBJ* uniform)super;
 

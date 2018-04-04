@@ -325,8 +325,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
 vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform material,
                                  const DifferentialGeometry& dg,
                                  const Ray& ray,
-                                 const Medium& currentMedium,
-                                 unsigned int& lcg)
+                                 const Medium& currentMedium)
 {
   const uniform Principled* uniform self = (const uniform Principled* uniform)material;
   vec3f T = make_vec3f(0.f);
@@ -371,7 +370,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         if (roughness < EPS)
           T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
         else
-          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, attenuation, lcg);
+          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, attenuation);
       }
 
       T = T * specular;
@@ -398,7 +397,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
           else
           {
             T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO,
-              coatEta, coatColor, coatThickness, coatRoughness, 0.f, coat, lcg);
+              coatEta, coatColor, coatThickness, coatRoughness, 0.f, coat);
           }
         }
       }

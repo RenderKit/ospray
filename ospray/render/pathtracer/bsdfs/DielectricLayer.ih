@@ -36,7 +36,7 @@ struct DielectricLayer
 };
 
 inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
-                                         const vec3f& wo, const vec3f& wi, unsigned int& lcg)
+                                         const vec3f& wo, const vec3f& wi)
 {
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
 
@@ -53,7 +53,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   // Ignore refraction
   BSDF_EvalRes substrate;
   foreach_unique (f in self->substrate)
-    substrate = f->eval(f, wo, wi, lcg);
+    substrate = f->eval(f, wo, wi);
 
   float cosThetaI1; // positive
   float Fi = fresnelDielectricEx(abs(cosThetaI), cosThetaI1, self->eta) * self->weight;
@@ -79,7 +79,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
 }
 
 inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
-                                             const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
+                                             const vec3f& wo, const vec2f& s, float ss)
 {
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
   BSDF_SampleRes res;
@@ -106,7 +106,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
     // Ignore refraction
     float ss1 = (ss - F) * rcp(1.f - F); // reallocate sample
     foreach_unique (f in self->substrate)
-      res = f->sample(f, wo, s, ss1, lcg);
+      res = f->sample(f, wo, s, ss1);
     if (reduce_max(res.weight) <= 0.f)
       return res;
     float cosThetaI = dot(res.wi, getN(super));

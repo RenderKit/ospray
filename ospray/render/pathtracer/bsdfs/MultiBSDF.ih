@@ -59,7 +59,7 @@ inline void MultiBSDF_add(varying BSDF* uniform super,
 
 /*! Evaluates all BSDF components. */
 inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
-                                   const vec3f& wo, const vec3f& wi, unsigned int& lcg)
+                                   const vec3f& wo, const vec3f& wi)
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
 
@@ -70,7 +70,7 @@ inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
     if (self->importances[i] > 0.0f)
     {
       const varying BSDF* uniform curBsdf = self->bsdfs[i];
-      BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, wi, lcg);
+      BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, wi);
       cur.value = cur.value * self->weights[i];
       res.value = res.value + cur.value;
       res.pdf += cur.pdf * self->importances[i];
@@ -83,7 +83,7 @@ inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
 
 /*! Sample the multi-BSDF. */
 inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
-                                       const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
+                                       const vec3f& wo, const vec2f& s, float ss)
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
 
@@ -93,7 +93,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
   if (self->numBsdfs == 1)
   {
     const varying BSDF* uniform bsdf = self->bsdfs[0];
-    BSDF_SampleRes res = bsdf->sample(bsdf, wo, s, ss, lcg);
+    BSDF_SampleRes res = bsdf->sample(bsdf, wo, s, ss);
     res.weight = res.weight * self->weights[0];
     return res;
   }
@@ -114,7 +114,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     foreach_unique (i in choice)
     {
       const varying BSDF* uniform bsdf = self->bsdfs[i];
-      res = bsdf->sample(bsdf, wo, s, ss, lcg);
+      res = bsdf->sample(bsdf, wo, s, ss);
       res.weight = res.weight * self->weights[i];
     }
 
@@ -139,7 +139,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
       if ((i != choice) & (self->importances[i] > 0.0f))
       {
         const varying BSDF* uniform curBsdf = self->bsdfs[i];
-        BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, res.wi, lcg);
+        BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, res.wi);
         cur.value = cur.value * self->weights[i];
         value = value + cur.value;
         res.pdf += cur.pdf * self->importances[i];

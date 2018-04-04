@@ -41,7 +41,7 @@ struct MicrofacetDielectricLayer
 };
 
 inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform super,
-                                                   const vec3f& wo, const vec3f& wi, unsigned int& lcg)
+                                                   const vec3f& wo, const vec3f& wi)
 {
   const varying MicrofacetDielectricLayer* uniform self = (const varying MicrofacetDielectricLayer* uniform)super;
 
@@ -54,7 +54,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   // Ignore refraction
   BSDF_EvalRes substrate;
   foreach_unique (f in self->substrate)
-    substrate = f->eval(f, wo, wi, lcg);
+    substrate = f->eval(f, wo, wi);
 
   // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
@@ -118,7 +118,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
 }
 
 inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* uniform super,
-                                                       const vec3f& wo, const vec2f& s, float ss, unsigned int& lcg)
+                                                       const vec3f& wo, const vec2f& s, float ss)
 {
   const varying MicrofacetDielectricLayer* uniform self = (const varying MicrofacetDielectricLayer* uniform)super;
   BSDF_SampleRes res;
@@ -153,7 +153,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     // Evaluate the substrate
     // Ignore refraction
     foreach_unique (f in self->substrate)
-      substrate = f->eval(f, wo, res.wi, lcg);
+      substrate = f->eval(f, wo, res.wi);
   }
   else
   {
@@ -161,7 +161,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     // Ignore refraction
     float ss1 = (ss - coatingPickProb) * rcp(substratePickProb); // reallocate sample
     foreach_unique (f in self->substrate)
-      res = f->sample(f, wo, s, ss1, lcg);
+      res = f->sample(f, wo, s, ss1);
     if (reduce_max(res.weight) <= 0.f)
       return res;
     substrate.pdf = res.pdf;
@@ -262,7 +262,7 @@ inline varying BSDF* uniform MicrofacetDielectricLayer_create(uniform ShadingCon
 // Helper function for transparent shadow rays
 inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO,
                                                        float eta, vec3f transmittance, float thickness, float roughness, float anisotropy,
-                                                       float weight, unsigned int& lcg)
+                                                       float weight)
 {
   if (eta > 1.f) eta = rcp(eta);
 

@@ -47,8 +47,7 @@ inline float getEpsilon(const uniform PathTracer* uniform self,
 vec3f transparentShadow(const uniform PathTracer* uniform self,
                         vec3f lightContrib,
                         Ray &shadowRay,
-                        Medium medium,
-                        unsigned int &lcg)
+                        Medium medium)
 {
   uniform int maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
@@ -68,7 +67,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
     vec3f transparency;
     foreach_unique(m in material)
       if (m != NULL)
-        transparency = m->getTransparency(m, dg, shadowRay, medium, lcg);
+        transparency = m->getTransparency(m, dg, shadowRay, medium);
 
     lightContrib = lightContrib * transparency;
 
@@ -176,7 +175,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
-          shaded = shaded + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium, lcg);
+          shaded = shaded + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
         }
         // order of args important to filter NaNs (in case unshaded.X is zero)
         const vec3f ratio = min(Lw * shaded * rcp(unshaded), Lw);
@@ -299,7 +298,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         BSDF_EvalRes fe;
         foreach_unique(f in bsdf) {
           if (f != NULL)
-            fe = f->eval(f, wo, ls.dir, lcg);
+            fe = f->eval(f, wo, ls.dir);
         }
 
         // skip when zero contribution from material
@@ -320,7 +319,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         }
 
         const vec3f unshadedLightContrib = nextLw * ls.weight * misHeuristic(ls.pdf, fe.pdf);
-        L = L + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium, lcg);
+        L = L + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
       }
     }
 
@@ -330,7 +329,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     BSDF_SampleRes fs;
     foreach_unique(f in bsdf)
       if (f != NULL)
-        fs = f->sample(f, wo, s, ss.x, lcg);
+        fs = f->sample(f, wo, s, ss.x);
 
     // terminate path when zero contribution from material
     if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)

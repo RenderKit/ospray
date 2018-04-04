@@ -47,8 +47,7 @@ const varying BSDF* varying Glass_getBSDF(const uniform PathTraceMaterial* unifo
 vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
                             const DifferentialGeometry& dg,
                             const Ray& ray,
-                            const Medium& currentMedium,
-                            unsigned int& lcg)
+                            const Medium& currentMedium)
 {
   const uniform Glass* uniform self = (const uniform Glass* uniform)material;
 

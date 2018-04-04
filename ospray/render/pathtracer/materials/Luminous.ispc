@@ -49,7 +49,6 @@ vec3f Luminous_getTransparency(const uniform PathTraceMaterial* uniform _self
     , const DifferentialGeometry&
     , const Ray&
     , const Medium&
-    , unsigned int&
     )
 {
   uniform Luminous* uniform self = (uniform Luminous* uniform)_self;

@@ -19,8 +19,7 @@
 vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform self,
                                         const DifferentialGeometry& dg,
                                         const Ray& ray,
-                                        const Medium& currentMedium,
-                                        unsigned int& lcg)
+                                        const Medium& currentMedium)
 {
   return make_vec3f(0.0f);
 }
