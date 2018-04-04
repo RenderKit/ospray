@@ -27,9 +27,9 @@ extern uniform float* uniform MicrofacetAlbedoTable_dir; // directional 2D table
 extern uniform float* uniform MicrofacetAlbedoTable_avg; // average 1D table (roughness)
 
 // Microfacet dielectric albedo table
-#define MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE 32
-#define MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR 1.01f
-#define MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR 3.0f
+#define MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE 16
+#define MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR 1.f
+#define MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR 3.f
 // eta in [1/3, 1]
 extern uniform float* uniform MicrofacetDielectricAlbedoTable_dir; // directional 3D table (cosThetaO, eta, roughness)
 extern uniform float* uniform MicrofacetDielectricAlbedoTable_avg; // average 2D table (eta, roughness)

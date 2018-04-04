@@ -226,7 +226,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         // otherwise light could be added twice
         Light_EvalRes le = light->eval(light, lastDg, ray.dir, minLightDist, maxLightDist);
         if (reduce_max(le.radiance) > 0.0f)
-          L = L + Lw * le.radiance /** misHeuristic(lastBsdfPdf, le.pdf)*/;
+          L = L + Lw * le.radiance * misHeuristic(lastBsdfPdf, le.pdf);
       }
     }
 
@@ -263,7 +263,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         // convert pdf wrt. area to pdf wrt. solid angle
         const float cosd = dot(dg.Ng, ray.dir);
         const float lePdf = areaPdf * sqr(ray.t) / abs(cosd);
-        L = L + Lw * m->emission /** misHeuristic(lastBsdfPdf, lePdf)*/;
+        L = L + Lw * m->emission * misHeuristic(lastBsdfPdf, lePdf);
       }
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
@@ -284,7 +284,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       break;
 
     // direct lighting including shadows and MIS
-    /*
     if (bsdf->type & BSDF_SMOOTH) {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
       for (uniform int i = 0; i < numLights; i++) {
@@ -324,7 +323,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         L = L + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium, lcg);
       }
     }
-    */
 
     // sample BSDF
     vec2f s  = LCG_getFloat2(lcg);
@@ -364,10 +362,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // keep lastBsdfPdf and lastDg when there was a specular or glossy transmission
     // to better combine MIS with transparent shadows
-    //if (fs.type & ~(BSDF_SPECULAR_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION)) {
+    if (fs.type & ~(BSDF_SPECULAR_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION)) {
       lastBsdfPdf = fs.pdf;
       lastDg = dg;
-    //}
+    }
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);

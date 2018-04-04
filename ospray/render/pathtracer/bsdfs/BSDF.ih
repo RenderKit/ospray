@@ -22,32 +22,40 @@
 #include "math/random.ih"
 #include "Optics.ih"
 
-#define BSDF_SPECULAR_REFLECTION   (1<<0)  /*!< diffuse light reflection            */
-#define BSDF_DIFFUSE_REFLECTION    (1<<1)  /*!< glossy light reflection             */
-#define BSDF_GLOSSY_REFLECTION     (1<<2)  /*!< perfect specular light reflection   */
-#define BSDF_DIFFUSE_TRANSMISSION  (1<<3)  /*!< diffuse light transmission          */
+#define BSDF_SPECULAR_REFLECTION   (1<<0)  /*!< perfect specular light reflection   */
+#define BSDF_GLOSSY_REFLECTION     (1<<1)  /*!< glossy light reflection             */
+#define BSDF_DIFFUSE_REFLECTION    (1<<2)  /*!< diffuse light reflection            */
+#define BSDF_SPECULAR_TRANSMISSION (1<<3)  /*!< perfect specular light transmission */
 #define BSDF_GLOSSY_TRANSMISSION   (1<<4)  /*!< glossy light transmission           */
-#define BSDF_SPECULAR_TRANSMISSION (1<<5)  /*!< perfect specular light transmission */
+#define BSDF_DIFFUSE_TRANSMISSION  (1<<5)  /*!< diffuse light transmission          */
 
-/*! diffuse reflections and transmissions          */
+/* refractive light transmission -> refraction should *not* be ignored (transparent shadows) */
+#define BSDF_SPECULAR_REFRACTION   ((1<<6) | BSDF_SPECULAR_TRANSMISSION) /*!< perfect specular refractive light transmission */
+#define BSDF_GLOSSY_REFRACTION     ((1<<7) | BSDF_GLOSSY_TRANSMISSION)   /*!< glossy refractive light transmission  */
+#define BSDF_DIFFUSE_REFRACTION    ((1<<8) | BSDF_DIFFUSE_TRANSMISSION)  /*!< diffuse refractive light transmission */
+
+/*! diffuse reflections and transmissions */
 #define BSDF_DIFFUSE      (BSDF_DIFFUSE_REFLECTION   | BSDF_DIFFUSE_TRANSMISSION)
 
-/*! glossy reflections and transmissions           */
+/*! glossy reflections and transmissions */
 #define BSDF_GLOSSY       (BSDF_GLOSSY_REFLECTION    | BSDF_GLOSSY_TRANSMISSION)
 
 /*! perfect specular reflections and transmissions */
 #define BSDF_SPECULAR     (BSDF_SPECULAR_REFLECTION  | BSDF_SPECULAR_TRANSMISSION)
 
-/*! all possible reflections   */
+/*! all possible reflections */
 #define BSDF_REFLECTION   (BSDF_DIFFUSE_REFLECTION   | BSDF_GLOSSY_REFLECTION   | BSDF_SPECULAR_REFLECTION)
 
 /*! all possible transmissions */
 #define BSDF_TRANSMISSION (BSDF_DIFFUSE_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION | BSDF_SPECULAR_TRANSMISSION)
 
+/*! all possible refractive transmissions */
+#define BSDF_REFRACTION   (BSDF_DIFFUSE_REFRACTION | BSDF_GLOSSY_REFRACTION | BSDF_SPECULAR_REFRACTION)
+
 /*! all non-dirac types */
 #define BSDF_SMOOTH       (BSDF_DIFFUSE | BSDF_GLOSSY)
 
-/*! no component set   */
+/*! no component set */
 #define BSDF_NONE         0
 
 /*! all components set */
