@@ -24,9 +24,8 @@
 #include "render/Renderer.ih"
 #include "render/simpleAO/SimpleAOMaterial.ih"
 
-#define NEW_CPR_HALTON 1
-
-struct SimpleAO {
+struct SimpleAO
+{
   uniform Renderer super;
   uniform int samplesPerFrame;
   uniform float aoRayLength;
@@ -105,14 +104,7 @@ inline void shade_ao(uniform SimpleAO *uniform self,
                      const uniform int accumID,
                      const Ray &ray,
                      const int32 pixel_x,
-                     const int32 pixel_y
-#if NEW_CPR_HALTON
-#else
-                     ,
-                     const uniform float rot_x,
-                     const uniform float rot_y
-#endif
-                     )
+                     const int32 pixel_y)
 {
   if (noHit(ray)) {
     color = make_vec3f(self->super.bgColor);
@@ -139,7 +131,6 @@ inline void shade_ao(uniform SimpleAO *uniform self,
   // should be done in material:
   superColor = superColor * make_vec3f(dg.color);
 
-#if NEW_CPR_HALTON
   // init TEA RNG //
   uniform FrameBuffer *uniform fb = self->super.fb;
   RandomTEA rng_state;
@@ -165,30 +156,6 @@ inline void shade_ao(uniform SimpleAO *uniform self,
       hits++;
   }
 
-#else
-  // init TEA RNG //
-  uniform FrameBuffer *uniform fb = self->super.fb;
-  RandomTEA rng_state;
-  varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, (fb->size.x * pixel_y) + pixel_x, accumID);
-
-  int hits = 0;
-  vec3f biNormU,biNormV;
-  const vec3f N = dg.Ns;
-  getBinormals(biNormU,biNormV,N);
-
-  for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec3f ao_dir = getRandomDir(rng, biNormU, biNormV, N, rot_x,
-                                      rot_y,self->super.epsilon);
-
-    Ray ao_ray;
-    setRay(ao_ray, dg.P + (1e-3f * N), ao_dir);
-    ao_ray.t0 = self->super.epsilon;
-    ao_ray.t  = self->aoRayLength - self->super.epsilon;
-    if (dot(ao_ray.dir, N) < 0.05f || isOccluded(self->super.model,ao_ray))
-      hits++;
-  }
-#endif
   float diffuse = absf(dot(N,ray.dir));
   color = superColor * make_vec3f(diffuse * (1.0f - hits/(float)sampleCnt));
   alpha = 1.f;
@@ -205,12 +172,8 @@ void SimpleAO_renderSample(uniform Renderer *uniform _self,
   traceRay(self->super.model, sample.ray);
   sample.z = sample.ray.t;
 
-  const uniform int accumID = reduce_max(sample.sampleID.z) * self->samplesPerFrame;
-#if NEW_CPR_HALTON
-#else
-  const uniform float rot_x = 1.f - precomputedHalton2(accumID);
-  const uniform float rot_y = 1.f - precomputedHalton3(accumID);
-#endif
+  const uniform int accumID =
+      reduce_max(sample.sampleID.z) * self->samplesPerFrame;
 
   shade_ao(self,
            sample.rgb,
@@ -219,13 +182,7 @@ void SimpleAO_renderSample(uniform Renderer *uniform _self,
            accumID,
            sample.ray,
            sample.sampleID.x,
-           sample.sampleID.y
-#if NEW_CPR_HALTON
-#else
-           ,
-           rot_x,rot_y
-#endif
-           );
+           sample.sampleID.y);
 }
 
 
