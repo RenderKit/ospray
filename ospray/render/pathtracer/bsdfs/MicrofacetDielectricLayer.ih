@@ -26,6 +26,7 @@
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
 // [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
 // [Kelemen and Szirmay-Kalos, 2001, "A Microfacet Based Coupled Specular-Matte BRDF Model with Importance Sampling"]
+// [Jakob et al., 2014, "A Comprehensive Framework for Rendering Layered Materials", Extended Technical Report]
 struct MicrofacetDielectricLayer
 {
   BSDF super;
@@ -36,7 +37,12 @@ struct MicrofacetDielectricLayer
   float thickness;
   GGXDistribution microfacet;
   float roughness;
+
+  // Energy conservation/compensation [Kulla and Conty, 2017]
+  float Ravg;
   float Eavg;
+  float fmsScale;
+  
   float weight;
 };
 
@@ -65,16 +71,20 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * length));
 
   // Energy conservation
-  float Eo = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness) * self->weight;
-  float Ei = MicrofacetDielectricReflectionAlbedoTable_eval(abs(cosThetaI), self->eta, self->roughness) * self->weight;
+  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
+  float Ei = MicrofacetAlbedoTable_eval(abs(cosThetaI), self->roughness);
+  float Ro = (MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness)
+             + self->fmsScale * (1.f - Eo)) * self->weight; // add missing energy
+  float Ri = (MicrofacetDielectricReflectionAlbedoTable_eval(abs(cosThetaI), self->eta, self->roughness)
+             + self->fmsScale * (1.f - Ei)) * self->weight; // add missing energy
   float T;
   if (self->substrate->type & ~BSDF_DIFFUSE)
-    T = min(1.f - Eo, 1.f - Ei); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+    T = min(1.f - Ro, 1.f - Ri); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   else
-    T = (1.f - Eo) * (1.f - Ei) * rcp(1.f - self->Eavg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    T = (1.f - Ro) * (1.f - Ri) * rcp(1.f - self->Ravg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
   substrate.value = substrate.value * T;
 
-  float coatingPickProb = Eo;
+  float coatingPickProb = Ro;
   float substratePickProb = 1.f - coatingPickProb;
 
   if (cosThetaI > 0.f)
@@ -99,9 +109,12 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
     float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
     float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
+    // Energy compensation
+    float fms = self->fmsScale * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+
     BSDF_EvalRes coating;
     coating.pdf = whPdf * rcp(4.f*cosThetaOH);
-    coating.value = make_vec3f(F * D * G * rcp(4.f*cosThetaO));
+    coating.value = make_vec3f(F * D * G * rcp(4.f*cosThetaO) + fms);
 
     // Compute the total reflection
     BSDF_EvalRes res;
@@ -131,13 +144,16 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   linear3f toLocal = transposed(getFrame(super));
   vec3f wo0 = toLocal * wo;
 
+  // Energy conservation
+  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
+  float Ro = (MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness)
+             + self->fmsScale * (1.f - Eo)) * self->weight; // add missing energy
+
   // Sample the coating or the substrate
   vec3f wh;
   BSDF_EvalRes substrate;
-
-  float Eo = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness) * self->weight;
-
-  float coatingPickProb = Eo;
+  
+  float coatingPickProb = Ro;
   float substratePickProb = 1.f - coatingPickProb;
 
   if (ss < coatingPickProb)
@@ -183,12 +199,14 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * length));
 
   // Energy conservation
-  float Ei = MicrofacetDielectricReflectionAlbedoTable_eval(abs(cosThetaI), self->eta, self->roughness) * self->weight;
+  float Ei = MicrofacetAlbedoTable_eval(abs(cosThetaI), self->roughness);
+  float Ri = (MicrofacetDielectricReflectionAlbedoTable_eval(abs(cosThetaI), self->eta, self->roughness)
+             + self->fmsScale * (1.f - Ei)) * self->weight; // add missing energy
   float T;
   if (self->substrate->type & ~BSDF_DIFFUSE)
-    T = min(1.f - Eo, 1.f - Ei); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+    T = min(1.f - Ro, 1.f - Ri); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   else
-    T = (1.f - Eo) * (1.f - Ei) * rcp(1.f - self->Eavg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    T = (1.f - Ro) * (1.f - Ri) * rcp(1.f - self->Ravg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
   substrate.value = substrate.value * T;
 
   if (res.type & BSDF_SPECULAR)
@@ -219,9 +237,12 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
     float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
     float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
+    // Energy compensation
+    float fms = self->fmsScale * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+
     BSDF_EvalRes coating;
     coating.pdf = whPdf * rcp(4.f*cosThetaOH);
-    coating.value = make_vec3f(F * D * G * rcp(4.f*cosThetaO));
+    coating.value = make_vec3f(F * D * G * rcp(4.f*cosThetaO) + fms);
 
     // Compute the total reflection
     res.pdf = coatingPickProb * coating.pdf + substratePickProb * substrate.pdf;
@@ -245,7 +266,14 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
   self->thickness = thickness;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->roughness = roughness;
-  self->Eavg = MicrofacetDielectricReflectionAlbedoTable_evalAvg(self->eta, roughness) * weight;
+
+  // Energy conservation/compensation
+  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  float Favg = fresnelDielectricAvg(eta);
+  self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
+  self->Ravg = (MicrofacetDielectricReflectionAlbedoTable_evalAvg(self->eta, roughness)
+               + self->fmsScale * (1.f - self->Eavg)) * weight; // add missing energy
+
   self->weight = weight;
 }
 
@@ -272,8 +300,13 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO,
   vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
 
   // Energy conservation
-  float Eo = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness) * weight;
-  float T = 1.f - Eo; // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+  float Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  float Favg = fresnelDielectricAvg(eta);
+  float fmsScale = Favg * (1.f - Eavg) * rcp(1.f - Favg * Eavg);
+  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, roughness);
+  float Ro = (MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness)
+             + fmsScale * (1.f - Eo)) * weight; // add missing energy
+  float T = 1.f - Ro; // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   value = value * T;
   return value;
 }
