@@ -88,7 +88,7 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(const varying BSDF* uniform 
   {
     // Transmission
     res.pdf = (1.f-F) * rcp(sqr(self->eta)) * abs(cosThetaIH) * rcp(sqr(cosThetaOH + rcp(self->eta)*cosThetaIH));
-    value = res.pdf * abs(cosThetaOH) * rcp(cosThetaO);
+    value = res.pdf * abs(cosThetaOH) * rcp(cosThetaO); // ignore solid angle compression
   }
 
   linear3f toLocal = transposed(getFrame(super));
@@ -161,7 +161,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
 
   float singlePickProb = Eo;
   bool doReflection;
-  bool doSingle = ss <= singlePickProb;
+  bool doSingle = (ss <= singlePickProb);
 
   if (doSingle)
   {
@@ -186,14 +186,14 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
     if (doReflection)
     {
       // Reflection
-      res.wi = reflect(wo, wh, cosThetaOH);
       res.type = BSDF_GLOSSY_REFLECTION;
+      res.wi = reflect(wo, wh, cosThetaOH);
     }
     else
     {
       // Transmission
-      res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
       res.type = BSDF_GLOSSY_REFRACTION;
+      res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
     }
   }
   else
@@ -201,18 +201,18 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
     // Sample the energy compensation lobe
     float ss1 = (ss - singlePickProb) * rcp(1.f - singlePickProb);
     doReflection = (ss1 <= self->fmsRatio);
+    res.wi = getFrame(super) * cosineSampleHemisphere(s);
 
     if (doReflection)
     {
       // Reflection
       res.type = BSDF_GLOSSY_REFLECTION;
-      res.wi = getFrame(super) * cosineSampleHemisphere(s);
     }
     else
     {
       // Transmission
       res.type = BSDF_GLOSSY_REFRACTION;
-      res.wi = neg(getFrame(super) * cosineSampleHemisphere(s));
+      res.wi = neg(res.wi);
     }
   }
 
@@ -264,10 +264,9 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
   self->FavgEta = fresnelDielectricAvg(eta);
   self->FavgRcpEta = fresnelDielectricAvg(rcp(eta));
   float a = (1.f - self->FavgEta) * rcp(1.f - self->EavgRcpEta);
-  float b = (1.f - self->FavgRcpEta) * rcp(1.f - self->EavgEta) * sqr(eta);
+  float b = (1.f - self->FavgRcpEta) * rcp(1.f - self->EavgEta)/* * sqr(eta)*/; // ignore solid angle compression
   float x = b * rcp(a + b);
   self->fmsRatio = (1.f - x * (1.f - self->FavgEta));
-  //self->fmsRatio = self->FavgEta;
 }
 
 inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext* uniform ctx,

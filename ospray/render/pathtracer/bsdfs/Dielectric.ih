@@ -60,7 +60,8 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
     // Transmission
     res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
     res.type = BSDF_SPECULAR_REFRACTION;
-    res.weight = make_vec3f(sqr(self->eta)); // solid angle compression
+    //res.weight = make_vec3f(sqr(self->eta)); // solid angle compression
+    res.weight = make_vec3f(1.f); // ignore solid angle compression
   }
 
   return res;
