@@ -342,15 +342,15 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
   if (opacity > EPS)
   {
     // refractive dielectric base
+    const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
     const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
     const float dielectric = (1.f - metallic);
-    const float refractive = dielectric * transmission;
+    const float refractive = dielectric * transmission * specular;
 
     if (refractive > EPS)
     {
       const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
       const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
-      const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
       const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
 
       const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
@@ -372,8 +372,6 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         else
           T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, attenuation);
       }
-
-      T = T * specular;
 
       // clear coat
       const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));

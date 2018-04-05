@@ -72,8 +72,8 @@ inline BSDF_EvalRes ThinMicrofacetDielectric_eval(const varying BSDF* uniform su
     float fms = self->fmsScale * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
 
     // Energy conservation
-    float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness);
-    R += self->fmsScale * (1.f - Eo); // add missing energy
+    float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness)
+              + self->fmsScale * (1.f - Eo); // add missing energy
 
     BSDF_EvalRes res;
     res.pdf = whPdf * rcp(4.f*cosThetaOH) * R;
@@ -98,8 +98,8 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(const varying BSDF* unifor
 
   // Energy conservation
   float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
-  float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness);
-  R += self->fmsScale * (1.f - Eo); // add missing energy
+  float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness)
+            + self->fmsScale * (1.f - Eo); // add missing energy
 
   if (ss < R)
   {
@@ -186,8 +186,8 @@ inline vec3f ThinMicrofacetDielectric_getTransparency(float cosThetaO,
   float fmsScale = Favg * (1.f - Eavg) * rcp(1.f - Favg * Eavg);
 
   float Eo = MicrofacetAlbedoTable_eval(cosThetaO, roughness);
-  float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness);
-  R += fmsScale * (1.f - Eo); // add missing energy
+  float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness)
+            + fmsScale * (1.f - Eo); // add missing energy
 
   // Attenuation for crossing the slab once
   float length = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
