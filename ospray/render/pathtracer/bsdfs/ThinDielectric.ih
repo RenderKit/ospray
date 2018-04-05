@@ -59,7 +59,7 @@ inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
   else
   {
     // Transmission
-    // Compute attenuation for crossing the slab once
+    // Attenuation for crossing the slab once
     float length = rcp(cosThetaT);
     vec3f A = expf(self->attenuation * length);
 
@@ -98,9 +98,9 @@ inline vec3f ThinDielectric_getTransparency(float cosThetaO, float eta, vec3f at
   float cosThetaT; // positive
   float F = fresnelDielectricEx(cosThetaO, cosThetaT, eta);
 
-  // Compute attenuation for crossing the slab once
+  // Attenuation for crossing the slab once
   float length = rcp(cosThetaT);
   vec3f A = expf(attenuation * length);
 
-  return (1.f-F) * A;
+  return (1.f - F) * A;
 }
