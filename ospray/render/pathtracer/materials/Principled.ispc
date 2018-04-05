@@ -339,15 +339,15 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
     return T;
 
   // cut-out opacity
-  if (opacity > EPS)
+  if (self->thin && opacity > EPS)
   {
-    // refractive dielectric base
+    // glass base
     const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
     const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
     const float dielectric = (1.f - metallic);
-    const float refractive = dielectric * transmission * specular;
+    const float glass = dielectric * transmission * specular;
 
-    if (refractive > EPS)
+    if (glass > EPS)
     {
       const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
       const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
@@ -355,23 +355,20 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
 
       const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
 
-      if (self->thin)
-      {
-        // thin
-        float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
-        if (ior < 1.f) ior = rcp(ior);
-        ior = clamp(ior, 1.f, 3.f); // clamp to common range due to LUTs
+      // thin
+      float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
+      if (ior < 1.f) ior = rcp(ior);
+      ior = clamp(ior, 1.f, 3.f); // clamp to common range due to LUTs
 
-        const float eta = rcp(ior);
-        const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
-        const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
-        const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
+      const float eta = rcp(ior);
+      const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
+      const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
+      const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
 
-        if (roughness < EPS)
-          T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
-        else
-          T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, attenuation);
-      }
+      if (roughness < EPS)
+        T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
+      else
+        T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, attenuation);
 
       // clear coat
       const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
