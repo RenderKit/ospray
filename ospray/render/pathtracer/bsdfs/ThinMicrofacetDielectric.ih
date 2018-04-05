@@ -21,6 +21,8 @@
 // Thin microfacet dielectric BSDF with the Smith microsurface model.
 // It represents a transparent slab with unit thickness, and ignores refraction.
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
+// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+// [Jakob et al., 2014, "A Comprehensive Framework for Rendering Layered Materials", Extended Technical Report]
 // FIXME: rough transmission
 struct ThinMicrofacetDielectric
 {
