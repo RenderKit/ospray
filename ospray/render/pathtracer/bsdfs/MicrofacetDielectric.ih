@@ -33,6 +33,8 @@ struct MicrofacetDielectric
   float eta; // etaO / etaI
   GGXDistribution microfacet;
   float roughness;
+
+  // Energy compensation [Kulla and Conty, 2017]
   float EavgEta, EavgRcpEta;
   float FavgEta, FavgRcpEta;
   float fmsRatio;
@@ -156,7 +158,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   if (cosThetaO <= 0.f)
     return make_BSDF_SampleRes_zero();
 
-  // Energy compensation [Kulla and Conty, 2017]
+  // Energy compensation
   float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, self->eta, self->roughness);
 
   float singlePickProb = Eo;
@@ -256,9 +258,9 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
 
   self->eta = eta;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
-
-  // Energy compensation [Kulla and Conty, 2017]
   self->roughness = roughness;
+
+  // Energy compensation
   self->EavgEta = MicrofacetDielectricAlbedoTable_evalAvg(eta, roughness);
   self->EavgRcpEta = MicrofacetDielectricAlbedoTable_evalAvg(rcp(eta), roughness);
   self->FavgEta = fresnelDielectricAvg(eta);
