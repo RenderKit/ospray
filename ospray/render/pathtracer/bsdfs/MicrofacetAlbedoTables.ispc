@@ -25,8 +25,8 @@ uniform float* uniform MicrofacetDielectricRcpEtaAlbedoTable_dir = NULL;
 uniform float* uniform MicrofacetDielectricRcpEtaAlbedoTable_avg = NULL;
 uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_dir = NULL;
 uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_avg = NULL;
-uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir = NULL;
-uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg = NULL;
+//uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir = NULL;
+//uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg = NULL;
 
 static inline uniform float MicrofacetAlbedoTable_integrateAvg(const uniform float* uniform f, uniform int size, uniform int numSamples = 1024)
 {
@@ -138,12 +138,14 @@ static void MicrofacetDielectricRcpEtaAlbedoTable_precompute()
                                              MicrofacetDielectricRcpEtaAlbedoTable_dir,
                                              MicrofacetDielectricRcpEtaAlbedoTable_avg);
 
+  /*
   MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir = uniform new float[size*size*size];
   MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg = uniform new float[size*size];
   MicrofacetDielectricAlbedoTable_precompute(&MicrofacetDielectricReflectionAlbedo_integrate,
                                              size, minEta, maxEta,
                                              MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir,
                                              MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg);
+  */
 }
 
 void precomputeMicrofacetAlbedoTables()
