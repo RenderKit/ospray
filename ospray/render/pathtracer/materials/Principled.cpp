@@ -42,11 +42,11 @@ namespace ospray {
         MaterialParam3f edgeColor = getMaterialParam3f("edgeColor", vec3f(1.f));
         MaterialParam1f metallic = getMaterialParam1f("metallic", 0.f);
         MaterialParam1f specular = getMaterialParam1f("specular", 1.f);
-        MaterialParam1f ior = getMaterialParam1f("ior", 1.52f);
+        MaterialParam1f ior = getMaterialParam1f("ior", 1.f);
         MaterialParam1f transmission = getMaterialParam1f("transmission", 0.f);
         MaterialParam3f transmissionColor = getMaterialParam3f("transmissionColor", vec3f(1.f));
         float transmissionDepth = getParam1f("transmissionDepth", 1.f);
-        MaterialParam1f roughness = getMaterialParam1f("roughness", 0.5f);
+        MaterialParam1f roughness = getMaterialParam1f("roughness", 0.f);
         MaterialParam1f anisotropy = getMaterialParam1f("anisotropy", 0.f);
         MaterialParam1f rotation = getMaterialParam1f("rotation", 0.f);
         MaterialParam1f normal = getMaterialParam1f("normal", 1.f);

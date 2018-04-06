@@ -540,11 +540,11 @@ export void* uniform PathTracer_Principled_create()
     make_vec3f(1.f), NULL, xform, // edgeColor
     0.f, NULL, xform, // metallic
     1.f, NULL, xform, // specular
-    1.52f, NULL, xform, // ior
+    1.f, NULL, xform, // ior
     0.f, NULL, xform, // transmission
     make_vec3f(1.f), NULL, xform, // transmissionColor
     1.f, // transmissionDepth
-    0.5f, NULL, xform, // roughness
+    0.f, NULL, xform, // roughness
     0.f, NULL, xform, // anisotropy
     0.f, NULL, xform, // rotation
     1.f, NULL, xform, make_LinearSpace2f_identity(), // normal
