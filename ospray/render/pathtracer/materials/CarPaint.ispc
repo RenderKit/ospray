@@ -123,7 +123,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
     if (baseRoughness < EPS)
       bsdf = Lambert_create(ctx, baseFrame, baseColor);
     else
-      bsdf = OrenNayar_create(ctx, baseFrame, baseColor, roughnessToAlpha(baseRoughness));
+      bsdf = OrenNayar_create(ctx, baseFrame, baseColor, baseRoughness);
   }
  
   // clear coat layer

@@ -181,7 +181,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           if (roughness < EPS)
             plasticBsdf = Lambert_create(ctx, frame, baseColor);
           else
-            plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughnessToAlpha(roughness));
+            plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
         }
 
         if (diffuseTransmission > EPS)
