@@ -50,7 +50,7 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
 
   // Fresnel term
   float cosThetaO1; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta) * self->weight;
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta) * self->weight;
 
   // Evaluate the substrate
   // Ignore refraction
@@ -72,12 +72,12 @@ inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
   // Energy conservation
   float T;
   if (self->substrate->type & ~BSDF_DIFFUSE)
-    T = min(1.f - F, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+    T = min(1.f - Fo, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   else
-    T = (1.f - F) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    T = (1.f - Fo) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
   substrate.value = substrate.value * T;
 
-  substrate.pdf *= (1.f - F);
+  substrate.pdf *= (1.f - Fo);
   return substrate;
 }
 
@@ -93,9 +93,9 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
 
   // Fresnel term
   float cosThetaO1; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta) * self->weight;
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta) * self->weight;
 
-  if (ss < F)
+  if (ss < Fo)
   {
     // Sample the coating
     res.type = BSDF_SPECULAR_REFLECTION;
@@ -107,7 +107,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
   {
     // Sample the substrate
     // Ignore refraction
-    float ss1 = (ss - F) * rcp(1.f - F); // reallocate sample
+    float ss1 = (ss - Fo) * rcp(1.f - Fo); // reallocate sample
     foreach_unique (f in self->substrate)
       res = f->sample(f, wo, s, ss1);
     if (reduce_max(res.weight) <= 0.f)
@@ -128,12 +128,12 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
     // Energy conservation
     float T;
     if (self->substrate->type & ~BSDF_DIFFUSE)
-      T = min(1.f - F, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+      T = min(1.f - Fo, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
     else
-      T = (1.f - F) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
-    res.weight = res.weight * (T * rcp(1.f - F));
+      T = (1.f - Fo) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    res.weight = res.weight * (T * rcp(1.f - Fo));
 
-    res.pdf *= (1.f - F);
+    res.pdf *= (1.f - Fo);
   }
 
   return res;
@@ -177,7 +177,7 @@ inline vec3f DielectricLayer_getTransparency(float cosThetaO,
 
   // Fresnel term
   float cosThetaO1; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, eta) * weight;
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, eta) * weight;
 
   // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
@@ -185,7 +185,7 @@ inline vec3f DielectricLayer_getTransparency(float cosThetaO,
   vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
 
   // Energy conservation
-  float T = 1.f - F; // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+  float T = 1.f - Fo; // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
   value = value * T;
   return value;
 }
