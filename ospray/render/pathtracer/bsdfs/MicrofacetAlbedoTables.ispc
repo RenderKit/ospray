@@ -27,6 +27,7 @@ uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_dir = NULL;
 uniform float* uniform MicrofacetDielectricReflectionAlbedoTable_avg = NULL;
 //uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir = NULL;
 //uniform float* uniform MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg = NULL;
+uniform float* uniform MicrofacetSheenAlbedoTable_dir = NULL;
 
 static inline uniform float MicrofacetAlbedoTable_integrateAvg(const uniform float* uniform f, uniform int size, uniform int numSamples = 1024)
 {
@@ -148,6 +149,26 @@ static void MicrofacetDielectricRcpEtaAlbedoTable_precompute()
   */
 }
 
+static void MicrofacetSheenAlbedoTable_precompute()
+{
+  const uniform int size = MICROFACET_SHEEN_ALBEDO_TABLE_SIZE;
+
+  uniform float* uniform dirPtr = MicrofacetSheenAlbedoTable_dir = uniform new float[size*size];
+
+  for (uniform int j = 0; j < size; j++)
+  {
+    const float roughness = (float)j / (size-1);
+    // compute the direction albedo for each cosThetaO
+    foreach (i = 0 ... size)
+    {
+      const float cosThetaO = (float)i / (size-1);
+      dirPtr[i] = MicrofacetSheenAlbedo_integrate(cosThetaO, roughness);
+    }
+
+    dirPtr += size;
+  }
+}
+
 void precomputeMicrofacetAlbedoTables()
 {
   if (MicrofacetAlbedoTable_dir)
@@ -156,4 +177,5 @@ void precomputeMicrofacetAlbedoTables()
   MicrofacetAlbedoTable_precompute();
   MicrofacetDielectricAlbedoTable_precompute();
   MicrofacetDielectricRcpEtaAlbedoTable_precompute();
+  MicrofacetSheenAlbedoTable_precompute();
 }

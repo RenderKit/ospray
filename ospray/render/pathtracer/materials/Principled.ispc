@@ -25,6 +25,7 @@
 #include "../bsdfs/MicrofacetDielectric.ih"
 #include "../bsdfs/DielectricLayer.ih"
 #include "../bsdfs/MicrofacetDielectricLayer.ih"
+#include "../bsdfs/MicrofacetSheenLayer.ih"
 #include "../bsdfs/ThinDielectric.ih"
 #include "../bsdfs/ThinMicrofacetDielectric.ih"
 #include "../bsdfs/Transmission.ih"
@@ -98,6 +99,15 @@ struct Principled
   float coatNormal; // scale
   TextureParam coatNormalMap;
   linear2f coatNormalRot;
+
+  float sheen;
+  TextureParam sheenMap;
+
+  vec3f sheenColor;
+  TextureParam sheenColorMap;
+
+  float sheenRoughness;
+  TextureParam sheenRoughnessMap;
 
   // cut-out opacity in [0, 1]
   float opacity;
@@ -224,29 +234,35 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       {
         varying BSDF* varying glassBsdf;
 
-        if (!self->thin)
-        {
-          // solid
-          const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                                        : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+        const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
+                                      : self->insideMedium.ior*rcp(self->outsideMedium.ior);
 
-          if (roughness < EPS)
-            glassBsdf = Dielectric_create(ctx, frame, eta);
+        if (abs(eta-1.f) > EPS)
+        {
+          if (!self->thin)
+          {
+            // solid
+            if (roughness < EPS)
+              glassBsdf = Dielectric_create(ctx, frame, eta);
+            else
+              glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy);
+          }
           else
-            glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy);
+          {
+            // thin
+            const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
+            const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
+            const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
+
+            if (roughness < EPS)
+              glassBsdf = ThinDielectric_create(ctx, frame, eta, attenuation);
+            else
+              glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy, attenuation);
+          }
         }
         else
         {
-          // thin
-          const float eta = rcp(ior);
-          const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
-          const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
-          const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
-
-          if (roughness < EPS)
-            glassBsdf = ThinDielectric_create(ctx, frame, eta, attenuation);
-          else
-            glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy, attenuation);
+          glassBsdf = Transmission_create(ctx, frame, make_vec3f(1.f));
         }
 
         MultiBSDF_add(baseBsdf, glassBsdf, glass, glass);
@@ -298,6 +314,16 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         }
       }
     }
+
+    // sheen
+    const float sheen = clamp(self->sheen * get1f(self->sheenMap, dg.st, 1.f));
+    if (sheen > EPS)
+    {
+      const vec3f sheenColor = clamp(self->sheenColor * get3f(self->sheenColorMap, dg.st, make_vec3f(1.f)));
+      const float sheenRoughness = clamp(self->sheenRoughness * get1f(self->sheenRoughnessMap, dg.st, 1.f));
+        
+      bsdf = MicrofacetSheenLayer_create(ctx, frame, bsdf, sheenColor, sheenRoughness, sheen);
+    }
   }
 
   // cut-out transparency
@@ -339,7 +365,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
     return T;
 
   // cut-out opacity
-  if (self->thin && opacity > EPS)
+  if (opacity > EPS)
   {
     // glass base
     const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
@@ -349,52 +375,72 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
 
     if (glass > EPS)
     {
-      const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
-      const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
       const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
+      const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
+                                    : self->insideMedium.ior*rcp(self->outsideMedium.ior);
 
       const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
 
-      // thin
-      float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
-      if (ior < 1.f) ior = rcp(ior);
-      ior = clamp(ior, 1.f, 3.f); // clamp to common range due to LUTs
-
-      const float eta = rcp(ior);
-      const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
-      const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
-      const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
-
-      if (roughness < EPS)
-        T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
-      else
-        T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, anisotropy, attenuation);
-
-      // clear coat
-      const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
-      if (coat > EPS)
+      if (abs(eta-1.f) > EPS)
       {
-        float coatIor = self->coatIor * get1f(self->coatIorMap, dg.st, 1.f);
-        if (coatIor < 1.f) coatIor = rcp(coatIor);
-        coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
-        if (abs(coatIor-1.f) > EPS)
+        if (self->thin)
         {
-          const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
-                                            : coatIor*rcp(self->outsideMedium.ior);
-          const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
-          const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
-          const float coatRoughness = clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f));
-          
-          if (coatRoughness < EPS)
-          {
-            T = T * DielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coat);
-          }
+          // thin
+          const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
+          const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
+          const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
+          const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
+
+          if (roughness < EPS)
+            T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
           else
+            T = ThinMicrofacetDielectric_getTransparency(cosThetaO, eta, roughness, attenuation);
+        }
+      }
+      else
+      {
+        T = make_vec3f(1.f);
+      }
+
+      if (reduce_max(T) > 0.f)
+      {
+        // clear coat
+        const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
+        if (coat > EPS)
+        {
+          float coatIor = self->coatIor * get1f(self->coatIorMap, dg.st, 1.f);
+          if (coatIor < 1.f) coatIor = rcp(coatIor);
+          coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
+          if (abs(coatIor-1.f) > EPS)
           {
-            T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO,
-              coatEta, coatColor, coatThickness, coatRoughness, 0.f, coat);
+            const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
+                                              : coatIor*rcp(self->outsideMedium.ior);
+            const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
+            const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
+            const float coatRoughness = clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f));
+            
+            if (coatRoughness < EPS)
+            {
+              T = T * DielectricLayer_getTransparency(cosThetaO, coatEta, coatColor, coatThickness, coat);
+            }
+            else
+            {
+              T = T * MicrofacetDielectricLayer_getTransparency(cosThetaO,
+                coatEta, coatColor, coatThickness, coatRoughness, 0.f, coat);
+            }
           }
         }
+
+        // sheen
+        const float sheen = clamp(self->sheen * get1f(self->sheenMap, dg.st, 1.f));
+        if (sheen > EPS)
+        {
+          const float sheenRoughness = clamp(self->sheenRoughness * get1f(self->sheenRoughnessMap, dg.st, 1.f));
+            
+          T = T * MicrofacetSheenLayer_getTransparency(cosThetaO, sheenRoughness, sheen);
+        }
+
+        T = T * glass;
       }
     }
   }
@@ -442,6 +488,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float coatThickness, void* uniform coatThicknessMap, const uniform affine2f& coatThicknessXform,
     uniform float coatRoughness, void* uniform coatRoughnessMap, const uniform affine2f& coatRoughnessXform,
     uniform float coatNormal, void* uniform coatNormalMap, const uniform affine2f& coatNormalXform, const uniform linear2f& coatNormalRot,
+    uniform float sheen, void* uniform sheenMap, const uniform affine2f& sheenXform,
+    const uniform vec3f& sheenColor, void* uniform sheenColorMap, const uniform affine2f& sheenColorXform,
+    uniform float sheenRoughness, void* uniform sheenRoughnessMap, const uniform affine2f& sheenRoughnessXform,
     uniform float opacity, void* uniform opacityMap, const uniform affine2f& opacityXform,
     uniform bool thin,
     uniform float backlight, void* uniform backlightMap, const uniform affine2f& backlightXform,
@@ -507,6 +556,15 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->coatNormalMap = make_TextureParam((uniform Texture2D*)coatNormalMap, coatNormalXform);
   self->coatNormalRot = coatNormalRot;
 
+  self->sheen = sheen;
+  self->sheenMap = make_TextureParam((uniform Texture2D*)sheenMap, sheenXform);
+
+  self->sheenColor = sheenColor;
+  self->sheenColorMap = make_TextureParam((uniform Texture2D*)sheenColorMap, sheenColorXform);
+
+  self->sheenRoughness = sheenRoughness;
+  self->sheenRoughnessMap = make_TextureParam((uniform Texture2D*)sheenRoughnessMap, sheenRoughnessXform);
+
   self->opacity = opacity;
   self->opacityMap = make_TextureParam((uniform Texture2D*)opacityMap, opacityXform);
 
@@ -554,6 +612,9 @@ export void* uniform PathTracer_Principled_create()
     1.f, NULL, xform, // coatThickness
     0.f, NULL, xform, // coatRoughness
     1.f, NULL, xform, make_LinearSpace2f_identity(), // coatNormal
+    0.f, NULL, xform, // sheen
+    make_vec3f(1.f), NULL, xform, // sheenColor
+    0.f, NULL, xform, // sheenRoughness
     1.f, NULL, xform, // opacity
     false, // thin
     0.f, NULL, xform, // backlight

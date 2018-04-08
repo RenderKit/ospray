@@ -1,0 +1,100 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "math/sampling.ih"
+#include "MicrofacetDistribution.ih"
+
+// Cylindrical microfiber distribution for sheen
+// [Conty and Kulla, 2017, "Production Friendly Microfacet Sheen BRDF"]
+// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+struct SheenDistribution
+{
+  float r; // in (0, 1]
+};
+
+inline SheenDistribution make_SheenDistribution(float r)
+{
+  SheenDistribution self;
+  self.r = r;
+  return self;
+}
+
+inline float eval(const SheenDistribution& self,
+                  float cosTheta)
+{
+  float sinTheta = cos2sin(cosTheta);
+  float invr = rcp(self.r);
+  return (2.f + invr) * pow(sinTheta, invr) * one_over_two_pi;
+}
+
+// Helper function for computing Lambda
+inline float evalL(const SheenDistribution& self,
+                   float x)
+{
+  const float a0 = 25.3245f;
+  const float a1 = 21.5473f;
+  const float b0 = 3.32435f;
+  const float b1 = 3.82987f;
+  const float c0 = 0.16801f;
+  const float c1 = 0.19823f;
+  const float d0 = -1.27393f;
+  const float d1 = -1.97760f;
+  const float e0 = -4.85967f;
+  const float e1 = -4.32054f;
+
+  float r = self.r;
+  float w0 = sqr(1.f - r);
+  float w1 = 1.f - w0;
+
+  float a = w0*a0 + w1*a1;
+  float b = w0*b0 + w1*b1;
+  float c = w0*c0 + w1*c1;
+  float d = w0*d0 + w1*d1;
+  float e = w0*e0 + w1*e1;
+
+  return a / (1.f + b * pow(x, c)) + d * x + e;
+}
+
+inline float evalLambda(const SheenDistribution& self,
+                        float cosTheta)
+{
+  if (cosTheta < 0.5f)
+    return exp(evalL(self, cosTheta));
+  else
+    return exp(2.f * evalL(self, 0.5f) - evalL(self, 1.f - cosTheta));
+}
+
+// Non-physical artistic adjustment for a softer light terminator
+inline float evalLambdaI(const SheenDistribution& self,
+                         float cosTheta)
+{
+  float x = 1.f + 2.f * sqr(sqr(sqr(1.f - cosTheta)));
+  return pow(evalLambda(self, cosTheta), x);
+}
+
+// Smith's height-correlated masking-shadowing function
+// [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
+inline float evalG2(const SheenDistribution& self,
+                    float cosThetaO, float cosThetaI, float cosThetaOH, float cosThetaIH)
+{
+  if (cosThetaO * cosThetaOH <= 0.f || cosThetaI * cosThetaIH <= 0.f)
+    return 0.f;
+
+  //return rcp(1.f + evalLambda(self, cosThetaO) + evalLambda(self, cosThetaI));
+  return rcp(1.f + evalLambda(self, cosThetaO) + evalLambdaI(self, cosThetaI));
+}

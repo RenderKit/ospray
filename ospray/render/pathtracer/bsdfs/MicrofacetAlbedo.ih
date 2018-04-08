@@ -18,6 +18,7 @@
 
 #include "Fresnel.ih"
 #include "GGXDistribution.ih"
+#include "SheenDistribution.ih"
 
 inline float MicrofacetAlbedo_sample(float cosThetaO, const GGXDistribution& microfacet, const vec2f& s)
 {
@@ -118,6 +119,32 @@ inline float MicrofacetDielectricReflectionAlbedo_sample(float cosThetaO, float 
   return F * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
 }
 
+inline float MicrofacetSheenAlbedo_sample(float cosThetaO, const SheenDistribution& microfacet, const vec2f& s)
+{
+  // Handle edge cases
+  cosThetaO = max(cosThetaO, 1e-6f);
+
+  // Make an outgoing vector
+  vec3f wo = make_vec3f(cos2sin(cosThetaO), 0.f, cosThetaO);
+
+  // Sample the reflection
+  vec3f wi = uniformSampleHemisphere(s);
+  float cosThetaI = wi.z;
+
+  // Compute the microfacet normal
+  vec3f wh = normalize(wo + wi);
+  float cosThetaH = wh.z;
+  float cosThetaOH = dot(wo, wh);
+  float cosThetaIH = dot(wi, wh);
+
+  // Evaluate the reflection
+  float D = eval(microfacet, cosThetaH);
+  float G = evalG2(microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+
+  float pdf = uniformSampleHemispherePDF();
+  return D * G * rcp(4.f*cosThetaO * pdf);
+}
+
 inline float MicrofacetAlbedo_integrate(float cosThetaO, float roughness, uniform int numSamples = 1024)
 {
   GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
@@ -166,6 +193,24 @@ inline float MicrofacetDielectricReflectionAlbedo_integrate(float cosThetaO, flo
     {
       vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
       sum += MicrofacetDielectricReflectionAlbedo_sample(cosThetaO, eta, microfacet, s);
+    }
+  }
+
+  return min(sum / (n*n), 1.f);
+}
+
+inline float MicrofacetSheenAlbedo_integrate(float cosThetaO, float roughness, uniform int numSamples = 1024)
+{
+  SheenDistribution microfacet = make_SheenDistribution(roughnessToAlpha(roughness));
+
+  uniform int n = sqrt((uniform float)numSamples);
+  float sum = 0.f;
+  for (uniform int i = 0; i < n; i++)
+  {
+    for (uniform int j = 0; j < n; j++)
+    {
+      vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
+      sum += MicrofacetSheenAlbedo_sample(cosThetaO, microfacet, s);
     }
   }
 

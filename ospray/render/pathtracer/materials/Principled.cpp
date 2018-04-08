@@ -58,6 +58,10 @@ namespace ospray {
         MaterialParam1f coatRoughness = getMaterialParam1f("coatRoughness", 0.f);
         MaterialParam1f coatNormal = getMaterialParam1f("coatNormal", 1.f);
 
+        MaterialParam1f sheen = getMaterialParam1f("sheen", 0.f);
+        MaterialParam3f sheenColor = getMaterialParam3f("sheenColor", vec3f(1.f));
+        MaterialParam1f sheenRoughness = getMaterialParam1f("sheenRoughness", 0.5f);
+
         MaterialParam1f opacity = getMaterialParam1f("opacity", 1.f);
 
         bool thin = getParam1i("thin", 0) || (getParam1f("thin", 0.f) > 0.f);
@@ -87,6 +91,9 @@ namespace ospray {
           coatThickness.factor, coatThickness.map ? coatThickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThickness.xform,
           coatRoughness.factor, coatRoughness.map ? coatRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughness.xform,
           coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot,
+          sheen.factor, sheen.map ? sheen.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheen.xform,
+          (const ispc::vec3f&)sheenColor.factor, sheenColor.map ? sheenColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenColor.xform,
+          sheenRoughness.factor, sheenRoughness.map ? sheenRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenRoughness.xform,
           opacity.factor, opacity.map ? opacity.map->getIE() : nullptr, (const ispc::AffineSpace2f&)opacity.xform,
           thin,
           backlight.factor, backlight.map ? backlight.map->getIE() : nullptr, (const ispc::AffineSpace2f&)backlight.xform,

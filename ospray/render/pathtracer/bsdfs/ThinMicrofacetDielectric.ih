@@ -180,7 +180,7 @@ inline varying BSDF* uniform ThinMicrofacetDielectric_create(uniform ShadingCont
 
 // Helper function for transparent shadow rays
 inline vec3f ThinMicrofacetDielectric_getTransparency(float cosThetaO,
-                                                      float eta, float roughness, float anisotropy, vec3f attenuation)
+                                                      float eta, float roughness, vec3f attenuation)
 {
   // Energy conservation/compensation
   float Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
