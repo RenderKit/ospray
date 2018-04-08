@@ -85,19 +85,24 @@ namespace ospray {
           anisotropy.factor, anisotropy.map ? anisotropy.map->getIE() : nullptr, (const ispc::AffineSpace2f&)anisotropy.xform,
           rotation.factor, rotation.map ? rotation.map->getIE() : nullptr, (const ispc::AffineSpace2f&)rotation.xform,
           normal.factor, normal.map ? normal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)normal.xform, (const ispc::LinearSpace2f&)normal.rot,
+
           coat.factor, coat.map ? coat.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coat.xform,
           coatIor.factor, coatIor.map ? coatIor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatIor.xform,
           (const ispc::vec3f&)coatColor.factor, coatColor.map ? coatColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatColor.xform,
           coatThickness.factor, coatThickness.map ? coatThickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThickness.xform,
           coatRoughness.factor, coatRoughness.map ? coatRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughness.xform,
           coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot,
+
           sheen.factor, sheen.map ? sheen.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheen.xform,
           (const ispc::vec3f&)sheenColor.factor, sheenColor.map ? sheenColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenColor.xform,
           sheenRoughness.factor, sheenRoughness.map ? sheenRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenRoughness.xform,
+
           opacity.factor, opacity.map ? opacity.map->getIE() : nullptr, (const ispc::AffineSpace2f&)opacity.xform,
+
           thin,
           backlight.factor, backlight.map ? backlight.map->getIE() : nullptr, (const ispc::AffineSpace2f&)backlight.xform,
           thickness.factor, thickness.map ? thickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)thickness.xform,
+          
           outsideIor,
           (const ispc::vec3f&)outsideTransmissionColor,
           outsideTransmissionDepth);
