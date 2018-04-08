@@ -297,12 +297,15 @@ inline vec3f FresnelConductorArtistic_evalAvg(const Fresnel* uniform super)
 }
 
 inline Fresnel* uniform FresnelConductorArtistic_create(ShadingContext* uniform ctx,
-                                                        const vec3f& r, const vec3f& g)
+                                                        const vec3f& reflectivity, const vec3f& edgeTint)
 {
   FresnelConductorArtistic* uniform self =
     (FresnelConductorArtistic* uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorArtistic));
   Fresnel_Constructor(&self->super, FresnelConductorArtistic_eval, FresnelConductorArtistic_evalAvg);
   
+  const vec3f r = min(reflectivity, make_vec3f(0.99f));
+  const vec3f g = edgeTint;
+
   const vec3f n_min = (1.f - r) / (1.f + r);
   const vec3f n_max = (1.f + sqrt(r)) / (1.f - sqrt(r));
   const vec3f n = g * n_min + (1.f - g) * n_max;
