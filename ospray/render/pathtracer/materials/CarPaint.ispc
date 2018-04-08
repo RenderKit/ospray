@@ -251,7 +251,7 @@ export void* uniform PathTracer_CarPaint_create()
     0.f, NULL, xform, // flakeSpread
     0.f, NULL, xform, // flakeJitter
     0.f, NULL, xform, // flakeRoughness
-    0.f, NULL, xform, // coat
+    1.f, NULL, xform, // coat
     1.5f, NULL, xform, // coatIor
     make_vec3f(1.f), NULL, xform, // coatColor
     1.f, NULL, xform, // coatThickness

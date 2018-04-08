@@ -48,7 +48,7 @@ namespace ospray {
         MaterialParam1f flakeJitter = getMaterialParam1f("flakeJitter", 0.75f);
         MaterialParam1f flakeRoughness = getMaterialParam1f("flakeRoughness", 0.3f);
 
-        MaterialParam1f coat = getMaterialParam1f("coat", 0.f);
+        MaterialParam1f coat = getMaterialParam1f("coat", 1.f);
         MaterialParam1f coatIor = getMaterialParam1f("coatIor", 1.5f);
         MaterialParam3f coatColor = getMaterialParam3f("coatColor", vec3f(1.f));
         MaterialParam1f coatThickness = getMaterialParam1f("coatThickness", 1.f);
