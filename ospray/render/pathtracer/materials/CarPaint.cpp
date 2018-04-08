@@ -55,6 +55,9 @@ namespace ospray {
         MaterialParam1f coatRoughness = getMaterialParam1f("coatRoughness", 0.f);
         MaterialParam1f coatNormal = getMaterialParam1f("coatNormal", 1.f);
 
+        MaterialParam3f flipflopColor = getMaterialParam3f("flipflopColor", vec3f(1.f));
+        MaterialParam1f flipflopFalloff = getMaterialParam1f("flipflopFalloff", 1.f);
+
         ispc::PathTracer_CarPaint_set(getIE(),
           (const ispc::vec3f&)baseColor.factor, baseColor.map ? baseColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)baseColor.xform,
           roughness.factor, roughness.map ? roughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)roughness.xform,
@@ -71,7 +74,10 @@ namespace ospray {
           (const ispc::vec3f&)coatColor.factor, coatColor.map ? coatColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatColor.xform,
           coatThickness.factor, coatThickness.map ? coatThickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThickness.xform,
           coatRoughness.factor, coatRoughness.map ? coatRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughness.xform,
-          coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot);
+          coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot,
+          
+          (const ispc::vec3f&)flipflopColor.factor, flipflopColor.map ? flipflopColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flipflopColor.xform,
+          flipflopFalloff.factor, flipflopFalloff.map ? flipflopFalloff.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flipflopFalloff.xform);
       }
     };
 
