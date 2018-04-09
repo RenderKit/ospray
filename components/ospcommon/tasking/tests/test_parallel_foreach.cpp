@@ -14,47 +14,29 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common.h"
+#include "../../testing/catch.hpp"
+#include "../parallel_foreach.h"
 
-namespace ospcommon {
+#include <algorithm>
+#include <vector>
 
-  /*! flag that will glbally turn off all microbenches */
-// #define ALLOW_MICRO_BENCHES 1
+using ospcommon::tasking::parallel_foreach;
 
-  struct MicroBench {
-#if ALLOW_MICRO_BENCHES
-    template<typename Lambda>
-    MicroBench(const char *name, const Lambda &func) {
-      static size_t numTimesCalled = 0;
+TEST_CASE("parallel_foreach")
+{
+  const size_t N_ELEMENTS = 1e8;
 
-      ++numTimesCalled;
-      static size_t t_first = 0;
-      static size_t t_in    = 0;
-      static double s_first;
-      size_t t_enter = __rdtsc();
-      if (t_first == 0) { t_first = t_enter; s_first = getSysTime(); }
-      func();
-      size_t t_now = __rdtsc();
-      size_t t_leave = t_now;
-      size_t t_this  = t_leave - t_enter;
-      t_in += t_this;
-        
-      static size_t t_lastPing = t_first;
-      if (t_now-t_lastPing > 10000000000ULL) {
-        size_t t_total = t_leave - t_first;
-        double s_now = getSysTime();
-        printf("pct time in %s: %.2f (%.1f secs in; num times called %li)\n",
-               name,t_in*100.f/t_total,s_now-s_first,numTimesCalled);
-        t_lastPing = t_now;
-      }
-    }
-#else
-    template<typename Lambda>
-    inline MicroBench(const char *, const Lambda &func) {
-      func();
-    }
-#endif
+  const int bad_value  = 0;
+  const int good_value = 1;
 
-  };
+  std::vector<int> v(N_ELEMENTS);
+  std::fill(v.begin(), v.end(), bad_value);
 
-} // ::ospray
+  parallel_foreach(v, [&](int &value) {
+    value = good_value;
+  });
+
+  auto found = std::find(v.begin(), v.end(), bad_value);
+
+  REQUIRE(found == v.end());
+}

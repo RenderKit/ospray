@@ -134,6 +134,10 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
     // Sample the volume at the hit point in world coordinates.
     const vec3f coordinates = ray.org + ray.t0 * ray.dir;
     const float sample      = volume->sample(volume, coordinates);
+    if (isnan(sample)) {
+      volume->stepRay(volume, ray, volumeSamplingRate);
+      continue;
+    }
     if (lastSample == -1.f)
       lastSample = sample;
 

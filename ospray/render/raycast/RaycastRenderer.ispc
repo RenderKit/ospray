@@ -30,9 +30,6 @@ struct RaycastRenderer
 {
   /*! the base "Renderer" we are derived from */
   uniform Renderer super;
-  /*! the specific "shading" mode (primID, geomID, Ng, etc) we should
-      use for shading the ray */
-//  int shadeMode; unused
 };
 
 /*! a simple test-frame renderer that doesn't even trace a ray, just
@@ -71,7 +68,7 @@ void RaycastRenderer_renderSample_eyeLight(uniform Renderer *uniform _self,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.2f+.8f*abs(c));
@@ -89,7 +86,7 @@ void RaycastRenderer_renderSample_Ng(uniform Renderer *uniform _self,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NG);
@@ -108,7 +105,7 @@ void RaycastRenderer_renderSample_Ns(uniform Renderer *uniform _self,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
@@ -127,7 +124,7 @@ void RaycastRenderer_renderSample_dPds(uniform Renderer *uniform _self,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
@@ -152,7 +149,7 @@ void RaycastRenderer_renderSample_dPdt(uniform Renderer *uniform _self,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
@@ -177,7 +174,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(uniform Renderer *uniform
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(0.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
@@ -199,7 +196,7 @@ void RaycastRenderer_renderSample_eyeLight_primID(uniform Renderer *uniform _sel
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(0.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.3f+.8f*abs(c))*make_random_color(sample.ray.primID);
@@ -217,7 +214,7 @@ void RaycastRenderer_renderSample_eyeLight_instID(uniform Renderer *uniform _sel
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(0.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.3f+.8f*abs(c))*make_random_color(sample.ray.instID);
@@ -235,7 +232,7 @@ void RaycastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _sel
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(0.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.3f+.8f*abs(c))*make_random_color(sample.ray.geomID);
@@ -254,7 +251,7 @@ void RaycastRenderer_renderSample_backfacing_Ng(uniform Renderer *uniform _self,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.2f+.8f*abs(c));
@@ -274,7 +271,7 @@ void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);

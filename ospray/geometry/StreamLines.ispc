@@ -315,8 +315,8 @@ StreamLines_setCurve(      void           *uniform _self,
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
-  uniform uint32 geomID = rtcNewBezierCurveGeometry2(model->embreeSceneHandle,
-      RTC_GEOMETRY_STATIC, numSegments, numVertices, 1);
+  uniform uint32 geomID = rtcNewBezierCurveGeometry(model->embreeSceneHandle,
+      RTC_GEOMETRY_STATIC, numSegments, numVertices);
   rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_VERTEX_BUFFER, vertexCurve, 0, 16);
   rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_INDEX_BUFFER, indexCurve, 0, 4);
 

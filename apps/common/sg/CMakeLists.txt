@@ -31,7 +31,10 @@ if(OSPRAY_SG_VTK)
 
   include(${VTK_USE_FILE})
 
-  set(SG_VTK_SRCS importer/importUnstructuredVolume.cpp)
+  set(SG_VTK_SRCS
+    importer/importUnstructuredVolume.cpp
+    generator/generateVTKWaveletVolume.cpp
+  )
 
   add_definitions(-DOSPRAY_APPS_SG_VTK=1)
 endif()
@@ -109,6 +112,12 @@ ospray_create_library(ospray_sg SHARED
 
   3rdParty/ply.cpp
 
+  # scene graph generators
+  generator/generateBasicVolume.cpp
+  generator/generateGridOfSpheres.cpp
+  generator/generateRandomSpheres.cpp
+  generator/Generator.cpp
+
   # scene graph importers
   importer/Importer.cpp
   importer/importPoints.cpp
@@ -178,6 +187,12 @@ ospray_install_sdk_headers(
   common/Transform.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/common
+)
+
+ospray_install_sdk_headers(
+  generator/Generator.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/generator
 )
 
 ospray_install_sdk_headers(

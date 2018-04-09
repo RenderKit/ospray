@@ -90,6 +90,11 @@ namespace ospray {
       return properties.documentation;
     }
 
+    std::vector<Any> Node::whitelist() const
+    {
+      return properties.whitelist;
+    }
+
     void Node::setName(const std::string &v)
     {
       properties.name = v;

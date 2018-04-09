@@ -227,6 +227,14 @@ else()
     ospray_test_main
   )
 
+  # tasking/parallel_foreach
+  ospray_create_test(test_parallel_foreach
+    tasking/tests/test_parallel_foreach.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
   # tasking/schedule
   ospray_create_test(test_schedule
     tasking/tests/test_schedule.cpp
@@ -314,6 +322,7 @@ else()
     add_test(NAME ParameterizedObject COMMAND test_ParameterizedObject)
     add_test(NAME async               COMMAND test_async              )
     add_test(NAME parallel_for        COMMAND test_parallel_for       )
+    add_test(NAME parallel_foreach    COMMAND test_parallel_foreach   )
     add_test(NAME schedule            COMMAND test_schedule           )
   endif()
 endif()

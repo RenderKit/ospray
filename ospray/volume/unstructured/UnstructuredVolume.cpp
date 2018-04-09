@@ -40,6 +40,16 @@ namespace ospray {
   void UnstructuredVolume::commit()
   {
     updateEditableParameters();
+
+    if (getParamData("field", nullptr) != oldField ||
+        getParamData("cellField", nullptr) != oldCellField) {
+      oldField = getParamData("field", nullptr);
+      oldCellField = getParamData("cellField", nullptr);
+
+      // rebuild BVH, resync ISPC, etc...
+      finished = false;
+    }
+
     if (!finished)
       finish();
 
@@ -52,6 +62,8 @@ namespace ospray {
     } else if (methodString == "nonplanar") {
       ispc::UnstructuredVolume_method_nonplanar(ispcEquivalent);
     }
+
+    ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
 
     Volume::commit();
   }
@@ -85,7 +97,7 @@ namespace ospray {
           idx = indices[2 * id + 1][i - 4];
       }
       const auto &v = vertices[idx];
-      const float f = field[idx];
+      const float f = cellField ? cellField[id] : field[idx];
       const auto p  = vec4f(v.x, v.y, v.z, f);
 
       if (i == 0)
@@ -102,8 +114,9 @@ namespace ospray {
     Data *verticesData   = getParamData("vertices", nullptr);
     Data *indicesData    = getParamData("indices", nullptr);
     Data *fieldData      = getParamData("field", nullptr);
+    Data *cellFieldData  = getParamData("cellField", nullptr);
 
-    if (!verticesData || !indicesData || !fieldData) {
+    if (!verticesData || !indicesData || (!fieldData && !cellFieldData)) {
       throw std::runtime_error(
           "#osp: missing correct data arrays in "
           " UnstructuredVolume!");
@@ -115,7 +128,8 @@ namespace ospray {
     indices = (vec4i *)indicesData->data;
 
     vertices   = (vec3f *)verticesData->data;
-    field      = (float *)fieldData->data;
+    field      = fieldData ? (float *)fieldData->data : nullptr;
+    cellField  = cellFieldData ? (float *)cellFieldData->data : nullptr;
 
     buildBvhAndCalculateBounds();
     calculateFaceNormals();
@@ -131,6 +145,7 @@ namespace ospray {
                           (const ispc::vec3f *)faceNormals.data(),
                           (const ispc::vec4i *)indices,
                           (const float *)field,
+                          (const float *)cellField,
                           bvh.rootRef(),
                           bvh.nodePtr(),
                           bvh.itemListPtr(),

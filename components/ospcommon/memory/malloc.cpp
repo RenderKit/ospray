@@ -31,9 +31,7 @@ namespace ospcommon {
     void* alignedMalloc(size_t size, size_t align)
     {
       assert((align & (align-1)) == 0);
-      // FIXME: have to disable this for now as the TBB  allocator itself seems
-      //        to access some uninitialized value when using valgrind
-#if 0//defined(TASKING_TBB)
+#if defined(TASKING_TBB)
       return scalable_aligned_malloc(size,align);
 #else
 #  ifdef _WIN32
@@ -46,7 +44,7 @@ namespace ospcommon {
 
   void alignedFree(void* ptr)
   {
-#if 0//defined(TASKING_TBB)
+#if defined(TASKING_TBB)
       scalable_aligned_free(ptr);
 #else
 #  ifdef _WIN32
