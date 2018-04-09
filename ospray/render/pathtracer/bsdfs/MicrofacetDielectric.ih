@@ -194,7 +194,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
     else
     {
       // Transmission
-      res.type = BSDF_GLOSSY_REFRACTION;
+      res.type = BSDF_GLOSSY_TRANSMISSION;
       res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
     }
   }
@@ -213,7 +213,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
     else
     {
       // Transmission
-      res.type = BSDF_DIFFUSE_REFRACTION;
+      res.type = BSDF_DIFFUSE_TRANSMISSION;
       res.wi = neg(res.wi);
     }
   }
@@ -253,7 +253,7 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
                                              float eta, float roughness, float anisotropy)
 {
   BSDF_Constructor(&self->super,
-                   BSDF_GLOSSY_REFLECTION | BSDF_GLOSSY_REFRACTION | BSDF_DIFFUSE_REFLECTION | BSDF_DIFFUSE_REFRACTION,
+                   BSDF_GLOSSY | BSDF_DIFFUSE,
                    MicrofacetDielectric_eval, MicrofacetDielectric_sample,
                    frame);
 

@@ -84,7 +84,7 @@ inline void RobustThinDielectric_Constructor(varying RobustThinDielectric* unifo
                                              const varying linear3f* uniform frame,
                                              float eta, vec3f attenuation)
 {
-  BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION | BSDF_SPECULAR_TRANSMISSION,
+  BSDF_Constructor(&self->super, BSDF_SPECULAR,
                    RobustThinDielectric_eval, RobustThinDielectric_sample,
                    frame);
   self->eta = eta;

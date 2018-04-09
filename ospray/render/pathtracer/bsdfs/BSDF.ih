@@ -29,11 +29,6 @@
 #define BSDF_GLOSSY_TRANSMISSION   (1<<4)  /*!< glossy light transmission           */
 #define BSDF_DIFFUSE_TRANSMISSION  (1<<5)  /*!< diffuse light transmission          */
 
-/* refractive light transmission -> refraction should *not* be ignored (transparent shadows) */
-#define BSDF_SPECULAR_REFRACTION   ((1<<6) | BSDF_SPECULAR_TRANSMISSION) /*!< perfect specular refractive light transmission */
-#define BSDF_GLOSSY_REFRACTION     ((1<<7) | BSDF_GLOSSY_TRANSMISSION)   /*!< glossy refractive light transmission  */
-#define BSDF_DIFFUSE_REFRACTION    ((1<<8) | BSDF_DIFFUSE_TRANSMISSION)  /*!< diffuse refractive light transmission */
-
 /*! diffuse reflections and transmissions */
 #define BSDF_DIFFUSE      (BSDF_DIFFUSE_REFLECTION   | BSDF_DIFFUSE_TRANSMISSION)
 
@@ -48,9 +43,6 @@
 
 /*! all possible transmissions */
 #define BSDF_TRANSMISSION (BSDF_DIFFUSE_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION | BSDF_SPECULAR_TRANSMISSION)
-
-/*! all possible refractive transmissions */
-#define BSDF_REFRACTION   (BSDF_DIFFUSE_REFRACTION | BSDF_GLOSSY_REFRACTION | BSDF_SPECULAR_REFRACTION)
 
 /*! all non-dirac types */
 #define BSDF_SMOOTH       (BSDF_DIFFUSE | BSDF_GLOSSY)

@@ -378,15 +378,21 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
       const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
       const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
                                     : self->insideMedium.ior*rcp(self->outsideMedium.ior);
-
       const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
 
       if (abs(eta-1.f) > EPS)
       {
-        if (self->thin)
+        const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
+
+        if (!self->thin)
+        {
+          // solid
+          if (roughness < EPS)
+            T = Dielectric_getTransparency(cosThetaO, eta);
+        }
+        else
         {
           // thin
-          const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
           const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
           const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
           const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
