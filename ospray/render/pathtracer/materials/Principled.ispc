@@ -242,7 +242,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           if (!self->thin)
           {
             // solid
-            if (roughness < EPS)
+            if (roughness < EPS && !self->roughnessMap.map) // use microfacet if textured due to different transparent shadow behavior
               glassBsdf = Dielectric_create(ctx, frame, eta);
             else
               glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy);
@@ -387,7 +387,7 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         if (!self->thin)
         {
           // solid
-          if (roughness < EPS)
+          if (roughness < EPS && !self->roughnessMap.map) // use microfacet if textured due to different transparent shadow behavior
             T = Dielectric_getTransparency(cosThetaO, eta);
         }
         else
