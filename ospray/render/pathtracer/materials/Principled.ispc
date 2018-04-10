@@ -159,6 +159,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     varying BSDF* uniform baseBsdf = MultiBSDF_create(ctx);
 
     const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
+    const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
     const float metallic = clamp(self->metallic * get1f(self->metallicMap, dg.st, 1.f));
     const float roughness = clamp(self->roughness * get1f(self->roughnessMap, dg.st, 1.f));
     const float anisotropy = clamp(self->anisotropy * get1f(self->anisotropyMap, dg.st, 1.f));
@@ -169,7 +170,6 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     if (dielectric > EPS)
     {
       const float transmission = clamp(self->transmission * get1f(self->transmissionMap, dg.st, 1.f));
-      const float specular = clamp(self->specular * get1f(self->specularMap, dg.st, 1.f));
 
       float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
       if (ior < 1.f) ior = rcp(ior);
@@ -268,19 +268,20 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       }
     }
       
-    // metal base
-    if (metallic > EPS)
+    // conductor base
+    const float conductor = metallic * specular;
+    if (conductor > EPS)
     {
       const vec3f edgeColor = clamp(self->edgeColor * get3f(self->edgeColorMap, dg.st, make_vec3f(1.f)));
       
       Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
-      varying BSDF* varying metalBsdf;
+      varying BSDF* varying conductorBsdf;
       if (roughness < EPS)
-        metalBsdf = Conductor_create(ctx, frame, fresnel);
+        conductorBsdf = Conductor_create(ctx, frame, fresnel);
       else
-        metalBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness, anisotropy);
+        conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness, anisotropy);
 
-      MultiBSDF_add(baseBsdf, metalBsdf, metallic, metallic);
+      MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
     }
 
     bsdf = baseBsdf;
