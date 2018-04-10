@@ -45,7 +45,7 @@ namespace ospray {
         MaterialParam1f ior = getMaterialParam1f("ior", 1.f);
         MaterialParam1f transmission = getMaterialParam1f("transmission", 0.f);
         MaterialParam3f transmissionColor = getMaterialParam3f("transmissionColor", vec3f(1.f));
-        float transmissionDepth = getParam1f("transmissionDepth", 1.f);
+        MaterialParam1f transmissionDepth = getMaterialParam1f("transmissionDepth", 1.f);
         MaterialParam1f roughness = getMaterialParam1f("roughness", 0.f);
         MaterialParam1f anisotropy = getMaterialParam1f("anisotropy", 0.f);
         MaterialParam1f rotation = getMaterialParam1f("rotation", 0.f);
@@ -80,7 +80,7 @@ namespace ospray {
           ior.factor, ior.map ? ior.map->getIE() : nullptr, (const ispc::AffineSpace2f&)ior.xform,
           transmission.factor, transmission.map ? transmission.map->getIE() : nullptr, (const ispc::AffineSpace2f&)transmission.xform,
           (const ispc::vec3f&)transmissionColor.factor, transmissionColor.map ? transmissionColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)transmissionColor.xform,
-          transmissionDepth,
+          transmissionDepth.factor, transmissionDepth.map ? transmissionDepth.map->getIE() : nullptr, (const ispc::AffineSpace2f&)transmissionDepth.xform,
           roughness.factor, roughness.map ? roughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)roughness.xform,
           anisotropy.factor, anisotropy.map ? anisotropy.map->getIE() : nullptr, (const ispc::AffineSpace2f&)anisotropy.xform,
           rotation.factor, rotation.map ? rotation.map->getIE() : nullptr, (const ispc::AffineSpace2f&)rotation.xform,

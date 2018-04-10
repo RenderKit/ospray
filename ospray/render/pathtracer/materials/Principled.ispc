@@ -52,16 +52,17 @@ struct Principled
 
   // index of refraction in [1, 3]
   float ior;
-  TextureParam iorMap; // currently ignored for solid transmission
+  TextureParam iorMap;
 
   // specular transmission in [0, 1]
   float transmission;
   TextureParam transmissionMap;
 
   vec3f transmissionColor;
-  TextureParam transmissionColorMap; // currently ignored for solid transmission
+  TextureParam transmissionColorMap;
 
   float transmissionDepth;
+  TextureParam transmissionDepthMap;
 
   // roughness in [0, 1]; 0 = ideally smooth (mirror)
   float roughness;
@@ -124,7 +125,6 @@ struct Principled
   float thickness;
   TextureParam thicknessMap;
   
-  Medium insideMedium;
   Medium outsideMedium;
 };
 
@@ -142,6 +142,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
   const uniform Principled* uniform self = (const uniform Principled* uniform)super;
   varying BSDF* varying bsdf = NULL;
   
+  // create the base shading frame
   varying linear3f* uniform frame =
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
   const float rotation = clamp(self->rotation * get1f(self->rotationMap, dg.st, 1.f));
@@ -152,7 +153,6 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     frame->vy = cross(frame->vz, frame->vx);
   }
 
-  // cut-out opacity
   const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg.st, 1.f));
   if (opacity > EPS)
   {
@@ -173,7 +173,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
 
       float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
       if (ior < 1.f) ior = rcp(ior);
-      ior = clamp(ior, 1.f, 3.f); // clamp to common range due to LUTs
+      float eta = fromOutside ? self->outsideMedium.ior * rcp(ior)
+                              : ior * rcp(self->outsideMedium.ior);
+      eta = clamp(eta, 1.f/3.f, 3.f); // clamp to common range due to LUTs
 
       // plastic base
       const float plastic = dielectric * (1.f - transmission);
@@ -212,16 +214,16 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         }
         
         // specular
-        if (specular > EPS && abs(ior-1.f) > EPS)
+        if (specular > EPS && abs(eta-1.f) > EPS)
         {
           if (roughness < EPS)
           {
-            plasticBsdf = DielectricLayer_create(ctx, frame, plasticBsdf, rcp(ior), make_vec3f(1.f), 1.f, specular);
+            plasticBsdf = DielectricLayer_create(ctx, frame, plasticBsdf, eta, make_vec3f(1.f), 1.f, specular);
           }
           else
           {
             plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf,
-              rcp(ior), make_vec3f(1.f), 1.f, roughness, anisotropy, specular);
+              eta, make_vec3f(1.f), 1.f, roughness, anisotropy, specular);
           }
         }
 
@@ -232,10 +234,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       const float glass = dielectric * transmission * specular;
       if (glass > EPS)
       {
-        varying BSDF* varying glassBsdf;
-
-        const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                                      : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+        varying BSDF* varying glassBsdf = NULL;
 
         if (abs(eta-1.f) > EPS)
         {
@@ -292,14 +291,16 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     {
       float coatIor = self->coatIor * get1f(self->coatIorMap, dg.st, 1.f);
       if (coatIor < 1.f) coatIor = rcp(coatIor);
-      coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
-      if (abs(coatIor-1.f) > EPS)
+      float coatEta = fromOutside ? self->outsideMedium.ior * rcp(coatIor)
+                                  : coatIor * rcp(self->outsideMedium.ior);
+      coatEta = clamp(coatEta, 1.f/3.f, 3.f); // clamp to common range due to LUTs
+
+      if (abs(coatEta-1.f) > EPS)
       {
-        const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
-                                          : coatIor*rcp(self->outsideMedium.ior);
         const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
         const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
         const float coatRoughness = clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f));
+
         varying linear3f* uniform coatFrame =
           LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
         
@@ -376,8 +377,11 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
     if (glass > EPS)
     {
       const bool fromOutside = self->thin ? true : eq(currentMedium, self->outsideMedium);
-      const float eta = fromOutside ? self->outsideMedium.ior*rcp(self->insideMedium.ior)
-                                    : self->insideMedium.ior*rcp(self->outsideMedium.ior);
+      float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
+      if (ior < 1.f) ior = rcp(ior);
+      float eta = fromOutside ? self->outsideMedium.ior * rcp(ior)
+                              : ior * rcp(self->outsideMedium.ior);
+      eta = clamp(eta, 1.f/3.f, 3.f); // clamp to common range due to LUTs
       const float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.f);
 
       if (abs(eta-1.f) > EPS)
@@ -394,8 +398,9 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         {
           // thin
           const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
+          const float transmissionDepth = max(self->transmissionDepth * get1f(self->transmissionDepthMap, dg.st, 1.f), 0.f);
           const float thickness = max(self->thickness * get1f(self->thicknessMap, dg.st, 1.f), 0.f);
-          const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
+          const vec3f attenuation = logf(transmissionColor) / transmissionDepth * thickness;
 
           if (roughness < EPS)
             T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
@@ -416,8 +421,11 @@ vec3f Principled_getTransparency(const uniform PathTraceMaterial* uniform materi
         {
           float coatIor = self->coatIor * get1f(self->coatIorMap, dg.st, 1.f);
           if (coatIor < 1.f) coatIor = rcp(coatIor);
-          coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
-          if (abs(coatIor-1.f) > EPS)
+          float coatEta = fromOutside ? self->outsideMedium.ior * rcp(coatIor)
+                                      : coatIor * rcp(self->outsideMedium.ior);
+          coatEta = clamp(coatEta, 1.f/3.f, 3.f); // clamp to common range due to LUTs
+
+          if (abs(coatEta-1.f) > EPS)
           {
             const float coatEta = fromOutside ? self->outsideMedium.ior*rcp(coatIor)
                                               : coatIor*rcp(self->outsideMedium.ior);
@@ -467,9 +475,19 @@ void Principled_selectNextMedium(const uniform PathTraceMaterial* uniform super,
     return;
 
   if (eq(currentMedium, self->outsideMedium))
-    currentMedium = self->insideMedium;
+  {
+    float ior = self->ior * get1f(self->iorMap, dg.st, 1.f);
+    if (ior < 1.f) ior = rcp(ior);
+    const vec3f transmissionColor = clamp(self->transmissionColor * get3f(self->transmissionColorMap, dg.st, make_vec3f(1.f)));
+    const float transmissionDepth = max(self->transmissionDepth * get1f(self->transmissionDepthMap, dg.st, 1.f), 0.f);
+
+    currentMedium.ior = ior;
+    currentMedium.attenuation = logf(transmissionColor) / transmissionDepth;
+  }
   else
+  {
     currentMedium = self->outsideMedium;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -483,7 +501,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float ior, void* uniform iorMap, const uniform affine2f& iorXform,
     uniform float transmission, void* uniform transmissionMap, const uniform affine2f& transmissionXform,
     const uniform vec3f& transmissionColor, void* uniform transmissionColorMap, const uniform affine2f& transmissionColorXform,
-    uniform float transmissionDepth,
+    uniform float transmissionDepth, void* uniform transmissionDepthMap, const uniform affine2f& transmissionDepthXform,
     uniform float roughness, void* uniform roughnessMap, const uniform affine2f& roughnessXform,
     uniform float anisotropy, void* uniform anisotropyMap, const uniform affine2f& anisotropyXform,
     uniform float rotation, void* uniform rotationMap, const uniform affine2f& rotationXform,
@@ -529,6 +547,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->transmissionColorMap = make_TextureParam((uniform Texture2D*)transmissionColorMap, transmissionColorXform);
 
   self->transmissionDepth = transmissionDepth;
+  self->transmissionDepthMap = make_TextureParam((uniform Texture2D*)transmissionDepthMap, transmissionDepthXform);
 
   self->roughness = roughness;
   self->roughnessMap = make_TextureParam((uniform Texture2D*)roughnessMap, roughnessXform);
@@ -582,10 +601,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->thickness = thickness;
   self->thicknessMap = make_TextureParam((uniform Texture2D*)thicknessMap, thicknessXform);
   
-  self->insideMedium.ior = clamp(ior >= 1.f ? ior : rcp(ior), 1.f, 3.f);
-  self->insideMedium.attenuation = logf(transmissionColor) / transmissionDepth;
-  
-  self->outsideMedium.ior = clamp(outsideIor >= 1.f ? outsideIor : rcp(outsideIor), 1.f, 3.f);
+  self->outsideMedium.ior = outsideIor >= 1.f ? outsideIor : rcp(outsideIor);
   self->outsideMedium.attenuation = logf(outsideTransmissionColor) / outsideTransmissionDepth;
 }
 
@@ -607,7 +623,7 @@ export void* uniform PathTracer_Principled_create()
     1.f, NULL, xform, // ior
     0.f, NULL, xform, // transmission
     make_vec3f(1.f), NULL, xform, // transmissionColor
-    1.f, // transmissionDepth
+    1.f, NULL, xform, // transmissionDepth
     0.f, NULL, xform, // roughness
     0.f, NULL, xform, // anisotropy
     0.f, NULL, xform, // rotation
