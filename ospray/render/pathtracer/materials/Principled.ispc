@@ -46,11 +46,15 @@ struct Principled
   float metallic;
   TextureParam metallicMap;
   
-  // specular reflectivity in [0, 1]
+  // diffuse weight in [0, 1]
+  float diffuse;
+  TextureParam diffuseMap;
+
+  // specular weight in [0, 1]
   float specular;
   TextureParam specularMap;
 
-  // index of refraction in [1, 3]
+  // index of refraction
   float ior;
   TextureParam iorMap;
 
@@ -80,11 +84,11 @@ struct Principled
   TextureParam normalMap;
   linear2f normalRot;
   
-  // dielectric clear coat reflectivity in [0, 1]
+  // dielectric clear coat weight in [0, 1]
   float coat;
   TextureParam coatMap;
 
-  // dielectric clear coat index of refraction in [1, 3]
+  // dielectric clear coat index of refraction
   float coatIor;
   TextureParam coatIorMap;
   
@@ -101,6 +105,7 @@ struct Principled
   TextureParam coatNormalMap;
   linear2f coatNormalRot;
 
+  // sheen weight in [0, 1]
   float sheen;
   TextureParam sheenMap;
 
@@ -184,6 +189,8 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         varying BSDF* varying plasticBsdf = NULL;
 
         // diffuse
+        const float diffuse = clamp(self->diffuse * get1f(self->diffuseMap, dg.st, 1.f));
+        const vec3f diffuseColor = baseColor * diffuse;
         const float backlight = self->thin ? clamp(self->backlight * get1f(self->backlightMap, dg.st, 1.f), 0.f, 2.f) : 0.f;
         const float diffuseTransmission = backlight * 0.5f;
         const float diffuseReflection = 1.f - diffuseTransmission;
@@ -191,14 +198,14 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         if (diffuseReflection > EPS)
         {
           if (roughness < EPS)
-            plasticBsdf = Lambert_create(ctx, frame, baseColor);
+            plasticBsdf = Lambert_create(ctx, frame, diffuseColor);
           else
-            plasticBsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
+            plasticBsdf = OrenNayar_create(ctx, frame, diffuseColor, roughness);
         }
 
         if (diffuseTransmission > EPS)
         {
-          varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, frame, baseColor);
+          varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, frame, diffuseColor);
 
           if (plasticBsdf)
           {
@@ -227,7 +234,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           }
         }
 
-        MultiBSDF_add(baseBsdf, plasticBsdf, plastic, plastic);
+        MultiBSDF_add(baseBsdf, plasticBsdf, plastic, plastic * max(diffuse, specular));
       }
 
       // glass base
@@ -498,6 +505,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     const uniform vec3f& baseColor, void* uniform baseColorMap, const uniform affine2f& baseColorXform,
     const uniform vec3f& edgeColor, void* uniform edgeColorMap, const uniform affine2f& edgeColorXform,
     uniform float metallic, void* uniform metallicMap, const uniform affine2f& metallicXform,
+    uniform float diffuse, void* uniform diffuseMap, const uniform affine2f& diffuseXform,
     uniform float specular, void* uniform specularMap, const uniform affine2f& specularXform,
     uniform float ior, void* uniform iorMap, const uniform affine2f& iorXform,
     uniform float transmission, void* uniform transmissionMap, const uniform affine2f& transmissionXform,
@@ -535,6 +543,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->metallic = metallic;
   self->metallicMap = make_TextureParam((uniform Texture2D*)metallicMap, metallicXform);
   
+  self->diffuse = diffuse;
+  self->diffuseMap = make_TextureParam((uniform Texture2D*)diffuseMap, diffuseXform);
+
   self->specular = specular;
   self->specularMap = make_TextureParam((uniform Texture2D*)specularMap, specularXform);
 
@@ -620,6 +631,7 @@ export void* uniform PathTracer_Principled_create()
     make_vec3f(0.8f), NULL, xform, // baseColor
     make_vec3f(1.f), NULL, xform, // edgeColor
     0.f, NULL, xform, // metallic
+    1.f, NULL, xform, // diffuse
     1.f, NULL, xform, // specular
     1.f, NULL, xform, // ior
     0.f, NULL, xform, // transmission
@@ -637,7 +649,7 @@ export void* uniform PathTracer_Principled_create()
     1.f, NULL, xform, make_LinearSpace2f_identity(), // coatNormal
     0.f, NULL, xform, // sheen
     make_vec3f(1.f), NULL, xform, // sheenColor
-    0.f, NULL, xform, // sheenRoughness
+    0.2f, NULL, xform, // sheenRoughness
     1.f, NULL, xform, // opacity
     false, // thin
     0.f, NULL, xform, // backlight

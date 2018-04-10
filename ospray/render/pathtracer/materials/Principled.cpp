@@ -41,6 +41,7 @@ namespace ospray {
         MaterialParam3f baseColor = getMaterialParam3f("baseColor", vec3f(0.8f));
         MaterialParam3f edgeColor = getMaterialParam3f("edgeColor", vec3f(1.f));
         MaterialParam1f metallic = getMaterialParam1f("metallic", 0.f);
+        MaterialParam1f diffuse = getMaterialParam1f("diffuse", 1.f);
         MaterialParam1f specular = getMaterialParam1f("specular", 1.f);
         MaterialParam1f ior = getMaterialParam1f("ior", 1.f);
         MaterialParam1f transmission = getMaterialParam1f("transmission", 0.f);
@@ -60,7 +61,7 @@ namespace ospray {
 
         MaterialParam1f sheen = getMaterialParam1f("sheen", 0.f);
         MaterialParam3f sheenColor = getMaterialParam3f("sheenColor", vec3f(1.f));
-        MaterialParam1f sheenRoughness = getMaterialParam1f("sheenRoughness", 0.5f);
+        MaterialParam1f sheenRoughness = getMaterialParam1f("sheenRoughness", 0.2f);
 
         MaterialParam1f opacity = getMaterialParam1f("opacity", 1.f);
 
@@ -76,6 +77,7 @@ namespace ospray {
           (const ispc::vec3f&)baseColor.factor, baseColor.map ? baseColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)baseColor.xform,
           (const ispc::vec3f&)edgeColor.factor, edgeColor.map ? edgeColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)edgeColor.xform,
           metallic.factor, metallic.map ? metallic.map->getIE() : nullptr, (const ispc::AffineSpace2f&)metallic.xform,
+          diffuse.factor, diffuse.map ? diffuse.map->getIE() : nullptr, (const ispc::AffineSpace2f&)diffuse.xform,
           specular.factor, specular.map ? specular.map->getIE() : nullptr, (const ispc::AffineSpace2f&)specular.xform,
           ior.factor, ior.map ? ior.map->getIE() : nullptr, (const ispc::AffineSpace2f&)ior.xform,
           transmission.factor, transmission.map ? transmission.map->getIE() : nullptr, (const ispc::AffineSpace2f&)transmission.xform,
