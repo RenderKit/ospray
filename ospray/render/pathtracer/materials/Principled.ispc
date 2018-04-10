@@ -293,6 +293,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
 
     bsdf = baseBsdf;
     
+    // coatings
+    varying linear3f* uniform coatFrame = frame;
+
     // clear coat
     const float coat = clamp(self->coat * get1f(self->coatMap, dg.st, 1.f));
     if (coat > EPS)
@@ -309,8 +312,11 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
         const float coatRoughness = clamp(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f));
 
-        varying linear3f* uniform coatFrame =
-          LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
+        if (self->coatNormalMap.map)
+        {
+          coatFrame = LinearSpace3f_create(ctx,
+            makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
+        }
         
         if (coatRoughness < EPS)
         {
@@ -331,7 +337,7 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       const vec3f sheenColor = clamp(self->sheenColor * get3f(self->sheenColorMap, dg.st, make_vec3f(1.f)));
       const float sheenRoughness = clamp(self->sheenRoughness * get1f(self->sheenRoughnessMap, dg.st, 1.f));
         
-      bsdf = MicrofacetSheenLayer_create(ctx, frame, bsdf, sheenColor, sheenRoughness, sheen);
+      bsdf = MicrofacetSheenLayer_create(ctx, coatFrame, bsdf, sheenColor, sheenRoughness, sheen);
     }
   }
 
