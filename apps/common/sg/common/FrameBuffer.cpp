@@ -52,6 +52,7 @@ namespace ospray {
 
       createChild("useSRGB", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
+      createChild("useAccumBuffer", "bool", true);
 
       createFB();
     }
@@ -63,6 +64,7 @@ namespace ospray {
           || child("size").lastModified() >= lastCommitted()
           || child("displayWall").lastModified() >= lastCommitted()
           || child("useVarianceBuffer").lastModified() >= lastCommitted()
+          || child("useAccumBuffer").lastModified() >= lastCommitted()
           || child("useSRGB").lastModified() >= lastCommitted()
           || child("toneMapping").lastModified() >= lastCommitted())
       {
@@ -128,12 +130,16 @@ namespace ospray {
 
     void FrameBuffer::clear()
     {
-      ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM|OSP_FB_COLOR);
+      auto useAccum = child("useAccumBuffer").valueAs<bool>();
+      ospFrameBufferClear(ospFrameBuffer, OSP_FB_COLOR |
+                                          (useAccum ? OSP_FB_ACCUM : 0));
     }
 
     void FrameBuffer::clearAccum()
     {
-      ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
+      auto useAccum = child("useAccumBuffer").valueAs<bool>();
+      if (useAccum)
+        ospFrameBufferClear(ospFrameBuffer, OSP_FB_ACCUM);
     }
 
     vec2i FrameBuffer::size() const
@@ -160,11 +166,13 @@ namespace ospray {
       auto format = useSRGB ? OSP_FB_SRGBA : OSP_FB_RGBA8;
 
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
+      auto useAccum    = child("useAccumBuffer").valueAs<bool>();
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
                                          (displayWallStream=="")
                                          ? format
                                          : OSP_FB_NONE,
-                                         OSP_FB_COLOR | OSP_FB_ACCUM |
+                                         OSP_FB_COLOR |
+                                         (useAccum ? OSP_FB_ACCUM : 0) |
                                          (useVariance ? OSP_FB_VARIANCE : 0));
       clearAccum();
       setValue(ospFrameBuffer);
