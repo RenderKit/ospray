@@ -1328,7 +1328,7 @@ in the table below.
   float  flakeScale               100  scale of the flake structure, higher values increase
                                        the amount of flakes
                                 
-  float  flakeSpread              0.2  flake spread in [0-1]
+  float  flakeSpread              0.3  flake spread in [0-1]
 
   float  flakeJitter             0.75  flake randomness in [0-1]
 

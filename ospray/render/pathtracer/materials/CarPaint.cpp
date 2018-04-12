@@ -44,7 +44,7 @@ namespace ospray {
 
         MaterialParam1f flakeScale = getMaterialParam1f("flakeScale", 100.f);
         MaterialParam1f flakeDensity = getMaterialParam1f("flakeDensity", 0.f);
-        MaterialParam1f flakeSpread = getMaterialParam1f("flakeSpread", 0.2f);
+        MaterialParam1f flakeSpread = getMaterialParam1f("flakeSpread", 0.3f);
         MaterialParam1f flakeJitter = getMaterialParam1f("flakeJitter", 0.75f);
         MaterialParam1f flakeRoughness = getMaterialParam1f("flakeRoughness", 0.3f);
 
