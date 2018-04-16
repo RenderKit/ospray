@@ -129,9 +129,6 @@
 /// Basic Types
 ////////////////////////////////////////////////////////////////////////////////
 
-/* default floating-point type */
-typedef float real;
-
 /* windows does not have ssize_t */
 #ifdef __WIN32
 #ifdef __X86_64__
