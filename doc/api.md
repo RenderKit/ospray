@@ -1859,10 +1859,10 @@ To set a pixel operation to the given framebuffer use
 #### Tone Mapper
 
 The tone mapper is a pixel operation which implements a generic filmic tone
-mapping operator. It approximates the Academy Color Encoding System (ACES)
-by default. The tone mapper is created by passing the type string "`tonemapper`"
-to `ospNewPixelOp`. The tone mapping curve can be customized using the
-parameters listed in the table below.
+mapping operator. Using the default parameters it approximates the Academy
+Color Encoding System (ACES). The tone mapper is created by passing the type
+string "`tonemapper`" to `ospNewPixelOp`. The tone mapping curve can be
+customized using the parameters listed in the table below.
 
   ----- ---------- --------    -----------------------------------------
   Type  Name       Default     Description
@@ -1885,6 +1885,20 @@ parameters listed in the table below.
   ----- ---------  --------    -----------------------------------------
   : Parameters accepted by the tone mapper.
 
+To use the popular "Uncharted 2" filmic tone mapping curve instead, set the
+parameters to the values listed in the table below.
+
+  Name       Value
+  ---------  --------
+  contrast   1.1759
+  shoulder   0.9746
+  midIn      0.18
+  midOut     0.18
+  hdrMax     6.3704
+  acesColor  false
+  ---------  --------
+  : Filmic tone mapping curve parameters. Note that the curve includes an
+  exposure bias to match 18% middle gray.
 
 Rendering
 ---------
