@@ -45,12 +45,13 @@ namespace ospray {
     float m = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
     float n = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
     float w = max(getParam1f("hdrMax", aces_hdrMax), 1.f);
+    bool acesColor = getParam1i("acesColor", 1);
     
     // Solve b and c
     float b = -((powf(m, -a*d)*(-powf(m, a) + (n*(powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d))) / (powf(m, a*d)*n - n*powf(w, a*d)))) / n);
     float c = max((powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d)) / (powf(m, a*d)*n - n*powf(w, a*d)), 0.f); // avoid discontinuous curve by clamping to 0
     
-    ispc::ToneMapperPixelOp_set(ispcEquivalent, exposure, a, b, c, d);
+    ispc::ToneMapperPixelOp_set(ispcEquivalent, exposure, a, b, c, d, acesColor);
   }
 
   std::string ToneMapperPixelOp::toString() const

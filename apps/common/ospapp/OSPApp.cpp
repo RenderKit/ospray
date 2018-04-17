@@ -595,6 +595,7 @@ namespace ospray {
         frameBuffer["midIn"] = 0.18f;
         frameBuffer["midOut"] = 0.18f;
         frameBuffer["hdrMax"] = 11.0785f;
+        frameBuffer["acesColor"] = true;
       }
     }
 

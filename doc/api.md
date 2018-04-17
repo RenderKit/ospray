@@ -1880,6 +1880,8 @@ parameters listed in the table below.
                                gray
 
   float hdrMax     11.0785     maximum HDR input that is not clipped
+
+  bool  acesColor  true        apply the ACES color transforms
   ----- ---------  --------    -----------------------------------------
   : Parameters accepted by the tone mapper.
 
