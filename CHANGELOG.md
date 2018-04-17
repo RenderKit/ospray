@@ -3,6 +3,9 @@ Version History
 
 ### Changes in v1.6.0:
 
+-   Added Principled and CarPaint materials
+-   Improved flexibility of the tone mapper
+
 ### Changes in v1.5.0:
 
 -   TetrahedralVolume now generalized to take both tet and hex data, now called
