@@ -977,6 +977,29 @@ An existing geometry or volume can be removed from a model with
     void ospRemoveGeometry(OSPModel, OSPGeometry);
     void ospRemoveVolume(OSPModel, OSPVolume);
 
+Finally, Models can be configured with parameters for making various
+feature/performance tradeoffs:
+
+  ------------- ---------------- --------  -------------------------------------
+  Type          Name              Default  Description
+  ------------- ---------------- --------  -------------------------------------
+  bool          dyanmicScene        false  use RTC_SCENE_DYNAMIC flag (faster
+                                           BVH build, slower ray traversal),
+                                           otherwise uses RTC_SCENE_STATIC flag
+                                           (faster ray traversal, slightly
+                                           slower BVH build)
+
+  bool          compactMode         false  tell Embree to use a more compact BVH
+                                           in memory by trading ray traversal
+                                           performance
+
+  bool          robustMode          false  tell Embree to enable more robust ray
+                                           intersection code paths (slightly
+                                           slower)
+  ------------- ---------------- --------  -------------------------------------
+  : Parameters understood by Models
+
+
 ### Lights
 
 To let the given `renderer` create a new light source of given type
