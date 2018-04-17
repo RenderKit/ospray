@@ -1268,7 +1268,7 @@ listed in the table below.
 
   float  normal                     1  normal map/scale
 
-  int    thin                       0  flag specifying whether the material is thin or solid
+  bool   thin                   false  flag specifying whether the material is thin or solid
 
   float  thickness                  1  thickness of the material (thin only), affects the
                                        amount of color attenuation due to specular transmission
