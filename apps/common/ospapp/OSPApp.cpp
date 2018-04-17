@@ -81,6 +81,7 @@ namespace ospray {
                 << "\t" << "-vf float //camera field of view" << std::endl
                 << "\t" << "-ar float //camera aperture radius" << std::endl
                 << "\t" << "--aces //use ACES tone mapping" << std::endl
+                << "\t" << "--filmic //use filmic tone mapping" << std::endl
                 << std::endl;
     }
 
@@ -120,6 +121,7 @@ namespace ospray {
       addAnimatedImporterNodesToWorld(renderer);
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
+      setupToneMapping(renderer);
       renderer.verify();
       renderer.commit();
 
@@ -276,6 +278,12 @@ namespace ospray {
           --i;
         } else if (arg == "--aces") {
           aces = true;
+          filmic = false;
+          removeArgs(ac, av, i, 1);
+          --i;
+        } else if (arg == "--filmic") {
+          filmic = true;
+          aces = false;
           removeArgs(ac, av, i, 1);
           --i;
         } else if (arg.compare(0, 4, "-sg:") == 0) {
@@ -587,8 +595,7 @@ namespace ospray {
     {
       auto &frameBuffer = renderer["frameBuffer"];
 
-      if (aces)
-      {
+      if (aces) {
         frameBuffer["toneMapping"] = true;
         frameBuffer["contrast"] = 1.6773f;
         frameBuffer["shoulder"] = 0.9714f;
@@ -596,6 +603,14 @@ namespace ospray {
         frameBuffer["midOut"] = 0.18f;
         frameBuffer["hdrMax"] = 11.0785f;
         frameBuffer["acesColor"] = true;
+      } else if (filmic) {
+        frameBuffer["toneMapping"] = true;
+        frameBuffer["contrast"] = 1.1759f;
+        frameBuffer["shoulder"] = 0.9746f;
+        frameBuffer["midIn"] = 0.18f;
+        frameBuffer["midOut"] = 0.18f;
+        frameBuffer["hdrMax"] = 6.3704f;
+        frameBuffer["acesColor"] = false;
       }
     }
 

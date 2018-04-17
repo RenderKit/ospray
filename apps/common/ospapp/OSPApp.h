@@ -108,6 +108,7 @@ namespace ospray {
       bool addDefaultLights = false;
       bool noDefaultLights = false;
       bool aces = false;
+      bool filmic = false;
       bool debug = false;
       std::string initialRendererType;
       box3f bboxWithoutPlane;
