@@ -329,9 +329,13 @@ namespace ospray {
 
         fileLoaded = true;
 
+        // Double ugly: This is re-done by postCommit, but we need to
+        // do it here so the transferFunction is set before we commit the
+        // volume, so that it's in a valid state.
+        ospSetObject(ospVolume, "transferFunction",
+                     child("transferFunction").valueAs<OSPTransferFunction>());
         commit(); //<-- UGLY, recommitting the volume after child changes...
       }
-
       Volume::postCommit(ctx);
     }
 

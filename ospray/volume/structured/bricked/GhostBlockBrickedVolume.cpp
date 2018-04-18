@@ -57,7 +57,7 @@ namespace ospray {
       const vec3i &regionCoords,
       // size of the region that we're writing to, MUST be the same as the
       // dimensions of source[][][]
-                                    const vec3i &regionSize)
+      const vec3i &regionSize)
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
