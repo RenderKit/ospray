@@ -48,6 +48,10 @@ namespace ospray {
 
   void Model::commit()
   {
+    useEmbreeDynamicSceneFlag = getParam<int>("dynamicScene", 0);
+    useEmbreeCompactSceneFlag = getParam<int>("compactMode", 0);
+    useEmbreeRobustSceneFlag = getParam<int>("robustMode", 0);
+
     postStatusMsg(2)
         << "=======================================================\n"
         << "Finalizing model, has " << geometry.size()
@@ -55,7 +59,19 @@ namespace ospray {
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
-    ispc::Model_init(getIE(), embreeDevice, geometry.size(), volume.size());
+    int sceneFlags = 0;
+    sceneFlags =
+        sceneFlags | (useEmbreeDynamicSceneFlag ? RTC_SCENE_DYNAMIC : RTC_SCENE_STATIC);
+    sceneFlags =
+        sceneFlags | (useEmbreeCompactSceneFlag ? RTC_SCENE_COMPACT : 0);
+    sceneFlags =
+        sceneFlags | (useEmbreeRobustSceneFlag ? RTC_SCENE_ROBUST : 0);
+
+    ispc::Model_init(getIE(),
+                     embreeDevice,
+                     sceneFlags,
+                     geometry.size(),
+                     volume.size());
 
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 

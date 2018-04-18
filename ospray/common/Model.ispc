@@ -40,6 +40,7 @@ export void Model_cleanup(void *uniform _model)
 
 export void Model_init(void *uniform _model,
                        void *uniform embreeDevice,
+                       uniform int32 embreeSceneFlags,
                        uniform int32 numGeometries,
                        uniform int32 numVolumes)
 {
@@ -47,12 +48,7 @@ export void Model_init(void *uniform _model,
   if (model->embreeSceneHandle)
     rtcDeleteScene(model->embreeSceneHandle);
 
-  uniform RTCSceneFlags scene_flags
-    = 
-    // RTC_SCENE_STATIC |
-    // RTC_SCENE_HIGH_QUALITY
-    RTC_SCENE_DYNAMIC
-    ;
+  uniform RTCSceneFlags scene_flags = (RTCSceneFlags)embreeSceneFlags;
 
   uniform RTCAlgorithmFlags traversal_flags =
       RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;
