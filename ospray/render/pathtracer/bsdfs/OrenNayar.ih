@@ -19,15 +19,14 @@
 #include "BSDF.ih"
 #include "GGXDistribution.ih"
 
-// Oren-Nayar BRDF, improved qualitative model.
-// [Gotanda, 2012, "Beyond a Simple Physically Based Blinn-Phong Model in Real-Time", Course Notes]
-// [Gotanda, 2014, "Designing Reflectance Models for New Consoles", Slides]
+// Oren-Nayar BRDF.
+// [Fujii, 2012, "A tiny improvement of Oren-Nayar reflectance model"]
 struct OrenNayar
 {
   BSDF super;
 
   vec3f R; // reflectance
-  float sigma2;
+  float roughness;
 };
 
 inline BSDF_EvalRes OrenNayar_eval(const varying BSDF* uniform super,
@@ -39,12 +38,9 @@ inline BSDF_EvalRes OrenNayar_eval(const varying BSDF* uniform super,
   float cosThetaO = max(dot(wo, getN(super)), 0.f);
   float cosThetaI = max(dot(wi, getN(super)), 0.f);
 
-  // Equation 25 [Gotanda, 2012] with sigma instead of shininess
-  // Also see [Gotanda, 2014]
-  float cosPhiDiff = dot(wo, wi) - cosThetaO * cosThetaI;
-  float C1 = 1.f - 0.5f * self->sigma2 * rcp(self->sigma2 + 0.65f);
-  float C2 = 0.45f * self->sigma2 * rcp(self->sigma2 + 0.09f) * cosPhiDiff * (cosPhiDiff >= 0.f ? min(cosThetaI*rcp(cosThetaO), 1.f) : cosThetaI);
-  res.value = self->R * one_over_pi * (cosThetaI * C1 + C2);
+  float s = dot(wo, wi) - cosThetaO * cosThetaI;
+  float sInvt = (s > 0.f) ? (s * rcp(max(cosThetaO, cosThetaI))) : s;
+  res.value = self->R * (cosThetaI * (1.f + self->roughness * sInvt) * rcp(pi + (pi/2.f - 2.f/3.f) * self->roughness));
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
   return res;
 }
@@ -65,22 +61,19 @@ inline BSDF_SampleRes OrenNayar_sample(const varying BSDF* uniform super,
 
 inline void OrenNayar_Constructor(varying OrenNayar* uniform self, 
                                   const varying linear3f* uniform frame,
-                                  const vec3f& R,
-                                  float roughness)
+                                  const vec3f& R, float roughness)
 {
   BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
                    OrenNayar_eval, OrenNayar_sample,
                    frame);
 
   self->R = R;
-  const float sigma = roughnessToAlpha(roughness) * (1.f/sqrt(2.f)); // convert roughness
-  self->sigma2 = sqr(sigma);
+  self->roughness = roughness;
 }
 
 inline varying BSDF* uniform OrenNayar_create(uniform ShadingContext* uniform ctx, 
                                               const varying linear3f* uniform frame,
-                                              const vec3f& R,
-                                              float roughness)
+                                              const vec3f& R, float roughness)
 {
   varying OrenNayar* uniform self = (varying OrenNayar* uniform)ShadingContext_alloc(ctx, sizeof(OrenNayar));
   OrenNayar_Constructor(self, frame, R, roughness);

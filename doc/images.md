@@ -11,6 +11,8 @@
 [imgDiffuseRooms]: diffuse_rooms.png { width=80% }
 [imgNormalMap]: normalmap_frustum.png { width=60% }
 [imgMaterialOBJ]: material_OBJ.jpg { width=60% }
+[imgMaterialPrincipled]: material_Principled.jpg { width=60% }
+[imgMaterialCarPaint]: material_CarPaint.jpg { width=60% }
 [imgMaterialMetal]: material_Metal.jpg { width=60% }
 [imgMaterialAlloy]: material_Alloy.jpg { width=60% }
 [imgMaterialGlass]: material_Glass.jpg { width=60% }

@@ -977,6 +977,29 @@ An existing geometry or volume can be removed from a model with
     void ospRemoveGeometry(OSPModel, OSPGeometry);
     void ospRemoveVolume(OSPModel, OSPVolume);
 
+Finally, Models can be configured with parameters for making various
+feature/performance tradeoffs:
+
+  ------------- ---------------- --------  -------------------------------------
+  Type          Name              Default  Description
+  ------------- ---------------- --------  -------------------------------------
+  bool          dyanmicScene        false  use RTC_SCENE_DYNAMIC flag (faster
+                                           BVH build, slower ray traversal),
+                                           otherwise uses RTC_SCENE_STATIC flag
+                                           (faster ray traversal, slightly
+                                           slower BVH build)
+
+  bool          compactMode         false  tell Embree to use a more compact BVH
+                                           in memory by trading ray traversal
+                                           performance
+
+  bool          robustMode          false  tell Embree to enable more robust ray
+                                           intersection code paths (slightly
+                                           slower)
+  ------------- ---------------- --------  -------------------------------------
+  : Parameters understood by Models
+
+
 ### Lights
 
 To let the given `renderer` create a new light source of given type
@@ -1223,6 +1246,142 @@ usually in a linear format (and only the first component is used).
 Additionally, all textures support [texture transformations].
 
 ![Rendering of a OBJ material with wood textures.][imgMaterialOBJ]
+
+#### Principled
+
+The Principled material is the most complex material offered by the
+[path tracer], which is capable of producing a wide variety of materials
+(e.g., plastic, metal, wood, glass) by combining multiple different layers
+and lobes. It uses the GGX microfacet distribution with approximate multiple
+scattering for dielectrics and metals, uses the Oren-Nayar model for diffuse
+reflection, and is energy conserving. To create a Principled material, pass
+the type string "`Principled`" to `ospNewMaterial2`. Its parameters are
+listed in the table below.
+
+  -------------------------------------------------------------------------------------------
+  Type   Name                 Default  Description
+  ------ ----------------- ----------  ------------------------------------------------------
+  vec3f  baseColor          white 0.8  base reflectivity (diffuse and/or metallic)
+
+  vec3f  edgeColor              white  edge tint (metallic only)
+
+  float  metallic                   0  mix between dielectric (diffuse and/or specular)
+                                       and metallic (specular only with complex IOR) in [0-1]
+
+  float  diffuse                    1  diffuse reflection weight in [0-1]
+
+  float  specular                   1  specular reflection/transmission weight in [0-1]
+
+  float  ior                        1  dielectric index of refraction
+
+  float  transmission               0  specular transmission weight in [0-1]
+
+  vec3f  transmissionColor      white  attenuated color due to transmission (Beer's law)
+
+  float  transmissionDepth          1  distance at which color attenuation is equal to
+                                       transmissionColor
+
+  float  roughness                  0  diffuse and specular roughness in [0–1], 0 is perfectly
+                                       smooth
+
+  float  anisotropy                 0  amount of specular anisotropy in [0-1]
+
+  float  rotation                   0  rotation of the direction of anisotropy in [0-1], 1 is
+                                       going full circle
+
+  float  normal                     1  normal map/scale
+
+  bool   thin                   false  flag specifying whether the material is thin or solid
+
+  float  thickness                  1  thickness of the material (thin only), affects the
+                                       amount of color attenuation due to specular transmission
+
+  float  backlight                  0  amount of diffuse transmission (thin only) in [0-2],
+                                       1 is 50% reflection and 50% transmission, 2 is
+                                       transmission only
+
+  float  coat                       0  clear coat layer weight in [0-1]
+
+  float  coatIor                  1.5  clear coat index of refraction
+
+  vec3f  coatColor              white  clear coat color tint
+
+  float  coatThickness              1  clear coat thickness, affects the amount of color
+                                       attenuation
+
+  float  coatRoughness              0  clear coat roughness in [0-1], 0 is perfectly smooth
+
+  float  coatNormal                 1  clear coat normal map/scale
+
+  float  sheen                      0  sheen layer weight in [0-1]
+
+  vec3f  sheenColor             white  sheen color tint
+
+  float  sheenRoughness           0.2  sheen roughness in [0-1], 0 is perfectly smooth
+
+  float  opacity                    1  cut-out opacity/transparency, 1 is fully opaque
+  -------------------------------------------------------------------------------------------
+  : Parameters of the Principled material.
+
+All parameters can be textured by passing a [texture] handle, suffixed with "`Map`"
+(e.g., "`baseColorMap`"); [texture transformations] are supported as well.
+
+![Rendering of a Principled coated brushed metal material with textured
+anisotropic rotation and a dust layer (sheen) on top.][imgMaterialPrincipled]
+
+#### CarPaint
+
+The CarPaint material is a specialized version of the Principled material for
+rendering different types of car paints. To create a CarPaint material, pass
+the type string "`CarPaint`" to `ospNewMaterial2`. Its parameters are listed
+in the table below.
+
+  -------------------------------------------------------------------------------------------
+  Type   Name                 Default  Description
+  ------ ----------------- ----------  ------------------------------------------------------
+  vec3f  baseColor          white 0.8  diffuse base reflectivity
+
+  float  roughness                  0  diffuse roughness in [0–1], 0 is perfectly smooth
+
+  float  normal                     1  normal map/scale
+
+  float  flakeDensity               0  density of metallic flakes in [0-1], 0 disables flakes,
+                                       1 fully covers the surface with flakes
+
+  float  flakeScale               100  scale of the flake structure, higher values increase
+                                       the amount of flakes
+                                
+  float  flakeSpread              0.3  flake spread in [0-1]
+
+  float  flakeJitter             0.75  flake randomness in [0-1]
+
+  float  flakeRoughness           0.3  flake roughness in [0-1], 0 is perfectly smooth
+
+  float  coat                       1  clear coat layer weight in [0-1]
+
+  float  coatIor                  1.5  clear coat index of refraction
+
+  vec3f  coatColor              white  clear coat color tint
+
+  float  coatThickness              1  clear coat thickness, affects the amount of color
+                                       attenuation
+
+  float  coatRoughness              0  clear coat roughness in [0-1], 0 is perfectly smooth
+
+  float  coatNormal                 1  clear coat normal map/scale
+
+  vec3f  flipflopColor          white  reflectivity of coated flakes at grazing angle, used
+                                       together with coatColor produces a pearlescent paint
+
+  float  flipflopFalloff            1  flip flop color falloff, 1 disables the flip flop
+                                       effect
+  -------------------------------------------------------------------------------------------
+  : Parameters of the CarPaint material.
+
+All parameters can be textured by passing a [texture] handle, suffixed with "`Map`"
+(e.g., "`baseColorMap`"); [texture transformations] are supported as well.
+
+![Rendering of a pearlescent CarPaint material.][imgMaterialCarPaint]
 
 #### Metal
 
@@ -1723,10 +1882,10 @@ To set a pixel operation to the given framebuffer use
 #### Tone Mapper
 
 The tone mapper is a pixel operation which implements a generic filmic tone
-mapping operator. It approximates the Academy Color Encoding System (ACES)
-by default. The tone mapper is created by passing the type string "`tonemapper`"
-to `ospNewPixelOp`. The tone mapping curve can be customized using the
-parameters listed in the table below.
+mapping operator. Using the default parameters it approximates the Academy
+Color Encoding System (ACES). The tone mapper is created by passing the type
+string "`tonemapper`" to `ospNewPixelOp`. The tone mapping curve can be
+customized using the parameters listed in the table below.
 
   ----- ---------- --------    -----------------------------------------
   Type  Name       Default     Description
@@ -1744,9 +1903,25 @@ parameters listed in the table below.
                                gray
 
   float hdrMax     11.0785     maximum HDR input that is not clipped
+
+  bool  acesColor  true        apply the ACES color transforms
   ----- ---------  --------    -----------------------------------------
   : Parameters accepted by the tone mapper.
 
+To use the popular "Uncharted 2" filmic tone mapping curve instead, set the
+parameters to the values listed in the table below.
+
+  Name       Value
+  ---------  --------
+  contrast   1.1759
+  shoulder   0.9746
+  midIn      0.18
+  midOut     0.18
+  hdrMax     6.3704
+  acesColor  false
+  ---------  --------
+  : Filmic tone mapping curve parameters. Note that the curve includes an
+  exposure bias to match 18% middle gray.
 
 Rendering
 ---------

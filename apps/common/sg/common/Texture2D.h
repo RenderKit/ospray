@@ -42,13 +42,15 @@ namespace ospray {
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
       static std::shared_ptr<Texture2D> load(const FileName &fileName,
-                                             const bool prefereLinear = false);
+                                             const bool preferLinear = false,
+                                             const bool nearestFilter = false);
 
       //! texture size, in pixels
       vec2i size {-1};
       int channels{0};
       int depth{0};
       bool preferLinear{false};
+      bool nearestFilter{false};
 
       //! format of each texel
       OSPTextureFormat texelType {OSP_TEXTURE_FORMAT_INVALID};

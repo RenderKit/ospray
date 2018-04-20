@@ -23,3 +23,11 @@ inline float roughnessToAlpha(float roughness)
   // Roughness is squared for perceptual reasons
   return max(sqr(roughness), 0.001f);
 }
+
+// [Burley, 2012, "Physically Based Shading at Disney", Course Notes, v3]
+inline vec2f roughnessToAlpha(float roughness, float anisotropy)
+{
+  float aspect = sqrt(1.f - 0.9f * anisotropy);
+  return make_vec2f(max(sqr(roughness) / aspect, 0.001f),
+                    max(sqr(roughness) * aspect, 0.001f));
+}

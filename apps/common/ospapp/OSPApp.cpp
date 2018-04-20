@@ -80,6 +80,8 @@ namespace ospray {
                 << "\t" << "-vi float float float //camera direction xyz" << std::endl
                 << "\t" << "-vf float //camera field of view" << std::endl
                 << "\t" << "-ar float //camera aperture radius" << std::endl
+                << "\t" << "--aces //use ACES tone mapping" << std::endl
+                << "\t" << "--filmic //use filmic tone mapping" << std::endl
                 << std::endl;
     }
 
@@ -119,6 +121,7 @@ namespace ospray {
       addAnimatedImporterNodesToWorld(renderer);
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
+      setupToneMapping(renderer);
       renderer.verify();
       renderer.commit();
 
@@ -272,6 +275,16 @@ namespace ospray {
         } else if (arg == "-ar") {
           apertureRadius = atof(av[i + 1]);
           removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "--aces") {
+          aces = true;
+          filmic = false;
+          removeArgs(ac, av, i, 1);
+          --i;
+        } else if (arg == "--filmic") {
+          filmic = true;
+          aces = false;
+          removeArgs(ac, av, i, 1);
           --i;
         } else if (arg.compare(0, 4, "-sg:") == 0) {
           // SG parameters are validated by prefix only.
@@ -576,6 +589,29 @@ namespace ospray {
         camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
       renderer.verify();
       renderer.commit();
+    }
+
+    void OSPApp::setupToneMapping(sg::Node &renderer)
+    {
+      auto &frameBuffer = renderer["frameBuffer"];
+
+      if (aces) {
+        frameBuffer["toneMapping"] = true;
+        frameBuffer["contrast"] = 1.6773f;
+        frameBuffer["shoulder"] = 0.9714f;
+        frameBuffer["midIn"] = 0.18f;
+        frameBuffer["midOut"] = 0.18f;
+        frameBuffer["hdrMax"] = 11.0785f;
+        frameBuffer["acesColor"] = true;
+      } else if (filmic) {
+        frameBuffer["toneMapping"] = true;
+        frameBuffer["contrast"] = 1.1759f;
+        frameBuffer["shoulder"] = 0.9746f;
+        frameBuffer["midIn"] = 0.18f;
+        frameBuffer["midOut"] = 0.18f;
+        frameBuffer["hdrMax"] = 6.3704f;
+        frameBuffer["acesColor"] = false;
+      }
     }
 
     void OSPApp::addAnimatedImporterNodesToWorld(sg::Node &renderer)

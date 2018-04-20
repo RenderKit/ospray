@@ -169,38 +169,6 @@ inline varying vec2f RandomTEA__getFloats(varying RandomTEA* uniform this) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// LCG - Linear Congruential Generator
-
-inline unsigned int LCG_next(unsigned int value)
-{
-  const unsigned int m = 1664525;
-  const unsigned int n = 1013904223;
-
-  return value * m + n;
-}
-
-inline float LCG_getFloat(unsigned int& state)
-{
-  state = LCG_next(state);
-  return to_float_unorm(state);
-}
-
-inline vec2f LCG_getFloat2(unsigned int& state)
-{
-  const float x = LCG_getFloat(state);
-  const float y = LCG_getFloat(state);
-  return make_vec2f(x, y);
-}
-
-inline vec3f LCG_getFloat3(unsigned int& state)
-{
-  const float x = LCG_getFloat(state);
-  const float y = LCG_getFloat(state);
-  const float z = LCG_getFloat(state);
-  return make_vec3f(x, y, z);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // Hash functions
 
 inline unsigned int MurmurHash3_mix(unsigned int hash, unsigned int k)
@@ -231,6 +199,47 @@ inline unsigned int MurmurHash3_finalize(unsigned int hash)
   hash ^= hash >> 16;
 
   return hash;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// LCG - Linear Congruential Generator
+
+inline unsigned int LCG_init(unsigned int index, unsigned int seed)
+{
+  unsigned int state = 0;
+  state = MurmurHash3_mix(state, index);
+  state = MurmurHash3_mix(state, seed);
+  state = MurmurHash3_finalize(state);
+  return state;
+}
+
+inline unsigned int LCG_next(unsigned int value)
+{
+  const unsigned int m = 1664525;
+  const unsigned int n = 1013904223;
+
+  return value * m + n;
+}
+
+inline float LCG_getFloat(unsigned int& state)
+{
+  state = LCG_next(state);
+  return to_float_unorm(state);
+}
+
+inline vec2f LCG_getFloat2(unsigned int& state)
+{
+  const float x = LCG_getFloat(state);
+  const float y = LCG_getFloat(state);
+  return make_vec2f(x, y);
+}
+
+inline vec3f LCG_getFloat3(unsigned int& state)
+{
+  const float x = LCG_getFloat(state);
+  const float y = LCG_getFloat(state);
+  const float z = LCG_getFloat(state);
+  return make_vec3f(x, y, z);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -286,4 +295,10 @@ inline float radicalInverse2(uint32 idx)
 
 inline varying vec2f RandomHammersley2__getFloats(varying unsigned int idx) {
   return make_vec2f(rcp((float)idx), radicalInverse2(idx));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// halton - low discrepancy halton sequence; first two dimensions; no state
+inline varying vec2f HaltonSequence_get2D(varying unsigned int idx) {
+  return make_vec2f(radicalInverse2(idx),radicalInverse(idx,3));
 }

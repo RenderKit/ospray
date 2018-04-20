@@ -1,0 +1,199 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "MicrofacetDielectric.ih"
+
+// Thin microfacet dielectric BSDF with the Smith microsurface model.
+// It represents a transparent slab with unit thickness, and ignores refraction.
+// [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
+// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+// [Jakob et al., 2014, "A Comprehensive Framework for Rendering Layered Materials", Extended Technical Report]
+// FIXME: rough transmission
+struct ThinMicrofacetDielectric
+{
+  BSDF super;
+
+  float eta;
+  GGXDistribution microfacet;
+  float roughness;
+  vec3f attenuation;
+
+  // Energy compensation [Kulla and Conty, 2017]
+  float Eavg;
+  float fmsScale;
+};
+
+inline BSDF_EvalRes ThinMicrofacetDielectric_eval(const varying BSDF* uniform super,
+                                                  const vec3f& wo, const vec3f& wi)
+{
+  const varying ThinMicrofacetDielectric* uniform self = (const varying ThinMicrofacetDielectric* uniform)super;
+  BSDF_EvalRes res;
+
+  float cosThetaO = dot(wo, getN(super));
+  if (cosThetaO <= 0.f)
+    return make_BSDF_EvalRes_zero();
+  float cosThetaI = dot(wi, getN(super));
+  bool isReflection = cosThetaI > 0.f;
+
+  if (isReflection)
+  {
+    // Compute the microfacet normal
+    vec3f wh = normalize(wo + wi);
+    float cosThetaH = dot(wh, getN(super));
+    float cosThetaOH = dot(wo, wh);
+    float cosThetaIH = dot(wi, wh);
+
+    linear3f toLocal = transposed(getFrame(super));
+    vec3f wo0 = toLocal * wo;
+    vec3f wi0 = toLocal * wi;
+    vec3f wh0 = toLocal * wh;
+
+    float F = fresnelDielectric(cosThetaOH, self->eta);
+    float whPdf;
+    float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
+    float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
+
+    // Energy compensation
+    float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
+    float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+    float fms = self->fmsScale * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+
+    // Energy conservation
+    float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness)
+              + self->fmsScale * (1.f - Eo); // add missing energy
+
+    BSDF_EvalRes res;
+    res.pdf = whPdf * rcp(4.f*cosThetaOH) * R;
+    res.value = make_vec3f(F * D * G * rcp(4.f*cosThetaO) + fms);
+    return res;
+  }
+  else
+  {
+    return make_BSDF_EvalRes_zero();
+  }
+}
+
+inline BSDF_SampleRes ThinMicrofacetDielectric_sample(const varying BSDF* uniform super,
+                                                      const vec3f& wo, const vec2f& s, float ss)
+{
+  const varying ThinMicrofacetDielectric* uniform self = (const varying ThinMicrofacetDielectric* uniform)super;
+  BSDF_SampleRes res;
+
+  float cosThetaO = dot(wo, getN(super));
+  if (cosThetaO <= 0.f)
+    return make_BSDF_SampleRes_zero();
+
+  // Energy conservation
+  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
+  float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, self->eta, self->roughness)
+            + self->fmsScale * (1.f - Eo); // add missing energy
+
+  if (ss < R)
+  {
+    // Reflection
+    linear3f toGlobal = getFrame(super);
+    linear3f toLocal = transposed(getFrame(super));
+    vec3f wo0 = toLocal * wo;
+
+    // Sample the microfacet normal
+    float whPdf;
+    vec3f wh = toGlobal * sampleVisible(self->microfacet, wo0, whPdf, s);
+
+    res.wi = reflect(wo, wh);
+    float cosThetaI = dot(res.wi, getN(super));
+    if (cosThetaI <= 0.f)
+      return make_BSDF_SampleRes_zero();
+    float cosThetaOH = dot(wo, wh);
+    float cosThetaIH = dot(res.wi, wh);
+    vec3f wi0 = toLocal * res.wi;
+
+    float F = fresnelDielectric(cosThetaOH, self->eta);
+    float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
+
+    // Energy compensation
+    float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+    float fms = self->fmsScale * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+
+    res.type = BSDF_GLOSSY_REFLECTION;
+    res.pdf = whPdf * rcp(4.f*abs(cosThetaOH)) * R;
+    res.weight = (make_vec3f(F * G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH)) * rcp(R)) + (fms * rcp(res.pdf)));
+  }
+  else
+  {
+    // Transmission
+    // Attenuation for crossing the slab once
+    float length = rcp(refract(cosThetaO, self->eta)); // rcp(cosThetaO1)
+    vec3f A = expf(self->attenuation * length);
+
+    res.type = BSDF_SPECULAR_TRANSMISSION;
+    res.wi = neg(wo);
+    res.pdf = inf;
+    res.weight = A;
+  }
+  
+  return res;
+}
+
+inline void ThinMicrofacetDielectric_Constructor(varying ThinMicrofacetDielectric* uniform self,
+                                                 const varying linear3f* uniform frame,
+                                                 float eta, float roughness, float anisotropy, vec3f attenuation)
+{
+  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | BSDF_SPECULAR_TRANSMISSION,
+                   ThinMicrofacetDielectric_eval, ThinMicrofacetDielectric_sample,
+                   frame);
+
+  self->eta = eta;
+  self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
+  self->roughness = roughness;
+  self->attenuation = attenuation;
+
+  // Energy compensation
+  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  float Favg = fresnelDielectricAvg(eta);
+  self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
+}
+
+inline varying BSDF* uniform ThinMicrofacetDielectric_create(uniform ShadingContext* uniform ctx,
+                                                             const varying linear3f* uniform frame,
+                                                             float eta, float roughness, float anisotropy, vec3f attenuation)
+{
+  varying ThinMicrofacetDielectric* uniform self =
+    (varying ThinMicrofacetDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinMicrofacetDielectric));
+  ThinMicrofacetDielectric_Constructor(self, frame, eta, roughness, anisotropy, attenuation);
+  return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline vec3f ThinMicrofacetDielectric_getTransparency(float cosThetaO,
+                                                      float eta, float roughness, vec3f attenuation)
+{
+  // Energy conservation/compensation
+  float Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  float Favg = fresnelDielectricAvg(eta);
+  float fmsScale = Favg * (1.f - Eavg) * rcp(1.f - Favg * Eavg);
+
+  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, roughness);
+  float R = MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness)
+            + fmsScale * (1.f - Eo); // add missing energy
+
+  // Attenuation for crossing the slab once
+  float length = rcp(refract(cosThetaO, eta)); // rcp(cosThetaO1)
+  vec3f A = expf(attenuation * length);
+
+  return (1.f - R) * A;
+}

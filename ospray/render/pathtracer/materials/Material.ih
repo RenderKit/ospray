@@ -45,6 +45,7 @@ typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMa
                                                        const Medium& currentMedium);
 
 typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial* uniform self,
+                                                       const DifferentialGeometry& dg,
                                                        Medium& currentMedium);
 
 struct PathTraceMaterial
@@ -62,14 +63,45 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);
                                    // const uniform vec3f emission = { 0.f, 0.f, 0.f }; fails, ISPC issue #1231
 
-inline linear3f makeShadingFrame(const DifferentialGeometry& dg, const vec3f& localNormal)
+
+inline linear3f makeShadingFrame(const DifferentialGeometry& dg)
 {
-  // transform to world space and align to tangents/texture coordinates
-  linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
-  vec3f shadingNormal = f * localNormal;
-  // in general f is not ortho-normal, thus need to re-normalize
-  shadingNormal = normalize(shadingNormal);
-  return frame(shadingNormal);
+  vec3f N = dg.Ns;
+  vec3f U = normalize(dg.dPds);
+  vec3f V = cross(N, U);
+  if (dot(V,V) > 0.f)
+  {
+    V = normalize(V);
+    U = cross(V, N);
+    return make_LinearSpace3f(U, V, N);
+  }
+  else
+  {
+    return frame(N);
+  }
+}
+
+inline linear3f makeShadingFrame(const linear3f& f, const vec3f& localN)
+{
+  vec3f N = f * localN; // transform normal to world space
+  vec3f U = f.vx;
+  vec3f V = cross(N, U);
+  if (dot(V,V) > 0.f)
+  {
+    V = normalize(V);
+    U = cross(V, N);
+    return make_LinearSpace3f(U, V, N);
+  }
+  else
+  {
+    return frame(N);
+  }
+}
+
+inline linear3f makeShadingFrame(const DifferentialGeometry& dg, const vec3f& localN)
+{
+  linear3f f = makeShadingFrame(dg);
+  return makeShadingFrame(f, localN);
 }
 
 inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
@@ -77,21 +109,20 @@ inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
                                  const uniform linear2f& normalRot,
                                  uniform float normalScale = 1.f)
 {
-  vec3f shadingNormal;
-  if (valid(normalMap)) {
+  linear3f f = makeShadingFrame(dg);
+  
+  if (valid(normalMap))
+  {
     // get normal from texture
-    vec3f localNormal = getNormal(normalMap, dg.st) * make_vec3f(normalScale, normalScale, 1.f);
+    vec3f localN = getNormal(normalMap, dg.st) * make_vec3f(normalScale, normalScale, 1.f);
     // rotate in 2D (tangent space) to account for tc transformations
-    vec2f rotNormal = normalRot * make_vec2f(localNormal.x, localNormal.y);
-    localNormal.x = rotNormal.x;
-    localNormal.y = rotNormal.y;
-    // transform to world space and align to tangents/texture coordinates
-    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
-    shadingNormal = f * localNormal;
-    // in general f is not ortho-normal, thus need to re-normalize
-    shadingNormal = normalize(shadingNormal);
-  } else {
-    shadingNormal = dg.Ns;
+    vec2f rotN = normalRot * make_vec2f(localN.x, localN.y);
+    localN.x = rotN.x;
+    localN.y = rotN.y;
+    return makeShadingFrame(f, localN);
   }
-  return frame(shadingNormal);
+  else
+  {
+    return f;
+  }
 }

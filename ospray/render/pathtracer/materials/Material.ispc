@@ -25,6 +25,7 @@ vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform
 }
 
 void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform self,
+                                        const DifferentialGeometry& dg,
                                         Medium& currentMedium)
 { /* do nothing by default */ }
 

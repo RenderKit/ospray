@@ -22,6 +22,7 @@
 #include "geometry/Instance.ih"
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
+#include "bsdfs/MicrofacetAlbedoTables.ih"
 
 #define MAX_ROULETTE_CONT_PROB 0.95f
 #define PDF_CULLING 0.0f
@@ -84,7 +85,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
     /*! Tracking medium if we hit a medium interface. */
     foreach_unique(m in material)
       if (m != NULL)
-        m->selectNextMedium(m, medium);
+        m->selectNextMedium(m, dg, medium);
 
     shadowRay.t0 = shadowRay.t + getEpsilon(self, dg);
     shadowRay.t = tOriginal;
@@ -97,7 +98,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                                     const vec2f &pixel, // normalized, i.e. in [0..1]
                                     Ray &ray,
-                                    varying RandomTEA* uniform rng)
+                                    unsigned int &lcg)
 {
   ScreenSample sample;
   sample.alpha = 1.f;
@@ -154,7 +155,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         for (uniform int i = 0; i < numLights; i++) {
           const uniform Light *uniform light = self->lights[i];
 
-          Light_SampleRes ls = light->sample(light, dg, RandomTEA__getFloats(rng));
+          Light_SampleRes ls = light->sample(light, dg, LCG_getFloat2(lcg));
 
           // skip when zero contribution from light
           if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -287,7 +288,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       for (uniform int i = 0; i < numLights; i++) {
         const uniform Light *uniform light = self->lights[i];
 
-        Light_SampleRes ls = light->sample(light, dg, RandomTEA__getFloats(rng));
+        Light_SampleRes ls = light->sample(light, dg, LCG_getFloat2(lcg));
 
         // skip when zero contribution from light
         if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -323,8 +324,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     // sample BSDF
-    vec2f s  = RandomTEA__getFloats(rng);
-    vec2f ss = RandomTEA__getFloats(rng); // ss.y used for Russian roulette
+    vec2f s  = LCG_getFloat2(lcg);
+    vec2f ss = LCG_getFloat2(lcg); // ss.y used for Russian roulette
     BSDF_SampleRes fs;
     foreach_unique(f in bsdf)
       if (f != NULL)
@@ -354,11 +355,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     if (fs.type & BSDF_TRANSMISSION) {
       foreach_unique(m in material) {
         if (m != NULL)
-          m->selectNextMedium(m, currentMedium);
+          m->selectNextMedium(m, dg, currentMedium);
       }
     }
 
-    // keep lastBsdfPdf and lastDg when there was a Dirac transmission
+    // keep lastBsdfPdf and lastDg when there was a specular transmission
     // to better combine MIS with transparent shadows
     if (fs.type & ~BSDF_SPECULAR_TRANSMISSION) {
       lastBsdfPdf = fs.pdf;
@@ -397,25 +398,24 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   screenSample.sampleID.y = iy;
 
   // init RNG
-  RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, fb->size.x*iy+ix, accumID);
+  unsigned int lcg = LCG_init(fb->size.x*iy+ix, accumID);
   const int spp = max(1, self->super.spp);
 
   for (uniform int s=0; s < spp; s++) {
     screenSample.sampleID.z = accumID*spp + s;
 
     CameraSample cameraSample;
-    const vec2f pixelSample = RandomTEA__getFloats(rng);
-    const vec2f timeSample = RandomTEA__getFloats(rng);
+    const vec2f pixelSample = LCG_getFloat2(lcg);
+    const float timeSample = LCG_getFloat(lcg);
     cameraSample.screen.x = (screenSample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
     cameraSample.screen.y = (screenSample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
-    cameraSample.lens     = RandomTEA__getFloats(rng);
-    cameraSample.time     = timeSample.x;
+    cameraSample.lens     = LCG_getFloat2(lcg);
+    cameraSample.time     = timeSample;
 
     camera->initRay(camera, screenSample.ray, cameraSample);
 
     ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
-                                                 screenSample.ray, rng);
+                                                 screenSample.ray, lcg);
     screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);
@@ -507,6 +507,8 @@ export void* uniform PathTracer_create(void *uniform cppE)
   self->super.renderTile = PathTracer_renderTile;
 
   PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
+
+  precomputeMicrofacetAlbedoTables();
   precomputeZOrder();
 
   return self;

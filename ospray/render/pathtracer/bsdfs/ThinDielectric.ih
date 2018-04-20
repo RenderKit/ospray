@@ -16,22 +16,16 @@
 
 #pragma once
 
-#include "BSDF.ih"
-#include "Fresnel.ih"
+#include "Dielectric.ih"
 
-// ThinDielectric models a very thin, transparent slab, i.e. it assumes two
-// parallel interfaces with unit-distrance with a (potentially) attenuating
-// medium inbetween
-// it accounts for multiple internal reflections between the interfaces, but
-// neglects parallaxe effects due to its thickness
+// Thin dielectric BSDF.
+// It represents a transparent slab with unit thickness, and ignores refraction.
 struct ThinDielectric
 {
   BSDF super;
 
-  float eta;         //!< (relative) refraction index of external/internal medium
-                     // assumed to be <=1
-  vec3f attenuation; //!< negative Napierian attenuation coefficient,
-                     // i.e. wrt. the natural base e
+  float eta;
+  vec3f attenuation;
 };
 
 inline BSDF_EvalRes ThinDielectric_eval(const varying BSDF* uniform super,
@@ -40,56 +34,46 @@ inline BSDF_EvalRes ThinDielectric_eval(const varying BSDF* uniform super,
   return make_BSDF_EvalRes_zero();
 }
 
-
 inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
                                             const vec3f& wo, const vec2f& s, float ss)
 {
   const varying ThinDielectric* uniform self = (const varying ThinDielectric* uniform)super;
   BSDF_SampleRes res;
 
-  const float cosThetaO = max(dot(wo, getN(super)), 0.0f);
+  float cosThetaO = max(dot(wo, getN(super)), 0.f);
 
-  // reflection due to Fresnel
-  const float R = fresnelDielectric(cosThetaO, self->eta);
-  const float T = 1.f - R; // transmission due to Fresnel
-
-  // attenuation (Beer's law) when crossing the slab once
-  const float length = rsqrt(sqrCosT(cosThetaO, self->eta)); // refracted dir!
-  const vec3f A = expf(self->attenuation * length);
-
-  // total transmission:
-  // TAT + TARARAT + TARARARARAT + ... = AT^2 sum (RA)^2n = AT^2/(1-(RA)^2)
-  const vec3f tT = A * sqr(T) * rcp(1.f - sqr(R*A));
-
-  // total reflection:
-  // R + TARAT + TARARARAT + ... = R + R(TA)^2 sum (RA)^2n
-  // = R + R(TA)^2/(1-(RA)^2) = R + RA * tT
-  const vec3f tR = R + R*A*tT;
+  // Fresnel term
+  float cosThetaT; // positive
+  float F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+  res.pdf = inf;
 
   // Sample the reflection or the transmission
-  const float pr = luminance(tR);
-  const float pt = luminance(tT);
-  const float p = pr * rcp(pt + pr);
-
-  if (ss <= p) {
+  bool doReflection = (ss <= F);
+  if (doReflection)
+  {
     // Reflection
     res.wi = reflect(wo, getN(super), cosThetaO);
     res.type = BSDF_SPECULAR_REFLECTION;
-    res.weight = tR * rcp(p);
-  } else {
+    res.weight = make_vec3f(1.f);
+  }
+  else
+  {
     // Transmission
+    // Attenuation for crossing the slab once
+    float length = rcp(cosThetaT);
+    vec3f A = expf(self->attenuation * length);
+
     res.wi = neg(wo);
     res.type = BSDF_SPECULAR_TRANSMISSION;
-    res.weight = tT * rcp(1.0f - p);
+    res.weight = A;
   }
-
-  res.pdf = inf;
 
   return res;
 }
 
-inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self, const varying linear3f* uniform frame,
-                                       uniform float eta, vec3f attenuation)
+inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self,
+                                       const varying linear3f* uniform frame,
+                                       float eta, vec3f attenuation)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR,
                    ThinDielectric_eval, ThinDielectric_sample,
@@ -98,10 +82,25 @@ inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self, con
   self->attenuation = attenuation;
 }
 
-inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                   uniform float eta, vec3f attenuation)
+inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx,
+                                                   const varying linear3f* uniform frame,
+                                                   float eta, vec3f attenuation)
 {
   varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));
   ThinDielectric_Constructor(self, frame, eta, attenuation);
   return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline vec3f ThinDielectric_getTransparency(float cosThetaO, float eta, vec3f attenuation)
+{
+  // Fresnel term
+  float cosThetaT; // positive
+  float F = fresnelDielectricEx(cosThetaO, cosThetaT, eta);
+
+  // Attenuation for crossing the slab once
+  float length = rcp(cosThetaT);
+  vec3f A = expf(attenuation * length);
+
+  return (1.f - F) * A;
 }

@@ -77,6 +77,11 @@ inline void postIntersect(uniform Model *uniform model,
   if (flags & DG_COLOR)
     dg.color = make_vec4f(1.f);
 
+  if (flags & DG_TANGENTS) {
+    dg.dPds = make_vec3f(1.f, 0.f, 0.f);
+    dg.dPdt = make_vec3f(0.f, 1.f, 0.f);
+  }
+
   dg.P = ray.org + ray.t * ray.dir;
   dg.epsilon = getIntersectionError(dg.P, ray.t);
 

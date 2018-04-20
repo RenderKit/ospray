@@ -50,6 +50,8 @@ namespace ospray {
                     NodeFlags::required |
                     NodeFlags::gui_slider).setMinMax(1.f, 64.f);
 
+      createChild("acesColor", "bool", true);
+
       createChild("useSRGB", "bool", true);
       createChild("useAccumBuffer", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
@@ -112,6 +114,7 @@ namespace ospray {
         ospSet1f(toneMapper, "midIn", child("midIn").valueAs<float>());
         ospSet1f(toneMapper, "midOut", child("midOut").valueAs<float>());
         ospSet1f(toneMapper, "hdrMax", child("hdrMax").valueAs<float>());
+        ospSet1i(toneMapper, "acesColor", child("acesColor").valueAs<bool>());
 
         ospCommit(toneMapper);
       }

@@ -109,6 +109,27 @@ namespace ospray {
     return tetBox;
   }
 
+  void UnstructuredVolume::fixupTetWinding()
+  {
+    tasking::parallel_for(nCells, [&](int i) {
+      if (indices[2 * i].x != -1)
+        return;
+
+      auto &idx = indices[2 * i + 1];
+      const auto &p0 = vertices[idx.x];
+      const auto &p1 = vertices[idx.y];
+      const auto &p2 = vertices[idx.z];
+      const auto &p3 = vertices[idx.w];
+
+      auto center = (p0 + p1 + p2 + p3) / 4;
+      auto norm = cross(p1 - p0, p2 - p0);
+      auto dist = dot(norm, p0 - center);
+
+      if (dist > 0.f)
+        std::swap(idx.x, idx.y);
+    });
+  }
+
   void UnstructuredVolume::finish()
   {
     Data *verticesData   = getParamData("vertices", nullptr);
@@ -132,6 +153,7 @@ namespace ospray {
     cellField  = cellFieldData ? (float *)cellFieldData->data : nullptr;
 
     buildBvhAndCalculateBounds();
+    fixupTetWinding();
     calculateFaceNormals();
 
     float samplingRate = getParam1f("samplingRate", 1.f);

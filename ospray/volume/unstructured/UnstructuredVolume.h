@@ -53,6 +53,7 @@ namespace ospray {
     void finish() override;
 
     void buildBvhAndCalculateBounds();
+    void fixupTetWinding();
     void calculateFaceNormals();
     float calculateSamplingStep();
 

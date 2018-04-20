@@ -57,6 +57,10 @@ namespace ospray {
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle {nullptr};
     box3f bounds;
+
+    bool useEmbreeDynamicSceneFlag{true};
+    bool useEmbreeCompactSceneFlag{false};
+    bool useEmbreeRobustSceneFlag{false};
   };
 
 } // ::ospray
