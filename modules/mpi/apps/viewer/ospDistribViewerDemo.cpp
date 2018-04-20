@@ -159,6 +159,8 @@ int main(int argc, char **argv) {
   FileName transferFcnFile;
   bool appInitMPI = false;
   size_t nlocalBricks = 1;
+  float sphereRadius = 0.005;
+  bool transparentSpheres = false;
 
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
@@ -183,6 +185,10 @@ int main(int argc, char **argv) {
       appInitMPI = true;
     } else if (arg == "-nlocal-bricks") {
       nlocalBricks = std::stol(argv[++i]);
+    } else if (arg == "-radius") {
+      sphereRadius = std::stof(argv[++i]);
+    } else if (arg == "-transparent-spheres") {
+      transparentSpheres = true;
     }
   }
   if (!volumeFile.empty()) {
@@ -227,7 +233,6 @@ int main(int argc, char **argv) {
   Model model;
   std::vector<gensv::LoadedVolume> volumes;
   box3f worldBounds;
-  float sphereRadius = 0.005;
   if (!volumeFile.empty()) {
     volumes.push_back(gensv::loadVolume(volumeFile, dimensions, dtype,
                                         valueRange));
@@ -261,7 +266,8 @@ int main(int argc, char **argv) {
     model.addVolume(v.volume);
 
     if (nSpheres != 0) {
-      auto spheres = gensv::makeSpheres(v.bounds, nSpheres, sphereRadius);
+      auto spheres = gensv::makeSpheres(v.bounds, nSpheres,
+                                        sphereRadius, transparentSpheres);
       model.addGeometry(spheres);
     }
     regions.push_back(v.bounds);
