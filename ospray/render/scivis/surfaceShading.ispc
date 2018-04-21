@@ -98,7 +98,7 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
   const linear3f localToWorld = frame(shadingNormal);
 
   for (uniform int i = 0; i < self->aoSamples; i++) {
-    const vec2f halton = HaltonSequence_get2D(sampleID.z);
+    const vec2f halton = HaltonSequence_get2D(accumID * self->aoSamples + i);
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
