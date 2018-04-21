@@ -76,7 +76,8 @@ namespace gensv {
     std::vector<Sphere> spheres(numSpheres);
 
     std::mt19937 rng;
-    rng.seed(std::random_device()());
+    //rng.seed(std::random_device()());
+    rng.seed(0);
 
     // Generate spheres within this nodes volume, to keep the data disjoint.
     // We also leave some buffer space on the boundaries to avoid clipping
