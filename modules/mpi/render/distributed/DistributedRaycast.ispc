@@ -280,7 +280,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       const vec3f lightDir = normalize(make_vec3f(1.0));
       const vec3f dgNormal = normalize(dg.Ns);
       // Hard-coded Blinn-Phong. TODO: Materials API support
-      vec3f geomColor = matColor * make_vec3f(0.5);
+      vec3f geomColor = matColor * make_vec3f(0.1);
       if (dot(lightDir, dgNormal) > 0.0) {
         geomColor = geomColor + matColor * dot(lightDir, dgNormal)
           + specColor * pow(dot(dgNormal, normalize(viewDir + lightDir)), 20);
