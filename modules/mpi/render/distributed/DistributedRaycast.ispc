@@ -18,6 +18,8 @@
 #include "common/Model.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
+#include "math/random.ih"
+#include "math/sampling.ih"
 
 struct DistributedRaycastRenderer
 {
@@ -30,6 +32,8 @@ struct DistributedRaycastRenderer
   uniform int numMyRegions;
   uniform box3f *uniform othersRegions;
   uniform int numOthersRegions;
+  uniform box3f *uniform ghostRegions;
+  uniform int aoSamples;
 };
 
 struct RegionInfo
@@ -146,6 +150,52 @@ vec4f DRR_integrateVolumeSegment(uniform DistributedRaycastRenderer *uniform sel
   return volumeColor;
 }
 
+float DRR_computeAmbientOcclusion(uniform DistributedRaycastRenderer *uniform self,
+                                  const varying vec3i &sampleID,
+                                  const varying DifferentialGeometry &dg,
+                                  const varying vec3f &shadingNormal,
+                                  const uniform box3f *uniform ghostRegion)
+{
+  const int accumID = sampleID.z;
+  const int ix = sampleID.x;
+  const int iy = sampleID.y;
+
+  RandomTEA rng_state;
+  varying RandomTEA* const uniform rng = &rng_state;
+  RandomTEA__Constructor(rng, 0x290374, (self->super.fb->size.x * iy) + ix);
+  const vec2f rot = RandomTEA__getFloats(rng);
+
+  float occlusion = 0.f;
+  const linear3f localToWorld = frame(shadingNormal);
+
+  for (uniform int i = 0; i < self->aoSamples; i++) {
+    const vec2f halton = HaltonSequence_get2D(accumID * self->aoSamples + i);
+    const vec2f r = CranleyPattersonRotation(halton, rot);
+    const vec3f localAoDir = cosineSampleHemisphere(r);
+    const vec3f aoDir = normalize(localToWorld * localAoDir);
+
+    // Check if the ray goes below the surface
+    if (dot(aoDir, shadingNormal) < 0.05f) { 
+      occlusion += 1.f;
+      continue;
+    }
+
+    Ray aoRay;
+    setRay(aoRay, dg.P + (self->super.epsilon * shadingNormal), aoDir,
+           self->super.epsilon, 1e20f);
+    if (ghostRegion) {
+      intersectBox(aoRay, *ghostRegion, aoRay.t0, aoRay.t);
+    }
+    // TODO: Clip with the corresponding ghostRegion, or region if no ghost
+    // regions provided
+    if (isOccluded(self->super.model, aoRay)) {
+      occlusion += 1.f;
+    }
+  }
+  // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir) cancel
+  return 1.0f - occlusion / self->aoSamples;
+}
+
 void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
                                              void *uniform perFrameData,
                                              varying ScreenSample &sample)
@@ -175,6 +225,11 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   }
   const float regionEnter = sample.ray.t0;
   const float regionExit = sample.ray.t;
+
+  uniform box3f *uniform ghostRegion = NULL;
+  if (self->ghostRegions && regionInfo) {
+    ghostRegion = &self->ghostRegions[regionInfo->currentRegion];
+  }
 
   Ray volRay = sample.ray;
   Ray geomRay = sample.ray;
@@ -230,7 +285,12 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         geomColor = geomColor + matColor * dot(lightDir, dgNormal)
           + specColor * pow(dot(dgNormal, normalize(viewDir + lightDir)), 20);
       }
-      currentContribution = make_vec4f(geomColor, dg.color.w);
+      float occlusion = 1.0;
+      if (self->aoSamples > 0) {
+        occlusion = DRR_computeAmbientOcclusion(self, sample.sampleID,
+                                                dg, dgNormal, ghostRegion);
+      }
+      currentContribution = make_vec4f(geomColor * occlusion, dg.color.w);
 
       // Find the next geometry hit by the ray, if it wasn't opaque
       if (dg.color.w < 0.99) {
@@ -260,6 +320,8 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   self->numMyRegions = 0;
   self->othersRegions = NULL;
   self->numOthersRegions = 0;
+  self->aoSamples = 0;
+  self->ghostRegions = NULL;
 
   return self;
 }
@@ -268,7 +330,9 @@ export void DistributedRaycastRenderer_setRegions(void *uniform _self,
                                                     uniform box3f *uniform myRegions,
                                                     uniform int numMyRegions,
                                                     uniform box3f *uniform othersRegions,
-                                                    uniform int numOthersRegions)
+                                                    uniform int numOthersRegions,
+                                                    uniform int aoSamples,
+                                                    uniform box3f *uniform ghostRegions)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
@@ -276,5 +340,7 @@ export void DistributedRaycastRenderer_setRegions(void *uniform _self,
   self->numMyRegions = numMyRegions;
   self->othersRegions = othersRegions;
   self->numOthersRegions = numOthersRegions;
+  self->aoSamples = aoSamples;
+  self->ghostRegions = ghostRegions;
 }
 

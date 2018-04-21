@@ -42,7 +42,7 @@ namespace ospray {
       // compositing.
       virtual void commit() override;
 
-      std::vector<box3f> myRegions, othersRegions;
+      std::vector<box3f> myRegions, othersRegions, ghostRegions;
     };
 
   } // ::ospray::mpi

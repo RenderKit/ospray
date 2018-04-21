@@ -39,6 +39,7 @@ namespace ospray {
     // DistributedRaycastRenderer definitions /////////////////////////////////
 
     DistributedRaycastRenderer::DistributedRaycastRenderer()
+      : numAoSamples(0)
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
     }
@@ -46,6 +47,7 @@ namespace ospray {
     void DistributedRaycastRenderer::commit()
     {
       Renderer::commit();
+      numAoSamples = getParam1i("aoSamples", 0);
       if (!dynamic_cast<DistributedModel*>(model)) {
         throw std::runtime_error("DistributedRaycastRender must use a DistributedModel from "
                                  "the MPIDistributedDevice");
@@ -67,7 +69,9 @@ namespace ospray {
           (ispc::box3f*)distribModel->myRegions.data(),
           distribModel->myRegions.size(),
           (ispc::box3f*)distribModel->othersRegions.data(),
-          distribModel->othersRegions.size());
+          distribModel->othersRegions.size(),
+          numAoSamples,
+          (ispc::box3f*)distribModel->ghostRegions.data());
 
       const size_t numRegions = distribModel->myRegions.size()
         + distribModel->othersRegions.size();
