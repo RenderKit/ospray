@@ -17,25 +17,42 @@
 #pragma once
 
 #include <cstdlib>
-#include "../common.h"
+#include <cstdint>
+#include <string>
+#include <vector>
+#include "Socket.h"
+#include "Fabric.h"
 
 namespace ospcommon {
   namespace networking {
 
-    /*! abstraction for a physical fabric that can transmit data -
-      sockets, mpi, etc */
-    struct OSPCOMMON_INTERFACE Fabric
+    /*! A fabrich which sends and recieves over a TCP socket connection */
+    struct OSPCOMMON_INTERFACE SocketFabric : public Fabric
     {
-      virtual ~Fabric() = default;
+      /*! Setup the connection by listening for an incoming
+          connection on the desired port */
+      SocketFabric(const uint16_t port);
+      /*! Connecting to another socket on the host on the desired port */
+      SocketFabric(const std::string &hostname, const uint16_t port);
+      ~SocketFabric();
+
+      SocketFabric(const SocketFabric&) = delete;
+      SocketFabric& operator=(const SocketFabric&) = delete;
+
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
         delivered */
-      virtual void   send(void *mem, size_t s) = 0;
+      void send(void *mem, size_t s) override;
 
       /*! receive some block of data - whatever the sender has sent -
         and give us size and pointer to this data */
-      virtual size_t read(void *&mem) = 0;
+      size_t read(void *&mem) override;
+
+    private:
+      ospcommon::socket_t socket;
+      std::vector<char> buffer;
     };
 
   } // ::ospcommon::networking
 } // ::ospcommon
+

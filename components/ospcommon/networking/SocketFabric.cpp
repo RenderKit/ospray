@@ -14,28 +14,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include <cstdlib>
-#include "../common.h"
+#include "SocketFabric.h"
 
 namespace ospcommon {
   namespace networking {
 
-    /*! abstraction for a physical fabric that can transmit data -
-      sockets, mpi, etc */
-    struct OSPCOMMON_INTERFACE Fabric
-    {
-      virtual ~Fabric() = default;
-      /*! send exact number of bytes - the fabric can do that through
-        multiple smaller messages, but all bytes have to be
-        delivered */
-      virtual void   send(void *mem, size_t s) = 0;
+      SocketFabric::SocketFabric(const uint16_t port)
+        : socket(nullptr), buffer(64 * 1024, 0)
+      {
+        ospcommon::socket_t listenSock = ospcommon::bind(port);
+        socket = ospcommon::listen(listenSock);
+      }
 
-      /*! receive some block of data - whatever the sender has sent -
-        and give us size and pointer to this data */
-      virtual size_t read(void *&mem) = 0;
-    };
+      SocketFabric::SocketFabric(const std::string &hostname, const uint16_t port)
+        : socket(ospcommon::connect(hostname.c_str(), port)),
+        buffer(64 * 1024, 0)
+      {}
 
-  } // ::ospcommon::networking
-} // ::ospcommon
+      SocketFabric::~SocketFabric() {
+        ospcommon::close(socket);
+      }
+
+      void SocketFabric::send(void *mem, size_t s) {
+        // A bit annoying, because the ospcommon::Socket wrapper does its
+        // own internal buffering, however a Fabric is unbuffered and is
+        // made buffered by using the buffered data streams
+        ospcommon::write(socket, mem, s);
+        ospcommon::flush(socket);
+      }
+
+      size_t SocketFabric::read(void *&mem) {
+        const size_t s = ospcommon::read_some(socket, buffer.data(),
+                                              buffer.size());
+        mem = buffer.data();
+        return s;
+      }
+  }
+}
+
