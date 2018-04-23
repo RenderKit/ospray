@@ -191,34 +191,35 @@ namespace ospcommon
     
     void read(socket_t hsock_i, void* data_i, size_t bytes)
     {
-#if BUFFERING
       char* data = (char*)data_i;
-      buffered_socket_t* hsock = (buffered_socket_t*) hsock_i;
       while (bytes) {
-        if (hsock->istart == hsock->iend) {
-          ssize_t n = ::recv(hsock->fd,hsock->ibuf,hsock->isize,MSG_NOSIGNAL);
-          if      (n == 0) throw Disconnect();
-          else if (n  < 0) THROW_RUNTIME_ERROR("error reading from socket");
-          hsock->istart = 0;
-          hsock->iend = n;
-        }
-        size_t bsize = hsock->iend-hsock->istart;
-        if (bytes < bsize) bsize = bytes;
-        memcpy(data,hsock->ibuf+hsock->istart,bsize);
-        data += bsize;
-        hsock->istart += bsize;
-        bytes -= bsize;
+        size_t readBytes = read_some(hsock_i, data, bytes);
+        data += readBytes;
+        bytes -= readBytes;
       }
-#else
-      char* data = (char*) data_i;
+    }
+
+    size_t read_some(socket_t hsock_i, void* data, const size_t bytes)
+    {
       buffered_socket_t* hsock = (buffered_socket_t*) hsock_i;
-      while (bytes) {
-        ssize_t n = ::read(hsock->fd,data,bytes);
+#if BUFFERING
+      if (hsock->istart == hsock->iend) {
+        ssize_t n = ::recv(hsock->fd,hsock->ibuf,hsock->isize,MSG_NOSIGNAL);
         if      (n == 0) throw Disconnect();
         else if (n  < 0) THROW_RUNTIME_ERROR("error reading from socket");
-        data+=n;
-        bytes-=n;
+        hsock->istart = 0;
+        hsock->iend = n;
       }
+      size_t bsize = hsock->iend-hsock->istart;
+      if (bytes < bsize) bsize = bytes;
+      memcpy(data,hsock->ibuf+hsock->istart,bsize);
+      hsock->istart += bsize;
+      return bsize;
+#else
+      ssize_t n = ::read(hsock->fd,data,bytes);
+      if      (n == 0) throw Disconnect();
+      else if (n  < 0) THROW_RUNTIME_ERROR("error reading from socket");
+      return n;
 #endif
     }
 
