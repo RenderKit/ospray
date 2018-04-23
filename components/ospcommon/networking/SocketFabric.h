@@ -34,7 +34,7 @@ namespace ospcommon {
       SocketFabric(const uint16_t port);
       /*! Connecting to another socket on the host on the desired port */
       SocketFabric(const std::string &hostname, const uint16_t port);
-      ~SocketFabric();
+      ~SocketFabric() override;
 
       SocketFabric(const SocketFabric&) = delete;
       SocketFabric& operator=(const SocketFabric&) = delete;
