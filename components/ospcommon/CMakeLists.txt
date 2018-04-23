@@ -49,6 +49,7 @@ else()
     networking/DataStreaming.h
     networking/Fabric.h
     networking/Socket.cpp
+    networking/SocketFabric.cpp
 
     tasking/detail/parallel_for.inl
     tasking/detail/schedule.inl
@@ -144,6 +145,7 @@ else()
     networking/DataStreaming.h
     networking/Fabric.h
     networking/Socket.h
+    networking/SocketFabric.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/networking
   )

@@ -333,9 +333,16 @@ export void SpheresGeometry_set(void  *uniform _self
 
   self->huge_mesh = huge_mesh;
 
+  // Why a log function?
   self->epsilon = log(self->radius);
   if (self->epsilon < 0.f)
     self->epsilon = -1.f/self->epsilon;
+
+  // This can occur if the radius is < 1 in some cases, so make sure
+  // epsilon is not too big
+  if (self->epsilon >= self->radius) {
+    self->epsilon = self->radius / 100.0;
+  }
 
   rtcSetUserData(model->embreeSceneHandle,geomID,self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,

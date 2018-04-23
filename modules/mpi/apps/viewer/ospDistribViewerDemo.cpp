@@ -159,6 +159,9 @@ int main(int argc, char **argv) {
   FileName transferFcnFile;
   bool appInitMPI = false;
   size_t nlocalBricks = 1;
+  float sphereRadius = 0.005;
+  bool transparentSpheres = false;
+  int aoSamples = 0;
 
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
@@ -183,6 +186,12 @@ int main(int argc, char **argv) {
       appInitMPI = true;
     } else if (arg == "-nlocal-bricks") {
       nlocalBricks = std::stol(argv[++i]);
+    } else if (arg == "-radius") {
+      sphereRadius = std::stof(argv[++i]);
+    } else if (arg == "-transparent-spheres") {
+      transparentSpheres = true;
+    } else if (arg == "-ao") {
+      aoSamples = std::stoi(argv[++i]);
     }
   }
   if (!volumeFile.empty()) {
@@ -227,7 +236,6 @@ int main(int argc, char **argv) {
   Model model;
   std::vector<gensv::LoadedVolume> volumes;
   box3f worldBounds;
-  float sphereRadius = 0.005;
   if (!volumeFile.empty()) {
     volumes.push_back(gensv::loadVolume(volumeFile, dimensions, dtype,
                                         valueRange));
@@ -255,22 +263,28 @@ int main(int argc, char **argv) {
     }
   }
 
-  std::vector<box3f> regions;
+  std::vector<box3f> regions, ghostRegions;
   for (auto &v : volumes) {
     v.volume.commit();
     model.addVolume(v.volume);
 
-    if (nSpheres != 0) {
-      auto spheres = gensv::makeSpheres(v.bounds, nSpheres, sphereRadius);
-      model.addGeometry(spheres);
-    }
+    ghostRegions.push_back(worldBounds);
     regions.push_back(v.bounds);
+  }
+  // All ranks generate the same sphere data to mimic rendering a distributed
+  // shared dataset
+  if (nSpheres != 0) {
+    auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
+                                      sphereRadius, transparentSpheres);
+    model.addGeometry(spheres);
   }
 
   Arcball arcballCamera(worldBounds);
 
   ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3, regions.data());
+  ospray::cpp::Data ghostRegionData(ghostRegions.size() * 2, OSP_FLOAT3, ghostRegions.data());
   model.set("regions", regionData);
+  model.set("ghostRegions", ghostRegionData);
   model.commit();
 
   Camera camera("perspective");
@@ -286,6 +300,7 @@ int main(int argc, char **argv) {
   renderer.set("camera", camera);
   renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));
   renderer.set("varianceThreshold", varianceThreshold);
+  renderer.set("aoSamples", aoSamples);
   renderer.commit();
   assert(renderer);
 

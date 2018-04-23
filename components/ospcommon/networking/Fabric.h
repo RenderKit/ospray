@@ -17,13 +17,14 @@
 #pragma once
 
 #include <cstdlib>
+#include "../common.h"
 
 namespace ospcommon {
   namespace networking {
 
     /*! abstraction for a physical fabric that can transmit data -
       sockets, mpi, etc */
-    struct Fabric
+    struct OSPCOMMON_INTERFACE Fabric
     {
       virtual ~Fabric() = default;
       /*! send exact number of bytes - the fabric can do that through
