@@ -139,6 +139,17 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
                     ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so)
     INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+
+    # If the shared lib we're copying is named with a specific version, also
+    # create a major version suffixed symlink
+    STRING(REGEX MATCH "([0-9]+)[.]([0-9]+)[.]([0-9]+)" VERSION_STRING ${TARGET_NAME})
+    if (CMAKE_MATCH_0)
+      EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink
+                      ${TARGET_NAME}
+                      ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1})
+      INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1}
+              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+    endif()
   ENDMACRO()
 
   IF (OSPRAY_TASKING_TBB)
