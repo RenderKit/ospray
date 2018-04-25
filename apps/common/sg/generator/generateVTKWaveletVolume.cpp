@@ -59,6 +59,9 @@ namespace ospray {
 
       // generate volume data
 
+      std::cout << "...generating wavelet volume with dims=" << dims << "..." 
+                << std::endl;
+
       auto halfDims = dims / 2;
 
       vtkSmartPointer<vtkRTAnalyticSource> wavelet = vtkRTAnalyticSource::New();
@@ -78,6 +81,9 @@ namespace ospray {
       wavelet->SetSubsampleRate(1);
 
       wavelet->Update();
+
+      std::cout << "...data generated, now creating scene graph objects..."
+                << std::endl;
 
       auto imageData = wavelet->GetOutput();
 
@@ -119,6 +125,8 @@ namespace ospray {
       // add volume to world
 
       world->add(volume_node);
+
+      std::cout << "...finished!" << std::endl;
     }
 
     OSPSG_REGISTER_GENERATE_FUNCTION(generateVTKWaveletVolume, vtkWavelet);
