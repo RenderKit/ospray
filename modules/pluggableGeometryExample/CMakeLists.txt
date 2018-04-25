@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -32,16 +32,7 @@ IF (OSPRAY_MODULE_BILINEAR_PATCH)
   #
   ADD_SUBDIRECTORY(ospray)
 
-  # build the module-specific sample apps and tools. since these are
-  # stand-alone apps outside of the ospray core we'll put those into a
-  # '<module>/ospray' subdirectory.
-  #
-  # For this module this will build the 'ospBilinearPatchViewer'
-  # example. If other modules come with their own
-  # tools/converters/importers/etc, this is where those sohuld go.
-  #
-  IF (OSPRAY_APPS_EXAMPLEVIEWER)#Must build example viewer app to build this one
-    ADD_SUBDIRECTORY(apps)
-  ENDIF()
+  # add sg plugin for '.patches' files
+  ADD_SUBDIRECTORY(sg)
 
 ENDIF (OSPRAY_MODULE_BILINEAR_PATCH)

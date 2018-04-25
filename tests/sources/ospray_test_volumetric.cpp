@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright 2017-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "ospray_test_fixture.h"
 
 using OSPRayTestScenes::Sierpinski;
@@ -7,8 +23,8 @@ TEST_P(Sierpinski, simple) {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Volumetric, Sierpinski, ::testing::Combine(::testing::Values("scivis"), ::testing::Values(false), ::testing::Values(4, 5, 6, 7, 8, 9, 10)));
-INSTANTIATE_TEST_CASE_P(Isosurfaces, Sierpinski, ::testing::Combine(::testing::Values("scivis", "pathtracer"), ::testing::Values(true), ::testing::Values(4, 5, 6, 7, 8, 9, 10)));
+INSTANTIATE_TEST_CASE_P(Volumetric, Sierpinski, ::testing::Combine(::testing::Values("scivis"), ::testing::Values(false), ::testing::Values(4, 6, 9)));
+INSTANTIATE_TEST_CASE_P(Isosurfaces, Sierpinski, ::testing::Combine(::testing::Values("scivis", "pathtracer"), ::testing::Values(true), ::testing::Values( 5, 7,  9)));
 
 TEST_P(Torus, simple) {
   PerformRenderTest();

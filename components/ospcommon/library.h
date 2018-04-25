@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -46,6 +46,11 @@ namespace ospcommon {
 
       /* returns address of a symbol from any library in the repo */
       void* getSymbol(const std::string& sym) const;
+
+      /* add the default library to the repo */
+      void addDefaultLibrary();
+
+      bool libraryExists(const std::string &name) const;
 
     private:
       static LibraryRepository* instance;

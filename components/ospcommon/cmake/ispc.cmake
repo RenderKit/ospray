@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 # ISPC versions to look for, in decending order (newest first)
-SET(ISPC_VERSION_WORKING "1.9.1")
+SET(ISPC_VERSION_WORKING "1.9.2" "1.9.1")
 LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 IF (NOT ISPC_EXECUTABLE)
@@ -25,7 +25,7 @@ IF (NOT ISPC_EXECUTABLE)
   ELSEIF(WIN32)
     SET(ISPC_DIR_SUFFIX "windows")
     IF (MSVC_VERSION LESS 1900)
-      LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2013")
+      MESSAGE(WARNING "MSVC 12 2013 is not supported anymore.")
     ELSE()
       LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
     ENDIF()
@@ -109,11 +109,23 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(ISPC_INCLUDE_DIR_PARMS "-I" ${ISPC_INCLUDE_DIR_PARMS})
   ENDIF()
 
+  #CAUTION: -O0/1 -g with ispc seg faults
+  SET(ISPC_FLAGS_DEBUG "-g" CACHE STRING "ISPC Debug flags")
+  MARK_AS_ADVANCED(ISPC_FLAGS_DEBUG)
+  SET(ISPC_FLAGS_RELEASE "-O3" CACHE STRING "ISPC Release flags")
+  MARK_AS_ADVANCED(ISPC_FLAGS_RELEASE)
+  SET(ISPC_FLAGS_RELWITHDEBINFO "-O2 -g" CACHE STRING "ISPC Release with Debug symbols flags")
+  MARK_AS_ADVANCED(ISPC_FLAGS_RELWITHDEBINFO)
   IF (WIN32 OR "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    SET(ISPC_OPT_FLAGS -O3)
+    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELEASE})
+  ELSEIF ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_DEBUG})
   ELSE()
-    SET(ISPC_OPT_FLAGS -O2 -g)
+    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELWITHDEBINFO})
   ENDIF()
+
+  # turn space sparated list into ';' separated list
+  STRING(REPLACE " " ";" ISPC_OPT_FLAGS "${ISPC_OPT_FLAGS}")
 
   IF (NOT WIN32)
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
@@ -135,7 +147,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
     ELSEIF ("${dir}" MATCHES "^[A-Z]:") # absolute DOS-style path to input
       STRING(REGEX REPLACE "^[A-Z]:" "${ISPC_TARGET_DIR}/rebased/" outdir "${dir}")
     ELSE() # relative path to input
-      SET(outdir "${ISPC_TARGET_DIR}/local_${dir}")
+      SET(outdir "${ISPC_TARGET_DIR}/local_${OSPRAY_ISPC_TARGET_NAME}_${dir}")
       SET(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
     ENDIF()
 
@@ -153,7 +165,6 @@ MACRO (OSPRAY_ISPC_COMPILE)
     ENDIF ()
 
     SET(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
-
     # if we have multiple targets add additional object files
     LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
     IF (NUM_TARGETS GREATER 1)

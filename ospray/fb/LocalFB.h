@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,7 +40,7 @@ namespace ospray {
                      bool hasAccumBuffer,
                      bool hasVarianceBuffer,
                      void *colorBufferToUse=nullptr);
-    virtual ~LocalFrameBuffer();
+    virtual ~LocalFrameBuffer() override;
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */

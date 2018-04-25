@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -55,15 +55,14 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
   {
     Spheres();
-    virtual ~Spheres();
-    
+
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;
 
     // Data members //
-    
+
     /*! default radius, if no per-sphere radius was specified. */
-    float radius;   
+    float radius;
     int32 materialID;
 
     size_t numSpheres;
@@ -74,20 +73,18 @@ namespace ospray {
     int64 offset_colorID;
 
     Ref<Data> sphereData;
-    Ref<Data> materialList;
-    void     *_materialList {nullptr};
-    
+
     /*! data array from which we read the per-sphere color data; if
       NULL we do not have per-sphere data */
     Ref<Data> colorData;
 
     Ref<Data> texcoordData;
-    
+
     /*! stride in colorData array for accessing i'th sphere's
       color. color of sphere i will be read as 3 floats from
       'colorOffset+i*colorStride */
     size_t    colorStride;
-    
+
     /*! offset in colorData array for accessing i'th sphere's
       color. color of sphere i will be read as 3 floats from
       'colorOffset+i*colorStride */

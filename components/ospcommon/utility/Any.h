@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,6 +21,7 @@
 
 #include "../common.h"
 #include "../TypeTraits.h"
+#include "demangle.h"
 
 namespace ospcommon {
   namespace utility {
@@ -52,6 +53,9 @@ namespace ospcommon {
       template<typename T>
       Any& operator=(T rhs);
 
+      bool operator==(const Any &rhs) const;
+      bool operator!=(const Any &rhs) const;
+
       template<typename T>
       T& get();
 
@@ -66,10 +70,6 @@ namespace ospcommon {
       std::string toString() const;
 
     private:
-
-      // Friends //
-
-      friend bool operator==(const Any &lhs, const Any &rhs);
 
       // Helper types //
 
@@ -151,6 +151,16 @@ namespace ospcommon {
       return *this;
     }
 
+    inline bool Any::operator==(const Any &rhs) const
+    {
+      return currentValue->isSame(rhs.currentValue.get());
+    }
+
+    inline bool Any::operator!=(const Any &rhs) const
+    {
+      return !(*this == rhs);
+    }
+
     template<typename T>
     inline T &Any::get()
     {
@@ -162,9 +172,10 @@ namespace ospcommon {
       else {
         std::stringstream msg;
         msg << "Incorrect type queried for Any!" << '\n';
-        msg << "  queried type == " << typeid(T).name() << '\n';
-        msg << "  current type == " << currentValue->valueTypeID().name()
-            << '\n';
+        msg << "  queried type == "
+            << nameOf<T>() << '\n';
+        msg << "  current type == "
+            << demangle(currentValue->valueTypeID().name()) << '\n';
         throw std::runtime_error(msg.str());
       }
     }
@@ -180,9 +191,10 @@ namespace ospcommon {
       else {
         std::stringstream msg;
         msg << "Incorrect type queried for Any!" << '\n';
-        msg << "  queried type == " << typeid(T).name() << '\n';
-        msg << "  current type == " << currentValue->valueTypeID().name()
-            << '\n';
+        msg << "  queried type == "
+            << nameOf<T>() << '\n';
+        msg << "  current type == "
+            << demangle(currentValue->valueTypeID().name()) << '\n';
         throw std::runtime_error(msg.str());
       }
     }
@@ -203,7 +215,7 @@ namespace ospcommon {
     {
       std::stringstream retval;
       retval << "Any : (currently holds value of type) --> "
-             << currentValue->valueTypeID().name();
+             << demangle(currentValue->valueTypeID().name());
       return retval.str();
     }
 
@@ -242,7 +254,7 @@ namespace ospcommon {
     template <typename T>
     template <typename TYPE>
     inline traits::NoOperatorEquals<TYPE, bool>
-    Any::handle<T>::isSameImpl(Any::handle_base *other) const
+    Any::handle<T>::isSameImpl(Any::handle_base *) const
     {
       return false;
     }
@@ -251,18 +263,6 @@ namespace ospcommon {
     inline void *Any::handle<T>::data()
     {
       return &value;
-    }
-
-    // Comparison functions ///////////////////////////////////////////////////
-
-    inline bool operator==(const Any &lhs, const Any &rhs)
-    {
-      return lhs.currentValue->isSame(rhs.currentValue.get());
-    }
-
-    inline bool operator!=(const Any &lhs, const Any &rhs)
-    {
-      return !(lhs == rhs);
     }
 
   } // ::ospcommon::utility

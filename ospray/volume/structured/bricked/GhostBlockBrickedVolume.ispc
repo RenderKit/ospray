@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -446,10 +446,10 @@ template_setRegion(double)
               volume->super.localCoordinatesUpperBound);                \
                                                                         \
     /* Lower and upper corners of the box straddling the voxels to be interpolated. */ \
-    const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);   \
+    const vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);   \
                                                                         \
     /* Fractional coordinates within the lower corner voxel used during interpolation. */ \
-    const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0); \
+    const vec3f frac = clampedLocalCoordinates - to_float(voxelIndex_0); \
                                                                         \
     /* Compute the 1D address of the block in the volume and the voxel in the block. */ \
     Address8 address8;                                                  \

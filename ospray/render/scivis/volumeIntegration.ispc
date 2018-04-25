@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -44,6 +44,7 @@ vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
     // Setup differential geometry for the volume sample point.
     DifferentialGeometry dg;
     dg.P  = coordinates;
+    dg.epsilon = renderer->volumeEpsilon; // FIXME: improve
     dg.Ns = gradient;
 
     // Compute lighting.
@@ -190,6 +191,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
             dg.Ng = neg(dg.Ng);  // face forward
           dg.Ns   = dg.Ng;
           dg.P    = coordinates + dg.Ns * renderer->volumeEpsilon;
+          dg.epsilon = renderer->volumeEpsilon; // FIXME: improve
 
           dg.color = make_vec4f(sampleColor, 1);
           dg.Ng    = dg.Ns;
@@ -251,6 +253,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
       dg.Ng = neg(dg.Ng);  // face forward
     dg.Ns   = dg.Ng;
     dg.P    = singleCoordinates + dg.Ns * renderer->volumeEpsilon;
+    dg.epsilon = renderer->volumeEpsilon; // FIXME: improve
 
     // Compute lighting.
     vec3f shadedColor = make_vec3f(0.f);

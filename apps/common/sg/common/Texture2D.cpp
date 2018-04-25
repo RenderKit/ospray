@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,11 +22,53 @@
 OIIO_NAMESPACE_USING
 #endif
 
-#include "sg/common/Texture2D.h"
+#include "Texture2D.h"
+
 #include "ospray/common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {
+
+    Texture2D::Texture2D()
+    {
+      setValue((OSPTexture2D)nullptr);
+    }
+
+    Texture2D::~Texture2D()
+    {
+      if (data) alignedFree(data);
+    }
+
+    void Texture2D::preCommit(RenderContext &)
+    {
+      OSPTextureFormat type = OSP_TEXTURE_R8;
+
+      if (depth == 1) {
+        if( channels == 1 ) type = OSP_TEXTURE_R8;
+        if( channels == 3 )
+          type = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+        if( channels == 4 )
+          type = preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
+      } else if (depth == 4) {
+        if( channels == 1 ) type = OSP_TEXTURE_R32F;
+        if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
+        if( channels == 4 ) type = OSP_TEXTURE_RGBA32F;
+      }
+
+      void* dat = data;
+      if (!dat && texelData)
+        dat = texelData->base();
+      if (!dat)
+      {
+        setValue((OSPTexture2D)nullptr);
+        std::cout << "Texture2D: image data null\n";
+        return;
+      }
+
+      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, 0);
+      setValue(ospTexture2D);
+      ospCommit(ospTexture2D);
+    }
 
     std::string Texture2D::toString() const
     {
@@ -42,8 +84,6 @@ namespace ospray {
     {
       FileName fileName = fileNameAbs;
       std::string fileNameBase = fileNameAbs;
-      std::string path = fileNameAbs.path();
-
       /* WARNING: this cache means that every texture ever loaded will
          forever keep at least one refcount - ie, no texture will ever
          auto-die!!! (to fix this we'd have to add a dedicated
@@ -57,7 +97,7 @@ namespace ospray {
       std::shared_ptr<Texture2D> tex = std::static_pointer_cast<Texture2D>(
         createNode(fileName.name(),"Texture2D"));
 
-#if USE_OPENIMAGEIO
+#ifdef USE_OPENIMAGEIO
       ImageInput *in = ImageInput::open(fileName.str().c_str());
       if (!in) {
         std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
@@ -71,7 +111,7 @@ namespace ospray {
         tex->depth = hdr ? 4 : 1;
         tex->preferLinear = preferLinear;
         const size_t stride = tex->size.x * tex->channels * tex->depth;
-        tex->data = new unsigned char[tex->size.y * stride];
+        tex->data = alignedMalloc(sizeof(unsigned char) * tex->size.y * stride);
 
         in->read_image(hdr ? TypeDesc::FLOAT : TypeDesc::UINT8, tex->data);
         in->close();
@@ -79,7 +119,7 @@ namespace ospray {
 
         // flip image (because OSPRay's textures have the origin at the lower left corner)
         unsigned char* data = (unsigned char*)tex->data;
-        for (size_t y = 0; y < tex->size.y / 2; y++) {
+        for (int y = 0; y < tex->size.y / 2; y++) {
           unsigned char *src = &data[y * stride];
           unsigned char *dest = &data[(tex->size.y-1-y) * stride];
           for (size_t x = 0; x < stride; x++)
@@ -100,7 +140,6 @@ namespace ospray {
               if (fileNameBase.size() > 0) {
                 if (fileNameBase.substr(0,1) == "/") {// Absolute path.
                   fileName = fileNameBase;
-                  path = "";
                 }
               }
           }
@@ -151,7 +190,6 @@ namespace ospray {
           if (maxVal != 255)
             throw std::runtime_error("#osp:miniSG: could not parse P6 PPM file '"+fileName.str()+"': currently supporting only maxVal=255 formats."
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
-          // tex = new Texture2D;
           tex->size.x   = width;
           tex->size.y   = height;
           tex->channels = 3;
@@ -159,7 +197,7 @@ namespace ospray {
           tex->preferLinear = preferLinear;
 
           unsigned int dataSize = tex->size.x * tex->size.y * tex->channels * tex->depth;
-          tex->data     = new unsigned char[dataSize];
+          tex->data = alignedMalloc(sizeof(unsigned char) * dataSize);
           rc = fread(tex->data,dataSize,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           unsigned char *texels = (unsigned char *)tex->data;
@@ -230,9 +268,9 @@ namespace ospray {
           tex->channels = numChannels;
           tex->depth    = sizeof(float);
           tex->preferLinear = preferLinear;
-          tex->data     = new float[width * height * numChannels];
+          tex->data     = alignedMalloc(sizeof(float) * width * height * numChannels);
           if (fread(tex->data, sizeof(float), width * height * numChannels, file)
-              != width * height * numChannels)
+              != size_t(width * height * numChannels))
             throw std::runtime_error("could not fread");
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           float *texels = (float *)tex->data;
@@ -264,10 +302,10 @@ namespace ospray {
         if (!pixels) {
           std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
         } else {
-          tex->data = new unsigned char[tex->size.x*tex->size.y*tex->channels*tex->depth];
+          tex->data = alignedMalloc(sizeof(unsigned char) * tex->size.x*tex->size.y*tex->channels*tex->depth);
           // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
-          for (size_t y=0; y<tex->size.y; y++) {
-            for (size_t x=0; x<tex->size.x; x++) {
+          for (int y = 0; y < tex->size.y; y++) {
+            for (int x = 0; x < tex->size.x; x++) {
               if (hdr) {
                 const float *pixel = &((float*)pixels)[(y*tex->size.x+x)*tex->channels];
                 float *dst = &((float*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
@@ -286,43 +324,6 @@ namespace ospray {
 #endif
       textureCache[fileName.str()] = tex;
       return tex;
-    }
-
-    Texture2D::Texture2D()
-      : data(nullptr), texelData(nullptr)
-    {
-      setValue((OSPTexture2D)nullptr);
-    }
-
-    void Texture2D::preCommit(RenderContext &ctx)
-    {
-      OSPTextureFormat type = OSP_TEXTURE_R8;
-
-      if (depth == 1) {
-        if( channels == 1 ) type = OSP_TEXTURE_R8;
-        if( channels == 3 )
-          type = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
-        if( channels == 4 )
-          type = preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
-      } else if (depth == 4) {
-        if( channels == 1 ) type = OSP_TEXTURE_R32F;
-        if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
-        if( channels == 4 ) type = OSP_TEXTURE_RGBA32F;
-      }
-
-      void* dat = data;
-      if (!dat && texelData)
-        dat = texelData->base();
-      if (!dat)
-      {
-        setValue((OSPTexture2D)nullptr);
-        std::cout << "Texture2D: image data null\n";
-        return;
-      }
-
-      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, 0);
-      setValue(ospTexture2D);
-      ospCommit(ospTexture2D);
     }
 
     OSP_REGISTER_SG_NODE(Texture2D);

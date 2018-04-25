@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -29,10 +29,10 @@ OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
 OPTION(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
 
 # common utilities
-IF(OSPRAY_APPS_BENCHMARK OR OSRPAY_APPS_EXAMPLEVIEWER)
+IF(OSPRAY_APPS_BENCHMARK OR OSPRAY_APPS_EXAMPLEVIEWER)
+  ADD_SUBDIRECTORY(common/ospapp)
   ADD_SUBDIRECTORY(common/sg)
   ADD_SUBDIRECTORY(common/tfn_lib)
-  ADD_SUBDIRECTORY(common/xml)
 ENDIF()
 
 IF(OSPRAY_APPS_BENCHMARK)

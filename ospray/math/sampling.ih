@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -38,6 +38,16 @@ inline vec3f cartesian(const float phi, const float cosTheta)
   return cartesian(phi, cos2sin(cosTheta), cosTheta);
 }
 
+/// uniform sampling of hemisphere oriented along the +z-axis
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f uniformSampleHemisphere(const vec2f s)
+{
+  const float phi = two_pi * s.x;
+  const float cosTheta = s.y;
+  const float sinTheta = cos2sin(s.y);
+  return cartesian(phi, sinTheta, cosTheta);
+}
 
 /// cosine-weighted sampling of hemisphere oriented along the +z-axis
 ////////////////////////////////////////////////////////////////////////////////

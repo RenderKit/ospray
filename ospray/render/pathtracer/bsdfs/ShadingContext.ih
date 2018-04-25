@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,7 +18,7 @@
 
 #include "math/LinearSpace.ih"
 
-#define SHADINGCONTEXT_SIZE      (programCount*2048)
+#define SHADINGCONTEXT_SIZE      (programCount*programCount*1024)
 #define SHADINGCONTEXT_ALIGNMENT 64
 
 struct ShadingContext

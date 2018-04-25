@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,8 +30,9 @@ inline BSDF_EvalRes Lambert_eval(const varying BSDF* uniform super,
 {
   const varying Lambert* uniform self = (const varying Lambert* uniform)super;
   BSDF_EvalRes res;
-  res.pdf = clamp(dot(wi, getN(super))) * one_over_pi;
-  res.value = self->R/pi * clamp(dot(wi, getN(super)));
+  float cosThetaI = max(dot(wi, getN(super)), 0.f);
+  res.pdf = cosineSampleHemispherePDF(cosThetaI);
+  res.value = self->R * one_over_pi * cosThetaI;
   return res;
 }
 
@@ -62,8 +63,7 @@ inline varying BSDF* uniform Lambert_create(uniform ShadingContext* uniform ctx,
                                             const varying linear3f* uniform frame,
                                             const varying vec3f &R)
 {
-  varying Lambert* uniform self
-    = (varying Lambert* uniform)ShadingContext_alloc(ctx, sizeof(Lambert));
+  varying Lambert* uniform self = (varying Lambert* uniform)ShadingContext_alloc(ctx, sizeof(Lambert));
   Lambert_Constructor(self, frame, R);
   return &self->super;
 }

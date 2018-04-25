@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,8 +19,6 @@
 #include "fb/Tile.ih"
 #include "fb/FrameBuffer.ih"
 #include "render/util.ih"
-
-#define FB_STRIDE super.size.x
 
 /*! a Local FrameBuffer that stores all pixel values (color, depth,
     accum) in a plain 2D array of pixels (one array per component) */

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,7 +29,11 @@ namespace ospcommon
   /*! exception thrown when other side disconnects */
   struct Disconnect : public std::exception
   {
-    virtual const char* what() const throw() override
+#ifdef _WIN32
+    virtual const char* what() const override
+#else
+    virtual const char* what() const noexcept override
+#endif
     { return "network disconnect"; }
   };
 

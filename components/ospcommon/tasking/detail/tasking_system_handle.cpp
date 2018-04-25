@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -62,7 +62,7 @@ namespace ospcommon {
         return tbb::task_scheduler_init::default_num_threads();
 #  endif
 #elif defined(OSPRAY_TASKING_CILK)
-        return numThreads >= 0 ? std::thread::hardware_concurrency();
+        return numThreads >= 0 ? numThreads : std::thread::hardware_concurrency();
 #elif defined(OSPRAY_TASKING_OMP)
         int threads = 0;
         #pragma omp parallel
@@ -72,6 +72,8 @@ namespace ospcommon {
         return threads;
 #elif defined(OSPRAY_TASKING_INTERNAL)
         return detail::numThreadsTaskSystemInternal();
+#else
+        return 0;
 #endif
       }
 

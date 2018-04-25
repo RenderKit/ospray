@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,10 +14,18 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_CXX_FLAGS "-std=c++11 -fPIC -fno-strict-aliasing -Wno-narrowing")
+SET(OSPRAY_CXX_FLAGS "-std=c++11 -fPIC -fno-strict-aliasing -Wno-narrowing -Wno-unknown-pragmas")
 
 IF(OSPRAY_STRICT_BUILD)
+  # Should try to fix and remove...
+  SET(OSPRAY_CXX_FLAGS "-Wno-aligned-new ${OSPRAY_CXX_FLAGS}")
+
+  # Options selected for GCC 7.1+
   SET(OSPRAY_CXX_FLAGS "-Wall ${OSPRAY_CXX_FLAGS}")
+ENDIF()
+
+IF(OSPRAY_WARN_AS_ERRORS)
+  SET(OSPRAY_CXX_FLAGS "-Werror ${OSPRAY_CXX_FLAGS}")
 ENDIF()
 
 SET(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")

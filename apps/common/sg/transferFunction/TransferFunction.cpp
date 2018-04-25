@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -79,7 +79,7 @@ namespace ospray {
         opacities->push_back(interpolatedAlpha(*alpha, i * dx));
     }
 
-    void TransferFunction::preCommit(RenderContext &ctx)
+    void TransferFunction::preCommit(RenderContext &)
     {
       auto ospTransferFunction = valueAs<OSPTransferFunction>();
       if (!ospTransferFunction) {
@@ -90,14 +90,9 @@ namespace ospray {
       calculateOpacities();
     }
 
-    void TransferFunction::postCommit(RenderContext &ctx)
+    void TransferFunction::postCommit(RenderContext &)
     {
       ospCommit(valueAs<OSPTransferFunction>());
-    }
-
-    void TransferFunction::setFromXML(const xml::Node& node,
-                                      const unsigned char *binBasePtr)
-    {
     }
 
     std::string TransferFunction::toString() const

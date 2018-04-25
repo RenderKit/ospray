@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -209,13 +209,13 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
   // Coordinates of the lower corner of the cell in world coordinates.
   vec3f lower;
   volume->transformLocalToWorld(volume,
-                                float_cast(index << CELL_WIDTH_BITCOUNT),
+                                to_float(index << CELL_WIDTH_BITCOUNT),
                                 lower);
 
   // Coordinates of the upper corner of the cell in world coordinates.
   vec3f upper;
   volume->transformLocalToWorld(volume,
-                                float_cast(index + 1 << CELL_WIDTH_BITCOUNT),
+                                to_float(index + 1 << CELL_WIDTH_BITCOUNT),
                                 upper);
 
   // The bounding box in world coordinates.
@@ -269,7 +269,7 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
                                   localCoordinates);
 
     // Compute the 3D index of the cell containing the hit point.
-    vec3i cellIndex = integer_cast(localCoordinates) >> CELL_WIDTH_BITCOUNT;
+    vec3i cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
 
     // If we visited this cell before then it must not be empty.
     if (ray.geomID == cellIndex.x &&
@@ -298,7 +298,7 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
     // Exit bound of the grid cell in world coordinates.
     vec3f farBound;
     volume->transformLocalToWorld(volume,
-                                  float_cast(cellIndex +
+                                  to_float(cellIndex +
                                              nextCellIndex <<
                                              CELL_WIDTH_BITCOUNT),
                                   farBound);
@@ -336,7 +336,7 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
                                 localCoordinates);
 
   // Compute the 3D index of the cell containing the hit point.
-  vec3i cellIndex = integer_cast(localCoordinates) >> CELL_WIDTH_BITCOUNT;
+  vec3i cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
 
   // If we visited this cell before then it must not be empty.
   if (ray.geomID == cellIndex.x &&

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -45,9 +45,7 @@ namespace ospray {
 
     /*! Copy voxels into the volume at the given index (non-zero
       return value indicates success). */
-    int AMRVolume::setRegion(const void *source,
-                             const vec3i &index,
-                             const vec3i &count)
+    int AMRVolume::setRegion(const void *, const vec3i &, const vec3i &)
     {
       FATAL("'setRegion()' doesn't make sense for AMR volumes; "
             "they can only be set from existing data");
@@ -60,7 +58,7 @@ namespace ospray {
 
       // Make the voxel value range visible to the application.
       if (findParam("voxelRange") == nullptr)
-        set("voxelRange", voxelRange);
+        setParam("voxelRange", voxelRange);
       else
         voxelRange = getParam2f("voxelRange", voxelRange);
 
@@ -117,6 +115,25 @@ namespace ospray {
       const vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
       const vec3f gridOrigin  = getParam3f("gridOrigin", vec3f(0.f));
 
+      voxelType =  getParamString("voxelType", "unspecified");
+      auto voxelTypeID = getVoxelType();
+
+      switch (voxelTypeID) {
+      case OSP_UCHAR:
+        break;
+      case OSP_SHORT:
+        break;
+      case OSP_USHORT:
+        break;
+      case OSP_FLOAT:
+        break;
+      case OSP_DOUBLE:
+        break;
+      default:
+        throw std::runtime_error("amrVolume unsupported voxel type '"
+                                 + voxelType + "'");
+      }
+
       ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep,
                           (const ispc::vec3f&)gridOrigin,
                           (const ispc::vec3f&)gridSpacing);
@@ -128,12 +145,19 @@ namespace ospray {
                              &accel->leaf[0],
                              accel->level.size(),
                              &accel->level[0],
+                             voxelTypeID,
                              (ispc::box3f &)worldBounds);
 
-      tasking::parallel_for(accel->leaf.size(),[&](int leafID) {
+      tasking::parallel_for(accel->leaf.size(),[&](size_t leafID) {
         ispc::AMRVolume_computeValueRangeOfLeaf(getIE(), leafID);
       });
     }
+
+  OSPDataType AMRVolume::getVoxelType()
+  {
+    return (voxelType == "") ? typeForString(getParamString("voxelType", "unspecified")):
+                      typeForString(voxelType.c_str());
+  }
 
     OSP_REGISTER_VOLUME(AMRVolume, AMRVolume);
     OSP_REGISTER_VOLUME(AMRVolume, amr_volume);

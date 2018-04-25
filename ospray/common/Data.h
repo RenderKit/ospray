@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,9 +25,9 @@ namespace ospray {
       'n' items of a given type */
   struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   {
-    Data(size_t numItems, OSPDataType type, void *data, int flags = 0);
+    Data(size_t numItems, OSPDataType type, const void *data, int flags = 0);
 
-    virtual ~Data();
+    virtual ~Data() override;
 
     /*! commit this object - for this object type, make sure that all
         listeners that have registered know that we have changed */

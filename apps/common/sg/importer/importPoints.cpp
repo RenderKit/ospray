@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -60,7 +60,7 @@ namespace ospray {
         float r = ((f-lo) * (color.size()-1)) / (hi-lo);
         int idx = int(r);
         if (idx < 0) idx = 0;
-        if (idx >= color.size()) idx = color.size()-2;
+        if (idx >= static_cast<int>(color.size())) idx = color.size()-2;
 
         vec3f c = color[idx] + (r-idx)*(color[idx+1]-color[idx]);
         return vec4f(c,1.f);
@@ -73,19 +73,24 @@ namespace ospray {
     bool readOne(FILE *file, float *f, int N, bool ascii)
     {
       if (!ascii)
-        return fread(f,sizeof(float),N,file) == N;
+        return fread(f,sizeof(float),N,file) == size_t(N);
 
       // ascii:
       for (int i=0;i<N;i++) {
         int rc = fscanf(file,"%f",f+i);
         if (rc == 0) return (i == 0);
-        fscanf(file,"\n");
+        rc = fscanf(file,"\n");
       }
       return true;
     }
 
-    // for now, let's hardcode the importers - should be moved to a
-    // registry at some point ...
+    /*! importer for a binary set of points, the format of which are
+        controlled through the 'Pseudo-URL' "url" parameter. e.g.,
+        'points://fileName.raw:format=xyzff,radius=.2' means the file
+        is sequence of records with 5 elements, the first three of
+        which are x, y, and z coordinates, and the other two are
+        (unused) floats, with a fixed radius of 0.2 for every
+        sphere */
     void importFileType_points(std::shared_ptr<Node> &world,
                                const FileName &url)
     {
@@ -165,7 +170,7 @@ namespace ospray {
       // the current scene graph works - 'adding' that node (which
       // happens to have the right name) will essentially replace the
       // old value of that node, and thereby assign the 'data' field
-      sphereData->setName("sphereData");
+      sphereData->setName("spheres");
       sphereObject.add(sphereData);
 
       if (!mappedScalarVector.empty()) {

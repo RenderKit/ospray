@@ -1,3 +1,10 @@
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#pragma clang diagnostic ignored "-Wcast-qual"
+#pragma clang diagnostic ignored "-Wunused-macros"
+#pragma clang diagnostic ignored "-Wextended-offsetof"
+#pragma clang diagnostic ignored "-Wself-assign"
+
 /*
 
     The interface routines for reading and writing PLY polygon files.
@@ -54,7 +61,7 @@
     a[2] = b[2] op c[2];                              \
   }
 #define VEC3_ASN_OP(a,op,b)      {a[0] op b[0]; a[1] op b[1]; a[2] op b[2];}
-	    
+
 #define DOTPROD3(a, b)   (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 
 #define CROSSPROD3(a,b,c)       {a[0]=b[1]*c[2]-b[2]*c[1];  \
@@ -158,12 +165,12 @@ extern "C" {
     "invalid",
     "char", "short", "int",
     "uchar", "ushort", "uint",
-    "float", 
+    "float",
     "double",
   };
 
   int ply_type_size[] = {
-    0, 1, 2, 4, 1, 2, 4, 4, 
+    0, 1, 2, 4, 1, 2, 4, 4,
     8
   };
 
@@ -279,7 +286,7 @@ Exit:
       get_native_binary_type();
     if (!types_checked)
       check_types();
-  
+
     /* create a record for this object */
 
     plyfile = (PlyFile *) myalloc (sizeof (PlyFile));
@@ -860,7 +867,7 @@ Exit:
       get_native_binary_type();
     if (!types_checked)
       check_types();
-  
+
     /* create record for this object */
 
     plyfile = (PlyFile *) myalloc (sizeof (PlyFile));
@@ -881,7 +888,7 @@ Exit:
           free(words);
         return (NULL);
       }
-  
+
     while (words) {
       /* parse words */
 
@@ -914,7 +921,7 @@ Exit:
         free(words);
         break;
       }
-    
+
       /* free up words space */
       free (words);
 
@@ -1335,7 +1342,7 @@ Exit:
 #endif
     other->size = elem->other_size;
     other->props = (PlyProperty **) myalloc (sizeof(PlyProperty) * elem->nprops);
-  
+
     /* save descriptions of each "other" property */
     nprops = 0;
     for (i = 0; i < elem->nprops; i++) {
@@ -1354,7 +1361,7 @@ Exit:
       elem->other_offset = NO_OTHER_PROPS;
     }
 #endif
-  
+
     /* return structure */
     return (other);
   }
@@ -1432,6 +1439,10 @@ Exit:
     /* create a list to hold all the current elements */
     other->other_data = (OtherData **)
       malloc (sizeof (OtherData *) * other->elem_count);
+    if (other->other_data == nullptr) {
+      fprintf(stderr, "ply_get_other_element: can't alloc memory for other->other_data\n");
+      exit(1);
+    }
 
     /* set up for getting elements */
     other->other_props = ply_get_other_properties (plyfile, elem_name,
@@ -1466,7 +1477,7 @@ Entry:
     int i;
     OtherElem *other;
     PlyElement *elem;
-  
+
     /* ignore this call if there is no other element */
     if (other_elems == NULL)
       return;
@@ -1477,7 +1488,7 @@ Entry:
     /* describe the other properties of this element */
     /* store them in the main element list as elements with
        only other properties */
-  
+
     REALLOCN(plyfile->elems, PlyElement *,
              plyfile->nelems, plyfile->nelems + other_elems->num_elems);
     if (plyfile->elems == nullptr) {
@@ -1920,7 +1931,7 @@ Entry:
   {
     int i;
     char temp;
-    
+
     for (i=0; i < num_bytes/2; i++)
       {
         temp = bytes[i];
@@ -1965,19 +1976,19 @@ Entry:
   void check_types()
   {
     if ((ply_type_size[PLY_CHAR] != sizeof(char)) ||
-        (ply_type_size[PLY_SHORT] != sizeof(short)) ||	
-        (ply_type_size[PLY_INT] != sizeof(int)) ||	
-        (ply_type_size[PLY_UCHAR] != sizeof(unsigned char)) ||	
-        (ply_type_size[PLY_USHORT] != sizeof(unsigned short)) ||	
-        (ply_type_size[PLY_UINT] != sizeof(unsigned int)) ||	
-        (ply_type_size[PLY_FLOAT] != sizeof(float)) ||	
+        (ply_type_size[PLY_SHORT] != sizeof(short)) ||
+        (ply_type_size[PLY_INT] != sizeof(int)) ||
+        (ply_type_size[PLY_UCHAR] != sizeof(unsigned char)) ||
+        (ply_type_size[PLY_USHORT] != sizeof(unsigned short)) ||
+        (ply_type_size[PLY_UINT] != sizeof(unsigned int)) ||
+        (ply_type_size[PLY_FLOAT] != sizeof(float)) ||
         (ply_type_size[PLY_DOUBLE] != sizeof(double)))
       {
         fprintf(stderr, "ply: Type sizes do not match built-in types\n");
         fprintf(stderr, "ply: Exiting...\n");
         exit(1);
       }
-    
+
     types_checked = 1;
   }
 
@@ -2167,7 +2178,7 @@ Entry:
     short short_val;
     float float_val;
     void  *value;
-  
+
     switch (type) {
     case PLY_CHAR:
       char_val = int_val;
@@ -2205,7 +2216,7 @@ Entry:
 
     if ((file_type != native_binary_type) && (ply_type_size[type] > 1))
       swap_bytes((char *)value, ply_type_size[type]);
-  
+
     if (fwrite (value, ply_type_size[type], 1, fp) != 1)
       {
         fprintf(stderr, "PLY ERROR: fwrite() failed -- aborting.\n");
@@ -2444,7 +2455,7 @@ Exit:
         fprintf(stderr, "PLY ERROR: fread() failed -- aborting.\n");
         exit(1);
       }
-  
+
 
     if ((file_type != native_binary_type) && (ply_type_size[type] > 1))
       swap_bytes((char *)ptr, ply_type_size[type]);
@@ -2824,3 +2835,4 @@ Entry:
   }
 }
 
+#pragma clang diagnostic pop

@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include <GLFW/glfw3.h>
 #include "imgui3D.h"
 #include "cameraManipulator.h"
@@ -45,7 +61,7 @@ namespace ospray {
       cam.modified = true;
     }
 
-    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
+    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort position
       forward/backward on right mouse button */
     void InspectCenter::dragRight(ImGui3DWidget *widget,
                                   const vec2i &to, const vec2i &from)
@@ -93,6 +109,12 @@ namespace ospray {
       ImGui3DWidget::ViewPort &cam = widget->viewPort;
       float du = (to.x - from.x) * widget->rotateSpeed;
       float dv = (to.y - from.y) * widget->rotateSpeed;
+
+      if (widget->upAnchored) {
+        const float theta = std::acos(dot(cam.up, normalize(cam.from-cam.at)));
+        // prevent instabilities at the poles by enforcing a minimum angle to up
+        dv = clamp(dv, theta-float(pi)+0.05f, theta-0.05f);
+      }
 
       const vec3f pivot = cam.at;
       AffineSpace3fa xfm

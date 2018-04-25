@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "render/pathtracer/bsdfs/Dielectric.ih"
+#include "render/pathtracer/bsdfs/RobustDielectric.ih"
 #include "texture/TextureParam.ih"
 
 struct Glass
@@ -29,7 +29,7 @@ struct Glass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Glass_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,
@@ -39,8 +39,8 @@ const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* unifo
 
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                      : self->mediumInside.ior*rcp(self->mediumOutside.ior);
-
-  varying BSDF* uniform bsdf = Dielectric_create(ctx, dg, eta);
+                                                     
+  varying BSDF* uniform bsdf = RobustDielectric_create(ctx, dg, eta);
   return bsdf;
 }
 

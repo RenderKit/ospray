@@ -1,18 +1,18 @@
-// ************************************************************************** //
-// Copyright 2016 Ingo Wald                                                   //
-//                                                                            //
-// Licensed under the Apache License, Version 2.0 (the "License");            //
-// you may not use this file except in compliance with the License.           //
-// You may obtain a copy of the License at                                    //
-//                                                                            //
-// http://www.apache.org/licenses/LICENSE-2.0                                 //
-//                                                                            //
-// Unless required by applicable law or agreed to in writing, software        //
-// distributed under the License is distributed on an "AS IS" BASIS,          //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   //
-// See the License for the specific language governing permissions and        //
-// limitations under the License.                                             //
-// ************************************************************************** //
+// ======================================================================== //
+// Copyright 2016-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #pragma once
 
@@ -40,8 +40,9 @@ namespace maml {
   struct MessageHandler
   {
     virtual void incoming(const std::shared_ptr<Message> &message) = 0;
+    virtual ~MessageHandler() = default;
   };
-  
+
   /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
   OSPRAY_MAML_INTERFACE void registerHandlerFor(MPI_Comm comm,
@@ -61,14 +62,14 @@ namespace maml {
       receives any more messages (until the next 'start()' call) even
       if they are already in flight */
   OSPRAY_MAML_INTERFACE void stop();
-  
+
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this
       function has been called maml has full ownership of this message,
       and the user may no longer access it (because maml may delete it at
       any time). note this message will not be sent immediately if the
       mpi sending is stopped; it will, however, be placed in the
-      outbox to be sent at the next possible opportunity. 
+      outbox to be sent at the next possible opportunity.
 
       WARNING: calling flush does NOT guarantee that there's no more
       messages coming in to this node: it does mean that all the

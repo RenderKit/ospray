@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,8 +33,6 @@
 #include <random>
 #include "gensv/generateSciVis.h"
 
-#define RUN_LOCAL 0
-
 /* This app demonstrates how to write a distributed scivis style
  * renderer using the distributed MPI device. Note that because
  * OSPRay uses sort-last compositing it is up to the user to ensure
@@ -66,18 +64,18 @@ namespace ospRandSciVisTest {
 
   using namespace ospcommon;
 
-  int   numSpheresPerNode = 100;
-  float sphereRadius      = 0.01f;
-  vec2i fbSize            = vec2i(1024, 768);
-  int   numFrames         = 32;
-  bool  runDistributed    = true;
-  int   logLevel          = 0;
+  static int   numSpheresPerNode = 100;
+  static float sphereRadius      = 0.01f;
+  static vec2i fbSize            = vec2i(1024, 768);
+  static int   numFrames         = 32;
+  static bool  runDistributed    = true;
+  static int   logLevel          = 0;
 
-  vec3f up;
-  vec3f pos;
-  vec3f gaze;
-  float fovy = 60.f;
-  bool customView = false;
+  static vec3f up;
+  static vec3f pos;
+  static vec3f gaze;
+  static float fovy = 60.f;
+  static bool customView = false;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {

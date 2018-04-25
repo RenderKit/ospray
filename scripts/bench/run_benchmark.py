@@ -1,4 +1,19 @@
 #!/usr/bin/python
+## ======================================================================== ##
+## Copyright 2016-2018 Intel Corporation                                    ##
+##                                                                          ##
+## Licensed under the Apache License, Version 2.0 (the "License");          ##
+## you may not use this file except in compliance with the License.         ##
+## You may obtain a copy of the License at                                  ##
+##                                                                          ##
+##     http://www.apache.org/licenses/LICENSE-2.0                           ##
+##                                                                          ##
+## Unless required by applicable law or agreed to in writing, software      ##
+## distributed under the License is distributed on an "AS IS" BASIS,        ##
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
+## See the License for the specific language governing permissions and      ##
+## limitations under the License.                                           ##
+## ======================================================================== ##
 
 import argparse
 import os
@@ -27,11 +42,9 @@ TEST_PARAMETERS = {
         "-vu 0.000000 1.000000 0.000000 -vi 21.111689 12.973234 -443.164886", ""),
 
     "heptane1": ("test_data/csafe-heptane-302-volume.osp",
-        "-vp 286.899994 422.800018 -30.200012 -vu 0 1 0 -vi 151.000000 151.000000 151.000000",
-        "-tfc 0 0 0 0.00 -tfc 1 0 0 0.11 -tfc 1 1 0 0.22 -tfc 1 1 1 0.33 -tfs 0.25"),
+        "-vp 286.899994 422.800018 -30.200012 -vu 0 1 0 -vi 151.000000 151.000000 151.000000", ""),
     "heptane2": ("test_data/csafe-heptane-302-volume.osp",
-        "-vp -36.2362 86.8541 230.026 -vu 0 0 1 -vi 150.5 150.5 150.5",
-        "-tfc 0 0 0 0.00 -tfc 1 0 0 0.11 -tfc 1 1 0 0.22 -tfc 1 1 1 0.33 -tfs 0.25"),
+        "-vp -36.2362 86.8541 230.026 -vu 0 0 1 -vi 150.5 150.5 150.5", ""),
 
     "llnl_iso1": ("test_data/llnl-2048-iso.xml", "-vp 3371.659912 210.557999 -443.156006 "
         "-vu -0.000000 -0.000000 -1.000000 -vi 1439.359985 1005.450012 871.119019", ""),
@@ -39,33 +52,27 @@ TEST_PARAMETERS = {
         "-vu -0.000000 -0.000000 -1.000000 -vi 1439.358887 1005.449951 871.118164", ""),
 
     "magnetic1": ("test_data/magnetic-512-volume.osp",
-        "-vp 255.5 -1072.12 255.5 -vu 0 0 1 -vi 255.5 255.5 255.5",
-        "-tfc 0.1 0.1 0.1 0 -tfc 0 0 1 0.25 -tfc 1 0 0 1 -tfs 1"),
+        "-vp 255.5 -1072.12 255.5 -vu 0 0 1 -vi 255.5 255.5 255.5", ""),
     "magnetic2": ("test_data/magnetic-512-volume.osp",
-        "-vp 431.923 -99.5843 408.068 -vu 0 0 1 -vi 255.5 255.5 255.5",
-        "-tfc 0.1 0.1 0.1 0 -tfc 0 0 1 0.25 -tfc 1 0 0 1 -tfs 1"),
+        "-vp 431.923 -99.5843 408.068 -vu 0 0 1 -vi 255.5 255.5 255.5", ""),
     "magnetic3": ("test_data/magnetic-512-volume.osp",
-        "-vp 431.923 -99.5843 408.068 -vu 0 0 1 -vi 255.5 255.5 255.5",
-        "-tfc 0.1 0.1 0.1 0 -tfc 0 0 1 0.25 -tfc 1 0 0 1 -tfs 1 -is 2.0"),
+        "-vp 431.923 -99.5843 408.068 -vu 0 0 1 -vi 255.5 255.5 255.5", ""),
 
-    "sponza1": ("test_data/crytek-sponza/sponza.obj", "-vp 667.492554 186.974228 76.008301 "
-        "-vu 0.000000 1.000000 0.000000 -vi 84.557503 188.199417 -38.148270",
-        "--ambient 1 1 1 12"),
+    "sponza1": ("test_data/crytek-sponza/sponza.obj", "-vp 667.492554 186.974228 76.008301 ",
+        "-vu 0.000000 1.000000 0.000000 -vi 84.557503 188.199417 -38.148270"),
 
-    "san_miguel1": ("test_data/san-miguel/sanMiguel.obj", "-vp -2.198506 3.497189 23.826025 "
-        "-vu 0.000000 1.000000 0.000000 -vi -2.241950 2.781175 21.689358",
-        "--ambient 1 1 1 12"),
+    "san_miguel1": ("test_data/san-miguel/sanMiguel.obj", "-vp -2.198506 3.497189 23.826025 ",
+        "-vu 0.000000 1.000000 0.000000 -vi -2.241950 2.781175 21.689358"),
 
-    "sibenik1": ("test_data/sibenik/sibenik.obj", "-vp -17.734447 -13.788272 3.443677 "
-        "-vu 0.000000 1.000000 0.000000 -vi -2.789550 -10.993323 0.331822",
-        "--ambient 1 1 1 12" ),
+    "sibenik1": ("test_data/sibenik/sibenik.obj", "-vp -17.734447 -13.788272 3.443677 ",
+        "-vu 0.000000 1.000000 0.000000 -vi -2.789550 -10.993323 0.331822"),
 }
 
 # Takes a string "xxx" and prints "=== xxx ==="
 def print_headline(line):
     print "=== {} ===".format(line.strip())
 
-# Unless an optimization to the algorithm is made, the score achieved in benchmark should be 
+# Unless an optimization to the algorithm is made, the score achieved in benchmark should be
 # consistent across builds. This funciton compares results of current test with recorded ones.
 def check_score_correctness(stats, baseline_score, test_name):
     if test_name not in baseline_score:
@@ -139,11 +146,11 @@ def run_single_test(test_name, exe, img_dir, use_scivis):
     filename, camera, params = TEST_PARAMETERS[test_name]
     results = []
 
-    command_sv = "{} {} {} -bf 100 -wf 50 -r sv --variance -spp 1 --ao-distance 1e8f --sun-int 0" \
-        " --ao-samples 1 --noshadows --bg-color 1 1 1 -i {}/test_{}_scivis {}" \
+    command_sv = "{} {} {} -bf 100 -wf 50 -r sv" \
+        " -i {}/test_{}_scivis {}" \
         .format(exe, filename, camera, img_dir, test_name, params)
 
-    command_pt = "{} {} {} -bf 100 -wf 50 -r pt --variance --max-depth 1 --sun-int" \
+    command_pt = "{} {} {} -bf 100 -wf 50 -r pt" \
         " -i {}/test_{}_pt {}".format(exe,filename, camera, img_dir, test_name, params)
 
     command = command_sv if use_scivis else command_pt
@@ -241,7 +248,7 @@ parser.add_argument("--height", help="height of the image, default {}".format(DE
                     type=int)
 parser.add_argument("--tests",
                     help="takes comma-separated list of tests to run; if not specified, all tests "
-                    "are ran")
+                    "are run")
 parser.add_argument("--tests-list", help="print list of all tests", action="store_true")
 parser.add_argument("--output", help="output file name")
 parser.add_argument("--baseline",

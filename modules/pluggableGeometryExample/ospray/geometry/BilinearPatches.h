@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,11 +22,11 @@
   per patch. */
 
 // ospcomon: vec3f, box3f, etcpp - generic helper stuff
-#include <ospcommon/vec.h>
-#include <ospcommon/box.h>
+#include "ospcommon/vec.h"
+#include "ospcommon/box.h"
 // ospray: everything that's related to the ospray ray tracing core
-#include <ospray/geometry/Geometry.h>
-#include <ospray/common/Model.h>
+#include "ospray/geometry/Geometry.h"
+#include "ospray/common/Model.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
@@ -40,7 +40,7 @@ namespace ospray {
   namespace blp {
     // import ospcommon component - vec3f etc
     using namespace ospcommon;
-    
+
     /*! a geometry type that implements (a set of) bi-linear
       patches. This implements a new ospray geometry, and as such has
       to
@@ -55,23 +55,24 @@ namespace ospray {
       all that matters is under which name it is registered in the cpp
       file (see comments on OSPRAY_REGISTER_GEOMETRY)
     */
-    struct BilinearPatches : public ospray::Geometry {
-
+    struct BilinearPatches : public ospray::Geometry
+    {
       /*! data layout of a single patch. note we do not actually use
           this class anywhere on the c++ side of this example, it is
           only for illustrative purposes. The input data should come
           as a data array of N such patches (we compute N
           automatically based on the size of this array) */
-      struct Patch {
+      struct Patch
+      {
         vec3f controlPoint[2][2];
       };
-      
+
       /*! constructor - will create the 'ispc equivalent' */
       BilinearPatches();
 
       /*! destructor - supposed to clean up all alloced memory */
-      virtual ~BilinearPatches();
-      
+      virtual ~BilinearPatches() override;
+
       /*! the commit() message that gets called upon the app calling
           "ospCommit(<thisGeometry>)" */
       virtual void commit() override;
@@ -87,7 +88,7 @@ namespace ospray {
           a array of vec3fs. */
       Ref<Data> patchesData;
     };
-    
+
   } // ::ospray::bilinearPatch
 } // ::ospray
- 
+

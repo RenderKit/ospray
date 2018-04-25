@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,7 +33,6 @@ struct Cylinders {
   Geometry super; //!< inherited geometry fields
 
   uint8 *data;
-  Material **materialList;
 
   float radius;
   int   materialID;
@@ -77,8 +76,13 @@ void Cylinders_intersect(Cylinders *uniform self,
   }
   uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
   uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
-  const vec3f A = v0 - ray.org;
-  const vec3f B = v1 - ray.org;
+
+  const vec3f center = 0.5f*(v0 + v1);
+  const float approxDist = dot(center - ray.org, ray.dir);
+  const vec3f closeOrg = ray.org + approxDist * ray.dir;
+
+  const vec3f A = v0 - closeOrg;
+  const vec3f B = v1 - closeOrg;
 
   const vec3f V = ray.dir;
   const vec3f AB = B - A;
@@ -92,8 +96,8 @@ void Cylinders_intersect(Cylinders *uniform self,
 
   // clip to near and far cap of cylinder
   const float rVAB = rcp(dot(V,AB));
-  const float tA = dot(AB,A) * rVAB;
-  const float tB = dot(AB,B) * rVAB;
+  const float tA = dot(AB,A) * rVAB + approxDist;
+  const float tB = dot(AB,B) * rVAB + approxDist;
   const float tAB0 = max(ray.t0,min(tA,tB));
   const float tAB1 = min(ray.t, max(tA,tB));
 
@@ -105,8 +109,8 @@ void Cylinders_intersect(Cylinders *uniform self,
   
   const float srad = sqrt(radical);
 
-  const float t_in = (- b - srad) *rcpf(2.f*a);
-  const float t_out= (- b + srad) *rcpf(2.f*a);
+  const float t_in = (- b - srad) *rcpf(2.f*a) + approxDist;
+  const float t_out= (- b + srad) *rcpf(2.f*a) + approxDist;
 
   bool hit = false;
 
@@ -123,7 +127,7 @@ void Cylinders_intersect(Cylinders *uniform self,
     ray.geomID = self->super.geomID;
     // cannot easily be moved to postIntersect
     // we need hit in object-space, in postIntersect it is in world-space
-    const vec3f P = ray.t*ray.dir - A;
+    const vec3f P = ray.org + ray.t*ray.dir - v0;
     const vec3f V = cross(P,AB);
     ray.Ng = cross(AB,V);
     ray.u = (ray.t-tA)*rcp(tB-tA);
@@ -161,9 +165,20 @@ static void Cylinders_postIntersect(Geometry *uniform _self,
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
     uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(cylinderPtr+self->offset_materialID));
-    if (self->materialList) {
-      dg.material = self->materialList[dg.materialID];
-    }
+  }
+}
+
+int32 Cylinders_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  const Cylinders *const uniform self = (const Cylinders *uniform)_self;
+  if (self->offset_materialID >= 0) {
+    uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*primID;
+    return *((uniform uint32 *varying)(cylinderPtr+self->offset_materialID));
+  } else {
+    return -1;
   }
 }
 
@@ -200,8 +215,10 @@ SampleAreaRes Cylinders_sampleArea(
 
 void Cylinders_getAreas(
     const Geometry *const uniform _self
+    , const int32 *const uniform primIDs
+    , const uniform int32 numPrims
     , const uniform affine3f &xfm
-    , float *const uniform area
+    , float *const uniform areas
     )
 {
   Cylinders *uniform self = (Cylinders *uniform)_self;
@@ -219,16 +236,16 @@ void Cylinders_getAreas(
   const uniform float scaling = reduce_add(scaling3)/3.f;
 
   uniform float radius = self->radius;
-  uint8 *uniform cylinderPtr = self->data;
   const uniform int64 stride = self->bytesPerCylinder;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-  for(uniform int32 i = 0; i < self->super.primitives; i++, cylinderPtr += stride) {
+  for (uniform int32 i = 0; i < numPrims; i++) {
+    uint8 *uniform cylinderPtr = self->data + primIDs[i] * stride;
     if (self->offset_radius >= 0)
       radius = *((float *uniform)(cylinderPtr + self->offset_radius));
     const uniform float circ = two_pi * radius * scaling;
     uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
     uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
-    area[i] = circ * length(v0 - v1) * scaling;
+    areas[i] = circ * length(v0 - v1) * scaling;
   }
 }
 
@@ -268,10 +285,11 @@ export void CylindersGeometry_set(void *uniform _self
   
   self->super.model = model;
   self->super.geomID = geomID;
-  self->super.primitives = numCylinders;
+  self->super.numPrimitives = numCylinders;
+  self->super.getMaterialID = Cylinders_getMaterialID;
   self->super.getAreas = Cylinders_getAreas;
   self->super.sampleArea = Cylinders_sampleArea;
-  self->materialList = (Material **)materialList;
+  self->super.materialList = (Material **)materialList;
   self->texcoord = (CylinderTexCoord *uniform)texcoord;
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;

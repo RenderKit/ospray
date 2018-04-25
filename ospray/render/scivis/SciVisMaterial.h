@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,12 +25,12 @@ namespace ospray {
   namespace scivis {
 
     using Color = vec3f;
-    
+
     /*! implements the Material used by the \ref ospray_render_scivis */
     struct SciVisMaterial : public Material
     {
       SciVisMaterial();
-      virtual ~SciVisMaterial() = default;
+      virtual ~SciVisMaterial() override = default;
 
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */

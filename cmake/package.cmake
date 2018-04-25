@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -125,7 +125,7 @@ IF (WIN32) # Windows specific settings
     SET(CPACK_WIX_PROPERTY_ARPURLINFOABOUT http://www.ospray.org/)
     SET(CPACK_PACKAGE_NAME "OSPRay v${OSPRAY_VERSION}")
     SET(CPACK_COMPONENTS_ALL lib devel apps mpi redist)
-    SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION}")
+    SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION_MAJOR}")
     MATH(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")
     SET(CPACK_WIX_PRODUCT_GUID "9D64D525-2603-4E8C-9108-845A146${OSPRAY_VERSION_NUMBER}")
     SET(CPACK_WIX_UPGRADE_GUID "9D64D525-2603-4E8C-9108-845A146${OSPRAY_VERSION_MAJOR}0000") # upgrade as long as major version is the same
@@ -184,7 +184,11 @@ ELSE() # Linux specific settings
     SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 
     SET(CPACK_RPM_CHANGELOG_FILE ${CMAKE_BINARY_DIR}/rpm_changelog.txt) # ChangeLog of the RPM
-    STRING(TIMESTAMP CHANGELOG_DATE "%a %b %d %Y")
+    IF (CMAKE_VERSION VERSION_LESS "3.7.0")
+      EXECUTE_PROCESS(COMMAND date "+%a %b %d %Y" OUTPUT_VARIABLE CHANGELOG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
+    ELSE()
+      STRING(TIMESTAMP CHANGELOG_DATE "%a %b %d %Y")
+    ENDIF()
     SET(RPM_CHANGELOG "* ${CHANGELOG_DATE} Johannes Günther <johannes.guenther@intel.com> - ${OSPRAY_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}\n- First package")
     FILE(WRITE ${CPACK_RPM_CHANGELOG_FILE} ${RPM_CHANGELOG})
 

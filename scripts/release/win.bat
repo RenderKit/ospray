@@ -1,6 +1,6 @@
 @echo off
 rem ======================================================================== rem
-rem Copyright 2015-2017 Intel Corporation                                    rem
+rem Copyright 2015-2018 Intel Corporation                                    rem
 rem                                                                          rem
 rem Licensed under the Apache License, Version 2.0 (the "License");          rem
 rem you may not use this file except in compliance with the License.         rem
@@ -25,10 +25,11 @@ python -c "from urllib import urlretrieve; urlretrieve('http://sdvis.org/ospray/
 
 rem set release settings
 cmake -L ^
--G "Visual Studio 12 2013 Win64" ^
--T "Intel C++ Compiler 17.0" ^
+-G "Visual Studio 14 2015 Win64" ^
+-T "Intel C++ Compiler 18.0" ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_MODULE_MPI=ON ^
+-D OSPRAY_MODULE_MPI_APPS=OFF ^
 -D OSPRAY_SG_CHOMBO=OFF ^
 -D OSPRAY_SG_OPENIMAGEIO=OFF ^
 -D OSPRAY_SG_VTK=OFF ^

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -49,11 +49,9 @@ IF (OSPRAY_MODULE_MPI)
 
   LINK
 
-    ospray
+    ospray_module_ispc
     ospray_mpi_common
-    ospray_common
     ospray_mpi_maml
-    ${MPI_CXX_LIBRARIES}
   )
 
   ##############################################################
@@ -63,7 +61,7 @@ IF (OSPRAY_MODULE_MPI)
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
     mpi_offload_worker_main.cpp
   LINK
-    ospray
+    ospray_module_ispc
   )
 
   ##############################################################

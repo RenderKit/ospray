@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,16 +16,8 @@
 
 #pragma once
 
-// ospray
-#include "ospray/common/OSPCommon.h"
 // ospray::sg
-#include "sg/common/TimeStamp.h"
-#include "sg/common/Serialization.h"
-#include "sg/common/RuntimeError.h"
-// stl
-#include <map>
-// xml
-#include "common/xml/XML.h"
+#include "Node.h"
 
 namespace ospray {
   namespace sg {
@@ -35,15 +27,18 @@ namespace ospray {
     struct OSPSG_INTERFACE DataBuffer : public Node
     {
       DataBuffer(OSPDataType type)
-        : type(type), data(nullptr)
+        : type(type)
       {}
 
-      virtual ~DataBuffer() = default;
+      virtual ~DataBuffer() override
+      {
+        if(data) ospRelease(data);
+      }
 
       virtual std::string toString() const override
       { return "DataBuffer<abstract>"; }
 
-      virtual void postCommit(RenderContext &ctx) override
+      virtual void postCommit(RenderContext &) override
       {
         if (hasParent()) {
           if (parent().value().is<OSPObject>())
@@ -52,7 +47,7 @@ namespace ospray {
       }
 
       template <typename T>
-      T get(index_t idx) const { return ((T*)base())[idx]; }
+      T get(size_t idx) const { return ((T*)base())[idx]; }
 
       virtual void*  base()  const = 0;
       virtual size_t size()  const = 0;
@@ -82,7 +77,13 @@ namespace ospray {
       size_t numBytes() const { return size() * bytesPerElement(); }
 
       OSPDataType type;
-      OSPData     data;
+      OSPData     data {nullptr};
+
+    protected:
+
+      // Helper functions //
+
+      std::string arrayTypeAsString() const;
     };
 
     // -------------------------------------------------------
@@ -94,10 +95,10 @@ namespace ospray {
       DataArrayT(T *base, size_t size, bool mine = true)
         : DataBuffer((OSPDataType)TID), numElements(size),
           mine(mine), base_ptr(base) {}
-      ~DataArrayT() { if (mine && base_ptr) delete base_ptr; }
+      ~DataArrayT() override { if (mine && base_ptr) delete base_ptr; }
 
       std::string toString() const override
-      { return "DataArray<" + stringForType((OSPDataType)TID) + ">"; }
+      { return "DataArray<" + arrayTypeAsString() + ">"; }
 
       void   *base() const override { return (void*)base_ptr; }
       size_t  size() const override { return numElements; }
@@ -138,7 +139,7 @@ namespace ospray {
       DataVectorT() : DataBuffer((OSPDataType)TID) {}
 
       std::string toString() const override
-      { return "DataVector<" + stringForType((OSPDataType)TID) + ">"; }
+      { return "DataVector<" + arrayTypeAsString() + ">"; }
 
       void   *base() const override { return (void*)v.data(); }
       size_t  size() const override { return v.size(); }
@@ -168,6 +169,7 @@ namespace ospray {
     using DataVector4i  = DataVectorT<vec4i, OSP_INT4>;
     using DataVectorOSP = DataVectorT<OSPObject, OSP_OBJECT>;
     using DataVectorRAW = DataVectorT<byte_t, OSP_RAW>;
+    using DataVectorAffine3f = DataVectorT<ospcommon::affine3f, OSP_RAW>;
 
     template<typename T>
     std::shared_ptr<T> make_shared_aligned(void *data, size_t num)

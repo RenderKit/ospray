@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -72,10 +72,7 @@ namespace ospray {
       const size_t numRegions = distribModel->myRegions.size()
         + distribModel->othersRegions.size();
 
-      auto *perFrameData = beginFrame(dfb);
-      // This renderer doesn't use per frame data, since we sneak in some tile
-      // info in this pointer.
-      assert(!perFrameData);
+      beginFrame(dfb);
 
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;
@@ -117,7 +114,7 @@ namespace ospray {
           std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
           std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
           std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
-          std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, 1.0);
+          std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, bgColor.w);
           std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
           fb->setTile(tile);
         }

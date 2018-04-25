@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -58,6 +58,99 @@ void DistributedRaycastRenderer_testRegions(uniform DistributedRaycastRenderer *
   }
 }
 
+// TODO: The main scivis renderer does this in a really strange way
+Volume* DRR_intersectVolumes(uniform DistributedRaycastRenderer *uniform self,
+                             const varying ScreenSample &sample,
+                             varying Ray &ray,
+                             const float rayOffset)
+{
+  Volume *volume = NULL;
+  Ray volumeRay = sample.ray;
+  vec2f interval = make_vec2f(volumeRay.t0, volumeRay.t);
+
+  for (uniform int32 i = 0; i < self->super.model->volumeCount; ++i) {
+    Volume *uniform v = self->super.model->volumes[i];
+    float t0, t1;
+    intersectBox(volumeRay, v->boundingBox, t0, t1);
+
+    // Clip against volume clipping box (if specified).
+    if (ne(v->volumeClippingBox.lower,
+           v->volumeClippingBox.upper)) {
+      float tClip0, tClip1;
+      intersectBox(ray, v->volumeClippingBox, tClip0, tClip1);
+
+      t0 = max(t0, tClip0);
+      t1 = min(t1, tClip1);
+    }
+
+    if (t0 < t1 && t0 < volumeRay.t) {
+      interval.x = max(t0, sample.ray.t0);
+      interval.y = min(t1, sample.ray.t);
+      volumeRay.t = t0;
+      volume = v;
+    }
+  }
+  if (volume) {
+    volumeRay.t0 = interval.x;
+    volumeRay.t = interval.y;
+
+    // Sample offset placement correction, like in the data-parallel
+    // raycast renderer. We must offset and step as if we're sampling a continuous
+    // volume on a single node.
+    float dt = volume->samplingStep * rcpf(volume->samplingRate);
+    float t0 = volumeRay.t0;
+    int i0 = (int)(volumeRay.t0 / dt);
+    volumeRay.t0 = (i0 + rayOffset)*dt;
+    if (volumeRay.t0 < t0) {
+      volumeRay.t0 += dt;
+    }
+    volumeRay.t = min(volumeRay.t, sample.ray.t);
+
+    // Update the user provided ray
+    ray = volumeRay;
+  }
+  return volume;
+}
+
+vec4f DistributedRaycastRenderer_integrateVolumes(uniform DistributedRaycastRenderer *uniform self,
+                                                  const varying ScreenSample &sample,
+                                                  const float rayOffset)
+{
+  vec4f volumeColor = make_vec4f(0.0);
+  // See if we hit the volume bounds
+  Ray ray = sample.ray;
+  Volume *volume = DRR_intersectVolumes(self, sample, ray, rayOffset);
+  if (volume) {
+    // Now raymarch the volume
+    while (ray.t0 < ray.t && volumeColor.w < 1.0) {
+      const vec3f coordinates = ray.org + ray.t0 * ray.dir;
+      vec4f color = make_vec4f(0.0);
+
+      foreach_unique (v in volume) {
+        const float sample = v->sample(v, coordinates);
+
+        TransferFunction *uniform tfcn = v->transferFunction;
+        // Look up the color associated with the volume sample.
+        const vec3f sampleColor = tfcn->getColorForValue(tfcn, sample);
+        const float opacity = tfcn->getOpacityForValue(tfcn, sample);
+
+        // Set the color contribution for this sample only (do not accumulate).
+        color = clamp(opacity / v->samplingRate)
+          * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
+
+        // Advance the ray
+        v->stepRay(v, ray, volume->samplingRate);
+      }
+      volumeColor = volumeColor + (1.f - volumeColor.w) * color;
+    }
+    volumeColor.w = clamp(volumeColor.w);
+
+    ray.t = sample.ray.t;
+    volume = DRR_intersectVolumes(self, sample, ray, rayOffset);
+  }
+  return volumeColor;
+}
+
 void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
                                              void *uniform perFrameData,
                                              varying ScreenSample &sample)
@@ -66,7 +159,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     (uniform DistributedRaycastRenderer *uniform)_self;
 
   uniform RegionInfo *uniform regionInfo = (uniform RegionInfo *uniform)perFrameData;
-  if (regionInfo && regionInfo->currentRegion == 0) {
+  if (self->myRegions && regionInfo && regionInfo->currentRegion == 0) {
     DistributedRaycastRenderer_testRegions(self, regionInfo, sample);
   }
 
@@ -86,7 +179,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   }
 
   traceRay(self->super.model, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
 
   if (sample.ray.geomID < 0) {
     // The owner sends the background color, so we composite with a transparent
@@ -114,51 +207,14 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       sample.rgb = sample.rgb + matColor * dot(lightDir, dgNormal)
                 + specColor * pow(dot(dgNormal, normalize(viewDir + lightDir)), 20);
     }
+    // TODO: Support transparent geometries
     sample.alpha = 1.f;
   }
 
   vec4f volumeColor = make_vec4f(0.f);
   // TODO: Support for more than one volume (put them in the Embree BVH?)
   if (self->super.model->volumeCount > 0) {
-    // See if we hit the volume bounds
-    Ray ray = sample.ray;
-    float t0, t1;
-    Volume *uniform volume = self->super.model->volumes[0];
-    intersectBox(ray, volume->boundingBox, t0, t1);
-    t1 = min(t1, sample.ray.t);
-    if (t0 < t1 && t0 >= ray.t0 && t0 <= ray.t) {
-      // Sample offset placement correction, like in the data-parallel
-      // raycast renderer. We must offset and step as if we're sampling a continuous
-      // volume on a single node.
-      float dt = volume->samplingStep * rcpf(volume->samplingRate);
-      int i0 = (int)(t0 / dt);
-      ray.t0 = (i0 + rayOffset)*dt;
-      if (ray.t0 < t0) {
-        ray.t0 += dt;
-      }
-      ray.t = min(t1, sample.ray.t);
-
-      // Now raymarch the volume
-      while (ray.t0 < ray.t && volumeColor.w < 1.0) {
-        const vec3f coordinates = ray.org + ray.t0 * ray.dir;
-        const float sample = volume->sample(volume, coordinates);
-
-        TransferFunction *uniform tfcn = volume->transferFunction;
-        // Look up the color associated with the volume sample.
-        const vec3f sampleColor = tfcn->getColorForValue(tfcn, sample);
-        const float opacity = tfcn->getOpacityForValue(tfcn, sample);
-
-        // Set the color contribution for this sample only (do not accumulate).
-        const vec4f color = clamp(opacity / volume->samplingRate)
-          * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
-
-        volumeColor = volumeColor + (1.f - volumeColor.w) * color;
-
-        // Advance the ray
-        volume->stepRay(volume, ray, volume->samplingRate);
-      }
-      volumeColor.w = clamp(volumeColor.w);
-    }
+    volumeColor = DistributedRaycastRenderer_integrateVolumes(self, sample, rayOffset);
   }
   // Composite the geometry
   sample.rgb = make_vec3f(volumeColor.x, volumeColor.y, volumeColor.z)
@@ -175,7 +231,9 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
   self->myRegions = NULL;
+  self->numMyRegions = 0;
   self->othersRegions = NULL;
+  self->numOthersRegions = 0;
 
   return self;
 }

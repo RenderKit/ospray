@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,9 +15,16 @@
 // ======================================================================== //
 
 #include "Data.h"
+// core ospray
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {
+
+    std::string DataBuffer::arrayTypeAsString() const
+    {
+      return stringForType(type);
+    }
 
     OSP_REGISTER_SG_NODE(DataVector1uc);
     OSP_REGISTER_SG_NODE(DataVector1f);
@@ -31,6 +38,7 @@ namespace ospray {
     OSP_REGISTER_SG_NODE(DataVector4i);
     OSP_REGISTER_SG_NODE(DataVectorOSP);
     OSP_REGISTER_SG_NODE(DataVectorRAW);
+    OSP_REGISTER_SG_NODE(DataVectorAffine3f);
 
   } // ::ospray::sg
 } // ::ospray

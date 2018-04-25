@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,6 +17,7 @@
 #include "CellRef.ih"
 #include "FindStack.ih"
 #include "../amr/AMR.ih"
+
 
   /* packet-based variant of findCell kernel */
 extern CellRef findCell(const AMR *uniform self,
@@ -99,7 +100,7 @@ extern CellRef findLeafCell(const AMR *uniform self,
         CellRef ret;
         const uint32 idx = (int)(f_bc.x + brick->f_dims.x*(f_bc.y+brick->f_dims.y*(f_bc.z)));
         ret.pos = brick->bounds.lower + f_bc*brick->cellWidth;
-        ret.value = brick->value[idx];
+        ret.value = self->getVoxel((void*)brick->value, idx);
         ret.width = brick->cellWidth;
         return ret;
       } else {

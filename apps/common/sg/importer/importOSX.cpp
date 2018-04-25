@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,7 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow-uncaptured-local"
 
 // sg
 #include "SceneGraph.h"
@@ -126,35 +127,35 @@ namespace ospray {
       {
         std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fn);
         assert(doc);
-        if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay")
+        if (doc->child.size() != 1 || doc->child[0].name != "OSPRay")
           throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");
-        const xml::Node &root_element = *doc->child[0];
-        xml::for_each_child_of(root_element,[&](const xml::Node &node){
+        const xml::Node &root_element = doc->child[0];
+        for (const auto &node : root_element.child) {
           if (node.name == "Model") {
             const xml::Node &model_node = node;
-            xml::for_each_child_of(model_node, [&](const xml::Node &node){
+            for (const auto &node : model_node.child) {
               if (node.name == "StreamLines") {
                 const xml::Node &sl_node = node;
-                xml::for_each_child_of(sl_node, [&](const xml::Node &node){
+                for (const auto &node : sl_node.child) {
                   if (node.name == "vertex")
                     osxParseVec3fas(streamLines->vertex, node.content);
                   else if (node.name == "index")
                     osxParseInts(streamLines->index, node.content);
-                });
+                }
               } else if (node.name == "TriangleMesh") {
                 const xml::Node &tris_node = node;
-                xml::for_each_child_of(tris_node, [&](const xml::Node &node){
+                for (const auto &node : tris_node.child) {
                   if (node.name == "vertex")
                     osxParseVec3fas(triangles->vertex, node.content);
                   else if (node.name == "color")
                     osxParseColors(triangles->color, node.content);
                   else if (node.name == "index")
                     osxParseVec3is(triangles->index, node.content);
-                });
+                }
               }
-            });
+            }
           }
-        });
+        }
       }
     }
 
@@ -163,11 +164,14 @@ namespace ospray {
     {
       osx::StreamLines streamLines;
       osx::Triangles   triangles;
+      std::cout << "parsing OSX input file... \n";
       parseOSX(&streamLines, &triangles, fileName);
+      std::cout << "...finished parsing...\n";
 
       auto name = fileName.str();
 
       if (!streamLines.index.empty()) {
+        std::cout << "...adding found streamlines to the scene...\n";
         auto slNode = createNode(name + "_streamlines",
                                  "StreamLines")->nodeAs<StreamLines>();
 
@@ -203,6 +207,7 @@ namespace ospray {
       }
 
       if (!triangles.index.empty()) {
+        std::cout << "...adding found triangles to the scene...\n";
         auto slNode = createNode(name + "_triangles",
                                  "TriangleMesh")->nodeAs<StreamLines>();
         slNode->remove("material");
@@ -228,8 +233,11 @@ namespace ospray {
 
         world->add(instance);
       }
+
+      std::cout << "...finished import!\n";
     }
 
   } // ::ospray::sg
 } // ::ospray
 
+#pragma clang diagnostic pop

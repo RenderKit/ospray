@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -117,12 +117,12 @@ namespace ospray {
         throw std::runtime_error("could not open input file " + fileName);
 
       int rc = 0;
-      char atomType[1000];
+      char atomTypeName[1000];
       vec3f pos;
 
       while ((rc = fscanf(file, "%s %f %f %f\n",
-                          atomType, &pos.x, &pos.y, &pos.z)) == 4) {
-        Atom a = {pos, 0, getAtomType(atomType)};
+                          atomTypeName, &pos.x, &pos.y, &pos.z)) == 4) {
+        Atom a = {pos, 0, getAtomType(atomTypeName)};
         atom[a.type].push_back(a);
       }
 

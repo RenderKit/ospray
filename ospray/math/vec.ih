@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -610,6 +610,7 @@ __lift_unary_fct(rcp)
 __lift_unary_fct(exp)
 __lift_unary_fct(frac)
 __lift_unary_fct(sqr)
+__lift_unary_fct(sqrt)
 
 #undef __lift_unary_fct
 
@@ -714,7 +715,7 @@ __define_interpolate(vec4f)
 inline vec2i make_vec2i(const vec2f &a)
 { return make_vec2i((int)a.x, (int)a.y); }
 
-inline vec2i integer_cast(const vec2f &a)
+inline vec2i to_int(const vec2f &a)
 { return make_vec2i(a); }
 
 inline vec2f clamp(const vec2f &a, const uniform vec2f &b, const uniform vec2f &c)
@@ -755,11 +756,20 @@ inline vec3i operator-(const varying vec3i &a, const varying int32 b)
 inline uniform vec3i operator/(const uniform vec3i &a, const uniform int b)
 { return(make_vec3i(a.x / b, a.y / b, a.z / b)); }
 
-inline vec3f float_cast(const vec3i &a)
+inline vec3f to_float(const vec3i &a)
 { return make_vec3f(a); }
 
-inline vec3i integer_cast(const vec3f &a)
+inline vec3i to_int(const vec3f &a)
 { return make_vec3i(a); }
+
+inline vec3f to_float_unorm(const vec3ui &a)
+{ return make_vec3f(to_float_unorm(a.x), to_float_unorm(a.y), to_float_unorm(a.z)); }
+
+inline vec3f floatbits(const vec3ui &a)
+{ return make_vec3f(floatbits(a.x), floatbits(a.y), floatbits(a.z)); }
+
+inline vec3ui intbits(const vec3f &a)
+{ return make_vec3ui(intbits(a.x), intbits(a.y), intbits(a.z)); }
 
 inline vec3i operator>>(const vec3i &a, const int b)
 { return(make_vec3i(a.x >> b, a.y >> b, a.z >> b)); }
@@ -781,6 +791,9 @@ inline vec3f clamp(const vec3f &a, const uniform vec3f &b, const uniform vec3f &
 
 inline vec3f clamp(const vec3f &a, const vec3f &b, const vec3f &c)
 { return(make_vec3f(clamp(a.x, b.x, c.x), clamp(a.y, b.y, c.y), clamp(a.z, b.z, c.z))); }
+
+inline vec3f clamp(const vec3f &a)
+{ return(make_vec3f(clamp(a.x), clamp(a.y), clamp(a.z))); }
 
 inline vec3i clamp(const vec3i &a, const uniform vec3i &b, const uniform vec3i &c)
 { return(make_vec3i(clamp(a.x, b.x, c.x), clamp(a.y, b.y, c.y), clamp(a.z, b.z, c.z))); }
@@ -866,6 +879,7 @@ inline varying vec3f pow(const varying vec3f &a, const varying float b)
 
 inline varying vec4f pow(const varying vec4f &a, const varying float b)
 { return make_vec4f(pow(a.x, b), pow(a.y, b), pow(a.z, b), pow(a.w, b)); }
+
 
 inline uniform bool isnan(uniform vec3f v)
 { return isnan(v.x+v.y+v.z); }

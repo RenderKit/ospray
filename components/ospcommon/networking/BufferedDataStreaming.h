@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,7 +29,7 @@ namespace ospcommon {
     struct OSPCOMMON_INTERFACE BufferedReadStream : public ReadStream
     {
       BufferedReadStream(Fabric &fabric);
-      ~BufferedReadStream() = default;
+      ~BufferedReadStream() override = default;
 
       void read(void *mem, size_t size) override;
 
@@ -48,9 +48,9 @@ namespace ospcommon {
     struct OSPCOMMON_INTERFACE BufferedWriteStream : public WriteStream
     {
       BufferedWriteStream(Fabric &fabric, size_t maxBufferSize = 1LL*1024*1024);
-      ~BufferedWriteStream();
+      ~BufferedWriteStream() override;
 
-      void write(void *mem, size_t size) override;
+      void write(const void *mem, size_t size) override;
       void flush() override;
 
     private:

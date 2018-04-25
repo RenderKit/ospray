@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -92,6 +92,11 @@ namespace ospray {
       auto sgMaterials =
           createNode("materialList", "MaterialList")->nodeAs<MaterialList>();
 
+      if (mats.empty()) {
+        sgMaterials->push_back(createNode("default", "Material")->nodeAs<Material>());
+        return sgMaterials;
+      }
+
       for (auto &mat : mats) {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
         auto &matNode   = *matNodePtr;
@@ -100,20 +105,29 @@ namespace ospray {
         for (auto &param : mat.unknown_parameter) {
           if (param.first == "type") {
             matNode["type"] = param.second;
-            std::cout << "Creating material node of type " << param.second
-                      << std::endl;
-            addOBJparams = false;
+            if (param.second != "OBJMaterial" && param.second != "default")
+              addOBJparams = false;
           } else {
             std::string paramType;
             ospcommon::utility::Any paramValue;
-            parseParameterString(param.second, paramType, paramValue);
-            try {
-              matNode.createChildWithValue(param.first, paramType, paramValue);
-            } catch (const std::runtime_error &) {
-              // NOTE(jda) - silently move on if parsed node type doesn't exist
-              // maybe it's a texture, try it
+            if (param.first.find("Map") != std::string::npos)
+            {
               addTextureIfNeeded(matNode, param.first,
                                  param.second, containingPath);
+            }
+            else
+            {
+              parseParameterString(param.second, paramType, paramValue);
+              try {
+                matNode.createChildWithValue(param.first, paramType, paramValue);
+              } catch (const std::runtime_error &) {
+                // NOTE(jda) - silently move on if parsed node type doesn't exist
+                // maybe it's a texture, try it
+                std::cout << "attempting to load param as texture: "
+                          << param.first << " " << param.second << std::endl;
+                addTextureIfNeeded(matNode, param.first,
+                                   param.second, containingPath);
+              }
             }
           }
         }
@@ -152,16 +166,20 @@ namespace ospray {
       std::vector<tinyobj::material_t> materials;
 
       std::string err;
-      auto containingPath = fileName.path().str() + '/';
-      bool ret            = tinyobj::LoadObj(&attrib,
+      const std::string containingPath = fileName.path();
+
+      std::cout << "parsing OBJ input file... \n";
+      bool ret = tinyobj::LoadObj(&attrib,
                                   &shapes,
                                   &materials,
                                   &err,
                                   fileName.c_str(),
                                   containingPath.c_str());
 
+#if 0 // NOTE(jda) - enable if you want to see warnings from TinyOBJ
       if (!err.empty())
         std::cerr << "#ospsg: obj parsing warning(s)...\n" << err << std::endl;
+#endif
 
       if (!ret) {
         std::cerr << "#ospsg: FATAL error parsing obj file, no geometry added"
@@ -174,6 +192,13 @@ namespace ospray {
       std::string base_name = fileName.name() + '_';
       int shapeId           = 0;
 
+      std::cout << "...adding found triangle groups to the scene...\n";
+
+      size_t shapeCounter = 0;
+      size_t numShapes    = shapes.size();
+      size_t increment    = numShapes / size_t(10);
+      int    incrementer  = 0;
+
 #if !USE_INSTANCES
       auto objInstance = createNode("instance", "Instance");
       world->add(objInstance);
@@ -185,6 +210,9 @@ namespace ospray {
             PRINT(numVertsInFace);
           }
         }
+
+        if (shapeCounter++ > (increment * incrementer + 1))
+          std::cout << incrementer++ * 10 << "%\n";
 
         auto name = base_name + std::to_string(shapeId++) + '_' + shape.name;
         auto mesh = createNode(name, "TriangleMesh")->nodeAs<TriangleMesh>();
@@ -203,7 +231,7 @@ namespace ospray {
             createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
-        for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
+        for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
           auto idx0 = shape.mesh.indices[i + 0];
           auto idx1 = shape.mesh.indices[i + 1];
           auto idx2 = shape.mesh.indices[i + 2];
@@ -279,7 +307,13 @@ namespace ospray {
 #else
         (*objInstance)["model"].add(mesh);
 #endif
+
       }
+
+      std::cout << "...finished import!\n";
     }
+
+    OSPSG_REGISTER_IMPORT_FUNCTION(importOBJ, obj);
+
   }  // ::ospray::sg
 }  // ::ospray

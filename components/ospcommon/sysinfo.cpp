@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -61,8 +61,8 @@ namespace ospcommon
 
   std::string getCPUVendor()
   {
-    int cpuinfo[4]; 
-    __cpuid (cpuinfo, 0); 
+    int cpuinfo[4];
+    __cpuid (cpuinfo, 0);
     int name[4];
     name[0] = cpuinfo[1];
     name[1] = cpuinfo[3];
@@ -71,7 +71,7 @@ namespace ospcommon
     return (char*)name;
   }
 
-  CPUModel getCPUModel() 
+  CPUModel getCPUModel()
   {
     int out[4];
     __cpuid(out, 0);
@@ -106,8 +106,11 @@ namespace ospcommon
     case CPU_CORE_NEHALEM    : return "Nehalem";
     case CPU_CORE_SANDYBRIDGE: return "SandyBridge";
     case CPU_HASWELL         : return "Haswell";
-    default                  : return "Unknown CPU";
+    case CPU_KNL             : return "Knights Landing";
+    case CPU_UNKNOWN         : return "Unknown CPU";
     }
+
+    return "Unknown CPU";
   }
 
   /* constants to access destination registers of CPUID instruction */
@@ -149,18 +152,18 @@ namespace ospcommon
   static const int CPU_FEATURE_BIT_AVX512BW = 1 << 30;    // AVX512BW
   static const int CPU_FEATURE_BIT_AVX512VL = 1 << 31;    // AVX512VL (EVEX.128 and EVEX.256 AVX512 instructions)
   static const int CPU_FEATURE_BIT_AVX512IFMA = 1 << 21;  // AVX512IFMA
-  
+
   /* cpuid[eax=7,ecx=0].ecx */
   static const int CPU_FEATURE_BIT_AVX512VBMI = 1 << 1;   // AVX512VBMI
 
-  __noinline int64_t get_xcr0() 
+  __noinline int64_t get_xcr0()
   {
 #ifdef _WIN32
     int64_t xcr0 = 0; // int64_t is workaround for compiler bug under VS2013, Win32
-#if defined(__INTEL_COMPILER) 
+#if defined(__INTEL_COMPILER)
     xcr0 = _xgetbv(0);
 #elif (defined(_MSC_VER) && (_MSC_FULL_VER >= 160040219)) // min VS2010 SP1 compiler is required
-    xcr0 = _xgetbv(0); 
+    xcr0 = _xgetbv(0);
 #else
 #pragma message ("WARNING: AVX not supported by your compiler.")
     xcr0 = 0;
@@ -170,7 +173,7 @@ namespace ospcommon
 #else
 
     int xcr0 = 0;
-#if defined(__INTEL_COMPILER) 
+#if defined(__INTEL_COMPILER)
     __asm__ ("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx" );
 #elif ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)) && (!defined(__MACOSX__) || defined(__TARGET_AVX__) || defined(__TARGET_AVX2__))
     __asm__ ("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx" );
@@ -188,16 +191,16 @@ namespace ospcommon
   {
     /* cache CPU features access */
     static int cpu_features = 0;
-    if (cpu_features) 
+    if (cpu_features)
       return cpu_features;
 
     /* get number of CPUID leaves */
-    int cpuid_leaf0[4]; 
+    int cpuid_leaf0[4];
     __cpuid(cpuid_leaf0, 0x00000000);
-    unsigned nIds = cpuid_leaf0[EAX];  
+    unsigned nIds = cpuid_leaf0[EAX];
 
     /* get number of extended CPUID leaves */
-    int cpuid_leafe[4]; 
+    int cpuid_leafe[4];
     __cpuid(cpuid_leafe, 0x80000000);
     unsigned nExIds = cpuid_leafe[EAX];
 
@@ -206,7 +209,7 @@ namespace ospcommon
     int cpuid_leaf_7[4] = { 0,0,0,0 };
     int cpuid_leaf_e1[4] = { 0,0,0,0 };
     if (nIds >= 1) __cpuid (cpuid_leaf_1,0x00000001);
-#if _WIN32
+#ifdef _WIN32
 #if _MSC_VER && (_MSC_FULL_VER < 160040219)
 #else
     if (nIds >= 7) __cpuidex(cpuid_leaf_7,0x00000007,0);
@@ -226,7 +229,7 @@ namespace ospcommon
       ymm_enabled = xmm_enabled && ((xcr0 & 0x04) == 0x04); /* check if ymm state are enabled in XCR0 */
       zmm_enabled = ymm_enabled && ((xcr0 & 0xE0) == 0xE0); /* check if OPMASK state, upper 256-bit of ZMM0-ZMM15 and ZMM16-ZMM31 state are enabled in XCR0 */
     }
-    
+
     if (xmm_enabled && cpuid_leaf_1[EDX] & CPU_FEATURE_BIT_SSE   ) cpu_features |= CPU_FEATURE_SSE;
     if (xmm_enabled && cpuid_leaf_1[EDX] & CPU_FEATURE_BIT_SSE2  ) cpu_features |= CPU_FEATURE_SSE2;
     if (xmm_enabled && cpuid_leaf_1[ECX] & CPU_FEATURE_BIT_SSE3  ) cpu_features |= CPU_FEATURE_SSE3;
@@ -246,7 +249,7 @@ namespace ospcommon
     if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512F )  cpu_features |= CPU_FEATURE_AVX512F;
     if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512DQ) cpu_features |= CPU_FEATURE_AVX512DQ;
     if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512PF) cpu_features |= CPU_FEATURE_AVX512PF;
-    if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512ER) cpu_features |= CPU_FEATURE_AVX512ER; 
+    if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512ER) cpu_features |= CPU_FEATURE_AVX512ER;
     if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512CD) cpu_features |= CPU_FEATURE_AVX512CD;
     if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512BW) cpu_features |= CPU_FEATURE_AVX512BW;
     if (zmm_enabled && cpuid_leaf_7[EBX] & CPU_FEATURE_BIT_AVX512IFMA) cpu_features |= CPU_FEATURE_AVX512IFMA;
@@ -286,7 +289,7 @@ namespace ospcommon
     if (features & CPU_FEATURE_AVX512VBMI) str += "AVX512VBMI ";
     return str;
   }
-  
+
   std::string stringOfISA (int isa)
   {
     if (isa == SSE) return "SSE";
@@ -322,7 +325,7 @@ namespace ospcommon
     return std::string(filename);
   }
 
-  size_t getNumberOfLogicalThreads() 
+  size_t getNumberOfLogicalThreads()
   {
     static int nThreads = -1;
     if (nThreads != -1) return nThreads;
@@ -339,11 +342,11 @@ namespace ospcommon
     GetActiveProcessorCountFunc      pGetActiveProcessorCount      = (GetActiveProcessorCountFunc)     GetProcAddress(hlib, "GetActiveProcessorCount");
 
     if (pGetActiveProcessorGroupCount && pGetActiveProcessorCount &&
-       ((osvi.dwMajorVersion > 6) || ((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1)))) 
+       ((osvi.dwMajorVersion > 6) || ((osvi.dwMajorVersion == 6) && (osvi.dwMinorVersion >= 1))))
     {
       int groups = pGetActiveProcessorGroupCount();
       int totalProcessors = 0;
-      for (int i = 0; i < groups; i++) 
+      for (int i = 0; i < groups; i++)
         totalProcessors += pGetActiveProcessorCount(i);
       nThreads = totalProcessors;
     }
@@ -356,7 +359,7 @@ namespace ospcommon
     return nThreads;
   }
 
-  int getTerminalWidth() 
+  int getTerminalWidth()
   {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     if (handle == INVALID_HANDLE_VALUE) return 80;
@@ -385,7 +388,7 @@ namespace ospcommon
 
 namespace ospcommon
 {
-  std::string getExecutableFileName() 
+  std::string getExecutableFileName()
   {
     char pid[32]; sprintf(pid, "/proc/%d/exe", getpid());
     char buf[1024];
@@ -436,7 +439,7 @@ namespace ospcommon
     return nThreads;
   }
 
-  int getTerminalWidth() 
+  int getTerminalWidth()
   {
     struct winsize info;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &info) < 0) return 80;

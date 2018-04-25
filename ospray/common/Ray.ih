@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -163,4 +163,9 @@ inline void rayTransform(Ray &ray,
     ray.t  = reduce_min((xfmPoint(xfm,  t) - ray.org) * rcp_dir);
     // -- Ng
     ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
+}
+
+inline float getIntersectionError(const vec3f& P, float t)
+{
+  return max(t, reduce_max(abs(P))) * 0x1.fp-18;
 }

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,28 +24,31 @@
 #include "ospcommon/box.h"
 #include "ospcommon/AsyncLoop.h"
 #include "ospcommon/utility/CodeTimer.h"
+#include "ospcommon/utility/DoubleBufferedValue.h"
 #include "ospcommon/utility/TransactionalValue.h"
 
-#include "sg/common/Node.h"
+#include "sg/Renderer.h"
 
 // ospImGui util
 #include "ImguiUtilExport.h"
 
 namespace ospray {
 
-  enum class ExecState {STOPPED, RUNNING, INVALID};
+  using namespace ospcommon;
+
+  enum class ExecState {STOPPED, STARTED, RUNNING, INVALID};
 
   class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngine
   {
   public:
 
-    AsyncRenderEngine(std::shared_ptr<sg::Node> sgRenderer,
-                      std::shared_ptr<sg::Node> sgRendererDW);
+    AsyncRenderEngine(std::shared_ptr<sg::Renderer> sgRenderer,
+                      std::shared_ptr<sg::Renderer> sgRendererDW);
     ~AsyncRenderEngine();
 
     // Properties //
 
-    void setFbSize(const ospcommon::vec2i &size);
+    void setFbSize(const vec2i &size);
 
     // Method to say that an objects needs to be comitted before next frame //
 
@@ -78,31 +81,28 @@ namespace ospray {
 
     // Data //
 
-    std::unique_ptr<ospcommon::AsyncLoop> backgroundThread;
+    std::unique_ptr<AsyncLoop> backgroundThread;
 
     std::atomic<ExecState> state{ExecState::INVALID};
 
     int numOsprayThreads {-1};
 
-    std::shared_ptr<sg::Node> scenegraph;
-    std::shared_ptr<sg::Node> scenegraphDW;
+    std::shared_ptr<sg::Renderer> scenegraph;
+    std::shared_ptr<sg::Renderer> scenegraphDW;
 
-    ospcommon::utility::TransactionalValue<vec2i> fbSize;
-    ospcommon::utility::TransactionalValue<vec2f> pickPos;
-    ospcommon::utility::TransactionalValue<OSPPickResult> pickResult;
-
-    sg::TimeStamp lastRTime;
+    utility::TransactionalValue<vec2i> fbSize;
+    utility::TransactionalValue<vec2f> pickPos;
+    utility::TransactionalValue<OSPPickResult> pickResult;
 
     int nPixels {0};
 
-    int currentPB {0};
-    int mappedPB  {1};
-
     std::mutex fbMutex;
-    std::vector<uint32_t> pixelBuffer[2];
+    utility::DoubleBufferedValue<std::vector<uint32_t>> pixelBuffers;
 
     std::atomic<bool> newPixels {false};
 
-    ospcommon::utility::CodeTimer fps;
+    bool commitDeviceOnAsyncLoopThread {true};
+
+    utility::CodeTimer fps;
   };
 }// namespace ospray

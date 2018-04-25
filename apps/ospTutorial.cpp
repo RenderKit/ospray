@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,12 +27,12 @@
 #include <stdio.h>
 #include <errno.h>
 #ifdef _WIN32
+#  define NOMINMAX
 #  include <malloc.h>
 #else
 #  include <alloca.h>
 #endif
 
-#define NOMINMAX
 #include "ospray/ospray_cpp.h"
 
 // helper function to write the rendered image as PPM file
@@ -103,28 +103,30 @@ int main(int argc, const char **argv) {
   ospray::cpp::Data data(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions
   data.commit();
   mesh.set("vertex", data);
+  data.release(); // we are done using this handle
 
   data = ospray::cpp::Data(4, OSP_FLOAT4, color);
   data.commit();
   mesh.set("vertex.color", data);
+  data.release(); // we are done using this handle
 
   data = ospray::cpp::Data(2, OSP_INT3, index); // OSP_INT4 format is also supported for triangle indices
   data.commit();
   mesh.set("index", data);
+  data.release(); // we are done using this handle
 
   mesh.commit();
 
-
   ospray::cpp::Model world;
   world.addGeometry(mesh);
+  mesh.release(); // we are done using this handle
   world.commit();
-
 
   // create renderer
   ospray::cpp::Renderer renderer("scivis"); // choose Scientific Visualization renderer
 
   // create and setup light for Ambient Occlusion
-  ospray::cpp::Light light = renderer.newLight("ambient");
+  ospray::cpp::Light light("scivis", "ambient");
   light.commit();
   auto lightHandle = light.handle();
   ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);
@@ -148,7 +150,7 @@ int main(int argc, const char **argv) {
 
   // access framebuffer and write its content as PPM file
   uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
-  writePPM("firstFrame.ppm", imgSize, fb);
+  writePPM("firstFrameCpp.ppm", imgSize, fb);
   framebuffer.unmap(fb);
 
 
@@ -157,8 +159,16 @@ int main(int argc, const char **argv) {
     renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
-  writePPM("accumulatedFrame.ppm", imgSize, fb);
+  writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
   framebuffer.unmap(fb);
+
+  // final cleanups
+  renderer.release();
+  camera.release();
+  lights.release();
+  light.release();
+  framebuffer.release();
+  world.release();
 
   return 0;
 }

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,11 +16,19 @@
 
 #include "Geometry.ih"
 
-export void Geometry_setMaterial(void *uniform _geo, 
-                                 void *uniform _mat)
+export void Geometry_setMaterialList(void *uniform _geo, 
+                                     void *uniform _matList)
 {
   uniform Geometry *uniform geo = (uniform Geometry *uniform)_geo;
-  geo->material = (uniform Material *uniform)_mat;
+  geo->materialList = (uniform Material *uniform *)_matList;
+}
+
+int32 Geometry_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  return -1;
 }
 
 //! constructor for ispc-side Geometry object
@@ -29,15 +37,16 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  uniform Geometry_postIntersectFct postIntersect,
                                  uniform Model *uniform model,
                                  uniform int32  geomID,
-                                 uniform Material *uniform material
+                                 uniform Material *uniform *uniform materialList
                                  )
 {
   geometry->cppEquivalent = cppEquivalent;
-  geometry->primitives = 0;
-  geometry->model    = model;
-  geometry->material = material;
-  geometry->geomID   = geomID;
+  geometry->numPrimitives = 0;
+  geometry->model = model;
+  geometry->materialList = materialList;
+  geometry->geomID = geomID;
   geometry->postIntersect = postIntersect;
+  geometry->getMaterialID = Geometry_getMaterialID;
   geometry->sampleArea = NULL;
   geometry->getAreas = NULL;
 }

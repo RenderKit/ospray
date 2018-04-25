@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Selector.h"
+#include "Selector.h"
 
 namespace ospray {
   namespace sg {
@@ -40,7 +40,7 @@ namespace ospray {
              if (child.second->name() != "index" && child.second->name() != "bounds")
              {
                if (i++ == index)
-                 child.second->traverse(ctx, "render");
+                 child.second->finalize(ctx);
              }
            }
          }

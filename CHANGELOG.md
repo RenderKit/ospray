@@ -1,57 +1,127 @@
 Version History
 ---------------
 
+### Changes in v1.5.0:
+
+-   TetrahedralVolume now generalized to take both tet and hex data, now called
+    `UnstructuredVolume`
+-   New function for creating materials (`ospNewMaterial2`) which takes the
+    renderer type string, not a renderer instance (the old version is now
+    deprecated)
+-   New `tonemapper` PixelOp for tone mapping final frames
+-   Streamlines now support per-vertex radii and smooth interpolation
+-   `ospray_sg` headers are now installed alongside the SDK
+-   Core OSPRay ispc device now implemented as a module
+    -   Devices which implement the public API are no longer required to link
+        the dependencies to core OSPRay (e.g. Embree v2.x)
+    -   By default, `ospInit` will load the ispc module if a device was not
+        created via `--osp:mpi` or `--osp:device:[name]`
+-   MPI devices can now accept an existing world communicator instead of always
+    creating their own
+-   Added ability to control ISPC specific optimization flags via CMake options
+    -   See the various `ISPC_FLAGS_*` variables to control which flags get used
+-   Enhancements to sample applications
+    -   `ospray_sg` (and thus `ospExampleViewer`/`ospBenchmark`) can now be
+        extended with new scene data importers via modules or the SDK
+    -   Updated ospTutorial examples to properly call ospRelease()
+    -   New options in the ospExampleViewer GUI to showcase new features
+        -   SRGB frame buffers, tone mapping, etc.
+-   General bug fixes
+    -   Fixes to geometries with multiple emissive materials
+    -   Improvements to precision of ray-sphere intersections
+
+### Changes in v1.4.3:
+
+-   Several bug fixes
+    -   Fixed potential issue with static initialization order
+    -   Correct compiler flags for Debug config
+    -   Spheres `postIntersect` shading is now 64-bit safer
+
+### Changes in v1.4.2:
+
+-   Several cleanups and bug fixes
+    -   Fixed memory leak where the Embree BVH was never released when an
+        OSPModel was released
+    -   Fixed a crash when API logging was enabled in certain situations
+    -   Fixed a crash in MPI mode when creating lights without a renderer
+    -   Fixed an issue with camera lens samples not initilized when spp <= 0
+    -   Fixed an issue in ospExampleViewer when specifying multiple data files
+-   The C99 tutorial is now indicated as the default; the C++ wrappers do not
+    change the semantics of the API (memory management) so the C99 version
+    should be considered first when learning the API
+
+### Changes in v1.4.1:
+
+-   Several cleanups and bug fixes
+    -   Improved precision of ray intersection with streamlines,
+        spheres, and cylinder geometries
+    -   Fixed address overflow in framebuffer, in practice image size is
+        now limited only by available memory
+    -   Fixed several deadlocks and race conditions
+    -   Fix shadow computation in SciVis renderer, objects behind light
+        sources do not occlude anymore
+    -   No more image jittering with MPI rendering when no accumulation
+        buffer is used
+-   Improved path tracer materials
+    -   Also support RGB `eta`/`k` for Metal
+    -   Added Alloy material, a "metal" with textured color
+-   Minimum required Embree version is now v2.15
+
 ### Changes in v1.4.0:
 
--   New adaptive mesh refinement (AMR) and unstructured tetrahedral volume types
--   Dynamic load balancing is now implemented for the `mpi_offload` device
+-   New adaptive mesh refinement (AMR) and unstructured tetrahedral
+    volume types
+-   Dynamic load balancing is now implemented for the `mpi_offload`
+    device
 -   Many improvements and fixes to the available path tracer materials
-    -   Specular lobe of OBJMaterial uses Blinn-Phong for more
-        realistic highlights
+    -   Specular lobe of OBJMaterial uses Blinn-Phong for more realistic
+        highlights
     -   Metal accepts spectral samples of complex refraction index
     -   ThinGlass behaves consistent to Glass and can texture
         attenuation color
 -   Added Russian roulette termination to path tracer
 -   SciVis OBJMaterial accepts texture coordinate transformations
--   Applications can now access depth information in MPI distributed uses of
-    OSPRay (both `mpi_offload` and `mpi_distributed` devices)
--   Many robustness fixes for both the `mpi_offload` and `mpi_distributed`
-    devices through improvements to the `mpi_common` and `mpi_maml`
-    infrastructure libraries
--   Major sample app cleanups:
-    -   `ospray_sg` library is the new basis for building apps, which
-         is a scenegraph implementation
+-   Applications can now access depth information in MPI distributed
+    uses of OSPRay (both `mpi_offload` and `mpi_distributed` devices)
+-   Many robustness fixes for both the `mpi_offload` and
+    `mpi_distributed` devices through improvements to the `mpi_common`
+    and `mpi_maml` infrastructure libraries
+-   Major sample app cleanups
+    -   `ospray_sg` library is the new basis for building apps, which is
+        a scenegraph implementation
     -   Old (unused) libraries have been removed: miniSG, commandline,
         importer, loaders, and scripting
-    -   Some removed functionality (such as scripting) may be reintroduced in
-        the new infrastructure later, though most features have
-        remained and have been improved
-    -   Optional improved texture loading has been transitioned
-        from ImageMagick to OpenImageIO
+    -   Some removed functionality (such as scripting) may be
+        reintroduced in the new infrastructure later, though most
+        features have remained and have been improved
+    -   Optional improved texture loading has been transitioned from
+        ImageMagick to OpenImageIO
 -   Many cleanups, bug fixes, and improvements to `ospray_common` and
     other support libraries
--   This will be the last release in which we support MSVC12
-    (Visual Studio 2013). Future releases will require VS2015 or newer
+-   This will be the last release in which we support MSVC12 (Visual
+    Studio 2013). Future releases will require VS2015 or newer
 
 ### Changes in v1.3.1:
 
--   Improved robustness of OSPRay CMake find_package config
-    -   Fixed bugs related to CMake configuration when using
-        the OSPRay SDK from an install
+-   Improved robustness of OSPRay CMake `find_package` config
+    -   Fixed bugs related to CMake configuration when using the OSPRay
+        SDK from an install
 -   Fixed issue with Embree library when installing with
     `OSPRAY_INSTALL_DEPENDENCIES` enabled
 
 ### Changes in v1.3.0:
 
 -   New MPI distributed device to support MPI distributed applications
-    using OSPRay collectively for "in-situ" rendering (currently in "alpha")
+    using OSPRay collectively for "in-situ" rendering (currently in
+    "alpha")
     -   Enabled via new `mpi_distributed` device type
-    -   Currently only supports `raycast` renderer, other renderers will be
-        supported in the future
-    -   All API calls are expected to be exactly replicated (object instances
-        and parameters) except scene data (geometries and volumes)
-    -   The original MPI device is now called the `mpi_offload` device to
-        differentiate between the two implementations
+    -   Currently only supports `raycast` renderer, other renderers will
+        be supported in the future
+    -   All API calls are expected to be exactly replicated (object
+        instances and parameters) except scene data (geometries and
+        volumes)
+    -   The original MPI device is now called the `mpi_offload` device
+        to differentiate between the two implementations
 -   Support of Intel® AVX-512 for next generation Intel® Xeon® processor
     (codename Skylake), thus new minimum ISPC version is 1.9.1
 -   Thread affinity of OSPRay's tasking system can now be controlled via
@@ -65,9 +135,9 @@ Version History
     coordinates
 -   The GLUT- and Qt-based demo viewer applications have been replaced
     by an example viewer with minimal dependencies
-    -   Building the sample applications now requires GCC 4.9 (previously
-        4.8) for features used in the C++ standard library; OSPRay
-        itself can still be built with GCC 4.8
+    -   Building the sample applications now requires GCC 4.9
+        (previously 4.8) for features used in the C++ standard library;
+        OSPRay itself can still be built with GCC 4.8
     -   The new example viewer based on `ospray::sg` (called
         `ospExampleViewerSg`) is the single application we are
         consolidating to, `ospExampleViewer` will remain only as a
@@ -85,7 +155,7 @@ Version History
 
 ### Changes in v1.2.1:
 
--   Various bugfixes related to MPI distributed rendering, ISPC issues
+-   Various bug fixes related to MPI distributed rendering, ISPC issues
     on Windows, and other build related issues
 
 ### Changes in v1.2.0:
@@ -111,12 +181,12 @@ Version History
     -   New API functions for committing parameters on Devices
 -   Removed support for the first generation Intel® Xeon Phi™ coprocessor
     (codename Knights Corner)
--   Other minor improvements, updates, and bugfixes:
+-   Other minor improvements, updates, and bug fixes
     -   Updated Embree required version to v2.13.0 for added features
         and performance
     -   New API function `ospDeviceSetErrorMsgFunc()` to specify a
         callback for handling message outputs from OSPRay
-    -   Add ability to remove user set parameter values with new
+    -   Added ability to remove user set parameter values with new
         `ospRemoveParam()` API function
     -   The MPI device is now provided via a module, removing the need
         for having separately compiled versions of OSPRay with and
@@ -126,7 +196,7 @@ Version History
 
 ### Changes in v1.1.2:
 
--   Various bugfixes related to normalization, epsilons and debug
+-   Various bug fixes related to normalization, epsilons and debug
     messages
 
 ### Changes in v1.1.1:
@@ -222,7 +292,7 @@ Version History
 -   Enhanced error messages when `ospLoadModule()` fails
 -   Added `OSP_FB_RGBA32F` support in the `DistributedFrameBuffer`
 -   Updated Glass shader in the path tracer
--   Many miscellaneous cleanups, bugfixes, and improvements
+-   Many miscellaneous cleanups, bug fixes, and improvements
 
 ### Changes in v0.10.1:
 
@@ -266,7 +336,7 @@ Version History
     -   `ospray.h` header is now C99 compatible
 -   Removed loaders module, functionality remains inside of
     `ospVolumeViewer`
--   Many miscellaneous cleanups, bugfixes, and improvements:
+-   Many miscellaneous cleanups, bug fixes, and improvements
     -   Fixed data distributed volume rendering bugs when using less
         blocks than workers
     -   Fixes to CMake `find_package()` config
@@ -289,11 +359,11 @@ Version History
 -   Added `ospRemoveVolume()` API call
 -   Added ability to render a subsection of the full view into the
     entire framebuffer in the perspective camera
--   Many miscellaneous cleanups, bugfixes, and improvements:
+-   Many miscellaneous cleanups, bug fixes, and improvements
     -   The depthbuffer is now correctly populated by in the "scivis"
         renderer
     -   Updated default renderer to be "ao1" in ospModelViewer
-    -   Trianglemesh postIntersect shading is now 64-bit safe
+    -   Trianglemesh `postIntersect` shading is now 64-bit safe
     -   Texture2D has been reworked, with many improvements and bug fixes
     -   Fixed bug where MPI device would freeze while rendering frames
         with Intel TBB
@@ -335,7 +405,7 @@ changes.
     -   Soft shadows (light sources: sphere, cone, extended spot, quad)
     -   Transparent shadows
     -   Normal mapping (OBJ material)
--   Volume rendering enhancements:
+-   Volume rendering enhancements
     -   Expanded material support
     -   Support for multiple lights
     -   Support for double precision volumes
@@ -394,7 +464,7 @@ changes.
     unify (and replace) the existing simpler GLUT-based viewers
 -   Added new path tracing renderer (`ospray/render/pathtracer`),
 -   roughly based on the Embree sample path tracer
--   Added new features to the volume renderer:
+-   Added new features to the volume renderer
     -   Gradient shading (lighting)
     -   Implicit isosurfacing
     -   Progressive refinement

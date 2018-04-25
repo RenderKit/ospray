@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -53,6 +53,8 @@ namespace ospray {
 
     Assert(model && "invalid model pointer");
 
+    Geometry::finalize(model);
+
     RTCScene embreeSceneHandle = model->embreeSceneHandle;
 
     vertexData = getParamData("vertex",getParamData("position"));
@@ -61,7 +63,6 @@ namespace ospray {
     texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
     indexData  = getParamData("index",getParamData("triangle"));
     prim_materialIDData = getParamData("prim.materialID");
-    materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
     if (!vertexData)
@@ -89,15 +90,7 @@ namespace ospray {
     this->normal = normalData ? (float*)normalData->data : nullptr;
     this->color  = colorData ? (vec4f*)colorData->data : nullptr;
     this->texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
-    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
-    this->materialList  = materialListData ? (ospray::Material**)materialListData->data : nullptr;
-    
-    if (materialList) {
-      const int num_materials = materialListData->numItems;
-      ispcMaterialPtrs.resize(num_materials);
-      for (int i = 0; i < num_materials; i++)
-        ispcMaterialPtrs[i] = materialList[i]->getIE();
-    } 
+    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr; 
 
     size_t numTris  = -1;
     size_t numVerts = -1;
@@ -165,7 +158,6 @@ namespace ospray {
                            (ispc::vec4f*)color,
                            (ispc::vec2f*)texcoord,
                            geom_materialID,
-                           getMaterial() ? getMaterial()->getIE() : nullptr,
                            materialList ? ispcMaterialPtrs.data() : nullptr,
                            (uint32_t*)prim_materialID,
                            colorData && colorData->type == OSP_FLOAT4,

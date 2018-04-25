@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,9 +20,11 @@
 #include "constants.h"
 #include "math.h"
 
+#include "TypeTraits.h"
+
 namespace ospcommon {
 
-  template <typename T, int N, int ALIGN = 0>
+  template <typename T, int N, bool ALIGN = false>
   struct vec_t
   {
     using scalar_t = T;
@@ -36,7 +38,7 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 2> &o) = default;
+    //inline vec_t(const vec_t<T, 2> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s)
     {
@@ -45,8 +47,13 @@ namespace ospcommon {
     {
     }
 
-    template <typename OT>
-    explicit inline vec_t(const vec_t<OT, 2> &o) : x(o.x), y(o.y)
+    #if 0
+    template <typename OT,
+              typename = traits::enable_if_t<!std::is_same<T, OT>::value>>
+    #else
+    template <typename OT, bool OA>
+    #endif
+    explicit inline vec_t(const vec_t<OT, 2, OA> &o) : x(o.x), y(o.y)
     {
     }
 
@@ -82,7 +89,7 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 3> &o) = default;
+    //inline vec_t(const vec_t<T, 3> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s), z(s)
     {
@@ -91,7 +98,7 @@ namespace ospcommon {
     {
     }
 
-    template <typename OT, int OA>
+    template <typename OT, bool OA>
     explicit inline vec_t(const vec_t<OT, 3, OA> &o) : x(o.x), y(o.y), z(o.z)
     {
     }
@@ -122,13 +129,13 @@ namespace ospcommon {
   };
 
   template <typename T>
-  struct vec_t<T, 3, 1>
+  struct vec_t<T, 3, true>
   {
     using scalar_t = T;
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 3, 1> &o) = default;
+    //inline vec_t(const vec_t<T, 3, 1> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s), z(s)
     {
@@ -136,7 +143,9 @@ namespace ospcommon {
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
     }
-    inline vec_t(const vec_t<T, 3> &o) : x(o.x), y(o.y), z(o.z)
+
+    template <typename OT, bool OA>
+    inline vec_t(const vec_t<OT, 3, OA> &o) : x(o.x), y(o.y), z(o.z)
     {
     }
 
@@ -178,7 +187,7 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
-    inline vec_t(const vec_t<T, 4> &o) = default;
+    //inline vec_t(const vec_t<T, 4> &o) = default;
 
     inline explicit vec_t(scalar_t s) : x(s), y(s), z(s), w(s)
     {
@@ -187,11 +196,15 @@ namespace ospcommon {
         : x(x), y(y), z(z), w(w)
     {
     }
-    inline vec_t(const vec_t<T, 3> &o, const T w) : x(o.x), y(o.y), z(o.z), w(w)
+
+    template <typename OT, typename WT>
+    inline vec_t(const vec_t<OT, 3> &o, const WT w)
+        : x(o.x), y(o.y), z(o.z), w(w)
     {
     }
-    template <typename OT>
-    explicit inline vec_t(const vec_t<OT, 4> &o)
+
+    template <typename OT, bool OA>
+    explicit inline vec_t(const vec_t<OT, 4, OA> &o)
         : x(o.x), y(o.y), z(o.z), w(o.w)
     {
     }
@@ -281,7 +294,7 @@ namespace ospcommon {
     return vec_t<T, 3>(op(v.x), op(v.y), op(v.z));          \
   }                                                         \
   template <typename T>                                     \
-  inline vec_t<T, 3, 1> op(const vec_t<T, 3, 1> &v)         \
+  inline vec_t<T, 3, true> op(const vec_t<T, 3, 1> &v)      \
   {                                                         \
     return vec_t<T, 3, 1>(op(v.x), op(v.y), op(v.z));       \
   }                                                         \
@@ -291,7 +304,10 @@ namespace ospcommon {
     return vec_t<T, 4>(op(v.x), op(v.y), op(v.z), op(v.w)); \
   }
 
-  unary_functor(rcp) unary_functor(abs) unary_functor(sin) unary_functor(cos)
+  unary_functor(rcp)
+  unary_functor(abs)
+  unary_functor(sin)
+  unary_functor(cos)
 #undef unary_functor
 
 // -------------------------------------------------------
@@ -305,7 +321,7 @@ namespace ospcommon {
     return vec_t<T, 2>(a.x op b.x, a.y op b.y);                             \
   }                                                                         \
                                                                             \
-  template <typename T, int A, int B>                                       \
+  template <typename T, bool A, bool B>                                     \
   inline vec_t<T, 3> name(const vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b) \
   {                                                                         \
     return vec_t<T, 3>(a.x op b.x, a.y op b.y, a.z op b.z);                 \
@@ -324,7 +340,7 @@ namespace ospcommon {
     return vec_t<T, 2>(a.x op b, a.y op b);                                 \
   }                                                                         \
                                                                             \
-  template <typename T, int A>                                              \
+  template <typename T, bool A>                                             \
   inline vec_t<T, 3, A> name(const vec_t<T, 3, A> &a, const T &b)           \
   {                                                                         \
     return vec_t<T, 3, A>(a.x op b, a.y op b, a.z op b);                    \
@@ -343,7 +359,7 @@ namespace ospcommon {
     return vec_t<T, 2>(a op b.x, a op b.y);                                 \
   }                                                                         \
                                                                             \
-  template <typename T, int A>                                              \
+  template <typename T, bool A>                                             \
   inline vec_t<T, 3, A> name(const T a, const vec_t<T, 3, A> &b)            \
   {                                                                         \
     return vec_t<T, 3, A>(a op b.x, a op b.y, a op b.z);                    \
@@ -355,9 +371,11 @@ namespace ospcommon {
     return vec_t<T, 4>(a op b.x, a op b.y, a op b.z, a op b.w);             \
   }
 
-      binary_operator(operator+, +) binary_operator(operator-, -)
-          binary_operator(operator*, *) binary_operator(operator/, /)
-              binary_operator(operator%, %)
+  binary_operator(operator+, +)
+  binary_operator(operator-, -)
+  binary_operator(operator*, *)
+  binary_operator(operator/, /)
+  binary_operator(operator%, %)
 #undef binary_operator
 
 // -------------------------------------------------------
@@ -373,7 +391,7 @@ namespace ospcommon {
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T, int A, int B>                                     \
+  template <typename T, bool A, bool B>                                   \
   inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b) \
   {                                                                       \
     a.x op b.x;                                                           \
@@ -401,7 +419,7 @@ namespace ospcommon {
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T, int A>                                            \
+  template <typename T, bool A>                                           \
   inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const T &b)              \
   {                                                                       \
     a.x op b;                                                             \
@@ -420,19 +438,20 @@ namespace ospcommon {
     return a;                                                             \
   }
 
-                  binary_operator(operator+=, +=)
-                      binary_operator(operator-=, -=)
-                          binary_operator(operator*=, *=)
-                              binary_operator(operator/=, /=)
+  binary_operator(operator+=, +=)
+  binary_operator(operator-=, -=)
+  binary_operator(operator*=, *=)
+  binary_operator(operator/=, /=)
+  binary_operator(operator%=, %=)
 #undef binary_operator
 
-      // -------------------------------------------------------
-      // ternary operators (just for compatibilty with old embree
-      // -------------------------------------------------------
-      template <typename T, int A>
-      inline vec_t<T, 3, A> madd(const vec_t<T, 3, A> &a,
-                                 const vec_t<T, 3, A> &b,
-                                 const vec_t<T, 3, A> &c)
+  // -------------------------------------------------------
+  // ternary operators (just for compatibilty with old embree
+  // -------------------------------------------------------
+  template <typename T, bool A>
+  inline vec_t<T, 3, A> madd(const vec_t<T, 3, A> &a,
+                             const vec_t<T, 3, A> &b,
+                             const vec_t<T, 3, A> &c)
   {
     return vec_t<T, 3, A>(
         madd(a.x, b.x, c.x), madd(a.y, b.y, c.y), madd(a.z, b.z, c.z));
@@ -447,7 +466,7 @@ namespace ospcommon {
     return a.x == b.x && a.y == b.y;
   }
 
-  template <typename T, int A, int B>
+  template <typename T, bool A, bool B>
   inline bool operator==(const vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b)
   {
     return a.x == b.x && a.y == b.y && a.z == b.z;
@@ -465,7 +484,7 @@ namespace ospcommon {
     return !(a == b);
   }
 
-  template <typename T, int A, int B>
+  template <typename T, bool A, bool B>
   inline bool operator!=(const vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b)
   {
     return !(a == b);
@@ -484,7 +503,7 @@ namespace ospcommon {
     return a.x < b.x || a.y < b.y;
   }
 
-  template <typename T, int A, int B>
+  template <typename T, bool A, bool B>
   inline bool anyLessThan(const vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b)
   {
     return a.x < b.x || a.y < b.y || a.z < b.z;
@@ -533,7 +552,7 @@ namespace ospcommon {
   // -------------------------------------------------------
   // length functions
   // -------------------------------------------------------
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline T length(const vec_t<T, N, A> &v)
   {
     return sqrt(dot(v, v));
@@ -542,7 +561,7 @@ namespace ospcommon {
   // -------------------------------------------------------
   // cross product
   // -------------------------------------------------------
-  template <typename T, int A, int B>
+  template <typename T, bool A, bool B>
   inline vec_t<T, 3> cross(const vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b)
   {
     return vec_t<T, 3>(
@@ -552,13 +571,13 @@ namespace ospcommon {
   // -------------------------------------------------------
   // normalize()
   // -------------------------------------------------------
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline vec_t<T, N, A> normalize(const vec_t<T, N, A> &v)
   {
     return v * rsqrt(dot(v, v));
   }
 
-  template <typename T, int N, int A>
+  template <typename T, int N, bool A>
   inline vec_t<T, N, A> safe_normalize(const vec_t<T, N, A> &v)
   {
     return v * rsqrt(max(1e-6f, dot(v, v)));
@@ -573,7 +592,7 @@ namespace ospcommon {
     o << "(" << v.x << "," << v.y << ")";
     return o;
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline std::ostream &operator<<(std::ostream &o, const vec_t<T, 3, A> &v)
   {
     o << "(" << v.x << "," << v.y << "," << v.z << ")";
@@ -600,7 +619,7 @@ namespace ospcommon {
     return vec_t<T, 2>(f(a.x, b.x), f(a.y, b.y));                           \
   }                                                                         \
                                                                             \
-  template <typename T, int A>                                              \
+  template <typename T, bool A>                                              \
   inline vec_t<T, 3, A> f(const vec_t<T, 3, A> &a, const vec_t<T, 3, A> &b) \
   {                                                                         \
     return vec_t<T, 3, A>(f(a.x, b.x), f(a.y, b.y), f(a.z, b.z));           \
@@ -612,86 +631,76 @@ namespace ospcommon {
     return vec_t<T, 4>(f(a.x, b.x), f(a.y, b.y), f(a.z, b.z), f(a.w, b.w)); \
   }
 
-  define_functor(min) define_functor(max) define_functor(divRoundUp)
+  define_functor(min)
+  define_functor(max)
+  define_functor(divRoundUp)
 #undef define_functor
 
-      // -------------------------------------------------------
-      // reductions
-      // -------------------------------------------------------
-      template <typename T, int A>
-      inline T reduce_add(const vec_t<T, 2, A> &v)
+  // -------------------------------------------------------
+  // reductions
+  // -------------------------------------------------------
+  template <typename T, bool A>
+  inline T reduce_add(const vec_t<T, 2, A> &v)
   {
     return v.x + v.y;
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_add(const vec_t<T, 3, A> &v)
   {
     return v.x + v.y + v.z;
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_add(const vec_t<T, 4, A> &v)
   {
     return v.x + v.y + v.z + v.w;
   }
 
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_mul(const vec_t<T, 2, A> &v)
   {
     return v.x * v.y;
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_mul(const vec_t<T, 3, A> &v)
   {
     return v.x * v.y * v.z;
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_mul(const vec_t<T, 4, A> &v)
   {
     return v.x * v.y * v.z * v.w;
   }
 
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_min(const vec_t<T, 2, A> &v)
   {
     return min(v.x, v.y);
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_min(const vec_t<T, 3, A> &v)
   {
     return min(min(v.x, v.y), v.z);
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_min(const vec_t<T, 4, A> &v)
   {
     return min(min(v.x, v.y), min(v.z, v.w));
   }
 
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_max(const vec_t<T, 2, A> &v)
   {
     return max(v.x, v.y);
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_max(const vec_t<T, 3, A> &v)
   {
     return max(max(v.x, v.y), v.z);
   }
-  template <typename T, int A>
+  template <typename T, bool A>
   inline T reduce_max(const vec_t<T, 4, A> &v)
   {
     return max(max(v.x, v.y), max(v.z, v.w));
-  }
-
-  // -------------------------------------------------------
-  // select
-  // -------------------------------------------------------
-  template <typename T, int A>
-  inline vec_t<T, 3, A> select(bool s,
-                               const vec_t<T, 3, A> &a,
-                               const vec_t<T, 3, A> &b)
-  {
-    return vec_t<T, 3, A>(
-        select(s, a.x, b.x), select(s, a.y, b.y), select(s, a.z, b.z));
   }
 
   // -------------------------------------------------------
@@ -775,7 +784,7 @@ namespace std {
     }
   };
 
-  template <typename T, int A>
+  template <typename T, bool A>
   struct less<ospcommon::vec_t<T, 3, A>>
   {
     inline bool operator()(const ospcommon::vec_t<T, 3, A> &a,

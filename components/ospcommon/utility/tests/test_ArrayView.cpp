@@ -1,4 +1,19 @@
-#define CATCH_CONFIG_MAIN
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "../../testing/catch.hpp"
 
 #include "../ArrayView.h"
@@ -31,7 +46,7 @@ inline void verify_N(const ArrayView<T> &v, int N)
   REQUIRE(v.data() != nullptr);
   REQUIRE(v.begin() != nullptr);
   REQUIRE(v.cbegin() != nullptr);
-  REQUIRE(v.size() == N);
+  REQUIRE(v.size() == size_t(N));
 
   for (int i = 0; i < N; ++i)
     REQUIRE(v[i] == i);

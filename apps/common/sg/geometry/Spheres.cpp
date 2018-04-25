@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,13 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
-#include "sg/geometry/Spheres.h"
-#include "sg/common/Data.h"
-#include "sg/common/World.h"
-// xml parser
-#include "common/xml/XML.h"
+#include "Spheres.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {
@@ -52,7 +47,7 @@ namespace ospray {
         if (hasChild("radius"))
           radius = child("radius").valueAs<float>();
 
-        for (int i = 0; i < spheres->numBytes(); i += sphereBytes) {
+        for (size_t i = 0; i < spheres->numBytes(); i += sphereBytes) {
           vec3f &center = *(vec3f*)(base + i + offset_center);
           if (offset_radius >= 0)
             radius = *(float*)(base + i + offset_radius);
@@ -62,29 +57,6 @@ namespace ospray {
       }
 
       return bounds;
-    }
-
-    //! \brief Initialize this node's value from given XML node
-    /*!
-      \detailed This allows a plug-and-play concept where a XML
-      file can specify all kind of nodes wihout needing to know
-      their actual types: The XML parser only needs to be able to
-      create a proper C++ instance of the given node type (the
-      OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
-      tell the node to parse itself from the given XML content and
-      XML children
-
-      \param node The XML node specifying this node's fields
-
-      \param binBasePtr A pointer to an accompanying binary file (if
-      existant) that contains additional binary data that the xml
-      node fields may point into
-    */
-    void Spheres::setFromXML(const xml::Node &node,
-                             const unsigned char *binBasePtr)
-    {
-      throw std::runtime_error("setFromXML no longer makes sense with the"
-                               " new scene graph design");
     }
 
     OSP_REGISTER_SG_NODE(Spheres);

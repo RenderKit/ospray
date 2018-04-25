@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -148,10 +148,10 @@ inline float SSV_sample_##type##_32(void *uniform _self,              \
               self->super.localCoordinatesUpperBound);                       \
                                                                              \
   /* Lower and upper corners of the box straddling the voxels to be interpolated. */\
-  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);          \
+  const vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);          \
                                                                              \
   /* Fractional coordinates within the lower corner voxel used during interpolation. */\
-  const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0);     \
+  const vec3f frac = clampedLocalCoordinates - to_float(voxelIndex_0);     \
                                                                              \
   const uint32 voxelOfs                                                      \
     = voxelIndex_0.x * self->voxelOfs_dx                                     \
@@ -209,10 +209,10 @@ inline float SSV_sample_##type##_64_32(void *uniform _self,           \
             self->super.localCoordinatesUpperBound);                         \
                                                                              \
   /* Lower and upper corners of the box straddling the voxels to be interpolated. */\
-  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);          \
+  const vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);          \
                                                                              \
   /* Fractional coordinates within the lower corner voxel used during interpolation. */\
-  const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0);     \
+  const vec3f frac = clampedLocalCoordinates - to_float(voxelIndex_0);     \
                                                                              \
   varying float ret = 0.f;                                                   \
   foreach_unique (sliceID in voxelIndex_0.z)  {                              \
@@ -310,10 +310,10 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
       self->super.super.sample = SSV_sample_uint8_32;
     } else if (voxelType == OSP_SHORT) {
       self->super.getVoxel = SSV_getVoxel_int16_32;
-      self->super.super.sample = SSV_sample_float_32;
+      self->super.super.sample = SSV_sample_int16_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_32;
-      self->super.super.sample = SSV_sample_float_32;
+      self->super.super.sample = SSV_sample_uint16_32;
     } else if (voxelType == OSP_FLOAT) {
       self->super.getVoxel = SSV_getVoxel_float_32;
       self->super.super.sample = SSV_sample_float_32;

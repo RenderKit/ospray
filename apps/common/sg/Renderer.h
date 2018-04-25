@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -23,17 +23,25 @@ namespace ospray {
 
     class FrameBuffer;
 
+    /*! renderer renders the scene into the framebuffer on render call.
+     * child render calls are made during commit to cache rendering.
+     * verify and commit must be called before rendered
+    */
     struct OSPSG_INTERFACE Renderer : public Renderable
     {
       Renderer();
+      ~Renderer() override;
       virtual std::string toString() const override;
 
-      // renderer renders the scene into the framebuffer on render call.
-      //  It will call render on model when commit when model modified
+      void renderFrame(std::shared_ptr<FrameBuffer> fb, int flags = 0, bool verifyCommit = true);
+
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
+
+      // NOTE(jda) - why does this overload NOT show up from the base Node???
+      void traverse(const std::string &operation);
+
       void preRender(RenderContext &ctx) override;
-      void postRender(RenderContext &ctx) override;
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
       OSPPickResult pick(const vec2f &pickPos);
@@ -53,4 +61,3 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
-

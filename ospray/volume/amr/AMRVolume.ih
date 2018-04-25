@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,6 +31,7 @@ struct AMRVolume
   //! Grid spacing in each dimension.
   uniform vec3f gridSpacing;
 
+
     //! The value at the given sample location in world coordinates.
   varying float (*uniform computeSampleLevel)(void *uniform _self,
                                          const varying vec3f &worldCoordinates);
@@ -44,4 +45,5 @@ struct AMRVolume
   void (*uniform transformWorldToLocal)(const AMRVolume *uniform volume,
                                         const varying vec3f &worldCoordinates,
                                         varying vec3f &localCoordinates);
+
 };

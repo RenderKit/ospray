@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -39,11 +39,10 @@ namespace ospray {
       virtual void commit() override
       {
         auto ior = getParamData("ior");
-        // default to Aluminium
-        float etaResampled[SPECTRUM_SAMPLES]
-          = {0.570, 0.668, 0.776, 0.888, 1.02, 1.16, 1.31, 1.49};
-        float kResampled[SPECTRUM_SAMPLES]
-          = {5.21, 5.57, 5.93, 6.28, 6.63, 6.97, 7.30, 7.61};
+        float etaResampled[SPECTRUM_SAMPLES];
+        float kResampled[SPECTRUM_SAMPLES];
+        float *etaSpectral = nullptr;
+        float *kSpectral = nullptr;
         if (ior && ior->data && ior->size() > 0) {
           if (ior->type != OSP_FLOAT3)
             throw std::runtime_error("Metal::ior must have data type OSP_FLOAT3 (wavelength, eta, k)[]");
@@ -55,19 +54,33 @@ namespace ospray {
           for(int l = 0; l < SPECTRUM_SAMPLES; wl += SPECTRUM_SPACING, l++) {
             for(; iorP != iorLast && iorP->x < wl; iorP++)
               iorPrev = *iorP;
-            auto f = (wl-iorPrev.x)/(iorP->x-iorPrev.x);
-            etaResampled[l] = (1.f - f) * iorPrev.y + f * iorP->y;
-            kResampled[l] = (1.f - f) * iorPrev.z + f * iorP->z;
+            if (iorP->x == iorPrev.x) {
+              etaResampled[l] = iorPrev.y;
+              kResampled[l] = iorPrev.z;
+            } else {
+              auto f = (wl - iorPrev.x) / (iorP->x - iorPrev.x);
+              etaResampled[l] = (1.f - f) * iorPrev.y + f * iorP->y;
+              kResampled[l] = (1.f - f) * iorPrev.z + f * iorP->z;
+            }
           }
+          etaSpectral = etaResampled;
+          kSpectral = kResampled;
         }
+
+        // default to Aluminium, used when ior not given
+        const vec3f& eta = getParam3f("eta", vec3f(RGB_AL_ETA));
+        const vec3f& k = getParam3f("k", vec3f(RGB_AL_K));
+
 
         const float roughness = getParamf("roughness", 0.1f);
         Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
-        affine2f xform_roughness = getTextureTransform("map_roughness"); 
+        affine2f xform_roughness = getTextureTransform("map_roughness");
 
         ispc::PathTracer_Metal_set(getIE()
-            , etaResampled
-            , kResampled
+            , etaSpectral
+            , kSpectral
+            , (const ispc::vec3f&)eta
+            , (const ispc::vec3f&)k
             , roughness
             , map_roughness ? map_roughness->getIE() : nullptr
             , (const ispc::AffineSpace2f&)xform_roughness

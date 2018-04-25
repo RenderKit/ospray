@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,8 +28,8 @@ namespace ospray {
 
     struct MPIDistributedDevice : public api::Device
     {
-      MPIDistributedDevice()  = default;
-      ~MPIDistributedDevice();
+      MPIDistributedDevice() = default;
+      ~MPIDistributedDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -49,6 +49,10 @@ namespace ospray {
 
       /*! have given renderer create a new Light */
       OSPLight newLight(OSPRenderer _renderer, const char *type) override;
+
+      /*! have given renderer create a new Light */
+      OSPLight newLight(const char *renderer_type,
+                        const char *light_type) override;
 
       /*! map frame buffer */
       const void *frameBufferMap(OSPFrameBuffer fb,
@@ -99,7 +103,7 @@ namespace ospray {
 
       /*! create a new data buffer */
       OSPData newData(size_t nitems, OSPDataType format,
-                      void *init, int flags) override;
+                      const void *init, int flags) override;
 
       /*! Copy data into the given volume. */
       int setRegion(OSPVolume object, const void *source,
@@ -162,6 +166,10 @@ namespace ospray {
 
       /*! have given renderer create a new material */
       OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) override;
+
+      /*! have given renderer create a new material */
+      OSPMaterial newMaterial(const char *renderer_type,
+                              const char *material_type) override;
 
       /*! create a new camera object (out of list of registered cameras) */
       OSPCamera newCamera(const char *type) override;

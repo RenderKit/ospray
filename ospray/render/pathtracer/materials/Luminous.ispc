@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -26,7 +26,7 @@ struct Luminous
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform 
+const varying BSDF* varying 
 Luminous_getBSDF(const uniform PathTraceMaterial* uniform _self
     , uniform ShadingContext* uniform ctx
     , const DifferentialGeometry& dg

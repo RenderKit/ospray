@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,7 +48,7 @@ namespace ospray {
   {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     PerspectiveCamera();
-    virtual ~PerspectiveCamera() = default;
+    virtual ~PerspectiveCamera() override = default;
 
     //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
@@ -71,5 +71,5 @@ namespace ospray {
     StereoMode stereoMode;
     float interpupillaryDistance; // distance between the two cameras (stereo)
   };
-  
+
 } // ::ospray

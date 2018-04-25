@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,6 +18,7 @@
 //#include "CellRef.ih"
 // #include "AMRCommon.h"
 #include "AMRVolume.ih"
+#include "AMR.ih"
 // ospray
 #include "ospray/math/AffineSpace.ih"
 #include "ospray/common/Ray.ih"
@@ -28,7 +29,7 @@
 #include "embree2/rtcore.isph"
 
 // ------------------------------------------------------------------
-//! The gradient at the given sample location in world coordinates.
+//! The current level at the given sample location in world coordinates.
 static varying float AMR_level(void *uniform _self, const varying vec3f &pos)
 {
   AMRVolume *uniform self = (AMRVolume *uniform) _self;
@@ -66,6 +67,8 @@ static varying vec3f AMR_gradient(void *uniform _self, const varying vec3f &pos)
   return(gradient / gradientStep);
 }
 
+// adaptively step the ray based on the log of the
+// current AMR level cell size.
 // ray.time is set to interval length of intersected sample
 inline void AMR_stepRay(void *uniform _volume,
                         varying Ray &ray,
@@ -144,7 +147,9 @@ export void AMRVolume_setAMR(void *uniform _self,
                              uniform int numNodes, void *uniform _node,
                              uniform int numLeaves, void *uniform _leaf,
                              uniform int numLevels, void *uniform _level,
-                             const uniform box3f &worldBounds)
+                             const uniform int voxelType,
+                             const uniform box3f &worldBounds
+                             )
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
 
@@ -158,13 +163,29 @@ export void AMRVolume_setAMR(void *uniform _self,
   self->amr.finestLevel          = self->amr.level+numLevels-1;
   self->amr.numLevels            = numLevels;
   self->amr.finestLevelCellWidth = self->amr.level[numLevels-1].cellWidth;
+
+  if (voxelType == OSP_UCHAR) {
+    self->amr.getVoxel = AMR_getVoxel_uint8_32;
+  } else if (voxelType == OSP_SHORT) {
+    self->amr.getVoxel = AMR_getVoxel_int16_32;
+  } else if (voxelType == OSP_USHORT) {
+    self->amr.getVoxel = AMR_getVoxel_uint16_32;
+  } else if (voxelType == OSP_FLOAT) {
+    self->amr.getVoxel = AMR_getVoxel_float_32;
+  } else if (voxelType == OSP_DOUBLE) {
+    self->amr.getVoxel = AMR_getVoxel_double_32;
+  } else {
+      print("#osp:amrVolume unsupported voxelType");
+      return;
+  }
 }
 
 export void AMRVolume_set(void *uniform _self,
                           uniform box3f &worldBounds,
                           uniform float samplingStep,
                           const uniform vec3f &gridOrigin,
-                          const uniform vec3f &gridSpacing)
+                          const uniform vec3f &gridSpacing
+                          )
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
 

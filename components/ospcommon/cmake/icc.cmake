@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_CXX_FLAGS "-std=c++11 -fPIC -fno-strict-aliasing -no-ansi-alias -DNOMINMAX")
+SET(OSPRAY_CXX_FLAGS "-std=c++11 -fPIC -fno-strict-aliasing -no-ansi-alias -DNOMINMAX -Wno-unknown-pragmas")
 
 IF(OSPRAY_STRICT_BUILD)
   SET(OSPRAY_CXX_FLAGS "-Wall ${OSPRAY_CXX_FLAGS}")

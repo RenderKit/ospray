@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,8 +17,8 @@
 #pragma once
 
 // sg
-#include "sg/common/Node.h"
-#include "sg/common/Data.h"
+#include "Node.h"
+#include "Data.h"
 // ospcommon
 #include "ospcommon/FileName.h"
 
@@ -30,6 +30,7 @@ namespace ospray {
     {
       /*! constructor */
       Texture2D();
+      ~Texture2D() override;
 
       virtual void preCommit(RenderContext &ctx) override;
 

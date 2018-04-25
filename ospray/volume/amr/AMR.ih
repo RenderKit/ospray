@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,6 +18,7 @@
 
 // ospray
 #include "math/box.ih"
+#include "ospray/OSPDataType.h"
 // ours
 #include "KDTree.ih"
 #include "range.ih"
@@ -48,6 +49,27 @@ inline float min(float a, float b, float c, float d,
 {
   return min(min(min(a,b),min(c,d)),min(min(e,f),min(g,h)));
 }
+
+//! "templated" voxel get functions for different data types
+#define template_AMR_getVoxel(type)                                              \
+/* --------------------------------------------------------------------------\
+// versions for pure 32-bit addressing. volume *MUST* be smaller than 2G     \
+// ------------------------------------------------------------------------*/\
+inline float AMR_getVoxel_##type##_32(void *varying data,                    \
+                                     const varying uint32 index)             \
+{                                                                            \
+  /* Cast to the actual voxel type. */                                       \
+  const type *varying voxelData = (const type *varying)data;                 \
+  /* The voxel value at the given index. */                                  \
+  return voxelData[index];                                                   \
+}                                                                            \
+
+template_AMR_getVoxel(uint8);
+template_AMR_getVoxel(int16);
+template_AMR_getVoxel(uint16);
+template_AMR_getVoxel(float);
+template_AMR_getVoxel(double);
+#undef template_getVoxel
 
 /*! enum to symbolically iterate the 8 corners of an octant */
 enum { C000=0, C001,C010,C011,C100,C101,C110,C111 };
@@ -120,6 +142,13 @@ struct AMR
 
   box3f worldBounds;
   vec3f maxValidPos;
+
+  //! Voxel type.
+  uniform OSPDataType voxelType;
+
+  //! Voxel data accessor.
+//  void (*uniform getVoxel)(void *uniform volume, const varying vec3i &index, varying float &value);
+  float (*uniform getVoxel)(void *varying data, const varying uint32 index);
 };
 
 inline float nextafter(const float f, const float s)

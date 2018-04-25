@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,7 +20,9 @@
 // ospcommon
 #include "ospcommon/utility/ArrayView.h"
 // sg
-#include "sg/importer/Importer.h"
+#include "../importer/Importer.h"
+// core ospray
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {
@@ -34,6 +36,7 @@ namespace ospray {
                          std::string("octant"),
                          std::string("finest"),
                          std::string("finestLevel")});
+      createChild("voxelType", "string", std::string("unspecified"));
     }
 
     AMRVolume::~AMRVolume()
@@ -81,6 +84,7 @@ namespace ospray {
         utility::ArrayView<float> bd(new float[numCells], numCells);
 
         int nr = fread(bd.data(), sizeof(float), numCells, dataFile);
+        UNUSED(nr);
 
         if (bi.level > maxLevel) {
           delete [] bd.data();
@@ -96,6 +100,7 @@ namespace ospray {
       }
 
       child("bounds") = bounds;
+      child("transferFunction")["valueRange"] = valueRange.toVec2f();
       ospLogF(1) << "read file; found " << brickInfo.size() << " bricks"
                  << std::endl;
 
@@ -112,7 +117,7 @@ namespace ospray {
         setValue(volume);
       }
 
-      for (int bID = 0; bID < brickInfo.size(); bID++) {
+      for (size_t bID = 0; bID < brickInfo.size(); bID++) {
         const auto &bi = brickInfo[bID];
         OSPData data = ospNewData(bi.size().product(),
                                   OSP_FLOAT,
@@ -144,54 +149,6 @@ namespace ospray {
       brickInfoNode->postCommit(ctx);
 
       child("voxelRange") = valueRange.toVec2f();
-    }
-
-    void AMRVolume::setFromXML(const xml::Node &node,
-                               const unsigned char *binBasePtr)
-    {
-      std::string fileName = node.getProp("fileName");
-      range1f clampRange;
-      std::string clampRangeString = node.getProp("clamp");
-      if (!clampRangeString.empty()) {
-        sscanf(clampRangeString.c_str(),
-               "%f %f",
-               &clampRange.lower,
-               &clampRange.upper);
-      }
-      if (fileName != "") {
-        const std::string compName = node.getProp("component");
-        FileName realFN            = node.doc->fileName.path() + fileName;
-        if (realFN.ext() == "hdf5") {
-#ifdef OSPRAY_APPS_SG_CHOMBO
-          auto nodePtr = nodeAs<AMRVolume>();
-          parseAMRChomboFile(nodePtr,
-                             realFN,
-                             compName,
-                             clampRangeString.empty() ? nullptr : &clampRange,
-                             child("maxLevel").valueAs<int>());
-#else
-          throw std::runtime_error("chombo support (hdf5) not built in");
-#endif
-        } else {
-          std::string BSs = node.getProp("brickSize");
-          if (BSs == "") {
-            throw std::runtime_error(
-                "no 'brickSize' specified for raw2amr generated file");
-          }
-          int BS = atoi(BSs.c_str());
-          parseRaw2AmrFile(realFN, BS);
-        }
-      } else
-        throw std::runtime_error("no filename set in xml node...");
-
-      std::string method = node.getProp("method");
-      if (method.empty())
-        method = node.getProp("amrMethod");
-
-      if (!method.empty())
-        child("amrMethod") = method;
-
-      child("transferFunction")["valueRange"] = valueRange.toVec2f();
     }
 
     OSP_REGISTER_SG_NODE(AMRVolume);

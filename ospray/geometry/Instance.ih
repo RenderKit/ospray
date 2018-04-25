@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,7 +21,7 @@
 #include "math/AffineSpace.ih"
 
 struct Instance {
-  uniform Geometry geometry; //!< inherited geometry fields
+  uniform Geometry super; //!< inherited geometry fields
   uniform Model *uniform model; //!< instanced model
   AffineSpace3f xfm; //!< instantiation matrix
   AffineSpace3f rcp_xfm; //!< rcp(instantiation matrix)

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -44,7 +44,7 @@ namespace ospray {
     Assert(volume);
 
     numPlanes = planesData->numItems;
-    planes    = (const vec4f*)planesData->data;
+    planes    = (vec4f*)planesData->data;
 
     ispc::Slices_set(getIE(), model->getIE(), numPlanes,
                      (ispc::vec4f*)planes, volume->getIE());

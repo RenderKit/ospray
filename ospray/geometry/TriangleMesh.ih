@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,7 +30,6 @@ struct TriangleMesh {
   vec4f    *color;  //!< mesh's vertex color array
   vec2f    *texcoord; //!< mesh's texture coordinate array
   uint32   *prim_materialID;     // per-primitive material ID
-  Material *uniform *materialList;  // list of materials, if multiple materials are assigned to this mesh.
   int32     geom_materialID;     // per-object material ID
   bool      has_alpha;     // 4th color component is valid
   bool      huge_mesh;     // need 64-bit addressing

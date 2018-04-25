@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,7 +37,7 @@ namespace ospray {
   public:
 
     StructuredVolume() = default;
-    virtual ~StructuredVolume() = default;
+    virtual ~StructuredVolume() override;
 
     //! A string description of this class.
     virtual std::string toString() const override;

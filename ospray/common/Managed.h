@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,6 +16,9 @@
 
 #pragma once
 
+// ospcommon
+#include "ospcommon/utility/Any.h"
+#include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "ospray/OSPDataType.h"
 #include "common/OSPCommon.h"
@@ -103,16 +106,19 @@ namespace ospray {
     </dl>
 
    */
-  struct OSPRAY_SDK_INTERFACE ManagedObject : public RefCount
+  struct OSPRAY_SDK_INTERFACE ManagedObject
+    : public memory::RefCount,
+      public utility::ParameterizedObject
   {
-    /*! \brief constructor */
+    using OSP_PTR = ManagedObject*;
+
     ManagedObject() = default;
 
     /*! \brief destructor, frees the ISPC-side allocated memory pointed to by
      * ispcEquivalent, thus derived classes do not need to and must not delete
      * their ispcEquivalent. This also means that derived classes most often do
      * not need an own destructor. */
-    virtual ~ManagedObject();
+    virtual ~ManagedObject() override;
 
     /*! \brief commit the object's outstanding changes (such as changed
      *         parameters etc) */
@@ -125,100 +131,6 @@ namespace ospray {
     /*! return the ISPC equivalent of this class */
     void *getIE() const;
 
-    // ------------------------------------------------------------------
-    // everything related to finding/getting/setting parameters
-    // ------------------------------------------------------------------
-
-    /*! \brief container for _any_ sort of parameter an app can assign
-        to an ospray object */
-    struct OSPRAY_SDK_INTERFACE Param
-    {
-      Param(const char *name);
-      ~Param() { clear(); }
-
-      /*! clear parameter to 'invalid type and value'; free/de-refcount data if
-       *  reqd' */
-      void clear();
-
-      /*! set parameter to a 'pointer to object' type, and given pointer */
-      void set(ManagedObject *ptr);
-
-      //! set parameter to a 'c-string' type
-      /* \internal this function creates and keeps a *copy* of the passed
-       *  string! */
-      void set(const char *s);
-
-      //! set parameter to a 'c-string' type
-      /* \internal this function does *not* copy whatever data this
-         pointer points to (it doesn't have the info to do so), so
-         this pointer belongs to the application, and it can not be
-         used remotely */
-      void set(void *v);
-
-      /*! set parameter to given value and type
-        @{ */
-      void set(const float  &v) { clear(); type = OSP_FLOAT; u_float = v; }
-      void set(const int    &v) { clear(); type = OSP_INT;   u_int   = v; }
-      void set(const uint32 &v) { clear(); type = OSP_UINT;  u_uint  = v; }
-
-      void set(const vec2f  &v) { clear(); type = OSP_FLOAT2;  u_vec2f  = v; }
-      void set(const vec3f  &v) { clear(); type = OSP_FLOAT3;  u_vec3f  = v; }
-      void set(const vec3fa &v) { clear(); type = OSP_FLOAT3A; u_vec3fa = v; }
-      void set(const vec4f  &v) { clear(); type = OSP_FLOAT4;  u_vec4f  = v; }
-
-      void set(const vec2i &v) { clear(); type = OSP_INT2; u_vec2i = v; }
-      void set(const vec3i &v) { clear(); type = OSP_INT3; u_vec3i = v; }
-      void set(const vec4i &v) { clear(); type = OSP_INT4; u_vec4i = v; }
-
-      void set(const vec2ui &v) { clear(); type = OSP_UINT2; u_vec2ui = v; }
-      void set(const vec3ui &v) { clear(); type = OSP_UINT3; u_vec3ui = v; }
-      void set(const vec4ui &v) { clear(); type = OSP_UINT4; u_vec4ui = v; }
-      /*! @} */
-
-      union {
-        float    u_float;
-        int      u_int;
-        uint32_t u_uint;
-        int64_t  u_int64;
-
-        vec2f  u_vec2f;
-        vec3f  u_vec3f;
-        vec3fa u_vec3fa;
-        vec4f  u_vec4f;
-
-        vec2i u_vec2i;
-        vec3i u_vec3i;
-        vec4i u_vec4i;
-
-        vec2ui u_vec2ui;
-        vec3ui u_vec3ui;
-        vec4ui u_vec4ui;
-
-        ManagedObject *ptr;
-        std::string   *s;
-      };
-
-      /*! actual type of this parameter */
-      OSPDataType type;
-      /*! name under which this parameter is registered */
-      std::string name;
-    };
-
-    /*! \brief find a given parameter, or add it if not exists (and so
-     *         specified) */
-    Param *findParam(const char *name, bool addIfNotExist = false);
-
-    /*! \brief check if a given parameter is available */
-    bool hasParam(const char *name);
-
-    void removeParam(const char *name);
-
-    /*! set a parameter with given name to given value, create param if not
-     *  existing */
-    template<typename T>
-    void set(const char *name, const T &t);
-
-    /*! @{ */
     /*! \brief find the named parameter, and return its object value if
         available; else return 'default' value
 
@@ -231,19 +143,18 @@ namespace ospray {
 
     Data *getParamData(const char *name, Data *valIfNotFound = nullptr);
 
-    vec4f  getParam4f(const char *name, const vec4f  valIfNotFound);
-    vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
-    vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
-    vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
-    vec2f  getParam2f(const char *name, const vec2f  valIfNotFound);
-    int32  getParam1i(const char *name, const int32  valIfNotFound);
-    float  getParam1f(const char *name, const float  valIfNotFound);
-    float  getParamf (const char *name, const float  valIfNotFound);
+    vec4f  getParam4f(const char *name, vec4f  valIfNotFound);
+    vec3fa getParam3f(const char *name, vec3fa valIfNotFound);
+    vec3f  getParam3f(const char *name, vec3f  valIfNotFound);
+    vec3i  getParam3i(const char *name, vec3i  valIfNotFound);
+    vec2f  getParam2f(const char *name, vec2f  valIfNotFound);
+    int32  getParam1i(const char *name, int32  valIfNotFound);
+    float  getParam1f(const char *name, float  valIfNotFound);
+    float  getParamf (const char *name, float  valIfNotFound);
 
-    void *getVoidPtr(const char *name, void *valIfNotFound);
-    const char *getParamString(const char *name,
-                               const char *valIfNotFound = "");
-    /*! @} */
+    void *getParamVoidPtr(const char *name, void * valIfNotFound);
+    std::string getParamString(const char *name,
+                               std::string valIfNotFound = "");
 
     // ------------------------------------------------------------------
     // functions to allow objects (called a 'listener') to track
@@ -294,12 +205,6 @@ namespace ospray {
        dies */
     std::set<ManagedObject *> objectsListeningForChanges;
 
-    /*! \brief list of parameters attached to this object */
-    // NOTE(jda) - Use std::shared_ptr because copy/move of a ManagedObject
-    //             would end up copying parameters, where destruction of each
-    //             copy should only result in freeing the parameters *once*
-    std::vector<std::shared_ptr<Param>> paramList;
-
     /*! \brief a global ID that can be used for referencing an object remotely*/
     id_t ID {(id_t)-1};
 
@@ -319,21 +224,10 @@ namespace ospray {
     return ispcEquivalent;
   }
 
-  inline bool ManagedObject::hasParam(const char *name)
-  {
-    return findParam(name,false) != nullptr;
-  }
-
   inline Data*
   ManagedObject::getParamData(const char *name, Data *valIfNotFound)
   {
     return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound);
-  }
-
-  template<typename T>
-  inline void ManagedObject::set(const char *name, const T &t)
-  {
-    findParam(name, true)->set(t);
   }
 
 #define OSP_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
@@ -346,3 +240,26 @@ namespace ospray {
   Object *ospray_create_##object_name##__##external_name()
 
 } // ::ospray
+
+// Specializations for ISPCDevice /////////////////////////////////////////////
+
+namespace ospcommon {
+  namespace utility {
+
+    // OSPRay's parameters cannot be bool, explicitely use int instead
+    template <>
+    inline void ParameterizedObject::Param::set(const bool &v)
+    {
+      set<int>(v);
+    }
+
+    template <>
+    inline void
+    ParameterizedObject::Param::set(const ospray::ManagedObject::OSP_PTR &object)
+    {
+      if (object) object->refInc();
+      data = object;
+    }
+
+  } // ::ospcommon::utility
+} // ::ospcommon

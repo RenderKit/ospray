@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,13 +17,20 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "Fresnel.ih"
 #include "GGXDistribution.ih"
 
+// Simplified Weidlich-Wilkie microfacet coating BSDF with the Smith microsurface model.
+// Refraction for all rays and Fresnel for exiting rays are ignored, but absorption is computed
+// from the refracted ray lengths. The advantages are that it does not suffer from energy loss,
+// absorption behaves the same as in the original approach, and it's faster.
+// [Weidlich and Wilkie, 2007, "Arbitrarily Layered Micro-Facet Surfaces"]
+// [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
 struct MicrofacetDielectricLayer
 {
   BSDF super;
 
-  varying BSDF* uniform substrate;
+  varying BSDF* varying substrate;
   float eta;
   vec3f transmittance;
   float thickness;
@@ -38,7 +45,8 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
 
   float cosThetaO = dot(wo, getN(super));
   float cosThetaI = dot(wi, getN(super));
-  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f) return make_BSDF_EvalRes_zero();
+  if (cosThetaO <= 0.f || cosThetaI <= 0.f)
+    return make_BSDF_EvalRes_zero();
 
   // Compute the microfacet normal
   vec3f wh = normalize(wi + wo);
@@ -57,12 +65,14 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
   float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   BSDF_EvalRes coating;
-  coating.pdf = whPdf * rcp(4.0f*cosThetaOH);
-  coating.value = make_vec3f(F * D * G * rcp(4.0f*cosThetaO));
+  coating.pdf = whPdf * rcp(4.f*cosThetaOH);
+  coating.value = make_vec3f(F * D * G * rcp(4.f*cosThetaO));
 
   // Evaluate the substrate
   // Ignore refraction
-  BSDF_EvalRes substrate = self->substrate->eval(self->substrate, wo, wi);
+  BSDF_EvalRes substrate;
+  foreach_unique (f in self->substrate)
+    substrate = f->eval(f, wo, wi);
 
   // Apply the coating transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
@@ -72,12 +82,11 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(const varying BSDF* uniform s
 
   // Compute the final substrate reflection
   // Ignore Fresnel for the exiting ray
-  float Ft = 1.0f-fresnelDielectric(cosThetaO, self->eta);
-  substrate.value = substrate.value * Ft;
+  substrate.value = substrate.value * (1.f-F);
 
   // Compute the total reflection
-  float coatingPickProb = 1.0f-Ft;
-  float substratePickProb = Ft;
+  float coatingPickProb = fresnelDielectric(cosThetaO, self->eta); // have to use the macronormal for sampling
+  float substratePickProb = 1.f - coatingPickProb;
 
   res.pdf = coatingPickProb * coating.pdf + substratePickProb * substrate.pdf;
   res.value = coating.value + substrate.value;
@@ -91,62 +100,53 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.0f) return make_BSDF_SampleRes_zero();
+  if (cosThetaO <= 0.f)
+    return make_BSDF_SampleRes_zero();
 
   // Sample the coating or the substrate reflection
   vec3f wh;
   BSDF_EvalRes substrate;
 
-  float Ft = 1.0f-fresnelDielectric(cosThetaO, self->eta);
-  float coatingPickProb = 1.0f-Ft;
-  float substratePickProb = Ft;
+  float coatingPickProb = fresnelDielectric(cosThetaO, self->eta); // only the macronormal is available yet
+  float substratePickProb = 1.f - coatingPickProb;
 
   if (ss < coatingPickProb)
   {
-      // Sample the microfacet normal
-      float whPdf;
-      //wh = getFrame(super) * sample(self->distribution, whPdf, s);
-      wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
-      float cosThetaOH = dot(wo, wh);
+    // Sample the microfacet normal
+    float whPdf;
+    //wh = getFrame(super) * sample(self->distribution, whPdf, s);
+    wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
+    float cosThetaOH = dot(wo, wh);
 
-      res.type = BSDF_GLOSSY_REFLECTION;
-      res.wi = reflect(wo, wh, cosThetaOH);
+    res.type = BSDF_GLOSSY_REFLECTION;
+    res.wi = reflect(wo, wh, cosThetaOH);
 
-      // Evaluate the substrate
-      substrate = self->substrate->eval(self->substrate, wo, res.wi);
+    // Evaluate the substrate
+    foreach_unique (f in self->substrate)
+      substrate = f->eval(f, wo, res.wi);
   }
   else
   {
-      // Sample the substrate
-      float ss1 = (ss - coatingPickProb) * rcp(substratePickProb); // reallocate sample
-      res = self->substrate->sample(self->substrate, wo, s, ss1);
-      if (reduce_max(res.weight) <= 0.0f) return res;
-      substrate.pdf = res.pdf;
-      substrate.value = res.weight * res.pdf;
+    // Sample the substrate
+    float ss1 = (ss - coatingPickProb) * rcp(substratePickProb); // reallocate sample
+    foreach_unique (f in self->substrate)
+      res = f->sample(f, wo, s, ss1);
+    if (reduce_max(res.weight) <= 0.f)
+      return res;
+    substrate.pdf = res.pdf;
+    substrate.value = res.weight * ((res.type & BSDF_SPECULAR) ? 1.f : res.pdf); // correctly handle delta distributions
 
-      // Compute the microfacet normal
-      wh = normalize(res.wi + wo);
+    // Compute the microfacet normal
+    wh = normalize(res.wi + wo);
   }
 
   float cosThetaI = dot(res.wi, getN(super));
-  if (cosThetaI <= 0.0f) return make_BSDF_SampleRes_zero();
+  if (cosThetaI <= 0.f)
+    return make_BSDF_SampleRes_zero();
   float cosThetaOH = dot(wo, wh);
 
   // Fresnel term
   float F = fresnelDielectric(cosThetaOH, self->eta);
-
-  // Evaluate the coating reflection
-  float cosThetaH = dot(wh, getN(super));
-  float cosThetaIH = dot(res.wi, wh);
-
-  float whPdf;
-  //float D = eval(self->distribution, cosThetaH, whPdf);
-  float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
-  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
-
-  BSDF_EvalRes coating;
-  coating.pdf = whPdf * rcp(4.0f*cosThetaOH);
-  coating.value = make_vec3f(F * D * G * rcp(4.0f*cosThetaO));
 
   // Apply the coating transmittance
   float cosThetaO1 = refract(cosThetaO, self->eta); // positive
@@ -154,16 +154,38 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(const varying BSDF* unifo
   substrate.value = substrate.value * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
   // Compute the final substrate reflection
-  substrate.value = substrate.value * Ft;
+  substrate.value = substrate.value * (1.f-F);
 
-  // Compute the total reflection
-  res.pdf = coatingPickProb * coating.pdf + substratePickProb * substrate.pdf;
-  res.weight = (coating.value + substrate.value) * rcp(res.pdf);
-  return res;
+  if (res.type & BSDF_SPECULAR)
+  {
+    // If we sampled a delta distribution, we don't have to evaluate the coating reflection (see MultiBSDF_sample)
+    res.weight = substrate.value * rcp(substratePickProb);
+    return res;
+  }
+  else
+  {
+    // Evaluate the coating reflection
+    float cosThetaH = dot(wh, getN(super));
+    float cosThetaIH = dot(res.wi, wh);
+
+    float whPdf;
+    //float D = eval(self->distribution, cosThetaH, whPdf);
+    float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
+    float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+
+    BSDF_EvalRes coating;
+    coating.pdf = whPdf * rcp(4.f*cosThetaOH);
+    coating.value = make_vec3f(F * D * G * rcp(4.f*cosThetaO));
+
+    // Compute the total reflection
+    res.pdf = coatingPickProb * coating.pdf + substratePickProb * substrate.pdf;
+    res.weight = (coating.value + substrate.value) * rcp(res.pdf);
+    return res;
+  }
 }
 
 inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLayer* uniform self, const varying linear3f* uniform frame,
-                                                  varying BSDF* uniform substrate, float eta, vec3f transmittance, float thickness, float roughness)
+                                                  varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | substrate->type,
                    MicrofacetDielectricLayer_eval, MicrofacetDielectricLayer_sample,
@@ -177,7 +199,7 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
 }
 
 inline varying BSDF* uniform MicrofacetDielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                              varying BSDF* uniform substrate, float eta, vec3f transmittance, float thickness, float roughness)
+                                                              varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness, float roughness)
 {
   varying MicrofacetDielectricLayer* uniform self = (varying MicrofacetDielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectricLayer));
   MicrofacetDielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, roughness);

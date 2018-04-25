@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,7 +29,7 @@ namespace ospcommon {
      * or some default if the value doesn't exist --> makes it easier to read
      * "branchy" code.
      *
-     * NOTE: Similar (but perhaps not identical to) 'boost::optional' or C++17's 
+     * NOTE: Similar (but perhaps not identical to) 'boost::optional' or C++17's
      * 'std::optional'.
      *
      *  Example:
@@ -66,18 +66,18 @@ namespace ospcommon {
       Optional(Optional<U> &&other);
 
 #if 0 // NOTE(jda) - can't get this to NOT conflict with copy/move ctors...
-      template <typename... Args> 
+      template <typename... Args>
       Optional(Args&&... args);
 #else
       Optional(const T& value);
 #endif
 
       ~Optional();
- 
+
       Optional& operator=(const Optional& other);
       Optional& operator=(Optional&& other);
 
-      template <typename U> 
+      template <typename U>
       Optional& operator=(U&& value);
 
       template <typename U>
@@ -98,12 +98,12 @@ namespace ospcommon {
       const T& value() const;
             T& value();
 
-      template <typename U> 
+      template <typename U>
       T value_or(U&& default_value) const;
 
       void reset();
 
-      template <typename... Args> 
+      template <typename... Args>
       T& emplace(Args&&... args);
 
       // Extra members //
@@ -173,7 +173,7 @@ namespace ospcommon {
 
 #if 0 // NOTE(jda) - see comment in declaration...
     template <typename T>
-    template <typename... Args> 
+    template <typename... Args>
     inline Optional<T>::Optional(Args&&... args)
     {
       emplace(std::forward<Args>(args)...);
@@ -198,6 +198,7 @@ namespace ospcommon {
       default_construct_storage_if_needed();
       value() = other.value();
       hasValue = true;
+      return *this;
     }
 
     template <typename T>
@@ -206,10 +207,11 @@ namespace ospcommon {
       default_construct_storage_if_needed();
       value() = std::move(other.value());
       hasValue = true;
+      return *this;
     }
 
     template <typename T>
-    template <typename U> 
+    template <typename U>
     inline Optional<T>& Optional<T>::operator=(U&& rhs)
     {
       static_assert(std::is_convertible<U, T>::value,
@@ -234,6 +236,7 @@ namespace ospcommon {
       default_construct_storage_if_needed();
       value() = other.value();
       hasValue = true;
+      return *this;
     }
 
     template <typename T>
@@ -246,7 +249,9 @@ namespace ospcommon {
                     " convertable to the type parameter of the destination"
                     " Optional<>.");
       default_construct_storage_if_needed();
+      value() = other.value();
       hasValue = true;
+      return *this;
     }
 
     template <typename T>
@@ -298,14 +303,14 @@ namespace ospcommon {
     }
 
     template <typename T>
-    template <typename U> 
+    template <typename U>
     inline T Optional<T>::value_or(U&& default_value) const
     {
       static_assert(std::is_convertible<U, T>::value,
                     "ospcommon::utility::Optional<T> requires the type given"
                     " to value_or() to be convertible to type T, the type"
                     " parameter of Optional<>.");
-      return has_value() ? value() : 
+      return has_value() ? value() :
                            static_cast<T>(std::forward<U>(default_value));
     }
 
@@ -319,7 +324,7 @@ namespace ospcommon {
     }
 
     template <typename T>
-    template <typename... Args> 
+    template <typename... Args>
     inline T& Optional<T>::emplace(Args&&... args)
     {
       reset();
@@ -379,7 +384,7 @@ namespace ospcommon {
       return (lhs && rhs) && (*lhs >= *rhs);
     }
 
-    template <class T, class... Args> 
+    template <class T, class... Args>
     inline Optional<T> make_optional(Args&&... args)
     {
       Optional<T> ret;

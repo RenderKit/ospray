@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -45,10 +45,17 @@ struct SampleAreaRes
   vec3f normal; //!< geometry normal Ng at the sampled point
 };
 
+typedef int32 (*Geometry_GetMaterialIDFct)(
+    const Geometry *const uniform
+    , const int32 primID //!< primitive to query
+    );
+
 typedef void (*Geometry_GetAreasFct)(
     const Geometry *const uniform
+    , const int32 *const uniform primIDs //!< primitive IDs
+    , const uniform int32 numPrims //!< number of primitives
     , const uniform affine3f &xfm //!< instance transformation (obj2world)
-    , float *const uniform area //!< array to return area per primitive
+    , float *const uniform areas //!< array to return area per primitive
     // in world-space
     );
 
@@ -67,6 +74,7 @@ struct Geometry {
     DifferentialGeometry struct, see above prototype for details */
   Geometry_postIntersectFct postIntersect;
 
+  Geometry_GetMaterialIDFct getMaterialID;
   Geometry_GetAreasFct getAreas;
   Geometry_SampleAreaFct sampleArea;
 
@@ -74,10 +82,10 @@ struct Geometry {
   void *uniform cppEquivalent;
 
   //! number of primitives this geometry has
-  uniform int32 primitives;
+  uniform int32 numPrimitives;
 
-  //! material attached to this geometry
-  Material *uniform material;
+  //! material list attached to this geometry
+  Material *uniform *uniform materialList;
 
   //! model that this geometry is part of
   Model *uniform model;
@@ -92,4 +100,4 @@ extern void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  uniform Geometry_postIntersectFct postIntersect,
                                  uniform Model *uniform model,
                                  uniform int32  geomID,
-                                 uniform Material *uniform material);
+                                 uniform Material *uniform *uniform materialList);

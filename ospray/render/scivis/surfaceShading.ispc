@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -173,7 +173,8 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > self->super.minContribution) {
           Ray shadowRay;
-          setRay(shadowRay, P, light.dir);
+          setRay(shadowRay, P, light.dir, self->super.epsilon,
+              light.dist - self->super.epsilon, ray.time);
           const float light_alpha = lightAlpha(self, shadowRay,
               self->super.model,
               max_contrib,

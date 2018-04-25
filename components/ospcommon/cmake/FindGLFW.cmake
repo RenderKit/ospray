@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -36,12 +36,8 @@ IF (WIN32)
   ELSEIF (MSVC11)
     SET(GLFW_LIB_SUFFIX "vc2012")
   ELSEIF (MINGW)
-    IF (X64)
-      SET(GLFW_LIB_SUFFIX "mingw-w64")
     # Who's ever going to build for 32bit??
-    ELSE ()
-      SET(GLFW_LIB_SUFFIX "mingw-w64")
-    ENDIF()
+    SET(GLFW_LIB_SUFFIX "mingw-w64")
   ENDIF()
 ENDIF ()
 
@@ -56,16 +52,15 @@ FIND_PATH(GLFW_ROOT include/GLFW/glfw3.h
 )
 
 FIND_PATH(GLFW_INCLUDE_DIR GLFW/glfw3.h PATHS ${GLFW_ROOT}/include NO_DEFAULT_PATH)
-SET(GLFW_HINTS
-  HINTS
-    ${GLFW_ROOT}
+FIND_LIBRARY(GLFW_LIBRARY
+  NAMES glfw glfw3
+  HINTS ${GLFW_ROOT}
+  PATHS /usr /
   PATH_SUFFIXES
     /lib
     /lib64
     /lib-${GLFW_LIB_SUFFIX}
-  )
-SET(GLFW_PATHS PATHS /usr/lib /usr/lib64 /lib /lib64)
-FIND_LIBRARY(GLFW_LIBRARY libglfw.so glfw3dll ${GLFW_HINTS} ${GLFW_PATHS})
+)
 
 SET(GLFW_ROOT_LAST ${GLFW_ROOT} CACHE INTERNAL "Last value of GLFW_ROOT to detect changes")
 

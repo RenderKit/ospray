@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,10 +34,13 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
       (uniform Geometry *uniform)instancedModel->geometry[geomID];
 
     dg.geometry = instancedGeometry;
-    dg.material = instancedGeometry->material;
 
     instancedGeometry->postIntersect(instancedGeometry,instancedModel,
                                      dg,ray,flags);
+
+    if (instancedGeometry->materialList) {
+      dg.material = instancedGeometry->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+    }
   }
   dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
   dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
@@ -51,8 +54,10 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
 export void *uniform InstanceGeometry_create(void *uniform cppE)
 {
   Instance *uniform self = uniform new Instance;
-  self->geometry.cppEquivalent = cppE;
-  self->geometry.postIntersect = Instance_postIntersect;
+  Geometry_Constructor(&self->super, cppE,
+                       Instance_postIntersect,
+                       NULL, -1,
+                       NULL);
   self->areaPDF = NULL;
 
   return self;

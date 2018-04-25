@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -493,3 +493,18 @@ export void LinearTransferFunction_precomputePreIntegratedValues(void *uniform _
   LinearTransferFunction_precomputePreIntegratedOpacityValues(_self);
   self->super.preIntegrationComputed = true;
 }
+
+export void LinearTransferFunction_freeMemory(void *uniform _self)
+{
+  LinearTransferFunction *uniform self
+    = (LinearTransferFunction *uniform) _self;
+  if (self->opacityPITable)
+    delete[] self->opacityPITable;
+
+  if (self->colorPITable)
+    delete[] self->colorPITable;
+
+  if (self->colorValues != NULL)
+    delete[] self->colorValues;
+}
+

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -63,19 +63,19 @@ namespace ospDDLoader {
 
   using namespace ospcommon;
 
-  std::string volumeFile, dtype;
-  vec3i dimensions        = vec3i(-1);
-  vec2f valueRange        = vec2f(-1);
-  vec2i fbSize            = vec2i(1024, 768);
-  int   numFrames         = 32;
-  int   logLevel          = 0;
-  FileName transferFcn;
+  static std::string volumeFile, dtype;
+  static vec3i dimensions        = vec3i(-1);
+  static vec2f valueRange        = vec2f(-1);
+  static vec2i fbSize            = vec2i(1024, 768);
+  static int   numFrames         = 32;
+  static int   logLevel          = 0;
+  static FileName transferFcn;
 
-  vec3f up;
-  vec3f pos;
-  vec3f gaze;
-  float fovy = 60.f;
-  bool customView = false;
+  static vec3f up;
+  static vec3f pos;
+  static vec3f gaze;
+  static float fovy = 60.f;
+  static bool customView = false;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
@@ -204,7 +204,6 @@ namespace ospDDLoader {
       // Re-sample the opacity values
       for (size_t i = 0; i < opacitySamples; ++i){
         const float x = stepSize * i;
-        std::array<float, 4> sampleColor;
         if (x > (iter + 1)->x) {
           ++iter;
         }

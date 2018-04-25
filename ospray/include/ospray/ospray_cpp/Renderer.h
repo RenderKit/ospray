@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -32,15 +32,12 @@ namespace ospray {
       Renderer(const Renderer &copy);
       Renderer(OSPRenderer existing = nullptr);
 
-      Material newMaterial(const std::string &type) const;
-      Light    newLight(const std::string &type) const;
-
       float renderFrame(const FrameBuffer &fb, uint32_t channels) const;
 
       OSPPickResult pick(const ospcommon::vec2f &screenPos) const;
     };
 
-    // Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
     inline Renderer::Renderer(const std::string &type)
     {
@@ -62,23 +59,8 @@ namespace ospray {
     {
     }
 
-    inline Material Renderer::newMaterial(const std::string &type) const
-    {
-      auto mat = Material(ospNewMaterial(handle(), type.c_str()));
-
-      if (!mat.handle()) {
-        throw std::runtime_error("Failed to create OSPMaterial!");
-      }
-
-      return mat;
-    }
-
-    inline Light Renderer::newLight(const std::string &type) const
-    {
-      return Light(ospNewLight(handle(), type.c_str()));
-    }
-
-    inline float Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels) const
+    inline float Renderer::renderFrame(const FrameBuffer &fb,
+                                       uint32_t channels) const
     {
       return ospRenderFrame(fb.handle(), handle(), channels);
     }

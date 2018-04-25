@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -51,7 +51,7 @@ namespace ospray {
       Tile __aligned(64) tile(tileID, fb->size, accumID);
 #endif
 
-      tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
+      tasking::parallel_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
         renderer->renderTile(perFrameData, tile, tIdx);
       });
 

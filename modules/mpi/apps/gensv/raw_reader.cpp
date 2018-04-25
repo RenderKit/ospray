@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright 2017-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include <cassert>
 #include <stdexcept>
 #include "raw_reader.h"
@@ -38,14 +54,14 @@ size_t RawReader::readRegion(const vec3sz &start, const vec3sz &size, unsigned c
     read = fread(buffer, voxelSize, size.x * size.y * size.z, file);
     offset = startRead + read * voxelSize;
   } else if (size.x == dimensions.x) {
-    for (int z = start.z; z < start.z + size.z; ++z) {
+    for (size_t z = start.z; z < start.z + size.z; ++z) {
       const vec3sz startSlice(start.x, start.y, z);
       const vec3sz sizeSlice(size.x, size.y, 1);
       read += readRegion(startSlice, sizeSlice, buffer + read * voxelSize);
     }
   } else {
-    for (int z = start.z; z < start.z + size.z; ++z) {
-      for (int y = start.y; y < start.y + size.y; ++y) {
+    for (size_t z = start.z; z < start.z + size.z; ++z) {
+      for (size_t y = start.y; y < start.y + size.y; ++y) {
         const vec3sz startLine(start.x, y, z);
         const vec3sz sizeLine(size.x, 1, 1);
         read += readRegion(startLine, sizeLine, buffer + read * voxelSize);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -55,7 +55,6 @@ static void BilinearPatches_postIntersect(uniform Geometry *uniform geometry,
 
   if (flags & DG_MATERIALID) {
     dg.materialID = 0;
-    dg.material   = self->super.material;
   }
 }
 
@@ -69,7 +68,7 @@ static void BilinearPatches_postIntersect(uniform Geometry *uniform geometry,
 export void *uniform BilinearPatches_create(void *uniform cppEquivalent)
 {
   BilinearPatches *uniform self = uniform new uniform BilinearPatches;
-  
+
   /* recursively call the 'inherited' constructor, and pass our
      'overridden' functions for intersect and postintersect. note we
      do not have to set the 'intersect' and 'occluded' functions
@@ -101,7 +100,6 @@ unmasked void BilinearPatches_bounds(BilinearPatches *uniform self,
                                      uniform size_t primID,
                                      uniform box3fa &bbox)
 {
-  print("bounds\n");
   Patch *uniform patch = self->patchArray+primID;
   bbox = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),make_vec3fa(patch->v00)),
                                           make_vec3fa(patch->v01)),
@@ -153,14 +151,14 @@ bool recursiveBisection(varying Ray &ray,
   // if (min_t > 0.f) return false;
   const float max_t = max(max(t0,t1),max(t2,t3));
   if (max_t < 0.f) return false;
-  
+
   const uniform float uc = 0.5f*(u0+u1);
   const uniform float vc = 0.5f*(v0+v1);
 
   if (recursionsLeft == 0) {
     const float t = 0.25*(t0+t1+t2+t3);
     if (t < ray.t0 || t >= ray.t) return false;
-    
+
     ray.t = t;
     ray.u = uc;
     ray.v = vc;
@@ -170,7 +168,7 @@ bool recursiveBisection(varying Ray &ray,
 
     const vec3f pv0 = p00+ray.v*(p10-p00);
     const vec3f pv1 = p01+ray.v*(p11-p01);
-    
+
     ray.Ng = cross(pu1-pu0,pv1-pv0);
     return true;
   } else {
@@ -179,7 +177,7 @@ bool recursiveBisection(varying Ray &ray,
     const uniform vec3f pc0 = 0.5f*(p10+p00);
     const uniform vec3f pc1 = 0.5f*(p11+p01);
     const uniform vec3f pcc = 0.25f*(p00+p01+p10+p11);
-    
+
     bool hit = false;
     hit |= recursiveBisection(ray,frame, p00,p0c,pc0,pcc, u0,uc, v0,vc, recursionsLeft-1);
     hit |= recursiveBisection(ray,frame, pc0,pcc,p10,p1c, u0,uc, vc,v1, recursionsLeft-1);
@@ -244,11 +242,11 @@ export void BilinearPatches_finalize(void *uniform _self,
   // create a new embree geometry with numpathces prims, in the model
   // that this goemetry is in.
   uint32 uniform geomID = rtcNewUserGeometry(model->embreeSceneHandle,numPatches);
-  
+
   // set 'us' as user data (this will be the first arg in intersect()
   // and computebounds() callbacks
   rtcSetUserData(model->embreeSceneHandle,geomID,self);
-  
+
   // set function pointers:
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&BilinearPatches_bounds);
@@ -257,7 +255,7 @@ export void BilinearPatches_finalize(void *uniform _self,
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                          (uniform RTCOccludedFuncVarying)&BilinearPatches_intersect);
 }
-                                    
 
-    
- 
+
+
+

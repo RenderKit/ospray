@@ -1,5 +1,5 @@
 ﻿// ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,9 +16,10 @@
 
 // ospray
 #include "Device.h"
+#include "objectFactory.h"
 #include "common/OSPCommon.h"
-#include "common/Util.h"
 // ospcommon
+#include "ospcommon/library.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
@@ -33,16 +34,14 @@ namespace ospray {
     // Helper functions ///////////////////////////////////////////////////////
 
     template <typename OSTREAM_T>
-    static inline void installStatusMsgFunc(OSTREAM_T &stream)
+    static inline void installStatusMsgFunc(Device& device, OSTREAM_T &stream)
     {
-      auto &device = currentDevice();
       device.msg_fcn = [&](const char *msg){ stream << msg; };
     }
 
     template <typename OSTREAM_T>
-    static inline void installErrorMsgFunc(OSTREAM_T &stream)
+    static inline void installErrorMsgFunc(Device& device, OSTREAM_T &stream)
     {
-      auto &device = currentDevice();
       device.error_fcn = [&](OSPError e, const char *msg) {
         stream << "OSPRAY ERROR [" << e << "]: " << msg << std::endl;
       };
@@ -50,19 +49,20 @@ namespace ospray {
 
     // Device definitions /////////////////////////////////////////////////////
 
-    Ref<Device> Device::current = nullptr;
-
-    RTCDevice Device::embreeDevice = nullptr;
+    std::shared_ptr<Device> Device::current;
     uint32_t Device::logLevel = 0;
-
-    Device::~Device()
-    {
-      if (embreeDevice) rtcDeleteDevice(embreeDevice);
-    }
 
     Device *Device::createDevice(const char *type)
     {
-      return createInstanceHelper<Device, OSP_DEVICE>(type);
+      // NOTE(jda) - If a user is manually creating the device (i.e. not using
+      //             ospInit() to do it), then we need to check if there's a
+      //             valid library for core ospray in our main symbol lookup
+      //             table.
+      auto &repo = *LibraryRepository::getInstance();
+      if (!repo.libraryExists("ospray"))
+        repo.addDefaultLibrary();
+
+      return objectFactory<Device, OSP_DEVICE>(type);
     }
 
     void Device::commit()
@@ -76,10 +76,10 @@ namespace ospray {
       }
 
       auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
-      debugMode = OSPRAY_DEBUG.value_or(getParam1i("debug", 0));
+      debugMode = OSPRAY_DEBUG.value_or(getParam<int>("debug", 0));
 
       auto OSPRAY_TRACE_API = utility::getEnvVar<int>("OSPRAY_TRACE_API");
-      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam1i("traceApi", 0));
+      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam<int>("traceApi", 0));
 
       if (traceAPI) {
         auto streamPtr =
@@ -92,30 +92,36 @@ namespace ospray {
       }
 
       auto OSPRAY_LOG_LEVEL = utility::getEnvVar<int>("OSPRAY_LOG_LEVEL");
-      logLevel = OSPRAY_LOG_LEVEL.value_or(getParam1i("logLevel", 0));
+      logLevel = OSPRAY_LOG_LEVEL.value_or(getParam<int>("logLevel", 0));
 
       auto OSPRAY_THREADS = utility::getEnvVar<int>("OSPRAY_THREADS");
-      numThreads = OSPRAY_THREADS.value_or(getParam1i("numThreads", -1));
+      numThreads = OSPRAY_THREADS.value_or(getParam<int>("numThreads", -1));
 
       auto OSPRAY_LOG_OUTPUT =
           utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
 
-      auto dst = OSPRAY_LOG_OUTPUT.value_or(getParamString("logOutput"));
+      auto dst = OSPRAY_LOG_OUTPUT.value_or(
+        getParam<std::string>("logOutput", "none")
+      );
+
       if (dst == "cout")
-        installStatusMsgFunc(std::cout);
+        installStatusMsgFunc(*this, std::cout);
       else if (dst == "cerr")
-        installStatusMsgFunc(std::cerr);
+        installStatusMsgFunc(*this, std::cerr);
       else if (dst == "none")
         msg_fcn = [](const char*){};
 
       auto OSPRAY_ERROR_OUTPUT =
           utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
 
-      dst = OSPRAY_ERROR_OUTPUT.value_or(getParamString("errorOutput"));
+      dst = OSPRAY_ERROR_OUTPUT.value_or(
+        getParam<std::string>("errorOutput", "none")
+      );
+
       if (dst == "cout")
-        installErrorMsgFunc(std::cout);
+        installErrorMsgFunc(*this, std::cout);
       else if (dst == "cerr")
-        installErrorMsgFunc(std::cerr);
+        installErrorMsgFunc(*this, std::cerr);
       else if (dst == "none")
         error_fcn = [](OSPError, const char*){};
 
@@ -130,7 +136,7 @@ namespace ospray {
                                                             AFFINITIZE;
       }
 
-      threadAffinity = getParam1i("setAffinity", threadAffinity);
+      threadAffinity = getParam<int>("setAffinity", threadAffinity);
 
       tasking::initTaskingSystem(numThreads);
 
@@ -144,7 +150,7 @@ namespace ospray {
 
     bool deviceIsSet()
     {
-      return Device::current.ptr != nullptr;
+      return Device::current.get() != nullptr;
     }
 
     Device &currentDevice()

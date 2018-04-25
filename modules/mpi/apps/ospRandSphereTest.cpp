@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,25 +31,23 @@
 // stl
 #include <random>
 
-#define RUN_LOCAL 0
-
 namespace ospRandSphereTest {
 
   using namespace ospcommon;
 
-  int   numSpheresPerNode = 100;
-  float sphereRadius      = 0.01f;
-  float sceneLowerBound   = 0.f;
-  float sceneUpperBound   = 1.f;
-  vec2i fbSize            = vec2i(1024, 768);
-  int   numFrames         = 32;
-  bool  runDistributed    = true;
+  static int   numSpheresPerNode = 100;
+  static float sphereRadius      = 0.01f;
+  static float sceneLowerBound   = 0.f;
+  static float sceneUpperBound   = 1.f;
+  static vec2i fbSize            = vec2i(1024, 768);
+  static int   numFrames         = 32;
+  static bool  runDistributed    = true;
 
-  vec3f up;
-  vec3f pos;
-  vec3f gaze;
-  float fovy = 60.f;
-  bool customView = false;
+  static vec3f up;
+  static vec3f pos;
+  static vec3f gaze;
+  static float fovy = 60.f;
+  static bool customView = false;
 
   // Compute an X x Y x Z grid to have num bricks,
   // only gives a nice grid for numbers with even factors since

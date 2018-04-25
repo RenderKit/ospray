@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,7 +48,7 @@ namespace ospray {
   {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     OrthographicCamera();
-    ~OrthographicCamera() = default;
+    ~OrthographicCamera() override = default;
 
     virtual std::string toString() const override;
     virtual void commit() override;

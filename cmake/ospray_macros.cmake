@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -35,6 +35,7 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(INTERSECTION_FILTER_RESTORE "intersection filter")
   ospray_check_embree_feature(GEOMETRY_TRIANGLES "triangle geometries")
   ospray_check_embree_feature(GEOMETRY_USER "user geometries")
+  ospray_check_embree_feature(GEOMETRY_HAIR "spline curve geometries")
   ospray_check_embree_feature(RAY_PACKETS "ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
@@ -45,9 +46,9 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
     message(FATAL_ERROR
             "We did not find Embree installed on your system. OSPRay requires"
             " an Embree installation >= v${EMBREE_VERSION_REQUIRED}, please"
-            " download and extract Embree or compile Embree from source, then"
-            " set the 'embree_DIR' variable to"
-            " <embree-install-dir>/lib/cmake/embree-<version>.")
+            " download and extract Embree (or compile Embree from source), then"
+            " set the 'embree_DIR' variable to the installation (or build)"
+            " directory.")
   else()
     message(STATUS "Found Embree v${EMBREE_VERSION}: ${EMBREE_LIBRARY}")
   endif()

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,7 +30,7 @@ struct Plastic
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Plastic_getBSDF(const uniform PathTraceMaterial* uniform super,
                                             uniform ShadingContext* uniform ctx,
                                             const DifferentialGeometry& dg,
                                             const Ray& ray,
@@ -40,7 +40,7 @@ const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uni
 
   varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
   const vec3f _pigmentColor = self->pigmentColor;
-  varying BSDF* uniform bsdf = Lambert_create(ctx, shadingFrame, _pigmentColor);
+  varying BSDF* varying bsdf = Lambert_create(ctx, shadingFrame, _pigmentColor);
 
   if (self->roughness == 0.0f)
     bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);

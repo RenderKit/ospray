@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,10 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/common
-                    ${CMAKE_SOURCE_DIR}/apps/exampleViewer)
+ospray_disable_compiler_warnings()
 
-OSPRAY_CREATE_APPLICATION(ospDistribViewerDemo
+include_directories(${CMAKE_SOURCE_DIR}/apps/common
+                    ${CMAKE_SOURCE_DIR}/apps/exampleViewer
+                    ${GLFW_INCLUDE_DIRS})
+
+ospray_create_application(ospDistribViewerDemo
   ospDistribViewerDemo.cpp
   arcball.cpp
 LINK
@@ -29,5 +32,6 @@ LINK
   ospray_sg
   ospray_tfn
   gensv
+  ${GLFW_LIBRARY}
 )
 

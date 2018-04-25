@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,7 +37,7 @@ namespace ospray {
     intensity = getParam1f("intensity", 1.f);
     angularDiameter = getParam1f("angularDiameter", .0f);
 
-    const vec3f radiance = color * intensity;
+    vec3f radiance = color * intensity;
     direction = -normalize(direction); // the ispc::DirLight expects direction towards light source
 
     angularDiameter = clamp(angularDiameter, 0.f, 180.f);

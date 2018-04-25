@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -32,29 +32,8 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   {
-#if EXP_DATA_PARALLEL
-    struct OSPRAY_SDK_INTERFACE DataParallelPiece : public RefCount {
-      /*! world space bounding box of this piece. it is assumed that
-          this covers all the space that rays should be integrating
-          over; so _including_ any ghost cells if those are required
-          to bridge gaps between neighboring blocks */
-      box3f worldBounds;
-      /*! pointer to the parent containing this piece. note this is
-          intentionally not a ref to avoid cycles in the ref-graph */
-      Volume     *parent;
-      /*! the actual volume that contains that piece of the data. NULL
-          if not on this node */
-      Ref<Volume> actualData;
-      /*! handle to the owning process:objectID, so we know whom to
-          ask for this block if so required. note that a volume block
-          may be stored on multiple nodes, and thus may have multiple
-          owners */
-      std::vector<ObjectHandle> owner;
-    };
-#endif
-
     //! Destructor.
-    virtual ~Volume() = default;
+    virtual ~Volume() override = default;
 
     //! \brief Returns whether the volume is a data-distributed volume
     virtual bool isDataDistributed() const;

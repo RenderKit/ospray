@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -77,7 +77,7 @@ namespace ospray {
       FrameBuffer *fb;
     };
 
-    virtual ~PixelOp() = default;
+    virtual ~PixelOp() override = default;
 
     //! \brief create an instance of this pixel op
     virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) = 0;

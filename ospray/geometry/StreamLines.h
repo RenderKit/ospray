@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -82,22 +82,23 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE StreamLines : public Geometry
   {
     StreamLines();
-    virtual ~StreamLines() = default;
+    virtual ~StreamLines() override = default;
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;
 
     // Data members //
 
-    Ref<Data> vertexData;  //!< refcounted data array for vertex data
+    Ref<Data> vertexData; //!< refcounted data array for vertex data
     Ref<Data> indexData; //!< refcounted data array for segment data
-    Ref<Data> colorData;  //!< refcounted data array for vertex color data
+    Ref<Data> colorData; //!< refcounted data array for vertex color data
+    Ref<Data> radiusData; //!< refcounted data array for vertex radius data
 
     const vec3fa *vertex {nullptr};
     size_t        numVertices {0};
     const uint32 *index {nullptr};
     size_t        numSegments {0};
-    const vec4f  *color {nullptr};
-    float         radius {0.f};
+    std::vector<vec4f> vertexCurve;
+    std::vector<uint32> indexCurve;
   };
   /*! @} */
 

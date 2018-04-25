@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,26 +14,25 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-SET(THREADS_PREFER_PTHREAD_FLAG TRUE)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
-IF (TARGET ospray_common)
+if (TARGET ospray_common)
   # this target is already built!
-ELSE()
-  FIND_PACKAGE(Threads REQUIRED)
-  SET(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${TASKING_SYSTEM_LIBS})
+else()
+  find_package(Threads REQUIRED)
+  set(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${TASKING_SYSTEM_LIBS})
 
-  IF (WIN32)
-    LIST(APPEND LINK_LIBS ws2_32)
-  ENDIF()
+  if (WIN32)
+    list(APPEND LINK_LIBS ws2_32)
+  endif()
 
   ## Create ospcommon library ##
 
-  OSPRAY_CREATE_LIBRARY(ospray_common
+  ospray_create_library(ospray_common
     common.cpp
     FileName.cpp
     sysinfo.cpp
-    malloc.cpp
     library.cpp
     thread.cpp
     vec.cpp
@@ -41,6 +40,10 @@ ELSE()
     array3D/Array3D.cpp
 
     containers/TransactionalBuffer.h
+
+    memory/DeletedUniquePtr.h
+    memory/malloc.cpp
+    memory/RefCount.h
 
     networking/BufferedDataStreaming.cpp
     networking/DataStreaming.h
@@ -57,10 +60,20 @@ ELSE()
 
     utility/Any.h
     utility/CodeTimer.h
+    utility/DataView.h
+    utility/demangle.cpp
+    utility/DoubleBufferedValue.h
+    utility/getEnvVar.h
     utility/OnScopeExit.h
     utility/Optional.h
+    utility/ParameterizedObject.cpp
     utility/PseudoURL.cpp
+    utility/SaveImage.h
+    utility/StringManip.h
+    utility/TimeStamp.cpp
     utility/TransactionalValue.h
+
+    xml/XML.cpp
 
     AffineSpace.h
     box.h
@@ -70,7 +83,6 @@ ELSE()
     math.h
     platform.h
     Quaternion.h
-    RefCount.h
     TypeTraits.h
     vec.h
   LINK
@@ -80,11 +92,11 @@ ELSE()
 
   ## Install headers ##
 
-  SET(OSPCOMMON_SDK_INSTALL_LOC
+  set(OSPCOMMON_SDK_INSTALL_LOC
     ../ospcommon #NOTE: this is "next" to the SDK/ directory
   )
 
-  OSPRAY_INSTALL_SDK_HEADERS(
+  ospray_install_sdk_headers(
     AffineSpace.h
     AsyncLoop.h
     box.h
@@ -94,12 +106,10 @@ ELSE()
     intrinsics.h
     library.h
     LinearSpace.h
-    malloc.h
     math.h
     platform.h
     Quaternion.h
     range.h
-    RefCount.h
     sysinfo.h
     thread.h
     TypeTraits.h
@@ -108,20 +118,28 @@ ELSE()
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}
   )
 
-  OSPRAY_INSTALL_SDK_HEADERS(
+  ospray_install_sdk_headers(
     array3D/Array3D.h
     array3D/for_each.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/array3D
   )
 
-  OSPRAY_INSTALL_SDK_HEADERS(
+  ospray_install_sdk_headers(
     containers/TransactionalBuffer.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
   )
 
-  OSPRAY_INSTALL_SDK_HEADERS(
+  ospray_install_sdk_headers(
+    memory/DeletedUniquePtr.h
+    memory/malloc.h
+    memory/RefCount.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/memory
+  )
+
+  ospray_install_sdk_headers(
     networking/BufferedDataStreaming.h
     networking/DataStreaming.h
     networking/Fabric.h
@@ -130,7 +148,7 @@ ELSE()
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/networking
   )
 
-  OSPRAY_INSTALL_SDK_HEADERS(
+  ospray_install_sdk_headers(
     tasking/async.h
     tasking/parallel_for.h
     tasking/schedule.h
@@ -139,7 +157,7 @@ ELSE()
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking
   )
 
-  OSPRAY_INSTALL_SDK_HEADERS(
+  ospray_install_sdk_headers(
     tasking/detail/parallel_for.inl
     tasking/detail/schedule.inl
     tasking/detail/TaskSys.h
@@ -147,96 +165,155 @@ ELSE()
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking/detail
   )
 
-  OSPRAY_INSTALL_SDK_HEADERS(
+  ospray_install_sdk_headers(
     utility/Any.h
+    utility/ArrayView.h
     utility/CodeTimer.h
+    utility/DataView.h
+    utility/demangle.h
+    utility/DoubleBufferedValue.h
+    utility/getEnvVar.h
     utility/OnScopeExit.h
     utility/Optional.h
+    utility/ParameterizedObject.h
     utility/PseudoURL.h
+    utility/SaveImage.h
+    utility/StringManip.h
     utility/TransactionalValue.h
+    utility/TimeStamp.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
   )
 
-  ## Test apps ##
+  ospray_install_sdk_headers(
+    xml/XML.h
 
-  # Any
-
-  OSPRAY_CREATE_TEST(test_Any
-    utility/tests/test_Any.cpp
-  LINK
-    ospray_common
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/xml
   )
 
-  ADD_TEST(NAME Any COMMAND test_Any)
+  ## Build Test Apps ##
 
-  # ArrayView
+  add_library(ospray_test_main STATIC testing/catch_main.cpp)
 
-  OSPRAY_CREATE_TEST(test_ArrayView
-    utility/tests/test_ArrayView.cpp
+  # containers/AlignedVector
+  ospray_create_test(test_AlignedVector
+    containers/tests/test_AlignedVector.cpp
   LINK
     ospray_common
+    ospray_test_main
   )
-
-  ADD_TEST(NAME ArrayView COMMAND test_ArrayView)
-
-  # utility/OnScopeExit
-
-  OSPRAY_CREATE_TEST(test_OnScopeExit
-    utility/tests/test_OnScopeExit.cpp
-  LINK
-    ospray_common
-  )
-
-  ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
-
-  # Optional
-
-  OSPRAY_CREATE_TEST(test_Optional
-    utility/tests/test_Optional.cpp
-  LINK
-    ospray_common
-  )
-
-  ADD_TEST(NAME Optional COMMAND test_Optional)
 
   # containers/TransactionalBuffer
-
-  OSPRAY_CREATE_TEST(test_TransactionalBuffer
+  ospray_create_test(test_TransactionalBuffer
     containers/tests/test_TransactionalBuffer.cpp
   LINK
     ospray_common
+    ospray_test_main
   )
 
-  ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
+  # tasking/async
+  ospray_create_test(test_async
+    tasking/tests/test_async.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
 
-  IF(NOT WIN32)
-    # tasking/async
-    OSPRAY_CREATE_TEST(test_async
-      tasking/tests/test_async.cpp
-    LINK
-      ospray_common
-    )
+  # tasking/parallel_for
+  ospray_create_test(test_parallel_for
+    tasking/tests/test_parallel_for.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
 
-    ADD_TEST(NAME async COMMAND test_async)
+  # tasking/schedule
+  ospray_create_test(test_schedule
+    tasking/tests/test_schedule.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
 
-    # tasking/parallel_for
-    OSPRAY_CREATE_TEST(test_parallel_for
-      tasking/tests/test_parallel_for.cpp
-    LINK
-      ospray_common
-    )
+  # utility/Any
+  ospray_create_test(test_Any
+    utility/tests/test_Any.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
 
-    ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
+  # utility/ArgumentList
+  ospray_create_test(test_ArgumentList
+    utility/tests/test_ArgumentList.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
 
-    # tasking/schedule
-    OSPRAY_CREATE_TEST(test_schedule
-      tasking/tests/test_schedule.cpp
-    LINK
-      ospray_common
-    )
+  # utility/ArrayView
+  ospray_create_test(test_ArrayView
+    utility/tests/test_ArrayView.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
 
-    ADD_TEST(NAME schedule COMMAND test_schedule)
-  ENDIF()
+  # utility/Observers
+  ospray_create_test(test_Observers
+    utility/tests/test_Observers.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
 
-ENDIF()
+  # utility/OnScopeExit
+  ospray_create_test(test_OnScopeExit
+    utility/tests/test_OnScopeExit.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/Optional
+  ospray_create_test(test_Optional
+    utility/tests/test_Optional.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/ParameterizedObject
+  ospray_create_test(test_ParameterizedObject
+    utility/tests/test_ParameterizedObject.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  # utility/StringManip
+  ospray_create_test(test_StringManip
+    utility/tests/test_StringManip.cpp
+  LINK
+    ospray_common
+    ospray_test_main
+  )
+
+  ## Add Test Apps to CTest ##
+
+  add_test(NAME ArgumentList          COMMAND test_ArgumentList       )
+  add_test(NAME ArrayView             COMMAND test_ArrayView          )
+  add_test(NAME OnScopeExit           COMMAND test_OnScopeExit        )
+  add_test(NAME Optional              COMMAND test_Optional           )
+  add_test(NAME TransactionalBuffer   COMMAND test_TransactionalBuffer)
+  add_test(NAME StringManip           COMMAND test_StringManip        )
+  if(NOT WIN32) # Tests which are broken on Windows with unknown fixes (for now)
+    add_test(NAME Any                 COMMAND test_Any                )
+    add_test(NAME AlignedVector       COMMAND test_AlignedVector      )
+    add_test(NAME Observers           COMMAND test_Observers          )
+    add_test(NAME ParameterizedObject COMMAND test_ParameterizedObject)
+    add_test(NAME async               COMMAND test_async              )
+    add_test(NAME parallel_for        COMMAND test_parallel_for       )
+    add_test(NAME schedule            COMMAND test_schedule           )
+  endif()
+endif()

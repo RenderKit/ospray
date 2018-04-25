@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -46,9 +46,9 @@ namespace mpicommon {
     containsMe = true;
   }
 
-  void Group::makeIntraComm(MPI_Comm comm)
+  void Group::makeIntraComm(MPI_Comm _comm)
   {
-    this->comm = comm; makeIntraComm();
+    this->comm = _comm; makeIntraComm();
   }
 
   void Group::makeInterComm()
@@ -58,9 +58,9 @@ namespace mpicommon {
     MPI_CALL(Comm_remote_size(comm, &size));
   }
 
-  void Group::makeInterComm(MPI_Comm comm)
+  void Group::makeInterComm(MPI_Comm _comm)
   {
-    this->comm = comm; makeInterComm();
+    this->comm = _comm; makeInterComm();
   }
 
   void Group::barrier() const
@@ -69,9 +69,9 @@ namespace mpicommon {
   }
 
   /*! set to given intercomm, and properly set size, root, etc */
-  void Group::setTo(MPI_Comm comm)
+  void Group::setTo(MPI_Comm _comm)
   {
-    this->comm = comm;
+    this->comm = _comm;
     if (comm == MPI_COMM_NULL) {
       rank = size = -1;
     } else {
@@ -132,7 +132,7 @@ namespace mpicommon {
     return comm != MPI_COMM_NULL && rank >= 0;
   }
 
-  bool init(int *ac, const char **av)
+  bool init(int *ac, const char **av, bool useCommWorld)
   {
     int initialized = false;
     MPI_CALL(Initialized(&initialized));
@@ -140,7 +140,7 @@ namespace mpicommon {
     int provided = 0;
     if (!initialized) {
       /* MPI not initialized by the app - it's up to us */
-      MPI_CALL(Init_thread(ac, (char ***)&av,
+      MPI_CALL(Init_thread(ac, const_cast<char ***>(&av),
                            MPI_THREAD_MULTIPLE, &provided));
     } else {
       /* MPI was already initialized by the app that called us! */
@@ -148,9 +148,11 @@ namespace mpicommon {
     }
     mpiIsThreaded = provided == MPI_THREAD_MULTIPLE;
 
-    MPI_CALL(Comm_dup(MPI_COMM_WORLD, &world.comm));
-    MPI_CALL(Comm_rank(world.comm, &world.rank));
-    MPI_CALL(Comm_size(world.comm, &world.size));
+    if (useCommWorld) {
+      MPI_CALL(Comm_dup(MPI_COMM_WORLD, &world.comm));
+      MPI_CALL(Comm_rank(world.comm, &world.rank));
+      MPI_CALL(Comm_size(world.comm, &world.size));
+    }
     return !initialized;
   }
 

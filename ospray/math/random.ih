@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #pragma once
+
+#include "vec.ih"
 
 #define TABLE_SIZE 32
 #define WARMUP_ITERATIONS 7
@@ -166,6 +168,70 @@ inline varying vec2f RandomTEA__getFloats(varying RandomTEA* uniform this) {
   return make_vec2f(this->v0 * tofloat, this->v1 * tofloat);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// LCG - Linear Congruential Generator
+
+inline unsigned int LCG_next(unsigned int value)
+{
+  const unsigned int m = 1664525;
+  const unsigned int n = 1013904223;
+
+  return value * m + n;
+}
+
+inline float LCG_getFloat(unsigned int& state)
+{
+  state = LCG_next(state);
+  return to_float_unorm(state);
+}
+
+inline vec2f LCG_getFloat2(unsigned int& state)
+{
+  const float x = LCG_getFloat(state);
+  const float y = LCG_getFloat(state);
+  return make_vec2f(x, y);
+}
+
+inline vec3f LCG_getFloat3(unsigned int& state)
+{
+  const float x = LCG_getFloat(state);
+  const float y = LCG_getFloat(state);
+  const float z = LCG_getFloat(state);
+  return make_vec3f(x, y, z);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Hash functions
+
+inline unsigned int MurmurHash3_mix(unsigned int hash, unsigned int k)
+{
+  const unsigned int c1 = 0xcc9e2d51;
+  const unsigned int c2 = 0x1b873593;
+  const unsigned int r1 = 15;
+  const unsigned int r2 = 13;
+  const unsigned int m = 5;
+  const unsigned int n = 0xe6546b64;
+
+  k *= c1;
+  k = (k << r1) | (k >> (32 - r1));
+  k *= c2;
+
+  hash ^= k;
+  hash = ((hash << r2) | (hash >> (32 - r2))) * m + n;
+
+  return hash;
+}
+
+inline unsigned int MurmurHash3_finalize(unsigned int hash)
+{
+  hash ^= hash >> 16;
+  hash *= 0x85ebca6b;
+  hash ^= hash >> 13;
+  hash *= 0xc2b2ae35;
+  hash ^= hash >> 16;
+
+  return hash;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Utility functions

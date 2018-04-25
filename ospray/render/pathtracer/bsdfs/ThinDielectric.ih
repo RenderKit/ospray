@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,6 +17,7 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "Fresnel.ih"
 
 // ThinDielectric models a very thin, transparent slab, i.e. it assumes two
 // parallel interfaces with unit-distrance with a (potentially) attenuating

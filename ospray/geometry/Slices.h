@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -50,7 +50,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Slices : public Geometry
   {
     Slices();
-    virtual ~Slices() = default;
+    virtual ~Slices() override = default;
     virtual std::string toString() const override;
     virtual void finalize(Model *model) override;
 
@@ -59,8 +59,8 @@ namespace ospray {
     Ref<Data> planesData; //!< refcounted data array for planes data
     Ref<Volume> volume;
 
-    size_t       numPlanes;
-    const vec4f *planes;
+    size_t numPlanes;
+    vec4f *planes;
   };
   /*! @} */
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,14 +15,17 @@
 // ======================================================================== //
 
 #include "Geometry.h"
-#include "sg/common/World.h"
+#include "../common/Model.h"
 
 namespace ospray {
   namespace sg {
 
     Geometry::Geometry(const std::string &type)
     {
-      createChild("material", "Material");
+      auto matList =
+        createChild("materialList", "MaterialList").nodeAs<MaterialList>();
+      matList->push_back(createNode("default", "Material")->nodeAs<Material>());
+
       createChild("type", "string", type);
       setValue((OSPGeometry)nullptr);
     }
@@ -32,7 +35,7 @@ namespace ospray {
       return "ospray::sg::Geometry";
     }
 
-    void Geometry::preCommit(RenderContext &ctx)
+    void Geometry::preCommit(RenderContext &)
     {
       auto ospGeometry = valueAs<OSPGeometry>();
       if (!ospGeometry) {
@@ -44,12 +47,30 @@ namespace ospray {
       }
     }
 
-    void Geometry::postCommit(RenderContext &ctx)
+    void Geometry::postCommit(RenderContext &)
     {
       auto ospGeometry = valueAs<OSPGeometry>();
-      if (hasChild("material")) {
+
+      if (hasChild("material") && !hasChild("materialList")) {
+        // XXX FIXME never happens
         ospSetMaterial(ospGeometry, child("material").valueAs<OSPMaterial>());
       }
+
+      auto materialListNode = child("materialList").nodeAs<MaterialList>();
+      const auto &materialList = materialListNode->nodes;
+      if (!materialList.empty()) {
+        std::vector<OSPObject> mats;
+        for (auto mat : materialList) {
+          auto m = mat->valueAs<OSPObject>();
+          if (m)
+            mats.push_back(m);
+        }
+        auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
+        ospCommit(ospMaterialList);
+        ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
+        ospRelease(ospMaterialList);
+      }
+
       ospCommit(ospGeometry);
     }
 

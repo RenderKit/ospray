@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -99,7 +99,7 @@ export void *uniform Slices_set(void          *uniform _slices,
 
   slices->super.model  = model;
   slices->super.geomID = geomID;
-  slices->super.primitives = numPlanes;
+  slices->super.numPrimitives = numPlanes;
   slices->planes = planes;
   slices->volume = volume;
 

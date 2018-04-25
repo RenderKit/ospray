@@ -1,18 +1,18 @@
-// ************************************************************************** //
-// Copyright 2016 Ingo Wald                                                   //
-//                                                                            //
-// Licensed under the Apache License, Version 2.0 (the "License");            //
-// you may not use this file except in compliance with the License.           //
-// You may obtain a copy of the License at                                    //
-//                                                                            //
-// http://www.apache.org/licenses/LICENSE-2.0                                 //
-//                                                                            //
-// Unless required by applicable law or agreed to in writing, software        //
-// distributed under the License is distributed on an "AS IS" BASIS,          //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   //
-// See the License for the specific language governing permissions and        //
-// limitations under the License.                                             //
-// ************************************************************************** //
+// ======================================================================== //
+// Copyright 2016-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #include "ospcommon/tasking/tasking_system_handle.h"
 #include "maml/maml.h"
@@ -24,15 +24,15 @@
 struct MyHandler : public maml::MessageHandler
 {
   MyHandler() = default;
-  
-  void incoming(const std::shared_ptr<maml::Message> &message) override
+
+  void incoming(const std::shared_ptr<maml::Message> &) override
   {
     ++numReceived;
   }
 
   std::atomic<int> numReceived;
 };
-  
+
 extern "C" int main(int ac, char **av)
 {
   MPI_CALL(Init(&ac, &av));
@@ -49,19 +49,19 @@ extern "C" int main(int ac, char **av)
 
   int numMessages = 100;
   int payloadSize = 100000;
-  
+
   MyHandler handler;
   maml::registerHandlerFor(MPI_COMM_WORLD,&handler);
 
   char *payload = (char*)malloc(payloadSize);
   for (int i=0;i<payloadSize;i++)
     payload[i] = distrib(rng);
-  
+
   for (int run=0;run<numRuns;run++) {
     MPI_CALL(Barrier(MPI_COMM_WORLD));
     double t0 = ospcommon::getSysTime();
     maml::start();
-    
+
     for (int mID=0;mID<numMessages;mID++) {
       for (int r=0;r<numRanks;r++) {
         maml::sendTo(MPI_COMM_WORLD,r,std::make_shared<maml::Message>(payload,payloadSize));
@@ -80,7 +80,7 @@ extern "C" int main(int ac, char **av)
            rate.c_str());
     MPI_CALL(Barrier(MPI_COMM_WORLD));
   }
-  
+
   MPI_CALL(Barrier(MPI_COMM_WORLD));
   MPI_Finalize();
 }

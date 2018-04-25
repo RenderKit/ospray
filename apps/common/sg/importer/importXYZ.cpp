@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -36,7 +36,7 @@ namespace ospray {
       else if (fileName.ext() == "xyz3")
         m.loadXYZ3(fileName);
 
-      for (int i = 0; i < m.atomType.size(); i++) {
+      for (size_t i = 0; i < m.atomType.size(); i++) {
         auto name = fileName.str() + "_type_" + std::to_string(i);
 
         auto spGeom = createNode(name + "_geometry",

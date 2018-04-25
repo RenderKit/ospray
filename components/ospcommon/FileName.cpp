@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -66,10 +66,10 @@ namespace ospcommon
   }
 
   /*! returns the path */
-  FileName FileName::path() const {
+  std::string FileName::path() const {
     size_t pos = filename.find_last_of(path_sep);
-    if (pos == std::string::npos) return FileName();
-    return filename.substr(0,pos);
+    if (pos == std::string::npos) return "";	
+    return filename.substr(0,pos+1);
   }
 
   /*! returns the basename */

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -72,11 +72,13 @@ inline void postIntersect(uniform Model *uniform model,
 {
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
+  dg.material = NULL;
 
   if (flags & DG_COLOR)
     dg.color = make_vec4f(1.f);
 
   dg.P = ray.org + ray.t * ray.dir;
+  dg.epsilon = getIntersectionError(dg.P, ray.t);
 
   // a first hack for instancing: problem is that ospray assumes that
   // 'ray.geomid' specifies the respective sub-geometry of a model
@@ -91,8 +93,10 @@ inline void postIntersect(uniform Model *uniform model,
     foreach_unique(geomID in ray.geomID) {
       uniform Geometry *uniform geom = model->geometry[geomID];
       dg.geometry = geom;
-      dg.material = geom->material;
       geom->postIntersect(geom,model,dg,ray,flags);
+      if (geom->materialList) {
+        dg.material = geom->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+      }
     }
   } else {
     // instanced geometry: create copy of ray, iterate over
@@ -102,9 +106,12 @@ inline void postIntersect(uniform Model *uniform model,
     foreach_unique(instID in ray.instID) {
       uniform Geometry *uniform instGeom = model->geometry[instID];
       dg.geometry = instGeom;
-      dg.material = instGeom->material;
       newRay.instID = -1;
       instGeom->postIntersect(instGeom,model,dg,newRay,flags);
+      // override the geometry's material if the instance has its own material list
+      if (instGeom->materialList) {
+        dg.material = instGeom->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+      }
     }
   }
 

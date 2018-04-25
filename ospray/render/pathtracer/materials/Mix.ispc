@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,6 @@
 #include "Material.ih"
 #include "texture/TextureParam.ih"
 #include "render/pathtracer/bsdfs/MultiBSDF.ih"
-#include "render/pathtracer/bsdfs/Scale.ih"
 
 struct Mix
 {
@@ -32,7 +31,7 @@ struct Mix
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Mix_getBSDF(const uniform PathTraceMaterial* uniform super,
+const varying BSDF* varying Mix_getBSDF(const uniform PathTraceMaterial* uniform super,
                                         uniform ShadingContext* uniform ctx,
                                         const DifferentialGeometry& dg,
                                         const Ray& ray,
@@ -44,10 +43,10 @@ const varying BSDF* uniform Mix_getBSDF(const uniform PathTraceMaterial* uniform
   float factor = self->factor * clamp(get1f(self->map_factor, dg.st, 1.f));
 
   if (self->mat1)
-    MultiBSDF_add(bsdf, Scale_create(ctx, self->mat1->getBSDF(self->mat1, ctx, dg, ray, currentMedium), 1.0f - factor), 1.0f - factor);
+    MultiBSDF_add(bsdf, self->mat1->getBSDF(self->mat1, ctx, dg, ray, currentMedium), 1.0f - factor, 1.0f - factor);
 
   if (self->mat2)
-    MultiBSDF_add(bsdf, Scale_create(ctx, self->mat2->getBSDF(self->mat2, ctx, dg, ray, currentMedium), factor), factor);
+    MultiBSDF_add(bsdf, self->mat2->getBSDF(self->mat2, ctx, dg, ray, currentMedium), factor, factor);
 
   return bsdf;
 }

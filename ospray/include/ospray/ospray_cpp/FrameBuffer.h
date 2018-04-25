@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -43,7 +43,7 @@ namespace ospray {
       void setPixelOp(PixelOp &p) const;
       void setPixelOp(OSPPixelOp p) const;
 
-      const void *map(OSPFrameBufferChannel channel) const;
+      void *map(OSPFrameBufferChannel channel) const;
       void unmap(void *ptr) const;
       void clear(uint32_t channel) const;
 
@@ -110,9 +110,9 @@ namespace ospray {
       ospSetPixelOp(handle(), p);
     }
 
-    inline const void *FrameBuffer::map(OSPFrameBufferChannel channel) const
+    inline void *FrameBuffer::map(OSPFrameBufferChannel channel) const
     {
-      return ospMapFrameBuffer(handle(), channel);
+      return const_cast<void*>(ospMapFrameBuffer(handle(), channel));
     }
 
     inline void FrameBuffer::unmap(void *ptr) const

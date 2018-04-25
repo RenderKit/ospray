@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -32,7 +32,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE TransferFunction : public ManagedObject
   {
     TransferFunction() = default;
-    virtual ~TransferFunction() = default;
+    virtual ~TransferFunction() override = default;
     virtual void commit() override;
     virtual std::string toString() const override;
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,7 +37,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   {
     Renderer() = default;
-    virtual ~Renderer() = default;
+    virtual ~Renderer() override = default;
 
     /*! \brief creates an abstract renderer class of given type
 
@@ -49,10 +49,10 @@ namespace ospray {
 
     virtual void commit() override;
     virtual std::string toString() const override;
-    
+
     /*! \brief render one frame, and put it into given frame buffer */
     virtual float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags);
-    
+
     //! \brief called to initialize a new frame
     /*! this function gets called exactly once (on each node) at the
       beginning of each frame, and allows the renderer to do whatever
@@ -81,6 +81,9 @@ namespace ospray {
 
     Model *model {nullptr};
     FrameBuffer *currentFB {nullptr};
+
+    /*! \brief parameter to automatically prevent self-intersection issues */
+    bool autoEpsilon {true};
 
     /*! \brief parameter to prevent self-intersection issues, will be scaled with diameter of the scene */
     float epsilon {1e-6f};

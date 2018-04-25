@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -60,7 +60,6 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Cylinders : public Geometry
   {
     Cylinders();
-    virtual ~Cylinders() = default;
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
     /*! \brief integrates this geometry's primitives into the respective
@@ -80,8 +79,6 @@ namespace ospray {
     float epsilon;  //epsilon for intersections
 
     Ref<Data> cylinderData;
-    Ref<Data> materialList;
-    void     *_materialList {nullptr};
     Ref<Data> colorData; /*!< cylinder color array */
     Ref<Data> texcoordData;
   };

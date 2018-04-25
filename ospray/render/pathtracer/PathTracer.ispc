@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,6 +34,12 @@ inline float misHeuristic(float pdf1, float pdf2)
   // using the limit when pdf1 approaches inf
   // compare with bit less than sqrt(float_max) (when sqr starts to overflow)
   return pdf1 > 1e17f ? 1.0f : p;
+}
+
+inline float getEpsilon(const uniform PathTracer* uniform self,
+                        const DifferentialGeometry& dg)
+{
+  return self->super.autoEpsilon ? dg.epsilon : self->super.epsilon;
 }
 
 // TODO use intersection filters
@@ -80,7 +86,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
       if (m != NULL)
         m->selectNextMedium(m, medium);
 
-    shadowRay.t0 = shadowRay.t + self->super.epsilon;
+    shadowRay.t0 = shadowRay.t + getEpsilon(self, dg);
     shadowRay.t = tOriginal;
     shadowRay.primID = -1;
     shadowRay.geomID = -1;
@@ -106,6 +112,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   DifferentialGeometry lastDg;
   // P and N also used by light eval
   lastDg.P = ray.org;
+  lastDg.epsilon = getIntersectionError(ray.org, 0.f);
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
@@ -136,6 +143,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       if (shadowCatcherDist <= ray.t && shadowCatcherDist > ray.t0) {
         // "postIntersect" of shadowCatcher plane
         dg.P = ray.org + shadowCatcherDist * ray.dir;
+        dg.epsilon = getIntersectionError(dg.P, shadowCatcherDist);
         dg.Ns = dg.Ng = make_vec3f(self->shadowCatcherPlane);
         if (dot(ray.dir, dg.Ng) >= 0.f)
           dg.Ns = dg.Ng = neg(dg.Ng);
@@ -162,7 +170,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           // test for shadows
           Ray shadowRay;
           setRay(shadowRay, dg.P, ls.dir,
-              self->super.epsilon, ls.dist - self->super.epsilon, ray.time);
+              getEpsilon(self, dg), ls.dist - getEpsilon(self, dg), ray.time);
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
@@ -299,7 +307,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         // test for shadows
         Ray shadowRay;
         setRay(shadowRay, dg.P, ls.dir,
-               self->super.epsilon, ls.dist - self->super.epsilon, ray.time);
+               getEpsilon(self, dg), ls.dist - getEpsilon(self, dg), ray.time);
 
         const vec3f nextLw = Lw * fe.value;
 
@@ -359,7 +367,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);
-    setRay(ray, dg.P, fs.wi, self->super.epsilon, inf, ray.time);
+    setRay(ray, dg.P, fs.wi, getEpsilon(self, dg), inf, ray.time);
     depth++;
   } while (reduce_max(Lw) > self->super.minContribution);
 

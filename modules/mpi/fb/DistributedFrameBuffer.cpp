@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -117,7 +117,7 @@ namespace ospray {
         vec2i coords, float error)
       : colorFormat(fmt), hasDepth(hasDepth)
     {
-      int command;
+      int command = 0;
       size_t msgSize = 0;
       switch (colorFormat) {
         case OSP_FB_NONE:
@@ -133,8 +133,6 @@ namespace ospray {
           msgSize = sizeof(MasterTileMessage_RGBA_F32);
           pixelSize = sizeof(vec4f);
           break;
-        default:
-          throw std::runtime_error("Unsupported color buffer fmt in DFB!");
       }
       if (hasDepth) {
         msgSize += sizeof(float) * TILE_SIZE * TILE_SIZE;
@@ -244,7 +242,7 @@ namespace ospray {
 
   void DFB::startNewFrame(const float errorThreshold)
   {
-    std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
+    std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
 
     {
       SCOPED_LOCK(mutex);
@@ -256,7 +254,7 @@ namespace ospray {
 
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
-      delayedMessage = this->delayedMessage;
+      _delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
 
       // NOTE: Doing error sync may do a broadcast, needs to be done before
@@ -300,7 +298,7 @@ namespace ospray {
     }
 
     // might actually want to move this to a thread:
-    for (auto &msg : delayedMessage)
+    for (auto &msg : _delayedMessage)
       scheduleProcessing(msg);
 
     if (isFrameComplete(0))
@@ -342,7 +340,6 @@ namespace ospray {
       td = new AlphaBlendTile_simple(this, xy, tileID, ownerID);
       break;
     case Z_COMPOSITE:
-    default:
       size_t numWorkers = masterIsAWorker ? mpicommon::numGlobalRanks() :
                                             mpicommon::numWorkers();
       td = new ZCompositeTile(this, xy, tileID, ownerID, numWorkers);
@@ -451,7 +448,37 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
     if (pixelOp) {
       pixelOp->postAccum(tile->final);
+      if (colorBufferFormat == OSP_FB_RGBA8 || colorBufferFormat == OSP_FB_SRGBA) {
+        uint8_t *colors = reinterpret_cast<uint8_t*>(tile->color);
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
+          colors[i * 4] = clamp(tile->final.r[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 1] = clamp(tile->final.g[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 2] = clamp(tile->final.b[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 3] = clamp(tile->final.a[i] * 255.0, 0.0, 255.0);
+        }
+      } else if (colorBufferFormat == OSP_FB_RGBA32F) {
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
+          tile->color[i] = vec4f(tile->final.r[i], tile->final.g[i],
+              tile->final.b[i], tile->final.a[i]);
+        }
+      }
     }
+
+    // write the final colors into the color buffer
+    // normalize and write final color, and compute error
+    auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
+    switch (colorBufferFormat) {
+      case OSP_FB_RGBA8:
+        DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
+        break;
+      case OSP_FB_SRGBA:
+        DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
+        break;
+      default:
+      break;
+    }
+
+    DFB_writeTile((ispc::VaryingTile*)&tile->final, &tile->color);
 
     auto msg = [&]{
       MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
@@ -480,7 +507,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
       DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i/%i\n",
                  mpicommon::globalRank(), tile->begin.x, tile->begin.y,
-                 numTilesCompletedThisFrame.load(), myTiles.size()));
+                 numTilesCompletedThisFrame, myTiles.size()));
     } else {
       // If we're the master sending a message to ourself skip going
       // through the messaging layer entirely and just call incoming directly
@@ -488,7 +515,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
     }
   }
 
-  void DFB::finalizeTileOnMaster(TileData *tile)
+  void DFB::finalizeTileOnMaster(TileData *DBG(tile))
   {
     assert(mpicommon::IamTheMaster());
     /*! we will not do anything with the tile other than mark it's done */
@@ -637,7 +664,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
   {
     frameID = -1; // we increment at the start of the frame
     if (!myTiles.empty()) {
-      tasking::parallel_for(myTiles.size(), [&](int taskIndex) {
+      tasking::parallel_for(myTiles.size(), [&](size_t taskIndex) {
         TileData *td = this->myTiles[taskIndex];
         assert(td);
         const auto bytes = TILE_SIZE * TILE_SIZE * sizeof(float);
@@ -673,6 +700,9 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
   int32 DFB::accumID(const vec2i &tile)
   {
+    if (!hasAccumBuffer)
+      return 0;
+
     const auto tileNr = tile.y * numTiles.x + tile.x;
     tileInstances[tileNr]++;
     return tileAccumID[tileNr]++;

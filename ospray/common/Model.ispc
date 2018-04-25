@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,16 +31,28 @@ export void *uniform Model_create(void *uniform cppE)
   return (void *uniform)model;
 }
 
-export void Model_init(void *uniform _model, 
+export void Model_cleanup(void *uniform _model)
+{
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+  if (model->geometry) delete[] model->geometry;
+  if (model->volumes)  delete[] model->volumes;
+}
+
+export void Model_init(void *uniform _model,
                        void *uniform embreeDevice,
-                       uniform int32 numGeometries, 
+                       uniform int32 numGeometries,
                        uniform int32 numVolumes)
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;
   if (model->embreeSceneHandle)
     rtcDeleteScene(model->embreeSceneHandle);
 
-  uniform RTCSceneFlags scene_flags = RTC_SCENE_STATIC | RTC_SCENE_HIGH_QUALITY;
+  uniform RTCSceneFlags scene_flags
+    = 
+    // RTC_SCENE_STATIC |
+    // RTC_SCENE_HIGH_QUALITY
+    RTC_SCENE_DYNAMIC
+    ;
 
   uniform RTCAlgorithmFlags traversal_flags =
       RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;
@@ -57,12 +69,12 @@ export void Model_init(void *uniform _model,
   model->geometryCount = numGeometries;
   if (numGeometries > 0)
     model->geometry = uniform new uniform uniGeomPtr[numGeometries];
-  else 
+  else
     model->geometry = NULL;
 
   if (model->volumes) delete[] model->volumes;
   model->volumeCount = numVolumes;
-  if (numVolumes > 0) 
+  if (numVolumes > 0)
     model->volumes = uniform new uniform uniVolumePtr[numVolumes];
   else
     model->volumes = NULL;

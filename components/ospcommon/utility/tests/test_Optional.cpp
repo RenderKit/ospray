@@ -1,4 +1,19 @@
-#define CATCH_CONFIG_MAIN
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "../../testing/catch.hpp"
 
 #include "../Optional.h"
@@ -74,11 +89,24 @@ TEST_CASE("Optional<> construction", "[constructors]")
   }
 }
 
-TEST_CASE("Optional<>::operator=()", "[methods]")
+TEST_CASE("Optional<>::operator=(T)", "[methods]")
 {
   Optional<int> opt;
   opt = 5;
   verify_value(opt, 5);
+}
+
+TEST_CASE("Optional<>::operator=(Optional<>)", "[methods]")
+{
+  Optional<int> opt;
+  opt = 5;
+
+  Optional<int> otherOpt = opt;
+  verify_value(otherOpt, 5);
+
+  Optional<float> movedFromOpt;
+  movedFromOpt = std::move(opt);
+  verify_value(movedFromOpt, 5.f);
 }
 
 TEST_CASE("Optional<>::value_or()", "[methods]")

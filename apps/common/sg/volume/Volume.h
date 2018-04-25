@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -46,10 +46,6 @@ namespace ospray {
       //! return bounding box of all primitives
       box3f bounds() const override;
 
-      //! \brief Initialize this node's value from given XML node
-      void setFromXML(const xml::Node &node,
-                      const unsigned char *binBasePtr) override;
-
       vec3i dimensions {-1};
       std::string voxelType = "<undefined>";
 
@@ -61,10 +57,6 @@ namespace ospray {
     {
       std::string toString() const override;
 
-      //! \brief Initialize this node's value from given XML node
-      void setFromXML(const xml::Node &node,
-                      const unsigned char *binBasePtr) override;
-
       void preCommit(RenderContext &ctx) override;
 
       //! \brief file name of the xml doc when the node was loaded from xml
@@ -72,51 +64,6 @@ namespace ospray {
       FileName fileNameOfCorrespondingXmlDoc;
 
       std::string fileName;
-    };
-
-    /*! a structured volume loaded from the Richtmyer-Meshkov .bob files */
-    struct OSPSG_INTERFACE RichtmyerMeshkov : public StructuredVolume
-    {
-      RichtmyerMeshkov();
-
-      std::string toString() const override;
-
-      //! \brief Initialize this node's value from given XML node
-      void setFromXML(const xml::Node &node,
-                      const unsigned char *binBasePtr) override;
-
-      void preCommit(RenderContext &ctx) override;
-
-      std::string dirName;
-      int timeStep {-1};
-
-      //! \brief file name of the xml doc when the node was loaded from xml
-      /*! \detailed we need this to properly resolve relative directory names */
-      FileName fileNameOfCorrespondingXmlDoc;
-
-    private:
-
-      //! \brief state for the loader threads to use, for picking which block to load
-      struct LoaderState
-      {
-        std::mutex mutex;
-        std::atomic<size_t> nextBlockID;
-        bool useGZip;
-        FileName fullDirName;
-        int timeStep;
-        vec2f voxelRange;
-
-        const static size_t BLOCK_SIZE;
-        const static size_t NUM_BLOCKS;
-
-        LoaderState(const FileName &fullDirName, const int timeStep);
-        //! \brief Load the next RM block and return the id of the loaded block.
-        //         If all blocks are loaded, returns a block ID >= NUM_BLOCKS
-        size_t loadNextBlock(std::vector<uint8_t> &b);
-      };
-
-      //! \brief worker thread function for loading blocks of the RM data
-      void loaderThread(LoaderState &state);
     };
 
   } // ::ospray::sg

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,15 +34,15 @@ namespace ospray {
         if (getIE() == nullptr)
           ispcEquivalent = ispc::PathTracer_OBJ_create();
 
-        Texture2D *map_d  = (Texture2D*)getParamObject("map_d", nullptr);
+        Texture2D *map_d  = (Texture2D*)getParamObject("map_d");
         affine2f xform_d  = getTextureTransform("map_d");
-        Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", nullptr)));
+        Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap")));
         affine2f xform_Kd = getTextureTransform("map_Kd") * getTextureTransform("map_kd") * getTextureTransform("colorMap"); 
-        Texture2D *map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks", nullptr));
+        Texture2D *map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks"));
         affine2f xform_Ks = getTextureTransform("map_Ks") * getTextureTransform("map_ks"); 
-        Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", nullptr));
+        Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns"));
         affine2f xform_Ns = getTextureTransform("map_Ns") * getTextureTransform("map_ns"); 
-        Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", getParamObject("normalMap", getParamObject("bumpMap", nullptr))));
+        Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", getParamObject("normalMap", getParamObject("bumpMap"))));
         affine2f xform_Bump = getTextureTransform("map_Bump") * getTextureTransform("map_bump") * getTextureTransform("normalMap") * getTextureTransform("BumpMap"); 
         linear2f rot_Bump   = xform_Bump.l.orthogonal().transposed();
 

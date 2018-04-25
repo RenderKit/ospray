@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,6 +34,7 @@ public:
 
   void set(const std::string &name, const std::string &v) const;
   void set(const std::string &name, int v) const;
+  void set(const std::string &name, void *v) const;
 
   void commit() const;
 
@@ -76,6 +77,11 @@ inline void Device::set(const std::string &name, const std::string &v) const
 inline void Device::set(const std::string &name, int v) const
 {
   ospDeviceSet1i(ospHandle, name.c_str(), v);
+}
+
+inline void Device::set(const std::string &name, void *v) const
+{
+  ospDeviceSetVoidPtr(ospHandle, name.c_str(), v);
 }
 
 inline void Device::commit() const

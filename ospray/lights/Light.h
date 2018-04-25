@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -23,7 +23,7 @@ namespace ospray {
   //! Base class for Light objects
   struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
   {
-    virtual ~Light() = default;
+    virtual ~Light() override = default;
 
     //! Create a light of the given type
     static Light *createLight(const char *type);

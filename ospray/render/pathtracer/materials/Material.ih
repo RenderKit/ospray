@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,10 +22,11 @@
 #include "Medium.ih"
 #include "render/pathtracer/bsdfs/BSDF.ih"
 #include "render/pathtracer/bsdfs/ShadingContext.ih"
+#include "texture/TextureParam.ih"
 
 struct PathTraceMaterial;
 
-typedef const varying BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform self,
+typedef const varying BSDF* varying (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform self,
                                                                      uniform ShadingContext* uniform ctx,
                                                                      /*! The point to shade on a surface. */
                                                                      const DifferentialGeometry& dg,
@@ -60,3 +61,37 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetTransparencyFunc getTransparency = NULL,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);
                                    // const uniform vec3f emission = { 0.f, 0.f, 0.f }; fails, ISPC issue #1231
+
+inline linear3f makeShadingFrame(const DifferentialGeometry& dg, const vec3f& localNormal)
+{
+  // transform to world space and align to tangents/texture coordinates
+  linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
+  vec3f shadingNormal = f * localNormal;
+  // in general f is not ortho-normal, thus need to re-normalize
+  shadingNormal = normalize(shadingNormal);
+  return frame(shadingNormal);
+}
+
+inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
+                                 const uniform TextureParam& normalMap,
+                                 const uniform linear2f& normalRot,
+                                 uniform float normalScale = 1.f)
+{
+  vec3f shadingNormal;
+  if (valid(normalMap)) {
+    // get normal from texture
+    vec3f localNormal = getNormal(normalMap, dg.st) * make_vec3f(normalScale, normalScale, 1.f);
+    // rotate in 2D (tangent space) to account for tc transformations
+    vec2f rotNormal = normalRot * make_vec2f(localNormal.x, localNormal.y);
+    localNormal.x = rotNormal.x;
+    localNormal.y = rotNormal.y;
+    // transform to world space and align to tangents/texture coordinates
+    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
+    shadingNormal = f * localNormal;
+    // in general f is not ortho-normal, thus need to re-normalize
+    shadingNormal = normalize(shadingNormal);
+  } else {
+    shadingNormal = dg.Ns;
+  }
+  return frame(shadingNormal);
+}

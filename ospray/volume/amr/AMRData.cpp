@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -49,7 +49,7 @@ namespace ospray {
       auto numBricks = getNumBricks(brickInfoData);
       const BrickInfo *brickInfo = (const BrickInfo *)brickInfoData.data;
       const Data **allBricksData = (const Data **)brickDataData.data;
-      for (int i = 0; i < numBricks; i++)
+      for (size_t i = 0; i < numBricks; i++)
         brick.emplace_back(brickInfo[i], (const float*)allBricksData[i]->data);
     }
 

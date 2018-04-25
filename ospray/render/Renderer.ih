@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -75,6 +75,7 @@ struct Renderer {
                      frame */
   Model       *uniform model;
   Camera      *camera;
+  bool         autoEpsilon; // flag whether to compute epsilon automatically/adaptively
   float        epsilon; // parameter to prevent self-intersection issues, will be scaled with diameter of the scene
   int32        spp; // number of samples per pixel; negative values mean subsampling, i.e. render only every 2^-spp pixel in x and y for the first frame
   vec4f bgColor;// background color and alpha

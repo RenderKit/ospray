@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -13,6 +13,10 @@
 // See the License for the specific language governing permissions and      //
 // limitations under the License.                                           //
 // ======================================================================== //
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-qual"
+#pragma clang diagnostic ignored "-Wextended-offsetof"
 
 #undef NDEBUG
 
@@ -77,7 +81,7 @@ namespace ospray {
         void *other_props = nullptr;      /* other properties */
       } Face;
 
-      PlyProperty vert_props[] = { /* list of property information for a vertex */
+      static PlyProperty vert_props[] = { /* list of property information for a vertex */
         {(char*)"x", PLY_FLOAT, PLY_FLOAT, offsetof(::ospray::sg::ply::Vertex,coord[X]), 0, 0, 0, 0},
         {(char*)"y", PLY_FLOAT, PLY_FLOAT, offsetof(::ospray::sg::ply::Vertex,coord[Y]), 0, 0, 0, 0},
         {(char*)"z", PLY_FLOAT, PLY_FLOAT, offsetof(::ospray::sg::ply::Vertex,coord[Z]), 0, 0, 0, 0},
@@ -100,7 +104,7 @@ namespace ospray {
         VTX_BLUE
       };
 
-      PlyProperty face_props[] = { /* list of property information for a face */
+      static PlyProperty face_props[] = { /* list of property information for a face */
         {(char*)"vertex_indices", PLY_INT, PLY_INT, offsetof(Face,verts),
          1, PLY_UCHAR, PLY_UCHAR, offsetof(Face,nverts)},
         {(char*)"red", PLY_UCHAR, PLY_UCHAR, offsetof(Face,red), 0, 0, 0, 0},
@@ -116,20 +120,12 @@ namespace ospray {
         float version;
         int vertices = 0;
 
-        int triangles = 0;
-
         int has_x, has_y, has_z;
-        int has_face_red=0; // face colors
-        int has_face_green=0; // face colors
         int has_face_blue=0; // face colors
-        int has_vertex_red=0; // vertex colors
-        int has_vertex_green=0; // vertex colors
-        int has_vertex_blue=0; // vertex colors
         int has_nx=0, has_ny=0, has_nz=0;
         int has_fverts=0;
 
         PlyOtherElems *other_elements = nullptr;
-        PlyOtherProp *vert_other,*face_other;//,*edge_other;
 
         char **element_list = nullptr;
         int file_type = 0;
@@ -142,13 +138,11 @@ namespace ospray {
         /*** Read in the original PLY object ***/
         const char *filename = fileName.c_str();
         FILE *file;
-        bool isPipe = false;
 
         if (strlen(filename) > 7 && !strcmp(filename+strlen(filename)-7,".ply.gz")) {
 #ifdef _WIN32
           THROW_SG_ERROR("#osp:sg:ply: gzipped file not supported yet on Windows");
 #else
-          isPipe = true;
           const char cmdPattern[] = "/usr/bin/gunzip -c %s";
           char *cmd = new char[sizeof(cmdPattern) + strlen(filename)];
           sprintf(cmd, cmdPattern, filename);
@@ -210,25 +204,22 @@ namespace ospray {
                 has_nz = TRUE;
               } else if (equal_strings("diffuse_red", plist[j]->name)) {
                 ply_get_property (ply, elem_name, &vert_props[VTX_RED]);  /* z */
-                has_vertex_red = TRUE;
               } else if (equal_strings("diffuse_green", plist[j]->name)) {
                 ply_get_property (ply, elem_name, &vert_props[VTX_GREEN]);  /* z */
-                has_vertex_green = TRUE;
               } else if (equal_strings("diffuse_blue", plist[j]->name)) {
                 ply_get_property (ply, elem_name, &vert_props[VTX_BLUE]);  /* z */
-                has_vertex_blue = TRUE;
               }
             }
 
-            vert_other = ply_get_other_properties (ply, elem_name,
-                                                   offsetof(Vertex,other_props));
+            ply_get_other_properties(ply, elem_name,
+                                     offsetof(Vertex,other_props));
 
             /* test for necessary properties */
             if ((!has_x) || (!has_y) || (!has_z))
-              {
-                fprintf(stderr, "Vertices don't have x, y, and z\n");
-                exit(-1);
-              }
+            {
+              fprintf(stderr, "Vertices don't have x, y, and z\n");
+              exit(-1);
+            }
 
             vertices = num_elems;
             if (has_nx && has_ny && has_nz)
@@ -259,27 +250,20 @@ namespace ospray {
                 has_fverts = TRUE;
               } else if (equal_strings("red", plist[j]->name)) {
                 ply_get_property(ply, elem_name, &face_props[FACE_RED]);/* vertex_indices */
-                has_face_red = TRUE;
               } else if (equal_strings("green", plist[j]->name)) {
                 ply_get_property(ply, elem_name, &face_props[FACE_GREEN]);/* vertex_indices */
-                has_face_green = TRUE;
               } else if (equal_strings("blue", plist[j]->name)) {
                 ply_get_property(ply, elem_name, &face_props[FACE_BLUE]);/* vertex_indices */
-                has_face_blue = TRUE;
               }
             }
-            face_other = ply_get_other_properties (ply, elem_name,
-                                                   offsetof(Face,other_props));
-
+            ply_get_other_properties(ply, elem_name,
+                                     offsetof(Face,other_props));
 
             /* test for necessary properties */
             if (!has_fverts) {
               fprintf(stderr, "Faces must have vertex indices\n");
               exit(-1);
             }
-
-            triangles = num_elems;
-            // numTrisWritten += num_elems;
 
             /* grab all the face elements */
             for (int j=0; j<num_elems; j++)  {
@@ -314,15 +298,12 @@ namespace ospray {
 
 
         int num_comments;
-        char **comments;
-        // PlyOtherProp *vert_other,*face_other;//,*edge_other;
 
         int num_obj_info;
-        char **obj_info;
 
 
-        comments = ply_get_comments (ply, &num_comments);
-        obj_info = ply_get_obj_info (ply, &num_obj_info);
+        ply_get_comments (ply, &num_comments);
+        ply_get_obj_info (ply, &num_obj_info);
 
         ply_close (ply);
 
@@ -364,3 +345,5 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
+
+#pragma clang diagnostic pop

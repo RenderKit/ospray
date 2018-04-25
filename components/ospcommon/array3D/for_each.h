@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -35,6 +35,15 @@ namespace ospcommon {
     inline size_t longIndex(const vec3i &idx, const vec3i &dims)
     {
       return idx.x + size_t(dims.x) * (idx.y + size_t(dims.y) * idx.z);
+    }
+
+    /*! reverse mapping form a cell index to the cell coordinates, for
+        a given volume size 'dims' */
+    inline vec3i coordsOf(const size_t idx, const vec3i &dims)
+    {
+      return vec3i(idx % dims.x,
+                   (idx / dims.x) % dims.y,
+                   (idx / dims.x) / dims.y);
     }
 
     /*! iterate through all indices in [lower,upper), EXCLUSING the

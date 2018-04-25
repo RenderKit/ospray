@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,6 +17,7 @@
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/MPIBcastFabric.h"
 #include "mpi/MPIOffloadDevice.h"
+#include "api/ISPCDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -48,8 +49,6 @@
 #  include <unistd.h> // for gethostname
 #endif
 
-#define DBG(a) /**/
-
 #ifndef HOST_NAME_MAX
 #  define HOST_NAME_MAX 10000
 #endif
@@ -60,7 +59,7 @@ namespace ospray {
     using namespace mpicommon;
     using ospcommon::utility::getEnvVar;
 
-    void embreeErrorFunc(const RTCError code, const char* str)
+    static void embreeErrorFunc(void *, const RTCError code, const char* str)
     {
       std::stringstream msg;
       msg << "#osp: Embree internal error " << code << " : " << str;
@@ -115,11 +114,11 @@ namespace ospray {
 
       auto embreeDevice =
           rtcNewDevice(generateEmbreeDeviceCfg(*device).c_str());
-      device->embreeDevice = embreeDevice;
+      api::ISPCDevice::embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 
-      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
+      rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
 
       if (rtcDeviceGetError(embreeDevice) != RTC_NO_ERROR) {
         // why did the error function not get called !?

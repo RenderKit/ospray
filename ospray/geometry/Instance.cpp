@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,8 +48,8 @@ namespace ospray {
       instancedScene->commit();
     }
 
-    embreeGeomID = rtcNewInstance(model->embreeSceneHandle,
-                                  instancedScene->embreeSceneHandle);
+    embreeGeomID = rtcNewInstance2(model->embreeSceneHandle,
+                                   instancedScene->embreeSceneHandle);
 
     const box3f b = instancedScene->bounds;
     if (b.empty()) {
@@ -79,9 +79,9 @@ namespace ospray {
     bounds.extend(xfmPoint(xfm,v110));
     bounds.extend(xfmPoint(xfm,v111));
 
-    rtcSetTransform(model->embreeSceneHandle,embreeGeomID,
-                    RTC_MATRIX_COLUMN_MAJOR,
-                    (const float *)&xfm);
+    rtcSetTransform2(model->embreeSceneHandle,embreeGeomID,
+                     RTC_MATRIX_COLUMN_MAJOR,
+                     (const float *)&xfm);
     AffineSpace3f rcp_xfm = rcp(xfm);
     areaPDF.resize(instancedScene->geometry.size());
     ispc::InstanceGeometry_set(getIE(),

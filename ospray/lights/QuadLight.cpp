@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -38,7 +38,7 @@ namespace ospray {
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
 
-    const vec3f radiance = color * intensity;
+    vec3f radiance = color * intensity;
 
     ispc::QuadLight_set(getIE(),
                         (ispc::vec3f&)position,

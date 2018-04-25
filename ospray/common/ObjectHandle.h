@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -57,10 +57,10 @@ namespace ospray {
     bool defined() const;
 
     /*! define the given handle to refer to given object */
-    static void assign(const ObjectHandle &handle, const ManagedObject *object);
+    static void assign(const ObjectHandle &handle, ManagedObject *object);
 
     /*! define the given handle to refer to given object */
-    void assign(const ManagedObject *object) const;
+    void assign(ManagedObject *object) const;
 
     void freeObject() const;
 

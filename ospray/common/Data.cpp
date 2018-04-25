@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  Data::Data(size_t numItems, OSPDataType type, void *init, int flags) :
+  Data::Data(size_t numItems, OSPDataType type, const void *init, int flags) :
     numItems(numItems),
     numBytes(numItems * sizeOf(type)),
     flags(flags),
@@ -28,7 +28,7 @@ namespace ospray {
   {
     if (flags & OSP_DATA_SHARED_BUFFER) {
       Assert2(init != NULL, "shared buffer is NULL");
-      data = init;
+      data = const_cast<void *>(init);
     } else {
       data = alignedMalloc(numBytes+16);
       if (init)
@@ -38,6 +38,14 @@ namespace ospray {
     }
 
     managedObjectType = OSP_DATA;
+
+    if (type == OSP_OBJECT) {
+      Data **child = (Data **)data;
+      for (uint32_t i = 0; i < numItems; i++) {
+        if (child[i])
+          child[i]->refInc();
+      }
+    }
   }
 
   Data::~Data()

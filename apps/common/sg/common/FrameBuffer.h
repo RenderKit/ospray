@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,7 @@
 #pragma once
 
 // sg components
-#include "sg/common/Node.h"
+#include "Node.h"
 
 namespace ospray {
   namespace sg {
@@ -29,13 +29,13 @@ namespace ospray {
 
       // no destructor since we release the framebuffer object in Node::~Node()
 
-      unsigned char *map();
+      const unsigned char *map();
       void unmap(const void *mem);
 
       void clear();
 
       void clearAccum();
-      
+
       vec2i size() const;
 
       virtual void postCommit(RenderContext &ctx) override;
@@ -44,7 +44,7 @@ namespace ospray {
       virtual std::string toString() const override;
 
       OSPFrameBuffer handle() const;
-      
+
       // create the ospray framebuffer for this class
       void createFB();
 
@@ -52,6 +52,7 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
+      OSPPixelOp toneMapper {nullptr};
       std::string displayWallStream;
     };
 

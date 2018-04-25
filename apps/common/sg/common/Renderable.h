@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,11 +27,12 @@ namespace ospray {
     struct OSPSG_INTERFACE Renderable : public Node
     {
       Renderable();
-      virtual ~Renderable() = default;
+      virtual ~Renderable() override = default;
 
       virtual std::string toString() const override;
 
       virtual box3f bounds() const override;
+
       virtual box3f computeBounds() const;
 
       virtual void preTraverse(RenderContext &ctx,
@@ -42,8 +43,8 @@ namespace ospray {
 
       // Interface for render traversals //
 
-      virtual void preRender(RenderContext &ctx) {}
-      virtual void postRender(RenderContext &ctx) {}
+      virtual void preRender(RenderContext &) {}
+      virtual void postRender(RenderContext &) {}
     };
 
   } // ::ospray::sg

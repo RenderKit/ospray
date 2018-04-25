@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,6 +21,11 @@
 #include "StructuredVolume_ispc.h"
 
 namespace ospray {
+
+  StructuredVolume::~StructuredVolume()
+  {
+    if (ispcEquivalent) ispc::StructuredVolume_destroy(ispcEquivalent);
+  }
 
   std::string StructuredVolume::toString() const
   {
@@ -73,31 +78,31 @@ namespace ospray {
       if (voxelType == "uchar") {
         out = malloc(sizeof(unsigned char) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned char *)source, (unsigned char *)out,
+        upsampleRegion((const unsigned char *)source, (unsigned char *)out,
                        regionSize, scaledRegionSize);
       }
       else if (voxelType == "short") {
         out = malloc(sizeof(short) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned short *)source, (unsigned short *)out,
+        upsampleRegion((const unsigned short *)source, (unsigned short *)out,
                        regionSize, scaledRegionSize);
       }
       else if (voxelType == "ushort") {
         out = malloc(sizeof(unsigned short) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned short *)source, (unsigned short *)out,
+        upsampleRegion((const unsigned short *)source, (unsigned short *)out,
                        regionSize, scaledRegionSize);
       }
       else if (voxelType == "float") {
         out = malloc(sizeof(float) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((float *)source, (float *)out, regionSize,
+        upsampleRegion((const float *)source, (float *)out, regionSize,
                        scaledRegionSize);
       }
       else if (voxelType == "double") {
         out = malloc(sizeof(double) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((double *)source, (double *)out, regionSize,
+        upsampleRegion((const double *)source, (double *)out, regionSize,
                        scaledRegionSize);
       }
       regionSize = scaledRegionSize;
@@ -126,8 +131,8 @@ namespace ospray {
   void StructuredVolume::finish()
   {
     // Make the voxel value range visible to the application.
-    if (findParam("voxelRange") == NULL)
-      set("voxelRange", voxelRange);
+    if (!hasParam("voxelRange"))
+      setParam("voxelRange", voxelRange);
     else
       voxelRange = getParam2f("voxelRange", voxelRange);
 

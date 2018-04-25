@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray::sg
-#include "../common/World.h"
+#include "../common/Model.h"
 
 /*! \file sg/module/Module.h Defines the interface for writing
     ospray::sg modules */
@@ -47,7 +47,7 @@ namespace ospray {
 #define OSP_SG_REGISTER_MODULE(moduleName)            \
     extern "C" void ospray_sg_##moduleName##_init()
 
-  }
-}
+  } // ::ospray::sg
+} // ::ospray
 
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,9 +30,10 @@ namespace ospray {
     return "ospray::Texture2D";
   }
 
-  Texture2D *Texture2D::createTexture(const vec2i &size,
-      const OSPTextureFormat type, void *data, const int flags) 
+  Texture2D *Texture2D::createTexture(const vec2i &_size,
+      const OSPTextureFormat type, void *data, const int flags)
   {
+    auto size = _size;
     Texture2D *tx = new Texture2D;
 
     tx->size = size;

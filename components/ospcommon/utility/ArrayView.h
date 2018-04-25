@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,10 +17,8 @@
 #pragma once
 
 #include "../common.h"
-#include "../TypeTraits.h"
 
 #include <array>
-#include <iterator>
 #include <vector>
 
 namespace ospcommon {

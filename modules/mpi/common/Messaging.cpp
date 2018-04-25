@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,7 +16,7 @@
 
 #include "Messaging.h"
 // ospcommon
-#include "ospcommon/utility/DeletedUniquePtr.h"
+#include "ospcommon/memory/DeletedUniquePtr.h"
 // stl
 #include <unordered_map>
 
@@ -25,8 +25,8 @@ namespace ospray {
     namespace messaging {
 
       using namespace mpicommon;
-      using ospcommon::utility::DeletedUniquePtr;
-      using ospcommon::utility::make_deleted_unique;
+      using ospcommon::memory::DeletedUniquePtr;
+      using ospcommon::memory::make_deleted_unique;
 
       // Internal maml message handler for all of OSPRay //////////////////////
 
@@ -85,8 +85,8 @@ namespace ospray {
       {
         auto instance =
             make_deleted_unique<ObjectMessageHandler>(
-              [](ObjectMessageHandler *handler){
-                handlerValid = false; delete handler;
+              [](ObjectMessageHandler *_handler){
+                handlerValid = false; delete _handler;
               }
             );
 

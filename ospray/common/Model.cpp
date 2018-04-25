@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospray
-#include "api/Device.h"
+#include "api/ISPCDevice.h"
 #include "Model.h"
 // ispc exports
 #include "Model_ispc.h"
@@ -24,13 +24,21 @@ namespace ospray {
 
   extern "C" void *ospray_getEmbreeDevice()
   {
-    return api::Device::current->embreeDevice;
+    return api::ISPCDevice::embreeDevice;
   }
 
   Model::Model()
   {
     managedObjectType = OSP_MODEL;
     this->ispcEquivalent = ispc::Model_create(this);
+  }
+
+  Model::~Model()
+  {
+    if (embreeSceneHandle)
+      rtcDeleteScene(embreeSceneHandle);
+
+    ispc::Model_cleanup(getIE());
   }
 
   std::string Model::toString() const
@@ -48,6 +56,7 @@ namespace ospray {
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
     ispc::Model_init(getIE(), embreeDevice, geometry.size(), volume.size());
+
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 
     bounds = empty;
@@ -63,9 +72,9 @@ namespace ospray {
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
 
-    for (size_t i=0; i<volume.size(); i++) 
+    for (size_t i=0; i<volume.size(); i++)
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
-    
+
     rtcCommit(embreeSceneHandle);
   }
 

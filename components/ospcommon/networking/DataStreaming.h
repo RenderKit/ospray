@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,6 +18,7 @@
 
 #include "../common.h"
 #include "../utility/ArrayView.h"
+#include "../TypeTraits.h"
 
 #include <vector>
 
@@ -27,7 +28,9 @@ namespace ospcommon {
     /*! abstraction of an object that we can serailize/write (raw) data into */
     struct WriteStream
     {
-      virtual void write(void *mem, size_t size) = 0;
+      virtual ~WriteStream() = default;
+
+      virtual void write(const void *mem, size_t size) = 0;
       virtual void flush() {}
     };
 
@@ -35,6 +38,8 @@ namespace ospcommon {
       then de-serialize into work objects */
     struct ReadStream
     {
+      virtual ~ReadStream() = default;
+
       virtual void read(void *mem, size_t size) = 0;
     };
 
@@ -42,7 +47,7 @@ namespace ospcommon {
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
-      buf.write((byte_t*)&rh, sizeof(T));
+      buf.write((const byte_t*)&rh, sizeof(T));
       return buf;
     }
 
@@ -53,13 +58,17 @@ namespace ospcommon {
       return buf;
     }
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors */
+    /*! @{ stream operators into/out of read/write streams, for std::vectors
+     * of non-POD types*/
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
+
+      for (const auto &x : rh)
+        buf << x;
+
       return buf;
     }
 
@@ -69,7 +78,10 @@ namespace ospcommon {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      buf.read((byte_t*)rh.data(), sizeof(T)*sz);
+
+      for (size_t i = 0; i < sz; ++i)
+        buf >> rh[i];
+
       return buf;
     }
     /*! @} */
@@ -81,7 +93,7 @@ namespace ospcommon {
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((byte_t*)rh.data(), sizeof(T)*sz);
+      buf.write((const byte_t*)rh.data(), sizeof(T)*sz);
       return buf;
     }
     /*! @} */
@@ -91,7 +103,7 @@ namespace ospcommon {
     {
       const size_t sz = rh.size();
       buf << sz;
-      buf.write((byte_t*)rh.c_str(), sz);
+      buf.write((const void *)rh.data(), sz);
       return buf;
     }
 
@@ -100,7 +112,7 @@ namespace ospcommon {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      buf.read((byte_t*)rh.data(), sz);
+      buf.read((void *)rh.data(), sz);
       return buf;
     }
     /*! @} */

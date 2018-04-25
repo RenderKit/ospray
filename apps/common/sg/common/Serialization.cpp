@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,15 +15,15 @@
 // ======================================================================== //
 
 #include "Serialization.h"
-#include "World.h"
+#include "Model.h"
 
 namespace ospray {
   namespace sg {
 
-    void Serialization::serialize(std::shared_ptr<sg::World> world,
-                                  Serialization::Mode mode)
+    void Serialization::serialize(std::shared_ptr<sg::Model> world,
+                                  Serialization::Mode)
     {
-      clear(); 
+      clear();
       Serialization::State state;
       state.serialization = this;
       world->serialize(state);

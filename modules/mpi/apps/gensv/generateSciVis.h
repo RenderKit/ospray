@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright 2017-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #pragma once
 
 #include "ospcommon/FileName.h"
@@ -34,7 +50,8 @@ namespace gensv {
   /* Generate this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
-   * The coloring is based on color-mapping the ranks id.
+   * The coloring is based on color-mapping the ranks id. Each region
+   * can have more than one brick in the total gridding.
    * The region occupied by the volume is then used to be the rank's
    * overall region bounds and will be the bounding box for the
    * generated geometry as well.
@@ -42,6 +59,21 @@ namespace gensv {
    * box, due to the ghost voxels.
    */
   LoadedVolume makeVolume();
+
+  /* Generate bricks of volume data based on some gridding. The volumes are
+   * placed in cells of the grid computed in 'computeGrid' based on the number
+   * of ranks with each rank owning a specific cell in the gridding.
+   * The coloring is based on color-mapping the ranks id. Each region
+   * can have more than one brick in the total gridding.
+   * The region occupied by the volume is then used to be the rank's
+   * overall region bounds and will be the bounding box for the
+   * generated geometry as well.
+   * Returns the ghostGridOrigin of the volume which may be outside the bounding
+   * box, due to the ghost voxels.
+   */
+  std::vector<LoadedVolume> makeVolumes(const size_t firstBrick,
+                                        const size_t numMine,
+                                        const size_t numBricks);
 
   /* Load this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number

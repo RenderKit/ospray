@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -28,12 +28,50 @@ MACRO(OSPRAY_WARN_ONCE identifier message)
   ENDIF()
 ENDMACRO()
 
+
+# workaround link issues to Embree ISPC exports
+# ISPC only adds the ISA suffix during name mangling (and dynamic dispatch
+# code) when compiling for multiple targets. Thus, when only one OSPRay ISA is
+# selected, but Embree was compiled for multiple ISAs, we need to add a
+# second, different, supported dummy target.
+MACRO(OSPRAY_FIX_ISPC_TARGET_LIST)
+  LIST(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
+  IF (NUM_TARGETS EQUAL 1)
+    IF (EMBREE_ISA_SUPPORTS_SSE2)
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse2)
+    ELSEIF (EMBREE_ISA_SUPPORTS_SSE4 AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "sse4")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse4)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX2 AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx2")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx2)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512KNL AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512knl-i32x16")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512SKX AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512skx-i32x16")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
+    ENDIF()
+  ENDIF()
+ENDMACRO()
+
 ## Macro configure ISA targets for ispc ##
 MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
 
   SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
       "Target ISA (SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, or ALL)")
   STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
+
+  OPTION(OSPRAY_BUILD_ISA_SCALAR
+         "Include 'SCALAR' target (WARNING: may not work!)" OFF)
+  MARK_AS_ADVANCED(OSPRAY_BUILD_ISA_SCALAR)
+
+  IF (OSPRAY_BUILD_ISA_SCALAR)
+    SET(OSPRAY_SUPPORTED_ISAS SCALAR)
+  ENDIF()
 
   IF(EMBREE_ISA_SUPPORTS_SSE4)
     SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE4)
@@ -119,32 +157,7 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
                   "Please select one of ${OSPRAY_SUPPORTED_ISAS}, or ALL.")
   ENDIF()
 
-  # workaround link issues to Embree ISPC exports
-  # ISPC only adds the ISA suffix during name mangling (and dynamic dispatch
-  # code) when compiling for multiple targets. Thus, when only one OSPRay ISA is
-  # selected, but Embree was compiled for multiple ISAs, we need to add a
-  # second, different, supported dummy target.
-  LIST(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
-  IF (NUM_TARGETS EQUAL 1)
-    IF (EMBREE_ISA_SUPPORTS_SSE2)
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse2)
-    ELSEIF (EMBREE_ISA_SUPPORTS_SSE4 AND
-            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "sse4")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse4)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX AND
-            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX2 AND
-            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx2")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx2)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512KNL AND
-            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512knl-i32x16")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512SKX AND
-            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512skx-i32x16")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
-    ENDIF()
-  ENDIF()
+  OSPRAY_FIX_ISPC_TARGET_LIST()
 ENDMACRO()
 
 ## Target creation macros ##
@@ -255,6 +268,132 @@ MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
   ENDIF()
 ENDMACRO()
 
+## Convenience macro that creates a loadable library with different
+# SIMD-instantiations.
+#
+# i.e., 'OSPRAY_CREATE_SIMD_LIBRARY(myLib <sources>)' would, when
+# targets sse, avx, and avx2 are all enabled, create one
+# libmyLib_sse.so that has 'sources' comiled with sse compile flags,
+# one libmyLib_avx.so compiles with avx, etc.
+MACRO(OSPRAY_CREATE_SIMD_LIBRARY LIBRARY_BASE_NAME)
+  OSPRAY_SPLIT_CREATE_ARGS(LIBRARY ${ARGN})
+
+#    SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
+#      "Target ISA (scalar, SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, or ALL)")
+
+#  message("ospray supported isas: " ${OSPRAY_SUPPORTED_ISAS})
+#  message("ospray build isa: " ${OSPRAY_BUILD_ISA})
+
+  # ------------------------------------------------------------------
+  # this is the list of all isa-specific targets we can in theory
+  # build for. note that skx and knx are different because they use
+  # different isas to be cleaned up, and set somewhere globally!
+
+  IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+    SET(ISALIST scalar sse4 avx avx2 skx knx)
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SCALAR")
+    SET(ISALIST scalar)
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE4")
+    SET(ISALIST scalar sse4)
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
+    SET(ISALIST scalar sse4 avx )
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
+    SET(ISALIST scalar sse4 avx avx2)
+    #    SET(ISALIST sse avx avx2 skx knx)
+  ELSE ()
+    MESSAGE(FATAL_ERROR "un-recognized ospray_build_isa '${OSPRAY_BUILD_ISA}' in ospray_create_simd_library")
+  ENDIF()
+
+  SET(OSPRAY_CXXFLAGS_COMMON "")
+  IF (OSPRAY_COMPILER_ICC)
+    SET(OSPRAY_CXXFLAGS_SCALAR -DOSPRAY_SIMD_NONE=1 -DOSPRAY_SCALAR=1)
+    SET(OSPRAY_CXXFLAGS_NATIVE -march=native -DOSPRAY_SIMD_NATIVE=1)
+    SET(OSPRAY_CXXFLAGS_SSE4 -xsse4.2 -DOSPRAY_SIMD_SSE=1)
+    SET(OSPRAY_CXXFLAGS_AVX  -xAVX -DOSPRAY_SIMD_AVX=1)
+    SET(OSPRAY_CXXFLAGS_AVX2 -xCORE-AVX2 -DOSPRAY_SIMD_AVX2=1)
+    SET(OSPRAY_CXXFLAGS_AVX512SKX  -xCORE-AVX512 -DOSPRAY_SIMD_SKX=1)
+    SET(OSPRAY_CXXFLAGS_AVX512KNL  -xMIC-AVX512 -DOSPRAY_SIMD_KNX=1)
+  ELSEIF (OSPRAY_COMPILER_GCC)
+    SET(OSPRAY_CXXFLAGS_SCALAR -DOSPRAY_SIMD_NONE=1 -DOSPRAY_SCALAR=1)
+    SET(OSPRAY_CXXFLAGS_NATIVE -march=native -DOSPRAY_SIMD_NATIVE=1)
+    SET(OSPRAY_CXXFLAGS_SSE4 -msse4.2 -DOSPRAY_SIMD_SSE=1)
+    SET(OSPRAY_CXXFLAGS_AVX  -mavx -DOSPRAY_SIMD_AVX=1)
+    SET(OSPRAY_CXXFLAGS_AVX2 -mavx2 -mf16c -mfma -mlzcnt -mbmi -mbmi2 -DOSPRAY_SIMD_AVX2=1)
+    SET(OSPRAY_CXXFLAGS_AVX512SKX   -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl -mf16c -mavx2 -mfma -mlzcnt -mbmi -mbmi2 -DOSPRAY_SIMD_SKX=2)
+    SET(OSPRAY_CXXFLAGS_AVX512KNL  -mavx512f -mavx512pf -mavx512er -mavx512cd -mf16c -mavx2 -mfma -mlzcnt -mbmi -mbmi2 -DOSPRAY_SIMD_KNX=1)
+  ELSEIF (OSPRAY_COMPILER_CLANG)
+    # get rid of "XXX is not defined, will evaluate to 0" warning - that's what we _want_
+    SET(OSPRAY_CXXFLAGS_COMMON ${OSPRAY_CXXFLAGS_COMMON} -Wno-undef)
+    # at least temporarily, ignore un-used parameters (should
+    # eventually turn back on, but not while we have lots of dummy api
+    # functions...)
+    SET(OSPRAY_CXXFLAGS_COMMON ${OSPRAY_CXXFLAGS_COMMON} -Wno-unused-parameter)
+
+    # define isa-specific flags
+    SET(OSPRAY_CXXFLAGS_SCALAR -DOSPRAY_SIMD_NONE=1 -DOSPRAY_SCALAR=1)
+    SET(OSPRAY_CXXFLAGS_NATIVE -march=native -DOSPRAY_SIMD_NATIVE=1 )
+    SET(OSPRAY_CXXFLAGS_SSE4 -msse4.2 -DOSPRAY_SIMD_SSE=1)
+    SET(OSPRAY_CXXFLAGS_AVX  -mavx -DOSPRAY_SIMD_AVX=1)
+    SET(OSPRAY_CXXFLAGS_AVX2 -mavx2 -mf16c -mfma -mlzcnt -mbmi -mbmi2 -DOSPRAY_SIMD_AVX2=1)
+    SET(OSPRAY_CXXFLAGS_AVX512SKX -march=skx -DOSPRAY_SIMD_SKX=1)
+    SET(OSPRAY_CXXFLAGS_AVX512KNL -march=knl -DOSPRAY_SIMD_KNX=1)
+  ELSE()
+    MESSAGE("OSPRAY_CREATE_SIMD_LIBRARY: Compiler not recognized!")
+  ENDIF()
+
+  # the name of the library we'll be generating for that isa
+  SET(OSPRAY_SIMD_LIBNAME_SCALAR scalar)
+  SET(OSPRAY_SIMD_LIBNAME_SSE4 sse4)
+  SET(OSPRAY_SIMD_LIBNAME_AVX  avx)
+  SET(OSPRAY_SIMD_LIBNAME_AVX2 avx2)
+  SET(OSPRAY_SIMD_LIBNAME_AVX512KNL knl)
+  SET(OSPRAY_SIMD_LIBNAME_AVX512SKX skx)
+  # end 'to be cleaned up'
+  # ------------------------------------------------------------------
+
+  # hack: prevent ispc from doing multi-target binaries in this module by
+  # temporarily setting a single-target ispc target list
+  SET(SAVED_OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST})
+
+  FOREACH(ISA ${OSPRAY_SUPPORTED_ISAS})
+    SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_${ISA}})
+    OSPRAY_FIX_ISPC_TARGET_LIST()
+    SET(OSPRAY_ISPC_TARGET_NAME ${OSPRAY_SIMD_LIBNAME_${ISA}})
+
+    # ----------- float -----------
+    SET(LIBRARY_NAME ${LIBRARY_BASE_NAME}_${OSPRAY_SIMD_LIBNAME_${ISA}})
+    OSPRAY_ADD_LIBRARY(${LIBRARY_NAME}_float SHARED ${LIBRARY_SOURCES})
+    TARGET_COMPILE_OPTIONS(${LIBRARY_NAME}_float PRIVATE ${OSPRAY_CXXFLAGS_COMMON} ${OSPRAY_CXXFLAGS_${ISA}} -DOSPRAY_USE_DOUBLES=0)
+    TARGET_LINK_LIBRARIES(${LIBRARY_NAME}_float ${LIBRARY_LIBS})
+    OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME}_float)
+    IF(${LIBRARY_EXCLUDE_FROM_ALL})
+      SET_TARGET_PROPERTIES(${LIBRARY_NAME}_float PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    ELSE()
+      OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME}_float ${LIBRARY_COMPONENT})
+    ENDIF()
+
+    # ----------- double -----------
+    SET(LIBRARY_NAME ${LIBRARY_BASE_NAME}_${OSPRAY_SIMD_LIBNAME_${ISA}})
+    OSPRAY_ADD_LIBRARY(${LIBRARY_NAME}_double SHARED ${LIBRARY_SOURCES})
+    TARGET_COMPILE_OPTIONS(${LIBRARY_NAME}_double PRIVATE ${OSPRAY_CXXFLAGS_COMMON} ${OSPRAY_CXXFLAGS_${ISA}} -DOSPRAY_USE_DOUBLES=1)
+    TARGET_LINK_LIBRARIES(${LIBRARY_NAME}_double ${LIBRARY_LIBS})
+    OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME}_double)
+    IF(${LIBRARY_EXCLUDE_FROM_ALL})
+      SET_TARGET_PROPERTIES(${LIBRARY_NAME}_double PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    ELSE()
+      OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME}_double ${LIBRARY_COMPONENT})
+    ENDIF()
+
+    # end of hack: restore original ispc target list for multi-target libraries
+    SET(OSPRAY_ISPC_TARGET_LIST ${SAVED_OSPRAY_ISPC_TARGET_LIST})
+    SET(OSPRAY_ISPC_TARGET_NAME "")
+  ENDFOREACH()
+
+  # end of hack: restore original ispc target list for multi-target libraries
+  SET(OSPRAY_ISPC_TARGET_LIST ${SAVED_OSPRAY_ISPC_TARGET_LIST})
+  SET(OSPRAY_ISPC_TARGET_NAME "")
+ENDMACRO()
+
 ## Conveniance macro for creating OSPRay applications ##
 # Usage
 #
@@ -330,14 +469,17 @@ MACRO(OSPRAY_INSTALL_SDK_HEADERS)
   )
 ENDMACRO()
 
-## Compiler configuration macro ##
+## Compiler configuration macros ##
 
 MACRO(OSPRAY_CONFIGURE_COMPILER)
   # unhide compiler to make it easier for users to see what they are using
   MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
-  OPTION(OSPRAY_STRICT_BUILD "Build with additional warning flags" OFF)
+  OPTION(OSPRAY_STRICT_BUILD "Build with additional warning flags" ON)
   MARK_AS_ADVANCED(OSPRAY_STRICT_BUILD)
+
+  OPTION(OSPRAY_WARN_AS_ERRORS "Treat warnings as errors" OFF)
+  MARK_AS_ADVANCED(OSPRAY_WARN_AS_ERRORS)
 
   SET(OSPRAY_COMPILER_ICC   FALSE)
   SET(OSPRAY_COMPILER_GCC   FALSE)
@@ -369,6 +511,13 @@ MACRO(OSPRAY_CONFIGURE_COMPILER)
     # increase stack to 8MB (the default size of 1MB is too small for our apps)
     # note: linker options are independent of compiler (icc or MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
+  ENDIF()
+ENDMACRO()
+
+MACRO(OSPRAY_DISABLE_COMPILER_WARNINGS)
+  IF (NOT OSPRAY_COMPILER_MSVC)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+  #ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
   ENDIF()
 ENDMACRO()
 

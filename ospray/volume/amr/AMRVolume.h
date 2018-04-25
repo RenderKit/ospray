@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,6 +27,7 @@ namespace ospray {
     struct AMRVolume : public ospray::Volume
     {
       AMRVolume();
+      ~AMRVolume() override = default;
 
       std::string toString() const override;
 
@@ -36,11 +37,17 @@ namespace ospray {
                     const vec3i &index,
                     const vec3i &count) override;
 
+      //! Get the OSPDataType enum corresponding to the voxel type string.
+      OSPDataType getVoxelType();
+
       std::unique_ptr<amr::AMRData>  data;
       std::unique_ptr<amr::AMRAccel> accel;
 
       Ref<Data> brickInfoData;
       Ref<Data> brickDataData;
+
+      //! Voxel type.
+      std::string voxelType;
 
       //! Voxel value range (will be computed if not provided as a parameter).
       vec2f voxelRange {FLT_MAX, -FLT_MAX};

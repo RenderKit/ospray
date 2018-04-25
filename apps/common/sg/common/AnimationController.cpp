@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,27 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/AnimationController.h"
+#include "AnimationController.h"
 
 namespace ospray {
   namespace sg {
 
     AnimationController::AnimationController()
     {
-      setValue(0.f);
-      createChild("start","float", 0.0f);
+      setValue(0.f); createChild("start","float", 0.0f);
       createChild("stop","float", 1.0f);
       createChild("time","float", 0.0f);
       createChild("step","float", 0.01f);
       createChild("enabled","bool",false);
-    }
-
-    void AnimationController::preCommit(RenderContext &ctx)
-    {
-    }
-
-    void AnimationController::postCommit(RenderContext &ctx)
-    {
     }
 
     void AnimationController::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)

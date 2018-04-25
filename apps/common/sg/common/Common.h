@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,9 +34,6 @@
 // ospray API
 #include "ospray/ospray.h"
 
-// core ospray
-#include "ospray/common/OSPCommon.h"
-
 namespace ospray {
   namespace sg {
 
@@ -50,7 +47,7 @@ namespace ospray {
     /*! base node for every scene graph node */
     struct Node;
     /*! c++ wrapper for an ospray model */
-    struct World;
+    struct Model;
     /*! c++ wrapper for an ospray light source */
     struct Light;
     /*! c++ wrapper for an ospray camera */

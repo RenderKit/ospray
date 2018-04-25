@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,11 +16,15 @@
 
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
 
 #include "TypeTraits.h"
+
+#include "tasking/schedule.h"
+#include "tasking/tasking_system_handle.h"
 
 namespace ospcommon {
 
@@ -36,8 +40,10 @@ namespace ospcommon {
   {
   public:
 
+    enum LaunchMethod { AUTO = 0, THREAD = 1, TASK = 2 };
+
     template <typename LOOP_BODY_FCN>
-    AsyncLoop(LOOP_BODY_FCN &&fcn);
+    AsyncLoop(LOOP_BODY_FCN &&fcn, LaunchMethod m = AUTO);
 
     ~AsyncLoop();
 
@@ -46,9 +52,9 @@ namespace ospcommon {
 
   private:
 
-    bool threadShouldBeAlive {true};
-    bool loopShouldBeRunning {false};
-    bool insideLoopBody      {false};
+    std::atomic<bool> threadShouldBeAlive {true};
+    std::atomic<bool> loopShouldBeRunning {false};
+    std::atomic<bool> insideLoopBody      {false};
 
     std::thread             backgroundThread;
     std::condition_variable loopRunningCond;
@@ -58,26 +64,34 @@ namespace ospcommon {
   // Inlined members //////////////////////////////////////////////////////////
 
   template <typename LOOP_BODY_FCN>
-  inline AsyncLoop::AsyncLoop(LOOP_BODY_FCN &&fcn)
+  inline AsyncLoop::AsyncLoop(LOOP_BODY_FCN &&fcn, AsyncLoop::LaunchMethod m)
   {
     static_assert(traits::has_operator_method<LOOP_BODY_FCN>::value,
                   "ospcommon::AsyncLoop() requires the implementation of "
                   "method 'void LOOP_BODY_FCN::operator()' in order to "
                   "construct the loop instance.");
 
-    backgroundThread = std::thread([&,fcn](){
+    auto mainLoop = [&,fcn]() {
       while (threadShouldBeAlive) {
         std::unique_lock<std::mutex> lock(loopRunningMutex);
-        loopRunningCond.wait(lock, [&] { return loopShouldBeRunning; });
+        loopRunningCond.wait(lock, [&] { return loopShouldBeRunning.load(); });
 
         if (!threadShouldBeAlive)
           return;
 
         insideLoopBody = true;
-        fcn();
+        if(loopShouldBeRunning) fcn();
         insideLoopBody = false;
       }
-    });
+    };
+
+    if (m == AUTO)
+      m = tasking::numTaskingThreads() > 4 ? TASK : THREAD;
+
+    if (m == THREAD)
+      backgroundThread = std::thread(mainLoop);
+    else // m == TASK
+      tasking::schedule(mainLoop);
   }
 
   inline AsyncLoop::~AsyncLoop()
@@ -102,7 +116,7 @@ namespace ospcommon {
     if (loopShouldBeRunning) {
       loopShouldBeRunning = false;
       std::unique_lock<std::mutex> lock(loopRunningMutex);
-      loopRunningCond.wait(lock, [&] { return !insideLoopBody; });
+      loopRunningCond.wait(lock, [&] { return !insideLoopBody.load(); });
     }
   }
 

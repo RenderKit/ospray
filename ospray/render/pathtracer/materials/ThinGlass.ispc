@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,7 +34,21 @@ struct ThinGlass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform ThinGlass_getBSDF(const PathTraceMaterial* uniform super,
+static inline const vec3f getAttenuation(const ThinGlass* uniform self,
+    const DifferentialGeometry& dg)
+{
+  vec3f attenuation = self->attenuation
+    + logf(make_vec3f(dg.color)) * self->attenuationScale;
+
+  if (valid(self->map_attenuationColor)) {
+    vec3f attenuationColor = get3f(self->map_attenuationColor, dg.st);
+    attenuation = attenuation + logf(attenuationColor) * self->attenuationScale;
+  }
+
+  return attenuation;
+}
+
+const varying BSDF* varying ThinGlass_getBSDF(const PathTraceMaterial* uniform super,
                                               ShadingContext* uniform ctx,
                                               const DifferentialGeometry& dg,
                                               const Ray& ray,
@@ -42,14 +56,9 @@ const varying BSDF* uniform ThinGlass_getBSDF(const PathTraceMaterial* uniform s
 {
   const ThinGlass* uniform self = (const ThinGlass* uniform)super;
 
-  vec3f attenuation = self->attenuation;
-  if (valid(self->map_attenuationColor)) {
-    vec3f attenuationColor = get3f(self->map_attenuationColor, dg.st);
-    attenuation = attenuation + logf(attenuationColor) * self->attenuationScale;
-  }
 
   varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
-  return ThinDielectric_create(ctx, frame, self->eta, attenuation);
+  return ThinDielectric_create(ctx, frame, self->eta, getAttenuation(self, dg));
 }
 
 vec3f ThinGlass_getTransparency(const PathTraceMaterial* uniform material,
@@ -64,14 +73,8 @@ vec3f ThinGlass_getTransparency(const PathTraceMaterial* uniform material,
   const float R = fresnelDielectric(cosThetaO, self->eta); // Fresnel
   const float length = rsqrt(sqrCosT(cosThetaO, self->eta)); // refracted dir!
 
-  vec3f attenuation = self->attenuation;
-  if (valid(self->map_attenuationColor)) {
-    vec3f attenuationColor = get3f(self->map_attenuationColor, dg.st);
-    attenuation = attenuation + logf(attenuationColor) * self->attenuationScale;
-  }
-
   // attenuation (Beer's law) when crossing the slab once
-  const vec3f A = expf(attenuation * length);
+  const vec3f A = expf(getAttenuation(self, dg) * length);
 
   // total transmission (see ThinDielectric)
   return A * sqr(1.f - R) * rcp(1.f - sqr(R*A));

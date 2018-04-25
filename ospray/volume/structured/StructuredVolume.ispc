@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,11 +31,11 @@ inline varying float StructuredVolume_sample(void *uniform _volume, const varyin
                                               volume->localCoordinatesUpperBound);
 
   // Lower and upper corners of the box straddling the voxels to be interpolated.
-  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);
+  const vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);
   const vec3i voxelIndex_1 = voxelIndex_0 + 1;
 
   // Fractional coordinates within the lower corner voxel used during interpolation.
-  const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - float_cast(voxelIndex_0);
+  const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - to_float(voxelIndex_0);
 
   // Look up the voxel values to be interpolated.
   float voxelValue_000;
@@ -203,3 +203,10 @@ export void *uniform StructuredVolume_createAccelerator(void *uniform _self)
 
   return self->accelerator;
 }
+
+export void *uniform StructuredVolume_destroy(void *uniform _self)
+{
+  StructuredVolume *uniform self = (StructuredVolume *uniform)_self;
+  if (self->accelerator) GridAccelerator_destroy(self->accelerator);
+}
+

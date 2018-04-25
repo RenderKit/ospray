@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -46,8 +46,6 @@ namespace ospray {
       case OSP_FB_RGBA32F:
         colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
         break;
-      default:
-        throw std::runtime_error("color buffer format not supported");
       }
     }
 

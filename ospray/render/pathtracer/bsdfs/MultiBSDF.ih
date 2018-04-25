@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,6 +25,7 @@ struct MultiBSDF
   BSDF super;
 
   const varying BSDF* uniform bsdfs[MULTIBSDF_MAX_COMPONENTS]; //!< pointers to BSDF components
+  float weights[MULTIBSDF_MAX_COMPONENTS];
   float importances[MULTIBSDF_MAX_COMPONENTS];
   float importanceSum;
   uniform int numBsdfs;                                        //!< number of stored BSDF components
@@ -32,7 +33,7 @@ struct MultiBSDF
 
 /*! Adds a new BSDF to the list of BSDFs */
 inline void MultiBSDF_add(varying BSDF* uniform super,
-                          const varying BSDF* uniform bsdf, float importance = 1.0f)
+                          const varying BSDF* uniform bsdf, float weight = 1.f, float importance = 1.f)
 {
   varying MultiBSDF* uniform self = (varying MultiBSDF* uniform)super;
 
@@ -41,11 +42,19 @@ inline void MultiBSDF_add(varying BSDF* uniform super,
   {
     self->super.type |= bsdf->type;
     self->bsdfs[self->numBsdfs] = bsdf;
+    self->weights[self->numBsdfs] = weight;
     unmasked { self->importances[self->numBsdfs] = 0.0f; }
     self->importances[self->numBsdfs] = importance;
     self->importanceSum += importance;
     self->numBsdfs++;
   }
+}
+
+inline void MultiBSDF_add(varying BSDF* uniform super,
+                          const varying BSDF* varying bsdf, float weight = 1.f, float importance = 1.f)
+{
+  foreach_unique (f in bsdf)
+    MultiBSDF_add(super, f, weight, importance);
 }
 
 /*! Evaluates all BSDF components. */
@@ -62,6 +71,7 @@ inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
     {
       const varying BSDF* uniform curBsdf = self->bsdfs[i];
       BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, wi);
+      cur.value = cur.value * self->weights[i];
       res.value = res.value + cur.value;
       res.pdf += cur.pdf * self->importances[i];
     }
@@ -83,7 +93,9 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
   if (self->numBsdfs == 1)
   {
     const varying BSDF* uniform bsdf = self->bsdfs[0];
-    return bsdf->sample(bsdf, wo, s, ss);
+    BSDF_SampleRes res = bsdf->sample(bsdf, wo, s, ss);
+    res.weight = res.weight * self->weights[0];
+    return res;
   }
   else
   {
@@ -103,12 +115,14 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     {
       const varying BSDF* uniform bsdf = self->bsdfs[i];
       res = bsdf->sample(bsdf, wo, s, ss);
+      res.weight = res.weight * self->weights[i];
     }
 
     if (eq(res.weight, make_vec3f(0.0f)) | (res.pdf == 0.0f))
       return make_BSDF_SampleRes_zero();
 
-    // XXX why not also eval smooth BSDF when specular one was sampled?
+    // if the sampled BSDF is specular (has a delta distribution), we cannot add the contributions from the other BSDFs
+    // [Pharr et al., 2016, "Physically Based Rendering", 3rd Edition, Section 14.1.6]
     if (res.type & BSDF_SPECULAR)
     {
       // scale by rcp(selection pdf)
@@ -126,6 +140,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
       {
         const varying BSDF* uniform curBsdf = self->bsdfs[i];
         BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, res.wi);
+        cur.value = cur.value * self->weights[i];
         value = value + cur.value;
         res.pdf += cur.pdf * self->importances[i];
       }

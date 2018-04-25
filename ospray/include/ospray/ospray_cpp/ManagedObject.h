@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -97,7 +97,7 @@ namespace ospray {
     public:
 
       ManagedObject_T(OSP_TYPE object = nullptr);
-      virtual ~ManagedObject_T();
+      virtual ~ManagedObject_T() override;
 
       void set(const std::string &name, const std::string &v) const override;
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "sg/common/Common.h"
-#include "sg/common/TimeStamp.h"
+#include "Common.h"
+#include "ospcommon/utility/TimeStamp.h"
 
 namespace ospray {
   namespace sg {
@@ -33,22 +33,20 @@ namespace ospray {
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm);
 
-      TimeStamp MTime();
-      TimeStamp childMTime();
-
       // Data members //
 
-      std::shared_ptr<sg::World> world;      //!< world we're rendering into
+      std::shared_ptr<sg::Model> world;      //!< world we're rendering into
       OSPModel currentOSPModel{nullptr};
       affine3f currentTransform{ospcommon::one};
       float time {0.f};
 
       OSPRenderer ospRenderer {nullptr};
+      std::string ospRendererType;
       int level {0};
 
 
-      TimeStamp _MTime;
-      TimeStamp _childMTime;
+      utility::TimeStamp _MTime;
+      utility::TimeStamp _childMTime;
     };
 
     // Inlined RenderContext definitions //////////////////////////////////////
@@ -61,16 +59,6 @@ namespace ospray {
         ospRenderer(nullptr),
         level(0)
     {}
-
-    inline TimeStamp RenderContext::MTime()
-    {
-      return _MTime;
-    }
-
-    inline TimeStamp RenderContext::childMTime()
-    {
-      return _childMTime;
-    }
 
   }// ::ospray::sg
 }// ::ospray

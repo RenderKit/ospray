@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -70,7 +70,7 @@ namespace ospray {
     box4f lBounds = empty;
     box4f rBounds = empty;
 
-    for (int i = begin; i < end; i++) {
+    for (size_t i = begin; i < end; i++) {
       ctr.as_vec4f = center(primBounds[primID[i]]);
 
       if (ctr.raw[dim] < pos) {
@@ -82,7 +82,7 @@ namespace ospray {
       }
     }
 
-    for (int i = begin; i < end; i++) {
+    for (size_t i = begin; i < end; i++) {
       primID[i] = tmp_primID[i];
     }
 
@@ -102,11 +102,11 @@ namespace ospray {
     } else {
       assert(l > begin);
       assert(l < end);
-      for (int i = begin; i < l; i++) {
+      for (size_t i = begin; i < l; i++) {
         ctr.as_vec4f = center(primBounds[primID[i]]);
         assert(ctr.raw[dim] < pos);
       }
-      for (int i = l; i < end; i++) {
+      for (size_t i = l; i < end; i++) {
         ctr.as_vec4f = center(primBounds[primID[i]]);
         assert(ctr.raw[dim] >= pos);
       }

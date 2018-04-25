@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Node.h"
-#include "sg/common/Data.h"
-#include "sg/common/Texture2D.h"
-#include "sg/common/RenderContext.h"
+#include "Node.h"
+#include "../visitor/VerifyNodes.h"
+
+#include "ospcommon/utility/StringManip.h"
 
 namespace ospray {
   namespace sg {
@@ -32,9 +32,11 @@ namespace ospray {
       properties.name = "NULL";
       properties.type = "Node";
       // MSVC 2013 is buggy and ignores {}-initialization of anonymous structs
-#if _MSC_VER <= 1800
+#ifdef _WIN32
+#  if _MSC_VER <= 1800
       properties.parent = nullptr;
       properties.valid = false;
+#  endif
 #endif
       properties.flags = sg::NodeFlags::none;
       markAsModified();
@@ -52,14 +54,7 @@ namespace ospray {
       return "ospray::sg::Node";
     }
 
-    void Node::setFromXML(const xml::Node &node, const unsigned char *binBasePtr)
-    {
-      throw std::runtime_error(toString() +
-                               ":setFromXML() not implemented for XML node type "
-                               + node.name);
-    }
-
-    void Node::serialize(sg::Serialization::State &state)
+    void Node::serialize(sg::Serialization::State &)
     {
     }
 
@@ -177,6 +172,11 @@ namespace ospray {
       return empty;
     }
 
+    size_t Node::uniqueID() const
+    {
+      return properties.whenCreated;
+    }
+
     // Node stored value (data) interface /////////////////////////////////////
 
     Any Node::value()
@@ -231,16 +231,11 @@ namespace ospray {
       if (itr != properties.children.end())
         return true;
 
-      std::string name_lower = name;
-      std::transform(name_lower.begin(), name_lower.end(),
-                     name_lower.begin(), ::tolower);
+      std::string name_lower = utility::lowerCase(name);
 
       auto &c = properties.children;
       itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
-        std::string node_lower = n.first;
-        std::transform(node_lower.begin(), node_lower.end(),
-                       node_lower.begin(), ::tolower);
-        return node_lower == name_lower;
+        return utility::lowerCase(n.first) == name_lower;
       });
 
       return itr != properties.children.end();
@@ -252,16 +247,11 @@ namespace ospray {
       if (itr != properties.children.end())
         return *itr->second;
 
-      std::string name_lower = name;
-      std::transform(name_lower.begin(), name_lower.end(),
-                     name_lower.begin(), ::tolower);
+      std::string name_lower = utility::lowerCase(name);
 
       auto &c = properties.children;
       itr = std::find_if(c.begin(), c.end(), [&](const NodeLink &n){
-        std::string node_lower = n.first;
-        std::transform(node_lower.begin(), node_lower.end(),
-                       node_lower.begin(), ::tolower);
-        return node_lower == name_lower;
+        return utility::lowerCase(n.first) == name_lower;
       });
 
       if (itr == properties.children.end()) {
@@ -312,6 +302,11 @@ namespace ospray {
       return properties.children;
     }
 
+    bool Node::hasChildren() const
+    {
+      return properties.children.size() != 0;
+    }
+
     size_t Node::numChildren() const
     {
       return properties.children.size();
@@ -351,9 +346,6 @@ namespace ospray {
                         const std::shared_ptr<Node> &node)
     {
       properties.children[name] = node;
-#ifndef _WIN32
-# warning "TODO: child node parent needs to be set, which requires multi-parent support"
-#endif
     }
 
     bool Node::hasParent() const
@@ -378,19 +370,34 @@ namespace ospray {
 
     // Traversal interface ////////////////////////////////////////////////////
 
+    void Node::verify()
+    {
+      traverse(VerifyNodes{false});
+    }
+
+    void Node::commit()
+    {
+      traverse("commit");
+    }
+
+    void Node::finalize(RenderContext &ctx)
+    {
+      traverse(ctx, "render");
+    }
+
+    void Node::animate()
+    {
+      traverse("animate");
+    }
+
     void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
-      //TODO: make child m time propagate
-      if (operation != "verify" && operation != "print" && !isValid())
-        return;
-
       ctx._childMTime = TimeStamp();
       bool traverseChildren = true;
       preTraverse(ctx, operation, traverseChildren);
       ctx.level++;
 
-      if (traverseChildren)
-      {
+      if (traverseChildren) {
         for (auto &child : properties.children)
           child.second->traverse(ctx, operation);
       }
@@ -406,34 +413,16 @@ namespace ospray {
       traverse(ctx, operation);
     }
 
-    void Node::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
+    void Node::preTraverse(RenderContext &ctx,
+                           const std::string& operation,
+                           bool& traverseChildren)
     {
-      if (operation == "print") {
-        for (int i=0;i<ctx.level;i++)
-          std::cout << "  ";
-        std::cout << name() << " : " << type() << "=\"";
-        if (type() == "string")
-          std::cout << valueAs<std::string>();
-        if (type() == "float")
-          std::cout << valueAs<float>();
-        if (type() == "vec3f")
-          std::cout << valueAs<vec3f>();
-        if (type() == "vec2i")
-          std::cout << valueAs<vec2i>();
-        std::cout << "\"\n";
-      } else if (operation == "commit") {
-       if (lastModified() >= lastCommitted() ||
-                childrenLastModified() >= lastCommitted())
+      if (operation == "commit") {
+        if (lastModified() >= lastCommitted() ||
+            childrenLastModified() >= lastCommitted())
           preCommit(ctx);
         else
           traverseChildren = false;
-      } else if (operation == "verify") {
-        if (properties.valid && childrenLastModified() < properties.lastVerified)
-          traverseChildren = false;
-        properties.valid = computeValid();
-        properties.lastVerified = TimeStamp();
-      } else if (operation == "modified") {
-        markAsModified();
       }
     }
 
@@ -444,19 +433,14 @@ namespace ospray {
            childrenLastModified() >= lastCommitted())) {
         postCommit(ctx);
         markAsCommitted();
-      } else if (operation == "verify") {
-        for (const auto &child : properties.children) {
-          if (child.second->flags() & NodeFlags::required)
-            properties.valid &= child.second->isValid();
-        }
       }
     }
 
-    void Node::preCommit(RenderContext &ctx)
+    void Node::preCommit(RenderContext &)
     {
     }
 
-    void Node::postCommit(RenderContext &ctx)
+    void Node::postCommit(RenderContext &)
     {
     }
 
@@ -466,7 +450,7 @@ namespace ospray {
 
     using CreatorFct = sg::Node*(*)();
 
-    std::map<std::string, CreatorFct> nodeRegistry;
+    static std::map<std::string, CreatorFct> nodeRegistry;
 
     std::shared_ptr<Node> createNode(std::string name,
                                      std::string type,
@@ -501,16 +485,6 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(Node);
-    //OSPRay types
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<float>, float);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<int>, int);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<bool>, bool);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<std::string>, string);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPObject>, OSPObject);
 
   } // ::ospray::sg
 } // ::ospray

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/Animator.h"
+#include "Animator.h"
 
 namespace ospray {
   namespace sg {
@@ -32,12 +32,11 @@ namespace ospray {
       createChild("stop", "float", 1.f);
     }
 
-    void Animator::preCommit(RenderContext &ctx)
+    void Animator::preCommit(RenderContext &)
     {
       if (!hasParent())
         return;
-      if (!hasChild("value1")) //TODO: support moving it?
-      {
+      if (!hasChild("value1")) { //TODO: support moving it?
         const std::string type = parent().type();
         createChild("value1", type);
         createChild("value2", type);
@@ -47,22 +46,18 @@ namespace ospray {
       parent().setValue(value());
     }
 
-    void Animator::postCommit(RenderContext &ctx)
-    {
-    }
-
-    void Animator::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
+    void Animator::preTraverse(RenderContext &ctx,
+                               const std::string& operation,
+                               bool& traverseChildren)
     {
       Node::preTraverse(ctx,operation, traverseChildren);
-      if (operation == "animate")
-      {
+      if (operation == "animate") {
         const Any& value1 = child("value1").value();
         const Any& value2 = child("value2").value();
         const float start = child("start").valueAs<float>();
         const float stop = child("stop").valueAs<float>();
         const float duration = stop-start;
-        if (ctx.time >= start && ctx.time <= stop)
-        {
+        if (ctx.time >= start && ctx.time <= stop) {
           float interp = (ctx.time-start)/duration;
           if (value1.is<float>())
             setValue(lerp<float>(interp, value1, value2));

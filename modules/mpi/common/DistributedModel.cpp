@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,7 @@
 #include <iterator>
 #include <algorithm>
 // ospray
-#include "api/Device.h"
+#include "api/ISPCDevice.h"
 #include "DistributedModel.h"
 #include "mpiCommon/MPICommon.h"
 #include "Messaging.h"
@@ -30,7 +30,7 @@ namespace ospray {
 
     extern "C" void *ospray_getEmbreeDevice()
     {
-      return api::Device::current->embreeDevice;
+      return api::ISPCDevice::embreeDevice;
     }
 
     DistributedModel::DistributedModel()
@@ -77,7 +77,7 @@ namespace ospray {
         myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
       }
 
-      for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+      for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
           messaging::bcast(i, myRegions);
         } else {
@@ -89,7 +89,7 @@ namespace ospray {
       }
 
       if (logLevel() >= 1) {
-        for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+        for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
           if (i == mpicommon::globalRank()) {
             postStatusMsg(1) << "Rank " << mpicommon::globalRank()
               << ": Got regions from others {";

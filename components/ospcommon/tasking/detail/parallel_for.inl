@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,26 +33,26 @@ namespace ospcommon {
     namespace detail {
 
 #if defined(OSPRAY_TASKING_LIBDISPATCH)
-      template <typename TASK_T>
-      inline void callFcn_T(void *_task, size_t taskIndex)
+      template<typename INDEX_T, typename TASK_T>
+      inline void callFcn_T(void *_task, INDEX_T taskIndex)
       {
         auto &task = *((TASK_T*)_task);
         task(taskIndex);
       }
 #endif
 
-      template<typename TASK_T>
-      inline void parallel_for_impl(int nTasks, TASK_T&& fcn)
+      template<typename INDEX_T, typename TASK_T>
+      inline void parallel_for_impl(INDEX_T nTasks, TASK_T&& fcn)
       {
 #ifdef OSPRAY_TASKING_TBB
-        tbb::parallel_for(0, nTasks, std::forward<TASK_T>(fcn));
+        tbb::parallel_for(INDEX_T(0), nTasks, std::forward<TASK_T>(fcn));
 #elif defined(OSPRAY_TASKING_CILK)
-        cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+        cilk_for (INDEX_T taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
           fcn(taskIndex);
         }
 #elif defined(OSPRAY_TASKING_OMP)
 #       pragma omp parallel for schedule(dynamic)
-        for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+        for (INDEX_T taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
           fcn(taskIndex);
         }
 #elif defined(OSPRAY_TASKING_INTERNAL)
@@ -64,7 +64,7 @@ namespace ospcommon {
                          &fcn,
                          &callFcn_T<TASK_T>);
 #else // Debug (no tasking system)
-        for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+        for (INDEX_T taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
           fcn(taskIndex);
         }
 #endif

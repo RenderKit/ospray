@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,14 +30,6 @@ namespace ospray {
     this->ispcEquivalent = ispc::Spheres_create(this);
   }
 
-  Spheres::~Spheres()
-  {
-    if (_materialList) {
-      free(_materialList);
-      _materialList = nullptr;
-    }
-  }
-
   std::string Spheres::toString() const
   {
     return "ospray::Spheres";
@@ -45,6 +37,8 @@ namespace ospray {
 
   void Spheres::finalize(Model *model)
   {
+    Geometry::finalize(model);
+
     radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
     bytesPerSphere    = getParam1i("bytes_per_sphere",4*sizeof(float));
@@ -53,11 +47,10 @@ namespace ospray {
     offset_materialID = getParam1i("offset_materialID",-1);
     offset_colorID    = getParam1i("offset_colorID",-1);
     sphereData        = getParamData("spheres");
-    materialList      = getParamData("materialList");
     colorData         = getParamData("color");
     colorOffset       = getParam1i("color_offset",0);
-    auto colComps     = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
-    colorStride       = getParam1i("color_stride", colComps * sizeof(float));
+    auto colorComps   = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
+    colorStride       = getParam1i("color_stride", colorComps * sizeof(float));
     texcoordData      = getParamData("texcoord");
 
     if (sphereData.ptr == nullptr) {
@@ -79,39 +72,34 @@ namespace ospray {
                                "without causing address overflows)");
     }
 
-    if (_materialList) {
-      free(_materialList);
-      _materialList = nullptr;
-    }
-
-    if (materialList) {
-      void **ispcMaterials = (void**) malloc(sizeof(void*) *
-                                             materialList->numItems);
-      for (uint32_t i = 0; i < materialList->numItems; i++) {
-        Material *m = ((Material**)materialList->data)[i];
-        ispcMaterials[i] = m?m->getIE():nullptr;
-      }
-      _materialList = (void*)ispcMaterials;
-    }
-
     const char* spherePtr = (const char*)sphereData->data;
     bounds = empty;
     for (uint32_t i = 0; i < numSpheres; i++, spherePtr += bytesPerSphere) {
-      const float r = offset_radius < 0 ? radius : *(float*)(spherePtr + offset_radius);
-      const vec3f center = *(vec3f*)(spherePtr + offset_center);
+      const float r = offset_radius < 0 ?
+          radius : *(const float*)(spherePtr + offset_radius);
+      const vec3f center = *(const vec3f*)(spherePtr + offset_center);
       bounds.extend(box3f(center - r, center + r));
     }
 
+    // check whether we need 64-bit addressing
+    bool huge_mesh = false;
+    if (colorData && colorData->numBytes > INT32_MAX)
+      huge_mesh = true;
+    if (texcoordData && texcoordData->numBytes > INT32_MAX)
+      huge_mesh = true;
+
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
-                              sphereData->data,_materialList,
-                              texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
+                              sphereData->data,
+                              materialList ? ispcMaterialPtrs.data() : nullptr,
+                              texcoordData ?
+                                  (ispc::vec2f *)texcoordData->data : nullptr,
                               colorData ? colorData->data : nullptr,
                               colorOffset, colorStride,
                               colorData && colorData->type == OSP_FLOAT4,
                               numSpheres,bytesPerSphere,
                               radius,materialID,
                               offset_center,offset_radius,
-                              offset_materialID,offset_colorID);
+                              offset_materialID,offset_colorID,huge_mesh);
   }
 
   OSP_REGISTER_GEOMETRY(Spheres,spheres);

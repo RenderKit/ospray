@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2017 Intel Corporation                                    ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -113,7 +113,7 @@ ELSE ()
     FIND_LIBRARY(TBB_LIBRARY_MALLOC_DEBUG tbbmalloc_debug PATHS ${TBB_ROOT}/lib NO_DEFAULT_PATH)
   ELSE()
     FIND_PATH(TBB_INCLUDE_DIR tbb/task_scheduler_init.h PATHS ${TBB_ROOT}/include NO_DEFAULT_PATH)
-    SET(TBB_HINTS HINTS ${TBB_ROOT}/lib/intel64/gcc4.4 ${TBB_ROOT}/lib ${TBB_ROOT}/lib64 PATHS /usr/libx86_64-linux-gnu/)
+    SET(TBB_HINTS HINTS ${TBB_ROOT}/lib/intel64/gcc4.7 ${TBB_ROOT}/lib/intel64/gcc4.4 ${TBB_ROOT}/lib ${TBB_ROOT}/lib64 PATHS /usr/libx86_64-linux-gnu/)
     FIND_LIBRARY(TBB_LIBRARY libtbb.so.2 ${TBB_HINTS})
     FIND_LIBRARY(TBB_LIBRARY_DEBUG libtbb_debug.so.2 ${TBB_HINTS})
     FIND_LIBRARY(TBB_LIBRARY_MALLOC libtbbmalloc.so.2 ${TBB_HINTS})

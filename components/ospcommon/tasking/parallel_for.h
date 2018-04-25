@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,32 +24,42 @@ namespace ospcommon {
 
     // NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an
     //             implied synchronizsation after all of the tasks have run.
-    template<typename TASK_T>
-    inline void parallel_for(int nTasks, TASK_T&& fcn)
+    template<typename INDEX_T, typename TASK_T>
+    inline void parallel_for(INDEX_T nTasks, TASK_T&& fcn)
     {
       using namespace traits;
-      static_assert(has_operator_method_with_integral_param<TASK_T>::value,
+      static_assert(is_valid_index<INDEX_T>::value,
+                    "ospcommon::tasking::parallel_for() requires the type"
+                    " INDEX_T to be unsigned char, short, int, uint, long,"
+                    " or size_t.");
+
+      static_assert(has_operator_method_matching_param<TASK_T, INDEX_T>::value,
                     "ospcommon::tasking::parallel_for() requires the "
                     "implementation of method "
                     "'void TASK_T::operator(P taskIndex), where P is of "
-                    "type unsigned char, short, int, uint, long, or size_t.");
+                    "type INDEX_T [first parameter of parallel_for()].");
 
       detail::parallel_for_impl(nTasks, std::forward<TASK_T>(fcn));
     }
 
     // NOTE(jda) - Allow serial version of parallel_for() without the need to
     //             change the entire tasking system backend
-    template<typename TASK_T>
-    inline void serial_for(int nTasks, const TASK_T& fcn)
+    template<typename INDEX_T, typename TASK_T>
+    inline void serial_for(INDEX_T nTasks, const TASK_T& fcn)
     {
       using namespace traits;
-      static_assert(has_operator_method_with_integral_param<TASK_T>::value,
+      static_assert(is_valid_index<INDEX_T>::value,
+                    "ospcommon::tasking::serial_for() requires the type"
+                    " INDEX_T to be unsigned char, short, int, uint, long,"
+                    " or size_t.");
+
+      static_assert(has_operator_method_matching_param<TASK_T, INDEX_T>::value,
                     "ospcommon::tasking::serial_for() requires the "
                     "implementation of method "
                     "'void TASK_T::operator(P taskIndex), where P is of "
-                    "type unsigned char, short, int, uint, long, or size_t.");
+                    "type INDEX_T [first parameter of serial_for()].");
 
-      for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex)
+      for (INDEX_T taskIndex = 0; taskIndex < nTasks; ++taskIndex)
         fcn(taskIndex);
     }
 

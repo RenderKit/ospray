@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -256,6 +256,9 @@ extern "C" {
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
 
+  /*! add an untyped void pointer to given Device */
+  OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
+
   /*! status message callback function type */
   typedef void (*OSPStatusFunc)(const char* messageText);
 
@@ -310,10 +313,16 @@ extern "C" {
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
   //! let given renderer create a new material of given type
-  OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
+
+  //! let given renderer create a new material of given type
+  OSPRAY_INTERFACE OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
 
   //! let given renderer create a new light of given type
-  OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
+
+  //! let given renderer create a new light of given type
+  OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
 
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot

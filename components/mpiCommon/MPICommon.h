@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2018 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -175,8 +175,10 @@ namespace mpicommon {
   OSPRAY_MPI_INTERFACE extern Group worker;
 
   // Initialize OSPRay's MPI groups, returns false if MPI
-  // was already initialized.
-  OSPRAY_MPI_INTERFACE bool init(int *ac, const char **av);
+  // was already initialized. useCommWorld indicates if MPI_COMM_WORLD
+  // should be set as the world group used for communication. If false,
+  // it is up to the caller to configure the world group correctly.
+  OSPRAY_MPI_INTERFACE bool init(int *ac, const char **av, bool useCommWorld);
 
   inline int globalRank()
   {
