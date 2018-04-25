@@ -587,6 +587,13 @@ namespace ospray {
         camera["apertureRadius"] = apertureRadius.getValue();
       if (camera.hasChild("focusdistance"))
         camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
+
+      // orthographic camera adjustments
+      if (camera.hasChild("height"))
+        camera["height"] = (float)height;
+      if (camera.hasChild("aspect"))
+        camera["aspect"] = width / (float)height;
+
       renderer.verify();
       renderer.commit();
     }
