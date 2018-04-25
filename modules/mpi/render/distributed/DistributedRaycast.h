@@ -43,6 +43,8 @@ namespace ospray {
       float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
 
       std::string toString() const override;
+
+      int numAoSamples;
     };
 
   } // ::ospray::mpi

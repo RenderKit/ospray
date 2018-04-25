@@ -61,7 +61,8 @@ namespace gensv {
    * or owned data region.
    */
   ospray::cpp::Geometry makeSpheres(const box3f &bbox, const size_t numSpheres,
-                                    const float sphereRadius)
+                                    const float sphereRadius,
+                                    const bool transparent)
   {
     struct Sphere
     {
@@ -75,7 +76,8 @@ namespace gensv {
     std::vector<Sphere> spheres(numSpheres);
 
     std::mt19937 rng;
-    rng.seed(std::random_device()());
+    //rng.seed(std::random_device()());
+    rng.seed(0);
 
     // Generate spheres within this nodes volume, to keep the data disjoint.
     // We also leave some buffer space on the boundaries to avoid clipping
@@ -102,7 +104,10 @@ namespace gensv {
     const float r = (numRanks - myRank) / numRanks;
     const float b = myRank / numRanks;
     const float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
-    vec4f color(r, g, b, 1.f);
+    vec4f color(r, g, b, 1.0);
+    if (transparent) {
+      color.w = 0.1;
+    }
     ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
 
     ospray::cpp::Geometry geom("spheres");

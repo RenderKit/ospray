@@ -14,36 +14,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "SocketFabric.h"
 
-// ospray stuff
-#include "geometry/Geometry.h"
-#include "volume/Volume.h"
-#include "common/Model.h"
+namespace ospcommon {
+  namespace networking {
 
-// stl
-#include <vector>
+      SocketFabric::SocketFabric(const uint16_t port)
+        : socket(nullptr), buffer(64 * 1024, 0)
+      {
+        ospcommon::socket_t listenSock = ospcommon::bind(port);
+        socket = ospcommon::listen(listenSock);
+      }
 
-// embree
-#include "embree2/rtcore.h"
+      SocketFabric::SocketFabric(const std::string &hostname, const uint16_t port)
+        : socket(ospcommon::connect(hostname.c_str(), port)),
+        buffer(64 * 1024, 0)
+      {}
 
-namespace ospray {
-  namespace mpi {
+      SocketFabric::~SocketFabric() {
+        ospcommon::close(socket);
+      }
 
-    struct DistributedModel : public Model
-    {
-      DistributedModel();
-      virtual ~DistributedModel() override = default;
+      void SocketFabric::send(void *mem, size_t s) {
+        // A bit annoying, because the ospcommon::Socket wrapper does its
+        // own internal buffering, however a Fabric is unbuffered and is
+        // made buffered by using the buffered data streams
+        ospcommon::write(socket, mem, s);
+        ospcommon::flush(socket);
+      }
 
-      virtual std::string toString() const override;
+      size_t SocketFabric::read(void *&mem) {
+        const size_t s = ospcommon::read_some(socket, buffer.data(),
+                                              buffer.size());
+        mem = buffer.data();
+        return s;
+      }
+  }
+}
 
-      // commit synchronizes the distributed models between processes
-      // so that ranks know how many tiles to expect for sort-last
-      // compositing.
-      virtual void commit() override;
-
-      std::vector<box3f> myRegions, othersRegions, ghostRegions;
-    };
-
-  } // ::ospray::mpi
-} // ::ospray

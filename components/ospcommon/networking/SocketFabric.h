@@ -16,34 +16,43 @@
 
 #pragma once
 
-// ospray stuff
-#include "geometry/Geometry.h"
-#include "volume/Volume.h"
-#include "common/Model.h"
-
-// stl
+#include <cstdlib>
+#include <cstdint>
+#include <string>
 #include <vector>
+#include "Socket.h"
+#include "Fabric.h"
 
-// embree
-#include "embree2/rtcore.h"
+namespace ospcommon {
+  namespace networking {
 
-namespace ospray {
-  namespace mpi {
-
-    struct DistributedModel : public Model
+    /*! A fabrich which sends and recieves over a TCP socket connection */
+    struct OSPCOMMON_INTERFACE SocketFabric : public Fabric
     {
-      DistributedModel();
-      virtual ~DistributedModel() override = default;
+      /*! Setup the connection by listening for an incoming
+          connection on the desired port */
+      SocketFabric(const uint16_t port);
+      /*! Connecting to another socket on the host on the desired port */
+      SocketFabric(const std::string &hostname, const uint16_t port);
+      ~SocketFabric() override;
 
-      virtual std::string toString() const override;
+      SocketFabric(const SocketFabric&) = delete;
+      SocketFabric& operator=(const SocketFabric&) = delete;
 
-      // commit synchronizes the distributed models between processes
-      // so that ranks know how many tiles to expect for sort-last
-      // compositing.
-      virtual void commit() override;
+      /*! send exact number of bytes - the fabric can do that through
+        multiple smaller messages, but all bytes have to be
+        delivered */
+      void send(void *mem, size_t s) override;
 
-      std::vector<box3f> myRegions, othersRegions, ghostRegions;
+      /*! receive some block of data - whatever the sender has sent -
+        and give us size and pointer to this data */
+      size_t read(void *&mem) override;
+
+    private:
+      ospcommon::socket_t socket;
+      std::vector<char> buffer;
     };
 
-  } // ::ospray::mpi
-} // ::ospray
+  } // ::ospcommon::networking
+} // ::ospcommon
+

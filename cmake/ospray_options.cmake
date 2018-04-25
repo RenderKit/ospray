@@ -134,11 +134,22 @@ INCLUDE(package)
 ##############################################################
 
 IF (OSPRAY_INSTALL_DEPENDENCIES)
-  MACRO(OSPRAY_INSTALL_NAMELINK NAME)
+  MACRO(OSPRAY_INSTALL_NAMELINK NAME TARGET_NAME)
     EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink
-                    lib${NAME}.so.2 ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so)
+                    ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so)
     INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+
+    # If the shared lib we're copying is named with a specific version, also
+    # create a major version suffixed symlink
+    STRING(REGEX MATCH "([0-9]+)[.]([0-9]+)[.]([0-9]+)" VERSION_STRING ${TARGET_NAME})
+    if (CMAKE_MATCH_0)
+      EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink
+                      ${TARGET_NAME}
+                      ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1})
+      INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1}
+              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+    endif()
   ENDMACRO()
 
   IF (OSPRAY_TASKING_TBB)
@@ -168,8 +179,10 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
       INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
               DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
       IF (NOT APPLE)
-        OSPRAY_INSTALL_NAMELINK(tbb)
-        OSPRAY_INSTALL_NAMELINK(tbbmalloc)
+        get_filename_component(TBB_LIBNAME ${TBB_LIBRARY} NAME)
+        get_filename_component(TBB_MALLOC_LIBNAME ${TBB_LIBRARY_MALLOC} NAME)
+        OSPRAY_INSTALL_NAMELINK(tbb ${TBB_LIBNAME})
+        OSPRAY_INSTALL_NAMELINK(tbbmalloc ${TBB_MALLOC_LIBNAME})
       ENDIF()
     ENDIF()
   ENDIF()
@@ -190,7 +203,8 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
     INSTALL(PROGRAMS ${EMBREE_LIBRARY}
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
     IF (NOT APPLE)
-      OSPRAY_INSTALL_NAMELINK(embree)
+      get_filename_component(EMBREE_LIBNAME ${EMBREE_LIBRARY} NAME)
+      OSPRAY_INSTALL_NAMELINK(embree ${EMBREE_LIBNAME})
     ENDIF()
   ENDIF()
 ENDIF()
