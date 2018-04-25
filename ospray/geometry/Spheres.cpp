@@ -49,8 +49,11 @@ namespace ospray {
     sphereData        = getParamData("spheres");
     colorData         = getParamData("color");
     colorOffset       = getParam1i("color_offset",0);
-    auto colorComps   = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
-    colorStride       = getParam1i("color_stride", colorComps * sizeof(float));
+    colorComponents   = getParam1i("color_components",
+                                   colorData
+                                   && colorData->type == OSP_FLOAT3 ? 3 : 4);
+    colorStride       = getParam1i("color_stride",
+                                   colorComponents * sizeof(float));
     texcoordData      = getParamData("texcoord");
 
     if (sphereData.ptr == nullptr) {
@@ -95,7 +98,7 @@ namespace ospray {
                                   (ispc::vec2f *)texcoordData->data : nullptr,
                               colorData ? colorData->data : nullptr,
                               colorOffset, colorStride,
-                              colorData && colorData->type == OSP_FLOAT4,
+                              colorData && colorComponents == 4,
                               numSpheres,bytesPerSphere,
                               radius,materialID,
                               offset_center,offset_radius,

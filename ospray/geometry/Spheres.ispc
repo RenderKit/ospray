@@ -104,14 +104,15 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
     } else
       colorID = ray.primID;
     if (self->has_alpha) {
-      dg.color = gather_vec4f(self->huge_mesh,
-                              (uniform vec4f*)self->color + self->color_offset,
-                              colorID);
+      dg.color = gather_byte_stride_vec4f(self->huge_mesh,
+                                          self->color + self->color_offset,
+                                          self->color_stride,
+                                          colorID);
     } else {
-      vec3f c = gather_vec3f(self->huge_mesh,
-                             (float* uniform)self->color + self->color_offset,
-                             3,
-                             colorID);
+      vec3f c = gather_byte_stride_vec3f(self->huge_mesh,
+                                         self->color + self->color_offset,
+                                         self->color_stride,
+                                         colorID);
       dg.color = make_vec4f(c.x, c.y, c.z, 1.f);
     }
   }

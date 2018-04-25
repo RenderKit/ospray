@@ -80,15 +80,18 @@ namespace ospray {
 
     Ref<Data> texcoordData;
 
+    /*! The number of components for each color (3 or 4) */
+    int colorComponents;
+
     /*! stride in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as 3 floats from
+      color. color of sphere i will be read as colorComponents floats from
       'colorOffset+i*colorStride */
-    size_t    colorStride;
+    size_t colorStride;
 
     /*! offset in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as 3 floats from
+      color. color of sphere i will be read as colorComponents floats from
       'colorOffset+i*colorStride */
-    size_t    colorOffset;
+    size_t colorOffset;
 
 
     float epsilon;  //epsilon for intersections
