@@ -20,6 +20,13 @@
 #include "common/OSPCommon.h"
 #include "common/Data.h"
 #include "common/Material.h"
+#if USE_EMBREE3
+#include "rtcore_buffer.h"
+#endif
+
+#ifdef USE_EMBREE3
+extern RTCDevice ispc_embreeDevice;
+#endif
 
 namespace ospray {
 

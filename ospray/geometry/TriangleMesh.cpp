@@ -127,25 +127,29 @@ namespace ospray {
     }
 
 #if USE_EMBREE3
-    eMeshGeom = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
-                                   numTris,numVerts);
+    eMeshGeom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_TRIANGLE);
+    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT3,
+                               indexData->data,0,numCompsInTri*sizeof(int),numTris);
+    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT3,
+                               vertexData->data,0,numCompsInVtx*sizeof(int),numVerts);
+    rtcCommitGeometry(eMeshGeom);
     eMeshID = rtcAttachGeometry(embreeSceneHandle,eMeshGeom);
 #else
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-#endif
-
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
                  (void*)this->vertex,0,
                  sizeOf(vertexData->type));
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
                  (void*)this->index,0,
                  sizeOf(indexData->type));
+#endif
 
     bounds = empty;
     
     for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
-      bounds.extend(*(vec3f*)(vertex + i));
+      bounds.extend(*(vec3f*)((float *)vertexData->data + i));
+
 
     if (numPrints < 5) {
       postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris "
@@ -156,8 +160,10 @@ namespace ospray {
     ispc::TriangleMesh_set(getIE(),model->getIE(),
 #if USE_EMBREE3
                            eMeshGeom,
-#endif
+                           eMeshID,
+#else
                            eMesh,
+#endif
                            numTris,
                            numCompsInTri,
                            numCompsInVtx,

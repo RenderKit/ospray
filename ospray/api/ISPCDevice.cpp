@@ -34,7 +34,7 @@
 #include <algorithm>
 
 #ifdef USE_EMBREE3
-static void *ispc_embreeDevice;
+RTCDevice ispc_embreeDevice;
 #endif
 
 namespace ospray {
