@@ -21,10 +21,6 @@
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
 #include "volume/Volume.ih"
-// embree
-#include "rtcore.isph"
-#include "rtcore_scene.isph"
-#include "rtcore_geometry_user.isph"
 
 struct Slices {
   uniform Geometry super; //!< inherited geometry fields
@@ -95,16 +91,37 @@ export void *uniform Slices_set(void          *uniform _slices,
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle, numPlanes);
-
+#if USE_EMBREE3
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  rtcSetGeometryUserPrimitiveCount(geom,numCylinders);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+#else
+  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numPlanes);
+#endif
+  
   slices->super.model  = model;
   slices->super.geomID = geomID;
   slices->super.numPrimitives = numPlanes;
   slices->planes = planes;
   slices->volume = volume;
 
-  rtcSetUserData(model->embreeSceneHandle, geomID, slices);
-  rtcSetBoundsFunction(model->embreeSceneHandle, geomID, (uniform RTCBoundsFunc)&Slices_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle, geomID, (uniform RTCIntersectFuncVarying)&Slices_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle, geomID, (uniform RTCOccludedFuncVarying)&Slices_intersect);
+#if USE_EMBREE3
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&Slices_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&Slices_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&Slices_intersect);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
+#else
+  rtcSetUserData(model->embreeSceneHandle,geomID,self);
+  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
+                       (uniform RTCBoundsFunc)&Slices_bounds);
+  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
+                          (uniform RTCIntersectFuncVarying)&Slices_intersect);
+  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
+                         (uniform RTCOccludedFuncVarying)&Slices_intersect);
+#endif
 }
