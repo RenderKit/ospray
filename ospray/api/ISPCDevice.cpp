@@ -78,17 +78,23 @@ namespace ospray {
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 #ifdef USE_EMBREE3
         ispc_embreeDevice = embreeDevice;
-#endif
-
-
+        rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
+        RTCError erc = rtcGetDeviceError(embreeDevice);
+        if (erc != RTC_ERROR_NONE) {
+          // why did the error function not get called !?
+          postStatusMsg() << "#osp:init: embree internal error number " << erc;
+          assert(erc == RTC_ERROR_NONE);
+        }
+#else
         rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
-
         RTCError erc = rtcDeviceGetError(embreeDevice);
         if (erc != RTC_NO_ERROR) {
           // why did the error function not get called !?
           postStatusMsg() << "#osp:init: embree internal error number " << erc;
           assert(erc == RTC_NO_ERROR);
         }
+#endif
+
       }
 
       TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();

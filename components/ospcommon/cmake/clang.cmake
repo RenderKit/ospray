@@ -53,6 +53,10 @@ IF(OSPRAY_STRICT_BUILD)
 
   # Options selected for Clang 5.0+
   SET(OSPRAY_CXX_FLAGS "-Weverything ${OSPRAY_CXX_FLAGS}")
+
+  IF (USE_EMBREE3)
+    SET(OSPRAY_CXX_FLAGS "${OSPRAY_CXX_FLAGS} -Wno-cast-qual ")
+  ENDIF()
 ENDIF()
 
 IF(OSPRAY_WARN_AS_ERRORS)
