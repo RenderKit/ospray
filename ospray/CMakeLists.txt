@@ -236,6 +236,13 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   volume/amr/method_octant.ispc
 )
 
+IF (USE_EMBREE3)
+  SET(OSPRAY_ISPC_DEVICE_SOURCES 
+    ${OSPRAY_ISPC_DEVICE_SOURCES}
+    ispc_tasksys.cpp
+    )
+ENDIF()
+
 
 # -------------------------------------------------------
 # Install API headers
