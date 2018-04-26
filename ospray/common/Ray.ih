@@ -41,6 +41,29 @@
   correspondence between what we store and what embree expects in its
   'intersect' functions */
 struct Ray {
+#if USE_EMBREE3
+  /* ray input data */
+  vec3f org;  /*!< ray origin */
+  float t0;   /*!< start of valid ray interval */
+
+  vec3f dir;  /*!< ray direction */
+  float time; //!< Time of this ray for motion blur
+
+  float t;    /*!< end of valid ray interval, or distance to hit point after 'intersect' */
+  int32 mask; //!< Used to mask out objects during traversal
+  int32 rayID;
+  int32 flags;
+
+  /* hit data */
+  vec3f Ng;    /*! geometry normal. may or may not be set by geometry intersectors */
+
+  float u;     //!< Barycentric u coordinate of hit
+  float v;     //!< Barycentric v coordinate of hit
+
+  int geomID;  //!< geometry ID
+  int primID;  //!< primitive ID
+  int instID;  //!< instance ID
+#else
   /* ray input data */
   vec3f org;  /*!< ray origin */
   vec3f dir;  /*!< ray direction */
@@ -59,7 +82,6 @@ struct Ray {
   int primID;  //!< primitive ID
   int instID;  //!< instance ID
 
-
   // ------------------------------------------------------------------
   // END OF EMBREE LAYOUT - this is where we can add our own data
   // ------------------------------------------------------------------
@@ -68,6 +90,7 @@ struct Ray {
   int primID_hi64;
 
   void *uniform userData;
+#endif
 };
 
 // XXX why not inf??
