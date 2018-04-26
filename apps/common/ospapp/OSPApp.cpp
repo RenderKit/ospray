@@ -116,7 +116,7 @@ general app-parameters:
 
 scene data generators through command line options:
 
-usage --> "--generator:type[:parameter1=value,parameter2=value,...]"
+usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
     types:
 
@@ -141,7 +141,7 @@ usage --> "--generator:type[:parameter1=value,parameter2=value,...]"
           parameters:
               [dimensions,dims]=[intxintxint]
                   number of spheres to generate in each 3D dimension
-              [isovalues,isosurfaces]=value1/value2/value3...
+              [isovalues,isosurfaces]=[value1/value2/value3...]
                   use vtkMarchingCubes filter to generate isosurfaces instead of the volume
 )text"
       << std::endl;
