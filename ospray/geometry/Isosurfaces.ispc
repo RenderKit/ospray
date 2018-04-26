@@ -21,10 +21,6 @@
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
 #include "volume/Volume.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
 struct Isosurfaces {
   uniform Geometry super; //!< inherited geometry fields
@@ -85,26 +81,47 @@ export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
   return isosurfaces;
 }
 
-export void *uniform Isosurfaces_set(void          *uniform _isosurfaces,
+export void *uniform Isosurfaces_set(void          *uniform _self,
                                      void          *uniform _model,
                                      int32          uniform numIsovalues,
                                      uniform float *uniform isovalues,
                                      void          *uniform _volume)
 {
-  uniform Isosurfaces *uniform isosurfaces = (uniform Isosurfaces *uniform)_isosurfaces;
+  uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle, 1);
+#if USE_EMBREE3
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  rtcSetGeometryUserPrimitiveCount(geom,1);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+#else
+  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,1);
+#endif
 
-  isosurfaces->super.model = model;
-  isosurfaces->super.geomID = geomID;
-  isosurfaces->super.numPrimitives = numIsovalues;
-  isosurfaces->isovalues = isovalues;
-  isosurfaces->volume = volume;
+  self->super.model = model;
+  self->super.geomID = geomID;
+  self->super.numPrimitives = numIsovalues;
+  self->isovalues = isovalues;
+  self->volume = volume;
 
-  rtcSetUserData(model->embreeSceneHandle, geomID, isosurfaces);
-  rtcSetBoundsFunction(model->embreeSceneHandle, geomID, (uniform RTCBoundsFunc)&Isosurfaces_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle, geomID, (uniform RTCIntersectFuncVarying)&Isosurfaces_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle, geomID, (uniform RTCOccludedFuncVarying)&Isosurfaces_intersect);
+#if USE_EMBREE3
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&Isosurfaces_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&Isosurfaces_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&Isosurfaces_intersect);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
+#else
+  rtcSetUserData(model->embreeSceneHandle,geomID,self);
+  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
+                       (uniform RTCBoundsFunc)&Isosurfaces_bounds);
+  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
+                          (uniform RTCIntersectFuncVarying)&Isosurfaces_intersect);
+  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
+                         (uniform RTCOccludedFuncVarying)&Isosurfaces_intersect);
+#endif
 }

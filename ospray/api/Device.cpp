@@ -24,7 +24,7 @@
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
 // embree
-#include "embree2/rtcore.h"
+#include "rtcore.h"
 
 #include <map>
 

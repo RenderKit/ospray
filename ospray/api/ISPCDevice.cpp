@@ -34,7 +34,7 @@
 #include <algorithm>
 
 #ifdef USE_EMBREE3
-void *ispc_embreeDevice;
+static void *ispc_embreeDevice;
 #endif
 
 namespace ospray {
@@ -47,7 +47,11 @@ namespace ospray {
     {
       try {
         if (embreeDevice) {
+#if USE_EMBREE3
+          rtcReleaseDevice(embreeDevice);
+#else
           rtcDeleteDevice(embreeDevice);
+#endif
           embreeDevice = nullptr;
         }
       } catch (...) {

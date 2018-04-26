@@ -126,8 +126,14 @@ namespace ospray {
       throw std::runtime_error("unsupported trianglemesh.vertex.normal data type");
     }
 
+#if USE_EMBREE3
+    eMeshGeom = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
+                                   numTris,numVerts);
+    eMeshID = rtcAttachGeometry(embreeSceneHandle,eMeshGeom);
+#else
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
+#endif
 
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
                  (void*)this->vertex,0,
@@ -147,7 +153,11 @@ namespace ospray {
                        << "  mesh bounds " << bounds;
     }
 
-    ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
+    ispc::TriangleMesh_set(getIE(),model->getIE(),
+#if USE_EMBREE3
+                           eMeshGeom,
+#endif
+                           eMesh,
                            numTris,
                            numCompsInTri,
                            numCompsInVtx,

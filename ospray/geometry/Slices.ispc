@@ -76,34 +76,38 @@ export void *uniform Slices_create(void *uniform cppEquivalent)
 {
   uniform Slices *uniform slices = uniform new uniform Slices;
 
-  Geometry_Constructor(&slices->super, cppEquivalent, Slices_postIntersect, NULL, 0, NULL);
+  Geometry_Constructor(&slices->super, cppEquivalent, Slices_postIntersect, 
+#if USE_EMBREE3
+                       NULL,
+#endif
+                       NULL, 0, NULL);
 
   return slices;
 }
 
-export void *uniform Slices_set(void          *uniform _slices,
+export void *uniform Slices_set(void          *uniform _self,
                                 void          *uniform _model,
                                 int32          uniform numPlanes,
                                 uniform vec4f *uniform planes,
                                 void          *uniform _volume)
 {
-  uniform Slices *uniform slices = (uniform Slices *uniform)_slices;
+  uniform Slices *uniform self = (uniform Slices *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
 #if USE_EMBREE3
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
-  rtcSetGeometryUserPrimitiveCount(geom,numCylinders);
+  rtcSetGeometryUserPrimitiveCount(geom,numPlanes);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 #else
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numPlanes);
 #endif
   
-  slices->super.model  = model;
-  slices->super.geomID = geomID;
-  slices->super.numPrimitives = numPlanes;
-  slices->planes = planes;
-  slices->volume = volume;
+  self->super.model  = model;
+  self->super.geomID = geomID;
+  self->super.numPrimitives = numPlanes;
+  self->planes = planes;
+  self->volume = volume;
 
 #if USE_EMBREE3
   rtcSetGeometryUserData(geom, self);

@@ -19,7 +19,7 @@
 //ospray
 #include "Device.h"
 //embree
-#include "embree2/rtcore.h"
+#include "rtcore.h"
 
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */

@@ -20,7 +20,7 @@
 #include "common/Data.h"
 
 // embree
-#include "embree2/rtcore.h"
+#include "rtcore.h"
 
 namespace ospray {
 
@@ -94,7 +94,12 @@ namespace ospray {
     Ref<Data> prim_materialIDData;  /*!< data array for per-prim material ID (uint32) */
 
     #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
+#if USE_EMBREE3
+    RTCGeometry eMeshGeom{nullptr};   /*!< embree triangle mesh handle */
+    uint32 eMeshID{RTC_INVALID_ID};   /*!< embree triangle mesh handle */
+#else
     uint32 eMesh{RTC_INVALID_ID};   /*!< embree triangle mesh handle */
+#endif
   };
 
 } // ::ospray
