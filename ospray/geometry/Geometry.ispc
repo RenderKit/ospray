@@ -36,7 +36,10 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
                                  uniform Geometry_postIntersectFct postIntersect,
                                  uniform Model *uniform model,
-                                 uniform int32  geomID,
+#if USE_EMBREE3
+                                 RTCGeometry geom,
+#endif
+                                 uniform int32 geomID,
                                  uniform Material *uniform *uniform materialList
                                  )
 {
@@ -44,6 +47,9 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
   geometry->numPrimitives = 0;
   geometry->model = model;
   geometry->materialList = materialList;
+#if USE_EMBREE3
+  geometry->geom = geom;
+#endif
   geometry->geomID = geomID;
   geometry->postIntersect = postIntersect;
   geometry->getMaterialID = Geometry_getMaterialID;

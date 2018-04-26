@@ -22,8 +22,12 @@
 #include "../volume/Volume.ih"
 
 // embree stuff
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
+#include "rtcore.isph"
+#include "rtcore_scene.isph"
+
+#ifdef USE_EMBREE3
+extern RTCDevice uniform ispc_embreeDevice;
+#endif
 
 struct Model {
 
@@ -47,14 +51,26 @@ struct Model {
 inline void traceRay(uniform Model *uniform model,
                      varying Ray &ray)
 {
+#if USE_EMBREE3
+  uniform RTCIntersectContext context;
+  rtcInitIntersectContext(&context);
+  rtcIntersectV(model->embreeSceneHandle,&context,(varying RTCRayHit*)&ray);
+#else
   rtcIntersect(model->embreeSceneHandle,(varying RTCRay&)ray);
+#endif
 }
 
 /*! determine if ray is occluded (using embree where possible) */
 inline bool isOccluded(uniform Model *uniform model,
                      varying Ray &ray)
 {
+#if USE_EMBREE3
+  uniform RTCIntersectContext context;
+  rtcInitIntersectContext(&context);
+  rtcOccludedV(model->embreeSceneHandle,&context,(varying RTCRay*)&ray);
+#else
   rtcOccluded(model->embreeSceneHandle,(varying RTCRay&)ray);
+#endif
   return ray.geomID >= 0;
 }
 

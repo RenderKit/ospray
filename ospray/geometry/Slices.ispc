@@ -22,9 +22,9 @@
 #include "geometry/Geometry.ih"
 #include "volume/Volume.ih"
 // embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
+#include "rtcore.isph"
+#include "rtcore_scene.isph"
+#include "rtcore_geometry_user.isph"
 
 struct Slices {
   uniform Geometry super; //!< inherited geometry fields

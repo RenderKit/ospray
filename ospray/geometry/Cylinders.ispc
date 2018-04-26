@@ -20,10 +20,6 @@
 #include "common/Ray.ih"
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
 struct CylinderTexCoord {
   vec2f v0;
@@ -55,6 +51,9 @@ unmasked void Cylinders_bounds(Cylinders *uniform self,
     uniform size_t primID,
     uniform box3fa &bbox)
 {
+#if USE_EMBREE3
+  print("not implemneted\n");
+#endif
   uniform uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder*primID;
   uniform bool offr = self->offset_radius >= 0;
   uniform float radius = offr ? *((float *uniform)(cylinderPtr + self->offset_radius)) : self->radius;
@@ -69,6 +68,9 @@ void Cylinders_intersect(Cylinders *uniform self,
                          varying Ray &ray,
                          uniform size_t primID)
 {
+#if USE_EMBREE3
+  print("not implemneted\n");
+#endif
   uniform uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder*primID;
   uniform float radius = self->radius;
   if (self->offset_radius >= 0) {
@@ -255,6 +257,9 @@ export void *uniform Cylinders_create(void *uniform cppEquivalent)
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
   Geometry_Constructor(&geom->super,cppEquivalent,
                        Cylinders_postIntersect,
+#if USE_EMBREE3
+                       NULL,
+#endif
                        NULL,0,NULL);
   return geom;
 }
@@ -281,7 +286,13 @@ export void CylindersGeometry_set(void *uniform _self
   Cylinders *uniform self = (Cylinders *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
 
+#if USE_EMBREE3
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  rtcSetGeometryUserPrimitiveCount(geom,numCylinders);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+#else
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numCylinders);
+#endif
   
   self->super.model = model;
   self->super.geomID = geomID;
@@ -309,11 +320,24 @@ export void CylindersGeometry_set(void *uniform _self
   if (self->epsilon < 0.f)
     self->epsilon = -1.f/self->epsilon;
 
-  rtcSetUserData(model->embreeSceneHandle, geomID, self);
+#if USE_EMBREE3
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&Cylinders_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&Cylinders_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&Cylinders_intersect);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
+#else
+  rtcSetUserData(model->embreeSceneHandle,geomID,self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&Cylinders_bounds);
   rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
                           (uniform RTCIntersectFuncVarying)&Cylinders_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                          (uniform RTCOccludedFuncVarying)&Cylinders_intersect);
+#endif
+
 }

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "embree2/rtcore.isph"
+#include "rtcore.isph"
 
 #include "OSPConfig.h"
 

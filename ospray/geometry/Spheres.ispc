@@ -22,10 +22,6 @@
 #include "common/safe_gather.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
 struct Spheres {
   /*! inherit from "Geometry" class: */
@@ -130,6 +126,9 @@ unmasked void Spheres_bounds(uniform Spheres *uniform self,
                              uniform size_t primID,
                              uniform box3fa &bbox)
 {
+#if USE_EMBREE3
+  print("not implemneted\n");
+#endif
   uniform uint8 *uniform spherePtr = self->data
     + self->stride*((uniform int64)primID);
   uniform bool offr = self->offset_radius >= 0;
@@ -145,6 +144,9 @@ void Spheres_intersect(uniform Spheres *uniform self,
                        varying Ray &ray,
                        uniform size_t primID)
 {
+#if USE_EMBREE3
+  print("not implemneted\n");
+#endif
   uniform uint8 *uniform spherePtr =
     self->data + self->stride*((uniform int64)primID);
   uniform float radius = self->radius;
@@ -281,7 +283,11 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
   uniform Spheres *uniform self = uniform new uniform Spheres;
   Geometry_Constructor(&self->super,cppEquivalent,
                        Spheres_postIntersect,
-                       NULL,0,NULL);
+                       NULL,
+#if USE_EMBREE3
+                       NULL,
+#endif
+                       0,NULL);
   return self;
 }
 
@@ -308,7 +314,13 @@ export void SpheresGeometry_set(void  *uniform _self
   uniform Spheres *uniform self = (uniform Spheres *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
 
+#if USE_EMBREE3
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  rtcSetGeometryUserPrimitiveCount(geom,numSpheres);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+#else
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSpheres);
+#endif
 
   self->super.model = model;
   self->super.geomID = geomID;
@@ -344,6 +356,17 @@ export void SpheresGeometry_set(void  *uniform _self
     self->epsilon = self->radius / 100.0;
   }
 
+#if USE_EMBREE3
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&Spheres_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&Spheres_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&Spheres_intersect);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
+#else
   rtcSetUserData(model->embreeSceneHandle,geomID,self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&Spheres_bounds);
@@ -351,4 +374,5 @@ export void SpheresGeometry_set(void  *uniform _self
                           (uniform RTCIntersectFuncVarying)&Spheres_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                          (uniform RTCOccludedFuncVarying)&Spheres_intersect);
+#endif
 }

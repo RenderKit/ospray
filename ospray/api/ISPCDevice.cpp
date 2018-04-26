@@ -33,6 +33,10 @@
 // stl
 #include <algorithm>
 
+#ifdef USE_EMBREE3
+void *ispc_embreeDevice;
+#endif
+
 namespace ospray {
 
   namespace api {
@@ -68,6 +72,10 @@ namespace ospray {
       // in the host-stubs, where it shouldn't.
       // -------------------------------------------------------
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
+#ifdef USE_EMBREE3
+        ispc_embreeDevice = embreeDevice;
+#endif
+
 
         rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
 

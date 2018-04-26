@@ -56,7 +56,11 @@ export void *uniform InstanceGeometry_create(void *uniform cppE)
   Instance *uniform self = uniform new Instance;
   Geometry_Constructor(&self->super, cppE,
                        Instance_postIntersect,
-                       NULL, -1,
+                       NULL, 
+#if USE_EMBREE3
+                       NULL,
+#endif
+                       -1,
                        NULL);
   self->areaPDF = NULL;
 

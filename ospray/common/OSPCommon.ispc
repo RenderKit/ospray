@@ -17,7 +17,7 @@
 #include "OSPCommon.ih"
 
 //embree
-#include "embree2/rtcore.isph"
+#include "rtcore.isph"
 
 //extern "C" void abort ();
 //extern "C" void exit(uniform int);
@@ -28,11 +28,19 @@ void error_handler(const RTCError code, const int8* str)
 {
   print("Embree: ");
   switch (code) {
+#if USE_EMBREE3
+  case RTC_ERROR_UNKNOWN    : print("RTC_UNKNOWN_ERROR"); break;
+  case RTC_ERROR_INVALID_ARGUMENT : print("RTC_INVALID_ARGUMENT"); break;
+  case RTC_ERROR_INVALID_OPERATION: print("RTC_INVALID_OPERATION"); break;
+  case RTC_ERROR_OUT_OF_MEMORY    : print("RTC_OUT_OF_MEMORY"); break;
+  case RTC_ERROR_UNSUPPORTED_CPU  : print("RTC_UNSUPPORTED_CPU"); break;
+#else
   case RTC_UNKNOWN_ERROR    : print("RTC_UNKNOWN_ERROR"); break;
   case RTC_INVALID_ARGUMENT : print("RTC_INVALID_ARGUMENT"); break;
   case RTC_INVALID_OPERATION: print("RTC_INVALID_OPERATION"); break;
   case RTC_OUT_OF_MEMORY    : print("RTC_OUT_OF_MEMORY"); break;
   case RTC_UNSUPPORTED_CPU  : print("RTC_UNSUPPORTED_CPU"); break;
+#endif
   default                   : print("invalid error code"); break;
   }
   if (str) { 

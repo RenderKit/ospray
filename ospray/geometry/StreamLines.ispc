@@ -21,11 +21,6 @@
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
 struct StreamLines {
   uniform Geometry super; //!< inherited geometry fields
@@ -120,6 +115,52 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   t_out= approximateDistance + min((- b + srad)*rcpf(2.f*a), max(tA,tB));
 }
 
+
+#if USE_EMBREE3
+unmasked void StreamLines_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+  
+  uniform StreamLines *uniform self
+    = (uniform StreamLines *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+  
+  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+  
+  const uniform uint32 idx = self->index[primID];
+  const vec3f A = make_vec3f(self->vertex[idx]);
+  const vec3f B = make_vec3f(self->vertex[idx+1]);
+  
+  float t_in=inf, t_out=-inf;
+  intersectCylinder_numericalFix(*ray,A,B,t_in,t_out,self->radius);
+  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius);
+  intersectSphere_numericalFix(*ray,B,t_in,t_out,self->radius);
+  
+  bool hit = false;
+  if (t_in < t_out) {
+    if (t_in > ray->t0 && t_in < ray->t) {
+      ray->t = t_in;
+      hit = true;
+    } else if (t_out > ray->t0 && t_out < ray->t) {
+      ray->t = t_out;
+      hit = true;
+    }
+  }
+  
+  if (hit) {
+    ray->geomID = self->super.geomID;
+    ray->primID = primID;
+    const vec3f P = ray->org + ray->t * ray->dir;
+    float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
+    s = min(max(s,0.f),1.f);
+    const vec3f PonAxis = A + s * (B-A);
+    ray->u = s;
+    ray->Ng = normalize(P-PonAxis);
+  }
+}
+#else
 void StreamLines_intersect(uniform StreamLines *uniform self,
                            varying Ray &ray,
                            uniform size_t primID)
@@ -155,6 +196,7 @@ void StreamLines_intersect(uniform StreamLines *uniform self,
     ray.Ng = normalize(P-PonAxis);
   }
 }
+#endif
 
 static void StreamLines_postIntersect(uniform Geometry *uniform self,
                                        uniform Model *uniform model,
@@ -265,7 +307,11 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
   StreamLines *uniform geom = uniform new StreamLines;
   Geometry_Constructor(&geom->super,cppEquivalent,
                        StreamLines_postIntersect,
-                       NULL,0,NULL);
+                       NULL,
+#if USE_EMBREE3
+                       NULL,
+#endif
+                       0,NULL);
   return geom;
 }
 
@@ -281,10 +327,15 @@ StreamLines_set(       void *uniform _self,
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
+#if USE_EMBREE3
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  rtcSetGeometryUserPrimitiveCount(geom,numSegments);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+#else
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSegments);
-
-  self->super.model  = model;
+#endif
   self->super.geomID = geomID;
+  self->super.model  = model;
   self->vertex = vertex;
   self->index = index;
   // XXX different representation for area sampling, see above
@@ -294,6 +345,17 @@ StreamLines_set(       void *uniform _self,
   self->numVertices = numVertices;
   self->color = color;
   self->radius = radius;
+#if USE_EMBREE3
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&StreamLines_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&StreamLines_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&StreamLines_intersect);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
+#else
   rtcSetUserData(model->embreeSceneHandle, geomID, self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&StreamLines_bounds);
@@ -301,6 +363,7 @@ StreamLines_set(       void *uniform _self,
                           (uniform RTCIntersectFuncVarying)&StreamLines_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                           (uniform RTCOccludedFuncVarying)&StreamLines_intersect);
+#endif
 }
 
 export void *uniform
@@ -313,6 +376,9 @@ StreamLines_setCurve(      void           *uniform _self,
                      const uniform uint32 *uniform index,
                      const uniform vec4f  *uniform color)
 {
+#if USE_EMBREE3
+  print("setcurve not implemnted\n"); 
+#else
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
   uniform uint32 geomID = rtcNewBezierCurveGeometry(model->embreeSceneHandle,
@@ -331,4 +397,5 @@ StreamLines_setCurve(      void           *uniform _self,
   self->vertex = NULL; // not used by curve
   self->index = index;
   self->color = color;
+#endif
 }
