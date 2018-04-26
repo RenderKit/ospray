@@ -53,9 +53,6 @@ namespace ospray {
     embreeGeomID = rtcAttachGeometry(model->embreeSceneHandle,embreeGeom);
     rtcReleaseGeometry(embreeGeom);
     rtcSetGeometryInstancedScene(embreeGeom,instancedScene->embreeSceneHandle);
-    rtcSetGeometryTransform(
-    embreeGeomID = rtcNewInstance2(model->embreeSceneHandle,
-                                   instancedScene->embreeSceneHandle);
 #else
     embreeGeomID = rtcNewInstance2(model->embreeSceneHandle,
                                    instancedScene->embreeSceneHandle);
@@ -90,7 +87,7 @@ namespace ospray {
     bounds.extend(xfmPoint(xfm,v111));
 
 #if USE_EMBREE3
-    rtcSetGeometryTransform,0,RTC_MATRIX_COLUMN_MAJOR,&xfm);
+    rtcSetGeometryTransform(embreeGeom,0,RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,&xfm);
 #else
     rtcSetTransform2(model->embreeSceneHandle,embreeGeomID,
                      RTC_MATRIX_COLUMN_MAJOR,
