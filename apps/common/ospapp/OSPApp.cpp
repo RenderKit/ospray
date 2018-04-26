@@ -53,36 +53,98 @@ namespace ospray {
 
     void OSPApp::printHelp()
     {
-      std::cout << "./ospApp [params] -sg:[params] [files]" << std::endl;
-      std::cout << "params..." << std::endl
-                << "\t" << "-f --fast //prioritizes performance over advanced rendering features" << std::endl
-                << "\t" << "-sg:node:...:node=value //modify a node value" << std::endl
-                << "\t" << "-sg:node:...:node+=name,type //modify a node value" << std::endl
-                << "\t" << "-r --renderer //renderer type.  scivis, pathtracer, ao1, raycast" << std::endl
-                << "\t" << "-d --debug //debug output" << std::endl
-                << "\t" << "-m --module //load custom ospray module" << std::endl
-                << "\t" << "--matrix int int int //create an array of load models of dimensions xyz" << std::endl
-                << "\t" << "--add-plane //add a ground plane (default for non-fast mode)" << std::endl
-                << "\t" << "--no-plane //remove ground plane" << std::endl
-                << "\t" << "--no-lights //no default lights" << std::endl
-                << "\t" << "--add-lights //default lights" << std::endl
-                << "\t" << "--hdri-light filename //add an hdri light" << std::endl
-                << "\t" << "--translate float float float //translate transform" << std::endl
-                << "\t" << "--scale float float float //scale transform" << std::endl
-                << "\t" << "--rotate float float float //rotate transform" << std::endl
-                << "\t" << "--animation //adds subsequent import files to a timeseries" << std::endl
-                << "\t" << "--file //adds subsequent import files without a timeseries" << std::endl
-                << "\t" << "-w int //window width" << std::endl
-                << "\t" << "-h int //window height" << std::endl
-                << "\t" << "--size int int //window width height" << std::endl
-                << "\t" << "-vp float float float //camera position xyz" << std::endl
-                << "\t" << "-vu float float float //camera up xyz" << std::endl
-                << "\t" << "-vi float float float //camera direction xyz" << std::endl
-                << "\t" << "-vf float //camera field of view" << std::endl
-                << "\t" << "-ar float //camera aperture radius" << std::endl
-                << "\t" << "--aces //use ACES tone mapping" << std::endl
-                << "\t" << "--filmic //use filmic tone mapping" << std::endl
-                << std::endl;
+      std::cout <<
+R"text(
+./ospApp [parameters] [scene_files]
+
+general app-parameters:
+
+    -f --fast
+        prioritizes performance over advanced rendering features
+    -sg:node:...:node=value
+        modify a node value
+    -sg:node:...:node+=name,type
+        modify a node value
+    -r --renderer [renderer_type]
+        renderer type --> scivis, pathtracer, ao, raycast, etc...
+    -d --debug
+        debug output
+    -m --module
+        load custom ospray module
+    --matrix int int int
+        create an array of load models of dimensions xyz
+    --add-plane
+        add a ground plane
+    --no-plane
+        remove ground plane
+    --no-lights
+        no default lights
+    --add-lights
+        default lights
+    --hdri-light filename
+        add an hdri light
+    --translate float float float
+        translate transform
+    --scale float float float
+        scale transform
+    --rotate float float float
+        rotate transform
+    --animation
+        adds subsequent import files to a timeseries
+    --file
+        adds subsequent import files without a timeseries
+    -w [int]
+        window width
+    -h [int]
+        window height
+    --size [int] [int]
+        window width height
+    -vp [float] [float] [float]
+        camera position xyz
+    -vu [float] [float] [float]
+        camera up xyz
+    -vi [float] [float] [float]
+        camera direction xyz
+    -vf [float]
+        camera field of view
+    -ar [float]
+        camera aperture radius
+    --aces
+        use ACES tone mapping
+    --filmic
+        use filmic tone mapping
+
+scene data generators through command line options:
+
+usage --> "--generator:type[:parameter1=value,parameter2=value,...]"
+
+    types:
+
+      randomSpheres --> generate a block of random sphere centers of uniform radius
+          parameters:
+              numSpheres=[int]
+                  number of spheres to generate
+              radius=[float]
+                  radius of spheres
+
+      gridOfSpheres --> generate a block of gridded sphere centers of uniform radius
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  number of spheres to generate in each 3D dimension
+
+      basicVolume --> generate a volume with linearly increasing voxel values
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  the 3D dimensions of the volume
+
+      vtkWavelet --> generate the vtkWavelet volume (requries VTK support compiled in)
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  number of spheres to generate in each 3D dimension
+              [isovalues,isosurfaces]=value1/value2/value3...
+                  use vtkMarchingCubes filter to generate isosurfaces instead of the volume
+)text"
+      << std::endl;
     }
 
     int OSPApp::main(int argc, const char *argv[])
