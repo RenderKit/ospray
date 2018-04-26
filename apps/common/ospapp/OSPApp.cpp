@@ -69,9 +69,9 @@ general app-parameters:
         renderer type --> scivis, pathtracer, ao, raycast, etc...
     -d --debug
         debug output
-    -m --module
+    -m --module [module_name]
         load custom ospray module
-    --matrix int int int
+    --matrix [int] [int] [int]
         create an array of load models of dimensions xyz
     --add-plane
         add a ground plane
@@ -81,13 +81,13 @@ general app-parameters:
         no default lights
     --add-lights
         default lights
-    --hdri-light filename
+    --hdri-light [filename]
         add an hdri light
-    --translate float float float
+    --translate [float] [float] [float]
         translate transform
-    --scale float float float
+    --scale [float] [float] [float]
         scale transform
-    --rotate float float float
+    --rotate [float] [float] [float]
         rotate transform
     --animation
         adds subsequent import files to a timeseries
