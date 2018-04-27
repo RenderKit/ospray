@@ -103,6 +103,8 @@ general app-parameters:
         alias for window size = 1920x1080
     -4k
         alias for window size = 3840x2160
+    -8k
+        alias for window size = 7680x4320
     -vp [float] [float] [float]
         camera position xyz
     -vu [float] [float] [float]
@@ -316,6 +318,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         } else if (arg == "-4k") {
           width  = 3840;
           height = 2160;
+        } else if (arg == "-8k") {
+          width  = 7680;
+          height = 4320;
         } else if (arg == "-vp") {
           vec3f posVec;
           posVec.x = atof(av[i + 1]);
