@@ -107,6 +107,80 @@ OSPGeometry getSphere() {
   return sphere;
 }
 
+OSPGeometry getSphereColorFloat3() {
+  // sphere vertex data
+  float vertex[] = { 0.0f, 0.0f, 3.0f, 0.0f};
+  float color[] =  { 1.0f, 0.0f, 0.0f, 1.0f};
+  // create and setup model and sphere
+  OSPGeometry sphere = ospNewGeometry("spheres");
+  EXPECT_TRUE(sphere);
+  OSPData data = ospNewData(1, OSP_FLOAT4, vertex);
+  EXPECT_TRUE(data);
+  ospCommit(data);
+  ospSetData(sphere, "spheres", data);
+  data = ospNewData(1, OSP_FLOAT3, color);
+  EXPECT_TRUE(data);
+  ospCommit(data);
+  ospSetData(sphere, "color", data);
+  ospSet1f(sphere, "radius", 1.0f);
+  ospCommit(sphere);
+
+  return sphere;
+}
+
+OSPGeometry getSphereColorUchar4() {
+  // sphere vertex data
+  float vertex[] = { 0.0f, 0.0f, 3.0f, 0.0f};
+  uint8_t color[] =  { 255, 0, 0, 255};
+  // create and setup model and sphere
+  OSPGeometry sphere = ospNewGeometry("spheres");
+  EXPECT_TRUE(sphere);
+  OSPData data = ospNewData(1, OSP_FLOAT4, vertex);
+  EXPECT_TRUE(data);
+  ospCommit(data);
+  ospSetData(sphere, "spheres", data);
+  data = ospNewData(1, OSP_UCHAR4, color);
+  EXPECT_TRUE(data);
+  ospCommit(data);
+  ospSetData(sphere, "color", data);
+  ospSet1f(sphere, "radius", 1.0f);
+  ospCommit(sphere);
+
+  return sphere;
+}
+
+OSPGeometry getSphereInterleavedLayout() {
+  struct Sphere {
+    float vertex[3];
+    float color[4];
+  };
+  Sphere s;
+  s.vertex[0] = 0;
+  s.vertex[1] = 0;
+  s.vertex[2] = 3;
+  s.color[0] = 1;
+  s.color[1] = 0;
+  s.color[2] = 0;
+  s.color[3] = 1;
+
+  // create and setup model and sphere
+  OSPGeometry sphere = ospNewGeometry("spheres");
+  EXPECT_TRUE(sphere);
+  OSPData data = ospNewData(sizeof(Sphere), OSP_CHAR, &s);
+  EXPECT_TRUE(data);
+  ospCommit(data);
+  ospSetData(sphere, "spheres", data);
+  ospSetData(sphere, "color", data);
+  ospSet1i(sphere, "color_offset", 3 * sizeof(float));
+  ospSet1i(sphere, "bytes_per_sphere", sizeof(Sphere));
+  ospSet1i(sphere, "color_stride", sizeof(Sphere));
+  ospSet1i(sphere, "color_format", OSP_FLOAT4);
+  ospSet1f(sphere, "radius", 1.0f);
+  ospCommit(sphere);
+
+  return sphere;
+}
+
 OSPGeometry getStreamline() {
   float vertex[] = { 2.0f, -1.0f, 3.0f, 0.0f,
                      0.4f, 0.5f, 8.0f, -2.0f,
@@ -156,6 +230,33 @@ TEST_P(SingleObject, simpleMesh) {
 // single red sphere
 TEST_P(SingleObject, simpleSphere) {
   OSPGeometry sphere = ::getSphere();
+  ospSetMaterial(sphere, GetMaterial());
+  ospCommit(sphere);
+  AddGeometry(sphere);
+  PerformRenderTest();
+}
+
+// single red sphere with OSP_FLOAT3 color layout
+TEST_P(SingleObject, simpleSphereColorFloat3) {
+  OSPGeometry sphere = ::getSphereColorFloat3();
+  ospSetMaterial(sphere, GetMaterial());
+  ospCommit(sphere);
+  AddGeometry(sphere);
+  PerformRenderTest();
+}
+
+// single red sphere with OSP_UCHAR4 color layout
+TEST_P(SingleObject, simpleSphereColorUchar4) {
+  OSPGeometry sphere = ::getSphereColorUchar4();
+  ospSetMaterial(sphere, GetMaterial());
+  ospCommit(sphere);
+  AddGeometry(sphere);
+  PerformRenderTest();
+}
+
+// single red sphere with interleaved layout
+TEST_P(SingleObject, simpleSphereInterleavedLayout) {
+  OSPGeometry sphere = ::getSphereInterleavedLayout();
   ospSetMaterial(sphere, GetMaterial());
   ospCommit(sphere);
   AddGeometry(sphere);
