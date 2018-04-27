@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Geometry.h"
+#include "ospray/OSPDataType.h"
 
 namespace ospray {
   /*! @{ \defgroup geometry_spheres Spheres ("spheres")
@@ -80,16 +81,17 @@ namespace ospray {
 
     Ref<Data> texcoordData;
 
-    /*! The number of components for each color (3 or 4) */
-    int colorComponents;
+    /*! The color format of the colorData array, one of:
+        OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
+    OSPDataType colorFormat;
 
     /*! stride in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorComponents floats from
+      color. color of sphere i will be read as colorFormat color from
       'colorOffset+i*colorStride */
     size_t colorStride;
 
     /*! offset in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorComponents floats from
+      color. color of sphere i will be read as colorFormat color from
       'colorOffset+i*colorStride */
     size_t colorOffset;
 

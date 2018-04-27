@@ -20,6 +20,7 @@
 #include "Spheres.h"
 #include "common/Data.h"
 #include "common/Model.h"
+#include "common/OSPCommon.h"
 // ispc-generated files
 #include "Spheres_ispc.h"
 
@@ -42,6 +43,7 @@ namespace ospray {
     radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
     bytesPerSphere    = getParam1i("bytes_per_sphere",4*sizeof(float));
+    texcoordData      = getParamData("texcoord");
     offset_center     = getParam1i("offset_center",0);
     offset_radius     = getParam1i("offset_radius",-1);
     offset_materialID = getParam1i("offset_materialID",-1);
@@ -49,12 +51,21 @@ namespace ospray {
     sphereData        = getParamData("spheres");
     colorData         = getParamData("color");
     colorOffset       = getParam1i("color_offset",0);
-    colorComponents   = getParam1i("color_components",
-                                   colorData
-                                   && colorData->type == OSP_FLOAT3 ? 3 : 4);
-    colorStride       = getParam1i("color_stride",
-                                   colorComponents * sizeof(float));
-    texcoordData      = getParamData("texcoord");
+
+    if (colorData) {
+      if (hasParam("color_format")) {
+        colorFormat = static_cast<OSPDataType>(getParam1i("color_format",
+                                                          OSP_UNKNOWN));
+      } else {
+        colorFormat = colorData->type;
+      }
+    } else {
+      colorFormat = OSP_UNKNOWN;
+    }
+    colorStride = getParam1i("color_stride",
+                             colorFormat == OSP_UNKNOWN ?
+                             0 : sizeOf(colorFormat));
+
 
     if (sphereData.ptr == nullptr) {
       throw std::runtime_error("#ospray:geometry/spheres: no 'spheres' data "
@@ -97,8 +108,7 @@ namespace ospray {
                               texcoordData ?
                                   (ispc::vec2f *)texcoordData->data : nullptr,
                               colorData ? colorData->data : nullptr,
-                              colorOffset, colorStride,
-                              colorData && colorComponents == 4,
+                              colorOffset, colorStride, colorFormat,
                               numSpheres,bytesPerSphere,
                               radius,materialID,
                               offset_center,offset_radius,
