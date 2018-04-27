@@ -99,6 +99,10 @@ general app-parameters:
         window height
     --size [int] [int]
         window width height
+    -hd
+        alias for window size = 1920x1080
+    -4k
+        alias for window size = 3840x2160
     -vp [float] [float] [float]
         camera position xyz
     -vu [float] [float] [float]
@@ -306,6 +310,12 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           height = atoi(av[i + 2]);
           removeArgs(ac, av, i, 3);
           --i;
+        } else if (arg == "-hd") {
+          width  = 1920;
+          height = 1080;
+        } else if (arg == "-4k") {
+          width  = 3840;
+          height = 2160;
         } else if (arg == "-vp") {
           vec3f posVec;
           posVec.x = atof(av[i + 1]);
