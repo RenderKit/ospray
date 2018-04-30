@@ -340,7 +340,7 @@ export void SpheresGeometry_set(void  *uniform _self
 
   // This can occur if the radius is < 1 in some cases, so make sure
   // epsilon is not too big
-  if (self->epsilon >= self->radius) {
+  if (self->epsilon > self->radius / 100.0) {
     self->epsilon = self->radius / 100.0;
   }
 

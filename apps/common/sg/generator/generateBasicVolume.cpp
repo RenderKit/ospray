@@ -36,7 +36,7 @@ namespace ospray {
       vec3i dims(100, 100, 100);
 
       for (auto &p : params) {
-        if (p.first == "dimensions") {
+        if (p.first == "dimensions" || p.first == "dims") {
           auto string_dims = ospcommon::utility::split(p.second, 'x');
           if (string_dims.size() != 3) {
             std::cout << "WARNING: ignoring incorrect 'dimensions' parameter,"

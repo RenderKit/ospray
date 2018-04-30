@@ -33,6 +33,7 @@ if(OSPRAY_SG_VTK)
 
   set(SG_VTK_SRCS
     importer/importUnstructuredVolume.cpp
+    importer/importVTKPolyData.cpp
     generator/generateVTKWaveletVolume.cpp
   )
 

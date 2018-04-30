@@ -233,6 +233,8 @@ namespace ospray {
 #ifdef OSPRAY_APPS_SG_VTK
       } else if (ext == "vtu" || ext == "vtk" || ext == "off") {
         sg::importUnstructuredVolume(world, fileName);
+      } else if (ext == "vtp") {
+        sg::importVTKPolyData(world, fileName);
 #endif
 #ifdef OSPRAY_APPS_SG_CHOMBO
       } else if (ext == "hdf5") {
