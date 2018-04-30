@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <array>
+#include "ospcommon/vec.h"
 #include "ospray_test_fixture.h"
 
 using OSPRayTestScenes::Base;
@@ -21,39 +23,43 @@ using OSPRayTestScenes::SingleObject;
 using OSPRayTestScenes::Box;
 using OSPRayTestScenes::Sierpinski;
 using OSPRayTestScenes::Pipes;
+using namespace ospcommon;
 
 namespace {
 
 OSPGeometry getMesh() {
   // triangle mesh data
-  float vertices[] = { -2.0f, -1.0f, 3.5f,
-                       2.0f, -1.0f, 3.0f,
-                       2.0f,  1.0f, 3.5f,
-                       -2.0f,  1.0f, 3.0f
-                     };
+  std::array<vec3f, 4> vertices = {
+    vec3f(-2.0f, -1.0f, 3.5f),
+    vec3f(2.0f, -1.0f, 3.0f),
+    vec3f(2.0f,  1.0f, 3.5f),
+    vec3f(-2.0f,  1.0f, 3.0f)
+  };
   // triangle color data
-  float color[] =  { 1.0f, 0.0f, 0.0f, 1.0f,
-                     0.0f, 1.0f, 0.0f, 1.0f,
-                     0.0f, 0.0f, 1.0f, 1.0f,
-                     0.7f, 0.7f, 0.7f, 1.0f
-                   };
-  int32_t indices[] = { 0, 1, 2,
-                        0, 1, 3,
-                        0, 2, 3,
-                        1, 2, 3
-                      };
+  std::array<vec4f, 4> color =  {
+    vec4f(1.0f, 0.0f, 0.0f, 1.0f),
+    vec4f(0.0f, 1.0f, 0.0f, 1.0f),
+    vec4f(0.0f, 0.0f, 1.0f, 1.0f),
+    vec4f(0.7f, 0.7f, 0.7f, 1.0f)
+  };
+  std::array<vec3i, 4> indices = {
+    vec3i(0, 1, 2),
+    vec3i(0, 1, 3),
+    vec3i(0, 2, 3),
+    vec3i(1, 2, 3)
+  };
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
   EXPECT_TRUE(mesh);
-  OSPData data = ospNewData(4, OSP_FLOAT3, vertices);
+  OSPData data = ospNewData(vertices.size(), OSP_FLOAT3, vertices.data());
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(mesh, "vertex", data);
-  data = ospNewData(4, OSP_FLOAT4, color);
+  data = ospNewData(color.size(), OSP_FLOAT4, color.data());
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(mesh, "vertex.color", data);
-  data = ospNewData(4, OSP_INT3, indices);
+  data = ospNewData(indices.size(), OSP_INT3, indices.data());
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(mesh, "index", data);
@@ -63,20 +69,21 @@ OSPGeometry getMesh() {
 }
 
 OSPGeometry getCylinder() {
-  //  cylinder vertex data
-  float vertex[] = { 0.0f, -1.0f, 3.0f,
-                     0.0f, 1.0f, 3.0f
-                   };
-  //  cylinder color
-  float color[] =  { 1.0f, 0.0f, 0.0f, 1.0f};
+  // cylinder vertex data
+  std::array<vec3f, 2> vertex = {
+    vec3f(0.0f, -1.0f, 3.0f),
+    vec3f(0.0f, 1.0f, 3.0f)
+  };
+  // cylinder color
+  vec4f color(1.0f, 0.0f, 0.0f, 1.0f);
   // create and setup model and cylinder
   OSPGeometry cylinder = ospNewGeometry("cylinders");
   EXPECT_TRUE(cylinder);
-  OSPData data = ospNewData(2, OSP_FLOAT3, vertex);
+  OSPData data = ospNewData(vertex.size(), OSP_FLOAT3, vertex.data());
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(cylinder, "cylinders", data);
-  data = ospNewData(1, OSP_FLOAT4, color);
+  data = ospNewData(1, OSP_FLOAT4, &color);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(cylinder, "color", data);
@@ -88,16 +95,16 @@ OSPGeometry getCylinder() {
 
 OSPGeometry getSphere() {
   // sphere vertex data
-  float vertex[] = { 0.0f, 0.0f, 3.0f, 0.0f};
-  float color[] =  { 1.0f, 0.0f, 0.0f, 1.0f};
+  vec4f vertex(0.0f, 0.0f, 3.0f, 0.0f);
+  vec4f color(1.0f, 0.0f, 0.0f, 1.0f);
   // create and setup model and sphere
   OSPGeometry sphere = ospNewGeometry("spheres");
   EXPECT_TRUE(sphere);
-  OSPData data = ospNewData(1, OSP_FLOAT4, vertex);
+  OSPData data = ospNewData(1, OSP_FLOAT4, &vertex);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(sphere, "spheres", data);
-  data = ospNewData(1, OSP_FLOAT4, color);
+  data = ospNewData(1, OSP_FLOAT4, &color);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(sphere, "color", data);
@@ -109,16 +116,16 @@ OSPGeometry getSphere() {
 
 OSPGeometry getSphereColorFloat3() {
   // sphere vertex data
-  float vertex[] = { 0.0f, 0.0f, 3.0f, 0.0f};
-  float color[] =  { 1.0f, 0.0f, 0.0f, 1.0f};
+  vec4f vertex(0.0f, 0.0f, 3.0f, 0.0f);
+  vec3f color(1.0f, 0.0f, 0.0f);
   // create and setup model and sphere
   OSPGeometry sphere = ospNewGeometry("spheres");
   EXPECT_TRUE(sphere);
-  OSPData data = ospNewData(1, OSP_FLOAT4, vertex);
+  OSPData data = ospNewData(1, OSP_FLOAT4, &vertex);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(sphere, "spheres", data);
-  data = ospNewData(1, OSP_FLOAT3, color);
+  data = ospNewData(1, OSP_FLOAT3, &color);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(sphere, "color", data);
@@ -130,16 +137,16 @@ OSPGeometry getSphereColorFloat3() {
 
 OSPGeometry getSphereColorUchar4() {
   // sphere vertex data
-  float vertex[] = { 0.0f, 0.0f, 3.0f, 0.0f};
-  uint8_t color[] =  { 255, 0, 0, 255};
+  vec4f vertex(0.0f, 0.0f, 3.0f, 0.0f);
+  vec4uc color(255, 0, 0, 255);
   // create and setup model and sphere
   OSPGeometry sphere = ospNewGeometry("spheres");
   EXPECT_TRUE(sphere);
-  OSPData data = ospNewData(1, OSP_FLOAT4, vertex);
+  OSPData data = ospNewData(1, OSP_FLOAT4, &vertex);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(sphere, "spheres", data);
-  data = ospNewData(1, OSP_UCHAR4, color);
+  data = ospNewData(1, OSP_UCHAR4, &color);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(sphere, "color", data);
@@ -151,17 +158,16 @@ OSPGeometry getSphereColorUchar4() {
 
 OSPGeometry getSphereInterleavedLayout() {
   struct Sphere {
-    float vertex[3];
-    float color[4];
+    vec3f vertex;
+    vec4f color;
+
+    Sphere() : vertex(0), color(0) {}
   };
+
   Sphere s;
-  s.vertex[0] = 0;
-  s.vertex[1] = 0;
-  s.vertex[2] = 3;
-  s.color[0] = 1;
-  s.color[1] = 0;
-  s.color[2] = 0;
-  s.color[3] = 1;
+  s.vertex.z = 3;
+  s.color.x = 1;
+  s.color.w = 1;
 
   // create and setup model and sphere
   OSPGeometry sphere = ospNewGeometry("spheres");
@@ -171,7 +177,7 @@ OSPGeometry getSphereInterleavedLayout() {
   ospCommit(data);
   ospSetData(sphere, "spheres", data);
   ospSetData(sphere, "color", data);
-  ospSet1i(sphere, "color_offset", 3 * sizeof(float));
+  ospSet1i(sphere, "color_offset", sizeof(vec3f));
   ospSet1i(sphere, "bytes_per_sphere", sizeof(Sphere));
   ospSet1i(sphere, "color_stride", sizeof(Sphere));
   ospSet1i(sphere, "color_format", OSP_FLOAT4);
