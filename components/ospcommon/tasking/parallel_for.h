@@ -19,6 +19,8 @@
 #include "../TypeTraits.h"
 #include "detail/parallel_for.inl"
 
+#include <algorithm>
+
 namespace ospcommon {
   namespace tasking {
 
@@ -78,14 +80,14 @@ namespace ospcommon {
                     "ospcommon::tasking::parallel_for() requires the type"
                     " INDEX_T to be unsigned char, short, int, uint, long,"
                     " or size_t.");
-      
+
       // // iw - TODO: fix this
       // static_assert(has_operator_method_matching_param<TASK_T, INDEX_T>::value,
       //               "ospcommon::tasking::parallel_for() requires the "
       //               "implementation of method "
       //               "'void TASK_T::operator(P taskIndex), where P is of "
       //               "type INDEX_T [first parameter of parallel_for()].");
-      
+
       INDEX_T numBlocks = (nTasks+BLOCK_SIZE-1)/BLOCK_SIZE;
       parallel_for(numBlocks,[&](INDEX_T blockID){
           INDEX_T begin = blockID * (INDEX_T)BLOCK_SIZE;

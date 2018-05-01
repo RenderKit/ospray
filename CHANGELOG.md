@@ -6,6 +6,8 @@ Version History
 -   Added Principled and CarPaint materials
 -   Improved flexibility of the tone mapper
 -   Added ability to configure Embree scene flags via OSPModel parameters
+-   Fixed memory leak caused by incorrect parameter reference counts in ISPC
+    device
 
 ### Changes in v1.5.0:
 
