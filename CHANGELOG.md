@@ -8,6 +8,10 @@ Version History
 -   Added ability to configure Embree scene flags via OSPModel parameters
 -   Fixed memory leak caused by incorrect parameter reference counts in ISPC
     device
+-   Fixed support for color strides which were not multiples of `sizeof(float)`
+-   Added support for RGBA8 color format to Spheres, which can be set by
+    specifying the "colorFormat" parameter as `OSP_UCHAR4`, or passing the
+    "colorData" through an `OSPData` of `OSP_UCHAR4`.
 
 ### Changes in v1.5.0:
 
