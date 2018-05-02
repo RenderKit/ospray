@@ -481,7 +481,7 @@ export void SpheresGeometry_set(void  *uniform _self
   rtcSetGeometryIntersectFunction
     (geom,(uniform RTCIntersectFunctionN)&Spheres_intersect);
   rtcSetGeometryOccludedFunction
-    (geom,(uniform RTCOccludedFunctionN)&Spheres_intersect);
+    (geom,(uniform RTCOccludedFunctionN)&Spheres_occluded);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
 #else
