@@ -59,6 +59,14 @@ namespace ospray {
       } else {
         colorFormat = colorData->type;
       }
+      if (colorFormat != OSP_FLOAT4 && colorFormat != OSP_FLOAT3
+          && colorFormat != OSP_FLOAT3A && colorFormat != OSP_UCHAR4)
+      {
+        throw std::runtime_error("#ospray:geometry/spheres: invalid "
+                                 "colorFormat specified! Must be one of: "
+                                 "OSP_FLOAT4, OSP_FLOAT3, OSP_FLOAT3A or "
+                                 "OSP_UCHAR4.");
+      }
     } else {
       colorFormat = OSP_UNKNOWN;
     }
