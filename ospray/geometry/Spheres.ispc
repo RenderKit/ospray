@@ -475,7 +475,6 @@ export void SpheresGeometry_set(void  *uniform _self
 
 #if USE_EMBREE3
   rtcSetGeometryUserData(geom, self);
-  print("creating user geometry w/ % spheres\n",numSpheres);
   rtcSetGeometryUserPrimitiveCount(geom,numSpheres);
   rtcSetGeometryBoundsFunction
     (geom,(uniform RTCBoundsFunction)&Spheres_bounds, self);
@@ -483,9 +482,7 @@ export void SpheresGeometry_set(void  *uniform _self
     (geom,(uniform RTCIntersectFunctionN)&Spheres_intersect);
   rtcSetGeometryOccludedFunction
     (geom,(uniform RTCOccludedFunctionN)&Spheres_intersect);
-  print("committing spheres\n");
   rtcCommitGeometry(geom);
-  print("DONE committing spheres\n");
   rtcReleaseGeometry(geom);
 #else
   rtcSetUserData(model->embreeSceneHandle,geomID,self);
