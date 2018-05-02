@@ -123,8 +123,6 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 }
 
 #if USE_EMBREE3
-typedef box3fa *uniform box3fa_ptr;
-
 unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform Spheres *uniform self = (uniform Spheres *uniform)args->geometryUserPtr;
@@ -206,9 +204,59 @@ unmasked void Spheres_intersect(const RTCIntersectFunctionNArguments *uniform ar
   if (hit) {
     ray->primID = primID;
     ray->geomID = self->super.geomID;
+    ray->instID = args->context->instID[0];
     // cannot easily be moved to postIntersect
     // we need hit in object space, in postIntersect it is in world-space
     ray->Ng = ray->org + ray->t*ray->dir - center;
+  }
+}  
+
+unmasked void Spheres_occluded(const RTCIntersectFunctionNArguments *uniform args)
+{
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+  
+  uniform Spheres *uniform self
+    = (uniform Spheres *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+  
+  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+
+  // from here on it's the original intersection code from ospray/embree2
+  uniform uint8 *uniform spherePtr =
+    self->data + self->stride*((uniform int64)primID);
+  uniform float radius = self->radius;
+  if (self->offset_radius >= 0) {
+    radius = *((uniform float *uniform)(spherePtr+self->offset_radius));
+  }
+  uniform vec3f center =
+    *((uniform vec3f*uniform)(spherePtr+self->offset_center));
+  const float approxDist = dot(center - ray->org, ray->dir);
+  const vec3f closeOrg = ray->org + approxDist * ray->dir;
+  const vec3f A = center - closeOrg;
+
+  const float a = dot(ray->dir,ray->dir);
+  const float b = 2.f*dot(ray->dir,A);
+  const float c = dot(A,A)-radius*radius;
+
+  const float radical = b*b-4.f*a*c;
+  if (radical < 0.f) return;
+
+  const float srad = sqrt(radical);
+
+  const float t_in = (b - srad) *rcpf(2.f*a) + approxDist;
+  const float t_out= (b + srad) *rcpf(2.f*a) + approxDist;
+
+  bool hit = false;
+  if (t_in > ray->t0 && t_in < ray->t) {
+    hit = true;
+    ray->t = t_in;
+  } else if (t_out > (ray->t0 + self->epsilon) && t_out < ray->t) {
+    hit = true;
+    ray->t = t_out;
+  } else {
+    ray->t = neg_inf;
   }
 }  
 #else
