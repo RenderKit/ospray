@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/memory/malloc.h"
 #include <vector>
 #include <assert.h>
 
@@ -22,34 +23,18 @@ namespace ospcommon
 {
 #define __dllexport /**/
 
-  void* alignedMalloc(size_t size, size_t align) 
-  {
-    if (size == 0)
-      return nullptr;
-    
-    assert((align & (align-1)) == 0);
-    void* ptr = aligned_alloc(align,size);
-
-    if (size != 0 && ptr == nullptr)
-      throw std::bad_alloc();
-    
-    return ptr;
-  }
-  
-  void alignedFree(void* ptr)
-  {
-    if (ptr)
-      free(ptr);
-  }
-
   /* Signature of ispc-generated 'task' functions */
-  typedef void (*ISPCTaskFunc)(void* data, int threadIndex, int threadCount, int taskIndex, int taskCount);
+  using ISPCTaskFunc = void (*)(void* data,
+                                int threadIndex,
+                                int threadCount,
+                                int taskIndex,
+                                int taskCount);
 
   extern "C" __dllexport void* ISPCAlloc(void** taskPtr, int64_t size, int32_t alignment)
   {
     if (*taskPtr == nullptr) *taskPtr = new std::vector<void*>;
     std::vector<void*>* lst = (std::vector<void*>*)(*taskPtr);
-    void* ptr = alignedMalloc((size_t)size,alignment);
+    void* ptr = memory::alignedMalloc((size_t)size,alignment);
     lst->push_back(ptr);
     return ptr;
   }
@@ -57,11 +42,14 @@ namespace ospcommon
   extern "C" __dllexport void ISPCSync(void* task)
   {
     std::vector<void*>* lst = (std::vector<void*>*)task;
-    for (size_t i=0; i<lst->size(); i++) alignedFree((*lst)[i]);
+    for (size_t i=0; i<lst->size(); i++) memory::alignedFree((*lst)[i]);
     delete lst;
   }
 
-  extern "C" __dllexport void ISPCLaunch(void** taskPtr, void* func, void* data, int count)
+  extern "C" __dllexport void ISPCLaunch(void** taskPtr,
+                                         void* func,
+                                         void* data,
+                                         int count)
   {
     printf("ispclaunch ... should never get called on ospray\n"); exit(0);
     tasking::parallel_for(count,[&] (const int i) {
