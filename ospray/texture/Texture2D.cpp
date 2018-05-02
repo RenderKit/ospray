@@ -48,7 +48,7 @@ namespace ospray {
     if (flags & OSP_TEXTURE_SHARED_BUFFER) {
       tx->data = data;
     } else {
-      tx->data = bytes ? new unsigned char[bytes] : NULL;
+      tx->data = new unsigned char[bytes];
       memcpy(tx->data, data, bytes);
     }
 
