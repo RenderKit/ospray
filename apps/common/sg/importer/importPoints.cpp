@@ -76,12 +76,27 @@ namespace ospray {
         return fread(f,sizeof(float),N,file) == size_t(N);
 
       // ascii:
-      for (int i=0;i<N;i++) {
-        int rc = fscanf(file,"%f",f+i);
-        if (rc == 0) return (i == 0);
-        rc = fscanf(file,"\n");
+      const int LINE_SZ = 10000;
+      char line[LINE_SZ];
+      char *save_ptr;
+      while (fgets(line,LINE_SZ,file) && !feof(file)) {
+        if (line[0] == '#')
+          continue;
+        char *tok = strtok_r(line,"\n\t ",&save_ptr);
+        if (!tok) 
+          // empty line - that's kind-of OK, just consume it
+          continue;
+        
+        // non-empty line - this MUST match, or we'll error out.
+        for (int i=0;i<N;i++) {
+          if (!tok) throw std::runtime_error("read line with incomplete data");
+          f[i] = atof(tok);
+          tok = strtok_r(NULL,"\n\t ",&save_ptr);
+        }
+        return true;
       }
-      return true;
+      // could not read a line ... eof.
+      return false;
     }
 
     /*! importer for a binary set of points, the format of which are

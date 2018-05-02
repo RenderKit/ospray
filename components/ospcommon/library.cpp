@@ -76,19 +76,23 @@ namespace ospcommon {
     if (use_double_flag && atoi(use_double_flag)) {
       precision = "double";
     }
-    
+
     std::string file = name;
     void *lib = nullptr;
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
 #else
+    std::string fullName = "lib" + file + "_" + desiredISAname + "_" + precision;
+
 # if defined(__MACOSX__) || defined(__APPLE__)
-    std::string fullName = "lib"+file+".dylib";
+    fullName += ".dylib";
 # else
-    std::string fullName = "lib"+file+"_"+desiredISAname+"_"+precision+".so";
+    fullName += ".so";
 # endif
+
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+
     if (!lib) {
       PRINT(dlerror());
       foundISAname = "";
@@ -166,7 +170,7 @@ namespace ospcommon {
         return;
       }
 
-      
+
 #ifdef _WIN32
       // TODO: Must use GetLastError and FormatMessage on windows
       // to log out the error that occurred when calling LoadLibrary
