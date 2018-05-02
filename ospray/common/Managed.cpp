@@ -25,6 +25,15 @@ namespace ospray {
     // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check
     ispc::delete_uniform(ispcEquivalent);
     ispcEquivalent = nullptr;
+
+    // make sure all ManagedObject parameter refs are decremented
+    std::for_each(params_begin(),
+                  params_end(),
+                  [&](std::shared_ptr<Param> &p) {
+                    auto &param = *p;
+                    if (param.data.is<OSP_PTR>())
+                      param.data.get<OSP_PTR>()->refDec();
+                  });
   }
 
   /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */

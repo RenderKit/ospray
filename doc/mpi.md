@@ -171,3 +171,39 @@ the application can create a communicator with one rank per-node to then
 run OSPRay on one process per-node. The remaining ranks on each node
 can then aggregate their data to the OSPRay process for rendering.
 
+There are also two optional parameters available on the OSPModel created
+using the distributed device, which can be set to tell OSPRay about your
+application's data distribution.
+
+  ---------- ----------------- ----------------------------------------------
+  Type       Name              Description
+  ---------- ----------------- ----------------------------------------------
+  `box3f[]`  regions           [data] array of boxes which bound the data owned by
+                               the current rank, used for sort-last compositing.
+                               The global set of regions specified by all ranks
+                               must be disjoint for correct compositing.
+        
+  `box3f[]`  ghostRegions      Optional [data] array of boxes which bound the ghost data on
+                               each rank. Using these shared data between nodes
+                               can be used for computing secondary ray effects
+                               such as ambient occlusion. If specifying ghostRegions,
+                               there should be one ghostRegion for each region.
+  ------ ------------ -------------------------------------------------------
+  : Parameters for the distributed OSPModel
+
+See the distributed device examples in the MPI module for examples.
+
+The renderer supported when using the distributed device is the `mpi_raycast` renderer.
+This renderer is an experimental renderer and currently only supports ambient occlusion
+(on the local data only). To compute correct ambient occlusion across the distributed
+data the application is responsible for replicating ghost data and specifying the
+ghostRegions and regions as described above.
+
+  ---------- ----------------- -------- -------------------------------------
+  Type       Name               Default Description
+  ---------- ----------------- -------- -------------------------------------
+  int        aoSamples                0  number of rays per sample to compute
+                                         ambient occlusion
+  ------ ------------ -------------------------------------------------------
+  : Parameters for the distributed OSPModel
+

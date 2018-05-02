@@ -65,6 +65,10 @@ namespace ospcommon {
        *         specified) */
       Param *findParam(const std::string &name, bool addIfNotExist = false);
 
+      /*! enumerate parameters */
+      std::shared_ptr<Param> *params_begin();
+      std::shared_ptr<Param> *params_end();
+
     private:
 
       // Data members //
