@@ -75,6 +75,10 @@ namespace ospray {
       if (!ascii)
         return fread(f,sizeof(float),N,file) == size_t(N);
 
+#if _WIN32
+      throw std::runtime_error("ascii importer for points not implemented"
+                               " on Windows!");
+#else
       // ascii:
       const int LINE_SZ = 10000;
       char line[LINE_SZ];
@@ -83,10 +87,10 @@ namespace ospray {
         if (line[0] == '#')
           continue;
         char *tok = strtok_r(line,"\n\t ",&save_ptr);
-        if (!tok) 
+        if (!tok)
           // empty line - that's kind-of OK, just consume it
           continue;
-        
+
         // non-empty line - this MUST match, or we'll error out.
         for (int i=0;i<N;i++) {
           if (!tok) throw std::runtime_error("read line with incomplete data");
@@ -97,6 +101,7 @@ namespace ospray {
       }
       // could not read a line ... eof.
       return false;
+#endif
     }
 
     /*! importer for a binary set of points, the format of which are
