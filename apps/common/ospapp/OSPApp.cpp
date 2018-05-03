@@ -126,7 +126,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
     types:
 
-      randomSpheres --> generate a block of random sphere centers of uniform radius
+      spheres --> generate a block of random sphere centers of uniform radius
           parameters:
               numSpheres=[int]
                   number of spheres to generate
@@ -137,6 +137,13 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           parameters:
               [dimensions,dims]=[intxintxint]
                   number of spheres to generate in each 3D dimension
+
+      cylinders --> generate a block of cylinders in {X,Y} grid of length Z
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  number of cylinders to generate in X,Y 2D dimensions, use Z for length
+              radius=[float]
+                  radius of cylinders
 
       basicVolume --> generate a volume with linearly increasing voxel values
           parameters:

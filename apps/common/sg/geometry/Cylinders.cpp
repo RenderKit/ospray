@@ -58,7 +58,7 @@ namespace ospray {
             radius = *(float*)(base + i + offset_radius);
           // TODO less conservative bounds
           box3f cylinderBounds(ospcommon::min(v0, v1) - radius,
-              ospcommon::max(v0, v1) + radius);
+                               ospcommon::max(v0, v1) + radius);
           bounds.extend(cylinderBounds);
         }
       }
