@@ -71,7 +71,7 @@ namespace ospcommon {
         size_t begin = input.find_first_not_of(delim,pos);
         if (begin == input.npos) return tokens;
         size_t end = input.find_first_of(delim,begin);
-        tokens.push_back(input.substr(begin,end==input.npos?input.npos:end-begin));
+        tokens.push_back(input.substr(begin,(end==input.npos)?input.npos:(end-begin)));
         pos = end;
       }
     }
