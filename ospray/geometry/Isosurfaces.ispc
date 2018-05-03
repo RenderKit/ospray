@@ -28,13 +28,98 @@ struct Isosurfaces {
   uniform Volume *uniform volume;
 };
 
-void Isosurfaces_bounds(uniform Isosurfaces *uniform isosurfaces,
+#if USE_EMBREE3
+unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
+{
+  uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
+
+  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
+  *out = make_box3fa(self->volume->boundingBox);
+}
+#else
+void Isosurfaces_bounds(uniform Isosurfaces *uniform self,
                         uniform size_t primID,
                         uniform box3fa &bbox)
 {
-  bbox = make_box3fa(isosurfaces->volume->boundingBox);
+  bbox = make_box3fa(self->volume->boundingBox);
+}
+#endif
+
+#if USE_EMBREE3
+void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
+                                const uniform bool isOcclusionTest)
+{
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+  
+  uniform Isosurfaces *uniform self
+    = (uniform Isosurfaces *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+  
+  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+
+  uniform Volume *uniform volume = self->volume;
+
+  float hit_t;
+  vec3f hit_Ng;
+  
+  /* iw - just to explain the following code sequence: in embree3, the
+     'occluded' function no longer guarantees that we have a 'full'
+     ospray ray to intersect (the ospray ray is what emrbee calls a
+     rayhit, the concatenation of ray _and_ hitpoint!), but that
+     voluem->intersectIsoSurface code seems to assume that this is
+     always a ful ospray::ray. So, just to make sure that this code
+     always has a valid "full" ray to work with I'm creating a temp
+     one here, and then, when writing results back, make sure that we
+     not write any hit information unless it's not an occlusoin
+     test */
+  Ray tmpRay;
+  tmpRay.org = ray->org;
+  tmpRay.time = ray->time;
+  tmpRay.dir = ray->dir;
+  tmpRay.t0 = ray->t0;
+  tmpRay.t = ray->t;
+  tmpRay.instID = -1;
+  tmpRay.geomID = -1;
+  tmpRay.primID = -1;
+
+  volume->intersectIsosurface(volume,
+                              self->isovalues,
+                              self->super.numPrimitives,
+                              self->super.geomID,
+                              tmpRay);
+  bool hit = tmpRay.primID >= 0;
+  if (isOcclusionTest) {
+    if (hit) {
+      // hit something
+    } else {
+      ray->t = neg_inf;
+    }
+  } else {
+    if (hit) {
+      ray->instID = args->context->instID[0];
+      ray->geomID = self->super.geomID;
+      ray->primID = tmpRay.primID;
+      ray->t =  tmpRay.t;
+      ray->Ng = tmpRay.Ng;
+    }
+  }
 }
 
+unmasked void Isosurfaces_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Isosurfaces_intersect_kernel(args,false);
+}
+
+unmasked void Isosurfaces_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Isosurfaces_intersect_kernel(args,true);
+}
+
+
+#else
 void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
                            varying Ray &ray,
                            uniform size_t primID)
@@ -47,6 +132,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
                               self->super.geomID,
                               ray);
 }
+#endif
 
 static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
                                       uniform Model *uniform model,
@@ -93,7 +179,6 @@ export void *uniform Isosurfaces_set(void          *uniform _self,
 
 #if USE_EMBREE3
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
-  rtcSetGeometryUserPrimitiveCount(geom,1);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 #else
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,1);
@@ -107,12 +192,13 @@ export void *uniform Isosurfaces_set(void          *uniform _self,
 
 #if USE_EMBREE3
   rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryUserPrimitiveCount(geom,1);
   rtcSetGeometryBoundsFunction
     (geom,(uniform RTCBoundsFunction)&Isosurfaces_bounds, self);
   rtcSetGeometryIntersectFunction
     (geom,(uniform RTCIntersectFunctionN)&Isosurfaces_intersect);
   rtcSetGeometryOccludedFunction
-    (geom,(uniform RTCOccludedFunctionN)&Isosurfaces_intersect);
+    (geom,(uniform RTCOccludedFunctionN)&Isosurfaces_occluded);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
 #else

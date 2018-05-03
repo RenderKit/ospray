@@ -154,8 +154,8 @@ export void *uniform Slices_set(void          *uniform _self,
                                 uniform vec4f *uniform planes,
                                 void          *uniform _volume)
 {
-  uniform Slices *uniform self = (uniform Slices *uniform)_self;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform Slices *uniform self   = (uniform Slices *uniform)_self;
+  uniform Model  *uniform model  = (uniform Model  *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
 #if USE_EMBREE3
