@@ -131,8 +131,13 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
 }
 
 
+
+
+
 #if USE_EMBREE3
-unmasked void StreamLines_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+unmasked void StreamLines_intersect_kernel
+(const struct RTCIntersectFunctionNArguments *uniform args,
+ const uniform bool occlusionTest)
 {
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
@@ -164,58 +169,36 @@ unmasked void StreamLines_intersect(const struct RTCIntersectFunctionNArguments 
     }
   }
   
-  if (hit) {
-    ray->geomID = self->super.geomID;
-    ray->primID = primID;
-    ray->instID = args->context->instID[0];
-    const vec3f P = ray->org + ray->t * ray->dir;
-    float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
-    s = min(max(s,0.f),1.f);
-    const vec3f PonAxis = A + s * (B-A);
-    ray->u = s;
-    ray->Ng = normalize(P-PonAxis);
+  if (occlusionTest) {
+    if (hit) {
+      // ray->geomID = self->super.geomID;
+      // ray->primID = primID;
+    } else {
+      ray->t = neg_inf;
+    }
+  } else {
+    if (hit) {
+      ray->geomID = self->super.geomID;
+      ray->primID = primID;
+      ray->instID = args->context->instID[0];
+      const vec3f P = ray->org + ray->t * ray->dir;
+      float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
+      s = min(max(s,0.f),1.f);
+      const vec3f PonAxis = A + s * (B-A);
+      ray->u = s;
+      ray->Ng = normalize(P-PonAxis);
+    }
   }
 }
 
-/*! this is the occluded function - it may NOT modify ray.hit values */
+unmasked void StreamLines_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  StreamLines_intersect_kernel(args,false);
+}
+
 unmasked void StreamLines_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
 {
-  // make sure to set the mask
-  if (!args->valid[programIndex]) return;
-
-  uniform StreamLines *uniform self
-    = (uniform StreamLines *uniform)args->geometryUserPtr;
-  uniform unsigned int primID = args->primID;
-  
-  // this assumes that the args->rayhit is actually a pointer toa varying ray!
-  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
-
-  const uniform uint32 idx = self->index[primID];
-  const vec3f A = make_vec3f(self->vertex[idx]);
-  const vec3f B = make_vec3f(self->vertex[idx+1]);
-  
-  float t_in=inf, t_out=-inf;
-  intersectCylinder_numericalFix(*ray,A,B,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(*ray,B,t_in,t_out,self->radius);
-  
-  bool hit = false;
-  if (t_in < t_out) {
-    if (t_in > ray->t0 && t_in < ray->t) {
-      ray->t = t_in;
-      hit = true;
-    } else if (t_out > ray->t0 && t_out < ray->t) {
-      ray->t = t_out;
-      hit = true;
-    }
-  }
-  
-  if (hit) {
-    // ray->geomID = self->super.geomID;
-    // ray->primID = primID;
-  } else {
-    ray->t = neg_inf;
-  }
+  StreamLines_intersect_kernel(args,true);
 }
 #else
 void StreamLines_intersect(uniform StreamLines *uniform self,
@@ -419,7 +402,7 @@ StreamLines_set(       void *uniform _self,
   rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
                           (uniform RTCIntersectFuncVarying)&StreamLines_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCOccludedFuncVarying)&StreamLines_intersect);
+                          (uniform RTCOccludedFuncVarying)&StreamLines_occluded);
 #endif
 }
 
