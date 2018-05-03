@@ -416,15 +416,28 @@ StreamLines_setCurve(      void           *uniform _self,
                      const uniform uint32 *uniform index,
                      const uniform vec4f  *uniform color)
 {
-#if USE_EMBREE3
-  print("setcurve not implemnted\n"); 
-#else
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
+#if USE_EMBREE3
+  uniform RTCGeometry geom
+    = rtcNewGeometry(ispc_embreeDevice,
+                     RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
+  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT4,
+                             vertexCurve,0,sizeof(uniform vec3fa),numVertices);
+  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_INT,
+                             indexCurve,0,sizeof(uniform int),numSegments);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
+  
+  self->super.geom = geom;
+
+#else
   uniform uint32 geomID = rtcNewBezierCurveGeometry(model->embreeSceneHandle,
       RTC_GEOMETRY_STATIC, numSegments, numVertices);
   rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_VERTEX_BUFFER, vertexCurve, 0, 16);
   rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_INDEX_BUFFER, indexCurve, 0, 4);
+#endif
 
   self->super.model = model;
   self->super.geomID = geomID;
@@ -437,5 +450,4 @@ StreamLines_setCurve(      void           *uniform _self,
   self->vertex = NULL; // not used by curve
   self->index = index;
   self->color = color;
-#endif
 }
