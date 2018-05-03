@@ -75,7 +75,7 @@ namespace ospray {
       if (!ascii)
         return fread(f,sizeof(float),N,file) == size_t(N);
 
-#if _WIN32
+#ifdef _WIN32
       throw std::runtime_error("ascii importer for points not implemented"
                                " on Windows!");
 #else
