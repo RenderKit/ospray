@@ -424,7 +424,7 @@ StreamLines_setCurve(      void           *uniform _self,
                      RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
   rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT4,
                              vertexCurve,0,sizeof(uniform vec3fa),numVertices);
-  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_INT,
+  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT,
                              indexCurve,0,sizeof(uniform int),numSegments);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
   rtcCommitGeometry(geom);
