@@ -25,7 +25,7 @@
 #include <vector>
 
 // embree
-#include "embree2/rtcore.h"
+#include "rtcore.h"
 
 namespace ospray {
   namespace mpi {

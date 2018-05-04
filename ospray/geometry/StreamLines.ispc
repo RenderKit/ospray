@@ -164,7 +164,7 @@ unmasked void StreamLines_intersect_kernel
   
   float t_in=inf, t_out=-inf;
   intersectCylinder_numericalFix(*ray,A,B,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius);
+  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius); 
   intersectSphere_numericalFix(*ray,B,t_in,t_out,self->radius);
   
   bool hit = false;
