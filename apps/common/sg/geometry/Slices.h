@@ -14,58 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Renderable.h"
+#pragma once
+
+#include "Geometry.h"
 
 namespace ospray {
   namespace sg {
 
-    Renderable::Renderable()
+    // simple cylinders, with all of the key info (position and radius)
+    struct OSPSG_INTERFACE Slices : public sg::Geometry
     {
-      createChild("bounds", "box3f", box3f(empty));
-    }
+      Slices();
 
-    std::string Renderable::toString() const
-    {
-      return "ospray::sg::Renderable";
-    }
+      // return bounding box of all primitives
+      box3f bounds() const override;
 
-    box3f Renderable::bounds() const
-    {
-      return child("bounds").valueAs<box3f>();
-    }
+      void preTraverse(RenderContext &ctx,
+                       const std::string& operation,
+                       bool& traverseChildren) override;
 
-    box3f Renderable::computeBounds() const
-    {
-      box3f cbounds = bounds();
-      for (const auto &child : properties.children)
-      {
-        auto tbounds = child.second->bounds();
-          cbounds.extend(tbounds);
-      }
-      return cbounds;
-    }
-
-    void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation,
-                                 bool& traverseChildren)
-    {
-      Node::preTraverse(ctx,operation, traverseChildren);
-      if (operation == "render")
-        preRender(ctx);
-    }
-
-    void Renderable::postTraverse(RenderContext &ctx,
-                                  const std::string& operation)
-    {
-      Node::postTraverse(ctx,operation);
-      if (operation == "render")
-        postRender(ctx);
-    }
-
-    void Renderable::postCommit(RenderContext &)
-    {
-      child("bounds") = computeBounds();
-    }
+      void postRender(RenderContext& ctx) override;
+    };
 
   } // ::ospray::sg
 } // ::ospray

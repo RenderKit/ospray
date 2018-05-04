@@ -14,58 +14,46 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Renderable.h"
+#include "Slices.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {
 
-    Renderable::Renderable()
+    Slices::Slices() : Geometry("slices") {}
+
+    box3f Slices::bounds() const
     {
-      createChild("bounds", "box3f", box3f(empty));
+      box3f bounds = empty;
+
+      if (hasChild("volume"))
+        bounds = child("volume").bounds();
+
+      return bounds;
     }
 
-    std::string Renderable::toString() const
+    void Slices::postRender(RenderContext& ctx)
     {
-      return "ospray::sg::Renderable";
-    }
-
-    box3f Renderable::bounds() const
-    {
-      return child("bounds").valueAs<box3f>();
-    }
-
-    box3f Renderable::computeBounds() const
-    {
-      box3f cbounds = bounds();
-      for (const auto &child : properties.children)
-      {
-        auto tbounds = child.second->bounds();
-          cbounds.extend(tbounds);
+      auto ospGeometry = valueAs<OSPGeometry>();
+      if (ospGeometry && hasChild("volume")) {
+        auto ospVolume = child("volume").valueAs<OSPObject>();
+        ospSetObject(ospGeometry, "volume", ospVolume);
       }
-      return cbounds;
+
+      Geometry::postRender(ctx);
     }
 
-    void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation,
-                                 bool& traverseChildren)
+    void Slices::preTraverse(RenderContext &ctx,
+                             const std::string& operation,
+                             bool& traverseChildren)
     {
+      traverseChildren = operation != "render";
       Node::preTraverse(ctx,operation, traverseChildren);
       if (operation == "render")
         preRender(ctx);
     }
 
-    void Renderable::postTraverse(RenderContext &ctx,
-                                  const std::string& operation)
-    {
-      Node::postTraverse(ctx,operation);
-      if (operation == "render")
-        postRender(ctx);
-    }
+    OSP_REGISTER_SG_NODE(Slices);
 
-    void Renderable::postCommit(RenderContext &)
-    {
-      child("bounds") = computeBounds();
-    }
-
-  } // ::ospray::sg
-} // ::ospray
+  }// ::ospray::sg
+}// ::ospray
