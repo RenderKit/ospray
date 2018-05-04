@@ -95,6 +95,8 @@ namespace ospray {
           auto splitParam = utility::split(value, '=');
           if (splitParam.size() == 2)
             parameters.emplace_back(splitParam[0], splitParam[1]);
+          else if (splitParam.size() == 1)
+            parameters.emplace_back(splitParam[0], "");
         }
 
         fcn(world, parameters);
