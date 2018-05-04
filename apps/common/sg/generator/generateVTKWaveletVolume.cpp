@@ -25,6 +25,7 @@
 #include <vtkMarchingCubes.h>
 #include <vtkRTAnalyticSource.h>
 #include <vtkSmartPointer.h>
+#include <vtkCell.h>
 
 namespace ospray {
   namespace sg {
