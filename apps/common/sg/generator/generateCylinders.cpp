@@ -59,7 +59,6 @@ namespace ospray {
       // generate cylinder data
 
       const auto numCylinders = dims.product();
-      const auto inv_dims     = 1.f / dims;
 
       auto cylinder_vertices = std::make_shared<DataVector3f>();
 
