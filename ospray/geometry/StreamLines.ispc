@@ -99,6 +99,7 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   const vec3f VxAB  = cross(V,AB);
   const float ab2   = dot(AB,AB);
   const float a     = dot(VxAB,VxAB);
+  if (a == 0.f) return;
   const float b     = 2 * dot(VxAB,AOxAB);
   const float c     = dot(AOxAB,AOxAB) - (sqr(r) * ab2);
 
