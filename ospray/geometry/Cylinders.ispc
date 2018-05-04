@@ -29,6 +29,7 @@ struct CylinderTexCoord {
   vec2f v0;
   vec2f v1;
 };
+
 struct Cylinders {
   Geometry super; //!< inherited geometry fields
 
@@ -91,6 +92,7 @@ void Cylinders_intersect(Cylinders *uniform self,
   const vec3f VxAB   = cross(V,AB);
   const float ab2    = dot(AB,AB);
   const float a      = dot(VxAB,VxAB);
+  if (a == 0.f) return;
   const float b      = 2 * dot(VxAB,AOxAB);
   const float c      = dot(AOxAB,AOxAB) - (sqr(radius) * ab2);
 
@@ -117,7 +119,7 @@ void Cylinders_intersect(Cylinders *uniform self,
   if (t_in >= (tAB0) && t_in <= (tAB1)) {
     hit = true;
     ray.t = t_in;
-  } else if (t_out >= (tAB0+self->epsilon) && t_out <= (tAB1)) {
+  } else if (t_out >= (tAB0) && t_out <= (tAB1)) {
     hit = true;
     ray.t = t_out;
   }
@@ -130,7 +132,7 @@ void Cylinders_intersect(Cylinders *uniform self,
     const vec3f P = ray.org + ray.t*ray.dir - v0;
     const vec3f V = cross(P,AB);
     ray.Ng = cross(AB,V);
-    ray.u = (ray.t-tA)*rcp(tB-tA);
+    ray.u = (ray.t-tA)*rcp(tB-tA+1e-10f);
   }
 }
 
