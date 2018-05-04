@@ -118,6 +118,7 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
   const vec3f VxAB   = cross(V,AB);
   const float ab2    = dot(AB,AB);
   const float a      = dot(VxAB,VxAB);
+  if (a == 0.f) return;
   const float b      = 2 * dot(VxAB,AOxAB);
   const float c      = dot(AOxAB,AOxAB) - (sqr(radius) * ab2);
 
