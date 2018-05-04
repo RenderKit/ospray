@@ -235,6 +235,8 @@ namespace ospray {
         sg::importUnstructuredVolume(world, fileName);
       } else if (ext == "vtp") {
         sg::importVTKPolyData(world, fileName);
+      } else if (ext == "vti") {
+        sg::importVTI(world, fileName);
 #endif
 #ifdef OSPRAY_APPS_SG_CHOMBO
       } else if (ext == "hdf5") {
