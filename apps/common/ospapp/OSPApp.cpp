@@ -156,6 +156,8 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
                   number of spheres to generate in each 3D dimension
               [isovalues,isosurfaces]=[value1/value2/value3...]
                   use vtkMarchingCubes filter to generate isosurfaces instead of the volume
+              viewSlice
+                  add a slice to the middle of the volume in the X/Y plane
 )text"
       << std::endl;
     }
