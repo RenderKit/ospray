@@ -16,6 +16,7 @@
 
 #include "Importer.h"
 #include "common/sg/SceneGraph.h"
+#include "ospcommon/utility/StringManip.h"
 #include <memory>
 
 /*! \file sg/module/Importer.cpp Defines the interface for writing
@@ -70,18 +71,56 @@ namespace ospray {
       std::vector<vec3f> color;
     };
 
+    /*! read a (possibly arbitrarily-sized) line of characters from a
+        C-style FILE*, and retrn it as a std::string. This function
+        reads until end of line (\n) or end of file, whichever comes
+        first. If end of line the \n is included in the string. if the
+        file is already eof a empty string is returned */
+    std::string readLine(FILE *file) 
+    {
+      std::stringstream ss;
+      while (!feof(file)) {
+        char c = fgetc(file);
+        if (c == EOF) break;
+        ss << c;
+        if (c == '\n') break;
+      }
+      return ss.str();
+    }
+
     bool readOne(FILE *file, float *f, int N, bool ascii)
     {
       if (!ascii)
         return fread(f,sizeof(float),N,file) == size_t(N);
 
       // ascii:
-      for (int i=0;i<N;i++) {
-        int rc = fscanf(file,"%f",f+i);
-        if (rc == 0) return (i == 0);
-        rc = fscanf(file,"\n");
+      while (!feof(file)) {
+        // get a new line of text
+        std::string line = readLine(file);
+
+        // split off comment, if applicable. after that
+        std::vector<std::string> tokens = utility::split(line,'#');
+
+        // ignore if there was nothing - or at least, nothing before the token
+        if (tokens.empty()) continue;
+        
+        // from now on, only tokens[0] matters - that is what was
+        // before the comment sign. Now, split into real tokens by whitespace
+        tokens = utility::split(tokens[0]," \n\t\r");
+        if (tokens.empty()) 
+          // empty line
+          continue;
+        
+        // we have tokens - now they *must* match how many we're
+        // reading.
+        if (tokens.size() < (size_t)N)
+          throw std::runtime_error("read line with incomplete data");
+        for (int i=0;i<N;i++)
+          f[i] = std::stof(tokens[i]);
+        return true;
       }
-      return true;
+      // could not read a line ... eof.
+      return false;
     }
 
     /*! importer for a binary set of points, the format of which are

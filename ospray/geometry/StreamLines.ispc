@@ -70,8 +70,11 @@ inline void intersectSphere_numericalFix(varying Ray &ray,
     return;
 
   const float srad = sqrt(radical);
-  t_in = min(t_in, approximateDistance + (- b - srad) * rcpf(2.f*a));
-  t_out= max(t_out, approximateDistance + (- b + srad) * rcpf(2.f*a));
+
+  const float sph_t_in  = approximateDistance + (- b - srad) * rcpf(2.f*a);
+  const float sph_t_out = approximateDistance + (- b + srad) * rcpf(2.f*a);
+  t_in = min(t_in, sph_t_in);
+  t_out= max(t_out,sph_t_out);
 }
 
 /*! do a ray-cylinder intersection, with the numerical fix of first
@@ -99,6 +102,7 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   const vec3f VxAB  = cross(V,AB);
   const float ab2   = dot(AB,AB);
   const float a     = dot(VxAB,VxAB);
+  if (a == 0.f) return;
   const float b     = 2 * dot(VxAB,AOxAB);
   const float c     = dot(AOxAB,AOxAB) - (sqr(r) * ab2);
 
@@ -116,8 +120,13 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   const float tA = dot(AB,A) * rVAB;
   const float tB = dot(AB,B) * rVAB;
 
-  t_in = approximateDistance + max((- b - srad)*rcpf(2.f*a), min(tA,tB));
-  t_out= approximateDistance + min((- b + srad)*rcpf(2.f*a), max(tA,tB));
+  const float cyl_t_in = approximateDistance + max((- b - srad)*rcpf(2.f*a), min(tA,tB));
+  const float cyl_t_out= approximateDistance + min((- b + srad)*rcpf(2.f*a), max(tA,tB));
+
+  if (cyl_t_in < cyl_t_out) {
+    t_in = cyl_t_in;
+    t_out = cyl_t_out;
+  }
 }
 
 void StreamLines_intersect(uniform StreamLines *uniform self,
@@ -128,20 +137,28 @@ void StreamLines_intersect(uniform StreamLines *uniform self,
   const vec3f A = make_vec3f(self->vertex[idx]);
   const vec3f B = make_vec3f(self->vertex[idx+1]);
 
+  const uniform vec3f _A = make_vec3f(self->vertex[idx]);
+  const uniform vec3f _B = make_vec3f(self->vertex[idx+1]);
+
   float t_in=inf, t_out=-inf;
   intersectCylinder_numericalFix(ray,A,B,t_in,t_out,self->radius);
   intersectSphere_numericalFix(ray,A,t_in,t_out,self->radius);
   intersectSphere_numericalFix(ray,B,t_in,t_out,self->radius);
 
+  if (t_in >= t_out) {
+    // no intersection between segment and ray ...
+    return;
+  }
+
+  // ray overlaps segment from [t_in..t_out] - let's check if that's
+  // on the valid ray interval
   bool hit = false;
-  if (t_in < t_out) {
-    if (t_in > ray.t0 && t_in < ray.t) {
-      ray.t = t_in;
-      hit = true;
-    } else if (t_out > ray.t0 && t_out < ray.t) {
-      ray.t = t_out;
-      hit = true;
-    }
+  if (t_in > ray.t0 && t_in < ray.t) {
+    ray.t = t_in;
+    hit = true;
+  } else if (t_out > ray.t0 && t_out < ray.t) {
+    ray.t = t_out;
+    hit = true;
   }
 
   if (hit) {

@@ -231,7 +231,16 @@ namespace ospcommon {
     inline void
     ParameterizedObject::Param::set(const ospray::ManagedObject::OSP_PTR &object)
     {
+      using OSP_PTR = ospray::ManagedObject::OSP_PTR;
+
       if (object) object->refInc();
+
+      if (data.is<OSP_PTR>()) {
+        auto *existingObj = data.get<OSP_PTR>();
+        if (existingObj != nullptr)
+          existingObj->refDec();
+      }
+
       data = object;
     }
 

@@ -33,7 +33,7 @@ namespace ospray {
       const float sceneUpperBound = 1.f;
 
       int numSpheres = 1e6;
-      float radius   = 0.002f;
+      float radius   = 0.001f;
 
       for (auto &p : params) {
         if (p.first == "numSpheres")

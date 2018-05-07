@@ -103,6 +103,12 @@ namespace ospray {
 #ifdef OSPRAY_APPS_SG_VTK
     OSPSG_INTERFACE void importUnstructuredVolume(const std::shared_ptr<Node> &world,
                                                   const FileName &fileName);
+
+    OSPSG_INTERFACE void importVTKPolyData(const std::shared_ptr<Node> &world,
+                                           const FileName &fileName);
+
+    OSPSG_INTERFACE void importVTI(const std::shared_ptr<Node> &world,
+                                           const FileName &fileName);
 #endif
 
     /*! import an X3D-format model, and add its contents to the given world */

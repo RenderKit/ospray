@@ -14,48 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Texture2D.h"
-#include "Texture2D_ispc.h"
+#pragma once
+
+#include "Geometry.h"
 
 namespace ospray {
+  namespace sg {
 
-  Texture2D::~Texture2D()
-  {
-    if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
-      delete [] (unsigned char *)data;
-  }
+    // simple cylinders, with all of the key info (position and radius)
+    struct OSPSG_INTERFACE Slices : public sg::Geometry
+    {
+      Slices();
 
-  std::string Texture2D::toString() const
-  {
-    return "ospray::Texture2D";
-  }
+      // return bounding box of all primitives
+      box3f bounds() const override;
 
-  Texture2D *Texture2D::createTexture(const vec2i &_size,
-      const OSPTextureFormat type, void *data, const int flags)
-  {
-    auto size = _size;
-    Texture2D *tx = new Texture2D;
+      void preTraverse(RenderContext &ctx,
+                       const std::string& operation,
+                       bool& traverseChildren) override;
 
-    tx->size = size;
-    tx->type = type;
-    tx->flags = flags;
-    tx->managedObjectType = OSP_TEXTURE;
+      void postRender(RenderContext& ctx) override;
+    };
 
-    const size_t bytes = sizeOf(type) * size.x * size.y;
-
-    assert(data);
-
-    if (flags & OSP_TEXTURE_SHARED_BUFFER) {
-      tx->data = data;
-    } else {
-      tx->data = new unsigned char[bytes];
-      memcpy(tx->data, data, bytes);
-    }
-
-    tx->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
-                                                tx->data, type, flags);
-
-    return tx;
-  }
-
+  } // ::ospray::sg
 } // ::ospray

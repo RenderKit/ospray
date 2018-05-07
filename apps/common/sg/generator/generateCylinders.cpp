@@ -15,25 +15,24 @@
 // ======================================================================== //
 
 // ospcommon
-#include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/utility/StringManip.h"
+#include "ospcommon/multidim_index_sequence.h"
 // sg
 #include "../common/Data.h"
 #include "Generator.h"
 
-#include <random>
-
 namespace ospray {
   namespace sg {
 
-    void generateBasicVolume(const std::shared_ptr<Node> &world,
-                               const std::vector<string_pair> &params)
+    void generateCylinders(const std::shared_ptr<Node> &world,
+                           const std::vector<string_pair> &params)
     {
-      auto volume_node = createNode("basic_volume", "StructuredVolume");
+      auto cylinders_node = createNode("pile_of_cylinders", "Cylinders");
 
       // get generator parameters
 
-      vec3i dims(100, 100, 100);
+      vec3i dims(10, 10, 10);
+      float radius = 2.5f;
 
       for (auto &p : params) {
         if (p.first == "dimensions" || p.first == "dims") {
@@ -48,42 +47,52 @@ namespace ospray {
           dims = vec3i(std::atoi(string_dims[0].c_str()),
                        std::atoi(string_dims[1].c_str()),
                        std::atoi(string_dims[2].c_str()));
+        } else if (p.first == "radius") {
+          radius = std::atof(p.second.c_str());
         } else {
-          std::cout << "WARNING: unknown spheres generator parameter '"
+          std::cout << "WARNING: unknown cylinders generator parameter '"
                     << p.first << "' with value '" << p.second << "'"
                     << std::endl;
         }
       }
 
-      // generate volume data
+      // generate cylinder data
 
-      auto numVoxels = dims.product();
+      const auto numCylinders = dims.product();
 
-      float *voxels = new float[numVoxels];
+      auto cylinder_vertices = std::make_shared<DataVector3f>();
 
-      for (int i = 0; i < numVoxels; ++i)
-        voxels[i] = float(i);
+      cylinder_vertices->setName("cylinders");
+      cylinder_vertices->v.resize(2 * numCylinders);
 
-      // create data nodes
+      index_sequence_3D dims_converter(dims);
 
-      auto voxel_data = std::make_shared<DataArray1f>(voxels, numVoxels);
+      for (size_t i = 0; i < dims_converter.total_indices(); ++i) {
+        auto v1 = dims_converter.reshape(i) * 10;
+        auto v2 = v1;
 
-      voxel_data->setName("voxelData");
+        v1.z = 0.f;
 
-      volume_node->add(voxel_data);
+        cylinder_vertices->v[(2 * i) + 0] = v1;
+        cylinder_vertices->v[(2 * i) + 1] = v2;
+      }
 
-      // volume attributes
+      cylinders_node->add(cylinder_vertices);
 
-      volume_node->child("voxelType")  = std::string("float");
-      volume_node->child("dimensions") = dims;
+      // cylinders attribute nodes
 
-      // add volume to world
+      cylinders_node->createChild("radius", "float", radius);
+      cylinders_node->createChild("bytes_per_cylinder",
+                                  "int",
+                                  int(2 * sizeof(vec3f)),
+                                  NodeFlags::gui_readonly);
 
-      world->add(volume_node);
+      // finally add to world
+
+      world->add(cylinders_node);
     }
 
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateBasicVolume, basic_volume);
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateBasicVolume, volume);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateCylinders, cylinders);
 
   }  // ::ospray::sg
 }  // ::ospray

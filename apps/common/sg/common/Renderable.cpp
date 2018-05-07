@@ -46,7 +46,8 @@ namespace ospray {
     }
 
     void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation, bool& traverseChildren)
+                                 const std::string& operation,
+                                 bool& traverseChildren)
     {
       Node::preTraverse(ctx,operation, traverseChildren);
       if (operation == "render")

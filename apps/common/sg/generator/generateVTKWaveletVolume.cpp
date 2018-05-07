@@ -22,8 +22,10 @@
 #include "Generator.h"
 // vtk
 #include <vtkImageData.h>
+#include <vtkMarchingCubes.h>
 #include <vtkRTAnalyticSource.h>
 #include <vtkSmartPointer.h>
+#include <vtkCell.h>
 
 namespace ospray {
   namespace sg {
@@ -32,13 +34,16 @@ namespace ospray {
                                   const std::vector<string_pair> &params)
     {
       auto volume_node = createNode("wavelet", "StructuredVolume");
+      auto iso_node    = createNode("wavelet_isosurface", "TriangleMesh");
 
       // get generator parameters
 
       vec3i dims(256, 256, 256);
+      std::vector<float> isoValues;
+      std::vector<vec4f> slices;
 
       for (auto &p : params) {
-        if (p.first == "dimensions") {
+        if (p.first == "dimensions" || p.first == "dims") {
           auto string_dims = ospcommon::utility::split(p.second, 'x');
           if (string_dims.size() != 3) {
             std::cout << "WARNING: ignoring incorrect 'dimensions' parameter,"
@@ -50,16 +55,28 @@ namespace ospray {
           dims = vec3i(std::atoi(string_dims[0].c_str()),
                        std::atoi(string_dims[1].c_str()),
                        std::atoi(string_dims[2].c_str()));
+        } else if (p.first == "viewSlice") {
+          slices.emplace_back(1.f, 0.f, 0.f, dims.x / 2.f);
+        } else if (p.first == "isosurfaces" || p.first == "isovalues") {
+          auto string_isos = ospcommon::utility::split(p.second, '/');
+          for (const auto &s : string_isos)
+            isoValues.push_back(std::atof(s.c_str()));
         } else {
-          std::cout << "WARNING: unknown spheres generator parameter '"
+          std::cout << "WARNING: unknown wavelet generator parameter '"
                     << p.first << "' with value '" << p.second << "'"
                     << std::endl;
         }
       }
 
+      const bool computeIsosurface = !isoValues.empty();
+      const bool addSlices = !slices.empty();
+
       // generate volume data
 
-      auto halfDims = dims / 2;
+      std::cout << "...generating wavelet volume with dims=" << dims << "..."
+                << std::endl;
+
+      const auto halfDims = dims / 2;
 
       vtkSmartPointer<vtkRTAnalyticSource> wavelet = vtkRTAnalyticSource::New();
       wavelet->SetWholeExtent(-halfDims.x, halfDims.x-1,
@@ -81,6 +98,29 @@ namespace ospray {
 
       auto imageData = wavelet->GetOutput();
 
+      // generate isosurface
+
+      vtkSmartPointer<vtkMarchingCubes> mc =
+        vtkSmartPointer<vtkMarchingCubes>::New();
+
+      if (computeIsosurface) {
+        std::cout << "...creating isosurfaces with wavelet volume data..."
+                  << std::endl;
+
+        mc->SetInputConnection(wavelet->GetOutputPort());
+        mc->ComputeNormalsOn();
+        mc->ComputeGradientsOn();
+        mc->SetNumberOfContours(int(isoValues.size()));
+
+        for (int i = 0; i < int(isoValues.size()); ++i)
+          mc->SetValue(i, isoValues[i]);
+
+        mc->Update();
+      }
+
+      std::cout << "...data generated, now creating scene graph objects..."
+                << std::endl;
+
       // validate expected outputs
 
       std::string voxelType = imageData->GetScalarTypeAsString();
@@ -88,37 +128,86 @@ namespace ospray {
       if (voxelType != "float")
         throw std::runtime_error("wavelet not floats? got '" + voxelType + "'");
 
-      auto dimentionality = imageData->GetDataDimension();
+      const auto dimentionality = imageData->GetDataDimension();
 
       if (dimentionality != 3)
         throw std::runtime_error("wavelet not 3 dimentional?");
 
-      // import data into sg nodes
+      if (computeIsosurface) {
+        // import isosurface data into sg nodes
+        auto polyData = mc->GetOutput();
 
-      dims = vec3i(imageData->GetDimensions()[0],
-                   imageData->GetDimensions()[1],
-                   imageData->GetDimensions()[2]);
+        auto vertices =
+              createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
+        auto indices =
+              createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
 
-      auto numVoxels = dims.product();
+        int numberOfCells  = polyData->GetNumberOfCells();
+        int numberOfPoints = polyData->GetNumberOfPoints();
 
-      auto *voxels_ptr = (float*)imageData->GetScalarPointer();
+        double point[3];
+        for (int i = 0; i < numberOfPoints; i++) {
+          polyData->GetPoint(i, point);
+          vertices->push_back(vec3f(point[0], point[1], point[2]));
+        }
 
-      auto voxel_data = std::make_shared<DataArray1f>(voxels_ptr, numVoxels);
+        for (int i = 0; i < numberOfCells; i++) {
+          vtkCell *cell = polyData->GetCell(i);
 
-      voxel_data->setName("voxelData");
+          if (cell->GetCellType() == VTK_TRIANGLE) {
+            indices->push_back(vec3i(cell->GetPointId(0),
+                                     cell->GetPointId(1),
+                                     cell->GetPointId(2)));
+          }
+        }
 
-      volume_node->add(voxel_data);
+        iso_node->add(vertices);
+        iso_node->add(indices);
 
-      // volume attributes
+        // add isosurface to world
+        world->add(iso_node);
+      } else {
+        // import volume data into sg nodes
 
-      volume_node->child("voxelType")  = voxelType;
-      volume_node->child("dimensions") = dims;
+        dims = vec3i(imageData->GetDimensions()[0],
+                     imageData->GetDimensions()[1],
+                     imageData->GetDimensions()[2]);
 
-      volume_node->createChild("stashed_vtk_source", "Node", wavelet);
+        const auto numVoxels = dims.product();
 
-      // add volume to world
+        auto *voxels_ptr = (float*)imageData->GetScalarPointer();
 
-      world->add(volume_node);
+        auto voxel_data = std::make_shared<DataArray1f>(voxels_ptr, numVoxels);
+
+        voxel_data->setName("voxelData");
+
+        volume_node->add(voxel_data);
+
+        // volume attributes
+
+        volume_node->child("voxelType")  = voxelType;
+        volume_node->child("dimensions") = dims;
+
+        volume_node->createChild("stashed_vtk_source", "Node", wavelet);
+
+        if (addSlices) {
+          auto slices_node = createNode("slices", "Slices");
+          auto slices_data = std::make_shared<DataVector4f>();
+          slices_data->v = slices;
+          slices_data->setName("planes");
+
+          slices_node->add(slices_data);
+          slices_node->setChild("volume", volume_node);
+
+          // add slices to world
+          world->add(slices_node);
+        } else {
+          // add volume to world
+          world->add(volume_node);
+        }
+      }
+
+      std::cout << "...finished!" << std::endl;
     }
 
     OSPSG_REGISTER_GENERATE_FUNCTION(generateVTKWaveletVolume, vtkWavelet);

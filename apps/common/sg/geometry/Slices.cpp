@@ -14,48 +14,46 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Texture2D.h"
-#include "Texture2D_ispc.h"
+#include "Slices.h"
+#include "../common/Data.h"
 
 namespace ospray {
+  namespace sg {
 
-  Texture2D::~Texture2D()
-  {
-    if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
-      delete [] (unsigned char *)data;
-  }
+    Slices::Slices() : Geometry("slices") {}
 
-  std::string Texture2D::toString() const
-  {
-    return "ospray::Texture2D";
-  }
+    box3f Slices::bounds() const
+    {
+      box3f bounds = empty;
 
-  Texture2D *Texture2D::createTexture(const vec2i &_size,
-      const OSPTextureFormat type, void *data, const int flags)
-  {
-    auto size = _size;
-    Texture2D *tx = new Texture2D;
+      if (hasChild("volume"))
+        bounds = child("volume").bounds();
 
-    tx->size = size;
-    tx->type = type;
-    tx->flags = flags;
-    tx->managedObjectType = OSP_TEXTURE;
-
-    const size_t bytes = sizeOf(type) * size.x * size.y;
-
-    assert(data);
-
-    if (flags & OSP_TEXTURE_SHARED_BUFFER) {
-      tx->data = data;
-    } else {
-      tx->data = new unsigned char[bytes];
-      memcpy(tx->data, data, bytes);
+      return bounds;
     }
 
-    tx->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
-                                                tx->data, type, flags);
+    void Slices::postRender(RenderContext& ctx)
+    {
+      auto ospGeometry = valueAs<OSPGeometry>();
+      if (ospGeometry && hasChild("volume")) {
+        auto ospVolume = child("volume").valueAs<OSPObject>();
+        ospSetObject(ospGeometry, "volume", ospVolume);
+      }
 
-    return tx;
-  }
+      Geometry::postRender(ctx);
+    }
 
-} // ::ospray
+    void Slices::preTraverse(RenderContext &ctx,
+                             const std::string& operation,
+                             bool& traverseChildren)
+    {
+      traverseChildren = operation != "render";
+      Node::preTraverse(ctx,operation, traverseChildren);
+      if (operation == "render")
+        preRender(ctx);
+    }
+
+    OSP_REGISTER_SG_NODE(Slices);
+
+  }// ::ospray::sg
+}// ::ospray
