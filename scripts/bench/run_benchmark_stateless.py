@@ -23,6 +23,8 @@ import csv
 import sys
 import math
 
+# Global constants ############################################################
+
 # Various constants
 CSV_FIELD_NAMES = ["test name", "max", "min", "median", "median abs dev",
                    "mean", "std dev", "no. of samples"]
@@ -43,6 +45,8 @@ TEST_PARAMETERS = {
     ,"spheres-4k-8spp": ("--generate:spheres", "-4k", "-sg:spp=8")
     ,"spheres-8k-8spp": ("--generate:spheres", "-8k", "-sg:spp=8")
 }
+
+# Function definitions ########################################################
 
 # Takes a string "xxx" and prints "=== xxx ==="
 def print_headline(line):
@@ -133,7 +137,7 @@ def run_single_test(test_name, exe, img_dir, use_scivis):
 
     print "Running \"{}\"".format(command.strip())
 
-    child = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     test_output = child.communicate()
     test_retcode = child.returncode
 
@@ -193,6 +197,12 @@ def run_tests(args):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
 
+    # Setup MPI run command
+    run_mpi = False if args.mpi_config == "" else True
+
+    if run_mpi:
+        exe ="{} {} --osp:mpi".format(args.mpi_config, exe)
+
     failed_tests = 0
 
     for test_num, (test_name, use_scivis) in enumerate(sorted(tests_to_run)):
@@ -212,6 +222,8 @@ def run_tests(args):
 
     sys.exit(failed_tests)
 
+# Main execution ##############################################################
+
 # Command line arguments parsing
 parser = argparse.ArgumentParser()
 parser.add_argument("--tests",
@@ -224,6 +236,7 @@ parser.add_argument("--baseline",
 parser.add_argument("--reference", help="path to directory with reference images")
 parser.add_argument("--renderer", help="type of renderer used",
                     choices=["both", "scivis", "pt"], default="both")
+parser.add_argument("--mpi-config", help="path to file which is used to wrap ospBenchmark with an MPI launch", default="")
 args = parser.parse_args()
 
 if args.tests_list:
