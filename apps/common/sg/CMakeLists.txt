@@ -116,12 +116,13 @@ ospray_create_library(ospray_sg SHARED
   3rdParty/ply.cpp
 
   # scene graph generators
+  generator/Generator.cpp
   generator/generateBasicVolume.cpp
+  generator/generateCurves.cpp
   generator/generateCylinders.cpp
   generator/generateGridOfSpheres.cpp
   generator/generateRandomSpheres.cpp
-  generator/generateCurves.cpp
-  generator/Generator.cpp
+  generator/generateUnstructuredVolume.cpp
 
   # scene graph importers
   importer/Importer.cpp
