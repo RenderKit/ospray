@@ -31,8 +31,6 @@ namespace ospray {
 
       void preCommit(RenderContext &ctx) override;
 
-      std::string fileName;
-
       TimeStamp vertexFieldTime;
       TimeStamp cellFieldTime;
     };
