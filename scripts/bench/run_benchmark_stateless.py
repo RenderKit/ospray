@@ -145,7 +145,7 @@ def run_single_test(test_name, exe, img_dir, use_scivis):
 
 # Checks if return code, stdandard output and generated images are correct
 def analyze_results(test_name, retcode, output, output_csv, img_dir, baseline_score, args):
-    if retcode != 0:
+    if retcode != 0 and abs(retcode) != 11: #non-zero (but can segfault on exit...!)
         return False, "subprocess returned with exit code {}".format(retcode)
 
     stdout = output[0]
