@@ -612,12 +612,20 @@ UnstructuredVolume_disableCellGradient(void *uniform _self)
     self->super.gradientShadingEnabled = false;
 }
 
+export void
+UnstructuredVolume_setFaceNormals(void *uniform _self,
+                                  const vec3f *uniform _faceNormals)
+{
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
+
+  self->faceNormals = _faceNormals;
+}
+
 export void UnstructuredVolume_set(void *uniform _self,
                                   const uniform int &_nVertices,
                                   const uniform int &_nCells,
                                   const uniform box3f &_bbox,
                                   const vec3f *uniform _vertices,
-                                  const vec3f *uniform _faceNormals,
                                   const vec4i *uniform _indices,
                                   const float *uniform _field,
                                   const float *uniform _cellField,
@@ -642,7 +650,7 @@ export void UnstructuredVolume_set(void *uniform _self,
   self->super.samplingRate = samplingRate;
   self->super.samplingStep = samplingStep;
 
-  self->faceNormals = _faceNormals;
+  self->faceNormals = NULL;
 
   self->bvh.rootRef = rootRef;
   self->bvh.node    = (MinMaxBVH2Node * uniform) _bvhNode;

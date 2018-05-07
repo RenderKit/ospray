@@ -579,15 +579,27 @@ indices into the vertics and data value.  Vertex ordering is the same
 as VTK_HEXAHEDRON - four bottom vertices counterclockwise, then top
 four counterclockwise.
 
-  Type     Name        Description
-  -------- ----------- ------------------------------------------------------------
-  vec3f[]  vertices    [data] array of vertex positions
-  float[]  field       [data] array of vertex data values to be sampled
-  float[]  cellField   [data] array of cell data values to be sampled
-  vec4i[]  intices     [data] array of tetrahedra indices (into vertices and field)
-  string   hexMethod   "planar" (default) or "nonplanar"
-  -------- ----------- ------------------------------------------------------------
-  : Additional configuration parameters for tetrahedral volumes.
+  -------- ------------------  -------  ---------------------------------------
+  Type     Name                Default  Description
+  -------- ------------------  -------  ---------------------------------------
+  vec3f[]  vertices                     [data] array of vertex positions
+
+  float[]  field                        [data] array of vertex data values to
+                                        be sampled
+
+  float[]  cellField                    [data] array of cell data values to be
+                                        sampled
+
+  vec4i[]  intices                      [data] array of tetrahedra indices
+                                        (into vertices and field)
+
+  string   hexMethod           planar   "planar" (faster, assumes planar sides)
+                                        or "nonplanar"
+
+  bool     precomputedNormals  true     whether to accelerate by precomputing,
+                                        at a cost of 72 bytes/cell
+  -------- ------------------  -------  ---------------------------------------
+  : Additional configuration parameters for unstructured volumes.
 
 ### Transfer Function
 
