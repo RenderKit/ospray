@@ -190,7 +190,7 @@ def run_tests(args):
         [True] if args.renderer == "scivis" else [True, False]
     tests_to_run = set([(name, sv) for name in tests_to_run for sv in use_sv_options])
 
-    exe = "./{}".format(EXE_NAME)
+    exe = "{}/{}".format(args.app_location, EXE_NAME)
     img_dir = DEFAULT_IMG_DIR
 
     # Create images directory
@@ -198,10 +198,10 @@ def run_tests(args):
         os.makedirs(img_dir)
 
     # Setup MPI run command
-    run_mpi = False if args.mpi_config == "" else True
+    run_mpi = args.mpi_wrapper != ""
 
     if run_mpi:
-        exe ="{} {} --osp:mpi".format(args.mpi_config, exe)
+        exe ="{} {} --osp:mpi".format(args.mpi_wrapper, exe)
 
     failed_tests = 0
 
@@ -236,7 +236,8 @@ parser.add_argument("--baseline",
 parser.add_argument("--reference", help="path to directory with reference images")
 parser.add_argument("--renderer", help="type of renderer used",
                     choices=["both", "scivis", "pt"], default="both")
-parser.add_argument("--mpi-config", help="path to file which is used to wrap ospBenchmark with an MPI launch", default="")
+parser.add_argument("--app-location", help="path to ospBenchmark", default="")
+parser.add_argument("--mpi-wrapper", help="path to file which is used to wrap ospBenchmark with an MPI launch", default="")
 args = parser.parse_args()
 
 if args.tests_list:
