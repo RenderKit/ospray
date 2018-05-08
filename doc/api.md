@@ -8,8 +8,8 @@ To access the OSPRay API you first need to include the OSPRay header
 where the API is compatible with C99 and C++.
 
 
-Initialization
---------------
+Initialization and Shutdown
+---------------------------
 
 In order to use the API, OSPRay must be initialized with a "device". A
 device is the object which implements the API. Creating and initializing
@@ -226,6 +226,17 @@ implemented in shared libraries. To load plugin `name` from
 Modules are searched in OS-dependent paths. `ospLoadModule` returns
 `OSP_NO_ERROR` if the plugin could be successfully loaded.
 
+### Shutting Down OSPRay
+
+When the application is finished using OSPRay (typically on application exit),
+the OSPRay API should be finalized with
+
+    void ospShutdown();
+
+This API call ensures that the current device is cleaned up appropriately. Due
+to static object allocation having non-deterministic ordering, it is recommended
+that applications call `ospShutdown()` before the calling application process
+terminates.
 
 Objects
 -------
@@ -1362,7 +1373,7 @@ in the table below.
 
   float  flakeScale               100  scale of the flake structure, higher values increase
                                        the amount of flakes
-                                
+
   float  flakeSpread              0.3  flake spread in [0-1]
 
   float  flakeJitter             0.75  flake randomness in [0-1]

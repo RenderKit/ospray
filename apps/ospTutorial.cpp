@@ -170,5 +170,7 @@ int main(int argc, const char **argv) {
   framebuffer.release();
   world.release();
 
+  ospShutdown();
+
   return 0;
 }

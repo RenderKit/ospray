@@ -231,6 +231,13 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(OSP_INVALID_OPERATION)
 
+extern "C" void ospShutdown()
+OSPRAY_CATCH_BEGIN
+{
+  Device::current.reset();
+}
+OSPRAY_CATCH_END()
+
 extern "C" OSPDevice ospNewDevice(const char *deviceType)
 OSPRAY_CATCH_BEGIN
 {
