@@ -35,13 +35,8 @@ namespace ospray {
 
   Model::~Model()
   {
-    if (embreeSceneHandle) {
-#if USE_EMBREE3
+    if (embreeSceneHandle)
       rtcReleaseScene(embreeSceneHandle);
-#else
-      rtcDeleteScene(embreeSceneHandle);
-#endif
-    }
 
     ispc::Model_cleanup(getIE());
   }
@@ -65,8 +60,7 @@ namespace ospray {
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
     int sceneFlags = 0;
-#if USE_EMBREE3
-#else
+#if 0
     sceneFlags =
         sceneFlags | (useEmbreeDynamicSceneFlag ? RTC_SCENE_DYNAMIC : RTC_SCENE_STATIC);
     sceneFlags =
@@ -98,11 +92,7 @@ namespace ospray {
     for (size_t i=0; i<volume.size(); i++)
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
 
-#if USE_EMBREE3
     rtcCommitScene(embreeSceneHandle);
-#else
-    rtcCommit(embreeSceneHandle);
-#endif
   }
 
 } // ::ospray

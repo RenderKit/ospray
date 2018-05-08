@@ -22,7 +22,8 @@
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
 
-struct StreamLines {
+struct StreamLines
+{
   uniform Geometry super; //!< inherited geometry fields
   float           radius;
   const uniform vec3fa *vertex;
@@ -31,7 +32,6 @@ struct StreamLines {
   const uniform vec4f  *color;
 };
 
-#if USE_EMBREE3
 unmasked void StreamLines_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform StreamLines *uniform self = (uniform StreamLines *uniform)args->geometryUserPtr;
@@ -44,18 +44,6 @@ unmasked void StreamLines_bounds(const RTCBoundsFunctionArguments *uniform args)
                      max(A,B) + self->radius);
   if (index == -1) print("bounds!\n");
 }
-#else
-void StreamLines_bounds(uniform StreamLines *uniform self,
-                        uniform size_t primID,
-                        uniform box3fa &bbox)
-{
-  const uniform uint32 index  = self->index[primID];
-  const uniform vec3f A = make_vec3f(self->vertex[index]);
-  const uniform vec3f B = make_vec3f(self->vertex[index+1]);
-  bbox = make_box3fa(min(A,B) - self->radius,
-                     max(A,B) + self->radius);
-}
-#endif
 
 /*! do a ray-sphere intersection, with the numerical fix of first
     moving the ray origin to an approximate sphere distance, and then
@@ -139,14 +127,10 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   }
 }
 
-
-
-
-
-#if USE_EMBREE3
-unmasked void StreamLines_intersect_kernel
-(const struct RTCIntersectFunctionNArguments *uniform args,
- const uniform bool occlusionTest)
+unmasked void StreamLines_intersect_kernel(
+  const struct RTCIntersectFunctionNArguments *uniform args,
+  const uniform bool occlusionTest
+)
 {
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
@@ -204,51 +188,6 @@ unmasked void StreamLines_occluded(const struct RTCIntersectFunctionNArguments *
 {
   StreamLines_intersect_kernel(args,true);
 }
-#else
-void StreamLines_intersect(uniform StreamLines *uniform self,
-                           varying Ray &ray,
-                           uniform size_t primID)
-{
-  const uniform uint32 idx = self->index[primID];
-  const vec3f A = make_vec3f(self->vertex[idx]);
-  const vec3f B = make_vec3f(self->vertex[idx+1]);
-
-  const uniform vec3f _A = make_vec3f(self->vertex[idx]);
-  const uniform vec3f _B = make_vec3f(self->vertex[idx+1]);
-
-  float t_in=inf, t_out=-inf;
-  intersectCylinder_numericalFix(ray,A,B,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(ray,A,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(ray,B,t_in,t_out,self->radius);
-
-  if (t_in >= t_out) {
-    // no intersection between segment and ray ...
-    return;
-  }
-
-  // ray overlaps segment from [t_in..t_out] - let's check if that's
-  // on the valid ray interval
-  bool hit = false;
-  if (t_in > ray.t0 && t_in < ray.t) {
-    ray.t = t_in;
-    hit = true;
-  } else if (t_out > ray.t0 && t_out < ray.t) {
-    ray.t = t_out;
-    hit = true;
-  }
-
-  if (hit) {
-    ray.geomID = self->super.geomID;
-    ray.primID = primID;
-    const vec3f P = ray.org + ray.t * ray.dir;
-    float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
-    s = min(max(s,0.f),1.f);
-    const vec3f PonAxis = A + s * (B-A);
-    ray.u = s;
-    ray.Ng = normalize(P-PonAxis);
-  }
-}
-#endif
 
 static void StreamLines_postIntersect(uniform Geometry *uniform self,
                                        uniform Model *uniform model,
@@ -360,9 +299,7 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
   Geometry_Constructor(&geom->super,cppEquivalent,
                        StreamLines_postIntersect,
                        NULL,
-#if USE_EMBREE3
                        NULL,
-#endif
                        0,NULL);
   return geom;
 }
@@ -379,12 +316,10 @@ StreamLines_set(       void *uniform _self,
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
-#if USE_EMBREE3
+
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
-#else
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSegments);
-#endif
+
   self->super.geomID = geomID;
   self->super.model  = model;
   self->vertex = vertex;
@@ -396,7 +331,7 @@ StreamLines_set(       void *uniform _self,
   self->numVertices = numVertices;
   self->color = color;
   self->radius = radius;
-#if USE_EMBREE3
+
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom,numSegments);
   rtcSetGeometryBoundsFunction
@@ -407,15 +342,6 @@ StreamLines_set(       void *uniform _self,
     (geom,(uniform RTCOccludedFunctionN)&StreamLines_occluded);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
-#else
-  rtcSetUserData(model->embreeSceneHandle, geomID, self);
-  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
-                       (uniform RTCBoundsFunc)&StreamLines_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCIntersectFuncVarying)&StreamLines_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCOccludedFuncVarying)&StreamLines_occluded);
-#endif
 }
 
 export void *uniform
@@ -430,7 +356,7 @@ StreamLines_setCurve(      void           *uniform _self,
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
-#if USE_EMBREE3
+
   uniform RTCGeometry geom
     = rtcNewGeometry(ispc_embreeDevice,
                      RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
@@ -443,13 +369,6 @@ StreamLines_setCurve(      void           *uniform _self,
   rtcReleaseGeometry(geom);
 
   self->super.geom = geom;
-
-#else
-  uniform uint32 geomID = rtcNewBezierCurveGeometry(model->embreeSceneHandle,
-      RTC_GEOMETRY_STATIC, numSegments, numVertices);
-  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_VERTEX_BUFFER, vertexCurve, 0, 16);
-  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_INDEX_BUFFER, indexCurve, 0, 4);
-#endif
 
   self->super.model = model;
   self->super.geomID = geomID;

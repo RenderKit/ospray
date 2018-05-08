@@ -50,13 +50,10 @@ IF(OSPRAY_STRICT_BUILD)
   SET(OSPRAY_CXX_FLAGS "-Wno-over-aligned ${OSPRAY_CXX_FLAGS}")
   SET(OSPRAY_CXX_FLAGS "-Wno-shadow ${OSPRAY_CXX_FLAGS}")
   SET(OSPRAY_CXX_FLAGS "-Wno-format-nonliteral ${OSPRAY_CXX_FLAGS}")
+  SET(OSPRAY_CXX_FLAGS "-Wno-cast-qual ${OSPRAY_CXX_FLAGS}") #Embree v3.x issue
 
   # Options selected for Clang 5.0+
   SET(OSPRAY_CXX_FLAGS "-Weverything ${OSPRAY_CXX_FLAGS}")
-
-  IF (USE_EMBREE3)
-    SET(OSPRAY_CXX_FLAGS "${OSPRAY_CXX_FLAGS} -Wno-cast-qual ")
-  ENDIF()
 ENDIF()
 
 IF(OSPRAY_WARN_AS_ERRORS)

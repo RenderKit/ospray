@@ -33,12 +33,9 @@
 // stl
 #include <algorithm>
 
-#ifdef USE_EMBREE3
 RTCDevice ispc_embreeDevice;
-#endif
 
 namespace ospray {
-
   namespace api {
 
     RTCDevice ISPCDevice::embreeDevice = nullptr;
@@ -47,11 +44,7 @@ namespace ospray {
     {
       try {
         if (embreeDevice) {
-#if USE_EMBREE3
           rtcReleaseDevice(embreeDevice);
-#else
-          rtcDeleteDevice(embreeDevice);
-#endif
           embreeDevice = nullptr;
         }
       } catch (...) {
@@ -76,7 +69,6 @@ namespace ospray {
       // in the host-stubs, where it shouldn't.
       // -------------------------------------------------------
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-#ifdef USE_EMBREE3
         ispc_embreeDevice = embreeDevice;
         rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
         RTCError erc = rtcGetDeviceError(embreeDevice);
@@ -85,15 +77,6 @@ namespace ospray {
           postStatusMsg() << "#osp:init: embree internal error number " << erc;
           assert(erc == RTC_ERROR_NONE);
         }
-#else
-        rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
-        RTCError erc = rtcDeviceGetError(embreeDevice);
-        if (erc != RTC_NO_ERROR) {
-          // why did the error function not get called !?
-          postStatusMsg() << "#osp:init: embree internal error number " << erc;
-          assert(erc == RTC_NO_ERROR);
-        }
-#endif
 
       }
 

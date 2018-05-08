@@ -40,15 +40,10 @@ INCLUDE_DIRECTORIES_ISPC(
   ${PROJECT_BINARY_DIR}
 #  ${EMBREE_INCLUDE_DIRS}
 )
-IF(USE_EMBREE3) 
-  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS}/embree3)
-  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS}/embree3)
-  ADD_DEFINITIONS_ISPC("-DUSE_EMBREE3=1")
-  ADD_DEFINITIONS("-DUSE_EMBREE3=1")
-ELSE()
-  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS}/embree2)
-  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS}/embree2)
-ENDIF()
+
+# NOTE(jda) - this is fishy...embree headers should be not in global include paths
+INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS}/embree3)
+INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS}/embree3)
 
 SET(OSPRAY_SOURCES
   api/API.cpp
@@ -77,6 +72,8 @@ SET(OSPRAY_SOURCES
 )
 
 SET(OSPRAY_ISPC_DEVICE_SOURCES
+
+  ispc_tasksys.cpp
 
   api/ISPCDevice.cpp
 
@@ -235,13 +232,6 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   volume/amr/method_finest.ispc
   volume/amr/method_octant.ispc
 )
-
-IF (USE_EMBREE3)
-  SET(OSPRAY_ISPC_DEVICE_SOURCES 
-    ${OSPRAY_ISPC_DEVICE_SOURCES}
-    ispc_tasksys.cpp
-    )
-ENDIF()
 
 
 # -------------------------------------------------------

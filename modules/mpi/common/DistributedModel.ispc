@@ -38,24 +38,9 @@ export void DistributedModel_init(void *uniform _model,
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;
   if (model->embreeSceneHandle) {
-#if USE_EMBREE3
     rtcReleaseScene(model->embreeSceneHandle);
-#else
-    rtcDeleteScene(model->embreeSceneHandle);
-#endif
   }
-#if USE_EMBREE3
   model->embreeSceneHandle = rtcNewScene((RTCDevice)embreeDevice);
-#else
-  uniform RTCSceneFlags scene_flags = RTC_SCENE_STATIC | RTC_SCENE_HIGH_QUALITY;
-
-  uniform RTCAlgorithmFlags traversal_flags =
-      RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;
-
-  model->embreeSceneHandle = rtcDeviceNewScene((RTCDevice)embreeDevice,
-                                               scene_flags,
-                                               traversal_flags);
-#endif
 
   if (model->geometry) delete[] model->geometry;
   model->geometryCount = numGeometries;

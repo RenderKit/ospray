@@ -122,7 +122,6 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
   }
 }
 
-#if USE_EMBREE3
 unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform Spheres *uniform self = (uniform Spheres *uniform)args->geometryUserPtr;
@@ -138,24 +137,7 @@ unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(center - radius, center + radius);
 }
-#else
-unmasked void Spheres_bounds(uniform Spheres *uniform self,
-                             uniform size_t primID,
-                             uniform box3fa &bbox)
-{
-  uniform uint8 *uniform spherePtr = self->data
-    + self->stride*((uniform int64)primID);
-  uniform bool offr = self->offset_radius >= 0;
-  uniform float radius =
-    offr ? *((uniform float *uniform)(spherePtr+self->offset_radius)) :
-    self->radius;
-  uniform vec3f center =
-    *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-  bbox = make_box3fa(center - radius, center + radius);
-}
-#endif
 
-#if USE_EMBREE3
 void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
                               const uniform bool isOcclusionTest)
 {
@@ -226,52 +208,6 @@ unmasked void Spheres_occluded(const struct RTCIntersectFunctionNArguments *unif
 {
   Spheres_intersect_kernel(args,true);
 }
-#else
-void Spheres_intersect(uniform Spheres *uniform self,
-                       varying Ray &ray,
-                       uniform size_t primID)
-{
-  uniform uint8 *uniform spherePtr =
-    self->data + self->stride*((uniform int64)primID);
-  uniform float radius = self->radius;
-  if (self->offset_radius >= 0) {
-    radius = *((uniform float *uniform)(spherePtr+self->offset_radius));
-  }
-  uniform vec3f center =
-    *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-  const float approxDist = dot(center - ray.org, ray.dir);
-  const vec3f closeOrg = ray.org + approxDist * ray.dir;
-  const vec3f A = center - closeOrg;
-
-  const float a = dot(ray.dir,ray.dir);
-  const float b = 2.f*dot(ray.dir,A);
-  const float c = dot(A,A)-radius*radius;
-
-  const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return;
-
-  const float srad = sqrt(radical);
-
-  const float t_in = (b - srad) *rcpf(2.f*a) + approxDist;
-  const float t_out= (b + srad) *rcpf(2.f*a) + approxDist;
-
-  bool hit = false;
-  if (t_in > ray.t0 && t_in < ray.t) {
-    hit = true;
-    ray.t = t_in;
-  } else if (t_out > (ray.t0 + self->epsilon) && t_out < ray.t) {
-    hit = true;
-    ray.t = t_out;
-  }
-  if (hit) {
-    ray.primID = primID;
-    ray.geomID = self->super.geomID;
-    // cannot easily be moved to postIntersect
-    // we need hit in object space, in postIntersect it is in world-space
-    ray.Ng = ray.org + ray.t*ray.dir - center;
-  }
-}
-#endif
 
 int32 Spheres_getMaterialID(
                             const Geometry *uniform const _self
@@ -369,9 +305,7 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
   Geometry_Constructor(&self->super,cppEquivalent,
                        Spheres_postIntersect,
                        NULL,
-#if USE_EMBREE3
                        NULL,
-#endif
                        0,NULL);
   return self;
 }
@@ -399,12 +333,8 @@ export void SpheresGeometry_set(void  *uniform _self
   uniform Spheres *uniform self = (uniform Spheres *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
 
-#if USE_EMBREE3
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
-#else
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSpheres);
-#endif
 
   self->super.model = model;
   self->super.geomID = geomID;
@@ -440,7 +370,6 @@ export void SpheresGeometry_set(void  *uniform _self
     self->epsilon = self->radius / 100.0;
   }
 
-#if USE_EMBREE3
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom,numSpheres);
   rtcSetGeometryBoundsFunction
@@ -451,13 +380,4 @@ export void SpheresGeometry_set(void  *uniform _self
     (geom,(uniform RTCOccludedFunctionN)&Spheres_occluded);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
-#else
-  rtcSetUserData(model->embreeSceneHandle,geomID,self);
-  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
-                       (uniform RTCBoundsFunc)&Spheres_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCIntersectFuncVarying)&Spheres_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
-                         (uniform RTCOccludedFuncVarying)&Spheres_intersect);
-#endif
 }

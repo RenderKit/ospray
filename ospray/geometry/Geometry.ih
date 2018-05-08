@@ -24,10 +24,6 @@
 // embree
 #include "rtcore.isph"
 #include "rtcore_geometry.isph"
-#if USE_EMBREE3
-#else
-# include "rtcore_geometry_user.isph"
-#endif
 
 
 /*! Geometries are supposed to fill certain members of DifferentialGeometry:
@@ -100,13 +96,10 @@ struct Geometry {
   Model *uniform model;
 
   //! ID that 'model' knows this geometry under
-#if USE_EMBREE3
   RTCGeometry geom;
-#endif
   uniform int32 geomID;
 };
 
-#if USE_EMBREE3
 //! constructor for ispc-side Geometry object
 extern void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
@@ -115,6 +108,7 @@ extern void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  RTCGeometry geom,
                                  uniform int32 geomID,
                                  uniform Material *uniform *uniform materialList);
+
 inline void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
                                  uniform Geometry_postIntersectFct postIntersect,
@@ -124,13 +118,3 @@ inline void Geometry_Constructor(uniform Geometry *uniform geometry,
 {
   Geometry_Constructor(geometry,cppEquivalent,postIntersect,model,NULL,geomID,materialList);
 }
-
-#else
-//! constructor for ispc-side Geometry object
-extern void Geometry_Constructor(uniform Geometry *uniform geometry,
-                                 void *uniform cppEquivalent,
-                                 uniform Geometry_postIntersectFct postIntersect,
-                                 uniform Model *uniform model,
-                                 uniform int32 geomID,
-                                 uniform Material *uniform *uniform materialList);
-#endif

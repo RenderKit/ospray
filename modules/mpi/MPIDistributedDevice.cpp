@@ -124,7 +124,6 @@ namespace ospray {
         auto &embreeDevice = api::ISPCDevice::embreeDevice;
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-#ifdef USE_EMBREE3
         ispc_embreeDevice = embreeDevice;
         rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
         RTCError erc = rtcGetDeviceError(embreeDevice);
@@ -133,16 +132,6 @@ namespace ospray {
           postStatusMsg() << "#osp:init: embree internal error number " << erc;
           assert(erc == RTC_ERROR_NONE);
         }
-#else
-        rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
-
-        RTCError erc = rtcDeviceGetError(embreeDevice);
-        if (erc != RTC_NO_ERROR) {
-          // why did the error function not get called !?
-          postStatusMsg() << "#osp:init: embree internal error number " << erc;
-          assert(erc == RTC_NO_ERROR);
-        }
-#endif
         initialized = true;
       }
 
