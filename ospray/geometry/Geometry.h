@@ -20,8 +20,8 @@
 #include "common/OSPCommon.h"
 #include "common/Data.h"
 #include "common/Material.h"
-
-#include "rtcore_buffer.h"
+//embree
+#include "embree3/rtcore.h"
 
 extern RTCDevice ispc_embreeDevice;
 

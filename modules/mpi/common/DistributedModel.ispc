@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "common/Model.ih"
-#include "rtcore_scene.isph"
+#include "embree3/rtcore.isph"
 
 typedef uniform Geometry *uniform uniGeomPtr;
 typedef uniform Material *uniform uniMaterialPtr;

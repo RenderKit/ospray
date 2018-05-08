@@ -22,8 +22,7 @@
 #include "math/AffineSpace.ih"
 
 // embree
-#include "rtcore.isph"
-#include "rtcore_geometry.isph"
+#include "embree3/rtcore.isph"
 
 
 /*! Geometries are supposed to fill certain members of DifferentialGeometry:

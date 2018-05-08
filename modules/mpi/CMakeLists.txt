@@ -29,10 +29,6 @@ IF (OSPRAY_MODULE_MPI)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
   INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_BINARY_DIR})
 
-  # NOTE(jda) - this is also fishy...embree headers shouldn't be in global include path
-  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS}/embree3)
-  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS}/embree3)
-
   OSPRAY_CREATE_LIBRARY(ospray_module_mpi
     MPIDistributedDevice.cpp
     MPIOffloadDevice.cpp

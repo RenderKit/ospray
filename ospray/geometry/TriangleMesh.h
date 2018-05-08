@@ -19,9 +19,6 @@
 #include "Geometry.h"
 #include "common/Data.h"
 
-// embree
-#include "rtcore.h"
-
 namespace ospray {
 
   /*! \defgroup geometry_trianglemesh Triangle Meshes ("trianglemesh")

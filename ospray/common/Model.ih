@@ -22,8 +22,7 @@
 #include "../volume/Volume.ih"
 
 // embree stuff
-#include "rtcore.isph"
-#include "rtcore_scene.isph"
+#include "embree3/rtcore.isph"
 
 extern RTCDevice uniform ispc_embreeDevice;
 
