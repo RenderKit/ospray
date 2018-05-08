@@ -51,6 +51,9 @@ export void Model_init(void *uniform _model,
 
   model->embreeSceneHandle = rtcNewScene((RTCDevice)embreeDevice);
 
+  rtcSetSceneFlags(model->embreeSceneHandle,
+                   (uniform RTCSceneFlags)embreeSceneFlags);
+
   if (model->geometry) delete[] model->geometry;
   model->geometryCount = numGeometries;
   if (numGeometries > 0)

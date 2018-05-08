@@ -60,14 +60,13 @@ namespace ospray {
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
     int sceneFlags = 0;
-#if 0
     sceneFlags =
-        sceneFlags | (useEmbreeDynamicSceneFlag ? RTC_SCENE_DYNAMIC : RTC_SCENE_STATIC);
+        sceneFlags | (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
     sceneFlags =
-        sceneFlags | (useEmbreeCompactSceneFlag ? RTC_SCENE_COMPACT : 0);
+        sceneFlags | (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
     sceneFlags =
-        sceneFlags | (useEmbreeRobustSceneFlag ? RTC_SCENE_ROBUST : 0);
-#endif
+        sceneFlags | (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
+
     ispc::Model_init(getIE(),
                      embreeDevice,
                      sceneFlags,
