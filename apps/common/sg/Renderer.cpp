@@ -20,6 +20,8 @@
 #include "visitor/MarkAllAsModified.h"
 #include "visitor/VerifyNodes.h"
 
+#include "ospcommon/memory/malloc.h"
+
 namespace ospray {
   namespace sg {
 
@@ -140,7 +142,7 @@ namespace ospray {
       backplate->preferLinear = true;
       backplate->depth = 4;
       const size_t stride = backplate->size.x * backplate->channels * backplate->depth;
-      backplate->data = malloc(sizeof(unsigned char) * backplate->size.y * stride);
+      backplate->data = memory::alignedMalloc(sizeof(unsigned char) * backplate->size.y * stride);
       vec3f bgColor = child("bgColor").valueAs<vec3f>();
       memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
       createChild("useBackplate", "bool", true, NodeFlags::none, "use\

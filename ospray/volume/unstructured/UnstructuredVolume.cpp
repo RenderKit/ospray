@@ -65,6 +65,21 @@ namespace ospray {
 
     ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
 
+    if (getParam<int>("precomputedNormals", 1)) {
+      if (faceNormals.empty()) {
+        calculateFaceNormals();
+        ispc::UnstructuredVolume_setFaceNormals(ispcEquivalent,
+                                                (const ispc::vec3f *)faceNormals.data());
+      }
+    } else {
+      if (!faceNormals.empty()) {
+        ispc::UnstructuredVolume_setFaceNormals(ispcEquivalent,
+                                                (const ispc::vec3f *)nullptr);
+        faceNormals.clear();
+        faceNormals.shrink_to_fit();
+      }
+    }
+
     Volume::commit();
   }
 
@@ -154,7 +169,6 @@ namespace ospray {
 
     buildBvhAndCalculateBounds();
     fixupTetWinding();
-    calculateFaceNormals();
 
     float samplingRate = getParam1f("samplingRate", 1.f);
     float samplingStep = calculateSamplingStep();
@@ -164,7 +178,6 @@ namespace ospray {
                           nCells,
                           (const ispc::box3f &)bbox,
                           (const ispc::vec3f *)vertices,
-                          (const ispc::vec3f *)faceNormals.data(),
                           (const ispc::vec4i *)indices,
                           (const float *)field,
                           (const float *)cellField,
