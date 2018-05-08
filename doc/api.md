@@ -569,10 +569,11 @@ like the structured volume equivalent, but they only modify the root
 
 ### Unstructured Volumes
 
-Unstructured volumes can contain tetrahedral or hexahedral cell types,
-and are defined by three arrays: vertices, corresponding field values,
-and eight indices per cell (first four are -1 for tetrahedral cells). An
-unstructred volume type is created by passing the type string
+Unstructured volumes can contain tetrahedral, wedge, or hexahedral
+cell types, and are defined by three arrays: vertices, corresponding
+field values, and eight indices per cell (first four are -1 for
+tetrahedral cells, first two are -2 for wedge cells). An unstructured
+volume type is created by passing the type string
 "`unstructured_volume`" to `ospNewVolume`.
 
 Field values can be specified per-vertex (`field`) or per-cell
@@ -584,6 +585,11 @@ index) data value will be used for sampling when rendering. Note that
 the index order for each tetrahedron does not matter, as OSPRay
 internally calculates vertex normals to ensure proper sampling and
 interpolation.
+
+For wedge cells, each wedge is formed by a group of six indices into
+the vertices and data value.  Vertex ordering is the same as
+`VTK_WEDGE` - three bottom vertices counterclockwise, then top three
+counterclockwise.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
 indices into the vertics and data value. Vertex ordering is the same as
