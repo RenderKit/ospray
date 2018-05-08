@@ -53,11 +53,11 @@ void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
 {
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
-  
+
   uniform Slices *uniform self
     = (uniform Slices *uniform)args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
-  
+
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
@@ -68,15 +68,15 @@ void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   intersectBox(*ray, self->volume->boundingBox, tBox0, tBox1);
 
   // slice intersections ignored where NaNs exist in the volume
-  bool hit = !isnan(tIntersect) && 
-    tIntersect >= max(ray->t0, tBox0) && 
+  bool hit = !isnan(tIntersect) &&
+    tIntersect >= max(ray->t0, tBox0) &&
     tIntersect <= min(ray->t, tBox1) &&
     !isnan(self->volume->sample(self->volume, ray->org + tIntersect*ray->dir));
-  
-  if (isOcclusionTest) {
-    if (!hit) ray->t = neg_inf;
-  } else {
-    if (hit) {
+
+  if (hit) {
+    if (isOcclusionTest) {
+      ray->t = neg_inf;
+    } else {
       ray->instID = args->context->instID[0];
       ray->geomID = self->super.geomID;
       ray->primID = primID;
@@ -139,7 +139,7 @@ export void *uniform Slices_create(void *uniform cppEquivalent)
 {
   uniform Slices *uniform self = uniform new uniform Slices;
 
-  Geometry_Constructor(&self->super, cppEquivalent, Slices_postIntersect, 
+  Geometry_Constructor(&self->super, cppEquivalent, Slices_postIntersect,
 #if USE_EMBREE3
                        NULL,
 #endif
@@ -164,7 +164,7 @@ export void *uniform Slices_set(void          *uniform _self,
 #else
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numPlanes);
 #endif
-  
+
   self->super.model  = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numPlanes;

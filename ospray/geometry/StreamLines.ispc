@@ -150,23 +150,23 @@ unmasked void StreamLines_intersect_kernel
 {
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
-  
+
   uniform StreamLines *uniform self
     = (uniform StreamLines *uniform)args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
-  
+
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
-  
+
   const uniform uint32 idx = self->index[primID];
   const vec3f A = make_vec3f(self->vertex[idx]);
   const vec3f B = make_vec3f(self->vertex[idx+1]);
-  
+
   float t_in=inf, t_out=-inf;
   intersectCylinder_numericalFix(*ray,A,B,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius); 
+  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius);
   intersectSphere_numericalFix(*ray,B,t_in,t_out,self->radius);
-  
+
   bool hit = false;
   if (t_in < t_out) {
     if (t_in > ray->t0 && t_in < ray->t) {
@@ -177,16 +177,11 @@ unmasked void StreamLines_intersect_kernel
       hit = true;
     }
   }
-  
-  if (occlusionTest) {
-    if (hit) {
-      // ray->geomID = self->super.geomID;
-      // ray->primID = primID;
-    } else {
+
+  if (hit) {
+    if (occlusionTest) {
       ray->t = neg_inf;
-    }
-  } else {
-    if (hit) {
+    } else {
       ray->geomID = self->super.geomID;
       ray->primID = primID;
       ray->instID = args->context->instID[0];
@@ -446,7 +441,7 @@ StreamLines_setCurve(      void           *uniform _self,
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
-  
+
   self->super.geom = geom;
 
 #else

@@ -44,7 +44,7 @@ struct Cylinders {
   uint8 *color;
   int    color_stride;
   bool   has_alpha; // 4th color component is valid
- 
+
   CylinderTexCoord *texcoord;
 };
 
@@ -86,11 +86,11 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
 {
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
-  
+
   uniform Cylinders *uniform self
     = (uniform Cylinders *uniform)args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
-  
+
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
@@ -113,7 +113,7 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
 
   const vec3f V = ray->dir;
   const vec3f AB = B - A;
-  
+
   const vec3f AOxAB  = cross(AB,A);
   const vec3f VxAB   = cross(V,AB);
   const float ab2    = dot(AB,AB);
@@ -134,7 +134,7 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
   //
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return;
-  
+
   const float srad = sqrt(radical);
 
   const float t_in = (- b - srad) *rcpf(2.f*a) + approxDist;
@@ -148,21 +148,22 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
   } else if (t_out >= (tAB0+self->epsilon) && t_out <= (tAB1)) {
     hit = true;
     ray->t = t_out;
-  } else {
-    if (isOcclusionTest)
-      ray->t = neg_inf;
   }
 
-  if (!isOcclusionTest && hit) {
-    ray->instID = args->context->instID[0];
-    ray->primID = primID;
-    ray->geomID = self->super.geomID;
-    // cannot easily be moved to postIntersect
-    // we need hit in object-space, in postIntersect it is in world-space
-    const vec3f P = ray->org + ray->t*ray->dir - v0;
-    const vec3f V = cross(P,AB);
-    ray->Ng = cross(AB,V);
-    ray->u = (ray->t-tA)*rcp(tB-tA);
+  if (hit) {
+    if (isOcclusionTest) {
+      ray->t = neg_inf;
+    } else {
+      ray->instID = args->context->instID[0];
+      ray->primID = primID;
+      ray->geomID = self->super.geomID;
+      // cannot easily be moved to postIntersect
+      // we need hit in object-space, in postIntersect it is in world-space
+      const vec3f P = ray->org + ray->t*ray->dir - v0;
+      const vec3f V = cross(P,AB);
+      ray->Ng = cross(AB,V);
+      ray->u = (ray->t-tA)*rcp(tB-tA);
+    }
   }
 }
 
@@ -197,7 +198,7 @@ void Cylinders_intersect(Cylinders *uniform self,
 
   const vec3f V = ray.dir;
   const vec3f AB = B - A;
-  
+
   const vec3f AOxAB  = cross(AB,A);
   const vec3f VxAB   = cross(V,AB);
   const float ab2    = dot(AB,AB);
@@ -218,7 +219,7 @@ void Cylinders_intersect(Cylinders *uniform self,
   //
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return;
-  
+
   const float srad = sqrt(radical);
 
   const float t_in = (- b - srad) *rcpf(2.f*a) + approxDist;
@@ -273,7 +274,7 @@ static void Cylinders_postIntersect(Geometry *uniform _self,
     dg.st = lerp(ray.u, tc.v0, tc.v1);
   } else
     dg.st = make_vec2f(0.0f);
-  
+
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
     uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(cylinderPtr+self->offset_materialID));
@@ -402,7 +403,7 @@ export void CylindersGeometry_set(void *uniform _self
 #else
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numCylinders);
 #endif
-  
+
   self->super.model = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numCylinders;

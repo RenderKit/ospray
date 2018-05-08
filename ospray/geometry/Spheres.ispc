@@ -161,11 +161,11 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
 {
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
-  
+
   uniform Spheres *uniform self
     = (uniform Spheres *uniform)args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
-  
+
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
@@ -201,20 +201,21 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   } else if (t_out > (ray->t0 + self->epsilon) && t_out < ray->t) {
     hit = true;
     ray->t = t_out;
-  } else {
-    if (isOcclusionTest)
-      ray->t = neg_inf;
   }
 
-  if (!isOcclusionTest && hit) {
-    ray->primID = primID;
-    ray->geomID = self->super.geomID;
-    ray->instID = args->context->instID[0];
-    // cannot easily be moved to postIntersect
-    // we need hit in object space, in postIntersect it is in world-space
-    ray->Ng = ray->org + ray->t*ray->dir - center;
+  if (hit) {
+    if (isOcclusionTest) {
+      ray->t = neg_inf;
+    } else {
+      ray->primID = primID;
+      ray->geomID = self->super.geomID;
+      ray->instID = args->context->instID[0];
+      // cannot easily be moved to postIntersect
+      // we need hit in object space, in postIntersect it is in world-space
+      ray->Ng = ray->org + ray->t*ray->dir - center;
+    }
   }
-}  
+}
 
 unmasked void Spheres_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
 {

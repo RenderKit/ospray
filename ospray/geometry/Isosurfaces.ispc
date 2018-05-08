@@ -52,11 +52,11 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform 
 {
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
-  
+
   uniform Isosurfaces *uniform self
     = (uniform Isosurfaces *uniform)args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
-  
+
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
@@ -64,7 +64,7 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform 
 
   float hit_t;
   vec3f hit_Ng;
-  
+
   /* iw - just to explain the following code sequence: in embree3, the
      'occluded' function no longer guarantees that we have a 'full'
      ospray ray to intersect (the ospray ray is what emrbee calls a
@@ -90,15 +90,11 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform 
                               self->super.numPrimitives,
                               self->super.geomID,
                               tmpRay);
-  bool hit = tmpRay.primID >= 0;
-  if (isOcclusionTest) {
-    if (hit) {
-      // hit something
-    } else {
+  const bool hit = tmpRay.primID >= 0;
+  if (hit) {
+    if (isOcclusionTest) {
       ray->t = neg_inf;
-    }
-  } else {
-    if (hit) {
+    } else {
       ray->instID = args->context->instID[0];
       ray->geomID = self->super.geomID;
       ray->primID = tmpRay.primID;
@@ -117,7 +113,6 @@ unmasked void Isosurfaces_occluded(const struct RTCIntersectFunctionNArguments *
 {
   Isosurfaces_intersect_kernel(args,true);
 }
-
 
 #else
 void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
