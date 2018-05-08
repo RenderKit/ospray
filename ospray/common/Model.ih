@@ -29,8 +29,8 @@
 extern RTCDevice uniform ispc_embreeDevice;
 #endif
 
-struct Model {
-
+struct Model
+{
   /*! the scene handle we can use to tell embree to trace rays against this scene */
   uniform RTCScene embreeSceneHandle;
 
@@ -44,34 +44,36 @@ struct Model {
   //! volumes contained in the model
   uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
-
 };
 
 /*! trace a ray (using embree where possible) */
-inline void traceRay(uniform Model *uniform model,
-                     varying Ray &ray)
+inline void traceRay(uniform Model *uniform model, varying Ray &ray)
 {
 #if USE_EMBREE3
   uniform RTCIntersectContext context;
   rtcInitIntersectContext(&context);
-  rtcIntersectV(model->embreeSceneHandle,&context,(varying RTCRayHit*)&ray);
+  rtcIntersectV(model->embreeSceneHandle,
+                &context,
+                (varying RTCRayHit* uniform)&ray);
 #else
   rtcIntersect(model->embreeSceneHandle,(varying RTCRay&)ray);
 #endif
 }
 
 /*! determine if ray is occluded (using embree where possible) */
-inline bool isOccluded(uniform Model *uniform model,
-                     varying Ray &ray)
+inline bool isOccluded(uniform Model *uniform model, varying Ray &ray)
 {
 #if USE_EMBREE3
   uniform RTCIntersectContext context;
   rtcInitIntersectContext(&context);
-  rtcOccludedV(model->embreeSceneHandle,&context,(varying RTCRay*)&ray);
+  rtcOccludedV(model->embreeSceneHandle,
+               &context,
+               (varying RTCRay* uniform)&ray);
+  return ray.t < ray.t0;
 #else
   rtcOccluded(model->embreeSceneHandle,(varying RTCRay&)ray);
-#endif
   return ray.geomID >= 0;
+#endif
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of
