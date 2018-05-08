@@ -136,7 +136,7 @@ namespace ospray {
                                                             AFFINITIZE;
       }
 
-      threadAffinity = getParam<bool>("setAffinity", threadAffinity);
+      threadAffinity = getParam<int>("setAffinity", threadAffinity);
 
       tasking::initTaskingSystem(numThreads);
 
