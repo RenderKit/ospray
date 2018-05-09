@@ -123,6 +123,7 @@ ospray_create_library(ospray_sg SHARED
   generator/generateCurves.cpp
   generator/generateCylinders.cpp
   generator/generateGridOfSpheres.cpp
+  generator/generateRandomQuads.cpp
   generator/generateRandomSpheres.cpp
   generator/generateUnstructuredVolume.cpp
 
