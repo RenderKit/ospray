@@ -75,6 +75,7 @@ ospray_create_library(ospray_sg SHARED
 
   geometry/Cylinders.cpp
   geometry/Geometry.cpp
+  geometry/QuadMesh.cpp
   geometry/Slices.cpp
   geometry/Spheres.cpp
   geometry/StreamLines.cpp
@@ -118,6 +119,7 @@ ospray_create_library(ospray_sg SHARED
   # scene graph generators
   generator/Generator.cpp
   generator/generateBasicVolume.cpp
+  generator/generateCube.cpp
   generator/generateCurves.cpp
   generator/generateCylinders.cpp
   generator/generateGridOfSpheres.cpp
@@ -204,6 +206,7 @@ ospray_install_sdk_headers(
 ospray_install_sdk_headers(
   geometry/Cylinders.h
   geometry/Geometry.h
+  geometry/QuadMesh.h
   geometry/Spheres.h
   geometry/StreamLines.h
   geometry/TriangleMesh.h

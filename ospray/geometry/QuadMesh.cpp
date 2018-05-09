@@ -29,7 +29,7 @@ namespace ospray {
     return i >= i0 && i < i1;
   }
 
-  QuadMesh::QuadMesh() 
+  QuadMesh::QuadMesh()
   {
     this->ispcEquivalent = ispc::QuadMesh_create(this);
   }
@@ -47,7 +47,7 @@ namespace ospray {
       postStatusMsg(2) << "(all future printouts for quad mesh creation "
                        << "will be omitted)";
     }
-    
+
     if (numPrints < 5)
       postStatusMsg(2) << "ospray: finalizing quadmesh ...";
 
@@ -90,7 +90,7 @@ namespace ospray {
     this->normal = normalData ? (float*)normalData->data : nullptr;
     this->color  = colorData ? (vec4f*)colorData->data : nullptr;
     this->texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
-    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr; 
+    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
 
     size_t numQuads  = -1;
     size_t numVerts = -1;
@@ -100,9 +100,7 @@ namespace ospray {
     size_t numCompsInNor = 0;
     switch (indexData->type) {
     case OSP_INT:
-    case OSP_UINT:  numQuads = indexData->size() / 4; numCompsInQuad = 3; break;
-    case OSP_INT3:
-    case OSP_UINT3: numQuads = indexData->size(); numCompsInQuad = 3; break;
+    case OSP_UINT:  numQuads = indexData->size() / 4; numCompsInQuad = 4; break;
     case OSP_UINT4:
     case OSP_INT4:  numQuads = indexData->size(); numCompsInQuad = 4; break;
     default:
@@ -137,7 +135,7 @@ namespace ospray {
                  sizeOf(indexData->type));
 
     bounds = empty;
-    
+
     for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
       bounds.extend(*(vec3f*)(vertex + i));
 
