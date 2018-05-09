@@ -16,14 +16,6 @@
 
 #include "OSPCommon.ih"
 
-//embree
-#include "rtcore.isph"
-
-//extern "C" void abort ();
-//extern "C" void exit(uniform int);
-//extern "C" uniform int puts ( const uniform int8* uniform str );
-//extern "C" uniform int putchar ( uniform int character );
-
 void error_handler(const RTCError code, const int8* str)
 {
   print("Embree: ");
