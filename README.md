@@ -1,6 +1,8 @@
 OSPRay
 ======
 
+[![Join the chat at https://gitter.im/ospray/ospray](https://badges.gitter.im/ospray/ospray.svg)](https://gitter.im/ospray/ospray?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is release v1.6.0 (devel) of OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
 more information.
