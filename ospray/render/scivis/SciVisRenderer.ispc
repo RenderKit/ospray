@@ -66,15 +66,6 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
     shadeMaterials(dg, info);
 
-    foreach_unique(material in (SciVisMaterial*)dg.material) {
-      if (material->ptexFilter) {
-        info.Kd = info.Kd * evalPtexFilter(material->ptexFilter,
-                                           ray.primID,
-                                           make_vec2f(ray.u,ray.v));
-      }
-    }
-
-
     info.local_opacity = path_opacity * info.d;
 
     if (info.local_opacity > self->super.minContribution) { // worth shading?
