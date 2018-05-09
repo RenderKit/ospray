@@ -16,6 +16,41 @@
 
 #include "UnstructuredVolume.ih"
 
+static inline uniform vec3f tetNormal(UnstructuredVolume *uniform self,
+                                      uniform uint64 id,
+                                      uniform int planeID)
+{
+  if (self->faceNormals)
+    return self->faceNormals[(id * 6) + planeID];
+
+  const int *uniform idx = (const int *uniform)&self->indices[2 * id + 1];
+  const vec3f *uniform vtx = self->vertices;
+
+  const uniform int planes[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
+  const int *uniform plane = planes[planeID];
+
+  return normalize(cross(vtx[idx[plane[1]]] - vtx[idx[plane[0]]],
+                         vtx[idx[plane[2]]] - vtx[idx[plane[0]]]));
+}
+
+static inline uniform vec3f hexNormal(UnstructuredVolume *uniform self,
+                                      uniform uint64 id,
+                                      uniform int planeID)
+{
+  if (self->faceNormals)
+    return self->faceNormals[(id * 6) + planeID];
+
+  const int *uniform idx = (const int *uniform)&self->indices[2 * id];
+  const vec3f *uniform vtx = self->vertices;
+
+  const uniform int planes[6][3] = {{0, 2, 1}, {0, 5, 4}, {0, 7, 3},
+                                    {6, 5, 1}, {6, 7, 4}, {6, 2, 3}};
+  const int *uniform plane = planes[planeID];
+
+  return normalize(cross(vtx[idx[plane[1]]] - vtx[idx[plane[0]]],
+                         vtx[idx[plane[2]]] - vtx[idx[plane[0]]]));
+}
+
 bool intersectAndSampleTet(void *uniform userData,
                            uniform uint64 id,
                            uniform bool assumeInside,
@@ -33,10 +68,10 @@ bool intersectAndSampleTet(void *uniform userData,
   uniform vec3f p2 = self->vertices[t.z];
   uniform vec3f p3 = self->vertices[t.w];
 
-  uniform vec3f norm0 = self->faceNormals[(id * 6) + 0];
-  uniform vec3f norm1 = self->faceNormals[(id * 6) + 1];
-  uniform vec3f norm2 = self->faceNormals[(id * 6) + 2];
-  uniform vec3f norm3 = self->faceNormals[(id * 6) + 3];
+  uniform vec3f norm0 = tetNormal(self, id, 0);
+  uniform vec3f norm1 = tetNormal(self, id, 1);
+  uniform vec3f norm2 = tetNormal(self, id, 2);
+  uniform vec3f norm3 = tetNormal(self, id, 3);
 
   // Distance from the world point to the faces.
   float d0 = dot(norm0, p1 - samplePos);
@@ -271,7 +306,7 @@ bool intersectAndSampleHexPlanar(void *uniform userData,
   for (uniform int planeID = 0; planeID < 6; planeID++) {
     dist[planeID] =
       dot(samplePos - self->vertices[planeID < 3 ? lower.x : upper.z],
-          self->faceNormals[(id * 6) + planeID]);
+          hexNormal(self, id, planeID));
     if (!assumeInside && dist[planeID] >= 0.f)
       return false;
   }
@@ -413,7 +448,7 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
     float t_fr = ray.t;
     for (uniform int plane = 0; plane < 4; plane ++) {
       const uniform vec3f p0 = self->vertices[(&t.x)[(plane + 1) & 0x3]];
-      const uniform vec3f norm = self->faceNormals[(id * 6) + plane];
+      const uniform vec3f norm = tetNormal(self, id, plane);
 
       const float side_dot = dot(ray.dir, norm);
       const float side_t = rcp(side_dot) * dot(p0 - ray.org, norm);
@@ -458,7 +493,7 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
     float t_fr = ray.t;
     for (uniform int plane = 0; plane < 6; plane ++) {
       const uniform vec3f p0 = self->vertices[plane < 3 ? lower.x : upper.z];
-      const uniform vec3f norm = self->faceNormals[(id * 6) + plane];
+      const uniform vec3f norm = hexNormal(self, id, plane);
 
       const float side_dot = dot(ray.dir, norm);
       const float side_t = rcp(side_dot) * dot(p0 - ray.org, norm);
@@ -577,12 +612,20 @@ UnstructuredVolume_disableCellGradient(void *uniform _self)
     self->super.gradientShadingEnabled = false;
 }
 
+export void
+UnstructuredVolume_setFaceNormals(void *uniform _self,
+                                  const vec3f *uniform _faceNormals)
+{
+  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
+
+  self->faceNormals = _faceNormals;
+}
+
 export void UnstructuredVolume_set(void *uniform _self,
                                   const uniform int &_nVertices,
                                   const uniform int &_nCells,
                                   const uniform box3f &_bbox,
                                   const vec3f *uniform _vertices,
-                                  const vec3f *uniform _faceNormals,
                                   const vec4i *uniform _indices,
                                   const float *uniform _field,
                                   const float *uniform _cellField,
@@ -607,7 +650,7 @@ export void UnstructuredVolume_set(void *uniform _self,
   self->super.samplingRate = samplingRate;
   self->super.samplingStep = samplingStep;
 
-  self->faceNormals = _faceNormals;
+  self->faceNormals = NULL;
 
   self->bvh.rootRef = rootRef;
   self->bvh.node    = (MinMaxBVH2Node * uniform) _bvhNode;

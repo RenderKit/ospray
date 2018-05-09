@@ -37,7 +37,6 @@ namespace ospray {
 
       /*! camera type, i.e., 'ao', 'obj', 'pathtracer', ... */
       const std::string type;
-      OSPCamera ospCamera {nullptr};
     };
 
     // Inlined Camera definitions /////////////////////////////////////////////

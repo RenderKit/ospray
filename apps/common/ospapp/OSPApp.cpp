@@ -218,6 +218,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
       render(rendererPtr);
 
+      rendererPtr.reset();
+      ospShutdown();
+
       return 0;
     }
 

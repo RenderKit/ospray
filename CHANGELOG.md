@@ -8,6 +8,8 @@ Version History
 -   Added ability to configure Embree scene flags via OSPModel parameters
 -   Fixed memory leak caused by incorrect parameter reference counts in ISPC
     device
+-   Added new `ospShutdown` API function to aid in correctness and determinism
+    of OSPRay API cleanup
 
 ### Changes in v1.5.0:
 

@@ -8,8 +8,8 @@ To access the OSPRay API you first need to include the OSPRay header
 where the API is compatible with C99 and C++.
 
 
-Initialization
---------------
+Initialization and Shutdown
+---------------------------
 
 In order to use the API, OSPRay must be initialized with a "device". A
 device is the object which implements the API. Creating and initializing
@@ -226,6 +226,17 @@ implemented in shared libraries. To load plugin `name` from
 Modules are searched in OS-dependent paths. `ospLoadModule` returns
 `OSP_NO_ERROR` if the plugin could be successfully loaded.
 
+### Shutting Down OSPRay
+
+When the application is finished using OSPRay (typically on application exit),
+the OSPRay API should be finalized with
+
+    void ospShutdown();
+
+This API call ensures that the current device is cleaned up appropriately. Due
+to static object allocation having non-deterministic ordering, it is recommended
+that applications call `ospShutdown()` before the calling application process
+terminates.
 
 Objects
 -------
@@ -579,15 +590,27 @@ indices into the vertics and data value.  Vertex ordering is the same
 as VTK_HEXAHEDRON - four bottom vertices counterclockwise, then top
 four counterclockwise.
 
-  Type     Name        Description
-  -------- ----------- ------------------------------------------------------------
-  vec3f[]  vertices    [data] array of vertex positions
-  float[]  field       [data] array of vertex data values to be sampled
-  float[]  cellField   [data] array of cell data values to be sampled
-  vec4i[]  intices     [data] array of tetrahedra indices (into vertices and field)
-  string   hexMethod   "planar" (default) or "nonplanar"
-  -------- ----------- ------------------------------------------------------------
-  : Additional configuration parameters for tetrahedral volumes.
+  -------- ------------------  -------  ---------------------------------------
+  Type     Name                Default  Description
+  -------- ------------------  -------  ---------------------------------------
+  vec3f[]  vertices                     [data] array of vertex positions
+
+  float[]  field                        [data] array of vertex data values to
+                                        be sampled
+
+  float[]  cellField                    [data] array of cell data values to be
+                                        sampled
+
+  vec4i[]  intices                      [data] array of tetrahedra indices
+                                        (into vertices and field)
+
+  string   hexMethod           planar   "planar" (faster, assumes planar sides)
+                                        or "nonplanar"
+
+  bool     precomputedNormals  true     whether to accelerate by precomputing,
+                                        at a cost of 72 bytes/cell
+  -------- ------------------  -------  ---------------------------------------
+  : Additional configuration parameters for unstructured volumes.
 
 ### Transfer Function
 
@@ -1350,7 +1373,7 @@ in the table below.
 
   float  flakeScale               100  scale of the flake structure, higher values increase
                                        the amount of flakes
-                                
+
   float  flakeSpread              0.3  flake spread in [0-1]
 
   float  flakeJitter             0.75  flake randomness in [0-1]

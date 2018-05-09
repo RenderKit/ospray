@@ -168,5 +168,7 @@ int main(int argc, const char **argv) {
   ospRelease(framebuffer);
   ospRelease(world);
 
+  ospShutdown();
+
   return 0;
 }
