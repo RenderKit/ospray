@@ -63,7 +63,7 @@ namespace ospray {
       quad_indices->setName("index");
 
       quad_indices->v = std::vector<int>{
-        0,1,3,2,
+        0,1,3,2, // Still wrong
         0,1,5,4,
         0,3,7,4,
         2,1,5,6,
@@ -71,8 +71,29 @@ namespace ospray {
         4,5,6,7
       };
 #endif
-
       quads_node->add(quad_indices);
+
+#if 1 // Colors
+      auto quad_colors = std::make_shared<DataVector3fa>();
+      quad_colors->setName("color");
+	  
+      static const vec3fa r(1,0,0);
+      static const vec3fa g(0,1,0);
+      static const vec3fa b(0,0,1);
+
+      quad_colors->v = std::vector<vec3fa>{
+        0+0+0, // 0
+        r+0+0, // 1
+        0+g+0, // 2
+        0+0+b, // 3
+        r+g+0, // 4
+        r+0+b, // 5
+        0+g+b, // 6
+        r+g+b, // 7
+      };
+
+      quads_node->add(quad_colors);
+#endif
 
       // finally add to world
 
