@@ -46,16 +46,15 @@ namespace ospcommon
     delete lst;
   }
 
-  extern "C" __dllexport void ISPCLaunch(void** taskPtr,
+  extern "C" __dllexport void ISPCLaunch(void** /*taskPtr*/,
                                          void* func,
                                          void* data,
                                          int count)
   {
-    printf("ispclaunch ... should never get called on ospray\n"); exit(0);
     tasking::parallel_for(count,[&] (const int i) {
-        const int threadIndex = i; //(int) TaskScheduler::threadIndex();
-        const int threadCount = count; //(int) TaskScheduler::threadCount();
-        ((ISPCTaskFunc)func)(data,threadIndex,threadCount,i,count);
-      });
+      const int threadIndex = i; //(int) TaskScheduler::threadIndex();
+      const int threadCount = count; //(int) TaskScheduler::threadCount();
+      ((ISPCTaskFunc)func)(data,threadIndex,threadCount,i,count);
+    });
   }
 }
