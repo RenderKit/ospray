@@ -48,7 +48,7 @@ namespace ospray {
       instancedScene->commit();
     }
 
-    RTCGeometry embreeGeom   = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_INSTANCE);
+    RTCGeometry embreeGeom   = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_INSTANCE);
     embreeGeomID = rtcAttachGeometry(model->embreeSceneHandle,embreeGeom);
     rtcSetGeometryInstancedScene(embreeGeom,instancedScene->embreeSceneHandle);
 

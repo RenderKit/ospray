@@ -33,7 +33,12 @@
 // stl
 #include <algorithm>
 
-RTCDevice ispc_embreeDevice;
+extern "C" {
+  RTCDevice ispc_embreeDevice()
+  {
+    return ospray::api::ISPCDevice::embreeDevice;
+  }
+}
 
 namespace ospray {
   namespace api {
@@ -69,7 +74,6 @@ namespace ospray {
       // in the host-stubs, where it shouldn't.
       // -------------------------------------------------------
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-        ispc_embreeDevice = embreeDevice;
         rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
         RTCError erc = rtcGetDeviceError(embreeDevice);
         if (erc != RTC_ERROR_NONE) {

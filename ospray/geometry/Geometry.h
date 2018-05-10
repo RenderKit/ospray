@@ -23,7 +23,9 @@
 //embree
 #include "embree3/rtcore.h"
 
-extern RTCDevice ispc_embreeDevice;
+extern "C" {
+  RTCDevice ispc_embreeDevice();
+}
 
 namespace ospray {
 

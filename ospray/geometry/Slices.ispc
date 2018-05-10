@@ -124,7 +124,7 @@ export void *uniform Slices_set(void          *uniform _self,
   uniform Model  *uniform model  = (uniform Model  *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
-  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 
   self->super.model  = model;

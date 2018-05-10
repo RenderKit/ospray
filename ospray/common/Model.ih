@@ -24,7 +24,7 @@
 // embree stuff
 #include "embree3/rtcore.isph"
 
-extern RTCDevice uniform ispc_embreeDevice;
+extern "C" RTCDevice uniform ispc_embreeDevice();
 
 struct Model
 {

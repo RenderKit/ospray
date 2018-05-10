@@ -317,7 +317,7 @@ StreamLines_set(       void *uniform _self,
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
 
-  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 
   self->super.geomID = geomID;
@@ -358,7 +358,7 @@ StreamLines_setCurve(      void           *uniform _self,
   Model *uniform model = (Model *uniform)_model;
 
   uniform RTCGeometry geom
-    = rtcNewGeometry(ispc_embreeDevice,
+    = rtcNewGeometry(ispc_embreeDevice(),
                      RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
   rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT4,
                              vertexCurve,0,sizeof(uniform vec3fa),numVertices);

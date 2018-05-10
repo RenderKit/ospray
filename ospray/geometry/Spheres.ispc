@@ -333,7 +333,7 @@ export void SpheresGeometry_set(void  *uniform _self
   uniform Spheres *uniform self = (uniform Spheres *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
 
-  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 
   self->super.model = model;

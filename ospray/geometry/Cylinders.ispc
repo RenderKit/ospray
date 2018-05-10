@@ -306,7 +306,7 @@ export void CylindersGeometry_set(void *uniform _self
   Cylinders *uniform self = (Cylinders *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
 
-  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice,RTC_GEOMETRY_TYPE_USER);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 
   self->super.model = model;
