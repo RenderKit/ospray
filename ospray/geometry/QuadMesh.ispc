@@ -26,8 +26,31 @@
 #include "embree2/rtcore_geometry.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
-//XXX, embree treat quads internally as a pair of triangles.
-//XXX, does any of this get called as one quad or just two triangles?
+// vec[234]f variants of quad interpolation
+static vec2f quad_interpolate(const vec4f uv,
+		                      const vec2f t0,
+		                      const vec2f t1,
+		                      const vec2f t2,
+		                      const vec2f t3)
+{
+	return uv.x*t0 + uv.y*t1 + uv.z*t2 + uv.w*t3;
+}
+static vec3f quad_interpolate(const vec4f uv,
+		                      const vec3f t0,
+		                      const vec3f t1,
+		                      const vec3f t2,
+		                      const vec3f t3)
+{
+	return uv.x*t0 + uv.y*t1 + uv.z*t2 + uv.w*t3;
+}
+static vec4f quad_interpolate(const vec4f uv,
+		                      const vec4f t0,
+		                      const vec4f t1,
+		                      const vec4f t2,
+		                      const vec4f t3)
+{
+	return uv.x*t0 + uv.y*t1 + uv.z*t2 + uv.w*t3;
+}
 
 static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
                                    uniform Model    *uniform model,
@@ -38,8 +61,10 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
   QuadMesh *uniform self = (QuadMesh *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
   const uniform bool huge_mesh = self->huge_mesh;
-  const vec3i index = gather_vec3i(huge_mesh, self->index, self->idxSize, ray.primID);
-  vec3f bary = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
+  const vec4i index = gather_vec4i(huge_mesh, self->index, self->idxSize, ray.primID);
+  const float u = ray.u;
+  const float v = ray.v;
+  const vec4f uv = make_vec4f((1-v)*(1-u), (1-v)*u, v*u, v*(1-u));
 
   if (flags & DG_NS && self->normal) {
     const uniform float *uniform normal = self->normal;
@@ -47,7 +72,8 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
     const vec3f a = gather_vec3f(huge_mesh, normal, norSize, index.x);
     const vec3f b = gather_vec3f(huge_mesh, normal, norSize, index.y);
     const vec3f c = gather_vec3f(huge_mesh, normal, norSize, index.z);
-    dg.Ns = interpolate(bary, a, b, c);
+    const vec3f d = gather_vec3f(huge_mesh, normal, norSize, index.w);
+    dg.Ns = quad_interpolate(uv, a, b, c, d);
   }
 
   if (flags & DG_COLOR && self->color) {
@@ -55,7 +81,8 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
     const vec4f a = gather_vec4f(huge_mesh, color, index.x);
     const vec4f b = gather_vec4f(huge_mesh, color, index.y);
     const vec4f c = gather_vec4f(huge_mesh, color, index.z);
-    dg.color = interpolate(bary, a, b, c);
+    const vec4f d = gather_vec4f(huge_mesh, color, index.w);
+    dg.color = quad_interpolate(uv, a, b, c, d);
     if (!self->has_alpha)
       dg.color.w = 1.f;
   }
@@ -65,10 +92,12 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
     const vec2f a = gather_vec2f(huge_mesh, texcoord, index.x);
     const vec2f b = gather_vec2f(huge_mesh, texcoord, index.y);
     const vec2f c = gather_vec2f(huge_mesh, texcoord, index.z);
-    dg.st = interpolate(bary, a, b, c);
+    const vec2f d = gather_vec2f(huge_mesh, texcoord, index.w);
+    dg.st = quad_interpolate(uv, a, b, c, d);
   } else
     dg.st = make_vec2f(0.0f, 0.0f);
 
+  //TODO, fix for quads
   if (flags & DG_TANGENTS) {
     uniform bool fallback = true;
     if (self->texcoord) {
@@ -123,6 +152,7 @@ SampleAreaRes QuadMesh_sampleArea(
   const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
   SampleAreaRes res;
 
+  //TODO, fix for quads
   // gather vertices
   const uniform bool huge_mesh = self->huge_mesh;
   const vec3i index = gather_vec3i(huge_mesh, self->index, self->idxSize, primID);
