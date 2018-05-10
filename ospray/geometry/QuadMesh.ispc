@@ -26,31 +26,19 @@
 #include "embree2/rtcore_geometry.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
-// vec[234]f variants of quad interpolation
-static vec2f quad_interpolate(const vec4f uv,
-		                      const vec2f t0,
-		                      const vec2f t1,
-		                      const vec2f t2,
-		                      const vec2f t3)
-{
-	return uv.x*t0 + uv.y*t1 + uv.z*t2 + uv.w*t3;
+// Create quad_interpolate for vec2f, vec3f, and vec4f types
+#define __define_quad_interpolate(T)              \
+static inline T quad_interpolate(const vec4f& uv, \
+                                 const T& t0,     \
+                                 const T& t1,     \
+                                 const T& t2,     \
+                                 const T& t3) {   \
+  return uv.x*t0 + uv.y*t1 + uv.z*t2 + uv.w*t3;   \
 }
-static vec3f quad_interpolate(const vec4f uv,
-		                      const vec3f t0,
-		                      const vec3f t1,
-		                      const vec3f t2,
-		                      const vec3f t3)
-{
-	return uv.x*t0 + uv.y*t1 + uv.z*t2 + uv.w*t3;
-}
-static vec4f quad_interpolate(const vec4f uv,
-		                      const vec4f t0,
-		                      const vec4f t1,
-		                      const vec4f t2,
-		                      const vec4f t3)
-{
-	return uv.x*t0 + uv.y*t1 + uv.z*t2 + uv.w*t3;
-}
+
+__define_quad_interpolate(vec2f);
+__define_quad_interpolate(vec3f);
+__define_quad_interpolate(vec4f);
 
 static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
                                    uniform Model    *uniform model,
