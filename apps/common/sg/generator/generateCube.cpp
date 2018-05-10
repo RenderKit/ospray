@@ -80,33 +80,47 @@ namespace ospray {
 
       quads_node->add(quad_colors);
 
+#if 0 //todo, debug odd rendering/lighting error on +Z plane
+      auto quad_normals = std::make_shared<DataVector3f>();
+      quad_normals->setName("normal");
+
+      quad_normals->v.resize(quad_vertices->v.size());
+
+      static const vec3f origin(0,0,0); //todo support arbitrary normal origin
+      for (unsigned int i=0; i < quad_normals->v.size(); i++) {
+        quad_normals->v[i] = normalize(origin - quad_vertices->v[i]);
+      }
+      quads_node->add(quad_normals);
+#endif
+
       // finally add to world
 
 #if 1 // QuadMesh or TriangleMesh?
       world->add(quads_node);
 
 #else
-	  auto tris_node = createNode("cube", "TriangleMesh");
+      auto tris_node = createNode("cube", "TriangleMesh");
       auto tri_indices = std::make_shared<DataVector3i>();
       tri_indices->setName("index");
       tri_indices->v = std::vector<vec3i>{
-		vec3i(0,3,2), // +Z
-		vec3i(2,1,0), // +Z
-		vec3i(0,1,6), // +Y
-		vec3i(6,5,0), // +Y
-		vec3i(0,5,4), // +X
-		vec3i(4,3,0), // +X
-		vec3i(4,5,6), // -Z
-		vec3i(6,7,4), // -Z
-		vec3i(2,3,4), // -Y
-		vec3i(4,7,2), // -Y
-		vec3i(1,2,7), // -X
-		vec3i(7,6,1), // -X
+        vec3i(0,3,2), // +Z
+        vec3i(2,1,0), // +Z
+        vec3i(0,1,6), // +Y
+        vec3i(6,5,0), // +Y
+        vec3i(0,5,4), // +X
+        vec3i(4,3,0), // +X
+        vec3i(4,5,6), // -Z
+        vec3i(6,7,4), // -Z
+        vec3i(2,3,4), // -Y
+        vec3i(4,7,2), // -Y
+        vec3i(1,2,7), // -X
+        vec3i(7,6,1), // -X
       };
 
       tris_node->add(quad_vertices);
       tris_node->add(tri_indices);
       tris_node->add(quad_colors);
+      tris_node->add(quad_normals);
 
       world->add(tris_node);
 #endif
