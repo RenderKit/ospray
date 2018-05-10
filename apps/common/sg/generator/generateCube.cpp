@@ -34,14 +34,14 @@ namespace ospray {
       quad_vertices->setName("vertex");
 
       quad_vertices->v = std::vector<vec3f>{
-        vec3f( 1,  1,  1),
-        vec3f(-1,  1,  1),
-        vec3f( 1, -1,  1),
-        vec3f(-1, -1,  1),
-        vec3f( 1,  1, -1),
-        vec3f(-1,  1, -1),
-        vec3f( 1, -1, -1),
-        vec3f(-1, -1, -1)
+        vec3f( 1,  1,  1), // 0
+        vec3f(-1,  1,  1), // 1
+        vec3f(-1, -1,  1), // 2
+        vec3f( 1, -1,  1), // 3
+        vec3f( 1, -1, -1), // 4
+        vec3f( 1,  1, -1), // 5
+        vec3f(-1,  1, -1), // 6
+        vec3f(-1, -1, -1)  // 7
       };
 
       quads_node->add(quad_vertices);
@@ -51,19 +51,19 @@ namespace ospray {
       quad_indices->setName("index");
 
       quad_indices->v = std::vector<vec4i>{
-        vec4i(0,1,2,3),
-        vec4i(0,1,5,4),
-        vec4i(0,3,7,4),
-        vec4i(2,1,5,6),
-        vec4i(2,3,7,6),
-        vec4i(4,5,6,7)
+		vec4i(0,1,2,3), // +Z
+		vec4i(0,1,6,5), // +Y
+		vec4i(0,3,4,5), // +X
+		vec4i(4,5,6,7), // -Z
+		vec4i(2,3,4,7), // -Y
+		vec4i(1,2,7,6), // -X
       };
 #else
       auto quad_indices = std::make_shared<DataVector1i>();
       quad_indices->setName("index");
 
       quad_indices->v = std::vector<int>{
-        0,1,2,3,
+        0,1,3,2,
         0,1,5,4,
         0,3,7,4,
         2,1,5,6,
