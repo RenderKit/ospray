@@ -95,14 +95,14 @@ namespace ospray {
     size_t numQuads  = -1;
     size_t numVerts = -1;
 
-    size_t numCompsInQuad = 0;
+    size_t numCompsInQuad = 4;
     size_t numCompsInVtx = 0;
     size_t numCompsInNor = 0;
     switch (indexData->type) {
     case OSP_INT:
-    case OSP_UINT:  numQuads = indexData->size() / 4; numCompsInQuad = 4; break;
+    case OSP_UINT:  numQuads = indexData->size() / 4; break;
     case OSP_UINT4:
-    case OSP_INT4:  numQuads = indexData->size(); numCompsInQuad = 4; break;
+    case OSP_INT4:  numQuads = indexData->size(); break;
     default:
       throw std::runtime_error("unsupported quadmesh.index data type");
     }
@@ -132,7 +132,7 @@ namespace ospray {
                  sizeOf(vertexData->type));
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
                  (void*)this->index,0,
-                 sizeOf(indexData->type));
+                 numCompsInQuad * sizeof(int));
 
     bounds = empty;
 
