@@ -58,6 +58,7 @@ namespace ospray {
 		vec4i(2,3,4,7), // -Y
 		vec4i(1,2,7,6), // -X
       };
+
 #else
       auto quad_indices = std::make_shared<DataVector1i>();
       quad_indices->setName("index");
@@ -76,7 +77,7 @@ namespace ospray {
 #if 1 // Colors
       auto quad_colors = std::make_shared<DataVector3fa>();
       quad_colors->setName("color");
-	  
+
       static const vec3fa r(1,0,0);
       static const vec3fa g(0,1,0);
       static const vec3fa b(0,0,1);
@@ -97,7 +98,34 @@ namespace ospray {
 
       // finally add to world
 
+#if 1 // QuadMesh or TriangleMesh?
       world->add(quads_node);
+
+#else
+	  auto tris_node = createNode("cube", "TriangleMesh");
+      auto tri_indices = std::make_shared<DataVector3i>();
+      tri_indices->setName("index");
+      tri_indices->v = std::vector<vec3i>{
+		vec3i(0,1,2), // +Z
+		vec3i(2,3,0), // +Z
+		vec3i(0,1,6), // +Y
+		vec3i(6,5,0), // +Y
+		vec3i(0,3,4), // +X
+		vec3i(4,5,0), // +X
+		vec3i(4,5,6), // -Z
+		vec3i(6,7,4), // -Z
+		vec3i(2,3,4), // -Y
+		vec3i(4,7,2), // -Y
+		vec3i(1,2,7), // -X
+		vec3i(7,6,1), // -X
+      };
+
+      tris_node->add(quad_vertices);
+      tris_node->add(tri_indices);
+      tris_node->add(quad_colors);
+
+      world->add(tris_node);
+#endif
     }
 
     OSPSG_REGISTER_GENERATE_FUNCTION(generateCube, cube);
