@@ -124,7 +124,6 @@ namespace ospray {
         auto &embreeDevice = api::ISPCDevice::embreeDevice;
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-        ispc_embreeDevice = embreeDevice;
         rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
         RTCError erc = rtcGetDeviceError(embreeDevice);
         if (erc != RTC_ERROR_NONE) {

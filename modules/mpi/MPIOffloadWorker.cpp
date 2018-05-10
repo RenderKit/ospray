@@ -120,7 +120,6 @@ namespace ospray {
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 
-      ispc_embreeDevice = embreeDevice;
       rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
       RTCError erc = rtcGetDeviceError(embreeDevice);
       if (erc != RTC_ERROR_NONE) {
