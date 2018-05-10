@@ -46,35 +46,20 @@ namespace ospray {
 
       quads_node->add(quad_vertices);
 
-#if 1
       auto quad_indices = std::make_shared<DataVector4i>();
       quad_indices->setName("index");
 
       quad_indices->v = std::vector<vec4i>{
-		vec4i(0,1,2,3), // +Z
-		vec4i(0,1,6,5), // +Y
-		vec4i(0,3,4,5), // +X
-		vec4i(4,5,6,7), // -Z
-		vec4i(2,3,4,7), // -Y
-		vec4i(1,2,7,6), // -X
+        vec4i(0,1,2,3), // +Z
+        vec4i(0,1,6,5), // +Y
+        vec4i(0,3,4,5), // +X
+        vec4i(4,5,6,7), // -Z
+        vec4i(2,3,4,7), // -Y
+        vec4i(1,2,7,6), // -X
       };
 
-#else
-      auto quad_indices = std::make_shared<DataVector1i>();
-      quad_indices->setName("index");
-
-      quad_indices->v = std::vector<int>{
-        0,1,3,2, // Still wrong
-        0,1,5,4,
-        0,3,7,4,
-        2,1,5,6,
-        2,3,7,6,
-        4,5,6,7
-      };
-#endif
       quads_node->add(quad_indices);
 
-#if 1 // Colors
       auto quad_colors = std::make_shared<DataVector3fa>();
       quad_colors->setName("color");
 
@@ -94,7 +79,6 @@ namespace ospray {
       };
 
       quads_node->add(quad_colors);
-#endif
 
       // finally add to world
 
