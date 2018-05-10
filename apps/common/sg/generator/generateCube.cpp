@@ -50,9 +50,9 @@ namespace ospray {
       quad_indices->setName("index");
 
       quad_indices->v = std::vector<vec4i>{
-        vec4i(0,1,2,3), // +Z
+        vec4i(0,3,2,1), // +Z
         vec4i(0,1,6,5), // +Y
-        vec4i(0,3,4,5), // +X
+        vec4i(0,5,4,3), // +X
         vec4i(4,5,6,7), // -Z
         vec4i(2,3,4,7), // -Y
         vec4i(1,2,7,6), // -X
@@ -90,12 +90,12 @@ namespace ospray {
       auto tri_indices = std::make_shared<DataVector3i>();
       tri_indices->setName("index");
       tri_indices->v = std::vector<vec3i>{
-		vec3i(0,1,2), // +Z
-		vec3i(2,3,0), // +Z
+		vec3i(0,3,2), // +Z
+		vec3i(2,1,0), // +Z
 		vec3i(0,1,6), // +Y
 		vec3i(6,5,0), // +Y
-		vec3i(0,3,4), // +X
-		vec3i(4,5,0), // +X
+		vec3i(0,5,4), // +X
+		vec3i(4,3,0), // +X
 		vec3i(4,5,6), // -Z
 		vec3i(6,7,4), // -Z
 		vec3i(2,3,4), // -Y

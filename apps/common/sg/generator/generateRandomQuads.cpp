@@ -75,9 +75,9 @@ namespace ospray {
         auto rc = vec3f(vert_dist(rng), vert_dist(rng), vert_dist(rng));
 
         quad_vertices->v[i]   = rv;
-        quad_vertices->v[i+1] = rv + delta_y;
+        quad_vertices->v[i+1] = rv + delta_x;
         quad_vertices->v[i+2] = rv + delta_x + delta_y;
-        quad_vertices->v[i+3] = rv + delta_x;
+        quad_vertices->v[i+3] = rv + delta_y;
 
         quad_colors->v[i]    = r+g+b;
         quad_colors->v[i+1]  = r;
