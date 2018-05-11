@@ -128,7 +128,7 @@ namespace ospray {
     inline void FrameBuffer::free() const
     {
       if (owner && handle()) {
-        ospFreeFrameBuffer(handle());
+        ospRelease(handle());
       }
     }
 

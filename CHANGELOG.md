@@ -10,6 +10,8 @@ Version History
     device
 -   Added new `ospShutdown` API function to aid in correctness and determinism
     of OSPRay API cleanup
+-   `ospFreeFrameBuffer` has been deprecated in favor of using `ospRelease` to
+    free frame buffer handles
 
 ### Changes in v1.5.0:
 
