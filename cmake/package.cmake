@@ -164,7 +164,7 @@ ELSE() # Linux specific settings
     SET(CPACK_RPM_COMPONENT_INSTALL ON)
 
     # dependencies
-    SET(OSPLIB_REQS "embree-lib >= ${EMBREE_VERSION_REQUIRED}")
+    SET(OSPLIB_REQS "embree3-lib >= ${EMBREE_VERSION_REQUIRED}")
     IF (CMAKE_VERSION VERSION_LESS "3.4.0")
       OSPRAY_WARN_ONCE(RPM_PACKAGING "You need at least v3.4.0 of CMake for generating RPMs")
       SET(CPACK_RPM_PACKAGE_REQUIRES ${OSPLIB_REQS})
