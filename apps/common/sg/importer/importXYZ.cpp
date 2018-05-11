@@ -46,6 +46,7 @@ namespace ospray {
                             int(sizeof(particle::Model::Atom)));
         spGeom->createChild("offset_center", "int", int(0));
         spGeom->createChild("offset_radius", "int", int(3*sizeof(float)));
+        spGeom->createChild("material", "Material");
 
         auto spheres =
           std::make_shared<DataVectorT<particle::Model::Atom, OSP_RAW>>();
