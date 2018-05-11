@@ -17,7 +17,7 @@ PANDOC := pandoc
 PDMINVERSION := 2000000
 PDOK := $(shell expr `$(PANDOC) --version|head -n 1|cut -d' ' -f 2| sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/' -e 's/^[0-9]\{5,6\}$$/&00/'` \>= $(PDMINVERSION))
 ifneq "$(PDOK)" "1"
-  $(error You need at least pandoc v1.19.2)
+  $(error You need at least pandoc v2.0)
 endif
 
 all: www doc pdf
