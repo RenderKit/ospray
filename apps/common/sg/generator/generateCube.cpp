@@ -80,19 +80,6 @@ namespace ospray {
 
       quads_node->add(quad_colors);
 
-#if 0 //todo, debug odd rendering/lighting error on +Z plane
-      auto quad_normals = std::make_shared<DataVector3f>();
-      quad_normals->setName("normal");
-
-      quad_normals->v.resize(quad_vertices->v.size());
-
-      static const vec3f origin(0,0,0); //todo support arbitrary normal origin
-      for (unsigned int i=0; i < quad_normals->v.size(); i++) {
-        quad_normals->v[i] = normalize(origin - quad_vertices->v[i]);
-      }
-      quads_node->add(quad_normals);
-#endif
-
       // finally add to world
 
 #if 1 // QuadMesh or TriangleMesh?
@@ -120,7 +107,6 @@ namespace ospray {
       tris_node->add(quad_vertices);
       tris_node->add(tri_indices);
       tris_node->add(quad_colors);
-      tris_node->add(quad_normals);
 
       world->add(tris_node);
 #endif
