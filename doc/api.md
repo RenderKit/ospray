@@ -571,12 +571,12 @@ like the structured volume equivalent, but they only modify the root
 
 Unstructured volumes can contain tetrahedral or hexahedral cell types,
 and are defined by three arrays: vertices, corresponding field values,
-and eight indices per cell (first four are -1 for tetrahedral
-cells). An unstructred volume type is created by passing the type
-string "`unstructured_volume`" to `ospNewVolume`.
+and eight indices per cell (first four are -1 for tetrahedral cells). An
+unstructred volume type is created by passing the type string
+"`unstructured_volume`" to `ospNewVolume`.
 
-Field values can be specified per-vertex ('field') or per-cell
-('cellField').  If both values are set, cellField takes precedence.
+Field values can be specified per-vertex (`field`) or per-cell
+(`cellField`). If both values are set, `cellField` takes precedence.
 
 Similar to [triangle mesh], each tetrahedron is formed by a group of
 indices into the vertices. For each vertex, the corresponding (by array
@@ -586,9 +586,9 @@ internally calculates vertex normals to ensure proper sampling and
 interpolation.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertics and data value.  Vertex ordering is the same
-as VTK_HEXAHEDRON - four bottom vertices counterclockwise, then top
-four counterclockwise.
+indices into the vertics and data value. Vertex ordering is the same as
+`VTK_HEXAHEDRON` -- four bottom vertices counterclockwise, then top four
+counterclockwise.
 
   -------- ------------------  -------  ---------------------------------------
   Type     Name                Default  Description
@@ -601,7 +601,7 @@ four counterclockwise.
   float[]  cellField                    [data] array of cell data values to be
                                         sampled
 
-  vec4i[]  intices                      [data] array of tetrahedra indices
+  vec4i[]  indices                      [data] array of tetrahedra indices
                                         (into vertices and field)
 
   string   hexMethod           planar   "planar" (faster, assumes planar sides)
@@ -1635,7 +1635,7 @@ convention shall be used. The following parameters (prefixed with
   Type   Name         Description
   ------ ------------ ------------------------------------------------------
   vec4f  transform    interpreted as 2×2 matrix (linear part), column-major
-  float  rotation     angle in degree, counterclock-wise, around center
+  float  rotation     angle in degree, counterclockwise, around center
   vec2f  scale        enlarge texture, relative to center (0.5, 0.5)
   vec2f  translation  move texture in positive direction (right/up)
   ------ ------------ ------------------------------------------------------
