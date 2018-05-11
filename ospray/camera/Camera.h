@@ -32,6 +32,8 @@ namespace ospray {
 
     virtual void commit() override;
 
+    virtual vec2f projectPoint(const vec3f &p) const;
+
     static Camera *createInstance(const char *identifier);
 
     // Data members //
