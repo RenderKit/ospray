@@ -69,6 +69,8 @@ SET(OSPRAY_SOURCES
 
 SET(OSPRAY_ISPC_DEVICE_SOURCES
 
+  ispc_tasksys.cpp
+
   api/ISPCDevice.cpp
 
   common/ObjectHandle.cpp

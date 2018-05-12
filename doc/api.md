@@ -1859,13 +1859,6 @@ application driving a display wall may well generate an intermediate
 framebuffer and eventually transfer its pixel to the individual displays
 using an `OSPPixelOp` [pixel operation].
 
-A framebuffer can be freed again using
-
-    void ospFreeFrameBuffer(OSPFrameBuffer);
-
-Because OSPRay uses reference counting internally the framebuffer may
-not immediately be deleted at this time.
-
 The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via
 
