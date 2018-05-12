@@ -56,6 +56,7 @@ namespace ospray {
 
         spGeom->add(spheres);
 
+        // TODO: This should actually pull from the material list
         auto &material = spGeom->child("material");
 
         material["d"]  = 1.f;
