@@ -99,17 +99,38 @@ namespace ospray {
   {
     box4f tetBox;
 
-    int maxIdx = indices[2 * id][0] == -1 ? 4 : 8;
+    int maxIdx;
+
+    switch (indices[2 * id][0]) {
+    case -1:
+      maxIdx = 4;
+      break;
+    case -2:
+      maxIdx = 6;
+      break;
+    default:
+      maxIdx = 8;
+      break;
+    }
 
     for (int i = 0; i < maxIdx; i++) {
-      size_t idx;
-      if (maxIdx == 4) {
+      size_t idx = 0;
+      switch (maxIdx) {
+      case 4:
         idx = indices[2 * id + 1][i];
-      } else {
+        break;
+      case 6:
+        if (i < 2)
+          idx = indices[2 * id][1 + 2];
+        else
+          idx = indices[2 * id + 1][i - 2];
+        break;
+      case 8:
         if (i < 4)
           idx = indices[2 * id][i];
         else
           idx = indices[2 * id + 1][i - 4];
+        break;
       }
       const auto &v = vertices[idx];
       const float f = cellField ? cellField[id] : field[idx];
@@ -243,6 +264,23 @@ namespace ospray {
 
           faceNormals[i + j] = norm;
         }
+      } else if (indices[2 * taskIndex].x == -2) {
+        // wedge cell
+        const vec4i &lower = indices[2 * taskIndex];
+        const vec4i &upper = indices[2 * taskIndex + 1];
+
+        const auto v0 = vertices[lower.z];
+        const auto v1 = vertices[lower.w];
+        const auto v2 = vertices[upper.x];
+        const auto v3 = vertices[upper.y];
+        const auto v4 = vertices[upper.z];
+        const auto v5 = vertices[upper.w];
+
+        faceNormals[i + 0] = normalize(cross(v2 - v0, v1 - v0)); // bottom
+        faceNormals[i + 1] = normalize(cross(v4 - v3, v5 - v3)); // top
+        faceNormals[i + 2] = normalize(cross(v3 - v0, v2 - v0));
+        faceNormals[i + 3] = normalize(cross(v4 - v1, v0 - v1));
+        faceNormals[i + 4] = normalize(cross(v5 - v2, v1 - v2));
       } else {
         // hexahedron cell
         const vec4i &lower = indices[2 * taskIndex];
