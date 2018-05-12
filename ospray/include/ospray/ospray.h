@@ -506,7 +506,7 @@ extern "C" {
 
     due to refcounting the frame buffer may not immediately be deleted
     at this time */
-  OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,

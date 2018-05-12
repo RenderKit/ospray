@@ -127,6 +127,94 @@ namespace ospray {
       world->add(tets_node);
     }
 
+    void generateWedges(const std::shared_ptr<Node> &world,
+                        const std::vector<string_pair> &params)
+    {
+      auto tets_node = createNode("unstructured_wedges",
+                                  "UnstructuredVolume");
+
+      // get generator parameters
+
+      vec2i dims(100, 100);
+
+      for (auto &p : params) {
+        if (p.first == "dimensions" || p.first == "dims") {
+          auto string_dims = ospcommon::utility::split(p.second, 'x');
+          if (string_dims.size() != 2) {
+            std::cout << "WARNING: ignoring incorrect 'dimensions' parameter,"
+                      << " it must be of the form 'dimensions=XxY'"
+                      << std::endl;
+            continue;
+          }
+
+          dims = vec2i(std::atoi(string_dims[0].c_str()),
+                       std::atoi(string_dims[1].c_str()));
+        } else {
+          std::cout << "WARNING: unknown wedge generator parameter '"
+                    << p.first << "' with value '" << p.second << "'"
+                    << std::endl;
+        }
+      }
+
+      // generate sphere data
+
+      auto verts = createNode("vertices", "DataVector3f")->nodeAs<DataVector3f>();
+      auto indices = createNode("indices", "DataVector4i")->nodeAs<DataVector4i>();
+      auto field = createNode("field", "DataVector1f")->nodeAs<DataVector1f>();
+
+      for (int w = 0; w < 2; w++) {
+        for (int u = 0; u < dims.x; u++) {
+          for (int v = 0; v < dims.y; v++) {
+            float uu = M_PI * (-0.5f + u / float(dims.x - 1));
+            float vv = M_PI * (v / float(dims.y - 1));
+            float radius = 1.0f - float(w)/4;
+
+            verts->push_back(radius * vec3f(std::cos(uu) * std::cos(vv),
+                                            std::cos(uu) * std::sin(vv),
+                                            std::sin(uu)));
+            field->push_back(std::cos(4 * uu) * std::sin(4 *vv));
+          }
+        }
+      }
+
+      auto offset = dims.x * dims.y;
+      for (int u = 0; u < dims.x - 1; u++) {
+        for (int v = 0; v < dims.y - 1; v++) {
+          indices->push_back(vec4i(-2, -2,
+                                   v * dims.x + u,
+                                   (v + 1) * dims.x + u));
+          indices->push_back(vec4i(v * dims.x + (u + 1),
+                                   v * dims.x + u + offset,
+                                   (v + 1) * dims.x + u + offset,
+                                   v * dims.x + (u + 1) + offset));
+
+          indices->push_back(vec4i(-2, -2,
+                                   (v + 1) * dims.x + u,
+                                   (v + 1) * dims.x + (u + 1)));
+          indices->push_back(vec4i(v * dims.x + (u + 1),
+                                   (v + 1) * dims.x + u + offset,
+                                   (v + 1) * dims.x + (u + 1) + offset,
+                                   v * dims.x + (u + 1) + offset));
+        }
+      }
+
+      tets_node->add(verts);
+      tets_node->add(indices);
+
+      auto vertexFields = std::make_shared<NodeList<DataVector1f>>();
+      std::vector<sg::Any> vertexFieldNames;
+
+      vertexFields->push_back(field);
+      vertexFieldNames.push_back(std::string("GEN/VTX"));
+
+      tets_node->add(vertexFields, "vertexFields");
+      tets_node->createChild("vertexFieldName",
+                             "string",
+                             vertexFieldNames[0]).setWhiteList(vertexFieldNames);
+
+      world->add(tets_node);
+    }
+
     void generateHexahedrons(const std::shared_ptr<Node> &world,
                              const std::vector<string_pair> &params)
     {
@@ -211,6 +299,7 @@ namespace ospray {
     }
 
     OSPSG_REGISTER_GENERATE_FUNCTION(generateTetrahedrons, unstructuredTet);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateWedges, unstructuredWedge);
     OSPSG_REGISTER_GENERATE_FUNCTION(generateHexahedrons, unstructuredHex);
 
   }  // ::ospray::sg

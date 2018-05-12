@@ -23,8 +23,6 @@
 #include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
-// embree
-#include "embree2/rtcore.h"
 
 #include <map>
 

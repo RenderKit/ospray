@@ -26,7 +26,7 @@
 #include "ospray/common/Model.ih"
 #include "ospray/transferFunction/LinearTransferFunction.ih"
 // embree
-#include "embree2/rtcore.isph"
+#include "embree3/rtcore.isph"
 
 // ------------------------------------------------------------------
 //! The current level at the given sample location in world coordinates.
