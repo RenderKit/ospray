@@ -54,7 +54,7 @@ namespace ospray {
         );
   }
 
-  vec2f Camera::projectPoint(const vec3f &p) const {
+  vec2f Camera::projectPoint(const vec3f &) const {
     NOTIMPLEMENTED;
   }
 
