@@ -46,7 +46,6 @@ namespace ospray {
                             int(sizeof(particle::Model::Atom)));
         spGeom->createChild("offset_center", "int", int(0));
         spGeom->createChild("offset_radius", "int", int(3*sizeof(float)));
-        spGeom->createChild("material", "Material");
 
         auto spheres =
           std::make_shared<DataVectorT<particle::Model::Atom, OSP_RAW>>();
@@ -56,12 +55,10 @@ namespace ospray {
 
         spGeom->add(spheres);
 
-        // TODO: This should actually pull from the material list
-        auto &material = spGeom->child("material");
-
-        material["d"]  = 1.f;
-        material["Kd"] = m.atomType[i]->color;
-        material["Ks"] = vec3f(0.2f, 0.2f, 0.2f);
+        auto materials = spGeom->child("materialList").nodeAs<MaterialList>();
+        materials->item(0)["d"]  = 1.f;
+        materials->item(0)["Kd"] = m.atomType[i]->color;
+        materials->item(0)["Ks"] = vec3f(0.2f);
 
         auto model = createNode(name + "_model", "Model");
         model->add(spGeom);
