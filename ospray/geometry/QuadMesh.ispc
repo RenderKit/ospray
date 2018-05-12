@@ -22,9 +22,7 @@
 #include "math/sampling.ih"
 
 // embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_geometry.isph"
-#include "embree2/rtcore_geometry_user.isph"
+#include "embree3/rtcore.isph"
 
 // Create quad_interpolate for vec2f, vec3f, and vec4f types
 #define __define_quad_interpolate(T)              \
@@ -199,7 +197,8 @@ void QuadMesh_getAreas(
 void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
                           void *uniform cppEquivalent,
                           uniform Model *uniform model,
-                          uniform int32  geomID,
+                          RTCGeometry geom,
+                          uniform int32 geomID,
                           uniform int32  numQuads,
                           uniform int32  idxSize,
                           uniform int32  vtxSize,
@@ -217,7 +216,7 @@ void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
 {
   Geometry_Constructor(&mesh->super,cppEquivalent,
                        QuadMesh_postIntersect,
-                       model,geomID,
+                       model,geom, geomID,
                        materialList);
   mesh->super.getMaterialID = QuadMesh_getMaterialID;
   mesh->super.getAreas = QuadMesh_getAreas;
@@ -241,13 +240,15 @@ export void *uniform QuadMesh_create(void *uniform cppEquivalent)
 {
   QuadMesh *uniform mesh = uniform new QuadMesh;
   QuadMesh_Constructor(mesh, cppEquivalent,
-                       NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, true, false);
+                       NULL, NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL,
+                       NULL, -1, NULL, NULL, true, false);
   return mesh;
 }
 
 export void *uniform QuadMesh_set(void *uniform _mesh,
                                   void *uniform _model,
-                                  uniform int32  geomID,
+                                  RTCGeometry geom,
+                                  uniform int32 geomID,
                                   uniform int32  numQuads,
                                   uniform int32  idxSize,
                                   uniform int32  vtxSize,
@@ -269,6 +270,7 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
   QuadMesh_Constructor(mesh,
                        mesh->super.cppEquivalent,
                        model,
+                       geom,
                        geomID,
                        numQuads,
                        idxSize, vtxSize, norSize,

@@ -124,15 +124,13 @@ namespace ospray {
       throw std::runtime_error("unsupported quadmesh.vertex.normal data type");
     }
 
-    eMesh = rtcNewQuadMesh2(embreeSceneHandle,RTC_GEOMETRY_STATIC,
-                            numQuads,numVerts);
-
-    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
-                 (void*)this->vertex,0,
-                 sizeOf(vertexData->type));
-    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
-                 (void*)this->index,0,
-                 numCompsInQuad * sizeof(int));
+    eMeshGeom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
+    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT4,
+                               indexData->data,0,numCompsInQuad*sizeof(int),numQuads);
+    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT3,
+                               vertexData->data,0,numCompsInVtx*sizeof(int),numVerts);
+    rtcCommitGeometry(eMeshGeom);
+    eMeshID = rtcAttachGeometry(embreeSceneHandle,eMeshGeom);
 
     bounds = empty;
 
@@ -145,7 +143,9 @@ namespace ospray {
                        << "  mesh bounds " << bounds;
     }
 
-    ispc::QuadMesh_set(getIE(),model->getIE(),eMesh,
+    ispc::QuadMesh_set(getIE(),model->getIE(),
+                       eMeshGeom,
+                       eMeshID,
                        numQuads,
                        numCompsInQuad,
                        numCompsInVtx,
