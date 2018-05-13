@@ -25,6 +25,7 @@
 #include <vtkMarchingCubes.h>
 #include <vtkRTAnalyticSource.h>
 #include <vtkSmartPointer.h>
+#include <vtkCell.h>
 
 namespace ospray {
   namespace sg {
@@ -39,6 +40,7 @@ namespace ospray {
 
       vec3i dims(256, 256, 256);
       std::vector<float> isoValues;
+      std::vector<vec4f> slices;
 
       for (auto &p : params) {
         if (p.first == "dimensions" || p.first == "dims") {
@@ -53,6 +55,8 @@ namespace ospray {
           dims = vec3i(std::atoi(string_dims[0].c_str()),
                        std::atoi(string_dims[1].c_str()),
                        std::atoi(string_dims[2].c_str()));
+        } else if (p.first == "viewSlice") {
+          slices.emplace_back(1.f, 0.f, 0.f, dims.x / 2.f);
         } else if (p.first == "isosurfaces" || p.first == "isovalues") {
           auto string_isos = ospcommon::utility::split(p.second, '/');
           for (const auto &s : string_isos)
@@ -64,14 +68,15 @@ namespace ospray {
         }
       }
 
-      bool computeIsosurface = !isoValues.empty();
+      const bool computeIsosurface = !isoValues.empty();
+      const bool addSlices = !slices.empty();
 
       // generate volume data
 
-      std::cout << "...generating wavelet volume with dims=" << dims << "..." 
+      std::cout << "...generating wavelet volume with dims=" << dims << "..."
                 << std::endl;
 
-      auto halfDims = dims / 2;
+      const auto halfDims = dims / 2;
 
       vtkSmartPointer<vtkRTAnalyticSource> wavelet = vtkRTAnalyticSource::New();
       wavelet->SetWholeExtent(-halfDims.x, halfDims.x-1,
@@ -123,7 +128,7 @@ namespace ospray {
       if (voxelType != "float")
         throw std::runtime_error("wavelet not floats? got '" + voxelType + "'");
 
-      auto dimentionality = imageData->GetDataDimension();
+      const auto dimentionality = imageData->GetDataDimension();
 
       if (dimentionality != 3)
         throw std::runtime_error("wavelet not 3 dimentional?");
@@ -168,7 +173,7 @@ namespace ospray {
                      imageData->GetDimensions()[1],
                      imageData->GetDimensions()[2]);
 
-        auto numVoxels = dims.product();
+        const auto numVoxels = dims.product();
 
         auto *voxels_ptr = (float*)imageData->GetScalarPointer();
 
@@ -185,8 +190,21 @@ namespace ospray {
 
         volume_node->createChild("stashed_vtk_source", "Node", wavelet);
 
-        // add volume to world
-        world->add(volume_node);
+        if (addSlices) {
+          auto slices_node = createNode("slices", "Slices");
+          auto slices_data = std::make_shared<DataVector4f>();
+          slices_data->v = slices;
+          slices_data->setName("planes");
+
+          slices_node->add(slices_data);
+          slices_node->setChild("volume", volume_node);
+
+          // add slices to world
+          world->add(slices_node);
+        } else {
+          // add volume to world
+          world->add(volume_node);
+        }
       }
 
       std::cout << "...finished!" << std::endl;

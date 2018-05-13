@@ -76,6 +76,18 @@ inline vec3##S gather_vec3##S(const uniform bool huge,                         \
                                       index);                                  \
 }                                                                              \
 
+#define __define_gather_vec4_stride(T, S)                                      \
+inline vec4##S gather_vec4##S(const uniform bool huge,                         \
+                              const T *uniform const base,                     \
+                              const uniform int stride,                        \
+                              const varying int index)                         \
+{                                                                              \
+  return gather_byte_stride_vec4 ##S(huge,                                     \
+                                     (const uniform uint8 *uniform)base,       \
+                                     stride * sizeof(uniform T),               \
+                                     index);                                   \
+}                                                                              \
+
 
 #define __define_gather_vec_byte_stride(T, S, N)                               \
 inline vec##N ##S gather_byte_stride_vec##N ##S(const uniform bool huge,       \
@@ -111,7 +123,6 @@ inline vec##N ##S gather_byte_stride_vec##N ##S(const uniform bool huge,       \
   return v;                                                                    \
 }                                                                              \
 
-
 __define_gather_stride(float);
 __define_gather_stride(int32);
 __define_gather_stride(uint32);
@@ -129,7 +140,10 @@ __define_gather(vec4f);
 __define_gather_vec_byte_stride(float, f, 3);
 __define_gather_vec_byte_stride(float, f, 4);
 __define_gather_vec_byte_stride(int, i, 3);
+__define_gather_vec_byte_stride(int, i, 4);
 
 __define_gather_vec3_stride(float, f);
 __define_gather_vec3_stride(int, i);
+
+__define_gather_vec4_stride(int, i);
 

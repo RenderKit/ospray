@@ -109,7 +109,9 @@ namespace ospray {
       struct EmbreeDeviceScopeGuard
       {
         RTCDevice embreeDevice;
-        ~EmbreeDeviceScopeGuard() { rtcDeleteDevice(embreeDevice); }
+        ~EmbreeDeviceScopeGuard() {
+          rtcReleaseDevice(embreeDevice);
+        }
       };
 
       auto embreeDevice =
@@ -118,12 +120,12 @@ namespace ospray {
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 
-      rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
-
-      if (rtcDeviceGetError(embreeDevice) != RTC_NO_ERROR) {
+      rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
+      RTCError erc = rtcGetDeviceError(embreeDevice);
+      if (erc != RTC_ERROR_NONE) {
         // why did the error function not get called !?
-        postStatusMsg() << "#osp:init: embree internal error number "
-                        << (int)rtcDeviceGetError(embreeDevice);
+        postStatusMsg() << "#osp:init: embree internal error number " << erc;
+        assert(erc == RTC_ERROR_NONE);
       }
 
       char hostname[HOST_NAME_MAX];

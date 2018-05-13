@@ -27,10 +27,10 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
                                    uniform int64 flags)
 {
   uniform Instance *uniform self = (uniform Instance *uniform)_self;
-  uniform Model *uniform instancedModel = 
+  uniform Model *uniform instancedModel =
     (uniform Model *uniform)self->model;
   foreach_unique(geomID in ray.geomID) {
-    uniform Geometry *uniform instancedGeometry = 
+    uniform Geometry *uniform instancedGeometry =
       (uniform Geometry *uniform)instancedModel->geometry[geomID];
 
     dg.geometry = instancedGeometry;
@@ -56,14 +56,16 @@ export void *uniform InstanceGeometry_create(void *uniform cppE)
   Instance *uniform self = uniform new Instance;
   Geometry_Constructor(&self->super, cppE,
                        Instance_postIntersect,
-                       NULL, -1,
+                       NULL,
+                       NULL,
+                       -1,
                        NULL);
   self->areaPDF = NULL;
 
   return self;
 }
 
-export void InstanceGeometry_set(void *uniform _self, 
+export void InstanceGeometry_set(void *uniform _self,
                                  const uniform AffineSpace3f &xfm,
                                  const uniform AffineSpace3f &rcp_xfm,
                                  void *uniform _model,

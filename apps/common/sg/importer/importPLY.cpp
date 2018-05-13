@@ -70,16 +70,16 @@ namespace ospray {
       } Vertex;
 
 
-      typedef struct Face {
-        int id;
-        unsigned char nverts;           /* number of vertex indices in list */
+      struct Face {
+        int id {0};
+        unsigned char nverts {0};           /* number of vertex indices in list */
         int *verts = nullptr;              /* vertex index list */
-        unsigned char red;
-        unsigned char green;
-        unsigned char blue;
+        unsigned char red {0};
+        unsigned char green {0};
+        unsigned char blue {0};
 
         void *other_props = nullptr;      /* other properties */
-      } Face;
+      };
 
       static PlyProperty vert_props[] = { /* list of property information for a vertex */
         {(char*)"x", PLY_FLOAT, PLY_FLOAT, offsetof(::ospray::sg::ply::Vertex,coord[X]), 0, 0, 0, 0},
@@ -268,7 +268,6 @@ namespace ospray {
             /* grab all the face elements */
             for (int j=0; j<num_elems; j++)  {
               Face tmp;
-              memset(&tmp, 0, sizeof(tmp));
               ply_get_element (ply, (void *) &tmp);
               if (!has_face_blue) {
                 tmp.red = tmp.green = tmp.blue = 255;

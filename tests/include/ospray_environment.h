@@ -33,7 +33,7 @@ class OSPRayEnvironment : public ::testing::Environment {
 
  public:
   OSPRayEnvironment(int argc, char **argv);
-  ~OSPRayEnvironment() {};
+  ~OSPRayEnvironment();
 
   bool GetDumpImg() const {
     return dumpImg;

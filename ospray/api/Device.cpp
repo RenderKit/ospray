@@ -23,8 +23,6 @@
 #include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
-// embree
-#include "embree2/rtcore.h"
 
 #include <map>
 
@@ -101,7 +99,7 @@ namespace ospray {
           utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
 
       auto dst = OSPRAY_LOG_OUTPUT.value_or(
-        getParam<std::string>("logOutput", "none")
+        getParam<std::string>("logOutput", "")
       );
 
       if (dst == "cout")
@@ -115,7 +113,7 @@ namespace ospray {
           utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
 
       dst = OSPRAY_ERROR_OUTPUT.value_or(
-        getParam<std::string>("errorOutput", "none")
+        getParam<std::string>("errorOutput", "")
       );
 
       if (dst == "cout")
@@ -136,7 +134,7 @@ namespace ospray {
                                                             AFFINITIZE;
       }
 
-      threadAffinity = getParam<bool>("setAffinity", threadAffinity);
+      threadAffinity = getParam<int>("setAffinity", threadAffinity);
 
       tasking::initTaskingSystem(numThreads);
 

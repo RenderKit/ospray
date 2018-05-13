@@ -110,17 +110,25 @@ namespace ospray {
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
 
-    ispc::SpheresGeometry_set(getIE(),model->getIE(),
+    ispc::SpheresGeometry_set(getIE(),
+                              model->getIE(),
                               sphereData->data,
                               materialList ? ispcMaterialPtrs.data() : nullptr,
                               texcoordData ?
                                   (ispc::vec2f *)texcoordData->data : nullptr,
                               colorData ? colorData->data : nullptr,
-                              colorOffset, colorStride, colorFormat,
-                              numSpheres,bytesPerSphere,
-                              radius,materialID,
-                              offset_center,offset_radius,
-                              offset_materialID,offset_colorID,huge_mesh);
+                              colorOffset,
+                              colorStride,
+                              colorFormat,
+                              numSpheres,
+                              bytesPerSphere,
+                              radius,
+                              materialID,
+                              offset_center,
+                              offset_radius,
+                              offset_materialID,
+                              offset_colorID,
+                              huge_mesh);
   }
 
   OSP_REGISTER_GEOMETRY(Spheres,spheres);

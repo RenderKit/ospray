@@ -24,7 +24,7 @@
 #include <vector>
 
 // embree
-#include "embree2/rtcore.h"
+#include "embree3/rtcore.h"
 
 namespace ospray {
 

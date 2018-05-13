@@ -213,7 +213,7 @@ namespace ospray {
               }
               std::swap(texels[a], texels[b]);
             }
-        } catch(std::runtime_error e) {
+        } catch(const std::runtime_error &e) {
           std::cerr << e.what() << std::endl;
         }
       } else if (ext == "pfm") {
@@ -286,7 +286,7 @@ namespace ospray {
               std::swap(texels[y * width * numChannels + x], texels[(height - 1 - y) * width * numChannels + x]);
             }
           }
-        } catch(std::runtime_error e) {
+        } catch(const std::runtime_error &e) {
           std::cerr << e.what() << std::endl;
         }
       }

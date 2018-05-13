@@ -49,8 +49,7 @@ namespace ospray {
     // now, update the local precomputed values
     // ------------------------------------------------------------------
     dir = normalize(dir);
-    vec3f dir_du = normalize(cross(dir, up)); // right-handed coordinate system
-    vec3f dir_dv;
+    dir_du = normalize(cross(dir, up)); // right-handed coordinate system
     if (architectural)
       dir_dv = normalize(up); // orient film to be parallel to 'up' and shift such that 'dir' is centered
     else
@@ -73,13 +72,13 @@ namespace ospray {
         break;
     }
 
-    float imgPlane_size_y = 2.f*tanf(deg2rad(0.5f*fovy));
-    float imgPlane_size_x = imgPlane_size_y * aspect;
+    imgPlaneSize.y = 2.f * tanf(deg2rad(0.5f * fovy));
+    imgPlaneSize.x = imgPlaneSize.y * aspect;
 
-    dir_du *= imgPlane_size_x;
-    dir_dv *= imgPlane_size_y;
+    dir_du *= imgPlaneSize.x;
+    dir_dv *= imgPlaneSize.y;
 
-    vec3f dir_00 = dir - .5f * dir_du - .5f * dir_dv;
+    dir_00 = dir - .5f * dir_du - .5f * dir_dv;
 
     float scaledAperture = 0.f;
     // prescale to focal plane
@@ -87,7 +86,7 @@ namespace ospray {
       dir_du *= focusDistance;
       dir_dv *= focusDistance;
       dir_00 *= focusDistance;
-      scaledAperture = apertureRadius / (imgPlane_size_x * focusDistance);
+      scaledAperture = apertureRadius / (imgPlaneSize.x * focusDistance);
     }
 
     ispc::PerspectiveCamera_set(getIE()
@@ -100,6 +99,23 @@ namespace ospray {
         , stereoMode == OSP_STEREO_SIDE_BY_SIDE
         , (const ispc::vec3f&)ipd_offset
         );
+  }
+
+  vec2f PerspectiveCamera::projectPoint(const vec3f &p) const {
+    // We find the intersection of the ray through the point with the virtual
+    // film plane, then find the vector to this point from the origin of the
+    // film plane (screenDir) and project this point onto the x/y axes of
+    // the plane.
+    const vec3f r = normalize(p - pos);
+    const float denom = dot(-r, -dir);
+    if (denom == 0.0) {
+      return vec2f(-1);
+    }
+    const float t = 1.0 / denom;
+
+    const vec3f screenDir = r * t - dir_00;
+    return vec2f(dot(screenDir, normalize(dir_du)),
+                 dot(screenDir, normalize(dir_dv))) / imgPlaneSize;
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);

@@ -238,6 +238,10 @@ extern "C" {
   //! returns OSPError value to report any errors during initialization
   OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
 
+  //! shutdown the OSPRay engine...effectively deletes whatever device is
+  //  currently set.
+  OSPRAY_INTERFACE void ospShutdown();
+
   //! initialize the OSPRay engine (for single-node user application) using
   //! explicit device string.
   OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
@@ -502,7 +506,7 @@ extern "C" {
 
     due to refcounting the frame buffer may not immediately be deleted
     at this time */
-  OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,

@@ -140,7 +140,7 @@ namespace ospray {
       std::shared_ptr<FormatURL> fu;
       try {
         fu = std::make_shared<FormatURL>(fileName.c_str());
-      } catch (std::runtime_error e) {
+      } catch (const std::runtime_error &) {
         /* this failed so this was not a file type url ... */
         fu = nullptr;
       }
@@ -235,6 +235,8 @@ namespace ospray {
         sg::importUnstructuredVolume(world, fileName);
       } else if (ext == "vtp") {
         sg::importVTKPolyData(world, fileName);
+      } else if (ext == "vti") {
+        sg::importVTI(world, fileName);
 #endif
 #ifdef OSPRAY_APPS_SG_CHOMBO
       } else if (ext == "hdf5") {
