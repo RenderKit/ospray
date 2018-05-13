@@ -70,6 +70,39 @@ inline vec3##S gather_vec3##S(const uniform bool huge,                         \
   return v;                                                                    \
 }                                                                              \
 
+#define __define_gather_vec4_stride(T, S)                                      \
+inline vec4##S gather_vec4##S(const uniform bool huge,                         \
+                              const T *uniform const base,                     \
+                              const uniform int stride,                        \
+                              const varying int index)                         \
+{                                                                              \
+  vec4##S v;                                                                   \
+  if (huge) {                                                                  \
+    const int index_lo = index & ((1<<BITS)-1);                                \
+    const int index_hi = index - index_lo;                                     \
+    /* varying offset of lower bits */                                         \
+    const varying int scaledIndexLo = stride * index_lo;                       \
+    foreach_unique(hi in index_hi) {                                           \
+      /* uniform offset for upper bits */                                      \
+      uniform int64 scaledIndexHi = (int64)hi * stride;                        \
+      /* properly shifted base address (shifted by 64-bits) */                 \
+      const T *uniform base_hi = base + scaledIndexHi;                         \
+                                                                               \
+      v.x = base_hi[scaledIndexLo+0];                                          \
+      v.y = base_hi[scaledIndexLo+1];                                          \
+      v.z = base_hi[scaledIndexLo+2];                                          \
+      v.w = base_hi[scaledIndexLo+3];                                          \
+    }                                                                          \
+  } else {                                                                     \
+    const varying int scaledIndex = stride * index;                            \
+    v.x = base[scaledIndex+0];                                                 \
+    v.y = base[scaledIndex+1];                                                 \
+    v.z = base[scaledIndex+2];                                                 \
+    v.w = base[scaledIndex+3];                                                 \
+  }                                                                            \
+  return v;                                                                    \
+}                                                                              \
+
 __define_gather(float);
 __define_gather(int32);
 __define_gather(uint32);
@@ -79,3 +112,4 @@ __define_gather(vec4f);
 
 __define_gather_vec3_stride(float, f);
 __define_gather_vec3_stride(int, i);
+__define_gather_vec4_stride(int, i);

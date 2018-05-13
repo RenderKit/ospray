@@ -147,6 +147,17 @@ namespace ospray {
                                      cell->GetPointId(6),
                                      cell->GetPointId(7)));
           }
+
+          if (cell->GetCellType() == VTK_WEDGE) {
+            indices->push_back(vec4i(-2,
+                                     -2,
+                                     cell->GetPointId(0),
+                                     cell->GetPointId(1)));
+            indices->push_back(vec4i(cell->GetPointId(2),
+                                     cell->GetPointId(3),
+                                     cell->GetPointId(4),
+                                     cell->GetPointId(5)));
+          }
         }
 
         readFieldData(dataSet->GetPointData(), vertexFields, vertexFieldNames);

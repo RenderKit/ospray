@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "common/Model.ih"
-#include "embree2/rtcore_scene.isph"
+#include "embree3/rtcore.isph"
 
 typedef uniform Geometry *uniform uniGeomPtr;
 typedef uniform Material *uniform uniMaterialPtr;
@@ -37,17 +37,10 @@ export void DistributedModel_init(void *uniform _model,
                                   uniform int32 numVolumes)
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;
-  if (model->embreeSceneHandle)
-    rtcDeleteScene(model->embreeSceneHandle);
-
-  uniform RTCSceneFlags scene_flags = RTC_SCENE_STATIC | RTC_SCENE_HIGH_QUALITY;
-
-  uniform RTCAlgorithmFlags traversal_flags =
-      RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;
-
-  model->embreeSceneHandle = rtcDeviceNewScene((RTCDevice)embreeDevice,
-                                               scene_flags,
-                                               traversal_flags);
+  if (model->embreeSceneHandle) {
+    rtcReleaseScene(model->embreeSceneHandle);
+  }
+  model->embreeSceneHandle = rtcNewScene((RTCDevice)embreeDevice);
 
   if (model->geometry) delete[] model->geometry;
   model->geometryCount = numGeometries;

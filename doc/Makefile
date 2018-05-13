@@ -3,20 +3,21 @@ SHELL := /bin/bash
 webpages := $(addprefix www/, $(addsuffix .html, index news demos documentation gallery downloads related_projects pvospray displaywall fiu_comparison legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, demos getting_ospray readme_head))
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api mpi scenegraph examples))
-images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectual stereo orthographic panoramic) $(addprefix material_, OBJ Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow rm_volume_ao_shadows rm_volume heptane_bubbly_osp mag_pt rm_volume2 dns_small code GLuRayPage))
+images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectual stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow rm_volume_ao_shadows rm_volume heptane_bubbly_osp mag_pt rm_volume2 dns_small code GLuRayPage))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
 images_fig := spot_light quad_light hdri_light
+images_svg := gitter_badge
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png))
+webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf)
 
 PANDOC := pandoc
-PDMINVERSION := 1190200
+PDMINVERSION := 2000000
 PDOK := $(shell expr `$(PANDOC) --version|head -n 1|cut -d' ' -f 2| sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/' -e 's/^[0-9]\{5,6\}$$/&00/'` \>= $(PDMINVERSION))
 ifneq "$(PDOK)" "1"
-  $(error You need at least pandoc v1.19.2)
+  $(error You need at least pandoc v2.0)
 endif
 
 all: www doc pdf
@@ -79,7 +80,7 @@ tmpdir:
 ### webpages
 ########################################################################
 
-markdown2web = $(PANDOC) -smart --email-obfuscation=none -f markdown $(filter-out webtemplate.html,$+) --template webtemplate -V select_$(basename $(@F)) -o $@
+markdown2web = $(PANDOC) --email-obfuscation=none -f markdown $(filter-out webtemplate.html,$+) --template webtemplate -V select_$(basename $(@F)) -o $@
 
 $(webpages): tmp/links.md tmp/images_local_png.md webtemplate.html
 
@@ -114,6 +115,9 @@ www/documentation.html: documentation.md tmp/api_html.md mpi.md tmp/scenegraph_h
 www/images/%.png: %.fig
 	fig2dev -L png -S 4 $+ $@
 
+www/images/%.svg: %.svg
+	cp $+ $@
+
 tmp/%.pdf: %.fig
 	fig2dev -L pdf $+ $@
 
@@ -142,8 +146,8 @@ convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g'
 tmp/api.md: api.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md compilation.md documentation.md tmp/api.md mpi.md scenegraph.md examples.md tmp/links.md tmp/images_web.md
-	$(PANDOC) $+ -t markdown+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
+../README.md: tmp/readme_head.md overview.md gitter.md compilation.md documentation.md tmp/api.md mpi.md scenegraph.md examples.md tmp/links.md tmp/images_web.md
+	$(PANDOC) $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
 ########################################################################

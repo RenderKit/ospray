@@ -21,13 +21,9 @@
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
-struct StreamLines {
+struct StreamLines
+{
   uniform Geometry super; //!< inherited geometry fields
   float           radius;
   const uniform vec3fa *vertex;
@@ -36,15 +32,17 @@ struct StreamLines {
   const uniform vec4f  *color;
 };
 
-void StreamLines_bounds(uniform StreamLines *uniform self,
-                        uniform size_t primID,
-                        uniform box3fa &bbox)
+unmasked void StreamLines_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
+  uniform StreamLines *uniform self = (uniform StreamLines *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
   const uniform uint32 index  = self->index[primID];
   const uniform vec3f A = make_vec3f(self->vertex[index]);
   const uniform vec3f B = make_vec3f(self->vertex[index+1]);
-  bbox = make_box3fa(min(A,B) - self->radius,
+  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
+  *out = make_box3fa(min(A,B) - self->radius,
                      max(A,B) + self->radius);
+  if (index == -1) print("bounds!\n");
 }
 
 /*! do a ray-sphere intersection, with the numerical fix of first
@@ -70,8 +68,11 @@ inline void intersectSphere_numericalFix(varying Ray &ray,
     return;
 
   const float srad = sqrt(radical);
-  t_in = min(t_in, approximateDistance + (- b - srad) * rcpf(2.f*a));
-  t_out= max(t_out, approximateDistance + (- b + srad) * rcpf(2.f*a));
+
+  const float sph_t_in  = approximateDistance + (- b - srad) * rcpf(2.f*a);
+  const float sph_t_out = approximateDistance + (- b + srad) * rcpf(2.f*a);
+  t_in = min(t_in, sph_t_in);
+  t_out= max(t_out,sph_t_out);
 }
 
 /*! do a ray-cylinder intersection, with the numerical fix of first
@@ -99,6 +100,7 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   const vec3f VxAB  = cross(V,AB);
   const float ab2   = dot(AB,AB);
   const float a     = dot(VxAB,VxAB);
+  if (a == 0.f) return;
   const float b     = 2 * dot(VxAB,AOxAB);
   const float c     = dot(AOxAB,AOxAB) - (sqr(r) * ab2);
 
@@ -116,44 +118,75 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   const float tA = dot(AB,A) * rVAB;
   const float tB = dot(AB,B) * rVAB;
 
-  t_in = approximateDistance + max((- b - srad)*rcpf(2.f*a), min(tA,tB));
-  t_out= approximateDistance + min((- b + srad)*rcpf(2.f*a), max(tA,tB));
+  const float cyl_t_in = approximateDistance + max((- b - srad)*rcpf(2.f*a), min(tA,tB));
+  const float cyl_t_out= approximateDistance + min((- b + srad)*rcpf(2.f*a), max(tA,tB));
+
+  if (cyl_t_in < cyl_t_out) {
+    t_in = cyl_t_in;
+    t_out = cyl_t_out;
+  }
 }
 
-void StreamLines_intersect(uniform StreamLines *uniform self,
-                           varying Ray &ray,
-                           uniform size_t primID)
+unmasked void StreamLines_intersect_kernel(
+  const struct RTCIntersectFunctionNArguments *uniform args,
+  const uniform bool occlusionTest
+)
 {
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+
+  uniform StreamLines *uniform self
+    = (uniform StreamLines *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+
+  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+
   const uniform uint32 idx = self->index[primID];
   const vec3f A = make_vec3f(self->vertex[idx]);
   const vec3f B = make_vec3f(self->vertex[idx+1]);
 
   float t_in=inf, t_out=-inf;
-  intersectCylinder_numericalFix(ray,A,B,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(ray,A,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(ray,B,t_in,t_out,self->radius);
+  intersectCylinder_numericalFix(*ray,A,B,t_in,t_out,self->radius);
+  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius);
+  intersectSphere_numericalFix(*ray,B,t_in,t_out,self->radius);
 
   bool hit = false;
   if (t_in < t_out) {
-    if (t_in > ray.t0 && t_in < ray.t) {
-      ray.t = t_in;
+    if (t_in > ray->t0 && t_in < ray->t) {
+      ray->t = t_in;
       hit = true;
-    } else if (t_out > ray.t0 && t_out < ray.t) {
-      ray.t = t_out;
+    } else if (t_out > ray->t0 && t_out < ray->t) {
+      ray->t = t_out;
       hit = true;
     }
   }
 
   if (hit) {
-    ray.geomID = self->super.geomID;
-    ray.primID = primID;
-    const vec3f P = ray.org + ray.t * ray.dir;
-    float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
-    s = min(max(s,0.f),1.f);
-    const vec3f PonAxis = A + s * (B-A);
-    ray.u = s;
-    ray.Ng = normalize(P-PonAxis);
+    if (occlusionTest) {
+      ray->t = neg_inf;
+    } else {
+      ray->geomID = self->super.geomID;
+      ray->primID = primID;
+      ray->instID = args->context->instID[0];
+      const vec3f P = ray->org + ray->t * ray->dir;
+      float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
+      s = min(max(s,0.f),1.f);
+      const vec3f PonAxis = A + s * (B-A);
+      ray->u = s;
+      ray->Ng = normalize(P-PonAxis);
+    }
   }
+}
+
+unmasked void StreamLines_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  StreamLines_intersect_kernel(args,false);
+}
+
+unmasked void StreamLines_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  StreamLines_intersect_kernel(args,true);
 }
 
 static void StreamLines_postIntersect(uniform Geometry *uniform self,
@@ -265,7 +298,9 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
   StreamLines *uniform geom = uniform new StreamLines;
   Geometry_Constructor(&geom->super,cppEquivalent,
                        StreamLines_postIntersect,
-                       NULL,0,NULL);
+                       NULL,
+                       NULL,
+                       0,NULL);
   return geom;
 }
 
@@ -281,10 +316,12 @@ StreamLines_set(       void *uniform _self,
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSegments);
 
-  self->super.model  = model;
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+
   self->super.geomID = geomID;
+  self->super.model  = model;
   self->vertex = vertex;
   self->index = index;
   // XXX different representation for area sampling, see above
@@ -294,13 +331,17 @@ StreamLines_set(       void *uniform _self,
   self->numVertices = numVertices;
   self->color = color;
   self->radius = radius;
-  rtcSetUserData(model->embreeSceneHandle, geomID, self);
-  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
-                       (uniform RTCBoundsFunc)&StreamLines_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCIntersectFuncVarying)&StreamLines_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCOccludedFuncVarying)&StreamLines_intersect);
+
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryUserPrimitiveCount(geom,numSegments);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&StreamLines_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&StreamLines_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&StreamLines_occluded);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
 }
 
 export void *uniform
@@ -315,10 +356,19 @@ StreamLines_setCurve(      void           *uniform _self,
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
-  uniform uint32 geomID = rtcNewBezierCurveGeometry(model->embreeSceneHandle,
-      RTC_GEOMETRY_STATIC, numSegments, numVertices);
-  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_VERTEX_BUFFER, vertexCurve, 0, 16);
-  rtcSetBuffer(model->embreeSceneHandle, geomID, RTC_INDEX_BUFFER, indexCurve, 0, 4);
+
+  uniform RTCGeometry geom
+    = rtcNewGeometry(ispc_embreeDevice(),
+                     RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
+  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT4,
+                             vertexCurve,0,sizeof(uniform vec3fa),numVertices);
+  rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT,
+                             indexCurve,0,sizeof(uniform int),numSegments);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
+
+  self->super.geom = geom;
 
   self->super.model = model;
   self->super.geomID = geomID;

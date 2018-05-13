@@ -27,6 +27,7 @@ namespace ospray {
       createChild("hexMethod", "string", std::string("planar"))
         .setWhiteList({std::string("planar"),
               std::string("nonplanar")});
+      createChild("precomputedNormals", "bool", true);
     }
 
     std::string UnstructuredVolume::toString() const

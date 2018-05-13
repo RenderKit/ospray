@@ -55,11 +55,10 @@ namespace ospray {
 
         spGeom->add(spheres);
 
-        auto &material = spGeom->child("material");
-
-        material["d"]  = 1.f;
-        material["Kd"] = m.atomType[i]->color;
-        material["Ks"] = vec3f(0.2f, 0.2f, 0.2f);
+        auto materials = spGeom->child("materialList").nodeAs<MaterialList>();
+        materials->item(0)["d"]  = 1.f;
+        materials->item(0)["Kd"] = m.atomType[i]->color;
+        materials->item(0)["Ks"] = vec3f(0.2f);
 
         auto model = createNode(name + "_model", "Model");
         model->add(spGeom);

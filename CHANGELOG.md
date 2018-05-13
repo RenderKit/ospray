@@ -12,6 +12,10 @@ Version History
 -   Added support for RGBA8 color format to Spheres, which can be set by
     specifying the "colorFormat" parameter as `OSP_UCHAR4`, or passing the
     "colorData" through an `OSPData` of `OSP_UCHAR4`.
+-   Added new `ospShutdown` API function to aid in correctness and determinism
+    of OSPRay API cleanup
+-   `ospFreeFrameBuffer` has been deprecated in favor of using `ospRelease` to
+    free frame buffer handles
 
 ### Changes in v1.5.0:
 

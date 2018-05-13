@@ -8,8 +8,8 @@ To access the OSPRay API you first need to include the OSPRay header
 where the API is compatible with C99 and C++.
 
 
-Initialization
---------------
+Initialization and Shutdown
+---------------------------
 
 In order to use the API, OSPRay must be initialized with a "device". A
 device is the object which implements the API. Creating and initializing
@@ -226,6 +226,17 @@ implemented in shared libraries. To load plugin `name` from
 Modules are searched in OS-dependent paths. `ospLoadModule` returns
 `OSP_NO_ERROR` if the plugin could be successfully loaded.
 
+### Shutting Down OSPRay
+
+When the application is finished using OSPRay (typically on application exit),
+the OSPRay API should be finalized with
+
+    void ospShutdown();
+
+This API call ensures that the current device is cleaned up appropriately. Due
+to static object allocation having non-deterministic ordering, it is recommended
+that applications call `ospShutdown()` before the calling application process
+terminates.
 
 Objects
 -------
@@ -558,14 +569,15 @@ like the structured volume equivalent, but they only modify the root
 
 ### Unstructured Volumes
 
-Unstructured volumes can contain tetrahedral or hexahedral cell types,
-and are defined by three arrays: vertices, corresponding field values,
-and eight indices per cell (first four are -1 for tetrahedral
-cells). An unstructred volume type is created by passing the type
-string "`unstructured_volume`" to `ospNewVolume`.
+Unstructured volumes can contain tetrahedral, wedge, or hexahedral
+cell types, and are defined by three arrays: vertices, corresponding
+field values, and eight indices per cell (first four are -1 for
+tetrahedral cells, first two are -2 for wedge cells). An unstructured
+volume type is created by passing the type string
+"`unstructured_volume`" to `ospNewVolume`.
 
-Field values can be specified per-vertex ('field') or per-cell
-('cellField').  If both values are set, cellField takes precedence.
+Field values can be specified per-vertex (`field`) or per-cell
+(`cellField`). If both values are set, `cellField` takes precedence.
 
 Similar to [triangle mesh], each tetrahedron is formed by a group of
 indices into the vertices. For each vertex, the corresponding (by array
@@ -574,20 +586,37 @@ the index order for each tetrahedron does not matter, as OSPRay
 internally calculates vertex normals to ensure proper sampling and
 interpolation.
 
-For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertics and data value.  Vertex ordering is the same
-as VTK_HEXAHEDRON - four bottom vertices counterclockwise, then top
-four counterclockwise.
+For wedge cells, each wedge is formed by a group of six indices into
+the vertices and data value.  Vertex ordering is the same as
+`VTK_WEDGE` - three bottom vertices counterclockwise, then top three
+counterclockwise.
 
-  Type     Name        Description
-  -------- ----------- ------------------------------------------------------------
-  vec3f[]  vertices    [data] array of vertex positions
-  float[]  field       [data] array of vertex data values to be sampled
-  float[]  cellField   [data] array of cell data values to be sampled
-  vec4i[]  intices     [data] array of tetrahedra indices (into vertices and field)
-  string   hexMethod   "planar" (default) or "nonplanar"
-  -------- ----------- ------------------------------------------------------------
-  : Additional configuration parameters for tetrahedral volumes.
+For hexahedral cells, each hexahedron is formed by a group of eight
+indices into the vertics and data value. Vertex ordering is the same as
+`VTK_HEXAHEDRON` -- four bottom vertices counterclockwise, then top four
+counterclockwise.
+
+  -------- ------------------  -------  ---------------------------------------
+  Type     Name                Default  Description
+  -------- ------------------  -------  ---------------------------------------
+  vec3f[]  vertices                     [data] array of vertex positions
+
+  float[]  field                        [data] array of vertex data values to
+                                        be sampled
+
+  float[]  cellField                    [data] array of cell data values to be
+                                        sampled
+
+  vec4i[]  indices                      [data] array of tetrahedra indices
+                                        (into vertices and field)
+
+  string   hexMethod           planar   "planar" (faster, assumes planar sides)
+                                        or "nonplanar"
+
+  bool     precomputedNormals  true     whether to accelerate by precomputing,
+                                        at a cost of 72 bytes/cell
+  -------- ------------------  -------  ---------------------------------------
+  : Additional configuration parameters for unstructured volumes.
 
 ### Transfer Function
 
@@ -1350,7 +1379,7 @@ in the table below.
 
   float  flakeScale               100  scale of the flake structure, higher values increase
                                        the amount of flakes
-                                
+
   float  flakeSpread              0.3  flake spread in [0-1]
 
   float  flakeJitter             0.75  flake randomness in [0-1]
@@ -1612,7 +1641,7 @@ convention shall be used. The following parameters (prefixed with
   Type   Name         Description
   ------ ------------ ------------------------------------------------------
   vec4f  transform    interpreted as 2×2 matrix (linear part), column-major
-  float  rotation     angle in degree, counterclock-wise, around center
+  float  rotation     angle in degree, counterclockwise, around center
   vec2f  scale        enlarge texture, relative to center (0.5, 0.5)
   vec2f  translation  move texture in positive direction (right/up)
   ------ ------------ ------------------------------------------------------
@@ -1829,13 +1858,6 @@ framebuffer that an application will never map. For example, an
 application driving a display wall may well generate an intermediate
 framebuffer and eventually transfer its pixel to the individual displays
 using an `OSPPixelOp` [pixel operation].
-
-A framebuffer can be freed again using
-
-    void ospFreeFrameBuffer(OSPFrameBuffer);
-
-Because OSPRay uses reference counting internally the framebuffer may
-not immediately be deleted at this time.
 
 The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via

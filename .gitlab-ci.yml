@@ -86,14 +86,6 @@ build-arch-clang-warnings:
     - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
   allow_failure: true
 
-build-ubuntu1704-gcc:
-  <<: *build_job_docker
-  image: ospray/docker-images:ubuntu17.04
-  artifacts:
-    paths:
-      - $CI_PROJECT_DIR
-    expire_in: 3 day
-
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
@@ -123,7 +115,7 @@ build-centos6-icc:
   script:
     - module load gcc/4.8.2
     - module load intel
-    - module load embree
+    - module load embree/3.1.0
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -137,7 +129,7 @@ build-centos6-icc15:
   script:
     - module load gcc/4.8.2
     - module load intel/2015
-    - module load embree
+    - module load embree/3.1.0
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -383,7 +375,7 @@ release-linux-icc:
     - module load cmake
     - module load gcc/4.8.2
     - module load intel
-    - module load embree
+    - module load embree/3.1.0
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh

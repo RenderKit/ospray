@@ -20,7 +20,8 @@ extern OSPRayEnvironment * ospEnv;
 
 namespace OSPRayTestScenes {
 
-Base::Base() {
+Base::Base()
+{
   const ::testing::TestCase* const testCase = ::testing::UnitTest::GetInstance()->current_test_case();
   const ::testing::TestInfo* const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
   imgSize = ospEnv->GetImgSize();
@@ -47,7 +48,8 @@ Base::Base() {
   SetImageTool();
 }
 
-void Base::SetImageTool() {
+void Base::SetImageTool()
+{
   try {
     imageTool = new OSPImageTools(imgSize, GetTestName(), frameBufferFormat);
   } catch (std::bad_alloc &e) {
@@ -55,35 +57,55 @@ void Base::SetImageTool() {
   }
 }
 
-Base::~Base() {
+Base::~Base()
+{
+#if 0 // TODO: leaking lights...releasing them segfaults with gcc (?!?!?)
+  ospRelease(lights);
+
+  for (auto l : lightsList)
+    ospRelease(l);
+#endif
+
+  ospRelease(framebuffer);
+  ospRelease(renderer);
+  ospRelease(camera);
+  ospRelease(world);
+
   delete imageTool;
 }
 
-void Base::SetUp() {
+void Base::SetUp()
+{
   ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
 }
 
-void Base::TearDown() {
-}
-
-void Base::AddLight(OSPLight light) {
+void Base::AddLight(OSPLight light)
+{
   lightsList.push_back(light);
-  SetLights();
 }
 
-void Base::AddGeometry(OSPGeometry new_geometry) {
+void Base::AddGeometry(OSPGeometry new_geometry)
+{
   ospAddGeometry(world, new_geometry);
-  ospCommit(world);
-  ospCommit(renderer);
+  ospRelease(new_geometry);
 }
 
-void Base::AddVolume(OSPVolume new_volume) {
+void Base::AddVolume(OSPVolume new_volume)
+{
   ospAddVolume(world, new_volume);
-  ospCommit(world);
-  ospCommit(renderer);
+  ospRelease(new_volume);
 }
 
-void Base::PerformRenderTest() {
+void Base::PerformRenderTest()
+{
+  SetLights();
+
+  ospCommit(camera);
+  ospCommit(world);
+  ospCommit(renderer);
+
+  ospFrameBufferClear(framebuffer, OSP_FB_ACCUM);
+
   RenderFrame(OSP_FB_COLOR | OSP_FB_ACCUM);
   uint32_t* framebuffer_data = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
@@ -96,7 +118,8 @@ void Base::PerformRenderTest() {
   ospUnmapFrameBuffer(framebuffer_data, framebuffer);
 }
 
-void Base::CreateEmptyScene() {
+void Base::CreateEmptyScene()
+{
   SetCamera();
   SetWorld();
   SetRenderer();
@@ -104,7 +127,8 @@ void Base::CreateEmptyScene() {
   SetFramebuffer();
 }
 
-void Base::SetCamera() {
+void Base::SetCamera()
+{
   float cam_pos[] = {0.f, 0.f, 0.f};
   float cam_up [] = {0.f, 1.f, 0.f};
   float cam_view [] = {0.f, 0.f, 1.f};
@@ -115,37 +139,39 @@ void Base::SetCamera() {
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
-  ospCommit(camera);
 }
 
-void Base::SetWorld() {
+void Base::SetWorld()
+{
   world = ospNewModel();
-  ospCommit(world);
 }
 
-void Base::SetLights() {
+void Base::SetLights()
+{
   lights = ospNewData(lightsList.size(), OSP_LIGHT, lightsList.data());
   ospSetObject(renderer, "lights", lights);
+  ospRelease(lights);
   ospCommit(lights);
-  ospCommit(renderer);
 }
 
-void Base::SetRenderer() {
+void Base::SetRenderer()
+{
   renderer = ospNewRenderer(rendererType.data());
   ospSet1i(renderer, "aoSamples", 1);
   ospSet1f(renderer, "bgColor", 1.0f);
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
   ospSet1i(renderer, "spp", samplesPerPixel);
-  ospCommit(renderer);
 }
 
-void Base::SetFramebuffer() {
-  framebuffer = ospNewFrameBuffer(imgSize, frameBufferFormat, OSP_FB_COLOR | OSP_FB_ACCUM);
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR);
+void Base::SetFramebuffer()
+{
+  framebuffer = ospNewFrameBuffer(imgSize, frameBufferFormat,
+                                  OSP_FB_COLOR | OSP_FB_ACCUM);
 }
 
-OSPMaterial Base::CreateMaterial(std::string type) {
+OSPMaterial Base::CreateMaterial(std::string type)
+{
   OSPMaterial material = ospNewMaterial(renderer, type.data());
   EXPECT_TRUE(material);
 
@@ -162,20 +188,23 @@ OSPMaterial Base::CreateMaterial(std::string type) {
   return material;
 }
 
-void Base::RenderFrame(const uint32_t frameBufferChannels) {
+void Base::RenderFrame(const uint32_t frameBufferChannels)
+{
   for (int frame = 0; frame < frames; ++frame)
     ospRenderFrame(framebuffer, renderer, frameBufferChannels);
 }
 
 
-SingleObject::SingleObject() {
+SingleObject::SingleObject()
+{
   auto params = GetParam();
   rendererType = std::get<0>(params);
   materialType = std::get<1>(params);
 }
 
-void SingleObject::SetUp() {
-  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+void SingleObject::SetUp()
+{
+  Base::SetUp();
 
   SetMaterial();
 
@@ -194,11 +223,13 @@ void SingleObject::SetUp() {
   AddLight(ambient);
 }
 
-void SingleObject::SetMaterial() {
+void SingleObject::SetMaterial()
+{
   material = CreateMaterial(materialType);
 }
 
-Box::Box() {
+Box::Box()
+{
   rendererType = "pathtracer";
 
   auto params = GetParam();
@@ -206,12 +237,11 @@ Box::Box() {
   sphereMaterialType = std::get<1>(params);
 }
 
-void Box::SetUp() {
-  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+void Box::SetUp()
+{
+  Base::SetUp();
 
   SetMaterials();
-
-  OSPData data;
 
   float wallsVertices[] = {
     // left wall
@@ -260,15 +290,18 @@ void Box::SetUp() {
     12, 13, 14, 14, 15, 12
   };
   OSPGeometry wallsMesh = ospNewGeometry("triangles");
-  data = ospNewData(16, OSP_FLOAT3, wallsVertices);
+  OSPData data = ospNewData(16, OSP_FLOAT3, wallsVertices);
   ospCommit(data);
   ospSetData(wallsMesh, "vertex", data);
+  ospRelease(data);
   data = ospNewData(16, OSP_FLOAT4, wallsColors);
   ospCommit(data);
   ospSetData(wallsMesh, "vertex.color", data);
+  ospRelease(data);
   data = ospNewData(10, OSP_INT3, wallsIndices);
   ospCommit(data);
   ospSetData(wallsMesh, "index", data);
+  ospRelease(data);
   OSPMaterial wallsMaterial = GetMaterial("OBJMaterial");
   ospSetMaterial(wallsMesh, wallsMaterial);
   ospCommit(wallsMesh);
@@ -285,8 +318,10 @@ void Box::SetUp() {
   data = ospNewData(4, OSP_FLOAT3, lightVertices);
   ospCommit(data);
   ospSetData(lightSquare, "vertex", data);
+  ospRelease(data);
   data = ospNewData(2, OSP_INT3, lightIndices);
   ospSetData(lightSquare, "index", data);
+  ospRelease(data);
   OSPMaterial lightMaterial = ospNewMaterial(renderer, "Luminous");
   ospSetf(lightMaterial, "intensity", 20.f);
   ospSet3f(lightMaterial, "color", 1.f, 0.7f, 0.3f);
@@ -317,9 +352,11 @@ void Box::SetUp() {
   data = ospNewData(8, OSP_FLOAT3, cuboidVertices);
   ospCommit(data);
   ospSetData(cuboid, "vertex", data);
+  ospRelease(data);
   data = ospNewData(12, OSP_INT3, cuboidIndices);
   ospCommit(data);
   ospSetData(cuboid, "index", data);
+  ospRelease(data);
   ospSetMaterial(cuboid, cuboidMaterial);
   ospCommit(cuboid);
   AddGeometry(cuboid);
@@ -329,18 +366,21 @@ void Box::SetUp() {
   data = ospNewData(1, OSP_FLOAT4, sphereVertex);
   ospCommit(data);
   ospSetData(sphere, "spheres", data);
+  ospRelease(data);
   ospSet1f(sphere, "radius", 0.45f);
   ospSetMaterial(sphere, sphereMaterial);
   ospCommit(sphere);
   AddGeometry(sphere);
 }
 
-void Box::SetMaterials() {
+void Box::SetMaterials()
+{
   cuboidMaterial = GetMaterial(cuboidMaterialType);
   sphereMaterial = GetMaterial(sphereMaterialType);
 }
 
-OSPMaterial Box::GetMaterial(std::string type)  {
+OSPMaterial Box::GetMaterial(std::string type)
+{
   OSPMaterial newMaterial = ospNewMaterial(renderer, type.data());
   if (type == "OBJMaterial") {
     ospSetf(newMaterial, "Ns", 100.f);
@@ -355,7 +395,8 @@ OSPMaterial Box::GetMaterial(std::string type)  {
 }
 
 
-Sierpinski::Sierpinski() {
+Sierpinski::Sierpinski()
+{
   auto params = GetParam();
   renderIsosurface = std::get<1>(params);
   level = std::get<2>(params);
@@ -363,8 +404,9 @@ Sierpinski::Sierpinski() {
   rendererType = std::get<0>(params);
 }
 
-void Sierpinski::SetUp() {
-  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+void Sierpinski::SetUp()
+{
+  Base::SetUp();
 
   float cam_pos[] = {-0.5f, -1.f, 0.2f};
   float cam_up [] = {0.f, 0.f, -1.f};
@@ -372,8 +414,6 @@ void Sierpinski::SetUp() {
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
-  ospCommit(camera);
-  ospCommit(renderer);
 
   int size = 1 << level;
 
@@ -398,8 +438,10 @@ void Sierpinski::SetUp() {
   }
 
   OSPVolume pyramid = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_UCHAR, volumetricData.data(), OSP_DATA_SHARED_BUFFER);
+  OSPData voxelsData = ospNewData(size * size * size, OSP_UCHAR,
+                                  volumetricData.data());
   ospSetData(pyramid, "voxelData", voxelsData);
+  ospRelease(voxelsData);
   ospSet3i(pyramid, "dimensions", size, size, size);
   ospSetString(pyramid, "voxelType", "uchar");
   ospSet2f(pyramid, "voxelRange", 0, 255);
@@ -416,19 +458,24 @@ void Sierpinski::SetUp() {
   float opacites[] = { 0.f, 1.0f };
   OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
   ospSetData(transferFun, "colors", tfColorData);
+  ospRelease(tfColorData);
   OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
   ospSetData(transferFun, "opacities", tfOpacityData);
+  ospRelease(tfOpacityData);
   ospCommit(transferFun);
   ospSetObject(pyramid, "transferFunction", transferFun);
+  ospRelease(transferFun);
 
   ospCommit(pyramid);
 
   if (renderIsosurface) {
     OSPGeometry isosurface = ospNewGeometry("isosurfaces");
     ospSetObject(isosurface, "volume", pyramid);
+    ospRelease(pyramid);
     float isovalues[1] = { 0.f };
     OSPData isovaluesData = ospNewData(1, OSP_FLOAT, isovalues);
     ospSetData(isosurface, "isovalues", isovaluesData);
+    ospRelease(isovaluesData);
 
     ospCommit(isosurface);
     AddGeometry(isosurface);
@@ -444,12 +491,14 @@ void Sierpinski::SetUp() {
 }
 
 
-Torus::Torus() {
+Torus::Torus()
+{
   rendererType = GetParam();
 }
 
-void Torus::SetUp() {
-  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+void Torus::SetUp()
+{
+  Base::SetUp();
 
   float cam_pos[] = {-0.7f, -1.4f, 0.f};
   float cam_up[] = {0.f, 0.f, -1.f};
@@ -457,11 +506,8 @@ void Torus::SetUp() {
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
-  ospCommit(camera);
-  ospCommit(renderer);
 
   ospSet1f(renderer, "epsilon", 0.01);
-  ospCommit(renderer);
 
   int size = 250;
 
@@ -484,8 +530,11 @@ void Torus::SetUp() {
   }
 
   OSPVolume torus = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT, volumetricData.data(), OSP_DATA_SHARED_BUFFER);
+  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
+                                  volumetricData.data(),
+                                  OSP_DATA_SHARED_BUFFER);
   ospSetData(torus, "voxelData", voxelsData);
+  ospRelease(voxelsData);
   ospSet3i(torus, "dimensions", size, size, size);
   ospSetString(torus, "voxelType", "float");
   ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
@@ -501,18 +550,23 @@ void Torus::SetUp() {
   float opacites[] = { 1.0f, 1.0f };
   OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
   ospSetData(transferFun, "colors", tfColorData);
+  ospRelease(tfColorData);
   OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
   ospSetData(transferFun, "opacities", tfOpacityData);
+  ospRelease(tfOpacityData);
   ospCommit(transferFun);
   ospSetObject(torus, "transferFunction", transferFun);
+  ospRelease(transferFun);
 
   ospCommit(torus);
 
   OSPGeometry isosurface = ospNewGeometry("isosurfaces");
   ospSetObject(isosurface, "volume", torus);
+  ospRelease(torus);
   float isovalues[2] = { -7000.f, 0.f };
   OSPData isovaluesData = ospNewData(2, OSP_FLOAT, isovalues);
   ospSetData(isosurface, "isovalues", isovaluesData);
+  ospRelease(isovaluesData);
   ospCommit(isosurface);
   AddGeometry(isosurface);
 
@@ -523,11 +577,13 @@ void Torus::SetUp() {
   AddLight(ambient);
 }
 
-SlicedCube::SlicedCube() {
+SlicedCube::SlicedCube()
+{
 }
 
-void SlicedCube::SetUp() {
-  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+void SlicedCube::SetUp()
+{
+  Base::SetUp();
 
   float cam_pos[] = {-0.7f, -1.4f, 0.f};
   float cam_up[] = {0.f, 0.f, -1.f};
@@ -535,11 +591,8 @@ void SlicedCube::SetUp() {
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
-  ospCommit(camera);
-  ospCommit(renderer);
 
   ospSet1f(renderer, "epsilon", 0.01);
-  ospCommit(renderer);
 
   int size = 100;
 
@@ -575,7 +628,9 @@ void SlicedCube::SetUp() {
 
   OSPVolume blob = ospNewVolume("shared_structured_volume");
   ASSERT_TRUE(blob);
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT, volumetricData.data(), OSP_DATA_SHARED_BUFFER);
+  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
+                                  volumetricData.data(),
+                                  OSP_DATA_SHARED_BUFFER);
   ASSERT_TRUE(voxelsData);
   ospSetData(blob, "voxelData", voxelsData);
   ospSet3i(blob, "dimensions", size, size, size);
@@ -619,10 +674,9 @@ MTLMirrors::MTLMirrors() {
 }
 
 void MTLMirrors::SetUp() {
-  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+  Base::SetUp();
 
   ospSet3f(renderer, "bgColor", 0.5f, 0.5f, 0.45f);
-  ospCommit(renderer);
 
   OSPData data;
 
@@ -676,7 +730,8 @@ void MTLMirrors::SetUp() {
   AddLight(ambient);
 }
 
-Pipes::Pipes() {
+Pipes::Pipes()
+{
   auto params = GetParam();
   rendererType = std::get<0>(params);
   materialType = std::get<1>(params);
@@ -685,11 +740,11 @@ Pipes::Pipes() {
   frames = 10;
 }
 
-void Pipes::SetUp() {
-  ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+void Pipes::SetUp()
+{
+  Base::SetUp();
 
   ospSet1f(renderer, "epsilon", 0.001f);
-  ospCommit(renderer);
 
   float cam_pos[] = {-7.f, 2.f, 0.7f};
   float cam_view[] = {7.f, -2.f, -0.7f};
@@ -697,8 +752,6 @@ void Pipes::SetUp() {
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up", cam_up);
-  ospCommit(camera);
-  ospCommit(renderer);
 
   float vertex[] = {
     -2.f,  2.f, -2.f, 0.f,

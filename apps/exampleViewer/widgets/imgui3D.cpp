@@ -224,6 +224,11 @@ namespace ospray {
     {
     }
 
+    bool ImGui3DWidget::exitRequested() const
+    {
+      return exitRequestedByUser;
+    }
+
     void ImGui3DWidget::setViewPort(const vec3f from,
                                     const vec3f at,
                                     const vec3f up)
@@ -360,7 +365,8 @@ namespace ospray {
       #endif
 
       // Main loop
-      while (!glfwWindowShouldClose(window)) {
+      while (!glfwWindowShouldClose(window) &&
+             !currentWidget->exitRequested()) {
         ospcommon::utility::CodeTimer timer;
         ospcommon::utility::CodeTimer timerTotal;
 
@@ -488,7 +494,7 @@ namespace ospray {
       case 27 /*ESC*/:
       case 'q':
       case 'Q':
-        std::exit(0);
+        exitRequestedByUser = true;
         break;
       default:
         break;

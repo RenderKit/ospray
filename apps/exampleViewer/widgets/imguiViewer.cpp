@@ -361,12 +361,6 @@ namespace ospray {
     case 'p':
       printViewport();
       break;
-    case 27 /*ESC*/:
-    case 'q':
-    case 'Q':
-      renderEngine.stop();
-      std::exit(0);
-      break;
     default:
       ImGui3DWidget::keypress(key);
     }

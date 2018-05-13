@@ -81,7 +81,7 @@ namespace ospray {
         newPixels = true;
         fbMutex.unlock();
       }
-    });
+    }, AsyncLoop::LaunchMethod::THREAD);
   }
 
   AsyncRenderEngine::~AsyncRenderEngine()
