@@ -91,7 +91,6 @@ namespace ospray {
     Ref<Data> prim_materialIDData;  /*!< data array for per-prim material ID (uint32) */
 
     #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
-    RTCGeometry eMeshGeom{nullptr};
     uint32 eMeshID{RTC_INVALID_ID};   /*!< embree quad  mesh handle */
   };
 

@@ -124,13 +124,14 @@ namespace ospray {
       throw std::runtime_error("unsupported quadmesh.vertex.normal data type");
     }
 
-    eMeshGeom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
+    auto eMeshGeom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
     rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT4,
                                indexData->data,0,numCompsInQuad*sizeof(int),numQuads);
     rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT3,
                                vertexData->data,0,numCompsInVtx*sizeof(int),numVerts);
     rtcCommitGeometry(eMeshGeom);
     eMeshID = rtcAttachGeometry(embreeSceneHandle,eMeshGeom);
+    rtcReleaseGeometry(eMeshGeom);
 
     bounds = empty;
 
