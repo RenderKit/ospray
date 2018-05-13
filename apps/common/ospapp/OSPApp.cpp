@@ -99,6 +99,8 @@ general app-parameters:
         window height
     --size [int] [int]
         window width height
+    -sd
+        alias for window size = 640x480
     -hd
         alias for window size = 1920x1080
     -4k
@@ -324,6 +326,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           height = atoi(av[i + 2]);
           removeArgs(ac, av, i, 3);
           --i;
+        } else if (arg == "-sd") {
+          width  = 640;
+          height = 480;
         } else if (arg == "-hd") {
           width  = 1920;
           height = 1080;

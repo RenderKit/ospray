@@ -293,7 +293,7 @@ benchmark-centos7-gcc:
     - mkdir benchmarks
     - make ospray_bench_data
     - ln -s /opt/ospray/benchmark/test_data $CI_PROJECT_DIR/build/test_data
-    - ../scripts/bench/run_benchmark.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
+    - ../scripts/bench/run_benchmark_datasets.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
   tags:
     - docker
     - ospray-benchmark
