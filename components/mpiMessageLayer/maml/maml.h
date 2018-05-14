@@ -43,6 +43,12 @@ namespace maml {
     virtual ~MessageHandler() = default;
   };
 
+  /*! initialize the service for this process */
+  OSPRAY_MAML_INTERFACE void init();
+
+  /*! shutdown the service for this process */
+  OSPRAY_MAML_INTERFACE void shutdown();
+
   /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
   OSPRAY_MAML_INTERFACE void registerHandlerFor(MPI_Comm comm,

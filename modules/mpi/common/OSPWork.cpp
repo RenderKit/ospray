@@ -753,6 +753,7 @@ namespace ospray {
 
       void CommandFinalize::runOnMaster()
       {
+        maml::shutdown();
         world.barrier();
         MPI_CALL(Finalize());
       }

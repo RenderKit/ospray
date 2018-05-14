@@ -201,7 +201,9 @@ def run_tests(args):
         [True] if args.renderer == "scivis" else [True, False]
     tests_to_run = set([(name, sv) for name in tests_to_run for sv in use_sv_options])
 
-    exe = "{}/{}".format(args.app_location, EXE_NAME)
+    exe = EXE_NAME
+    if args.app_location != "":
+        exe = args.app_location + "/" + exe
     img_dir = DEFAULT_IMG_DIR
 
     # Create images directory

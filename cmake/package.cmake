@@ -16,6 +16,7 @@
 
 INCLUDE(GNUInstallDirs)
 
+SET(CMAKE_INSTALL_SCRIPTDIR scripts)
 IF (OSPRAY_ZIP_MODE)
   # in tgz / zip let's have relative RPath
   SET(CMAKE_SKIP_INSTALL_RPATH OFF)
@@ -40,6 +41,7 @@ ELSE()
   IF (NOT WIN32)
     # for RPMs install docu in versioned folder
     SET(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_DOCDIR}-${OSPRAY_VERSION})
+    SET(CMAKE_INSTALL_SCRIPTDIR ${CMAKE_INSTALL_DATAROOTDIR}/OSPRay-${OSPRAY_VERSION}/scripts)
   ENDIF()
 ENDIF()
 
@@ -61,6 +63,12 @@ INSTALL(FILES ${PROJECT_SOURCE_DIR}/LICENSE.txt DESTINATION ${CMAKE_INSTALL_DOCD
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/README.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
+
+##############################################################
+# install documentation
+##############################################################
+
+INSTALL(PROGRAMS ${PROJECT_SOURCE_DIR}/scripts/bench/run_benchmark.py DESTINATION ${CMAKE_INSTALL_SCRIPTDIR} COMPONENT apps)
 
 ##############################################################
 # CPack specific stuff

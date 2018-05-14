@@ -20,7 +20,17 @@
 namespace maml {
 
   // maml API definitions /////////////////////////////////////////////////////
-  
+
+  void init()
+  {
+    // NOTE(jda) - initialization still done statically, stubbed for future need
+  }
+
+  void shutdown()
+  {
+    Context::singleton.reset();
+  }
+
   /*! register a new incoing-message handler. if any message comes in
     on the given communicator we'll call this handler */
   void registerHandlerFor(MPI_Comm comm, MessageHandler *handler)
@@ -64,5 +74,5 @@ namespace maml {
     msg->comm = comm;
     Context::singleton->send(msg);
   }
-  
+
 } // ::maml
