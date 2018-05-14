@@ -31,6 +31,7 @@ MARK_AS_ADVANCED(gtest_hide_internal_symbols)
 # Tests
 ##############################################################
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/ospray/include)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/components)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/tests/include)
 
 SET(TESTS_SOURCES
@@ -47,6 +48,7 @@ SET_TARGET_PROPERTIES(ospray_test_suite PROPERTIES
 
 TARGET_LINK_LIBRARIES(ospray_test_suite gtest_main)
 TARGET_LINK_LIBRARIES(ospray_test_suite ospray)
+TARGET_LINK_LIBRARIES(ospray_test_suite ospray_common)
 
 # Baseline images for tests and benchmarks
 include(ExternalData)

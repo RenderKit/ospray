@@ -22,6 +22,7 @@
 #include "common/safe_gather.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
+#include "ospray/OSPDataType.h"
 
 struct Spheres {
   /*! inherit from "Geometry" class: */
@@ -39,13 +40,12 @@ struct Spheres {
 
   float      radius;
   float      epsilon;
-
   int        materialID;
 
-  uint8     *color;
-  int        color_stride;
-  int        color_offset;
-  bool       has_alpha; // 4th color component is valid
+  uint8      *color;
+  int         color_stride;
+  int         color_offset;
+  int         color_format; 
 
   vec2f     *texcoord;
 
@@ -99,16 +99,28 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
       colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
     } else
       colorID = ray.primID;
-    if (self->has_alpha) {
-      dg.color = gather_vec4f(self->huge_mesh,
-                              (uniform vec4f*)self->color + self->color_offset,
-                              colorID);
-    } else {
-      vec3f c = gather_vec3f(self->huge_mesh,
-                             (float* uniform)self->color + self->color_offset,
-                             3,
-                             colorID);
+    if (self->color_format == OSP_FLOAT4) {
+      dg.color = gather_byte_stride_vec4f(self->huge_mesh,
+                                          self->color + self->color_offset,
+                                          self->color_stride,
+                                          colorID);
+    } else if (self->color_format == OSP_FLOAT3
+        || self->color_format == OSP_FLOAT3A)
+    {
+      vec3f c = gather_byte_stride_vec3f(self->huge_mesh,
+                                         self->color + self->color_offset,
+                                         self->color_stride,
+                                         colorID);
       dg.color = make_vec4f(c.x, c.y, c.z, 1.f);
+    } else if (self->color_format == OSP_UCHAR4) {
+      const uint32 c = gather_stride_uint32(self->huge_mesh,
+                                            self->color + self->color_offset,
+                                            self->color_stride,
+                                            colorID);
+      dg.color.x = (c & 0x000000ff) / 255.0;
+      dg.color.y = ((c & 0x0000ff00) >> 8) / 255.0;
+      dg.color.z = ((c & 0x00ff0000) >> 16) / 255.0;
+      dg.color.w = ((c & 0xff000000) >> 24) / 255.0;
     }
   }
 
@@ -318,7 +330,7 @@ export void SpheresGeometry_set(void  *uniform _self
                                 , void *uniform color
                                 , uniform int color_offset
                                 , uniform int color_stride
-                                , uniform bool has_alpha
+                                , uniform int color_format
                                 , uniform int numSpheres
                                 , uniform int bytesPerSphere
                                 , uniform float radius
@@ -346,7 +358,7 @@ export void SpheresGeometry_set(void  *uniform _self
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;
   self->color_offset = color_offset;
-  self->has_alpha = has_alpha;
+  self->color_format = color_format;
   self->radius = radius;
   self->data = (uint8 *uniform)data;
   self->materialID = materialID;

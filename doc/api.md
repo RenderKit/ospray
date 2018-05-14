@@ -685,34 +685,54 @@ representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a [data]
 array:
 
-  ---------- ----------------- --------  ---------------------------------------
-  Type       Name               Default  Description
-  ---------- ----------------- --------  ---------------------------------------
-  float      radius                0.01  radius of all spheres
-                                         (if `offset_radius` is not used)
+  ------------ ----------------- ----------------------- ---------------------------------------
+  Type         Name                              Default Description
+  ------------ ----------------- ----------------------- ---------------------------------------
+  float        radius                               0.01  radius of all spheres
+                                                          (if `offset_radius` is not used)
 
-  OSPData    spheres               NULL  memory holding the spatial [data] of
-                                         all spheres
+  OSPData      spheres                              NULL  memory holding the spatial [data] of
+                                                          all spheres
 
-  int        bytes_per_sphere        16  size (in bytes) of each sphere within
-                                         the `spheres` array
+  int          bytes_per_sphere                       16  size (in bytes) of each sphere within
+                                                          the `spheres` array
 
-  int        offset_center            0  offset (in bytes) of each sphere's
-                                         "vec3f center" position (in
-                                         object-space) within the `spheres`
-                                         array
+  int          offset_center                           0  offset (in bytes) of each sphere's
+                                                          "vec3f center" position (in
+                                                          object-space) within the `spheres`
+                                                          array
 
-  int        offset_radius           -1  offset (in bytes) of each sphere's
-                                         "float radius" within the `spheres`
-                                         array (`-1` means disabled and use
-                                         `radius`)
+  int          offset_radius                          -1  offset (in bytes) of each sphere's
+                                                          "float radius" within the `spheres`
+                                                          array (`-1` means disabled and use `radius`)
 
-  vec4f[] /  color                 NULL  [data] array of colors (RGBA/RGB),
-  vec3f(a)[]                             color is constant for each sphere
+  int          offset_colorID                         -1  offset (in bytes) of each sphere's
+                                                          "int colorID" within the `spheres`
+                                                          array (`-1` means disabled and use
+                                                          the shared material color)
 
-  vec2f[]    texcoord              NULL  [data] array of texture coordinates,
-                                         coordinate is constant for each sphere
-  ---------- ----------------- --------  ---------------------------------------
+  vec4f[] /    color                                NULL  [data] array of colors (RGBA/RGB),
+  vec3f(a)[] /                                            color is constant for each sphere
+  vec4uc
+
+  int          color_offset                           0   offset (in bytes) to the start of
+                                                          the color data in `color`
+
+  int          color_format             `color.data_type`  the format of the color data.
+                                                          Can be one of:
+                                                          `OSP_FLOAT4`, `OSP_FLOAT3`,
+                                                          `OSP_FLOAT3A` or `OSP_UCHAR4`. Defaults
+                                                          to the type of data in `color`
+
+  int          color_stride      `sizeof(color_format)`   stride (in bytes) between each color
+                                                          element in the `color` array.
+                                                          Defaults to the size of a single
+                                                          element of type `color_format`
+
+
+  vec2f[]      texcoord                             NULL  [data] array of texture coordinates,
+                                                          coordinate is constant for each sphere
+  ---------- ----------------- -------------------------  ---------------------------------------
   : Parameters defining a spheres geometry.
 
 ### Cylinders
