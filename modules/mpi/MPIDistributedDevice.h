@@ -28,7 +28,7 @@ namespace ospray {
 
     struct MPIDistributedDevice : public api::Device
     {
-      MPIDistributedDevice() = default;
+      MPIDistributedDevice();
       ~MPIDistributedDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////

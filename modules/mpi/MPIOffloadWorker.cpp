@@ -104,6 +104,8 @@ namespace ospray {
     {
       auto &device = ospray::api::Device::current;
 
+      maml::init();
+
       // NOTE(jda) - This guard guarentees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left
       struct EmbreeDeviceScopeGuard

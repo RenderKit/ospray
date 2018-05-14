@@ -94,8 +94,15 @@ namespace ospray {
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
 
+    MPIDistributedDevice::MPIDistributedDevice()
+    {
+      maml::init();
+    }
+
     MPIDistributedDevice::~MPIDistributedDevice()
     {
+      maml::shutdown();
+
       if (shouldFinalizeMPI) {
         try {
           MPI_CALL(Finalize());
