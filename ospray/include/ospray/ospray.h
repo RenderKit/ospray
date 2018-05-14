@@ -63,7 +63,11 @@
 #endif
 
 /*! \brief Error codes returned by various API and callback functions */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_NO_ERROR = 0,          //!< No error has been recorded
   OSP_UNKNOWN_ERROR = 1,     //!< An unknown error has occured
   OSP_INVALID_ARGUMENT = 2,  //!< An invalid argument is specified
@@ -73,7 +77,11 @@ typedef enum {
 } OSPError;
 
 /*! OSPRay format constants for Frame Buffer creation */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_FB_NONE,    //!< framebuffer will not be mapped by application
   OSP_FB_RGBA8,   //!< one dword per pixel: rgb+alpha, each one byte
   OSP_FB_SRGBA,   //!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
@@ -86,7 +94,11 @@ typedef enum {
 } OSPFrameBufferFormat;
 
 /*! OSPRay channel constants for Frame Buffer (can be OR'ed together) */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
@@ -94,7 +106,11 @@ typedef enum {
 } OSPFrameBufferChannel;
 
 /*! flags that can be passed to OSPNewData; can be OR'ed together */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
 
