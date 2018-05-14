@@ -298,9 +298,9 @@ namespace ospray {
       world->add(hex_node);
     }
 
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateTetrahedrons, unstructuredTet);
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateWedges, unstructuredWedge);
-    OSPSG_REGISTER_GENERATE_FUNCTION(generateHexahedrons, unstructuredHex);
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateHexahedrons,  unstructuredHex  );
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateTetrahedrons, unstructuredTet  );
+    OSPSG_REGISTER_GENERATE_FUNCTION(generateWedges,       unstructuredWedge);
 
   }  // ::ospray::sg
 }  // ::ospray
