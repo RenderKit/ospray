@@ -137,8 +137,9 @@ namespace osp {
 
   typedef uint64_t uint64;
 
+  struct Device;
+
   struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
-  struct Device           : public ManagedObject {};
   struct FrameBuffer      : public ManagedObject {};
   struct Renderer         : public ManagedObject {};
   struct Camera           : public ManagedObject {};
