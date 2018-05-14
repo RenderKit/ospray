@@ -68,11 +68,6 @@
 using namespace ospray::cpp;
 using namespace ospcommon;
 
-struct Sphere {
-  vec3f org;
-  int colorID{0};
-};
-
 // Struct for bcasting out the camera change info and general app state
 struct AppState {
   // eye pos, look dir, up dir

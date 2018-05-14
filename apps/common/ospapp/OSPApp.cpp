@@ -99,6 +99,8 @@ general app-parameters:
         window height
     --size [int] [int]
         window width height
+    -sd
+        alias for window size = 640x480
     -hd
         alias for window size = 1920x1080
     -4k
@@ -126,31 +128,39 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
     types:
 
-      spheres --> generate a block of random sphere centers of uniform radius
-          parameters:
-              numSpheres=[int]
-                  number of spheres to generate
-              radius=[float]
-                  radius of spheres
-
-      gridOfSpheres --> generate a block of gridded sphere centers of uniform radius
+      basicVolume: generate a volume with linearly increasing voxel values
           parameters:
               [dimensions,dims]=[intxintxint]
-                  number of spheres to generate in each 3D dimension
+                  the 3D dimensions of the volume
 
-      cylinders --> generate a block of cylinders in {X,Y} grid of length Z
+      cylinders: generate a block of cylinders in {X,Y} grid of length Z
           parameters:
               [dimensions,dims]=[intxintxint]
                   number of cylinders to generate in X,Y 2D dimensions, use Z for length
               radius=[float]
                   radius of cylinders
 
-      basicVolume --> generate a volume with linearly increasing voxel values
+      cube: generate a simple cube as a QuadMesh
+
+      gridOfSpheres: generate a block of gridded sphere centers of uniform radius
           parameters:
               [dimensions,dims]=[intxintxint]
-                  the 3D dimensions of the volume
+                  number of spheres to generate in each 3D dimension
 
-      vtkWavelet --> generate the vtkWavelet volume (requries VTK support compiled in)
+      spheres: generate a block of random sphere centers of uniform radius
+          parameters:
+              numSpheres=[int]
+                  number of spheres to generate
+              radius=[float]
+                  radius of spheres
+
+      unstructuredHex: generate a simple unstructured volume as hexes
+
+      unstructuredTet: generate a simple unstructured volume as tets
+
+      unstructuredWedge: generate a simple unstructured volume as wedges
+
+      vtkWavelet: generate the vtkWavelet volume (requries VTK support compiled in)
           parameters:
               [dimensions,dims]=[intxintxint]
                   number of spheres to generate in each 3D dimension
@@ -324,6 +334,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           height = atoi(av[i + 2]);
           removeArgs(ac, av, i, 3);
           --i;
+        } else if (arg == "-sd") {
+          width  = 640;
+          height = 480;
         } else if (arg == "-hd") {
           width  = 1920;
           height = 1080;
