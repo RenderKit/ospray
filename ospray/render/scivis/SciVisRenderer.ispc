@@ -33,67 +33,35 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                            varying Ray &ray, const varying float &rayOffset)
 {
   vec3f color = make_vec3f(0.f);
-  //float path_opacity = 1.f;
-  //uniform int path_depth = 0;
-  //float first_hit_dist = 0.f;
 
-  // WILL: I am pretty sure this will NOT work for layered transparent
-  // geometries and volumes. We should just find the first geometry sample,
-  // not accumulate all geometry samples??
-  //while (1) {
+  traceRay(self->super.model, ray);
 
-    traceRay(self->super.model, ray);
+  // Check if we missed, if so we are done //
+  if (ray.geomID < 0)
+    return make_vec4f(0.f);
 
-    // Check if we missed, if so we are done //
-    if (ray.geomID < 0) {
-      return make_vec4f(0.f);
-    }
+  // Start shading //
 
-    // Start shading //
+  // Calculate material information from DG //
+  DifferentialGeometry dg;
+  postIntersect(self->super.model,
+                dg,
+                ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_TANGENTS|
+                DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
-    // Calculate material information from DG //
-    DifferentialGeometry dg;
-    postIntersect(self->super.model,
-                  dg,
-                  ray,
-                  DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_TANGENTS|
-                  DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+  SciVisShadingInfo info;
+  initShadingInfo(info);
 
-#if 1
-    SciVisShadingInfo info;
-    initShadingInfo(info);
+  shadeMaterials(dg, info);
 
-    shadeMaterials(dg, info);
+  info.local_opacity = info.d;
 
-    info.local_opacity = info.d;
+  if (info.local_opacity > self->super.minContribution) { // worth shading?
+    shadeAO(self, sampleID, dg, info, color);
+    integrateOverLights(self, ray, dg, info, color, rayOffset,sampleID, 0.5f);
+  }
 
-    if (info.local_opacity > self->super.minContribution) { // worth shading?
-      shadeAO(self, sampleID, dg, info, color);
-      integrateOverLights(self, ray, dg, info, color, rayOffset,sampleID, 0.5f);
-    }
-#endif
-
-    // Kill path when reached max depth or if remaining contribution too low
-    // TODO WILL: There should be no path traced. We should shade
-    // one geometry, and if it's transparent the ray must be continued through it
-    /*
-    path_opacity = path_opacity * (1.f - info.d);
-    path_depth++;
-    if (path_depth >= self->super.maxDepth
-        || path_opacity < self->super.minContribution) {
-      ray.t = first_hit_dist;
-      return make_vec4f(color, 1.f - path_opacity);
-    }
-    */
-
-    //break;
-    // Reset ray
-    //ray.t0 = ray.t + self->super.epsilon;
-    //ray.t = infinity;
-    //ray.primID = -1;
-    //ray.geomID = -1;
-    //ray.instID = -1;
-  //}
   return make_vec4f(color, info.local_opacity);
 }
 
@@ -120,31 +88,22 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
   // Provide ray offset for use with isosurface geometries (this value
   // ignored elsewhere).
-  if (volume != NULL) {
+  if (volume != NULL)
     geometryRay.time = -rayOffset * volume->samplingStep;
-  }
 
   // Initial trace through geometries.
   vec4f geometryColor = SciVisRenderer_computeGeometrySample(renderer,
-                                                             sampleID, geometryRay, rayOffset);
+                                                             sampleID,
+                                                             geometryRay,
+                                                             rayOffset);
 
   // Depth is the first volume bounding box or geometry hit
   depth = min(ray.t0, geometryRay.t);
 
   // Trace the ray through the volume and geometries.
+  float firstHit = depth;
 
-  // This is clearly wrong if the geometry is transparent, because
-  // we will shade it again down in the ray continuation loop.
-  /*
-  if (geometryRay.t < ray.t0 || volume == NULL) {
-    // Geometry contribution.
-    color = geometryColor;
-  }
-  */
-
-  float firstHit;
-  while ((firstHit = min(ray.t0, geometryRay.t)) < tMax && color.w < 0.99f)
-  {
+  while (firstHit < tMax && color.w < 0.99f) {
     // WILL NOTE: without a volume this will always be false.
     if (firstHit == ray.t0) {
 
@@ -164,8 +123,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         vec4f volumeColor;
         float tBegin = ray.t0;
         float tEnd = min(geometryRay.t,ray.t);
-        foreach_unique (v in volume)
-        {
+        foreach_unique (v in volume) {
           //interval sampling
           volumeColor = SciVisRenderer_computeVolumeInterval(renderer,
               v, ray, tBegin, tEnd, .99f, 0, rayOffset, sampleID, 1.f);
@@ -198,10 +156,14 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
         // Trace next geometry ray.
         geometryColor = SciVisRenderer_computeGeometrySample(renderer,
-                                                             sampleID, geometryRay, rayOffset);
+                                                             sampleID,
+                                                             geometryRay,
+                                                             rayOffset);
       }
 
     }
+
+    firstHit = min(ray.t0, geometryRay.t);
   }
 }
 
