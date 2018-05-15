@@ -91,6 +91,7 @@ struct Volume {
   void (*uniform intersectIsosurface)(void *uniform _self,
                                       uniform float *uniform isovalues,
                                       uniform int numIsovalues,
+                                      uniform size_t geomID,
                                       varying Ray &ray);
 
   //! Bounding box for the volume in world coordinates.  This is an internal derived parameter and not meant to be redefined externally.

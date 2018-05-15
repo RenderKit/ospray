@@ -21,11 +21,6 @@
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_geometry.isph"
-#include "embree2/rtcore_geometry_user.isph"
-
 static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
                                        uniform Model    *uniform model,
                                        varying DifferentialGeometry &dg,
@@ -178,7 +173,8 @@ void TriangleMesh_getAreas(
 void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               void *uniform cppEquivalent,
                               uniform Model *uniform model,
-                              uniform int32  geomID,
+                              RTCGeometry geom,
+                              uniform int32 geomID,
                               uniform int32  numTriangles,
                               uniform int32  idxSize,
                               uniform int32  vtxSize,
@@ -196,7 +192,9 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
 {
   Geometry_Constructor(&mesh->super,cppEquivalent,
                        TriangleMesh_postIntersect,
-                       model,geomID,
+                       model,
+                       geom,
+                       geomID,
                        materialList);
   mesh->super.getMaterialID = TriangleMesh_getMaterialID;
   mesh->super.getAreas = TriangleMesh_getAreas;
@@ -219,14 +217,15 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   TriangleMesh *uniform mesh = uniform new TriangleMesh;
-  TriangleMesh_Constructor(mesh, cppEquivalent,
-                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, true, false);
+  TriangleMesh_Constructor(mesh, cppEquivalent, NULL, NULL, 0, 0, 0, 0, 0,
+                           NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, true, false);
   return mesh;
 }
 
 export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       void *uniform _model,
-                                      uniform int32  geomID,
+                                      RTCGeometry geom,
+                                      uniform int32 geomID,
                                       uniform int32  numTriangles,
                                       uniform int32  idxSize,
                                       uniform int32  vtxSize,
@@ -248,6 +247,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
   TriangleMesh_Constructor(mesh,
                            mesh->super.cppEquivalent,
                            model,
+                           geom,
                            geomID,
                            numTriangles,
                            idxSize, vtxSize, norSize,

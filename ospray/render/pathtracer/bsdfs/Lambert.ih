@@ -61,7 +61,7 @@ inline void Lambert_Constructor(varying Lambert* uniform self,
 
 inline varying BSDF* uniform Lambert_create(uniform ShadingContext* uniform ctx, 
                                             const varying linear3f* uniform frame,
-                                            const varying vec3f &R)
+                                            const varying vec3f& R)
 {
   varying Lambert* uniform self = (varying Lambert* uniform)ShadingContext_alloc(ctx, sizeof(Lambert));
   Lambert_Constructor(self, frame, R);

@@ -121,6 +121,15 @@ OSPRAY_CATCH_BEGIN
         return OSP_INVALID_ARGUMENT;
       }
 
+      if (av == "--osp:stream") {
+        removeArgs(*_ac,_av,i,1);
+        loadLocalModule("stream");
+        currentDevice.reset(Device::createDevice("stream"));
+
+        --i;
+        continue;
+      }
+
       auto moduleSwitch = av.substr(0, 13);
       if (moduleSwitch == "--osp:module:") {
         removeArgs(*_ac,_av,i,1);
@@ -221,6 +230,13 @@ OSPRAY_CATCH_BEGIN
   return OSP_NO_ERROR;
 }
 OSPRAY_CATCH_END(OSP_INVALID_OPERATION)
+
+extern "C" void ospShutdown()
+OSPRAY_CATCH_BEGIN
+{
+  Device::current.reset();
+}
+OSPRAY_CATCH_END()
 
 extern "C" OSPDevice ospNewDevice(const char *deviceType)
 OSPRAY_CATCH_BEGIN
@@ -597,6 +613,14 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospDeviceSet1b(OSPDevice _object, const char *id, int32_t x)
+OSPRAY_CATCH_BEGIN
+{
+  Device *object = (Device *)_object;
+  object->setParam(id, static_cast<bool>(x));
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
 OSPRAY_CATCH_BEGIN
 {
@@ -656,6 +680,14 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().setString(_object, id, s);
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSet1b(OSPObject _object, const char *id, int x)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setBool(_object, id, static_cast<bool>(x));
 }
 OSPRAY_CATCH_END()
 

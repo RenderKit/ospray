@@ -28,47 +28,107 @@ inline T gather_##T(const uniform bool huge,                                   \
                     const T *uniform const base,                               \
                     const varying int index)                                   \
 {                                                                              \
+  return gather_stride_##T (huge,                                              \
+                            (const uniform uint8 *uniform const)base,          \
+                            sizeof(uniform T),                                 \
+                            index);                                            \
+}                                                                              \
+
+
+#define __define_gather_stride(T)                                              \
+inline T gather_stride_##T(const uniform bool huge,                            \
+                           const uniform uint8 *uniform const base,            \
+                           const uniform int stride,                           \
+                           const varying int index)                            \
+{                                                                              \
   T v;                                                                         \
   if (huge) {                                                                  \
     const int index_lo = index & ((1<<BITS)-1);                                \
     const int index_hi = index - index_lo;                                     \
-    foreach_unique(hi in index_hi)                                             \
-      v = (base+hi)[index_lo];                                                 \
-  } else                                                                       \
-    v = base[index];                                                           \
+    const int scaledIndexLo = index_lo * stride;                               \
+    foreach_unique(hi in index_hi) {                                           \
+      /* uniform offset for upper bits */                                      \
+      const uniform uint64 scaledIndexHi = (uint64)(hi) * stride;              \
+      /* properly shifted base address (shifted by 64-bits) */                 \
+      const uniform uint8 *uniform base_hi = base + scaledIndexHi;             \
+      const uniform T *varying data =                                          \
+        (const uniform T *varying)(base_hi + scaledIndexLo);                   \
+      v = *data;                                                               \
+    }                                                                          \
+  } else {                                                                     \
+    const uniform T *varying data =                                            \
+      (const uniform T *varying)(base + stride * index);                       \
+    v = *data;                                                                 \
+  }                                                                            \
   return v;                                                                    \
-}
+}                                                                              \
+
 
 #define __define_gather_vec3_stride(T, S)                                      \
 inline vec3##S gather_vec3##S(const uniform bool huge,                         \
+                              const uniform T *uniform const base,             \
+                              const uniform int stride,                        \
+                              const varying int index)                         \
+{                                                                              \
+  return gather_byte_stride_vec3 ##S (huge,                                    \
+                                      (const uniform uint8 *uniform)base,      \
+                                      stride * sizeof(uniform T),              \
+                                      index);                                  \
+}                                                                              \
+
+#define __define_gather_vec4_stride(T, S)                                      \
+inline vec4##S gather_vec4##S(const uniform bool huge,                         \
                               const T *uniform const base,                     \
                               const uniform int stride,                        \
                               const varying int index)                         \
 {                                                                              \
-  vec3##S v;                                                                   \
+  return gather_byte_stride_vec4 ##S(huge,                                     \
+                                     (const uniform uint8 *uniform)base,       \
+                                     stride * sizeof(uniform T),               \
+                                     index);                                   \
+}                                                                              \
+
+
+#define __define_gather_vec_byte_stride(T, S, N)                               \
+inline vec##N ##S gather_byte_stride_vec##N ##S(const uniform bool huge,       \
+                                      const uniform uint8 *uniform const base, \
+                                      const uniform int stride,                \
+                                      const varying int index)                 \
+{                                                                              \
+  vec ##N ##S v;                                                               \
+  varying T *uniform out = &v.x;                                               \
   if (huge) {                                                                  \
     const int index_lo = index & ((1<<BITS)-1);                                \
     const int index_hi = index - index_lo;                                     \
     /* varying offset of lower bits */                                         \
-    const varying int scaledIndexLo = stride * index_lo;                       \
+    const varying int scaledIndexLo = index_lo * stride;                       \
     foreach_unique(hi in index_hi) {                                           \
       /* uniform offset for upper bits */                                      \
-      uniform int64 scaledIndexHi = (int64)hi * stride;                        \
+      const uniform uint64 scaledIndexHi = (uint64)(hi) * (uint64)(stride);    \
       /* properly shifted base address (shifted by 64-bits) */                 \
-      const T *uniform base_hi = base + scaledIndexHi;                         \
-                                                                               \
-      v.x = base_hi[scaledIndexLo+0];                                          \
-      v.y = base_hi[scaledIndexLo+1];                                          \
-      v.z = base_hi[scaledIndexLo+2];                                          \
+      const uniform uint8 *uniform base_hi = base + scaledIndexHi;             \
+      const uniform T *varying data =                                          \
+        (const uniform T *varying)(base_hi + scaledIndexLo);                   \
+      for (uniform int i = 0; i < N; ++i) {                                    \
+        out[i] = data[i];                                                      \
+      }                                                                        \
     }                                                                          \
   } else {                                                                     \
-    const varying int scaledIndex = stride * index;                            \
-    v.x = base[scaledIndex+0];                                                 \
-    v.y = base[scaledIndex+1];                                                 \
-    v.z = base[scaledIndex+2];                                                 \
+    const uniform T *varying data =                                            \
+      (const uniform T *varying)(base + stride * index);                       \
+    for (uniform int i = 0; i < N; ++i) {                                      \
+      out[i] = data[i];                                                        \
+    }                                                                          \
   }                                                                            \
   return v;                                                                    \
 }                                                                              \
+
+__define_gather_stride(float);
+__define_gather_stride(int32);
+__define_gather_stride(uint32);
+
+__define_gather_stride(vec2f);
+__define_gather_stride(vec4f);
 
 __define_gather(float);
 __define_gather(int32);
@@ -77,5 +137,13 @@ __define_gather(uint32);
 __define_gather(vec2f);
 __define_gather(vec4f);
 
+__define_gather_vec_byte_stride(float, f, 3);
+__define_gather_vec_byte_stride(float, f, 4);
+__define_gather_vec_byte_stride(int, i, 3);
+__define_gather_vec_byte_stride(int, i, 4);
+
 __define_gather_vec3_stride(float, f);
 __define_gather_vec3_stride(int, i);
+
+__define_gather_vec4_stride(int, i);
+

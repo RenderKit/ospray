@@ -108,7 +108,7 @@ namespace ospray {
           }
         } else if (parm == "--osp:setaffinity" || parm == "--osp:affinity") {
           if (i+1<ac) {
-            device->setParam("setAffinity", atoi(av[i+1]));
+            device->setParam<bool>("setAffinity", atoi(av[i+1]));
             removeArgs(ac,av,i,2);
           } else {
             postStatusMsg("<n> argument required for --osp:setaffinity!");

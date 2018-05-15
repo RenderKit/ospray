@@ -65,8 +65,6 @@ namespace ospray {
       void importURL(std::shared_ptr<Node> world,
                      const FileName &fileName,
                      const FormatURL &fu) const;
-      void importRegistryGenerator(std::shared_ptr<Node> world,
-                                   const std::string &type) const;
       void importRegistryFileLoader(std::shared_ptr<Node> world,
                                     const std::string &type,
                                     const FileName &fileName) const;
@@ -82,12 +80,6 @@ namespace ospray {
     OSPSG_INTERFACE
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer);
-
-    /*! import a given file. throws a sg::RuntimeError if this could
-     *  not be done */
-    OSPSG_INTERFACE
-    void importFile(std::shared_ptr<sg::Model> &world,
-                    const FileName &fileName);
 
     /*! import an OBJ wavefront model, and add its contents to the given
         world */
@@ -111,6 +103,12 @@ namespace ospray {
 #ifdef OSPRAY_APPS_SG_VTK
     OSPSG_INTERFACE void importUnstructuredVolume(const std::shared_ptr<Node> &world,
                                                   const FileName &fileName);
+
+    OSPSG_INTERFACE void importVTKPolyData(const std::shared_ptr<Node> &world,
+                                           const FileName &fileName);
+
+    OSPSG_INTERFACE void importVTI(const std::shared_ptr<Node> &world,
+                                           const FileName &fileName);
 #endif
 
     /*! import an X3D-format model, and add its contents to the given world */

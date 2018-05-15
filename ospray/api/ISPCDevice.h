@@ -19,8 +19,7 @@
 //ospray
 #include "Device.h"
 //embree
-#include "embree2/rtcore.h"
-
+#include "embree3/rtcore.h"
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
@@ -95,6 +94,11 @@ namespace ospray {
       void setObject(OSPObject target,
                      const char *bufName,
                      OSPObject value) override;
+
+      /*! assign (named) float parameter to an object */
+      void setBool(OSPObject object,
+                   const char *bufName,
+                   const bool b) override;
 
       /*! assign (named) float parameter to an object */
       void setFloat(OSPObject object,

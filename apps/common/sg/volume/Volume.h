@@ -41,29 +41,33 @@ namespace ospray {
     /*! a plain old structured volume */
     struct OSPSG_INTERFACE StructuredVolume : public Volume
     {
+      StructuredVolume();
+
       std::string toString() const override;
 
       //! return bounding box of all primitives
       box3f bounds() const override;
 
-      vec3i dimensions {-1};
-      std::string voxelType = "<undefined>";
-
-      const unsigned char *mappedPointer {nullptr};
+      void preCommit(RenderContext &ctx) override;
     };
 
     /*! a plain old structured volume */
     struct OSPSG_INTERFACE StructuredVolumeFromFile : public StructuredVolume
     {
+      StructuredVolumeFromFile();
+
       std::string toString() const override;
 
       void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
 
       //! \brief file name of the xml doc when the node was loaded from xml
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
 
       std::string fileName;
+
+      bool fileLoaded{false};
     };
 
   } // ::ospray::sg

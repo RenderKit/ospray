@@ -20,6 +20,7 @@
 #include "math/LinearSpace.ih"
 #include "math/spectrum.ih"
 #include "Optics.ih"
+#include "ShadingContext.ih"
 
 //! \brief Computes fresnel coefficient for dielectric medium
 /*! \detailed Computes fresnel coefficient for media interface with
@@ -37,14 +38,14 @@ inline float fresnelDielectric(float cosI, float cosT, float eta)
  *  refraction index eta. Eta is the outside refraction index
  *  divided by the inside refraction index. The cosine has to be
  *  positive. */
-inline float fresnelDielectric(const float cosI, const float eta)
+inline float fresnelDielectric(float cosI, float eta)
 {
   const float sqrCosT = sqrCosT(cosI, eta);
   if (sqrCosT < 0.0f) return 1.0f;
   return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
 }
 
-inline float fresnelDielectricEx(const float cosI, float& cosT, const float eta)
+inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
 {
   const float sqrCosT = sqrCosT(cosI, eta);
   if (sqrCosT < 0.0f)
@@ -56,9 +57,24 @@ inline float fresnelDielectricEx(const float cosI, float& cosT, const float eta)
   return fresnelDielectric(cosI, cosT, eta);
 }
 
+// F_{\mathit{avg}} = 2 \int_0^1 F(\mu) \mu d\mu
+// \mu = \cos(\theta)
+// Fit from [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+inline float fresnelDielectricAvg(float eta)
+{
+  const float rcpEta = rcp(eta);
+
+  if (rcpEta >= 1.f)
+    return (rcpEta - 1.f) / (4.08567f + 1.00071f*rcpEta);
+
+  const float rcpEta2 = sqr(rcpEta);
+  const float rcpEta3 = rcpEta2 * rcpEta;
+  return 0.997118f + 0.1014f*rcpEta - 0.965241f*rcpEta2 - 0.130607f*rcpEta3;
+}
+
 /*! Computes fresnel coefficient for conductor medium with complex
  *  refraction index (eta,k). The cosine has to be positive. */
-inline vec3f fresnelConductor(const float cosI, const vec3f eta, const vec3f k)
+inline vec3f fresnelConductor(float cosI, vec3f eta, vec3f k)
 {
   const vec3f tmp = sqr(eta) + sqr(k);
   const vec3f Rpar
@@ -70,7 +86,7 @@ inline vec3f fresnelConductor(const float cosI, const vec3f eta, const vec3f k)
   return 0.5f * (Rpar + Rper);
 }
 
-inline float fresnelConductor(const float cosI, const uniform float eta, const uniform float k)
+inline float fresnelConductor(float cosI, uniform float eta, uniform float k)
 {
   const uniform float tmp = sqr(eta) + sqr(k);
   const float Rpar
@@ -82,7 +98,7 @@ inline float fresnelConductor(const float cosI, const uniform float eta, const u
   return 0.5f * (Rpar + Rper);
 }
 
-inline vec3f fresnelConductor(const float cosI, const spectrum eta, const spectrum k)
+inline vec3f fresnelConductor(float cosI, spectrum eta, spectrum k)
 {
   vec3f rgb = make_vec3f(0.f);
   for (uniform int l = 0; l < SPECTRUM_SAMPLES; l++)
@@ -95,19 +111,30 @@ inline vec3f fresnelConductor(const float cosI, const spectrum eta, const spectr
 // mainly for abstracting the conductor variants
 struct Fresnel;
 
-typedef vec3f (*Fresnel_EvalFunc)(const Fresnel* uniform self, const float cosI);
+typedef vec3f (*Fresnel_EvalFunc)(const Fresnel* uniform self, float cosI);
+typedef vec3f (*Fresnel_EvalAvgFunc)(const Fresnel* uniform self);
 
 struct Fresnel
 {
   uniform Fresnel_EvalFunc eval;
+
+  // F_{\mathit{avg}} = 2 \int_0^1 F(\mu) \mu d\mu
+  // \mu = \cos(\theta)
+  uniform Fresnel_EvalAvgFunc evalAvg;
 };
 
-inline void Fresnel_Constructor(Fresnel* uniform self, uniform Fresnel_EvalFunc eval)
+inline vec3f Fresnel_evalAvg(const Fresnel* uniform self)
 {
-  self->eval = eval;
+  return make_vec3f(0.f);
 }
 
-
+inline void Fresnel_Constructor(Fresnel* uniform self,
+                                uniform Fresnel_EvalFunc eval,
+                                uniform Fresnel_EvalAvgFunc evalAvg)
+{
+  self->eval = eval;
+  self->evalAvg = evalAvg;
+}
 
 
 struct FresnelConductorRGBUniform
@@ -117,9 +144,9 @@ struct FresnelConductorRGBUniform
   uniform vec3f k;
 };
 
-inline vec3f FresnelConductorRGBUniform_eval(const Fresnel* uniform super, const float cosI) {
-  const FresnelConductorRGBUniform * uniform self =
-    (const FresnelConductorRGBUniform * uniform)super;
+inline vec3f FresnelConductorRGBUniform_eval(const Fresnel* uniform super, float cosI)
+{
+  const FresnelConductorRGBUniform* uniform self = (const FresnelConductorRGBUniform* uniform)super;
 
   return make_vec3f(
       fresnelConductor(cosI, self->eta.x, self->k.x),
@@ -129,10 +156,11 @@ inline vec3f FresnelConductorRGBUniform_eval(const Fresnel* uniform super, const
 }
 
 inline Fresnel* uniform FresnelConductorRGBUniform_create(ShadingContext* uniform ctx,
-    const uniform vec3f &eta, const uniform vec3f &k) {
-  FresnelConductorRGBUniform * uniform self =
-    (FresnelConductorRGBUniform * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBUniform));
-  self->super.eval = &FresnelConductorRGBUniform_eval;
+    const uniform vec3f& eta, const uniform vec3f& k)
+{
+  FresnelConductorRGBUniform* uniform self =
+    (FresnelConductorRGBUniform* uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBUniform));
+  Fresnel_Constructor(&self->super, FresnelConductorRGBUniform_eval, Fresnel_evalAvg);
   self->eta = eta;
   self->k = k;
 
@@ -147,18 +175,19 @@ struct FresnelConductorRGBVarying
   varying vec3f k;
 };
 
-inline vec3f FresnelConductorRGBVarying_eval(const Fresnel* uniform super, const float cosI) {
-  const FresnelConductorRGBVarying * uniform self =
-    (const FresnelConductorRGBVarying * uniform)super;
+inline vec3f FresnelConductorRGBVarying_eval(const Fresnel* uniform super, float cosI)
+{
+  const FresnelConductorRGBVarying* uniform self = (const FresnelConductorRGBVarying* uniform)super;
 
   return fresnelConductor(cosI, self->eta, self->k);
 }
 
 inline Fresnel* uniform FresnelConductorRGBVarying_create(ShadingContext* uniform ctx,
-    const vec3f &eta, const vec3f &k) {
-  FresnelConductorRGBVarying * uniform self =
-    (FresnelConductorRGBVarying * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBVarying));
-  self->super.eval = &FresnelConductorRGBVarying_eval;
+    const vec3f& eta, const vec3f& k)
+{
+  FresnelConductorRGBVarying* uniform self =
+    (FresnelConductorRGBVarying* uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorRGBVarying));
+  Fresnel_Constructor(&self->super, FresnelConductorRGBVarying_eval, Fresnel_evalAvg);
   self->eta = eta;
   self->k = k;
 
@@ -173,18 +202,33 @@ struct FresnelSchlick
   varying vec3f g; // reflectivity at grazing angle (90 deg)
 };
 
-inline vec3f FresnelSchlick_eval(const Fresnel* uniform super, const float cosI) {
-  const FresnelSchlick * uniform self = (const FresnelSchlick * uniform)super;
+inline vec3f FresnelSchlick_eval(const Fresnel* uniform super, float cosI)
+{
+  const FresnelSchlick* uniform self = (const FresnelSchlick* uniform)super;
 
   const float c = 1.f - cosI;
   return lerp(sqr(sqr(c))*c, self->r, self->g);
 }
 
+// Exact solution from [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+inline vec3f FresnelSchlick_evalAvg(const Fresnel* uniform super)
+{
+  const FresnelSchlick* uniform self = (const FresnelSchlick* uniform)super;
+
+  const vec3f r = self->r;
+  const vec3f g = self->g;
+  const float p = 1.f/5.f;
+  const float p2 = p*p;
+
+  return (2.f*g*p2 + r + 3.f*p*r) * rcp(1.f + 3.f*p + 2.f*p2);
+}
+
 inline Fresnel* uniform FresnelSchlick_create(ShadingContext* uniform ctx,
-    const varying vec3f &r, const varying vec3f &g) {
+    const varying vec3f& r, const varying vec3f& g)
+{
   FresnelSchlick * uniform self =
     (FresnelSchlick * uniform)ShadingContext_alloc(ctx, sizeof(FresnelSchlick));
-  self->super.eval = &FresnelSchlick_eval;
+  Fresnel_Constructor(&self->super, FresnelSchlick_eval, FresnelSchlick_evalAvg);
   self->r = r;
   self->g = g;
 
@@ -199,18 +243,19 @@ struct FresnelConductorSpectral
   uniform spectrum k;
 };
 
-inline vec3f FresnelConductorSpectral_eval(const Fresnel* uniform super, const float cosI) {
-  const FresnelConductorSpectral * uniform self =
-    (const FresnelConductorSpectral * uniform)super;
+inline vec3f FresnelConductorSpectral_eval(const Fresnel* uniform super, float cosI)
+{
+  const FresnelConductorSpectral* uniform self = (const FresnelConductorSpectral* uniform)super;
 
   return fresnelConductor(cosI, self->eta, self->k);
 }
 
 inline Fresnel* uniform FresnelConductorSpectral_create(ShadingContext* uniform ctx,
-    const spectrum &eta, const spectrum &k) {
-  FresnelConductorSpectral * uniform self =
-    (FresnelConductorSpectral * uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorSpectral));
-  self->super.eval = &FresnelConductorSpectral_eval;
+    const spectrum& eta, const spectrum& k)
+{
+  FresnelConductorSpectral* uniform self =
+    (FresnelConductorSpectral* uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorSpectral));
+  Fresnel_Constructor(&self->super, FresnelConductorSpectral_eval, Fresnel_evalAvg);
   self->eta = eta;
   self->k = k;
 
@@ -224,21 +269,43 @@ struct FresnelConductorArtistic
   uniform Fresnel super;
   varying vec3f eta;
   varying vec3f k;
+
+  varying vec3f r;
+  varying vec3f g;
 };
 
-inline vec3f FresnelConductorArtistic_eval(const Fresnel* uniform super, const float cosI)
+inline vec3f FresnelConductorArtistic_eval(const Fresnel* uniform super, float cosI)
 {
   const FresnelConductorArtistic* uniform self = (const FresnelConductorArtistic* uniform)super;
   return fresnelConductor(cosI, self->eta, self->k);
 }
 
+// Fit from [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+inline vec3f FresnelConductorArtistic_evalAvg(const Fresnel* uniform super)
+{
+  const FresnelConductorArtistic* uniform self = (const FresnelConductorArtistic* uniform)super;
+  const vec3f r = self->r;
+  const vec3f r2 = r*r;
+  const vec3f r3 = r2*r;
+  const vec3f g = self->g;
+  const vec3f g2 = g*g;
+  const vec3f g3 = g2*g;
+
+  return 0.087237f + 0.0230685f*g - 0.0864902f*g2 + 0.0774594f*g3
+    + 0.782654f*r - 0.136432f*r2 + 0.278708f*r3
+    + 0.19744f*g*r + 0.0360605f*g2*r - 0.2586f*g*r2;
+}
+
 inline Fresnel* uniform FresnelConductorArtistic_create(ShadingContext* uniform ctx,
-                                                        const vec3f& r, const vec3f& g)
+                                                        const vec3f& reflectivity, const vec3f& edgeTint)
 {
   FresnelConductorArtistic* uniform self =
     (FresnelConductorArtistic* uniform)ShadingContext_alloc(ctx, sizeof(FresnelConductorArtistic));
-  self->super.eval = &FresnelConductorArtistic_eval;
+  Fresnel_Constructor(&self->super, FresnelConductorArtistic_eval, FresnelConductorArtistic_evalAvg);
   
+  const vec3f r = min(reflectivity, make_vec3f(0.99f));
+  const vec3f g = edgeTint;
+
   const vec3f n_min = (1.f - r) / (1.f + r);
   const vec3f n_max = (1.f + sqrt(r)) / (1.f - sqrt(r));
   const vec3f n = g * n_min + (1.f - g) * n_max;
@@ -246,6 +313,9 @@ inline Fresnel* uniform FresnelConductorArtistic_create(ShadingContext* uniform 
   
   self->eta = n;
   self->k = sqrt(k2);
+
+  self->r = r;
+  self->g = g;
 
   return &self->super;
 }

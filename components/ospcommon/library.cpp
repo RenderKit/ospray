@@ -68,49 +68,66 @@ namespace ospcommon {
 
   void *loadIsaLibrary(const std::string &name,
                        const std::string desiredISAname,
-                       std::string &foundISAname)
+                       std::string &foundISAname,
+                       std::string &foundPrec)
   {
+    std::string precision = "float";
+    const char *use_double_flag = getenv("OSPRAY_USE_DOUBLES");
+    if (use_double_flag && atoi(use_double_flag)) {
+      precision = "double";
+    }
+
     std::string file = name;
     void *lib = nullptr;
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
 #else
-#if defined(__MACOSX__) || defined(__APPLE__)
-    std::string fullName = "lib"+file+".dylib";
-#else
-    std::string fullName = "lib"+file+"_"+desiredISAname+".so";
-#endif
+    std::string fullName = "lib" + file + "_" + desiredISAname + "_" + precision;
+
+# if defined(__MACOSX__) || defined(__APPLE__)
+    fullName += ".dylib";
+# else
+    fullName += ".so";
+# endif
+
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+
     if (!lib) {
-      //      PRINT(dlerror());
+      PRINT(dlerror());
       foundISAname = "";
-    } else
+    } else {
+      std::cout << "#osp: loaded library *** " << fullName << " ***" << std::endl;
       foundISAname = desiredISAname;
+      foundPrec = precision;
+    }
 #endif
     return lib;
   }
-
 
   /*! try loading the most isa-specific lib that is a) supported on
       this platform, and b) that can be found as a shared
       library. will return the most isa-specific lib (ie, if both avx
       and sse are available, and th ecpu supports at least avx (or
       more), it'll return avx, not sse*/
-  void *tryLoadingMostIsaSpecificLib(const std::string &name, std::string &foundISA)
+  void *tryLoadingMostIsaSpecificLib(const std::string &name, std::string &foundISA, std::string &foundPrec)
   {
     void *lib = NULL;
 
+    // try 'native' first
+    if ((lib = loadIsaLibrary(name,"native",foundISA,foundPrec)) != NULL) return lib;
+
+    // no 'native found': assume build several isas explicitly for distribution:
     // try KNL:
-    if (CpuID::has_avx512er() && (lib = loadIsaLibrary(name,"knl",foundISA))) return lib;
+    if (CpuID::has_avx512er() && (lib = loadIsaLibrary(name,"knl",foundISA,foundPrec))) return lib;
     // try SKL:
-    if (CpuID::has_avx512bw() && (lib = loadIsaLibrary(name,"skx",foundISA))) return lib;
+    if (CpuID::has_avx512bw() && (lib = loadIsaLibrary(name,"skx",foundISA,foundPrec))) return lib;
     // try avx2:
-    if (CpuID::has_avx2() && (lib = loadIsaLibrary(name,"avx2",foundISA))) return lib;
+    if (CpuID::has_avx2() && (lib = loadIsaLibrary(name,"avx2",foundISA,foundPrec))) return lib;
     // try avx1:
-    if (CpuID::has_avx() && (lib = loadIsaLibrary(name,"avx",foundISA))) return lib;
+    if (CpuID::has_avx() && (lib = loadIsaLibrary(name,"avx",foundISA,foundPrec))) return lib;
     // try sse4.2:
-    if (CpuID::has_sse42() && (lib = loadIsaLibrary(name,"sse42",foundISA))) return lib;
+    if (CpuID::has_sse42() && (lib = loadIsaLibrary(name,"sse4",foundISA,foundPrec))) return lib;
 
     // couldn't find any hardware-specific libs - return null, and let
     // caller try to load a generic, non-isa specific lib instead
@@ -120,14 +137,6 @@ namespace ospcommon {
   Library::Library(const std::string& name)
   {
     std::string file = name;
-
-    std::string foundISA;
-    lib = tryLoadingMostIsaSpecificLib(name,foundISA);
-    if (lib) {
-      std::cout << "#osp: found isa-speicific lib for library " << name << ", most specific ISA=" << foundISA << std::endl;
-      return;
-    }
-
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
@@ -138,6 +147,9 @@ namespace ospcommon {
     std::string fullName = "lib"+file+".so";
 #endif
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    if (lib == nullptr) {
+      PRINT(dlerror());
+    }
 #endif
 
     // iw: do NOT use this 'hack' that tries to find the
@@ -150,14 +162,22 @@ namespace ospcommon {
     // which almost always returns 'file not found')
 
     if (lib == nullptr) {
+
+      std::string foundISA,foundPrec;
+      lib = tryLoadingMostIsaSpecificLib(name,foundISA,foundPrec);
+      if (lib) {
+        std::cout << "#osp: found isa-specific lib for library " << name << ", most specific ISA=" << foundISA << ", using precision=" << foundPrec << std::endl;
+        return;
+      }
+
+
 #ifdef _WIN32
       // TODO: Must use GetLastError and FormatMessage on windows
       // to log out the error that occurred when calling LoadLibrary
       throw std::runtime_error("could not open module lib "+name);
 #else
-      const char* error = dlerror();
-      throw std::runtime_error("could not open module lib "+name
-          +" due to "+error);
+      // dlerror() is cleared after each call and will return null at this point.
+      throw std::runtime_error("could not open module lib "+name);
 #endif
     }
   }

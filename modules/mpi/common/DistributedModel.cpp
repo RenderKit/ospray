@@ -56,6 +56,7 @@ namespace ospray {
       // Send my bounding boxes to other nodes, recieve theirs for a
       // "full picture" of what geometries live on what nodes
       Data *regionData = getParamData("regions");
+      Data *ghostRegionData = getParamData("ghostRegions");
 
       // The box3f data is sent as data of FLOAT3 items
       // TODO: It's a little awkward to copy the boxes again like this, maybe
@@ -75,6 +76,14 @@ namespace ospray {
         postStatusMsg("No regions found, making implicit "
                       "infinitely large region", 1);
         myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
+      }
+
+      // Check if we've got ghost regions set, otherwise just use the regions
+      if (ghostRegionData) {
+        box3f *boxes = reinterpret_cast<box3f*>(ghostRegionData->data);
+        ghostRegions = std::vector<box3f>(boxes, boxes + ghostRegionData->numItems / 2);
+      } else {
+        ghostRegions = myRegions;
       }
 
       for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {

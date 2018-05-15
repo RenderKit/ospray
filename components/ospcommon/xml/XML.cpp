@@ -366,7 +366,7 @@ namespace ospcommon {
         delete[] mem;
         fclose(file);
         return doc;
-      } catch (std::runtime_error e) {
+      } catch (const std::runtime_error &e) {
         delete[] mem;
         fclose(file);
         throw e;

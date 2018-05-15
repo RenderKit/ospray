@@ -36,7 +36,8 @@ namespace gensv {
    * or owned data region.
    */
   ospray::cpp::Geometry makeSpheres(const box3f &bbox, const size_t numSpheres,
-                                    const float sphereRadius);
+                                    const float sphereRadius,
+                                    const bool transparent = false);
 
   struct LoadedVolume {
     ospray::cpp::Volume volume;

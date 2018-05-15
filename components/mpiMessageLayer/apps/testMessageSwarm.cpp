@@ -50,6 +50,8 @@ extern "C" int main(int ac, char **av)
   MPI_CALL(Init(&ac, &av));
   ospcommon::tasking::initTaskingSystem();
 
+  maml::init();
+
   int rank = -1;
   MPI_CALL(Comm_size(MPI_COMM_WORLD, &numRanks));
   MPI_CALL(Comm_rank(MPI_COMM_WORLD, &rank));

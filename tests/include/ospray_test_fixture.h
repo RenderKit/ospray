@@ -57,7 +57,6 @@ public:
   ~Base();
 
   virtual void SetUp();
-  virtual void TearDown();
   Base& operator=(const Base&) = delete;
   Base(const Base&) = delete;
 

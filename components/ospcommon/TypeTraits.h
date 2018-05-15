@@ -130,5 +130,18 @@ namespace ospcommon {
     using is_class_t =
         enable_if_t<std::is_class<typename std::decay<T>::type>::value>;
 
+    // type 'T1' and 'T2' are not the same ////////////////////////////////////
+
+    template <typename T1, typename T2>
+    using is_not_same_t = enable_if_t<!std::is_same<T1, T2>::value>;
+
+    // If a single type is convertable to another /////////////////////////////
+
+    template <typename FROM, typename TO>
+    using can_convert = std::is_convertible<TO, FROM>;
+
+    template <typename FROM, typename TO>
+    using can_convert_t = enable_if_t<can_convert<FROM, TO>::value>;
+
   } // ::ospray::sg::traits
 } // ::ospray

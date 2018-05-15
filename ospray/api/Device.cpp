@@ -23,8 +23,6 @@
 #include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
-// embree
-#include "embree2/rtcore.h"
 
 #include <map>
 
@@ -76,10 +74,10 @@ namespace ospray {
       }
 
       auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
-      debugMode = OSPRAY_DEBUG.value_or(getParam<int>("debug", 0));
+      debugMode = OSPRAY_DEBUG.value_or(getParam<bool>("debug", 0));
 
       auto OSPRAY_TRACE_API = utility::getEnvVar<int>("OSPRAY_TRACE_API");
-      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam<int>("traceApi", 0));
+      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam<bool>("traceApi", 0));
 
       if (traceAPI) {
         auto streamPtr =
@@ -101,7 +99,7 @@ namespace ospray {
           utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
 
       auto dst = OSPRAY_LOG_OUTPUT.value_or(
-        getParam<std::string>("logOutput", "none")
+        getParam<std::string>("logOutput", "")
       );
 
       if (dst == "cout")
@@ -115,7 +113,7 @@ namespace ospray {
           utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
 
       dst = OSPRAY_ERROR_OUTPUT.value_or(
-        getParam<std::string>("errorOutput", "none")
+        getParam<std::string>("errorOutput", "")
       );
 
       if (dst == "cout")

@@ -49,6 +49,11 @@ namespace ospcommon
   /*! read data from the socket */
   OSPCOMMON_INTERFACE void read(socket_t socket, void* data, size_t bytes);
 
+  /*! read the available data on the socket, up to 'bytes' bytes.
+      Returns the number of bytes read. */
+  OSPCOMMON_INTERFACE size_t read_some(socket_t socket, void* data,
+                                       const size_t bytes);
+
   /*! write data to the socket */
   OSPCOMMON_INTERFACE void write(socket_t socket, const void* data, size_t bytes);
 

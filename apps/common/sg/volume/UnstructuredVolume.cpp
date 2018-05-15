@@ -17,6 +17,7 @@
 // sg
 #include "UnstructuredVolume.h"
 #include "../common/Data.h"
+#include "../common/NodeList.h"
 
 namespace ospray {
   namespace sg {
@@ -26,6 +27,7 @@ namespace ospray {
       createChild("hexMethod", "string", std::string("planar"))
         .setWhiteList({std::string("planar"),
               std::string("nonplanar")});
+      createChild("precomputedNormals", "bool", true);
     }
 
     std::string UnstructuredVolume::toString() const
@@ -37,48 +39,96 @@ namespace ospray {
     {
       auto ospVolume = valueAs<OSPVolume>();
 
-      if (ospVolume) {
-        ospCommit(ospVolume);
-        if (child("isosurfaceEnabled").valueAs<bool>() == true
-            && isosurfacesGeometry) {
-          OSPData isovaluesData = ospNewData(1, OSP_FLOAT,
-            &child("isosurface").valueAs<float>());
-          ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
-          ospCommit(isosurfacesGeometry);
+      if (!ospVolume) {
+        if (!hasChild("vertices"))
+          throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'vertices' array!");
+        else if (!hasChild("indices"))
+          throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'indices' array!");
+        else if (!hasChild("vertexFields") && !hasChild("cellFields"))
+          throw std::runtime_error("#osp:sg UnstructuredVolume -> no vertex or cell field data!");
+
+        ospVolume = ospNewVolume("unstructured_volume");
+
+        if (!ospVolume)
+          THROW_SG_ERROR("could not allocate volume");
+
+        // unclear how to define isosurfaces for cell-valued volumes
+        if (!hasChild("cellFieldName")) {
+          isosurfacesGeometry = ospNewGeometry("isosurfaces");
+          ospSetObject(isosurfacesGeometry, "volume", ospVolume);
         }
-        return;
+
+        setValue(ospVolume);
+
+        auto vertices   = child("vertices").nodeAs<DataBuffer>();
+
+        ospcommon::box3f bounds;
+        for (size_t i = 0; i < vertices->size(); ++i)
+          bounds.extend(vertices->get<vec3f>(i));
+        child("bounds") = bounds;
       }
 
-      setValue(ospNewVolume("unstructured_volume"));
+      if ((hasChild("cellFieldName") && child("cellFieldName").lastModified() > cellFieldTime) ||
+          (hasChild("vertexFieldName") && child("vertexFieldName").lastModified() > vertexFieldTime)) {
+        if (hasChild("cellFieldName"))
+          cellFieldTime = child("cellFieldName").lastModified();
+        if (hasChild("vertexFieldName"))
+          vertexFieldTime = child("vertexFieldName").lastModified();
 
-      if (!hasChild("vertices"))
-        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'vertices' array!");
-      else if (!hasChild("indices"))
-        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'indices' array!");
-      else if (!hasChild("field"))
-        throw std::runtime_error("#osp:sg UnstructuredVolume -> no 'field' array!");
+        std::shared_ptr<DataVector1f> field;
 
-      auto vertices   = child("vertices").nodeAs<DataBuffer>();
-      auto indices    = child("indices").nodeAs<DataBuffer>();
-      auto field      = child("field").nodeAs<DataBuffer>();
+        std::string targetName;
+        std::string fieldList;
+        std::string nameList;
 
-      ospcommon::box3f bounds;
-      for (size_t i = 0; i < vertices->size(); ++i)
-        bounds.extend(vertices->get<vec3f>(i));
-      child("bounds") = bounds;
+        if (hasChild("cellFieldName")) {
+          targetName = "cellField";
+          fieldList = "cellFields";
+          nameList = "cellFieldName";
+        } else if (hasChild("vertexFieldName")) {
+          targetName = "field";
+          fieldList = "vertexFields";
+          nameList = "vertexFieldName";
+        }
 
-      auto *field_array = field->baseAs<float>();
-      auto minMax = std::minmax_element(field_array,
-                                        field_array + field->size() - 1);
-      vec2f voxelRange(*minMax.first, *minMax.second);
+        auto fields = child(fieldList).nodeAs<NodeList<DataVector1f>>();
+        auto name = child(nameList).nodeAs<Node>();
+        auto whitelist = name->whitelist();
+        auto idx = std::distance(whitelist.begin(),
+                                 std::find(whitelist.begin(),
+                                           whitelist.end(),
+                                           name->valueAs<std::string>()));
 
-      child("voxelRange") = voxelRange;
-      child("transferFunction")["valueRange"] = voxelRange;
+        field = ((*fields)[idx]).nodeAs<DataVector1f>();
+        ospSetData(ospVolume, targetName.c_str(), field->getOSP());
 
-      child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
-      float iso = child("isosurface").valueAs<float>();
-      if (iso < voxelRange.x || iso > voxelRange.y)
-        child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
+        auto *field_array = field->baseAs<float>();
+        auto minMax = std::minmax_element(field_array,
+                                          field_array + field->size());
+        vec2f voxelRange(*minMax.first, *minMax.second);
+
+        if (voxelRange.x == voxelRange.y) {
+          voxelRange.x -= 1.f;
+          voxelRange.y += 1.f;
+        }
+
+        child("voxelRange") = voxelRange;
+        child("transferFunction")["valueRange"] = voxelRange;
+
+        child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
+        float iso = child("isosurface").valueAs<float>();
+        if (iso < voxelRange.x || iso > voxelRange.y)
+          child("isosurface") = (voxelRange.y + voxelRange.x) / 2.f;
+      }
+
+      ospCommit(ospVolume);
+      if (child("isosurfaceEnabled").valueAs<bool>() == true
+          && isosurfacesGeometry) {
+        OSPData isovaluesData = ospNewData(1, OSP_FLOAT,
+                                           &child("isosurface").valueAs<float>());
+        ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
+        ospCommit(isosurfacesGeometry);
+      }
     }
 
     OSP_REGISTER_SG_NODE(UnstructuredVolume);

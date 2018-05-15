@@ -24,36 +24,90 @@
 
 namespace ospcommon {
 
+  struct vec_base {}; // NOTE: only for identifying vec_t types at compile-time
+
+  // -------------------------------------------------------
+  // type traits relevant to vec_t<> type compile-time logic
+  // -------------------------------------------------------
+
+  namespace traits {
+
+    template <typename T>
+    using is_arithmetic_t = enable_if_t<std::is_arithmetic<T>::value>;
+
+    template <typename T>
+    struct is_vec
+    {
+      const static bool value = std::is_base_of<vec_base, T>::value;
+    };
+
+    template <typename VEC_TYPE, typename SCALAR_TYPE>
+    struct is_valid_scalar_for_binary_op
+    {
+      // NOTE: decay types to throw out pointerness and/or constness
+      using vec_element_t =
+          typename std::decay<typename VEC_TYPE::scalar_t>::type;
+      using scalar_t = typename std::decay<SCALAR_TYPE>::type;
+
+      const static bool value =
+          std::is_constructible<vec_element_t, scalar_t>::value &&
+          !is_vec<scalar_t>::value;
+    };
+
+    template <typename VEC_TYPE, typename SCALAR_TYPE>
+    using is_valid_scalar_for_binary_op_t =
+      enable_if_t<is_valid_scalar_for_binary_op<VEC_TYPE, SCALAR_TYPE>::value>;
+
+    template <typename VEC_ELEMENT_T, typename TYPE_IN_QUESTION>
+    struct is_valid_vec_constructor_type
+    {
+      const static bool value =
+          std::is_constructible<VEC_ELEMENT_T, TYPE_IN_QUESTION>::value &&
+          !std::is_same<TYPE_IN_QUESTION, VEC_ELEMENT_T>::value &&
+          !is_vec<TYPE_IN_QUESTION>::value;
+    };
+
+    template <typename VEC_ELEMENT_T, typename TYPE_IN_QUESTION>
+    using is_valid_vec_constructor_type_t =
+        enable_if_t<
+          is_valid_vec_constructor_type<VEC_ELEMENT_T, TYPE_IN_QUESTION>::value
+        >;
+
+  } // ::ospcommon::traits
+
+  // vec_t<> types ////////////////////////////////////////////////////////////
+
   template <typename T, int N, bool ALIGN = false>
-  struct vec_t
+  struct vec_t : public vec_base
   {
     using scalar_t = T;
     using Scalar   = T;
   };
 
   template <typename T>
-  struct vec_t<T, 2>
+  struct vec_t<T, 2> : public vec_base
   {
     using scalar_t = T;
     using Scalar   = T;
 
     inline vec_t() = default;
-    //inline vec_t(const vec_t<T, 2> &o) = default;
 
-    inline explicit vec_t(scalar_t s) : x(s), y(s)
+    inline vec_t(scalar_t s) : x(s), y(s)
     {
     }
+
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s)
+    {
+    }
+
     inline vec_t(scalar_t x, scalar_t y) : x(x), y(y)
     {
     }
 
-    #if 0
-    template <typename OT,
-              typename = traits::enable_if_t<!std::is_same<T, OT>::value>>
-    #else
     template <typename OT, bool OA>
-    #endif
-    explicit inline vec_t(const vec_t<OT, 2, OA> &o) : x(o.x), y(o.y)
+    inline vec_t(const vec_t<OT, 2, OA> &o) : x(o.x), y(o.y)
     {
     }
 
@@ -62,6 +116,7 @@ namespace ospcommon {
       assert(idx < 2);
       return (&x)[idx];
     }
+
     inline T &operator[](const size_t idx)
     {
       assert(idx < 2);
@@ -83,23 +138,29 @@ namespace ospcommon {
   };
 
   template <typename T>
-  struct vec_t<T, 3>
+  struct vec_t<T, 3> : public vec_base
   {
     using scalar_t = T;
     using Scalar   = T;
 
     inline vec_t() = default;
-    //inline vec_t(const vec_t<T, 3> &o) = default;
 
-    inline explicit vec_t(scalar_t s) : x(s), y(s), z(s)
+    inline vec_t(scalar_t s) : x(s), y(s), z(s)
     {
     }
+
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s), z(s)
+    {
+    }
+
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
     }
 
     template <typename OT, bool OA>
-    explicit inline vec_t(const vec_t<OT, 3, OA> &o) : x(o.x), y(o.y), z(o.z)
+    inline vec_t(const vec_t<OT, 3, OA> &o) : x(o.x), y(o.y), z(o.z)
     {
     }
 
@@ -108,6 +169,7 @@ namespace ospcommon {
       assert(axis < 3);
       return (&x)[axis];
     }
+
     inline T &operator[](const size_t axis)
     {
       assert(axis < 3);
@@ -119,6 +181,7 @@ namespace ospcommon {
     {
       return x + y + z;
     }
+
     /*! return result of reduce_mul() across all components */
     inline scalar_t product() const
     {
@@ -129,17 +192,23 @@ namespace ospcommon {
   };
 
   template <typename T>
-  struct vec_t<T, 3, true>
+  struct vec_t<T, 3, true> : public vec_base
   {
     using scalar_t = T;
     using Scalar   = T;
 
     inline vec_t() = default;
-    //inline vec_t(const vec_t<T, 3, 1> &o) = default;
 
-    inline explicit vec_t(scalar_t s) : x(s), y(s), z(s)
+    inline vec_t(scalar_t s) : x(s), y(s), z(s)
     {
     }
+
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s), z(s)
+    {
+    }
+
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z)
     {
     }
@@ -181,17 +250,25 @@ namespace ospcommon {
   };
 
   template <typename T>
-  struct vec_t<T, 4>
+  struct vec_t<T, 4> : public vec_base
   {
     using scalar_t = T;
     using Scalar   = T;
 
     inline vec_t() = default;
-    //inline vec_t(const vec_t<T, 4> &o) = default;
 
-    inline explicit vec_t(scalar_t s) : x(s), y(s), z(s), w(s)
+    inline vec_t(scalar_t s) : x(s), y(s), z(s), w(s)
     {
     }
+
+#if 0
+    template <typename OT,
+              typename = traits::is_valid_vec_constructor_type_t<T, OT>>
+    inline vec_t(const OT &s) : x(s), y(s), z(s), w(s)
+    {
+    }
+#endif
+
     inline vec_t(scalar_t x, scalar_t y, scalar_t z, scalar_t w)
         : x(x), y(y), z(z), w(w)
     {
@@ -204,7 +281,7 @@ namespace ospcommon {
     }
 
     template <typename OT, bool OA>
-    explicit inline vec_t(const vec_t<OT, 4, OA> &o)
+    inline vec_t(const vec_t<OT, 4, OA> &o)
         : x(o.x), y(o.y), z(o.z), w(o.w)
     {
     }
@@ -311,64 +388,104 @@ namespace ospcommon {
 #undef unary_functor
 
 // -------------------------------------------------------
-// binary operators, same type
+// binary arithmetic operators
 // -------------------------------------------------------
-#define binary_operator(name, op)                                           \
-  /* "vec op vec" */                                                        \
-  template <typename T>                                                     \
-  inline vec_t<T, 2> name(const vec_t<T, 2> &a, const vec_t<T, 2> &b)       \
-  {                                                                         \
-    return vec_t<T, 2>(a.x op b.x, a.y op b.y);                             \
-  }                                                                         \
-                                                                            \
-  template <typename T, bool A, bool B>                                     \
-  inline vec_t<T, 3> name(const vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b) \
-  {                                                                         \
-    return vec_t<T, 3>(a.x op b.x, a.y op b.y, a.z op b.z);                 \
-  }                                                                         \
-                                                                            \
-  template <typename T>                                                     \
-  inline vec_t<T, 4> name(const vec_t<T, 4> &a, const vec_t<T, 4> &b)       \
-  {                                                                         \
-    return vec_t<T, 4>(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w);     \
-  }                                                                         \
-                                                                            \
-  /* "vec op scalar" */                                                     \
-  template <typename T>                                                     \
-  inline vec_t<T, 2> name(const vec_t<T, 2> &a, const T &b)                 \
-  {                                                                         \
-    return vec_t<T, 2>(a.x op b, a.y op b);                                 \
-  }                                                                         \
-                                                                            \
-  template <typename T, bool A>                                             \
-  inline vec_t<T, 3, A> name(const vec_t<T, 3, A> &a, const T &b)           \
-  {                                                                         \
-    return vec_t<T, 3, A>(a.x op b, a.y op b, a.z op b);                    \
-  }                                                                         \
-                                                                            \
-  template <typename T>                                                     \
-  inline vec_t<T, 4> name(const vec_t<T, 4> &a, const T &b)                 \
-  {                                                                         \
-    return vec_t<T, 4>(a.x op b, a.y op b, a.z op b, a.w op b);             \
-  }                                                                         \
-                                                                            \
-  /* "scalar op vec" */                                                     \
-  template <typename T>                                                     \
-  inline vec_t<T, 2> name(const T a, const vec_t<T, 2> &b)                  \
-  {                                                                         \
-    return vec_t<T, 2>(a op b.x, a op b.y);                                 \
-  }                                                                         \
-                                                                            \
-  template <typename T, bool A>                                             \
-  inline vec_t<T, 3, A> name(const T a, const vec_t<T, 3, A> &b)            \
-  {                                                                         \
-    return vec_t<T, 3, A>(a op b.x, a op b.y, a op b.z);                    \
-  }                                                                         \
-                                                                            \
-  template <typename T>                                                     \
-  inline vec_t<T, 4> name(const T a, const vec_t<T, 4> &b)                  \
-  {                                                                         \
-    return vec_t<T, 4>(a op b.x, a op b.y, a op b.z, a op b.w);             \
+
+# define binary_operator(name, op)                                             \
+  /* "vec op vec" */                                                           \
+  template <typename T>                                                        \
+  inline vec_t<T, 2> name(const vec_t<T, 2> &a, const vec_t<T, 2> &b)          \
+  {                                                                            \
+    return vec_t<T, 2>(a.x op b.x, a.y op b.y);                                \
+  }                                                                            \
+                                                                               \
+  template <typename T, bool A, bool B>                                        \
+  inline vec_t<T, 3> name(const vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b)    \
+  {                                                                            \
+    return vec_t<T, 3>(a.x op b.x, a.y op b.y, a.z op b.z);                    \
+  }                                                                            \
+                                                                               \
+  template <typename T>                                                        \
+  inline vec_t<T, 4> name(const vec_t<T, 4> &a, const vec_t<T, 4> &b)          \
+  {                                                                            \
+    return vec_t<T, 4>(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w);        \
+  }                                                                            \
+                                                                               \
+  /* "vec<T, N> op vec<U, N>" (element types don't match) */                   \
+  template <typename T1,                                                       \
+            typename T2,                                                       \
+            int N,                                                             \
+            bool A,                                                            \
+            typename = traits::is_not_same_t<T1, T2>>                          \
+  inline auto name(const vec_t<T1, N, A> &v1, const vec_t<T2, N, A> &v2)       \
+      -> vec_t<decltype(T1() op T2()), N, A>                                   \
+  {                                                                            \
+    using result_t = vec_t<decltype(T1() op T2()), N, A>;                      \
+    return result_t(result_t(v1) op result_t(v2));                             \
+  }                                                                            \
+                                                                               \
+  /* "vec op scalar" (SFINAE out scalar types which are ill-formed) */         \
+  template <typename T,                                                        \
+            typename U = T,                                                    \
+            typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 2>, U>>\
+  inline auto name(const vec_t<T, 2> &a, const U &b)                           \
+      -> vec_t<decltype(T() op U()), 2>                                        \
+  {                                                                            \
+    using result_t = vec_t<decltype(T() op U()), 2>;                           \
+    return result_t(a.x op b, a.y op b);                                       \
+  }                                                                            \
+                                                                               \
+  template <typename T,                                                        \
+            bool A,                                                            \
+            typename U = T,                                                    \
+            typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 3, A>, U>> \
+  inline auto name(const vec_t<T, 3, A> &a, const U &b)                        \
+      -> vec_t<decltype(T() op U()), 3, A>                                     \
+  {                                                                            \
+    using result_t = vec_t<decltype(T() op U()), 3, A>;                        \
+    return result_t(a.x op b, a.y op b, a.z op b);                             \
+  }                                                                            \
+                                                                               \
+  template <typename T,                                                        \
+            typename U = T,                                                    \
+            typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 4>, U>>\
+  inline auto name(const vec_t<T, 4> &a, const U &b)                           \
+      -> vec_t<decltype(T() op U()), 4>                                        \
+  {                                                                            \
+    using result_t = vec_t<decltype(T() op U()), 4>;                           \
+    return result_t(a.x op b, a.y op b, a.z op b, a.w op b);                   \
+  }                                                                            \
+                                                                               \
+  /* "scalar op vec" (SFINAE out scalar types which are ill-formed) */         \
+  template <typename T,                                                        \
+            typename U = T,                                                     \
+            typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 2>, U>> \
+  inline auto name(const U &a, const vec_t<T, 2> &b)                           \
+      -> vec_t<decltype(U() op T()), 2>                                        \
+  {                                                                            \
+    using result_t = vec_t<decltype(U() op T()), 2>;                           \
+    return result_t(a op b.x, a op b.y);                                       \
+  }                                                                            \
+                                                                               \
+  template <typename T,                                                        \
+            bool A,                                                            \
+            typename U = T,                                                    \
+            typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 3, A>, U>> \
+  inline auto name(const U &a, const vec_t<T, 3, A> &b)                        \
+      -> vec_t<decltype(U() op T()), 3, A>                                     \
+  {                                                                            \
+    using result_t = vec_t<decltype(U() op T()), 3, A>;                        \
+    return result_t(a op b.x, a op b.y, a op b.z);                             \
+  }                                                                            \
+                                                                               \
+  template <typename T,                                                        \
+            typename U = T,                                                    \
+            typename = traits::is_valid_scalar_for_binary_op_t<vec_t<T, 4>, U>>\
+  inline auto name(const U &a, const vec_t<T, 4> &b)                           \
+      -> vec_t<decltype(U() op T()), 4>                                        \
+  {                                                                            \
+    using result_t = vec_t<decltype(U() op T()), 4>;                           \
+    return result_t(a op b.x, a op b.y, a op b.z, a op b.w);                   \
   }
 
   binary_operator(operator+, +)
@@ -379,20 +496,20 @@ namespace ospcommon {
 #undef binary_operator
 
 // -------------------------------------------------------
-// binary operators, same type
+// binary arithmetic assignment operators
 // -------------------------------------------------------
 #define binary_operator(name, op)                                         \
   /* "vec op vec" */                                                      \
-  template <typename T>                                                   \
-  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const vec_t<T, 2> &b)          \
+  template <typename T, typename U>                                       \
+  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const vec_t<U, 2> &b)          \
   {                                                                       \
     a.x op b.x;                                                           \
     a.y op b.y;                                                           \
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T, bool A, bool B>                                   \
-  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const vec_t<T, 3, B> &b) \
+  template <typename T, typename U, bool A, bool B>                       \
+  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const vec_t<U, 3, B> &b) \
   {                                                                       \
     a.x op b.x;                                                           \
     a.y op b.y;                                                           \
@@ -400,8 +517,8 @@ namespace ospcommon {
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T>                                                   \
-  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const vec_t<T, 4> &b)          \
+  template <typename T, typename U>                                       \
+  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const vec_t<U, 4> &b)          \
   {                                                                       \
     a.x op b.x;                                                           \
     a.y op b.y;                                                           \
@@ -411,16 +528,21 @@ namespace ospcommon {
   }                                                                       \
                                                                           \
   /* "vec op scalar" */                                                   \
-  template <typename T>                                                   \
-  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const T &b)                    \
+  template <typename T,                                                   \
+            typename U,                                                   \
+            typename = traits::is_arithmetic_t<U>>                        \
+  inline vec_t<T, 2> &name(vec_t<T, 2> &a, const U &b)                    \
   {                                                                       \
     a.x op b;                                                             \
     a.y op b;                                                             \
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T, bool A>                                           \
-  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const T &b)              \
+  template <typename T,                                                   \
+            typename U,                                                   \
+            bool A,                                                       \
+            typename = traits::is_arithmetic_t<U>>                        \
+  inline vec_t<T, 3, A> &name(vec_t<T, 3, A> &a, const U &b)              \
   {                                                                       \
     a.x op b;                                                             \
     a.y op b;                                                             \
@@ -428,8 +550,10 @@ namespace ospcommon {
     return a;                                                             \
   }                                                                       \
                                                                           \
-  template <typename T>                                                   \
-  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const T &b)                    \
+  template <typename T,                                                   \
+            typename U,                                                   \
+            typename = traits::is_arithmetic_t<U>>                        \
+  inline vec_t<T, 4> &name(vec_t<T, 4> &a, const U &b)                    \
   {                                                                       \
     a.x op b;                                                             \
     a.y op b;                                                             \

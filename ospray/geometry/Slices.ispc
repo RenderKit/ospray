@@ -21,41 +21,69 @@
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
 #include "volume/Volume.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
-struct Slices {
+struct Slices
+{
   uniform Geometry super; //!< inherited geometry fields
   uniform vec4f *uniform planes;
   uniform Volume *uniform volume;
 };
 
-void Slices_bounds(uniform Slices *uniform slices,
-                   uniform size_t primID,
-                   uniform box3fa &bbox)
+unmasked void Slices_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  bbox = make_box3fa(slices->volume->boundingBox);
+  uniform Slices *uniform self = (uniform Slices *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
+
+  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
+  *out = make_box3fa(self->volume->boundingBox);
 }
 
-void Slices_intersect(uniform Slices *uniform slices,
-                      varying Ray &ray,
-                      uniform size_t primID)
+void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
+                                const uniform bool isOcclusionTest)
 {
-  const float tIntersect = intersectPlane(ray, slices->planes[primID]);
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+
+  uniform Slices *uniform self
+    = (uniform Slices *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+
+  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+
+
+  const float tIntersect = intersectPlane(*ray, self->planes[primID]);
 
   float tBox0, tBox1;
-  intersectBox(ray, slices->volume->boundingBox, tBox0, tBox1);
+  intersectBox(*ray, self->volume->boundingBox, tBox0, tBox1);
 
   // slice intersections ignored where NaNs exist in the volume
-  if (!isnan(tIntersect) && tIntersect >= max(ray.t0, tBox0) && tIntersect <= min(ray.t, tBox1) &&
-      !isnan(slices->volume->sample(slices->volume, ray.org + tIntersect*ray.dir))) {
-    ray.geomID = slices->super.geomID;
-    ray.primID = primID;
-    ray.t = tIntersect;
-    ray.Ng = make_vec3f(slices->planes[primID]);
+  bool hit = !isnan(tIntersect) &&
+    tIntersect >= max(ray->t0, tBox0) &&
+    tIntersect <= min(ray->t, tBox1) &&
+    !isnan(self->volume->sample(self->volume, ray->org + tIntersect*ray->dir));
+
+  if (hit) {
+    if (isOcclusionTest) {
+      ray->t = neg_inf;
+    } else {
+      ray->instID = args->context->instID[0];
+      ray->geomID = self->super.geomID;
+      ray->primID = primID;
+      ray->t = tIntersect;
+      ray->Ng = make_vec3f(self->planes[primID]);
+    }
   }
+}
+
+unmasked void Slices_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Slices_intersect_kernel(args,false);
+}
+
+unmasked void Slices_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Slices_intersect_kernel(args,true);
 }
 
 static void Slices_postIntersect(uniform Geometry *uniform geometry,
@@ -78,33 +106,41 @@ static void Slices_postIntersect(uniform Geometry *uniform geometry,
 
 export void *uniform Slices_create(void *uniform cppEquivalent)
 {
-  uniform Slices *uniform slices = uniform new uniform Slices;
+  uniform Slices *uniform self = uniform new uniform Slices;
 
-  Geometry_Constructor(&slices->super, cppEquivalent, Slices_postIntersect, NULL, 0, NULL);
+  Geometry_Constructor(&self->super, cppEquivalent, Slices_postIntersect,
+                       NULL, NULL, 0, NULL);
 
-  return slices;
+  return self;
 }
 
-export void *uniform Slices_set(void          *uniform _slices,
+export void *uniform Slices_set(void          *uniform _self,
                                 void          *uniform _model,
                                 int32          uniform numPlanes,
                                 uniform vec4f *uniform planes,
                                 void          *uniform _volume)
 {
-  uniform Slices *uniform slices = (uniform Slices *uniform)_slices;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform Slices *uniform self   = (uniform Slices *uniform)_self;
+  uniform Model  *uniform model  = (uniform Model  *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle, numPlanes);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 
-  slices->super.model  = model;
-  slices->super.geomID = geomID;
-  slices->super.numPrimitives = numPlanes;
-  slices->planes = planes;
-  slices->volume = volume;
+  self->super.model  = model;
+  self->super.geomID = geomID;
+  self->super.numPrimitives = numPlanes;
+  self->planes = planes;
+  self->volume = volume;
 
-  rtcSetUserData(model->embreeSceneHandle, geomID, slices);
-  rtcSetBoundsFunction(model->embreeSceneHandle, geomID, (uniform RTCBoundsFunc)&Slices_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle, geomID, (uniform RTCIntersectFuncVarying)&Slices_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle, geomID, (uniform RTCOccludedFuncVarying)&Slices_intersect);
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryUserPrimitiveCount(geom,numPlanes);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&Slices_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&Slices_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&Slices_occluded);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
 }

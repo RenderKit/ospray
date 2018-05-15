@@ -20,36 +20,55 @@
 #include "visitor/MarkAllAsModified.h"
 #include "visitor/VerifyNodes.h"
 
+#include "ospcommon/memory/malloc.h"
+
 namespace ospray {
   namespace sg {
 
+    static std::vector<std::string> globalWhiteList = {
+      std::string("scivis"),
+      std::string("pathtracer"),
+      std::string("ao"),
+      std::string("raycast"),
+      std::string("raycast_vertexColor"),
+      std::string("raycast_dPds"),
+      std::string("raycast_dPdt"),
+      std::string("raycast_Ng"),
+      std::string("raycast_Ns"),
+      std::string("backfacing_Ng"),
+      std::string("backfacing_Ns"),
+      std::string("primID"),
+      std::string("geomID"),
+      std::string("instID"),
+      std::string("testFrame")
+    };
+
+    std::vector<std::string> Renderer::globalRendererTypeWhiteList()
+    {
+      return globalWhiteList;
+    }
+
+    void Renderer::setGlobalRendererTypeWhiteList(std::vector<std::string> list)
+    {
+      globalWhiteList = list;
+    }
+
     Renderer::Renderer()
     {
-      createChild("rendererType", "string", std::string("scivis"),
+      std::string defaultRendererType =
+          globalWhiteList.empty() ? "scivis" : globalWhiteList[0];
+
+      createChild("rendererType", "string", defaultRendererType,
                   NodeFlags::required |
                   NodeFlags::gui_combo,
                   "scivis: standard whitted style ray tracer. "
                   "pathtracer/pt: photo-realistic path tracer");
-      child("rendererType").setWhiteList({std::string("scivis"),
-                                          std::string("sv"),
-                                          std::string("raytracer"),
-                                          std::string("rt"),
-                                          std::string("ao"),
-                                          std::string("ao1"),
-                                          std::string("ao2"),
-                                          std::string("ao4"),
-                                          std::string("ao8"),
-                                          std::string("ao16"),
-                                          std::string("dvr"),
-                                          std::string("raycast"),
-                                          std::string("raycast_Ng"),
-                                          std::string("raycast_Ns"),
-                                          std::string("primID"),
-                                          std::string("geomID"),
-                                          std::string("instID"),
-                                          std::string("testFrame"),
-                                          std::string("pathtracer"),
-                                          std::string("pt")});
+
+      std::vector<Any> whiteList;
+      for (auto &v : globalWhiteList)
+        whiteList.push_back(v);
+
+      child("rendererType").setWhiteList(whiteList);
       createChild("world",
                   "Model").setDocumentation("model containing scene objects");
       createChild("camera", "PerspectiveCamera");
@@ -123,9 +142,11 @@ namespace ospray {
       backplate->preferLinear = true;
       backplate->depth = 4;
       const size_t stride = backplate->size.x * backplate->channels * backplate->depth;
-      backplate->data = malloc(sizeof(unsigned char) * backplate->size.y * stride);
+      backplate->data = memory::alignedMalloc(sizeof(unsigned char) * backplate->size.y * stride);
       vec3f bgColor = child("bgColor").valueAs<vec3f>();
       memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
+      createChild("useBackplate", "bool", true, NodeFlags::none, "use\
+           backplate for path tracer");
     }
 
     Renderer::~Renderer()
@@ -134,7 +155,9 @@ namespace ospray {
         ospRelease(lightsData);
     }
 
-    void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb, int flags, bool verifyCommit)
+    void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb,
+                               int flags,
+                               bool verifyCommit)
     {
       RenderContext ctx;
       if (verifyCommit) {
@@ -142,7 +165,9 @@ namespace ospray {
         traverse(ctx, "commit");
       }
       traverse(ctx, "render");
-      variance = ospRenderFrame(fb->valueAs<OSPFrameBuffer>(), ospRenderer, flags);
+      variance = ospRenderFrame(fb->valueAs<OSPFrameBuffer>(),
+                                ospRenderer,
+                                flags);
     }
 
     std::string Renderer::toString() const
@@ -278,6 +303,10 @@ namespace ospray {
           }
 
         }
+
+        if (!child("useBackplate").valueAs<bool>())
+          ospSetObject(ospRenderer, "backplate", nullptr);
+
         ospCommit(ospRenderer);
         frameMTime.renew();
       }

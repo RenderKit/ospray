@@ -38,68 +38,46 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        Texture2D* baseColorMap = (Texture2D*)getParamObject("baseColorMap");
-        affine2f baseColorXform = getTextureTransform("baseColorMap");
-        vec3f baseColor = getParam3f("baseColor", baseColorMap ? vec3f(1.f) : vec3f(0.8f));
+        MaterialParam3f baseColor = getMaterialParam3f("baseColor", vec3f(0.8f));
+        MaterialParam1f roughness = getMaterialParam1f("roughness", 0.f);
+        MaterialParam1f normal = getMaterialParam1f("normal", 1.f);
 
-        Texture2D* baseRoughnessMap = (Texture2D*)getParamObject("baseRoughnessMap");
-        affine2f baseRoughnessXform = getTextureTransform("baseRoughnessMap");
-        float baseRoughness = getParamf("baseRoughness", baseRoughnessMap ? 1.f : 0.f);
+        MaterialParam1f flakeScale = getMaterialParam1f("flakeScale", 100.f);
+        MaterialParam1f flakeDensity = getMaterialParam1f("flakeDensity", 0.f);
+        MaterialParam1f flakeSpread = getMaterialParam1f("flakeSpread", 0.3f);
+        MaterialParam1f flakeJitter = getMaterialParam1f("flakeJitter", 0.75f);
+        MaterialParam1f flakeRoughness = getMaterialParam1f("flakeRoughness", 0.3f);
 
-        Texture2D* flakeScaleMap = (Texture2D*)getParamObject("flakeScaleMap");
-        affine2f flakeScaleXform = getTextureTransform("flakeScaleMap");
-        float flakeScale = getParamf("flakeScale", flakeScaleMap ? 1.f : 100.f);
+        MaterialParam1f coat = getMaterialParam1f("coat", 1.f);
+        MaterialParam1f coatIor = getMaterialParam1f("coatIor", 1.5f);
+        MaterialParam3f coatColor = getMaterialParam3f("coatColor", vec3f(1.f));
+        MaterialParam1f coatThickness = getMaterialParam1f("coatThickness", 1.f);
+        MaterialParam1f coatRoughness = getMaterialParam1f("coatRoughness", 0.f);
+        MaterialParam1f coatNormal = getMaterialParam1f("coatNormal", 1.f);
 
-        Texture2D* flakeDensityMap = (Texture2D*)getParamObject("flakeDensityMap");
-        affine2f flakeDensityXform = getTextureTransform("flakeDensityMap");
-        float flakeDensity = getParamf("flakeDensity", flakeDensityMap ? 1.f : 1.f);
-
-        Texture2D* flakeSpreadMap = (Texture2D*)getParamObject("flakeSpreadMap");
-        affine2f flakeSpreadXform = getTextureTransform("flakeSpreadMap");
-        float flakeSpread = getParamf("flakeSpread", flakeSpreadMap ? 1.f : 0.2f);
-
-        Texture2D* flakeJitterMap = (Texture2D*)getParamObject("flakeJitterMap");
-        affine2f flakeJitterXform = getTextureTransform("flakeJitterMap");
-        float flakeJitter = getParamf("flakeJitter", flakeJitterMap ? 1.f : 0.75f);
-
-        Texture2D* flakeRoughnessMap = (Texture2D*)getParamObject("flakeRoughnessMap");
-        affine2f flakeRoughnessXform = getTextureTransform("flakeRoughnessMap");
-        float flakeRoughness = getParamf("flakeRoughness", flakeRoughnessMap ? 1.f : 0.3f);
-
-        Texture2D* coatMap = (Texture2D*)getParamObject("coatMap");
-        affine2f coatXform = getTextureTransform("coatMap");
-        float coat = getParamf("coat", coatMap ? 1.f : 0.f);
-
-        Texture2D* coatColorMap = (Texture2D*)getParamObject("coatColorMap");
-        affine2f coatColorXform = getTextureTransform("coatColorMap");
-        vec3f coatColor = getParam3f("coatColor", vec3f(1.f));
-
-        Texture2D* coatThicknessMap = (Texture2D*)getParamObject("coatThicknessMap");
-        affine2f coatThicknessXform = getTextureTransform("coatThicknessMap");
-        float coatThickness = getParamf("coatThickness", 1.f);
-
-        Texture2D* coatRoughnessMap = (Texture2D*)getParamObject("coatRoughnessMap");
-        affine2f coatRoughnessXform = getTextureTransform("coatRoughnessMap");
-        float coatRoughness = getParamf("coatRoughness", coatRoughnessMap ? 1.f : 0.f);
-
-        Texture2D* coatNormalMap = (Texture2D*)getParamObject("coatNormalMap");
-        affine2f coatNormalXform = getTextureTransform("coatNormalMap");
-        linear2f coatNormalRot   = coatNormalXform.l.orthogonal().transposed();
-        float coatNormalScale = getParamf("coatNormalScale", 1.f);
+        MaterialParam3f flipflopColor = getMaterialParam3f("flipflopColor", vec3f(1.f));
+        MaterialParam1f flipflopFalloff = getMaterialParam1f("flipflopFalloff", 1.f);
 
         ispc::PathTracer_CarPaint_set(getIE(),
-          (const ispc::vec3f&)baseColor, baseColorMap ? baseColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)baseColorXform,
-          baseRoughness, baseRoughnessMap ? baseRoughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)baseRoughnessXform,
-          flakeScale, flakeScaleMap ? flakeScaleMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeScaleXform,
-          flakeDensity, flakeDensityMap ? flakeDensityMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeDensityXform,
-          flakeSpread, flakeSpreadMap ? flakeSpreadMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeSpreadXform,
-          flakeJitter, flakeJitterMap ? flakeJitterMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeJitterXform,
-          flakeRoughness, flakeRoughnessMap ? flakeRoughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeRoughnessXform,
-          coat, coatMap ? coatMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatXform,
-          (const ispc::vec3f&)coatColor, coatColorMap ? coatColorMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatColorXform,
-          coatThickness, coatThicknessMap ? coatThicknessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThicknessXform,
-          coatRoughness, coatRoughnessMap ? coatRoughnessMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughnessXform,
-          coatNormalMap ? coatNormalMap->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormalXform, (const ispc::LinearSpace2f&)coatNormalRot, coatNormalScale);
+          (const ispc::vec3f&)baseColor.factor, baseColor.map ? baseColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)baseColor.xform,
+          roughness.factor, roughness.map ? roughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)roughness.xform,
+          normal.factor, normal.map ? normal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)normal.xform, (const ispc::LinearSpace2f&)normal.rot,
+
+          flakeScale.factor, flakeScale.map ? flakeScale.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeScale.xform,
+          flakeDensity.factor, flakeDensity.map ? flakeDensity.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeDensity.xform,
+          flakeSpread.factor, flakeSpread.map ? flakeSpread.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeSpread.xform,
+          flakeJitter.factor, flakeJitter.map ? flakeJitter.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeJitter.xform,
+          flakeRoughness.factor, flakeRoughness.map ? flakeRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flakeRoughness.xform,
+
+          coat.factor, coat.map ? coat.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coat.xform,
+          coatIor.factor, coatIor.map ? coatIor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatIor.xform,
+          (const ispc::vec3f&)coatColor.factor, coatColor.map ? coatColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatColor.xform,
+          coatThickness.factor, coatThickness.map ? coatThickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatThickness.xform,
+          coatRoughness.factor, coatRoughness.map ? coatRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatRoughness.xform,
+          coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot,
+          
+          (const ispc::vec3f&)flipflopColor.factor, flipflopColor.map ? flipflopColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flipflopColor.xform,
+          flipflopFalloff.factor, flipflopFalloff.map ? flipflopFalloff.map->getIE() : nullptr, (const ispc::AffineSpace2f&)flipflopFalloff.xform);
       }
     };
 

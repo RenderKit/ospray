@@ -28,8 +28,6 @@ namespace ospray {
 
       // return bounding box of all primitives
       box3f bounds() const override;
-
-      OSPGeometry ospGeometry {nullptr};
     };
 
   } // ::ospray::sg

@@ -49,6 +49,12 @@ namespace ospcommon {
     range_t(const T &t) : lower(t), upper(t){}
     range_t(const T &_lower, const T &_upper) : lower(_lower), upper(_upper){}
 
+    template <typename other_t>
+    explicit range_t(const range_t<other_t> &other) 
+      : lower(T(other.lower)), 
+        upper(T(other.upper)) 
+    {}
+
     inline T size() const
     {
       return upper - lower;
@@ -116,6 +122,26 @@ namespace ospcommon {
     o << "[" << r.lower << "," << r.upper << "]";
     return o;
   }
+
+  /*! scale range, per dimension */
+  template<typename T>
+  inline range_t<T> operator*(const range_t<T> &range, const T &scale)
+  { return range_t<T>(range.lower*scale,range.upper*scale); }
+
+  /*! scale range, per dimension */
+  template<typename T>
+  inline range_t<T> operator*(const T &scale, const range_t<T> &range)
+  { return range_t<T>(range.lower*scale,range.upper*scale); }
+
+  /*! translate a range, per dimension */
+  template<typename T>
+  inline range_t<T> operator+(const range_t<T> &range, const T &translation)
+  { return range_t<T>(range.lower+translation,range.upper+translation); }
+
+  /*! translate a range, per dimension */
+  template<typename T>
+  inline range_t<T> operator+(const T &translation, const range_t<T> &range)
+  { return range_t<T>(range.lower+translation,range.upper+translation); }
 
   /*! find properly with given name, and return as lowerng ('l')
     int. return undefined if prop does not exist */

@@ -57,7 +57,7 @@ const varying BSDF* varying Metal_getBSDF(const uniform PathTraceMaterial* unifo
   if (roughness == 0.0f)
     return Conductor_create(ctx, frame, fresnel);
   else
-    return MicrofacetConductor_create(ctx, frame, fresnel, roughness);
+    return MicrofacetConductor_create(ctx, frame, fresnel, roughness, 0.f);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

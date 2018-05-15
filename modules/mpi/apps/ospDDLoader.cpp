@@ -153,7 +153,8 @@ namespace ospDDLoader {
    */
   void initialize_ospray()
   {
-    ospray::cpp::Device device;
+    ospLoadModule("ispc");
+    ospray::cpp::Device device(nullptr);
 
     ospLoadModule("mpi");
     device = ospray::cpp::Device("mpi_distributed");

@@ -25,7 +25,7 @@
 #include <vector>
 
 // embree
-#include "embree2/rtcore.h"
+#include "embree3/rtcore.h"
 
 namespace ospray {
   namespace mpi {
@@ -42,7 +42,7 @@ namespace ospray {
       // compositing.
       virtual void commit() override;
 
-      std::vector<box3f> myRegions, othersRegions;
+      std::vector<box3f> myRegions, othersRegions, ghostRegions;
     };
 
   } // ::ospray::mpi

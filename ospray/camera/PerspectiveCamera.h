@@ -54,6 +54,7 @@ namespace ospray {
     /*! Every derived class should overrride this! */
     virtual std::string toString() const override;
     virtual void commit() override;
+    virtual vec2f projectPoint(const vec3f &p) const override;
 
     // Data members //
 
@@ -62,12 +63,18 @@ namespace ospray {
     float apertureRadius;
     float focusDistance;
     bool architectural; // orient image plane to be parallel to 'up' and shift the lens
+    vec3f dir_00;
+    vec3f dir_du;
+    vec3f dir_dv;
+    vec2f imgPlaneSize;
+
     typedef enum {
       OSP_STEREO_NONE,
       OSP_STEREO_LEFT,
       OSP_STEREO_RIGHT,
       OSP_STEREO_SIDE_BY_SIDE
     } StereoMode;
+
     StereoMode stereoMode;
     float interpupillaryDistance; // distance between the two cameras (stereo)
   };

@@ -21,7 +21,7 @@ namespace ospray {
 
     FrameBuffer::FrameBuffer(vec2i size)
     {
-      createChild("size", "vec2i", size);
+      createChild("size", "vec2i", size, NodeFlags::gui_readonly);
       createChild("displayWall", "string", std::string(""));
 
       createChild("toneMapping", "bool", true);
@@ -50,7 +50,10 @@ namespace ospray {
                     NodeFlags::required |
                     NodeFlags::gui_slider).setMinMax(1.f, 64.f);
 
+      createChild("acesColor", "bool", true);
+
       createChild("useSRGB", "bool", true);
+      createChild("useAccumBuffer", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
 
       createFB();
@@ -62,6 +65,7 @@ namespace ospray {
       if (lastModified() >= lastCommitted()
           || child("size").lastModified() >= lastCommitted()
           || child("displayWall").lastModified() >= lastCommitted()
+          || child("useAccumBuffer").lastModified() >= lastCommitted()
           || child("useVarianceBuffer").lastModified() >= lastCommitted()
           || child("useSRGB").lastModified() >= lastCommitted()
           || child("toneMapping").lastModified() >= lastCommitted())
@@ -110,6 +114,7 @@ namespace ospray {
         ospSet1f(toneMapper, "midIn", child("midIn").valueAs<float>());
         ospSet1f(toneMapper, "midOut", child("midOut").valueAs<float>());
         ospSet1f(toneMapper, "hdrMax", child("hdrMax").valueAs<float>());
+        ospSet1i(toneMapper, "acesColor", child("acesColor").valueAs<bool>());
 
         ospCommit(toneMapper);
       }
@@ -159,14 +164,15 @@ namespace ospray {
 
       auto format = useSRGB ? OSP_FB_SRGBA : OSP_FB_RGBA8;
 
+      auto useAccum    = child("useAccumBuffer").valueAs<bool>();
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
                                          (displayWallStream=="")
                                          ? format
                                          : OSP_FB_NONE,
-                                         OSP_FB_COLOR | OSP_FB_ACCUM |
+                                         OSP_FB_COLOR |
+                                         (useAccum ? OSP_FB_ACCUM : 0) |
                                          (useVariance ? OSP_FB_VARIANCE : 0));
-      clearAccum();
       setValue(ospFrameBuffer);
     }
 

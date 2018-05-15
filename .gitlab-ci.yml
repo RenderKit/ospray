@@ -27,10 +27,11 @@ variables:
     - release
   dependencies:
     - test-centos6-gcc
+    - pdf
   only:
     - devel
     - master
-    - release-1.5.x
+    - release-1.6.x
 
 .job_template: &test_job
   stage: test-build
@@ -50,7 +51,7 @@ variables:
 .job_template: &test_job_windows
   <<: *test_job
   script:
-    - call scripts\tests\run_tests.bat
+    - cmd call /c 'scripts\tests\run_tests.bat'
   artifacts:
     paths:
       - tests.xml
@@ -85,14 +86,6 @@ build-arch-clang-warnings:
     - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
   allow_failure: true
 
-build-ubuntu1704-gcc:
-  <<: *build_job_docker
-  image: ospray/docker-images:ubuntu17.04
-  artifacts:
-    paths:
-      - $CI_PROJECT_DIR
-    expire_in: 3 day
-
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
@@ -122,7 +115,7 @@ build-centos6-icc:
   script:
     - module load gcc/4.8.2
     - module load intel
-    - module load embree
+    - module load embree/3.1.0
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -136,7 +129,7 @@ build-centos6-icc15:
   script:
     - module load gcc/4.8.2
     - module load intel/2015
-    - module load embree
+    - module load embree/3.1.0
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -174,7 +167,7 @@ build-osx-clang:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140" "OSPRAY_MODULE_MPI=ON"
+    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"v140^" ^"OSPRAY_MODULE_MPI=ON^"'
   tags:
     - msvc14
     - win7
@@ -186,7 +179,7 @@ build-windows-msvc14:
 build-windows-msvc15:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141" "OSPRAY_MODULE_MPI=OFF"
+    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 15 2017 Win64^" ^"v141^" ^"OSPRAY_MODULE_MPI=OFF^"'
   tags:
     - msvc15
     - win7
@@ -198,7 +191,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0" "OSPRAY_MODULE_MPI=ON"
+    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"Intel C++ Compiler 18.0^" ^"OSPRAY_MODULE_MPI=ON^"'
   tags:
     - icc18
     - win7
@@ -300,7 +293,7 @@ benchmark-centos7-gcc:
     - mkdir benchmarks
     - make ospray_bench_data
     - ln -s /opt/ospray/benchmark/test_data $CI_PROJECT_DIR/build/test_data
-    - ../scripts/bench/run_benchmark.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
+    - ../scripts/bench/run_benchmark_datasets.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
   tags:
     - docker
     - ospray-benchmark
@@ -337,6 +330,43 @@ source-protex-scan:
   allow_failure: true
 
 
+### Documentation ###
+
+.job_template: &doc-defaults
+  stage: build
+  tags:
+    - docker
+  image: ospray/docker-images:docu
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+
+pdf:
+  <<: *doc-defaults
+  script:
+    - cd doc
+    - make pdf
+  only:
+    - devel
+    - release-1.6.x
+    - master
+  artifacts:
+    paths:
+      - readme.pdf
+    expire_in: 1 week
+
+web:
+  <<: *doc-defaults
+  script:
+    - cd doc
+    - make www
+  only:
+    - master
+  artifacts:
+    paths:
+      - doc/www/*
+    expire_in: 1 week
+
+
 ### RELEASE JOBS ###
 
 release-linux-icc:
@@ -345,7 +375,7 @@ release-linux-icc:
     - module load cmake
     - module load gcc/4.8.2
     - module load intel
-    - module load embree
+    - module load embree/3.1.0
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh
@@ -375,7 +405,7 @@ release-osx-clang:
 release-windows:
   <<: *release_job
   script:
-    - call scripts\release\win.bat
+    - cmd call /c 'scripts\release\win.bat'
   tags:
     - msvc
     - win7

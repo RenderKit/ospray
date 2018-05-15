@@ -21,6 +21,10 @@
 #include "../common/DifferentialGeometry.ih"
 #include "math/AffineSpace.ih"
 
+// embree
+#include "embree3/rtcore.isph"
+
+
 /*! Geometries are supposed to fill certain members of DifferentialGeometry:
     calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,
     DG_NS, DG_TEXCOORD, DG_COLOR, and DG_MATERIALID, in flags is set.
@@ -91,6 +95,7 @@ struct Geometry {
   Model *uniform model;
 
   //! ID that 'model' knows this geometry under
+  RTCGeometry geom;
   uniform int32 geomID;
 };
 
@@ -99,5 +104,16 @@ extern void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
                                  uniform Geometry_postIntersectFct postIntersect,
                                  uniform Model *uniform model,
-                                 uniform int32  geomID,
+                                 RTCGeometry geom,
+                                 uniform int32 geomID,
                                  uniform Material *uniform *uniform materialList);
+
+inline void Geometry_Constructor(uniform Geometry *uniform geometry,
+                                 void *uniform cppEquivalent,
+                                 uniform Geometry_postIntersectFct postIntersect,
+                                 uniform Model *uniform model,
+                                 uniform int32 geomID,
+                                 uniform Material *uniform *uniform materialList)
+{
+  Geometry_Constructor(geometry,cppEquivalent,postIntersect,model,NULL,geomID,materialList);
+}

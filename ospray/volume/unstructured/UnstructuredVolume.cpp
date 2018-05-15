@@ -40,6 +40,16 @@ namespace ospray {
   void UnstructuredVolume::commit()
   {
     updateEditableParameters();
+
+    if (getParamData("field", nullptr) != oldField ||
+        getParamData("cellField", nullptr) != oldCellField) {
+      oldField = getParamData("field", nullptr);
+      oldCellField = getParamData("cellField", nullptr);
+
+      // rebuild BVH, resync ISPC, etc...
+      finished = false;
+    }
+
     if (!finished)
       finish();
 
@@ -51,6 +61,23 @@ namespace ospray {
       ispc::UnstructuredVolume_method_planar(ispcEquivalent);
     } else if (methodString == "nonplanar") {
       ispc::UnstructuredVolume_method_nonplanar(ispcEquivalent);
+    }
+
+    ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
+
+    if (getParam<int>("precomputedNormals", 1)) {
+      if (faceNormals.empty()) {
+        calculateFaceNormals();
+        ispc::UnstructuredVolume_setFaceNormals(ispcEquivalent,
+                                                (const ispc::vec3f *)faceNormals.data());
+      }
+    } else {
+      if (!faceNormals.empty()) {
+        ispc::UnstructuredVolume_setFaceNormals(ispcEquivalent,
+                                                (const ispc::vec3f *)nullptr);
+        faceNormals.clear();
+        faceNormals.shrink_to_fit();
+      }
     }
 
     Volume::commit();
@@ -72,20 +99,41 @@ namespace ospray {
   {
     box4f tetBox;
 
-    int maxIdx = indices[2 * id][0] == -1 ? 4 : 8;
+    int maxIdx;
+
+    switch (indices[2 * id][0]) {
+    case -1:
+      maxIdx = 4;
+      break;
+    case -2:
+      maxIdx = 6;
+      break;
+    default:
+      maxIdx = 8;
+      break;
+    }
 
     for (int i = 0; i < maxIdx; i++) {
-      size_t idx;
-      if (maxIdx == 4) {
+      size_t idx = 0;
+      switch (maxIdx) {
+      case 4:
         idx = indices[2 * id + 1][i];
-      } else {
+        break;
+      case 6:
+        if (i < 2)
+          idx = indices[2 * id][1 + 2];
+        else
+          idx = indices[2 * id + 1][i - 2];
+        break;
+      case 8:
         if (i < 4)
           idx = indices[2 * id][i];
         else
           idx = indices[2 * id + 1][i - 4];
+        break;
       }
       const auto &v = vertices[idx];
-      const float f = field[idx];
+      const float f = cellField ? cellField[id] : field[idx];
       const auto p  = vec4f(v.x, v.y, v.z, f);
 
       if (i == 0)
@@ -97,13 +145,35 @@ namespace ospray {
     return tetBox;
   }
 
+  void UnstructuredVolume::fixupTetWinding()
+  {
+    tasking::parallel_for(nCells, [&](int i) {
+      if (indices[2 * i].x != -1)
+        return;
+
+      auto &idx = indices[2 * i + 1];
+      const auto &p0 = vertices[idx.x];
+      const auto &p1 = vertices[idx.y];
+      const auto &p2 = vertices[idx.z];
+      const auto &p3 = vertices[idx.w];
+
+      auto center = (p0 + p1 + p2 + p3) / 4;
+      auto norm = cross(p1 - p0, p2 - p0);
+      auto dist = dot(norm, p0 - center);
+
+      if (dist > 0.f)
+        std::swap(idx.x, idx.y);
+    });
+  }
+
   void UnstructuredVolume::finish()
   {
     Data *verticesData   = getParamData("vertices", nullptr);
     Data *indicesData    = getParamData("indices", nullptr);
     Data *fieldData      = getParamData("field", nullptr);
+    Data *cellFieldData  = getParamData("cellField", nullptr);
 
-    if (!verticesData || !indicesData || !fieldData) {
+    if (!verticesData || !indicesData || (!fieldData && !cellFieldData)) {
       throw std::runtime_error(
           "#osp: missing correct data arrays in "
           " UnstructuredVolume!");
@@ -115,10 +185,11 @@ namespace ospray {
     indices = (vec4i *)indicesData->data;
 
     vertices   = (vec3f *)verticesData->data;
-    field      = (float *)fieldData->data;
+    field      = fieldData ? (float *)fieldData->data : nullptr;
+    cellField  = cellFieldData ? (float *)cellFieldData->data : nullptr;
 
     buildBvhAndCalculateBounds();
-    calculateFaceNormals();
+    fixupTetWinding();
 
     float samplingRate = getParam1f("samplingRate", 1.f);
     float samplingStep = calculateSamplingStep();
@@ -128,9 +199,9 @@ namespace ospray {
                           nCells,
                           (const ispc::box3f &)bbox,
                           (const ispc::vec3f *)vertices,
-                          (const ispc::vec3f *)faceNormals.data(),
                           (const ispc::vec4i *)indices,
                           (const float *)field,
+                          (const float *)cellField,
                           bvh.rootRef(),
                           bvh.nodePtr(),
                           bvh.itemListPtr(),
@@ -193,6 +264,23 @@ namespace ospray {
 
           faceNormals[i + j] = norm;
         }
+      } else if (indices[2 * taskIndex].x == -2) {
+        // wedge cell
+        const vec4i &lower = indices[2 * taskIndex];
+        const vec4i &upper = indices[2 * taskIndex + 1];
+
+        const auto v0 = vertices[lower.z];
+        const auto v1 = vertices[lower.w];
+        const auto v2 = vertices[upper.x];
+        const auto v3 = vertices[upper.y];
+        const auto v4 = vertices[upper.z];
+        const auto v5 = vertices[upper.w];
+
+        faceNormals[i + 0] = normalize(cross(v2 - v0, v1 - v0)); // bottom
+        faceNormals[i + 1] = normalize(cross(v4 - v3, v5 - v3)); // top
+        faceNormals[i + 2] = normalize(cross(v3 - v0, v2 - v0));
+        faceNormals[i + 3] = normalize(cross(v4 - v1, v0 - v1));
+        faceNormals[i + 4] = normalize(cross(v5 - v2, v1 - v2));
       } else {
         // hexahedron cell
         const vec4i &lower = indices[2 * taskIndex];

@@ -16,14 +16,13 @@
 
 #pragma once
 
-#include "BSDF.ih"
-#include "Fresnel.ih"
+#include "Dielectric.ih"
 
-// Simplified Weidlich-Wilkie smooth coating BSDF.
-// Refraction for all rays and Fresnel for exiting rays are ignored, but absorption is computed
-// from the refracted ray lengths. The advantages are that it does not suffer from energy loss,
-// absorption behaves the same as in the original approach, and it's faster.
+// Simplified, energy conserving Weidlich-Wilkie smooth coating BSDF.
+// Refraction is ignored, but absorption is computed from the refracted ray lengths.
 // [Weidlich and Wilkie, 2007, "Arbitrarily Layered Micro-Facet Surfaces"]
+// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
+// [Kelemen and Szirmay-Kalos, 2001, "A Microfacet Based Coupled Specular-Matte BRDF Model with Importance Sampling"]
 struct DielectricLayer
 {
   BSDF super;
@@ -32,38 +31,54 @@ struct DielectricLayer
   float eta;
   vec3f transmittance;
   float thickness;
+
+  // Energy conservation [Kulla and Conty, 2017]
+  float Favg;
+
+  float weight;
 };
 
 inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
                                          const vec3f& wo, const vec3f& wi)
 {
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
-  BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
+  if (cosThetaO <= 0.f)
+    return make_BSDF_EvalRes_zero();
   float cosThetaI = dot(wi, getN(super));
-  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f) return make_BSDF_EvalRes_zero();
 
   // Fresnel term
   float cosThetaO1; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta) * self->weight;
 
-  // Evaluate the substrate BRDF
+  // Evaluate the substrate
   // Ignore refraction
   BSDF_EvalRes substrate;
   foreach_unique (f in self->substrate)
     substrate = f->eval(f, wo, wi);
 
-  // Apply the coating transmittance
-  // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
-  float cosThetaI1 = refract(cosThetaI, self->eta); // positive
-  substrate.value = substrate.value * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
+  float cosThetaI1; // positive
+  float Fi = fresnelDielectricEx(abs(cosThetaI), cosThetaI1, self->eta) * self->weight;
 
-  // Compute the final subtrate reflection
-  // Ignore Fresnel for the exiting ray
-  res.pdf = (1.0f-F) * substrate.pdf;
-  res.value = (1.0f-F) * substrate.value;
-  return res;
+  // Apply the coating medium absorption
+  // Use refracted angles for computing the absorption path length
+  float lengthO1 = rcp(cosThetaO1);
+  float lengthI1 = rcp(cosThetaI1);
+  float length = lengthO1 + lengthI1;
+  if (cosThetaI <= 0.f) length *= 0.5f; // for transmission, use the average length
+  substrate.value = lerp(self->weight, substrate.value, substrate.value * pow(self->transmittance, self->thickness * length));
+
+  // Energy conservation
+  float T;
+  if (self->substrate->type & ~BSDF_DIFFUSE)
+    T = min(1.f - Fo, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+  else
+    T = (1.f - Fo) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+  substrate.value = substrate.value * T;
+
+  substrate.pdf *= (1.f - Fo);
+  return substrate;
 }
 
 inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
@@ -73,54 +88,104 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
   BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.0f) return make_BSDF_SampleRes_zero();
+  if (cosThetaO <= 0.f)
+    return make_BSDF_SampleRes_zero();
 
   // Fresnel term
   float cosThetaO1; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta) * self->weight;
 
-  if (ss < F) {
-    // Sample the coating reflection
+  if (ss < Fo)
+  {
+    // Sample the coating
     res.type = BSDF_SPECULAR_REFLECTION;
     res.wi = reflect(wo, getN(super), cosThetaO);
     res.pdf = inf;
-    res.weight = make_vec3f(1.0f);
-  } else {
-    // Sample the substrate BRDF
-    float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
+    res.weight = make_vec3f(1.f);
+  }
+  else
+  {
+    // Sample the substrate
+    // Ignore refraction
+    float ss1 = (ss - Fo) * rcp(1.f - Fo); // reallocate sample
     foreach_unique (f in self->substrate)
       res = f->sample(f, wo, s, ss1);
-    if (reduce_max(res.weight) <= 0.0f) return res;
-    float cosThetaI = max(dot(res.wi, getN(super)), 0.0f); // should be positive
+    if (reduce_max(res.weight) <= 0.f)
+      return res;
+    float cosThetaI = dot(res.wi, getN(super));
 
-    // Apply the coating transmittance
-    float cosThetaI1 = refract(cosThetaI, self->eta); // positive
-    res.weight = res.weight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
+    float cosThetaI1; // positive
+    float Fi = fresnelDielectricEx(abs(cosThetaI), cosThetaI1, self->eta) * self->weight;
 
-    // Compute the final reflection
-    res.pdf = (1.0f-F) * res.pdf;
+    // Apply the coating medium absorption
+    // Use refracted angles for computing the absorption path length
+    float lengthO1 = rcp(cosThetaO1);
+    float lengthI1 = rcp(cosThetaI1);
+    float length = lengthO1 + lengthI1;
+    if (cosThetaI <= 0.f) length *= 0.5f; // for transmission, use the average length
+    res.weight = lerp(self->weight, res.weight, res.weight * pow(self->transmittance, self->thickness * length));
+
+    // Energy conservation
+    float T;
+    if (self->substrate->type & ~BSDF_DIFFUSE)
+      T = min(1.f - Fo, 1.f - Fi); // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+    else
+      T = (1.f - Fo) * (1.f - Fi) * rcp(1.f - self->Favg); // for diffuse substrates [Kelemen and Szirmay-Kalos, 2001]
+    res.weight = res.weight * (T * rcp(1.f - Fo));
+
+    res.pdf *= (1.f - Fo);
   }
 
   return res;
 }
 
 inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, const varying linear3f* uniform frame,
-                                        varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness)
+                                        varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness,
+                                        float weight)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION | substrate->type,
                    DielectricLayer_eval, DielectricLayer_sample,
                    frame);
 
   self->substrate = substrate;
-  self->eta = eta;
+  self->eta = (eta <= 1.f) ? eta : rcp(eta);
   self->transmittance = transmittance;
   self->thickness = thickness;
+
+  // Energy conservation
+  self->Favg = fresnelDielectricAvg(eta) * weight;
+  
+  self->weight = weight;
 }
 
 inline varying BSDF* uniform DielectricLayer_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                    varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness)
+                                                    varying BSDF* varying substrate,
+                                                    float eta, vec3f transmittance, float thickness,
+                                                    float weight)
 {
   varying DielectricLayer* uniform self = (varying DielectricLayer* uniform)ShadingContext_alloc(ctx, sizeof(DielectricLayer));
-  DielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness);
+  DielectricLayer_Constructor(self, frame, substrate, eta, transmittance, thickness, weight);
   return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline vec3f DielectricLayer_getTransparency(float cosThetaO,
+                                             float eta, vec3f transmittance, float thickness,
+                                             float weight)
+{
+  if (eta < 1.f) eta = rcp(eta);
+
+  // Fresnel term
+  float cosThetaO1; // positive
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaO1, eta) * weight;
+
+  // Apply the coating medium absorption
+  // Use refracted angles for computing the absorption path length
+  float lengthO1 = rcp(cosThetaO1);
+  vec3f value = lerp(weight, make_vec3f(1.f), pow(transmittance, thickness * lengthO1));
+
+  // Energy conservation
+  float T = 1.f - Fo; // for generic (non-diffuse) substrates [Kulla and Conty, 2017]
+  value = value * T;
+  return value;
 }

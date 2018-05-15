@@ -22,32 +22,36 @@
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
 // [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
 // [Heitz and d'Eon, 2014, "Importance Sampling Microfacet-Based BSDFs using the Distribution of Visible Normals"]
+// [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals"]
 struct GGXDistribution
 {
-  float alpha;
+  vec2f alpha;
 };
 
-inline GGXDistribution make_GGXDistribution(float alpha)
+inline GGXDistribution make_GGXDistribution(const vec2f& alpha)
 {
-  GGXDistribution m;
-  m.alpha = alpha;
-  return m;
+  GGXDistribution self;
+  self.alpha = alpha;
+  return self;
 }
 
-// D(\omega_m) = \frac{\alpha^2}{\pi \cos^4\theta_m (\alpha^2 + \tan^2\theta_m)^2}
+// D(\omega_m) = \frac{1}{\pi \alpha_x \alpha_y \cos^4\theta_m \left(1 + \tan^2\theta_m \left(\frac{\cos^2\phi_m}{\alpha_x^2} + \frac{\sin^2\phi_m}{\alpha_y^2}\right)\right)^2}
 inline float eval(const GGXDistribution& self,
-                  float cosTheta)
+                  const vec3f& wh)
 {
-  float alpha2 = sqr(self.alpha);
-  float tmp = (alpha2*cosTheta - cosTheta) * cosTheta + 1.f;
-  return alpha2 * rcp(pi*sqr(tmp));
+  float cosTheta = wh.z;
+  float cosTheta2 = sqr(cosTheta);
+
+  float e = (sqr(wh.x / self.alpha.x) + sqr(wh.y / self.alpha.y)) / cosTheta2;
+  return rcp(pi * self.alpha.x * self.alpha.y * sqr(cosTheta2 * (1.f + e)));
 }
 
 // p(\omega_m) = D(\omega_m) \cos\theta_m
 inline float eval(const GGXDistribution& self,
-                  float cosTheta, float& pdf)
+                  const vec3f& wh, float& pdf)
 {
-  float D = eval(self, cosTheta);
+  float cosTheta = wh.z;
+  float D = eval(self, wh);
   pdf = D * abs(cosTheta);
   return D;
 }
@@ -58,18 +62,33 @@ inline float eval(const GGXDistribution& self,
 inline vec3f sample(const GGXDistribution& self,
                     float& pdf, const vec2f& s)
 {
-  float alpha2 = sqr(self.alpha);
-  float tanTheta2 = alpha2*s.x * rcp(1.f-s.x);
-  float cosTheta = rsqrt(1.f + tanTheta2);
-  float sinTheta = cos2sin(cosTheta);
-
-  float phi = 2.f*pi * s.y;
-
-  float cosTheta3 = sqr(cosTheta)*cosTheta;
-  pdf = alpha2 * rcp(pi * cosTheta3 * sqr(alpha2+tanTheta2));
+  float phi;
+  if (self.alpha.x == self.alpha.y)
+  {
+    phi = 2.f*pi * s.y;
+  }
+  else
+  {
+    phi = atan(self.alpha.y / self.alpha.x * tan(pi*(2.f*s.y + 0.5f)));
+    if (s.y > 0.5f) phi += pi;
+  }
 
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
+
+  float alpha2;
+  if (self.alpha.x == self.alpha.y)
+    alpha2 = sqr(self.alpha.x);
+  else
+    alpha2 = rcp(sqr(cosPhi / self.alpha.x) + sqr(sinPhi / self.alpha.y));
+  
+  float tanTheta2 = alpha2*s.x / (1.f-s.x);
+  float cosTheta = rsqrt(1.f + tanTheta2);
+  float cosTheta3 = sqr(cosTheta)*cosTheta;
+  float sinTheta = cos2sin(cosTheta);
+
+  float e = tanTheta2 / alpha2;
+  pdf = rcp(pi * self.alpha.x * self.alpha.y * cosTheta3 * sqr(1.f + e));
 
   float x = cosPhi * sinTheta;
   float y = sinPhi * sinTheta;
@@ -79,116 +98,77 @@ inline vec3f sample(const GGXDistribution& self,
 
 // Smith Lambda function [Heitz, 2014]
 // \Lambda(\omega_o) = \frac{-1 + \sqrt{1+\frac{1}{a^2}}}{2}
-// a = \frac{1}{\alpha \tan\theta_o}
-inline float Lambda(const GGXDistribution& self,
-                    float cosTheta)
+// a = \frac{1}{\alpha_o \tan\theta_o}
+// \alpha_o = \sqrt{cos^2\phi_o \alpha_x^2 + sin^2\phi_o \alpha_y^2}
+inline float evalLambda(const GGXDistribution& self,
+                        const vec3f& wo)
 {
-  float alpha2 = sqr(self.alpha);
-  float cosTheta2 = sqr(cosTheta);
-  float tanTheta2 = (1.f-cosTheta2) * rcp(cosTheta2);
-  return 0.5f * (-1.f + sqrt(1.f+alpha2*tanTheta2));
+  float cosThetaO = wo.z;
+  float cosThetaO2 = sqr(cosThetaO);
+  float invA2 = (sqr(wo.x * self.alpha.x) + sqr(wo.y * self.alpha.y)) / cosThetaO2;
+  return 0.5f * (-1.f + sqrt(1.f+invA2));
 }
 
-inline float G1(const GGXDistribution& self,
-                float cosThetaO, float cosThetaOH)
+inline float evalG1(const GGXDistribution& self,
+                    const vec3f& wo, float cosThetaOH)
 {
+  float cosThetaO = wo.z;
   if (cosThetaO * cosThetaOH <= 0.f)
     return 0.f;
 
-  return rcp(1.f + Lambda(self, cosThetaO));
+  return rcp(1.f + evalLambda(self, wo));
 }
 
 // Smith's height-correlated masking-shadowing function
 // [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
-inline float G2(const GGXDistribution& self,
-                float cosThetaO, float cosThetaI, float cosThetaOH, float cosThetaIH)
+inline float evalG2(const GGXDistribution& self,
+                    const vec3f& wo, const vec3f& wi, float cosThetaOH, float cosThetaIH)
 {
+  float cosThetaO = wo.z;
+  float cosThetaI = wi.z;
   if (cosThetaO * cosThetaOH <= 0.f || cosThetaI * cosThetaIH <= 0.f)
     return 0.f;
 
-  return rcp(1.f + Lambda(self, cosThetaO) + Lambda(self, cosThetaI));
+  return rcp(1.f + evalLambda(self, wo) + evalLambda(self, wi));
 }
 
 inline float evalVisible(const GGXDistribution& self,
-                         float cosThetaH, float cosThetaO, float cosThetaOH, float& pdf)
+                         const vec3f& wh, const vec3f& wo, float cosThetaOH, float& pdf)
 {
-  float D = eval(self, cosThetaH);
-  pdf = G1(self, cosThetaO, cosThetaOH) * abs(cosThetaOH) * D / abs(cosThetaO);
+  float cosThetaO = wo.z;
+  float D = eval(self, wh);
+  pdf = evalG1(self, wo, cosThetaOH) * abs(cosThetaOH) * D / abs(cosThetaO);
   return D;
 }
 
-// Visible normal sampling code for the alpha=1 case
-inline vec2f sampleVisible11(const GGXDistribution& self,
-                             float thetaI, const vec2f& s)
-{
-  vec2f slope;
-
-  // Special case (normal incidence)
-  if (thetaI < 1e-4f)
-  {
-    float sinPhi, cosPhi;
-    float r = sqrt_safe(s.x / (1 - s.x));
-    sincos(2.f * pi * s.y, &sinPhi, &cosPhi);
-    return make_vec2f(r * cosPhi, r * sinPhi);
-  }
-
-  // Precomputations
-  float tanThetaI = tan(thetaI);
-  float a = rcp(tanThetaI);
-  float G1 = 2.f / (1.f + sqrt_safe(1.f + rcp(a*a)));
-
-  // Sample X component
-  float A = 2.f * s.x / G1 - 1.f;
-  float tmp = rcp(A*A - 1.f);
-  tmp = min(tmp, 1e10f);
-  float B = tanThetaI;
-  float D = sqrt_safe(B*B*tmp*tmp - (A*A - B*B) * tmp);
-  float slopeX1 = B * tmp - D;
-  float slopeX2 = B * tmp + D;
-  slope.x = (A < 0.f || slopeX2 > rcp(tanThetaI)) ? slopeX1 : slopeX2;
-
-  // Sample Y component
-  float S = (s.y > 0.5f) ? 1.f : -1.f;
-  float sy = S * 2.f * (s.y - 0.5f);
-
-  float z = (sy * (sy * (sy * 0.27385f - 0.73369f) + 0.46341f)) /
-    (sy * (sy * (sy * 0.093073f + 0.309420f) - 1.f) + 0.597999f);
-
-  slope.y = S * z * sqrt(1.f + slope.x*slope.x);
-
-  return slope;
-}
-
+// Fast visible normal sampling (wo must be in the upper hemisphere)
+// [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals"]
 inline vec3f sampleVisible(const GGXDistribution& self,
-                           vec3f wo, float& pdf, const vec2f& s)
+                           const vec3f& wo, float& pdf, const vec2f& s)
 {
   // Stretch wo
-  wo = normalize(make_vec3f(self.alpha * wo.x, self.alpha * wo.y, wo.z));
+  vec3f V = normalize(make_vec3f(self.alpha.x * wo.x, self.alpha.y * wo.y, wo.z));
 
-  // Compute polar coordinates
-  bool valid = wo.z < 0.99999f;
-  float theta = valid ? acos(wo.z) : 0.f;
-  float phi = valid ? atan2(wo.y, wo.x) : 0.f;
-  float sinPhi, cosPhi;
-  sincos(phi, &sinPhi, &cosPhi);
+  // Orthonormal basis
+  vec3f T1 = (V.z < 0.9999f) ? normalize(cross(V, make_vec3f(0,0,1))) : make_vec3f(1,0,0);
+  vec3f T2 = cross(T1, V);
 
-  // Sample P22_{wo}(slope.x, slope.y, 1, 1)
-  vec2f slope = sampleVisible11(self, theta, s);
-
-  // Rotate
-  slope = make_vec2f(
-    cosPhi * slope.x - sinPhi * slope.y,
-    sinPhi * slope.x + cosPhi * slope.y);
-
-  // Unstretch
-  slope.x *= self.alpha;
-  slope.y *= self.alpha;
+  // Sample point with polar coordinates (r, phi)
+  float a = 1.f / (1.f + V.z);
+  float r = sqrt(s.x);
+  float phi = (s.y<a) ? s.y/a * pi : pi + (s.y-a)/(1.f-a) * pi;
+  float P1 = r*cos(phi);
+  float P2 = r*sin(phi)*((s.y<a) ? 1.f : V.z);
 
   // Compute normal
-  vec3f m = normalize(make_vec3f(-slope.x, -slope.y, 1.f));
+  vec3f wh = P1*T1 + P2*T2 + sqrt(max(0.f, 1.f - P1*P1 - P2*P2))*V;
+
+  // Unstretch
+  wh = normalize(make_vec3f(self.alpha.x * wh.x, self.alpha.y * wh.y, max(0.f, wh.z)));
 
   // Compute pdf
-  pdf = G1(self, wo.z, dot(wo, m)) * abs(dot(wo, m)) * eval(self, m.z) / abs(wo.z);
-  return m;
+  float cosThetaO = wo.z;
+  pdf = evalG1(self, wo, dot(wo, wh)) * abs(dot(wo, wh)) * eval(self, wh) / abs(cosThetaO);
+  return wh;
 }
 

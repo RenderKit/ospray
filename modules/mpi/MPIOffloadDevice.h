@@ -33,7 +33,7 @@ namespace ospray {
 
     struct MPIOffloadDevice : public api::Device
     {
-      MPIOffloadDevice() = default;
+      MPIOffloadDevice();
       ~MPIOffloadDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
@@ -123,6 +123,11 @@ namespace ospray {
       void setObject(OSPObject target,
                      const char *bufName,
                      OSPObject value) override;
+
+      /*! assign (named) float parameter to an object */
+      void setBool(OSPObject object,
+                   const char *bufName,
+                   const bool b) override;
 
       /*! assign (named) float parameter to an object */
       void setFloat(OSPObject object,

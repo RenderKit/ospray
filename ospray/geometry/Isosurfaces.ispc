@@ -21,10 +21,6 @@
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
 #include "volume/Volume.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
 struct Isosurfaces {
   uniform Geometry super; //!< inherited geometry fields
@@ -32,75 +28,80 @@ struct Isosurfaces {
   uniform Volume *uniform volume;
 };
 
-void Isosurfaces_bounds(uniform Isosurfaces *uniform isosurfaces,
-                        uniform size_t primID,
-                        uniform box3fa &bbox)
+unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  bbox = make_box3fa(isosurfaces->volume->boundingBox);
+  uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
+
+  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
+  *out = make_box3fa(self->volume->boundingBox);
 }
 
-void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
-                           varying Ray &ray,
-                           uniform size_t primID)
+void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
+                                const uniform bool isOcclusionTest)
 {
-  // Volume of interest.
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+
+  uniform Isosurfaces *uniform self
+    = (uniform Isosurfaces *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+
+  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+
   uniform Volume *uniform volume = self->volume;
 
-  float tBox0, tBox1;
-  intersectBox(ray, self->volume->boundingBox, tBox0, tBox1);
+  float hit_t;
+  vec3f hit_Ng;
 
-  // Operate on a copy of the ray.
-  Ray rayCopy = ray;
-  rayCopy.t0 = max(ray.t0, tBox0) + ray.time; // use ray.time as a ray offset
-  rayCopy.t = min(ray.t, tBox1);
+  /* iw - just to explain the following code sequence: in embree3, the
+     'occluded' function no longer guarantees that we have a 'full'
+     ospray ray to intersect (the ospray ray is what emrbee calls a
+     rayhit, the concatenation of ray _and_ hitpoint!), but that
+     voluem->intersectIsoSurface code seems to assume that this is
+     always a ful ospray::ray. So, just to make sure that this code
+     always has a valid "full" ray to work with I'm creating a temp
+     one here, and then, when writing results back, make sure that we
+     not write any hit information unless it's not an occlusoin
+     test */
+  Ray tmpRay;
+  tmpRay.org = ray->org;
+  tmpRay.time = ray->time;
+  tmpRay.dir = ray->dir;
+  tmpRay.t0 = ray->t0;
+  tmpRay.t = ray->t;
+  tmpRay.instID = -1;
+  tmpRay.geomID = -1;
+  tmpRay.primID = -1;
 
-  // Sample the volume at the current point in world coordinates.
-  float t0 = rayCopy.t0;
-  float sample0 = volume->sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
-
-  while(1) {
-
-    // Advance the ray.
-    volume->intersectIsosurface(volume, self->isovalues, self->super.numPrimitives, rayCopy);
-
-    if (rayCopy.t0 > rayCopy.t)
-      return;
-
-    const float t = rayCopy.t0;
-    const float sample = volume->sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
-
-    // Find t value and isovalue index for the first isosurface intersection.
-    float tHit = infinity;
-    int isovalueID;
-
-    if (!isnan(sample0+sample)) {
-      for (uniform int i=0; i<self->super.numPrimitives; i++) {
-        if ((self->isovalues[i] - sample0) * (self->isovalues[i] - sample) <= 0.f) {
-          const float rcpSamp = rcpf(sample - sample0);
-          float tIso = infinity;
-          if (!isnan(rcpSamp)) {
-            tIso = t0 + (self->isovalues[i] - sample0) * rcpf(sample - sample0) * (t - t0);
-          }
-
-          if (tIso < tHit) {
-            tHit = tIso;
-            isovalueID = i;
-          }
-        }
-      }
-
-      // If we found a hit, update ray information and return.
-      if (tHit <= rayCopy.t) {
-        ray.geomID = self->super.geomID;
-        ray.primID = isovalueID;
-        ray.t = tHit;
-        return;
-      }
+  volume->intersectIsosurface(volume,
+                              self->isovalues,
+                              self->super.numPrimitives,
+                              self->super.geomID,
+                              tmpRay);
+  const bool hit = tmpRay.primID >= 0;
+  if (hit) {
+    if (isOcclusionTest) {
+      ray->t = neg_inf;
+    } else {
+      ray->instID = args->context->instID[0];
+      ray->geomID = self->super.geomID;
+      ray->primID = tmpRay.primID;
+      ray->t =  tmpRay.t;
+      ray->Ng = tmpRay.Ng;
     }
-
-    t0 = t;
-    sample0 = sample;
   }
+}
+
+unmasked void Isosurfaces_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Isosurfaces_intersect_kernel(args,false);
+}
+
+unmasked void Isosurfaces_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Isosurfaces_intersect_kernel(args,true);
 }
 
 static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
@@ -111,7 +112,7 @@ static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
 {
   uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)geometry;
 
-  if ((flags & DG_NS)) {
+  if (flags & DG_NS) {
     dg.Ns = self->volume->computeGradient(self->volume, dg.P);
     if (dot(dg.Ns,dg.Ns) < 1e-6f)
       dg.Ns = neg(ray.dir); //make_vec3f(1.f,0.f,0.f);
@@ -119,7 +120,7 @@ static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
 
   dg.Ng = dg.Ns;
 
-  if ((flags & DG_COLOR)) {
+  if (flags & DG_COLOR) {
    TransferFunction *uniform xf = self->volume->transferFunction;
    const vec3f sampleColor = xf->getColorForValue(xf, self->isovalues[ray.primID]);
    const float sampleOpacity = 1.f; // later allow "opacity" parameter on isosurfaces.
@@ -136,26 +137,33 @@ export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
   return isosurfaces;
 }
 
-export void *uniform Isosurfaces_set(void          *uniform _isosurfaces,
+export void *uniform Isosurfaces_set(void          *uniform _self,
                                      void          *uniform _model,
                                      int32          uniform numIsovalues,
                                      uniform float *uniform isovalues,
                                      void          *uniform _volume)
 {
-  uniform Isosurfaces *uniform isosurfaces = (uniform Isosurfaces *uniform)_isosurfaces;
+  uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle, 1);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
 
-  isosurfaces->super.model = model;
-  isosurfaces->super.geomID = geomID;
-  isosurfaces->super.numPrimitives = numIsovalues;
-  isosurfaces->isovalues = isovalues;
-  isosurfaces->volume = volume;
+  self->super.model = model;
+  self->super.geomID = geomID;
+  self->super.numPrimitives = numIsovalues;
+  self->isovalues = isovalues;
+  self->volume = volume;
 
-  rtcSetUserData(model->embreeSceneHandle, geomID, isosurfaces);
-  rtcSetBoundsFunction(model->embreeSceneHandle, geomID, (uniform RTCBoundsFunc)&Isosurfaces_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle, geomID, (uniform RTCIntersectFuncVarying)&Isosurfaces_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle, geomID, (uniform RTCOccludedFuncVarying)&Isosurfaces_intersect);
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryUserPrimitiveCount(geom,1);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&Isosurfaces_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&Isosurfaces_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&Isosurfaces_occluded);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
 }

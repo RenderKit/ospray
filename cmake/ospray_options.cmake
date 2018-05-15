@@ -19,7 +19,7 @@
 ##############################################################
 
 SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 5)
+SET(OSPRAY_VERSION_MINOR 6)
 SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
@@ -34,13 +34,8 @@ IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   ENDIF()
 ENDIF()
 
-SET(EMBREE_VERSION_REQUIRED 2.15.0)
 
-OPTION(OSPRAY_ENABLE_TESTING OFF)
-
-IF (OSPRAY_ENABLE_TESTING)
-  ENABLE_TESTING()
-ENDIF()
+SET(EMBREE_VERSION_REQUIRED 3.1.0)
 
 SET(OSPRAY_VERSION
   ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
@@ -113,6 +108,16 @@ INCLUDE(GNUInstallDirs)
 # Must be before ISA config and package
 INCLUDE(configure_embree)
 
+
+OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
+
+OPTION(OSPRAY_ENABLE_TESTING ON)
+
+IF (OSPRAY_ENABLE_TESTING)
+  ENABLE_TESTING()
+ENDIF()
+
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
 ##############################################################
@@ -130,33 +135,55 @@ INCLUDE(package)
 ##############################################################
 
 IF (OSPRAY_INSTALL_DEPENDENCIES)
-  MACRO(OSPRAY_INSTALL_NAMELINK NAME)
+  MACRO(OSPRAY_INSTALL_NAMELINK NAME TARGET_NAME)
     EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink
-                    lib${NAME}.so.2 ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so)
+                    ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so)
     INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+
+    # If the shared lib we're copying is named with a specific version, also
+    # create a major version suffixed symlink
+    STRING(REGEX MATCH "([0-9]+)[.]([0-9]+)[.]([0-9]+)" VERSION_STRING ${TARGET_NAME})
+    if (CMAKE_MATCH_0)
+      EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink
+                      ${TARGET_NAME}
+                      ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1})
+      INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1}
+              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+    endif()
   ENDMACRO()
 
   IF (OSPRAY_TASKING_TBB)
     IF (WIN32)
       SET(TBB_DLL_HINTS
+        HINTS
         ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
         ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
         ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER}
         ${TBB_ROOT}/bin
       )
-      FIND_FILE(TBB_DLL tbb.dll HINTS ${TBB_DLL_HINTS})
-      FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
+      FIND_FILE(TBB_DLL tbb.dll ${TBB_DLL_HINTS})
+      FIND_FILE(TBB_DLL_DEBUG tbb_debug.dll ${TBB_DLL_HINTS})
+      FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll ${TBB_DLL_HINTS})
+      FIND_FILE(TBB_DLL_MALLOC_DEBUG tbbmalloc_debug.dll ${TBB_DLL_HINTS})
       MARK_AS_ADVANCED(TBB_DLL)
+      MARK_AS_ADVANCED(TBB_DLL_DEBUG)
       MARK_AS_ADVANCED(TBB_DLL_MALLOC)
+      MARK_AS_ADVANCED(TBB_DLL_MALLOC_DEBUG)
       INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
-              DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+              DESTINATION ${CMAKE_INSTALL_BINDIR}
+              CONFIGURATIONS Release RelWithDebInfo COMPONENT redist)
+      INSTALL(PROGRAMS ${TBB_DLL_DEBUG} ${TBB_DLL_MALLOC_DEBUG}
+              DESTINATION ${CMAKE_INSTALL_BINDIR}
+              CONFIGURATIONS Debug COMPONENT redist)
     ELSE()
       INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
               DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
       IF (NOT APPLE)
-        OSPRAY_INSTALL_NAMELINK(tbb)
-        OSPRAY_INSTALL_NAMELINK(tbbmalloc)
+        get_filename_component(TBB_LIBNAME ${TBB_LIBRARY} NAME)
+        get_filename_component(TBB_MALLOC_LIBNAME ${TBB_LIBRARY_MALLOC} NAME)
+        OSPRAY_INSTALL_NAMELINK(tbb ${TBB_LIBNAME})
+        OSPRAY_INSTALL_NAMELINK(tbbmalloc ${TBB_MALLOC_LIBNAME})
       ENDIF()
     ENDIF()
   ENDIF()
@@ -169,7 +196,7 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
       ${embree_DIR}/../../../bin
       ${embree_DIR}/../bin
     )
-    FIND_FILE(EMBREE_DLL embree.dll HINTS ${EMBREE_DLL_HINTS})
+    FIND_FILE(EMBREE_DLL embree3.dll HINTS ${EMBREE_DLL_HINTS})
     MARK_AS_ADVANCED(EMBREE_DLL)
     INSTALL(PROGRAMS ${EMBREE_DLL}
             DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
@@ -177,7 +204,8 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
     INSTALL(PROGRAMS ${EMBREE_LIBRARY}
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
     IF (NOT APPLE)
-      OSPRAY_INSTALL_NAMELINK(embree)
+      get_filename_component(EMBREE_LIBNAME ${EMBREE_LIBRARY} NAME)
+      OSPRAY_INSTALL_NAMELINK(embree ${EMBREE_LIBNAME})
     ENDIF()
   ENDIF()
 ENDIF()

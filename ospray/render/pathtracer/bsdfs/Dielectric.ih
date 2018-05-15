@@ -24,7 +24,7 @@ struct Dielectric
 {
   BSDF super;
 
-  float eta;
+  float eta; // etaO / etaI
 };
 
 inline BSDF_EvalRes Dielectric_eval(const varying BSDF* uniform super,
@@ -39,7 +39,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   const varying Dielectric* uniform self = (const varying Dielectric* uniform)super;
   BSDF_SampleRes res;
 
-  float cosThetaO = max(dot(wo, getN(super)), 0.0f);
+  float cosThetaO = max(dot(wo, getN(super)), 0.f);
 
   // Fresnel term
   float cosThetaT; // positive
@@ -47,16 +47,21 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   res.pdf = inf;
 
   // Sample the reflection or the transmission
-  if (ss <= F) {
+  bool doReflection = (ss <= F);
+  if (doReflection)
+  {
     // Reflection
     res.wi = reflect(wo, getN(super), cosThetaO);
     res.type = BSDF_SPECULAR_REFLECTION;
-    res.weight = make_vec3f(1.0f);
-  } else {
+    res.weight = make_vec3f(1.f);
+  }
+  else
+  {
     // Transmission
     res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
     res.type = BSDF_SPECULAR_TRANSMISSION;
-    res.weight = make_vec3f(rcp(sqr(self->eta))); // solid angle compression
+    //res.weight = make_vec3f(sqr(self->eta)); // solid angle compression
+    res.weight = make_vec3f(1.f); // ignore solid angle compression
   }
 
   return res;
@@ -79,4 +84,11 @@ inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform c
   varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));
   Dielectric_Constructor(self, frame, eta);
   return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline vec3f Dielectric_getTransparency(float cosThetaO, float eta)
+{
+  float T = 1.f - fresnelDielectric(cosThetaO, eta);
+  return make_vec3f(T);
 }

@@ -63,7 +63,11 @@
 #endif
 
 /*! \brief Error codes returned by various API and callback functions */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_NO_ERROR = 0,          //!< No error has been recorded
   OSP_UNKNOWN_ERROR = 1,     //!< An unknown error has occured
   OSP_INVALID_ARGUMENT = 2,  //!< An invalid argument is specified
@@ -73,7 +77,11 @@ typedef enum {
 } OSPError;
 
 /*! OSPRay format constants for Frame Buffer creation */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_FB_NONE,    //!< framebuffer will not be mapped by application
   OSP_FB_RGBA8,   //!< one dword per pixel: rgb+alpha, each one byte
   OSP_FB_SRGBA,   //!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
@@ -86,7 +94,11 @@ typedef enum {
 } OSPFrameBufferFormat;
 
 /*! OSPRay channel constants for Frame Buffer (can be OR'ed together) */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
@@ -94,7 +106,11 @@ typedef enum {
 } OSPFrameBufferChannel;
 
 /*! flags that can be passed to OSPNewData; can be OR'ed together */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
 
@@ -137,8 +153,9 @@ namespace osp {
 
   typedef uint64_t uint64;
 
+  struct Device;
+
   struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
-  struct Device           : public ManagedObject {};
   struct FrameBuffer      : public ManagedObject {};
   struct Renderer         : public ManagedObject {};
   struct Camera           : public ManagedObject {};
@@ -238,6 +255,10 @@ extern "C" {
   //! returns OSPError value to report any errors during initialization
   OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
 
+  //! shutdown the OSPRay engine...effectively deletes whatever device is
+  //  currently set.
+  OSPRAY_INTERFACE void ospShutdown();
+
   //! initialize the OSPRay engine (for single-node user application) using
   //! explicit device string.
   OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
@@ -255,6 +276,9 @@ extern "C" {
 
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
+
+  /*! add 1-bool parameter to given Device */
+  OSPRAY_INTERFACE void ospDeviceSet1b(OSPDevice, const char *id, int32_t x);
 
   /*! add an untyped void pointer to given Device */
   OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
@@ -499,7 +523,7 @@ extern "C" {
 
     due to refcounting the frame buffer may not immediately be deleted
     at this time */
-  OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
@@ -526,6 +550,9 @@ extern "C" {
 
   /*! add a data array to another object */
   OSPRAY_INTERFACE void ospSetData(OSPObject, const char *id, OSPData);
+
+  /*! add 1-bool parameter to given object, value is of type 'int' for C99 compatibility */
+  OSPRAY_INTERFACE void ospSet1b(OSPObject, const char *id, int x);
 
   /*! add 1-float parameter to given object */
   OSPRAY_INTERFACE void ospSetf(OSPObject, const char *id, float x);

@@ -106,6 +106,8 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
                                             const uniform vec3i &cellIndex,
                                             uniform vec2f &cellRange)
 {
+  uniform bool cellEmpty = true;
+
   // Loop over voxels in the current cell.
   foreach (k = 0 ... CELL_WIDTH, j = 0 ... CELL_WIDTH, i = 0 ... CELL_WIDTH) {
 
@@ -120,7 +122,12 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
     if(!isnan(value)) {
       cellRange.x = min(cellRange.x, reduce_min(value));
       cellRange.y = max(cellRange.y, reduce_max(value));
+      cellEmpty = false;
     }
+  }
+
+  if (cellEmpty) {
+    cellRange.x = cellRange.y = floatbits(0xffffffff);  /* NaN */
   }
 }
 
@@ -286,14 +293,16 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
     vec2f cellRange;
     GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
 
-    // Get the maximum opacity in the volumetric value range.
-    float maximumOpacity =
+    if (!isnan(cellRange.x)) {
+      // Get the maximum opacity in the volumetric value range.
+      float maximumOpacity =
         volume->super.transferFunction->getMaxOpacityInRange(volume->super.transferFunction,
                                                              cellRange);
 
-    // Return the hit point if the grid cell is not fully transparent.
-    if (maximumOpacity > 0.0f)
-      return;
+      // Return the hit point if the grid cell is not fully transparent.
+      if (maximumOpacity > 0.0f)
+        return;
+    }
 
     // Exit bound of the grid cell in world coordinates.
     vec3f farBound;
@@ -353,10 +362,12 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
   vec2f cellRange;
   GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
 
-  // Return the hit point if the grid cell contains an isovalue.
-  for (uniform int i=0; i<numIsovalues; i++) {
-    if (isovalues[i] >= cellRange.x && isovalues[i] <= cellRange.y)
-      return;
+  if (!isnan(cellRange.x)) {
+    // Return the hit point if the grid cell contains an isovalue.
+    for (uniform int i=0; i<numIsovalues; i++) {
+      if (isovalues[i] >= cellRange.x && isovalues[i] <= cellRange.y)
+        return;
+    }
   }
 
   // Bounds of the grid cell in world coordinates.

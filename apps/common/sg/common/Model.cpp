@@ -16,12 +16,17 @@
 
 #include "Model.h"
 
+#include "../visitor/MarkAllAsModified.h"
+
 namespace ospray {
   namespace sg {
 
     Model::Model()
     {
       setValue((OSPModel)nullptr);
+      createChild("dynamicScene", "bool", true);
+      createChild("compactMode", "bool", false);
+      createChild("robustMode", "bool", false);
     }
 
     std::string Model::toString() const
@@ -42,8 +47,12 @@ namespace ospray {
     void Model::preCommit(RenderContext &ctx)
     {
       auto model = valueAs<OSPModel>();
-      if (model)
+      if (model) {
         ospRelease(model);
+        child("dynamicScene").markAsModified();
+        child("compactMode").markAsModified();
+        child("robustMode").markAsModified();
+      }
       model = ospNewModel();
       setValue(model);
       stashedModel = ctx.currentOSPModel;
@@ -61,6 +70,9 @@ namespace ospray {
 
       ospCommit(model);
       ctx.currentOSPModel = stashedModel;
+
+      // reset bounding box
+      child("bounds") = box3f(empty);
       child("bounds") = computeBounds();
     }
 

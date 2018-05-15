@@ -61,12 +61,13 @@ namespace gensv {
    * or owned data region.
    */
   ospray::cpp::Geometry makeSpheres(const box3f &bbox, const size_t numSpheres,
-                                    const float sphereRadius)
+                                    const float sphereRadius,
+                                    const bool transparent)
   {
     struct Sphere
     {
       vec3f org;
-      int colorID {0};
+      int colorID{0};
     };
 
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
@@ -74,8 +75,10 @@ namespace gensv {
 
     std::vector<Sphere> spheres(numSpheres);
 
+    // To simulate loading a shared dataset all ranks generate the same
+    // sphere data.
     std::mt19937 rng;
-    rng.seed(std::random_device()());
+    rng.seed(0);
 
     // Generate spheres within this nodes volume, to keep the data disjoint.
     // We also leave some buffer space on the boundaries to avoid clipping
@@ -89,7 +92,6 @@ namespace gensv {
                                                  bbox.upper.y - sphereRadius);
     std::uniform_real_distribution<float> dist_z(bbox.lower.z + sphereRadius,
                                                  bbox.upper.z - sphereRadius);
-
     for (auto &s : spheres) {
       s.org.x = dist_x(rng);
       s.org.y = dist_y(rng);
@@ -102,14 +104,18 @@ namespace gensv {
     const float r = (numRanks - myRank) / numRanks;
     const float b = myRank / numRanks;
     const float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
-    vec4f color(r, g, b, 1.f);
+    vec4f color(r, g, b, 1.0);
+    if (transparent) {
+      color.w = 0.1;
+    }
     ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
 
     ospray::cpp::Geometry geom("spheres");
-    geom.set("spheres", sphere_data);
-    geom.set("color", color_data);
     geom.set("offset_colorID", int(sizeof(vec3f)));
+    geom.set("bytes_per_sphere", int(sizeof(Sphere)));
+    geom.set("spheres", sphere_data);
     geom.set("radius", sphereRadius);
+    geom.set("color", color_data);
     geom.commit();
 
     return geom;

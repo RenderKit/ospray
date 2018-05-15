@@ -94,8 +94,15 @@ namespace ospray {
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
 
+    MPIDistributedDevice::MPIDistributedDevice()
+    {
+      maml::init();
+    }
+
     MPIDistributedDevice::~MPIDistributedDevice()
     {
+      maml::shutdown();
+
       if (shouldFinalizeMPI) {
         try {
           MPI_CALL(Finalize());
@@ -124,16 +131,13 @@ namespace ospray {
         auto &embreeDevice = api::ISPCDevice::embreeDevice;
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-
-        rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
-
-        RTCError erc = rtcDeviceGetError(embreeDevice);
-        if (erc != RTC_NO_ERROR) {
+        rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
+        RTCError erc = rtcGetDeviceError(embreeDevice);
+        if (erc != RTC_ERROR_NONE) {
           // why did the error function not get called !?
           postStatusMsg() << "#osp:init: embree internal error number " << erc;
-          assert(erc == RTC_NO_ERROR);
+          assert(erc == RTC_ERROR_NONE);
         }
-
         initialized = true;
       }
 
@@ -273,6 +277,14 @@ namespace ospray {
     int MPIDistributedDevice::loadModule(const char *name)
     {
       return loadLocalModule(name);
+    }
+
+    void MPIDistributedDevice::setBool(OSPObject _object,
+                                       const char *bufName,
+                                       const bool b)
+    {
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->setParam(bufName, b);
     }
 
     void MPIDistributedDevice::setFloat(OSPObject _object,

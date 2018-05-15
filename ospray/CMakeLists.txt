@@ -45,6 +45,7 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
 
+  common/ospray.rc
   common/OSPCommon.cpp
 
   include/ospray/ospray.h
@@ -68,9 +69,10 @@ SET(OSPRAY_SOURCES
 
 SET(OSPRAY_ISPC_DEVICE_SOURCES
 
+  ispc_tasksys.cpp
+
   api/ISPCDevice.cpp
 
-  common/ospray.rc
   common/ObjectHandle.cpp
   common/Data.cpp
   common/Managed.cpp
@@ -103,6 +105,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Geometry.cpp
   geometry/TriangleMesh.ispc
   geometry/TriangleMesh.cpp
+  geometry/QuadMesh.ispc
+  geometry/QuadMesh.cpp
   geometry/StreamLines.cpp
   geometry/StreamLines.ispc
   geometry/Instance.ispc
@@ -161,6 +165,7 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
   render/pathtracer/GeometryLight.ispc
+  render/pathtracer/bsdfs/MicrofacetAlbedoTables.ispc
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp
@@ -293,6 +298,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
   geometry/StreamLines.h
   geometry/TriangleMesh.h
   geometry/TriangleMesh.ih
+  geometry/QuadMesh.h
+  geometry/QuadMesh.ih
   DESTINATION geometry
 )
 
@@ -461,15 +468,20 @@ COMPONENT
   lib
 )
 
-OSPRAY_CREATE_LIBRARY(ospray_module_ispc
-  ${OSPRAY_ISPC_DEVICE_SOURCES}
-LINK
-  ${OSPRAY_LIBS}
-  ospray
-  ${EMBREE_LIBRARIES}
-COMPONENT
-  lib
-)
+OPTION(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
+MARK_AS_ADVANCED(OSPRAY_BUILD_ISPC_DEVICE)
+
+IF(OSPRAY_BUILD_ISPC_DEVICE)
+  OSPRAY_CREATE_LIBRARY(ospray_module_ispc
+    ${OSPRAY_ISPC_DEVICE_SOURCES}
+  LINK
+    ${OSPRAY_LIBS}
+    ospray
+    ${EMBREE_LIBRARIES}
+  COMPONENT
+    lib
+  )
+ENDIF()
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)

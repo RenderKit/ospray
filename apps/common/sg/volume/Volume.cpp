@@ -28,8 +28,10 @@ namespace ospray {
                                  const T *voxel, size_t num)
     {
       for (size_t i = 0; i < num; ++i) {
-        voxelRange.x = std::min(voxelRange.x, static_cast<float>(voxel[i]));
-        voxelRange.y = std::max(voxelRange.y, static_cast<float>(voxel[i]));
+        if (!std::isnan(static_cast<float>(voxel[i]))) {
+          voxelRange.x = std::min(voxelRange.x, static_cast<float>(voxel[i]));
+          voxelRange.y = std::max(voxelRange.y, static_cast<float>(voxel[i]));
+        }
       }
     }
 
@@ -140,6 +142,13 @@ namespace ospray {
     // structured volume class
     // =======================================================
 
+    StructuredVolume::StructuredVolume()
+    {
+      createChild("dimensions", "vec3i", NodeFlags::gui_readonly);
+      createChild("voxelType", "string",
+                  std::string("<undefined>"), NodeFlags::gui_readonly);
+    }
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolume::toString() const
     {
@@ -149,8 +158,61 @@ namespace ospray {
     //! return bounding box of all primitives
     box3f StructuredVolume::bounds() const
     {
-      return {vec3f(0.f),
-              vec3f(dimensions)*child("gridSpacing").valueAs<vec3f>()};
+      auto dimensions  = child("dimensions").valueAs<vec3i>();
+      auto gridSpacing = child("gridSpacing").valueAs<vec3f>();
+      return {vec3f(0.f), dimensions * gridSpacing};
+    }
+
+    void StructuredVolume::preCommit(RenderContext &)
+    {
+      auto ospVolume = valueAs<OSPVolume>();
+
+      if (ospVolume) {
+        ospCommit(ospVolume);
+        if (child("isosurfaceEnabled").valueAs<bool>() == true
+            && isosurfacesGeometry) {
+          OSPData isovaluesData = ospNewData(1, OSP_FLOAT,
+            &child("isosurface").valueAs<float>());
+          ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
+          ospCommit(isosurfacesGeometry);
+        }
+        return;
+      }
+
+      auto voxelType  = child("voxelType").valueAs<std::string>();
+      auto dimensions = child("dimensions").valueAs<vec3i>();
+
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0) {
+        throw std::runtime_error("StructuredVolume::render(): "
+                                 "invalid volume dimensions");
+      }
+
+      ospVolume = ospNewVolume("shared_structured_volume");
+      setValue(ospVolume);
+
+      isosurfacesGeometry = ospNewGeometry("isosurfaces");
+      ospSetObject(isosurfacesGeometry, "volume", ospVolume);
+
+      vec2f voxelRange(std::numeric_limits<float>::infinity(),
+                       -std::numeric_limits<float>::infinity());
+      const OSPDataType ospVoxelType = typeForString(voxelType);
+
+      const size_t nVoxels =
+          (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
+
+      auto voxels_data_node = child("voxelData").nodeAs<DataBuffer>();
+
+      auto *voxels = static_cast<uint8_t*>(voxels_data_node->base());
+
+      extendVoxelRange(voxelRange, ospVoxelType, voxels, nVoxels);
+
+      child("voxelRange") = voxelRange;
+      child("transferFunction")["valueRange"] = voxelRange;
+
+      child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
+      float iso = child("isosurface").valueAs<float>();
+      if (iso < voxelRange.x || iso > voxelRange.y)
+        child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolume);
@@ -159,6 +221,11 @@ namespace ospray {
     // structured volume that is stored in a separate file (ie, a file
     // other than the ospbin file)
     // =======================================================
+
+    StructuredVolumeFromFile::StructuredVolumeFromFile()
+    {
+      createChild("blockBricked", "bool", true, NodeFlags::gui_readonly);
+    }
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolumeFromFile::toString() const
@@ -182,78 +249,94 @@ namespace ospray {
         return;
       }
 
+      bool useBlockBricked = child("blockBricked").valueAs<bool>();
+      ospVolume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
+                                                 "shared_structured_volume");
+
+      setValue(ospVolume);
+    }
+
+    void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
+    {
+      auto ospVolume = valueAs<OSPVolume>();
+
+      auto dimensions = child("dimensions").valueAs<vec3i>();
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0) {
         throw std::runtime_error("StructuredVolume::render(): "
                                  "invalid volume dimensions");
       }
 
-      bool useBlockBricked = true;
-      ospVolume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
-                                                 "shared_structured_volume");
+      if (!fileLoaded) {
+        auto voxelType  = child("voxelType").valueAs<std::string>();
 
-      if (!ospVolume)
-        THROW_SG_ERROR("could not allocate volume");
+        isosurfacesGeometry = ospNewGeometry("isosurfaces");
+        ospSetObject(isosurfacesGeometry, "volume", ospVolume);
 
-      isosurfacesGeometry = ospNewGeometry("isosurfaces");
-      ospSetObject(isosurfacesGeometry, "volume", ospVolume);
+        FileName realFileName = fileNameOfCorrespondingXmlDoc.path() + fileName;
+        FILE *file = fopen(realFileName.c_str(),"rb");
+        if (!file) {
+          throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
+                                   +realFileName.str()+"' (expanded from xml file '"
+                                   +fileNameOfCorrespondingXmlDoc.str()
+                                   +"' and file name '"+fileName+"')");
+        }
 
-      setValue(ospVolume);
+        vec2f voxelRange(std::numeric_limits<float>::infinity(),
+                         -std::numeric_limits<float>::infinity());
+        const OSPDataType ospVoxelType = typeForString(voxelType);
+        const size_t voxelSize = sizeOf(ospVoxelType);
 
-      ospSetString(ospVolume,"voxelType",voxelType.c_str());
-      ospSetVec3i(ospVolume,"dimensions",(const osp::vec3i&)dimensions);
+        bool useBlockBricked = child("blockBricked").valueAs<bool>();
 
-      FileName realFileName = fileNameOfCorrespondingXmlDoc.path() + fileName;
-      FILE *file = fopen(realFileName.c_str(),"rb");
-      if (!file) {
-        throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
-                                 +realFileName.str()+"' (expanded from xml file '"
-                                 +fileNameOfCorrespondingXmlDoc.str()
-                                 +"' and file name '"+fileName+"')");
-      }
+        if (useBlockBricked) {
+          const size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
+          std::vector<uint8_t> slice(nPerSlice * voxelSize, 0);
 
-      vec2f voxelRange(std::numeric_limits<float>::infinity(),
-                       -std::numeric_limits<float>::infinity());
-      const OSPDataType ospVoxelType = typeForString(voxelType);
-      const size_t voxelSize = sizeOf(ospVoxelType);
-
-      if (useBlockBricked) {
-        const size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
-        std::vector<uint8_t> slice(nPerSlice * voxelSize, 0);
-
-        for (int z = 0; z < dimensions.z; ++z) {
-          if (fread(slice.data(), voxelSize, nPerSlice, file) != nPerSlice) {
-            throw std::runtime_error("StructuredVolume::render(): read incomplete slice "
-                "data ... partial file or wrong format!?");
+          for (int z = 0; z < dimensions.z; ++z) {
+            if (fread(slice.data(), voxelSize, nPerSlice, file) != nPerSlice) {
+              throw std::runtime_error("StructuredVolume::render(): read incomplete slice "
+                  "data ... partial file or wrong format!?");
+            }
+            const vec3i region_lo(0, 0, z);
+            const vec3i region_sz(dimensions.x, dimensions.y, 1);
+            extendVoxelRange(voxelRange, ospVoxelType, slice.data(), nPerSlice);
+            ospSetRegion(ospVolume,
+                         slice.data(),
+                         (const osp::vec3i&)region_lo,
+                         (const osp::vec3i&)region_sz);
           }
-          const vec3i region_lo(0, 0, z);
-          const vec3i region_sz(dimensions.x, dimensions.y, 1);
-          extendVoxelRange(voxelRange, ospVoxelType, slice.data(), nPerSlice);
-          ospSetRegion(ospVolume,
-                       slice.data(),
-                       (const osp::vec3i&)region_lo,
-                       (const osp::vec3i&)region_sz);
+        } else {
+          const size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
+          uint8_t *voxels = new uint8_t[nVoxels * voxelSize];
+          if (fread(voxels, voxelSize, nVoxels, file) != nVoxels) {
+            THROW_SG_ERROR("read incomplete data (truncated file or "
+                           "wrong format?!)");
+          }
+          extendVoxelRange(voxelRange, ospVoxelType, voxels, nVoxels);
+          OSPData data = ospNewData(nVoxels, ospVoxelType, voxels, OSP_DATA_SHARED_BUFFER);
+          ospSetData(ospVolume,"voxelData",data);
         }
-      } else {
-        const size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
-        uint8_t *voxels = new uint8_t[nVoxels * voxelSize];
-        if (fread(voxels, voxelSize, nVoxels, file) != nVoxels) {
-          THROW_SG_ERROR("read incomplete data (truncated file or "
-                         "wrong format?!)");
-        }
-        extendVoxelRange(voxelRange, ospVoxelType, voxels, nVoxels);
-        OSPData data = ospNewData(nVoxels, ospVoxelType, voxels, OSP_DATA_SHARED_BUFFER);
-        ospSetData(ospVolume,"voxelData",data);
+
+        fclose(file);
+
+        child("voxelRange") = voxelRange;
+        child("transferFunction")["valueRange"] = voxelRange;
+
+        child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
+        float iso = child("isosurface").valueAs<float>();
+        if (iso < voxelRange.x || iso > voxelRange.y)
+          child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
+
+        fileLoaded = true;
+
+        // Double ugly: This is re-done by postCommit, but we need to
+        // do it here so the transferFunction is set before we commit the
+        // volume, so that it's in a valid state.
+        ospSetObject(ospVolume, "transferFunction",
+                     child("transferFunction").valueAs<OSPTransferFunction>());
+        commit(); //<-- UGLY, recommitting the volume after child changes...
       }
-
-      fclose(file);
-
-      child("voxelRange") = voxelRange;
-      child("transferFunction")["valueRange"] = voxelRange;
-
-      child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
-      float iso = child("isosurface").valueAs<float>();
-      if (iso < voxelRange.x || iso > voxelRange.y)
-        child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
+      Volume::postCommit(ctx);
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);

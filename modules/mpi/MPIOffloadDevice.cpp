@@ -373,6 +373,11 @@ namespace ospray {
 
     // MPIDevice definitions //////////////////////////////////////////////////
 
+    MPIOffloadDevice::MPIOffloadDevice()
+    {
+      maml::init();
+    }
+
     MPIOffloadDevice::~MPIOffloadDevice()
     {
       if (IamTheMaster()) {
@@ -588,6 +593,15 @@ namespace ospray {
       work::LoadModule work(name);
       processWork(work, true);
       return work.errorCode;
+    }
+
+    /*! assign (named) float parameter to an object */
+    void MPIOffloadDevice::setBool(OSPObject _object,
+                                   const char *bufName,
+                                   const bool b)
+    {
+      work::SetParam<bool> work((ObjectHandle&)_object, bufName, b);
+      processWork(work);
     }
 
     /*! assign (named) float parameter to an object */

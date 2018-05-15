@@ -91,14 +91,16 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
   // init TEA RNG //
   RandomTEA rng_state;
   varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, (self->super.fb->size.x * iy) + ix, accumID);
+  RandomTEA__Constructor(rng, 0x290374, (self->super.fb->size.x * iy) + ix);
+  const vec2f rot = RandomTEA__getFloats(rng);
 
   float occlusion = 0.f;
   const linear3f localToWorld = frame(shadingNormal);
 
   for (uniform int i = 0; i < self->aoSamples; i++) {
-    const vec2f s = RandomTEA__getFloats(rng);
-    const vec3f local_ao_dir = cosineSampleHemisphere(s);
+    const vec2f halton = HaltonSequence_get2D(accumID * self->aoSamples + i);
+    const vec2f r = CranleyPattersonRotation(halton, rot);
+    const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
@@ -111,7 +113,7 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
            self->super.epsilon, self->aoDistance);
 
     if (self->aoTransparencyEnabled) {
-      const float rayOffset = self->super.epsilon*(1.f + s.x);
+      const float rayOffset = self->super.epsilon*(1.f + r.x);
       occlusion += (1.f - lightAlpha(self, ao_ray, self->super.model, 1.0f,
                                      rayOffset, sampleID, 0.2f));
     } else if (isOccluded(self->super.model, ao_ray))
@@ -133,7 +135,7 @@ void shadeAO(const uniform SciVisRenderer *uniform self,
   float ao = 1.0f;
   if (self->needToDoAO)
     ao = calculateAO(self, sampleID, dg, info.shadingNormal);
-  
+
   color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
 }
 

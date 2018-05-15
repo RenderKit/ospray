@@ -48,8 +48,9 @@ namespace ospray {
       instancedScene->commit();
     }
 
-    embreeGeomID = rtcNewInstance2(model->embreeSceneHandle,
-                                   instancedScene->embreeSceneHandle);
+    RTCGeometry embreeGeom   = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_INSTANCE);
+    embreeGeomID = rtcAttachGeometry(model->embreeSceneHandle,embreeGeom);
+    rtcSetGeometryInstancedScene(embreeGeom,instancedScene->embreeSceneHandle);
 
     const box3f b = instancedScene->bounds;
     if (b.empty()) {
@@ -79,9 +80,10 @@ namespace ospray {
     bounds.extend(xfmPoint(xfm,v110));
     bounds.extend(xfmPoint(xfm,v111));
 
-    rtcSetTransform2(model->embreeSceneHandle,embreeGeomID,
-                     RTC_MATRIX_COLUMN_MAJOR,
-                     (const float *)&xfm);
+    rtcSetGeometryTransform(embreeGeom,0,RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,&xfm);
+    rtcCommitGeometry(embreeGeom);
+    rtcReleaseGeometry(embreeGeom);
+
     AffineSpace3f rcp_xfm = rcp(xfm);
     areaPDF.resize(instancedScene->geometry.size());
     ispc::InstanceGeometry_set(getIE(),

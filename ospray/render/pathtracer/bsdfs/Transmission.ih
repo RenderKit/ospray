@@ -48,7 +48,7 @@ inline BSDF_SampleRes Transmission_sample(const varying BSDF* uniform super,
 }
 
 inline void Transmission_Constructor(varying Transmission* uniform self, const varying linear3f* uniform frame,
-                                     const vec3f& T)
+                                     vec3f T)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR_TRANSMISSION,
                    Transmission_eval, Transmission_sample,
@@ -57,7 +57,7 @@ inline void Transmission_Constructor(varying Transmission* uniform self, const v
 }
 
 inline varying BSDF* uniform Transmission_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                 const vec3f& T)
+                                                 vec3f T)
 {
   varying Transmission* uniform self = (varying Transmission* uniform)ShadingContext_alloc(ctx, sizeof(Transmission));
   Transmission_Constructor(self, frame, T);

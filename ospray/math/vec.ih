@@ -543,6 +543,26 @@ inline vec3f cross(const vec3f &a, const vec3f &b)
 { return make_vec3f(a.y*b.z-a.z*b.y,
                     a.z*b.x-a.x*b.z,
                     a.x*b.y-a.y*b.x); }
+/*! computes 3D cross product for vec3fs that produce varying results */
+inline vec3f cross(const vec3f &a, const uniform vec3f &b)
+{ return make_vec3f(a.y*b.z-a.z*b.y,
+                    a.z*b.x-a.x*b.z,
+                    a.x*b.y-a.y*b.x); }
+/*! computes 3D cross product for vec3fs that produce varying results */
+inline vec3f cross(const uniform vec3f &a, const vec3f &b)
+{ return make_vec3f(a.y*b.z-a.z*b.y,
+                    a.z*b.x-a.x*b.z,
+                    a.x*b.y-a.y*b.x); }
+
+// ------------------------------------------------------------------
+// rotate
+// ------------------------------------------------------------------
+/*! rotates vector around axis for *all-uniform* vec3fs */
+inline uniform vec3f rotate(const uniform vec3f &v, const uniform vec3f &axis, uniform float theta)
+{ return v * cos(theta) + cross(axis, v) * sin(theta) + axis * dot(axis, v) * (1.f - cos(theta)); }
+/*! rotates vector around axis for vec3fs that produce varying results */
+inline vec3f rotate(const vec3f &v, const vec3f &axis, float theta)
+{ return v * cos(theta) + cross(axis, v) * sin(theta) + axis * dot(axis, v) * (1.f - cos(theta)); }
 
 
 // ------------------------------------------------------------------

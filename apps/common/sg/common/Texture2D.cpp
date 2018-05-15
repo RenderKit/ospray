@@ -65,7 +65,7 @@ namespace ospray {
         return;
       }
 
-      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, 0);
+      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
       setValue(ospTexture2D);
       ospCommit(ospTexture2D);
     }
@@ -80,7 +80,8 @@ namespace ospray {
       some reason, return NULL. Multiple loads from the same file
       will return the *same* texture object */
     std::shared_ptr<Texture2D> Texture2D::load(const FileName &fileNameAbs,
-                                               const bool preferLinear)
+                                               const bool preferLinear,
+                                               const bool nearestFilter)
     {
       FileName fileName = fileNameAbs;
       std::string fileNameBase = fileNameAbs;
@@ -110,6 +111,7 @@ namespace ospray {
         const bool hdr = spec.format.size() > 1;
         tex->depth = hdr ? 4 : 1;
         tex->preferLinear = preferLinear;
+        tex->nearestFilter = nearestFilter;
         const size_t stride = tex->size.x * tex->channels * tex->depth;
         tex->data = alignedMalloc(sizeof(unsigned char) * tex->size.y * stride);
 
@@ -195,6 +197,7 @@ namespace ospray {
           tex->channels = 3;
           tex->depth    = 1;
           tex->preferLinear = preferLinear;
+          tex->nearestFilter = nearestFilter;
 
           unsigned int dataSize = tex->size.x * tex->size.y * tex->channels * tex->depth;
           tex->data = alignedMalloc(sizeof(unsigned char) * dataSize);
@@ -210,7 +213,7 @@ namespace ospray {
               }
               std::swap(texels[a], texels[b]);
             }
-        } catch(std::runtime_error e) {
+        } catch(const std::runtime_error &e) {
           std::cerr << e.what() << std::endl;
         }
       } else if (ext == "pfm") {
@@ -268,6 +271,7 @@ namespace ospray {
           tex->channels = numChannels;
           tex->depth    = sizeof(float);
           tex->preferLinear = preferLinear;
+          tex->nearestFilter = nearestFilter;
           tex->data     = alignedMalloc(sizeof(float) * width * height * numChannels);
           if (fread(tex->data, sizeof(float), width * height * numChannels, file)
               != size_t(width * height * numChannels))
@@ -282,7 +286,7 @@ namespace ospray {
               std::swap(texels[y * width * numChannels + x], texels[(height - 1 - y) * width * numChannels + x]);
             }
           }
-        } catch(std::runtime_error e) {
+        } catch(const std::runtime_error &e) {
           std::cerr << e.what() << std::endl;
         }
       }
@@ -299,6 +303,7 @@ namespace ospray {
         tex->channels = n;
         tex->depth    = hdr ? 4 : 1;
         tex->preferLinear = preferLinear;
+        tex->nearestFilter = nearestFilter;
         if (!pixels) {
           std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
         } else {

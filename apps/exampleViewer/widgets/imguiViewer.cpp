@@ -52,26 +52,37 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     vec3f val = node->valueAs<vec3f>();
-    if ((node->flags() & sg::NodeFlags::gui_color)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("(%f, %f, %f)", val.x, val.y, val.z);
+    } else if (nodeFlags & sg::NodeFlags::gui_color) {
       if (ImGui::ColorEdit3(text.c_str(), (float*)&val.x))
         node->setValue(val);
-    }
-    else if ((node->flags() & sg::NodeFlags::gui_slider)) {
+    } else if (nodeFlags & sg::NodeFlags::gui_slider) {
       if (ImGui::SliderFloat3(text.c_str(), &val.x,
                               node->min().get<vec3f>().x,
                               node->max().get<vec3f>().x))
         node->setValue(val);
-    }
-    else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
+    } else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
       node->setValue(val);
     }
+  }
+
+  static void sgWidget_vec3i(const std::string &text,
+                             std::shared_ptr<sg::Node> node)
+  {
+    vec3i val = node->valueAs<vec3i>();
+    ImGui::Text("(%i, %i, %i)", val.x, val.y, val.z);
   }
 
   static void sgWidget_vec2f(const std::string &text,
                              std::shared_ptr<sg::Node> node)
   {
     vec2f val = node->valueAs<vec2f>();
-    if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("(%f, %f)", val.x, val.y);
+    } else if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
       node->setValue(val);
     }
   }
@@ -80,7 +91,10 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     vec2i val = node->valueAs<vec2i>();
-    if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("(%i, %i)", val.x, val.y);
+    } else if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
       node->setValue(val);
     }
   }
@@ -89,10 +103,16 @@ namespace ospray {
                              std::shared_ptr<sg::Node> node)
   {
     float val = node->valueAs<float>();
-    if ((node->flags() & sg::NodeFlags::gui_slider)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("%f", val);
+    } else if ((node->flags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderFloat(text.c_str(), &val,
                              node->min().get<float>(),
                              node->max().get<float>()))
+        node->setValue(val);
+    } else if (node->flags() & sg::NodeFlags::valid_min_max) {
+      if (ImGui::DragFloat(text.c_str(), &val, .01f, node->min().get<float>(), node->max().get<float>()))
         node->setValue(val);
     } else if (ImGui::DragFloat(text.c_str(), &val, .01f)) {
       node->setValue(val);
@@ -103,7 +123,10 @@ namespace ospray {
                             std::shared_ptr<sg::Node> node)
   {
     bool val = node->valueAs<bool>();
-    if (ImGui::Checkbox(text.c_str(), &val)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text(val ? "true" : "false");
+    } else if (ImGui::Checkbox(text.c_str(), &val)) {
       node->setValue(val);
     }
   }
@@ -112,13 +135,18 @@ namespace ospray {
                            std::shared_ptr<sg::Node> node)
   {
     int val = node->valueAs<int>();
-    if ((node->flags() & sg::NodeFlags::gui_slider)) {
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text("%i", val);
+    } else if ((node->flags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderInt(text.c_str(), &val,
                            node->min().get<int>(),
                            node->max().get<int>()))
         node->setValue(val);
-    }
-    else if (ImGui::DragInt(text.c_str(), &val)) {
+    } else if (node->flags() & sg::NodeFlags::valid_min_max) {
+      if (ImGui::DragInt(text.c_str(), &val, .01f, node->min().get<int>(), node->max().get<int>()))
+        node->setValue(val);
+    } else if (ImGui::DragInt(text.c_str(), &val)) {
       node->setValue(val);
     }
   }
@@ -126,14 +154,36 @@ namespace ospray {
   static void sgWidget_string(const std::string &text,
                               std::shared_ptr<sg::Node> node)
   {
-    std::string value = node->valueAs<std::string>().c_str();
-    std::vector<char> buf(value.size() + 1 + 256);
-    strcpy(buf.data(), value.c_str());
-    buf[value.size()] = '\0';
-    if (ImGui::InputText(text.c_str(), buf.data(),
-                         value.size()+256,
-                         ImGuiInputTextFlags_EnterReturnsTrue)) {
-      node->setValue(std::string(buf.data()));
+    auto value = node->valueAs<std::string>();
+    auto nodeFlags = node->flags();
+    if (nodeFlags & sg::NodeFlags::gui_readonly) {
+      ImGui::Text(value.c_str());
+    } else {
+      auto whitelist = node->whitelist();
+      if (!whitelist.empty()) {
+        int val = -1;
+
+        std::string list;
+        for (auto it = whitelist.begin(); it != whitelist.end(); ++it) {
+            auto option = *it;
+            if (option.get<std::string>() == value)
+                val = std::distance(whitelist.begin(), it);
+            list += option.get<std::string>();
+            list.push_back('\0');
+        }
+
+        ImGui::Combo(text.c_str(), &val, list.c_str(), whitelist.size());
+        node->setValue(whitelist[val]);
+      } else {
+        std::vector<char> buf(value.size() + 1 + 256);
+        strcpy(buf.data(), value.c_str());
+        buf[value.size()] = '\0';
+        if (ImGui::InputText(text.c_str(), buf.data(),
+                             value.size()+256,
+                             ImGuiInputTextFlags_EnterReturnsTrue)) {
+            node->setValue(std::string(buf.data()));
+        }
+      }
     }
   }
 
@@ -172,6 +222,7 @@ namespace ospray {
         {"vec2i", sgWidget_vec2i},
         {"vec2f", sgWidget_vec2f},
         {"vec3f", sgWidget_vec3f},
+        {"vec3i", sgWidget_vec3i},
         {"box3f", sgWidget_box3f},
         {"string", sgWidget_string},
         {"bool", sgWidget_bool},
@@ -304,14 +355,11 @@ namespace ospray {
     case 'r':
       resetView();
       break;
+    case 'd':
+      resetDefaultView();
+      break;
     case 'p':
       printViewport();
-      break;
-    case 27 /*ESC*/:
-    case 'q':
-    case 'Q':
-      renderEngine.stop();
-      std::exit(0);
       break;
     default:
       ImGui3DWidget::keypress(key);
@@ -323,6 +371,28 @@ namespace ospray {
     auto oldAspect = viewPort.aspect;
     viewPort = originalView;
     viewPort.aspect = oldAspect;
+  }
+
+  void ImGuiViewer::resetDefaultView()
+  {
+    auto &renderer = *scenegraph;
+
+    auto &world = renderer["world"];
+    auto bbox = world.bounds();
+    vec3f diag = bbox.size();
+    diag = max(diag, vec3f(0.3f * length(diag)));
+
+    auto gaze = ospcommon::center(bbox);
+    auto pos = gaze - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
+    auto up = vec3f(0.f, 1.f, 0.f);
+
+    auto &camera = renderer["camera"];
+    camera["pos"] = pos;
+    camera["dir"] = normalize(gaze - pos);
+    camera["up"] = up;
+
+    setViewPort(pos, gaze, up);
+    originalView = viewPort;
   }
 
   void ImGuiViewer::printViewport()
@@ -460,7 +530,7 @@ namespace ospray {
         toggleRenderingPaused();
 
       if (ImGui::MenuItem("Take Screenshot"))
-          saveScreenshot("ospimguiviewer");
+          saveScreenshot("ospexampleviewer");
 
       if (ImGui::MenuItem("Quit")) {
         renderEngine.stop();
@@ -486,6 +556,7 @@ namespace ospray {
         manipulator = moveModeManipulator.get();
 
       if (ImGui::MenuItem("Reset View")) resetView();
+      if (ImGui::MenuItem("Create Default View")) resetDefaultView();
       if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
       if (ImGui::MenuItem("Print View")) printViewport();
 
@@ -671,8 +742,10 @@ namespace ospray {
       const bool exportButtonPressed = ImGui::Button("Export...");
       const char* exportpath = exportdlg.saveFileDialog(exportButtonPressed);
       if (strlen(exportpath) > 0) {
-        std::cout << "writing OSPSG file to path: " << exportpath << std::endl;
-        sg::writeOSPSG(node, std::string(exportpath));
+        // Make sure that the file has the .ospsg suffix
+        FileName exportfile = FileName(exportpath).setExt(".ospsg");
+        std::cout << "writing OSPSG file to path: " << exportfile << std::endl;
+        sg::writeOSPSG(node, exportfile);
       }
 
       ImGui::EndPopup();

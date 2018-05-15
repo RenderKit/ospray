@@ -1,0 +1,118 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "Dielectric.ih"
+
+// Thin dielectric BSDF.
+// It represents a transparent slab with unit thickness, and ignores refraction.
+struct RobustThinDielectric
+{
+  BSDF super;
+
+  float eta;
+  vec3f attenuation;
+};
+
+inline BSDF_EvalRes RobustThinDielectric_eval(const varying BSDF* uniform super,
+                                              const vec3f& wo, const vec3f& wi)
+{
+  return make_BSDF_EvalRes_zero();
+}
+
+inline BSDF_SampleRes RobustThinDielectric_sample(const varying BSDF* uniform super,
+                                                  const vec3f& wo, const vec2f& s, float ss)
+{
+  const varying RobustThinDielectric* uniform self = (const varying RobustThinDielectric* uniform)super;
+  BSDF_SampleRes res;
+
+  float cosThetaO = max(dot(wo, getN(super)), 0.f);
+
+  // Fresnel terms
+  float cosThetaT; // positive
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+  float Ft = fresnelDielectric(cosThetaT, rcp(self->eta));
+
+  // Attenuation for crossing the slab once
+  float length = rcp(cosThetaT);
+  vec3f A = expf(self->attenuation * length);
+
+  // Reflection and transmission weights
+  vec3f R = Fo + (1.f - Fo) * (1.f - Ft) * (Ft * sqr(A)) * rcp(1.f - sqr(Ft * A));
+  vec3f T = (1.f - Fo) * A * (1.f - Ft) * (1.f + sqr(Ft * A) * rcp(1.f - sqr(Ft * A)));
+
+  // Sample the reflection or the transmission
+  float pR = luminance(R);
+  float pT = luminance(T);
+  float p = pR * rcp(pR + pT);
+
+  bool doReflection = (ss <= p);
+  if (doReflection)
+  {
+    // Reflection
+    res.wi = reflect(wo, getN(super), cosThetaO);
+    res.type = BSDF_SPECULAR_REFLECTION;
+    res.weight = R * rcp(p);
+  }
+  else
+  {
+    // Transmission
+    res.wi = neg(wo);
+    res.type = BSDF_SPECULAR_TRANSMISSION;
+    res.weight = T * rcp(1.f - p);
+  }
+
+  res.pdf = inf;
+  return res;
+}
+
+inline void RobustThinDielectric_Constructor(varying RobustThinDielectric* uniform self,
+                                             const varying linear3f* uniform frame,
+                                             float eta, vec3f attenuation)
+{
+  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+                   RobustThinDielectric_eval, RobustThinDielectric_sample,
+                   frame);
+  self->eta = eta;
+  self->attenuation = attenuation;
+}
+
+inline varying BSDF* uniform RobustThinDielectric_create(uniform ShadingContext* uniform ctx,
+                                                         const varying linear3f* uniform frame,
+                                                         float eta, vec3f attenuation)
+{
+  varying RobustThinDielectric* uniform self = (varying RobustThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(RobustThinDielectric));
+  RobustThinDielectric_Constructor(self, frame, eta, attenuation);
+  return &self->super;
+}
+
+// Helper function for transparent shadow rays
+inline vec3f RobustThinDielectric_getTransparency(float cosThetaO, float eta, vec3f attenuation)
+{
+  // Fresnel terms
+  float cosThetaT; // positive
+  float Fo = fresnelDielectricEx(cosThetaO, cosThetaT, eta);
+  float Ft = fresnelDielectric(cosThetaT, rcp(eta));
+
+  // Attenuation for crossing the slab once
+  float length = rcp(cosThetaT);
+  vec3f A = expf(attenuation * length);
+
+  // Transmission weight
+  vec3f T = (1.f - Fo) * A * (1.f - Ft) * (1.f + sqr(Ft * A) * rcp(1.f - sqr(Ft * A)));
+  return T;
+}

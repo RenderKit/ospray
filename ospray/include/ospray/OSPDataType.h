@@ -18,8 +18,11 @@
 #pragma once
 
 /*! An enum type that represensts the different data types represented in ospray */
-typedef enum {
-
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   //! Object reference type.
   OSP_DEVICE = 100,
 
@@ -50,7 +53,7 @@ typedef enum {
   OSP_CHAR = 2000,
 
   //! Unsigned character scalar and vector types.
-  OSP_UCHAR = 2500, OSP_UCHAR2, OSP_UCHAR3, OSP_UCHAR4, 
+  OSP_UCHAR = 2500, OSP_UCHAR2, OSP_UCHAR3, OSP_UCHAR4,
 
   //! Signed 16-bit integer scalar.
   OSP_SHORT = 3000,

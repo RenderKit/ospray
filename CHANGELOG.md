@@ -1,6 +1,39 @@
 Version History
 ---------------
 
+### Changes in v1.6.0:
+
+-   Updated ISPC device to use Embree v3.1+
+-   Added new `ospShutdown` API function to aid in correctness and determinism
+    of OSPRay API cleanup
+-   Added Principled and CarPaint materials to the path tracer
+-   Improved flexibility of the tone mapper
+-   Improvements to `UnstructuredVolume`
+    -   Implemented support for wedges (in addition to tets and hexes)
+    -   Implemented support for implicit isosurface geometry
+    -   Implemented support for cell-centered data (as an alternative to
+        per-vertex data)
+    -   Added an option to precompute normals, providing a memory/performance
+        tradeoff for applications
+-   Implemented `QuadMesh` geometry type to handle quads directly
+-   Implemented the ability to set 'void' cell values in all volume types
+    -   When `nan` is present as a volume's cell value the volume sample will be
+        ignored by the `scivis` renderer
+-   Fixed support for color strides which were not multiples of `sizeof(float)`
+-   Added support for RGBA8 color format to Spheres, which can be set by
+    specifying the "colorFormat" parameter as `OSP_UCHAR4`, or passing the
+    "colorData" through an `OSPData` of `OSP_UCHAR4`.
+-   Added ability to configure Embree scene flags via `OSPModel` parameters
+-   `ospFreeFrameBuffer` has been deprecated in favor of using `ospRelease` to
+    free frame buffer handles
+-   Fixed memory leak caused by incorrect parameter reference counts in ISPC
+    device
+-   Fixed occasional crashes in the `MPIOffload` device on shutdown
+-   Various improvements to sample apps and `ospray_sg`
+    -   Added new `generator` nodes, allowing the ability to inject
+        programmatically generated scene data (only C++ for now)
+    -   Bugfixes and improvements to enhance stability and usability
+
 ### Changes in v1.5.0:
 
 -   TetrahedralVolume now generalized to take both tet and hex data, now called
