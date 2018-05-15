@@ -30,7 +30,8 @@
 
 vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                            const varying vec3i &sampleID,
-                                           varying Ray &ray, const varying float &rayOffset)
+                                           varying Ray &ray,
+                                           const varying float &rayOffset)
 {
   vec3f color = make_vec3f(0.f);
 
