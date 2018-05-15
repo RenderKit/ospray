@@ -27,7 +27,6 @@ cmake --build . --config Release --target ospray_test_data -- /m /nologo
 cd ..
 
 set OSP_LIBS=build\Release
-set EMBREE_DIR=C:\Program Files\Intel\Embree v2.16.1 x64
 set BASELINE_DIR=build\regression_tests\baseline\
 
 set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin

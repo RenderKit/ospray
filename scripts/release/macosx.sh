@@ -30,7 +30,7 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/osx
-DEP_EMBREE=embree-2.17.4.x86_64.macosx
+DEP_EMBREE=embree-3.1.0.x86_64.macosx
 DEP_ISPC=ispc-v1.9.2-osx
 DEP_TBB=tbb2018_20171205oss
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_mac.tgz"
