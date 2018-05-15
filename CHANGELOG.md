@@ -3,20 +3,11 @@ Version History
 
 ### Changes in v1.6.0:
 
--   Added Principled and CarPaint materials to the path tracer
--   Improved flexibility of the tone mapper
--   Added ability to configure Embree scene flags via OSPModel parameters
--   Fixed memory leak caused by incorrect parameter reference counts in ISPC
-    device
--   Fixed support for color strides which were not multiples of `sizeof(float)`
--   Added support for RGBA8 color format to Spheres, which can be set by
-    specifying the "colorFormat" parameter as `OSP_UCHAR4`, or passing the
-    "colorData" through an `OSPData` of `OSP_UCHAR4`.
+-   Updated ISPC device to use Embree v3.1+
 -   Added new `ospShutdown` API function to aid in correctness and determinism
     of OSPRay API cleanup
--   `ospFreeFrameBuffer` has been deprecated in favor of using `ospRelease` to
-    free frame buffer handles
--   Implemented `QuadMesh` geometry type to handle quads directly
+-   Added Principled and CarPaint materials to the path tracer
+-   Improved flexibility of the tone mapper
 -   Improvements to `UnstructuredVolume`
     -   Implemented support for wedges (in addition to tets and hexes)
     -   Implemented support for implicit isosurface geometry
@@ -24,11 +15,20 @@ Version History
         per-vertex data)
     -   Added an option to precompute normals, providing a memory/performance
         tradeoff for applications
--   Updated ISPC device to use Embree v3.1 and later
--   Fixed occasional crashes in the ```MPIOffload``` device on shutdown
+-   Implemented `QuadMesh` geometry type to handle quads directly
 -   Implemented the ability to set 'void' cell values in all volume types
     -   When `nan` is present as a volume's cell value the volume sample will be
         ignored by the `scivis` renderer
+-   Fixed support for color strides which were not multiples of `sizeof(float)`
+-   Added support for RGBA8 color format to Spheres, which can be set by
+    specifying the "colorFormat" parameter as `OSP_UCHAR4`, or passing the
+    "colorData" through an `OSPData` of `OSP_UCHAR4`.
+-   Added ability to configure Embree scene flags via `OSPModel` parameters
+-   `ospFreeFrameBuffer` has been deprecated in favor of using `ospRelease` to
+    free frame buffer handles
+-   Fixed memory leak caused by incorrect parameter reference counts in ISPC
+    device
+-   Fixed occasional crashes in the `MPIOffload` device on shutdown
 -   Various improvements to sample apps and `ospray_sg`
     -   Added new `generator` nodes, allowing the ability to inject
         programmatically generated scene data (only C++ for now)

@@ -31,7 +31,7 @@ variables:
   only:
     - devel
     - master
-    - release-1.5.x
+    - release-1.6.x
 
 .job_template: &test_job
   stage: test-build
