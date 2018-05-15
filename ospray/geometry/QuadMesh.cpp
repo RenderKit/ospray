@@ -57,11 +57,11 @@ namespace ospray {
 
     RTCScene embreeSceneHandle = model->embreeSceneHandle;
 
-    vertexData = getParamData("vertex",getParamData("position"));
-    normalData = getParamData("vertex.normal",getParamData("normal"));
-    colorData  = getParamData("vertex.color",getParamData("color"));
-    texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
-    indexData  = getParamData("index",getParamData("quad"));
+    vertexData = getParamData("vertex");
+    normalData = getParamData("vertex.normal");
+    colorData  = getParamData("vertex.color");
+    texcoordData = getParamData("vertex.texcoord");
+    indexData  = getParamData("index");
     prim_materialIDData = getParamData("prim.materialID");
     geom_materialID = getParam1i("geom.materialID",-1);
 
@@ -95,7 +95,6 @@ namespace ospray {
     size_t numQuads  = -1;
     size_t numVerts = -1;
 
-    size_t numCompsInQuad = 4;
     size_t numCompsInVtx = 0;
     size_t numCompsInNor = 0;
     switch (indexData->type) {
@@ -126,7 +125,7 @@ namespace ospray {
 
     auto eMeshGeom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
     rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT4,
-                               indexData->data,0,numCompsInQuad*sizeof(int),numQuads);
+                               indexData->data,0,4*sizeof(int),numQuads);
     rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT3,
                                vertexData->data,0,numCompsInVtx*sizeof(int),numVerts);
     rtcCommitGeometry(eMeshGeom);
@@ -148,10 +147,9 @@ namespace ospray {
                        eMeshGeom,
                        eMeshID,
                        numQuads,
-                       numCompsInQuad,
                        numCompsInVtx,
                        numCompsInNor,
-                       (int*)index,
+                       (ispc::vec4i*)index,
                        (float*)vertex,
                        (float*)normal,
                        (ispc::vec4f*)color,

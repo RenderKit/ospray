@@ -592,7 +592,7 @@ the vertices and data value.  Vertex ordering is the same as
 counterclockwise.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertics and data value. Vertex ordering is the same as
+indices into the vertices and data value. Vertex ordering is the same as
 `VTK_HEXAHEDRON` -- four bottom vertices counterclockwise, then top four
 counterclockwise.
 
@@ -672,8 +672,30 @@ triangle mesh recognizes the following parameters:
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a triangle mesh geometry.
 
-The `vertex` and `index` arrays are mandatory to creat a valid triangle
+The `vertex` and `index` arrays are mandatory to create a valid triangle
 mesh.
+
+### Quad Mesh
+
+A mesh consisting of quads is created by calling `ospNewGeometry` with
+type string "`quads`". Once created, a quad mesh recognizes the
+following parameters:
+
+  Type               Name             Description
+  ------------------ ---------------- -------------------------------------------------
+  vec3f(a)[]         vertex           [data] array of vertex positions
+  vec3f(a)[]         vertex.normal    [data] array of vertex normals
+  vec4f[] / vec3fa[] vertex.color     [data] array of vertex colors (RGBA/RGB)
+  vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
+  vec4i[]            index            [data] array of quad indices (into the vertex array(s))
+  ------------------ ---------------- -------------------------------------------------
+  : Parameters defining a quad mesh geometry.
+
+The `vertex` and `index` arrays are mandatory to create a valid quad
+mesh. A quad is internally handled as a pair of two triangles, thus
+mixing triangles and quad is supported by encoding a triangle as a quad
+with the last two vertex indices being identical (`w=z`).
+
 
 ### Spheres
 
@@ -1027,12 +1049,12 @@ An existing geometry or volume can be removed from a model with
     void ospRemoveVolume(OSPModel, OSPVolume);
 
 Finally, Models can be configured with parameters for making various
-feature/performance tradeoffs:
+feature/performance trade-offs:
 
   ------------- ---------------- --------  -------------------------------------
   Type          Name              Default  Description
   ------------- ---------------- --------  -------------------------------------
-  bool          dyanmicScene        false  use RTC_SCENE_DYNAMIC flag (faster
+  bool          dynamicScene        false  use RTC_SCENE_DYNAMIC flag (faster
                                            BVH build, slower ray traversal),
                                            otherwise uses RTC_SCENE_STATIC flag
                                            (faster ray traversal, slightly
