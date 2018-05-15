@@ -114,7 +114,9 @@ inline void intersectCylinder_numericalFix(varying Ray &ray,
   const float srad = sqrt(radical);
 
   // clip to near and far cap of cylinder
-  const float rVAB = rcp(dot(V,AB));
+  const float dVAB = dot(V,AB);
+  if (dVAB == 0.f) return;
+  const float rVAB = rcp(dVAB);
   const float tA = dot(AB,A) * rVAB;
   const float tB = dot(AB,B) * rVAB;
 
