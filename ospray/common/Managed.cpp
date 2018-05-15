@@ -31,8 +31,10 @@ namespace ospray {
                   params_end(),
                   [&](std::shared_ptr<Param> &p) {
                     auto &param = *p;
-                    if (param.data.is<OSP_PTR>())
-                      param.data.get<OSP_PTR>()->refDec();
+                    if (param.data.is<OSP_PTR>()) {
+                      auto *obj = param.data.get<OSP_PTR>();
+                      if (obj != nullptr) obj->refDec();
+                    }
                   });
   }
 
