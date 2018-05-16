@@ -708,6 +708,20 @@ namespace ospcommon {
   }
 
   // -------------------------------------------------------
+  // interpolation
+  // -------------------------------------------------------
+
+  // barycentric interpolation
+  template <typename T, int N, bool A>
+  inline vec_t<T, N, A> interpolate_uv(const vec_t<float, 3> &f,
+                                       const vec_t<T, N, A> &a,
+                                       const vec_t<T, N, A> &b,
+                                       const vec_t<T, N, A> &c)
+  {
+    return f.x*a + f.y*b + f.z*c;
+  }
+
+  // -------------------------------------------------------
   // ostream operators
   // -------------------------------------------------------
   template <typename T>
