@@ -231,7 +231,11 @@ namespace ospray {
       } else if (ext == "xyz" || ext == "xyz2" || ext == "xyz3") {
         sg::importXYZ(world, fileName);
 #ifdef OSPRAY_APPS_SG_VTK
-      } else if (ext == "vtu" || ext == "vtk" || ext == "off") {
+      } else if (ext == "vtu" || ext == "vtk" || ext == "off"
+#ifdef OSPRAY_APPS_SG_VTK_XDMF
+                 || ext == "xdmf"
+#endif
+                 ) {
         sg::importUnstructuredVolume(world, fileName);
       } else if (ext == "vtp") {
         sg::importVTKPolyData(world, fileName);

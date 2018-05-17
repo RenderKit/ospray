@@ -37,6 +37,11 @@
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtksys/SystemTools.hxx>
 
+#ifdef OSPRAY_APPS_SG_VTK_XDMF
+#include <vtkAlgorithmOutput.h>
+#include <vtkXdmfReader.h>
+#endif
+
 #pragma clang diagnostic pop
 
 // NOTE(jda) - This should be put in a more general place, only used here
@@ -205,6 +210,10 @@ namespace ospray {
           loadVTKFile<vtkXMLUnstructuredGridReader>(fileName.c_str());
         else if (extension == "off")
           loadOFFFile(fileName);
+#ifdef OSPRAY_APPS_SG_VTK_XDMF
+        else if (extension == "xdmf")
+          loadVTKFile<vtkXdmfReader>(fileName.c_str());
+#endif
       }
     };
 
@@ -227,5 +236,18 @@ namespace ospray {
           v.createChild("cellFieldName", "string", mesh.cellFieldNames[0]).setWhiteList(mesh.cellFieldNames);
     }
 
+#ifdef OSPRAY_APPS_SG_VTK_XDMF
+    template <>
+    vtkDataSet *TetMesh::readVTKFile<vtkXdmfReader>(const FileName &fileName)
+    {
+      vtkSmartPointer<vtkXdmfReader> reader = vtkSmartPointer<vtkXdmfReader>::New();
+
+      reader->SetFileName(fileName.c_str());
+      reader->Update();
+
+      reader->GetOutputDataObject(0)->Register(reader);
+      return vtkDataSet::SafeDownCast(reader->GetOutputDataObject(0));
+    }
+#endif
   }  // ::ospray::sg
 }  // ::ospray

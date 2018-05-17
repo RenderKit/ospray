@@ -21,12 +21,19 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 option(OSPRAY_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
 
 if(OSPRAY_SG_VTK)
+  option(OSPRAY_SG_VTK_XDMF "Enable VTK XDMF loader for ospray_sg" OFF)
+  if (OSPRAY_SG_VTK_XDMF)
+    set(XDMF_COMPONENT vtkIOXdmf2)
+    add_definitions(-DOSPRAY_APPS_SG_VTK_XDMF=1)
+  endif()
+
   find_package(VTK COMPONENTS REQUIRED
     vtkIOLegacy
     vtkIOXML
     vtkIOXMLParser
     vtkIOExport
     vtksys
+    ${XDMF_COMPONENT}
   )
 
   include(${VTK_USE_FILE})
