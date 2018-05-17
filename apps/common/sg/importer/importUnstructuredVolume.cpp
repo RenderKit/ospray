@@ -96,7 +96,9 @@ namespace ospray {
 
         for (int i = 0; i < data->GetNumberOfArrays(); i++) {
           vtkAbstractArray *ad = data->GetAbstractArray(i);
-          int nDataPoints      = ad->GetSize() * ad->GetNumberOfComponents();
+          if (ad->GetNumberOfComponents() != 1)
+            continue;
+          int nDataPoints      = ad->GetSize();
 
           auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
 
