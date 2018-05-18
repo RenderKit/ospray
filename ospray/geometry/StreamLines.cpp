@@ -52,7 +52,7 @@ namespace ospray {
     vertex = (vec3fa*)vertexData->data;
     numVertices = vertexData->numItems;
     if (vertexData->type == OSP_FLOAT4) {
-      radius.reset((const float*)vertex + 3, 4);
+      radius.reset((const float*)vertex + 3, sizeof(vec4f));
       useCurve = true;
     }
 
