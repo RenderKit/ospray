@@ -19,6 +19,16 @@
 namespace ospcommon {
   namespace networking {
 
+    // Static helper functions ////////////////////////////////////////////////
+
+    static void closeIfExists(ospcommon::socket_t socket)
+    {
+      if (socket)
+        ospcommon::close(socket);
+    }
+
+    // SocketFabric definitions ///////////////////////////////////////////////
+
     SocketFabric::SocketFabric(const std::string &hostname, const uint16_t port)
       : socket(ospcommon::connect(hostname.c_str(), port)),
       buffer(64 * 1024, 0)
@@ -31,9 +41,7 @@ namespace ospcommon {
 
     SocketFabric::~SocketFabric()
     {
-      if (socket) {
-        ospcommon::close(socket);
-      }
+      closeIfExists(socket);
     }
 
     SocketFabric::SocketFabric(SocketFabric &&other)
@@ -46,11 +54,12 @@ namespace ospcommon {
 
     SocketFabric& SocketFabric::operator=(SocketFabric &&other)
     {
-      if (socket) {
-        ospcommon::close(socket);
-      }
+      closeIfExists(socket);
+
       socket = other.socket;
       other.socket = nullptr;
+
+      return *this;
     }
 
     void SocketFabric::send(void *mem, size_t s)
@@ -70,15 +79,15 @@ namespace ospcommon {
       return s;
     }
 
+    // SocketListener definitions /////////////////////////////////////////////
+
     SocketListener::SocketListener(const uint16_t port)
       : socket(ospcommon::bind(port))
     {}
 
     SocketListener::~SocketListener()
     {
-      if (socket) {
-        ospcommon::close(socket);
-      }
+      closeIfExists(socket);
     }
 
     SocketFabric SocketListener::accept()

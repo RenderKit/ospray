@@ -48,13 +48,15 @@ namespace ospcommon {
       size_t read(void *&mem) override;
 
     private:
+
       explicit SocketFabric(ospcommon::socket_t socket);
       friend struct SocketListener;
+
+      // Data //
 
       ospcommon::socket_t socket;
       std::vector<char> buffer;
     };
-
 
     /*! An abstraction for listening on a socket for connections,
      * for each accepted connection a SocketFabric will be returned */
@@ -71,6 +73,7 @@ namespace ospcommon {
       SocketFabric accept();
 
     private:
+
       ospcommon::socket_t socket;
     };
 
