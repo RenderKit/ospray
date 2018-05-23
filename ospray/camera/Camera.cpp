@@ -21,6 +21,10 @@
 
 namespace ospray {
 
+  ProjectedPoint::ProjectedPoint(const vec3f &pos, float radius)
+    : screenPos(pos), radius(radius)
+  {}
+
   Camera *Camera::createInstance(const char *type)
   {
     return createInstanceHelper<Camera, OSP_CAMERA>(type);
@@ -54,7 +58,7 @@ namespace ospray {
         );
   }
 
-  vec2f Camera::projectPoint(const vec3f &) const {
+  ProjectedPoint Camera::projectPoint(const vec3f &) const {
     NOTIMPLEMENTED;
   }
 

@@ -54,7 +54,7 @@ namespace ospray {
     /*! Every derived class should overrride this! */
     virtual std::string toString() const override;
     virtual void commit() override;
-    virtual vec2f projectPoint(const vec3f &p) const override;
+    virtual ProjectedPoint projectPoint(const vec3f &p) const override;
 
     // Data members //
 

@@ -21,6 +21,15 @@
 
 namespace ospray {
 
+  struct OSPRAY_SDK_INTERFACE ProjectedPoint {
+    //! The screen space position and depth
+    vec3f screenPos;
+    //! The radius of the projected disk, in the case of depth of field
+    float radius;
+
+    ProjectedPoint(const vec3f &pos, float radius);
+  };
+
   //! base camera class abstraction
   /*! the base class itself does not do anything useful; look into
       perspectivecamera etc for that */
@@ -32,7 +41,7 @@ namespace ospray {
 
     virtual void commit() override;
 
-    virtual vec2f projectPoint(const vec3f &p) const;
+    virtual ProjectedPoint projectPoint(const vec3f &p) const;
 
     static Camera *createInstance(const char *identifier);
 
