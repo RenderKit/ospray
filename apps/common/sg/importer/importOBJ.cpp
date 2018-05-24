@@ -230,11 +230,11 @@ namespace ospray {
         auto vi = createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
         vi->v.reserve(numSrcIndices / 3);
 
-        auto vn = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
+        auto vn = createNode("vertex.normal", "DataVector3f")->nodeAs<DataVector3f>();
         vn->v.reserve(numSrcIndices);
 
         auto vt =
-            createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
+            createNode("vertex.texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
         for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
