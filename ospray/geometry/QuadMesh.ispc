@@ -59,7 +59,18 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
   const vec4i index = gather_vec4i(huge_mesh, self->index, ray.primID);
   const float u = ray.u;
   const float v = ray.v;
-  const vec4f uv = make_vec4f((1-v)*(1-u), (1-v)*u, v*u, v*(1-u));
+  vec4f uv;
+#if 1 // bilinear for quads
+  if (index.z == index.w)
+    uv = make_vec4f(1.f-u-v, u, v, 0.f);
+  else 
+    uv = make_vec4f((1-v)*(1-u), (1-v)*u, v*u, v*(1-u));
+#else // always as triangles
+  if (u+v < 1.0f)
+    uv = make_vec4f(1.f-u-v, u, 0.f, v);
+  else 
+    uv = make_vec4f(0.f, 1.f-v, u+v-1.f, 1.f-u);
+#endif
 
   if (flags & DG_NS && self->normal) {
     const uniform float *uniform normal = self->normal;
@@ -98,7 +109,7 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
       const uniform vec2f *uniform texcoord = self->texcoord;
       const vec2f a = gather_vec2f(huge_mesh, texcoord, index.x);
       const vec2f b = gather_vec2f(huge_mesh, texcoord, index.y);
-      const vec2f c = gather_vec2f(huge_mesh, texcoord, index.w); // XXX
+      const vec2f c = gather_vec2f(huge_mesh, texcoord, index.w);
       const vec2f dst02 = a - c;
       const vec2f dst12 = b - c;
       const float det = dst02.x * dst12.y - dst02.y * dst12.x;
