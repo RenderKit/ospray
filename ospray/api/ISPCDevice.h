@@ -23,8 +23,11 @@
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
+extern "C" OSPRAY_SDK_INTERFACE RTCDevice ispc_embreeDevice();
+
 namespace ospray {
   namespace api {
+
 
     struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     {
