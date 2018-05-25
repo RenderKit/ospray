@@ -21,10 +21,9 @@
 //! ispc-equivalent of the ospray::QuadMesh geometry
 struct QuadMesh {
   Geometry  super; //!< inherited geometry fields
-  int32     idxSize; //!< stride of quad indices, in int32 elements
   int32     vtxSize; //!< stride of vertex positions, in float32 elements
   int32     norSize; //!< stride of normals, in float32 elements
-  int      *index;  //!< mesh's quad index array
+  vec4i    *index;  //!< mesh's quad index array
   float    *vertex; //!< mesh's vertex position array
   float    *normal; //!< mesh's vertex normal array
   vec4f    *color;  //!< mesh's vertex color array

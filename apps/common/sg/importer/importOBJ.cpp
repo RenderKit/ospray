@@ -267,11 +267,11 @@ namespace ospray {
         auto vi = createNode("index", "DataVector4i")->nodeAs<DataVector4i>();
         vi->v.reserve(numSrcIndices / 4);
 
-        auto vn = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
+        auto vn = createNode("vertex.normal", "DataVector3f")->nodeAs<DataVector3f>();
         vn->v.reserve(numSrcIndices);
 
         auto vt =
-            createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
+            createNode("vertex.texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
         // OSPRay doesn't support separate arrays for vertex, normal & texcoord
