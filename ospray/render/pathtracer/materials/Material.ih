@@ -109,10 +109,9 @@ inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
                                  const uniform linear2f& normalRot,
                                  uniform float normalScale = 1.f)
 {
-  linear3f f = makeShadingFrame(dg);
-  
   if (valid(normalMap))
   {
+    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
     // get normal from texture
     vec3f localN = getNormal(normalMap, dg.st) * make_vec3f(normalScale, normalScale, 1.f);
     // rotate in 2D (tangent space) to account for tc transformations
@@ -123,6 +122,6 @@ inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
   }
   else
   {
-    return f;
+    return makeShadingFrame(dg);
   }
 }
