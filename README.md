@@ -203,9 +203,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -2162,19 +2162,19 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">metallic</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">mix between dielectric (diffuse and/or specular) and metallic (specular only with complex IOR) in [0-1]</td>
+<td style="text-align: left;">mix between dielectric (diffuse and/or specular) and metallic (specular only with complex IOR) in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">diffuse</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: left;">diffuse reflection weight in [0-1]</td>
+<td style="text-align: left;">diffuse reflection weight in [0–1]</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">specular</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: left;">specular reflection/transmission weight in [0-1]</td>
+<td style="text-align: left;">specular reflection/transmission weight in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
@@ -2186,7 +2186,7 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">transmission</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">specular transmission weight in [0-1]</td>
+<td style="text-align: left;">specular transmission weight in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">vec3f</td>
@@ -2210,13 +2210,13 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">anisotropy</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">amount of specular anisotropy in [0-1]</td>
+<td style="text-align: left;">amount of specular anisotropy in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">rotation</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">rotation of the direction of anisotropy in [0-1], 1 is going full circle</td>
+<td style="text-align: left;">rotation of the direction of anisotropy in [0–1], 1 is going full circle</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
@@ -2240,13 +2240,13 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">backlight</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">amount of diffuse transmission (thin only) in [0-2], 1 is 50% reflection and 50% transmission, 2 is transmission only</td>
+<td style="text-align: left;">amount of diffuse transmission (thin only) in [0–2], 1 is 50% reflection and 50% transmission, 2 is transmission only</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coat</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">clear coat layer weight in [0-1]</td>
+<td style="text-align: left;">clear coat layer weight in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
@@ -2270,7 +2270,7 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coatRoughness</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">clear coat roughness in [0-1], 0 is perfectly smooth</td>
+<td style="text-align: left;">clear coat roughness in [0–1], 0 is perfectly smooth</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
@@ -2282,7 +2282,7 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">sheen</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">sheen layer weight in [0-1]</td>
+<td style="text-align: left;">sheen layer weight in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">vec3f</td>
@@ -2294,7 +2294,7 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">sheenRoughness</td>
 <td style="text-align: right;">0.2</td>
-<td style="text-align: left;">sheen roughness in [0-1], 0 is perfectly smooth</td>
+<td style="text-align: left;">sheen roughness in [0–1], 0 is perfectly smooth</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
@@ -2359,7 +2359,7 @@ CarPaint material, pass the type string “`CarPaint`” to
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">flakeDensity</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">density of metallic flakes in [0-1], 0 disables flakes, 1 fully covers the surface with flakes</td>
+<td style="text-align: left;">density of metallic flakes in [0–1], 0 disables flakes, 1 fully covers the surface with flakes</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
@@ -2371,25 +2371,25 @@ CarPaint material, pass the type string “`CarPaint`” to
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">flakeSpread</td>
 <td style="text-align: right;">0.3</td>
-<td style="text-align: left;">flake spread in [0-1]</td>
+<td style="text-align: left;">flake spread in [0–1]</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">flakeJitter</td>
 <td style="text-align: right;">0.75</td>
-<td style="text-align: left;">flake randomness in [0-1]</td>
+<td style="text-align: left;">flake randomness in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">flakeRoughness</td>
 <td style="text-align: right;">0.3</td>
-<td style="text-align: left;">flake roughness in [0-1], 0 is perfectly smooth</td>
+<td style="text-align: left;">flake roughness in [0–1], 0 is perfectly smooth</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coat</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: left;">clear coat layer weight in [0-1]</td>
+<td style="text-align: left;">clear coat layer weight in [0–1]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
@@ -2413,7 +2413,7 @@ CarPaint material, pass the type string “`CarPaint`” to
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coatRoughness</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">clear coat roughness in [0-1], 0 is perfectly smooth</td>
+<td style="text-align: left;">clear coat roughness in [0–1], 0 is perfectly smooth</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
@@ -3035,13 +3035,13 @@ below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">contrast</td>
 <td style="text-align: left;">1.6773</td>
-<td style="text-align: left;">contrast (toe of the curve); typically is in [1-2]</td>
+<td style="text-align: left;">contrast (toe of the curve); typically is in [1–2]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">shoulder</td>
 <td style="text-align: left;">0.9714</td>
-<td style="text-align: left;">highlight compression (shoulder of the curve); typically is in [0.9-1]</td>
+<td style="text-align: left;">highlight compression (shoulder of the curve); typically is in [0.9–1]</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
