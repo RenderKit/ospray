@@ -172,6 +172,15 @@ namespace ospray {
             list.push_back('\0');
         }
 
+        // add to whitelist if not found
+        if (val == -1) {
+          val = whitelist.size();
+          whitelist.push_back(value);
+          node->setWhiteList(whitelist);
+          list += value;
+          list.push_back('\0');
+        }
+
         ImGui::Combo(text.c_str(), &val, list.c_str(), whitelist.size());
         node->setValue(whitelist[val]);
       } else {
