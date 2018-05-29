@@ -38,6 +38,15 @@ __define_quad_interpolate(vec2f);
 __define_quad_interpolate(vec3f);
 __define_quad_interpolate(vec4f);
 
+int32 QuadMesh_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
+  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
+}
+
 static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
                                    uniform Model    *uniform model,
                                    varying DifferentialGeometry &dg,
@@ -47,10 +56,21 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
   QuadMesh *uniform self = (QuadMesh *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
   const uniform bool huge_mesh = self->huge_mesh;
-  const vec4i index = gather_vec4i(huge_mesh, self->index, self->idxSize, ray.primID);
+  const vec4i index = gather_vec4i(huge_mesh, self->index, ray.primID);
   const float u = ray.u;
   const float v = ray.v;
-  const vec4f uv = make_vec4f((1-v)*(1-u), (1-v)*u, v*u, v*(1-u));
+  vec4f uv;
+#if 1 // bilinear for quads
+  if (index.z == index.w)
+    uv = make_vec4f(1.f-u-v, u, v, 0.f);
+  else 
+    uv = make_vec4f((1-v)*(1-u), (1-v)*u, v*u, v*(1-u));
+#else // always as triangles
+  if (u+v < 1.0f)
+    uv = make_vec4f(1.f-u-v, u, 0.f, v);
+  else 
+    uv = make_vec4f(0.f, 1.f-v, u+v-1.f, 1.f-u);
+#endif
 
   if (flags & DG_NS && self->normal) {
     const uniform float *uniform normal = self->normal;
@@ -83,14 +103,13 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
   } else
     dg.st = make_vec2f(0.0f, 0.0f);
 
-  //TODO, fix for quads
   if (flags & DG_TANGENTS) {
     uniform bool fallback = true;
     if (self->texcoord) {
       const uniform vec2f *uniform texcoord = self->texcoord;
       const vec2f a = gather_vec2f(huge_mesh, texcoord, index.x);
       const vec2f b = gather_vec2f(huge_mesh, texcoord, index.y);
-      const vec2f c = gather_vec2f(huge_mesh, texcoord, index.z);
+      const vec2f c = gather_vec2f(huge_mesh, texcoord, index.w);
       const vec2f dst02 = a - c;
       const vec2f dst12 = b - c;
       const float det = dst02.x * dst12.y - dst02.y * dst12.x;
@@ -101,7 +120,7 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
         const uniform int32 vtxSize = self->vtxSize;
         const vec3f a = gather_vec3f(huge_mesh, vertex, vtxSize, index.x);
         const vec3f b = gather_vec3f(huge_mesh, vertex, vtxSize, index.y);
-        const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
+        const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.w);
         const vec3f dp02 = a - c;
         const vec3f dp12 = b - c;
         dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
@@ -116,15 +135,8 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
     }
   }
 
-  if (flags & DG_MATERIALID) {
-    if (self->prim_materialID) {
-      dg.materialID = self->prim_materialID[ray.primID];
-    }
-    // TODO: gather material ID from index array if indexSize==4
-    else {
-      dg.materialID = self->geom_materialID;
-    }
-  }
+  if (flags & DG_MATERIALID)
+    dg.materialID = QuadMesh_getMaterialID(_self, ray.primID);
 }
 
 SampleAreaRes QuadMesh_sampleArea(
@@ -138,33 +150,50 @@ SampleAreaRes QuadMesh_sampleArea(
   const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
   SampleAreaRes res;
 
-  //TODO, fix for quads
   // gather vertices
   const uniform bool huge_mesh = self->huge_mesh;
-  const vec3i index = gather_vec3i(huge_mesh, self->index, self->idxSize, primID);
+  const vec4i index = gather_vec4i(huge_mesh, self->index, primID);
   const uniform float *uniform vertex = self->vertex;
   const uniform int32 vtxSize = self->vtxSize;
+  // triangles a b c and d c b
   const vec3f a = gather_vec3f(huge_mesh, vertex, vtxSize, index.x);
   const vec3f b = gather_vec3f(huge_mesh, vertex, vtxSize, index.y);
-  const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
+  const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.w);
+  const vec3f d = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
 
-  const vec3f localPos = uniformSampleTriangle(a, b, c, s);
+  const vec3f e1 = xfmVector(xfm, a-c);
+  const vec3f e2 = xfmVector(xfm, b-c);
+  const vec3f m1 = cross(e1, e2);
+
+  res.normal = m1;
+  vec3f v0 = a;
+  vec3f v1 = b;
+  vec3f v2 = c;
+  vec2f sp = s;
+
+  if (index.z != index.w) {
+    // painfully slow: re-calculate areas to decide which triangle to sample
+    const vec3f e3 = xfmVector(xfm, d-b);
+    const vec3f m2 = cross(e3, e2);
+    const float a1 = length(m1);
+    const float a2 = length(m2);
+    const float p1 = a1*rcp(a1+a2);
+
+    if (s.x < p1) {
+      sp.x *= rcp(p1); // reproject
+    } else { // sample second tri
+      sp.x = (s.x - p1) * rcp(1.f - p1); // reproject
+      v0 = d;
+      v1 = c;
+      v2 = b;
+      res.normal = m2;
+    }
+  }
+
+  const vec3f localPos = uniformSampleTriangle(v0, v1, v2, sp);
+  res.normal = normalize(res.normal);
   res.pos = xfmPoint(xfm, localPos);
-
-  const vec3f e1 = a-c;
-  const vec3f e2 = b-c;
-  res.normal = normalize(cross(xfmVector(xfm, e1), xfmVector(xfm, e2)));
-
   return res;
-}
-
-int32 QuadMesh_getMaterialID(
-    const Geometry *uniform const _self
-    , const int32 primID
-    )
-{
-  const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
-  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
 }
 
 void QuadMesh_getAreas(
@@ -177,18 +206,20 @@ void QuadMesh_getAreas(
 {
   const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
 
-  const uniform int32 idxSize = self->idxSize;
   const float *const uniform vertex = self->vertex;
   const uniform int64 vtxSize = self->vtxSize;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
   for (uniform int32 i = 0; i < numPrims; i++) {
-    int *uniform index = self->index + primIDs[i] * idxSize;
-    const uniform vec3f a = *((vec3f*)(vertex + vtxSize * *index));
-    const uniform vec3f b = *((vec3f*)(vertex + vtxSize * *(index+1)));
-    const uniform vec3f c = *((vec3f*)(vertex + vtxSize * *(index+2)));
+    vec4i uniform index = self->index[primIDs[i]];
+    // triangles a b c and d c b
+    const uniform vec3f a = *((vec3f*)(vertex + vtxSize * index.x));
+    const uniform vec3f b = *((vec3f*)(vertex + vtxSize * index.y));
+    const uniform vec3f c = *((vec3f*)(vertex + vtxSize * index.w));
+    const uniform vec3f d = *((vec3f*)(vertex + vtxSize * index.z));
     const uniform vec3f e1 = xfmVector(xfm, a-c);
     const uniform vec3f e2 = xfmVector(xfm, b-c);
-    areas[i] = 0.5f * length(cross(e1, e2));
+    const uniform vec3f e3 = xfmVector(xfm, d-b);
+    areas[i] = 0.5f*(length(cross(e1, e2)) + length(cross(e2, e3)));
   }
 }
 
@@ -200,10 +231,9 @@ void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
                           RTCGeometry geom,
                           uniform int32 geomID,
                           uniform int32  numQuads,
-                          uniform int32  idxSize,
                           uniform int32  vtxSize,
                           uniform int32  norSize,
-                          uniform int    *uniform index,
+                          uniform vec4i  *uniform index,
                           uniform float  *uniform vertex,
                           uniform float  *uniform normal,
                           uniform vec4f  *uniform color,
@@ -227,7 +257,6 @@ void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
   mesh->normal       = normal;
   mesh->color        = color;
   mesh->texcoord     = texcoord;
-  mesh->idxSize      = idxSize;
   mesh->vtxSize      = vtxSize;
   mesh->norSize      = norSize;
   mesh->prim_materialID = prim_materialID;
@@ -240,7 +269,7 @@ export void *uniform QuadMesh_create(void *uniform cppEquivalent)
 {
   QuadMesh *uniform mesh = uniform new QuadMesh;
   QuadMesh_Constructor(mesh, cppEquivalent,
-                       NULL, NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL,
+                       NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL,
                        NULL, -1, NULL, NULL, true, false);
   return mesh;
 }
@@ -250,10 +279,9 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
                                   RTCGeometry geom,
                                   uniform int32 geomID,
                                   uniform int32  numQuads,
-                                  uniform int32  idxSize,
                                   uniform int32  vtxSize,
                                   uniform int32  norSize,
-                                  uniform int    *uniform index,
+                                  uniform vec4i  *uniform index,
                                   uniform float  *uniform vertex,
                                   uniform float  *uniform normal,
                                   uniform vec4f  *uniform color,
@@ -273,7 +301,7 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
                        geom,
                        geomID,
                        numQuads,
-                       idxSize, vtxSize, norSize,
+                       vtxSize, norSize,
                        index,
                        vertex,
                        normal,

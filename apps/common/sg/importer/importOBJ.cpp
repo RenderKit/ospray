@@ -267,11 +267,11 @@ namespace ospray {
         auto vi = createNode("index", "DataVector4i")->nodeAs<DataVector4i>();
         vi->v.reserve(numSrcIndices / 4);
 
-        auto vn = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
+        auto vn = createNode("vertex.normal", "DataVector3f")->nodeAs<DataVector3f>();
         vn->v.reserve(numSrcIndices);
 
         auto vt =
-            createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
+            createNode("vertex.texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
         // OSPRay doesn't support separate arrays for vertex, normal & texcoord
@@ -282,10 +282,11 @@ namespace ospray {
         size_t i = 0;
         for (int numVertsInFace : shape.mesh.num_face_vertices) {
           auto isQuad = (numVertsInFace == 4);
-          auto lastIndex = isQuad ? 3 : 2;
-          auto prim_indices = vec4i(0, 1, 2, lastIndex);
+          // when a Quad then use same splitting diagonale in OSPRay/Embree as
+          // tinyOBJ would use
+          auto prim_indices = isQuad ? vec4i(3, 0, 1, 2) : vec4i(0, 1, 2, 2);
           vi->push_back(i + prim_indices);
-          i += lastIndex + 1;
+          i += numVertsInFace;
         }
 
         for (size_t i = 0; i < numSrcIndices; i++) {
