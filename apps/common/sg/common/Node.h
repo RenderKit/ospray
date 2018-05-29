@@ -29,6 +29,7 @@
 #include "ospcommon/utility/TimeStamp.h"
 #include "ospcommon/xml/XML.h"
 #include "ospcommon/vec.h"
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {
@@ -460,7 +461,7 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
-    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
+    extern "C" OSPRAY_DLLEXPORT ospray::sg::Node*                       \
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
       return new InternalClassName;                                     \

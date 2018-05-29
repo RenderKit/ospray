@@ -148,8 +148,9 @@ namespace ospray {
     // Macro to register importers ////////////////////////////////////////////
 
 #define OSPSG_REGISTER_IMPORT_FUNCTION(function, name)                         \
-    extern "C" void ospray_sg_import_##name(std::shared_ptr<Node> world,       \
-                                            const FileName fileName)           \
+    extern "C" OSPRAY_DLLEXPORT                                                \
+    void ospray_sg_import_##name(std::shared_ptr<Node> world,                  \
+                                 const FileName fileName)                      \
     {                                                                          \
       function(world, fileName);                                               \
     }                                                                          \
