@@ -1337,15 +1337,15 @@ listed in the table below.
   vec3f  edgeColor              white  edge tint (metallic only)
 
   float  metallic                   0  mix between dielectric (diffuse and/or specular)
-                                       and metallic (specular only with complex IOR) in [0-1]
+                                       and metallic (specular only with complex IOR) in [0–1]
 
-  float  diffuse                    1  diffuse reflection weight in [0-1]
+  float  diffuse                    1  diffuse reflection weight in [0–1]
 
-  float  specular                   1  specular reflection/transmission weight in [0-1]
+  float  specular                   1  specular reflection/transmission weight in [0–1]
 
   float  ior                        1  dielectric index of refraction
 
-  float  transmission               0  specular transmission weight in [0-1]
+  float  transmission               0  specular transmission weight in [0–1]
 
   vec3f  transmissionColor      white  attenuated color due to transmission (Beer's law)
 
@@ -1355,9 +1355,9 @@ listed in the table below.
   float  roughness                  0  diffuse and specular roughness in [0–1], 0 is perfectly
                                        smooth
 
-  float  anisotropy                 0  amount of specular anisotropy in [0-1]
+  float  anisotropy                 0  amount of specular anisotropy in [0–1]
 
-  float  rotation                   0  rotation of the direction of anisotropy in [0-1], 1 is
+  float  rotation                   0  rotation of the direction of anisotropy in [0–1], 1 is
                                        going full circle
 
   float  normal                     1  normal map/scale
@@ -1367,11 +1367,11 @@ listed in the table below.
   float  thickness                  1  thickness of the material (thin only), affects the
                                        amount of color attenuation due to specular transmission
 
-  float  backlight                  0  amount of diffuse transmission (thin only) in [0-2],
+  float  backlight                  0  amount of diffuse transmission (thin only) in [0–2],
                                        1 is 50% reflection and 50% transmission, 2 is
                                        transmission only
 
-  float  coat                       0  clear coat layer weight in [0-1]
+  float  coat                       0  clear coat layer weight in [0–1]
 
   float  coatIor                  1.5  clear coat index of refraction
 
@@ -1380,15 +1380,15 @@ listed in the table below.
   float  coatThickness              1  clear coat thickness, affects the amount of color
                                        attenuation
 
-  float  coatRoughness              0  clear coat roughness in [0-1], 0 is perfectly smooth
+  float  coatRoughness              0  clear coat roughness in [0–1], 0 is perfectly smooth
 
   float  coatNormal                 1  clear coat normal map/scale
 
-  float  sheen                      0  sheen layer weight in [0-1]
+  float  sheen                      0  sheen layer weight in [0–1]
 
   vec3f  sheenColor             white  sheen color tint
 
-  float  sheenRoughness           0.2  sheen roughness in [0-1], 0 is perfectly smooth
+  float  sheenRoughness           0.2  sheen roughness in [0–1], 0 is perfectly smooth
 
   float  opacity                    1  cut-out opacity/transparency, 1 is fully opaque
   -------------------------------------------------------------------------------------------
@@ -1416,19 +1416,19 @@ in the table below.
 
   float  normal                     1  normal map/scale
 
-  float  flakeDensity               0  density of metallic flakes in [0-1], 0 disables flakes,
+  float  flakeDensity               0  density of metallic flakes in [0–1], 0 disables flakes,
                                        1 fully covers the surface with flakes
 
   float  flakeScale               100  scale of the flake structure, higher values increase
                                        the amount of flakes
 
-  float  flakeSpread              0.3  flake spread in [0-1]
+  float  flakeSpread              0.3  flake spread in [0–1]
 
-  float  flakeJitter             0.75  flake randomness in [0-1]
+  float  flakeJitter             0.75  flake randomness in [0–1]
 
-  float  flakeRoughness           0.3  flake roughness in [0-1], 0 is perfectly smooth
+  float  flakeRoughness           0.3  flake roughness in [0–1], 0 is perfectly smooth
 
-  float  coat                       1  clear coat layer weight in [0-1]
+  float  coat                       1  clear coat layer weight in [0–1]
 
   float  coatIor                  1.5  clear coat index of refraction
 
@@ -1437,7 +1437,7 @@ in the table below.
   float  coatThickness              1  clear coat thickness, affects the amount of color
                                        attenuation
 
-  float  coatRoughness              0  clear coat roughness in [0-1], 0 is perfectly smooth
+  float  coatRoughness              0  clear coat roughness in [0–1], 0 is perfectly smooth
 
   float  coatNormal                 1  clear coat normal map/scale
 
@@ -1955,10 +1955,10 @@ customized using the parameters listed in the table below.
   Type  Name       Default     Description
   ----- ---------  --------    -----------------------------------------
   float contrast   1.6773      contrast (toe of the curve); typically is
-                               in [1-2]
+                               in [1–2]
 
   float shoulder   0.9714      highlight compression (shoulder of the
-                               curve); typically is in [0.9-1]
+                               curve); typically is in [0.9–1]
 
   float midIn      0.18        mid-level anchor input; default is 18%
                                gray

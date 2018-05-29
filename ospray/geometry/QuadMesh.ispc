@@ -161,32 +161,33 @@ SampleAreaRes QuadMesh_sampleArea(
   const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.w);
   const vec3f d = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
 
-  // painfully slow: re-calculate areas to decide which triangle to sample
   const vec3f e1 = xfmVector(xfm, a-c);
   const vec3f e2 = xfmVector(xfm, b-c);
-  const vec3f e3 = xfmVector(xfm, d-b);
   const vec3f m1 = cross(e1, e2);
-  const vec3f m2 = cross(e3, e2);
-  const float a1 = length(m1);
-  const float a2 = length(m2);
-  const float p1 = a1*rcp(a1+a2);
 
   res.normal = m1;
   vec3f v0 = a;
   vec3f v1 = b;
   vec3f v2 = c;
+  vec2f sp = s;
 
-  vec2f sp;
-  sp.y = s.y;
+  if (index.z != index.w) {
+    // painfully slow: re-calculate areas to decide which triangle to sample
+    const vec3f e3 = xfmVector(xfm, d-b);
+    const vec3f m2 = cross(e3, e2);
+    const float a1 = length(m1);
+    const float a2 = length(m2);
+    const float p1 = a1*rcp(a1+a2);
 
-  if (s.x < p1) {
-    sp.x = s.x * rcp(p1); // reproject
-  } else { // sample second tri
-    sp.x = (s.x - p1) * rcp(1.f - p1); // reproject
-    v0 = d;
-    v1 = c;
-    v2 = b;
-    res.normal = m2;
+    if (s.x < p1) {
+      sp.x *= rcp(p1); // reproject
+    } else { // sample second tri
+      sp.x = (s.x - p1) * rcp(1.f - p1); // reproject
+      v0 = d;
+      v1 = c;
+      v2 = b;
+      res.normal = m2;
+    }
   }
 
   const vec3f localPos = uniformSampleTriangle(v0, v1, v2, sp);
@@ -218,7 +219,7 @@ void QuadMesh_getAreas(
     const uniform vec3f e1 = xfmVector(xfm, a-c);
     const uniform vec3f e2 = xfmVector(xfm, b-c);
     const uniform vec3f e3 = xfmVector(xfm, d-b);
-    areas[i] = length(cross(e1, e2)) + length(cross(e2, e3));
+    areas[i] = 0.5f*(length(cross(e1, e2)) + length(cross(e2, e3)));
   }
 }
 
