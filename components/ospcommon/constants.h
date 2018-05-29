@@ -33,14 +33,6 @@ namespace ospcommon
   /* we consider floating point numbers in that range as valid input numbers */
   static float FLT_LARGE = 1.844E18f;
 
-  static struct TrueTy {
-    __forceinline operator bool( ) const { return true; }
-  } True MAYBE_UNUSED;
-
-  static struct FalseTy {
-    __forceinline operator bool( ) const { return false; }
-  } False MAYBE_UNUSED;
-  
   static struct ZeroTy
   {
     __forceinline operator          double   ( ) const { return 0; }
