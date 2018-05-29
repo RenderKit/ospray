@@ -109,15 +109,17 @@ namespace ospray {
     const vec3f r = normalize(p - pos);
     const float denom = dot(-r, -dir);
     if (denom == 0.0) {
-      return ProjectedPoint(vec3f(-1), -1);
+      return ProjectedPoint(vec3f(-1, -1,
+                                  std::numeric_limits<float>::infinity()), -1);
     }
     const float t = 1.0 / denom;
 
     const vec3f screenDir = r * t - dir_00;
     const vec2f sp = vec2f(dot(screenDir, normalize(dir_du)),
                            dot(screenDir, normalize(dir_dv))) / imgPlaneSize;
+    const float depth = length(p - pos);
     // TODO: Depth of field radius
-    return ProjectedPoint(vec3f(sp.x, sp.y, t), 0);
+    return ProjectedPoint(vec3f(sp.x, sp.y, depth), 0);
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
