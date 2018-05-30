@@ -68,6 +68,20 @@
 using namespace ospray::cpp;
 using namespace ospcommon;
 
+// Commandline params
+std::string volumeFile = "";
+std::string dtype = "";
+vec3i dimensions = vec3i(-1);
+vec2f valueRange = vec2f(-1);
+size_t nSpheres = 0;
+float varianceThreshold = 0.0f;
+FileName transferFcnFile;
+bool appInitMPI = false;
+size_t nlocalBricks = 1;
+float sphereRadius = 0.005;
+bool transparentSpheres = false;
+int aoSamples = 0;
+
 // Struct for bcasting out the camera change info and general app state
 struct AppState {
   // eye pos, look dir, up dir
@@ -145,19 +159,8 @@ void charCallback(GLFWwindow *, unsigned int c) {
   }
 }
 
-int main(int argc, char **argv) {
-  std::string volumeFile, dtype;
-  vec3i dimensions = vec3i(-1);
-  vec2f valueRange = vec2f(-1);
-  size_t nSpheres = 0;
-  float varianceThreshold = 0.0f;
-  FileName transferFcnFile;
-  bool appInitMPI = false;
-  size_t nlocalBricks = 1;
-  float sphereRadius = 0.005;
-  bool transparentSpheres = false;
-  int aoSamples = 0;
-
+void parseArgs(int argc, char **argv)
+{
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-f") {
@@ -192,32 +195,26 @@ int main(int argc, char **argv) {
   if (!volumeFile.empty()) {
     if (dtype.empty()) {
       std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
-      return 1;
+      std::exit(1);
     }
     if (dimensions == vec3i(-1)) {
       std::cerr << "Error: -dims X Y Z is required to pass volume dims\n";
-      return 1;
+      std::exit(1);
     }
     if (valueRange == vec2f(-1)) {
       std::cerr << "Error: -range X Y is required to set transfer function range\n";
-      return 1;
+      std::exit(1);
     }
     if (nlocalBricks != 1) {
       std::cerr << "Error: -nlocal-bricks only makes supported for generated volumes\n";
-      return 1;
+      std::exit(1);
     }
   }
+}
 
+void runApp()
+{
   ospLoadModule("mpi");
-  // The application can be responsible for initializing and finalizing MPI,
-  // or can let OSPRay's mpi_distributed device handle it. In the case that
-  // the distributed device is responsible MPI will be initialized when the
-  // device is created and finalized when it's destroyed.
-  if (appInitMPI) {
-    int provided = 0;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-    assert(provided == MPI_THREAD_MULTIPLE);
-  }
   Device device("mpi_distributed");
   device.set("masterRank", 0);
   ospDeviceSetStatusFunc(device.handle(), [](const char *msg) { std::cout << msg << "\n"; });
@@ -310,13 +307,15 @@ int main(int argc, char **argv) {
   GLFWwindow *window = nullptr;
   if (rank == 0) {
     if (!glfwInit()) {
-      return 1;
+      std::cerr << "Failed to init GLFW" << std::endl;
+      std::exit(1);
     }
     window = glfwCreateWindow(app.fbSize.x, app.fbSize.y,
         "Sample Distributed OSPRay Viewer", nullptr, nullptr);
     if (!window) {
       glfwTerminate();
-      return 1;
+      std::cerr << "Failed to create window" << std::endl;
+      std::exit(1);
     }
     glfwMakeContextCurrent(window);
 
@@ -445,6 +444,24 @@ int main(int argc, char **argv) {
       glfwDestroyWindow(window);
   }
 
+}
+
+int main(int argc, char **argv) {
+  parseArgs(argc, argv);
+
+  // The application can be responsible for initializing and finalizing MPI,
+  // or can let OSPRay's mpi_distributed device handle it. In the case that
+  // the distributed device is responsible MPI will be initialized when the
+  // device is created and finalized when it's destroyed.
+  if (appInitMPI) {
+    int provided = 0;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    assert(provided == MPI_THREAD_MULTIPLE);
+  }
+
+  runApp();
+
+  ospShutdown();
   // If the app is responsible for setting up MPI we've also got
   // to finalize it at the exit
   if (appInitMPI) {
