@@ -175,8 +175,7 @@ namespace ospray {
 
     if (!verticesData || !indicesData || (!fieldData && !cellFieldData)) {
       throw std::runtime_error(
-          "#osp: missing correct data arrays in "
-          " UnstructuredVolume!");
+          "#osp: missing correct data arrays in UnstructuredVolume!");
     }
 
     nVertices   = verticesData->size();
