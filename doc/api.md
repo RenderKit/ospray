@@ -852,7 +852,7 @@ than the curvature radius of the Bézier curve at each location on the
 curve.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
-streamline is specified as a list of linear segments (or links)
+streamline is specified as a list of segments (or links)
 referenced via `index`: each entry `e` of the `index` array points the
 first vertex of a link (`vertex[index[e]]`) and the second vertex of the
 link is implicitly the directly following one (`vertex[index[e]+1]`).

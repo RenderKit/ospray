@@ -83,7 +83,8 @@ inline linear3f makeShadingFrame(const DifferentialGeometry& dg)
 
 inline linear3f makeShadingFrame(const linear3f& f, const vec3f& localN)
 {
-  vec3f N = f * localN; // transform normal to world space
+  // in general f is not ortho-normal, thus need to re-normalize
+  vec3f N = normalize(f * localN); // transform normal to world space
   vec3f U = f.vx;
   vec3f V = cross(N, U);
   if (dot(V,V) > 0.f)
