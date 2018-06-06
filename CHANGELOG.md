@@ -5,7 +5,7 @@ Version History
 
 -   Many bug fixes
     -   Quad mesh interpolation and sampling
-    -   Cornercases with normal mapping in path tracer materials
+    -   Normal mapping in path tracer materials
     -   Memory corruption with partly emitting mesh lights
 
 ### Changes in v1.6.0:

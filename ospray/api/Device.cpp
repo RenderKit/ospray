@@ -128,11 +128,11 @@ namespace ospray {
         numThreads = 1;
       }
 
+      threadAffinity = AUTO_DETECT;
+
       auto OSPRAY_SET_AFFINITY = utility::getEnvVar<int>("OSPRAY_SET_AFFINITY");
-      if (OSPRAY_SET_AFFINITY) {
-        threadAffinity = OSPRAY_SET_AFFINITY.value() == 0 ? DEAFFINITIZE :
-                                                            AFFINITIZE;
-      }
+      if (OSPRAY_SET_AFFINITY)
+        threadAffinity = OSPRAY_SET_AFFINITY.value();
 
       threadAffinity = getParam<int>("setAffinity", threadAffinity);
 
