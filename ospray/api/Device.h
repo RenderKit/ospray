@@ -231,8 +231,11 @@ namespace ospray {
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
 
-      enum OSP_THREAD_AFFINITY {AUTO_DETECT, AFFINITIZE, DEAFFINITIZE};
+      enum OSP_THREAD_AFFINITY
+      {DEAFFINITIZE = 0, AFFINITIZE = 1, AUTO_DETECT = 2};
+
       int threadAffinity {AUTO_DETECT};
+
       /*! logging level (cmdline: --osp:loglevel \<n\>) */
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
