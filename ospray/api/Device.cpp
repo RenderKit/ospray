@@ -133,8 +133,10 @@ namespace ospray {
         threadAffinity = OSPRAY_SET_AFFINITY.value() == 0 ? DEAFFINITIZE :
                                                             AFFINITIZE;
       }
-
-      threadAffinity = getParam<int>("setAffinity", threadAffinity);
+      else {
+        threadAffinity = getParam<int>("setAffinity", 0) == 0 ? DEAFFINITIZE : 
+                                                                AFFINITIZE;
+      }
 
       tasking::initTaskingSystem(numThreads);
 
