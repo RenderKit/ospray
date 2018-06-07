@@ -334,7 +334,7 @@ namespace ospray {
 
     } // ::ospray::sg::ply
 
-    void importPLY(std::shared_ptr<Node> &world, const FileName &fileName)
+    void importPLY(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
       auto mesh = sg::createNode(fileName.name(),
                                  "TriangleMesh")->nodeAs<TriangleMesh>();

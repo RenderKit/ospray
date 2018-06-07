@@ -130,7 +130,7 @@ namespace ospray {
         which are x, y, and z coordinates, and the other two are
         (unused) floats, with a fixed radius of 0.2 for every
         sphere */
-    void importFileType_points(std::shared_ptr<Node> &world,
+    void importFileType_points(const std::shared_ptr<Node> &world,
                                const FileName &url)
     {
       std::cout << "--------------------------------------------" << std::endl;

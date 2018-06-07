@@ -95,7 +95,7 @@ namespace ospray {
 
     // for now, let's hardcode the importers - should be moved to a
     // registry at some point ...
-    void importFileType_points(std::shared_ptr<Node> &world,
+    void importFileType_points(const std::shared_ptr<Node> &world,
                                const FileName &url);
 
 
@@ -159,7 +159,7 @@ namespace ospray {
       loadedFileName = fileName.str();
     }
 
-    void Importer::importURL(std::shared_ptr<Node> world,
+    void Importer::importURL(const std::shared_ptr<Node> &world,
                              const FileName &fileName,
                              const FormatURL &fu) const
     {
@@ -175,18 +175,16 @@ namespace ospray {
       }
     }
 
-    void Importer::importRegistryFileLoader(std::shared_ptr<Node> world,
+    void Importer::importRegistryFileLoader(const std::shared_ptr<Node> &world,
                                             const std::string &type,
                                             const FileName &fileName) const
     {
-      using importFunction = void(*)(std::shared_ptr<Node>, const FileName &);
-
-      static std::map<std::string, importFunction> symbolRegistry;
+      static std::map<std::string, ImporterFunction> symbolRegistry;
 
       if (symbolRegistry.count(type) == 0) {
         std::string creationFunctionName = "ospray_sg_import_" + type;
         symbolRegistry[type] =
-            (importFunction)getSymbol(creationFunctionName);
+            (ImporterFunction)getSymbol(creationFunctionName);
       }
 
       auto fcn = symbolRegistry[type];
@@ -206,7 +204,7 @@ namespace ospray {
           != importerForExtension.end();
     }
 
-    void Importer::importDefaultExtensions(std::shared_ptr<Node> world,
+    void Importer::importDefaultExtensions(const std::shared_ptr<Node> &world,
                                            const FileName &fileName) const
     {
       auto ext = fileName.ext();

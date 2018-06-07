@@ -37,9 +37,9 @@ namespace ospray {
     struct RIVLNode
     {
       RIVLNode() = default;
-      RIVLNode(std::shared_ptr<sg::Node> node)
+      RIVLNode(const std::shared_ptr<Node> node)
         : sgNode(node) {}
-      std::shared_ptr<sg::Node> sgNode{nullptr};
+      std::shared_ptr<Node> sgNode{nullptr};
       int nodeID{-1};
       int childID{-1};
       int transformID{-1};
@@ -438,7 +438,7 @@ namespace ospray {
       int nodeCounter=0;
       int modelCounter=0;
       std::map<int, int> nodeToModelMap;
-      std::map<std::shared_ptr<sg::Node>, int> modelPtrToModelIDMap;
+      std::map<std::shared_ptr<Node>, int> modelPtrToModelIDMap;
       for (auto node : nodeList)
       {
         if (node.sgNode && node.sgNode->type() == "Model")
@@ -497,7 +497,8 @@ namespace ospray {
       }
     }
 
-    void parseBGFscene(std::shared_ptr<sg::Node> world, const xml::Node &root)
+    void parseBGFscene(const std::shared_ptr<Node> &world,
+                       const xml::Node &root)
     {
       if (root.name != "BGFscene")
         throw std::runtime_error("XML file is not a RIVL model !?");
@@ -564,11 +565,11 @@ namespace ospray {
       transformList.resize(0);
     }
 
-    void importRIVL(std::shared_ptr<sg::Node> world,
-                    const std::string &fileName)
+    void importRIVL(const std::shared_ptr<Node> &world,
+                    const FileName &fileName)
     {
-      string xmlFileName = fileName;
-      string binFileName = fileName+".bin";
+      string xmlFileName = fileName.str();
+      string binFileName = fileName.str()+".bin";
       binBasePtr = (void *)mapFile(binFileName);
       if (binBasePtr == nullptr) {
         std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
@@ -577,7 +578,7 @@ namespace ospray {
         std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
         std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
       }
-      std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName);
+      std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName.str());
       if (doc->child.size() != 1 || doc->child[0].name != "BGFscene")
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       const xml::Node &root_element = doc->child[0];

@@ -23,7 +23,7 @@
 namespace ospray {
   namespace sg {
 
-    static void importStructuredVolume(std::shared_ptr<Node> world,
+    static void importStructuredVolume(const std::shared_ptr<Node> &world,
                                        const xml::Node &xmlNode)
     {
       using SVFF = StructuredVolumeFromFile;
@@ -58,7 +58,7 @@ namespace ospray {
       world->add(volume);
     }
 
-    static void importRAW2AMRVolume(std::shared_ptr<Node> world,
+    static void importRAW2AMRVolume(const std::shared_ptr<Node> &world,
                                     const std::string &originalFileName,
                                     const xml::Node &xmlNode)
     {
@@ -89,7 +89,7 @@ namespace ospray {
     }
 
 #ifdef OSPRAY_APPS_SG_CHOMBO
-    static void importCHOMBOFromOSP(std::shared_ptr<Node> world,
+    static void importCHOMBOFromOSP(const std::shared_ptr<Node> &world,
                                     const std::string &originalFileName,
                                     const xml::Node &xmlNode)
     {
@@ -111,7 +111,8 @@ namespace ospray {
     }
 #endif
 
-    void loadOSP(std::shared_ptr<Node> world, const std::string &fileName)
+    void loadOSP(const std::shared_ptr<Node> &world,
+                 const std::string &fileName)
     {
       std::cout << "#osp:sg: starting to read OSPRay XML file '" << fileName
                 << "'" << std::endl;
