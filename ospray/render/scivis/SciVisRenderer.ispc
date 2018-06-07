@@ -143,9 +143,10 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         // iw, 6-6-18: adding at least a ulp to the ray distance, to
         // guarantee forward progress - apparentlyt he epsilon can at
         // times be so small that it vanishes when adding,
-        const float ulpRayT = geometryRay.t * (1/(float)(1<<22));
+        const float ulpRayT = geometryRay.t * (1/(float)(1<<17));
         geometryRay.t0
           = geometryRay.t + max(renderer->super.epsilon,ulpRayT);
+
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;
@@ -191,6 +192,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   vec4f color = make_vec4f(0.0f);
   float depth = infinity;
 
+  // if (sample.sampleID.x == 128 && sample.sampleID.y == 64)
   SciVisRenderer_intersect(renderer, sample.ray, rayOffset,
                            sample.sampleID, color, depth);
 
