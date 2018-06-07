@@ -24,6 +24,7 @@
 #include <vtkCellData.h>
 #include <vtkCellTypes.h>
 #include <vtkDataSet.h>
+#include <vtkPointData.h>
 #include <vtkXMLImageDataReader.h>
 
 namespace ospray {
@@ -42,23 +43,29 @@ namespace ospray {
       reader->GetOutput()->Register(reader);
 
       auto output = reader->GetOutput();
-      std::string voxelType = output->GetScalarTypeAsString();
+      std::string voxelType = output->GetPointData()->GetArray(0)->GetDataTypeAsString();
+      void* voxelData = output->GetPointData()->GetArray(0)->GetVoidPointer(0);
       if (output->GetDataDimension() != 3)
         throw std::runtime_error("vti importer only supports 3d datasets");
       vec3i dims(output->GetDimensions()[0], output->GetDimensions()[1],
           output->GetDimensions()[2]);
       auto numVoxels = dims.product();
 
+      std::cout << "vtiimporter voxelType: " << voxelType << " dimensions: " << dims.x
+                << " " << dims.y << " " << dims.z
+                << " number of scalars: " << output->GetNumberOfScalarComponents()
+                << std::endl;
+
       std::shared_ptr<Node> voxelDataNode;
       if (voxelType == "float") {
         voxelDataNode = std::make_shared<DataArray1f>(
-              (float*)output->GetScalarPointer(), numVoxels);
+              (float*)voxelData, numVoxels);
       } else if (voxelType == "unsigned char") {
         voxelDataNode = std::make_shared<DataArray1uc>(
-              (unsigned char*)output->GetScalarPointer(), numVoxels);
+              (unsigned char*)voxelData, numVoxels);
       } else if (voxelType == "int") {
         voxelDataNode = std::make_shared<DataArray1i>(
-              (int*)output->GetScalarPointer(), numVoxels);
+              (int*)voxelData, numVoxels);
       }  //TODO: support short, unsigned short
       else
         throw std::runtime_error("unsupported voxel type in vti loader: " + voxelType);
