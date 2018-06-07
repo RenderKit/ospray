@@ -565,8 +565,14 @@ namespace ospray {
         tileIDs.push_back(tile->begin/TILE_SIZE);
         tileErrors.push_back(tile->error);
       }
-      else
+      else {
         mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg().message);
+        /*
+        const size_t nextTile = tileGatherBuffer.size();
+        tileGatherBuffer.resize(nextTile + msg->size);
+        std::memcpy(&tileGatherBuffer[nextTile], msg->data, msg->size);
+        */
+      }
 
       if (isFrameComplete(1)) {
         if(colorBufferFormat == OSP_FB_NONE)
@@ -714,6 +720,8 @@ namespace ospray {
   void DFB::closeCurrentFrame()
   {
     DBG(printf("rank %i CLOSES frame\n", mpicommon::globalRank()));
+
+    // Gather all the tiles from the other ranks to copy into the framebuffer
 
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */

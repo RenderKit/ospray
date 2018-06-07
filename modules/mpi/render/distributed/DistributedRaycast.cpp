@@ -116,9 +116,11 @@ namespace ospray {
       DETAILED_LOGGING = std::stoi(logging) != 0;
 
       if (DETAILED_LOGGING) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         auto job_name = utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
         std::string statsLogFile = job_name + std::string("-rank")
-          + std::to_string(mpicommon::globalRank()) + ".txt";
+          + std::to_string(rank) + ".txt";
         statsLog = std::ofstream(statsLogFile.c_str());
       }
     }

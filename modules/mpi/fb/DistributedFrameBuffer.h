@@ -161,6 +161,8 @@ namespace ospray {
     size_t delayedMessagesThisFrame;
     std::mutex statsMutex;
 
+    std::vector<char> tileGatherBuffer;
+
     friend struct TileData;
     friend struct WriteMultipleTile;
     friend struct AlphaBlendTile_simple;

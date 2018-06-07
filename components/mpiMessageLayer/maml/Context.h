@@ -104,14 +104,14 @@ namespace maml {
     void sendMessagesFromOutbox();
     void pollForAndRecieveMessages();
 
-    void waitOnSomeSendRequests();
-    void waitOnSomeRecvRequests();
+    void waitOnSomeRequests();
 
     void flushRemainingMessages();
 
     // Data members //
 
     bool tasksAreRunning {false};
+    bool madeProgress{false};
 
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;

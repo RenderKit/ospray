@@ -90,6 +90,8 @@ namespace maml {
         msg->started = high_resolution_clock::now();
         pendingSends.push_back(request);
         sendCache.push_back(std::move(msg));
+
+        madeProgress = true;
       }
     }
   }
@@ -122,36 +124,71 @@ namespace maml {
         msg->started = high_resolution_clock::now();
         pendingRecvs.push_back(request);
         recvCache.push_back(std::move(msg));
+
+        madeProgress = true;
       }
     }
   }
 
-  void Context::waitOnSomeSendRequests()
+  void Context::waitOnSomeRequests()
   {
-    if (!pendingSends.empty()) {
-      int numDone = 0;
-      int *done = STACK_BUFFER(int, pendingSends.size());
+    if (!pendingSends.empty() || !pendingRecvs.empty()) {
+      const int totalMessages = pendingSends.size() + pendingRecvs.size();
+      int *done = STACK_BUFFER(int, totalMessages);
+      MPI_Request *mergedRequests = STACK_BUFFER(MPI_Request, totalMessages);
 
-      MPI_CALL(Testsome(pendingSends.size(), pendingSends.data(), &numDone,
-                        done, MPI_STATUSES_IGNORE));
-      auto completed = high_resolution_clock::now();
-
-      for (int i = 0; i < numDone; ++i) {
-        int pendingSendCompletedIndex = done[i];
-        pendingSends[pendingSendCompletedIndex] = MPI_REQUEST_NULL;
-
-        auto &msg = sendCache[pendingSendCompletedIndex];
-        const auto sendTime = duration_cast<RealMilliseconds>(completed - msg->started);
-
-        {
-          std::lock_guard<std::mutex> lock(statsMutex);
-          sendTimes.push_back(sendTime);
-          sendBandwidth.emplace_back((msg->size / sendTime.count()) * 1e-6f);
+      for (int i = 0; i < totalMessages; ++i) {
+        if (i < pendingSends.size()) {
+          mergedRequests[i] = pendingSends[i];
+        } else {
+          mergedRequests[i] = pendingRecvs[i - pendingSends.size()];
         }
-
-        sendCache[pendingSendCompletedIndex].reset();
       }
 
+      int numDone = 0;
+      if (!madeProgress) {
+        MPI_CALL(Waitsome(totalMessages, mergedRequests, &numDone,
+                          done, MPI_STATUSES_IGNORE));
+      } else {
+        MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
+                          done, MPI_STATUSES_IGNORE));
+      }
+      auto completed = high_resolution_clock::now();
+      madeProgress |= numDone != 0;
+
+      for (int i = 0; i < numDone; ++i) {
+        int msgId = done[i];
+        if (msgId < pendingSends.size()) {
+          pendingSends[msgId] = MPI_REQUEST_NULL;
+
+          auto &msg = sendCache[msgId];
+          const auto sendTime = duration_cast<RealMilliseconds>(completed - msg->started);
+
+          {
+            std::lock_guard<std::mutex> lock(statsMutex);
+            sendTimes.push_back(sendTime);
+            sendBandwidth.emplace_back((msg->size / sendTime.count()) * 1e-6f);
+          }
+
+          sendCache[msgId].reset();
+        } else {
+          msgId -= pendingSends.size();
+          pendingRecvs[msgId] = MPI_REQUEST_NULL;
+
+          auto &msg = recvCache[msgId];
+          const auto recvTime = duration_cast<RealMilliseconds>(completed - msg->started);
+
+          {
+            std::lock_guard<std::mutex> lock(statsMutex);
+            recvTimes.push_back(recvTime);
+            recvBandwidth.emplace_back((msg->size / recvTime.count()) * 1e-6f);
+          }
+
+          inbox.push_back(std::move(recvCache[msgId]));
+        }
+      }
+
+      // Clean up anything we sent
       sendCache.erase(std::remove(sendCache.begin(),
                                   sendCache.end(),
                                   nullptr), sendCache.end());
@@ -159,35 +196,8 @@ namespace maml {
       pendingSends.erase(std::remove(pendingSends.begin(),
                                      pendingSends.end(),
                                      MPI_REQUEST_NULL), pendingSends.end());
-    }
-  }
 
-  void Context::waitOnSomeRecvRequests()
-  {
-    if (!pendingRecvs.empty()) {
-      int numDone = 0;
-      int *done = STACK_BUFFER(int, pendingRecvs.size());
-
-      MPI_CALL(Waitsome(pendingRecvs.size(), pendingRecvs.data(), &numDone,
-                        done, MPI_STATUSES_IGNORE));
-      auto completed = high_resolution_clock::now();
-
-      for (int i = 0; i < numDone; ++i) {
-        int pendingRecvCompletedIndex = done[i];
-        pendingRecvs[pendingRecvCompletedIndex] = MPI_REQUEST_NULL;
-
-        auto &msg = recvCache[pendingRecvCompletedIndex];
-        const auto recvTime = duration_cast<RealMilliseconds>(completed - msg->started);
-
-        {
-          std::lock_guard<std::mutex> lock(statsMutex);
-          recvTimes.push_back(recvTime);
-          recvBandwidth.emplace_back((msg->size / recvTime.count()) * 1e-6f);
-        }
-
-        inbox.push_back(std::move(recvCache[pendingRecvCompletedIndex]));
-      }
-
+      // Clean up anything we received
       recvCache.erase(std::remove(recvCache.begin(),
                                   recvCache.end(),
                                   nullptr), recvCache.end());
@@ -203,8 +213,7 @@ namespace maml {
     sendMessagesFromOutbox();
 
     while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty()) {
-      waitOnSomeRecvRequests();
-      waitOnSomeSendRequests();
+      waitOnSomeRequests();
       processInboxMessages();
     }
   }
@@ -228,11 +237,11 @@ namespace maml {
 
       if (!sendReceiveThread.get()) {
         sendReceiveThread = make_unique<AsyncLoop>([&](){
+          madeProgress = false;
           sendMessagesFromOutbox();
           pollForAndRecieveMessages();
 
-          waitOnSomeSendRequests();
-          waitOnSomeRecvRequests();
+          waitOnSomeRequests();
         }, launchMethod);
       }
 
