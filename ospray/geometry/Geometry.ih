@@ -16,6 +16,7 @@
 
 #pragma once
 
+
 #include "../common/Material.ih"
 #include "../common/Ray.ih"
 #include "../common/DifferentialGeometry.ih"

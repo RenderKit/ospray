@@ -86,7 +86,6 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
   // Get first intersected volume for each ray and set the ray bounds.
   Volume *volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
-
   // Provide ray offset for use with isosurface geometries (this value
   // ignored elsewhere).
   if (volume != NULL)
@@ -97,7 +96,6 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
                                                              sampleID,
                                                              geometryRay,
                                                              rayOffset);
-
   // Depth is the first volume bounding box or geometry hit
   depth = min(ray.t0, geometryRay.t);
 
@@ -116,9 +114,6 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
 
       } else {
-
-        if (any(volume == NULL))
-          print("ACCESSING NULL VOLUME HERE!\n");
 
         // Compute the volume sample at the current position and advance the ray
         vec4f volumeColor;
@@ -144,7 +139,13 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         // Reset geometry ray.
         // TODO WILL: Because the compute geom sample is now going
         // to set t to infinity, this ray is going to be sent off the back!
-        geometryRay.t0 = geometryRay.t + renderer->super.epsilon;
+
+        // iw, 6-6-18: adding at least a ulp to the ray distance, to
+        // guarantee forward progress - apparentlyt he epsilon can at
+        // times be so small that it vanishes when adding,
+        const float ulpRayT = geometryRay.t * (1/(float)(1<<22));
+        geometryRay.t0
+          = geometryRay.t + max(renderer->super.epsilon,ulpRayT);
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;
@@ -179,6 +180,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   float rayOffset = precomputedHalton2(sample.sampleID.z);
   int ix = sample.sampleID.x % 4;
   int iy = sample.sampleID.y % 4;
+
   int patternID = ix + 4 * iy;
   rayOffset += precomputedHalton3(patternID);
 
@@ -194,7 +196,6 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
 
   // blend with background
   color = color + (1.0f - color.w) * renderer->super.bgColor;
-
   // Store the result in the sample.
   sample.rgb = make_vec3f(color);
   sample.alpha = color.w;

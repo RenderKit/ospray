@@ -172,7 +172,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
           const float rcpSamp = rcpf(sample - sample0);
           float tIso = infinity;
           if (!isnan(rcpSamp)) {
-            tIso = t0 + (isovalues[i] - sample0) * rcpf(sample - sample0) * (t - t0);
+            tIso = t0 + (isovalues[i] - sample0) * rcpSamp * (t - t0);
           }
 
           if (tIso < tHit) {
@@ -183,7 +183,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
       }
 
       // If we found a hit, update ray information and return.
-      if (tHit <= rayCopy.t) {
+      if (tHit < rayCopy.t) {
         ray.geomID = geomID;
         ray.primID = isovalueID;
         ray.t = tHit;
