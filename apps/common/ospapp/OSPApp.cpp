@@ -497,11 +497,19 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
               float x, y, z;
               vals >> x >> y >> z;
               node.setValue(ospcommon::vec3f(x, y, z));
+            } else if (node.valueIsType<ospcommon::vec3i>()) {
+              int x, y, z;
+              vals >> x >> y >> z;
+              node.setValue(ospcommon::vec3i(x, y, z));
             } else if (node.valueIsType<ospcommon::vec2i>()) {
               int x, y;
               vals >> x >> y;
               node.setValue(ospcommon::vec2i(x, y));
-            } else
+            } else if (node.valueIsType<ospcommon::vec2f>()) {
+              float x, y;
+              vals >> x >> y;
+              node.setValue(ospcommon::vec2f(x, y));
+            } else {
               try {
                 auto &vec = dynamic_cast<sg::DataVector1f &>(node);
                 float f;
@@ -509,10 +517,14 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
                   vals >> f;
                   vec.push_back(f);
                 }
+              } catch (...) {
+                std::cerr << "Cannot set value of node '" << node.name()
+                          << "' on the command line!"
+                          << " The expected value type is not (yet) handled."
+                          << std::endl;
               }
-            catch (...) {
-              std::cerr << "Unexpected exception" << std::endl;
             }
+
           }
         }
       }
