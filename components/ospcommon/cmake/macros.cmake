@@ -184,10 +184,25 @@ MACRO(OSPRAY_INSTALL_LIBRARY name component)
   INSTALL(TARGETS ${name}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
+      NAMELINK_SKIP
     # on Windows put the dlls into bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
       COMPONENT ${component}
     # ... and the import lib into the devel package
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT devel
+  )
+
+  # Install the namelink in the devel component. This command also includes the
+  # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
+  # given no ARCHIVE DESTINATION for static library target" error. Installing
+  # these components twice doesn't hurt anything.
+  INSTALL(TARGETS ${name}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT devel
+      NAMELINK_ONLY
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT ${component}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
   )
