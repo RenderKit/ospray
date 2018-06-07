@@ -166,7 +166,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
     float tHit = infinity;
     int isovalueID;
 
-    if (!isnan(sample0+sample)) {
+    if (!isnan(sample0+sample) && (sample != sample0)) {
       for (uniform int i=0; i<numIsovalues; i++) {
         if ((isovalues[i] - sample0) * (isovalues[i] - sample) <= 0.f) {
           const float rcpSamp = rcpf(sample - sample0);
@@ -175,7 +175,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
             tIso = t0 + (isovalues[i] - sample0) * rcpSamp * (t - t0);
           }
 
-          if (tIso < tHit) {
+          if (tIso < tHit && tIso > ray.t0) {
             tHit = tIso;
             isovalueID = i;
           }
