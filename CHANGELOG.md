@@ -1,64 +1,77 @@
 Version History
 ---------------
 
+### Changes in v1.6.1:
+
+-   Many bug fixes
+    -   Quad mesh interpolation and sampling
+    -   Normal mapping in path tracer materials
+    -   Memory corruption with partly emitting mesh lights
+    -   Logic for setting thread affinity
+
 ### Changes in v1.6.0:
 
--   Updated ISPC device to use Embree v3.1+
--   Added new `ospShutdown` API function to aid in correctness and determinism
-    of OSPRay API cleanup
--   Added Principled and CarPaint materials to the path tracer
+-   Updated ispc device to use Embree3 (minimum required Embree
+    version is 3.1)
+-   Added new `ospShutdown()` API function to aid in correctness and
+    determinism of OSPRay API cleanup
+-   Added "`Principled`" and "`CarPaint"` materials to the path tracer
 -   Improved flexibility of the tone mapper
--   Improvements to `UnstructuredVolume`
-    -   Implemented support for wedges (in addition to tets and hexes)
-    -   Implemented support for implicit isosurface geometry
-    -   Implemented support for cell-centered data (as an alternative to
-        per-vertex data)
-    -   Added an option to precompute normals, providing a memory/performance
-        tradeoff for applications
--   Implemented `QuadMesh` geometry type to handle quads directly
--   Implemented the ability to set 'void' cell values in all volume types
-    -   When `nan` is present as a volume's cell value the volume sample will be
-        ignored by the `scivis` renderer
--   Fixed support for color strides which were not multiples of `sizeof(float)`
--   Added support for RGBA8 color format to Spheres, which can be set by
-    specifying the "colorFormat" parameter as `OSP_UCHAR4`, or passing the
-    "colorData" through an `OSPData` of `OSP_UCHAR4`.
--   Added ability to configure Embree scene flags via `OSPModel` parameters
--   `ospFreeFrameBuffer` has been deprecated in favor of using `ospRelease` to
-    free frame buffer handles
--   Fixed memory leak caused by incorrect parameter reference counts in ISPC
-    device
--   Fixed occasional crashes in the `MPIOffload` device on shutdown
+-   Improvements to unstructured volume
+    -   Support for wedges (in addition to tets and hexes)
+    -   Support for implicit isosurface geometry
+    -   Support for cell-centered data (as an alternative to per-vertex
+        data)
+    -   Added an option to precompute normals, providing a
+        memory/performance trade-off for applications
+-   Implemented "`quads`" geometry type to handle quads directly
+-   Implemented the ability to set "void" cell values in all volume
+    types: when `NaN` is present as a volume's cell value the volume
+    sample will be ignored by the SciVis renderer
+-   Fixed support for color strides which were not multiples of
+    `sizeof(float)`
+-   Added support for RGBA8 color format to spheres, which can be set by
+    specifying the "`color_format`" parameter as `OSP_UCHAR4`, or
+    passing the "`color`" array through an `OSPData` of type
+    `OSP_UCHAR4`.
+-   Added ability to configure Embree scene flags via `OSPModel`
+    parameters
+-   `ospFreeFrameBuffer()` has been deprecated in favor of using
+    `ospRelease()` to free frame buffer handles
+-   Fixed memory leak caused by incorrect parameter reference counts in
+    ispc device
+-   Fixed occasional crashes in the `mpi_offload` device on shutdown
 -   Various improvements to sample apps and `ospray_sg`
     -   Added new `generator` nodes, allowing the ability to inject
         programmatically generated scene data (only C++ for now)
-    -   Bugfixes and improvements to enhance stability and usability
+    -   Bug fixes and improvements to enhance stability and usability
 
 ### Changes in v1.5.0:
 
--   TetrahedralVolume now generalized to take both tet and hex data, now called
-    `UnstructuredVolume`
--   New function for creating materials (`ospNewMaterial2`) which takes the
-    renderer type string, not a renderer instance (the old version is now
-    deprecated)
+-   Unstructured tetrahedral volume now generalized to also support
+    hexahedral data, now called `unstructured_volume`
+-   New function for creating materials (`ospNewMaterial2()`) which
+    takes the renderer type string, not a renderer instance (the old
+    version is now deprecated)
 -   New `tonemapper` PixelOp for tone mapping final frames
 -   Streamlines now support per-vertex radii and smooth interpolation
 -   `ospray_sg` headers are now installed alongside the SDK
 -   Core OSPRay ispc device now implemented as a module
-    -   Devices which implement the public API are no longer required to link
-        the dependencies to core OSPRay (e.g. Embree v2.x)
-    -   By default, `ospInit` will load the ispc module if a device was not
-        created via `--osp:mpi` or `--osp:device:[name]`
--   MPI devices can now accept an existing world communicator instead of always
-    creating their own
--   Added ability to control ISPC specific optimization flags via CMake options
-    -   See the various `ISPC_FLAGS_*` variables to control which flags get used
+    -   Devices which implement the public API are no longer required to
+        link the dependencies to core OSPRay (e.g. Embree v2.x)
+    -   By default, `ospInit()` will load the ispc module if a device
+        was not created via `--osp:mpi` or `--osp:device:[name]`
+-   MPI devices can now accept an existing world communicator instead of
+    always creating their own
+-   Added ability to control ISPC specific optimization flags via CMake
+    options. See the various `ISPC_FLAGS_*` variables to control which
+    flags get used
 -   Enhancements to sample applications
-    -   `ospray_sg` (and thus `ospExampleViewer`/`ospBenchmark`) can now be
-        extended with new scene data importers via modules or the SDK
-    -   Updated ospTutorial examples to properly call ospRelease()
-    -   New options in the ospExampleViewer GUI to showcase new features
-        -   SRGB frame buffers, tone mapping, etc.
+    -   `ospray_sg` (and thus `ospExampleViewer`/`ospBenchmark`) can now
+        be extended with new scene data importers via modules or the SDK
+    -   Updated `ospTutorial` examples to properly call `ospRelease()`
+    -   New options in the `ospExampleViewer` GUI to showcase new
+        features (sRGB frame buffers, tone mapping, etc.)
 -   General bug fixes
     -   Fixes to geometries with multiple emissive materials
     -   Improvements to precision of ray-sphere intersections
@@ -67,21 +80,24 @@ Version History
 
 -   Several bug fixes
     -   Fixed potential issue with static initialization order
-    -   Correct compiler flags for Debug config
+    -   Correct compiler flags for `Debug` config
     -   Spheres `postIntersect` shading is now 64-bit safer
 
 ### Changes in v1.4.2:
 
 -   Several cleanups and bug fixes
-    -   Fixed memory leak where the Embree BVH was never released when an
-        OSPModel was released
+    -   Fixed memory leak where the Embree BVH was never released when
+        an `OSPModel` was released
     -   Fixed a crash when API logging was enabled in certain situations
-    -   Fixed a crash in MPI mode when creating lights without a renderer
-    -   Fixed an issue with camera lens samples not initilized when spp <= 0
-    -   Fixed an issue in ospExampleViewer when specifying multiple data files
--   The C99 tutorial is now indicated as the default; the C++ wrappers do not
-    change the semantics of the API (memory management) so the C99 version
-    should be considered first when learning the API
+    -   Fixed a crash in MPI mode when creating lights without a
+        renderer
+    -   Fixed an issue with camera lens samples not initialized when
+        `spp` <= 0
+    -   Fixed an issue in ospExampleViewer when specifying multiple data
+        files
+-   The C99 tutorial is now indicated as the default; the C++ wrappers
+    do not change the semantics of the API (memory management) so the
+    C99 version should be considered first when learning the API
 
 ### Changes in v1.4.1:
 
@@ -179,8 +195,8 @@ Version History
 -   Deprecated `ospCreateDevice()`; use `ospNewDevice()` instead
 -   Improved error handling
     -   Various API functions now return an `OSPError` value
-    -   `ospDeviceSetStatusFunc` replaces the deprecated
-        `ospDeviceSetErrorMsgFunc`
+    -   `ospDeviceSetStatusFunc()` replaces the deprecated
+        `ospDeviceSetErrorMsgFunc()`
     -   New API functions to query the last error
         (`ospDeviceGetLastErrorCode()` and `ospDeviceGetLastErrorMsg()`)
         or to register an error callback with `ospDeviceSetErrorFunc()`

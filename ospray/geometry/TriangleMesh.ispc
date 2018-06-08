@@ -21,6 +21,16 @@
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
+int32 TriangleMesh_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  // TODO: gather material ID from index array if indexSize==4
+  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
+  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
+}
+
 static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
                                        uniform Model    *uniform model,
                                        varying DifferentialGeometry &dg,
@@ -93,15 +103,8 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
     }
   }
 
-  if (flags & DG_MATERIALID) {
-    if (self->prim_materialID) {
-      dg.materialID = self->prim_materialID[ray.primID];
-    }
-    // TODO: gather material ID from index array if indexSize==4
-    else {
-      dg.materialID = self->geom_materialID;
-    }
-  }
+  if (flags & DG_MATERIALID)
+    dg.materialID = TriangleMesh_getMaterialID(_self, ray.primID);
 }
 
 SampleAreaRes TriangleMesh_sampleArea(
@@ -132,15 +135,6 @@ SampleAreaRes TriangleMesh_sampleArea(
   res.normal = normalize(cross(xfmVector(xfm, e1), xfmVector(xfm, e2)));
 
   return res;
-}
-
-int32 TriangleMesh_getMaterialID(
-    const Geometry *uniform const _self
-    , const int32 primID
-    )
-{
-  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
-  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
 }
 
 void TriangleMesh_getAreas(

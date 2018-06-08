@@ -138,7 +138,7 @@ export void* uniform GeometryLight_create(void* uniform _geo
   } else if (numEmissivePrims < geo->numPrimitives) {
     // save memory
     int32 *uniform newPrimIDs = uniform new uniform int32[numEmissivePrims];
-    memcpy(newPrimIDs, self->primIDs, numEmissivePrims*sizeof(int32));
+    memcpy(newPrimIDs, self->primIDs, numEmissivePrims*sizeof(uniform int32));
     delete[] self->primIDs;
     self->primIDs = newPrimIDs;
   }

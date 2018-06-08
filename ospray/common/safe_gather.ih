@@ -129,6 +129,7 @@ __define_gather_stride(uint32);
 
 __define_gather_stride(vec2f);
 __define_gather_stride(vec4f);
+__define_gather_stride(vec4i);
 
 __define_gather(float);
 __define_gather(int32);
@@ -136,6 +137,7 @@ __define_gather(uint32);
 
 __define_gather(vec2f);
 __define_gather(vec4f);
+__define_gather(vec4i);
 
 __define_gather_vec_byte_stride(float, f, 3);
 __define_gather_vec_byte_stride(float, f, 4);
@@ -144,6 +146,3 @@ __define_gather_vec_byte_stride(int, i, 4);
 
 __define_gather_vec3_stride(float, f);
 __define_gather_vec3_stride(int, i);
-
-__define_gather_vec4_stride(int, i);
-
