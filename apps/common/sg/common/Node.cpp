@@ -302,6 +302,19 @@ namespace ospray {
       throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
+    std::vector<std::shared_ptr<Node> > Node::childrenRecursive(const std::string &name)
+    {
+      std::vector<std::shared_ptr<Node> > found;
+      if (hasChild(name))
+        found.push_back(child(name).shared_from_this());
+
+      for (auto &child : properties.children) {
+          std::vector<std::shared_ptr<Node> > found2 = child.second->childrenRecursive(name);
+          found.insert(found.end(), found2.begin(),found2.end());
+      }
+      return found;
+    }
+
     const std::map<std::string, std::shared_ptr<Node>>& Node::children() const
     {
       return properties.children;

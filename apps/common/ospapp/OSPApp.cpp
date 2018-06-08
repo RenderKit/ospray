@@ -452,20 +452,20 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           ss << arg.substr(0, f);
           std::string child;
           std::reference_wrapper<sg::Node> node_ref = root;
-          try {
-            while (ss >> child) {
-              node_ref = node_ref.get().childRecursive(child);
-            }
+          std::vector<std::shared_ptr<sg::Node> > children;
+          while (ss >> child) {
+            if (ss.eof())
+              children = node_ref.get().childrenRecursive(child);
           }
-          catch (const std::runtime_error &) {
-            std::cerr << "Warning: unknown sg::Node '" << child
-                      << "', ignoring option '" << orgarg << "'." << std::endl;
+          if (children.empty())
+          {
+            std::cerr << "Warning: no children found in sg lookup\n";
+            continue;
           }
-          auto &node = node_ref.get();
-
           std::stringstream vals(value);
 
           if (addNode) {
+            auto &node = *children[0];
             std::string name, type;
             vals >> name >> type;
             try {
@@ -477,54 +477,56 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
                         << std::endl;
             }
           } else { // set node value
-
-            // TODO: more generic implementation
-            if (node.valueIsType<std::string>()) {
-              node.setValue(value);
-            } else if (node.valueIsType<float>()) {
-              float x;
-              vals >> x;
-              node.setValue(x);
-            } else if (node.valueIsType<int>()) {
-              int x;
-              vals >> x;
-              node.setValue(x);
-            } else if (node.valueIsType<bool>()) {
-              bool x;
-              vals >> x;
-              node.setValue(x);
-            } else if (node.valueIsType<ospcommon::vec3f>()) {
-              float x, y, z;
-              vals >> x >> y >> z;
-              node.setValue(ospcommon::vec3f(x, y, z));
-            } else if (node.valueIsType<ospcommon::vec3i>()) {
-              int x, y, z;
-              vals >> x >> y >> z;
-              node.setValue(ospcommon::vec3i(x, y, z));
-            } else if (node.valueIsType<ospcommon::vec2i>()) {
-              int x, y;
-              vals >> x >> y;
-              node.setValue(ospcommon::vec2i(x, y));
-            } else if (node.valueIsType<ospcommon::vec2f>()) {
-              float x, y;
-              vals >> x >> y;
-              node.setValue(ospcommon::vec2f(x, y));
-            } else {
-              try {
-                auto &vec = dynamic_cast<sg::DataVector1f &>(node);
-                float f;
-                while (vals.good()) {
-                  vals >> f;
-                  vec.push_back(f);
+            for (auto nodePtr : children)
+            {
+              auto &node = *nodePtr;
+              // TODO: more generic implementation
+              if (node.valueIsType<std::string>()) {
+                node.setValue(value);
+              } else if (node.valueIsType<float>()) {
+                float x;
+                vals >> x;
+                node.setValue(x);
+              } else if (node.valueIsType<int>()) {
+                int x;
+                vals >> x;
+                node.setValue(x);
+              } else if (node.valueIsType<bool>()) {
+                bool x;
+                vals >> x;
+                node.setValue(x);
+              } else if (node.valueIsType<ospcommon::vec3f>()) {
+                float x, y, z;
+                vals >> x >> y >> z;
+                node.setValue(ospcommon::vec3f(x, y, z));
+              } else if (node.valueIsType<ospcommon::vec3i>()) {
+                int x, y, z;
+                vals >> x >> y >> z;
+                node.setValue(ospcommon::vec3i(x, y, z));
+              } else if (node.valueIsType<ospcommon::vec2i>()) {
+                int x, y;
+                vals >> x >> y;
+                node.setValue(ospcommon::vec2i(x, y));
+              } else if (node.valueIsType<ospcommon::vec2f>()) {
+                float x, y;
+                vals >> x >> y;
+                node.setValue(ospcommon::vec2f(x, y));
+              } else {
+                try {
+                  auto &vec = dynamic_cast<sg::DataVector1f &>(node);
+                  float f;
+                  while (vals.good()) {
+                    vals >> f;
+                    vec.push_back(f);
+                  }
+                } catch (...) {
+                  std::cerr << "Cannot set value of node '" << node.name()
+                            << "' on the command line!"
+                            << " The expected value type is not (yet) handled."
+                            << std::endl;
                 }
-              } catch (...) {
-                std::cerr << "Cannot set value of node '" << node.name()
-                          << "' on the command line!"
-                          << " The expected value type is not (yet) handled."
-                          << std::endl;
               }
             }
-
           }
         }
       }
