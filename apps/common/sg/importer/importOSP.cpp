@@ -31,6 +31,7 @@ namespace ospray {
                                "StructuredVolumeFromFile")->nodeAs<SVFF>();
 
       vec3i dimensions(-1);
+      vec3f gridSpacing = volume->child("gridSpacing").valueAs<vec3f>();
       std::string volumeFileName = "";
       std::string voxelType = "";
 
@@ -43,6 +44,8 @@ namespace ospray {
           volumeFileName = child.content;
         else if (child.name == "samplingRate") {
           // Silently ignore
+        } else if (child.name == "gridSpacing") {
+          gridSpacing = toVec3f(child.content.c_str());
         } else {
           throw std::runtime_error("unknown old-style osp file "
                                    "component volume::" + child.name);
@@ -54,6 +57,7 @@ namespace ospray {
 
       volume->child("dimensions") = dimensions;
       volume->child("voxelType") = voxelType;
+      volume->child("gridSpacing") = gridSpacing;
 
       world->add(volume);
     }
