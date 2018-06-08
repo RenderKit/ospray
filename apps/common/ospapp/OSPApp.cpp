@@ -400,7 +400,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           currentCLTransform = clTransform();
           removeArgs(ac, av, i, 1);
           --i;
-        } else if (arg[0] != '-' || utility::beginsWith(arg, "--generate:")) {
+        } else if (utility::beginsWith(arg, "--generate:")) {
           auto splitValues = utility::split(arg, ':');
           auto type = splitValues[1];
           std::string params = splitValues.size() > 2 ? splitValues[2] : "";
