@@ -7,6 +7,7 @@ Version History
     -   Quad mesh interpolation and sampling
     -   Normal mapping in path tracer materials
     -   Memory corruption with partly emitting mesh lights
+    -   Logic for setting thread affinity
 
 ### Changes in v1.6.0:
 
