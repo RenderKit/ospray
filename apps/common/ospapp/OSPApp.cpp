@@ -91,7 +91,7 @@ general app-parameters:
         rotate transform
     --animation
         adds subsequent import files to a timeseries
-    --file
+    --static
         adds subsequent import files without a timeseries
     -w [int]
         window width
