@@ -329,7 +329,7 @@ namespace ospray {
           if (!binBasePtr)
             throw std::runtime_error("xml file mapping to binary file, but binary file not present");
           auto vertex =
-            make_shared_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
+            make_aligned_DataBuffer_node<DataArray3f>((char*)binBasePtr+ofs, num);
           vertex->setName("vertex");
           mesh->add(vertex);
         } else if (child.name == "normal") {
@@ -358,7 +358,7 @@ namespace ospray {
           if (!binBasePtr)
             throw std::runtime_error("xml file mapping to binary file, but binary file not present");
           auto index =
-            make_shared_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
+            make_aligned_DataBuffer_node<DataArray4i>((char*)binBasePtr+ofs, num);
           index->setName("index");
           mesh->add(index);
 

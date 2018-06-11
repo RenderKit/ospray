@@ -172,7 +172,7 @@ namespace ospray {
     using DataVectorAffine3f = DataVectorT<ospcommon::affine3f, OSP_RAW>;
 
     template<typename T>
-    std::shared_ptr<T> make_shared_aligned(void *data, size_t num)
+    std::shared_ptr<T> make_aligned_DataBuffer_node(void *data, size_t num)
     {
       using ElementType = typename T::ElementType;
       if ((size_t)data & 0x3) {
