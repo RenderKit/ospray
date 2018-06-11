@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 // ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/utility/StringManip.h"
 // sg
 #include "../common/Data.h"
@@ -30,7 +31,7 @@ namespace ospray {
       auto vertices = std::make_shared<DataVector3f>();
       vertices->setName("vertex");
 
-      vertices->v = std::vector<vec3f>{
+      vertices->v = containers::AlignedVector<vec3f>{
         vec3f( 1,  1,  1), // 0
         vec3f(-1,  1,  1), // 1
         vec3f(-1, -1,  1), // 2
@@ -48,7 +49,7 @@ namespace ospray {
       static const vec3fa g(0,1,0);
       static const vec3fa b(0,0,1);
 
-      colors->v = std::vector<vec3fa>{
+      colors->v = containers::AlignedVector<vec3fa>{
         0+0+0, // 0
         r+0+0, // 1
         0+g+0, // 2
@@ -67,7 +68,7 @@ namespace ospray {
         auto quad_indices = std::make_shared<DataVector4i>();
         quad_indices->setName("index");
 
-        quad_indices->v = std::vector<vec4i>{
+        quad_indices->v = containers::AlignedVector<vec4i>{
           vec4i(0,3,2,1), // +Z
           vec4i(0,1,6,5), // +Y
           vec4i(0,5,4,3), // +X
@@ -84,7 +85,7 @@ namespace ospray {
         auto tris_node = createNode("cube", "TriangleMesh");
         auto tri_indices = std::make_shared<DataVector3i>();
         tri_indices->setName("index");
-        tri_indices->v = std::vector<vec3i>{
+        tri_indices->v = containers::AlignedVector<vec3i>{
           vec3i(0,3,2), // +Z
           vec3i(2,1,0), // +Z
           vec3i(0,1,6), // +Y

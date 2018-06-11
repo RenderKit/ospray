@@ -50,14 +50,14 @@ namespace ospray {
         auto spheres =
           std::make_shared<DataVectorT<particle::Model::Atom, OSP_RAW>>();
         spheres->setName("spheres");
-        auto atomTypeID = m.atomTypeByName[m.atomType[i]->name];
+        auto atomTypeID = m.atomTypeByName[m.atomType[i].name];
         spheres->v = std::move(m.atom[atomTypeID]);
 
         spGeom->add(spheres);
 
         auto materials = spGeom->child("materialList").nodeAs<MaterialList>();
         materials->item(0)["d"]  = 1.f;
-        materials->item(0)["Kd"] = m.atomType[i]->color;
+        materials->item(0)["Kd"] = m.atomType[i].color;
         materials->item(0)["Ks"] = vec3f(0.2f);
 
         auto model = createNode(name + "_model", "Model");

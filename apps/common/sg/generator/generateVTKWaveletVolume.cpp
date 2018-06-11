@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/utility/StringManip.h"
 // sg
 #include "../common/Data.h"
@@ -39,8 +39,8 @@ namespace ospray {
       // get generator parameters
 
       vec3i dims(256, 256, 256);
-      std::vector<float> isoValues;
-      std::vector<vec4f> slices;
+      containers::AlignedVector<float> isoValues;
+      containers::AlignedVector<vec4f> slices;
 
       for (auto &p : params) {
         if (p.first == "dimensions" || p.first == "dims") {

@@ -18,6 +18,8 @@
 
 // ospray::sg
 #include "Node.h"
+// ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 
 namespace ospray {
   namespace sg {
@@ -28,7 +30,9 @@ namespace ospray {
     {
       DataBuffer(OSPDataType type)
         : type(type)
-      {}
+      {
+        Node::setType(toString());
+      }
 
       virtual ~DataBuffer() override
       {
@@ -94,7 +98,10 @@ namespace ospray {
     {
       DataArrayT(T *base, size_t size, bool mine = true)
         : DataBuffer((OSPDataType)TID), numElements(size),
-          mine(mine), base_ptr(base) {}
+          mine(mine), base_ptr(base)
+      {
+        Node::setType(toString());
+      }
       ~DataArrayT() override { if (mine && base_ptr) delete base_ptr; }
 
       std::string toString() const override
@@ -136,7 +143,10 @@ namespace ospray {
     template<typename T, int TID>
     struct DataVectorT : public DataBuffer
     {
-      DataVectorT() : DataBuffer((OSPDataType)TID) {}
+      DataVectorT() : DataBuffer((OSPDataType)TID)
+      {
+        Node::setType(toString());
+      }
 
       std::string toString() const override
       { return "DataVector<" + arrayTypeAsString() + ">"; }
@@ -154,7 +164,7 @@ namespace ospray {
 
       using ElementType = T;
 
-      std::vector<T> v;
+      containers::AlignedVector<T> v;
     };
 
     using DataVector1uc = DataVectorT<unsigned char, OSP_UCHAR>;
