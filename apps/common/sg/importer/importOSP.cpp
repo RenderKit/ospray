@@ -17,6 +17,8 @@
 #include "Importer.h"
 
 #include "../volume/AMRVolume.h"
+#include "../common/NodeParameter.h"
+#include "../common/NodeList.h"
 // ospcommon
 #include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/utility/StringManip.h"
@@ -81,15 +83,33 @@ namespace ospray {
       if (!slices.empty()) {
         // scale 4th component of slices by the dimension of the volume
         // (input value is on [0,1]), and add to scene
-        for (auto & slice : slices)
+        for (auto &slice : slices)
           slice.w *= dimensions.x;
 
         auto slices_node = createNode("slices", "Slices");
+
+#if 1 // enable for having values show up as widgets, disable for simple array
+        auto slices_data = std::make_shared<NodeList<NodeParam<vec4f>>>();
+        slices_data->setName("slices_list");
+
+        for (size_t i = 0; i < slices.size(); ++i) {
+          auto slice_node = std::make_shared<NodeParam<vec4f>>();
+          slice_node->setName("slice" + std::to_string(i));
+          slice_node->setType("vec4f");
+          slice_node->setValue(slices[i]);
+          slices_data->push_back(slice_node);
+        }
+
+        slices_node->add(slices_data);
+        slices_node->setChild("volume", volume);
+#else
         auto slices_data = std::make_shared<DataVector4f>();
         slices_data->v = slices;
         slices_data->setName("planes");
 
         slices_node->add(slices_data);
+#endif
+
         slices_node->setChild("volume", volume);
 
         // add slices to world

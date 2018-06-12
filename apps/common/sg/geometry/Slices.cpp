@@ -40,6 +40,19 @@ namespace ospray {
         ospSetObject(ospGeometry, "volume", ospVolume);
       }
 
+      if (ospGeometry && hasChild("slices_list")) {
+        std::vector<vec4f> slices;
+
+        auto &slices_list = child("slices_list");
+
+        for (auto &child : slices_list.children())
+          slices.push_back(child.second->valueAs<vec4f>());
+
+        auto slices_data = ospNewData(slices.size(), OSP_FLOAT4, slices.data());
+        ospSetObject(ospGeometry, "planes", slices_data);
+        ospRelease(slices_data);
+      }
+
       Geometry::postRender(ctx);
     }
 
