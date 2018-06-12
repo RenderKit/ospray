@@ -17,7 +17,8 @@
 #include "Importer.h"
 
 #include "../volume/AMRVolume.h"
-
+// ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/utility/StringManip.h"
 
 namespace ospray {
@@ -35,6 +36,8 @@ namespace ospray {
       std::string volumeFileName = "";
       std::string voxelType = "";
 
+      containers::AlignedVector<vec4f> slices;
+
       for (const auto &child : xmlNode.child) {
         if (child.name == "dimensions")
           dimensions = toVec3i(child.content.c_str());
@@ -42,7 +45,21 @@ namespace ospray {
           voxelType = child.content;
         else if (child.name == "filename")
           volumeFileName = child.content;
-        else if (child.name == "samplingRate") {
+        else if (child.name == "slice") {
+          auto components = utility::split(child.content, " ");
+          if (components.size() != 4) {
+            std::cerr << "WARNING: .osp files must have slices defined as 4 "
+                      << "floats separated by spaces! Ignoring..." << std::endl;
+            continue;
+          }
+
+          slices.emplace_back(
+            std::atof(components[0].c_str()),
+            std::atof(components[1].c_str()),
+            std::atof(components[2].c_str()),
+            std::atof(components[3].c_str())
+          );
+        } else if (child.name == "samplingRate") {
           // Silently ignore
         } else if (child.name == "gridSpacing") {
           gridSpacing = toVec3f(child.content.c_str());
@@ -60,6 +77,24 @@ namespace ospray {
       volume->child("gridSpacing") = gridSpacing;
 
       world->add(volume);
+
+      if (!slices.empty()) {
+        // scale 4th component of slices by the dimension of the volume
+        // (input value is on [0,1]), and add to scene
+        for (auto & slice : slices)
+          slice.w *= dimensions.x;
+
+        auto slices_node = createNode("slices", "Slices");
+        auto slices_data = std::make_shared<DataVector4f>();
+        slices_data->v = slices;
+        slices_data->setName("planes");
+
+        slices_node->add(slices_data);
+        slices_node->setChild("volume", volume);
+
+        // add slices to world
+        world->add(slices_node);
+      }
     }
 
     static void importRAW2AMRVolume(const std::shared_ptr<Node> &world,
