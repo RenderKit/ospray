@@ -31,6 +31,7 @@
 #include "ospray/ospray_cpp/Volume.h"
 #include "ospray/ospray_cpp/Model.h"
 #include "widgets/transferFunction.h"
+#include "ospcommon/containers/AlignedVector.h"
 #include "common/sg/transferFunction/TransferFunction.h"
 #include "widgets/imgui_impl_glfw_gl3.h"
 #include "common/imgui/imgui.h"
@@ -226,7 +227,7 @@ void runApp()
 
   AppState app;
   Model model;
-  std::vector<gensv::LoadedVolume> volumes;
+  containers::AlignedVector<gensv::LoadedVolume> volumes;
   box3f worldBounds;
   if (!volumeFile.empty()) {
     volumes.push_back(gensv::loadVolume(volumeFile, dimensions, dtype,
@@ -255,7 +256,7 @@ void runApp()
     }
   }
 
-  std::vector<box3f> regions, ghostRegions;
+  containers::AlignedVector<box3f> regions, ghostRegions;
   for (auto &v : volumes) {
     v.volume.commit();
     model.addVolume(v.volume);
@@ -338,8 +339,8 @@ void runApp()
     glfwSetCharCallback(window, charCallback);
   }
 
-  std::vector<vec3f> tfcnColors;
-  std::vector<float> tfcnAlphas;
+  containers::AlignedVector<vec3f> tfcnColors;
+  containers::AlignedVector<float> tfcnAlphas;
   while (!app.quit) {
     if (app.cameraChanged) {
       camera.set("pos", app.v[0]);
