@@ -84,7 +84,7 @@ namespace ospray {
         // scale 4th component of slices by the dimension of the volume
         // (input value is on [0,1]), and add to scene
         for (auto &slice : slices)
-          slice.w *= dimensions.x;
+          slice.w *= (dimensions * gridSpacing).x;
 
         auto slices_node = createNode("slices", "Slices");
 
