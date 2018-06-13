@@ -16,12 +16,12 @@
 
 #pragma once
 
-// ospray
+// ospcommon
 #include "ospcommon/FileName.h"
 #include "ospcommon/box.h"
+#include "ospcommon/containers/AlignedVector.h"
 // stl
 #include <map>
-#include <vector>
 
 namespace ospray {
   namespace particle {
@@ -47,12 +47,12 @@ namespace ospray {
         int type;
       };
 
-      std::vector<std::unique_ptr<AtomType>> atomType;
+      containers::AlignedVector<AtomType> atomType;
       std::map<std::string, int> atomTypeByName;
-      std::map<int, std::vector<Atom>> atom; //NOTE(jda) - maps typeID->atoms
+      std::map<int, containers::AlignedVector<Atom>> atom; //NOTE(jda) - maps typeID->atoms
 
       //! list of attribute values, if applicable.
-      std::map<std::string, std::vector<float>*> attribute;
+      std::map<std::string, containers::AlignedVector<float>*> attribute;
 
       int getAtomType(const std::string &name);
 
@@ -67,7 +67,8 @@ namespace ospray {
 
       void addAttribute(const std::string &name, float value)
       {
-        if (!attribute[name]) attribute[name] = new std::vector<float>;
+        if (!attribute[name])
+          attribute[name] = new containers::AlignedVector<float>();
         attribute[name]->push_back(value);
       }
     };

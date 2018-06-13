@@ -18,6 +18,8 @@
 
 // ospray::sg
 #include "Node.h"
+// ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 
 namespace ospray {
   namespace sg {
@@ -28,7 +30,9 @@ namespace ospray {
     {
       DataBuffer(OSPDataType type)
         : type(type)
-      {}
+      {
+        Node::setType(toString());
+      }
 
       virtual ~DataBuffer() override
       {
@@ -89,12 +93,15 @@ namespace ospray {
     // -------------------------------------------------------
     // data *ARRAYS*
     // -------------------------------------------------------
-    template<typename T, long int TID>
+    template<typename T, int TID = OSPTypeFor<T>::value>
     struct DataArrayT : public DataBuffer
     {
       DataArrayT(T *base, size_t size, bool mine = true)
         : DataBuffer((OSPDataType)TID), numElements(size),
-          mine(mine), base_ptr(base) {}
+          mine(mine), base_ptr(base)
+      {
+        Node::setType(toString());
+      }
       ~DataArrayT() override { if (mine && base_ptr) delete base_ptr; }
 
       std::string toString() const override
@@ -117,26 +124,29 @@ namespace ospray {
       T      *base_ptr {nullptr};
     };
 
-    using DataArray1uc = DataArrayT<unsigned char, OSP_UCHAR>;
-    using DataArray1f  = DataArrayT<float, OSP_FLOAT>;
-    using DataArray2f  = DataArrayT<vec2f, OSP_FLOAT2>;
-    using DataArray3f  = DataArrayT<vec3f, OSP_FLOAT3>;
-    using DataArray3fa = DataArrayT<vec3fa, OSP_FLOAT3A>;
-    using DataArray4f  = DataArrayT<vec4f, OSP_FLOAT4>;
-    using DataArray1i  = DataArrayT<int, OSP_INT>;
-    using DataArray2i  = DataArrayT<vec2i, OSP_INT2>;
-    using DataArray3i  = DataArrayT<vec3i, OSP_INT3>;
-    using DataArray4i  = DataArrayT<vec4i, OSP_INT4>;
-    using DataArrayOSP = DataArrayT<OSPObject, OSP_OBJECT>;
+    using DataArray1uc = DataArrayT<unsigned char>;
+    using DataArray1f  = DataArrayT<float>;
+    using DataArray2f  = DataArrayT<vec2f>;
+    using DataArray3f  = DataArrayT<vec3f>;
+    using DataArray3fa = DataArrayT<vec3fa>;
+    using DataArray4f  = DataArrayT<vec4f>;
+    using DataArray1i  = DataArrayT<int>;
+    using DataArray2i  = DataArrayT<vec2i>;
+    using DataArray3i  = DataArrayT<vec3i>;
+    using DataArray4i  = DataArrayT<vec4i>;
+    using DataArrayOSP = DataArrayT<OSPObject>;
     using DataArrayRAW = DataArrayT<byte_t, OSP_RAW>;
 
     // -------------------------------------------------------
     // data *VECTORS*
     // -------------------------------------------------------
-    template<typename T, int TID>
+    template<typename T, int TID = OSPTypeFor<T>::value>
     struct DataVectorT : public DataBuffer
     {
-      DataVectorT() : DataBuffer((OSPDataType)TID) {}
+      DataVectorT() : DataBuffer((OSPDataType)TID)
+      {
+        Node::setType(toString());
+      }
 
       std::string toString() const override
       { return "DataVector<" + arrayTypeAsString() + ">"; }
@@ -157,34 +167,39 @@ namespace ospray {
 
       using ElementType = T;
 
-      std::vector<T> v;
+      containers::AlignedVector<T> v;
     };
 
-    using DataVector1uc = DataVectorT<unsigned char, OSP_UCHAR>;
-    using DataVector1f  = DataVectorT<float, OSP_FLOAT>;
-    using DataVector2f  = DataVectorT<vec2f, OSP_FLOAT2>;
-    using DataVector3f  = DataVectorT<vec3f, OSP_FLOAT3>;
-    using DataVector3fa = DataVectorT<vec3fa, OSP_FLOAT3A>;
-    using DataVector4f  = DataVectorT<vec4f, OSP_FLOAT4>;
-    using DataVector1i  = DataVectorT<int, OSP_INT>;
-    using DataVector2i  = DataVectorT<vec2i, OSP_INT2>;
-    using DataVector3i  = DataVectorT<vec3i, OSP_INT3>;
-    using DataVector4i  = DataVectorT<vec4i, OSP_INT4>;
-    using DataVectorOSP = DataVectorT<OSPObject, OSP_OBJECT>;
+    using DataVector1uc = DataVectorT<unsigned char>;
+    using DataVector1f  = DataVectorT<float>;
+    using DataVector2f  = DataVectorT<vec2f>;
+    using DataVector3f  = DataVectorT<vec3f>;
+    using DataVector3fa = DataVectorT<vec3fa>;
+    using DataVector4f  = DataVectorT<vec4f>;
+    using DataVector1i  = DataVectorT<int>;
+    using DataVector2i  = DataVectorT<vec2i>;
+    using DataVector3i  = DataVectorT<vec3i>;
+    using DataVector4i  = DataVectorT<vec4i>;
+    using DataVectorOSP = DataVectorT<OSPObject>;
     using DataVectorRAW = DataVectorT<byte_t, OSP_RAW>;
     using DataVectorAffine3f = DataVectorT<ospcommon::affine3f, OSP_RAW>;
 
-    template<typename T>
-    std::shared_ptr<T> make_shared_aligned(void *data, size_t num)
+    template <typename T, int TID = OSPTypeFor<T>::value>
+    std::shared_ptr<DataBuffer> make_aligned_DataBuffer_node(void *data, size_t num)
     {
-      using ElementType = typename T::ElementType;
+      using ARRAY_NODE_TYPE  = DataArrayT<T, TID>;
+      using VECTOR_NODE_TYPE = DataVectorT<T, TID>;
+
       if ((size_t)data & 0x3) {
-        // Data *not* aligned correctly, copy into a new buffer appropriately...
-        char *m = new char[num * sizeof(ElementType)];
-        memcpy(m, data, num * sizeof(ElementType));
-        return std::make_shared<T>((ElementType*)m, num, true);
+        // Data *not* aligned correctly, copy into an node with aligned memory
+        auto node = std::make_shared<VECTOR_NODE_TYPE>();
+        const auto *in_first = static_cast<const T*>(data);
+        const auto *in_last  = in_first + num;
+        std::copy(in_first, in_last, std::back_inserter(node->v));
+        return node;
       } else {
-        return std::make_shared<T>((ElementType*)data, num, false);
+        // Use the buffer directly (non-owning)
+        return std::make_shared<ARRAY_NODE_TYPE>((T*)data, num, false);
       }
     }
 

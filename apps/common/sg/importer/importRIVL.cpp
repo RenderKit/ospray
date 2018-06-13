@@ -329,7 +329,7 @@ namespace ospray {
           if (!binBasePtr)
             throw std::runtime_error("xml file mapping to binary file, but binary file not present");
           auto vertex =
-            make_shared_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
+            make_aligned_DataBuffer_node<vec3f>((char*)binBasePtr+ofs, num);
           vertex->setName("vertex");
           mesh->add(vertex);
         } else if (child.name == "normal") {
@@ -358,7 +358,7 @@ namespace ospray {
           if (!binBasePtr)
             throw std::runtime_error("xml file mapping to binary file, but binary file not present");
           auto index =
-            make_shared_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
+            make_aligned_DataBuffer_node<vec4i>((char*)binBasePtr+ofs, num);
           index->setName("index");
           mesh->add(index);
 
@@ -367,7 +367,7 @@ namespace ospray {
                        "DataVector1i")->nodeAs<DataVector1i>();
 
           for(size_t i = 0; i < index->size(); i++)
-            primIDList->v.push_back((*index)[i].w >> 16);
+            primIDList->v.push_back(index->get<vec4i>(i).w >> 16);
 
           mesh->add(primIDList);
         } else if (child.name == "materiallist") {

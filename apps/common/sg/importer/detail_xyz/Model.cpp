@@ -39,11 +39,11 @@ namespace ospray {
       auto it = atomTypeByName.find(name);
       if (it == atomTypeByName.end()) {
         std::cout << "Found atom type '"+name+"'" << std::endl;
-        auto a = ospcommon::make_unique<AtomType>(name);
-        a->color = makeRandomColor(atomType.size());
+        AtomType a(name);
+        a.color = makeRandomColor(atomType.size());
         int newID = atomType.size();
         atomTypeByName[name] = newID;
-        atomType.push_back(std::move(a));
+        atomType.push_back(a);
         return newID;
       }
       return it->second;
@@ -101,7 +101,7 @@ namespace ospray {
 #endif
         }
         a.type = getAtomType(atomName);
-        a.radius = atomType[a.type]->radius;
+        a.radius = atomType[a.type].radius;
         if (a.radius == 0.f)
           a.radius = defaultRadius;
         atom[a.type].push_back(a);
@@ -184,7 +184,7 @@ namespace ospray {
 #endif
         }
         a.type = getAtomType(atomName);
-        a.radius = atomType[a.type]->radius;
+        a.radius = atomType[a.type].radius;
         if (a.radius == 0.f)
           a.radius = defaultRadius;
         atom[a.type].push_back(a);

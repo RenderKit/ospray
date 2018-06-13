@@ -17,6 +17,8 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wshadow-uncaptured-local"
 
+// ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 // sg
 #include "SceneGraph.h"
 #include "sg/common/Material.h"
@@ -31,9 +33,9 @@ namespace ospray {
 
       struct Triangles
       {
-        std::vector<vec3fa> vertex;
-        std::vector<vec4f>  color; // vertex color, from sv's 'v' value
-        std::vector<vec3i>  index;
+        containers::AlignedVector<vec3fa> vertex;
+        containers::AlignedVector<vec4f>  color; // vertex color, from sv's 'v' value
+        containers::AlignedVector<vec3i>  index;
 
         vec3f lerpf(float x, float x0, float x1, vec3f y0, vec3f y1)
         {
@@ -52,14 +54,14 @@ namespace ospray {
 
       struct StreamLines
       {
-        std::vector<vec3fa> vertex;
-        std::vector<int>    index;
+        containers::AlignedVector<vec3fa> vertex;
+        containers::AlignedVector<int>    index;
         float radius {0.001f};
       };
 
       static const char *delim = "\n\t\r ";
 
-      void osxParseInts(std::vector<int> &vec, const std::string &content)
+      void osxParseInts(containers::AlignedVector<int> &vec, const std::string &content)
       {
         char *s = strdup(content.c_str());
         char *tok = strtok(s,delim);
@@ -93,7 +95,7 @@ namespace ospray {
         return v;
       }
 
-      void osxParseVec3is(std::vector<vec3i> &vec, const std::string &content)
+      void osxParseVec3is(containers::AlignedVector<vec3i> &vec, const std::string &content)
       {
         char *s = strdup(content.c_str());
         char *tok = strtok(s,delim);
@@ -102,7 +104,7 @@ namespace ospray {
         free(s);
       }
 
-      void osxParseVec3fas(std::vector<vec3fa> &vec, const std::string &content)
+      void osxParseVec3fas(containers::AlignedVector<vec3fa> &vec, const std::string &content)
       {
         char *s = strdup(content.c_str());
         char *tok = strtok(s,delim);
@@ -111,7 +113,7 @@ namespace ospray {
         free(s);
       }
 
-      void osxParseColors(std::vector<vec4f> &vec, const std::string &content)
+      void osxParseColors(containers::AlignedVector<vec4f> &vec, const std::string &content)
       {
         char *s = strdup(content.c_str());
         char *tok = strtok(s,delim);
