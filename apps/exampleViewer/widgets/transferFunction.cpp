@@ -275,14 +275,6 @@ void TransferFunction::render()
 
     // Sample the palette then upload the data
     std::vector<uint8_t> palette(samples * 4, 0);
-//    auto colors = sg::createNode("colors",
-//                                 "DataVector3f")->nodeAs<sg::DataVector3f>();
-//    auto alpha  = sg::createNode("alpha",
-//                                 "DataVector2f")->nodeAs<sg::DataVector2f>();
-
-
-//    colors->v.resize(samples);
-//    alpha->v.resize(samples);
 
     // Step along the alpha line and sample it
     std::array<std::vector<vec2f>::const_iterator, 4> lit = {
@@ -304,11 +296,8 @@ void TransferFunction::render()
         sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
       }
       for (size_t j = 0; j < 3; ++j) {
-//        colors->v[i][j] = sampleColor[j];
         palette[i * 4 + j] = clamp(sampleColor[j] * 255.0, 0.0, 255.0);
       }
-//      alpha->v[i].x = x;
-//      alpha->v[i].y = clamp(sampleColor[3], 0.f, 1.f);
       palette[i * 4 + 3] = 255;
     }
 
@@ -319,16 +308,20 @@ void TransferFunction::render()
     auto &colorCP = *transferFcn->child("colorControlPoints").nodeAs<sg::DataVector4f>();
     auto &opacityCP = *transferFcn->child("opacityControlPoints").nodeAs<sg::DataVector2f>();
     opacityCP.clear();
+    colorCP.clear();
     for (auto line : rgbaLines[3].line)
       opacityCP.push_back(line);
-    opacityCP.markAsModified();
-
-//    transferFcn->add(colors);
-//    transferFcn->add(alpha);
-
+    int i = 0;
+    for (auto line : rgbaLines[0].line) {
+      colorCP.push_back(vec4f(line.x, line.y, 0.f, 0.f));
+      colorCP.v.back()[2] = rgbaLines[1].line[i].y;
+      colorCP.v.back()[3] = rgbaLines[2].line[i].y;
+      i++;
+    }
     // NOTE(jda) - HACK! colors array isn't updating, so we have to forcefully
     //             say "make sure you update yourself"...???
-//    colors->markAsModified();
+    opacityCP.markAsModified();
+    colorCP.markAsModified();
 
     if (prevBinding)
       glBindTexture(GL_TEXTURE_2D, prevBinding);
