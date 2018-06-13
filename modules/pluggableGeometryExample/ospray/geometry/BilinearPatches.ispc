@@ -92,12 +92,15 @@ export void BilinearPatches_destroy(void *uniform _self)
     to be able to tell it the bounding box for each primitimve. this
     is the callback embree calls for querying the (uniform) bounding
     box for a single given primitmive 'primID' */
-unmasked void BilinearPatches_bounds(BilinearPatches *uniform self,
-                                     uniform size_t primID,
-                                     uniform box3fa &bbox)
+unmasked void BilinearPatches_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
+  uniform BilinearPatches *uniform self
+    = (uniform BilinearPatches *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
   Patch *uniform patch = self->patchArray+primID;
-  bbox = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),make_vec3fa(patch->v00)),
+
+  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
+  *out = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),make_vec3fa(patch->v00)),
                                           make_vec3fa(patch->v01)),
                                make_vec3fa(patch->v10)),
                     make_vec3fa(patch->v11));
