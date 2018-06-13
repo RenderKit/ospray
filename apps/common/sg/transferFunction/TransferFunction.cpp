@@ -91,14 +91,14 @@ namespace ospray {
     {
       auto first = controlPoints.get<vec4f>(0);
       if (x <= first.x)
-        return first.y;
+        return vec3f(first.y,first.z,first.w);
 
       for (uint32_t i = 1; i < controlPoints.size(); i++) {
         auto current  = controlPoints.get<vec4f>(i);
         auto previous = controlPoints.get<vec4f>(i - 1);
         if (x <= current.x) {
           const float t = (x - previous.x) / (current.x - previous.x);
-          return (1.0 - t) * previous.y + t * current.y;
+          return (1.0 - t) * vec3f(previous.y,previous.z,previous.w)+ t * vec3f(current.y,current.z,current.w);
         }
       }
 
@@ -123,7 +123,6 @@ namespace ospray {
 
     void TransferFunction::computeColors()
     {
-      colors->v.clear();
       auto numSamples = child("numSamples").valueAs<int>();
 
       float x0 = 0.f;
@@ -131,6 +130,7 @@ namespace ospray {
 
       auto controlPoints     = child("colorControlPoints").nodeAs<DataBuffer>();
       auto colors = child("colors").nodeAs<DataVector3f>();
+      colors->v.clear();
 
       for (int i = 0; i < numSamples; i++)
         colors->push_back(interpolateColor(*controlPoints, i * dx));
