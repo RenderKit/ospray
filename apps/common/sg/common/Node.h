@@ -29,7 +29,7 @@
 #include "ospcommon/utility/TimeStamp.h"
 #include "ospcommon/xml/XML.h"
 #include "ospcommon/vec.h"
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {
