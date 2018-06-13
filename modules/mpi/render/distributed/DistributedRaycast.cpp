@@ -112,6 +112,7 @@ namespace ospray {
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
+#if 0
       auto logging = utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
       DETAILED_LOGGING = std::stoi(logging) != 0;
 
@@ -123,13 +124,16 @@ namespace ospray {
           + std::to_string(rank) + ".txt";
         statsLog = std::ofstream(statsLogFile.c_str());
       }
+#endif
     }
 
     DistributedRaycastRenderer::~DistributedRaycastRenderer()
     {
+#if 0
       if (DETAILED_LOGGING) {
         statsLog << std::flush;
       }
+#endif
     }
 
     void DistributedRaycastRenderer::commit()
@@ -171,7 +175,9 @@ namespace ospray {
 
       ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
           distribModel->allRegions.data(),
-          distribModel->allRegions.size());
+          distribModel->ghostRegions.data(),
+          distribModel->allRegions.size(),
+          numAoSamples);
 
       const size_t numRegions = distribModel->allRegions.size();
 
@@ -199,6 +205,8 @@ namespace ospray {
         ++depthIndex;
       }
 
+      std::vector<int> tileVisibilities(dfb->getTotalTiles(), 0);
+
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;
         const size_t tile_y = taskIndex / numTiles_x;
@@ -208,6 +216,8 @@ namespace ospray {
         const bool tileOwner = (taskIndex % numGlobalRanks()) == globalRank();
 
         if (dfb->tileError(tileID) <= errorThreshold) {
+          std::cout << "tile " << tileID * TILE_SIZE << " is below error thresh\n"
+            << std::flush;
           return;
         }
 
@@ -226,6 +236,9 @@ namespace ospray {
           renderTile(&regionInfo, tile, tIdx);
         });
         regionInfo.computeVisibility = false;
+
+        // WILL: Validation check that we all find the same number of visible regions for each tile.
+        tileVisibilities[taskIndex] = std::count(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, true);
 
         // If we own the tile send the background color and the count of children for the
         // number of regions projecting to it that will be sent.
@@ -250,6 +263,7 @@ namespace ospray {
           if (!regionInfo.regionVisible[region.id]) {
             continue;
           }
+          std::cout << "region " << region.id << " visible on " << tile.region.lower << "\n";
 
           // If we share ownership of this region but aren't responsible
           // for rendering it to this tile, don't render it.
@@ -279,6 +293,41 @@ namespace ospray {
 
       auto endRender = high_resolution_clock::now();
 
+      // WILL: Validation check that we all find the same number of visible regions for each tile.
+      std::vector<int> minTileVisibilities(dfb->getTotalTiles(), 0);
+      std::vector<int> maxTileVisibilities(dfb->getTotalTiles(), 0);
+      MPI_CALL(Reduce(tileVisibilities.data(), minTileVisibilities.data(), tileVisibilities.size(),
+                      MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD));
+      MPI_CALL(Reduce(tileVisibilities.data(), maxTileVisibilities.data(), tileVisibilities.size(),
+                      MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD));
+
+      std::vector<int> allVisibilities(dfb->getTotalTiles() * numGlobalRanks(), 0);
+      MPI_CALL(Gather(tileVisibilities.data(), dfb->getTotalTiles(), MPI_INT,
+                      allVisibilities.data(), dfb->getTotalTiles(), MPI_INT,
+                      0, MPI_COMM_WORLD));
+
+      if (globalRank() == 0) {
+        for (size_t i = 0; i < tileVisibilities.size(); ++i) {
+          const size_t numTiles_x = fb->getNumTiles().x;
+          const size_t tile_y = i / numTiles_x;
+          const size_t tile_x = i - tile_y*numTiles_x;
+          const vec2i tilebegin = vec2i(tile_x, tile_y) * TILE_SIZE;
+          if (minTileVisibilities[i] != maxTileVisibilities[i]) {
+            std::cout << "Discrepency in tile visibilites for tile " << tilebegin
+              << ": " << minTileVisibilities[i] << " vs. "
+              << maxTileVisibilities[i] << " = [";
+            for (size_t j = 0; j < numGlobalRanks(); ++j) {
+              std::cout << allVisibilities[j * dfb->getTotalTiles() + i];
+              if (j + 1 < numGlobalRanks()) {
+                std::cout << ", ";
+              }
+            }
+            std::cout << "]\n";
+          }
+        }
+        std::cout << std::flush;
+      }
+
       dfb->waitUntilFinished();
       endFrame(nullptr, channelFlags);
 
@@ -287,6 +336,7 @@ namespace ospray {
       getrusage(RUSAGE_SELF, &curUsage);
       curWall = high_resolution_clock::now();
 
+#if 0
       if (DETAILED_LOGGING) {
         const std::array<int, 3> localTimes = {
           duration_cast<milliseconds>(endRender - startRender).count(),
@@ -323,6 +373,7 @@ namespace ospray {
         maml::logMessageTimings(statsLog);
         statsLog << "-----\n";
       }
+#endif
       ++frameNumber;
       return dfb->endFrame(errorThreshold);
     }
@@ -370,6 +421,7 @@ namespace ospray {
       getrusage(RUSAGE_SELF, &curUsage);
       curWall = high_resolution_clock::now();
 
+#if 0
       if (DETAILED_LOGGING) {
         const std::array<int, 1> localTimes = {
           duration_cast<milliseconds>(endRender - startRender).count(),
@@ -398,6 +450,7 @@ namespace ospray {
           << "\tRendering: " << localTimes[0] << "ms\n";
         logProcessStatistics(statsLog);
       }
+#endif
 
       return fb->endFrame(errorThreshold);
     }

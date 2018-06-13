@@ -41,11 +41,16 @@ namespace ospray {
 
   void AlphaBlendTile_simple::newFrame()
   {
+    std::lock_guard<std::mutex> lock(mutex);
     currentGeneration = 0;
     expectedInNextGeneration = 0;
     missingInCurrentGeneration = 1;
 
     assert(bufferedTile.empty());
+    if (!bufferedTile.empty()) {
+      std::cout << mpicommon::globalRank()
+        << " is starting with buffered tiles!\n" << std::flush;
+    }
   }
 
   void computeSortOrder(AlphaBlendTile_simple::BufferedTile *t)
@@ -94,6 +99,17 @@ namespace ospray {
       --missingInCurrentGeneration;
       expectedInNextGeneration += tile.children;
 
+      if (missingInCurrentGeneration < 0) {
+        std::cout << "negative missing on " << mpicommon::globalRank()
+          << ", missing = " << missingInCurrentGeneration
+          << ", expectedInNex = " << expectedInNextGeneration
+          << ", current generation = " << currentGeneration
+          << ", tile = " << tile.region.lower
+          << "\n";
+        PING;
+        std::cout << std::flush;
+      }
+
       while (missingInCurrentGeneration == 0 && expectedInNextGeneration > 0) {
         currentGeneration++;
         missingInCurrentGeneration = expectedInNextGeneration;
@@ -105,8 +121,29 @@ namespace ospray {
             --missingInCurrentGeneration;
             expectedInNextGeneration += bt->tile.children;
           }
+          if (missingInCurrentGeneration < 0) {
+            std::cout << "negative missing on " << mpicommon::globalRank()
+              << ", missing = " << missingInCurrentGeneration
+              << ", expectedInNex = " << expectedInNextGeneration
+              << ", current generation = " << currentGeneration
+              << ", tile = " << tile.region.lower
+              << "\n";
+            PING;
+            std::cout << std::flush;
+          }
         }
       }
+    }
+
+    if (missingInCurrentGeneration < 0) {
+      std::cout << "negative missing on " << mpicommon::globalRank()
+        << ", missing = " << missingInCurrentGeneration
+        << ", expectedInNex = " << expectedInNextGeneration
+        << ", current generation = " << currentGeneration
+        << ", tile = " << tile.region.lower
+        << "\n";
+      PING;
+      std::cout << std::flush;
     }
 
     if (missingInCurrentGeneration == 0) {

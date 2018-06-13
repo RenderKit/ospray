@@ -34,20 +34,17 @@ using namespace std::chrono;
 namespace maml {
 
   /*! the singleton object that handles all the communication */
-  std::unique_ptr<Context> Context::singleton = make_unique<Context>();
+  std::unique_ptr<Context> Context::singleton;
+
+  Context::Context()
+  {
+    start();
+  }
 
   Context::~Context()
   {
-    if (tasksAreRunning) {
-      tasksAreRunning = false;
-      if (sendReceiveThread) {
-        sendReceiveThread->stop();
-      }
-      if (processInboxThread) {
-        processInboxThread->stop();
-      }
-      flushRemainingMessages();
-    }
+    PING;
+    stop();
   }
 
   /*! register a new incoing-message handler. if any message comes in
@@ -77,36 +74,32 @@ namespace maml {
 
   void Context::processInboxMessages()
   {
-    if (!inbox.empty()) {
-      auto incomingMessages = inbox.consume();
+    auto incomingMessages = inbox.consume();
 
-      for (auto &message : incomingMessages) {
-        auto *handler = handlers[message->comm];
-        handler->incoming(message);
-      }
+    for (auto &message : incomingMessages) {
+      auto *handler = handlers[message->comm];
+      handler->incoming(message);
     }
   }
 
   void Context::sendMessagesFromOutbox()
   {
-    if (!outbox.empty()) {
-      auto outgoingMessages = outbox.consume();
+    auto outgoingMessages = outbox.consume();
 
-      for (auto &msg : outgoingMessages) {
-        MPI_Request request;
+    for (auto &msg : outgoingMessages) {
+      MPI_Request request;
 
-        int rank = 0;
-        MPI_CALL(Comm_rank(msg->comm, &rank));
-        // Don't send to ourself, just forward to the inbox directly
-        if (rank == msg->rank) {
-          inbox.push_back(std::move(msg));
-        } else {
-          MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
-                msg->tag, msg->comm, &request));
-          msg->started = high_resolution_clock::now();
-          pendingSends.push_back(request);
-          sendCache.push_back(std::move(msg));
-        }
+      int rank = 0;
+      MPI_CALL(Comm_rank(msg->comm, &rank));
+      // Don't send to ourself, just forward to the inbox directly
+      if (rank == msg->rank) {
+        inbox.push_back(std::move(msg));
+      } else {
+        MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
+              msg->tag, msg->comm, &request));
+        msg->started = high_resolution_clock::now();
+        pendingSends.push_back(request);
+        sendCache.push_back(std::move(msg));
       }
     }
   }
@@ -121,6 +114,7 @@ namespace maml {
       MPI_Status status;
       MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
             comm, &hasIncoming, &status));
+
       if (hasIncoming) {
         int size;
         MPI_CALL(Get_count(&status, MPI_BYTE, &size));
@@ -133,7 +127,9 @@ namespace maml {
         MPI_Request request;
         MPI_CALL(Irecv(msg->data, size, MPI_BYTE, msg->rank,
                        msg->tag, msg->comm, &request));
+
         msg->started = high_resolution_clock::now();
+
         pendingRecvs.push_back(request);
         recvCache.push_back(std::move(msg));
       }
@@ -155,9 +151,6 @@ namespace maml {
         }
       }
 
-      // TODO: will this deadlock if we send to other ranks in some condition?
-      // e.g. if we both send to each other and start waiting on the sends
-      // but the other hasn't picked up the recv yet?
       int numDone = 0;
       MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
                         done, MPI_STATUSES_IGNORE));
@@ -166,35 +159,14 @@ namespace maml {
       for (int i = 0; i < numDone; ++i) {
         int msgId = done[i];
         if (msgId < pendingSends.size()) {
-
           pendingSends[msgId] = MPI_REQUEST_NULL;
-
-          auto &msg = sendCache[msgId];
-
-          const auto sendTime = duration_cast<RealMilliseconds>(completed - msg->started);
-
-          {
-            std::lock_guard<std::mutex> lock(statsMutex);
-            sendTimes.push_back(sendTime);
-            sendBandwidth.emplace_back((msg->size / sendTime.count()) * 1e-6f);
-          }
-
-          sendCache[msgId].reset();
+          sendCache[msgId] = nullptr;
         } else {
           msgId -= pendingSends.size();
-          pendingRecvs[msgId] = MPI_REQUEST_NULL;
-
-          auto &msg = recvCache[msgId];
-
-          const auto recvTime = duration_cast<RealMilliseconds>(completed - msg->started);
-
-          {
-            std::lock_guard<std::mutex> lock(statsMutex);
-            recvTimes.push_back(recvTime);
-            recvBandwidth.emplace_back((msg->size / recvTime.count()) * 1e-6f);
-          }
-
           inbox.push_back(std::move(recvCache[msgId]));
+
+          pendingRecvs[msgId] = MPI_REQUEST_NULL;
+          recvCache[msgId] = nullptr;
         }
       }
 
@@ -220,14 +192,17 @@ namespace maml {
 
   void Context::flushRemainingMessages()
   {
+    PING;
     // TODO: flush is not correct, we could be in a state where a message
     // is being process, which will then produce more messages to send but
     // the flushing will think all the work is done, and exit.
+    std::cout << std::flush;
     while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty() && !outbox.empty()) {
+      PING;
+      std::cout << std::flush;
       sendMessagesFromOutbox();
-
+      pollForAndRecieveMessages();
       waitOnSomeRequests();
-
       processInboxMessages();
     }
   }
@@ -238,6 +213,7 @@ namespace maml {
     has been called */
   void Context::start()
   {
+    std::lock_guard<std::mutex> lock(tasksMutex);
     if (!isRunning()) {
       tasksAreRunning = true;
 
@@ -249,23 +225,27 @@ namespace maml {
             AsyncLoop::LaunchMethod::THREAD : AsyncLoop::LaunchMethod::TASK;
       }
 
-      if (!sendReceiveThread.get()) {
-        sendReceiveThread = make_unique<AsyncLoop>([&](){
-          sendMessagesFromOutbox();
-          pollForAndRecieveMessages();
+      //if (!sendReceiveThread.get()) {
+        //sendReceiveThread = make_unique<AsyncLoop>([&](){
+        sendReceiveThread = std::thread([&](){
+          while (!quitThreads) {
+            sendMessagesFromOutbox();
+            pollForAndRecieveMessages();
+            waitOnSomeRequests();
+          }
+        });//, launchMethod);
+      //}
 
-          waitOnSomeRequests();
-        }, launchMethod);
-      }
+      //if (!processInboxThread.get()) {
+        processInboxThread = std::thread([&](){
+          while (!quitThreads) {
+            processInboxMessages();
+          }
+        });//, launchMethod);
+      //}
 
-      if (!processInboxThread.get()) {
-        processInboxThread = make_unique<AsyncLoop>([&](){
-          processInboxMessages();
-        }, launchMethod);
-      }
-
-      sendReceiveThread->start();
-      processInboxThread->start();
+      //sendReceiveThread->start();
+      //processInboxThread->start();
     }
   }
 
@@ -281,10 +261,22 @@ namespace maml {
     if they are already in fligh
     WILL: Don't actually stop, for reasons described above flush messages
   */
-  void Context::stop() {}
+  void Context::stop() 
+  {
+    std::lock_guard<std::mutex> lock(tasksMutex);
+    if (tasksAreRunning) {
+      quitThreads = true;
+      sendReceiveThread.join();
+      processInboxThread.join();
+
+      tasksAreRunning = false;
+      flushRemainingMessages();
+    }
+  }
 
   void Context::logMessageTimings(std::ostream &os)
   {
+#if 0
     std::lock_guard<std::mutex> lock(statsMutex);
     using Stats = pico_bench::Statistics<RealMilliseconds>;
     using SizeStats = pico_bench::Statistics<Bandwidth>;
@@ -312,6 +304,7 @@ namespace maml {
     recvTimes.clear();
     sendBandwidth.clear();
     recvBandwidth.clear();
+#endif
   }
 
 } // ::maml

@@ -325,6 +325,8 @@ namespace ospray {
       // NOTE: Doing error sync may do a broadcast, needs to be done before
       //       async messaging enabled in beginFrame()
       tileErrorRegion.sync();
+      // TODO WILL: Why is this needed? All ranks will know which ranks own
+      // which tiles, since it's assigned round-robin.
       MPI_CALL(Bcast(tileInstances, getTotalTiles(), MPI_INT, 0,
                      mpicommon::world.comm));
 
@@ -339,9 +341,7 @@ namespace ospray {
       for (auto &tile : myTiles)
         tile->newFrame();
 
-      // TODO: Could we be racing against something here??
       numTilesCompletedThisFrame = 0;
-
       if (hasAccumBuffer) {
         for (int t = 0; t < getTotalTiles(); t++) {
           if (tileError(vec2i(t, 0)) <= errorThreshold) {
@@ -476,39 +476,51 @@ namespace ospray {
 
   void DFB::waitUntilFinished()
   {
+    using namespace mpicommon;
+
+    std::cout << globalRank() << " WAITING\n" << std::flush;
     std::unique_lock<std::mutex> lock(mutex);
     frameDoneCond.wait(lock, [&]{
       return frameIsDone;
     });
+    std::cout << globalRank() << " done with frame\n" << std::flush;
 
     // Gather all the tiles from the other ranks to copy into the framebuffer
     const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer);
     std::vector<char> tileGatherResult;
-    std::vector<int> tileBytesExpected(mpicommon::numGlobalRanks(), 0);
-    std::vector<int> processOffsets(mpicommon::numGlobalRanks(), 0);
-    if (mpicommon::IamTheMaster()) {
+    std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
+    std::vector<int> processOffsets(numGlobalRanks(), 0);
+    if (IamTheMaster()) {
       tileGatherResult.resize(allTiles.size() * tileSize);
       for (size_t i = 0; i < allTiles.size(); ++i) {
         tileBytesExpected[allTiles[i]->ownerID] += tileSize;
       }
       size_t recvOffset = 0;
-      for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+      for (int i = 0; i < numGlobalRanks(); ++i) {
         processOffsets[i] = recvOffset;
         recvOffset += tileBytesExpected[i];
       }
     }
 
-    // This seems to 'help' the issue, but is not a fix, clearly.
-    //mpicommon::world.barrier();
+    if (globalRank() == 0) {
+      std::cout << "Expecting tiles: [";
+      for (size_t i = 0; i < tileBytesExpected.size(); ++i) {
+        std::cout << "\t(" << i << ", " << tileBytesExpected[i] / tileSize << ")\n";
+      }
+      std::cout << "]\n" << std::flush;
+    }
+
+    std::cout << globalRank() << " IN GATHER\n" << std::flush;
+
     MPI_CALL(Gatherv(tileGatherBuffer.data(), tileGatherBuffer.size(), MPI_BYTE,
                      tileGatherResult.data(), tileBytesExpected.data(),
                      processOffsets.data(), MPI_BYTE,
-                     mpicommon::masterRank(), mpicommon::world.comm));
+                     masterRank(), world.comm));
 
     firstMasterTile = high_resolution_clock::now();
     lastMasterTile = high_resolution_clock::now();
 
-    if (mpicommon::IamTheMaster()) {
+    if (IamTheMaster()) {
       tasking::parallel_for(getTotalTiles(), [&](int tile) {
         auto *msg = reinterpret_cast<TileMessage*>(&tileGatherResult[tile * tileSize]);
         if (msg->command & MASTER_WRITE_TILE_I8) {
@@ -915,8 +927,10 @@ namespace ospray {
       return 0;
 
     const auto tileNr = tile.y * numTiles.x + tile.x;
+    // Will: Why increment here?? Why was the accumID
+    // incremented here and not at end frame??
     tileInstances[tileNr]++;
-    return tileAccumID[tileNr]++;
+    return tileAccumID[tileNr];
   }
 
   float DFB::tileError(const vec2i &tile)
@@ -927,14 +941,17 @@ namespace ospray {
   void DFB::beginFrame()
   {
     cancelRendering = false;
-    mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }
 
   float DFB::endFrame(const float errorThreshold)
   {
-    mpi::messaging::disableAsyncMessaging();
     memset(tileInstances, 0, sizeof(int32)*getTotalTiles()); // XXX needed?
+
+    for (size_t i = 0; i < getTotalTiles(); ++i) {
+      ++tileAccumID[i];
+    }
+
     if (mpicommon::IamTheMaster()) // only refine on master
       return tileErrorRegion.refine(errorThreshold);
     else // slaves will get updated error with next sync() anyway

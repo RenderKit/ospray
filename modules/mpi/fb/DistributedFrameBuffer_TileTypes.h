@@ -185,6 +185,7 @@ namespace ospray {
       float sortOrder;
     };
 
+  private:
     std::vector<BufferedTile *> bufferedTile;
     int currentGeneration;
     int expectedInNextGeneration;

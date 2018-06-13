@@ -47,10 +47,19 @@ namespace maml {
   // WILL: Statistics logging
   OSPRAY_MAML_INTERFACE void logMessageTimings(std::ostream &os);
 
-  /*! initialize the service for this process */
+  /*! initialize the service for this process and
+      start the service; from this point on maml is free to use MPI
+      calls to send/receive messages; if your MPI library is not
+      thread safe the app should _not_ do any MPI calls until 'shutdown()'
+      has been called */
   OSPRAY_MAML_INTERFACE void init();
 
-  /*! shutdown the service for this process */
+  /*! shutdown the service for this process.
+      stops the maml layer; maml will no longer perform any MPI calls;
+      if the mpi layer is not thread safe the app is then free to use
+      MPI calls of its own, but it should not expect that this node
+      receives any more messages (until the next 'init()' call) even
+      if they are already in flight */
   OSPRAY_MAML_INTERFACE void shutdown();
 
   /*! register a new incoing-message handler. if any message comes in
@@ -58,20 +67,7 @@ namespace maml {
   OSPRAY_MAML_INTERFACE void registerHandlerFor(MPI_Comm comm,
                                                 MessageHandler *handler);
 
-  /*! start the service; from this point on maml is free to use MPI
-      calls to send/receive messages; if your MPI library is not
-      thread safe the app should _not_ do any MPI calls until 'stop()'
-      has been called */
-  OSPRAY_MAML_INTERFACE void start();
-
   OSPRAY_MAML_INTERFACE bool isRunning();
-
-  /*! stops the maml layer; maml will no longer perform any MPI calls;
-      if the mpi layer is not thread safe the app is then free to use
-      MPI calls of its own, but it should not expect that this node
-      receives any more messages (until the next 'start()' call) even
-      if they are already in flight */
-  OSPRAY_MAML_INTERFACE void stop();
 
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this

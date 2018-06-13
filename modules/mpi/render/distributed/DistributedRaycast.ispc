@@ -317,18 +317,24 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
   self->regions = NULL;
+  self->ghostRegions = NULL;
   self->numRegions = 0;
 
   return self;
 }
 
 export void DistributedRaycastRenderer_setRegions(void *uniform _self,
-                                                    void *uniform regions,
-                                                    uniform int numRegions)
+                                                  void *uniform regions,
+                                                  void *uniform ghostRegions,
+                                                  uniform int numRegions
+                                                  uniform int aoSamples)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
   self->regions = (uniform DistributedRegion *uniform)regions;
   self->numRegions = numRegions;
+  self->aoSamples = aoSamples;
+  self->ghostRegions = ghostRegions;
+
 }
 

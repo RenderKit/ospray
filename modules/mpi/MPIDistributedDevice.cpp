@@ -416,6 +416,7 @@ namespace ospray {
                                             OSPRenderer _renderer,
                                             const uint32 fbChannelFlags)
     {
+      mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
       auto &renderer = lookupDistributedObject<Renderer>(_renderer);
       auto result    = renderer.renderFrame(&fb, fbChannelFlags);
