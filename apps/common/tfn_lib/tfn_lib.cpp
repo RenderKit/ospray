@@ -28,7 +28,7 @@ const static uint64_t CURRENT_VERSION = 1;
 TransferFunction::TransferFunction(const FileName &fileName) {
   std::ifstream fin(fileName.c_str(), std::ios::binary);
   if (!fin.is_open()) {
-    throw std::runtime_error("File " + fileName.str() + " not found");
+    throw std::runtime_error("File '" + fileName.str() + "' not found");
   }
   // Verify this is actually a tfn::TransferFunction data file
   uint32_t magic = 0;
@@ -91,7 +91,7 @@ TransferFunction::TransferFunction(const std::string &name,
 void TransferFunction::save(const FileName &fileName) const {
   std::ofstream fout(fileName.c_str(), std::ios::binary);
   if (!fout.is_open()) {
-    throw std::runtime_error("Failed to open " + fileName.str() + " for writing");
+    throw std::runtime_error("Failed to open '" + fileName.str() + "' for writing");
   }
   if (!fout.write(reinterpret_cast<const char*>(&MAGIC_NUMBER), sizeof(uint32_t))) {
     throw std::runtime_error("Failed to write magic number header to " + fileName.str());

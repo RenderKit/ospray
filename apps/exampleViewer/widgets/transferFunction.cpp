@@ -384,7 +384,11 @@ void TransferFunction::save(const ospcommon::FileName &fileName) const
     output.rgbValues.push_back(vec3f(sampleColor[0], sampleColor[1], sampleColor[2]));
   }
 
-  output.save(fileName);
+  try {
+    output.save(fileName);
+  } catch (const std::runtime_error &e) {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+  }
 }
 
 void TransferFunction::setColorMap(const bool useOpacity)
