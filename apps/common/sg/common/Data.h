@@ -147,8 +147,11 @@ namespace ospray {
       size_t bytesPerElement() const override { return sizeof(T); }
 
       void push_back(const T &t) { v.push_back(t); }
-      T& operator[](int index) { return v[index]; }
-      const T& operator[](int index) const { return v[index]; }
+      T& operator[](size_t index) { return v[index]; }
+      const T& operator[](size_t index) const { return v[index]; }
+      void resize(size_t n, T val=T()) { v.resize(n,val); }
+      void clear() { v.resize(0); }
+
 
       // Data Members //
 

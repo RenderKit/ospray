@@ -36,11 +36,15 @@ namespace ospray {
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 
+      void loadParaViewTF(std::string fileName);
+
      private:
 
-      float interpolatedAlpha(const DataBuffer &alpha, float x);
+      float interpolateOpacity(const DataBuffer &controlPoints, float x);
+      vec3f interpolateColor(const DataBuffer &controlPoints, float x);
 
-      void calculateOpacities();
+      void computeOpacities();
+      void computeColors();
     };
 
   } // ::ospray::sg
