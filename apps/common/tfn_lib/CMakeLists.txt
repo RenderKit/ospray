@@ -26,6 +26,9 @@ IF (OSPRAY_APPS_PARAVIEW_TFN_CVT)
   OSPRAY_CREATE_APPLICATION(ospCvtParaViewTfcn
     convertParaViewTfcn.cpp
   LINK
+    ospray
+    ospray_common
+    ospray_sg
     ospray_json
     ospray_tfn
   )

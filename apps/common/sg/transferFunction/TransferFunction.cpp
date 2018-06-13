@@ -181,6 +181,7 @@ namespace ospray {
       } else {
         throw std::runtime_error("#ospCvtParaViewTfcn: Error - failed to read transfer function name\n");
       }
+      setName(tfcnName);
 
       if (paraViewFcn["ColorSpace"].type() == Json::stringValue
                       && paraViewFcn["ColorSpace"].asString() == "Diverging") {
