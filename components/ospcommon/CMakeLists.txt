@@ -127,6 +127,8 @@ else()
   )
 
   ospray_install_sdk_headers(
+    containers/aligned_allocator.h
+    containers/AlignedVector.h
     containers/TransactionalBuffer.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
