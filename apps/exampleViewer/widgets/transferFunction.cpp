@@ -331,10 +331,14 @@ void TransferFunction::render()
 
 void TransferFunction::load(const ospcommon::FileName &fileName)
 {
-  tfn::TransferFunction loaded(fileName);
-  transferFunctions.emplace_back(fileName);
-  tfcnSelection = transferFunctions.size() - 1;
-  setColorMap(true);
+  try {
+    tfn::TransferFunction loaded(fileName);
+    transferFunctions.emplace_back(fileName);
+    tfcnSelection = transferFunctions.size() - 1;
+    setColorMap(true);
+  } catch (const std::runtime_error &e) {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+  }
 }
 
 void TransferFunction::save(const ospcommon::FileName &fileName) const
