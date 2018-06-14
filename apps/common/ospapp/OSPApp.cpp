@@ -752,28 +752,39 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         transform["scale"] = animatedFile[0].transform.scale;
         transform["position"] = animatedFile[0].transform.translate;
         transform["rotation"] = animatedFile[0].transform.rotation;
-        auto &selector =
-            transform.createChild("selector_" + animatedFile[0].file,
-                                  "Selector");
+//        auto &selector =
+//            transform.createChild("selector_" + animatedFile[0].file,
+//                                  "Selector");
 
+        std::string importString;
         for (auto file : animatedFile) {
           FileName fn = file.file;
           if (fn.ext() == "ospsg")
             sg::loadOSPSG(renderer.shared_from_this(), fn.str());
           else {
-            auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-            auto &importerNode = *importerNode_ptr;
-            importerNode["fileName"] = fn.str();
-            selector.add(importerNode_ptr);
+            importString += file.file + ",";
+//            auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+//            auto &importerNode = *importerNode_ptr;
+//            importerNode["fileName"] = fn.str();
+//            selector.add(importerNode_ptr);
           }
         }
-        auto &anim_selector = selector["index"].createChild(
-            "anim_" + animatedFile[0].file, "Animator");
+        importString.erase(importString.end()-1);
+        if (importString != "")
+        {
+          auto importerNode_ptr = sg::createNode(animatedFile[0].file, "Importer");
+          auto &importerNode = *importerNode_ptr;
+          importerNode["fileName"] = importString;
+          transform.add(importerNode_ptr);
 
-        anim_selector.verify();
-        anim_selector.commit();
-        anim_selector["value2"] = int(animatedFile.size());
-        animation.setChild("anim_selector", anim_selector.shared_from_this());
+//          auto &anim_selector = importerNode.child("selector")["index"].createChild(
+//              "anim_" + animatedFile[0].file, "Animator");
+
+//          anim_selector.verify();
+//          anim_selector.commit();
+//          anim_selector["value2"] = int(animatedFile.size());
+//          animation.setChild("anim_selector", anim_selector.shared_from_this());
+        }
       }
     }
 

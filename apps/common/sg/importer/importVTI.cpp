@@ -30,11 +30,10 @@
 namespace ospray {
   namespace sg {
 
-    //! import VTK .vti files made up of 3d regular structured grids.
-    void importVTI(const std::shared_ptr<Node> &world,
+    std::shared_ptr<Node> importVTI_createVolumeNode(const std::shared_ptr<Node> &world,
                            const FileName &fileName)
     {
-      auto volumeNode = createNode("vtiVolume", "StructuredVolume");
+      auto volumeNode = createNode(fileName.base()+"_volume", "StructuredVolume");
 
       vtkSmartPointer<vtkXMLImageDataReader> reader =
           vtkSmartPointer<vtkXMLImageDataReader>::New();
@@ -74,7 +73,30 @@ namespace ospray {
       volumeNode->child("voxelType") = voxelType;
       volumeNode->child("dimensions") = dims;
 
-      world->add(volumeNode);
+      return volumeNode;
     }
+
+    //! import VTK .vti files made up of 3d regular structured grids.
+    void importVTI(const std::shared_ptr<Node> &world,
+                           const FileName &fileName)
+    {
+      std::cout << "importVTI" << std::endl;
+      world->add(importVTI_createVolumeNode(world,fileName));
+    }
+
+    //! import multiple VTK .vti files with the same tf
+    void importVTIs(const std::shared_ptr<Node> &world,
+                           const std::vector<FileName> &fileNames)
+    {
+      std::cout << "importVTIs" << std::endl;
+//      auto tf = createNode("vtiTransferFunction", "TransferFunction");
+      for(auto file : fileNames)
+      {
+        auto volume = importVTI_createVolumeNode(world,file);
+//        volume->setChild("transferFunction", tf);
+        world->add(volume);
+      }
+    }
+
   }  // ::ospray::sg
 }  // ::ospray
