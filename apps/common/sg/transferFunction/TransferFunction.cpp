@@ -45,10 +45,6 @@ namespace ospray {
       colors->v.emplace_back(1       , 0, 0       );
       colors->v.emplace_back(0.500008, 0, 0       );
 
-//      auto alpha = createChild("alpha", "DataVector2f").nodeAs<DataVector2f>();
-//      alpha->v.emplace_back(0.f, 0.f);
-//      alpha->v.emplace_back(1.f, 1.f);
-
       createChild("opacities", "DataVector1f");
 
       auto colorCP = createChild("colorControlPoints", "DataVector4f").nodeAs<DataVector4f>();
