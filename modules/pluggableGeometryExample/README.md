@@ -38,3 +38,4 @@ Build OSPRay (make sure that OSPRAY_MODULE_BILINEAR_PATCH is on!), then in your 
 
       ./ospExampleViewer --sg:module bilinear_patches ../modules/pluggableGeometryExample/examples/shadows.patches --renderer pt 
 
+
