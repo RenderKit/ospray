@@ -21,8 +21,8 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
-#include <tfn_lib/tfn_lib.h>
-#include "json/json.h"
+#include "tfn_lib/tfn_lib.h"
+#include "tfn_lib/json/json.h"
 
 namespace ospray {
   namespace sg {
