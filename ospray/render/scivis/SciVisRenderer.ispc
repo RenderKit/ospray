@@ -146,7 +146,6 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         const float ulpRayT = geometryRay.t * (1/(float)(1<<17));
         geometryRay.t0
           = geometryRay.t + max(renderer->super.epsilon,ulpRayT);
-
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;

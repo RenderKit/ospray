@@ -157,7 +157,7 @@ bool recursiveBisection(varying Ray &ray,
 
   if (recursionsLeft == 0) {
     const float t = 0.25*(t0+t1+t2+t3);
-    if (t < ray.t0 || t >= ray.t) return false;
+    if (t <= ray.t0 || t >= ray.t) return false;
 
     if (!isOcclusionTest) {
       ray.t = t;
