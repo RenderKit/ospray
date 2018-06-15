@@ -51,7 +51,7 @@ variables:
 .job_template: &test_job_windows
   <<: *test_job
   script:
-    - cmd call /c 'scripts\tests\run_tests.bat'
+    - & scripts\tests\run_tests.bat
   artifacts:
     paths:
       - tests.xml
@@ -167,7 +167,7 @@ build-osx-clang:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"v140^" ^"OSPRAY_MODULE_MPI=ON^"'
+    - & scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"v140^" ^"OSPRAY_MODULE_MPI=ON^"
   tags:
     - msvc14
     - win7
@@ -179,7 +179,7 @@ build-windows-msvc14:
 build-windows-msvc15:
   <<: *build_job_shell
   script:
-    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 15 2017 Win64^" ^"v141^" ^"OSPRAY_MODULE_MPI=OFF^"'
+    - & scripts\build_gitlab\win.bat ^"Visual Studio 15 2017 Win64^" ^"v141^" ^"OSPRAY_MODULE_MPI=OFF^"
   tags:
     - msvc15
     - win7
@@ -191,7 +191,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"Intel C++ Compiler 18.0^" ^"OSPRAY_MODULE_MPI=ON^"'
+    - & scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"Intel C++ Compiler 18.0^" ^"OSPRAY_MODULE_MPI=ON^"
   tags:
     - icc18
     - win7
@@ -405,7 +405,7 @@ release-osx-clang:
 release-windows:
   <<: *release_job
   script:
-    - cmd call /c 'scripts\release\win.bat'
+    - & scripts\release\win.bat
   tags:
     - msvc
     - win7
