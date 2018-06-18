@@ -209,15 +209,11 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
       renderer["frameBuffer"]["size"] = vec2i(width, height);
       setupToneMapping(renderer);
-      renderer.verify();
+      renderer.traverse(sg::VerifyNodes(true));
       renderer.commit();
 
       // last, to be able to modify all created SG nodes
       parseCommandLineSG(argc, argv, renderer);
-
-      // recommit in case any command line options modified the scene graph
-      renderer.verify();
-      renderer.commit();
 
       // after parseCommandLineSG (may have changed world bounding box)
       addPlaneToScene(renderer);
@@ -534,8 +530,6 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
     void OSPApp::addLightsToScene(sg::Node &renderer)
     {
-      renderer.verify();
-      renderer.commit();
       auto &lights = renderer["lights"];
 
       if (noDefaultLights == false &&
@@ -566,12 +560,8 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         auto tex = sg::Texture2D::load(hdriLightFile, false);
         tex->setName("map");
         auto &hdri = lights.createChild("hdri", "HDRILight");
-        tex->verify();
-        tex->commit();
         hdri.add(tex);
       }
-      renderer.verify();
-      renderer.commit();
     }
 
     void OSPApp::addImporterNodesToWorld(sg::Node &renderer)
@@ -624,16 +614,13 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
                   auto &rotation =
                       transform["rotation"].createChild("animator", "Animator");
 
-                  rotation.verify();
-                  rotation.commit();
-                  rotation.child("value1") = vec3f(0.f, 0.f, 0.f);
-                  rotation.child("value2") = vec3f(0.f, 2.f * 3.14f, 0.f);
+                  rotation.createChild("value1", "vec3f", vec3f(0.f, 0.f, 0.f));
+                  rotation.createChild("value2", "vec3f", vec3f(0.f, 2.f * 3.14f, 0.f));
+                  rotation.setValue(vec3f(0.0f, 0.0f, 0.0f));
 
                   animation.setChild("rotation", rotation.shared_from_this());
                 }
 
-                renderer.verify();
-                renderer.commit();
                 auto bounds = importerNode_ptr->computeBounds();
                 auto size = bounds.upper - bounds.lower;
                 float maxSize = max(max(size.x, size.y), size.z);
@@ -709,9 +696,6 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         camera["height"] = (float)height;
       if (camera.hasChild("aspect"))
         camera["aspect"] = width / (float)height;
-
-      renderer.verify();
-      renderer.commit();
     }
 
     void OSPApp::setupToneMapping(sg::Node &renderer)
@@ -752,28 +736,32 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         transform["scale"] = animatedFile[0].transform.scale;
         transform["position"] = animatedFile[0].transform.translate;
         transform["rotation"] = animatedFile[0].transform.rotation;
-        auto &selector =
-            transform.createChild("selector_" + animatedFile[0].file,
-                                  "Selector");
 
+        std::string importString;
         for (auto file : animatedFile) {
           FileName fn = file.file;
           if (fn.ext() == "ospsg")
             sg::loadOSPSG(renderer.shared_from_this(), fn.str());
           else {
-            auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-            auto &importerNode = *importerNode_ptr;
-            importerNode["fileName"] = fn.str();
-            selector.add(importerNode_ptr);
+            importString += file.file + ",";
           }
         }
-        auto &anim_selector = selector["index"].createChild(
-            "anim_" + animatedFile[0].file, "Animator");
+        importString.erase(importString.end()-1);
+        if (importString != "")
+        {
+          auto importerNode_ptr = sg::createNode(animatedFile[0].file, "Importer");
+          auto &importerNode = *importerNode_ptr;
+          importerNode["fileName"] = importString;
+          transform.add(importerNode_ptr);
+          transform.markAsModified();
 
-        anim_selector.verify();
-        anim_selector.commit();
-        anim_selector["value2"] = int(animatedFile.size());
-        animation.setChild("anim_selector", anim_selector.shared_from_this());
+          auto &anim_selector = importerNode.child("selector")["index"].createChild(
+              "anim_" + animatedFile[0].file, "Animator");
+
+          anim_selector.createChild("value2", "int");
+          anim_selector["value2"] = int(animatedFile.size());
+          animation.setChild("anim_selector", anim_selector.shared_from_this());
+        }
       }
     }
 
@@ -815,9 +803,6 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       planeMaterial["Kd"] = vec3f(0.3f);
       planeMaterial["Ks"] = vec3f(0.0f);
       planeMaterial["Ns"] = 10.f;
-
-      renderer.verify();
-      renderer.commit();
     }
 
   } // ::ospray::app

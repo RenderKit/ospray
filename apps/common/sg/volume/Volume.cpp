@@ -104,8 +104,7 @@ namespace ospray {
       createChild("gridSpacing", "vec3f", vec3f(1.f));
       createChild("isosurfaceEnabled", "bool", false);
       createChild("isosurface", "float",
-                  -std::numeric_limits<float>::infinity(),
-                  NodeFlags::valid_min_max |
+                  128.f,
                   NodeFlags::gui_slider).setMinMax(0.f,255.f);
     }
 
