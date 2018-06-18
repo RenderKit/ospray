@@ -19,6 +19,7 @@
 #include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
+#include "transferFunction.h"
 
 #include "common/sg/SceneGraph.h"
 #include "common/sg/Renderer.h"
@@ -68,6 +69,7 @@ namespace ospray {
     void guiCarDemo();
 
     void guiRenderStats();
+    void guiTransferFunction();
     void guiFindNode();
 
     void guiSingleNode(const std::string &baseText,
@@ -105,6 +107,8 @@ namespace ospray {
     int  numPreAllocatedTiles{4};
 
     PickMode lastPickQueryType {PICK_CAMERA};
+
+    TransferFunction transferFunctionWidget;
   };
 
 }// namespace ospray

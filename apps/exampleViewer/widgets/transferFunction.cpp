@@ -149,7 +149,6 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
 
 void TransferFunction::drawUi()
 {
-  if (ImGui::Begin("Transfer Function")){
     ImGui::Text("Left click and drag to add/move points\nRight click to remove\n");
     ImGui::InputText("filename", textBuffer.data(), textBuffer.size() - 1);
 
@@ -183,7 +182,7 @@ void TransferFunction::drawUi()
     }
 
     vec2f canvasPos(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
-    vec2f canvasSize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
+    vec2f canvasSize(ImGui::GetContentRegionAvail().x, std::min(ImGui::GetContentRegionAvail().y, 255.0f));
     // Force some min size of the editor
     if (canvasSize.x < 50.f){
       canvasSize.x = 50.f;
@@ -245,12 +244,12 @@ void TransferFunction::drawUi()
       }
     }
     draw_list->PopClipRect();
-  }
-  ImGui::End();
 }
 
 void TransferFunction::render()
 {
+  if (!transferFcn)
+    return;
   const int samples = transferFcn->child("numSamples").valueAs<int>();
   // Upload to GL if the transfer function has changed
   if (!paletteTex) {

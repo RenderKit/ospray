@@ -39,10 +39,17 @@ namespace ospray {
   {
   public:
 
-    TransferFunction(std::shared_ptr<sg::TransferFunction> tfn);
+    TransferFunction(std::shared_ptr<sg::TransferFunction> tfn = nullptr);
     ~TransferFunction();
     TransferFunction(const TransferFunction &t);
     TransferFunction& operator=(const TransferFunction &t);
+
+    void setSGTF(std::shared_ptr<sg::TransferFunction> tf) {
+      if (tf != transferFcn) {
+        fcnChanged = true;
+        transferFcn = tf;
+      }
+    }
     /* Draw the transfer function editor widget, returns true if the
      * transfer function changed
     */

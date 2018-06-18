@@ -725,6 +725,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
     {
       auto &world = renderer["world"];
       auto &animation = renderer["animationcontroller"];
+      renderer.createChild("transferFunctions", "Node");
 
       for (auto &animatedFile : animatedFiles) {
         if (animatedFile.empty())
@@ -754,6 +755,10 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           importerNode["fileName"] = importString;
           transform.add(importerNode_ptr);
           transform.markAsModified();
+
+          auto transferFunctions = importerNode.childrenRecursive("transferFunction");
+          for (auto tf : transferFunctions)
+            renderer["transferFunctions"].add(tf);
 
           auto &anim_selector = importerNode.child("selector")["index"].createChild(
               "anim_" + animatedFile[0].file, "Animator");
