@@ -610,19 +610,25 @@ namespace ospray {
     auto tfNodes = scenegraph->child("transferFunctions").children();
     if (tfNodes.empty())
       return;
-    std::shared_ptr<sg::Node> transferFunction;
-    std::vector<const char*> tfNodeCharList(tfNodes.size(), nullptr);
+    std::vector<std::shared_ptr<sg::Node> > transferFunctions;
+    std::shared_ptr<sg::Node> transferFunction = nullptr;
+    std::string tfNodeListString;
     for (auto& tf : tfNodes)
     {
-      tfNodeCharList.push_back(tf.first.c_str());
-      transferFunction = tf.second;
+      tfNodeListString += tf.second->name() + '\0';
+      transferFunctions.push_back(tf.second);
     }
-    static int selection = 0;
+    static int selection = -1;
     if (ImGui::CollapsingHeader("TransferFunctions", "TransferFunctions", true, true))
     {
-      transferFunctionWidget.setSGTF(transferFunction->nodeAs<sg::TransferFunction>());
-      transferFunctionWidget.render();
-      transferFunctionWidget.drawUi();
+      ImGui::Combo("transferFunction", &selection, tfNodeListString.c_str(), tfNodes.size());
+      if (selection >= 0 && selection < transferFunctions.size())
+        transferFunction = transferFunctions[selection];
+      if (transferFunction) {
+        transferFunctionWidget.setSGTF(transferFunction->nodeAs<sg::TransferFunction>());
+        transferFunctionWidget.render();
+        transferFunctionWidget.drawUi();
+      }
     }
   }
 
