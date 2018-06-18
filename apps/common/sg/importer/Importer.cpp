@@ -226,12 +226,12 @@ namespace ospray {
 
         if (files.size() > 0)
         {
-//          auto& selector =
-//            createChild("selector_" + files[0].base(),
-//                                  "Selector");
+          auto& selector =
+            createChild("selector",
+                                  "Selector");
           auto ext = files[0].ext(); //TODO: check that they are all homogeneous
           if (ext == "vti") {
-            sg::importVTIs(this->shared_from_this(),files);
+            sg::importVTIs(selector.shared_from_this(),files);
             return;
           }
         }

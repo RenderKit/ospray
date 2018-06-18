@@ -80,7 +80,6 @@ namespace ospray {
     void importVTI(const std::shared_ptr<Node> &world,
                            const FileName &fileName)
     {
-      std::cout << "importVTI" << std::endl;
       world->add(importVTI_createVolumeNode(world,fileName));
     }
 
@@ -88,12 +87,11 @@ namespace ospray {
     void importVTIs(const std::shared_ptr<Node> &world,
                            const std::vector<FileName> &fileNames)
     {
-      std::cout << "importVTIs" << std::endl;
-//      auto tf = createNode("vtiTransferFunction", "TransferFunction");
+      auto tf = createNode("transferFunction", "TransferFunction");
       for(auto file : fileNames)
       {
         auto volume = importVTI_createVolumeNode(world,file);
-//        volume->setChild("transferFunction", tf);
+        volume->add(tf);
         world->add(volume);
       }
     }
