@@ -190,6 +190,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         renderer["rendererType"] = initialRendererType;
 
       renderer.createChild("animationcontroller", "AnimationController");
+      renderer.createChild("transferFunctions", "Node");
 
       if (fast) {
         renderer["spp"] = -1;
@@ -608,6 +609,10 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
                     importerNode.childRecursive("adaptiveMaxSamplingRate") = 0.2f;
                 }
 
+                auto transferFunctions = importerNode.childrenRecursive("transferFunction");
+                for (auto tf : transferFunctions)
+                  renderer["transferFunctions"].add(tf);
+
                 transform["scale"] = file.transform.scale;
                 transform["rotation"] = file.transform.rotation;
                 if (files.size() < 2 && animatedFiles.empty()) {
@@ -725,7 +730,6 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
     {
       auto &world = renderer["world"];
       auto &animation = renderer["animationcontroller"];
-      renderer.createChild("transferFunctions", "Node");
 
       for (auto &animatedFile : animatedFiles) {
         if (animatedFile.empty())
