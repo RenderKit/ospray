@@ -146,14 +146,14 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
   return *this;
 }
 
-void TransferFunction::setColorMapByName(std::string name)
+void TransferFunction::setColorMapByName(std::string name, bool useOpacities)
 {
   for (int i =0; i < transferFunctions.size(); i++)
   {
     if (name == transferFunctions[i].name)
     {
       tfcnSelection = i;
-      setColorMap(false);
+      setColorMap(useOpacities);
       return;
     }
   }

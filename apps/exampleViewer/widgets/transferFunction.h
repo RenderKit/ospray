@@ -65,7 +65,7 @@ namespace ospray {
     // Save the current transfer function out to the file
     void save(const ospcommon::FileName &fileName) const;
 
-    void setColorMapByName(std::string name);
+    void setColorMapByName(std::string name, bool useOpacities = false);
 
     struct Line
     {

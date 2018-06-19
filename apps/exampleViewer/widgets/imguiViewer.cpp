@@ -844,7 +844,7 @@ namespace ospray {
 
   void ImGuiViewer::setColorMap(std::string name)
   {
-    transferFunctionWidget.setColorMapByName(name);
+    transferFunctionWidget.setColorMapByName(name, true);
   }
 
 } // ::ospray
