@@ -29,6 +29,7 @@ IF (OSPRAY_APPS_PARAVIEW_TFN_CVT)
   LINK
     ospray
     ospray_common
+    ospray_app
     ospray_sg
     ospray_json
     ospray_tfn

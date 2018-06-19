@@ -23,6 +23,7 @@
 #include "tfn_lib.h"
 #include <common/sg/transferFunction/TransferFunction.h>
 #include <common/sg/SceneGraph.h>
+#include <common/sg/transferFunction/TransferFunction.h>
 
 
 const static std::string USAGE =
@@ -42,20 +43,21 @@ inline float cvtSrgb(const float x) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
   if (argc < 3 || std::strcmp(argv[1], "-h") == 0 || std::strcmp(argv[1], "--help") == 0) {
     std::cout << USAGE;
     return 1;
   }
 
-  auto &tfNode = *sg::createNode("tfImporter", "TransferFunction")->nodeAs<sg::TransferFunction>();
-  tfNode.loadParaViewTF(std::string(argv[1]));
+  ospInit(&argc, argv);
+  auto tfNode = sg::createNode("tfImporter", "TransferFunction")->nodeAs<sg::TransferFunction>();
+  tfNode->loadParaViewTF(std::string(argv[1]));
 
   std::vector<vec2f> opacities;
   std::vector<vec4f> rgbPoints;
-  for (auto opacity : tfNode.child("opacityControlPoints").nodeAs<sg::DataVector2f>()->v)
+  for (auto opacity : tfNode->child("opacityControlPoints").nodeAs<sg::DataVector2f>()->v)
     opacities.emplace_back(opacity);
-  for (auto color : tfNode.child("colorControlPoints").nodeAs<sg::DataVector4f>()->v)
+  for (auto color : tfNode->child("colorControlPoints").nodeAs<sg::DataVector4f>()->v)
     rgbPoints.emplace_back(color);
 
   // Sample the color values since the piecewise_linear transferfunction doesn't
@@ -95,7 +97,7 @@ int main(int argc, char **argv) {
     rgbSamples.push_back(color);
   }
 
-  tfn::TransferFunction converted(tfNode.name(), rgbSamples, opacities, 0, 1.0, 0.5f);
+  tfn::TransferFunction converted(tfNode->name(), rgbSamples, opacities, 0, 1.0, 0.5f);
   converted.save(argv[2]);
 
   return 0;
