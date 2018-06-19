@@ -168,6 +168,7 @@ build-windows-msvc14:
   <<: *build_job_shell
   script:
     - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140" "OSPRAY_MODULE_MPI=ON"
+    - Start-Sleep -Seconds 600
   tags:
     - msvc14
     - win7
