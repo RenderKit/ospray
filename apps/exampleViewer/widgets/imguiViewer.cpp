@@ -618,12 +618,11 @@ namespace ospray {
       tfNodeListString += tf.second->name() + '\0';
       transferFunctions.push_back(tf.second);
     }
-    static int selection = -1;
     if (ImGui::CollapsingHeader("TransferFunctions", "TransferFunctions", true, true))
     {
-      ImGui::Combo("transferFunction", &selection, tfNodeListString.c_str(), tfNodes.size());
-      if (selection >= 0 && selection < transferFunctions.size())
-        transferFunction = transferFunctions[selection];
+      ImGui::Combo("transferFunction", &transferFunctionSelection, tfNodeListString.c_str(), tfNodes.size());
+      if (transferFunctionSelection >= 0 && transferFunctionSelection < transferFunctions.size())
+        transferFunction = transferFunctions[transferFunctionSelection];
       if (transferFunction) {
         transferFunctionWidget.setSGTF(transferFunction->nodeAs<sg::TransferFunction>());
         transferFunctionWidget.render();

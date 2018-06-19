@@ -109,6 +109,7 @@ namespace ospray {
     PickMode lastPickQueryType {PICK_CAMERA};
 
     TransferFunction transferFunctionWidget;
+    int transferFunctionSelection{0};
   };
 
 }// namespace ospray
