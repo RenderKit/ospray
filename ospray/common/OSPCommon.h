@@ -133,9 +133,6 @@ namespace ospray {
     OSPRAY_CORE_INTERFACE void free64(void *ptr);
   }
 
-  /*! size of OSPDataType */
-  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
-
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_CORE_INTERFACE OSPDataType typeForString(const char *string);
   /*! Convert a type string to an OSPDataType. */
@@ -144,6 +141,9 @@ namespace ospray {
 
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_CORE_INTERFACE std::string stringForType(OSPDataType type);
+
+  /*! size of OSPDataType */
+  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! size of OSPTextureFormat */
   OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPTextureFormat);

@@ -165,7 +165,7 @@ namespace osp {
   struct Material         : public ManagedObject {};
   struct Volume           : public ManagedObject {};
   struct TransferFunction : public ManagedObject {};
-  struct Texture2D        : public ManagedObject {};
+  struct Texture          : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
 
@@ -189,7 +189,7 @@ typedef osp::Material          *OSPMaterial;
 typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
-typedef osp::Texture2D         *OSPTexture2D;
+typedef osp::Texture           *OSPTexture  ;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
 
@@ -234,7 +234,7 @@ typedef struct _OSPManagedObject *OSPManagedObject,
   *OSPLight,
   *OSPVolume,
   *OSPTransferFunction,
-  *OSPTexture2D,
+  *OSPTexture,
   *OSPObject,
   *OSPPixelOp;
 
@@ -243,6 +243,9 @@ typedef struct _OSPManagedObject *OSPManagedObject,
 #define OSP_DEFAULT_VAL(a) /* no default arguments on C99 */
 
 #endif
+
+/* old (and deprecated) name for OSPTexture */
+typedef OSPTexture OSPTexture2D;
 
 #ifdef __cplusplus
 extern "C" {
@@ -387,19 +390,28 @@ extern "C" {
   /*! \detailed return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 
+  //! \brief create a new Texture
+  OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
+
   //! \brief create a new Texture2D with the given parameters
-  /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
+  /*! \detailed return 'NULL' if the texture could not be created with the given
+                parameters */
 #ifdef __cplusplus
-  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
-                                                const OSPTextureFormat,
-                                                void *source = NULL,
-                                                const uint32_t textureCreationFlags = 0);
+  OSPRAY_INTERFACE OSP_DEPRECATED OSPTexture ospNewTexture2D(
+    const osp::vec2i &size,
+    const OSPTextureFormat,
+    void *source = NULL,
+    const uint32_t textureCreationFlags = 0
+  );
 #else
-  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(const osp_vec2i *size,
-                                                const OSPTextureFormat,
-                                                void *source,
-                                                const uint32_t textureCreationFlags);
+  OSPRAY_INTERFACE OSP_DEPRECATED OSPTexture ospNewTexture2D(
+    const osp_vec2i *size,
+    const OSPTextureFormat,
+    void *source,
+    const uint32_t textureCreationFlags
+  );
 #endif
+
   //! \brief clears the specified channel(s) of the frame buffer
   /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 

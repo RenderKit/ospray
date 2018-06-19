@@ -528,16 +528,57 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
+extern "C" OSPTexture ospNewTexture(const char *type)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  OSPTexture texture = currentDevice().newTexture(type);
+  if (texture == nullptr) {
+    postStatusMsg(1) << "#ospray: could not create texture '" << type << "'";
+  }
+  return texture;
+}
+OSPRAY_CATCH_END(nullptr)
+
 extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
                                         const OSPTextureFormat type,
                                         void *data,
-                                        const uint32_t flags)
+                                        const uint32_t _flags)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
-  return currentDevice().newTexture2D((const vec2i&)size, type, data, flags);
+
+  auto texture = ospNewTexture("texture2d");
+
+  if (texture == nullptr)
+    return nullptr;
+
+  auto flags = _flags; // because the input value is declared const, use a copy
+
+  bool sharedBuffer = flags & OSP_TEXTURE_SHARED_BUFFER;
+
+  flags &= ~OSP_TEXTURE_SHARED_BUFFER;
+
+  const auto texelBytes  = sizeOf(type);
+  const auto totalTexels = size.x * size.y;
+  const auto totalBytes  = totalTexels * texelBytes;
+
+  auto data_handle = ospNewData(totalBytes,
+                                OSP_RAW,
+                                data,
+                                sharedBuffer ? OSP_DATA_SHARED_BUFFER : 0);
+
+  ospSetObject(texture, "data", data_handle);
+  ospRelease(data_handle);
+
+  ospSet1i(texture, "type", static_cast<int>(type));
+  ospSet1i(texture, "flags", static_cast<int>(flags));
+  ospSet2i(texture, "size", size.x, size.y);
+
+  return texture;
+  //return currentDevice().newTexture2D((const vec2i&)size, type, data, flags);
 }
 OSPRAY_CATCH_END(nullptr)
 

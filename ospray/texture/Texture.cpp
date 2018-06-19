@@ -14,23 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "Texture.h"
+#include "common/Util.h"
 
 namespace ospray {
 
-  /*! \brief A Texture defined through a 2D Image. */
-  struct OSPRAY_SDK_INTERFACE Texture2D : public Texture
+  std::string Texture::toString() const
   {
-    virtual ~Texture2D() override = default;
+    return "ospray::Texture";
+  }
 
-    virtual std::string toString() const override;
-
-    virtual void commit() override;
-
-    OSPTextureFormat type;
-    int flags;
-  };
+  Texture *Texture::createInstance(const char *type)
+  {
+    return createInstanceHelper<Texture, OSP_TEXTURE>(type);
+  }
 
 } // ::ospray

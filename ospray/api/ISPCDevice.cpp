@@ -26,6 +26,7 @@
 #include "render/LoadBalancer.h"
 #include "common/Material.h"
 #include "common/Library.h"
+#include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #include "lights/Light.h"
 #include "fb/LocalFB.h"
@@ -543,16 +544,11 @@ namespace ospray {
       return light;
     }
 
-    /*! create a new Texture2D object */
-    OSPTexture2D ISPCDevice::newTexture2D(const vec2i &size,
-        const OSPTextureFormat type, void *data, const uint32 flags)
+    /*! create a new Texture object */
+    OSPTexture ISPCDevice::newTexture(const char *type)
     {
-      Assert(size.x > 0 &&
-             "Width must be greater than 0 in ISPCDevice::newTexture2D");
-      Assert(size.y > 0 &&
-             "Height must be greater than 0 in ISPCDevice::newTexture2D");
-      Texture2D *tx = Texture2D::createTexture(size, type, data, flags);
-      return (OSPTexture2D)tx;
+      auto *tx = Texture::createInstance(type);
+      return (OSPTexture)tx;
     }
 
     /*! load module */

@@ -174,9 +174,8 @@ namespace ospray {
       OSPLight newLight(const char *renderer_type,
                         const char *light_type) override;
 
-      /*! create a new Texture2D object */
-      OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
-          void *data, const uint32 flags) override;
+      /*! create a new Texture object */
+      OSPTexture newTexture(const char *type) override;
 
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 

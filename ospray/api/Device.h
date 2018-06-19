@@ -150,8 +150,7 @@ namespace ospray {
                                       const char *material_type) = 0;
 
       /*! create a new Texture2D object */
-      virtual OSPTexture2D newTexture2D(const vec2i &size,
-          const OSPTextureFormat, void *data, const uint32 flags) = 0;
+      virtual OSPTexture newTexture(const char *type) = 0;
 
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
