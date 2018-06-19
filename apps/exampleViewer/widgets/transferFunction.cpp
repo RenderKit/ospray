@@ -107,7 +107,6 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> tfn) :
   rgbaLines[1].color = 0xff00ff00;
   rgbaLines[2].color = 0xffff0000;
   rgbaLines[3].color = 0xffffffff;
-  loadColorMapPresets();
   setColorMap(false);
 }
 
@@ -145,6 +144,19 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
   fcnChanged = true;
   setColorMap(false);
   return *this;
+}
+
+void TransferFunction::setColorMapByName(std::string name)
+{
+  for (int i =0; i < transferFunctions.size(); i++)
+  {
+    if (name == transferFunctions[i].name)
+    {
+      tfcnSelection = i;
+      setColorMap(false);
+      return;
+    }
+  }
 }
 
 void TransferFunction::drawUi()
@@ -393,6 +405,8 @@ void TransferFunction::save(const ospcommon::FileName &fileName) const
 
 void TransferFunction::setColorMap(const bool useOpacity)
 {
+  if (transferFunctions.size() < 1)
+    return;
   const auto &colors    = transferFunctions[tfcnSelection].rgbValues;
   const auto &opacities = transferFunctions[tfcnSelection].opacityValues;
 
@@ -416,6 +430,22 @@ void TransferFunction::setColorMap(const bool useOpacity)
     }
   }
   fcnChanged = true;
+}
+void TransferFunction::loadColorMapPresets(std::shared_ptr<sg::Node> tfPresets)
+{
+  for (auto preset : tfPresets->children())
+  {
+    std::vector<vec3f> colors;
+    std::vector<vec2f> opacities;
+    auto& tfPreset = *preset.second->nodeAs<sg::TransferFunction>();
+    auto& colorsDV = tfPreset["colors"].nodeAs<sg::DataVector3f>()->v;
+    for (auto color : colorsDV)
+      colors.push_back(color);
+    auto& opacitiesDV = tfPreset["opacityControlPoints"].nodeAs<sg::DataVector2f>()->v;
+    for (auto opacity : opacitiesDV)
+      opacities.push_back(opacity);
+    transferFunctions.emplace_back(tfPreset.name(), colors, opacities, 0, 1, 1);
+  }
 }
 
 void TransferFunction::loadColorMapPresets()

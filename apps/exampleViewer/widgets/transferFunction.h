@@ -50,6 +50,8 @@ namespace ospray {
         transferFcn = tf;
       }
     }
+
+    void loadColorMapPresets(std::shared_ptr<sg::Node> tfPresets);
     /* Draw the transfer function editor widget, returns true if the
      * transfer function changed
     */
@@ -62,6 +64,8 @@ namespace ospray {
     void load(const ospcommon::FileName &fileName);
     // Save the current transfer function out to the file
     void save(const ospcommon::FileName &fileName) const;
+
+    void setColorMapByName(std::string name);
 
     struct Line
     {

@@ -47,6 +47,8 @@ namespace ospray {
       if (!initialTextForNodeSearch.empty())
         window.setInitialSearchBoxText(initialTextForNodeSearch);
 
+      window.setColorMap(defaultTransferFunction);
+
       imgui3D::run();
     }
 

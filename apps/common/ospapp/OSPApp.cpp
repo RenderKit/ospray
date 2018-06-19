@@ -81,6 +81,10 @@ general app-parameters:
         no default lights
     --add-lights
         default lights
+    -tf --transferFunction [string]
+        default transferFunction
+    -ltf --loadTransferFunction [file]
+        load transfer function preset from file
     --hdri-light [filename]
         add an hdri light
     --translate [float] [float] [float]
@@ -192,6 +196,79 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       renderer.createChild("animationcontroller", "AnimationController");
       renderer.createChild("transferFunctions", "Node");
 
+      //transfer function presets
+      auto& tfPresets = renderer.createChild("transferFunctionPresets", "Node");
+
+      auto addPreset = [&](std::string name, std::vector<vec3f> colors, std::vector<vec2f> opacities,
+          std::shared_ptr<sg::Node>presets) {
+        auto& preset = *presets->createChild(name, "TransferFunction").nodeAs<sg::TransferFunction>();
+        auto& colors4f = *preset["colorControlPoints"].nodeAs<sg::DataVector4f>();
+        colors4f.clear();
+        for(int i = 0; i < colors.size(); i++) {
+          colors4f.push_back(vec4f(i/float(colors.size()-1), colors[i].x,
+              colors[i].y, colors[i].z));
+        }
+        preset.computeColors();
+      };
+
+      std::vector<vec3f> colors;
+      // The presets have no existing opacity value
+      const std::vector<vec2f> opacities;
+      // From the old volume viewer, these are based on ParaView
+      // Jet transfer function
+      colors.push_back(vec3f(0       , 0, 0.562493));
+      colors.push_back(vec3f(0       , 0, 1       ));
+      colors.push_back(vec3f(0       , 1, 1       ));
+      colors.push_back(vec3f(0.500008, 1, 0.500008));
+      colors.push_back(vec3f(1       , 1, 0       ));
+      colors.push_back(vec3f(1       , 0, 0       ));
+      colors.push_back(vec3f(0.500008, 0, 0       ));
+      addPreset("Jet", colors, opacities, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0        , 0          , 0          ));
+      colors.push_back(vec3f(0        , 0.120394   , 0.302678   ));
+      colors.push_back(vec3f(0        , 0.216587   , 0.524575   ));
+      colors.push_back(vec3f(0.0552529, 0.345022   , 0.659495   ));
+      colors.push_back(vec3f(0.128054 , 0.492592   , 0.720287   ));
+      colors.push_back(vec3f(0.188952 , 0.641306   , 0.792096   ));
+      colors.push_back(vec3f(0.327672 , 0.784939   , 0.873426   ));
+      colors.push_back(vec3f(0.60824  , 0.892164   , 0.935546   ));
+      colors.push_back(vec3f(0.881376 , 0.912184   , 0.818097   ));
+      colors.push_back(vec3f(0.9514   , 0.835615   , 0.449271   ));
+      colors.push_back(vec3f(0.904479 , 0.690486   , 0          ));
+      colors.push_back(vec3f(0.854063 , 0.510857   , 0          ));
+      colors.push_back(vec3f(0.777096 , 0.330175   , 0.000885023));
+      colors.push_back(vec3f(0.672862 , 0.139086   , 0.00270085 ));
+      colors.push_back(vec3f(0.508812 , 0          , 0          ));
+      colors.push_back(vec3f(0.299413 , 0.000366217, 0.000549325));
+      colors.push_back(vec3f(0.0157473, 0.00332647 , 0          ));
+      addPreset("Ice Fire", colors, opacities, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0.231373, 0.298039 , 0.752941));
+      colors.push_back(vec3f(0.865003, 0.865003 , 0.865003));
+      colors.push_back(vec3f(0.705882, 0.0156863, 0.14902));
+      addPreset("Cool Warm", colors, opacities, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0, 0, 1));
+      colors.push_back(vec3f(1, 0, 0));
+      addPreset("Blue Red", colors, opacities, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0));
+      colors.push_back(vec3f(1));
+      addPreset("Grayscale", colors, opacities, tfPresets.shared_from_this());
+      colors.clear();
+
+      for (const auto& tfFile : tfFiles)
+      {
+          auto& tf = *renderer["transferFunctionPresets"].createChild("loadedTF",
+            "TransferFunction").nodeAs<sg::TransferFunction>();
+          tf.loadParaViewTF(tfFile);
+      }
+
       if (fast) {
         renderer["spp"] = -1;
         renderer["shadowsEnabled"] = false;
@@ -283,6 +360,16 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           addDefaultLights = true;
           removeArgs(ac, av, i, 1);
           --i;
+        } else if (arg == "--transferFunction" ||
+          arg == "-tf") {
+          defaultTransferFunction = std::string(av[i+1]);
+          removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "--loadTransferFunction" ||
+          arg == "-ltf") {
+          tfFiles.push_back(av[i+1]);
+          removeArgs(ac, av, i, 2);
+          --i;
         } else if (arg == "--hdri-light") {
           hdriLightFile = av[i + 1];
           removeArgs(ac, av, i, 2);
@@ -314,7 +401,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           fast = true;
         } else if (arg == "--no-fast" || arg == "-nf") {
           fast = false;
-        } else if (arg == "--file") {
+        } else if (arg == "--static" || arg == "--file") {
           inAnimation = false;
           removeArgs(ac, av, i, 1);
           --i;

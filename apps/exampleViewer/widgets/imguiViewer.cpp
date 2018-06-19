@@ -271,6 +271,9 @@ namespace ospray {
     camera.remove("gaze");
 
     originalView = viewPort;
+
+    transferFunctionWidget.loadColorMapPresets(scenegraph->child("transferFunctionPresets").shared_from_this());
+    transferFunctionWidget.setColorMapByName("Jet");
   }
 
   ImGuiViewer::~ImGuiViewer()
@@ -837,6 +840,11 @@ namespace ospray {
 
     if (!renderingPaused)
       renderEngine.start();
+  }
+
+  void ImGuiViewer::setColorMap(std::string name)
+  {
+    transferFunctionWidget.setColorMapByName(name);
   }
 
 } // ::ospray

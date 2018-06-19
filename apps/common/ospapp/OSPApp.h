@@ -112,6 +112,8 @@ namespace ospray {
       bool debug = false;
       std::string initialRendererType;
       box3f bboxWithoutPlane;
+      std::vector<std::string> tfFiles;
+      std::string defaultTransferFunction = "Jet";
 
       bool addPlane =
           utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(0);

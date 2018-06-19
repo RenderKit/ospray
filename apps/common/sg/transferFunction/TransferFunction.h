@@ -38,8 +38,6 @@ namespace ospray {
 
       void loadParaViewTF(std::string fileName);
 
-     private:
-
       float interpolateOpacity(const DataBuffer &controlPoints, float x);
       vec3f interpolateColor(const DataBuffer &controlPoints, float x);
 

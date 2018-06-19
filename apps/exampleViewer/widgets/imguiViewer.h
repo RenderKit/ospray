@@ -42,6 +42,7 @@ namespace ospray {
     ~ImGuiViewer();
 
     void setInitialSearchBoxText(const std::string &text);
+    void setColorMap(std::string name);
 
   protected:
 
