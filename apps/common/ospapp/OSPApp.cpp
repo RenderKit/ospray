@@ -649,6 +649,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         tex->setName("map");
         auto &hdri = lights.createChild("hdri", "HDRILight");
         hdri.add(tex);
+        renderer.verify(); //TODO: this should not be necessary
       }
     }
 
