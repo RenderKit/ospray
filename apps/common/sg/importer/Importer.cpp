@@ -213,8 +213,7 @@ namespace ospray {
       std::cout << "importDefaultExtensions \"" << fileNamen.str() << "\"" << std::endl;
       std::vector<FileName> files;
       //check for multiple files
-      if (fileNamen.str().find(",") != std::string::npos)
-      {
+      if (fileNamen.str().find(",") != std::string::npos) {
         std::cout << "parsing import file series" << std::endl;
         // file series
         std::string filestr = fileNamen.str();
@@ -224,20 +223,19 @@ namespace ospray {
         while (ss >> file)
           files.push_back(FileName(file));
 
-        if (files.size() > 0)
-        {
+        if (files.size() > 0) {
           auto& selector =
             createChild("selector",
                                   "Selector");
           auto ext = files[0].ext(); //TODO: check that they are all homogeneous
+#ifdef OSPRAY_APPS_SG_VTK
           if (ext == "vti") {
             sg::importVTIs(selector.shared_from_this(),files);
             return;
           }
+#endif
         }
-      }
-      else
-      {
+      } else {
         std::cout << "single file import" << std::endl;
         files.push_back(fileNamen);
       }
