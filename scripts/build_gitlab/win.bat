@@ -22,7 +22,7 @@ cd build
 cmake -L ^
 -G "%~1" ^
 -T "%~2" ^
--D "%~3" ^
+-D OSPRAY_MODULE_MPI="%~3" ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_ENABLE_TESTING=ON ^
 -D OSPRAY_SG_CHOMBO=OFF ^
@@ -36,3 +36,6 @@ cmake --build . --config Release --target ALL_BUILD -- /m /nologo ^
 :abort
 endlocal
 :end
+
+rem propagate any error to calling PowerShell script:
+exit

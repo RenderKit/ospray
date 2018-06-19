@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <iterator>
 // ospray::sg
 #include "Node.h"
 // ospcommon

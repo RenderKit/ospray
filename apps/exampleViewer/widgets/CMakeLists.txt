@@ -14,12 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include_directories(
-  ${CMAKE_CURRENT_LIST_DIR}/../common/gl3w
-  ${CMAKE_CURRENT_LIST_DIR}/../common/imgui
-  ${GLFW_INCLUDE_DIRS}
-)
-
 ospray_create_library(ospray_imgui3d_sg
   Imgui3dExport.h
   imgui_impl_glfw_gl3.cpp
