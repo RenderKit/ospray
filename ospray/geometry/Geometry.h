@@ -20,12 +20,9 @@
 #include "common/OSPCommon.h"
 #include "common/Data.h"
 #include "common/Material.h"
+#include "api/ISPCDevice.h"
 //embree
 #include "embree3/rtcore.h"
-
-extern "C" {
-  RTCDevice ispc_embreeDevice();
-}
 
 namespace ospray {
 
