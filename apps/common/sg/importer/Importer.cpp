@@ -224,13 +224,11 @@ namespace ospray {
           files.push_back(FileName(file));
 
         if (files.size() > 0) {
-          auto& selector =
-            createChild("selector",
-                                  "Selector");
           auto ext = files[0].ext(); //TODO: check that they are all homogeneous
 #ifdef OSPRAY_APPS_SG_VTK
+          auto& selector = createChild("selector", "Selector");
           if (ext == "vti") {
-            sg::importVTIs(selector.shared_from_this(),files);
+            sg::importVTIs(selector.shared_from_this(), files);
             return;
           }
 #endif
