@@ -204,7 +204,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         auto& preset = *presets->createChild(name, "TransferFunction").nodeAs<sg::TransferFunction>();
         auto& colors4f = *preset["colorControlPoints"].nodeAs<sg::DataVector4f>();
         colors4f.clear();
-        for(int i = 0; i < colors.size(); i++) {
+        for(size_t i = 0; i < colors.size(); i++) {
           colors4f.push_back(vec4f(i/float(colors.size()-1), colors[i].x,
               colors[i].y, colors[i].z));
         }
