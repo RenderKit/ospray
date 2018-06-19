@@ -36,3 +36,6 @@ cmake --build . --config Release --target ALL_BUILD -- /m /nologo ^
 :abort
 endlocal
 :end
+
+rem propagate any error to calling PowerShell script:
+exit
