@@ -204,7 +204,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       if (straightPath) {
         sample.alpha = 1.0f - luminance(Lw);
         if ((bool)self->backplate) {
-          L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
+          DifferentialGeometry lookup;
+          initDgFromTexCoord(lookup, clamp2edge(self->backplate, pixel));
+          L = L + Lw * get3f(self->backplate, lookup);
           maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
         }
       }

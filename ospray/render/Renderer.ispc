@@ -43,7 +43,7 @@ Renderer_default_beginFrame(uniform Renderer *uniform self,
   return NULL;
 }
 
-static unmasked void Renderer_default_endFrame(uniform Renderer *uniform self, 
+static unmasked void Renderer_default_endFrame(uniform Renderer *uniform self,
                                                void *uniform perFrameData)
 {
   if (self->fb) self->fb = NULL;
@@ -90,7 +90,9 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
         depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-        tMax = min(get1f(self->maxDepthTexture, depthTexCoord), infinity);
+        DifferentialGeometry lookup;
+        initDgFromTexCoord(lookup, depthTexCoord);
+        tMax = min(get1f(self->maxDepthTexture, lookup), infinity);
       }
       vec3f col = make_vec3f(0.f);
       float alpha = 0.f;
@@ -165,7 +167,9 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
         depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-        const float tMax = get1f(self->maxDepthTexture, depthTexCoord);
+        DifferentialGeometry lookup;
+        initDgFromTexCoord(lookup, depthTexCoord);
+        const float tMax = get1f(self->maxDepthTexture, lookup);
         screenSample.ray.t = min(screenSample.ray.t, tMax);
       }
 
@@ -295,7 +299,9 @@ export void Renderer_pick(void *uniform _self,
     // always sample center of pixel
     const vec2f pixel = floor(screenPos * make_vec2f(fb->size.x, fb->size.y));
     const vec2f depthTexCoord = (pixel + 0.5f) * fb->rcpSize;
-    const float tMax = get1f(self->maxDepthTexture, depthTexCoord);
+    DifferentialGeometry lookup;
+    initDgFromTexCoord(lookup, depthTexCoord);
+    const float tMax = get1f(self->maxDepthTexture, lookup);
     ray.t = min(ray.t, tMax);
   }
 

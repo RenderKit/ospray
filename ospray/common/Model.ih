@@ -76,6 +76,8 @@ inline void postIntersect(uniform Model *uniform model,
                           const varying Ray &ray,
                           uniform int64 flags)
 {
+  dg.primID = ray.primID;
+
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
   dg.material = NULL;

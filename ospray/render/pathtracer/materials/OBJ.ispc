@@ -55,12 +55,12 @@ const varying BSDF* varying OBJ_getBSDF(const uniform PathTraceMaterial* uniform
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->map_Bump, self->rot_Bump));
 
   /*! cut-out opacity */
-  float d = self->d * get1f(self->map_d, dg.st, 1.f) * dg.color.w;
+  float d = self->d * get1f(self->map_d, dg, 1.f) * dg.color.w;
 
   /*! diffuse component */
   vec3f Kd = self->Kd;
   if (valid(self->map_Kd)) {
-    vec4f Kd_from_map = get4f(self->map_Kd, dg.st);
+    vec4f Kd_from_map = get4f(self->map_Kd, dg);
     Kd = Kd * make_vec3f(Kd_from_map);
     d *= Kd_from_map.w;
   }
@@ -74,8 +74,8 @@ const varying BSDF* varying OBJ_getBSDF(const uniform PathTraceMaterial* uniform
     MultiBSDF_add(bsdf, Transmission_create(ctx, shadingFrame, T), 1.f, luminance(T));
 
   /*! specular component */
-  float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);
-  vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg.st, make_vec3f(1.f));
+  float Ns = self->Ns * get1f(self->map_Ns, dg, 1.0f);
+  vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg, make_vec3f(1.f));
   if (reduce_max(Ks) > 0.0f)
     MultiBSDF_add(bsdf, Specular_create(ctx, shadingFrame, Ks, Ns), 1.f, luminance(Ks));
 
@@ -90,9 +90,9 @@ vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform super,
   uniform const OBJ* uniform self = (uniform const OBJ* uniform)super;
 
   /*! cut-out opacity */
-  float d = self->d * get1f(self->map_d, dg.st, 1.f) * dg.color.w;
+  float d = self->d * get1f(self->map_d, dg, 1.f) * dg.color.w;
   if (hasAlpha(self->map_Kd)) {
-    vec4f Kd_from_map = get4f(self->map_Kd, dg.st);
+    vec4f Kd_from_map = get4f(self->map_Kd, dg);
     d *= Kd_from_map.w;
   }
 

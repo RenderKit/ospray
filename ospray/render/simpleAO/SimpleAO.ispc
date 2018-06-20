@@ -83,7 +83,7 @@ inline void shade_ao(uniform SimpleAO *uniform self,
     foreach_unique(m in mat) {
       superColor = m->Kd;
       if (m->map_Kd) {
-        vec4f Kd_from_map = get4f(m->map_Kd,dg.st);
+        vec4f Kd_from_map = get4f(m->map_Kd,dg);
         superColor = superColor * make_vec3f(Kd_from_map);
       }
     }

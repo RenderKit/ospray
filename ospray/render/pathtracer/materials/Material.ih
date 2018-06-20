@@ -114,7 +114,7 @@ inline linear3f makeShadingFrame(const DifferentialGeometry& dg,
   {
     linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
     // get normal from texture
-    vec3f localN = getNormal(normalMap, dg.st) * make_vec3f(normalScale, normalScale, 1.f);
+    vec3f localN = getNormal(normalMap, dg) * make_vec3f(normalScale, normalScale, 1.f);
     // rotate in 2D (tangent space) to account for tc transformations
     vec2f rotN = normalRot * make_vec2f(localN.x, localN.y);
     localN.x = rotN.x;
