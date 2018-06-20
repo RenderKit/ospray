@@ -199,8 +199,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       //transfer function presets
       auto& tfPresets = renderer.createChild("transferFunctionPresets", "Node");
 
-      auto addPreset = [&](std::string name, std::vector<vec3f> colors, std::vector<vec2f> opacities,
-          std::shared_ptr<sg::Node>presets) {
+      auto addPreset = [&](std::string name,
+                           std::vector<vec3f> colors,
+                           std::shared_ptr<sg::Node>presets) {
         auto& preset = *presets->createChild(name, "TransferFunction").nodeAs<sg::TransferFunction>();
         auto& colors4f = *preset["colorControlPoints"].nodeAs<sg::DataVector4f>();
         colors4f.clear();
@@ -223,7 +224,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       colors.push_back(vec3f(1       , 1, 0       ));
       colors.push_back(vec3f(1       , 0, 0       ));
       colors.push_back(vec3f(0.500008, 0, 0       ));
-      addPreset("Jet", colors, opacities, tfPresets.shared_from_this());
+      addPreset("Jet", colors, tfPresets.shared_from_this());
       colors.clear();
 
       colors.push_back(vec3f(0        , 0          , 0          ));
@@ -243,23 +244,23 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       colors.push_back(vec3f(0.508812 , 0          , 0          ));
       colors.push_back(vec3f(0.299413 , 0.000366217, 0.000549325));
       colors.push_back(vec3f(0.0157473, 0.00332647 , 0          ));
-      addPreset("Ice Fire", colors, opacities, tfPresets.shared_from_this());
+      addPreset("Ice Fire", colors, tfPresets.shared_from_this());
       colors.clear();
 
       colors.push_back(vec3f(0.231373, 0.298039 , 0.752941));
       colors.push_back(vec3f(0.865003, 0.865003 , 0.865003));
       colors.push_back(vec3f(0.705882, 0.0156863, 0.14902));
-      addPreset("Cool Warm", colors, opacities, tfPresets.shared_from_this());
+      addPreset("Cool Warm", colors, tfPresets.shared_from_this());
       colors.clear();
 
       colors.push_back(vec3f(0, 0, 1));
       colors.push_back(vec3f(1, 0, 0));
-      addPreset("Blue Red", colors, opacities, tfPresets.shared_from_this());
+      addPreset("Blue Red", colors, tfPresets.shared_from_this());
       colors.clear();
 
       colors.push_back(vec3f(0));
       colors.push_back(vec3f(1));
-      addPreset("Grayscale", colors, opacities, tfPresets.shared_from_this());
+      addPreset("Grayscale", colors, tfPresets.shared_from_this());
       colors.clear();
 
       for (const auto& tfFile : tfFiles)
