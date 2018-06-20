@@ -56,9 +56,6 @@ namespace ospray {
       throw std::runtime_error(ss.str());
     }
 
-    this->type  = (OSPTextureFormat)type;
-    this->flags = flags;
-
     this->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
                                                   texData->data, type, flags);
   }
