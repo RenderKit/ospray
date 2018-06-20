@@ -29,50 +29,65 @@ OIIO_NAMESPACE_USING
 namespace ospray {
   namespace sg {
 
-    Texture2D::Texture2D()
+    // static helper functions ////////////////////////////////////////////////
+
+    OSPTextureFormat
+    osprayTextureFormat(int depth, int channels, bool preferLinear = false)
     {
-      setValue((OSPTexture2D)nullptr);
+      if (depth == 1) {
+        if( channels == 1 ) return OSP_TEXTURE_R8;
+        if( channels == 3 )
+          return preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+        if( channels == 4 )
+          return preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
+      } else if (depth == 4) {
+        if( channels == 1 ) return OSP_TEXTURE_R32F;
+        if( channels == 3 ) return OSP_TEXTURE_RGB32F;
+        if( channels == 4 ) return OSP_TEXTURE_RGBA32F;
+      }
+
+      return OSP_TEXTURE_FORMAT_INVALID;
     }
 
-    Texture2D::~Texture2D()
+    // Texture2D definitions //////////////////////////////////////////////////
+
+    Texture2D::Texture2D()
     {
-      if (data) alignedFree(data);
+      setValue((OSPTexture)nullptr);
     }
 
     void Texture2D::preCommit(RenderContext &)
     {
-      OSPTextureFormat type = OSP_TEXTURE_R8;
+      auto ospTexture = valueAs<OSPTexture>();
+      if (ospTexture != nullptr)
+        return; // already created
 
-      if (depth == 1) {
-        if( channels == 1 ) type = OSP_TEXTURE_R8;
-        if( channels == 3 )
-          type = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
-        if( channels == 4 )
-          type = preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
-      } else if (depth == 4) {
-        if( channels == 1 ) type = OSP_TEXTURE_R32F;
-        if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
-        if( channels == 4 ) type = OSP_TEXTURE_RGBA32F;
+      auto type = osprayTextureFormat(depth, channels, preferLinear);
+
+      if (data == nullptr)
+        data = texelData->base();
+      else {
+        const auto dataSize = size.x * size.y * channels * depth;
+        texelData =
+          std::make_shared<sg::DataArray1uc>((unsigned char*)data, dataSize);
       }
 
-      void* dat = data;
-      if (!dat && texelData)
-        dat = texelData->base();
-      if (!dat)
-      {
-        setValue((OSPTexture2D)nullptr);
-        std::cout << "Texture2D: image data null\n";
-        return;
-      }
+      if (data == nullptr)
+        throw std::runtime_error("committed a Texture2D node with null data!");
 
-      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
-      setValue(ospTexture2D);
-      ospCommit(ospTexture2D);
+      ospTexture = ospNewTexture("texture2d");
+      ospSet1i(ospTexture, "type", (int)type);
+      ospSet1i(ospTexture, "flags", nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
+      ospSet2i(ospTexture, "size", size.x, size.y);
+      ospSetObject(ospTexture, "data", texelData->getOSP());
+      ospCommit(ospTexture);
+
+      setValue(ospTexture);
     }
 
     std::string Texture2D::toString() const
     {
-      return "ospray::viewer::sg::Texture2D";
+      return "ospray::sg::Texture2D";
     }
 
     //! \brief load texture from given file.

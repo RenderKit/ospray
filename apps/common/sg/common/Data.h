@@ -17,6 +17,7 @@
 #pragma once
 
 #include <iterator>
+#include <functional>
 // ospray::sg
 #include "Node.h"
 // ospcommon
@@ -112,8 +113,15 @@ namespace ospray {
           mine(mine), base_ptr(base)
       {
         Node::setType(toString());
+
+        deleter = [](T *p) { alignedFree(p); };
       }
-      ~DataArrayT() override { if (mine && base_ptr) delete base_ptr; }
+
+      ~DataArrayT() override
+      {
+        if (mine && base_ptr)
+          deleter(base_ptr);
+      }
 
       std::string toString() const override
       { return "DataArray<" + arrayTypeAsString() + ">"; }
@@ -133,6 +141,8 @@ namespace ospray {
       size_t  numElements {0};
       bool    mine {false};
       T      *base_ptr {nullptr};
+
+      std::function<void(T*)> deleter;
     };
 
     using DataArray1uc = DataArrayT<unsigned char>;

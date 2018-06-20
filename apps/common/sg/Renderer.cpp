@@ -145,8 +145,8 @@ namespace ospray {
       backplate->data = memory::alignedMalloc(sizeof(unsigned char) * backplate->size.y * stride);
       vec3f bgColor = child("bgColor").valueAs<vec3f>();
       memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
-      createChild("useBackplate", "bool", true, NodeFlags::none, "use\
-           backplate for path tracer");
+      createChild("useBackplate", "bool", true, NodeFlags::none,
+                  "use backplate for path tracer");
     }
 
     Renderer::~Renderer()
