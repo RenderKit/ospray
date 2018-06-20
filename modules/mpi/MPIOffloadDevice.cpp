@@ -846,13 +846,12 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D MPIOffloadDevice::newTexture2D(const vec2i &sz,
-        const OSPTextureFormat type, void *data, const uint32 flags)
+    OSPTexture MPIOffloadDevice::newTexture(const char *type)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewTexture2d work(handle, sz, type, data, flags);
+      work::NewTexture work(type, handle);
       processWork(work);
-      return (OSPTexture2D)(int64)handle;
+      return (OSPTexture)(int64)handle;
     }
 
     int MPIOffloadDevice::getString(OSPObject _object,

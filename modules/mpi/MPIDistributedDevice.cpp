@@ -473,12 +473,7 @@ namespace ospray {
       NOT_IMPLEMENTED;
     }
 
-    OSPTexture2D MPIDistributedDevice::newTexture2D(
-      const vec2i &,
-      const OSPTextureFormat,
-      void *,
-      const uint32
-    )
+    OSPTexture2D MPIDistributedDevice::newTexture(const char *)
     {
       NOT_IMPLEMENTED;
     }

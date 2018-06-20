@@ -165,6 +165,7 @@ namespace ospray {
       using NewVolume           = NewObjectT<Volume>;
       using NewGeometry         = NewObjectT<Geometry>;
       using NewTransferFunction = NewObjectT<TransferFunction>;
+      using NewTexture          = NewObjectT<Texture>;
 
       // Specializations for objects
       template<>
@@ -290,32 +291,6 @@ namespace ospray {
 
         int32 flags;
       };
-
-
-      struct NewTexture2d : public Work
-      {
-        NewTexture2d() = default;
-        NewTexture2d(ObjectHandle handle, vec2i dimensions,
-                     OSPTextureFormat format, void *texture, uint32 flags);
-
-        void run() override;
-
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
-        void serialize(WriteStream &b) const override;
-
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
-        void deserialize(ReadStream &b) override;
-
-        ObjectHandle        handle;
-        vec2i               dimensions;
-        OSPTextureFormat    format;
-        std::vector<byte_t> data;
-        uint32              flags;
-      };
-
 
       struct SetRegion : public Work
       {

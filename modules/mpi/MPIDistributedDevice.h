@@ -205,9 +205,8 @@ namespace ospray {
       //! assign given material to given geometry
       void setMaterial(OSPGeometry _geom, OSPMaterial _mat) override;
 
-      /*! create a new Texture2D object */
-      OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
-                                void *data, const uint32 flags) override;
+      /*! create a new Texture object */
+      OSPTexture newTexture(const char *type) override;
 
       /*! sample a volume */
       void sampleVolume(float **results,

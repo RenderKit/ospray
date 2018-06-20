@@ -26,7 +26,7 @@
 #include "common/Library.h"
 #include "common/Model.h"
 #include "geometry/TriangleMesh.h"
-#include "texture/Texture2D.h"
+#include "texture/Texture.h"
 
 namespace ospray {
   namespace mpi {
@@ -50,7 +50,7 @@ namespace ospray {
         registerWorkUnit<NewLight2>(registry);
 
         registerWorkUnit<NewData>(registry);
-        registerWorkUnit<NewTexture2d>(registry);
+        registerWorkUnit<NewTexture>(registry);
 
         registerWorkUnit<CommitObject>(registry);
         registerWorkUnit<CommandRelease>(registry);
@@ -440,44 +440,6 @@ namespace ospray {
         b >> handle.i64 >> nItems >> fmt >> flags >> copiedData;
         dataView = copiedData;
         format = (OSPDataType)fmt;
-      }
-
-      // ospNewTexture2d //////////////////////////////////////////////////////
-
-      NewTexture2d::NewTexture2d(ObjectHandle handle,
-                                 vec2i dimensions,
-                                 OSPTextureFormat format,
-                                 void *texture,
-                                 uint32 flags)
-        : handle(handle),
-          dimensions(dimensions),
-          format(format),
-          flags(flags)
-      {
-        size_t sz = ospray::sizeOf(format) * dimensions.x * dimensions.y;
-        data.resize(sz);
-        std::memcpy(data.data(), texture, sz);
-      }
-
-      void NewTexture2d::run()
-      {
-        Texture2D *texture =
-            Texture2D::createTexture(dimensions, format, data.data(),
-                                     flags & ~OSP_TEXTURE_SHARED_BUFFER);
-        Assert(texture);
-        handle.assign(texture);
-      }
-
-      void NewTexture2d::serialize(WriteStream &b) const
-      {
-        b << (int64)handle << dimensions << (int32)format << flags << data;
-      }
-
-      void NewTexture2d::deserialize(ReadStream &b)
-      {
-        int32 fmt;
-        b >> handle.i64 >> dimensions >> fmt >> flags >> data;
-        format = (OSPTextureFormat)fmt;
       }
 
       // ospSetRegion /////////////////////////////////////////////////////////
