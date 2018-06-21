@@ -976,9 +976,11 @@ special parameters:
   float /       bgColor                      black,  background color and alpha
   vec3f / vec4f                         transparent  (RGBA)
 
-  OSPTexture2D  maxDepthTexture                NULL  screen-sized float [texture]
+  OSPTexture    maxDepthTexture                NULL  screen-sized float [texture]
                                                      with maximum far distance
                                                      per pixel
+                                                     (use texture type
+                                                     'texture2d')
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 
@@ -1009,20 +1011,20 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-  ------------- ---------------- --------  -------------------------------------
-  Type          Name              Default  Description
-  ------------- ---------------- --------  -------------------------------------
-  int           rouletteDepth           5  ray recursion depth at which to
-                                           start Russian roulette termination
+  ---------- ---------------- --------  -------------------------------------
+  Type       Name              Default  Description
+  ---------- ---------------- --------  -------------------------------------
+  int        rouletteDepth           5  ray recursion depth at which to
+                                        start Russian roulette termination
 
-  float         maxContribution         ∞  samples are clamped to this value
-                                           before they are accumulated into
-                                           the framebuffer
+  float      maxContribution         ∞  samples are clamped to this value
+                                        before they are accumulated into
+                                        the framebuffer
 
-  OSPTexture2D  backplate            NULL  [texture] image used as background,
-                                           replacing visible lights in infinity
-                                           (e.g. the [HDRI light])
-  ------------- ---------------- --------  -------------------------------------
+  OSPTexture backplate            NULL  [texture] image used as background,
+                                        replacing visible lights in infinity
+                                        (e.g. the [HDRI light])
+  ---------- ---------------- --------  -------------------------------------
   : Special parameters understood by the path tracer.
 
 The path tracer requires that [materials] are assigned to [geometries],
@@ -1207,7 +1209,7 @@ parameters:
   vec3f(a)     dir   direction to which the center of the texture will
                      be mapped to (analog to [panoramic camera])
 
-  OSPTexture2D map   environment map in latitude / longitude format
+  OSPTexture   map   environment map in latitude / longitude format
   ------------ ----- --------------------------------------------------
   : Special parameters accepted by the HDRI light.
 
@@ -1261,7 +1263,7 @@ files. To create an OBJ material pass the type string "`OBJMaterial`" to
   float         Ns                10  shininess (Phong exponent), usually in [2–10^4^]
   float         d             opaque  opacity
   vec3f         Tf             black  transparency filter color
-  OSPTexture2D  map_Bump        NULL  normal map
+  OSPTexture    map_Bump        NULL  normal map
   ------------- --------- ----------  -----------------------------------------
   : Main parameters of the OBJ material.
 
@@ -1638,17 +1640,31 @@ lights: [`color` and `intensity`](#lights).
 
 ### Texture
 
-To create a new 2D texture of size `size` (in pixels) and with the given
-format and flags use
+OSPRay currently implements only one texture type (`texture2d`), but is open
+for extension to other types by applications. More types may be added in future
+releases.
 
-    OSPTexture2D ospNewTexture2D(const vec2i &size,
-                                 const OSPTextureFormat,
-                                 void *source = NULL,
-                                 const uint32_t textureCreationFlags = 0);
+To create a new texture use
+
+    OSPTexture ospNewTexture(const char *type);
 
 The call returns `NULL` if the texture could not be created with the
-given parameters, or else an `OSPTexture2D` handle to the created
-texture. The supported texture formats are:
+given parameters, or else an `OSPTexture` handle to the created
+texture. Parameters
+
+  Type    Name         Description
+  ------- ------------ ----------------------------------
+  vec2f   size         size of the textures
+  int     type         `OSPTextureFormat` for the texture
+  int     flags        special attribute flags for this
+                       texture, currently only responds
+                       to `OSP_TEXTURE_FILTER_NEAREST` or
+                       no flags
+  OSPData data         the actual texel data
+  ------- ------------ ----------------------------------
+  : Parameters of `texture2D` texture type
+
+The supported texture formats for `texture2d` are:
 
   Name                Description
   ------------------- ----------------------------------------------------------
@@ -1661,17 +1677,14 @@ texture. The supported texture formats are:
   OSP_TEXTURE_R8      8\ bit [0–255] linear single component
   OSP_TEXTURE_R32F    32\ bit float single component
   ------------------- ----------------------------------------------------------
-  : Supported texture formats by `ospNewTexture2D`, i.e. valid constants
+  : Supported texture formats by `texture2D`, i.e. valid constants
   of type `OSPTextureFormat`.
 
 The texel data addressed by `source` starts with the texels in the lower
-left corner of the texture image, like in OpenGL. Similar to [data]
-buffers the texel data can be shared by the application by specifying
-the `OSP_TEXTURE_SHARED_BUFFER` flag. Per default a texture fetch is
+left corner of the texture image, like in OpenGL. Per default a texture fetch is
 filtered by performing bi-linear interpolation of the nearest 2×2
 texels; if instead fetching only the nearest texel is desired (i.e. no
-filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag. Both texture
-creating flags can be combined with a bitwise OR.
+filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
 ### Texture Transformations
 
