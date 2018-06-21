@@ -52,8 +52,10 @@ namespace ospray {
       bool preferLinear{false};
       bool nearestFilter{false};
 
-      std::shared_ptr<sg::DataArray1uc> texelData;
+      std::shared_ptr<sg::DataBuffer> texelData;
       void* data{nullptr};
+
+      std::string ospTextureType {"texture2d"};
     };
 
   } // ::ospray::sg

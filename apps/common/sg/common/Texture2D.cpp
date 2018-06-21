@@ -75,7 +75,7 @@ namespace ospray {
       if (data == nullptr)
         throw std::runtime_error("committed a Texture2D node with null data!");
 
-      ospTexture = ospNewTexture("texture2d");
+      ospTexture = ospNewTexture(ospTextureType.c_str());
       ospSet1i(ospTexture, "type", (int)type);
       ospSet1i(ospTexture, "flags", nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
       ospSet2i(ospTexture, "size", size.x, size.y);
