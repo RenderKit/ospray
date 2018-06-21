@@ -77,6 +77,7 @@ inline void postIntersect(uniform Model *uniform model,
                           uniform int64 flags)
 {
   dg.primID = ray.primID;
+  dg.st     = make_vec2f(ray.u, ray.v);
 
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized

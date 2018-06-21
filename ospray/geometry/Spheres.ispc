@@ -45,7 +45,7 @@ struct Spheres {
   uint8      *color;
   int         color_stride;
   int         color_offset;
-  int         color_format; 
+  int         color_format;
 
   vec2f     *texcoord;
 
@@ -126,8 +126,6 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
   if (flags & DG_TEXCOORD && self->texcoord)
     dg.st = self->texcoord[ray.primID];
-  else
-    dg.st = make_vec2f(0.0f);
 
   if (flags & DG_MATERIALID) {
     dg.materialID = Spheres_getMaterialID(self, ray.primID);

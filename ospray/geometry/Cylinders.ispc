@@ -184,8 +184,7 @@ static void Cylinders_postIntersect(Geometry *uniform _self,
   if (flags & DG_TEXCOORD && self->texcoord) {
     CylinderTexCoord tc = self->texcoord[ray.primID];
     dg.st = lerp(ray.u, tc.v0, tc.v1);
-  } else
-    dg.st = make_vec2f(0.0f);
+  }
 
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
     uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
