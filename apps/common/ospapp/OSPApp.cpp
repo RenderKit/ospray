@@ -209,7 +209,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           colors4f.push_back(vec4f(i/float(colors.size()-1), colors[i].x,
               colors[i].y, colors[i].z));
         }
-        preset.computeColors();
+        preset.updateChildDataValues();
       };
 
       std::vector<vec3f> colors;

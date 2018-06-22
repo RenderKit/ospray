@@ -51,6 +51,16 @@ namespace ospray {
         }
       }
 
+      void markAsModified() override
+      {
+        if (data) {
+          ospRelease(data);
+          data = nullptr;
+        }
+
+        Node::markAsModified();
+      }
+
       template <typename T>
       T get(size_t idx) const { return ((T*)base())[idx]; }
 

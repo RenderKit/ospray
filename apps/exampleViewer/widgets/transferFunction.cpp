@@ -329,10 +329,20 @@ void TransferFunction::render()
       colorCP.v.back()[3] = rgbaLines[2].line[i].y;
       i++;
     }
+
     // NOTE(jda) - HACK! colors array isn't updating, so we have to forcefully
     //             say "make sure you update yourself"...???
     opacityCP.markAsModified();
     colorCP.markAsModified();
+
+    // NOTE(jda) - MORE HACKS! (ugh)
+    auto &colors    = *transferFcn->child("colors").nodeAs<sg::DataBuffer>();
+    auto &opacities = *transferFcn->child("opacities").nodeAs<sg::DataBuffer>();
+
+    colors.markAsModified();
+    opacities.markAsModified();
+
+    transferFcn->updateChildDataValues();
 
     if (prevBinding)
       glBindTexture(GL_TEXTURE_2D, prevBinding);

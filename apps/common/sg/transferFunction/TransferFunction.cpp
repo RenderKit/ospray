@@ -58,8 +58,6 @@ namespace ospray {
       auto opacityCP = createChild("opacityControlPoints", "DataVector2f").nodeAs<DataVector2f>();
       opacityCP->v.emplace_back(0.f, 0.f);
       opacityCP->v.emplace_back(1.f, 1.f);
-      computeColors();
-      computeOpacities();
     }
 
     float TransferFunction::interpolateOpacity(const DataBuffer &controlPoints,
@@ -109,8 +107,8 @@ namespace ospray {
       float x0 = 0.f;
       float dx = (1.f - x0) / (numSamples-1);
 
-      auto controlPoints     = child("opacityControlPoints").nodeAs<DataBuffer>();
-      auto opacities = child("opacities").nodeAs<DataVector1f>();
+      auto controlPoints = child("opacityControlPoints").nodeAs<DataBuffer>();
+      auto opacities     = child("opacities").nodeAs<DataVector1f>();
 
       opacities->v.clear();
       for (int i = 0; i < numSamples; i++)
@@ -124,12 +122,18 @@ namespace ospray {
       float x0 = 0.f;
       float dx = (numSamples == 1 ) ? 0.0f : (1.f - x0) / (numSamples-1);
 
-      auto controlPoints     = child("colorControlPoints").nodeAs<DataBuffer>();
-      auto colors = child("colors").nodeAs<DataVector3f>();
+      auto controlPoints = child("colorControlPoints").nodeAs<DataBuffer>();
+      auto colors        = child("colors").nodeAs<DataVector3f>();
       colors->v.clear();
 
       for (int i = 0; i < numSamples; i++)
         colors->push_back(interpolateColor(*controlPoints, i * dx));
+    }
+
+    void TransferFunction::updateChildDataValues()
+    {
+      computeOpacities();
+      computeColors();
     }
 
     void TransferFunction::preCommit(RenderContext &)

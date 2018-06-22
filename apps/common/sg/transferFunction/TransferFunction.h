@@ -41,6 +41,10 @@ namespace ospray {
       float interpolateOpacity(const DataBuffer &controlPoints, float x);
       vec3f interpolateColor(const DataBuffer &controlPoints, float x);
 
+      void updateChildDataValues();
+
+    private:
+
       void computeOpacities();
       void computeColors();
     };
