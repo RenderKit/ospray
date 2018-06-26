@@ -27,5 +27,5 @@ LINK
   ospray_imgui
   ospray_imgui_util_sg
   ospray_tfn
-  ${GLFW_LIBRARY}
+  glfw
 )

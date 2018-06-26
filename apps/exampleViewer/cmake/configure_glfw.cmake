@@ -14,32 +14,43 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-find_package(OpenGL REQUIRED)
-
-ospray_disable_compiler_warnings()
-
 ##############################################################
-# Build support libs
+# Find or build GLFW
 ##############################################################
 
-include(cmake/configure_glfw.cmake)
+find_package(glfw3 QUIET)
 
-add_subdirectory(common)
+if (NOT glfw3_FOUND)
+  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+  set(GLFW_INSTALL    OFF CACHE BOOL "" FORCE)
 
-include_directories(
-  ${CMAKE_CURRENT_LIST_DIR}/common/gl3w
-  ${CMAKE_CURRENT_LIST_DIR}/common/imgui
-  ${GLFW_INCLUDE_DIRS}
-)
-add_subdirectory(widgets)
+  mark_as_advanced(GLFW_BUILD_DOCS)
+  mark_as_advanced(GLFW_DOCUMENT_INTERNALS)
+  mark_as_advanced(GLFW_INSTALL)
+  mark_as_advanced(GLFW_USE_MIR)
+  mark_as_advanced(GLFW_USE_WAYLAND)
 
-##############################################################
-# Build app
-##############################################################
+  if (USE_STATIC_RUNTIME)
+    set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
+  else()
+    set(USE_MSVC_RUNTIME_LIBRARY_DLL ON)
+  endif()
+  set(USE_MSVC_RUNTIME_LIBRARY_DLL ${USE_MSVC_RUNTIME_LIBRARY_DLL} CACHE BOOL "" FORCE)
+  mark_as_advanced(USE_MSVC_RUNTIME_LIBRARY_DLL)
 
-ospray_create_application(ospExampleViewer
-  ospExampleViewer.cpp
-LINK
-  ospray_app
-  ospray_imgui3d_sg
-)
+  add_subdirectory(common/glfw)
+  message(STATUS "GLFW not found! Building GLFW in the OSPRay source tree")
+else()
+  message(STATUS "Using GLFW found in the environment")
+endif()
+
+get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+
+set(GLFW_INCLUDE_DIRS ${glfw3_INCLUDE_DIRS}
+    CACHE INTERNAL "Found GLFW includes")
+
+if (USE_STATIC_RUNTIME)
+  string(REPLACE "/MDd" "/MTd" CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
+  string(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
+  string(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
+endif()
