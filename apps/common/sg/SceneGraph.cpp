@@ -19,18 +19,5 @@
 namespace ospray {
   namespace sg {
 
-    /*! 'render' the nodes */
-    std::string Group::toString() const
-    {
-      return "ospray::sg::Group";
-    }
-
-    std::string Info::toString() const
-    {
-      return "ospray::sg::Info";
-    }
-
-    OSP_REGISTER_SG_NODE(Group);
-
   } // ::ospray::sg
 } // ::ospray

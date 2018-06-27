@@ -382,7 +382,7 @@ namespace ospray {
 
     void parseGroupNode(const xml::Node &node)
     {
-      auto group = std::make_shared<sg::Group>();
+      auto group = std::make_shared<sg::Node>();
       std::stringstream ss_group;
       ss_group << "group_" << nodeList.size();
       group->setName(ss_group.str());
@@ -400,7 +400,6 @@ namespace ospray {
           if(!child.sgNode)
             continue;
 
-          group->children.push_back(child.sgNode);
           std::stringstream ss_child;
           ss_child << "child_" << childID;
           if (child.sgNode->type() == "Model") {

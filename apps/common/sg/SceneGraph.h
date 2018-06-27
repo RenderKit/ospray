@@ -31,44 +31,16 @@
 #include "common/Renderable.h"
 #include "common/Transform.h"
 
-#include "camera/PerspectiveCamera.h"
+#include "camera/Camera.h"
 
 #include "geometry/Geometry.h"
-#include "geometry/Spheres.h"
 
 #include "importer/Importer.h"
 
 #include "volume/Volume.h"
 
-// ospcommon
-#include "ospcommon/FileName.h"
-
 namespace ospray {
   namespace sg {
-
-    using ospcommon::FileName;
-
-    /*! \brief allows for adding semantical info to a model/scene
-     graph.  \note will not do anything by itself. */
-    struct OSPSG_INTERFACE Info : public sg::Node
-    {
-      /*! \brief returns a std::string with the c++ name of this class */
-      std::string toString() const override;
-
-      std::string permissions;
-      std::string acks;
-      std::string description;
-    };
-
-    struct OSPSG_INTERFACE Group : public sg::Renderable
-    {
-      /*! \brief returns a std::string with the c++ name of this class */
-      std::string toString() const override;
-
-      std::vector<std::shared_ptr<sg::Node>> children;
-    };
-
-    /*! @} */
 
   } // ::ospray::sg
 } // ::ospray
