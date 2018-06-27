@@ -44,7 +44,11 @@ else()
   message(STATUS "Using GLFW found in the environment")
 endif()
 
-get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+#NOTE(jda) - on Ubuntu16.04, the 'glfw' target doesn't exist here "yet", but
+#            still works as a target for linking the viewer app (???)
+if (TARGET glfw)
+  get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+endif()
 
 set(GLFW_INCLUDE_DIRS ${glfw3_INCLUDE_DIRS}
     CACHE INTERNAL "Found GLFW includes")
