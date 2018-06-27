@@ -56,7 +56,7 @@ namespace ospray {
 
      protected:
 
-      virtual void render(const std::shared_ptr<sg::Node> &) = 0;
+      virtual void render(const std::shared_ptr<sg::Root> &) = 0;
       virtual int parseCommandLine(int &ac, const char **&av) = 0;
 
       int initializeOSPRay(int *argc, const char *argv[]);
@@ -99,10 +99,9 @@ namespace ospray {
       CmdLineParam<float> apertureRadius = CmdLineParam<float>(0.f);
       CmdLineParam<float> fovy = CmdLineParam<float>(60.f);
 
-
       std::vector<clFile> files;
       std::vector<clGeneratorCfg> generators;
-      std::vector<std::vector<clFile> > animatedFiles;
+      std::vector<std::vector<clFile>> animatedFiles;
       int matrix_i = 1, matrix_j = 1, matrix_k = 1;
       std::string hdriLightFile;
       bool addDefaultLights = false;
@@ -122,6 +121,7 @@ namespace ospray {
           utility::getEnvVar<int>("OSPRAY_APPS_FAST_MODE").value_or(0);
 
      private:
+
       void parseGeneralCommandLine(int &ac, const char **&av);
 
       // parse command line arguments containing the format:

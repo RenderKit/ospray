@@ -21,14 +21,13 @@
 
 namespace ospray {
 
-  AsyncRenderEngine::AsyncRenderEngine(
-      std::shared_ptr<sg::Renderer> sgRenderer,
-      std::shared_ptr<sg::Renderer> sgRendererDW)
-    : scenegraph(sgRenderer), scenegraphDW(sgRendererDW)
+  AsyncRenderEngine::AsyncRenderEngine(std::shared_ptr<sg::Root> root)
+    : scenegraph(root)
   {
     auto sgFB = scenegraph->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+    auto renderer = scenegraph->child("renderer").nodeAs<sg::Renderer>();
 
-    backgroundThread = make_unique<AsyncLoop>([&, sgFB](){
+    backgroundThread = make_unique<AsyncLoop>([&, sgFB, renderer](){
       state = ExecState::RUNNING;
 
       if (commitDeviceOnAsyncLoopThread) {
@@ -51,20 +50,14 @@ namespace ospray {
         lastFTime = sg::TimeStamp();
       }
 
-      if (scenegraph->hasChild("animationcontroller"))
-        scenegraph->child("animationcontroller").animate();
+      if (renderer->hasChild("animationcontroller"))
+        renderer->child("animationcontroller").animate();
 
       if (pickPos.update())
         pickResult = scenegraph->pick(pickPos.ref());
 
       fps.start();
-      scenegraph->renderFrame(sgFB, OSP_FB_COLOR | OSP_FB_ACCUM, true);
-
-      if (scenegraphDW) {
-        auto dwFB =
-            scenegraphDW->child("frameBuffer").nodeAs<sg::FrameBuffer>();
-        scenegraphDW->renderFrame(dwFB, OSP_FB_COLOR | OSP_FB_ACCUM, true);
-      }
+      scenegraph->renderFrame();
 
       once = true;
       fps.stop();

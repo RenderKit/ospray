@@ -232,17 +232,15 @@ namespace ospray {
 
 
 // ImGuiViewer definitions ////////////////////////////////////////////////////
-  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph)
-    : ImGuiViewer(scenegraph->nodeAs<sg::Renderer>(), nullptr)
-  {}
 
-  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Renderer> &scenegraph,
-                           const std::shared_ptr<sg::Renderer> &scenegraphDW)
+  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Root> &scenegraph)
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
-      scenegraphDW(scenegraphDW),
-      renderEngine(scenegraph, scenegraphDW)
+      renderer(scenegraph->child("renderer").nodeAs<sg::Renderer>()),
+      renderEngine(scenegraph)
   {
+    frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
+
     auto OSPRAY_DYNAMIC_LOADBALANCER=
       utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
 
@@ -251,7 +249,7 @@ namespace ospray {
     if (useDynamicLoadBalancer)
       numPreAllocatedTiles = OSPRAY_DYNAMIC_LOADBALANCER.value();
 
-    auto bbox = scenegraph->child("world").bounds();
+    auto bbox = renderer->child("world").bounds();
     if (bbox.empty()) {
       bbox.lower = vec3f(-5,0,-5);
       bbox.upper = vec3f(5,10,5);
@@ -272,7 +270,7 @@ namespace ospray {
 
     originalView = viewPort;
 
-    transferFunctionWidget.loadColorMapPresets(scenegraph->child("transferFunctionPresets").shared_from_this());
+    transferFunctionWidget.loadColorMapPresets(renderer->child("transferFunctionPresets").shared_from_this());
     transferFunctionWidget.setColorMapByName("Jet");
   }
 
@@ -315,10 +313,10 @@ namespace ospray {
     switch (key) {
     case ' ':
     {
-      if (scenegraph && scenegraph->hasChild("animationcontroller")) {
+      if (renderer && renderer->hasChild("animationcontroller")) {
         bool animating =
-            scenegraph->child("animationcontroller")["enabled"].valueAs<bool>();
-        scenegraph->child("animationcontroller")["enabled"] = !animating;
+            renderer->child("animationcontroller")["enabled"].valueAs<bool>();
+        renderer->child("animationcontroller")["enabled"] = !animating;
       }
       break;
     }
@@ -378,9 +376,7 @@ namespace ospray {
 
   void ImGuiViewer::resetDefaultView()
   {
-    auto &renderer = *scenegraph;
-
-    auto &world = renderer["world"];
+    auto &world = renderer->child("world");
     auto bbox = world.bounds();
     vec3f diag = bbox.size();
     diag = max(diag, vec3f(0.3f * length(diag)));
@@ -389,7 +385,7 @@ namespace ospray {
     auto pos = gaze - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
     auto up = vec3f(0.f, 1.f, 0.f);
 
-    auto &camera = renderer["camera"];
+    auto &camera = scenegraph->child("camera");
     camera["pos"] = pos;
     camera["dir"] = normalize(gaze - pos);
     camera["up"] = up;
@@ -450,14 +446,6 @@ namespace ospray {
       camera["up"]  = viewPort.up;
       camera.markAsModified();
 
-      if (scenegraphDW.get()) {
-        auto &camera = scenegraphDW->child("camera");
-        camera["dir"] = dir;
-        camera["pos"] = viewPort.from;
-        camera["up"]  = viewPort.up;
-        camera.markAsModified();
-      }
-
       viewPort.modified = false;
     }
 
@@ -477,7 +465,6 @@ namespace ospray {
     }
 
     ucharFB = pixelBuffer.data();
-    frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
     ImGui3DWidget::display();
 
     lastTotalTime = ImGui3DWidget::totalTime;
@@ -608,12 +595,12 @@ namespace ospray {
 
   void ImGuiViewer::guiTransferFunction()
   {
-    if (!scenegraph->hasChild("transferFunctions"))
+    if (!renderer->hasChild("transferFunctions"))
       return;
-    auto tfNodes = scenegraph->child("transferFunctions").children();
+    auto tfNodes = renderer->child("transferFunctions").children();
     if (tfNodes.empty())
       return;
-    std::vector<std::shared_ptr<sg::Node> > transferFunctions;
+    std::vector<std::shared_ptr<sg::Node>> transferFunctions;
     std::shared_ptr<sg::Node> transferFunction = nullptr;
     std::string tfNodeListString;
     for (auto& tf : tfNodes)

@@ -34,10 +34,7 @@ namespace ospray {
   {
   public:
 
-    ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph);
-
-    ImGuiViewer(const std::shared_ptr<sg::Renderer> &scenegraph,
-                const std::shared_ptr<sg::Renderer> &scenegraphDW);
+    ImGuiViewer(const std::shared_ptr<sg::Root> &scenegraph);
 
     ~ImGuiViewer();
 
@@ -95,8 +92,8 @@ namespace ospray {
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
 
-    std::shared_ptr<sg::Node> scenegraph;
-    std::shared_ptr<sg::Node> scenegraphDW;
+    std::shared_ptr<sg::Root> scenegraph;
+    std::shared_ptr<sg::Renderer> renderer;
 
     std::string nodeNameForSearch;
     std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;

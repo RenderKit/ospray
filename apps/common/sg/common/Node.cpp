@@ -228,9 +228,10 @@ namespace ospray {
       }
     }
 
-    bool Node::modifiedButNotCommitted() const
+    bool Node::subtreeModifiedButNotCommitted() const
     {
-      return lastModified() > lastCommitted();
+      return (lastModified() > lastCommitted()) ||
+             (childrenLastModified() > lastCommitted());
     }
 
     // Parent-child structual interface ///////////////////////////////////////

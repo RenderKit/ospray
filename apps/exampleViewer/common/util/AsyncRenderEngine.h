@@ -42,8 +42,7 @@ namespace ospray {
   {
   public:
 
-    AsyncRenderEngine(std::shared_ptr<sg::Renderer> sgRenderer,
-                      std::shared_ptr<sg::Renderer> sgRendererDW);
+    AsyncRenderEngine(std::shared_ptr<sg::Root> root);
     ~AsyncRenderEngine();
 
     // Properties //
@@ -87,8 +86,7 @@ namespace ospray {
 
     int numOsprayThreads {-1};
 
-    std::shared_ptr<sg::Renderer> scenegraph;
-    std::shared_ptr<sg::Renderer> scenegraphDW;
+    std::shared_ptr<sg::Root> scenegraph;
 
     utility::TransactionalValue<vec2i> fbSize;
     utility::TransactionalValue<vec2f> pickPos;

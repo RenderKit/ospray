@@ -149,7 +149,8 @@ namespace ospray {
       virtual void markAsModified();
       virtual void setChildrenModified(TimeStamp t);
 
-      bool modifiedButNotCommitted() const;
+      //! Did this Node (or decendants) get modified and not (yet) committed?
+      bool subtreeModifiedButNotCommitted() const;
 
       // Parent-child structual interface /////////////////////////////////////
 

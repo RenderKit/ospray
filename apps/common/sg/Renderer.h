@@ -34,8 +34,7 @@ namespace ospray {
       virtual std::string toString() const override;
 
       void renderFrame(std::shared_ptr<FrameBuffer> fb,
-                       int flags = 0,
-                       bool verifyCommit = true);
+                       int flags = OSP_FB_COLOR | OSP_FB_ACCUM);
 
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
@@ -55,6 +54,12 @@ namespace ospray {
       static void setGlobalRendererTypeWhiteList(std::vector<std::string> list);
 
     private:
+
+      friend struct Root;
+
+      // Helper functions //
+
+      void updateRenderer();
 
       // Data members //
 

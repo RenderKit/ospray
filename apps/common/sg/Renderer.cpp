@@ -64,13 +64,17 @@ namespace ospray {
                   "scivis: standard whitted style ray tracer. "
                   "pathtracer/pt: photo-realistic path tracer");
 
+      updateRenderer();
+
       std::vector<Any> whiteList;
-      for (auto &v : globalWhiteList)
-        whiteList.push_back(v);
+      std::copy(globalWhiteList.begin(),
+                globalWhiteList.end(),
+                std::back_inserter(whiteList));
 
       child("rendererType").setWhiteList(whiteList);
       createChild("world",
                   "Model").setDocumentation("model containing scene objects");
+
       createChild("lights");
 
       createChild("bgColor", "vec3f", vec3f(0.15f, 0.15f, 0.15f),
@@ -153,16 +157,8 @@ namespace ospray {
         ospRelease(lightsData);
     }
 
-    void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb,
-                               int flags,
-                               bool verifyCommit)
+    void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb, int flags)
     {
-      RenderContext ctx;
-      if (verifyCommit) {
-        Node::traverse(VerifyNodes{});
-        traverse(ctx, "commit");
-      }
-      traverse(ctx, "render");
       variance = ospRenderFrame(fb->valueAs<OSPFrameBuffer>(),
                                 ospRenderer,
                                 flags);
@@ -196,37 +192,13 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      auto rendererType = child("rendererType").valueAs<std::string>();
-      if (!ospRenderer || rendererType != createdType) {
-        auto setRenderer = [&](OSPRenderer handle, const std::string &rType) {
-          Node::traverse(MarkAllAsModified{});
-          ospRenderer = handle;
-          createdType = rType;
-          ospCommit(ospRenderer);
-          setValue(ospRenderer);
-        };
-
-        auto potentialRenderer = ospNewRenderer(rendererType.c_str());
-        if (potentialRenderer != nullptr) {
-          setRenderer(potentialRenderer, rendererType);
-        } else if (ospRenderer == nullptr) {
-          //NOTE(jda) - default to scivs!
-          setRenderer(ospNewRenderer("scivis"), "scivis");
-          child("rendererType").setValue(std::string("scivis"));
-        } else {
-          //NOTE(jda) - revert rendererType back to name of currently valid
-          //            renderer
-          child("rendererType").setValue(createdType);
-        }
-      }
-
       auto backplate = child("backplate").nodeAs<Texture2D>();
       vec3f bgColor = child("bgColor").valueAs<vec3f>();
       memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
       backplate->markAsModified();
 
       ctx.ospRenderer = ospRenderer;
-      ctx.ospRendererType = rendererType;
+      ctx.ospRendererType = createdType;
       ctx.world = child("world").nodeAs<sg::Model>();
     }
 
@@ -250,8 +222,7 @@ namespace ospray {
         {
           // create and setup light list
           std::vector<OSPLight> lights;
-          for(auto &lightNode : child("lights").children())
-          {
+          for(auto &lightNode : child("lights").children()) {
             auto light = lightNode.second->valueAs<OSPLight>();
             if (light)
               lights.push_back(light);
@@ -268,11 +239,13 @@ namespace ospray {
         ospSetObject(ospRenderer, "lights", lightsData);
         ospSetObject(ospRenderer, "backplate", child("backplate").valueAs<OSPObject>());
 
-        if (child("world").childrenLastModified() > frameMTime) {
-          child("world").finalize(ctx);
-          ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
+        auto &world = child("world");
+
+        if (world.childrenLastModified() > frameMTime) {
+          world.finalize(ctx);
+          ospSetObject(ospRenderer, "model", world.valueAs<OSPObject>());
           if (child("autoEpsilon").valueAs<bool>()) {
-            const box3f bounds = child("world")["bounds"].valueAs<box3f>();
+            const box3f bounds = world["bounds"].valueAs<box3f>();
             const float diam = length(bounds.size());
             float logDiam = ospcommon::log(diam);
             if (logDiam < 0.f) {
@@ -302,6 +275,33 @@ namespace ospray {
     float Renderer::getLastVariance() const
     {
       return variance;
+    }
+
+    void Renderer::updateRenderer()
+    {
+      auto rendererType = child("rendererType").valueAs<std::string>();
+      if (!ospRenderer || rendererType != createdType) {
+        auto setRenderer = [&](OSPRenderer handle, const std::string &rType) {
+          Node::traverse(MarkAllAsModified{});
+          ospRenderer = handle;
+          createdType = rType;
+          ospCommit(ospRenderer);
+          setValue(ospRenderer);
+        };
+
+        auto potentialRenderer = ospNewRenderer(rendererType.c_str());
+        if (potentialRenderer != nullptr) {
+          setRenderer(potentialRenderer, rendererType);
+        } else if (ospRenderer == nullptr) {
+          //NOTE(jda) - default to scivs!
+          setRenderer(ospNewRenderer("scivis"), "scivis");
+          child("rendererType").setValue(std::string("scivis"));
+        } else {
+          //NOTE(jda) - revert rendererType back to name of currently valid
+          //            renderer
+          child("rendererType").setValue(createdType);
+        }
+      }
     }
 
     OSP_REGISTER_SG_NODE(Renderer);

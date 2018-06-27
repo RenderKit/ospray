@@ -16,6 +16,8 @@
 
 #include "SceneGraph.h"
 
+#include "visitor/VerifyNodes.h"
+
 namespace ospray {
   namespace sg {
 
@@ -23,6 +25,7 @@ namespace ospray {
     {
       createChild("frameBuffer", "FrameBuffer");
       createChild("camera", "PerspectiveCamera");
+      createChild("renderer", "Renderer");
     }
 
     std::string Root::toString() const
@@ -30,7 +33,7 @@ namespace ospray {
       return "ospray::sg::Root";
     }
 
-    void Root::preCommit(RenderContext &ctx)
+    void Root::preCommit(RenderContext &)
     {
       if (child("camera").hasChild("aspect") &&
           child("frameBuffer")["size"].lastModified() >
@@ -39,7 +42,10 @@ namespace ospray {
         child("camera")["aspect"] = fbSize.x / float(fbSize.y);
       }
 
-      auto rHandle = child("renderer").valueAs<OSPRenderer>();
+      auto rendererNode = child("renderer").nodeAs<Renderer>();
+      rendererNode->updateRenderer();
+
+      auto rHandle = rendererNode->valueAs<OSPRenderer>();
       auto cHandle = child("camera").valueAs<OSPCamera>();
       auto fHandle = child("frameBuffer").valueAs<OSPFrameBuffer>();
 
@@ -56,18 +62,16 @@ namespace ospray {
       if (newFB)
         currentFB = fHandle;
 
-      if (newRenderer || newCamera) {
+      if (newRenderer || newCamera)
         ospSetObject(rHandle, "camera", cHandle);
-        child("renderer").markAsModified(); // NOTE(jda) - neccessary??
-      }
 
-      bool rChanged = child("renderer").modifiedButNotCommitted();
-      bool cChanged   = child("camera").modifiedButNotCommitted();
+      bool rChanged = rendererNode->subtreeModifiedButNotCommitted();
+      bool cChanged = child("camera").subtreeModifiedButNotCommitted();
 
       clearFB = newFB || newCamera || newRenderer || rChanged || cChanged;
     }
 
-    void Root::postCommit(RenderContext &ctx)
+    void Root::postCommit(RenderContext &)
     {
       if (clearFB) {
         ospFrameBufferClear(
@@ -79,11 +83,34 @@ namespace ospray {
       }
     }
 
+    void Root::renderFrame(bool verifyCommit)
+    {
+      auto rendererNode = child("renderer").nodeAs<Renderer>();
+      auto fbNode = child("frameBuffer").nodeAs<FrameBuffer>();
+
+      if (verifyCommit) {
+        Node::traverse(VerifyNodes{});
+        commit();
+      }
+
+      traverse("render");
+
+      rendererNode->renderFrame(fbNode);
+    }
+
     OSPPickResult Root::pick(const vec2f &pickPos)
     {
       auto rendererNode = child("renderer").nodeAs<Renderer>();
       return rendererNode->pick(pickPos);
     }
+
+    float Root::getLastVariance() const
+    {
+      auto rendererNode = child("renderer").nodeAs<Renderer>();
+      return rendererNode->getLastVariance();
+    }
+
+    OSP_REGISTER_SG_NODE(Root);
 
   } // ::ospray::sg
 } // ::ospray

@@ -187,8 +187,10 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
       parseGeneralCommandLine(argc, argv);
 
-      auto rendererPtr = sg::createNode("renderer", "Renderer");
-      auto &renderer = *rendererPtr;
+      auto rootPtr = sg::createNode("renderer", "Root")->nodeAs<sg::Root>();
+
+      auto &root     = *rootPtr;
+      auto &renderer = root["renderer"];
 
       if (!initialRendererType.empty())
         renderer["rendererType"] = initialRendererType;
@@ -263,12 +265,13 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       addPreset("Grayscale", colors, tfPresets.shared_from_this());
       colors.clear();
 
-      for (const auto& tfFile : tfFiles)
-      {
-          auto& tf = *renderer["transferFunctionPresets"].createChild("loadedTF",
-            "TransferFunction").nodeAs<sg::TransferFunction>();
-          tf.loadParaViewTF(tfFile);
+      for (const auto& tfFile : tfFiles) {
+        auto& tf = *renderer["transferFunctionPresets"].createChild("loadedTF",
+          "TransferFunction").nodeAs<sg::TransferFunction>();
+        tf.loadParaViewTF(tfFile);
       }
+
+      auto &framebuffer = root["frameBuffer"];
 
       if (fast) {
         renderer["spp"] = -1;
@@ -276,8 +279,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         renderer["aoTransparencyEnabled"] = false;
         renderer["minContribution"] = 0.1f;
         renderer["maxDepth"] = 3;
-        renderer["frameBuffer"]["toneMapping"] = false;
-        renderer["frameBuffer"]["useVarianceBuffer"] = false;
+
+        framebuffer["toneMapping"] = false;
+        framebuffer["useVarianceBuffer"] = false;
         addPlane = false;
       }
 
@@ -286,24 +290,24 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       addGeneratorNodesToWorld(renderer);
       addAnimatedImporterNodesToWorld(renderer);
 
-      renderer["frameBuffer"]["size"] = vec2i(width, height);
-      setupToneMapping(renderer);
-      renderer.traverse(sg::VerifyNodes(true));
-      renderer.commit();
+      framebuffer["size"] = vec2i(width, height);
+      setupToneMapping(framebuffer);
+      root.traverse(sg::VerifyNodes(true));
+      root.commit();
 
       // last, to be able to modify all created SG nodes
       parseCommandLineSG(argc, argv, renderer);
 
       // after parseCommandLineSG (may have changed world bounding box)
       addPlaneToScene(renderer);
-      setupCamera(renderer);
+      setupCamera(root);
 
       if (debug)
-        renderer.traverse(sg::PrintNodes{});
+        root.traverse(sg::PrintNodes{});
 
-      render(rendererPtr);
+      render(rootPtr);
 
-      rendererPtr.reset();
+      rootPtr.reset();
       ospShutdown();
 
       return 0;
@@ -752,8 +756,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       }
     }
 
-    void OSPApp::setupCamera(sg::Node &renderer)
+    void OSPApp::setupCamera(sg::Node &root)
     {
+      auto &renderer = root["renderer"];
       auto &world = renderer["world"];
       auto bbox = bboxWithoutPlane;
       if (bbox.empty())
@@ -769,7 +774,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       if (!up.isOverridden())
         up = vec3f(0.f, 1.f, 0.f);
 
-      auto &camera = renderer["camera"];
+      auto &camera = root["camera"];
       camera["pos"] = pos.getValue();
       camera["dir"] = normalize(gaze.getValue() - pos.getValue());
       camera["up"] = up.getValue();
@@ -792,10 +797,8 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         camera["aspect"] = width / (float)height;
     }
 
-    void OSPApp::setupToneMapping(sg::Node &renderer)
+    void OSPApp::setupToneMapping(sg::Node &frameBuffer)
     {
-      auto &frameBuffer = renderer["frameBuffer"];
-
       if (aces) {
         frameBuffer["toneMapping"] = true;
         frameBuffer["contrast"] = 1.6773f;

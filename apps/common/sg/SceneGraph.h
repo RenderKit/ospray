@@ -28,6 +28,7 @@
 
 // sg components
 #include "common/Data.h"
+#include "common/FrameBuffer.h"
 #include "common/Renderable.h"
 #include "common/Transform.h"
 
@@ -47,7 +48,7 @@ namespace ospray {
     struct Root : public Node
     {
       Root();
-      ~Root() = default;
+      ~Root() override = default;
 
       // Node interface //
 
@@ -58,7 +59,7 @@ namespace ospray {
 
       // Root interface //
 
-      void renderFrame();
+      void renderFrame(bool verifyCommit = true);
 
       OSPPickResult pick(const vec2f &pickPos);
       float getLastVariance() const;
@@ -66,8 +67,6 @@ namespace ospray {
     private:
 
       // Data members //
-
-      float lastVariance {inf};
 
       OSPCamera currentCamera {nullptr};
       OSPRenderer currentRenderer {nullptr};
