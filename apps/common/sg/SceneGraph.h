@@ -39,8 +39,42 @@
 
 #include "volume/Volume.h"
 
+#include "Renderer.h"
+
 namespace ospray {
   namespace sg {
+
+    struct Root : public Node
+    {
+      Root();
+      ~Root() = default;
+
+      // Node interface //
+
+      std::string toString() const override;
+
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
+
+      // Root interface //
+
+      void renderFrame();
+
+      OSPPickResult pick(const vec2f &pickPos);
+      float getLastVariance() const;
+
+    private:
+
+      // Data members //
+
+      float lastVariance {inf};
+
+      OSPCamera currentCamera {nullptr};
+      OSPRenderer currentRenderer {nullptr};
+      OSPFrameBuffer currentFB {nullptr};
+
+      bool clearFB {true};
+    };
 
   } // ::ospray::sg
 } // ::ospray

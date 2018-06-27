@@ -71,8 +71,6 @@ namespace ospray {
       child("rendererType").setWhiteList(whiteList);
       createChild("world",
                   "Model").setDocumentation("model containing scene objects");
-      createChild("camera", "PerspectiveCamera");
-      createChild("frameBuffer", "FrameBuffer");
       createChild("lights");
 
       createChild("bgColor", "vec3f", vec3f(0.15f, 0.15f, 0.15f),
@@ -198,13 +196,6 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (child("camera").hasChild("aspect") &&
-          child("frameBuffer")["size"].lastModified() >
-          child("camera")["aspect"].lastCommitted()) {
-
-        auto fbSize = child("frameBuffer")["size"].valueAs<vec2i>();
-        child("camera")["aspect"] = fbSize.x / float(fbSize.y);
-      }
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
         auto setRenderer = [&](OSPRenderer handle, const std::string &rType) {
@@ -245,10 +236,8 @@ namespace ospray {
       if (!modified) {
         for (const auto& c : children()) {
           // ignore changes to the frame buffer/tone mapper
-          if (c.second->lastModified() > frameMTime
-              || (c.second->childrenLastModified() > frameMTime
-              && c.first != "frameBuffer"))
-          {
+          if (c.second->lastModified() > frameMTime ||
+              c.second->childrenLastModified() > frameMTime) {
             modified = true;
             break;
           }
@@ -256,11 +245,6 @@ namespace ospray {
       }
 
       if (modified) {
-        ospFrameBufferClear(
-          (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
-          OSP_FB_COLOR | OSP_FB_ACCUM
-        );
-
         if (lightsData == nullptr ||
           lightsBuildTime < child("lights").childrenLastModified())
         {
@@ -281,27 +265,23 @@ namespace ospray {
         }
 
         // complete setup of renderer
-        ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
         ospSetObject(ospRenderer, "lights", lightsData);
         ospSetObject(ospRenderer, "backplate", child("backplate").valueAs<OSPObject>());
 
-        if (child("world").childrenLastModified() > frameMTime)
-        {
+        if (child("world").childrenLastModified() > frameMTime) {
           child("world").finalize(ctx);
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
           if (child("autoEpsilon").valueAs<bool>()) {
             const box3f bounds = child("world")["bounds"].valueAs<box3f>();
             const float diam = length(bounds.size());
             float logDiam = ospcommon::log(diam);
-            if (logDiam < 0.f)
-            {
+            if (logDiam < 0.f) {
               logDiam = -1.f/logDiam;
             }
             const float epsilon = 1e-5f*logDiam;
             ospSet1f(ospRenderer, "epsilon", epsilon);
             ospSet1f(ospRenderer, "aoDistance", diam*0.3);
           }
-
         }
 
         if (!child("useBackplate").valueAs<bool>())
@@ -310,7 +290,6 @@ namespace ospray {
         ospCommit(ospRenderer);
         frameMTime.renew();
       }
-
     }
 
     OSPPickResult Renderer::pick(const vec2f &pickPos)

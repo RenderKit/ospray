@@ -19,5 +19,71 @@
 namespace ospray {
   namespace sg {
 
+    Root::Root()
+    {
+      createChild("frameBuffer", "FrameBuffer");
+      createChild("camera", "PerspectiveCamera");
+    }
+
+    std::string Root::toString() const
+    {
+      return "ospray::sg::Root";
+    }
+
+    void Root::preCommit(RenderContext &ctx)
+    {
+      if (child("camera").hasChild("aspect") &&
+          child("frameBuffer")["size"].lastModified() >
+          child("camera")["aspect"].lastCommitted()) {
+        auto fbSize = child("frameBuffer")["size"].valueAs<vec2i>();
+        child("camera")["aspect"] = fbSize.x / float(fbSize.y);
+      }
+
+      auto rHandle = child("renderer").valueAs<OSPRenderer>();
+      auto cHandle = child("camera").valueAs<OSPCamera>();
+      auto fHandle = child("frameBuffer").valueAs<OSPFrameBuffer>();
+
+      bool newRenderer = currentRenderer != rHandle;
+      bool newCamera = currentCamera != cHandle;
+      bool newFB = currentFB != fHandle;
+
+      if (newRenderer)
+        currentRenderer = rHandle;
+
+      if (newCamera)
+        currentCamera = cHandle;
+
+      if (newFB)
+        currentFB = fHandle;
+
+      if (newRenderer || newCamera) {
+        ospSetObject(rHandle, "camera", cHandle);
+        child("renderer").markAsModified(); // NOTE(jda) - neccessary??
+      }
+
+      bool rChanged = child("renderer").modifiedButNotCommitted();
+      bool cChanged   = child("camera").modifiedButNotCommitted();
+
+      clearFB = newFB || newCamera || newRenderer || rChanged || cChanged;
+    }
+
+    void Root::postCommit(RenderContext &ctx)
+    {
+      if (clearFB) {
+        ospFrameBufferClear(
+          child("frameBuffer").valueAs<OSPFrameBuffer>(),
+          OSP_FB_COLOR | OSP_FB_ACCUM
+        );
+
+        clearFB = false;
+      }
+    }
+
+    OSPPickResult Root::pick(const vec2f &pickPos)
+    {
+      auto rendererNode = child("renderer").nodeAs<Renderer>();
+      return rendererNode->pick(pickPos);
+    }
+
   } // ::ospray::sg
 } // ::ospray

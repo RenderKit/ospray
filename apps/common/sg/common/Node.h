@@ -149,6 +149,8 @@ namespace ospray {
       virtual void markAsModified();
       virtual void setChildrenModified(TimeStamp t);
 
+      bool modifiedButNotCommitted() const;
+
       // Parent-child structual interface /////////////////////////////////////
 
       using NodeLink = std::pair<std::string, std::shared_ptr<Node>>;
