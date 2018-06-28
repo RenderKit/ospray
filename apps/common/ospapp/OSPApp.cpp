@@ -296,7 +296,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       root.commit();
 
       // last, to be able to modify all created SG nodes
-      parseCommandLineSG(argc, argv, renderer);
+      parseCommandLineSG(argc, argv, root);
 
       // after parseCommandLineSG (may have changed world bounding box)
       addPlaneToScene(renderer);
@@ -504,7 +504,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       }
     }
 
-    void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root)
+    void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Root &root)
     {
       for (int i = 1; i < ac; i++) {
         std::string arg(av[i]);
@@ -541,16 +541,17 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           ss << arg.substr(0, f);
           std::string child;
           std::reference_wrapper<sg::Node> node_ref = root;
-          std::vector<std::shared_ptr<sg::Node> > children;
+          std::vector<std::shared_ptr<sg::Node>> children;
           while (ss >> child) {
             if (ss.eof())
               children = node_ref.get().childrenRecursive(child);
           }
-          if (children.empty())
-          {
+
+          if (children.empty()) {
             std::cerr << "Warning: no children found in sg lookup\n";
             continue;
           }
+
           std::stringstream vals(value);
 
           if (addNode) {
@@ -783,9 +784,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       //       camera moves unless also updated by the app!
       camera.createChild("gaze", "vec3f", gaze.getValue());
 
-      if (camera.hasChild("fovy"))
+      if (camera.hasChild("fovy") && fovy.isOverridden())
         camera["fovy"] = fovy.getValue();
-      if (camera.hasChild("apertureRadius"))
+      if (camera.hasChild("apertureRadius") && apertureRadius.isOverridden())
         camera["apertureRadius"] = apertureRadius.getValue();
       if (camera.hasChild("focusdistance"))
         camera["focusdistance"] = length(pos.getValue() - gaze.getValue());

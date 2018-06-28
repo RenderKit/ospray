@@ -127,7 +127,7 @@ namespace ospray {
       // parse command line arguments containing the format:
       //  -sg:nodeName:...:nodeName=value,value,value -- changes value
       //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
-      void parseCommandLineSG(int ac, const char **&av, sg::Node &root);
+      void parseCommandLineSG(int ac, const char **&av, sg::Root &root);
     };
 
   } // ::ospray::app
