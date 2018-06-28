@@ -136,6 +136,7 @@ namespace ospray {
       createChild("oneSidedLighting", "bool", true, NodeFlags::required);
       createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
 
+      createChild("useGeometryLights", "bool", true, NodeFlags::required);
       createChild("backplate", "Texture2D");
       auto backplate = child("backplate").nodeAs<Texture2D>();
       backplate->size.x = 1;

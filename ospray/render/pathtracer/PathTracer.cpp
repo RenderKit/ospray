@@ -122,8 +122,11 @@ namespace ospray {
 
     destroyGeometryLights();
     lightArray.clear();
+    geometryLights = 0;
 
-    if (model) {
+    const bool useGeometryLights = getParam1i("useGeometryLights", true);
+
+    if (model && useGeometryLights) {
       areaPDF.resize(model->geometry.size());
       generateGeometryLights(model, affine3f(one), affine3f(one), &areaPDF[0]);
       geometryLights = lightArray.size();
