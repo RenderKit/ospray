@@ -45,7 +45,7 @@
 namespace ospray {
   namespace sg {
 
-    struct Root : public Node
+    struct OSPSG_INTERFACE Root : public Node
     {
       Root();
       ~Root() override = default;
