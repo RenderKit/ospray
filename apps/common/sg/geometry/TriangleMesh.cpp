@@ -35,15 +35,22 @@ namespace ospray {
       return "ospray::sg::TriangleMesh";
     }
 
-    box3f TriangleMesh::bounds() const
+    box3f TriangleMesh::computeBounds() const
     {
-      box3f bounds = empty;
+      box3f bbox = bounds();
+
+      if (bbox != box3f(empty))
+        return bbox;
+
       if (hasChild("vertex")) {
         auto v = child("vertex").nodeAs<DataBuffer>();
         for (uint32_t i = 0; i < v->size(); i++)
-          bounds.extend(v->get<vec3f>(i));
+          bbox.extend(v->get<vec3f>(i));
       }
-      return bounds;
+
+      child("bounds") = bbox;
+
+      return bbox;
     }
 
     void TriangleMesh::preCommit(RenderContext &ctx)

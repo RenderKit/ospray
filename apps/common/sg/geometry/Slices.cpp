@@ -16,20 +16,26 @@
 
 #include "Slices.h"
 #include "../common/Data.h"
+#include "../volume/Volume.h"
 
 namespace ospray {
   namespace sg {
 
     Slices::Slices() : Geometry("slices") {}
 
-    box3f Slices::bounds() const
+    box3f Slices::computeBounds() const
     {
-      box3f bounds = empty;
+      box3f bbox = bounds();
+
+      if (bbox != box3f(empty))
+        return bbox;
 
       if (hasChild("volume"))
-        bounds = child("volume").bounds();
+        bbox = child("volume").nodeAs<Volume>()->computeBounds();
 
-      return bounds;
+      child("bounds") = bbox;
+
+      return bbox;
     }
 
     void Slices::postRender(RenderContext& ctx)

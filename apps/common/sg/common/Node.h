@@ -76,7 +76,10 @@ namespace ospray {
       virtual void serialize(sg::Serialization::State &state);
 
       template <typename T>
-      std::shared_ptr<T> nodeAs();
+      std::shared_ptr<T> nodeAs(); // static cast (faster, but not safe!)
+
+      template <typename T>
+      std::shared_ptr<T> tryNodeAs(); // dynamic cast (slower, but can check)
 
       // Properties ///////////////////////////////////////////////////////////
 
@@ -297,6 +300,15 @@ namespace ospray {
                     "Can only use nodeAs<T> to cast to an ospray::sg::Node"
                     " type! 'T' must be a child of ospray::sg::Node!");
       return std::static_pointer_cast<T>(shared_from_this());
+    }
+
+    template <typename T>
+    inline std::shared_ptr<T> Node::tryNodeAs()
+    {
+      static_assert(std::is_base_of<Node, T>::value,
+                    "Can only use tryNodeAs<T> to cast to an ospray::sg::Node"
+                    " type! 'T' must be a child of ospray::sg::Node!");
+      return std::dynamic_pointer_cast<T>(shared_from_this());
     }
 
     //! just for convenience; add a typed 'setParam' function

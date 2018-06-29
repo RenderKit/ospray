@@ -155,11 +155,21 @@ namespace ospray {
     }
 
     //! return bounding box of all primitives
-    box3f StructuredVolume::bounds() const
+    box3f StructuredVolume::computeBounds() const
     {
+      box3f bbox = bounds();
+
+      if (bbox != box3f(empty))
+        return bbox;
+
       auto dimensions  = child("dimensions").valueAs<vec3i>();
       auto gridSpacing = child("gridSpacing").valueAs<vec3f>();
-      return {vec3f(0.f), dimensions * gridSpacing};
+
+      bbox = box3f(vec3f(0.f), dimensions * gridSpacing);
+
+      child("bounds") = bbox;
+
+      return bbox;
     }
 
     void StructuredVolume::preCommit(RenderContext &)
