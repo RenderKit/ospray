@@ -45,10 +45,13 @@
 namespace ospray {
   namespace sg {
 
-    struct OSPSG_INTERFACE Root : public Node
+    /* This "ties" 3 major components together: framebuffer, renderer, and
+       camera
+     */
+    struct OSPSG_INTERFACE Frame : public Node
     {
-      Root();
-      ~Root() override = default;
+      Frame();
+      ~Frame() override = default;
 
       // Node interface //
 
@@ -57,7 +60,7 @@ namespace ospray {
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 
-      // Root interface //
+      // Frame interface //
 
       void renderFrame(bool verifyCommit = true);
 

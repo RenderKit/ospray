@@ -21,7 +21,7 @@
 
 namespace ospray {
 
-  AsyncRenderEngine::AsyncRenderEngine(std::shared_ptr<sg::Root> root)
+  AsyncRenderEngine::AsyncRenderEngine(std::shared_ptr<sg::Frame> root)
     : scenegraph(root)
   {
     auto sgFB = scenegraph->child("frameBuffer").nodeAs<sg::FrameBuffer>();

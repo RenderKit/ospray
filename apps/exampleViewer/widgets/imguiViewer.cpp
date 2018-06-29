@@ -233,7 +233,7 @@ namespace ospray {
 
 // ImGuiViewer definitions ////////////////////////////////////////////////////
 
-  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Root> &scenegraph)
+  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Frame> &scenegraph)
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
       renderer(scenegraph->child("renderer").nodeAs<sg::Renderer>()),

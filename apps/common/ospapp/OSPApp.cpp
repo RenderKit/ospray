@@ -187,7 +187,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
       parseGeneralCommandLine(argc, argv);
 
-      auto rootPtr = sg::createNode("renderer", "Root")->nodeAs<sg::Root>();
+      auto rootPtr = sg::createNode("renderer", "Frame")->nodeAs<sg::Frame>();
 
       auto &root     = *rootPtr;
       auto &renderer = root["renderer"];
@@ -504,7 +504,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       }
     }
 
-    void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Root &root)
+    void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Frame &root)
     {
       for (int i = 1; i < ac; i++) {
         std::string arg(av[i]);

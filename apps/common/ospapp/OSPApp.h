@@ -56,7 +56,7 @@ namespace ospray {
 
      protected:
 
-      virtual void render(const std::shared_ptr<sg::Root> &) = 0;
+      virtual void render(const std::shared_ptr<sg::Frame> &) = 0;
       virtual int parseCommandLine(int &ac, const char **&av) = 0;
 
       int initializeOSPRay(int *argc, const char *argv[]);
@@ -127,7 +127,7 @@ namespace ospray {
       // parse command line arguments containing the format:
       //  -sg:nodeName:...:nodeName=value,value,value -- changes value
       //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
-      void parseCommandLineSG(int ac, const char **&av, sg::Root &root);
+      void parseCommandLineSG(int ac, const char **&av, sg::Frame &root);
     };
 
   } // ::ospray::app

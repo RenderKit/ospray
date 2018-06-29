@@ -42,7 +42,7 @@ namespace ospray {
   {
   public:
 
-    AsyncRenderEngine(std::shared_ptr<sg::Root> root);
+    AsyncRenderEngine(std::shared_ptr<sg::Frame> root);
     ~AsyncRenderEngine();
 
     // Properties //
@@ -86,7 +86,7 @@ namespace ospray {
 
     int numOsprayThreads {-1};
 
-    std::shared_ptr<sg::Root> scenegraph;
+    std::shared_ptr<sg::Frame> scenegraph;
 
     utility::TransactionalValue<vec2i> fbSize;
     utility::TransactionalValue<vec2f> pickPos;

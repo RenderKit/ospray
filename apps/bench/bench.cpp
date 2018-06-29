@@ -31,7 +31,7 @@ namespace ospray {
 
     private:
 
-      void render(const std::shared_ptr<sg::Root> &) override;
+      void render(const std::shared_ptr<sg::Frame> &) override;
       int parseCommandLine(int &ac, const char **&av) override;
 
       template <typename T>
@@ -48,7 +48,7 @@ namespace ospray {
                         //             options
     }
 
-    void OSPBenchmark::render(const std::shared_ptr<sg::Root> &root)
+    void OSPBenchmark::render(const std::shared_ptr<sg::Frame> &root)
     {
       for (size_t i = 0; i < numWarmupFrames; ++i)
         root->renderFrame();

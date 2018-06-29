@@ -55,7 +55,7 @@ namespace ospray {
 
     private:
 
-      friend struct Root;
+      friend struct Frame;
 
       // Helper functions //
 

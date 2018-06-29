@@ -21,19 +21,19 @@
 namespace ospray {
   namespace sg {
 
-    Root::Root()
+    Frame::Frame()
     {
       createChild("frameBuffer", "FrameBuffer");
       createChild("camera", "PerspectiveCamera");
       createChild("renderer", "Renderer");
     }
 
-    std::string Root::toString() const
+    std::string Frame::toString() const
     {
-      return "ospray::sg::Root";
+      return "ospray::sg::Frame";
     }
 
-    void Root::preCommit(RenderContext &)
+    void Frame::preCommit(RenderContext &)
     {
       if (child("camera").hasChild("aspect") &&
           child("frameBuffer")["size"].lastModified() >
@@ -71,7 +71,7 @@ namespace ospray {
       clearFB = newFB || newCamera || newRenderer || rChanged || cChanged;
     }
 
-    void Root::postCommit(RenderContext &)
+    void Frame::postCommit(RenderContext &)
     {
       if (clearFB) {
         ospFrameBufferClear(
@@ -83,7 +83,7 @@ namespace ospray {
       }
     }
 
-    void Root::renderFrame(bool verifyCommit)
+    void Frame::renderFrame(bool verifyCommit)
     {
       auto rendererNode = child("renderer").nodeAs<Renderer>();
       auto fbNode = child("frameBuffer").nodeAs<FrameBuffer>();
@@ -98,19 +98,19 @@ namespace ospray {
       rendererNode->renderFrame(fbNode);
     }
 
-    OSPPickResult Root::pick(const vec2f &pickPos)
+    OSPPickResult Frame::pick(const vec2f &pickPos)
     {
       auto rendererNode = child("renderer").nodeAs<Renderer>();
       return rendererNode->pick(pickPos);
     }
 
-    float Root::getLastVariance() const
+    float Frame::getLastVariance() const
     {
       auto rendererNode = child("renderer").nodeAs<Renderer>();
       return rendererNode->getLastVariance();
     }
 
-    OSP_REGISTER_SG_NODE(Root);
+    OSP_REGISTER_SG_NODE(Frame);
 
   } // ::ospray::sg
 } // ::ospray
