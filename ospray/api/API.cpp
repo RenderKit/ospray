@@ -540,10 +540,10 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
-                                        const OSPTextureFormat type,
-                                        void *data,
-                                        const uint32_t _flags)
+extern "C" OSPTexture ospNewTexture2D(const osp::vec2i &size,
+                                      const OSPTextureFormat type,
+                                      void *data,
+                                      const uint32_t _flags)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -578,7 +578,6 @@ OSPRAY_CATCH_BEGIN
   ospSet2i(texture, "size", size.x, size.y);
 
   return texture;
-  //return currentDevice().newTexture2D((const vec2i&)size, type, data, flags);
 }
 OSPRAY_CATCH_END(nullptr)
 

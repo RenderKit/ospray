@@ -245,7 +245,7 @@ typedef struct _OSPManagedObject *OSPManagedObject,
 #endif
 
 /* old (and deprecated) name for OSPTexture */
-typedef OSPTexture OSPTexture2D;
+OSP_DEPRECATED typedef OSPTexture OSPTexture2D;
 
 #ifdef __cplusplus
 extern "C" {

@@ -473,7 +473,7 @@ namespace ospray {
       NOT_IMPLEMENTED;
     }
 
-    OSPTexture2D MPIDistributedDevice::newTexture(const char *)
+    OSPTexture MPIDistributedDevice::newTexture(const char *)
     {
       NOT_IMPLEMENTED;
     }

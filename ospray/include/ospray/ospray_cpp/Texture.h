@@ -14,20 +14,32 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// \file ospray/ospray.h Defines the external OSPRay API */
+#pragma once
 
-// NOTE: this is a single include for all the C++ wrappers around ospray.h
+#include <ospray/ospray_cpp/ManagedObject.h>
 
-#include "ospray_cpp/Camera.h"
-#include "ospray_cpp/Data.h"
-#include "ospray_cpp/Device.h"
-#include "ospray_cpp/FrameBuffer.h"
-#include "ospray_cpp/Geometry.h"
-#include "ospray_cpp/Light.h"
-#include "ospray_cpp/Material.h"
-#include "ospray_cpp/Model.h"
-#include "ospray_cpp/PixelOp.h"
-#include "ospray_cpp/Renderer.h"
-#include "ospray_cpp/Texture.h"
-#include "ospray_cpp/TransferFunction.h"
-#include "ospray_cpp/Volume.h"
+namespace ospray {
+namespace cpp    {
+
+class Texture : public ManagedObject_T<OSPTexture>
+{
+public:
+
+  Texture(const Texture &copy);
+  Texture(OSPTexture existing);
+};
+
+// Inlined function definitions ///////////////////////////////////////////////
+
+inline Texture::Texture(const Texture &copy) :
+  ManagedObject_T<OSPTexture>(copy.handle())
+{
+}
+
+inline Texture::Texture(OSPTexture existing) :
+  ManagedObject_T<OSPTexture>(existing)
+{
+}
+
+}// namespace cpp
+}// namespace ospray
