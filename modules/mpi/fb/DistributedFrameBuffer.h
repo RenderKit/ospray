@@ -156,11 +156,12 @@ namespace ospray {
     std::vector<RealMilliseconds> queueTimes;
     std::vector<RealMilliseconds> workTimes;
     RealMilliseconds finalGatherTime, masterTileWriteTime,
-                     waitFrameFinishTime;
+                     waitFrameFinishTime, compressTime, decompressTime;
+    double compressedPercent;
     std::mutex statsMutex;
 
     std::vector<char> tileGatherBuffer;
-    std::mutex writeGatherTileMutex;
+    std::atomic<size_t> nextTileWrite;
 
     friend struct TileData;
     friend struct WriteMultipleTile;

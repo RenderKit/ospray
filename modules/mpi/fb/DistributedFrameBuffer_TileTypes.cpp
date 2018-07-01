@@ -22,14 +22,14 @@ namespace ospray {
 
   using DFB = DistributedFrameBuffer;
 
-  TileDesc::TileDesc(DFB *dfb, const vec2i &begin,
+  TileDesc::TileDesc(const vec2i &begin,
                      size_t tileID, size_t ownerID)
-    : dfb(dfb), begin(begin), tileID(tileID), ownerID(ownerID)
+    : begin(begin), tileID(tileID), ownerID(ownerID)
   {}
 
   TileData::TileData(DFB *dfb, const vec2i &begin,
                      size_t tileID, size_t ownerID)
-    : TileDesc(dfb,begin,tileID,ownerID)
+    : TileDesc(begin,tileID,ownerID), dfb(dfb)
   {}
 
   AlphaBlendTile_simple::AlphaBlendTile_simple(DistributedFrameBuffer *dfb,

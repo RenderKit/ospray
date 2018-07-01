@@ -17,6 +17,7 @@
 #include <random>
 #include <array>
 #include "mpiCommon/MPICommon.h"
+#include "ospcommon/xml/XML.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
@@ -272,12 +273,13 @@ namespace gensv {
     return loadVolumeBrick(reader, brickId, grid, dimensions, dtype, valueRange);
   }
 
-  std::vector<SharedVolumeBrick> loadBrickedVolume(const FileName &file,
-                                                   const vec3i &dimensions,
-                                                   const std::string &dtype,
-                                                   const vec2f &valueRange,
-                                                   const size_t nbricks,
-                                                   const size_t bricksPerRank)
+  containers::AlignedVector<SharedVolumeBrick>
+    loadBrickedVolume(const FileName &file,
+                      const vec3i &dimensions,
+                      const std::string &dtype,
+                      const vec2f &valueRange,
+                      const size_t nbricks,
+                      const size_t bricksPerRank)
   {
     const int numRanks = mpicommon::numGlobalRanks();
     const int myRank = mpicommon::globalRank();
@@ -290,7 +292,7 @@ namespace gensv {
     RawReader reader(file, vec3sz(dimensions), dtypeSize);
     const vec3sz grid = vec3sz(computeGrid(nbricks));
 
-    std::vector<SharedVolumeBrick> bricks;
+    containers::AlignedVector<SharedVolumeBrick> bricks;
     if (bricksPerRank == nbricks) {
       for (size_t b = 0; b < nbricks; ++b) {
         const vec3sz brickId(b % grid.x,
@@ -359,7 +361,8 @@ namespace gensv {
     vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
-    containers::AlignedVector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
+    const size_t nbytes = fullDims.x * fullDims.y * fullDims.z * dtypeSize;
+    containers::AlignedVector<unsigned char> volumeData(nbytes, 0);
 
     reader.readRegion(brickId * brickDims - vec3sz(ghostOffset),
         vec3sz(fullDims), volumeData.data());
@@ -370,8 +373,8 @@ namespace gensv {
     return vol;
   }
 
-  std::vector<SharedVolumeBrick> loadRMBricks(const FileName &bobDir,
-                                              const size_t bricksPerRank)
+  containers::AlignedVector<SharedVolumeBrick>
+    loadRMBricks(const FileName &bobDir, const size_t bricksPerRank)
   {
     const int numRanks = mpicommon::numGlobalRanks();
     const int myRank = mpicommon::globalRank();
@@ -387,7 +390,7 @@ namespace gensv {
     const size_t dtypeSize = sizeForDtype(dtype);
     LLNLRMReader reader(bobDir);
 
-    std::vector<SharedVolumeBrick> bricks;
+    containers::AlignedVector<SharedVolumeBrick> bricks;
     // TODO: Uneven divisions? Maybe just yell at user?
     size_t bricksPerIter = std::max(size_t(1), size_t(nbricks / numRanks));
     for (size_t i = 0; i < bricksPerRank / bricksPerIter; ++i) {
@@ -431,7 +434,8 @@ namespace gensv {
           vol.volume.set("transferFunction", vol.tfcn);
           vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
-          std::vector<char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
+          const size_t nbytes = fullDims.x * fullDims.y * fullDims.z * dtypeSize;
+          containers::AlignedVector<char> volumeData(nbytes, 0);
 
           reader.loadBlock(b, volumeData);
           vol.volume.setRegion(volumeData.data(), vec3i(0), vec3i(fullDims));
@@ -445,6 +449,82 @@ namespace gensv {
       }
     }
     return bricks;
+  }
+
+  SharedVolumeBrick loadOSPBrick(const FileName &ospFile, const vec2f &valueRange) {
+    auto doc = xml::readXML(ospFile);
+    vec3i dimensions(0);
+    box3f region;
+    vec3f gridOrigin(0), gridSpacing(0);
+    float samplingRate = 0.125;
+    std::string dtype;
+    FileName rawFilename;
+
+    const xml::Node &volumeNode = doc->child[0];
+    for (const xml::Node &e : volumeNode.child) {
+      if (e.name == "dimensions") {
+        std::stringstream str(e.content);
+        str >> dimensions.x >> dimensions.y >> dimensions.z;
+      } else if (e.name == "regionLower") {
+        std::stringstream str(e.content);
+        str >> region.lower.x >> region.lower.y >> region.lower.z;
+      } else if (e.name == "regionUpper") {
+        std::stringstream str(e.content);
+        str >> region.upper.x >> region.upper.y >> region.upper.z;
+      } else if (e.name == "ghostLower") {
+        std::stringstream str(e.content);
+        str >> gridOrigin.x >> gridOrigin.y >> gridOrigin.z;
+      } else if (e.name == "spacing") {
+        std::stringstream str(e.content);
+        str >> gridSpacing.x >> gridSpacing.y >> gridSpacing.z;
+      } else if (e.name == "filename") {
+        rawFilename = ospFile.path() + e.content;
+      } else if (e.name == "voxelType") {
+        dtype = e.content;
+      } else if (e.name == "samplingRate") {
+        // Does the XML stuff trim out the spaces?
+        std::stringstream str(e.content);
+        str >> samplingRate;
+      }
+    }
+
+    std::cout << "Reading brick from volume file:\n"
+      << "Dims: " << dimensions << "\n"
+      << "Region: " << region << "\n"
+      << "gridOrigin: " << gridOrigin << "\n"
+      << "spacing: " << gridSpacing << "\n"
+      << "sampling rate: " << samplingRate << "\n"
+      << "dtype: " << dtype << "\n"
+      << "RAW file: " << rawFilename << "\n" << std::flush;
+
+    LoadedVolume vol;
+    vol.tfcn.set("valueRange", valueRange);
+    vol.tfcn.commit();
+
+    vol.ghostGridOrigin = gridOrigin;
+
+    vol.volume = ospray::cpp::Volume("block_bricked_volume");
+    vol.volume.set("voxelType", dtype.c_str());
+    vol.volume.set("dimensions", dimensions);
+    vol.volume.set("transferFunction", vol.tfcn);
+    vol.volume.set("gridOrigin", vol.ghostGridOrigin);
+    vol.volume.set("samplingRate", samplingRate);
+
+    const size_t dtypeSize = sizeForDtype(dtype);
+    const size_t nbytes = dimensions.x * dimensions.y * dimensions.z * dtypeSize;
+    containers::AlignedVector<char> volumeData(nbytes, 0);
+
+    std::fill(reinterpret_cast<float*>(&volumeData[0]),
+              reinterpret_cast<float*>(&volumeData[volumeData.size() - 1] + 1),
+              float(mpicommon::globalRank()));
+    //std::ifstream fin(rawFilename.c_str(), std::ios::binary);
+    //fin.read(volumeData.data(), nbytes);
+    vol.volume.setRegion(volumeData.data(), vec3i(0), vec3i(dimensions));
+    vol.volume.commit();
+
+    vol.bounds = region;
+    DistributedRegion dregion(vol.bounds, mpicommon::globalRank());
+    return SharedVolumeBrick(vol, dregion);
   }
 
 } // ::gensv

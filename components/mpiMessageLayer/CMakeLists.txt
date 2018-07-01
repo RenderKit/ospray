@@ -16,6 +16,8 @@
 
 SET(MAML_LIBRARY ospray_mpi_maml)
 
+find_package(Snappy REQUIRED)
+
 OSPRAY_CONFIGURE_MPI()
 
 OSPRAY_BUILD_COMPONENT(mpiCommon)
@@ -28,6 +30,7 @@ OSPRAY_CREATE_LIBRARY(${MAML_LIBRARY}
   maml/Context.cpp
 LINK
   ospray_mpi_common
+  Snappy::snappy
 COMPONENT mpi
 )
 

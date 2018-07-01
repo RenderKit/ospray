@@ -73,6 +73,7 @@ namespace ospDDLoader {
   static int   logLevel          = 0;
   static FileName transferFcn;
   static bool llnlrm = false;
+  static int aoSamples = 0;
 
   static vec3f up;
   static vec3f pos;
@@ -164,6 +165,8 @@ namespace ospDDLoader {
         rivl.numVerts = std::stoull(av[++i]);
         rivl.ofsPrims = std::stoull(av[++i]);
         rivl.numPrims = std::stoull(av[++i]);
+      } else if (arg == "-ao") {
+        aoSamples = std::stoi(av[++i]);
       }
     }
   }
@@ -204,7 +207,7 @@ namespace ospDDLoader {
       nbricks = mpicommon::numGlobalRanks();
     }
 
-    std::vector<gensv::SharedVolumeBrick> bricks;
+    containers::AlignedVector<gensv::SharedVolumeBrick> bricks;
     if (!llnlrm) {
       bricks = gensv::loadBrickedVolume(volumeFile, dimensions,
                                         dtype, valueRange,
@@ -252,10 +255,15 @@ namespace ospDDLoader {
      * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
      * regions bounding box.
      */
+    box3f worldBounds(vec3f(0), vec3f(dimensions) - vec3f(1));
     std::vector<gensv::DistributedRegion> regions;
+    std::vector<box3f> ghostRegions;
     for (auto &b : bricks) {
       regions.push_back(b.region);
       model.addVolume(b.vol.volume);
+      // Since the mesh is fully replicated, the whole world bounds
+      // is the ghost region
+      ghostRegions.emplace_back(worldBounds);
     }
     if (!rivl.file.empty()) {
       std::cout << "loading rivl " << rivl.file << "\n";
@@ -281,10 +289,12 @@ namespace ospDDLoader {
     }
     ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
         OSP_CHAR, regions.data());
+    ospray::cpp::Data ghostRegionData(ghostRegions.size() * sizeof(box3f),
+        OSP_CHAR, ghostRegions.data());
     model.set("regions", regionData);
+    model.set("ghostRegions", ghostRegionData);
     model.commit();
 
-    box3f worldBounds(vec3f(0), vec3f(dimensions) - vec3f(1));
     // We must use the global world bounds, not our local bounds
     // when computing the automatically picked camera position.
     auto camera = ospray::cpp::Camera("perspective");
@@ -296,7 +306,7 @@ namespace ospDDLoader {
     ospray::cpp::Renderer renderer = ospray::cpp::Renderer("mpi_raycast");
     renderer.set("model", model);
     renderer.set("camera", camera);
-    renderer.set("aoSamples", 0);
+    renderer.set("aoSamples", aoSamples);
     renderer.set("bgColor", vec3f(0.02));
     renderer.commit();
 

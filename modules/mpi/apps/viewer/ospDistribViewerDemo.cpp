@@ -88,6 +88,8 @@ int bricksPerRank = 1;
 bool llnlrm = false;
 const int IMG_SIZE = 1024;
 
+std::vector<std::string> osp_bricks;
+
 struct RIVLFile {
   std::string file;
   size_t ofsVerts, numVerts;
@@ -184,20 +186,9 @@ void charCallback(GLFWwindow *, unsigned int c) {
   }
 }
 
-int main(int argc, char **argv) {
-  std::string volumeFile, dtype;
-  vec3i dimensions = vec3i(-1);
-  vec2f valueRange = vec2f(-1);
-  size_t nSpheres = 0;
-  float varianceThreshold = 0.0f;
-  FileName transferFcnFile;
-  bool appInitMPI = false;
-  size_t nlocalBricks = 1;
-  float sphereRadius = 0.005;
-  bool transparentSpheres = false;
-  int aoSamples = 0;
-  bool sharedBrickTest = false;
-
+void parseArgs(int argc, char **argv)
+{
+  PING;
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-f") {
@@ -239,6 +230,11 @@ int main(int argc, char **argv) {
       rivl.numVerts = std::stoull(argv[++i]);
       rivl.ofsPrims = std::stoull(argv[++i]);
       rivl.numPrims = std::stoull(argv[++i]);
+    } else if (arg == "-osp-brick") {
+      ++i;
+      for (; i < argc && argv[i][0] != '-'; ++i) {
+        osp_bricks.push_back(argv[i]);
+      }
     }
   }
   if (!volumeFile.empty() && !llnlrm) {
@@ -278,7 +274,21 @@ void runApp()
   std::vector<gensv::LoadedVolume> volumes;
   std::vector<gensv::SharedVolumeBrick> bricks;
   box3f worldBounds;
-  if (!volumeFile.empty()) {
+  if (!osp_bricks.empty()) {
+    if (osp_bricks.size() != worldSize) {
+      throw std::runtime_error("OSP Brick count must match number of ranks");
+    }
+    const std::string my_brick = osp_bricks[rank];
+    bricks.push_back(gensv::loadOSPBrick(my_brick, valueRange));
+
+    MPI_Allreduce(&bricks[0].region.bounds.lower, &worldBounds.lower, 3,
+                  MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(&bricks[0].region.bounds.upper, &worldBounds.upper, 3,
+                  MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+
+    std::cout << "World bounds: " << worldBounds << "\n";
+
+  } else if (!volumeFile.empty()) {
     if (nBricks == -1) {
       nBricks = worldSize;
     }
@@ -412,6 +422,7 @@ void runApp()
     windowState = std::make_shared<WindowState>(app, arcballCamera);
     transferFcn = std::make_shared<ospray::sg::TransferFunction>();
     tfnWidget = std::make_shared<ospray::imgui3D::TransferFunction>(transferFcn);
+    tfnWidget->loadColorMapPresets();
     if (!transferFcnFile.str().empty()) {
       tfnWidget->load(transferFcnFile);
     }
@@ -474,11 +485,12 @@ void runApp()
       tfnWidget->render();
 
       if (transferFcn->childrenLastModified() != tfcnTimeStamp) {
+        transferFcn->child("valueRange").setValue(valueRange);
+        transferFcn->updateChildDataValues();
         tfcnColors = transferFcn->child("colors").nodeAs<ospray::sg::DataVector3f>()->v;
-        const auto &ospAlpha = transferFcn->child("alpha").nodeAs<ospray::sg::DataVector2f>()->v;
+        const auto &ospAlpha = transferFcn->child("opacities").nodeAs<ospray::sg::DataVector1f>()->v;
         tfcnAlphas.clear();
-        std::transform(ospAlpha.begin(), ospAlpha.end(), std::back_inserter(tfcnAlphas),
-            [](const vec2f &a) { return a.y; });
+        std::copy(ospAlpha.begin(), ospAlpha.end(), std::back_inserter(tfcnAlphas));
         app.tfcnChanged = true;
       }
 

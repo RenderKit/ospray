@@ -27,7 +27,7 @@ LLNLRMReader::LLNLRMReader(const ospcommon::FileName &bobDir)
   s = s.substr(3);
   timestep = std::stoi(s);
 }
-void LLNLRMReader::loadBlock(const size_t blockID, std::vector<char> &data) const {
+void LLNLRMReader::loadBlock(const size_t blockID, containers::AlignedVector<char> &data) const {
   if (blockID >= numBlocks()) {
     throw std::runtime_error("Invalid blockID for LLNL RM Data");
   }

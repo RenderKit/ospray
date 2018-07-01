@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <snappy.h>
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_TileTypes.h"
 #include "DistributedFrameBuffer_ispc.h"
@@ -294,10 +295,13 @@ namespace ospray {
   {
     queueTimes.clear();
     workTimes.clear();
-    tileGatherBuffer.clear();
+
+    const size_t finalTileSize = masterMsgSize(colorBufferFormat,
+                                               hasDepthBuffer);
+    tileGatherBuffer.resize(myTiles.size() * finalTileSize, 0);
+    nextTileWrite = 0;
 
     std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
-
     {
       // startNewFrame should only be called by one thread when we start
       // the frame right? I don't think we should need the mutex.
@@ -433,7 +437,7 @@ namespace ospray {
           myTiles.push_back(td);
           allTiles.push_back(td);
         } else {
-          allTiles.push_back(new TileDesc(this, tileStart, tileID, ownerID));
+          allTiles.push_back(new TileDesc(tileStart, tileID, ownerID));
         }
       }
     }
@@ -513,12 +517,62 @@ namespace ospray {
     std::cout << globalRank() << " IN GATHER\n" << std::flush;
 #endif
 
+#if 1
+    auto startCompr = high_resolution_clock::now();
+    size_t compressedSize = snappy::MaxCompressedLength(tileGatherBuffer.size());
+    std::vector<char> compressedBuf(compressedSize, 0);
+    snappy::RawCompress(tileGatherBuffer.data(), tileGatherBuffer.size(),
+                        compressedBuf.data(), &compressedSize);
+    auto endCompr = high_resolution_clock::now();
+
+    compressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
+    compressedPercent = 100.0 * (static_cast<double>(compressedSize) / tileGatherBuffer.size());
+
+    auto startGather = high_resolution_clock::now();
+    // We've got to use an int since Gatherv only takes int counts.
+    // However, it's pretty unlikely we'll reach the point where someone
+    // is sending 2GB in final tile data from a single process
+    const int sendCompressedSize = static_cast<int>(compressedSize);
+    // Get info about how many bytes each proc is sending us
+    std::vector<int> gatherSizes(numGlobalRanks(), 0);
+    MPI_CALL(Gather(&sendCompressedSize, 1, MPI_INT,
+                    gatherSizes.data(), 1, MPI_INT,
+                    masterRank(), world.comm));
+
+    std::vector<int> compressedOffsets(numGlobalRanks(), 0);
+    int offset = 0;
+    for (size_t i = 0; i < gatherSizes.size(); ++i) {
+      compressedOffsets[i] = offset;
+      offset += gatherSizes[i];
+    }
+
+    std::vector<char> compressedResults(offset, 0);
+    MPI_CALL(Gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
+                     compressedResults.data(), gatherSizes.data(),
+                     compressedOffsets.data(), MPI_BYTE,
+                     masterRank(), world.comm));
+    auto endGather = high_resolution_clock::now();
+
+    if (IamTheMaster()) {
+      // Now we must decompress each ranks data to process it, though we
+      // already know how much data each is sending us and where to write it.
+      startCompr = high_resolution_clock::now();
+      tasking::parallel_for(numGlobalRanks(), [&](int i) {
+          snappy::RawUncompress(&compressedResults[compressedOffsets[i]],
+                                gatherSizes[i],
+                                &tileGatherResult[processOffsets[i]]);
+      });
+      endCompr = high_resolution_clock::now();
+      decompressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
+    }
+#else
     auto startGather = high_resolution_clock::now();
     MPI_CALL(Gatherv(tileGatherBuffer.data(), tileGatherBuffer.size(), MPI_BYTE,
                      tileGatherResult.data(), tileBytesExpected.data(),
                      processOffsets.data(), MPI_BYTE,
                      masterRank(), world.comm));
     auto endGather = high_resolution_clock::now();
+#endif
     finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
 
     if (IamTheMaster()) {
@@ -660,12 +714,9 @@ namespace ospray {
         tileErrors.push_back(tile->error);
       }
       else {
-        //mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg().message);
         auto tileMsg = msg().message;
-        std::lock_guard<std::mutex> lock(writeGatherTileMutex);
-        const size_t nextTile = tileGatherBuffer.size();
-        tileGatherBuffer.resize(nextTile + tileMsg->size);
-        std::memcpy(&tileGatherBuffer[nextTile], tileMsg->data, tileMsg->size);
+        const size_t n = nextTileWrite.fetch_add(tileMsg->size);
+        std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
       }
 
       if (isFrameComplete(1)) {
@@ -683,12 +734,8 @@ namespace ospray {
       //incoming(msg().message);
       // TODO: Better unify the master is worker code path
       auto tileMsg = msg().message;
-      {
-        std::lock_guard<std::mutex> lock(writeGatherTileMutex);
-        const size_t nextTile = tileGatherBuffer.size();
-        tileGatherBuffer.resize(nextTile + tileMsg->size);
-        std::memcpy(&tileGatherBuffer[nextTile], tileMsg->data, tileMsg->size);
-      }
+      const size_t n = nextTileWrite.fetch_add(tileMsg->size);
+      std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
       if (isFrameComplete(1)) {
         closeCurrentFrame();
       }
@@ -997,7 +1044,9 @@ namespace ospray {
 
     double localWaitTime = finalGatherTime.count();
     os << "Gather time: " << localWaitTime << "ms\n"
-      << "Waiting for frame: " << waitFrameFinishTime.count() << "ms\n";
+      << "Waiting for frame: " << waitFrameFinishTime.count() << "ms\n"
+      << "Compress time: " << compressTime.count() << "ms\n"
+      << "Compressed buffer size: " << compressedPercent << "%\n";
 
     double maxWaitTime, minWaitTime;
     MPI_Reduce(&localWaitTime, &maxWaitTime, 1, MPI_DOUBLE,
@@ -1008,8 +1057,8 @@ namespace ospray {
     if (mpicommon::world.rank == 0) {
       os << "Max gather time: " << maxWaitTime << "ms\n"
         << "Min gather time: " << minWaitTime << "ms\n"
-        << "Master tile write loop time: " << masterTileWriteTime.count()
-        << "ms\n";
+        << "Master tile write loop time: " << masterTileWriteTime.count() << "ms\n"
+        << "Decompress time: " << decompressTime.count() << "ms\n";
     }
 #endif
   }

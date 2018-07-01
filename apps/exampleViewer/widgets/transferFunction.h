@@ -89,6 +89,9 @@ namespace ospray {
       void removePoint(const float &x);
     };
 
+    // Load up the preset color maps
+    void loadColorMapPresets();
+
   private:
 
     // The indices of the transfer function color presets available
@@ -126,8 +129,6 @@ namespace ospray {
     // overwriting the user's set opacity data. This is done when loading from a file
     // to show the loaded tfcn, but not when switching from the preset picker.
     void setColorMap(const bool useOpacity);
-    // Load up the preset color maps
-    void loadColorMapPresets();
   };
 
   }// ::imgui3D

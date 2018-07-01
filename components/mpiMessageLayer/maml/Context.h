@@ -31,7 +31,7 @@ namespace maml {
   /*! the singleton object that handles all the communication */
   struct OSPRAY_MAML_INTERFACE Context
   {
-    Context();
+    Context(bool enableCompression = false);
     ~Context();
 
     static std::unique_ptr<Context> singleton;
@@ -51,14 +51,6 @@ namespace maml {
     void logMessageTimings(std::ostream &os);
 
   private:
-    using RealMilliseconds = std::chrono::duration<double, std::milli>;
-    std::vector<RealMilliseconds> sendTimes, recvTimes;
-
-    // Sort of a hack to put it into pico_bench
-    using Bandwidth = std::chrono::duration<double>;
-    std::vector<Bandwidth> sendBandwidth, recvBandwidth;
-    std::mutex statsMutex;
-
     /*! start the service; from this point on maml is free to use MPI
       calls to send/receive messages; if your MPI library is not
       thread safe the app should _not_ do any MPI calls until 'stop()'
@@ -120,6 +112,7 @@ namespace maml {
     std::map<MPI_Comm, MessageHandler *> handlers;
 
     bool useTaskingSystem {true};
+    bool compressMessages {false};
 
     // NOTE(jda) - these are only used when _not_ using the tasking sytem...
     std::mutex tasksMutex;
@@ -128,6 +121,16 @@ namespace maml {
     std::atomic<bool> quitThreads{false};
     //std::unique_ptr<ospcommon::AsyncLoop> sendReceiveThread;
     //std::unique_ptr<ospcommon::AsyncLoop> processInboxThread;
+
+    std::mutex statsMutex;
+    using CompressionPercent = std::chrono::duration<double>;
+
+    using RealMilliseconds = std::chrono::duration<double, std::milli>;
+    std::vector<CompressionPercent> compressedSizes;
+    std::vector<RealMilliseconds> sendTimes, recvTimes,
+      compressTimes, decompressTimes;
+
+    bool DETAILED_LOGGING{false};
   };
 
 } // ::maml

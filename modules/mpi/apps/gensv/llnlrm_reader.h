@@ -17,7 +17,7 @@
 #pragma once
 
 #include <cstdio>
-#include <vector>
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/FileName.h"
 #include "ospcommon/vec.h"
 #include "raw_reader.h"
@@ -31,7 +31,8 @@ class LLNLRMReader {
 public:
   // The directory format should be .*/bobNNN where NNN is the timestep
   LLNLRMReader(const ospcommon::FileName &bobDir);
-  void loadBlock(const size_t blockID, std::vector<char> &data) const;
+  void loadBlock(const size_t blockID,
+                 ospcommon::containers::AlignedVector<char> &data) const;
   static size_t numBlocks();
   static vec3sz blockGrid();
   static vec3sz blockSize();

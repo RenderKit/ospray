@@ -31,8 +31,7 @@ namespace ospray {
     alloc'ed in TILE_SIZE pixels */
   struct TileDesc
   {
-    TileDesc(DistributedFrameBuffer *dfb,
-             const vec2i &begin,
+    TileDesc(const vec2i &begin,
              size_t tileID,
              size_t ownerID);
 
@@ -42,7 +41,6 @@ namespace ospray {
         node's tiles */
     virtual bool mine() const { return false; }
 
-    DistributedFrameBuffer *dfb;
     vec2i   begin;
     size_t  tileID, ownerID;
   };
@@ -78,6 +76,7 @@ namespace ospray {
 
     void accumulate(const ospray::Tile &tile);
 
+    DistributedFrameBuffer *dfb;
     float error; // estimated variance of this tile
     // TODO: dynamically allocate to save memory when no ACCUM or VARIANCE
     // even more TODO: Tile contains much more data (e.g. AUX), but using only

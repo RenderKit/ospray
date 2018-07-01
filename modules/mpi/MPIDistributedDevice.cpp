@@ -22,6 +22,7 @@
 #include "ospray/lights/Light.h"
 #include "ospray/transferFunction/TransferFunction.h"
 #include "ospray/api/ISPCDevice.h"
+#include "ospcommon/utility/getEnvVar.h"
 //mpiCommon
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi
@@ -95,10 +96,7 @@ namespace ospray {
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
 
-    MPIDistributedDevice::MPIDistributedDevice()
-    {
-      maml::init();
-    }
+    MPIDistributedDevice::MPIDistributedDevice() {}
 
     MPIDistributedDevice::~MPIDistributedDevice()
     {
@@ -140,6 +138,15 @@ namespace ospray {
           assert(erc == RTC_ERROR_NONE);
         }
         initialized = true;
+
+        auto OSPRAY_FORCE_COMPRESSION =
+          utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
+        // Turning on the compression past 64 ranks seems to be a good
+        // balancing point for cost of compressing vs. performance gain
+        auto enableCompression =
+          OSPRAY_FORCE_COMPRESSION.value_or(mpicommon::numGlobalRanks() >= 16);
+
+        maml::init(enableCompression);
       }
 
       masterRank = getParam<int>("masterRank", 0);

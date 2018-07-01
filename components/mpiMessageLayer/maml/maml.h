@@ -52,7 +52,7 @@ namespace maml {
       calls to send/receive messages; if your MPI library is not
       thread safe the app should _not_ do any MPI calls until 'shutdown()'
       has been called */
-  OSPRAY_MAML_INTERFACE void init();
+  OSPRAY_MAML_INTERFACE void init(bool enableCompression = false);
 
   /*! shutdown the service for this process.
       stops the maml layer; maml will no longer perform any MPI calls;
@@ -76,6 +76,11 @@ namespace maml {
       any time). note this message will not be sent immediately if the
       mpi sending is stopped; it will, however, be placed in the
       outbox to be sent at the next possible opportunity.
+      If a rank sends a message to itself the MPI communication
+      layer will be skipped, however some cost may be incurred
+      when compressing/decompressing the message and accessing
+      the various inbox/outbox vectors.
+
 
       WARNING: calling flush does NOT guarantee that there's no more
       messages coming in to this node: it does mean that all the

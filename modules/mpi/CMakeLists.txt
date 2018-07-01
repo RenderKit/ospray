@@ -20,6 +20,8 @@ IF (OSPRAY_MODULE_MPI)
 
   SET(OSPRAY_DEFAULT_COMPONENT mpi)
 
+  find_package(Snappy REQUIRED)
+
   OSPRAY_CONFIGURE_MPI()
 
   OSPRAY_BUILD_COMPONENT(mpiCommon)
@@ -52,6 +54,7 @@ IF (OSPRAY_MODULE_MPI)
     ospray_module_ispc
     ospray_mpi_common
     ospray_mpi_maml
+    Snappy::snappy
   )
 
   ##############################################################

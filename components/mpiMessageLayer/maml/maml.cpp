@@ -32,9 +32,9 @@ namespace maml {
       calls to send/receive messages; if your MPI library is not
       thread safe the app should _not_ do any MPI calls until 'stop()'
       has been called */
-  void init()
+  void init(bool enableCompression)
   {
-    Context::singleton = make_unique<Context>();
+    Context::singleton = make_unique<Context>(enableCompression);
   }
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;

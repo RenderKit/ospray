@@ -255,7 +255,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     vec4f currentContribution = make_vec4f(0);
     // Shade the current volume interval if it's before the next geometry
     if (firstHit == volRay.t0) {
-      const uniform float volumeEpsilon = 0.0001;
+      const uniform float volumeEpsilon = 0.001;
       // See if we exited the current volume
       if (volRay.t0 >= volRay.t) {
         volRay.t0 = volRay.t + volumeEpsilon;
@@ -266,12 +266,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         if (any(volume == NULL)) {
           print("ACCESSING NULL VOLUME!\n");
         }
-        // TODO: seems like we never advance the ray out of the region
-        // in some cases, and thus never leave this loop. Could this be
-        // case if we intersect the geometry outside the region? It should
-        // not be possible right? because we set the t range.
-        //volRay.t = min(geomRay.t, volRay.t);
-        volRay.t = regionExit;
+        volRay.t = min(geomRay.t, volRay.t);
         foreach_unique(v in volume) {
           currentContribution = DRR_integrateVolumeSegment(self, v, volRay);
         }
@@ -287,7 +282,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       const vec3f specColor = make_vec3f(0.6);
       const vec3f viewDir = normalize(negate(geomRay.dir));
       // TODO: read the light params?
-      const vec3f lightDir = normalize(make_vec3f(1.0));
+      const vec3f lightDir = normalize(make_vec3f(-1.0));
       const vec3f dgNormal = normalize(dg.Ns);
       // Hard-coded Blinn-Phong. TODO: Materials API support
       vec3f geomColor = matColor * make_vec3f(0.1);
@@ -302,13 +297,13 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       }
       currentContribution = make_vec4f(geomColor * occlusion, dg.color.w);
 
+      geomRay.t0 = geomRay.t + self->super.epsilon;
+      geomRay.t = regionExit;
+      geomRay.primID = -1;
+      geomRay.geomID = -1;
+      geomRay.instID = -1;
       // Find the next geometry hit by the ray, if it wasn't opaque
       if (dg.color.w < 0.99) {
-        geomRay.t0 = geomRay.t + self->super.epsilon;
-        geomRay.t = regionExit;
-        geomRay.primID = -1;
-        geomRay.geomID = -1;
-        geomRay.instID = -1;
         traceRay(self->super.model, geomRay);
       }
     }

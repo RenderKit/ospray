@@ -101,14 +101,17 @@ namespace gensv {
   LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
                           const std::string &dtype, const vec2f &valueRange);
 
-  std::vector<SharedVolumeBrick> loadBrickedVolume(const FileName &file,
-                                                   const vec3i &dimensions,
-                                                   const std::string &dtype,
-                                                   const vec2f &valueRange,
-                                                   const size_t nbricks,
-                                                   const size_t bricksPerRank);
+  containers::AlignedVector<SharedVolumeBrick>
+    loadBrickedVolume(const FileName &file,
+                      const vec3i &dimensions,
+                      const std::string &dtype,
+                      const vec2f &valueRange,
+                      const size_t nbricks,
+                      const size_t bricksPerRank);
 
-  std::vector<SharedVolumeBrick> loadRMBricks(const FileName &bobDir,
-                                              const size_t bricksPerRank);
+  containers::AlignedVector<SharedVolumeBrick>
+    loadRMBricks(const FileName &bobDir, const size_t bricksPerRank);
+
+  SharedVolumeBrick loadOSPBrick(const FileName &ospFile, const vec2f &valueRange);
 }
 

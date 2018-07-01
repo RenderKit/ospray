@@ -105,12 +105,15 @@ namespace ospray {
       // Extend the screen-space bounds to include p.xy, and update
       // the min depth.
       void extend(const vec3f &p) {
-        bounds.extend(vec2f(p.x * sign(p.z), p.y * sign(p.z)));
-        bounds.lower.x = clamp(bounds.lower.x);
-        bounds.upper.x = clamp(bounds.upper.x);
-        bounds.lower.y = clamp(bounds.lower.y);
-        bounds.upper.y = clamp(bounds.upper.y);
-        depth = std::max(depth, p.z);
+        if (p.z < 0) {
+          bounds = box2f(vec2f(0), vec2f(1));
+        } else {
+          bounds.extend(vec2f(p.x * sign(p.z), p.y * sign(p.z)));
+          bounds.lower.x = clamp(bounds.lower.x);
+          bounds.upper.x = clamp(bounds.upper.x);
+          bounds.lower.y = clamp(bounds.lower.y);
+          bounds.upper.y = clamp(bounds.upper.y);
+        }
       }
     };
 
@@ -208,14 +211,25 @@ namespace ospray {
         projectedRegions[i].bounds.lower *= dfb->size;
         projectedRegions[i].bounds.upper *= dfb->size;
         regionOrdering.insert(std::make_pair(projectedRegions[i].depth, i));
+        if (mpicommon::globalRank() == 0) {
+          std::cout << "region " << i << " projects too {"
+            << projectedRegions[i].bounds << ", z = " 
+            << projectedRegions[i].depth << "}\n";
+        }
       }
 
       // Compute the sort order for the regions
       std::vector<int> sortOrder(numRegions, 0);
       int depthIndex = 0;
       for (const auto &e : regionOrdering) {
-        sortOrder[e.second] = depthIndex;
-        ++depthIndex;
+        sortOrder[e.second] = depthIndex++;
+      }
+      if (mpicommon::globalRank() == 0) {
+        std::cout << "sortorder: {";
+        for (const auto &e : sortOrder) {
+          std::cout << e << ", ";
+        }
+        std::cout << "}\n" << std::flush;
       }
 
       // Pre-compute the list of tiles that we actually need to render to,
@@ -363,7 +377,7 @@ namespace ospray {
       curWall = high_resolution_clock::now();
 
 #if 1
-      if (DETAILED_LOGGING) {// && frameNumber > 5) {
+      if (DETAILED_LOGGING && frameNumber > 5) {
         const std::array<int, 3> localTimes = {
           duration_cast<milliseconds>(endRender - startRender).count(),
           duration_cast<milliseconds>(endComposite - endRender).count(),
@@ -400,7 +414,7 @@ namespace ospray {
 
         dfb->reportTimings(*statsLog);
         logProcessStatistics(*statsLog);
-        //maml::logMessageTimings(*statsLog);
+        maml::logMessageTimings(*statsLog);
         *statsLog << "-----\n" << std::flush;
       }
 #endif
@@ -499,36 +513,86 @@ namespace ospray {
       vec3f pt = bounds.lower;
       ProjectedPoint proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      vec3f v = pt - camera->pos;
+      screen.depth = dot(v, camera->dir);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+      }
+      // TODO: Manage sign if it's behind camera?
 
       pt.x = bounds.upper.x;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      v = pt - camera->pos;
+      screen.depth = std::max(dot(v, camera->dir), screen.depth);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+      }
 
       pt.y = bounds.upper.y;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      v = pt - camera->pos;
+      screen.depth = std::max(dot(v, camera->dir), screen.depth);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+      }
 
       pt.x = bounds.lower.x;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      v = pt - camera->pos;
+      screen.depth = std::max(dot(v, camera->dir), screen.depth);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+      }
 
       // Do the top of the box
       pt.y = bounds.lower.y;
       pt.z = bounds.upper.z;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      v = pt - camera->pos;
+      screen.depth = std::max(dot(v, camera->dir), screen.depth);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+      }
 
       pt.x = bounds.upper.x;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      v = pt - camera->pos;
+      screen.depth = std::max(dot(v, camera->dir), screen.depth);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+      }
 
       pt.y = bounds.upper.y;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      v = pt - camera->pos;
+      screen.depth = std::max(dot(v, camera->dir), screen.depth);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+      }
 
       pt.x = bounds.lower.x;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
+      v = pt - camera->pos;
+      screen.depth = std::max(dot(v, camera->dir), screen.depth);
+      if (mpicommon::globalRank() == 0) {
+        std::cout << pt << " projects to " << proj.screenPos
+          << ", z = " << dot(v, camera->dir) << "\n";
+        std::cout << std::flush;
+      }
 
       return screen;
     }
