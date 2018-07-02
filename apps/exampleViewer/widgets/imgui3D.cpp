@@ -393,7 +393,8 @@ namespace ospray {
           ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.,1.,1.,1.f));
           ImGui::SetWindowFontScale(currentWidget->fontScale*1.0f);
           font->Scale = 6.f;
-          ImGui::Text("%s", ("OSPRay v" + std::string(OSPRAY_VERSION)).c_str());
+          ImGui::Text("%s", ("OSPRay v" + std::string(OSPRAY_VERSION)
+                + std::string(OSPRAY_VERSION_NOTE)).c_str());
           font->Scale = 1.f;
           ImGui::SetWindowFontScale(currentWidget->fontScale*0.7f);
           ImGui::PopStyleColor(1);
