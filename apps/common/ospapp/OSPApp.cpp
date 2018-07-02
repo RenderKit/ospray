@@ -543,12 +543,18 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           std::reference_wrapper<sg::Node> node_ref = root;
           std::vector<std::shared_ptr<sg::Node>> children;
           while (ss >> child) {
-            if (ss.eof())
-              children = node_ref.get().childrenRecursive(child);
+            try {
+              if (ss.eof())
+                children = node_ref.get().childrenRecursive(child);
+              else
+                node_ref = node_ref.get().childRecursive(child);
+            } catch (...) {
+              std::cerr << "Warning: could not find child: " << child << std::endl;
+            }
           }
 
           if (children.empty()) {
-            std::cerr << "Warning: no children found in sg lookup\n";
+            std::cerr << "Warning: no children found in -sg: lookup\n";
             continue;
           }
 
