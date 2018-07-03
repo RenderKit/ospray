@@ -14,6 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+# avoid CMake policy CMP0072 warning:
+# prefer libGL over libOpenGl for better compatibility with SWR
+set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL REQUIRED)
 
 ospray_disable_compiler_warnings()
