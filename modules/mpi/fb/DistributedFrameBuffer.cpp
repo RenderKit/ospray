@@ -225,11 +225,11 @@ namespace ospray {
                  << "mappable copy on the master" << endl);
       } else {
         localFBonMaster
-          = std::make_shared<LocalFrameBuffer>(numPixels,
-                                               colorBufferFormat,
-                                               hasDepthBuffer,
-                                               false,
-                                               false);
+          = ospcommon::make_unique<LocalFrameBuffer>(numPixels,
+                                                     colorBufferFormat,
+                                                     hasDepthBuffer,
+                                                     false,
+                                                     false);
       }
     }
   }

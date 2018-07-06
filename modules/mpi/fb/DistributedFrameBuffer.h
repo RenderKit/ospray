@@ -210,7 +210,7 @@ namespace ospray {
     /*! local frame buffer on the master used for storing the final
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
-    std::shared_ptr<LocalFrameBuffer> localFBonMaster;
+    std::unique_ptr<LocalFrameBuffer> localFBonMaster;
 
     FrameMode frameMode;
 
