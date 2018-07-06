@@ -55,7 +55,6 @@ namespace ospray {
     inline API_TYPE createDistributedObject(const char *type)
     {
       auto *instance = OSPRAY_TYPE::createInstance(type);
-      instance->refInc();
 
       ObjectHandle handle;
       handle.assign(instance);
@@ -165,10 +164,7 @@ namespace ospray {
                                                   hasAccumBuffer,
                                                   hasVarianceBuffer,
                                                   true);
-      instance->refInc();
-
       handle.assign(instance);
-
       return (OSPFrameBuffer)(int64)handle;
     }
 
@@ -206,8 +202,6 @@ namespace ospray {
     OSPModel MPIDistributedDevice::newModel()
     {
       auto *instance = new DistributedModel;
-      instance->refInc();
-
       ObjectHandle handle;
       handle.assign(instance);
 
@@ -241,7 +235,6 @@ namespace ospray {
                                           const void *init, int flags)
     {
       auto *instance = new Data(nitems, format, init, flags);
-      instance->refInc();
       return (OSPData)instance;
     }
 
@@ -422,7 +415,6 @@ namespace ospray {
     {
       auto renderer = newRenderer(renderer_type);
       auto light = newLight(renderer, light_type);
-      release(renderer);
       return light;
     }
 
@@ -466,6 +458,10 @@ namespace ospray {
       if (!_obj) return;
       auto *obj = lookupObject<ManagedObject>(_obj);
       obj->refDec();
+      auto &handle = reinterpret_cast<ObjectHandle&>(_obj);
+      if (handle.defined()) {
+        handle.freeObject();
+      }
     }
 
     void MPIDistributedDevice::setMaterial(OSPGeometry, OSPMaterial)

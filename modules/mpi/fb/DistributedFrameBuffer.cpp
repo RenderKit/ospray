@@ -224,7 +224,8 @@ namespace ospray {
                  << "format; creating distributed frame buffer WITHOUT having a "
                  << "mappable copy on the master" << endl);
       } else {
-        localFBonMaster = new LocalFrameBuffer(numPixels,
+        localFBonMaster
+          = std::make_shared<LocalFrameBuffer>(numPixels,
                                                colorBufferFormat,
                                                hasDepthBuffer,
                                                false,

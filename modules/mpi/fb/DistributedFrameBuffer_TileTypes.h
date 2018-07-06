@@ -60,6 +60,8 @@ namespace ospray {
              size_t tileID,
              size_t ownerID);
 
+    virtual ~TileData() override = default;
+
     /*! called exactly once at the beginning of each frame */
     virtual void newFrame() = 0;
 
@@ -92,9 +94,8 @@ namespace ospray {
   // -------------------------------------------------------
   /*! specialized tile for plain sort-first rendering, but where the same tile
       region could be computed multiple times (with different accumId). */
-  class WriteMultipleTile : public TileData
+  struct WriteMultipleTile : public TileData
   {
-   public:
     WriteMultipleTile(DistributedFrameBuffer *dfb
         , const vec2i &begin
         , size_t tileID

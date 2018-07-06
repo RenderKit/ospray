@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <memory>
+
 // ospray
 #include "ospray/fb/LocalFB.h"
 // ospray_mpi
@@ -208,7 +210,7 @@ namespace ospray {
     /*! local frame buffer on the master used for storing the final
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
-    Ref<LocalFrameBuffer> localFBonMaster;
+    std::shared_ptr<LocalFrameBuffer> localFBonMaster;
 
     FrameMode frameMode;
 
