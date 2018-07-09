@@ -31,7 +31,7 @@ variables:
   only:
     - devel
     - master
-    - release-1.6.x
+    - /^release-.*$/
 
 .job_template: &test_job
   stage: test-build
@@ -347,7 +347,7 @@ pdf:
     - make pdf
   only:
     - devel
-    - release-1.6.x
+    - /^release-.*$/
     - master
   artifacts:
     paths:
