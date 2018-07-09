@@ -37,6 +37,7 @@ static float lerp(const float a, const float b, const float t)
 }
 
 namespace ospray {
+namespace imgui3D {
 
 TransferFunction::Line::Line() :
   line({vec2f(0, 0),
@@ -512,5 +513,6 @@ void TransferFunction::loadColorMapPresets()
   colors.clear();
 }
 
+}// ::imgui3D
 }// ::ospray
 

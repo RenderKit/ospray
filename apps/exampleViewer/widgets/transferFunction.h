@@ -34,6 +34,7 @@
 #include "common/sg/transferFunction/TransferFunction.h"
 
 namespace ospray {
+  namespace imgui3D {
 
   class OSPRAY_IMGUI3D_INTERFACE TransferFunction
   {
@@ -129,5 +130,6 @@ namespace ospray {
     void loadColorMapPresets();
   };
 
+  }// ::imgui3D
 }// ::ospray
 

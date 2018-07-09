@@ -106,7 +106,7 @@ namespace ospray {
 
     PickMode lastPickQueryType {PICK_CAMERA};
 
-    TransferFunction transferFunctionWidget;
+    imgui3D::TransferFunction transferFunctionWidget;
     int transferFunctionSelection{0};
   };
 
