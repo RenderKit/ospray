@@ -187,7 +187,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
       parseGeneralCommandLine(argc, argv);
 
-      auto rootPtr = sg::createNode("renderer", "Frame")->nodeAs<sg::Frame>();
+      auto rootPtr = sg::createNode("frame0", "Frame")->nodeAs<sg::Frame>();
 
       auto &root     = *rootPtr;
       auto &renderer = root["renderer"];
@@ -286,7 +286,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       }
 
       addLightsToScene(renderer);
-      addImporterNodesToWorld(renderer);
+      addImporterNodesToWorld(root);
       addGeneratorNodesToWorld(renderer);
       addAnimatedImporterNodesToWorld(renderer);
 
@@ -665,8 +665,9 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       }
     }
 
-    void OSPApp::addImporterNodesToWorld(sg::Node &renderer)
+    void OSPApp::addImporterNodesToWorld(sg::Node &root)
     {
+      auto &renderer = root["renderer"];
       auto &world = renderer["world"];
       auto &animation = renderer["animationcontroller"];
 
@@ -674,7 +675,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         FileName fn = file.file;
         if (fn.ext() == "ospsg")
         {
-          auto& cam = renderer["camera"];
+          auto& cam = root["camera"];
           auto dirTS = cam["dir"].lastModified();
           auto posTS = cam["pos"].lastModified();
           auto upTS = cam["up"].lastModified();
