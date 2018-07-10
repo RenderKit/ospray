@@ -303,7 +303,7 @@ void runApp()
   mpicommon::world.barrier();
 
   std::shared_ptr<ospray::sg::TransferFunction> transferFcn;
-  std::shared_ptr<ospray::TransferFunction> tfnWidget;
+  std::shared_ptr<ospray::imgui3D::TransferFunction> tfnWidget;
   std::shared_ptr<WindowState> windowState;
   GLFWwindow *window = nullptr;
   if (rank == 0) {
@@ -322,7 +322,7 @@ void runApp()
 
     windowState = std::make_shared<WindowState>(app, arcballCamera);
     transferFcn = std::make_shared<ospray::sg::TransferFunction>();
-    tfnWidget = std::make_shared<ospray::TransferFunction>(transferFcn);
+    tfnWidget = std::make_shared<ospray::imgui3D::TransferFunction>(transferFcn);
     if (!transferFcnFile.str().empty()) {
       tfnWidget->load(transferFcnFile);
     }
