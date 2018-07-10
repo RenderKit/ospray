@@ -326,6 +326,15 @@ extern "C" {
                                         OSPRenderer,
                                         const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
+  /*! progress and cancel callback function type
+        progress is in (0..1]
+        returned "bool" value != 0 indicates ospRenderFrame should continue rendering
+  */
+  typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
+
+  /*! set callback for given Device to call when an error occurs*/
+  OSPRAY_INTERFACE void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
+    
   //! create a new renderer of given type
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);

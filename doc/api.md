@@ -2021,3 +2021,27 @@ channel then `ospRenderFrame` returns an estimate of the current
 variance of the rendered image, otherwise `inf` is returned. The
 estimated variance can be used by the application as a quality indicator
 and thus to decide whether to stop or to continue progressive rendering.
+
+### Progress and Cancel {-}
+
+To be informed about the progress of rendering the current frame the
+application can register a callback function of type
+
+    typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
+
+via
+
+    void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
+
+The provided user pointer `userPtr` is passed as first argument to the
+callback function^[That way applications can also register a member
+function of a C++ class together with the `this` pointer as `userPtr`.]
+and the reported progress is in (0–1]. If the callback function returns
+zero than the application requests to cancel rendering, i.e. the current
+`ospRenderFrame` will return at the first opportunity and the content of
+the frambuffer will be undefined. Therefore, better clear the
+framebuffer with `ospFrameBufferClear` then before a subsequent call of
+`ospRenderFrame`.
+
+Passing `NULL` as `OSPProgressFunc` function pointer disables the
+progress callback.
