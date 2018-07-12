@@ -74,6 +74,9 @@ namespace ospray {
     vec2i numTiles;
     vec2i maxValidPixelID;
 
+    /*! buffer format of the color buffer */
+    ColorBufferFormat colorBufferFormat;
+
     /*! indicates whether the app requested this frame buffer to have
         an (application-mappable) depth buffer */
     bool hasDepthBuffer;
@@ -83,9 +86,6 @@ namespace ospray {
     bool hasVarianceBuffer;
     bool hasNormalBuffer;
     bool hasAlbedoBuffer;
-
-    /*! buffer format of the color buffer */
-    ColorBufferFormat colorBufferFormat;
 
     //! This marks the global number of frames that have been rendered since
     //! the last ospFramebufferClear() has been called.

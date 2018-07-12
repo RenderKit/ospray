@@ -1958,7 +1958,7 @@ To set a pixel operation to the given framebuffer use
 
     void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
 
-#### Tone Mapper
+#### Tone Mapper {-}
 
 The tone mapper is a pixel operation which implements a generic filmic tone
 mapping operator. Using the default parameters it approximates the Academy

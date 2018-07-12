@@ -163,12 +163,13 @@ namespace ospray {
 
   const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
   {
-    const void *buf = nullptr;
+    const void *buf;
     switch (channel) {
       case OSP_FB_COLOR: buf = colorBuffer; break;
       case OSP_FB_DEPTH: buf = depthBuffer; break;
       case OSP_FB_NORMAL: buf = normalBuffer; break;
       case OSP_FB_ALBEDO: buf = albedoBuffer; break;
+      default: buf = nullptr; break;
     }
 
     if (buf)
