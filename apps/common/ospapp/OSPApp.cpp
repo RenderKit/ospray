@@ -554,7 +554,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           }
 
           if (children.empty()) {
-            std::cerr << "Warning: no children found in -sg: lookup\n";
+            std::cerr << "Warning: no children found for " << av[i] << " lookup\n";
             continue;
           }
 
