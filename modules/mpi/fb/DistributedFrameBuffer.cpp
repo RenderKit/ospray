@@ -652,6 +652,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
         TileData *td = this->myTiles[taskIndex];
         assert(td);
         const auto bytes = TILE_SIZE * TILE_SIZE * sizeof(float);
+        // XXX needed? DFB_accumulateTile writes when accumId==0
         if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
           memset(td->accum.r, 0, bytes);
           memset(td->accum.g, 0, bytes);

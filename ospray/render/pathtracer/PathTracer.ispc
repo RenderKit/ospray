@@ -454,7 +454,7 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
 
     for (uniform int p = 0; p < blocks; p++) {
       const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
-      setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
+      setTile(tile, pixel, screenSample);
     }
   }
 }
