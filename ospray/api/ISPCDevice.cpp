@@ -94,30 +94,12 @@ namespace ospray {
                                    const uint32 channels)
     {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
-      bool hasDepthBuffer    = (channels & OSP_FB_DEPTH) != 0;
-      bool hasAccumBuffer    = (channels & OSP_FB_ACCUM) != 0;
-      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE) != 0;
 
-      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,
-                                             hasAccumBuffer,
-                                             hasVarianceBuffer);
+      FrameBuffer *fb = new LocalFrameBuffer(size, colorBufferFormat, channels);
       return (OSPFrameBuffer)fb;
     }
 
 
-      /*! clear the specified channel(s) of the frame buffer specified in
-       *  'whichChannels'
-
-        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.
-
-        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.
-
-        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
-        and reset accumID.
-      */
     void ISPCDevice::frameBufferClear(OSPFrameBuffer _fb,
                                        const uint32 fbChannelFlags)
     {
@@ -128,14 +110,10 @@ namespace ospray {
 
     /*! map frame buffer */
     const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,
-                                            OSPFrameBufferChannel channel)
+                                           OSPFrameBufferChannel channel)
     {
       LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
-      switch (channel) {
-      case OSP_FB_COLOR: return fb->mapColorBuffer();
-      case OSP_FB_DEPTH: return fb->mapDepthBuffer();
-      default: return nullptr;
-      }
+      return fb->mapBuffer(channel);
     }
 
     /*! unmap previously mapped frame buffer */

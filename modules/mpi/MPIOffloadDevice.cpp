@@ -487,11 +487,7 @@ namespace ospray {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
 
-      switch (channel) {
-      case OSP_FB_COLOR: return fb->mapColorBuffer();
-      case OSP_FB_DEPTH: return fb->mapDepthBuffer();
-      default: return nullptr;
-      }
+      return fb->mapBuffer(channel);
     }
 
     /*! unmap previously mapped frame buffer */

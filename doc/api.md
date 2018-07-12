@@ -1889,12 +1889,14 @@ values of `OSPFrameBufferChannel` listed in the table below.
   OSP_FB_COLOR     RGB color including alpha
   OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float
   OSP_FB_ACCUM     accumulation buffer for progressive refinement
-  OSP_FB_VARIANCE  estimate of the current variance if OSP_FB_ACCUM is also present, see [rendering]
+  OSP_FB_VARIANCE  for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
+  OSP_FB_NORMAL    accumulated screen-space normal of the first hit, as vec3f
+  OSP_FB_ALBEDO    accumulated material albedo (color without illumination) at the first hit, as vec3f
   ---------------- -----------------------------------------------------------
   : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
   naming optional information the framebuffer can store. These values
   can be combined by bitwise OR when passed to `ospNewFrameBuffer` or
-  `ospClearFrameBuffer`.
+  `ospFrameBufferClear`.
 
 If a certain channel value is _not_ specified, the given buffer channel
 will not be present. Note that ospray makes a very clear distinction
@@ -1920,7 +1922,7 @@ access the stored pixel information – via
     const void *ospMapFrameBuffer(OSPFrameBuffer,
                                   const OSPFrameBufferChannel = OSP_FB_COLOR);
 
-Note that only `OSP_FB_COLOR` or `OSP_FB_DEPTH` can be mapped. The
+Note that `OSP_FB_ACCUM` or `OSP_FB_VARIANCE` cannot be mapped. The
 origin of the screen coordinate system in OSPRay is the lower left
 corner (as in OpenGL), thus the first pixel addressed by the returned
 pointer is the lower left pixel of the image.
@@ -1934,11 +1936,11 @@ The individual channels of a framebuffer can be cleared with
 
     void ospFrameBufferClear(OSPFrameBuffer, const uint32_t frameBufferChannels);
 
-When selected, `OSP_FB_COLOR` will clear the color buffer to black
-`(0, 0, 0, 0)`, `OSP_FB_DEPTH` will clear the depth buffer to `inf`,
-`OSP_FB_ACCUM` will clear the accumulation buffer to black, resets the
-accumulation counter `accumID` and also clears the variance buffer (if
-present) to `inf`.
+When selected, `OSP_FB_COLOR` will clear the color buffer to black `(0,
+0, 0, 0)`, `OSP_FB_DEPTH` will clear the depth buffer to `inf`.
+`OSP_FB_ACCUM` will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
+`OSP_FB_NORMAL`, and `OSP_FB_ALBEDO`, if present) and resets the
+accumulation counter `accumID`.
 
 ### Pixel Operation {-}
 

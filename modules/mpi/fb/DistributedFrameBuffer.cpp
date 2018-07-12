@@ -190,13 +190,10 @@ namespace ospray {
   DFB::DistributedFrameBuffer(const vec2i &numPixels,
                               ObjectHandle myId,
                               ColorBufferFormat colorBufferFormat,
-                              bool hasDepthBuffer,
-                              bool hasAccumBuffer,
-                              bool hasVarianceBuffer,
+                              const uint32 channels,
                               bool masterIsAWorker)
     : MessageHandler(myId),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
-                  hasAccumBuffer,hasVarianceBuffer),
+      FrameBuffer(numPixels, colorBufferFormat, channels),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_MULTIPLE),
@@ -226,10 +223,8 @@ namespace ospray {
       } else {
         localFBonMaster
           = ospcommon::make_unique<LocalFrameBuffer>(numPixels,
-                                                     colorBufferFormat,
-                                                     hasDepthBuffer,
-                                                     false,
-                                                     false);
+              colorBufferFormat,
+              channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
       }
     }
   }
@@ -379,26 +374,14 @@ namespace ospray {
     createTiles();
   }
 
-  const void *DFB::mapDepthBuffer()
+  const void *DFB::mapBuffer(OSPFrameBufferChannel channel)
   {
     if (!localFBonMaster) {
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the depth "
-                               "buffer of a frame buffer that doesn't have a "
-                               "host-side color buffer");
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' a frame "
+                      "buffer that doesn't have a host-side correspondence");
     }
     assert(localFBonMaster);
-    return localFBonMaster->mapDepthBuffer();
-  }
-
-  const void *DFB::mapColorBuffer()
-  {
-    if (!localFBonMaster) {
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the color "
-                               "buffer of a frame buffer that doesn't have a "
-                               "host-side color buffer");
-    }
-    assert(localFBonMaster);
-    return localFBonMaster->mapColorBuffer();
+    return localFBonMaster->mapBuffer(channel);
   }
 
   void DFB::unmap(const void *mappedMem)

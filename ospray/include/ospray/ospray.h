@@ -102,7 +102,9 @@ typedef enum
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
-  OSP_FB_VARIANCE=(1<<3)
+  OSP_FB_VARIANCE=(1<<3),
+  OSP_FB_NORMAL=(1<<4), // in screenspace
+  OSP_FB_ALBEDO=(1<<5)
 } OSPFrameBufferChannel;
 
 /*! flags that can be passed to OSPNewData; can be OR'ed together */

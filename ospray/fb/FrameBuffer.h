@@ -32,13 +32,10 @@ namespace ospray {
 
     FrameBuffer(const vec2i &size,
                 ColorBufferFormat colorBufferFormat,
-                bool hasDepthBuffer,
-                bool hasAccumBuffer,
-                bool hasVarianceBuffer = false);
+                const uint32 channels);
     virtual ~FrameBuffer() override = default;
 
-    virtual const void *mapDepthBuffer() = 0;
-    virtual const void *mapColorBuffer() = 0;
+    virtual const void *mapBuffer(OSPFrameBufferChannel channel) = 0;
 
     virtual void unmap(const void *mappedMem) = 0;
     virtual void setTile(Tile &tile) = 0;
@@ -84,6 +81,8 @@ namespace ospray {
         an accumulation buffer */
     bool hasAccumBuffer;
     bool hasVarianceBuffer;
+    bool hasNormalBuffer;
+    bool hasAlbedoBuffer;
 
     /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;

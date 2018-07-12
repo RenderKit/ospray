@@ -75,9 +75,7 @@ namespace ospray {
     DistributedFrameBuffer(const vec2i &numPixels,
                            ObjectHandle myHandle,
                            ColorBufferFormat,
-                           bool hasDepthBuffer,
-                           bool hasAccumBuffer,
-                           bool hasVarianceBuffer,
+                           const uint32 channels,
                            bool masterIsAWorker = false);
 
     ~DistributedFrameBuffer() override ;
@@ -86,8 +84,7 @@ namespace ospray {
     // framebuffer / device interface
     // ==================================================================
 
-    const void *mapDepthBuffer() override;
-    const void *mapColorBuffer() override;
+    const void *mapBuffer(OSPFrameBufferChannel channel) override;
     void unmap(const void *mappedMem) override;
 
     /*! \brief clear (the specified channels of) this frame buffer

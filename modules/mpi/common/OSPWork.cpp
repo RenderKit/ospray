@@ -185,17 +185,12 @@ namespace ospray {
 
       void CreateFrameBuffer::run()
       {
-        const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
-        const bool hasAccumBuffer    = channels & OSP_FB_ACCUM;
-        const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
 
         FrameBuffer *fb
           = new DistributedFrameBuffer(dimensions, handle,
-                                       format, hasDepthBuffer,
-                                       hasAccumBuffer, hasVarianceBuffer);
+                                       format, channels);
         handle.assign(fb);
       }
 

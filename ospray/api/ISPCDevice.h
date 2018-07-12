@@ -187,6 +187,9 @@ namespace ospray {
 
         if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
+
+        if whichChannel&OSP_FB_NORMAL!=0, clear the normal buffer to 0,0,1.
+        if whichChannel&OSP_FB_ALBEDO!=0, clear the albedo buffer to 0,0,0.
       */
       void frameBufferClear(OSPFrameBuffer _fb,
                                     const uint32 fbChannelFlags) override;

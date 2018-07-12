@@ -153,16 +153,8 @@ namespace ospray {
                                             const OSPFrameBufferFormat mode,
                                             const uint32 channels)
     {
-      const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
-      const bool hasAccumBuffer    = channels & OSP_FB_ACCUM;
-      const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-
       ObjectHandle handle;
-
-      auto *instance = new DistributedFrameBuffer(size, handle, mode,
-                                                  hasDepthBuffer,
-                                                  hasAccumBuffer,
-                                                  hasVarianceBuffer,
+      auto *instance = new DistributedFrameBuffer(size, handle, mode, channels,
                                                   true);
       handle.assign(instance);
       return (OSPFrameBuffer)(int64)handle;
@@ -178,11 +170,7 @@ namespace ospray {
 
       auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
 
-      switch (channel) {
-      case OSP_FB_COLOR: return fb.mapColorBuffer();
-      case OSP_FB_DEPTH: return fb.mapDepthBuffer();
-      default: return nullptr;
-      }
+      return fb.mapBuffer(channel);
     }
 
     void MPIDistributedDevice::frameBufferUnmap(const void *mapped,
