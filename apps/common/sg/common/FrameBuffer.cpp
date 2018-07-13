@@ -61,6 +61,20 @@ namespace ospray {
 
     void FrameBuffer::postCommit(RenderContext &)
     {
+      bool removeToneMapper = false;
+      if (child("toneMapping").lastModified() >= lastCommitted()) {
+        bool toneMapping = child("toneMapping").valueAs<bool>();
+        if (toneMapping) {
+          toneMapper = ospNewPixelOp("tonemapper");
+          ospCommit(toneMapper);
+          ospSetPixelOp(ospFrameBuffer, toneMapper);
+        } else {
+          ospRelease(toneMapper);
+          toneMapper = nullptr;
+          removeToneMapper = true;
+        }
+      }
+
       // Avoid clearing the framebuffer when only tonemapping parameters have been changed
       if (lastModified() >= lastCommitted()
           || child("size").lastModified() >= lastCommitted()
@@ -68,22 +82,13 @@ namespace ospray {
           || child("useAccumBuffer").lastModified() >= lastCommitted()
           || child("useVarianceBuffer").lastModified() >= lastCommitted()
           || child("useSRGB").lastModified() >= lastCommitted()
-          || child("toneMapping").lastModified() >= lastCommitted())
+          || removeToneMapper)
       {
         std::string displayWall = child("displayWall").valueAs<std::string>();
         this->displayWallStream = displayWall;
 
         destroyFB();
         createFB();
-
-        bool toneMapping = child("toneMapping").valueAs<bool>();
-        if (toneMapping) {
-          toneMapper = ospNewPixelOp("tonemapper");
-          ospCommit(toneMapper);
-          ospSetPixelOp(ospFrameBuffer, toneMapper);
-        } else {
-          toneMapper = nullptr;
-        }
 
         if (displayWall != "") {
           ospLoadModule("displayWald");
@@ -173,6 +178,8 @@ namespace ospray {
                                          OSP_FB_COLOR |
                                          (useAccum ? OSP_FB_ACCUM : 0) |
                                          (useVariance ? OSP_FB_VARIANCE : 0));
+      if (toneMapper)
+        ospSetPixelOp(ospFrameBuffer, toneMapper);
       setValue(ospFrameBuffer);
     }
 
