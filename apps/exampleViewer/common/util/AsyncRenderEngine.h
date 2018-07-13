@@ -69,10 +69,26 @@ namespace ospray {
     bool          hasNewPickResult();
     OSPPickResult getPickResult();
 
-    const std::vector<uint32_t> &mapFramebuffer();
-    void                         unmapFramebuffer();
-
+    class Framebuffer
+    {
+    public:
+      vec2i size() const noexcept { return size_; }
+      OSPFrameBufferFormat format() const noexcept { return format_; }
+      void resize(const vec2i& size, const OSPFrameBufferFormat format);
+      void copy(const uint8_t* src) { if (src) memcpy(buf.data(), src, bytes); }
+      void adapt(const Framebuffer& other);
+      const uint8_t* data() const noexcept { return buf.data(); }
     private:
+      vec2i size_;
+      OSPFrameBufferFormat format_;
+      size_t bytes;
+      std::vector<uint8_t> buf;
+    };
+
+    const Framebuffer& mapFramebuffer();
+    void unmapFramebuffer();
+
+  private:
 
     // Helper functions //
 
@@ -88,14 +104,11 @@ namespace ospray {
 
     std::shared_ptr<sg::Frame> scenegraph;
 
-    utility::TransactionalValue<vec2i> fbSize;
     utility::TransactionalValue<vec2f> pickPos;
     utility::TransactionalValue<OSPPickResult> pickResult;
 
-    int nPixels {0};
-
-    std::mutex fbMutex;
-    utility::DoubleBufferedValue<std::vector<uint32_t>> pixelBuffers;
+    std::mutex fbMutex; // protect the front buffer when it is mapped 
+    utility::DoubleBufferedValue<Framebuffer> frameBuffers;
 
     std::atomic<bool> newPixels {false};
 

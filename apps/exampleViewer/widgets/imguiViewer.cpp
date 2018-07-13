@@ -239,8 +239,6 @@ namespace ospray {
       renderer(scenegraph->child("renderer").nodeAs<sg::Renderer>()),
       renderEngine(scenegraph)
   {
-    frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
-
     auto OSPRAY_DYNAMIC_LOADBALANCER=
       utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
 
@@ -255,7 +253,6 @@ namespace ospray {
       bbox.upper = vec3f(5,10,5);
     }
     setWorldBounds(bbox);
-    renderEngine.setFbSize({1024, 768});
 
     renderEngine.start();
 
@@ -298,14 +295,7 @@ namespace ospray {
   void ImGuiViewer::reshape(const vec2i &newSize)
   {
     ImGui3DWidget::reshape(newSize);
-    windowSize = newSize;
-
-    viewPort.modified = true;
-
-    renderEngine.setFbSize(newSize);
     scenegraph->child("frameBuffer")["size"].setValue(newSize);
-
-    pixelBuffer.resize(newSize.x * newSize.y);
   }
 
   void ImGuiViewer::keypress(char key)
@@ -324,7 +314,7 @@ namespace ospray {
       toggleRenderingPaused();
       break;
     case '!':
-      saveScreenshot("ospexampleviewer");
+      saveScreenshot = true;
       break;
     case 'X':
       if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0)) {
@@ -403,13 +393,6 @@ namespace ospray {
     fflush(stdout);
   }
 
-  void ImGuiViewer::saveScreenshot(const std::string &basename)
-  {
-    utility::writePPM(basename + ".ppm",
-                      windowSize.x, windowSize.y, pixelBuffer.data());
-    std::cout << "saved current frame to '" << basename << ".ppm'" << std::endl;
-  }
-
   void ImGuiViewer::toggleRenderingPaused()
   {
     renderingPaused = !renderingPaused;
@@ -449,30 +432,47 @@ namespace ospray {
       viewPort.modified = false;
     }
 
-    if (renderEngine.hasNewFrame()) {
-      auto &mappedFB = renderEngine.mapFramebuffer();
-      size_t nPixels = windowSize.x * windowSize.y;
+    renderFPS = renderEngine.lastFrameFps();
 
-      if (mappedFB.size() == nPixels) {
-        auto *srcPixels = mappedFB.data();
-        auto *dstPixels = pixelBuffer.data();
-        memcpy(dstPixels, srcPixels, nPixels * sizeof(uint32_t));
-        lastFrameFPS = renderEngine.lastFrameFps();
-        renderTime = 1.f/lastFrameFPS;
+    auto &mappedFB = renderEngine.mapFramebuffer();
+    switch (mappedFB.format()) {
+      default: /* fallthrough */
+      case OSP_FB_NONE:
+        frameBufferMode = ImGui3DWidget::FRAMEBUFFER_NONE;
+        break;
+      case OSP_FB_RGBA8: /* fallthrough */
+      case OSP_FB_SRGBA:
+        frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
+        break;
+      case OSP_FB_RGBA32F:
+        frameBufferMode = ImGui3DWidget::FRAMEBUFFER_FLOAT;
+        break;
+    }
+    fbSize = mappedFB.size();
+    ucharFB = (uint32_t *)mappedFB.data();
+
+    ImGui3DWidget::display();
+
+    if (saveScreenshot) {
+      std::string filename("ospexampleviewer");
+      if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_UCHAR) {
+        filename += ".ppm";
+        utility::writePPM(filename, fbSize.x, fbSize.y, ucharFB);
+      } else {
+        filename += ".pfm";
+        utility::writePFM(filename, fbSize.x, fbSize.y, floatFB);
       }
-
-      renderEngine.unmapFramebuffer();
+      std::cout << "saved current frame to '" << filename << "'" << std::endl;
+      saveScreenshot = false;
     }
 
-    ucharFB = pixelBuffer.data();
-    ImGui3DWidget::display();
+    renderEngine.unmapFramebuffer();
+    // that pointer is no longer valid, so set it to null
+    ucharFB = nullptr;
 
     lastTotalTime = ImGui3DWidget::totalTime;
     lastGUITime = ImGui3DWidget::guiTime;
     lastDisplayTime = ImGui3DWidget::displayTime;
-
-    // that pointer is no longer valid, so set it to null
-    ucharFB = nullptr;
   }
 
   void ImGuiViewer::buildGui()
@@ -521,7 +521,7 @@ namespace ospray {
         toggleRenderingPaused();
 
       if (ImGui::MenuItem("Take Screenshot"))
-          saveScreenshot("ospexampleviewer");
+          saveScreenshot = true;
 
       if (ImGui::MenuItem("Quit")) {
         renderEngine.stop();
@@ -583,7 +583,7 @@ namespace ospray {
     if (ImGui::CollapsingHeader("Rendering Statistics", "Rendering Statistics",
                                 true, false)) {
       ImGui::NewLine();
-      ImGui::Text("OSPRay render rate: %.1f fps", lastFrameFPS);
+      ImGui::Text("OSPRay render rate: %.1f fps", renderFPS);
       ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);

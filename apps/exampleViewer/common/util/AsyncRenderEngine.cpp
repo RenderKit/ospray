@@ -43,10 +43,7 @@ namespace ospray {
                                  //      be set to 0
       static int counter = 0;
       if (sgFB->childrenLastModified() > lastFTime || !once) {
-        auto size = sgFB->child("size").valueAs<vec2i>();
-        nPixels = size.x * size.y;
-        pixelBuffers.front().resize(nPixels);
-        pixelBuffers.back().resize(nPixels);
+        frameBuffers.back().resize(sgFB->size(), sgFB->format());
         lastFTime = sg::TimeStamp();
       }
 
@@ -62,15 +59,13 @@ namespace ospray {
       once = true;
       fps.stop();
 
-      auto *srcPB = (uint32_t*)sgFB->map();
-      auto *dstPB = (uint32_t*)pixelBuffers.back().data();
-
-      memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
-
+      auto srcPB = (uint8_t*)sgFB->map();
+      frameBuffers.back().copy(srcPB);
       sgFB->unmap(srcPB);
 
       if (fbMutex.try_lock()) {
-        pixelBuffers.swap();
+        frameBuffers.front().adapt(frameBuffers.back());
+        frameBuffers.swap();
         newPixels = true;
         fbMutex.unlock();
       }
@@ -80,11 +75,6 @@ namespace ospray {
   AsyncRenderEngine::~AsyncRenderEngine()
   {
     stop();
-  }
-
-  void AsyncRenderEngine::setFbSize(const ospcommon::vec2i &size)
-  {
-    fbSize = size;
   }
 
   void AsyncRenderEngine::start(int numOsprayThreads)
@@ -165,11 +155,11 @@ namespace ospray {
     return pickResult.get();
   }
 
-  const std::vector<uint32_t> &AsyncRenderEngine::mapFramebuffer()
+  const AsyncRenderEngine::Framebuffer &AsyncRenderEngine::mapFramebuffer()
   {
     fbMutex.lock();
     newPixels = false;
-    return pixelBuffers.front();
+    return frameBuffers.front();
   }
 
   void AsyncRenderEngine::unmapFramebuffer()
@@ -181,6 +171,38 @@ namespace ospray {
   {
     if (state == ExecState::INVALID)
       state = ExecState::STOPPED;
+  }
+
+  // Framebuffer impl
+  void AsyncRenderEngine::Framebuffer::resize(const vec2i& size,
+      const OSPFrameBufferFormat format)
+  {
+    format_ = format;
+    size_ = size;
+    bytes = size.x * size.y;
+    switch (format) {
+      default: /* fallthrough */
+      case OSP_FB_NONE:
+        bytes = 0;
+        size_ = vec2i(0);
+        break;
+      case OSP_FB_RGBA8: /* fallthrough */
+      case OSP_FB_SRGBA:
+        bytes *= sizeof(uint32_t);
+        break;
+      case OSP_FB_RGBA32F:
+        bytes *= 4*sizeof(float);
+        break;
+    }
+    buf.reserve(bytes);
+  }
+
+  void AsyncRenderEngine::Framebuffer::adapt(const Framebuffer& other)
+  {
+    format_ = other.format_;
+    size_ = other.size_;
+    bytes = other.bytes;
+    buf.reserve(bytes);
   }
 
 }// namespace ospray

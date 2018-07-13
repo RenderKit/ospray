@@ -121,9 +121,6 @@ namespace ospray {
        virtual void motion(const vec2i &pos);
        virtual void mouseButton(int button, int action, int mods);
        virtual void reshape(const vec2i &newSize);
-       /*! display this window. By default this will just clear this
-           window's framebuffer; it's up to the user to override this fct
-           to do something more useful */
        virtual void display();
 
        virtual void buildGui();
@@ -164,7 +161,6 @@ namespace ospray {
        /*! camera rotation speed modifier - affects how many units the
           camera _rotates_ with each unit on the screen */
        float rotateSpeed;
-       FrameBufferMode frameBufferMode;
 
        /*! recompute current viewPort's frame from cameras 'from',
            'at', 'up' values. */
@@ -175,7 +171,7 @@ namespace ospray {
        static bool animating;
        static bool showGui;
        double displayTime;
-       double renderTime;
+       double renderFPS;
        double guiTime;
        double totalTime;
        float  fontScale;
@@ -185,7 +181,7 @@ namespace ospray {
 
        bool exitRequestedByUser{false};
        /*! pointer to the frame buffer data. it is the repsonsiblity of
-           the applicatoin derived from this class to properly allocate
+           the application derived from this class to properly allocate
            and deallocate the frame buffer pointer */
        union {
          /*! uchar[4] RGBA-framebuffer, if applicable */
@@ -193,6 +189,8 @@ namespace ospray {
          /*! float[4] RGBA-framebuffer, if applicable */
          vec3fa *floatFB;
        };
+       FrameBufferMode frameBufferMode;
+       vec2i fbSize; // can be different to windowSize, e.g. during resizing
 
        GLFWwindow *window {nullptr};
 

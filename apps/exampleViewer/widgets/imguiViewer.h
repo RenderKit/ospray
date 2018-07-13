@@ -52,7 +52,6 @@ namespace ospray {
     void resetView();
     void resetDefaultView();
     void printViewport();
-    void saveScreenshot(const std::string &basename);
     void toggleRenderingPaused();
 
     void display() override;
@@ -83,7 +82,6 @@ namespace ospray {
 
     // Data //
 
-    double lastFrameFPS;
     double lastGUITime;
     double lastDisplayTime;
     double lastTotalTime;
@@ -91,6 +89,7 @@ namespace ospray {
 
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
+    bool saveScreenshot {false}; // write next mapped framebuffer to disk
 
     std::shared_ptr<sg::Frame> scenegraph;
     std::shared_ptr<sg::Renderer> renderer;
@@ -99,7 +98,6 @@ namespace ospray {
     std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
 
     AsyncRenderEngine renderEngine;
-    std::vector<uint32_t> pixelBuffer;
 
     bool useDynamicLoadBalancer{false};
     int  numPreAllocatedTiles{4};

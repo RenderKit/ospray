@@ -52,7 +52,15 @@ namespace ospray {
 
       createChild("acesColor", "bool", true);
 
-      createChild("useSRGB", "bool", true);
+      std::vector<Any> whiteList;
+      for(auto const& el : colorFormats)
+        whiteList.push_back(el.first);
+      createChild("colorFormat", "string", whiteList[0],
+                  NodeFlags::required |
+                  NodeFlags::gui_combo,
+                  "format of the color buffer");
+      child("colorFormat").setWhiteList(whiteList);
+
       createChild("useAccumBuffer", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
 
@@ -81,7 +89,7 @@ namespace ospray {
           || child("displayWall").lastModified() >= lastCommitted()
           || child("useAccumBuffer").lastModified() >= lastCommitted()
           || child("useVarianceBuffer").lastModified() >= lastCommitted()
-          || child("useSRGB").lastModified() >= lastCommitted()
+          || child("colorFormat").lastModified() >= lastCommitted()
           || removeToneMapper)
       {
         std::string displayWall = child("displayWall").valueAs<std::string>();
@@ -125,10 +133,9 @@ namespace ospray {
       }
     }
 
-    const unsigned char *FrameBuffer::map()
+    const void *FrameBuffer::map()
     {
-      return (const unsigned char *)ospMapFrameBuffer(ospFrameBuffer,
-                                                      OSP_FB_COLOR);
+      return ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
     }
 
     void FrameBuffer::unmap(const void *mem)
@@ -151,6 +158,15 @@ namespace ospray {
       return child("size").valueAs<vec2i>();
     }
 
+    OSPFrameBufferFormat FrameBuffer::format() const
+    {
+      auto key = child("colorFormat").valueAs<std::string>();
+      for(auto const& el : colorFormats)
+        if (el.first == key)
+          return el.second;
+      return OSP_FB_NONE;
+    }
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
     {
@@ -165,16 +181,9 @@ namespace ospray {
     void ospray::sg::FrameBuffer::createFB()
     {
       auto fbsize = size();
-      auto useSRGB = child("useSRGB").valueAs<bool>();
-
-      auto format = useSRGB ? OSP_FB_SRGBA : OSP_FB_RGBA8;
-
       auto useAccum    = child("useAccumBuffer").valueAs<bool>();
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
-                                         (displayWallStream=="")
-                                         ? format
-                                         : OSP_FB_NONE,
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize, format(),
                                          OSP_FB_COLOR |
                                          (useAccum ? OSP_FB_ACCUM : 0) |
                                          (useVariance ? OSP_FB_VARIANCE : 0));
