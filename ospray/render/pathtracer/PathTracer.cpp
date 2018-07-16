@@ -48,8 +48,10 @@ namespace ospray {
   Material *PathTracer::createMaterial(const char *type)
   {
     std::string ptType = std::string("PathTracer_")+type;
-    Material *material = Material::createMaterial(ptType.c_str());
-    if (!material) {
+    Material *material = nullptr;
+    try {
+      material = Material::createMaterial(ptType.c_str());
+    } catch (const std::runtime_error &) {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
       if (numOccurrances[T] == 0) {
