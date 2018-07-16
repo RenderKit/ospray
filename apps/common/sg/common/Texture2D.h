@@ -44,6 +44,7 @@ namespace ospray {
       static std::shared_ptr<Texture2D> load(const FileName &fileName,
                                              const bool preferLinear = false,
                                              const bool nearestFilter = false);
+      static void clearTextureCache();
 
       //! texture size, in pixels
       vec2i size {-1};
@@ -56,6 +57,7 @@ namespace ospray {
       void* data{nullptr};
 
       std::string ospTextureType {"texture2d"};
+      static std::map<std::string,std::shared_ptr<Texture2D> > textureCache;
     };
 
   } // ::ospray::sg

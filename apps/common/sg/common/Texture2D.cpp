@@ -100,13 +100,7 @@ namespace ospray {
     {
       FileName fileName = fileNameAbs;
       std::string fileNameBase = fileNameAbs;
-      /* WARNING: this cache means that every texture ever loaded will
-         forever keep at least one refcount - ie, no texture will ever
-         auto-die!!! (to fix this we'd have to add a dedicated
-         'clearTextureCache', or move this caching fucntionality into
-         a CachedTextureLoader objec that each parser creates and
-         destroys) */
-      static std::map<std::string,std::shared_ptr<Texture2D> > textureCache;
+
       if (textureCache.find(fileName.str()) != textureCache.end())
         return textureCache[fileName.str()];
 
@@ -346,7 +340,13 @@ namespace ospray {
       return tex;
     }
 
+    void Texture2D::clearTextureCache()
+    {
+      textureCache.clear();
+    }
+
     OSP_REGISTER_SG_NODE(Texture2D);
 
+    std::map<std::string,std::shared_ptr<Texture2D> > Texture2D::textureCache;
   } // ::ospray::sg
 } // ::ospray

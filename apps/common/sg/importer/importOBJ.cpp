@@ -163,6 +163,8 @@ namespace ospray {
         sgMaterials->push_back(matNodePtr);
       }
 
+      Texture2D::clearTextureCache();
+
       return sgMaterials;
     }
 
