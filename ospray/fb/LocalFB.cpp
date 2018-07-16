@@ -119,6 +119,12 @@ namespace ospray {
       if ((tile.accumID & 1) == 1)
         tileErrorRegion.update(tile.region.lower/TILE_SIZE, err);
     }
+    if (hasAlbedoBuffer)
+      ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),(ispc::Tile&)tile,
+          (ispc::vec3f*)albedoBuffer, tile.ar, tile.ag, tile.ab);
+    if (hasNormalBuffer)
+      ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),(ispc::Tile&)tile,
+          (ispc::vec3f*)normalBuffer, tile.nx, tile.ny, tile.nz);
     if (pixelOp)
       pixelOp->postAccum(tile);
     if (colorBuffer) {

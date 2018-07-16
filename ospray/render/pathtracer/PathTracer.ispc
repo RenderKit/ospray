@@ -395,6 +395,8 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   screenSample.rgb = make_vec3f(0.f);
   screenSample.alpha = 0.f;
   screenSample.z = inf;
+  screenSample.normal = make_vec3f(0.f);
+  screenSample.albedo = make_vec3f(0.f);
 
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
@@ -421,10 +423,16 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
     screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);
+    screenSample.normal = screenSample.normal + sample.normal;
+    screenSample.albedo = screenSample.albedo + sample.albedo;
   }
 
-  screenSample.rgb = screenSample.rgb * rcpf(spp);
-  screenSample.alpha = screenSample.alpha * rcpf(spp);
+  const float rspp = rcpf(spp);
+  screenSample.rgb = screenSample.rgb * rspp;
+  screenSample.alpha = screenSample.alpha * rspp;
+  screenSample.normal = screenSample.normal * rspp;
+  screenSample.albedo = screenSample.albedo * rspp;
+
   return screenSample;
 }
 

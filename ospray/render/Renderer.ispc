@@ -66,8 +66,6 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
     CameraSample cameraSample;
 
-    const uniform float spp_inv = 1.f / spp;
-
     const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
     const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
     const uniform int startSampleID = max(tile.accumID, 0)*spp;
@@ -122,10 +120,11 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         normal = normal + screenSample.normal;
         albedo = albedo + screenSample.albedo;
       }
-      screenSample.rgb = col * spp_inv;
-      screenSample.alpha = alpha * spp_inv;
-      screenSample.normal = normal * spp_inv;
-      screenSample.albedo = albedo * spp_inv;
+      const float rspp = rcpf(spp);
+      screenSample.rgb = col * rspp;
+      screenSample.alpha = alpha * rspp;
+      screenSample.normal = normal * rspp;
+      screenSample.albedo = albedo * rspp;
       setTile(tile, pixel, screenSample);
     }
   } else {
