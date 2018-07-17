@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray 
+// ospray
 #include "Geometry.h"
 #include "common/Data.h"
 #include "common/Util.h"
@@ -38,7 +38,9 @@ namespace ospray {
     }
 
     OSPMaterial ospMat = (OSPMaterial)mat;
-    setMaterialList(new Data(1, OSP_OBJECT, &ospMat));
+    auto *data = new Data(1, OSP_OBJECT, &ospMat);
+    setMaterialList(data);
+    data->refDec();
   }
 
   void Geometry::setMaterialList(Data *matListData)
