@@ -39,6 +39,7 @@ namespace ospray {
 
     OSPMaterial ospMat = (OSPMaterial)mat;
     setMaterialList(new Data(1, OSP_OBJECT, &ospMat));
+    mat->refDec(); // copied into matListData
   }
 
   void Geometry::setMaterialList(Data *matListData)
