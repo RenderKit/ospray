@@ -29,23 +29,6 @@ namespace ospray {
     return "ospray::PanoramicCamera";
   }
 
-  void PanoramicCamera::commit()
-  {
-    Camera::commit();
-
-    // ------------------------------------------------------------------
-    // update the local precomputed values: the camera coordinate frame
-    // ------------------------------------------------------------------
-    linear3f frame;
-    frame.vx = normalize(dir);
-    frame.vy = normalize(cross(frame.vx, up));
-    frame.vz = cross(frame.vx, frame.vy);
-
-    ispc::PanoramicCamera_set(getIE(),
-                              (const ispc::vec3f&)pos,
-                              (const ispc::LinearSpace3f&)frame);
-  }
-
   OSP_REGISTER_CAMERA(PanoramicCamera,panoramic);
 
 } // ::ospray

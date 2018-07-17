@@ -102,6 +102,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 {
   ScreenSample sample;
   sample.alpha = 1.f;
+  sample.normal = make_vec3f(0.0f);
+  sample.albedo = make_vec3f(0.0f);
 
   vec3f L = make_vec3f(0.f); // accumulated radiance
   vec3f Lw = make_vec3f(1.f); // path throughput
@@ -430,7 +432,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   const float rspp = rcpf(spp);
   screenSample.rgb = screenSample.rgb * rspp;
   screenSample.alpha = screenSample.alpha * rspp;
-  screenSample.normal = screenSample.normal * rspp;
+  screenSample.normal = transposed(camera->frame) * (screenSample.normal*rspp);
   screenSample.albedo = screenSample.albedo * rspp;
 
   return screenSample;

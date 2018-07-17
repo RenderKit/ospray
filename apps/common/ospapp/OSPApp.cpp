@@ -295,6 +295,13 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       root.traverse(sg::VerifyNodes(true));
       root.commit();
 
+      // sensible default for orthographic camera, before command line parsing
+      auto &camera = root["camera"];
+      if (camera.hasChild("height")) {
+        auto bbox = renderer["world"].bounds();
+        camera["height"] = bbox.empty() ? 1.f : 0.5f * length(bbox.size());
+      }
+
       // last, to be able to modify all created SG nodes
       parseCommandLineSG(argc, argv, root);
 
@@ -788,8 +795,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       camera["dir"] = normalize(gaze.getValue() - pos.getValue());
       camera["up"] = up.getValue();
 
-      // NOTE: Stash computed gaze point in the camera for apps, invalid once
-      //       camera moves unless also updated by the app!
+      // XXX hack: consumed and removed in constructor of ImGuiViewer
       camera.createChild("gaze", "vec3f", gaze.getValue());
 
       if (camera.hasChild("fovy") && fovy.isOverridden())
@@ -798,10 +804,6 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         camera["apertureRadius"] = apertureRadius.getValue();
       if (camera.hasChild("focusdistance"))
         camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
-
-      // orthographic camera adjustments
-      if (camera.hasChild("height"))
-        camera["height"] = (float)height;
       if (camera.hasChild("aspect"))
         camera["aspect"] = width / (float)height;
     }
@@ -880,10 +882,10 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
     void OSPApp::addPlaneToScene(sg::Node &renderer)
     {
-      auto &world = renderer["world"];
       if (addPlane == false) {
         return;
       }
+      auto &world = renderer["world"];
       auto bbox = world.bounds();
       if (bbox.empty()) {
         bbox.lower = vec3f(-5, 0, -5);

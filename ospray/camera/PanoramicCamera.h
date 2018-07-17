@@ -49,7 +49,6 @@ namespace ospray {
     virtual ~PanoramicCamera() override = default;
 
     virtual std::string toString() const override;
-    virtual void commit() override;
   };
 
 } // ::ospray

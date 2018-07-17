@@ -251,7 +251,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   camera/OrthographicCamera.h
   camera/OrthographicCamera.ih
   camera/PanoramicCamera.h
-  camera/PanoramicCamera.ih
   camera/PerspectiveCamera.h
   camera/PerspectiveCamera.ih
   DESTINATION camera

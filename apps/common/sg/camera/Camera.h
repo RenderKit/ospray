@@ -33,9 +33,7 @@ namespace ospray {
 
     protected:
 
-      // Data members //
-
-      /*! camera type, i.e., 'ao', 'obj', 'pathtracer', ... */
+      // camera type, i.e., "perspective", "orthographic", or "panoramic"
       const std::string type;
     };
 
@@ -64,5 +62,3 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
-
-
