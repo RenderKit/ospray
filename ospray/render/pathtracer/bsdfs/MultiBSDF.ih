@@ -40,7 +40,10 @@ inline void MultiBSDF_add(varying BSDF* uniform super,
   assert(self->numBsdfs < MULTIBSDF_MAX_COMPONENTS);
   if (self->numBsdfs < MULTIBSDF_MAX_COMPONENTS)
   {
+    self->super.albedo = self->super.albedo + bsdf->albedo * weight;
     self->super.type |= bsdf->type;
+    if (!self->super.frame) // use first frame TODO use dominant frame
+      self->super.frame = bsdf->frame;
     self->bsdfs[self->numBsdfs] = bsdf;
     self->weights[self->numBsdfs] = weight;
     unmasked { self->importances[self->numBsdfs] = 0.0f; }
@@ -154,7 +157,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
 
 inline void MultiBSDF_Constructor(varying MultiBSDF* uniform self)
 {
-  BSDF_Constructor(&self->super, BSDF_NONE,
+  BSDF_Constructor(&self->super, make_vec3f(0.f), BSDF_NONE,
                    MultiBSDF_eval, MultiBSDF_sample, NULL);
   self->numBsdfs = 0;
   unmasked { self->importanceSum = 0.0f; }

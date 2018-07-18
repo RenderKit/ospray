@@ -79,7 +79,7 @@ inline void Specular_Constructor(varying Specular* uniform self,
                                  vec3f R,
                                  float exp_)
 {
-  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
+  BSDF_Constructor(&self->super, R, BSDF_GLOSSY_REFLECTION,
                    Specular_eval, Specular_sample, frame);
 
   // convert from Phong exponent to Blinn

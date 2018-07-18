@@ -25,6 +25,7 @@ void initShadingInfo(varying SciVisShadingInfo &info)
   info.Ns = 0.f;
   info.Kd = make_vec3f(0.f);
   info.Ks = make_vec3f(0.f);
+  info.albedo = make_vec3f(0.f);
 
   info.local_opacity = 0.f;
 }
@@ -68,6 +69,8 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
       }
     }
   }
+
+  info.albedo = info.d * (info.Kd + info.Ks);
 
   // convert from Phong exponent to Blinn
   info.Ns *= 4.0f;

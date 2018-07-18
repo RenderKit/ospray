@@ -18,45 +18,30 @@
 
 #include "BSDF.ih"
 
-struct Reflection
-{
-  BSDF super;
-
-  vec3f reflectance;
-};
-
-inline BSDF_EvalRes Reflection_eval(const varying BSDF* uniform super,
+inline BSDF_EvalRes Reflection_eval(const varying BSDF* uniform self,
                                     const vec3f& wo, const vec3f& wi)
 {
   return make_BSDF_EvalRes_zero();
 }
 
-inline BSDF_SampleRes Reflection_sample(const varying BSDF* uniform super,
+inline BSDF_SampleRes Reflection_sample(const varying BSDF* uniform self,
                                         const vec3f& wo, const vec2f& s, float ss)
 {
-  const varying Reflection* uniform self = (const varying Reflection* uniform)super;
   BSDF_SampleRes res;
 
-  res.wi = reflect(wo, getN(super));
+  res.wi = reflect(wo, getN(self));
   res.pdf = inf;
   res.type = BSDF_SPECULAR_REFLECTION;
-  res.weight = self->reflectance;
+  res.weight = self->albedo;
   return res;
-}
-
-inline void Reflection_Constructor(varying Reflection* uniform self, const varying linear3f* uniform frame,
-                                   vec3f reflectance)
-{
-  BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION,
-                   Reflection_eval, Reflection_sample,
-                   frame);
-  self->reflectance = reflectance;
 }
 
 inline varying BSDF* uniform Reflection_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                                vec3f reflectance)
 {
-  varying Reflection* uniform self = (varying Reflection* uniform)ShadingContext_alloc(ctx, sizeof(Reflection));
-  Reflection_Constructor(self, frame, reflectance);
-  return &self->super;
+  varying BSDF* uniform self = (varying BSDF* uniform)ShadingContext_alloc(ctx, sizeof(BSDF));
+  BSDF_Constructor(self, reflectance, BSDF_SPECULAR_REFLECTION,
+                   Reflection_eval, Reflection_sample,
+                   frame);
+  return self;
 }

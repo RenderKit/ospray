@@ -110,6 +110,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   Medium currentMedium = make_Medium_vacuum();
   float lastBsdfPdf = inf; // probability density of previous sampled BSDF, for MIS
   bool straightPath = true; // path from camera did not change direction, for alpha and backplate
+  bool auxFree = true; // normal & albedo buffer were not yet written to
   uniform uint32 depth = 0;
   // geometric configuration of last surface interaction
   DifferentialGeometry lastDg;
@@ -331,9 +332,18 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     vec2f s  = LCG_getFloat2(lcg);
     vec2f ss = LCG_getFloat2(lcg); // ss.y used for Russian roulette
     BSDF_SampleRes fs;
+    vec3f Ns = dg.Ns;
     foreach_unique(f in bsdf)
-      if (f != NULL)
+      if (f != NULL) {
         fs = f->sample(f, wo, s, ss.x);
+        if (f->frame != NULL)
+          Ns = getN(f);
+      }
+    if (auxFree && (fs.type & BSDF_SMOOTH)) {
+      sample.normal = Ns;
+      sample.albedo = bsdf->albedo;
+      auxFree = false;
+    }
 
     // terminate path when zero contribution from material
     if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)

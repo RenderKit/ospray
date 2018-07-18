@@ -31,7 +31,8 @@
 vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                            const varying vec3i &sampleID,
                                            varying Ray &ray,
-                                           const varying float &rayOffset)
+                                           const varying float &rayOffset,
+                                           vec3f &normal, vec3f &albedo)
 {
   vec3f color = make_vec3f(0.f);
 
@@ -61,6 +62,9 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
   if (info.local_opacity > self->super.minContribution) { // worth shading?
     shadeAO(self, sampleID, dg, info, color);
     integrateOverLights(self, ray, dg, info, color, rayOffset,sampleID, 0.5f);
+    // assume this is the first/dominant hit
+    normal = info.shadingNormal;
+    albedo = info.albedo;
   }
 
   return make_vec4f(color, info.local_opacity);
@@ -72,7 +76,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
                               const varying float &rayOffset,
                               const varying vec3i &sampleID,
                               varying vec4f &color,
-                              varying float &depth)
+                              varying float &depth,
+                              vec3f &normal, vec3f &albedo)
 {
   // Original tMax for ray interval
   const float tMax = ray.t;
@@ -95,7 +100,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   vec4f geometryColor = SciVisRenderer_computeGeometrySample(renderer,
                                                              sampleID,
                                                              geometryRay,
-                                                             rayOffset);
+                                                             rayOffset,
+                                                             normal, albedo);
   // Depth is the first volume bounding box or geometry hit
   depth = min(ray.t0, geometryRay.t);
 
@@ -160,7 +166,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         geometryColor = SciVisRenderer_computeGeometrySample(renderer,
                                                              sampleID,
                                                              geometryRay,
-                                                             rayOffset);
+                                                             rayOffset,
+                                                             normal, albedo);
       }
 
     }
@@ -190,10 +197,12 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   // volumes, geometries, etc.
   vec4f color = make_vec4f(0.0f);
   float depth = infinity;
+  sample.normal = make_vec3f(0.0f);
+  sample.albedo = make_vec3f(0.0f);
 
-  // if (sample.sampleID.x == 128 && sample.sampleID.y == 64)
   SciVisRenderer_intersect(renderer, sample.ray, rayOffset,
-                           sample.sampleID, color, depth);
+                           sample.sampleID, color, depth,
+                           sample.normal, sample.albedo);
 
   // blend with background
   color = color + (1.0f - color.w) * renderer->super.bgColor;

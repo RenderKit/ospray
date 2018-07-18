@@ -75,7 +75,7 @@ inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self,
                                        const varying linear3f* uniform frame,
                                        float eta, vec3f attenuation)
 {
-  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+  BSDF_Constructor(&self->super, expf(attenuation), BSDF_SPECULAR,
                    ThinDielectric_eval, ThinDielectric_sample,
                    frame);
   self->eta = eta;

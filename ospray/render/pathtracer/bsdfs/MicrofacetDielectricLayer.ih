@@ -256,7 +256,17 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
                                                   float eta, vec3f transmittance, float thickness, float roughness, float anisotropy,
                                                   float weight)
 {
-  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | substrate->type,
+  // Energy conservation/compensation
+  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  float Favg = fresnelDielectricAvg(eta);
+  self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
+  self->Ravg = (MicrofacetDielectricReflectionAlbedoTable_evalAvg(self->eta, roughness)
+               + self->fmsScale * (1.f - self->Eavg)) * weight; // add missing energy
+
+  // XXX check
+  const vec3f albedo = substrate->albedo * ((1.0f - weight) +
+      pow(transmittance, thickness) * (1.f - Favg));
+  BSDF_Constructor(&self->super, albedo, BSDF_GLOSSY_REFLECTION | substrate->type,
                    MicrofacetDielectricLayer_eval, MicrofacetDielectricLayer_sample,
                    frame);
 
@@ -266,13 +276,6 @@ inline void MicrofacetDielectricLayer_Constructor(varying MicrofacetDielectricLa
   self->thickness = thickness;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->roughness = roughness;
-
-  // Energy conservation/compensation
-  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
-  float Favg = fresnelDielectricAvg(eta);
-  self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
-  self->Ravg = (MicrofacetDielectricReflectionAlbedoTable_evalAvg(self->eta, roughness)
-               + self->fmsScale * (1.f - self->Eavg)) * weight; // add missing energy
 
   self->weight = weight;
 }

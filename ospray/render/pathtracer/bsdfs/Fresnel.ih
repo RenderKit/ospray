@@ -112,6 +112,7 @@ inline vec3f fresnelConductor(float cosI, spectrum eta, spectrum k)
 struct Fresnel;
 
 typedef vec3f (*Fresnel_EvalFunc)(const Fresnel* uniform self, float cosI);
+// TODO change into member variable vec3f and implement for *all* Fresnels!
 typedef vec3f (*Fresnel_EvalAvgFunc)(const Fresnel* uniform self);
 
 struct Fresnel

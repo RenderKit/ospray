@@ -48,7 +48,8 @@ inline void Conductor_Constructor(varying Conductor* uniform self,
                                   const varying linear3f* uniform frame,
                                   Fresnel* uniform fresnel)
 {
-  BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION,
+  BSDF_Constructor(&self->super, fresnel->evalAvg(fresnel),
+                   BSDF_SPECULAR_REFLECTION,
                    Conductor_eval, Conductor_sample,
                    frame);
   self->fresnel = fresnel;
