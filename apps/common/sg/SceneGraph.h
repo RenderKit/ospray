@@ -76,6 +76,9 @@ namespace ospray {
       OSPFrameBuffer currentFB {nullptr};
 
       bool clearFB {true};
+
+      int numAccumulatedFrames{0};
+      int frameAccumulationLimit{-1};
     };
 
   } // ::ospray::sg
