@@ -104,7 +104,7 @@ namespace ospray {
       const bool accumBudgetReached =
           frameAccumulationLimit <= numAccumulatedFrames;
 
-      if (!limitAccumulation || (limitAccumulation && !accumBudgetReached)) {
+      if (!limitAccumulation || !accumBudgetReached) {
         rendererNode->renderFrame(fbNode);
         numAccumulatedFrames++;
       }
