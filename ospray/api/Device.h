@@ -229,6 +229,7 @@ namespace ospray {
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
+      bool apiTraceEnabled {false};
 
       enum OSP_THREAD_AFFINITY
       {DEAFFINITIZE = 0, AFFINITIZE = 1, AUTO_DETECT = 2};
