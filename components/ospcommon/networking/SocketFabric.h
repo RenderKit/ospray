@@ -41,7 +41,7 @@ namespace ospcommon {
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
         delivered */
-      void send(void *mem, size_t s) override;
+      void send(const void *mem, size_t s) override;
 
       /*! receive some block of data - whatever the sender has sent -
         and give us size and pointer to this data */

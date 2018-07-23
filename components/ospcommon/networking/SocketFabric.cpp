@@ -62,7 +62,7 @@ namespace ospcommon {
       return *this;
     }
 
-    void SocketFabric::send(void *mem, size_t s)
+    void SocketFabric::send(const void *mem, size_t s)
     {
       // A bit annoying, because the ospcommon::Socket wrapper does its
       // own internal buffering, however a Fabric is unbuffered and is
