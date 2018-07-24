@@ -236,6 +236,7 @@ namespace ospray {
       work::WorkTypeRegistry workRegistry;
 
       bool initialized {false};
+      bool commitTriggersMessageFlush {false};
     };
 
   } // ::ospray::mpi

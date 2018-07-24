@@ -462,6 +462,23 @@ namespace ospray {
       auto preAllocatedTiles =
           OSPRAY_PREALLOCATED_TILES.value_or(getParam<int>("preAllocatedTiles",4));
 
+      auto OSPRAY_MPI_OFFLOAD_COMMIT_FLUSH =
+          utility::getEnvVar<int>("OSPRAY_MPI_OFFLOAD_COMMIT_FLUSH");
+
+      commitTriggersMessageFlush =
+          OSPRAY_MPI_OFFLOAD_COMMIT_FLUSH.value_or(getParam<int>("commitsFlushMessages", 1));
+
+      auto OSPRAY_MPI_OFFLOAD_WRITE_BUFFER_SCALE =
+          utility::getEnvVar<float>("OSPRAY_MPI_OFFLOAD_WRITE_BUFFER_SCALE");
+
+      auto writeBufferSize =
+          OSPRAY_MPI_OFFLOAD_WRITE_BUFFER_SCALE.value_or(getParam<float>("writeBufferScale", 1.f));
+
+      size_t bufferSize = 1024 * size_t(writeBufferSize * 1024);
+
+      writeStream->flush();
+      writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric, bufferSize);
+
       work::SetLoadBalancer slbWork(ObjectHandle(),
                                     useDynamicLoadBalancer,
                                     preAllocatedTiles);
@@ -514,7 +531,7 @@ namespace ospray {
     {
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
-      processWork(work, true);
+      processWork(work, commitTriggersMessageFlush);
     }
 
     /*! add a new geometry to a model */
