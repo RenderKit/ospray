@@ -77,12 +77,15 @@ namespace ospray {
 
     float error; // estimated variance of this tile
     // TODO: dynamically allocate to save memory when no ACCUM or VARIANCE
-    ospray::Tile __aligned(64) accum;
+    // even more TODO: Tile contains much more data (e.g. AUX), but using only
+    // the color buffer here ==> much wasted memory
+    ospray::Tile __aligned(64) accum; // also hold accumulated normal&albedo
     ospray::Tile __aligned(64) variance;
     /* iw: TODO - have to change this. right now, to be able to give
        the 'postaccum' pixel op a readily normalized tile we have to
        create a local copy (the tile stores only the accum value,
        and we cannot change this) */
+    // also holds normalized normal&albedo in AOS format
     ospray::Tile  __aligned(64) final;
 
     //! the rbga32-converted colors
