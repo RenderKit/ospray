@@ -35,15 +35,15 @@ namespace ospray {
       void clear();
       void clearAccum();
 
-      vec2i size() const { return committed_size; };
-      OSPFrameBufferFormat format() const { return committed_format; };
+      vec2i size() const;
+      OSPFrameBufferFormat format() const;
 
       virtual void postCommit(RenderContext &ctx) override;
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
 
-      OSPFrameBuffer handle() const { return ospFrameBuffer; };
+      OSPFrameBuffer handle() const;
 
      private:
       // create the ospray framebuffer for this class
@@ -56,10 +56,10 @@ namespace ospray {
       vec2i committed_size {0};
       OSPFrameBufferFormat committed_format {OSP_FB_NONE};
       std::vector<std::pair<std::string, OSPFrameBufferFormat>> colorFormats {
-        {"sRGB",  OSP_FB_SRGBA}, 
-        {"RGBA8", OSP_FB_RGBA8}, 
-        {"float", OSP_FB_RGBA32F}, 
-        {"none",  OSP_FB_NONE} 
+        {"sRGB",  OSP_FB_SRGBA},
+        {"RGBA8", OSP_FB_RGBA8},
+        {"float", OSP_FB_RGBA32F},
+        {"none",  OSP_FB_NONE}
       };
       OSPPixelOp toneMapper {nullptr};
       std::string displayWallStream;

@@ -153,11 +153,26 @@ namespace ospray {
       ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
     }
 
+    vec2i FrameBuffer::size() const
+    {
+      return committed_size;
+    };
+
+    OSPFrameBufferFormat FrameBuffer::format() const
+    {
+      return committed_format;
+    };
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
     {
       return "ospray::sg::FrameBuffer";
     }
+
+    OSPFrameBuffer FrameBuffer::handle() const
+    {
+      return ospFrameBuffer;
+    };
 
     void ospray::sg::FrameBuffer::createFB()
     {
