@@ -78,10 +78,7 @@ namespace ospray {
     void Frame::postCommit(RenderContext &)
     {
       if (clearFB) {
-        ospFrameBufferClear(
-          child("frameBuffer").valueAs<OSPFrameBuffer>(),
-          OSP_FB_COLOR | OSP_FB_ACCUM
-        );
+        child("frameBuffer").nodeAs<FrameBuffer>()->clear();
 
         clearFB = false;
         numAccumulatedFrames = 0;
