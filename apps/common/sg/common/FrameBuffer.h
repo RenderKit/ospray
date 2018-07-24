@@ -33,19 +33,19 @@ namespace ospray {
       void unmap(const void *mem);
 
       void clear();
-
       void clearAccum();
 
-      vec2i size() const;
-      OSPFrameBufferFormat format() const;
+      vec2i size() const { return committed_size; };
+      OSPFrameBufferFormat format() const { return committed_format; };
 
       virtual void postCommit(RenderContext &ctx) override;
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
 
-      OSPFrameBuffer handle() const;
+      OSPFrameBuffer handle() const { return ospFrameBuffer; };
 
+     private:
       // create the ospray framebuffer for this class
       void createFB();
 
@@ -53,6 +53,8 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
+      vec2i committed_size {0};
+      OSPFrameBufferFormat committed_format {OSP_FB_NONE};
       std::vector<std::pair<std::string, OSPFrameBufferFormat>> colorFormats {
         {"sRGB",  OSP_FB_SRGBA}, 
         {"RGBA8", OSP_FB_RGBA8}, 

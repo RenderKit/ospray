@@ -76,7 +76,6 @@ namespace ospray {
       OSPFrameBufferFormat format() const noexcept { return format_; }
       void resize(const vec2i& size, const OSPFrameBufferFormat format);
       void copy(const uint8_t* src) { if (src) memcpy(buf.data(), src, bytes); }
-      void adapt(const Framebuffer& other);
       const uint8_t* data() const noexcept { return buf.data(); }
     private:
       vec2i size_;

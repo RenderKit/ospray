@@ -37,15 +37,6 @@ namespace ospray {
         ospDeviceCommit(device); // workaround #239
         commitDeviceOnAsyncLoopThread = false;
       }
-      static sg::TimeStamp lastFTime;
-
-      static bool once = false;  //TODO: initial commit as timestamp cannot
-                                 //      be set to 0
-      static int counter = 0;
-      if (sgFB->childrenLastModified() > lastFTime || !once) {
-        frameBuffers.back().resize(sgFB->size(), sgFB->format());
-        lastFTime = sg::TimeStamp();
-      }
 
       if (renderer->hasChild("animationcontroller"))
         renderer->child("animationcontroller").animate();
@@ -55,16 +46,14 @@ namespace ospray {
 
       fps.start();
       scenegraph->renderFrame();
-
-      once = true;
       fps.stop();
 
+      frameBuffers.back().resize(sgFB->size(), sgFB->format());
       auto srcPB = (uint8_t*)sgFB->map();
       frameBuffers.back().copy(srcPB);
       sgFB->unmap(srcPB);
 
       if (fbMutex.try_lock()) {
-        frameBuffers.front().adapt(frameBuffers.back());
         frameBuffers.swap();
         newPixels = true;
         fbMutex.unlock();
@@ -194,14 +183,6 @@ namespace ospray {
         bytes *= 4*sizeof(float);
         break;
     }
-    buf.reserve(bytes);
-  }
-
-  void AsyncRenderEngine::Framebuffer::adapt(const Framebuffer& other)
-  {
-    format_ = other.format_;
-    size_ = other.size_;
-    bytes = other.bytes;
     buf.reserve(bytes);
   }
 

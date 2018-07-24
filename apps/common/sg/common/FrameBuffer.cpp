@@ -153,37 +153,27 @@ namespace ospray {
       ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
     }
 
-    vec2i FrameBuffer::size() const
-    {
-      return child("size").valueAs<vec2i>();
-    }
-
-    OSPFrameBufferFormat FrameBuffer::format() const
-    {
-      auto key = child("colorFormat").valueAs<std::string>();
-      for(auto const& el : colorFormats)
-        if (el.first == key)
-          return el.second;
-      return OSP_FB_NONE;
-    }
-
     /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
     {
       return "ospray::sg::FrameBuffer";
     }
 
-    OSPFrameBuffer FrameBuffer::handle() const
-    {
-      return ospFrameBuffer;
-    }
-
     void ospray::sg::FrameBuffer::createFB()
     {
-      auto fbsize = size();
+      committed_size = child("size").valueAs<vec2i>();
+
+      committed_format = OSP_FB_NONE;
+      auto key = child("colorFormat").valueAs<std::string>();
+      for(auto const& el : colorFormats)
+        if (el.first == key) {
+          committed_format = el.second;
+          break;
+        }
+
       auto useAccum    = child("useAccumBuffer").valueAs<bool>();
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize, format(),
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)committed_size, committed_format,
                                          OSP_FB_COLOR |
                                          (useAccum ? OSP_FB_ACCUM : 0) |
                                          (useVariance ? OSP_FB_VARIANCE : 0));
