@@ -53,6 +53,10 @@ namespace ospray {
       for (size_t i = 0; i < numWarmupFrames; ++i)
         root->renderFrame();
 
+      // NOTE(jda) - allow 0 bench frames to enable testing only data load times
+      if (numBenchFrames <= 0)
+        return;
+
       auto benchmarker =
           pico_bench::Benchmarker<std::chrono::milliseconds>{ numBenchFrames };
 
