@@ -105,8 +105,6 @@ namespace ospray {
 
     utility::TransactionalValue<vec2f> pickPos;
     utility::TransactionalValue<OSPPickResult> pickResult;
-
-    std::mutex fbMutex; // protect the front buffer when it is mapped 
     utility::DoubleBufferedValue<Framebuffer> frameBuffers;
 
     std::atomic<bool> newPixels {false};

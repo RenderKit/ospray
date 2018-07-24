@@ -48,16 +48,16 @@ namespace ospray {
       scenegraph->renderFrame();
       fps.stop();
 
+      // NOTE(jda) - Spin here until the consumer has had the chance to update
+      //             to the latest frame.
+      while(state == ExecState::RUNNING && newPixels == true);
+
       frameBuffers.back().resize(sgFB->size(), sgFB->format());
       auto srcPB = (uint8_t*)sgFB->map();
       frameBuffers.back().copy(srcPB);
       sgFB->unmap(srcPB);
 
-      if (fbMutex.try_lock()) {
-        frameBuffers.swap();
-        newPixels = true;
-        fbMutex.unlock();
-      }
+      newPixels = true;
     }, AsyncLoop::LaunchMethod::THREAD);
   }
 
@@ -146,14 +146,16 @@ namespace ospray {
 
   const AsyncRenderEngine::Framebuffer &AsyncRenderEngine::mapFramebuffer()
   {
-    fbMutex.lock();
-    newPixels = false;
+    if (newPixels) {
+      frameBuffers.swap();
+      newPixels = false;
+    }
     return frameBuffers.front();
   }
 
   void AsyncRenderEngine::unmapFramebuffer()
   {
-    fbMutex.unlock();
+    // no-op
   }
 
   void AsyncRenderEngine::validate()
