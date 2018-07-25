@@ -41,6 +41,9 @@ namespace ospray {
     void setInitialSearchBoxText(const std::string &text);
     void setColorMap(std::string name);
 
+    template <typename CALLBACK_T>
+    void addCustomUICallback(const std::string &name, CALLBACK_T &&f);
+
   protected:
 
     enum PickMode { PICK_CAMERA, PICK_NODE };
@@ -66,6 +69,7 @@ namespace ospray {
     void guiCarDemo();
 
     void guiRenderStats();
+    void guiRenderCustomWidgets();
     void guiTransferFunction();
     void guiFindNode();
 
@@ -97,6 +101,11 @@ namespace ospray {
     std::string nodeNameForSearch;
     std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
 
+    using UICallback = std::function<void(sg::Frame &)>;
+    using NamedUICallback = std::pair<std::string, UICallback>;
+
+    std::vector<NamedUICallback> customPanes;
+
     AsyncRenderEngine renderEngine;
 
     bool useDynamicLoadBalancer{false};
@@ -107,5 +116,16 @@ namespace ospray {
     imgui3D::TransferFunction transferFunctionWidget;
     int transferFunctionSelection{0};
   };
+
+  // Inlined definitions //////////////////////////////////////////////////////
+
+  template <typename CALLBACK_T>
+  inline void
+  ImGuiViewer::addCustomUICallback(const std::string &name, CALLBACK_T &&f)
+  {
+    // TODO: static_assert the signature of CALLBACK_T::operator()
+
+    customPanes.push_back({name, f});
+  }
 
 }// namespace ospray

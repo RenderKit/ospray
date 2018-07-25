@@ -490,6 +490,7 @@ namespace ospray {
 #endif
 
     guiRenderStats();
+    guiRenderCustomWidgets();
     guiFindNode();
     guiTransferFunction();
 
@@ -590,6 +591,16 @@ namespace ospray {
       ImGui::Text("  display pixel time: %.1f ms", lastDisplayTime*1000.f);
       ImGui::Text("Variance: %.3f", renderer->getLastVariance());
       ImGui::NewLine();
+    }
+  }
+
+  void ImGuiViewer::guiRenderCustomWidgets()
+  {
+    for (const auto &p : customPanes) {
+      if (ImGui::CollapsingHeader(p.first.c_str(), p.first.c_str(),
+                                  true, false)) {
+        p.second(*scenegraph);
+      }
     }
   }
 
