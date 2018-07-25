@@ -462,12 +462,6 @@ namespace ospray {
       auto preAllocatedTiles =
           OSPRAY_PREALLOCATED_TILES.value_or(getParam<int>("preAllocatedTiles",4));
 
-      auto OSPRAY_MPI_OFFLOAD_COMMIT_FLUSH =
-          utility::getEnvVar<int>("OSPRAY_MPI_OFFLOAD_COMMIT_FLUSH");
-
-      commitTriggersMessageFlush =
-          OSPRAY_MPI_OFFLOAD_COMMIT_FLUSH.value_or(getParam<int>("commitsFlushMessages", 1));
-
       auto OSPRAY_MPI_OFFLOAD_WRITE_BUFFER_SCALE =
           utility::getEnvVar<float>("OSPRAY_MPI_OFFLOAD_WRITE_BUFFER_SCALE");
 
@@ -531,7 +525,7 @@ namespace ospray {
     {
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
-      processWork(work, commitTriggersMessageFlush);
+      processWork(work);
     }
 
     /*! add a new geometry to a model */
