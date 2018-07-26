@@ -52,12 +52,6 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
     message(STATUS "Found Embree v${EMBREE_VERSION}: ${EMBREE_LIBRARY}")
   endif()
 
-  # workaround issue in Embree v2.15.0-v2.16.4
-  # where embree-config.cmake returned the symlink in EMBREE_LIBRARY
-  if (IS_SYMLINK ${EMBREE_LIBRARY})
-    get_filename_component(EMBREE_LIBRARY ${EMBREE_LIBRARY} REALPATH)
-  endif()
-
   set(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
 endmacro()
 
