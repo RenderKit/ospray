@@ -43,7 +43,6 @@ namespace ospray {
       if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
-#define MAX_TILE_SIZE 32
 #if TILE_SIZE > MAX_TILE_SIZE
       auto tilePtr = make_unique<Tile>(tileID, fb->size, accumID);
       auto &tile   = *tilePtr;
