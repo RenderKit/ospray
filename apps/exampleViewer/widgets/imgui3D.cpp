@@ -74,8 +74,6 @@ namespace ospray {
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
     bool ImGui3DWidget::animating = false;
 
-    // InspectCenter Glut3DWidget::INSPECT_CENTER;
-
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
     // ------------------------------------------------------------------
@@ -195,24 +193,8 @@ namespace ospray {
         hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
-
       if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
         glDrawPixels(fbSize.x, fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
-#ifndef _WIN32
-        if (ImGui3DWidget::animating && dumpScreensDuringAnimation) {
-          char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
-          static const char *dumpFileRoot;
-          if (!dumpFileRoot) {
-            auto rc = mkstemp(tmpFileName);
-            (void)rc;
-            dumpFileRoot = tmpFileName;
-          }
-
-          char fileName[100000];
-          snprintf(fileName,sizeof(fileName),"%s_%08ld.ppm",dumpFileRoot,times(nullptr));
-          saveFrameBufferToFile(fileName,ucharFB,fbSize.x,fbSize.y);
-        }
-#endif
       } else if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
         glDrawPixels(fbSize.x, fbSize.y, GL_RGBA, GL_FLOAT, floatFB);
       } else {
