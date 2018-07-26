@@ -46,6 +46,8 @@ namespace ospray {
 
     void startAsyncRendering() override;
 
+    void setViewportToSgCamera();
+
   protected:
 
     enum PickMode { PICK_CAMERA, PICK_NODE };

@@ -280,6 +280,20 @@ namespace ospray {
     renderEngine.start();
   }
 
+  void ImGuiViewer::setViewportToSgCamera()
+  {
+    auto &camera = scenegraph->child("camera");
+
+    auto from = camera["pos"].valueAs<vec3f>();
+    auto dir  = camera["dir"].valueAs<vec3f>();
+    auto up   = camera["up"].valueAs<vec3f>();
+    auto dist = camera["focusDistance"].valueAs<float>();
+
+    viewPort.from = from;
+    viewPort.at   = from + (normalize(dir) * dist);
+    viewPort.up   = up;
+  }
+
   void ImGuiViewer::setInitialSearchBoxText(const std::string &text)
   {
     nodeNameForSearch = text;
