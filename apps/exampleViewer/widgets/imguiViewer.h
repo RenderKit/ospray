@@ -44,6 +44,8 @@ namespace ospray {
     template <typename CALLBACK_T>
     void addCustomUICallback(const std::string &name, CALLBACK_T &&f);
 
+    void startAsyncRendering() override;
+
   protected:
 
     enum PickMode { PICK_CAMERA, PICK_NODE };

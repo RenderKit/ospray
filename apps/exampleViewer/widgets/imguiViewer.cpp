@@ -254,8 +254,6 @@ namespace ospray {
     }
     setWorldBounds(bbox);
 
-    renderEngine.start();
-
     auto &camera = scenegraph->child("camera");
     auto pos  = camera["pos"].valueAs<vec3f>();
     auto gaze = camera["gaze"].valueAs<vec3f>();
@@ -269,11 +267,17 @@ namespace ospray {
 
     transferFunctionWidget.loadColorMapPresets(renderer->child("transferFunctionPresets").shared_from_this());
     transferFunctionWidget.setColorMapByName("Jet");
+
   }
 
   ImGuiViewer::~ImGuiViewer()
   {
     renderEngine.stop();
+  }
+
+  void ImGuiViewer::startAsyncRendering()
+  {
+    renderEngine.start();
   }
 
   void ImGuiViewer::setInitialSearchBoxText(const std::string &text)

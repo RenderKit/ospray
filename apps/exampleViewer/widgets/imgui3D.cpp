@@ -352,6 +352,13 @@ namespace ospray {
       }
       #endif
 
+      // make sure the widget matches the initial size of the window
+      vec2i displaySize;
+      glfwGetFramebufferSize(window, &displaySize.x, &displaySize.y);
+      currentWidget->reshape(displaySize);
+
+      currentWidget->startAsyncRendering();
+
       // Main loop
       while (!glfwWindowShouldClose(window) &&
              !currentWidget->exitRequested()) {

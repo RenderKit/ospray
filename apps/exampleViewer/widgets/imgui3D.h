@@ -118,6 +118,8 @@ namespace ospray {
 
        void setMotionSpeed(float speed);
 
+       virtual void startAsyncRendering() = 0;
+
        virtual void motion(const vec2i &pos);
        virtual void mouseButton(int button, int action, int mods);
        virtual void reshape(const vec2i &newSize);
