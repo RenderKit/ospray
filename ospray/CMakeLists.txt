@@ -108,6 +108,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/TriangleMesh.cpp
   geometry/QuadMesh.ispc
   geometry/QuadMesh.cpp
+  geometry/Curves.cpp
+  geometry/Curves.ispc
   geometry/StreamLines.cpp
   geometry/StreamLines.ispc
   geometry/Instance.ispc
@@ -288,6 +290,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  geometry/Curves.h
   geometry/Cylinders.h
   geometry/Geometry.h
   geometry/Geometry.ih

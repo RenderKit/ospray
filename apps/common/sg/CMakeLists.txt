@@ -80,6 +80,7 @@ ospray_create_library(ospray_sg SHARED
   SceneGraph.cpp
   Renderer.cpp
 
+  geometry/Curves.cpp
   geometry/Cylinders.cpp
   geometry/Geometry.cpp
   geometry/QuadMesh.cpp
@@ -214,6 +215,7 @@ ospray_install_sdk_headers(
 )
 
 ospray_install_sdk_headers(
+  geometry/Curves.h
   geometry/Cylinders.h
   geometry/Geometry.h
   geometry/QuadMesh.h
