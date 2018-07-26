@@ -65,7 +65,6 @@ namespace ospray {
       void renderFrame(bool verifyCommit = true);
 
       OSPPickResult pick(const vec2f &pickPos);
-      float getLastVariance() const;
 
     private:
 

@@ -113,12 +113,6 @@ namespace ospray {
       return rendererNode->pick(pickPos);
     }
 
-    float Frame::getLastVariance() const
-    {
-      auto rendererNode = child("renderer").nodeAs<Renderer>();
-      return rendererNode->getLastVariance();
-    }
-
     OSP_REGISTER_SG_NODE(Frame);
 
   } // ::ospray::sg

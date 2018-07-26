@@ -588,7 +588,7 @@ namespace ospray {
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);
       ImGui::Text("  display pixel time: %.1f ms", lastDisplayTime*1000.f);
-      ImGui::Text("Variance: %.3f", renderEngine.getLastVariance());
+      ImGui::Text("Variance: %.3f", renderer->getLastVariance());
       ImGui::NewLine();
     }
   }
