@@ -512,7 +512,7 @@ namespace ospray {
     guiFindNode();
     guiTransferFunction();
 
-    if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
+    if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, false))
       guiSGTree("root", scenegraph);
 
     ImGui::End();
