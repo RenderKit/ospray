@@ -105,6 +105,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Geometry.cpp
   geometry/TriangleMesh.ispc
   geometry/TriangleMesh.cpp
+  geometry/Subdivision.ispc
+  geometry/Subdivision.cpp
   geometry/QuadMesh.ispc
   geometry/QuadMesh.cpp
   geometry/Curves.cpp
