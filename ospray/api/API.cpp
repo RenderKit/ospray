@@ -715,6 +715,15 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
+extern "C" void ospSetProgressFunc(OSPProgressFunc callback, void* userPtr)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().progressCallback = callback;
+  currentDevice().progressUserPtr = userPtr;
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
 OSPRAY_CATCH_BEGIN
 {

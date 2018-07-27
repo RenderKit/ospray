@@ -253,6 +253,15 @@ namespace ospray {
       OSPError    lastErrorCode = OSP_NO_ERROR;
       std::string lastErrorMsg  = "no error";// no braced initializer for MSVC12
 
+      /* TODO
+      std::function<int(void*, const float)>
+      progress_fcn { [](void*, const float){ return 1; } };*/
+      OSPProgressFunc progressCallback;
+      void *progressUserPtr;
+      std::mutex progressMutex; // protect user callback function
+
+      bool reportProgress(const float);
+
     private:
 
       bool committed {false};

@@ -52,7 +52,7 @@ namespace ospray {
 
     enum PickMode { PICK_CAMERA, PICK_NODE };
 
-    void mouseButton(int button, int action, int mods);
+    void mouseButton(int button, int action, int mods) override;
     void reshape(const ospcommon::vec2i &newSize) override;
     void keypress(char key) override;
 
@@ -98,6 +98,10 @@ namespace ospray {
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
     bool saveScreenshot {false}; // write next mapped framebuffer to disk
+
+    float frameProgress {0.f};
+    bool cancelRendering {false};
+    int progressCallback(const float progress);
 
     std::shared_ptr<sg::Frame> scenegraph;
     std::shared_ptr<sg::Renderer> renderer;

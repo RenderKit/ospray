@@ -254,6 +254,9 @@ namespace ospray {
     }
     setWorldBounds(bbox);
 
+    ospSetProgressFunc((OSPProgressFunc)&ospray::ImGuiViewer::progressCallback,
+        this);
+
     auto &camera = scenegraph->child("camera");
     auto pos  = camera["pos"].valueAs<vec3f>();
     auto gaze = camera["gaze"].valueAs<vec3f>();
@@ -273,6 +276,7 @@ namespace ospray {
   ImGuiViewer::~ImGuiViewer()
   {
     renderEngine.stop();
+    ospSetProgressFunc(nullptr, nullptr);
   }
 
   void ImGuiViewer::startAsyncRendering()
@@ -602,7 +606,12 @@ namespace ospray {
     if (ImGui::CollapsingHeader("Rendering Statistics", "Rendering Statistics",
                                 true, false)) {
       ImGui::NewLine();
-      ImGui::Text("OSPRay render rate: %.1f fps", renderFPS);
+      if (renderFPS > 1.f) {
+        ImGui::Text("OSPRay render rate: %.1f fps", renderFPS);
+      } else {
+        ImGui::Text("OSPRay render time: %.1f sec", 1.f/renderFPS);
+        ImGui::Text("  Frame progress: %3.1f %%", frameProgress*100);
+      }
       ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);
@@ -861,6 +870,13 @@ namespace ospray {
   void ImGuiViewer::setColorMap(std::string name)
   {
     transferFunctionWidget.setColorMapByName(name, true);
+  }
+
+  int ImGuiViewer::progressCallback(const float progress)
+  {
+    frameProgress = progress;
+
+    return !cancelRendering;
   }
 
 } // ::ospray
