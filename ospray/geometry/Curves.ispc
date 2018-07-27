@@ -52,6 +52,7 @@ export void *uniform Curves_create(void *uniform cppEquivalent)
 export void *uniform
 Curves_set(void           *uniform _self,
            void           *uniform _model,
+           bool           uniform flat,
            const uniform vec4f *uniform vertexCurve,
            int32           uniform numVertices,
            const uniform uint32 *uniform indexCurve,
@@ -62,7 +63,8 @@ Curves_set(void           *uniform _self,
 
   uniform RTCGeometry geom
     = rtcNewGeometry(ispc_embreeDevice(),
-                     RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE);
+                     flat ? RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE
+                          : RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE);
   rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4,
                              vertexCurve, 0, sizeof(uniform vec4f),numVertices);
   rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT,

@@ -22,6 +22,7 @@ namespace ospray {
 
     Curves::Curves() : Geometry("curves")
     {
+      createChild("flat", "bool", false);
     }
 
     std::string Curves::toString() const

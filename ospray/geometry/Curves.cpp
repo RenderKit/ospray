@@ -70,8 +70,11 @@ namespace ospray {
       }
     }
 
+    bool flat = getParam<int>("flat", 1) ? true : false;
+
     ispc::Curves_set(getIE(),
                      model->getIE(),
+                     flat,
                      (const ispc::vec4f*)vertexData->data,
                      vertexData->numItems,
                      (const uint32_t*)indexData->data,
