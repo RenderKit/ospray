@@ -370,6 +370,7 @@ namespace ospray {
                         const std::shared_ptr<Node> &node)
     {
       properties.children[name] = node;
+      node->setParent(*this);
     }
 
     bool Node::hasParent() const
