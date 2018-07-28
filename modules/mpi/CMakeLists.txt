@@ -15,6 +15,13 @@
 ## ======================================================================== ##
 
 OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
+OPTION(OSPRAY_MODULE_MPI_APPS "MPI parallel device" OFF)
+
+# Note (Qi) because those apps depend on lib_tfb, we have to make sure
+#           ospray example viewer (thus the lib_tfn) is built
+if (NOT OSPRAY_APPS_EXAMPLEVIEWER)
+  SET(OSPRAY_MODULE_MPI_APPS OFF)
+endif (NOT OSPRAY_APPS_EXAMPLEVIEWER)
 
 IF (OSPRAY_MODULE_MPI)
 
@@ -70,7 +77,8 @@ IF (OSPRAY_MODULE_MPI)
   ##############################################################
   # Test apps
   ##############################################################
-
-  ADD_SUBDIRECTORY(apps)
+  IF (OSPRAY_MODULE_MPI_APPS)
+    ADD_SUBDIRECTORY(apps)
+  ENDIF (OSPRAY_MODULE_MPI_APPS)
 
 ENDIF (OSPRAY_MODULE_MPI)

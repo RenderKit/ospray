@@ -211,11 +211,13 @@ namespace ospray {
         projectedRegions[i].bounds.lower *= dfb->size;
         projectedRegions[i].bounds.upper *= dfb->size;
         regionOrdering.insert(std::make_pair(projectedRegions[i].depth, i));
+#if 0
         if (mpicommon::globalRank() == 0) {
           std::cout << "region " << i << " projects too {"
             << projectedRegions[i].bounds << ", z = " 
             << projectedRegions[i].depth << "}\n";
         }
+#endif
       }
 
       // Compute the sort order for the regions
@@ -224,6 +226,7 @@ namespace ospray {
       for (const auto &e : regionOrdering) {
         sortOrder[e.second] = depthIndex++;
       }
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << "sortorder: {";
         for (const auto &e : sortOrder) {
@@ -231,6 +234,7 @@ namespace ospray {
         }
         std::cout << "}\n" << std::flush;
       }
+#endif
 
       // Pre-compute the list of tiles that we actually need to render to,
       // so we can get a better thread assignment when doing the real work
@@ -515,10 +519,12 @@ namespace ospray {
       screen.extend(proj.screenPos);
       vec3f v = pt - camera->pos;
       screen.depth = dot(v, camera->dir);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
       }
+#endif
       // TODO: Manage sign if it's behind camera?
 
       pt.x = bounds.upper.x;
@@ -526,30 +532,36 @@ namespace ospray {
       screen.extend(proj.screenPos);
       v = pt - camera->pos;
       screen.depth = std::max(dot(v, camera->dir), screen.depth);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
       }
+#endif
 
       pt.y = bounds.upper.y;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
       v = pt - camera->pos;
       screen.depth = std::max(dot(v, camera->dir), screen.depth);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
       }
+#endif
 
       pt.x = bounds.lower.x;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
       v = pt - camera->pos;
       screen.depth = std::max(dot(v, camera->dir), screen.depth);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
       }
+#endif
 
       // Do the top of the box
       pt.y = bounds.lower.y;
@@ -558,41 +570,49 @@ namespace ospray {
       screen.extend(proj.screenPos);
       v = pt - camera->pos;
       screen.depth = std::max(dot(v, camera->dir), screen.depth);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
       }
+#endif
 
       pt.x = bounds.upper.x;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
       v = pt - camera->pos;
       screen.depth = std::max(dot(v, camera->dir), screen.depth);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
       }
+#endif
 
       pt.y = bounds.upper.y;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
       v = pt - camera->pos;
       screen.depth = std::max(dot(v, camera->dir), screen.depth);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
       }
+#endif
 
       pt.x = bounds.lower.x;
       proj = camera->projectPoint(pt);
       screen.extend(proj.screenPos);
       v = pt - camera->pos;
       screen.depth = std::max(dot(v, camera->dir), screen.depth);
+#if 0
       if (mpicommon::globalRank() == 0) {
         std::cout << pt << " projects to " << proj.screenPos
           << ", z = " << dot(v, camera->dir) << "\n";
         std::cout << std::flush;
       }
+#endif
 
       return screen;
     }
