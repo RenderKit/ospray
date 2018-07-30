@@ -103,6 +103,8 @@ namespace ospray {
        ImGui3DWidget(FrameBufferMode frameBufferMode,
                      ManipulatorMode initialManipulator=INSPECT_CENTER_MODE);
 
+      virtual ~ImGui3DWidget() = default;
+
        /*! set a default camera position that views given bounds from the
          top left front */
        virtual void setWorldBounds(const box3f &worldBounds);

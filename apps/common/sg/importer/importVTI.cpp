@@ -30,8 +30,7 @@
 namespace ospray {
   namespace sg {
 
-    std::shared_ptr<Node> importVTI_createVolumeNode(const std::shared_ptr<Node> &world,
-                           const FileName &fileName)
+    std::shared_ptr<Node> importVTI_createVolumeNode(const FileName &fileName)
     {
       auto volumeNode = createNode(fileName.base()+"_volume", "StructuredVolume");
 
@@ -80,7 +79,7 @@ namespace ospray {
     void importVTI(const std::shared_ptr<Node> &world,
                            const FileName &fileName)
     {
-      world->add(importVTI_createVolumeNode(world,fileName));
+      world->add(importVTI_createVolumeNode(fileName));
     }
 
     //! import multiple VTK .vti files with the same tf
@@ -90,7 +89,7 @@ namespace ospray {
       auto tf = createNode("transferFunction", "TransferFunction");
       for(auto file : fileNames)
       {
-        auto volume = importVTI_createVolumeNode(world,file);
+        auto volume = importVTI_createVolumeNode(file);
         volume->add(tf);
         world->add(volume);
       }

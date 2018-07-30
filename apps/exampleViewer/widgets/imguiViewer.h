@@ -36,7 +36,7 @@ namespace ospray {
 
     ImGuiViewer(const std::shared_ptr<sg::Frame> &scenegraph);
 
-    ~ImGuiViewer();
+    ~ImGuiViewer() override;
 
     void setInitialSearchBoxText(const std::string &text);
     void setColorMap(std::string name);
@@ -95,7 +95,6 @@ namespace ospray {
     double lastTotalTime;
     float lastVariance;
 
-    ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
     bool saveScreenshot {false}; // write next mapped framebuffer to disk
 

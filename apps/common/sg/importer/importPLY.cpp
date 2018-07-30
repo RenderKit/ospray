@@ -20,11 +20,6 @@
 
 #undef NDEBUG
 
-// O_LARGEFILE is a GNU extension.
-#ifdef __APPLE__
-#define  O_LARGEFILE  0
-#endif
-
 // sg
 #include "SceneGraph.h"
 #include "sg/common/Texture2D.h"

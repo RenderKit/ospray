@@ -31,24 +31,27 @@ namespace ospray {
     struct ImGui3DWidget;
 
     struct OSPRAY_IMGUI3D_INTERFACE Manipulator {
-      // this is the fct that gets called when the mouse moved in the
-      // associated window
-      virtual void motion(ImGui3DWidget *widget);
       Manipulator(ImGui3DWidget *widget)
         : widget(widget) {}
 
-      // helper functions called from the default 'motion' fct
-      virtual void dragLeft(ImGui3DWidget *widget,
-                            const vec2i &to,
-                            const vec2i &from) {}
-      virtual void dragRight(ImGui3DWidget *widget,
-                             const vec2i &to,
-                             const vec2i &from) {}
-      virtual void dragMiddle(ImGui3DWidget *widget,
-                              const vec2i &to,
-                              const vec2i &from) {}
+      virtual ~Manipulator() = default;
 
-      ImGui3DWidget *widget;
+      // this is the fct that gets called when the mouse moved in the
+      // associated window
+      virtual void motion(ImGui3DWidget *widget);
+
+      // helper functions called from the default 'motion' fct
+      virtual void dragLeft(ImGui3DWidget * /*widget*/,
+                            const vec2i & /*to*/,
+                            const vec2i & /*from*/) {}
+      virtual void dragRight(ImGui3DWidget * /*widget*/,
+                             const vec2i & /*to*/,
+                             const vec2i & /*from*/) {}
+      virtual void dragMiddle(ImGui3DWidget * /*widget*/,
+                              const vec2i & /*to*/,
+                              const vec2i & /*from*/) {}
+
+      ImGui3DWidget *widget {nullptr};
     };
 
     struct InspectCenter : public Manipulator
