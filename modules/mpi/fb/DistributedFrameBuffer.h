@@ -146,7 +146,7 @@ namespace ospray {
     size_t ownerIDFromTileID(size_t tileID) const;
 
     // signal the workers whether to cancel 
-    bool continueRendering() const { return !cancelRendering; };
+    bool continueRendering() const { return !cancelRendering; }
 
   private:
 
