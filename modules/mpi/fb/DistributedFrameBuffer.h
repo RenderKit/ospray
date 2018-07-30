@@ -64,6 +64,8 @@ namespace ospray {
     MASTER_TILE_HAS_DEPTH = 1,
     // Indicates that the tile additionally also has normal and/or albedo values
     MASTER_TILE_HAS_AUX = 1 << 5,
+    // abort rendering the current frame
+    CANCEL_RENDERING = 1 << 6,
   };
 
   class DistributedTileError : public TileError
@@ -143,6 +145,9 @@ namespace ospray {
 
     size_t ownerIDFromTileID(size_t tileID) const;
 
+    // signal the workers whether to cancel 
+    bool continueRendering() const { return !cancelRendering; };
+
   private:
 
     friend struct TileData;
@@ -197,6 +202,8 @@ namespace ospray {
     /*! Compose and send all-tiles-done message including tile errors. */
     void sendAllTilesDoneMessage();
 
+    void sendCancelRenderingMessage();
+
     // Data members ///////////////////////////////////////////////////////////
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
@@ -241,6 +248,8 @@ namespace ospray {
     /*! set to true when the framebuffer is done for the given
         frame */
     bool frameIsDone;
+
+    bool cancelRendering; // signal the workers whether to cancel 
 
     bool masterIsAWorker {false};
 

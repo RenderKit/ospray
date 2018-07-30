@@ -22,6 +22,7 @@
 #include "ospcommon/tasking/schedule.h"
 
 #include "mpiCommon/MPICommon.h"
+#include "api/Device.h"
 
 #ifdef _WIN32
 #  include <windows.h> // for Sleep
@@ -576,7 +577,12 @@ namespace ospray {
   void DFB::finalizeTileOnMaster(TileData *DBG(tile))
   {
     assert(mpicommon::IamTheMaster());
-    /*! we will not do anything with the tile other than mark it's done */
+
+    // TODO pixel accurate progress (tiles can be much smaller than TILE_SIZE)
+    float progress = (numTilesCompletedThisFrame+1)/(float)getTotalTiles();
+    if (!api::currentDevice().reportProgress(progress))
+      sendCancelRenderingMessage();
+
     if (isFrameComplete(1)) {
       closeCurrentFrame();
     }
@@ -623,8 +629,13 @@ namespace ospray {
 
   void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
   {
+    auto *msg = (TileMessage*)message->data;
+    if (msg->command & CANCEL_RENDERING) {
+      cancelRendering = true;
+      return;
+    }
+
       tasking::schedule([=]() {
-        auto *msg = (TileMessage*)message->data;
         if (msg->command & MASTER_WRITE_TILE_I8) {
           this->processMessage((MasterTileMessage_RGBA_I8*)msg);
         } else if (msg->command & MASTER_WRITE_TILE_F32) {
@@ -662,6 +673,19 @@ namespace ospray {
       }
 
       mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
+  }
+
+  void DFB::sendCancelRenderingMessage()
+  {
+      auto msg = std::make_shared<mpicommon::Message>(sizeof(TileMessage));
+
+      auto out = msg->data;
+      int val = CANCEL_RENDERING;
+      memcpy(out, &val, sizeof(val));
+
+      // notify all; broadcast not possible, because messaging layer is active
+      for (int rank = 0; rank < mpicommon::numGlobalRanks(); rank++)
+        mpi::messaging::sendTo(rank, myId, msg);
   }
 
   void DFB::closeCurrentFrame()
@@ -774,6 +798,7 @@ namespace ospray {
 
   void DFB::beginFrame()
   {
+    cancelRendering = false;
     mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }
