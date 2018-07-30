@@ -102,6 +102,7 @@ namespace ospray {
     float frameProgress {0.f};
     std::atomic<bool> cancelRendering {false};
     int progressCallback(const float progress);
+    static int progressCallbackWrapper(void * ptr, const float progress);
 
     std::shared_ptr<sg::Frame> scenegraph;
     std::shared_ptr<sg::Renderer> renderer;

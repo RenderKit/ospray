@@ -254,8 +254,7 @@ namespace ospray {
     }
     setWorldBounds(bbox);
 
-    ospSetProgressFunc((OSPProgressFunc)&ospray::ImGuiViewer::progressCallback,
-        this);
+    ospSetProgressFunc(&ospray::ImGuiViewer::progressCallbackWrapper, this);
 
     auto &camera = scenegraph->child("camera");
     auto pos  = camera["pos"].valueAs<vec3f>();
@@ -883,6 +882,11 @@ namespace ospray {
 
     // one-shot cancel
     return !cancelRendering.exchange(false);
+  }
+
+  int ImGuiViewer::progressCallbackWrapper(void * ptr, const float progress)
+  {
+    return ((ImGuiViewer*)ptr)->progressCallback(progress);
   }
 
 } // ::ospray
