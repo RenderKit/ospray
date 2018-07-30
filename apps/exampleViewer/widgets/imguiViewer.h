@@ -97,6 +97,7 @@ namespace ospray {
 
     imgui3D::ImGui3DWidget::ViewPort originalView;
     bool saveScreenshot {false}; // write next mapped framebuffer to disk
+    bool cancelFrameOnInteraction {false};
 
     float frameProgress {0.f};
     std::atomic<bool> cancelRendering {false};

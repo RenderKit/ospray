@@ -451,7 +451,7 @@ namespace ospray {
       camera.markAsModified();
 
       // don't cancel the first frame, otherwise it is hard to navigate
-      if (scenegraph->frameId() > 0)
+      if (scenegraph->frameId() > 0 && cancelFrameOnInteraction)
         cancelRendering = true;
 
       viewPort.modified = false;
@@ -545,6 +545,9 @@ namespace ospray {
       bool paused = renderingPaused;
       if (ImGui::Checkbox("Pause Rendering", &paused))
         toggleRenderingPaused();
+
+      if (ImGui::Checkbox("Interaction Cancels Frame",
+                          &cancelFrameOnInteraction));
 
       if (ImGui::MenuItem("Take Screenshot"))
           saveScreenshot = true;
