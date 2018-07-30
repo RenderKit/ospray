@@ -66,6 +66,8 @@ namespace ospray {
 
       OSPPickResult pick(const vec2f &pickPos);
 
+      int frameId() const;
+
     private:
 
       // Data members //

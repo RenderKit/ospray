@@ -113,6 +113,11 @@ namespace ospray {
       return rendererNode->pick(pickPos);
     }
 
+    int Frame::frameId() const
+    {
+      return numAccumulatedFrames;
+    }
+
     OSP_REGISTER_SG_NODE(Frame);
 
   } // ::ospray::sg

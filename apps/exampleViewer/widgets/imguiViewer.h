@@ -100,7 +100,7 @@ namespace ospray {
     bool saveScreenshot {false}; // write next mapped framebuffer to disk
 
     float frameProgress {0.f};
-    bool cancelRendering {false};
+    std::atomic<bool> cancelRendering {false};
     int progressCallback(const float progress);
 
     std::shared_ptr<sg::Frame> scenegraph;

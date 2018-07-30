@@ -451,6 +451,10 @@ namespace ospray {
       camera["up"]  = viewPort.up;
       camera.markAsModified();
 
+      // don't cancel the first frame, otherwise it is hard to navigate
+      if (scenegraph->frameId() > 0)
+        cancelRendering = true;
+
       viewPort.modified = false;
     }
 
@@ -609,8 +613,9 @@ namespace ospray {
       if (renderFPS > 1.f) {
         ImGui::Text("OSPRay render rate: %.1f fps", renderFPS);
       } else {
-        ImGui::Text("OSPRay render time: %.1f sec", 1.f/renderFPS);
-        ImGui::Text("  Frame progress: %3.1f %%", frameProgress*100);
+        ImGui::Text("OSPRay render time: %.1f sec. Frame progress: ", 1.f/renderFPS);
+        ImGui::SameLine();
+        ImGui::ProgressBar(frameProgress);
       }
       ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
@@ -876,7 +881,8 @@ namespace ospray {
   {
     frameProgress = progress;
 
-    return !cancelRendering;
+    // one-shot cancel
+    return !cancelRendering.exchange(false);
   }
 
 } // ::ospray
