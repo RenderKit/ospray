@@ -37,120 +37,86 @@ namespace ospray {
   void Subdivision::finalize(Model *model)
   {
     Assert(model && "invalid model pointer");
-
     Geometry::finalize(model);
 
-    RTCScene embreeSceneHandle = model->embreeSceneHandle;
+    auto vertexData = getParamData("vertex",getParamData("position"));
+    auto indexData = getParamData("index");
+    auto facesData = getParamData("faces");
+    auto edge_crease_indicesData = getParamData("edge_crease_indices");
+    auto edge_crease_weightsData = getParamData("edge_crease_weights");
+    auto vertex_crease_indicesData = getParamData("vertex_crease_indices");
+    auto vertex_crease_weightsData = getParamData("vertex_crease_weights");
+    auto colorsData = getParamData("colors");
+    auto edgeLevel = getParam1f("edgeLevel", 0.f);
+    auto prim_materialIDData = getParamData("prim.materialID");
+    uint32_t* prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
+    uint geom_materialID = getParam1i("geom.materialID",-1);
 
-//    vertexData = getParamData("vertex",getParamData("position"));
-//    normalData = getParamData("vertex.normal",getParamData("normal"));
-//    colorData  = getParamData("vertex.color",getParamData("color"));
-//    texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
-//    indexData  = getParamData("index",getParamData("triangle"));
-//    prim_materialIDData = getParamData("prim.materialID");
-//    geom_materialID = getParam1i("geom.materialID",-1);
+    int* index = (int*)indexData->data;
+    float* vertex = (float*)vertexData->data;
+    float* colors = (float*)colorsData->data;
+    int* faces = (int*)facesData->data;
+    vec2i* edge_crease_indices = (vec2i*)edge_crease_indicesData->data;
+    float* edge_crease_weights = (float*)edge_crease_weightsData->data;
+    int* vertex_crease_indices = (int*)vertex_crease_indicesData->data;
+    float* vertex_crease_weights = (float*)vertex_crease_weightsData->data;
 
-//    if (!vertexData)
-//      throw std::runtime_error("triangle mesh must have 'vertex' array");
-//    if (!indexData)
-//      throw std::runtime_error("triangle mesh must have 'index' array");
-//    if (colorData && colorData->type != OSP_FLOAT4 && colorData->type != OSP_FLOAT3A)
-//      throw std::runtime_error("vertex.color must have data type OSP_FLOAT4 or OSP_FLOAT3A");
+    if (vertexData->type != OSP_FLOAT3)
+      throw std::runtime_error("unsupported subdivision.vertex data type");
 
-//    // check whether we need 64-bit addressing
-//    bool huge_mesh = false;
-//    if (indexData->numBytes > INT32_MAX)
-//      huge_mesh = true;
-//    if (vertexData->numBytes > INT32_MAX)
-//      huge_mesh = true;
-//    if (normalData && normalData->numBytes > INT32_MAX)
-//      huge_mesh = true;
-//    if (colorData && colorData->numBytes > INT32_MAX)
-//      huge_mesh = true;
-//    if (texcoordData && texcoordData->numBytes > INT32_MAX)
-//      huge_mesh = true;
+    if (indexData->type != OSP_INT && indexData->type != OSP_UINT)
+      throw std::runtime_error("unsupported subdivision.index data type");
 
-//    this->index = (int*)indexData->data;
-//    this->vertex = (float*)vertexData->data;
-//    this->normal = normalData ? (float*)normalData->data : nullptr;
-//    this->color  = colorData ? (vec4f*)colorData->data : nullptr;
-//    this->texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
-//    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
+    auto geom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 
-//    size_t numTris  = -1;
-//    size_t numVerts = -1;
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3,
+                               vertex, 0, sizeof(vec3fa), vertexData->size());
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT,
+                               index, 0, sizeof(unsigned int), indexData->size());
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_FACE, 0, RTC_FORMAT_UINT,
+                               faces, 0, sizeof(unsigned int), facesData->size());
 
-//    size_t numCompsInTri = 0;
-//    size_t numCompsInVtx = 0;
-//    size_t numCompsInNor = 0;
-//    switch (indexData->type) {
-//    case OSP_INT:
-//    case OSP_UINT:  numTris = indexData->size() / 3; numCompsInTri = 3; break;
-//    case OSP_INT3:
-//    case OSP_UINT3: numTris = indexData->size(); numCompsInTri = 3; break;
-//    case OSP_UINT4:
-//    case OSP_INT4:  numTris = indexData->size(); numCompsInTri = 4; break;
-//    default:
-//      throw std::runtime_error("unsupported trianglemesh.index data type");
-//    }
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,    0,
+                               RTC_FORMAT_UINT2, edge_crease_indices,   0, 2*sizeof(unsigned int), 0);
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,   0,
+                               RTC_FORMAT_FLOAT, edge_crease_weights,   0, sizeof(float), 0);
 
-//    switch (vertexData->type) {
-//    case OSP_FLOAT:   numVerts = vertexData->size() / 4; numCompsInVtx = 4; break;
-//    case OSP_FLOAT3:  numVerts = vertexData->size(); numCompsInVtx = 3; break;
-//    case OSP_FLOAT3A: numVerts = vertexData->size(); numCompsInVtx = 4; break;
-//    case OSP_FLOAT4 : numVerts = vertexData->size(); numCompsInVtx = 4; break;
-//    default:
-//      throw std::runtime_error("unsupported trianglemesh.vertex data type");
-//    }
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,  0,
+                               RTC_FORMAT_UINT,  vertex_crease_indices, 0, sizeof(unsigned int), 0);
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT, 0,
+                               RTC_FORMAT_FLOAT, vertex_crease_weights, 0, sizeof(float), 0);
 
-//    if (normalData) switch (normalData->type) {
-//    case OSP_FLOAT3:  numCompsInNor = 3; break;
-//    case OSP_FLOAT:
-//    case OSP_FLOAT3A: numCompsInNor = 4; break;
-//    default:
-//      throw std::runtime_error("unsupported trianglemesh.vertex.normal data type");
-//    }
+    rtcSetGeometryVertexAttributeCount(geom,1);
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0,
+                               RTC_FORMAT_FLOAT3, colors, 0, sizeof(vec3fa), 8);
 
-//    auto eMeshGeom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_TRIANGLE);
-//    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT3,
-//                               indexData->data,0,numCompsInTri*sizeof(int),numTris);
-//    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT3,
-//                               vertexData->data,0,numCompsInVtx*sizeof(int),numVerts);
-//    rtcCommitGeometry(eMeshGeom);
-//    eMeshID = rtcAttachGeometry(embreeSceneHandle,eMeshGeom);
-//    rtcReleaseGeometry(eMeshGeom);
+    float* level = (float*) rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_LEVEL, 0,
+                               RTC_FORMAT_FLOAT, sizeof(float), indexData->size());
+    for (unsigned int i=0; i<indexData->size(); i++)
+      level[i] = edgeLevel;
 
-//    bounds = empty;
+    rtcCommitGeometry(geom);
+    auto eGeomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
+    rtcReleaseGeometry(geom);
 
-//    for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
-//      bounds.extend(*(vec3f*)((float *)vertexData->data + i));
+    bounds = empty;
+
+    for (uint32_t i = 0; i < vertexData->size()*3; i+=3)
+      bounds.extend(*(vec3f*)((float *)vertexData->data + i));
+    //TODO: must factor in displacement into bounds....
 
 
-//    if (numPrints < 5) {
-//      postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris "
-//                       << ", " << numVerts << " vertices)\n"
-//                       << "  mesh bounds " << bounds;
-//    }
+    postStatusMsg(2) << "  created subdivision (" << facesData->size() << " tris "
+                     << ", " << vertexData->size() << " vertices)\n"
+                     << "  mesh bounds " << bounds;
 
-//    ispc::Subdivision_set(getIE(),model->getIE(),
-//                           eMeshGeom,
-//                           eMeshID,
-//                           numTris,
-//                           numCompsInTri,
-//                           numCompsInVtx,
-//                           numCompsInNor,
-//                           (int*)index,
-//                           (float*)vertex,
-//                           (float*)normal,
-//                           (ispc::vec4f*)color,
-//                           (ispc::vec2f*)texcoord,
-//                           geom_materialID,
-//                           materialList ? ispcMaterialPtrs.data() : nullptr,
-//                           (uint32_t*)prim_materialID,
-//                           colorData && colorData->type == OSP_FLOAT4,
-//                           huge_mesh);
-  }
-
-  OSP_REGISTER_GEOMETRY(Subdivision,subdivision);
-
+    ispc::Subdivision_set(getIE(), model->getIE(),
+                          geom,
+                          eGeomID,
+                          geom_materialID,
+                          (uint32_t*)prim_materialID,
+                          materialList ? ispcMaterialPtrs.data() : nullptr
+                                         );
+    }
+    OSP_REGISTER_GEOMETRY(Subdivision,subdivision);
 } // ::ospray
