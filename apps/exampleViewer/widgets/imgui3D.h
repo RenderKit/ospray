@@ -158,7 +158,11 @@ namespace ospray {
        ViewPort viewPort;
        box3f  worldBounds; /*!< world bounds, to automatically set viewPort
                              lookat, mouse speed, etc */
+       bool fullScreen;
        vec2i windowSize;
+       // position and size when not in fullscreen
+       vec2i windowedPos;
+       vec2i windowedSize;
        /*! camera speed modifier - affects how many units the camera
           _moves_ with each unit on the screen */
        float motionSpeed {-1.f};

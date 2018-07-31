@@ -124,6 +124,7 @@ namespace ospray {
                                  ManipulatorMode initialManipulator) :
       lastMousePos(-1,-1),
       currMousePos(-1,-1),
+      fullScreen(false),
       windowSize(-1,-1),
       rotateSpeed(.003f),
       frameBufferMode(frameBufferMode),
@@ -245,8 +246,9 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title, const bool fullScreen, const vec2i windowSize)
+    void ImGui3DWidget::create(const char *title, const bool fullScreen_, const vec2i windowSize)
     {
+      fullScreen = fullScreen_;
       // Setup window
       auto error_callback = [](int error, const char* description) {
         fprintf(stderr, "Error %d: %s\n", error, description);
@@ -260,14 +262,14 @@ namespace ospray {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-      auto size = windowSize;
+      windowedSize = windowSize;
 
       auto defaultSizeFromEnv =
           getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
 
       if (defaultSizeFromEnv) {
         int rc = sscanf(defaultSizeFromEnv.value().c_str(),
-                        "%dx%d", &size.x, &size.y);
+                        "%dx%d", &windowedSize.x, &windowedSize.y);
         if (rc != 2) {
           throw std::runtime_error("could not parse"
                                    " OSPRAY_APPS_DEFAULT_WINDOW_SIZE "
@@ -282,11 +284,22 @@ namespace ospray {
         if(mode == nullptr) {
           throw std::runtime_error("could not get video mode");
         }
+        // request "windowed full screen" window
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
         window = glfwCreateWindow(mode->width, mode->height,
                                   title, monitor, nullptr);
+        // calculate position when going out of fullscreen
+        // this is actually the job of the window manager, but there is no
+        // (easy) way to ask where it would have placed a window
+        windowedPos = max(vec2i(0), vec2i(mode->width, mode->height) - windowedSize)/2;
       }
       else
-        window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
+        window = glfwCreateWindow(windowedSize.x, windowedSize.y, title,
+            nullptr, nullptr);
+
 
       glfwMakeContextCurrent(window);
 
@@ -455,6 +468,38 @@ namespace ospray {
       }
       case 'C':
         PRINT(viewPort);
+        break;
+      case 'f':
+        fullScreen = !fullScreen;
+
+        if (fullScreen) {
+          // remember window placement for going out of fullscreen
+          glfwGetWindowPos(window, &windowedPos.x, &windowedPos.y);
+          glfwGetWindowSize(window, &windowedSize.x, &windowedSize.y);
+          // find monitor the window is on
+          int count;
+          const vec2i winCenter = windowedPos + windowedSize/2;
+          GLFWmonitor** monitors = glfwGetMonitors(&count);
+          // per default use primary monitor
+          GLFWmonitor* monitor = monitors[0];
+          const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+          for (int m = 1; m < count; m++) {
+            range_t<vec2i> area;
+            glfwGetMonitorPos(monitors[m], &area.lower.x, &area.lower.y);
+            auto *curMode = glfwGetVideoMode(monitors[m]);
+            area.upper = area.lower + vec2i(curMode->width, curMode->height);
+            if (area.contains(winCenter)) {
+              monitor = monitors[m];
+              mode = curMode;
+              break;
+            }
+          }
+          glfwSetWindowMonitor(window, monitor, 0, 0,
+              mode->width, mode->height, mode->refreshRate);
+        } else {
+          glfwSetWindowMonitor(window, nullptr, windowedPos.x, windowedPos.y,
+              windowedSize.x, windowedSize.y, GLFW_DONT_CARE);
+        }
         break;
       case 'g':
         showGui = !showGui;
