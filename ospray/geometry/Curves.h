@@ -37,11 +37,6 @@ namespace ospray {
     Ref<Data> indexData; //!< refcounted data array for segment data
     Ref<Data> normalData; //!< refcounted data array for normal data
     Ref<Data> tangentData; //!< refcounted data array for tangent data
-
-    const vec3fa *vertex {nullptr};
-    size_t        numVertices {0};
-    const uint32 *index {nullptr};
-    size_t        numSegments {0};
   };
   /*! @} */
 

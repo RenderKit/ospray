@@ -90,18 +90,19 @@ namespace ospray {
 
     vertexData = getParamData("vertex",nullptr);
     if (!vertexData)
-      throw std::runtime_error("streamlines must have 'vertex' array");
+      throw std::runtime_error("curves must have 'vertex' array");
     if (vertexData->type != OSP_FLOAT4)
-      throw std::runtime_error("streamlines 'vertex' must be type OSP_FLOAT4");
+      throw std::runtime_error("curves 'vertex' must be type OSP_FLOAT4");
     auto vertex = (vec4f*)vertexData->data;
-    numVertices = vertexData->numItems;
+    auto numVertices = vertexData->numItems;
 
     indexData  = getParamData("index",nullptr);
     if (!indexData)
-      throw std::runtime_error("streamlines must have 'index' array");
+      throw std::runtime_error("curves must have 'index' array");
     if (indexData->type != OSP_INT)
-      throw std::runtime_error("streamlines 'index' array must be type OSP_INT");
-    index = (uint32*)indexData->data;
+      throw std::runtime_error("curves 'index' array must be type OSP_INT");
+    auto index = (uint32*)indexData->data;
+    auto numSegments = indexData->numItems;
 
     normalData = getParamData("normal", nullptr);
     tangentData = getParamData("tangent", nullptr);
@@ -121,7 +122,7 @@ namespace ospray {
     if (tangentData && tangentData->type != OSP_FLOAT3)
       throw std::runtime_error("curves 'tangent' array must be type OSP_FLOAT3");
 
-    postStatusMsg(2) << "#osp: creating streamlines geometry, "
+    postStatusMsg(2) << "#osp: creating curves geometry, "
                      << "#verts=" << numVertices << ", "
                      << "#segments=" << numSegments;
 
