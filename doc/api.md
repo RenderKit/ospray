@@ -864,6 +864,36 @@ respectively, would internally correspond to five links (`A-B`, `B-C`,
 `C-D`, `E-F`, and `F-G`), and would be specified via an array of
 vertices `[A,B,C,D,E,F,G]`, plus an array of link indices `[0,1,2,4,5]`.
 
+### Curves
+
+A geometry consisting of multiple curves is created by calling
+`ospNewGeometry` with type string "`curves`".  The parameters defining
+this geometry are listed in the table below.
+
+  ------------------ ------------- --------------------------------------------
+  Type               Name          Description
+  ------------------ ------------- --------------------------------------------
+  string             curveType     "flat" (ray oriented),
+                                   "round" (circular cross section),
+                                   "ribbon" (normal oriented flat curve)
+
+  string             curveBasis    "linear", "bezier", "bspline", "hermite"
+
+  vec4f[]            vertex        [data] array of vertex position and radius
+
+  int32[]            index         [data] array of indices to the first vertex
+                                   or tangent of a curve segment
+
+  vec3f[]            normal        [data] array of curve normals (only for
+                                   "ribbon" curves)
+
+  vec3f[]            tangent       [data] array of curve tangents (only for
+                                   "hermite" curves)
+------------------ ------------- --------------------------------------------
+  : Parameters defining a curves geometry.
+
+See Embree documentation for discussion of curve types and data formatting.
+
 ### Isosurfaces
 
 OSPRay can directly render multiple isosurfaces of a volume without

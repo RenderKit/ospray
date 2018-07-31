@@ -24,6 +24,30 @@ namespace ospray {
     Implements the \ref geometry_curves geometry
 
   */
+
+  /*! \defgroup geometry_curves Curves ("curves")
+
+    \brief Implements the embree curve geometry
+
+    \ingroup ospray_supported_geometries
+
+    A curve set is created via calling \ref ospNewGeometry with type
+    string "curves".
+
+    Once created, a curves object recognizes the following parameters
+    <pre>
+    Data<vec4f> "vertex"          // vertex array
+    Data<vec3i> "index"           // index array
+    Data<vec3f> "normal"          // normal array (for ribbon curves)
+    Data<vec3f> "tangent"         // tangent array (for hermite curves)
+    string      "curveType"       // falt, round, ribbon
+    string      "curveBasis"      // linear, bezier, bspline, hermite
+    </pre>
+
+    The functionality for this geometry is implemented via the
+    \ref ospray::Curves class.
+  */
+
   struct OSPRAY_SDK_INTERFACE Curves : public Geometry
   {
     Curves();
