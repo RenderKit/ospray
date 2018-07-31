@@ -115,7 +115,7 @@ build-centos6-icc:
   script:
     - module load gcc/4.8.2
     - module load intel
-    - module load embree/3.1.0
+    - module load embree
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -129,7 +129,7 @@ build-centos6-icc15:
   script:
     - module load gcc/4.8.2
     - module load intel/2015
-    - module load embree/3.1.0
+    - module load embree
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -375,7 +375,7 @@ release-linux-icc:
     - module load cmake
     - module load gcc/4.8.2
     - module load intel
-    - module load embree/3.1.0
+    - module load embree
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh
