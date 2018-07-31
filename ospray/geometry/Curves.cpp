@@ -31,21 +31,29 @@ namespace ospray {
 
   static RTCGeometryType curveMap[4][3] =
     {
-      (RTCGeometryType)-1,
-      RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE,
-      (RTCGeometryType)-1,
+      {
+        (RTCGeometryType)-1,
+        RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE,
+        (RTCGeometryType)-1,
+      },
 
-      RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
-      RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,
-      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
+      {
+        RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
+        RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,
+        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
+      },
 
-      RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
-      RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE,
-      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
+      {
+        RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
+        RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE,
+        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
+      },
 
-      RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
-      RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
-      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE
+      {
+        RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
+        RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
+        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE
+      }
     };
 
   static curveType curveTypeForString(const std::string &s)
@@ -57,7 +65,6 @@ namespace ospray {
     if (s == "round")
       return ROUND;
     throw std::runtime_error("curve with unknown curveType");
-    return FLAT;
   }
 
   static curveBasis curveBasisForString(const std::string &s)
@@ -71,7 +78,6 @@ namespace ospray {
     if (s == "hermite")
       return HERMITE;
     throw std::runtime_error("curve with unknown curveBasis");
-    return LINEAR;
   }
 
   Curves::Curves()
