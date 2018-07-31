@@ -26,6 +26,54 @@
 
 namespace ospray {
 
+  enum curveType { ROUND, FLAT, RIBBON };
+  enum curveBasis { LINEAR, BEZIER, BSPLINE, HERMITE };
+
+  static RTCGeometryType curveMap[4][3] =
+    {
+      (RTCGeometryType)-1,
+      RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE,
+      (RTCGeometryType)-1,
+
+      RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
+      RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,
+      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
+
+      RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
+      RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE,
+      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
+
+      RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
+      RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
+      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE
+    };
+
+  static curveType curveTypeForString(const std::string &s)
+  {
+    if (s == "flat")
+      return FLAT;
+    if (s == "ribbon")
+      return RIBBON;
+    if (s == "round")
+      return ROUND;
+    throw std::runtime_error("curve with unknown curveType");
+    return FLAT;
+  }
+
+  static curveBasis curveBasisForString(const std::string &s)
+  {
+    if (s == "bezier")
+      return BEZIER;
+    if (s == "bspline")
+      return BSPLINE;
+    if (s == "linear")
+      return LINEAR;
+    if (s == "hermite")
+      return HERMITE;
+    throw std::runtime_error("curve with unknown curveBasis");
+    return LINEAR;
+  }
+
   Curves::Curves()
   {
     this->ispcEquivalent = ispc::Curves_create(this);
@@ -55,30 +103,54 @@ namespace ospray {
       throw std::runtime_error("streamlines 'index' array must be type OSP_INT");
     index = (uint32*)indexData->data;
 
+    normalData = getParamData("normal", nullptr);
+    tangentData = getParamData("tangent", nullptr);
+
+    auto basis = curveBasisForString(getParamString("curveBasis", "unspecified"));
+    auto type = curveTypeForString(getParamString("curveType", "unspecified"));
+
+    if (type == RIBBON && !normalData)
+      throw std::runtime_error("ribbon curve must have 'normal' array");
+    if (basis == LINEAR && type != FLAT)
+      throw std::runtime_error("linear curve with non-flat type");
+    if (basis == HERMITE && !tangentData)
+      throw std::runtime_error("hermite curve must have 'tangent' array");
+
+    if (normalData && normalData->type != OSP_FLOAT3)
+      throw std::runtime_error("curves 'normal' array must be type OSP_FLOAT3");
+    if (tangentData && tangentData->type != OSP_FLOAT3)
+      throw std::runtime_error("curves 'tangent' array must be type OSP_FLOAT3");
+
     postStatusMsg(2) << "#osp: creating streamlines geometry, "
                      << "#verts=" << numVertices << ", "
                      << "#segments=" << numSegments;
 
+    uint32_t numVerts = 4;
+    if (basis == LINEAR || basis == HERMITE)
+      numVerts = 2;
+
     bounds = empty;
     for (uint32_t i = 0; i < indexData->numItems; i++) {
       const uint32_t idx = index[i];
-      for (uint32_t v = idx; v < idx + 4; v++) {
-        float radius = vertex[v][3];
+      for (uint32_t v = idx; v < idx + numVerts; v++) {
+        float radius = vertex[v].w;
         vec3f vtx(vertex[v].x, vertex[v].y, vertex[v].z);
         bounds.extend(vtx - radius);
         bounds.extend(vtx + radius);
       }
     }
 
-    bool flat = getParam<int>("flat", 1) ? true : false;
-
     ispc::Curves_set(getIE(),
                      model->getIE(),
-                     flat,
+                     (ispc::RTCGeometryType)curveMap[basis][type],
                      (const ispc::vec4f*)vertexData->data,
                      vertexData->numItems,
                      (const uint32_t*)indexData->data,
-                     indexData->numItems);
+                     indexData->numItems,
+                     normalData ? (const ispc::vec3f*)normalData->data : nullptr,
+                     normalData ? normalData->numItems : 0,
+                     tangentData ? (const ispc::vec3f*)tangentData->data : nullptr,
+                     tangentData ? tangentData->numItems : 0);
   }
 
   OSP_REGISTER_GEOMETRY(Curves,curves);

@@ -22,7 +22,15 @@ namespace ospray {
 
     Curves::Curves() : Geometry("curves")
     {
-      createChild("flat", "bool", false);
+      createChild("curveType", "string", std::string("flat"))
+        .setWhiteList({std::string("flat"),
+                       std::string("ribbon"),
+                       std::string("round")});
+      createChild("curveBasis", "string", std::string("bezier"))
+        .setWhiteList({std::string("bezier"),
+                       std::string("bspline"),
+                       std::string("hermite"),
+                       std::string("linear")});
     }
 
     std::string Curves::toString() const
@@ -40,10 +48,15 @@ namespace ospray {
       auto vtx = child("vertex").nodeAs<DataBuffer>()->baseAs<vec4f>();
       auto idx = child("index").nodeAs<DataBuffer>();
 
+      auto basis = child("curveBasis").valueAs<std::string>();
+      uint32_t numVerts = 4;
+      if (basis == "linear" || basis == "hermite")
+        numVerts = 2;
+
       for (uint32_t e = 0; e < idx->size(); e++) {
         uint32_t i = idx->get<int>(e);
-        for (uint32_t v = i; v < i + 4; v++) {
-          float radius = vtx[v][3];
+        for (uint32_t v = i; v < i + numVerts; v++) {
+          float radius = vtx[v].w;
           vec3f vertex(vtx[v].x, vtx[v].y, vtx[v].z);
           bbox.extend(vertex - radius);
           bbox.extend(vertex + radius);

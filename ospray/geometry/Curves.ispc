@@ -52,23 +52,31 @@ export void *uniform Curves_create(void *uniform cppEquivalent)
 export void *uniform
 Curves_set(void           *uniform _self,
            void           *uniform _model,
-           bool           uniform flat,
+           RTCGeometryType uniform curveType,
            const uniform vec4f *uniform vertexCurve,
            int32           uniform numVertices,
            const uniform uint32 *uniform indexCurve,
-           int32           uniform numSegments)
+           int32           uniform numSegments,
+           const uniform vec3f *uniform normalCurve,
+           int32           uniform numNormals,
+           const uniform vec3f *uniform tangentCurve,
+           int32           uniform numTangents)
 {
   Curves *uniform self = (Curves *uniform)_self;
   Model *uniform model = (Model *uniform)_model;
 
   uniform RTCGeometry geom
-    = rtcNewGeometry(ispc_embreeDevice(),
-                     flat ? RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE
-                          : RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE);
+    = rtcNewGeometry(ispc_embreeDevice(), curveType);
   rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4,
                              vertexCurve, 0, sizeof(uniform vec4f),numVertices);
   rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT,
                              indexCurve, 0, sizeof(uniform int), numSegments);
+  if (normalCurve)
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_NORMAL, 0, RTC_FORMAT_FLOAT3,
+                               normalCurve, 0, sizeof(uniform vec3f), numNormals);
+  if (tangentCurve)
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_TANGENT, 0, RTC_FORMAT_FLOAT3,
+                               tangentCurve, 0, sizeof(uniform vec3f), numTangents);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
