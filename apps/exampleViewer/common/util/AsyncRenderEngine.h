@@ -64,6 +64,7 @@ namespace ospray {
 
     bool   hasNewFrame() const;
     double lastFrameFps() const;
+    double lastFrameFpsSmoothed() const;
 
     bool          hasNewPickResult();
     OSPPickResult getPickResult();

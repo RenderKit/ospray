@@ -458,6 +458,7 @@ namespace ospray {
     }
 
     renderFPS = renderEngine.lastFrameFps();
+    renderFPSsmoothed = renderEngine.lastFrameFpsSmoothed();
 
     auto &mappedFB = renderEngine.mapFramebuffer();
     switch (mappedFB.format()) {

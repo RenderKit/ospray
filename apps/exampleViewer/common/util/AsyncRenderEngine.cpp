@@ -121,6 +121,11 @@ namespace ospray {
 
   double AsyncRenderEngine::lastFrameFps() const
   {
+    return fps.perSecond();
+  }
+
+  double AsyncRenderEngine::lastFrameFpsSmoothed() const
+  {
     return fps.perSecondSmoothed();
   }
 

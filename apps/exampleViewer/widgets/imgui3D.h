@@ -176,6 +176,7 @@ namespace ospray {
        static bool showGui;
        double displayTime;
        double renderFPS;
+       double renderFPSsmoothed;
        double guiTime;
        double totalTime;
        float  fontScale;

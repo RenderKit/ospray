@@ -156,6 +156,7 @@ namespace ospray {
 
       displayTime=-1.f;
       renderFPS=0.f;
+      renderFPSsmoothed=0.f;
       guiTime=-1.f;
       totalTime=-1.f;
     }
@@ -395,7 +396,7 @@ namespace ospray {
           ImGui::PopStyleColor(1);
 
           std::stringstream ss;
-          ss << currentWidget->renderFPS;
+          ss << currentWidget->renderFPSsmoothed;
           ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.2f, .2f, 1.f, 1.f));
           ImGui::Text("%s", ("fps: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
