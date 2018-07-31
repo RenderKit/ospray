@@ -1,6 +1,17 @@
 Version History
 ---------------
 
+### Changes in v1.7.0:
+
+-   Generalized texture interface to support more than classic 2D image
+    textures, thus `OSPTexture2D` and `ospNewTexture2D` are now
+    deprecated, use the new API call `ospNewTexture("texture2d")`
+    instead
+-   Added new framebuffer channels `OSP_FB_NORMAL` and `OSP_FB_ALBEDO`
+-   Applications can get information about the progress of rendering the
+    current frame, and optionally cancel it, by registering a callback
+    function via `ospSetProgressFunc()`
+
 ### Changes in v1.6.1:
 
 -   Many bug fixes
