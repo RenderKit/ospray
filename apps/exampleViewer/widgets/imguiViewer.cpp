@@ -267,9 +267,11 @@ namespace ospray {
 
     originalView = viewPort;
 
-    transferFunctionWidget.loadColorMapPresets(renderer->child("transferFunctionPresets").shared_from_this());
-    transferFunctionWidget.setColorMapByName("Jet");
+    transferFunctionWidget.loadColorMapPresets(
+      renderer->child("transferFunctionPresets").shared_from_this()
+    );
 
+    transferFunctionWidget.setColorMapByName("Jet");
   }
 
   ImGuiViewer::~ImGuiViewer()
@@ -295,6 +297,13 @@ namespace ospray {
     viewPort.from = from;
     viewPort.at   = from + (normalize(dir) * dist);
     viewPort.up   = up;
+
+    computeFrame();
+  }
+
+  void ImGuiViewer::setDefaultViewportToCurrent()
+  {
+    originalView = viewPort;
   }
 
   void ImGuiViewer::setInitialSearchBoxText(const std::string &text)
@@ -383,6 +392,7 @@ namespace ospray {
     auto oldAspect = viewPort.aspect;
     viewPort = originalView;
     viewPort.aspect = oldAspect;
+    viewPort.modified = true;
   }
 
   void ImGuiViewer::resetDefaultView()
@@ -576,8 +586,10 @@ namespace ospray {
       if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
         manipulator = moveModeManipulator.get();
 
-      if (ImGui::MenuItem("Reset View")) resetView();
+      if (ImGui::MenuItem("Reset View to Default")) resetView();
+      if (ImGui::MenuItem("Set View as Default")) setDefaultViewportToCurrent();
       if (ImGui::MenuItem("Create Default View")) resetDefaultView();
+      ImGui::Separator();
       if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
       if (ImGui::MenuItem("Print View")) printViewport();
 

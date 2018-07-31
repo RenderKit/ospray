@@ -47,6 +47,7 @@ namespace ospray {
     void startAsyncRendering() override;
 
     void setViewportToSgCamera();
+    void setDefaultViewportToCurrent();
 
   protected:
 
