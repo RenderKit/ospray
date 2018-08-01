@@ -713,13 +713,13 @@ or else an `OSPVolume` handle.
 The common parameters understood by all volume variants are summarized
 in the table below.
 
-<table style="width:97%;">
+<table style="width:98%;">
 <caption>Configuration parameters shared by all volume types.</caption>
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 33%" />
-<col style="width: 14%" />
-<col style="width: 39%" />
+<col style="width: 23%" />
+<col style="width: 27%" />
+<col style="width: 11%" />
+<col style="width: 34%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -731,66 +731,72 @@ in the table below.
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">OSPTransferFunction</td>
+<td style="text-align: left;">transferFunction</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"><a href="#transfer-function">transfer function</a> to use</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">vec2f</td>
 <td style="text-align: left;">voxelRange</td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;">minimum and maximum of the scalar values</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">gradientShadingEnabled</td>
 <td style="text-align: right;">false</td>
 <td style="text-align: left;">volume is rendered with surface shading wrt. to normalized gradient</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">preIntegration</td>
 <td style="text-align: right;">false</td>
 <td style="text-align: left;">use pre-integration for <a href="#transfer-function">transfer function</a> lookups</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">singleShade</td>
 <td style="text-align: right;">true</td>
 <td style="text-align: left;">shade only at the point of maximum intensity</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">adaptiveSampling</td>
 <td style="text-align: right;">true</td>
 <td style="text-align: left;">adapt ray step size based on opacity</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">adaptiveScalar</td>
 <td style="text-align: right;">15</td>
 <td style="text-align: left;">modifier for adaptive step size</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">adaptiveMaxSamplingRate</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">maximum sampling rate for adaptive sampling</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">samplingRate</td>
 <td style="text-align: right;">0.125</td>
 <td style="text-align: left;">sampling rate of the volume (this is the minimum step size for adaptive sampling)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">specular</td>
 <td style="text-align: right;">gray 0.3</td>
 <td style="text-align: left;">specular color for shading</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">volumeClippingBoxLower</td>
 <td style="text-align: right;">disabled</td>
 <td style="text-align: left;">lower coordinate (in object-space) to clip the volume values</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">volumeClippingBoxUpper</td>
 <td style="text-align: right;">disabled</td>
