@@ -38,8 +38,8 @@ namespace ospray {
     <pre>
     Data<vec4f> "vertex"          // vertex array
     Data<vec3i> "index"           // index array
-    Data<vec3f> "normal"          // normal array (for ribbon curves)
-    Data<vec3f> "tangent"         // tangent array (for hermite curves)
+    Data<vec3f> "vertex.normal"   // normal array (for ribbon curves)
+    Data<vec3f> "vertex.tangent"  // tangent array (for hermite curves)
     string      "curveType"       // falt, round, ribbon
     string      "curveBasis"      // linear, bezier, bspline, hermite
     </pre>

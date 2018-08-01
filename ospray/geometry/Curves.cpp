@@ -110,8 +110,8 @@ namespace ospray {
     auto index = (uint32*)indexData->data;
     auto numSegments = indexData->numItems;
 
-    normalData = getParamData("normal", nullptr);
-    tangentData = getParamData("tangent", nullptr);
+    normalData = getParamData("vertex.normal", nullptr);
+    tangentData = getParamData("vertex.tangent", nullptr);
 
     auto basis = curveBasisForString(getParamString("curveBasis", "unspecified"));
     auto type = curveTypeForString(getParamString("curveType", "unspecified"));
