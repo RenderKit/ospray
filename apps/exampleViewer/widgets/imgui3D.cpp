@@ -50,70 +50,67 @@ GLuint tex[2];
 std::atomic<unsigned> current_texture {0};
 std::atomic<bool> init {false};
 
-void create_textures() {
-    if(!init) glGenTextures(2, tex);
-    init = true;
+static void create_textures()
+{
+  if(!init) glGenTextures(2, tex);
+  init = true;
 }
 
-void transfertexture(GLsizei width, GLsizei height,
-                              GLenum format, GLenum type,
-                              const GLvoid *pixels) {
+static void transfertexture(GLsizei width, GLsizei height,
+                            GLenum format, GLenum type,
+                            const GLvoid *pixels)
+{
+  unsigned next = (current_texture + 1) & 1;
 
-    unsigned next = (current_texture + 1) & 1;
+  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
+               type, pixels);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-                 type, pixels);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    next++;
+  next++;
 }
 
-void drawquad(GLsizei width, GLsizei height) {
+static void drawquad(GLsizei width, GLsizei height)
+{
+  unsigned ctex = current_texture & 1;
 
-        unsigned ctex = current_texture & 1;
-
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0.0, width, 0.0, height, -1.0, 1.0);
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-
-
-        glLoadIdentity();
-        glDisable(GL_LIGHTING);
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0.0, width, 0.0, height, -1.0, 1.0);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
 
 
-        glColor3f(1,1,1);
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, tex[ctex]);
-        glEnable(GL_TEXTURE_2D);
+  glLoadIdentity();
+  glDisable(GL_LIGHTING);
 
 
-// Draw a textured quad
-        glBegin(GL_QUADS);
-        glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
-        glTexCoord2f(0, 1); glVertex3f(0, height, 0);
-        glTexCoord2f(1, 1); glVertex3f(width, height, 0);
-        glTexCoord2f(1, 0); glVertex3f(width, 0, 0);
-        glEnd();
+  glColor3f(1,1,1);
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, tex[ctex]);
+  glEnable(GL_TEXTURE_2D);
+
+  // Draw a textured quad
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+  glTexCoord2f(0, 1); glVertex3f(0, height, 0);
+  glTexCoord2f(1, 1); glVertex3f(width, height, 0);
+  glTexCoord2f(1, 0); glVertex3f(width, 0, 0);
+  glEnd();
 
 
-        glDisable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, tex[ctex]);
+  glDisable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, tex[ctex]);
 
-        glPopMatrix();
+  glPopMatrix();
 
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
 
-        glMatrixMode(GL_MODELVIEW);
-
-
-
+  glMatrixMode(GL_MODELVIEW);
 }
 
 #if 0
@@ -121,18 +118,15 @@ extern "C" void glDrawPixels( GLsizei width, GLsizei height,
                               GLenum format, GLenum type,
                               const GLvoid *pixels );
 #else
-void glDrawPixels( GLsizei width, GLsizei height,
-                              GLenum format, GLenum type,
-                              const GLvoid *pixels ) {
-
-    create_textures();
-    transfertexture(width,height,format,type,pixels);
-    drawquad(width,height);
-
-
+void glDrawPixels(GLsizei width, GLsizei height,
+                  GLenum format, GLenum type,
+                  const GLvoid *pixels)
+{
+  create_textures();
+  transfertexture(width,height,format,type,pixels);
+  drawquad(width,height);
 }
 #endif
-
 
 using ospcommon::utility::getEnvVar;
 
