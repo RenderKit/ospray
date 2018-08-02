@@ -476,6 +476,9 @@ namespace ospray {
 
     renderFPS = renderEngine.lastFrameFps();
     renderFPSsmoothed = renderEngine.lastFrameFpsSmoothed();
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    denoiseFPS = renderEngine.lastDenoiseFps();
+#endif
 
     if (renderEngine.hasNewFrame()) {
       auto &mappedFB = renderEngine.mapFramebuffer();
@@ -746,6 +749,9 @@ namespace ospray {
         ImGui::SameLine();
         ImGui::ProgressBar(frameProgress);
       }
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      ImGui::Text("Denoising rate: %.1f fps", denoiseFPS);
+#endif
       ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);

@@ -85,6 +85,9 @@ namespace ospray {
     double lastGUITime;
     double lastDisplayTime;
     double lastTotalTime;
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    double denoiseFPS;
+#endif
 
     imgui3D::ImGui3DWidget::ViewPort originalView;
     bool saveScreenshot {false}; // write next mapped framebuffer to disk

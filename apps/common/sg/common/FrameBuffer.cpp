@@ -35,6 +35,9 @@ namespace ospray {
 
       createChild("useAccumBuffer", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      createChild("useDenoiser", "bool", true);
+#endif
 
       updateFB();
     }
@@ -67,6 +70,9 @@ namespace ospray {
           || child("displayWall").lastModified() >= lastCommitted()
           || child("useAccumBuffer").lastModified() >= lastCommitted()
           || child("useVarianceBuffer").lastModified() >= lastCommitted()
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+          || child("useDenoiser").lastModified() >= lastCommitted()
+#endif
           || child("colorFormat").lastModified() >= lastCommitted()
           || removeToneMapper)
       {
@@ -100,9 +106,9 @@ namespace ospray {
       }
     }
 
-    const void *FrameBuffer::map()
+    const void *FrameBuffer::map(OSPFrameBufferChannel channel)
     {
-      return ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
+      return ospMapFrameBuffer(ospFrameBuffer, channel);
     }
 
     void FrameBuffer::unmap(const void *mem)
@@ -129,6 +135,13 @@ namespace ospray {
     {
       return committed_format;
     };
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    bool FrameBuffer::auxBuffers() const
+    {
+      return useDenoiser;
+    };
+#endif
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
@@ -157,11 +170,19 @@ namespace ospray {
           committed_format = el.second;
           break;
         }
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      useDenoiser = child("useDenoiser").valueAs<bool>();
+      if (useDenoiser)
+        committed_format = OSP_FB_RGBA32F;
+#endif
 
       auto useAccum    = child("useAccumBuffer").valueAs<bool>();
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)committed_size, committed_format,
                                          OSP_FB_COLOR |
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+          (useDenoiser ? OSP_FB_NORMAL | OSP_FB_ALBEDO : 0) |
+#endif
                                          (useAccum ? OSP_FB_ACCUM : 0) |
                                          (useVariance ? OSP_FB_VARIANCE : 0));
       setValue(ospFrameBuffer);

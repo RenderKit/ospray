@@ -28,9 +28,14 @@
 #include "ospcommon/utility/TransactionalValue.h"
 
 #include "sg/Renderer.h"
+#include "sg/common/FrameBuffer.h"
 
 // ospImGui util
 #include "ImguiUtilExport.h"
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+#include <OpenImageDenoise/oidn.hpp>
+#endif
 
 namespace ospray {
 
@@ -108,5 +113,38 @@ namespace ospray {
     bool commitDeviceOnAsyncLoopThread {true};
 
     utility::CodeTimer fps;
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    class Denoiser
+    {
+    public:
+      void init(oidn::DeviceRef &dev);
+      vec2i size() const noexcept { return size_; }
+      void copy(std::shared_ptr<sg::FrameBuffer>);
+      void execute();
+      const vec4f* result() const noexcept { return result_.data(); }
+    private:
+      vec2i size_;
+      bool needCommit;
+      std::vector<vec4f> color;
+      std::vector<vec3f> normal;
+      std::vector<vec3f> albedo;
+      std::vector<vec4f> result_;
+      oidn::FilterRef filter;
+    };
+
+    std::unique_ptr<AsyncLoop> denoiserThread;
+    oidn::DeviceRef denoiserDevice;
+    utility::DoubleBufferedValue<Denoiser> denoisers;
+  public:
+    double lastDenoiseFps() const;
+  private:
+    utility::CodeTimer denoiseFps;
+    bool newBuffers {false};
+    std::condition_variable newBuffersCond;
+    std::mutex newBuffersMutex;
+
+#endif
+
   };
 }// namespace ospray

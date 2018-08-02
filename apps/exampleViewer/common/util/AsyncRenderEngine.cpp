@@ -16,14 +16,20 @@
 
 #include "AsyncRenderEngine.h"
 
-#include "sg/common/FrameBuffer.h"
 #include "sg/Renderer.h"
 
 namespace ospray {
 
   AsyncRenderEngine::AsyncRenderEngine(std::shared_ptr<sg::Frame> root)
     : scenegraph(root)
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    , denoiserDevice(oidn::newDevice())
+#endif
   {
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    denoisers.front().init(denoiserDevice);
+    denoisers.back().init(denoiserDevice);
+#endif
     auto renderer = scenegraph->child("renderer").nodeAs<sg::Renderer>();
 
     backgroundThread = make_unique<AsyncLoop>([&, renderer](){
@@ -55,18 +61,110 @@ namespace ospray {
         return; // actually a continue
       }
 
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      if (sgFB->auxBuffers()) {
+          std::lock_guard<std::mutex> lock(newBuffersMutex);
+          denoisers.back().copy(sgFB);
+          newBuffers = true;
+          newBuffersCond.notify_all();
+      } else
+#endif
+      {
+        // NOTE(jda) - Spin here until the consumer has had the chance to update
+        //             to the latest frame.
+        while(state == ExecState::RUNNING && newPixels == true);
+
+        frameBuffers.back().resize(sgFB->size(), sgFB->format());
+        auto srcPB = (uint8_t*)sgFB->map();
+        frameBuffers.back().copy(srcPB);
+        sgFB->unmap(srcPB);
+
+        newPixels = true;
+      }
+    }, AsyncLoop::LaunchMethod::THREAD);
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    denoiserThread = make_unique<AsyncLoop>([&](){
+      std::unique_lock<std::mutex> lock(newBuffersMutex);
+      newBuffersCond.wait(lock, [&]{ return newBuffers; });
+      newBuffers = false;
+      denoisers.swap();
+      lock.unlock();
+
+      // work on denoisers.front
+      denoiseFps.start();
+      denoisers.front().execute();
+      denoiseFps.stop();
+
       // NOTE(jda) - Spin here until the consumer has had the chance to update
       //             to the latest frame.
       while(state == ExecState::RUNNING && newPixels == true);
 
-      frameBuffers.back().resize(sgFB->size(), sgFB->format());
-      auto srcPB = (uint8_t*)sgFB->map();
-      frameBuffers.back().copy(srcPB);
-      sgFB->unmap(srcPB);
+      frameBuffers.back().resize(denoisers.front().size(), OSP_FB_RGBA32F);
+      frameBuffers.back().copy((uint8_t*)denoisers.front().result());
 
       newPixels = true;
     }, AsyncLoop::LaunchMethod::THREAD);
+#endif
   }
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+  double AsyncRenderEngine::lastDenoiseFps() const
+  {
+    auto sgFB = scenegraph->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+    return sgFB->auxBuffers() ? denoiseFps.perSecond() : inf;
+  }
+
+  void AsyncRenderEngine::Denoiser::init(oidn::DeviceRef &dev)
+  {
+    filter = dev.newFilter("RT");
+  }
+
+  void AsyncRenderEngine::Denoiser::copy(std::shared_ptr<sg::FrameBuffer> fb)
+  {
+    auto fbSize = fb->size();
+    const auto elements = fbSize.x * fbSize.y;
+    if (fbSize != size_) {
+      needCommit = true;
+      size_ = fbSize;
+      color.resize(elements);
+      normal.resize(elements);
+      albedo.resize(elements);
+      result_.resize(elements);
+    }
+    const vec4f *buf4 = (const vec4f *)fb->map(OSP_FB_COLOR);
+    std::copy(buf4, buf4 + elements, color.begin());
+    fb->unmap(buf4);
+    const vec3f *buf3 = (const vec3f *)fb->map(OSP_FB_NORMAL);
+    std::copy(buf3, buf3 + elements, normal.begin());
+    fb->unmap(buf3);
+    buf3 = (const vec3f *)fb->map(OSP_FB_ALBEDO);
+    std::copy(buf3, buf3 + elements, albedo.begin());
+    fb->unmap(buf3);
+  }
+
+  void AsyncRenderEngine::Denoiser::execute()
+  {
+    if (needCommit) {
+      filter.setImage("color", color.data(), oidn::Format::Float3,
+          size_.x, size_.y, 0, sizeof(vec4f));
+
+      filter.setImage("normal", normal.data(), oidn::Format::Float3,
+          size_.x, size_.y, 0, sizeof(vec3f));
+
+      filter.setImage("albedo", albedo.data(), oidn::Format::Float3, 
+          size_.x, size_.y, 0, sizeof(vec3f));
+
+      filter.setImage("output", result_.data(), oidn::Format::Float3,
+          size_.x, size_.y, 0, sizeof(vec4f));
+
+      filter.set1i("hdr", 1);
+      filter.commit();
+      needCommit = false;
+    }
+    filter.execute();
+  }
+#endif
 
   AsyncRenderEngine::~AsyncRenderEngine()
   {
@@ -103,6 +201,10 @@ namespace ospray {
     while (state != ExecState::RUNNING) {
       backgroundThread->stop();
       backgroundThread->start();
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      denoiserThread->stop();
+      denoiserThread->start();
+#endif
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
   }
@@ -114,6 +216,9 @@ namespace ospray {
 
     state = ExecState::STOPPED;
     backgroundThread->stop();
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    denoiserThread->stop();
+#endif
   }
 
   ExecState AsyncRenderEngine::runningState() const

@@ -29,7 +29,7 @@ namespace ospray {
 
       // no destructor since we release the framebuffer object in Node::~Node()
 
-      const void *map();
+      const void *map(OSPFrameBufferChannel = OSP_FB_COLOR);
       void unmap(const void *mem);
 
       void clear();
@@ -37,6 +37,9 @@ namespace ospray {
 
       vec2i size() const;
       OSPFrameBufferFormat format() const;
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      bool auxBuffers() const;
+#endif
 
       virtual void postTraverse(RenderContext &, const std::string&) override;
       virtual void postCommit(RenderContext &ctx) override;
@@ -61,6 +64,9 @@ namespace ospray {
       };
       std::string displayWallStream;
       bool toneMapperActive {false};
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      bool useDenoiser {false};
+#endif
     };
 
   } // ::ospray::sg
