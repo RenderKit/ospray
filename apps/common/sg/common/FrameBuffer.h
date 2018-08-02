@@ -19,6 +19,10 @@
 // sg components
 #include "Node.h"
 
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+#include <OpenImageDenoise/oidn.hpp>
+#endif
+
 namespace ospray {
   namespace sg {
 
@@ -63,6 +67,12 @@ namespace ospray {
       };
       OSPPixelOp toneMapper {nullptr};
       std::string displayWallStream;
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      OIDN::Device denoiserDevice;
+      OIDN::Filter denoiser;
+      std::vector<vec4f> denoisedResult;
+      bool useDenoiser {false};
+#endif
     };
 
   } // ::ospray::sg

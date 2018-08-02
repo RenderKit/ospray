@@ -20,6 +20,10 @@ namespace ospray {
   namespace sg {
 
     FrameBuffer::FrameBuffer(vec2i size)
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      : denoiserDevice(OIDN::newDevice())
+      , denoiser(denoiserDevice.newFilter(OIDN::FilterType::AUTOENCODER_LDR))
+#endif
     {
       createChild("size", "vec2i", size, NodeFlags::gui_readonly);
       createChild("displayWall", "string", std::string(""));
@@ -63,6 +67,9 @@ namespace ospray {
 
       createChild("useAccumBuffer", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      createChild("useDenoiser", "bool", true);
+#endif
 
       createFB();
     }
@@ -89,6 +96,9 @@ namespace ospray {
           || child("displayWall").lastModified() >= lastCommitted()
           || child("useAccumBuffer").lastModified() >= lastCommitted()
           || child("useVarianceBuffer").lastModified() >= lastCommitted()
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+          || child("useDenoiser").lastModified() >= lastCommitted()
+#endif
           || child("colorFormat").lastModified() >= lastCommitted()
           || removeToneMapper)
       {
@@ -135,11 +145,20 @@ namespace ospray {
 
     const void *FrameBuffer::map()
     {
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      if (useDenoiser) {
+        denoiser.execute();
+        return denoisedResult.data();
+      } else
+#endif
       return ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
     }
 
     void FrameBuffer::unmap(const void *mem)
     {
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      if (!useDenoiser)
+#endif
       ospUnmapFrameBuffer(mem,ospFrameBuffer);
     }
 
@@ -185,16 +204,57 @@ namespace ospray {
           committed_format = el.second;
           break;
         }
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      useDenoiser = child("useDenoiser").valueAs<bool>();
+      if (useDenoiser)
+        committed_format = OSP_FB_RGBA32F;
+#endif
 
       auto useAccum    = child("useAccumBuffer").valueAs<bool>();
       auto useVariance = child("useVarianceBuffer").valueAs<bool>();
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)committed_size, committed_format,
-                                         OSP_FB_COLOR |
-                                         (useAccum ? OSP_FB_ACCUM : 0) |
-                                         (useVariance ? OSP_FB_VARIANCE : 0));
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)committed_size,
+          committed_format,
+          OSP_FB_COLOR |
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+          (useDenoiser ? OSP_FB_NORMAL | OSP_FB_ALBEDO : 0) |
+#endif
+          (useAccum ? OSP_FB_ACCUM : 0) |
+          (useVariance ? OSP_FB_VARIANCE : 0));
+
       if (toneMapper)
         ospSetPixelOp(ospFrameBuffer, toneMapper);
       setValue(ospFrameBuffer);
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      if (!useDenoiser)
+        return;
+
+      // XXX assume FB addresses don't change
+      const void *buf = ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
+      denoiser.setBuffer(OIDN::BufferType::INPUT, 0, OIDN::Format::FLOAT3,
+          buf, 0, sizeof(vec4f), committed_size.x, committed_size.y);
+      ospUnmapFrameBuffer(buf, ospFrameBuffer);
+
+      buf = ospMapFrameBuffer(ospFrameBuffer, OSP_FB_NORMAL);
+      denoiser.setBuffer(OIDN::BufferType::INPUT_NORMAL, 0,
+          OIDN::Format::FLOAT3, buf, 0, sizeof(vec3f),
+          committed_size.x, committed_size.y);
+      ospUnmapFrameBuffer(buf, ospFrameBuffer);
+
+      buf = ospMapFrameBuffer(ospFrameBuffer, OSP_FB_ALBEDO);
+      denoiser.setBuffer(OIDN::BufferType::INPUT_ALBEDO, 0,
+          OIDN::Format::FLOAT3, buf, 0, sizeof(vec3f),
+          committed_size.x, committed_size.y);
+      ospUnmapFrameBuffer(buf, ospFrameBuffer);
+
+      denoisedResult.reserve(committed_size.x * committed_size.y);
+      // TODO sRGB convertion should be done by OpenGL during display
+      denoiser.setBuffer(OIDN::BufferType::OUTPUT, 0, OIDN::Format::FLOAT3_SRGB,
+          denoisedResult.data(), 0, sizeof(vec4f),
+          committed_size.x, committed_size.y);
+
+      denoiser.commit();
+#endif
     }
 
     void ospray::sg::FrameBuffer::destroyFB()

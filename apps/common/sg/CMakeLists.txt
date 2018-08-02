@@ -75,6 +75,18 @@ if(OSPRAY_SG_OPENIMAGEIO)
   endif()
 endif()
 
+## OpenImageDenoise support ##
+
+option(OSPRAY_APPS_ENABLE_DENOISER "Use image denoiser in example viewer")
+mark_as_advanced(OSPRAY_APPS_ENABLE_DENOISER)
+if (OSPRAY_APPS_ENABLE_DENOISER)
+  find_package(OpenImageDenoise)
+  if (OPENIMAGEDENOISE_FOUND)
+    add_definitions(-DOSPRAY_APPS_ENABLE_DENOISER)
+    include_directories(${OPENIMAGEDENOISE_INCLUDE_DIRS})
+  endif()
+endif()
+
 ospray_create_library(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
@@ -160,6 +172,7 @@ LINK
   ${HDF5_LIBRARIES}
   ${VTK_LIBRARIES}
   ${OPENIMAGEIO_LIBRARIES}
+  ${OPENIMAGEDENOISE_LIBRARIES}
 )
 
 ## Install headers in SDK ##
