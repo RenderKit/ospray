@@ -256,7 +256,7 @@ namespace ospray {
       /* TODO
       std::function<int(void*, const float)>
       progress_fcn { [](void*, const float){ return 1; } };*/
-      OSPProgressFunc progressCallback;
+      OSPProgressFunc progressCallback {nullptr};
       void *progressUserPtr;
       std::mutex progressMutex; // protect user callback function
 
