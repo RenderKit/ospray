@@ -39,8 +39,10 @@ namespace ospray {
 
     managedObjectType = OSP_DATA;
 
+    // TODO WILL: This will not work if we want to set OSP_OBJECT containing
+    // data arrays when using the distributed device.
     if (type == OSP_OBJECT) {
-      Data **child = (Data **)data;
+      ManagedObject **child = (ManagedObject **)data;
       for (uint32_t i = 0; i < numItems; i++) {
         if (child[i])
           child[i]->refInc();

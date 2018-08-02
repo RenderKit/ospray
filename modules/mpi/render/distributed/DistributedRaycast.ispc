@@ -282,7 +282,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       const vec3f specColor = make_vec3f(0.6);
       const vec3f viewDir = normalize(negate(geomRay.dir));
       // TODO: read the light params?
-      const vec3f lightDir = normalize(make_vec3f(-1.0));
+      const vec3f lightDir = normalize(make_vec3f(1.0));
       const vec3f dgNormal = normalize(dg.Ns);
       // Hard-coded Blinn-Phong. TODO: Materials API support
       vec3f geomColor = matColor * make_vec3f(0.1);

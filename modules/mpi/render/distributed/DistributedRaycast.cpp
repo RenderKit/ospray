@@ -342,7 +342,8 @@ namespace ospray {
         // to the tile owner.
         tile.generation = 1;
         tile.children = 0;
-        for (const auto &region : distribModel->myRegions) {
+        for (size_t i = 0; i < distribModel->myRegions.size(); ++i) {
+          const auto &region = distribModel->myRegions[i];
           if (!regionInfo.regionVisible[region.id]) {
             continue;
           }
@@ -358,6 +359,7 @@ namespace ospray {
                                                  regionOwners.find(globalRank()));
           const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
           if (regionTileOwner) {
+            regionInfo.currentGhostRegion = i;
             regionInfo.currentRegion = region.id;
             tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
               renderTile(&regionInfo, tile, tIdx);
@@ -366,7 +368,6 @@ namespace ospray {
 
             fb->setTile(tile);
           }
-          ++regionInfo.currentGhostRegion;
         }
       });
 
