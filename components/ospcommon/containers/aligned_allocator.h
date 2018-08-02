@@ -30,7 +30,9 @@ namespace ospcommon {
     //
     // https://blogs.msdn.microsoft.com/vcblog/2008/08/28/the-mallocator/
 
-    template <typename T, int alignment = 64>
+#define OSPRAY_DEFAULT_ALIGNMENT 64
+
+    template <typename T, int alignment = OSPRAY_DEFAULT_ALIGNMENT>
     struct aligned_allocator
     {
       // Compile-time info //
@@ -56,6 +58,12 @@ namespace ospcommon {
       ~aligned_allocator()                         = default;
       aligned_allocator &operator=(const aligned_allocator &) = delete;
 
+      template <typename U, int OA = OSPRAY_DEFAULT_ALIGNMENT>
+      aligned_allocator(const aligned_allocator<U, OA> &);
+
+      template <typename U, int OA = OSPRAY_DEFAULT_ALIGNMENT>
+      aligned_allocator &operator=(const aligned_allocator<U, OA> &);
+
       T *address(T &r) const;
       const T *address(const T &s) const;
 
@@ -80,6 +88,19 @@ namespace ospcommon {
     };
 
     // Inlined member definitions /////////////////////////////////////////////
+
+    template <typename T, int A>
+    template <typename U, int OA>
+    aligned_allocator<T, A>::aligned_allocator(const aligned_allocator<U, OA> &)
+    {
+    }
+
+    template <typename T, int A>
+    template <typename U, int OA>
+    aligned_allocator<T, A> &
+    aligned_allocator<T, A>::operator=(const aligned_allocator<U, OA> &)
+    {
+    }
 
     template <typename T, int A>
     inline T *aligned_allocator<T, A>::address(T &r) const
