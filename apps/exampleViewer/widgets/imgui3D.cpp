@@ -45,14 +45,13 @@
 #include <string>
 
 #include <atomic>
-GLuint tex[2];
+GLuint tex;
 
-std::atomic<unsigned> current_texture {0};
 std::atomic<bool> init {false};
 
 static void create_textures()
 {
-  if(!init) glGenTextures(2, tex);
+  if(!init) glGenTextures(1, &tex);
   init = true;
 }
 
@@ -60,22 +59,16 @@ static void transfertexture(GLsizei width, GLsizei height,
                             GLenum format, GLenum type,
                             const GLvoid *pixels)
 {
-  unsigned next = (current_texture + 1) & 1;
-
   glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
                type, pixels);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  next++;
 }
 
 static void drawquad(GLsizei width, GLsizei height)
 {
-  unsigned ctex = current_texture & 1;
-
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
@@ -90,7 +83,7 @@ static void drawquad(GLsizei width, GLsizei height)
 
   glColor3f(1,1,1);
   glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, tex[ctex]);
+  glBindTexture(GL_TEXTURE_2D, tex);
   glEnable(GL_TEXTURE_2D);
 
   // Draw a textured quad
@@ -103,7 +96,7 @@ static void drawquad(GLsizei width, GLsizei height)
 
 
   glDisable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, tex[ctex]);
+  glBindTexture(GL_TEXTURE_2D, tex);
 
   glPopMatrix();
 
