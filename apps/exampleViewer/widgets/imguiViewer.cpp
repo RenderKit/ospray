@@ -484,10 +484,13 @@ namespace ospray {
         frameBufferMode = ImGui3DWidget::FRAMEBUFFER_FLOAT;
         break;
     }
-    fbSize = mappedFB.size();
-    ucharFB = (uint32_t *)mappedFB.data();
 
-    ImGui3DWidget::display();
+    fbSize = mappedFB.size();
+
+    if (fbSize == renderSize) {
+      ucharFB = (uint32_t *)mappedFB.data();
+      ImGui3DWidget::display();
+    }
 
     if (saveScreenshot) {
       std::string filename("ospexampleviewer");
@@ -561,7 +564,7 @@ namespace ospray {
                           &cancelFrameOnInteraction));
 
       if (ImGui::DragFloat("Render Resolution Scale", &renderResolutionScale,
-                           .01f, 0.01f, 1.f)) {
+                           .01f, 0.01f, 4.f)) {
         reshape(windowSize);
       }
 
