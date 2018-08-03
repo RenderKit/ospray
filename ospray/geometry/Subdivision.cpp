@@ -64,6 +64,9 @@ namespace ospray {
     if (vertexData->type != OSP_FLOAT3)
       throw std::runtime_error("unsupported subdivision.vertex data type");
 
+    if (colorsData && colorsData->type != OSP_FLOAT4)
+      throw std::runtime_error("unsupported subdivision.colors data type");
+
     if (indexData->type != OSP_INT && indexData->type != OSP_UINT)
       throw std::runtime_error("unsupported subdivision.index data type");
 
@@ -88,7 +91,7 @@ namespace ospray {
 
     rtcSetGeometryVertexAttributeCount(geom,1);
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0,
-                               RTC_FORMAT_FLOAT3, colors, 0, sizeof(vec3f), 8);
+                               RTC_FORMAT_FLOAT4, colors, 0, sizeof(vec4f), colorsData->size());
 
     float* level = (float*) rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_LEVEL, 0,
                                RTC_FORMAT_FLOAT, sizeof(float), indexData->size());
@@ -106,7 +109,7 @@ namespace ospray {
     //TODO: must factor in displacement into bounds....
 
 
-    postStatusMsg(2) << "  created subdivision (" << facesData->size() << " tris "
+    postStatusMsg(2) << "  created subdivision (" << facesData->size() << " faces "
                      << ", " << vertexData->size() << " vertices)\n"
                      << "  mesh bounds " << bounds;
 

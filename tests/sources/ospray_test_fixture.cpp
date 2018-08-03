@@ -1064,14 +1064,14 @@ void Subdivision::SetUp()
 
   float cube_colors[8][4] =
   {
-          {  0.0f,  0.0f,  0.0f },
-          {  1.0f,  0.0f,  0.0f },
-          {  1.0f,  0.0f,  1.0f },
-          {  0.0f,  0.0f,  1.0f },
-          {  0.0f,  1.0f,  0.0f },
-          {  1.0f,  1.0f,  0.0f },
-          {  1.0f,  1.0f,  1.0f },
-          {  0.0f,  1.0f,  1.0f }
+          {  0.0f,  0.0f,  0.0f, 1.f },
+          {  1.0f,  0.0f,  0.0f, 1.f },
+          {  1.0f,  0.0f,  1.0f, 1.f },
+          {  0.0f,  0.0f,  1.0f, 1.f },
+          {  0.0f,  1.0f,  0.0f, 1.f },
+          {  1.0f,  1.0f,  0.0f, 1.f },
+          {  1.0f,  1.0f,  1.0f, 1.f },
+          {  0.0f,  1.0f,  1.0f, 1.f }
   };
 
   unsigned int cube_indices[24] = {
@@ -1125,7 +1125,7 @@ void Subdivision::SetUp()
   ospSetData(subd, "vertex_crease_indices", vertex_crease_indices);
   auto vertex_crease_weights = ospNewData(8, OSP_FLOAT, cube_vertex_crease_weights);
   ospSetData(subd, "vertex_crease_weights", vertex_crease_weights);
-  auto colors = ospNewData(8, OSP_FLOAT3, cube_colors);
+  auto colors = ospNewData(8, OSP_FLOAT4, cube_colors);
   ospSetData(subd, "colors", colors);
   ospSet1f(subd, "edgeLevel", 256.0f);
   ospSetMaterial(subd, CreateMaterial(materialType));
@@ -1135,18 +1135,19 @@ void Subdivision::SetUp()
 
   ospSet1f(renderer, "epsilon", 0.001f);
 
-  float cam_pos[] = {-2.f, 2.f, 0.7f};
-  float cam_view[] = {2.f, -2.f, -0.7f};
+  float cam_pos[] = {-1.5f, 2.f, 0.7f};
+  float cam_view[] = {1.5f, -2.f, -0.7f};
   float cam_up[] = {0.f, 1.f, 1.f};
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up", cam_up);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
-  ASSERT_TRUE(ambient);
-  ospSetf(ambient, "intensity", 0.5f);
-  ospCommit(ambient);
-  AddLight(ambient);
+  OSPLight directional = ospNewLight(renderer, "directional");
+  ASSERT_TRUE(directional);
+  ospSetf(directional, "intensity", 0.5f);
+  ospSet3f(directional, "direction", -.2f, -.3f, -.4f);
+  ospCommit(directional);
+  AddLight(directional);
 }
 
 } // namespace OSPRayTestScenes
