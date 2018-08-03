@@ -41,12 +41,12 @@ namespace ospray {
 
     auto vertexData = getParamData("vertex",getParamData("position"));
     auto indexData = getParamData("index");
-    auto facesData = getParamData("faces");
+    auto facesData = getParamData("face");
     auto edge_crease_indicesData = getParamData("edge_crease_indices");
     auto edge_crease_weightsData = getParamData("edge_crease_weights");
     auto vertex_crease_indicesData = getParamData("vertex_crease_indices");
     auto vertex_crease_weightsData = getParamData("vertex_crease_weights");
-    auto colorsData = getParamData("colors");
+    auto colorsData = getParamData("vertex.color",getParamData("color"));
     auto texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
     auto edgeLevel = getParam1f("edgeLevel", 0.f);
     auto prim_materialIDData = getParamData("prim.materialID");
@@ -99,7 +99,6 @@ namespace ospray {
       rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 1,
                                  RTC_FORMAT_FLOAT2, texcoord, 0, sizeof(vec2f), texcoordData->size());
     }
-
 
     float* level = (float*) rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_LEVEL, 0,
                                RTC_FORMAT_FLOAT, sizeof(float), indexData->size());

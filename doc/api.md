@@ -699,6 +699,28 @@ mesh. A quad is internally handled as a pair of two triangles, thus
 mixing triangles and quad is supported by encoding a triangle as a quad
 with the last two vertex indices being identical (`w=z`).
 
+### Subdivision
+
+A mesh consisting of subdivision surfaces, created by specifying a geomtry of type "subdivision".
+Once created, a subdivision recognizes the following parameters:
+
+  Type               Name             Description
+  ------------------ ---------------- -------------------------------------------------
+  vec3f[]            vertex                [data] array of vertex positions
+  vec4i[]            index                 [data] array of quad indices (into the vertex array(s))
+  uint[]             face                  [data] array of faces
+  vec2i[]            edge_crease_indices   [data] array of edge crease indices
+  float[]            edge_crease_weights   [data] array of edge crease weights
+  uint[]             vertex_crease_indices [data] array of vertex crease indices
+  float[]            vertex_crease_weights [data] array of vertex crease weights
+  vec4f[]            vertex.color          [data] array of vertex colors (RGBA/RGB)
+  vec2f[]            vertex.texcoord       [data] array of vertex texture coordinates
+  float              edgeLevel             [float] edge level for subdivision, default is 0.f
+  ------------------ ---------------- -------------------------------------------------
+  : Parameters defining a Subdivision geometry.
+
+The `vertex`,`index`,'face', and edge and vertex crease and indices arrays are mandatory to create a valid Subdivision.
+Internally, levels are created with value edgeLevel for each index.
 
 ### Spheres
 
