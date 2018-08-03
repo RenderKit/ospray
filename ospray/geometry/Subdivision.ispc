@@ -22,9 +22,7 @@
 #include "math/sampling.ih"
 
 int32 Subdivision_getMaterialID(
-    const Geometry *uniform const _self
-    , const int32 primID
-    )
+    const Geometry *uniform const _self, const int32 primID)
 {
   // TODO: gather material ID from index array if indexSize==4
   const Subdivision *const uniform self = (const Subdivision *uniform)_self;
@@ -40,6 +38,9 @@ static void Subdivision_postIntersect(uniform Geometry *uniform _self,
   Subdivision *uniform self = (Subdivision *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
   //TODO: grab normal from embree intersect
+  if (flags & DG_MATERIALID) {
+    dg.materialID = Subdivision_getMaterialID(_self, ray.primID);
+  }
 }
 
 void Subdivision_Constructor(uniform Subdivision *uniform mesh,
@@ -66,6 +67,14 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
 export void *uniform Subdivision_create(void *uniform cppEquivalent)
 {
   Subdivision *uniform mesh = uniform new Subdivision;
+  Subdivision_Constructor(mesh,
+                          cppEquivalent,
+                          NULL,
+                          NULL,
+                          0,
+                          0,
+                          0,
+                          NULL);
   return mesh;
 }
 

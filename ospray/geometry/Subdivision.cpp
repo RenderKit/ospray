@@ -70,7 +70,7 @@ namespace ospray {
     auto geom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3,
-                               vertex, 0, sizeof(vec3fa), vertexData->size());
+                               vertex, 0, sizeof(vec3f), vertexData->size());
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT,
                                index, 0, sizeof(unsigned int), indexData->size());
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_FACE, 0, RTC_FORMAT_UINT,
@@ -88,7 +88,7 @@ namespace ospray {
 
     rtcSetGeometryVertexAttributeCount(geom,1);
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0,
-                               RTC_FORMAT_FLOAT3, colors, 0, sizeof(vec3fa), 8);
+                               RTC_FORMAT_FLOAT3, colors, 0, sizeof(vec3f), 8);
 
     float* level = (float*) rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_LEVEL, 0,
                                RTC_FORMAT_FLOAT, sizeof(float), indexData->size());
@@ -117,6 +117,8 @@ namespace ospray {
                           (uint32_t*)prim_materialID,
                           materialList ? ispcMaterialPtrs.data() : nullptr
                                          );
-    }
-    OSP_REGISTER_GEOMETRY(Subdivision,subdivision);
+  }
+
+  OSP_REGISTER_GEOMETRY(Subdivision,subdivision);
+
 } // ::ospray

@@ -209,5 +209,15 @@ private:
   std::vector<float> volumetricData;
 };
 
+// Fixture for tests rendering few connected cylinder segments. It's parametrized with type of
+// material used and radius of the segments.
+class Subdivision : public Base, public ::testing::TestWithParam<std::tuple<const char*, const char*, float>> {
+public:
+  Subdivision();
+  virtual void SetUp();
+private:
+  std::string materialType;
+};
+
 } // namespace OSPRayTestScenes
 

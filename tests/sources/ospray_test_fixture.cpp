@@ -1036,5 +1036,118 @@ void DepthCompositeVolume::SetUp()
   AddLight(ambient);
 }
 
+Subdivision::Subdivision()
+{
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  materialType = std::get<1>(params);
+  frames = 10;
+}
+
+void Subdivision::SetUp()
+{
+  Base::SetUp();
+
+  float inf = FLT_MAX;
+
+  float cube_vertices[8][3] =
+  {
+          { -1.0f, -1.0f, -1.0f },
+          {  1.0f, -1.0f, -1.0f },
+          {  1.0f, -1.0f,  1.0f },
+          { -1.0f, -1.0f,  1.0f },
+          { -1.0f,  1.0f, -1.0f },
+          {  1.0f,  1.0f, -1.0f },
+          {  1.0f,  1.0f,  1.0f },
+          { -1.0f,  1.0f,  1.0f }
+  };
+
+  float cube_colors[8][4] =
+  {
+          {  0.0f,  0.0f,  0.0f, 0.0f },
+          {  1.0f,  0.0f,  0.0f, 0.0f },
+          {  1.0f,  0.0f,  1.0f, 0.0f },
+          {  0.0f,  0.0f,  1.0f, 0.0f },
+          {  0.0f,  1.0f,  0.0f, 0.0f },
+          {  1.0f,  1.0f,  0.0f, 0.0f },
+          {  1.0f,  1.0f,  1.0f, 0.0f },
+          {  0.0f,  1.0f,  1.0f, 0.0f }
+  };
+
+  unsigned int cube_indices[24] = {
+          0, 4, 5, 1,
+          1, 5, 6, 2,
+          2, 6, 7, 3,
+          0, 3, 7, 4,
+          4, 7, 6, 5,
+          0, 1, 2, 3,
+  };
+
+  unsigned int cube_faces[6] = {
+          4, 4, 4, 4, 4, 4
+  };
+
+  float cube_vertex_crease_weights[8] = {
+          inf, inf,inf, inf, inf, inf, inf, inf
+  };
+
+  unsigned int cube_vertex_crease_indices[8] = {
+          0,1,2,3,4,5,6,7
+  };
+
+  float cube_edge_crease_weights[12] = {
+          inf, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf
+  };
+
+  unsigned int cube_edge_crease_indices[24] =
+  {
+          0,1, 1,2, 2,3, 3,0,
+          4,5, 5,6, 6,7, 7,4,
+          0,4, 1,5, 2,6, 3,7,
+  };
+
+  int numIndices = 24;
+  int  numFaces = 6;
+  int faceSize  = 4;
+
+  auto subd = ospNewGeometry("subdivision");
+  auto vertices = ospNewData(8, OSP_FLOAT3, cube_vertices);
+  ospSetData(subd, "vertex", vertices);
+  auto indices = ospNewData(numIndices, OSP_UINT, cube_indices);
+  ospSetData(subd, "index", indices);
+  auto faces = ospNewData(numFaces, OSP_UINT, cube_faces);
+  ospSetData(subd, "faces", faces);
+  auto edge_crease_indices = ospNewData(12, OSP_UINT2, cube_edge_crease_indices);
+  ospSetData(subd, "edge_crease_indices", edge_crease_indices);
+  auto edge_crease_weights = ospNewData(12, OSP_FLOAT, cube_edge_crease_weights);
+  ospSetData(subd, "edge_crease_weights", edge_crease_weights);
+  auto vertex_crease_indices = ospNewData(8, OSP_UINT, cube_vertex_crease_indices);
+  ospSetData(subd, "vertex_crease_indices", vertex_crease_indices);
+  auto vertex_crease_weights = ospNewData(8, OSP_FLOAT, cube_vertex_crease_weights);
+  ospSetData(subd, "vertex_crease_weights", vertex_crease_weights);
+  auto colors = ospNewData(8, OSP_FLOAT3A, cube_colors);
+  ospSetData(subd, "colors", colors);
+  ospSet1f(subd, "edgeLevel", 256.0f);
+  ospSetMaterial(subd, CreateMaterial(materialType));
+
+  ospCommit(subd);
+  AddGeometry(subd);
+
+  ospSet1f(renderer, "epsilon", 0.001f);
+
+  float cam_pos[] = {-7.f, 2.f, 0.7f};
+  float cam_view[] = {7.f, -2.f, -0.7f};
+  float cam_up[] = {0.f, 0.f, 1.f};
+  ospSet3fv(camera, "pos", cam_pos);
+  ospSet3fv(camera, "dir", cam_view);
+  ospSet3fv(camera, "up", cam_up);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient);
+  ospSetf(ambient, "intensity", 0.5f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
 } // namespace OSPRayTestScenes
 

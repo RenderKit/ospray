@@ -24,6 +24,7 @@ using OSPRayTestScenes::SpherePrecision;
 using OSPRayTestScenes::Box;
 using OSPRayTestScenes::Sierpinski;
 using OSPRayTestScenes::Pipes;
+using OSPRayTestScenes::Subdivision;
 using namespace ospcommon;
 
 namespace {
@@ -320,3 +321,11 @@ INSTANTIATE_TEST_CASE_P(Scivis, Pipes, ::testing::Combine(::testing::Values("sci
 #if 0 // TODO: these tests will break future tests...
 INSTANTIATE_TEST_CASE_P(Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values(0.1f, 0.4f)));
 #endif
+
+
+TEST_P(Subdivision, simple) {
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_CASE_P(Scivis, Subdivision, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
+INSTANTIATE_TEST_CASE_P(Pathtracer, Subdivision, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
