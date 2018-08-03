@@ -640,7 +640,7 @@ namespace ospray {
       ImGui::Text("Variance: %.3f", variance);
 
       auto eta = scenegraph->estimatedSeconds();
-      if (isfinite(eta)) {
+      if (std::isfinite(eta)) {
         auto sec = scenegraph->elapsedSeconds();
         ImGui::SameLine();
         ImGui::Text(" Total progress: ");
