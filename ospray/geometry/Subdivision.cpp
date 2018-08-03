@@ -47,9 +47,9 @@ namespace ospray {
     auto vertex_crease_indicesData = getParamData("vertex_crease_indices");
     auto vertex_crease_weightsData = getParamData("vertex_crease_weights");
     auto colorsData = getParamData("colors");
+    auto texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
     auto edgeLevel = getParam1f("edgeLevel", 0.f);
     auto prim_materialIDData = getParamData("prim.materialID");
-    uint32_t* prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
     uint geom_materialID = getParam1i("geom.materialID",-1);
 
     int* index = (int*)indexData->data;
@@ -60,6 +60,8 @@ namespace ospray {
     float* edge_crease_weights = (float*)edge_crease_weightsData->data;
     int* vertex_crease_indices = (int*)vertex_crease_indicesData->data;
     float* vertex_crease_weights = (float*)vertex_crease_weightsData->data;
+    uint32_t* prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
+    vec2f* texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
 
     if (vertexData->type != OSP_FLOAT3)
       throw std::runtime_error("unsupported subdivision.vertex data type");
@@ -92,6 +94,12 @@ namespace ospray {
     rtcSetGeometryVertexAttributeCount(geom,1);
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0,
                                RTC_FORMAT_FLOAT4, colors, 0, sizeof(vec4f), colorsData->size());
+    if (texcoord) {
+      rtcSetGeometryVertexAttributeCount(geom,2);
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 1,
+                                 RTC_FORMAT_FLOAT2, texcoord, 0, sizeof(vec2f), texcoordData->size());
+    }
+
 
     float* level = (float*) rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_LEVEL, 0,
                                RTC_FORMAT_FLOAT, sizeof(float), indexData->size());
@@ -118,7 +126,8 @@ namespace ospray {
                           eGeomID,
                           geom_materialID,
                           (uint32_t*)prim_materialID,
-                          materialList ? ispcMaterialPtrs.data() : nullptr
+                          materialList ? ispcMaterialPtrs.data() : nullptr,
+                          (ispc::vec2f*)texcoord
                                          );
   }
 

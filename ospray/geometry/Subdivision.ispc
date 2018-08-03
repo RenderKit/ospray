@@ -49,14 +49,20 @@ static void Subdivision_postIntersect(uniform Geometry *uniform _self,
     dg.Ns = cross(dPdu,dPdv);
   }
   //get colors
-  if (flags & DG_COLOR)
-  {
-    vec3f color;
+  if (flags & DG_COLOR) {
+    vec4f color;
     foreach_unique (geomID in ray.geomID) {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,0,&color.x,NULL,NULL,3);
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,0,&color.x,NULL,NULL,4);
     }
     dg.color = make_vec4f(color);
-    dg.color.w = 1.f;
+  }
+  //get texcoords
+  if (flags & DG_TEXCOORD && self->texcoord) {
+    vec2f tex;
+    foreach_unique (geomID in ray.geomID) {
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,0,&tex.x,NULL,NULL,2);
+    }
+    dg.st = tex;
   }
 }
 
@@ -67,7 +73,8 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
                              uniform int32 geomID,
                              uniform int32   geom_materialID,
                              uniform uint32 *uniform prim_materialID,
-                             uniform Material *uniform *uniform materialList)
+                             uniform Material *uniform *uniform materialList,
+                             uniform vec2f *uniform texcoord)
 {
   Geometry_Constructor(&mesh->super,cppEquivalent,
                        Subdivision_postIntersect,
@@ -78,6 +85,7 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
   mesh->super.getMaterialID = Subdivision_getMaterialID;
   mesh->prim_materialID = prim_materialID;
   mesh->geom_materialID = geom_materialID;
+  mesh->texcoord = texcoord;
 }
 
 
@@ -91,6 +99,7 @@ export void *uniform Subdivision_create(void *uniform cppEquivalent)
                           0,
                           0,
                           0,
+                          NULL,
                           NULL);
   return mesh;
 }
@@ -101,7 +110,8 @@ export void *uniform Subdivision_set(void *uniform _mesh,
                                       uniform int32 geomID,
                                       uniform int32 geom_materialID,
                                       uniform uint32 *uniform prim_materialID,
-                                      void *uniform _materialList
+                                      void *uniform _materialList,
+                                      uniform vec2f *uniform texcoord
                                       )
 {
   uniform Subdivision *uniform mesh = (uniform Subdivision *uniform)_mesh;
@@ -113,5 +123,7 @@ export void *uniform Subdivision_set(void *uniform _mesh,
                           geomID,
                           geom_materialID,
                           prim_materialID,
-                          (Material*uniform*uniform)_materialList);
+                          (Material*uniform*uniform)_materialList,
+                          texcoord
+                          );
 }

@@ -23,5 +23,6 @@ struct Subdivision {
   Geometry  super; //!< inherited geometry fields
   uint32   *prim_materialID;     // per-primitive material ID
   int32     geom_materialID;     // per-object material ID
+  vec2f     *texcoord;
 };
 
