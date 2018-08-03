@@ -636,7 +636,25 @@ namespace ospray {
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);
       ImGui::Text("  display pixel time: %.1f ms", lastDisplayTime*1000.f);
-      ImGui::Text("Variance: %.3f", renderer->getLastVariance());
+      auto variance = renderer->getLastVariance();
+      ImGui::Text("Variance: %.3f", variance);
+
+      auto eta = scenegraph->estimatedSeconds();
+      if (isfinite(eta)) {
+        auto sec = scenegraph->elapsedSeconds();
+        ImGui::SameLine();
+        ImGui::Text(" Total progress: ");
+
+        char str[100];
+        if (sec < eta)
+          snprintf(str, sizeof(str), "%.1f s / %.1f s", sec, eta);
+        else
+          snprintf(str, sizeof(str), "%.1f s", sec);
+
+        ImGui::SameLine();
+        ImGui::ProgressBar(sec/eta, ImVec2(-1,0), str);
+      }
+
       ImGui::NewLine();
     }
   }

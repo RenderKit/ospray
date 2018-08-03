@@ -94,7 +94,6 @@ namespace ospray {
     double lastGUITime;
     double lastDisplayTime;
     double lastTotalTime;
-    float lastVariance;
 
     imgui3D::ImGui3DWidget::ViewPort originalView;
     bool saveScreenshot {false}; // write next mapped framebuffer to disk

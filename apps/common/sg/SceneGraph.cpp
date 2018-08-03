@@ -82,6 +82,9 @@ namespace ospray {
 
         clearFB = false;
         numAccumulatedFrames = 0;
+        etaSeconds = inf;
+        etaVariance = inf;
+        etaAccumulation = inf;
       }
     }
 
@@ -97,14 +100,48 @@ namespace ospray {
 
       traverse("render");
 
-      const bool limitAccumulation  = frameAccumulationLimit >= 0;
-      const bool accumBudgetReached =
-          frameAccumulationLimit <= numAccumulatedFrames;
+      const bool accumBudgetReached = frameAccumulationLimit >= 0 &&
+        numAccumulatedFrames >= frameAccumulationLimit;
 
-      if (!limitAccumulation || !accumBudgetReached) {
-        rendererNode->renderFrame(fbNode);
-        numAccumulatedFrames++;
+      const float varianceThreshold =
+        rendererNode->child("varianceThreshold").valueAs<float>();
+      const float lastVariance = numAccumulatedFrames < 2 ? inf
+        : rendererNode->getLastVariance();
+      const bool varianceReached = varianceThreshold > 0.f &&
+          lastVariance <= varianceThreshold;
+
+      if (accumBudgetReached || varianceReached) {
+        etaSeconds = elapsedSeconds();
+        return;
       }
+
+      if (numAccumulatedFrames == 0)
+        accumulationTimer.start();
+
+      rendererNode->renderFrame(fbNode);
+
+      numAccumulatedFrames++;
+      accumulationTimer.stop();
+
+      if (frameAccumulationLimit >= 0)
+        etaAccumulation = frameAccumulationLimit * elapsedSeconds()
+          / numAccumulatedFrames;
+
+      if (varianceThreshold > 0.f) {
+        const float currentVariance = rendererNode->getLastVariance();
+        if (numAccumulatedFrames == 4) { // need stable variance estimate
+          firstVariance = currentVariance;
+          firstSeconds = elapsedSeconds();
+        }
+        // update estimate only on even frames (when variance was updated)
+        if (((numAccumulatedFrames&1)==0) && numAccumulatedFrames >= 6)
+          etaVariance = firstSeconds + (elapsedSeconds() - firstSeconds)
+            / (1.f/sqr(currentVariance) - 1.f/sqr(firstVariance))
+            / sqr(varianceThreshold);
+      }
+
+      // whichever is earlier
+      etaSeconds = std::min(etaVariance, etaAccumulation);
     }
 
     OSPPickResult Frame::pick(const vec2f &pickPos)
@@ -116,6 +153,16 @@ namespace ospray {
     int Frame::frameId() const
     {
       return numAccumulatedFrames;
+    }
+
+    float Frame::elapsedSeconds() const
+    {
+      return accumulationTimer.seconds();
+    }
+
+    float Frame::estimatedSeconds() const
+    {
+      return etaSeconds;
     }
 
     OSP_REGISTER_SG_NODE(Frame);
