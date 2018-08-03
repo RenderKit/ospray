@@ -160,6 +160,8 @@ namespace ospray {
                              lookat, mouse speed, etc */
        bool fullScreen;
        vec2i windowSize;
+       float renderResolutionScale {1.0f};
+       vec2i renderSize;
        // position and size when not in fullscreen
        vec2i windowedPos;
        vec2i windowedSize;

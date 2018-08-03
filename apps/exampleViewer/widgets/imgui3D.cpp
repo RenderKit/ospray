@@ -76,10 +76,8 @@ static void drawquad(GLsizei width, GLsizei height)
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
 
-
   glLoadIdentity();
   glDisable(GL_LIGHTING);
-
 
   glColor3f(1,1,1);
   glEnable(GL_TEXTURE_2D);
@@ -94,7 +92,6 @@ static void drawquad(GLsizei width, GLsizei height)
   glTexCoord2f(1, 0); glVertex3f(width, 0, 0);
   glEnd();
 
-
   glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, tex);
 
@@ -106,20 +103,16 @@ static void drawquad(GLsizei width, GLsizei height)
   glMatrixMode(GL_MODELVIEW);
 }
 
-#if 0
-extern "C" void glDrawPixels( GLsizei width, GLsizei height,
-                              GLenum format, GLenum type,
-                              const GLvoid *pixels );
-#else
-void glDrawPixels(GLsizei width, GLsizei height,
-                  GLenum format, GLenum type,
-                  const GLvoid *pixels)
+void drawPixels(ospcommon::vec2i windowSize,
+                ospcommon::vec2i renderSize,
+                GLenum pixelFormat,
+                GLenum type,
+                const GLvoid *pixels)
 {
   create_textures();
-  transfertexture(width,height,format,type,pixels);
-  drawquad(width,height);
+  transfertexture(renderSize.x,renderSize.y,pixelFormat,type,pixels);
+  drawquad(windowSize.x,windowSize.y);
 }
-#endif
 
 using ospcommon::utility::getEnvVar;
 
@@ -255,6 +248,7 @@ namespace ospray {
     void ImGui3DWidget::reshape(const vec2i &newSize)
     {
       windowSize = newSize;
+      renderSize = windowSize * renderResolutionScale;
       glViewport(0, 0, newSize.x, newSize.y);
       viewPort.aspect = newSize.x/float(newSize.y);
       viewPort.modified = true;
@@ -269,9 +263,9 @@ namespace ospray {
       }
 
       if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
-        glDrawPixels(fbSize.x, fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
+        drawPixels(windowSize, renderSize, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
       } else if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
-        glDrawPixels(fbSize.x, fbSize.y, GL_RGBA, GL_FLOAT, floatFB);
+        drawPixels(windowSize, renderSize, GL_RGBA, GL_FLOAT, floatFB);
       } else {
         glClearColor(0.f,0.f,0.f,1.f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -319,7 +313,9 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title, const bool fullScreen_, const vec2i windowSize)
+    void ImGui3DWidget::create(const char *title,
+                               const bool fullScreen_,
+                               const vec2i windowSize)
     {
       fullScreen = fullScreen_;
       // Setup window

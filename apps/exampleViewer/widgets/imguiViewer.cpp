@@ -325,7 +325,7 @@ namespace ospray {
   void ImGuiViewer::reshape(const vec2i &newSize)
   {
     ImGui3DWidget::reshape(newSize);
-    scenegraph->child("frameBuffer")["size"].setValue(newSize);
+    scenegraph->child("frameBuffer")["size"].setValue(renderSize);
   }
 
   void ImGuiViewer::keypress(char key)
@@ -559,6 +559,11 @@ namespace ospray {
 
       if (ImGui::Checkbox("Interaction Cancels Frame",
                           &cancelFrameOnInteraction));
+
+      if (ImGui::DragFloat("Render Resolution Scale", &renderResolutionScale,
+                           .01f, 0.01f, 1.f)) {
+        reshape(windowSize);
+      }
 
       if (ImGui::MenuItem("Take Screenshot"))
           saveScreenshot = true;
