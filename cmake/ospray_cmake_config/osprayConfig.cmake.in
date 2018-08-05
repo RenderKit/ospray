@@ -251,10 +251,8 @@ if (NOT CMAKE_VERSION VERSION_LESS "3.0")
     include("${OSPRAY_CMAKE_ROOT}/ospray-${f}-targets.cmake")
     # Note (Qi): this is actually not necessary, but this prevents compilation errors when someone
     #   used 'include_directories' by accidents.
-    set_target_properties(ospray::ospray_common
+    set_target_properties(ospray::${f}
       PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${OSPRAY_INCLUDE_DIRS}")
   endforeach()
-  set_target_properties(ospray::ospray
-    PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${OSPRAY_INCLUDE_DIRS}")
 
 endif()
