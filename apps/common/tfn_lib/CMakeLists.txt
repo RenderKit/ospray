@@ -14,8 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CREATE_LIBRARY(ospray_tfn tfn_lib.cpp LINK ospray_common)
-OSPRAY_CREATE_LIBRARY(ospray_json jsoncpp.cpp LINK ospray_common)
+OSPRAY_CREATE_LIBRARY(ospray_tfn tfn_lib.cpp LINK ospray_common EXCLUDE_FROM_EXPORT)
+OSPRAY_CREATE_LIBRARY(ospray_json jsoncpp.cpp LINK ospray_common EXCLUDE_FROM_EXPORT)
 SET_TARGET_PROPERTIES(ospray_json PROPERTIES DEFINE_SYMBOL JSON_DLL_BUILD)
 
 OPTION(OSPRAY_APPS_PARAVIEW_TFN_CVT

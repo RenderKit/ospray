@@ -23,4 +23,5 @@ OSPRAY_CREATE_LIBRARY(ospray_imgui
   imguifilesystem/imguifilesystem.cpp
 LINK
   ${OPENGL_LIBRARIES}
+EXCLUDE_FROM_EXPORT
 )

@@ -20,4 +20,5 @@ ospray_create_library(ospray_imgui_util_sg
 LINK
   ospray
   ospray_sg
+EXCLUDE_FROM_EXPORT
 )

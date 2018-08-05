@@ -18,4 +18,5 @@ OSPRAY_CREATE_LIBRARY(ospray_app STATIC
   OSPApp.cpp
 LINK
   ospray_sg
+EXCLUDE_FROM_EXPORT
 )

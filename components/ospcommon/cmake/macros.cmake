@@ -180,25 +180,40 @@ ENDMACRO()
 ## Target install macros for OSPRay libraries ##
 INCLUDE(GNUInstallDirs)
 
-MACRO(OSPRAY_INSTALL_LIBRARY name component)
+MACRO(OSPRAY_INSTALL_LIBRARY name component exclude_export)
 
-  INSTALL(TARGETS ${name}
-    EXPORT ${name}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  IF ("${exclude_export}" STREQUAL "FALSE")
+    INSTALL(TARGETS ${name}
+      EXPORT ${name}-targets
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
       NAMELINK_SKIP
-    # on Windows put the dlls into bin
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      # on Windows put the dlls into bin
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
       COMPONENT ${component}
-    # ... and the import lib into the devel package
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      # ... and the import lib into the devel package
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
-  )
+      )
+  ELSE()
+    INSTALL(TARGETS ${name}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT ${component}
+      NAMELINK_SKIP
+      # on Windows put the dlls into bin
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT ${component}
+      # ... and the import lib into the devel package
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT devel
+      )
+  ENDIF()
 
   # Install the namelink in the devel component. This command also includes the
   # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
   # given no ARCHIVE DESTINATION for static library target" error. Installing
   # these components twice doesn't hurt anything.
+  # Note (Qi): I am not sure if I need to add export target here again for them
   INSTALL(TARGETS ${name}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
@@ -209,23 +224,22 @@ MACRO(OSPRAY_INSTALL_LIBRARY name component)
       COMPONENT devel
   )
 
-  # Export targets to install directory
-  # Note (Qi): this creates one file per target, thus we have to include all of them
-  #   when compiling ospray related applications
-  SET(OSPRAY_TARGET_LIST ${OSPRAY_TARGET_LIST} ${name} CACHE INTERNAL "" FORCE)
-  install(EXPORT ${name}
-    FILE ospray-${name}-targets.cmake
-    NAMESPACE ospray::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}
-  )
-
-  # Export targets to build directory.
-  # Note (Qi): this might not be necessary actually
-  # Note (Qi): this creates one file osprayTargets.cmake that contains all the targets
-  export(TARGETS ${name}
-    NAMESPACE ospray::
-    APPEND FILE ${CMAKE_BINARY_DIR}/cmake/osprayTargets.cmake
-  )
+  IF ("${exclude_export}" STREQUAL "FALSE")
+    # Export targets to install directory
+    # Note (Qi): this creates one file per target, thus we have to include all of them
+    #   when compiling ospray related applications
+    SET(OSPRAY_TARGET_LIST ${OSPRAY_TARGET_LIST} ${name} CACHE INTERNAL "" FORCE)
+    install(EXPORT ${name}-targets
+      FILE ospray-${name}-targets.cmake
+      NAMESPACE ospray::
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}
+      )
+    # # Export targets to build directory. (Untested)
+    # # Note (Qi): this might not be necessary actually
+    # # Note (Qi): this creates one file osprayTargets.cmake that contains all the targets
+    # export(TARGETS ${name} NAMESPACE ospray::
+    #   APPEND FILE ${CMAKE_BINARY_DIR}/cmake/osprayTargets.cmake)
+  ENDIF ()
 
 ENDMACRO()
 
@@ -242,7 +256,8 @@ ENDMACRO()
 FUNCTION(OSPRAY_SPLIT_CREATE_ARGS PREFIX)
   SET(MY_SOURCES "")
   SET(LIBS "")
-  SET(MY_EXCLUDE_FROM_ALL FALSE)
+  SET(MY_EXCLUDE_FROM_ALL    FALSE)
+  SET(MY_EXCLUDE_FROM_EXPORT FALSE)
   SET(MY_COMPONENT ${OSPRAY_DEFAULT_COMPONENT})
   SET(CURRENT_LIST MY_SOURCES)
 
@@ -251,6 +266,8 @@ FUNCTION(OSPRAY_SPLIT_CREATE_ARGS PREFIX)
       SET(CURRENT_LIST LIBS)
     ELSEIF ("${arg}" STREQUAL "EXCLUDE_FROM_ALL")
       SET(MY_EXCLUDE_FROM_ALL TRUE)
+    ELSEIF ("${arg}" STREQUAL "EXCLUDE_FROM_EXPORT")
+      SET(MY_EXCLUDE_FROM_EXPORT TRUE)
     ELSEIF ("${arg}" STREQUAL "COMPONENT")
       SET(CURRENT_LIST MY_COMPONENT)
     ELSE()
@@ -272,6 +289,7 @@ FUNCTION(OSPRAY_SPLIT_CREATE_ARGS PREFIX)
   SET(${PREFIX}_SOURCES ${MY_SOURCES} PARENT_SCOPE)
   SET(${PREFIX}_LIBS ${LIBS} PARENT_SCOPE)
   SET(${PREFIX}_EXCLUDE_FROM_ALL ${MY_EXCLUDE_FROM_ALL} PARENT_SCOPE)
+  SET(${PREFIX}_EXCLUDE_FROM_EXPORT ${MY_EXCLUDE_FROM_EXPORT} PARENT_SCOPE)
   SET(${PREFIX}_COMPONENT ${MY_COMPONENT} PARENT_SCOPE)
 ENDFUNCTION()
 
@@ -300,7 +318,11 @@ MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
   IF(${LIBRARY_EXCLUDE_FROM_ALL})
     SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
   ELSE()
-    OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME} ${LIBRARY_COMPONENT})
+    IF(${LIBRARY_EXCLUDE_FROM_EXPORT})
+      OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME} ${LIBRARY_COMPONENT} TRUE)
+    ELSE()
+      OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME} ${LIBRARY_COMPONENT} FALSE)
+    ENDIF()
   ENDIF()
 ENDMACRO()
 
