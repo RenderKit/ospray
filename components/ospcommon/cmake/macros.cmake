@@ -181,7 +181,9 @@ ENDMACRO()
 INCLUDE(GNUInstallDirs)
 
 MACRO(OSPRAY_INSTALL_LIBRARY name component)
+
   INSTALL(TARGETS ${name}
+    EXPORT ${name}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
       NAMELINK_SKIP
@@ -206,6 +208,25 @@ MACRO(OSPRAY_INSTALL_LIBRARY name component)
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
   )
+
+  # Export targets to install directory
+  # Note (Qi): this creates one file per target, thus we have to include all of them
+  #   when compiling ospray related applications
+  SET(OSPRAY_TARGET_LIST ${OSPRAY_TARGET_LIST} ${name} CACHE INTERNAL "" FORCE)
+  install(EXPORT ${name}
+    FILE ospray-${name}-targets.cmake
+    NAMESPACE ospray::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}
+  )
+
+  # Export targets to build directory.
+  # Note (Qi): this might not be necessary actually
+  # Note (Qi): this creates one file osprayTargets.cmake that contains all the targets
+  export(TARGETS ${name}
+    NAMESPACE ospray::
+    APPEND FILE ${CMAKE_BINARY_DIR}/cmake/osprayTargets.cmake
+  )
+
 ENDMACRO()
 
 ## Target versioning macro ##

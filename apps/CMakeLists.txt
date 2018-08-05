@@ -31,9 +31,11 @@ OPTION(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
 
 # common utilities
 IF(OSPRAY_APPS_BENCHMARK OR OSPRAY_APPS_EXAMPLEVIEWER)
-  ADD_SUBDIRECTORY(common/ospapp)
-  ADD_SUBDIRECTORY(common/sg)
+  # Note (Qi): here we have to build tfn_lib, sg and ospapp IN ORDER
+  #   because otherwise we will have a wrong target export order ...
   ADD_SUBDIRECTORY(common/tfn_lib)
+  ADD_SUBDIRECTORY(common/sg)
+  ADD_SUBDIRECTORY(common/ospapp)
 ENDIF()
 
 IF(OSPRAY_APPS_BENCHMARK)

@@ -41,6 +41,12 @@ SET(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 
+# Note (Qi): here I am creating a global list for all the libraries
+#   built by ospray. If a libraries is created using the
+#   macro 'ospray_create_library', the library will be added into
+#   this list automatically.
+SET(OSPRAY_TARGET_LIST "" CACHE INTERNAL "" FORCE)
+
 ##############################################################
 # CMake modules and macro files
 ##############################################################
@@ -93,6 +99,15 @@ ADD_SUBDIRECTORY(modules)
 IF (OSPRAY_ENABLE_TESTING)
   ADD_SUBDIRECTORY(tests)
 ENDIF()
+
+##############################################################
+# Configure find_package files
+##############################################################
+# Note (Qi): I moved this command from ospray/CMakeLists.txt
+#   to here because we want to export all the targets built
+#   by ospray. In order to do that, we must have all the targets
+#   recorded first.
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/ospray_cmake_config.cmake)
 
 ##############################################################
 # add target for running clang-format

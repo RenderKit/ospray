@@ -493,9 +493,3 @@ TARGET_LINK_LIBRARIES(ospTutorial ospray)
 # C++ version
 ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
 TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
-
-##############################################################
-# Configure find_package files
-##############################################################
-
-INCLUDE(${CMAKE_SOURCE_DIR}/cmake/ospray_cmake_config.cmake)
