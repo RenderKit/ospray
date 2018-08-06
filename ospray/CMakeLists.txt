@@ -270,7 +270,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   common/ObjectHandle.h
   common/OSPCommon.h
   common/OSPCommon.ih
-  common/Ray.h
   common/Ray.ih
   common/Texture.h
   common/Util.h

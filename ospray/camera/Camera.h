@@ -17,7 +17,6 @@
 #pragma once
 
 #include "common/Managed.h"
-#include "common/Ray.h"
 
 namespace ospray {
 
