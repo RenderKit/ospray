@@ -563,13 +563,36 @@ namespace ospray {
       if (ImGui::Checkbox("Interaction Cancels Frame",
                           &cancelFrameOnInteraction));
 
-      if (ImGui::DragFloat("Render Resolution Scale", &renderResolutionScale,
-                           .01f, 0.01f, 4.f)) {
-        reshape(windowSize);
+      ImGui::Separator();
+
+      if (ImGui::BeginMenu("Scale Resolution")) {
+        float scale = renderResolutionScale;
+        if (ImGui::MenuItem("0.25x")) renderResolutionScale = 0.25f;
+        if (ImGui::MenuItem("0.50x")) renderResolutionScale = 0.5f;
+        if (ImGui::MenuItem("0.75x")) renderResolutionScale = 0.75f;
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("1.00x")) renderResolutionScale = 1.f;
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("1.25x")) renderResolutionScale = 1.25f;
+        if (ImGui::MenuItem("2.00x")) renderResolutionScale = 2.0f;
+        if (ImGui::MenuItem("4.00x")) renderResolutionScale = 4.0f;
+
+        if (scale != renderResolutionScale)
+          reshape(windowSize);
+
+        ImGui::EndMenu();
       }
+
+      ImGui::Separator();
 
       if (ImGui::MenuItem("Take Screenshot"))
           saveScreenshot = true;
+
+      ImGui::Separator();
 
       if (ImGui::MenuItem("Quit")) {
         renderEngine.stop();
