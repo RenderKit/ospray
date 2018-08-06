@@ -25,6 +25,7 @@
 #include "common/sg/common/FrameBuffer.h"
 #include "common/sg/visitor/GatherNodesByName.h"
 #include "common/sg/visitor/GatherNodesByPosition.h"
+#include "common/sg/common/FrameBuffer.h"
 
 #include "sg_imgui/ospray_sg_ui.h"
 
@@ -350,6 +351,14 @@ namespace ospray {
       break;
     case '!':
       saveScreenshot = true;
+      break;
+    case '@': {
+      auto fb = scenegraph->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+      auto fbSize = fb->size();
+      utility::writePFM("denoiser_normal.pfm", fbSize.x, fbSize.y, (vec3f*)fb->map(OSP_FB_NORMAL));
+      utility::writePFM("denoiser_albedo.pfm", fbSize.x, fbSize.y, (vec3f*)fb->map(OSP_FB_ALBEDO));
+      utility::writePFM("denoiser_color.pfm", fbSize.x, fbSize.y, (vec4f*)fb->map(OSP_FB_COLOR));
+              }
       break;
     case 'X':
       if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0)) {
