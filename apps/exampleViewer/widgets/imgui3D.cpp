@@ -26,7 +26,6 @@
 #include "ospray/version.h"
 
 #include <stdio.h>
-#include <GLFW/glfw3.h>
 
 #ifdef _WIN32
 #  define snprintf(buf,len, format,...) _snprintf_s(buf, len,len, format, __VA_ARGS__)
@@ -44,95 +43,16 @@
 #include <stdexcept>
 #include <string>
 
-#include <atomic>
-GLuint tex;
-
-std::atomic<bool> init {false};
-
-static void create_textures()
-{
-  if(!init) glGenTextures(1, &tex);
-  init = true;
-}
-
-static void transfertexture(GLsizei width, GLsizei height,
-                            GLenum format, GLenum type,
-                            const GLvoid *pixels)
-{
-  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-               type, pixels);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-}
-
-static void drawquad(GLsizei width, GLsizei height)
-{
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0.0, width, 0.0, height, -1.0, 1.0);
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-
-  glLoadIdentity();
-  glDisable(GL_LIGHTING);
-
-  glColor3f(1,1,1);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, tex);
-  glEnable(GL_TEXTURE_2D);
-
-  // Draw a textured quad
-  glBegin(GL_QUADS);
-  glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
-  glTexCoord2f(0, 1); glVertex3f(0, height, 0);
-  glTexCoord2f(1, 1); glVertex3f(width, height, 0);
-  glTexCoord2f(1, 0); glVertex3f(width, 0, 0);
-  glEnd();
-
-  glDisable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, tex);
-
-  glPopMatrix();
-
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-
-  glMatrixMode(GL_MODELVIEW);
-}
-
-void drawPixels(ospcommon::vec2i windowSize,
-                ospcommon::vec2i renderSize,
-                GLenum pixelFormat,
-                GLenum type,
-                const GLvoid *pixels)
-{
-  create_textures();
-  transfertexture(renderSize.x,renderSize.y,pixelFormat,type,pixels);
-  drawquad(windowSize.x,windowSize.y);
-}
-
 using ospcommon::utility::getEnvVar;
 
 namespace ospray {
   namespace imgui3D {
 
-    bool dumpScreensDuringAnimation = false;
     bool ImGui3DWidget::showGui = false;
 
     static ImGui3DWidget *currentWidget = nullptr;
 
     // Class definitions //////////////////////////////////////////////////////
-
-    /*! write given frame buffer to file, in PPM P6 format. */
-    void saveFrameBufferToFile(const char *fileName,
-                               const uint32_t *pixel,
-                               const uint32_t sizeX, const uint32_t sizeY)
-    {
-      utility::writePPM(fileName, sizeX, sizeY, pixel);
-      std::cout << "#osp:glut3D: saved framebuffer to file " << fileName
-        << std::endl;
-    }
 
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
@@ -193,9 +113,8 @@ namespace ospray {
       rotateSpeed(.003f),
       frameBufferMode(frameBufferMode),
       fontScale(2.f),
-      ucharFB(nullptr),
-	  moveModeManipulator(nullptr),
-	  inspectCenterManipulator(nullptr)
+      moveModeManipulator(nullptr),
+      inspectCenterManipulator(nullptr)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("ERROR: Can't create more than one ImGui3DWidget!");
@@ -260,14 +179,40 @@ namespace ospray {
         hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
-      if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
-        drawPixels(windowSize, renderSize, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
-      } else if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
-        drawPixels(windowSize, renderSize, GL_RGBA, GL_FLOAT, floatFB);
-      } else {
-        glClearColor(0.f,0.f,0.f,1.f);
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-      }
+//      glClearColor(0.f,0.f,0.f,1.f);
+//      glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+      glMatrixMode(GL_PROJECTION);
+      glPushMatrix();
+      glLoadIdentity();
+      glOrtho(0.0, windowSize.x, 0.0, windowSize.y, -1.0, 1.0);
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+
+      glLoadIdentity();
+      glDisable(GL_LIGHTING);
+
+      glColor3f(1,1,1);
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, fbTexture);
+      glEnable(GL_TEXTURE_2D);
+
+      // Draw a textured quad
+      glBegin(GL_QUADS);
+      glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+      glTexCoord2f(0, 1); glVertex3f(0, windowSize.y, 0);
+      glTexCoord2f(1, 1); glVertex3f(windowSize.x, windowSize.y, 0);
+      glTexCoord2f(1, 0); glVertex3f(windowSize.x, 0, 0);
+      glEnd();
+
+      glDisable(GL_TEXTURE_2D);
+
+      glPopMatrix();
+
+      glMatrixMode(GL_PROJECTION);
+      glPopMatrix();
+
+      glMatrixMode(GL_MODELVIEW);
     }
 
     void ImGui3DWidget::buildGui()
@@ -409,6 +354,8 @@ namespace ospray {
         }
       );
 
+      glGenTextures(1, &fbTexture);
+
       currentWidget = this;
     }
 
@@ -510,29 +457,6 @@ namespace ospray {
     void ImGui3DWidget::keypress(char key)
     {
       switch (key) {
-      case '!': {
-        if (ImGui3DWidget::animating) {
-          dumpScreensDuringAnimation = !dumpScreensDuringAnimation;
-        } else {
-          char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
-          static const char *dumpFileRoot;
-#ifndef _WIN32
-          if (!dumpFileRoot) {
-            auto rc = mkstemp(tmpFileName);
-            (void)rc;
-            dumpFileRoot = tmpFileName;
-          }
-#endif
-          char fileName[100000];
-          static int frameDumpSequenceID = 0;
-          snprintf(fileName, sizeof(fileName), "%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
-          if (ucharFB)
-            saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
-          return;
-        }
-
-        break;
-      }
       case 'C':
         PRINT(viewPort);
         break;

@@ -470,44 +470,50 @@ namespace ospray {
     renderFPS = renderEngine.lastFrameFps();
     renderFPSsmoothed = renderEngine.lastFrameFpsSmoothed();
 
-    auto &mappedFB = renderEngine.mapFramebuffer();
-    switch (mappedFB.format()) {
-      default: /* fallthrough */
-      case OSP_FB_NONE:
-        frameBufferMode = ImGui3DWidget::FRAMEBUFFER_NONE;
-        break;
-      case OSP_FB_RGBA8: /* fallthrough */
-      case OSP_FB_SRGBA:
-        frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
-        break;
-      case OSP_FB_RGBA32F:
-        frameBufferMode = ImGui3DWidget::FRAMEBUFFER_FLOAT;
-        break;
-    }
-
-    fbSize = mappedFB.size();
-
-    if (fbSize == renderSize) {
-      ucharFB = (uint32_t *)mappedFB.data();
-      ImGui3DWidget::display();
-    }
-
-    if (saveScreenshot) {
+    if (renderEngine.hasNewFrame()) {
+      auto &mappedFB = renderEngine.mapFramebuffer();
+      auto fbSize = mappedFB.size();
+      auto fbData = mappedFB.data();
+      GLenum texelType;
       std::string filename("ospexampleviewer");
-      if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_UCHAR) {
-        filename += ".ppm";
-        utility::writePPM(filename, fbSize.x, fbSize.y, ucharFB);
-      } else {
-        filename += ".pfm";
-        utility::writePFM(filename, fbSize.x, fbSize.y, floatFB);
+      switch (mappedFB.format()) {
+        default: /* fallthrough */
+        case OSP_FB_NONE:
+          frameBufferMode = ImGui3DWidget::FRAMEBUFFER_NONE;
+          break;
+        case OSP_FB_RGBA8: /* fallthrough */
+        case OSP_FB_SRGBA:
+          frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
+          texelType = GL_UNSIGNED_BYTE;
+          if (saveScreenshot) {
+            filename += ".ppm";
+            utility::writePPM(filename, fbSize.x, fbSize.y, (uint32_t*)fbData);
+          }
+          break;
+        case OSP_FB_RGBA32F:
+          frameBufferMode = ImGui3DWidget::FRAMEBUFFER_FLOAT;
+          texelType = GL_FLOAT;
+          if (saveScreenshot) {
+            filename += ".pfm";
+            utility::writePFM(filename, fbSize.x, fbSize.y, (vec4f*)fbData);
+          }
+          break;
       }
-      std::cout << "saved current frame to '" << filename << "'" << std::endl;
-      saveScreenshot = false;
+
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbSize.x, fbSize.y, 0, GL_RGBA,
+          texelType, fbData);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+      if (saveScreenshot) {
+        std::cout << "saved current frame to '" << filename << "'" << std::endl;
+        saveScreenshot = false;
+      }
+
+      renderEngine.unmapFramebuffer();
     }
 
-    renderEngine.unmapFramebuffer();
-    // that pointer is no longer valid, so set it to null
-    ucharFB = nullptr;
+    ImGui3DWidget::display();
 
     lastTotalTime = ImGui3DWidget::totalTime;
     lastGUITime = ImGui3DWidget::guiTime;

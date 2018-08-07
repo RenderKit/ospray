@@ -23,7 +23,7 @@
 
 #include "Imgui3dExport.h"
 
-struct GLFWwindow;
+#include <GLFW/glfw3.h>
 
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
@@ -191,17 +191,8 @@ namespace ospray {
        bool renderingPaused {false};
 
        bool exitRequestedByUser{false};
-       /*! pointer to the frame buffer data. it is the repsonsiblity of
-           the application derived from this class to properly allocate
-           and deallocate the frame buffer pointer */
-       union {
-         /*! uchar[4] RGBA-framebuffer, if applicable */
-         uint32_t *ucharFB;
-         /*! float[4] RGBA-framebuffer, if applicable */
-         vec3fa *floatFB;
-       };
+       GLuint fbTexture;
        FrameBufferMode frameBufferMode;
-       vec2i fbSize; // can be different to windowSize, e.g. during resizing
 
        GLFWwindow *window {nullptr};
 
