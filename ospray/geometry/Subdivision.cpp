@@ -50,7 +50,7 @@ namespace ospray {
     auto texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
     auto edgeLevel = getParam1f("edgeLevel", 0.f);
     auto prim_materialIDData = getParamData("prim.materialID");
-    uint geom_materialID = getParam1i("geom.materialID",-1);
+    auto geom_materialID = getParam1i("geom.materialID",-1);
 
     int* index = (int*)indexData->data;
     float* vertex = (float*)vertexData->data;
@@ -124,7 +124,7 @@ namespace ospray {
                           geom,
                           eGeomID,
                           geom_materialID,
-                          (uint32_t*)prim_materialID,
+                          prim_materialID,
                           materialList ? ispcMaterialPtrs.data() : nullptr,
                           (ispc::vec2f*)texcoord
                                          );
