@@ -701,8 +701,9 @@ with the last two vertex indices being identical (`w=z`).
 
 ### Subdivision
 
-A mesh consisting of subdivision surfaces, created by specifying a geomtry of type "subdivision".
-Once created, a subdivision recognizes the following parameters:
+A mesh consisting of subdivision surfaces, created by specifying a
+geomtry of type "`subdivision`". Once created, a subdivision recognizes
+the following parameters:
 
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
@@ -715,12 +716,13 @@ Once created, a subdivision recognizes the following parameters:
   float[]            vertex_crease_weights [data] array of vertex crease weights
   vec4f[]            vertex.color          [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord       [data] array of vertex texture coordinates
-  float              edgeLevel             [float] edge level for subdivision, default is 0.f
+  float              edgeLevel             edge level for subdivision, default is 0.f
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
-The `vertex`,`index`,'face', and edge and vertex crease and indices arrays are mandatory to create a valid Subdivision.
-Internally, levels are created with value edgeLevel for each index.
+The `vertex`, `index`, `face`, and edge and vertex crease and indices
+arrays are mandatory to create a valid Subdivision. Internally, levels
+are created with value `edgeLevel` for each index.
 
 ### Spheres
 
