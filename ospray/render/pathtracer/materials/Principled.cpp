@@ -60,6 +60,7 @@ namespace ospray {
         MaterialParam1f coatNormal = getMaterialParam1f("coatNormal", 1.f);
 
         MaterialParam1f sheen = getMaterialParam1f("sheen", 0.f);
+        MaterialParam3f sheenColor = getMaterialParam3f("sheenColor", vec3f(1.f));
         MaterialParam1f sheenTint = getMaterialParam1f("sheenTint", 0.f);
         MaterialParam1f sheenRoughness = getMaterialParam1f("sheenRoughness", 0.2f);
 
@@ -96,6 +97,7 @@ namespace ospray {
           coatNormal.factor, coatNormal.map ? coatNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatNormal.xform, (const ispc::LinearSpace2f&)coatNormal.rot,
 
           sheen.factor, sheen.map ? sheen.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheen.xform,
+          (const ispc::vec3f&)sheenColor.factor, sheenColor.map ? sheenColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenColor.xform,
           sheenTint.factor, sheenTint.map ? sheenTint.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenTint.xform,
           sheenRoughness.factor, sheenRoughness.map ? sheenRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenRoughness.xform,
 

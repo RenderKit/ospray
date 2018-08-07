@@ -1421,7 +1421,9 @@ listed in the table below.
 
   float  sheen                      0  sheen layer weight in [0–1]
 
-  float  sheenTint                  0  how much sheen is tinted from white towards baseColor
+  vec3f  sheenColor             white  sheen color tint
+
+  float  sheenTint                  0  how much sheen is tinted from sheenColor towards baseColor
 
   float  sheenRoughness           0.2  sheen roughness in [0–1], 0 is perfectly smooth
 
