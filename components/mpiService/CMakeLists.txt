@@ -22,4 +22,5 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_service
 LINK
   ospray_mpi_common
 COMPONENT mpi
+EXPORT
 )

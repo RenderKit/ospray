@@ -89,6 +89,7 @@ else()
   LINK
     ${LINK_LIBS}
   COMPONENT lib
+  EXPORT
   )
 
   ## Install headers ##

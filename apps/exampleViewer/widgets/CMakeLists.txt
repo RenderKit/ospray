@@ -27,7 +27,5 @@ LINK
   ospray_imgui
   ospray_imgui_util_sg
   ospray_tfn
-EXCLUDE_FROM_EXPORT
 )
-target_link_libraries(ospray_imgui3d_sg PRIVATE
-  glfw)
+target_link_libraries(ospray_imgui3d_sg PRIVATE glfw)
