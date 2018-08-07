@@ -11,6 +11,7 @@ Version History
 -   Applications can get information about the progress of rendering the
     current frame, and optionally cancel it, by registering a callback
     function via `ospSetProgressFunc()`
+-   Principled material parameter sheenColor was replaced by sheenTint
 
 ### Changes in v1.6.1:
 
