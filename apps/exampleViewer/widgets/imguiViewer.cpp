@@ -581,6 +581,13 @@ namespace ospray {
         if (ImGui::MenuItem("2.00x")) renderResolutionScale = 2.0f;
         if (ImGui::MenuItem("4.00x")) renderResolutionScale = 4.0f;
 
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("custom")) {
+          ImGui::InputFloat("x##fb_scaling", &renderResolutionScale);
+          ImGui::EndMenu();
+        }
+
         if (scale != renderResolutionScale)
           reshape(windowSize);
 
