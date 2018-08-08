@@ -12,6 +12,7 @@ Version History
     current frame, and optionally cancel it, by registering a callback
     function via `ospSetProgressFunc()`
 -   Added sheenTint parameter to Principled material
+-   Added baseNormal parameter to Principled material
 
 ### Changes in v1.6.1:
 
