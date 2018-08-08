@@ -40,26 +40,25 @@ namespace ospray {
       for manipulating a 3D viewPort with the mouse.
 
       This widget should allow users to easily write simple 3D viewers
-      with simple built-in viewPort motion. In theory, all one hsa to do
-      after creating the window (and initializeing the viewPort is
+      with simple built-in viewPort motion. In theory, all one has to do
+      after creating the window (and initializing the viewPort) is
       implement the respective 'display' callback to do the actual
       rendering, using the widget's infrastructure for the boilerplace
       stuff.
 
-      If specified (\see FrameBufferMode the widget will automatically
-      allocate a frame buffer (of either uchar4 or float4 type), in
-      which case the 'display' routine will only have to write to the
-      respective frame buffer (the widget will do the respective gl
-      calls to display that framebuffer); if not specified, it's up to
-      the derived class to implement whatever opengl calls are required
-      to draw the window's content.
+      The 'display' routine will only have to update the fbTexture (the
+      widget will do the respective gl calls to display that framebuffer
+      texture on a full screen quad).
 
     */
     struct OSPRAY_IMGUI3D_INTERFACE ImGui3DWidget
     {
        typedef enum {
-         FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_DEPTH,FRAMEBUFFER_NONE
-       } FrameBufferMode;
+         RESIZE_LETTERBOX, // show complete framebuffer, add borders to keep aspect
+         RESIZE_CROP,      // fill complete window, crop framebuffer to keep aspect
+         RESIZE_KEEPFOVY,  // height is filled, keeping camera fov, crop or pad sides to keep aspect
+         RESIZE_FILL,      // fill window with framebuffer, distort image aspect
+       } ResizeMode;
        typedef enum {
          MOVE_MODE           =(1<<0),
          INSPECT_CENTER_MODE =(1<<1)
@@ -100,7 +99,7 @@ namespace ospray {
        /*! current manipulator */
        Manipulator *manipulator;
 
-       ImGui3DWidget(FrameBufferMode frameBufferMode,
+       ImGui3DWidget(ResizeMode,
                      ManipulatorMode initialManipulator=INSPECT_CENTER_MODE);
 
       virtual ~ImGui3DWidget() = default;
@@ -192,7 +191,8 @@ namespace ospray {
 
        bool exitRequestedByUser{false};
        GLuint fbTexture;
-       FrameBufferMode frameBufferMode;
+       float fbAspect;
+       ResizeMode resizeMode;
 
        GLFWwindow *window {nullptr};
 

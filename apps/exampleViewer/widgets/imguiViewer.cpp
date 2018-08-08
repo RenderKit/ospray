@@ -234,7 +234,7 @@ namespace ospray {
 // ImGuiViewer definitions ////////////////////////////////////////////////////
 
   ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Frame> &scenegraph)
-    : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
+    : ImGui3DWidget(ImGui3DWidget::RESIZE_KEEPFOVY),
       scenegraph(scenegraph),
       renderer(scenegraph->child("renderer").nodeAs<sg::Renderer>()),
       renderEngine(scenegraph)
@@ -479,11 +479,9 @@ namespace ospray {
       switch (mappedFB.format()) {
         default: /* fallthrough */
         case OSP_FB_NONE:
-          frameBufferMode = ImGui3DWidget::FRAMEBUFFER_NONE;
           break;
         case OSP_FB_RGBA8: /* fallthrough */
         case OSP_FB_SRGBA:
-          frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
           texelType = GL_UNSIGNED_BYTE;
           if (saveScreenshot) {
             filename += ".ppm";
@@ -491,7 +489,6 @@ namespace ospray {
           }
           break;
         case OSP_FB_RGBA32F:
-          frameBufferMode = ImGui3DWidget::FRAMEBUFFER_FLOAT;
           texelType = GL_FLOAT;
           if (saveScreenshot) {
             filename += ".pfm";
@@ -500,10 +497,11 @@ namespace ospray {
           break;
       }
 
+      // update/upload fbTexture
+      fbAspect = fbSize.x/float(fbSize.y);
+      glBindTexture(GL_TEXTURE_2D, fbTexture);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbSize.x, fbSize.y, 0, GL_RGBA,
           texelType, fbData);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
       if (saveScreenshot) {
         std::cout << "saved current frame to '" << filename << "'" << std::endl;

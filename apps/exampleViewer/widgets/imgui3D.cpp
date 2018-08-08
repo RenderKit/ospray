@@ -104,14 +104,14 @@ namespace ospray {
     void ImGui3DWidget::mouseButton(int button, int action, int mods)
     {}
 
-    ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
+    ImGui3DWidget::ImGui3DWidget(ResizeMode resizeMode,
                                  ManipulatorMode initialManipulator) :
       lastMousePos(-1,-1),
       currMousePos(-1,-1),
       fullScreen(false),
       windowSize(-1,-1),
       rotateSpeed(.003f),
-      frameBufferMode(frameBufferMode),
+      resizeMode(resizeMode),
       fontScale(2.f),
       moveModeManipulator(nullptr),
       inspectCenterManipulator(nullptr)
@@ -167,6 +167,11 @@ namespace ospray {
       windowSize = newSize;
       renderSize = windowSize * renderResolutionScale;
       glViewport(0, 0, newSize.x, newSize.y);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(0.0, windowSize.x, 0.0, windowSize.y, -1.0, 1.0);
+
       viewPort.aspect = newSize.x/float(newSize.y);
       viewPort.modified = true;
     }
@@ -179,40 +184,41 @@ namespace ospray {
         hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
-//      glClearColor(0.f,0.f,0.f,1.f);
-//      glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-      glMatrixMode(GL_PROJECTION);
-      glPushMatrix();
-      glLoadIdentity();
-      glOrtho(0.0, windowSize.x, 0.0, windowSize.y, -1.0, 1.0);
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-
-      glLoadIdentity();
-      glDisable(GL_LIGHTING);
-
-      glColor3f(1,1,1);
-      glEnable(GL_TEXTURE_2D);
-      glBindTexture(GL_TEXTURE_2D, fbTexture);
-      glEnable(GL_TEXTURE_2D);
-
       // Draw a textured quad
+      float aspectCorrection = fbAspect * windowSize.y / windowSize.x;
+      vec2f border(0.f);
+      switch (resizeMode) {
+        case RESIZE_LETTERBOX:
+          if (aspectCorrection > 1.f)
+            border.y = 1.f - aspectCorrection;
+          else
+            border.x = 1.f - 1.f / aspectCorrection;
+          break;
+        case RESIZE_CROP:
+          if (aspectCorrection > 1.f)
+            border.x = 1.f - 1.f / aspectCorrection;
+          else
+            border.y = 1.f - aspectCorrection;
+          break;
+        case RESIZE_KEEPFOVY:
+          border.x = 1.f - 1.f / aspectCorrection;
+          break;
+        case RESIZE_FILL:
+          // nop
+          break;
+      }
+      border *= 0.5f;
+
       glBegin(GL_QUADS);
-      glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
-      glTexCoord2f(0, 1); glVertex3f(0, windowSize.y, 0);
-      glTexCoord2f(1, 1); glVertex3f(windowSize.x, windowSize.y, 0);
-      glTexCoord2f(1, 0); glVertex3f(windowSize.x, 0, 0);
+      glTexCoord2f(border.x, border.y);
+      glVertex3f(0, 0, 0);
+      glTexCoord2f(border.x, 1.f - border.y);
+      glVertex3f(0, windowSize.y, 0);
+      glTexCoord2f(1.f - border.x, 1.f - border.y);
+      glVertex3f(windowSize.x, windowSize.y, 0);
+      glTexCoord2f(1.f - border.x, border.y);
+      glVertex3f(windowSize.x, 0, 0);
       glEnd();
-
-      glDisable(GL_TEXTURE_2D);
-
-      glPopMatrix();
-
-      glMatrixMode(GL_PROJECTION);
-      glPopMatrix();
-
-      glMatrixMode(GL_MODELVIEW);
     }
 
     void ImGui3DWidget::buildGui()
@@ -354,7 +360,21 @@ namespace ospray {
         }
       );
 
+      // setup GL state
+      glDisable(GL_LIGHTING);
+      glColor3f(1, 1, 1);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
       glGenTextures(1, &fbTexture);
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, fbTexture);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      // for letterboxing
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
       currentWidget = this;
     }
