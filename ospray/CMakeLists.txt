@@ -141,6 +141,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   math/box.ispc
   math/Distribution1D.ispc
   math/Distribution2D.ispc
+  math/sobol.ih
+  math/sobol.ispc
   math/spectrum.h
   math/spectrum.ih
   math/spectrum.ispc
