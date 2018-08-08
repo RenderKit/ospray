@@ -161,6 +161,7 @@ namespace ospray {
        vec2i windowSize;
        float renderResolutionScale {1.0f};
        vec2i renderSize;
+       float fixedRenderAspect {0.f};
        // position and size when not in fullscreen
        vec2i windowedPos;
        vec2i windowedSize;

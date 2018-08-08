@@ -610,6 +610,27 @@ namespace ospray {
 
       ImGui::Separator();
 
+      if (ImGui::BeginMenu("Aspect Control")) {
+        const float aspect = fixedRenderAspect;
+        if (ImGui::MenuItem("Lock"))
+          fixedRenderAspect = (float)windowSize.x / windowSize.y;
+        if (ImGui::MenuItem("Unlock")) fixedRenderAspect = 0.f;
+        ImGui::InputFloat("Set", &fixedRenderAspect);
+        fixedRenderAspect = std::max(fixedRenderAspect, 0.f);
+
+        if (aspect != fixedRenderAspect) {
+          if (fixedRenderAspect > 0.f)
+            resizeMode = RESIZE_LETTERBOX;
+          else
+            resizeMode = RESIZE_KEEPFOVY;
+          reshape(windowSize);
+        }
+
+        ImGui::EndMenu();
+      }
+
+      ImGui::Separator();
+
       if (ImGui::MenuItem("Take Screenshot"))
           saveScreenshot = true;
 

@@ -166,6 +166,15 @@ namespace ospray {
     {
       windowSize = newSize;
       renderSize = windowSize * renderResolutionScale;
+
+      if (fixedRenderAspect > 0.f) {
+        float aspectCorrection = fixedRenderAspect * newSize.y / newSize.x;
+        if (aspectCorrection > 1.f)
+          renderSize.y /= aspectCorrection;
+        else
+          renderSize.x *= aspectCorrection;
+      }
+
       glViewport(0, 0, newSize.x, newSize.y);
 
       glMatrixMode(GL_PROJECTION);
