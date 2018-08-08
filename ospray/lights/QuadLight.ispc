@@ -35,7 +35,7 @@ struct QuadLight
 
 Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
                                  const DifferentialGeometry& dg,
-                                 const vec2f& sp, float ss)
+                                 const vec2f& sp)
 {
   const QuadLight* uniform self = (QuadLight* uniform)super;
   Light_SampleRes res;

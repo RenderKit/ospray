@@ -39,7 +39,7 @@ struct HDRILight
 // sample function used when no environment map is given: black
 Light_SampleRes HDRILight_sample_dummy(const uniform Light* uniform,
                                        const DifferentialGeometry&,
-                                       const vec2f&, float ss)
+                                       const vec2f&)
 {
   Light_SampleRes res;
   memset(&res, 0, sizeof(Light_SampleRes));
@@ -48,7 +48,7 @@ Light_SampleRes HDRILight_sample_dummy(const uniform Light* uniform,
 
 Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
                                  const DifferentialGeometry&,
-                                 const vec2f& s, float ss)
+                                 const vec2f& s)
 {
   uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
   Light_SampleRes res;
