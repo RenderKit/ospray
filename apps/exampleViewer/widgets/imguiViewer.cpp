@@ -574,8 +574,7 @@ namespace ospray {
       if (ImGui::Checkbox("Pause Rendering", &paused))
         toggleRenderingPaused();
 
-      if (ImGui::Checkbox("Interaction Cancels Frame",
-                          &cancelFrameOnInteraction));
+      ImGui::Checkbox("Interaction Cancels Frame", &cancelFrameOnInteraction);
 
       ImGui::Separator();
 

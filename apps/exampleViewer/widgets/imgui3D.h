@@ -25,6 +25,11 @@
 
 #include <GLFW/glfw3.h>
 
+// on Windows often only GL 1.1 headers are present
+#ifndef GL_CLAMP_TO_BORDER
+#define GL_CLAMP_TO_BORDER                0x812D
+#endif
+
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
   namespace imgui3D {
