@@ -37,7 +37,7 @@ struct SpotLight
 
 Light_SampleRes SpotLight_sample(const uniform Light* uniform super,
                                  const DifferentialGeometry& dg,
-                                 const vec2f& s)
+                                 const vec2f& s, float ss)
 {
   const SpotLight* uniform self = (SpotLight* uniform)super;
   Light_SampleRes res;

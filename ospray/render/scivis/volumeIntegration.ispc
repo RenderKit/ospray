@@ -50,10 +50,11 @@ vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
     // Compute lighting.
     vec3f shadedColor = make_vec3f(0.f);
     const vec2f s     = make_vec2f(0.0f);  // sample center of area lights
+    const float ss    = 0.0f;
 
     for (uniform uint32 i = 0; i < renderer->numLights; i++) {
       const Light_SampleRes light =
-          renderer->lights[i]->sample(renderer->lights[i], dg, s);
+          renderer->lights[i]->sample(renderer->lights[i], dg, s, ss);
       const float cosNL =
           (gradient.x == 0.f && gradient.y == 0.f && gradient.z == 0.f)
               ? 1.f

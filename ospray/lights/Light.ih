@@ -33,7 +33,7 @@ struct Light_SampleRes
 // of the light source (used by the raytracing renderers such as the SciVis renderer)
 typedef Light_SampleRes (*Light_SampleFunc)(const uniform Light* uniform,
                                             const DifferentialGeometry&, /*! point to generate the sample for >*/
-                                            const vec2f& s);             /*! random numbers to generate the sample >*/
+                                            const vec2f& s, float ss);   /*! random numbers to generate the sample >*/
 
 
 struct Light_EvalRes

@@ -114,7 +114,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   bool auxFree = true; // normal & albedo buffer were not yet written to
   uniform uint32 depth = 0;
   uniform uint32 sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
-  const uniform uint32 numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
+  const uniform uint32 numBounceSampleDims = 4 + numLights*3; // BSDF sample (3D), roulette (1D), light samples (N*3D)
   // geometric configuration of last surface interaction
   DifferentialGeometry lastDg;
   // P and N also used by light eval
@@ -160,7 +160,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         for (uniform int i = 0; i < numLights; i++) {
           const uniform Light *uniform light = self->lights[i];
 
-          Light_SampleRes ls = light->sample(light, dg, LDSampler_getFloat2(sampler, sampleDim + 4 + i*2));
+          const uniform uint32 lightSampleDim = sampleDim + 4 + i*3;
+          const vec2f s  = LDSampler_getFloat2(sampler, lightSampleDim);
+          const float ss = LDSampler_getFloat (sampler, lightSampleDim+2);
+          Light_SampleRes ls = light->sample(light, dg, s, ss);
 
           // skip when zero contribution from light
           if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -294,7 +297,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       for (uniform int i = 0; i < numLights; i++) {
         const uniform Light *uniform light = self->lights[i];
 
-        Light_SampleRes ls = light->sample(light, dg, LDSampler_getFloat2(sampler, sampleDim + 4 + i*2));
+        const uniform uint32 lightSampleDim = sampleDim + 4 + i*3;
+        const vec2f s  = LDSampler_getFloat2(sampler, lightSampleDim);
+        const float ss = LDSampler_getFloat (sampler, lightSampleDim+2);
+        Light_SampleRes ls = light->sample(light, dg, s, ss);
 
         // skip when zero contribution from light
         if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -330,8 +336,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     // sample BSDF
-    vec2f s  = LDSampler_getFloat2(sampler, sampleDim);
-    vec2f ss = LDSampler_getFloat2(sampler, sampleDim + 2); // ss.y used for Russian roulette
+    const vec2f s  = LDSampler_getFloat2(sampler, sampleDim);
+    const vec2f ss = LDSampler_getFloat2(sampler, sampleDim+2); // ss.y used for Russian roulette
     BSDF_SampleRes fs;
     vec3f Ns = dg.Ns;
     foreach_unique(f in bsdf)

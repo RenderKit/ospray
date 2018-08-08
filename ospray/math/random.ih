@@ -315,7 +315,7 @@ inline void LDSampler_init(varying LDSampler* uniform self, unsigned int index, 
   const unsigned int skip = 64; // skip the first few samples to reduce correlation artifacts
   self->index = seed + skip;
 
-  unsigned int hash = seed;
+  unsigned int hash = 0;
   hash = MurmurHash3_mix(hash, index);
   hash = MurmurHash3_finalize(hash);
 

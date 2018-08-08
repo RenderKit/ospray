@@ -158,7 +158,8 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
     const vec2f s = make_vec2f(0.0f); // sample center of area lights
-    const Light_SampleRes light = l->sample(l, dg, s);
+    const float ss = 0.0f;
+    const Light_SampleRes light = l->sample(l, dg, s, ss);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
       float cosNL = dot(light.dir, info.shadingNormal);

@@ -44,18 +44,18 @@ struct GeometryLight
 
 Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
                                      const DifferentialGeometry& dg,
-                                     const vec2f& s)
+                                     const vec2f& s, float ss)
 {
   const GeometryLight* uniform self = (GeometryLight* uniform)super;
   const Geometry* uniform geo = self->geo;
   Light_SampleRes res;
 
   // choose primitive
-  const Sample1D sample = Distribution1D_sample(self->numPrimitives, self->distribution, 0, s.x);
+  const Sample1D sample = Distribution1D_sample(self->numPrimitives, self->distribution, 0, ss);
   const int32 primID = self->primIDs[sample.idx];
 
   // XXX have to rescale s.x
-  const vec2f ns = make_vec2f(sample.frac, s.y);
+  const vec2f ns = s;
   // sample position on primitive
   // TODO maybe should already be done wrt. solid angle
   const SampleAreaRes as = geo->sampleArea(geo, primID, self->xfm, self->rcp_xfm, ns);
