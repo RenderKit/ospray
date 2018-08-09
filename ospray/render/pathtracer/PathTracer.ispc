@@ -420,11 +420,12 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   // init RNG
   LDSampler samplerState;
   varying LDSampler* uniform sampler = &samplerState;
-  LDSampler_init(sampler, fb->size.x*iy+ix, accumID);
   const int spp = max(1, self->super.spp);
 
   for (uniform int s=0; s < spp; s++) {
-    screenSample.sampleID.z = accumID*spp + s;
+    const uint32 sampleID = accumID*spp + s;
+    screenSample.sampleID.z = sampleID;
+    LDSampler_init(sampler, fb->size.x*iy+ix, sampleID);
 
     CameraSample cameraSample;
     const vec2f pixelSample = LDSampler_getFloat2(sampler, 0);
