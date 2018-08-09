@@ -17,6 +17,7 @@
 #pragma once
 
 #include "vec.ih"
+#include "sobol.ih"
 
 #define TABLE_SIZE 32
 #define WARMUP_ITERATIONS 7
@@ -201,14 +202,23 @@ inline unsigned int MurmurHash3_finalize(unsigned int hash)
   return hash;
 }
 
+inline unsigned int hashToRandom(unsigned int value, unsigned int scramble)
+{
+  value = (value ^ 61) ^ scramble;
+  value += value << 3;
+  value ^= value >> 4;
+  value *= 0x27d4eb2d;
+  return value;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // LCG - Linear Congruential Generator
 
-inline unsigned int LCG_init(unsigned int index, unsigned int seed)
+inline unsigned int LCG_init(unsigned int pixelID, unsigned int sampleIndex)
 {
   unsigned int state = 0;
-  state = MurmurHash3_mix(state, index);
-  state = MurmurHash3_mix(state, seed);
+  state = MurmurHash3_mix(state, pixelID);
+  state = MurmurHash3_mix(state, sampleIndex);
   state = MurmurHash3_finalize(state);
   return state;
 }
@@ -289,6 +299,48 @@ inline float radicalInverse2(uint32 idx)
   return f;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Low-discrepancy (Sobol) sampler
+
+struct LDSampler
+{
+  unsigned int index;    // sample index
+  unsigned int scramble; // random number for scrambling the samples
+  unsigned int lcg;      // LCG used when we run out of dimensions
+};
+
+inline void LDSampler_init(varying LDSampler* uniform self, unsigned int pixelID, unsigned int sampleIndex)
+{
+  self->index = sampleIndex + 64; // skip the first few samples to reduce correlation artifacts
+
+  unsigned int hash = 0;
+  hash = MurmurHash3_mix(hash, pixelID);
+  hash = MurmurHash3_finalize(hash);
+
+  self->scramble = hash;
+  self->lcg = MurmurHash3_finalize(hash);
+}
+
+inline float LDSampler_getFloat(varying LDSampler* uniform self, uniform unsigned int dimension)
+{
+  if (dimension >= Sobol_numDimensions)
+    return LCG_getFloat(self->lcg);
+
+  // Sample the Sobol sequence
+  const float s = Sobol_sample(self->index, dimension);
+
+  // Apply Cranley-Patterson rotation to reduce correlation artifacts
+  const float shift = to_float_unorm(hashToRandom(dimension, self->scramble));
+  return CranleyPattersonRotation(s, shift);
+}
+
+inline vec2f LDSampler_getFloat2(varying LDSampler* uniform self, uniform unsigned int dimension)
+{
+  const float x = LDSampler_getFloat(self, dimension);
+  const float y = LDSampler_getFloat(self, dimension+1);
+  return make_vec2f(x, y);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Hammersley - low discrepancy random numbers; only two dimensions; no state

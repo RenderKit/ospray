@@ -98,13 +98,14 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                                     const vec2f &pixel, // normalized, i.e. in [0..1]
                                     Ray &ray,
-                                    unsigned int &lcg)
+                                    varying LDSampler* uniform sampler)
 {
   ScreenSample sample;
   sample.alpha = 1.f;
   sample.normal = make_vec3f(0.0f);
   sample.albedo = make_vec3f(0.0f);
 
+  const uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
   vec3f L = make_vec3f(0.f); // accumulated radiance
   vec3f Lw = make_vec3f(1.f); // path throughput
   Medium currentMedium = make_Medium_vacuum();
@@ -112,6 +113,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   bool straightPath = true; // path from camera did not change direction, for alpha and backplate
   bool auxFree = true; // normal & albedo buffer were not yet written to
   uniform uint32 depth = 0;
+  uniform uint32 sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
+  const uniform uint32 numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
   // geometric configuration of last surface interaction
   DifferentialGeometry lastDg;
   // P and N also used by light eval
@@ -154,11 +157,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
         vec3f unshaded = make_vec3f(0.f); // illumination without occluders
         vec3f shaded = make_vec3f(0.f); // illumination including shadows
-        uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
         for (uniform int i = 0; i < numLights; i++) {
           const uniform Light *uniform light = self->lights[i];
 
-          Light_SampleRes ls = light->sample(light, dg, LCG_getFloat2(lcg));
+          const vec2f s = LDSampler_getFloat2(sampler, sampleDim + 4 + i*2);
+          Light_SampleRes ls = light->sample(light, dg, s);
 
           // skip when zero contribution from light
           if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -289,11 +292,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // direct lighting including shadows and MIS
     if (bsdf->type & BSDF_SMOOTH) {
-      uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
       for (uniform int i = 0; i < numLights; i++) {
         const uniform Light *uniform light = self->lights[i];
 
-        Light_SampleRes ls = light->sample(light, dg, LCG_getFloat2(lcg));
+        const vec2f s = LDSampler_getFloat2(sampler, sampleDim + 4 + i*2);
+        Light_SampleRes ls = light->sample(light, dg, s);
 
         // skip when zero contribution from light
         if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -329,8 +332,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     // sample BSDF
-    vec2f s  = LCG_getFloat2(lcg);
-    vec2f ss = LCG_getFloat2(lcg); // ss.y used for Russian roulette
+    const vec2f s  = LDSampler_getFloat2(sampler, sampleDim);
+    const vec2f ss = LDSampler_getFloat2(sampler, sampleDim+2); // ss.y used for Russian roulette
     BSDF_SampleRes fs;
     vec3f Ns = dg.Ns;
     foreach_unique(f in bsdf)
@@ -384,6 +387,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     straightPath &= eq(ray.dir, fs.wi);
     setRay(ray, dg.P, fs.wi, getEpsilon(self, dg), inf, ray.time);
     depth++;
+    sampleDim += numBounceSampleDims;
   } while (reduce_max(Lw) > self->super.minContribution);
 
   sample.rgb = L;
@@ -413,25 +417,27 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
 
-  // init RNG
-  unsigned int lcg = LCG_init(fb->size.x*iy+ix, accumID);
+  LDSampler samplerObj;
+  varying LDSampler* uniform sampler = &samplerObj;
   const int spp = max(1, self->super.spp);
 
   for (uniform int s=0; s < spp; s++) {
-    screenSample.sampleID.z = accumID*spp + s;
+    // init RNG
+    const uint32 sampleID = accumID*spp + s;
+    screenSample.sampleID.z = sampleID;
+    LDSampler_init(sampler, fb->size.x*iy+ix, sampleID);
 
     CameraSample cameraSample;
-    const vec2f pixelSample = LCG_getFloat2(lcg);
-    const float timeSample = LCG_getFloat(lcg);
+    const vec2f pixelSample = LDSampler_getFloat2(sampler, 0);
     cameraSample.screen.x = (screenSample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
     cameraSample.screen.y = (screenSample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
-    cameraSample.lens     = LCG_getFloat2(lcg);
-    cameraSample.time     = timeSample;
+    cameraSample.lens     = LDSampler_getFloat2(sampler, 2);
+    cameraSample.time     = LDSampler_getFloat(sampler, 4);
 
     camera->initRay(camera, screenSample.ray, cameraSample);
 
     ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
-                                                 screenSample.ray, lcg);
+                                                 screenSample.ray, sampler);
     screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);
