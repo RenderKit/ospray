@@ -196,8 +196,8 @@ namespace ospray {
        bool renderingPaused {false};
 
        bool exitRequestedByUser{false};
-       GLuint fbTexture;
-       float fbAspect;
+       GLuint fbTexture {0};
+       float fbAspect {1.f};
        ResizeMode resizeMode;
 
        GLFWwindow *window {nullptr};

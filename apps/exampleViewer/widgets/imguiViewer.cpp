@@ -479,6 +479,7 @@ namespace ospray {
       switch (mappedFB.format()) {
         default: /* fallthrough */
         case OSP_FB_NONE:
+          fbData = nullptr;
           break;
         case OSP_FB_RGBA8: /* fallthrough */
         case OSP_FB_SRGBA:
@@ -498,10 +499,13 @@ namespace ospray {
       }
 
       // update/upload fbTexture
-      fbAspect = fbSize.x/float(fbSize.y);
-      glBindTexture(GL_TEXTURE_2D, fbTexture);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbSize.x, fbSize.y, 0, GL_RGBA,
-          texelType, fbData);
+      if (fbData) {
+        fbAspect = fbSize.x/float(fbSize.y);
+        glBindTexture(GL_TEXTURE_2D, fbTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbSize.x, fbSize.y, 0, GL_RGBA,
+            texelType, fbData);
+      } else 
+        fbAspect = 1.f;
 
       if (saveScreenshot) {
         std::cout << "saved current frame to '" << filename << "'" << std::endl;
