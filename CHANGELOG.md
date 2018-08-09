@@ -13,6 +13,7 @@ Version History
     function via `ospSetProgressFunc()`
 -   Added sheenTint parameter to Principled material
 -   Added baseNormal parameter to Principled material
+-   Added low-discrepancy sampling to path tracer
 
 ### Changes in v1.6.1:
 
