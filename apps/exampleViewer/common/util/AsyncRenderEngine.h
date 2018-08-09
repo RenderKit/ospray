@@ -141,8 +141,9 @@ namespace ospray {
   private:
     utility::CodeTimer denoiseFps;
     bool newBuffers {false};
-    std::condition_variable newBuffersCond;
-    std::mutex newBuffersMutex;
+    bool denoiserStop {true};
+    std::condition_variable denoiserCond;
+    std::mutex denoiserMutex;
 
 #endif
 

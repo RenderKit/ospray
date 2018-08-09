@@ -63,10 +63,10 @@ namespace ospray {
 
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
       if (sgFB->auxBuffers()) {
-          std::lock_guard<std::mutex> lock(newBuffersMutex);
+          std::lock_guard<std::mutex> lock(denoiserMutex);
           denoisers.back().copy(sgFB);
           newBuffers = true;
-          newBuffersCond.notify_all();
+          denoiserCond.notify_all();
       } else
 #endif
       {
@@ -85,10 +85,14 @@ namespace ospray {
 
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
     denoiserThread = make_unique<AsyncLoop>([&](){
-      std::unique_lock<std::mutex> lock(newBuffersMutex);
-      newBuffersCond.wait(lock, [&]{ return newBuffers; });
-      newBuffers = false;
-      denoisers.swap();
+      std::unique_lock<std::mutex> lock(denoiserMutex);
+      denoiserCond.wait(lock, [&]{ return newBuffers || denoiserStop; });
+      if (denoiserStop)
+        return;
+      if (newBuffers) {
+        newBuffers = false;
+        denoisers.swap();
+      }
       lock.unlock();
 
       // work on denoisers.front
@@ -202,7 +206,13 @@ namespace ospray {
       backgroundThread->stop();
       backgroundThread->start();
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
+      {
+        std::lock_guard<std::mutex> lock(denoiserMutex);
+        denoiserStop = true;
+        denoiserCond.notify_all();
+      }
       denoiserThread->stop();
+      denoiserStop = false;
       denoiserThread->start();
 #endif
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -217,6 +227,11 @@ namespace ospray {
     state = ExecState::STOPPED;
     backgroundThread->stop();
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
+    {
+      std::lock_guard<std::mutex> lock(denoiserMutex);
+      denoiserStop = true;
+      denoiserCond.notify_all();
+    }
     denoiserThread->stop();
 #endif
   }
