@@ -708,21 +708,20 @@ the following parameters:
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
   vec3f[]            vertex                [data] array of vertex positions
-  vec4i[]            index                 [data] array of quad indices (into the vertex array(s))
-  uint[]             face                  [data] array of faces
-  vec2i[]            edge_crease_indices   [data] array of edge crease indices
-  float[]            edge_crease_weights   [data] array of edge crease weights
-  uint[]             vertex_crease_indices [data] array of vertex crease indices
-  float[]            vertex_crease_weights [data] array of vertex crease weights
   vec4f[]            vertex.color          [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord       [data] array of vertex texture coordinates
-  float              edgeLevel             edge level for subdivision, default is 0.f
+  vec4i[]            index                 [data] array of quad indices (into the vertex array(s))
+  uint[]             face                  [data] array of faces
+  float              edgeLevel             level of tesselation, default is 5
+  vec2i[]            edgeCrease.index      [data] array of edge crease indices
+  float[]            edgeCrease.weight     [data] array of edge crease weights
+  uint[]             vertexCrease.index    [data] array of vertex crease indices
+  float[]            vertexCrease.weight   [data] array of vertex crease weights
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
-The `vertex`, `index`, `face`, and edge and vertex crease and indices
-arrays are mandatory to create a valid Subdivision. Internally, levels
-are created with value `edgeLevel` for each index.
+The `vertex`, `index`, and `face` arrays are mandatory to create a valid
+subdivision surface. Optionally supported are edge and vertex creases.
 
 ### Spheres
 

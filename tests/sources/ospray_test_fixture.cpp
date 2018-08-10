@@ -1118,13 +1118,13 @@ void Subdivision::SetUp()
   auto faces = ospNewData(numFaces, OSP_UINT, cube_faces);
   ospSetData(subd, "face", faces);
   auto edge_crease_indices = ospNewData(12, OSP_UINT2, cube_edge_crease_indices);
-  ospSetData(subd, "edge_crease_indices", edge_crease_indices);
+  ospSetData(subd, "edgeCrease.index", edge_crease_indices);
   auto edge_crease_weights = ospNewData(12, OSP_FLOAT, cube_edge_crease_weights);
-  ospSetData(subd, "edge_crease_weights", edge_crease_weights);
+  ospSetData(subd, "edgeCrease.weight", edge_crease_weights);
   auto vertex_crease_indices = ospNewData(8, OSP_UINT, cube_vertex_crease_indices);
-  ospSetData(subd, "vertex_crease_indices", vertex_crease_indices);
+  ospSetData(subd, "vertexCrease.index", vertex_crease_indices);
   auto vertex_crease_weights = ospNewData(8, OSP_FLOAT, cube_vertex_crease_weights);
-  ospSetData(subd, "vertex_crease_weights", vertex_crease_weights);
+  ospSetData(subd, "vertexCrease.weight", vertex_crease_weights);
   auto colors = ospNewData(8, OSP_FLOAT4, cube_colors);
   ospSetData(subd, "color", colors);
   ospSet1f(subd, "edgeLevel", 256.0f);

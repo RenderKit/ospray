@@ -42,18 +42,18 @@ namespace ospray {
     auto vertexData = getParamData("vertex",getParamData("position"));
     auto indexData = getParamData("index");
     auto facesData = getParamData("face");
-    auto edge_crease_indicesData = getParamData("edge_crease_indices");
-    auto edge_crease_weightsData = getParamData("edge_crease_weights");
-    auto vertex_crease_indicesData = getParamData("vertex_crease_indices");
-    auto vertex_crease_weightsData = getParamData("vertex_crease_weights");
+    auto edge_crease_indicesData = getParamData("edgeCrease.index");
+    auto edge_crease_weightsData = getParamData("edgeCrease.weight");
+    auto vertex_crease_indicesData = getParamData("vertexCrease.index");
+    auto vertex_crease_weightsData = getParamData("vertexCrease.weight");
     auto colorsData = getParamData("vertex.color",getParamData("color"));
     auto texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
-    auto edgeLevel = getParam1f("edgeLevel", 0.f);
+    auto edgeLevel = getParam1f("edgeLevel", 5.f);
     auto prim_materialIDData = getParamData("prim.materialID");
     auto geom_materialID = getParam1i("geom.materialID",-1);
 
     int* index = (int*)indexData->data;
-    float* vertex = (float*)vertexData->data;
+    vec3f* vertex = (vec3f*)vertexData->data;
     float* colors = (float*)colorsData->data;
     int* faces = (int*)facesData->data;
     vec2i* edge_crease_indices = (vec2i*)edge_crease_indicesData->data;
@@ -91,19 +91,19 @@ namespace ospray {
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT, 0,
                                RTC_FORMAT_FLOAT, vertex_crease_weights, 0, sizeof(float), 0);
 
-    rtcSetGeometryVertexAttributeCount(geom,1);
-    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0,
-                               RTC_FORMAT_FLOAT4, colors, 0, sizeof(vec4f), colorsData->size());
+    if (colors) {
+      rtcSetGeometryVertexAttributeCount(geom,1);
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0,
+          RTC_FORMAT_FLOAT4, colors, 0, sizeof(vec4f), colorsData->size());
+    }
+
     if (texcoord) {
       rtcSetGeometryVertexAttributeCount(geom,2);
       rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 1,
-                                 RTC_FORMAT_FLOAT2, texcoord, 0, sizeof(vec2f), texcoordData->size());
+          RTC_FORMAT_FLOAT2, texcoord, 0, sizeof(vec2f), texcoordData->size());
     }
 
-    float* level = (float*) rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_LEVEL, 0,
-                               RTC_FORMAT_FLOAT, sizeof(float), indexData->size());
-    for (unsigned int i=0; i<indexData->size(); i++)
-      level[i] = edgeLevel;
+    rtcSetGeometryTessellationRate(geom, edgeLevel);
 
     rtcCommitGeometry(geom);
     auto eGeomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
@@ -111,8 +111,11 @@ namespace ospray {
 
     bounds = empty;
 
-    for (uint32_t i = 0; i < vertexData->size()*3; i+=3)
-      bounds.extend(*(vec3f*)((float *)vertexData->data + i));
+    /* better bounds if some vertices are not referenced:
+    for (auto i : indexData)
+      bounds.extend(vertexData[i]); */
+    for (size_t i = 0; i < vertexData->size(); i++)
+      bounds.extend(vertex[i]);
     //TODO: must factor in displacement into bounds....
 
 
