@@ -26,6 +26,8 @@
 #include "common/sg/visitor/GatherNodesByName.h"
 #include "common/sg/visitor/GatherNodesByPosition.h"
 
+#include "sg_imgui/ospray_sg_ui.h"
+
 #include <imgui.h>
 #include <imguifilesystem/imguifilesystem.h>
 
@@ -504,7 +506,7 @@ namespace ospray {
         glBindTexture(GL_TEXTURE_2D, fbTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbSize.x, fbSize.y, 0, GL_RGBA,
             texelType, fbData);
-      } else 
+      } else
         fbAspect = 1.f;
 
       if (saveScreenshot) {
@@ -836,133 +838,6 @@ namespace ospray {
         ImGui::Separator();
       }
     }
-  }
-
-  void ImGuiViewer::guiSingleNode(const std::string &baseText,
-                                  std::shared_ptr<sg::Node> node)
-  {
-    std::string text = baseText;
-
-    auto fcn = widgetBuilders[node->type()];
-
-    if (fcn) {
-      ImGui::Text(text.c_str());
-      ImGui::SameLine();
-      text = "##" + std::to_string(node->uniqueID());
-
-      fcn(text, node);
-    } else if (!node->hasChildren()) {
-      text += node->type();
-      ImGui::Text(text.c_str());
-    }
-  }
-
-  void ImGuiViewer::guiNodeContextMenu(const std::string &name,
-                                       std::shared_ptr<sg::Node> node)
-  {
-    if (ImGui::BeginPopupContextItem("item context menu")) {
-      char buf[256];
-      buf[0]='\0';
-      if (ImGui::Button("Add new node..."))
-        ImGui::OpenPopup("Add new node...");
-      if (ImGui::BeginPopup("Add new node...")) {
-        if (ImGui::InputText("node type: ", buf,
-                             256, ImGuiInputTextFlags_EnterReturnsTrue)) {
-          std::cout << "add node: \"" << buf << "\"\n";
-          try {
-            static int counter = 0;
-            std::stringstream ss;
-            ss << "userDefinedNode" << counter++;
-            node->add(sg::createNode(ss.str(), buf));
-          }
-          catch (const std::exception &) {
-            std::cerr << "invalid node type: " << buf << std::endl;
-          }
-        }
-        ImGui::EndPopup();
-      }
-      if (ImGui::Button("Set to new node..."))
-        ImGui::OpenPopup("Set to new node...");
-      if (ImGui::BeginPopup("Set to new node...")) {
-        if (ImGui::InputText("node type: ", buf,
-                             256, ImGuiInputTextFlags_EnterReturnsTrue)) {
-          std::cout << "set node: \"" << buf << "\"\n";
-          try {
-            static int counter = 0;
-            std::stringstream ss;
-            ss << "userDefinedNode" << counter++;
-            auto newNode = sg::createNode(ss.str(), buf);
-            newNode->setParent(node->parent());
-            node->parent().setChild(name, newNode);
-          } catch (const std::exception &) {
-            std::cerr << "invalid node type: " << buf << std::endl;
-          }
-        }
-        ImGui::EndPopup();
-      }
-      static ImGuiFs::Dialog importdlg;
-      const bool importButtonPressed = ImGui::Button("Import...");
-      const char* importpath = importdlg.chooseFileDialog(importButtonPressed);
-      if (strlen(importpath) > 0) {
-        std::cout << "importing OSPSG file from path: "
-                  << importpath << std::endl;
-        sg::loadOSPSG(node, std::string(importpath));
-      }
-
-      static ImGuiFs::Dialog exportdlg;
-      const bool exportButtonPressed = ImGui::Button("Export...");
-      const char* exportpath = exportdlg.saveFileDialog(exportButtonPressed);
-      if (strlen(exportpath) > 0) {
-        // Make sure that the file has the .ospsg suffix
-        FileName exportfile = FileName(exportpath).setExt(".ospsg");
-        std::cout << "writing OSPSG file to path: " << exportfile << std::endl;
-        sg::writeOSPSG(node, exportfile);
-      }
-
-      ImGui::EndPopup();
-    }
-  }
-
-  void ImGuiViewer::guiSGTree(const std::string &name,
-                              std::shared_ptr<sg::Node> node)
-  {
-    int styles = 0;
-    if (!node->isValid()) {
-      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f,0.06f, 0.02f,1.f));
-      styles++;
-    }
-
-    std::string text;
-
-    std::string nameLower = utility::lowerCase(name);
-    std::string nodeNameLower = utility::lowerCase(node->name());
-
-    if (nameLower != nodeNameLower)
-      text += name + " -> " + node->name() + " : ";
-    else
-      text += name + " : ";
-
-    guiSingleNode(text, node);
-
-    if (!node->isValid())
-      ImGui::PopStyleColor(styles--);
-
-    if (node->hasChildren()) {
-      text += node->type() + "##" + std::to_string(node->uniqueID());
-      if (ImGui::TreeNodeEx(text.c_str(),
-                            (node->numChildren() > 25) ?
-                             0 : ImGuiTreeNodeFlags_DefaultOpen)) {
-        guiNodeContextMenu(name, node);
-
-        for(auto child : node->children())
-          guiSGTree(child.first, child.second);
-
-        ImGui::TreePop();
-      }
-    }
-
-    if (ImGui::IsItemHovered() && !node->documentation().empty())
-      ImGui::SetTooltip("%s", node->documentation().c_str());
   }
 
   void ImGuiViewer::setCurrentDeviceParameter(const std::string &param,

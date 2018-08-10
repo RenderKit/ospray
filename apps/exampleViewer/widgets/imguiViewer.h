@@ -78,13 +78,6 @@ namespace ospray {
     void guiTransferFunction();
     void guiFindNode();
 
-    void guiSingleNode(const std::string &baseText,
-                       std::shared_ptr<sg::Node> node);
-    void guiNodeContextMenu(const std::string &name,
-                            std::shared_ptr<sg::Node> node);
-
-    void guiSGTree(const std::string &name, std::shared_ptr<sg::Node> node);
-
     void guiSearchSGNodes();
 
     void setCurrentDeviceParameter(const std::string &param, int value);
