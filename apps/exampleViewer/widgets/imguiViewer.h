@@ -71,8 +71,6 @@ namespace ospray {
     void guiMenuView();
     void guiMenuMPI();
 
-    void guiCarDemo();
-
     void guiRenderStats();
     void guiRenderCustomWidgets();
     void guiTransferFunction();
