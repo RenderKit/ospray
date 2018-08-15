@@ -232,10 +232,15 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     rayOffset -= 1.f;
   }
 
-  uniform Model *uniform model = self->myRegions[regionInfo->currentRegion];
+  uniform Model *uniform model = NULL;
   uniform Model *uniform ghostModel = NULL;
-  if (self->ghostRegions) {
-    ghostModel = self->ghostRegions[regionInfo->currentRegion];
+  if (regionInfo) {
+    model = self->myRegions[regionInfo->currentRegion];
+    if (self->ghostRegions) {
+      ghostModel = self->ghostRegions[regionInfo->currentRegion];
+    }
+  } else {
+    model = self->super.model;
   }
 
   // Intersect with current region for this node's local data

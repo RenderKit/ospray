@@ -393,7 +393,7 @@ void runApp()
   std::vector<OSPModel> modelHandles;
   std::transform(models.begin(), models.end(), std::back_inserter(modelHandles),
                  [](const Model &m) { return m.handle(); });
-  Data modelsData(sizeof(int64_t) * modelHandles.size(), OSP_CHAR, modelHandles.data());
+  Data modelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
   renderer.set("models", modelsData);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));

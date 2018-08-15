@@ -167,6 +167,10 @@ namespace ospray {
     void DistributedRaycastRenderer::commit()
     {
       Renderer::commit();
+      regions.clear();
+      ghostRegions.clear();
+      regionIEs.clear();
+      ghostRegionIEs.clear();
 
       numAoSamples = getParam1i("aoSamples", 0);
       camera = reinterpret_cast<PerspectiveCamera*>(getParamObject("camera"));
@@ -177,11 +181,11 @@ namespace ospray {
 
       Data *models = getParamData("models", nullptr);
       if (models) {
-        OSPObject *handles = reinterpret_cast<OSPObject*>(models->data);
+        ManagedObject **handles = reinterpret_cast<ManagedObject**>(models->data);
         // TODO: This is a total hack to work around the issue with a Data array
         // of OSP_OBJECT ObjectHandles
         for (size_t i = 0; i < models->numBytes / sizeof(int64_t); ++i) {
-          regions.push_back(Ref<DistributedModel>(lookupObject<DistributedModel>(handles[i])));
+          regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
         }
       } else if (model && dynamic_cast<DistributedModel*>(model)) {
         regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(model)));
@@ -189,9 +193,9 @@ namespace ospray {
 
       Data *ghosts = getParamData("ghostModels", nullptr);
       if (ghosts) {
-        OSPObject *handles = reinterpret_cast<OSPObject*>(ghosts->data);
+        ManagedObject **handles = reinterpret_cast<ManagedObject**>(ghosts->data);
         for (size_t i = 0; i < ghosts->numBytes / sizeof(int64_t); ++i) {
-          ghostRegions.push_back(Ref<DistributedModel>(lookupObject<DistributedModel>(handles[i])));
+          ghostRegions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
         }
       } else if (getParamObject("ghostModel")) {
         DistributedModel *ghostModel =
@@ -200,6 +204,18 @@ namespace ospray {
       }
 
       exchangeModelBounds();
+
+      std::transform(regions.begin(), regions.end(), std::back_inserter(regionIEs),
+                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
+      std::transform(ghostRegions.begin(), ghostRegions.end(), std::back_inserter(ghostRegionIEs),
+                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
+
+      ispc::DistributedRaycastRenderer_setRegions(getIE(),
+                                                  allRegions.data(),
+                                                  static_cast<int>(allRegions.size()),
+                                                  numAoSamples,
+                                                  regionIEs.data(),
+                                                  ghostRegionIEs.data());
     }
 
     float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
@@ -207,6 +223,7 @@ namespace ospray {
     {
       using namespace std::chrono;
       using namespace mpicommon;
+
       if (regions.empty()) {
         return renderNonDistrib(fb, channelFlags);
       }
@@ -219,18 +236,6 @@ namespace ospray {
       dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
       dfb->startNewFrame(errorThreshold);
       dfb->beginFrame();
-
-      std::vector<void*> regionIEs, ghostRegionIEs;
-      std::transform(regions.begin(), regions.end(), std::back_inserter(regionIEs),
-                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
-      std::transform(ghostRegions.begin(), ghostRegions.end(), std::back_inserter(ghostRegionIEs),
-                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
-
-      ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
-          allRegions.data(),
-          static_cast<int>(allRegions.size()),
-          numAoSamples,
-          regionIEs.data(), ghostRegionIEs.data());
 
       beginFrame(dfb);
 
@@ -248,7 +253,7 @@ namespace ospray {
           projectedRegions[i].bounds.lower *= dfb->size;
           projectedRegions[i].bounds.upper *= dfb->size;
           regionOrdering.insert(std::make_pair(projectedRegions[i].depth, i));
-#if 1
+#if 0
           if (mpicommon::globalRank() == 0) {
             std::cout << "region " << i << " projects too {"
               << projectedRegions[i].bounds << ", z = " 
@@ -497,7 +502,6 @@ namespace ospray {
     float DistributedRaycastRenderer::renderNonDistrib(FrameBuffer *fb,
                                                        const uint32 channelFlags)
     {
-#if 0
       using namespace mpicommon;
       auto startRender = high_resolution_clock::now();
       getrusage(RUSAGE_SELF, &prevUsage);
@@ -568,7 +572,6 @@ namespace ospray {
 
       ++frameNumber;
       return fb->endFrame(errorThreshold);
-#endif
     }
 
     std::string DistributedRaycastRenderer::toString() const

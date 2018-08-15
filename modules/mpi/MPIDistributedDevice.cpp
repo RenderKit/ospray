@@ -174,7 +174,7 @@ namespace ospray {
     OSPModel MPIDistributedDevice::newModel()
     {
       auto *instance = new DistributedModel;
-      return (OSPModel)instance;
+      return reinterpret_cast<OSPModel>(instance);
     }
 
     void MPIDistributedDevice::commit(OSPObject _object)
