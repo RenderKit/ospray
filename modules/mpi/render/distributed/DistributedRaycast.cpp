@@ -184,7 +184,7 @@ namespace ospray {
         ManagedObject **handles = reinterpret_cast<ManagedObject**>(models->data);
         // TODO: This is a total hack to work around the issue with a Data array
         // of OSP_OBJECT ObjectHandles
-        for (size_t i = 0; i < models->numBytes / sizeof(int64_t); ++i) {
+        for (size_t i = 0; i < models->numItems; ++i) {
           regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
         }
       } else if (model && dynamic_cast<DistributedModel*>(model)) {
@@ -194,7 +194,7 @@ namespace ospray {
       Data *ghosts = getParamData("ghostModels", nullptr);
       if (ghosts) {
         ManagedObject **handles = reinterpret_cast<ManagedObject**>(ghosts->data);
-        for (size_t i = 0; i < ghosts->numBytes / sizeof(int64_t); ++i) {
+        for (size_t i = 0; i < ghosts->numItems; ++i) {
           ghostRegions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
         }
       } else if (getParamObject("ghostModel")) {

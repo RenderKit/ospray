@@ -57,28 +57,6 @@ namespace ospray {
     float error;
   };
 
-  struct AllTilesDoneMessage : public TileMessage
-  {
-      int numTiles {0};
-
-      vec2i* tileIDs(ospcommon::byte_t* data)
-      {
-          return (vec2i*)(data + sizeof(TileMessage) + sizeof(int));
-      }
-
-      float* tileErrors(ospcommon::byte_t* data)
-      {
-          return (float*)(data + sizeof(TileMessage)
-                          + sizeof(int) + numTiles * sizeof(vec2i));
-      }
-
-      static size_t size(const size_t numTiles)
-      {
-          return sizeof(TileMessage) + sizeof(int) + sizeof(int) +
-                  numTiles * (sizeof(vec2i) + sizeof(float));
-      }
-  };
-
   /*! message sent to the master when a tile is finished. TODO:
       compress the color data */
   template <typename ColorT>
@@ -112,7 +90,7 @@ namespace ospray {
     size_t msgSize = 0;
     switch (fmt) {
       case OSP_FB_NONE:
-        throw std::runtime_error("Do not use per tile message for FB_NONE!");
+        throw std::runtime_error("Do not use per tile message for FB_NONE! (msgSize)");
       case OSP_FB_RGBA8:
       case OSP_FB_SRGBA:
         msgSize = sizeof(MasterTileMessage_RGBA_I8);
@@ -153,7 +131,7 @@ namespace ospray {
       const size_t msgSize = masterMsgSize(fmt, hasDepth);
       switch (fmt) {
         case OSP_FB_NONE:
-          throw std::runtime_error("Do not use per tile message for FB_NONE!");
+          throw std::runtime_error("Do not use per tile message for FB_NONE! (msg ctor)");
         case OSP_FB_RGBA8:
         case OSP_FB_SRGBA:
           command = MASTER_WRITE_TILE_I8;
@@ -296,10 +274,12 @@ namespace ospray {
     queueTimes.clear();
     workTimes.clear();
 
-    const size_t finalTileSize = masterMsgSize(colorBufferFormat,
-                                               hasDepthBuffer);
-    tileGatherBuffer.resize(myTiles.size() * finalTileSize, 0);
     nextTileWrite = 0;
+    if (colorBufferFormat != OSP_FB_NONE) {
+      const size_t finalTileSize = masterMsgSize(colorBufferFormat,
+                                                 hasDepthBuffer);
+      tileGatherBuffer.resize(myTiles.size() * finalTileSize, 0);
+    }
 
     std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
     {
@@ -330,7 +310,8 @@ namespace ospray {
       MPI_CALL(Bcast(tileInstances, getTotalTiles(), MPI_INT, 0,
                      mpicommon::world.comm));
 
-      if(colorBufferFormat == OSP_FB_NONE) {
+      if (colorBufferFormat == OSP_FB_NONE) {
+        SCOPED_LOCK(tileErrorsMutex);
         tileIDs.clear();
         tileErrors.clear();
         tileIDs.reserve(myTiles.size());
@@ -489,129 +470,23 @@ namespace ospray {
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
     //std::cout << globalRank() << " done with frame\n" << std::flush;
 
-    // Gather all the tiles from the other ranks to copy into the framebuffer
-    const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer);
-    std::vector<char> tileGatherResult;
-    std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
-    std::vector<int> processOffsets(numGlobalRanks(), 0);
-    if (IamTheMaster()) {
-      tileGatherResult.resize(allTiles.size() * tileSize);
-      for (size_t i = 0; i < allTiles.size(); ++i) {
-        tileBytesExpected[allTiles[i]->ownerID] += tileSize;
-      }
-      size_t recvOffset = 0;
-      for (int i = 0; i < numGlobalRanks(); ++i) {
-        processOffsets[i] = recvOffset;
-        recvOffset += tileBytesExpected[i];
-      }
-    }
-
-#if 0
-    if (globalRank() == 0) {
-      std::cout << "Expecting tiles: [";
-      for (size_t i = 0; i < tileBytesExpected.size(); ++i) {
-        std::cout << "\t(" << i << ", " << tileBytesExpected[i] / tileSize << ")\n";
-      }
-      std::cout << "]\n" << std::flush;
-    }
-    std::cout << globalRank() << " IN GATHER\n" << std::flush;
-#endif
-
-#if 1
-    auto startCompr = high_resolution_clock::now();
-    size_t compressedSize = snappy::MaxCompressedLength(tileGatherBuffer.size());
-    std::vector<char> compressedBuf(compressedSize, 0);
-    snappy::RawCompress(tileGatherBuffer.data(), tileGatherBuffer.size(),
-                        compressedBuf.data(), &compressedSize);
-    auto endCompr = high_resolution_clock::now();
-
-    compressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
-    compressedPercent = 100.0 * (static_cast<double>(compressedSize) / tileGatherBuffer.size());
-
-    auto startGather = high_resolution_clock::now();
-    // We've got to use an int since Gatherv only takes int counts.
-    // However, it's pretty unlikely we'll reach the point where someone
-    // is sending 2GB in final tile data from a single process
-    const int sendCompressedSize = static_cast<int>(compressedSize);
-    // Get info about how many bytes each proc is sending us
-    std::vector<int> gatherSizes(numGlobalRanks(), 0);
-    MPI_CALL(Gather(&sendCompressedSize, 1, MPI_INT,
-                    gatherSizes.data(), 1, MPI_INT,
-                    masterRank(), world.comm));
-
-    std::vector<int> compressedOffsets(numGlobalRanks(), 0);
-    int offset = 0;
-    for (size_t i = 0; i < gatherSizes.size(); ++i) {
-      compressedOffsets[i] = offset;
-      offset += gatherSizes[i];
-    }
-
-    std::vector<char> compressedResults(offset, 0);
-    MPI_CALL(Gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
-                     compressedResults.data(), gatherSizes.data(),
-                     compressedOffsets.data(), MPI_BYTE,
-                     masterRank(), world.comm));
-    auto endGather = high_resolution_clock::now();
-
-    if (IamTheMaster()) {
-      // Now we must decompress each ranks data to process it, though we
-      // already know how much data each is sending us and where to write it.
-      startCompr = high_resolution_clock::now();
-      tasking::parallel_for(numGlobalRanks(), [&](int i) {
-          snappy::RawUncompress(&compressedResults[compressedOffsets[i]],
-                                gatherSizes[i],
-                                &tileGatherResult[processOffsets[i]]);
-      });
-      endCompr = high_resolution_clock::now();
-      decompressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
-    }
-#else
-    auto startGather = high_resolution_clock::now();
-    MPI_CALL(Gatherv(tileGatherBuffer.data(), tileGatherBuffer.size(), MPI_BYTE,
-                     tileGatherResult.data(), tileBytesExpected.data(),
-                     processOffsets.data(), MPI_BYTE,
-                     masterRank(), world.comm));
-    auto endGather = high_resolution_clock::now();
-#endif
-    finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
-
-    if (IamTheMaster()) {
-      auto startMasterWrite = high_resolution_clock::now();
-      tasking::parallel_for(getTotalTiles(), [&](int tile) {
-        auto *msg = reinterpret_cast<TileMessage*>(&tileGatherResult[tile * tileSize]);
-        if (msg->command & MASTER_WRITE_TILE_I8) {
-          this->processMessage((MasterTileMessage_RGBA_I8*)msg);
-        } else if (msg->command & MASTER_WRITE_TILE_F32) {
-          this->processMessage((MasterTileMessage_RGBA_F32*)msg);
-        } else {
-          throw std::runtime_error("#dfb: non-master tile in final gather!");
-        }
-      });
-      auto endMasterWrite = high_resolution_clock::now();
-      masterTileWriteTime = duration_cast<RealMilliseconds>(endMasterWrite - startMasterWrite);
-    }
-  }
-
-  void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
-  {
-    if (hasVarianceBuffer) {
-      auto tileIDs = msg->tileIDs(data);
-      auto tileErrors = msg->tileErrors(data);
-      for (int i = 0; i < msg->numTiles; ++i) {
-        if (tileErrors[i] < (float)inf)
-          tileErrorRegion.update(tileIDs[i], tileErrors[i]);
-      }
-    }
-
-    if (isFrameComplete(msg->numTiles)) {
-      closeCurrentFrame();
+    if (colorBufferFormat != OSP_FB_NONE) {
+      gatherFinalTiles();
+    } else if (hasVarianceBuffer) {
+      gatherFinalErrors();
+    } else {
+      // TODO: Not really necessary b/c the calling device does a barrier
+      // as well right?
+      MPI_CALL(Barrier(world.comm));
     }
   }
 
   void DFB::processMessage(WriteTileMessage *msg)
   {
+    if (pixelOp) {
+      pixelOp->preAccum(msg->tile);
+    }
     auto *tileDesc = this->getTileDescFor(msg->coords);
-    // TODO: compress/decompress tile data
     TileData *td = (TileData*)tileDesc;
     td->process(msg->tile);
   }
@@ -666,9 +541,9 @@ namespace ospray {
     }
 
     // Finally, tell the master that this tile is done
-    auto *tileDesc = this->getTileDescFor(msg->coords);
-    TileData *td = (TileData*)tileDesc;
-    this->finalizeTileOnMaster(td);
+    //auto *tileDesc = this->getTileDescFor(msg->coords);
+    //TileData *td = (TileData*)tileDesc;
+    //this->finalizeTileOnMaster(td);
   }
 
   void DFB::tileIsCompleted(TileData *tile)
@@ -681,18 +556,20 @@ namespace ospray {
 
     // write the final colors into the color buffer
     // normalize and write final color, and compute error
-    auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
-    switch (colorBufferFormat) {
-      case OSP_FB_RGBA8:
-        DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
-        break;
-      case OSP_FB_SRGBA:
-        DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
-        break;
-      default:
-      break;
+    if (colorBufferFormat != OSP_FB_NONE) {
+      auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
+      switch (colorBufferFormat) {
+        case OSP_FB_RGBA8:
+          DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
+          break;
+        case OSP_FB_SRGBA:
+          DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
+          break;
+        default:
+          break;
+      }
+      DFB_writeTile((ispc::VaryingTile*)&tile->final, &tile->color);
     }
-    DFB_writeTile((ispc::VaryingTile*)&tile->final, &tile->color);
 
     auto msg = [&]{
       MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
@@ -708,34 +585,35 @@ namespace ospray {
     // Note: In the data-distributed device the master will be rendering
     // and completing tiles.
     if (mpicommon::IamAWorker()) {
-      if(colorBufferFormat == OSP_FB_NONE) { // TODO still send normal&albedo
+      // TODO still send normal&albedo
+      if (colorBufferFormat == OSP_FB_NONE) {
         SCOPED_LOCK(tileErrorsMutex);
         tileIDs.push_back(tile->begin/TILE_SIZE);
         tileErrors.push_back(tile->error);
-      }
-      else {
+      } else {
         auto tileMsg = msg().message;
         const size_t n = nextTileWrite.fetch_add(tileMsg->size);
         std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
       }
 
       if (isFrameComplete(1)) {
-        if(colorBufferFormat == OSP_FB_NONE)
-          sendAllTilesDoneMessage();
         closeCurrentFrame();
       }
-
       DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i/%i\n",
                  mpicommon::globalRank(), tile->begin.x, tile->begin.y,
                  numTilesCompletedThisFrame, myTiles.size()));
     } else {
-      // If we're the master sending a message to ourself skip going
-      // through the messaging layer entirely and just call incoming directly
-      //incoming(msg().message);
       // TODO: Better unify the master is worker code path
-      auto tileMsg = msg().message;
-      const size_t n = nextTileWrite.fetch_add(tileMsg->size);
-      std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
+      if (colorBufferFormat == OSP_FB_NONE) {
+        SCOPED_LOCK(tileErrorsMutex);
+        tileIDs.push_back(tile->begin/TILE_SIZE);
+        tileErrors.push_back(tile->error);
+      } else {
+        auto tileMsg = msg().message;
+        const size_t n = nextTileWrite.fetch_add(tileMsg->size);
+        std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
+      }
+
       if (isFrameComplete(1)) {
         closeCurrentFrame();
       }
@@ -816,8 +694,6 @@ namespace ospray {
         this->processMessage((MasterTileMessage_RGBA_F32*)msg);
       } else if (msg->command & WORKER_WRITE_TILE) {
         this->processMessage((WriteTileMessage*)msg);
-      } else if (msg->command & WORKER_ALL_TILES_DONE) {
-        this->processMessage((AllTilesDoneMessage*)msg, message->data);
       } else {
         throw std::runtime_error("#dfb: unknown tile type processed!");
       }
@@ -834,29 +710,149 @@ namespace ospray {
     });
   }
 
-  void DFB::sendAllTilesDoneMessage()
+  void DFB::gatherFinalTiles()
   {
-    auto msg = std::make_shared<mpicommon::Message>
-            (AllTilesDoneMessage::size(tileErrors.size()));
+    using namespace mpicommon;
+    using namespace std::chrono;
 
-    auto out = msg->data;
-    int val = WORKER_ALL_TILES_DONE;
-    memcpy(out, &val, sizeof(val));
-    out += sizeof(val);
-
-    int numTiles = tileErrors.size();
-    memcpy(out, &numTiles, sizeof(numTiles));
-    out += sizeof(numTiles);
-
-    if(!tileIDs.empty())
-    {
-      memcpy(out, tileIDs.data(), tileIDs.size() * sizeof(vec2i));
-      out += tileIDs.size() * sizeof(vec2i);
-
-      memcpy(out, tileErrors.data(), tileErrors.size() * sizeof(float));
+    const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer);
+    std::vector<char> tileGatherResult;
+    std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
+    std::vector<int> processOffsets(numGlobalRanks(), 0);
+    if (IamTheMaster()) {
+      tileGatherResult.resize(allTiles.size() * tileSize);
+      for (size_t i = 0; i < allTiles.size(); ++i) {
+        tileBytesExpected[allTiles[i]->ownerID] += tileSize;
+      }
+      size_t recvOffset = 0;
+      for (int i = 0; i < numGlobalRanks(); ++i) {
+        processOffsets[i] = recvOffset;
+        recvOffset += tileBytesExpected[i];
+      }
     }
 
-    mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
+#if 1
+    auto startCompr = high_resolution_clock::now();
+    size_t compressedSize = snappy::MaxCompressedLength(tileGatherBuffer.size());
+    std::vector<char> compressedBuf(compressedSize, 0);
+    snappy::RawCompress(tileGatherBuffer.data(), tileGatherBuffer.size(),
+                        compressedBuf.data(), &compressedSize);
+    auto endCompr = high_resolution_clock::now();
+
+    compressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
+    compressedPercent = 100.0 * (static_cast<double>(compressedSize) / tileGatherBuffer.size());
+
+    auto startGather = high_resolution_clock::now();
+    // We've got to use an int since Gatherv only takes int counts.
+    // However, it's pretty unlikely we'll reach the point where someone
+    // is sending 2GB in final tile data from a single process
+    const int sendCompressedSize = static_cast<int>(compressedSize);
+    // Get info about how many bytes each proc is sending us
+    std::vector<int> gatherSizes(numGlobalRanks(), 0);
+    MPI_CALL(Gather(&sendCompressedSize, 1, MPI_INT,
+                    gatherSizes.data(), 1, MPI_INT,
+                    masterRank(), world.comm));
+
+    std::vector<int> compressedOffsets(numGlobalRanks(), 0);
+    int offset = 0;
+    for (size_t i = 0; i < gatherSizes.size(); ++i) {
+      compressedOffsets[i] = offset;
+      offset += gatherSizes[i];
+    }
+
+    std::vector<char> compressedResults(offset, 0);
+    MPI_CALL(Gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
+                     compressedResults.data(), gatherSizes.data(),
+                     compressedOffsets.data(), MPI_BYTE,
+                     masterRank(), world.comm));
+    auto endGather = high_resolution_clock::now();
+
+    if (IamTheMaster()) {
+      // Now we must decompress each ranks data to process it, though we
+      // already know how much data each is sending us and where to write it.
+      startCompr = high_resolution_clock::now();
+      tasking::parallel_for(numGlobalRanks(), [&](int i) {
+          snappy::RawUncompress(&compressedResults[compressedOffsets[i]],
+                                gatherSizes[i],
+                                &tileGatherResult[processOffsets[i]]);
+      });
+      endCompr = high_resolution_clock::now();
+      decompressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
+    }
+#else
+    auto startGather = high_resolution_clock::now();
+    MPI_CALL(Gatherv(tileGatherBuffer.data(), tileGatherBuffer.size(), MPI_BYTE,
+                     tileGatherResult.data(), tileBytesExpected.data(),
+                     processOffsets.data(), MPI_BYTE,
+                     masterRank(), world.comm));
+    auto endGather = high_resolution_clock::now();
+#endif
+    finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
+
+    if (IamTheMaster()) {
+      auto startMasterWrite = high_resolution_clock::now();
+      tasking::parallel_for(getTotalTiles(), [&](int tile) {
+        auto *msg = reinterpret_cast<TileMessage*>(&tileGatherResult[tile * tileSize]);
+        if (msg->command & MASTER_WRITE_TILE_I8) {
+          this->processMessage((MasterTileMessage_RGBA_I8*)msg);
+        } else if (msg->command & MASTER_WRITE_TILE_F32) {
+          this->processMessage((MasterTileMessage_RGBA_F32*)msg);
+        } else {
+          throw std::runtime_error("#dfb: non-master tile in final gather!");
+        }
+      });
+      auto endMasterWrite = high_resolution_clock::now();
+      masterTileWriteTime = duration_cast<RealMilliseconds>(endMasterWrite - startMasterWrite);
+    }
+  }
+
+  void DFB::gatherFinalErrors()
+  {
+    using namespace mpicommon;
+    using namespace ospcommon;
+
+    std::vector<int> tilesFromRank(numGlobalRanks(), 0);
+    const int myTileCount = tileIDs.size();
+    MPI_CALL(Gather(&myTileCount, 1, MPI_INT,
+                    tilesFromRank.data(), 1, MPI_INT,
+                    masterRank(), world.comm));
+
+    std::vector<char> tileGatherResult;
+    std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
+    std::vector<int> processOffsets(numGlobalRanks(), 0);
+    const size_t tileInfoSize = sizeof(float) + sizeof(vec2i);
+    if (IamTheMaster()) {
+      size_t recvOffset = 0;
+      for (int i = 0; i < numGlobalRanks(); ++i) {
+        processOffsets[i] = recvOffset;
+        tileBytesExpected[i] = tilesFromRank[i] * tileInfoSize;
+        recvOffset += tileBytesExpected[i];
+      }
+      tileGatherResult.resize(recvOffset);
+    }
+
+    std::vector<char> sendBuffer(myTileCount * tileInfoSize);
+    std::memcpy(sendBuffer.data(), tileIDs.data(), tileIDs.size() * sizeof(vec2i));
+    std::memcpy(sendBuffer.data() + tileIDs.size() * sizeof(vec2i),
+                tileErrors.data(), tileErrors.size() * sizeof(float));
+
+    MPI_CALL(Gatherv(sendBuffer.data(), sendBuffer.size(), MPI_BYTE,
+                     tileGatherResult.data(), tileBytesExpected.data(),
+                     processOffsets.data(), MPI_BYTE,
+                     masterRank(), world.comm));
+
+    if (IamTheMaster()) {
+      tasking::parallel_for(numGlobalRanks(), [&](int rank) {
+          const vec2i *tileID = reinterpret_cast<vec2i*>(tileGatherResult.data() + processOffsets[rank]);
+          const float *error = reinterpret_cast<float*>(tileGatherResult.data() + processOffsets[rank]
+                                                        + tilesFromRank[rank] * sizeof(vec2i));
+          for (size_t i = 0; i < tilesFromRank[rank]; ++i) {
+            if (error[i] < (float)inf) {
+              tileErrorRegion.update(tileID[i], error[i]);
+            }
+          }
+      });
+    }
   }
 
   void DFB::sendCancelRenderingMessage()
@@ -875,14 +871,6 @@ namespace ospray {
   void DFB::closeCurrentFrame()
   {
     DBG(printf("rank %i CLOSES frame\n", mpicommon::globalRank()));
-
-    if (mpicommon::IamTheMaster() && !masterIsAWorker) {
-      /* do nothing */
-    } else {
-      if (pixelOp) {
-        pixelOp->endFrame();
-      }
-    }
 
     SCOPED_LOCK(mutex);
     frameIsActive = false;
@@ -1008,6 +996,14 @@ namespace ospray {
 
   float DFB::endFrame(const float errorThreshold)
   {
+    if (mpicommon::IamTheMaster() && !masterIsAWorker) {
+      /* do nothing */
+    } else {
+      if (pixelOp) {
+        pixelOp->endFrame();
+      }
+    }
+
     memset(tileInstances, 0, sizeof(int32)*getTotalTiles()); // XXX needed?
 
     for (size_t i = 0; i < getTotalTiles(); ++i) {

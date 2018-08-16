@@ -29,7 +29,6 @@ namespace ospray {
   struct TileDesc;
   struct TileData;
 
-  struct AllTilesDoneMessage;
   struct MasterTileMessage;
   template <typename ColorT>
   struct MasterTileMessage_FB;
@@ -54,12 +53,6 @@ namespace ospray {
         to let the master know when we're done. */
     MASTER_WRITE_TILE_I8 = 1 << 2,
     MASTER_WRITE_TILE_F32 = 1 << 3,
-    /*! command tag used for sending 'final' tiles from the tile
-        owner to the master frame buffer. We do send only one message
-        after all worker tiles are processed. This only applies for
-        the FB_NONE case where the master does not care about the
-        pixel data. */
-    WORKER_ALL_TILES_DONE  = 1 << 4,
     // Modifier to indicate the tile also has depth values
     MASTER_TILE_HAS_DEPTH = 1,
     // Indicates that the tile additionally also has normal and/or albedo values
@@ -134,8 +127,6 @@ namespace ospray {
     //! recipient's job to properly delete the message.
     void incoming(const std::shared_ptr<mpicommon::Message> &message) override;
 
-    //! process an client-to-master all-tiles-are-done message */
-    void processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data);
     //! process a (non-empty) write tile message at the master
     template <typename ColorT>
     void processMessage(MasterTileMessage_FB<ColorT> *msg);
@@ -212,8 +203,13 @@ namespace ospray {
     /*! Offloads processing of incoming message to tasking system */
     void scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message);
 
-    /*! Compose and send all-tiles-done message including tile errors. */
-    void sendAllTilesDoneMessage();
+    /*! Gather the final tiles from the other ranks to the master rank to
+     * copy into the framebuffer */
+    void gatherFinalTiles();
+
+    /*! Gather the tile IDs and error info from the other ranks to the master,
+     * for OSP_FB_NONE rendering, where we only track that info on the master */
+    void gatherFinalErrors();
 
     void sendCancelRenderingMessage();
 
@@ -278,7 +274,7 @@ namespace ospray {
     std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
 
     /*! Gather all tile errors in the optimized FB_NONE case to send them out
-        in the single AllTilesDoneMessage. */
+        in the single gatherv. */
     std::mutex tileErrorsMutex;
     std::vector< vec2i > tileIDs;
     std::vector< float > tileErrors;

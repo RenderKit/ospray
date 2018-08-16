@@ -52,6 +52,8 @@ IF (OSPRAY_MODULE_MPI)
     fb/DistributedFrameBuffer.ispc
     fb/DistributedFrameBuffer_TileTypes.cpp
 
+    fb/DebugPixelOp.cpp
+
     render/MPILoadBalancer.cpp
     render/distributed/DistributedRaycast.cpp
     render/distributed/DistributedRaycast.ispc

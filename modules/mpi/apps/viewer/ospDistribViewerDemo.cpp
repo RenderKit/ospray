@@ -86,6 +86,7 @@ int aoSamples = 0;
 int nBricks = -1;
 int bricksPerRank = 1;
 bool llnlrm = false;
+bool fbnone = false;
 const int IMG_SIZE = 512;
 
 std::vector<std::string> osp_bricks;
@@ -234,6 +235,8 @@ void parseArgs(int argc, char **argv)
       for (; i < argc && argv[i][0] != '-'; ++i) {
         osp_bricks.push_back(argv[i]);
       }
+    } else if (arg == "-fb-none") {
+      fbnone = true;
     }
   }
   if (!volumeFile.empty() && !llnlrm) {
@@ -261,12 +264,20 @@ void runApp()
   ospLoadModule("mpi");
   Device device("mpi_distributed");
   device.set("masterRank", 0);
-  ospDeviceSetStatusFunc(device.handle(), [](const char *msg) { std::cout << msg << "\n"; });
+  ospDeviceSetStatusFunc(device.handle(),
+                         [](const char *msg) {
+                           std::cout << "OSP Status: " << msg << "\n";
+                         });
+  ospDeviceSetErrorFunc(device.handle(),
+                        [](OSPError err, const char *msg) {
+                          std::cout << "OSP Error: " <<  msg << "\n";
+                        });
   device.commit();
   device.setCurrent();
 
   const int rank = mpicommon::world.rank;
   const int worldSize = mpicommon::world.size;
+  std::cout << "Rank " << rank << "/" << worldSize << "\n";
 
   AppState app;
   containers::AlignedVector<gensv::LoadedVolume> volumes;
@@ -402,8 +413,20 @@ void runApp()
   renderer.commit();
   assert(renderer);
 
-  FrameBuffer fb(app.fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
-  fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+  const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE;
+  OSPFrameBufferFormat fbColorFormat = OSP_FB_SRGBA;
+  if (fbnone) {
+    fbColorFormat = OSP_FB_NONE;
+  }
+  FrameBuffer fb(app.fbSize, fbColorFormat, fbFlags);
+  if (fbnone) {
+    PixelOp pixelOp("debug");
+    pixelOp.set("prefix", "distrib-viewer");
+    pixelOp.commit();
+    fb.setPixelOp(pixelOp);
+  }
+  fb.commit();
+  fb.clear(fbFlags);
 
   mpicommon::world.barrier();
 
@@ -456,7 +479,7 @@ void runApp()
       camera.set("up", app.v[2]);
       camera.commit();
 
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+      fb.clear(fbFlags);
       app.cameraChanged = false;
     }
     auto startFrame = high_resolution_clock::now();
@@ -467,9 +490,11 @@ void runApp()
 
     if (rank == 0) {
       glClear(GL_COLOR_BUFFER_BIT);
-      uint32_t *img = (uint32_t*)fb.map(OSP_FB_COLOR);
-      glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
-      fb.unmap(img);
+      if (!fbnone) {
+        uint32_t *img = (uint32_t*)fb.map(OSP_FB_COLOR);
+        glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
+        fb.unmap(img);
+      }
 
       const auto tfcnTimeStamp = transferFcn->childrenLastModified();
 
@@ -515,8 +540,8 @@ void runApp()
     MPI_Bcast(&app, sizeof(AppState), MPI_BYTE, 0, MPI_COMM_WORLD);
 
     if (app.fbSizeChanged) {
-      fb = FrameBuffer(app.fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+      fb = FrameBuffer(app.fbSize, OSP_FB_SRGBA, fbFlags);
+      fb.clear(fbFlags);
       camera.set("aspect", static_cast<float>(app.fbSize.x) / app.fbSize.y);
       camera.commit();
 
@@ -559,7 +584,7 @@ void runApp()
         b.vol.tfcn.commit();
       }
 
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+      fb.clear(fbFlags);
       app.tfcnChanged = false;
     }
   }
