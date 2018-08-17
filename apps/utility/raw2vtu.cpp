@@ -34,7 +34,8 @@ namespace ospray {
     enum CellType {
       Tetra = 0x0a,
       Hexa  = 0x0c,
-      Wedge = 0x0d
+      Wedge = 0x0d,
+      unknown = 0xff
     };
 
     struct PointsData {
@@ -50,18 +51,16 @@ namespace ospray {
     };
 
     struct CellsData {
-      void resize(uint64_t count) {
-        connectivity.resize(2 * count);
+      void resize(uint64_t count, unsigned int vertsPerCell) {
+        connectivity.resize(vertsPerCell * count);
         offsets.resize(count);
         types.resize(count);
       }
 
-      std::vector<vec4ul> connectivity;
+      std::vector<uint64_t> connectivity;
       std::vector<uint64_t> offsets;
       std::vector<uint8_t> types;
     };
-
-    static FILE* dataOut = nullptr;
 
     static size_t numWritten = 0;
     static size_t numRemoved = 0;
@@ -110,16 +109,35 @@ namespace ospray {
     };
 
     void makeVTU(const std::shared_ptr<Array3D<float>>& _in,
+                 const std::string primType,
                  const range1f& threshold,
                  PointsData& points,
                  CellsData& cells)
     {
       std::shared_ptr<Array3D<float>> in = _in;
 
+      int verticesCubes[][8]  = {{0, 1, 3, 2, 4, 5, 7, 6}};
+      int verticesTets[][4]   = {{0, 1, 3, 5}, {3, 2, 0, 6}, {5, 4, 6, 0}, {6, 7, 5, 3}, {0, 3, 6, 5}};  // can also be 6 [mirror] identical tets per cube
+      int verticesWedges[][6] = {{0, 1, 3, 4, 5, 7}, {3, 2, 0, 7, 6, 4}};
+
+      CellType cellType = (primType == "cubes"  ? CellType::Hexa :
+                           primType == "tets"   ? CellType::Tetra :
+                           primType == "wedges" ? CellType::Wedge :
+                           CellType::unknown);
+
+      unsigned int cellsPerMacroCell, vertsPerCell;
+      int* vertIndices;
+      switch (cellType) {
+        case CellType::Hexa:  cellsPerMacroCell = 1; vertsPerCell = 8; vertIndices = &verticesCubes[0][0];  break;
+        case CellType::Tetra: cellsPerMacroCell = 5; vertsPerCell = 4; vertIndices = &verticesTets[0][0];   break;
+        case CellType::Wedge: cellsPerMacroCell = 2; vertsPerCell = 6; vertIndices = &verticesWedges[0][0]; break;
+        default:              cellsPerMacroCell = 0; vertsPerCell = 0; vertIndices = nullptr; break;
+      }
+
       const vec3i pointsTotal = in->size();
-      const vec3i cellsTotal = in->size() - vec3i(1);
+      const vec3i macroCellsTotal = in->size() - vec3i(1);
       points.resize(pointsTotal.product());
-      cells.resize(cellsTotal.product());
+      cells.resize(cellsPerMacroCell * macroCellsTotal.product(), vertsPerCell);
       vector<int64_t> pointRefs;
       pointRefs.resize(pointsTotal.product());
 
@@ -131,39 +149,36 @@ namespace ospray {
         points.coords[pointIdx] = coords;
 
         // create cells
-        if (coords.x < cellsTotal.x && coords.y < cellsTotal.y && coords.z < cellsTotal.z) {
+        if (coords.x < macroCellsTotal.x && coords.y < macroCellsTotal.y && coords.z < macroCellsTotal.z) {
+          for (unsigned int cellInMacroCellIdx = 0; cellInMacroCellIdx < cellsPerMacroCell; cellInMacroCellIdx++) {
 #if USE_THRESHOLD
-          float sum = 0.f;
-          for (unsigned int cubeVertex = 0; cubeVertex < 8; cubeVertex++)
-            sum += in->get(coords + vec3i((cubeVertex&1) >> 0, (cubeVertex&2) >> 1, (cubeVertex&4) >> 2));
-          sum /= 8;
-
-          if (threshold.contains(sum)) {
-#endif
-            vec4ul baseLower{pointIdx,
-                             pointIdx + 1,
-                             pointIdx + 1 + pointsTotal.x,
-                             pointIdx +     pointsTotal.x};
-            vec4ul baseUpper{pointIdx +                     pointsTotal.y*pointsTotal.x,
-                             pointIdx + 1 +                 pointsTotal.y*pointsTotal.x,
-                             pointIdx + 1 + pointsTotal.x + pointsTotal.y*pointsTotal.x,
-                             pointIdx +     pointsTotal.x + pointsTotal.y*pointsTotal.x};
-            int64_t cellIdx = coords.x + coords.y*cellsTotal.x + coords.z*cellsTotal.x*cellsTotal.y;
-            cells.connectivity[2*cellIdx]   = baseLower;
-            cells.connectivity[2*cellIdx+1] = baseUpper;
-            cells.offsets[cellIdx] = 2*(cellIdx+1) * sizeof(cells.connectivity[0])/sizeof(cells.connectivity[0][0]);
-            cells.types[cellIdx] = CellType::Hexa;
-            numWritten++;
-#if USE_THRESHOLD
-            for (unsigned int cubeVertex = 0; cubeVertex < 4; cubeVertex++) {
-              pointRefs[baseLower[cubeVertex]]++;
-              pointRefs[baseUpper[cubeVertex]]++;
+            float sum = 0.f;
+            for (unsigned int cellVertexIdx = 0; cellVertexIdx < vertsPerCell; cellVertexIdx++) {
+              int vertIdx = vertIndices[cellInMacroCellIdx*vertsPerCell + cellVertexIdx];
+              sum += in->get(coords + vec3i((vertIdx&1) >> 0, (vertIdx&2) >> 1, (vertIdx&4) >> 2));
             }
-          }
-          else
-            numRemoved++;
+            sum /= vertsPerCell;
+
+            if (threshold.contains(sum)) {
 #endif
+              int64_t cellIdx = cellsPerMacroCell * (coords.x + coords.y*macroCellsTotal.x + coords.z*macroCellsTotal.x*macroCellsTotal.y) + cellInMacroCellIdx;
+              for (unsigned int cellVertexIdx = 0; cellVertexIdx < vertsPerCell; cellVertexIdx++) {
+                int vertIdx = vertIndices[cellInMacroCellIdx*vertsPerCell + cellVertexIdx];
+                cells.connectivity[vertsPerCell*cellIdx + cellVertexIdx] = pointIdx + ((vertIdx&1) >> 0)*1 + ((vertIdx&2) >> 1)*pointsTotal.x + ((vertIdx&4) >> 2)*pointsTotal.y*pointsTotal.x;
+              }
+              cells.offsets[cellIdx] = vertsPerCell * (cellIdx+1);
+              cells.types[cellIdx] = cellType;
+              numWritten++;
+#if USE_THRESHOLD
+              for (unsigned int cellVertexIdx = 0; cellVertexIdx < vertsPerCell; cellVertexIdx++)
+                pointRefs[cells.connectivity[vertsPerCell*cellIdx + cellVertexIdx]]++;
+            }
+            else
+              numRemoved++;
+#endif
+          }
         }
+
         progress.ping();
       });
 
@@ -186,21 +201,19 @@ namespace ospray {
 
       // update the cell references to the just compacted points and compact it as well
       i_without_gaps = 0;
-      for (int64_t i = 0; i < cellsTotal.product(); ) {
-        for (; i < cellsTotal.product() && cells.types[i] == CellType::Hexa; i++, i_without_gaps++) {
-          for (int j = 0; j < 4; j++) {
-            cells.connectivity[2*i_without_gaps][j]   = pointRefs[cells.connectivity[2*i][j]];
-            cells.connectivity[2*i_without_gaps+1][j] = pointRefs[cells.connectivity[2*i+1][j]];
-          }
-          cells.offsets[i_without_gaps] = 2*(i_without_gaps+1) * sizeof(cells.connectivity[0])/sizeof(cells.connectivity[0][0]);
+      for (int64_t i = 0; i < cellsPerMacroCell * macroCellsTotal.product(); ) {
+        for (; i < cellsPerMacroCell * macroCellsTotal.product() && cells.types[i] == cellType; i++, i_without_gaps++) {
+          for (unsigned int cellVertexIdx = 0; cellVertexIdx < vertsPerCell; cellVertexIdx++)
+            cells.connectivity[vertsPerCell*i_without_gaps + cellVertexIdx] = pointRefs[cells.connectivity[vertsPerCell*i + cellVertexIdx]];
+          cells.offsets[i_without_gaps] = vertsPerCell * (i_without_gaps+1);
           cells.types[i_without_gaps] = cells.types[i];
         }
-        for (; i < cellsTotal.product() && cells.types[i] != CellType::Hexa; i++)
+        for (; i < cellsPerMacroCell * macroCellsTotal.product() && cells.types[i] != cellType; i++)
           ;
       }
-      cells.resize(i_without_gaps);
+      cells.resize(i_without_gaps, vertsPerCell);
 #else
-      for (int64_t i = 0; i < pointsTotal.product(); ) {
+      for (int64_t i = 0; i < pointsTotal.product(); i++) {
         points.samplesRange.extend(points.samples[i]);
         points.coordsRange.extend(points.coords[i]);
       }
@@ -220,73 +233,73 @@ namespace ospray {
       uint64_t offset = 0;
       uint64_t len;
 
-      ofstream osp(fileName);
+      ofstream vtuStructure(fileName);
 
-      osp << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">" << endl;
-      osp << "  <UnstructuredGrid>" << endl;
-      osp << "    <Piece NumberOfPoints=\"" << points.samples.size() << "\" NumberOfCells=\"" << cells.offsets.size() << "\">" << endl;
+      vtuStructure << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">" << endl;
+      vtuStructure << "  <UnstructuredGrid>" << endl;
+      vtuStructure << "    <Piece NumberOfPoints=\"" << points.samples.size() << "\" NumberOfCells=\"" << cells.offsets.size() << "\">" << endl;
 
-      osp << "      <PointData Scalars=\"ImageFile\">" << endl;
-      osp << "        <DataArray type=\"Float32\" Name=\"ImageFile\" format=\"appended\" RangeMin=\"" << points.samplesRange.lower << "\" RangeMax=\"" << points.samplesRange.upper << "\" offset=\"" << offset << "\">" << endl;
-      osp << "        </DataArray>" << endl;
+      vtuStructure << "      <PointData Scalars=\"ImageFile\">" << endl;
+      vtuStructure << "        <DataArray type=\"Float32\" Name=\"ImageFile\" format=\"appended\" RangeMin=\"" << points.samplesRange.lower << "\" RangeMax=\"" << points.samplesRange.upper << "\" offset=\"" << offset << "\">" << endl;
+      vtuStructure << "        </DataArray>" << endl;
       offset += points.samples.size() * sizeof(points.samples[0]) + sizeof(len);
-      osp << "      </PointData>" << endl;
+      vtuStructure << "      </PointData>" << endl;
 
-      osp << "      <CellData>" << endl;
+      vtuStructure << "      <CellData>" << endl;
       offset += 0;
-      osp << "      </CellData>" << endl;
+      vtuStructure << "      </CellData>" << endl;
 
-      osp << "      <Points>" << endl;
-      osp << "        <DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"appended\" RangeMin=\"" << 0 << "\" RangeMax=\"" << ospcommon::length(points.coordsRange.size()) << "\" offset=\"" << offset << "\">" << endl;
-      osp << "          <InformationKey name=\"L2_NORM_FINITE_RANGE\" location=\"vtkDataArray\" length=\"2\">" << endl;
-      osp << "            <Value index=\"0\">" << endl;
-      osp << "              " << 0 << endl;
-      osp << "            </Value>" << endl;
-      osp << "            <Value index=\"1\">" << endl;
-      osp << "              " << /*points.coords.diameter()*/ospcommon::length(points.coordsRange.size()) << endl;
-      osp << "            </Value>" << endl;
-      osp << "          </InformationKey>" << endl;
-      osp << "          <InformationKey name=\"L2_NORM_RANGE\" location=\"vtkDataArray\" length=\"2\">" << endl;
-      osp << "            <Value index=\"0\">" << endl;
-      osp << "              " << 0 << endl;
-      osp << "            </Value>" << endl;
-      osp << "            <Value index=\"1\">" << endl;
-      osp << "              " << /*points.coords.diameter()*/ospcommon::length(points.coordsRange.size()) << endl;
-      osp << "            </Value>" << endl;
-      osp << "          </InformationKey>" << endl;
-      osp << "        </DataArray>" << endl;
+      vtuStructure << "      <Points>" << endl;
+      vtuStructure << "        <DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"appended\" RangeMin=\"" << 0 << "\" RangeMax=\"" << ospcommon::length(points.coordsRange.size()) << "\" offset=\"" << offset << "\">" << endl;
+      vtuStructure << "          <InformationKey name=\"L2_NORM_FINITE_RANGE\" location=\"vtkDataArray\" length=\"2\">" << endl;
+      vtuStructure << "            <Value index=\"0\">" << endl;
+      vtuStructure << "              " << 0 << endl;
+      vtuStructure << "            </Value>" << endl;
+      vtuStructure << "            <Value index=\"1\">" << endl;
+      vtuStructure << "              " << ospcommon::length(points.coordsRange.size()) << endl;
+      vtuStructure << "            </Value>" << endl;
+      vtuStructure << "          </InformationKey>" << endl;
+      vtuStructure << "          <InformationKey name=\"L2_NORM_RANGE\" location=\"vtkDataArray\" length=\"2\">" << endl;
+      vtuStructure << "            <Value index=\"0\">" << endl;
+      vtuStructure << "              " << 0 << endl;
+      vtuStructure << "            </Value>" << endl;
+      vtuStructure << "            <Value index=\"1\">" << endl;
+      vtuStructure << "              " << ospcommon::length(points.coordsRange.size()) << endl;
+      vtuStructure << "            </Value>" << endl;
+      vtuStructure << "          </InformationKey>" << endl;
+      vtuStructure << "        </DataArray>" << endl;
       offset += points.coords.size() * sizeof(points.coords[0]) + sizeof(len);
-      osp << "      </Points>" << endl;
+      vtuStructure << "      </Points>" << endl;
 
-      osp << "      <Cells>" << endl;
-      osp << "        <DataArray type=\"Int64\" Name=\"connectivity\" format=\"appended\" RangeMin=\"\" RangeMax=\"\" offset=\"" << offset << "\"/>" << endl;
+      vtuStructure << "      <Cells>" << endl;
+      vtuStructure << "        <DataArray type=\"Int64\" Name=\"connectivity\" format=\"appended\" RangeMin=\"\" RangeMax=\"\" offset=\"" << offset << "\"/>" << endl;
       offset += cells.connectivity.size() * sizeof(cells.connectivity[0]) + sizeof(len);
-      osp << "        <DataArray type=\"Int64\" Name=\"offsets\" format=\"appended\" RangeMin=\"\" RangeMax=\"\" offset=\"" << offset << "\"/>" << endl;
+      vtuStructure << "        <DataArray type=\"Int64\" Name=\"offsets\" format=\"appended\" RangeMin=\"\" RangeMax=\"\" offset=\"" << offset << "\"/>" << endl;
       offset += cells.offsets.size() * sizeof(cells.offsets[0]) + sizeof(len);
-      osp << "        <DataArray type=\"UInt8\" Name=\"types\" format=\"appended\" RangeMin=\"\" RangeMax=\"\" offset=\"" << offset << "\"/>" << endl;
+      vtuStructure << "        <DataArray type=\"UInt8\" Name=\"types\" format=\"appended\" RangeMin=\"\" RangeMax=\"\" offset=\"" << offset << "\"/>" << endl;
       offset += cells.types.size() * sizeof(cells.types[0]) + sizeof(len);
-      osp << "      </Cells>" << endl;
+      vtuStructure << "      </Cells>" << endl;
 
-      osp << "    </Piece>" << endl;
-      osp << "  </UnstructuredGrid>" << endl;
-      osp << "  <AppendedData encoding=\"raw\">" << endl;
-      osp << "  _";
+      vtuStructure << "    </Piece>" << endl;
+      vtuStructure << "  </UnstructuredGrid>" << endl;
+      vtuStructure << "  <AppendedData encoding=\"raw\">" << endl;
+      vtuStructure << "  _";
 
-      osp.close();
+      vtuStructure.close();
 
-      dataOut = fopen(fileName.c_str(), "ab");
-      if (!dataOut)
+      FILE* vtuData = fopen(fileName.c_str(), "ab");
+      if (!vtuData)
         throw std::runtime_error("could not open data output file!");
-      dumpVector(points.samples, dataOut);
-      dumpVector(points.coords, dataOut);
-      dumpVector(cells.connectivity, dataOut);
-      dumpVector(cells.offsets, dataOut);
-      dumpVector(cells.types, dataOut);
-      fclose(dataOut);
+      dumpVector(points.samples, vtuData);
+      dumpVector(points.coords, vtuData);
+      dumpVector(cells.connectivity, vtuData);
+      dumpVector(cells.offsets, vtuData);
+      dumpVector(cells.types, vtuData);
+      fclose(vtuData);
 
-      osp.open(fileName, std::ofstream::out | std::ofstream::app);
-      osp << "  </AppendedData>" << endl;
-      osp << "</VTKFile>" << endl;
+      vtuStructure.open(fileName, std::ofstream::out | std::ofstream::app);
+      vtuStructure << "  </AppendedData>" << endl;
+      vtuStructure << "</VTKFile>" << endl;
     }
 
     extern "C" int main(int ac, char **av)
@@ -310,7 +323,7 @@ namespace ospray {
       const char *inFileName     = av[1];
       const std::string format   = av[2];
       const vec3i inDims(atoi(av[3]), atoi(av[4]), atoi(av[5]));
-      const std::string primType = av[6];  // ignored, so far only cubes are generated; TODO: tets & wedges
+      const std::string primType = av[6];
 #if USE_THRESHOLD
       const range1f threshold(atof(av[7]), atof(av[8]));
       std::string outFileBase    = av[9];
@@ -333,7 +346,7 @@ namespace ospray {
 
       PointsData points;
       CellsData cells;
-      makeVTU(in, threshold, points, cells);
+      makeVTU(in, primType, threshold, points, cells);
       outputVTU(outFileBase + ".vtu", points, cells);
 
       return 0;
