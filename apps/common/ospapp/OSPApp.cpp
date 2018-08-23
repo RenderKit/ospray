@@ -19,10 +19,11 @@
 #include "OSPApp.h"
 #include "common/sg/SceneGraph.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "sg/generator/Generator.h"
+#include "sg/module/Module.h"
+#include "sg/texture/Texture2D.h"
 #include "sg/visitor/PrintNodes.h"
 #include "sg/visitor/VerifyNodes.h"
-#include "sg/module/Module.h"
-#include "sg/generator/Generator.h"
 
 namespace ospray {
   namespace app {

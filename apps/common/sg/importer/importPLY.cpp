@@ -22,8 +22,8 @@
 
 // sg
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "sg/texture/Texture2D.h"
 //
 #include "../3rdParty/ply.h"
 

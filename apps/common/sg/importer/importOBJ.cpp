@@ -18,9 +18,9 @@
 
 // sg
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
 #include "sg/geometry/QuadMesh.h"
+#include "sg/texture/Texture2D.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION  // define this in only *one* .cc
 #include "../3rdParty/tiny_obj_loader.h"

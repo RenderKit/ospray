@@ -22,6 +22,8 @@
 
 #include "ospcommon/memory/malloc.h"
 
+#include "texture/Texture2D.h"
+
 namespace ospray {
   namespace sg {
 

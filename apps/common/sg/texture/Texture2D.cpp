@@ -51,16 +51,11 @@ namespace ospray {
 
     // Texture2D definitions //////////////////////////////////////////////////
 
-    Texture2D::Texture2D()
+    void Texture2D::preCommit(RenderContext &ctx)
     {
-      setValue((OSPTexture)nullptr);
-    }
+      Texture::preCommit(ctx);
 
-    void Texture2D::preCommit(RenderContext &)
-    {
       auto ospTexture = valueAs<OSPTexture>();
-      if (ospTexture != nullptr)
-        return; // already created
 
       auto type = osprayTextureFormat(depth, channels, preferLinear);
 
@@ -75,14 +70,11 @@ namespace ospray {
       if (data == nullptr)
         throw std::runtime_error("committed a Texture2D node with null data!");
 
-      ospTexture = ospNewTexture(ospTextureType.c_str());
       ospSet1i(ospTexture, "type", (int)type);
       ospSet1i(ospTexture, "flags", nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
       ospSet2i(ospTexture, "size", size.x, size.y);
       ospSetObject(ospTexture, "data", texelData->getOSP());
       ospCommit(ospTexture);
-
-      setValue(ospTexture);
     }
 
     std::string Texture2D::toString() const

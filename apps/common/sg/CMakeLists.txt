@@ -104,7 +104,6 @@ ospray_create_library(ospray_sg SHARED
   common/Renderable.cpp
   common/RenderContext.h
   common/Serialization.cpp
-  common/Texture2D.cpp
   common/Transform.cpp
   common/Model.cpp
   common/Instance.cpp
@@ -148,6 +147,9 @@ ospray_create_library(ospray_sg SHARED
   importer/importXYZ.cpp
 
   importer/detail_xyz/Model.cpp
+
+  texture/Texture.cpp
+  texture/Texture2D.cpp
 
   ${SG_VTK_SRCS}
   ${CHOMBO_SRCS}

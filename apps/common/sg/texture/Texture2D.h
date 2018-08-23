@@ -17,8 +17,8 @@
 #pragma once
 
 // sg
-#include "Node.h"
-#include "Data.h"
+#include "Texture.h"
+#include "../common/Data.h"
 // ospcommon
 #include "ospcommon/FileName.h"
 
@@ -26,11 +26,11 @@ namespace ospray {
   namespace sg {
 
     /*! \brief C++ wrapper for a 2D Texture */
-    struct OSPSG_INTERFACE Texture2D : public Node
+    struct OSPSG_INTERFACE Texture2D : public Texture
     {
       /*! constructor */
-      Texture2D();
-      ~Texture2D() override = default;
+      Texture2D() = default;
+      virtual ~Texture2D() override = default;
 
       virtual void preCommit(RenderContext &ctx) override;
 
@@ -56,7 +56,6 @@ namespace ospray {
       std::shared_ptr<sg::DataBuffer> texelData;
       void* data{nullptr};
 
-      std::string ospTextureType {"texture2d"};
       static std::map<std::string,std::shared_ptr<Texture2D> > textureCache;
     };
 
