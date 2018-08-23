@@ -23,11 +23,17 @@ namespace ospray {
   namespace sg {
 
     /*! \brief C++ wrapper for a 2D Texture */
-    struct OSPSG_INTERFACE VolumeTexture : public Texture
+    struct OSPSG_INTERFACE TextureVolume : public Texture
     {
       /*! constructor */
-      VolumeTexture() = default;
-      virtual ~VolumeTexture() override = default;
+      TextureVolume();
+      virtual ~TextureVolume() override = default;
+
+      void postCommit(RenderContext &ctx) override;
+
+      void preTraverse(RenderContext &ctx,
+                       const std::string& operation,
+                       bool& traverseChildren) override;
 
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;

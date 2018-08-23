@@ -19,6 +19,8 @@
 #include "Material.h"
 #include "Model.h"
 
+#include "ospcommon/utility/StringManip.h"
+
 namespace ospray {
   namespace sg {
 
@@ -95,7 +97,7 @@ namespace ospray {
       // handle textures
       for (auto &it : properties.children) {
         auto &child = *it.second;
-        if (child.type() == "Texture2D")
+        if (utility::beginsWith(child.type(), "Texture"))
           ospSetObject(mat, it.first.c_str(), child.valueAs<OSPObject>());
       }
       ospCommit(mat);

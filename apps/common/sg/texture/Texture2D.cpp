@@ -51,8 +51,13 @@ namespace ospray {
 
     // Texture2D definitions //////////////////////////////////////////////////
 
+    Texture2D::Texture2D() : Texture("texture2d") {}
+
     void Texture2D::preCommit(RenderContext &ctx)
     {
+      if (committed)
+        return;
+
       Texture::preCommit(ctx);
 
       auto ospTexture = valueAs<OSPTexture>();
@@ -74,6 +79,15 @@ namespace ospray {
       ospSet1i(ospTexture, "flags", nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
       ospSet2i(ospTexture, "size", size.x, size.y);
       ospSetObject(ospTexture, "data", texelData->getOSP());
+    }
+
+    void Texture2D::postCommit(RenderContext &ctx)
+    {
+      if (committed)
+        return;
+      auto ospTexture = valueAs<OSPTexture>();
+      ospCommit(ospTexture);
+      committed = true;
     }
 
     std::string Texture2D::toString() const

@@ -38,7 +38,7 @@ namespace ospray {
 
     volume = v;
 
-    this->ispcEquivalent = ispc::VolumeTexture_create(v);
+    this->ispcEquivalent = ispc::VolumeTexture_create(v->getIE());
   }
 
   OSP_REGISTER_TEXTURE(VolumeTexture, volume);

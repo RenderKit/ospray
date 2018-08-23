@@ -150,7 +150,7 @@ ospray_create_library(ospray_sg SHARED
 
   texture/Texture.cpp
   texture/Texture2D.cpp
-  texture/VolumeTexture.cpp
+  texture/TextureVolume.cpp
 
   ${SG_VTK_SRCS}
   ${CHOMBO_SRCS}

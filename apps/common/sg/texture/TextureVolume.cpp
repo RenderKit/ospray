@@ -14,19 +14,39 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VolumeTexture.h"
+#include "TextureVolume.h"
 
 namespace ospray {
   namespace sg {
 
-    // VolumeTexture definitions //////////////////////////////////////////////////
+    // TextureVolume definitions //////////////////////////////////////////////////
 
-    std::string VolumeTexture::toString() const
+    TextureVolume::TextureVolume() : Texture("volume") {}
+
+    std::string TextureVolume::toString() const
     {
-      return "ospray::sg::VolumeTexture";
+      return "ospray::sg::TextureVolume";
     }
 
-    OSP_REGISTER_SG_NODE(VolumeTexture);
+    void TextureVolume::postCommit(RenderContext &ctx)
+    {
+      auto ospTexture = valueAs<OSPTexture>();
+
+      auto &volume = child("volume");
+      ospSetObject(ospTexture, "volume", volume.valueAs<OSPVolume>());
+
+      Texture::postCommit(ctx);
+    }
+
+    void TextureVolume::preTraverse(RenderContext &ctx,
+                                    const std::string& operation,
+                                    bool& traverseChildren)
+    {
+      traverseChildren = (operation != "render");
+      Node::preTraverse(ctx, operation, traverseChildren);
+    }
+
+    OSP_REGISTER_SG_NODE(TextureVolume);
 
   } // ::ospray::sg
 } // ::ospray

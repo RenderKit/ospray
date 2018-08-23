@@ -29,10 +29,11 @@ namespace ospray {
     struct OSPSG_INTERFACE Texture2D : public Texture
     {
       /*! constructor */
-      Texture2D() = default;
+      Texture2D();
       virtual ~Texture2D() override = default;
 
       virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
 
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
@@ -55,6 +56,8 @@ namespace ospray {
 
       std::shared_ptr<sg::DataBuffer> texelData;
       void* data{nullptr};
+
+      bool committed{false};
 
       static std::map<std::string,std::shared_ptr<Texture2D> > textureCache;
     };

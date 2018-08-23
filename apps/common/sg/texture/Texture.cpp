@@ -21,9 +21,10 @@ namespace ospray {
 
     // Texture definitions ////////////////////////////////////////////////////
 
-    Texture::Texture()
+    Texture::Texture(const std::string &type)
     {
       setValue((OSPTexture)nullptr);
+      ospTextureType = type;
     }
 
     std::string Texture::toString() const

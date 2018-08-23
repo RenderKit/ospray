@@ -26,7 +26,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Texture : public Node
     {
       /*! constructor */
-      Texture();
+      Texture(const std::string &type);
       ~Texture() override = default;
 
       virtual void preCommit(RenderContext &ctx) override;
