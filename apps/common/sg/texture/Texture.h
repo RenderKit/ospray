@@ -30,6 +30,7 @@ namespace ospray {
       ~Texture() override = default;
 
       virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
 
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;

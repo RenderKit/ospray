@@ -41,5 +41,11 @@ namespace ospray {
       setValue(ospTexture);
     }
 
+    void Texture::postCommit(RenderContext &)
+    {
+      auto ospTexture = valueAs<OSPTexture>();
+      ospCommit(ospTexture);
+    }
+
   } // ::ospray::sg
 } // ::ospray

@@ -21,13 +21,6 @@ namespace ospray {
 
     // VolumeTexture definitions //////////////////////////////////////////////////
 
-    void VolumeTexture::preCommit(RenderContext &ctx)
-    {
-      Texture::preCommit(ctx);
-      auto ospTexture = valueAs<OSPTexture>();
-      ospCommit(ospTexture);
-    }
-
     std::string VolumeTexture::toString() const
     {
       return "ospray::sg::VolumeTexture";

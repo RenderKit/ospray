@@ -29,8 +29,6 @@ namespace ospray {
       VolumeTexture() = default;
       virtual ~VolumeTexture() override = default;
 
-      virtual void preCommit(RenderContext &ctx) override;
-
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
     };

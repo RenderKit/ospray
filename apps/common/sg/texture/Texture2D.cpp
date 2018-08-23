@@ -74,7 +74,6 @@ namespace ospray {
       ospSet1i(ospTexture, "flags", nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
       ospSet2i(ospTexture, "size", size.x, size.y);
       ospSetObject(ospTexture, "data", texelData->getOSP());
-      ospCommit(ospTexture);
     }
 
     std::string Texture2D::toString() const
