@@ -200,8 +200,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   texture/Texture.cpp
   texture/Texture2D.cpp
   texture/Texture2D.ispc
-  texture/VolumeTexture.cpp
-  texture/VolumeTexture.ispc
+  texture/TextureVolume.cpp
+  texture/TextureVolume.ispc
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
@@ -350,9 +350,11 @@ OSPRAY_INSTALL_SDK_HEADERS(
 #TODO: all the specific renderer headers...
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  texture/Texture.h
   texture/Texture2D.h
   texture/Texture2D.ih
   texture/TextureParam.ih
+  texture/TextureVolume.h
   DESTINATION texture
 )
 

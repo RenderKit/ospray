@@ -205,7 +205,6 @@ ospray_install_sdk_headers(
   common/RuntimeError.h
   common/Selector.h
   common/Serialization.h
-  common/Texture2D.h
   common/Transform.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/common
@@ -239,6 +238,14 @@ ospray_install_sdk_headers(
   module/Module.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/module
+)
+
+ospray_install_sdk_headers(
+  texture/Texture.h
+  texture/Texture2D.h
+  texture/TextureVolume.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/texture
 )
 
 ospray_install_sdk_headers(

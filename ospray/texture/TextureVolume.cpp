@@ -14,19 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VolumeTexture.h"
-#include "VolumeTexture_ispc.h"
+#include "TextureVolume.h"
+#include "TextureVolume_ispc.h"
 
 #include "../common/Data.h"
 
 namespace ospray {
 
-  std::string VolumeTexture::toString() const
+  std::string TextureVolume::toString() const
   {
-    return "ospray::VolumeTexture";
+    return "ospray::TextureVolume";
   }
 
-  void VolumeTexture::commit()
+  void TextureVolume::commit()
   {
     if (this->ispcEquivalent)
       ispc::delete_uniform(ispcEquivalent);
@@ -38,9 +38,9 @@ namespace ospray {
 
     volume = v;
 
-    this->ispcEquivalent = ispc::VolumeTexture_create(v->getIE());
+    this->ispcEquivalent = ispc::TextureVolume_create(v->getIE());
   }
 
-  OSP_REGISTER_TEXTURE(VolumeTexture, volume);
+  OSP_REGISTER_TEXTURE(TextureVolume, volume);
 
 } // ::ospray

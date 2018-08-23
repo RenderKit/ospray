@@ -22,9 +22,9 @@
 namespace ospray {
 
   /*! \brief A Texture defined through a 2D Image. */
-  struct OSPRAY_SDK_INTERFACE VolumeTexture : public Texture
+  struct OSPRAY_SDK_INTERFACE TextureVolume : public Texture
   {
-    virtual ~VolumeTexture() override = default;
+    virtual ~TextureVolume() override = default;
 
     virtual std::string toString() const override;
 

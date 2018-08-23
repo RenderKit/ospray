@@ -18,7 +18,7 @@
 
 #include "../volume/Volume.ih"
 
-vec4f VolumeTexture_get(const uniform Texture2D *uniform self,
+vec4f TextureVolume_get(const uniform Texture2D *uniform self,
                         const varying DifferentialGeometry &dg)
 {
   uniform Volume *uniform volume = (uniform Volume *uniform)self->data;
@@ -33,7 +33,7 @@ vec4f VolumeTexture_get(const uniform Texture2D *uniform self,
   }
 }
 
-vec3f VolumeTexture_getN(const uniform Texture2D *uniform self,
+vec3f TextureVolume_getN(const uniform Texture2D *uniform self,
                          const varying DifferentialGeometry &dg)
 {
   uniform Volume *uniform volume = (uniform Volume *uniform)self->data;
@@ -49,12 +49,12 @@ vec3f VolumeTexture_getN(const uniform Texture2D *uniform self,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export void *uniform VolumeTexture_create(void *uniform volume)
+export void *uniform TextureVolume_create(void *uniform volume)
 {
   uniform Texture2D *uniform self = uniform new uniform Texture2D;
   self->data = volume;
-  self->get = VolumeTexture_get;
-  self->getNormal = VolumeTexture_getN;
+  self->get = TextureVolume_get;
+  self->getNormal = TextureVolume_getN;
 
   return self;
 }
