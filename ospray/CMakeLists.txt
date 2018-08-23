@@ -200,6 +200,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   texture/Texture.cpp
   texture/Texture2D.cpp
   texture/Texture2D.ispc
+  texture/VolumeTexture.cpp
+  texture/VolumeTexture.ispc
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp

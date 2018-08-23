@@ -102,3 +102,27 @@ void Volume_Constructor(Volume *uniform volume,
                         /*! pointer to the c++-equivalent class of this entity */
                         void *uniform cppEquivalent
                         );
+
+// Helper functions ///////////////////////////////////////////////////////////
+
+inline float Volume_getSample(uniform Volume *uniform volume, const vec3f &P)
+{
+  return volume->sample(volume, P);
+}
+
+inline vec3f Volume_getGradient(uniform Volume *uniform volume, const vec3f &P)
+{
+  return volume->computeGradient(volume, P);
+}
+
+inline vec3f Volume_getColor(uniform Volume *uniform volume, const float sample)
+{
+  return volume->transferFunction->getColorForValue(volume->transferFunction,
+                                                    sample);
+}
+
+inline float Volume_getOpacity(uniform Volume *uniform volume, const float sample)
+{
+  return volume->transferFunction->getOpacityForValue(volume->transferFunction,
+                                                      sample);
+}
