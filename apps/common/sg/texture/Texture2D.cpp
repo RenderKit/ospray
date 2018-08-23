@@ -81,7 +81,7 @@ namespace ospray {
       ospSetObject(ospTexture, "data", texelData->getOSP());
     }
 
-    void Texture2D::postCommit(RenderContext &ctx)
+    void Texture2D::postCommit(RenderContext &)
     {
       if (committed)
         return;
