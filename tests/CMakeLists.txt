@@ -59,6 +59,7 @@ set(ExternalData_URL_TEMPLATES
 	)
 
 set(ExternalData_OBJECT_STORES
+  "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests/baseline"
 	"/opt/ospray/test-data"
 	"//sdvis-nas/NAS/OSPRay/test-data"
 	)
@@ -81,4 +82,5 @@ ExternalData_Expand_Arguments(ospray_bench_data
 	)
 ExternalData_Add_Target(ospray_bench_data)
 set_target_properties(ospray_bench_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
+add_dependencies(ospray_test_suite ospray_test_data)
 

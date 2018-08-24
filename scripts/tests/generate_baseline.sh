@@ -18,7 +18,7 @@
 rm -rf img
 mkdir img
 
-regression_tests/ospray_test_suite --dump-img --baseline-dir=img/
+regression_tests/ospray_test_suite --dump-img --baseline-dir=regression_tests/baseline/
 FAILED=$(echo $?)
 
 exit $FAILED
