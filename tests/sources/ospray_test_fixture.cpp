@@ -794,5 +794,101 @@ void Pipes::SetUp()
   AddLight(ambient);
 }
 
+TextureVolume::TextureVolume()
+{
+  rendererType = GetParam();
+}
+
+void TextureVolume::SetUp()
+{
+  Base::SetUp();
+
+  float cam_pos[] = {-0.7f, -1.4f, 0.f};
+  float cam_up[] = {0.f, 0.f, -1.f};
+  float cam_view[] = {0.5f, 1.f, 0.f};
+  ospSet3fv(camera, "pos", cam_pos);
+  ospSet3fv(camera, "dir", cam_view);
+  ospSet3fv(camera, "up",  cam_up);
+
+  ospSet1f(renderer, "epsilon", 0.01);
+
+  int size = 250;
+
+  volumetricData.resize(size*size*size, 0);
+
+  float r = 30;
+  float R = 80;
+
+  for (int x = 0; x < size; ++x) {
+    for (int y = 0; y < size; ++y) {
+      for (int z = 0; z < size; ++z) {
+        float X = x - size / 2;
+        float Y = y - size / 2;
+        float Z = z - size / 2;
+
+        float d = (R - std::sqrt(X*X + Y*Y));
+        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
+      }
+    }
+  }
+
+  OSPVolume torus = ospNewVolume("shared_structured_volume");
+  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
+                                  volumetricData.data(),
+                                  OSP_DATA_SHARED_BUFFER);
+  ospSetData(torus, "voxelData", voxelsData);
+  ospRelease(voxelsData);
+  ospSet3i(torus, "dimensions", size, size, size);
+  ospSetString(torus, "voxelType", "float");
+  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
+  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
+  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+
+  OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
+  ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
+  float colors[] = {
+    1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f
+  };
+  float opacites[] = { 1.0f, 1.0f };
+  OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
+  ospSetData(transferFun, "colors", tfColorData);
+  ospRelease(tfColorData);
+  OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
+  ospSetData(transferFun, "opacities", tfOpacityData);
+  ospRelease(tfOpacityData);
+  ospCommit(transferFun);
+  ospSetObject(torus, "transferFunction", transferFun);
+  ospRelease(transferFun);
+  ospCommit(torus);
+
+  OSPMaterial sphereMaterial = ospNewMaterial(renderer, "default");
+  OSPTexture tex = ospNewTexture("volume");
+  ospSetObject(tex, "volume", torus);
+  ospCommit(tex);
+  ospSetObject(sphereMaterial, "map_Kd", tex);
+  ospCommit(sphereMaterial);
+
+  float sphereVertex[] = {0.f, 0.f, 0.f, 0.0f};
+  OSPGeometry sphere = ospNewGeometry("spheres");
+  auto data = ospNewData(1, OSP_FLOAT4, sphereVertex);
+  ospCommit(data);
+  ospSetData(sphere, "spheres", data);
+  ospRelease(data);
+  ospSet1f(sphere, "radius", 0.51f);
+  ospSetMaterial(sphere, sphereMaterial);
+  ospCommit(sphere);
+  ospAddGeometry(world,sphere);
+  ospRelease(sphereMaterial);
+  ospRelease(torus);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient) << "Failed to create lights";
+  ospSetf(ambient, "intensity", 0.5f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
+
 } // namespace OSPRayTestScenes
 
