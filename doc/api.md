@@ -1677,7 +1677,7 @@ parameters of lights: [`color` and `intensity`](#lights).
 
 ### Texture
 
-OSPRay currently implements only one texture type (`texture2d`), but is
+OSPRay currently implements two texture types (`texture2d` and `volume`) and is
 open for extension to other types by applications. More types may be
 added in future releases.
 
@@ -1687,7 +1687,12 @@ To create a new texture use
 
 The call returns `NULL` if the texture could not be created with the
 given parameters, or else an `OSPTexture` handle to the created
-texture. Parameters
+texture.
+
+#### Texture2D
+
+The `texture2D` texture type implements an image-based texture, where its
+parameters are as follows
 
   Type    Name         Description
   ------- ------------ ----------------------------------
@@ -1723,7 +1728,23 @@ fetch is filtered by performing bi-linear interpolation of the nearest
 2×2 texels; if instead fetching only the nearest texel is desired (i.e.
 no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
-### Texture Transformations
+#### TextureVolume
+
+The `volume` texture type implements texture lookups based on 3D world
+coordinates of the surface hit point on the associated geometry. If the given
+hit point is within the attached volume, the volume is sampled and classified
+with the transfer function attached to the volume. This implements the ability
+to visualize volume values (as colored by its transfer function) on arbitrary
+surfaces inside the volume (as opposed to an isosurface showing a particular
+value in the volume). Its parameters are as follows
+
+  Type      Name         Description
+  --------- ------------ -------------------------------------------
+  OSPVolume volume       volume used to generate color lookups
+  --------- ------------ -------------------------------------------
+  : Parameters of `volume` texture type
+
+### Texture2D Transformations
 
 All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
