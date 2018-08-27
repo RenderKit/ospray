@@ -53,15 +53,6 @@ namespace ospray {
     }
   }
 
-  void computeSortOrder(AlphaBlendTile_simple::BufferedTile *t)
-  {
-    float z = std::numeric_limits<float>::infinity();
-    for (int iy=0;iy<t->tile.region.upper.y-t->tile.region.lower.y;iy++)
-      for (int ix=0;ix<t->tile.region.upper.x-t->tile.region.lower.x;ix++)
-        z = std::min(z,t->tile.z[ix+TILE_SIZE*iy]);
-    t->sortOrder = z;
-  }
-
   void TileData::accumulate(const ospray::Tile &tile)
   {
     // accumulate, compute the final normalized colors, and compute the error,
@@ -89,9 +80,6 @@ namespace ospray {
     std::lock_guard<std::mutex> lock(mutex);
     BufferedTile *addTile = new BufferedTile;
     memcpy(&addTile->tile,&tile,sizeof(tile));
-#if 0
-    computeSortOrder(addTile);
-#endif
 
     bufferedTile.push_back(addTile);
 

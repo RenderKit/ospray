@@ -236,6 +236,10 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   uniform Model *uniform ghostModel = NULL;
   if (regionInfo) {
     model = self->myRegions[regionInfo->currentRegion];
+    // TODO: Maybe allow people to set just one ghost region,
+    // instead of requiring they always have equal number of regions
+    // and ghost regions. May make some use cases easier, and reduce memory
+    // overhead for those cases.
     if (self->ghostRegions) {
       ghostModel = self->ghostRegions[regionInfo->currentRegion];
     }

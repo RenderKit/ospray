@@ -335,6 +335,20 @@ void runApp()
     v.volume.commit();
     Model m;
     m.addVolume(v.volume);
+    // All ranks generate the same sphere data to mimic rendering a distributed
+    // shared dataset
+    if (nSpheres != 0) {
+      auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
+                                        sphereRadius, transparentSpheres);
+      m.addGeometry(spheres);
+      // If we're setting spheres we need to enforce an explicit region bound
+      m.set("region.lower", v.bounds.lower);
+      m.set("region.upper", v.bounds.upper);
+
+      Model g;
+      g.addGeometry(spheres);
+      ghostModels.push_back(g);
+    }
     m.set("id", int(rank * nlocalBricks + i));
     models.push_back(m);
   }
@@ -342,22 +356,26 @@ void runApp()
   // Loaded bricks
   for (size_t i = 0; i < bricks.size(); ++i) {
     auto &v = bricks[i].vol;
-    //v.volume.set("volumeClippingBoxLower", v.bounds.lower);
-    //v.volume.set("volumeClippingBoxUpper", v.bounds.upper);
     v.volume.commit();
     Model m;
     m.addVolume(v.volume);
+    // All ranks generate the same sphere data to mimic rendering a distributed
+    // shared dataset
+    if (nSpheres != 0) {
+      auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
+                                        sphereRadius, transparentSpheres);
+      m.addGeometry(spheres);
+      // If we're setting spheres we need to enforce an explicit region bound
+      m.set("region.lower", v.bounds.lower);
+      m.set("region.upper", v.bounds.upper);
+
+      Model g;
+      g.addGeometry(spheres);
+      ghostModels.push_back(g);
+    }
     m.set("id", bricks[i].region.id);
     models.push_back(m);
   }
-  /*
-  // All ranks generate the same sphere data to mimic rendering a distributed
-  // shared dataset
-  if (nSpheres != 0) {
-    auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
-                                      sphereRadius, transparentSpheres);
-  }
-  */
 
   /*
   if (!rivl.file.empty()) {
@@ -386,6 +404,9 @@ void runApp()
   for (auto &m : models) {
     m.commit();
   }
+  for (auto &m : ghostModels) {
+    m.commit();
+  }
 
   Arcball arcballCamera(worldBounds, vec2i(IMG_SIZE, IMG_SIZE));
 
@@ -397,15 +418,19 @@ void runApp()
   camera.commit();
 
   Renderer renderer("mpi_raycast");
-  // Should just do 1 set here, which is read?
-  // TODO: The passing it as a data like this is a total hack
-  // to circumvent an issue we'd run into in OSPRay passing ObjectHandles
-  // as OSP_OBJECTs
+
   std::vector<OSPModel> modelHandles;
   std::transform(models.begin(), models.end(), std::back_inserter(modelHandles),
                  [](const Model &m) { return m.handle(); });
   Data modelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
+
+  std::vector<OSPModel> ghostModelHandles;
+  std::transform(ghostModels.begin(), ghostModels.end(), std::back_inserter(modelHandles),
+                 [](const Model &m) { return m.handle(); });
+  Data ghostModelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
+
   renderer.set("models", modelsData);
+  renderer.set("ghostModels", ghostModelsData);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));
   renderer.set("varianceThreshold", varianceThreshold);
