@@ -16,6 +16,9 @@ Version History
 -   Added sheenTint parameter to Principled material
 -   Added baseNormal parameter to Principled material
 -   Added low-discrepancy sampling to path tracer
+-   Fixed documentation for `ospNewLight()`, which was replaced in v1.5.0 with
+    `ospNewLight2()` in the same way `ospNewMaterial()` was replaced by
+    `ospNewMaterial2()`
 
 ### Changes in v1.6.1:
 

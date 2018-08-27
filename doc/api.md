@@ -1111,7 +1111,7 @@ feature/performance trade-offs:
 To let the given `renderer` create a new light source of given type
 `type` use
 
-    OSPLight ospNewLight(OSPRenderer renderer, const char *type);
+    OSPLight ospNewLight2(const char *renderer_type, const char *type);
 
 The call returns `NULL` if that type of light is not known by the
 renderer, or else an `OSPLight` handle to the created light source.
@@ -1135,7 +1135,7 @@ not about `color`.
 The distant light (or traditionally the directional light) is thought to
 be very far away (outside of the scene), thus its light arrives (almost)
 as parallel rays. It is created by passing the type string "`distant`"
-to `ospNewLight`. In addition to the [general parameters](#lights)
+to `ospNewLight2`. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following special
 parameters:
 
@@ -1154,7 +1154,7 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 
 The sphere light (or the special case point light) is a light emitting
 uniformly in all directions. It is created by passing the type string
-"`sphere`" to `ospNewLight`. In addition to the [general
+"`sphere`" to `ospNewLight2`. In addition to the [general
 parameters](#lights) understood by all lights the sphere light supports
 the following special parameters:
 
@@ -1172,7 +1172,7 @@ tracer]).
 #### Spot Light
 
 The spot light is a light emitting into a cone of directions. It is
-created by passing the type string "`spot`" to `ospNewLight`. In
+created by passing the type string "`spot`" to `ospNewLight2`. In
 addition to the [general parameters](#lights) understood by all lights
 the spot light supports the special parameters listed in the table.
 
@@ -1206,7 +1206,7 @@ tracer]).
 
 The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
 uniformly on one side into the half space. It is created by passing the
-type string "`quad`" to `ospNewLight`. In addition to the [general
+type string "`quad`" to `ospNewLight2`. In addition to the [general
 parameters](#lights) understood by all lights the spot light supports
 the following special parameters:
 
@@ -1230,7 +1230,7 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [parameter
+"`hdri`" to `ospNewLight2`. In addition to the [parameter
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
@@ -1255,7 +1255,7 @@ Note that the currently only the [path tracer] supports the HDRI light.
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-"`ambient`" to `ospNewLight`.
+"`ambient`" to `ospNewLight2`.
 
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
