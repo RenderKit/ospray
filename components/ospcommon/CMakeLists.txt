@@ -197,7 +197,9 @@ else()
 
   ## Build Test Apps ##
 
-  add_library(ospray_test_main STATIC testing/catch_main.cpp)
+  if (OSPRAY_ENABLE_TESTS)
+    add_library(ospray_test_main STATIC testing/catch_main.cpp)
+  endif()
 
   # containers/AlignedVector
   ospray_create_test(test_AlignedVector
