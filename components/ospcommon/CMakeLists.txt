@@ -197,7 +197,7 @@ else()
 
   ## Build Test Apps ##
 
-  if (OSPRAY_ENABLE_TESTS)
+  if (OSPRAY_ENABLE_TESTING)
     add_library(ospray_test_main STATIC testing/catch_main.cpp)
   endif()
 
