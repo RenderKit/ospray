@@ -162,6 +162,7 @@ namespace ospray {
     std::mutex statsMutex;
 
     std::vector<char> tileGatherBuffer;
+    std::mutex writeGatherTileMutex;
 
     friend struct TileData;
     friend struct WriteMultipleTile;
@@ -185,7 +186,7 @@ namespace ospray {
     /*! This function is called when a master write tile is completed, on the
         master process. It only marks on the master that the tile is done, and
         checks if we've completed rendering the frame. */
-    void finalizeTileOnMaster(TileData *tile);
+    //void finalizeTileOnMaster(TileData *tile);
 
     //! number of tiles that "I" own
     size_t numMyTiles() const;

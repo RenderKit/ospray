@@ -126,9 +126,7 @@ namespace ospray {
         shouldFinalizeMPI = mpicommon::init(&_ac, _av, setComm == nullptr);
 
         if (setComm) {
-          MPI_CALL(Comm_dup(*setComm, &mpicommon::world.comm));
-          MPI_CALL(Comm_rank(mpicommon::world.comm, &mpicommon::world.rank));
-          MPI_CALL(Comm_size(mpicommon::world.comm, &mpicommon::world.size));
+          mpicommon::world.setTo(*setComm);
         }
 
         auto &embreeDevice = api::ISPCDevice::embreeDevice;

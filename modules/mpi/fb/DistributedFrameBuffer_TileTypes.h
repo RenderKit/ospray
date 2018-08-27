@@ -73,6 +73,9 @@ namespace ospray {
         written into / composited into this dfb tile */
     virtual void process(const ospray::Tile &tile) = 0;
 
+    // WILL debugging
+    virtual bool isComplete() const { return false; }
+
     void accumulate(const ospray::Tile &tile);
 
     float error; // estimated variance of this tile
@@ -168,6 +171,8 @@ namespace ospray {
     /*! called exactly once for each ospray::Tile that needs to get
         written into / composited into this dfb tile */
     void process(const ospray::Tile &tile) override;
+
+    bool isComplete() const { return missingInCurrentGeneration == 0; }
 
     struct BufferedTile
     {

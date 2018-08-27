@@ -238,6 +238,7 @@ namespace ospray {
           std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
           std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, bgColor.w);
           std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
+
           fb->setTile(tile);
         }
 
@@ -246,9 +247,10 @@ namespace ospray {
         tile.generation = 1;
         tile.children = 0;
         for (const auto &region : distribModel->myRegions) {
-          if (!regionInfo.regionVisible[region.id] ) {
+          if (!regionInfo.regionVisible[region.id]) {
             continue;
           }
+
           // If we share ownership of this region but aren't responsible
           // for rendering it to this tile, don't render it.
           // TODO: We can have a more robust distribution here if we compute
@@ -268,6 +270,7 @@ namespace ospray {
               renderTile(&regionInfo, tile, tIdx);
             });
             tile.sortOrder = sortOrder[region.id];
+
             fb->setTile(tile);
           }
           ++regionInfo.currentGhostRegion;

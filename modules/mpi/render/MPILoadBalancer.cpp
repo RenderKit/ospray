@@ -44,6 +44,7 @@ namespace ospray {
 
         dfb->startNewFrame(renderer->errorThreshold);
         dfb->beginFrame();
+        dfb->closeCurrentFrame();
 
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing

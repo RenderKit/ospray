@@ -145,7 +145,7 @@ namespace ospray {
               }
               postStatusMsg(1) << "])";
             }
-            postStatusMsg(1) << "\n";
+            postStatusMsg(1) << "\n" << std::flush;
           }
           mpicommon::world.barrier();
         }

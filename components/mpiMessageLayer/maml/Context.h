@@ -111,7 +111,6 @@ namespace maml {
     // Data members //
 
     bool tasksAreRunning {false};
-    bool madeProgress{false};
 
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;

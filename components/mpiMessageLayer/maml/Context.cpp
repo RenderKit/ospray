@@ -38,7 +38,16 @@ namespace maml {
 
   Context::~Context()
   {
-    stop();
+    if (tasksAreRunning) {
+      tasksAreRunning = false;
+      if (sendReceiveThread) {
+        sendReceiveThread->stop();
+      }
+      if (processInboxThread) {
+        processInboxThread->stop();
+      }
+      flushRemainingMessages();
+    }
   }
 
   /*! register a new incoing-message handler. if any message comes in
@@ -85,13 +94,19 @@ namespace maml {
 
       for (auto &msg : outgoingMessages) {
         MPI_Request request;
-        MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
-                       msg->tag, msg->comm, &request));
-        msg->started = high_resolution_clock::now();
-        pendingSends.push_back(request);
-        sendCache.push_back(std::move(msg));
 
-        madeProgress = true;
+        int rank = 0;
+        MPI_CALL(Comm_rank(msg->comm, &rank));
+        // Don't send to ourself, just forward to the inbox directly
+        if (rank == msg->rank) {
+          inbox.push_back(std::move(msg));
+        } else {
+          MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
+                msg->tag, msg->comm, &request));
+          msg->started = high_resolution_clock::now();
+          pendingSends.push_back(request);
+          sendCache.push_back(std::move(msg));
+        }
       }
     }
   }
@@ -102,14 +117,11 @@ namespace maml {
       MPI_Comm comm = it.first;
 
       /* probe if there's something incoming on this handler's comm */
-      while (true) {
-        int hasIncoming = 0;
-        MPI_Status status;
-        MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
-                        comm, &hasIncoming, &status));
-        if (!hasIncoming) {
-          break;
-        }
+      int hasIncoming = 0;
+      MPI_Status status;
+      MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
+            comm, &hasIncoming, &status));
+      if (hasIncoming) {
         int size;
         MPI_CALL(Get_count(&status, MPI_BYTE, &size));
 
@@ -124,8 +136,6 @@ namespace maml {
         msg->started = high_resolution_clock::now();
         pendingRecvs.push_back(request);
         recvCache.push_back(std::move(msg));
-
-        madeProgress = true;
       }
     }
   }
@@ -145,23 +155,22 @@ namespace maml {
         }
       }
 
+      // TODO: will this deadlock if we send to other ranks in some condition?
+      // e.g. if we both send to each other and start waiting on the sends
+      // but the other hasn't picked up the recv yet?
       int numDone = 0;
-      if (!madeProgress) {
-        MPI_CALL(Waitsome(totalMessages, mergedRequests, &numDone,
-                          done, MPI_STATUSES_IGNORE));
-      } else {
-        MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
-                          done, MPI_STATUSES_IGNORE));
-      }
+      MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
+                        done, MPI_STATUSES_IGNORE));
       auto completed = high_resolution_clock::now();
-      madeProgress |= numDone != 0;
 
       for (int i = 0; i < numDone; ++i) {
         int msgId = done[i];
         if (msgId < pendingSends.size()) {
+
           pendingSends[msgId] = MPI_REQUEST_NULL;
 
           auto &msg = sendCache[msgId];
+
           const auto sendTime = duration_cast<RealMilliseconds>(completed - msg->started);
 
           {
@@ -176,6 +185,7 @@ namespace maml {
           pendingRecvs[msgId] = MPI_REQUEST_NULL;
 
           auto &msg = recvCache[msgId];
+
           const auto recvTime = duration_cast<RealMilliseconds>(completed - msg->started);
 
           {
@@ -210,10 +220,14 @@ namespace maml {
 
   void Context::flushRemainingMessages()
   {
-    sendMessagesFromOutbox();
+    // TODO: flush is not correct, we could be in a state where a message
+    // is being process, which will then produce more messages to send but
+    // the flushing will think all the work is done, and exit.
+    while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty() && !outbox.empty()) {
+      sendMessagesFromOutbox();
 
-    while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty()) {
       waitOnSomeRequests();
+
       processInboxMessages();
     }
   }
@@ -237,7 +251,6 @@ namespace maml {
 
       if (!sendReceiveThread.get()) {
         sendReceiveThread = make_unique<AsyncLoop>([&](){
-          madeProgress = false;
           sendMessagesFromOutbox();
           pollForAndRecieveMessages();
 
@@ -265,18 +278,10 @@ namespace maml {
     if the mpi layer is not thread safe the app is then free to use
     MPI calls of its own, but it should not expect that this node
     receives any more messages (until the next 'start()' call) even
-    if they are already in flight */
-  void Context::stop()
-  {
-    tasksAreRunning = false;
-    if (sendReceiveThread) {
-      sendReceiveThread->stop();
-    }
-    if (processInboxThread) {
-      processInboxThread->stop();
-    }
-    flushRemainingMessages();
-  }
+    if they are already in fligh
+    WILL: Don't actually stop, for reasons described above flush messages
+  */
+  void Context::stop() {}
 
   void Context::logMessageTimings(std::ostream &os)
   {
