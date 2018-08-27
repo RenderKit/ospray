@@ -150,7 +150,7 @@ namespace ospray {
       }
       // AUX also includes depth
       if (hasDepth) {
-          command |= MASTER_TILE_HAS_DEPTH;
+        command |= MASTER_TILE_HAS_DEPTH;
       }
       if (hasNormal || hasAlbedo) {
         command |= MASTER_TILE_HAS_AUX;
@@ -334,6 +334,9 @@ namespace ospray {
             // TODO: This is probably an issue for the replicated
             // rendering mode
             //if (mpicommon::IamTheMaster() || allTiles[t]->mine())
+            // TODO: We need to know how many tiles where finished with error
+            // accumulation on the workers if we're the master so we know
+            // how many tiles they're actually going to render and send us.
             if (allTiles[t]->mine()) {
               numTilesCompletedThisFrame++;
             }
@@ -557,6 +560,8 @@ namespace ospray {
 
     if (pixelOp) {
       pixelOp->postAccum(tile->final);
+      // WILL This may not actually be needed
+#if 0
       // WILL: I've put this back in b/c I'm pretty sure that removing it
       // breaks pixel ops being able to effect the image in the distributed
       // rendering (unless something else has changed)
@@ -574,9 +579,10 @@ namespace ospray {
               tile->final.b[i], tile->final.a[i]);
         }
       }
+#endif
     }
 
-    // write the final colors into the color buffer
+    // Write the final colors into the color buffer
     // normalize and write final color, and compute error
     if (colorBufferFormat != OSP_FB_NONE) {
       auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
@@ -738,6 +744,7 @@ namespace ospray {
 
     const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer,
                                           hasNormalBuffer, hasAlbedoBuffer);
+
     std::vector<char> tileGatherResult;
     std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
     std::vector<int> processOffsets(numGlobalRanks(), 0);
@@ -748,6 +755,10 @@ namespace ospray {
       }
       size_t recvOffset = 0;
       for (int i = 0; i < numGlobalRanks(); ++i) {
+#if 0
+        std::cout << "Expecting " << tileBytesExpected[i] << " bytes from " << i
+          << ", #tiles: " << tileBytesExpected[i] / tileSize << "\n" << std::flush;
+#endif
         processOffsets[i] = recvOffset;
         recvOffset += tileBytesExpected[i];
       }

@@ -54,7 +54,7 @@ namespace ospray {
     MASTER_WRITE_TILE_I8 = 1 << 2,
     MASTER_WRITE_TILE_F32 = 1 << 3,
     // Modifier to indicate the tile also has depth values
-    MASTER_TILE_HAS_DEPTH = 1,
+    MASTER_TILE_HAS_DEPTH = 1 << 4,
     // Indicates that the tile additionally also has normal and/or albedo values
     MASTER_TILE_HAS_AUX = 1 << 5,
     // abort rendering the current frame
