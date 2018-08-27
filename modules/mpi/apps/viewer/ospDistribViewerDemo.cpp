@@ -360,11 +360,11 @@ void runApp()
       throw std::runtime_error("error reading rivl prims");
       
     }
-    ospray::cpp::Data vertData(verts.size(), OSP_FLOAT3, verts.data());
-    ospray::cpp::Data primData(prims.size(), OSP_INT4, prims.data());
+    Data vertData(verts.size(), OSP_FLOAT3, verts.data());
+    Data primData(prims.size(), OSP_INT4, prims.data());
     vertData.commit();
     primData.commit();
-    ospray::cpp::Geometry mesh("triangles");
+    Geometry mesh("triangles");
     mesh.set("vertex", vertData);
     mesh.set("index", primData);
     mesh.commit();
@@ -373,10 +373,14 @@ void runApp()
 
   Arcball arcballCamera(worldBounds, vec2i(IMG_SIZE, IMG_SIZE));
 
-  ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
+  Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
       OSP_CHAR, regions.data());
+  Data ghostRegionData(ghostRegions.size() * sizeof(box3f),
+      OSP_CHAR, ghostRegions.data());
+
   model.set("regions", regionData);
   model.set("ghostRegions", ghostRegionData);
+  model.set("id", rank);
   model.commit();
 
   Camera camera("perspective");
@@ -388,7 +392,13 @@ void runApp()
 
   Renderer renderer("mpi_raycast");
   // Should just do 1 set here, which is read?
-  renderer.set("model", model);
+  // TODO: The passing it as a data like this is a total hack
+  // to circumvent an issue we'd run into in OSPRay passing ObjectHandles
+  // as OSP_OBJECTs
+  OSPModel modelHandle = model.handle();
+  Data modelsData(sizeof(int64_t), OSP_CHAR, &modelHandle);
+  //renderer.set("model", model);
+  renderer.set("models", modelsData);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));
   renderer.set("varianceThreshold", varianceThreshold);
