@@ -198,6 +198,11 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     (uniform DistributedRaycastRenderer *uniform)_self;
 
   uniform RegionInfo *uniform regionInfo = (uniform RegionInfo *uniform)perFrameData;
+
+  // TODO WILL: It makes no sense that this fixes the visibility test issue.
+  sample.ray.t = infinity;
+  sample.ray.t0 = 1e-6f;
+
   // TODO: This is basically a hack to do a tile-region visibility pre-pass
   // without needing to modify much code. Really we'd want to do a separate
   // pre-pass of some kind where we either project the regions to the screen,
@@ -237,7 +242,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
                                         regionExit, rayOffset);
 
   traceRay(self->super.model, geomRay);
-  sample.z = min(geomRay.t, volRay.t);
+  sample.z = min(geomRay.t, volRay.t0);
 
   // Loop through the hits, we should integrate the volume to the first
   // geometry hit point, if the hit of the geometry is inside the volume
@@ -261,7 +266,12 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         if (any(volume == NULL)) {
           print("ACCESSING NULL VOLUME!\n");
         }
-        volRay.t = min(geomRay.t, volRay.t);
+        // TODO: seems like we never advance the ray out of the region
+        // in some cases, and thus never leave this loop. Could this be
+        // case if we intersect the geometry outside the region? It should
+        // not be possible right? because we set the t range.
+        //volRay.t = min(geomRay.t, volRay.t);
+        volRay.t = regionExit;
         foreach_unique(v in volume) {
           currentContribution = DRR_integrateVolumeSegment(self, v, volRay);
         }
@@ -335,6 +345,5 @@ export void DistributedRaycastRenderer_setRegions(void *uniform _self,
   self->numRegions = numRegions;
   self->aoSamples = aoSamples;
   self->ghostRegions = ghostRegions;
-
 }
 

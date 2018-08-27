@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <memory>
 #include <fstream>
 // ospray
 #include "render/Renderer.h"
@@ -53,7 +54,7 @@ namespace ospray {
 
       int numAoSamples;
       PerspectiveCamera *camera;
-      std::ofstream statsLog;
+      std::unique_ptr<std::ofstream> statsLog;
     };
 
   } // ::ospray::mpi

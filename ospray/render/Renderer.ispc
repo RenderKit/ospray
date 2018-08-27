@@ -150,6 +150,7 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->endFrame     = Renderer_default_endFrame;
   self->fb = NULL;
   Renderer_set(self, NULL, NULL, true, 1e-6f, 1, 20, 0.001f, make_vec4f(0.f), NULL);
+  precomputedHalton_create();
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,

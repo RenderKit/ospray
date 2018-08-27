@@ -29,7 +29,7 @@ Arcball::Arcball(const box3f &worldBounds, const vec2i &screenDims)
   zoomSpeed = max(length(diag) / 150.0, 0.001);
   diag = max(diag, vec3f(0.3f * length(diag)));
 
-  lookAt = AffineSpace3f::lookat(vec3f(0, 0, 1), vec3f(0, 0, 0), vec3f(0, 1, 0));
+  centerTranslation = AffineSpace3f::translate(-worldBounds.center());
   translation = AffineSpace3f::translate(vec3f(0, 0, length(diag)));
   updateCamera();
 }
@@ -51,6 +51,9 @@ void Arcball::pan(const ospcommon::vec2f &delta) {
 vec3f Arcball::eyePos() const {
   return xfmPoint(invCamera, vec3f(0, 0, 1));
 }
+vec3f Arcball::center() const {
+  return -centerTranslation.p;
+}
 vec3f Arcball::lookDir() const {
   return xfmVector(invCamera, vec3f(0, 0, 1));
 }
@@ -59,7 +62,7 @@ vec3f Arcball::upDir() const {
 }
 void Arcball::updateCamera() {
   const AffineSpace3f rot = LinearSpace3f(rotation);
-  const AffineSpace3f camera = translation * lookAt * rot * centerTranslation;
+  const AffineSpace3f camera = translation * rot * centerTranslation;
   invCamera = rcp(camera);
 }
 void Arcball::updateScreen(const vec2i &screenDims) {

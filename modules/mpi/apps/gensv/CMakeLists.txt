@@ -14,5 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(gensv generateSciVis.cpp raw_reader.cpp)
+add_library(gensv SHARED
+  generateSciVis.cpp raw_reader.cpp
+  llnlrm_reader.cpp)
 

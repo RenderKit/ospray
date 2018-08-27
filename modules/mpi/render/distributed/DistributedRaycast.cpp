@@ -47,6 +47,13 @@ namespace ospray {
 
     static bool DETAILED_LOGGING = false;
 
+    bool startsWith(const std::string &a, const std::string &prefix) {
+      if (a.size() < prefix.size()) {
+        return false;
+      }
+      return std::equal(prefix.begin(), prefix.end(), a.begin());
+    }
+
     void logProcessStatistics(std::ostream &os) {
       const double elapsedCpu = curUsage.ru_utime.tv_sec + curUsage.ru_stime.tv_sec
                                 - (prevUsage.ru_utime.tv_sec + prevUsage.ru_stime.tv_sec)
@@ -59,13 +66,15 @@ namespace ospray {
 
       std::ifstream procStatus("/proc/" + std::to_string(getpid()) + "/status");
       std::string line;
-      const static std::string threadPrefix = "Threads:";
-      const static std::string cpusPrefix = "Cpus_allowed_list:";
+      const static std::vector<std::string> propPrefixes{
+        "Threads", "Cpus_allowed_list", "VmSize", "VmRSS"
+      };
       while (std::getline(procStatus, line)) {
-        if (line.compare(0, threadPrefix.size(), threadPrefix) == 0) {
-          os << "\t" << line << "\n";
-        } else if (line.compare(0, cpusPrefix.size(), cpusPrefix) == 0) {
-          os << "\t" << line << "\n";
+        for (const auto &p : propPrefixes) {
+          if (startsWith(line, p)) {
+            os << "\t" << line << "\n";
+            break;
+          }
         }
       }
     }
@@ -96,7 +105,11 @@ namespace ospray {
       // Extend the screen-space bounds to include p.xy, and update
       // the min depth.
       void extend(const vec3f &p) {
-        bounds.extend(vec2f(clamp(p.x), clamp(p.y)));
+        bounds.extend(vec2f(p.x * sign(p.z), p.y * sign(p.z)));
+        bounds.lower.x = clamp(bounds.lower.x);
+        bounds.upper.x = clamp(bounds.upper.x);
+        bounds.lower.y = clamp(bounds.lower.y);
+        bounds.upper.y = clamp(bounds.upper.y);
         depth = std::max(depth, p.z);
       }
     };
@@ -112,7 +125,7 @@ namespace ospray {
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
-#if 0
+#if 1
       auto logging = utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
       DETAILED_LOGGING = std::stoi(logging) != 0;
 
@@ -122,16 +135,16 @@ namespace ospray {
         auto job_name = utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
         std::string statsLogFile = job_name + std::string("-rank")
           + std::to_string(rank) + ".txt";
-        statsLog = std::ofstream(statsLogFile.c_str());
+        statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
       }
 #endif
     }
 
     DistributedRaycastRenderer::~DistributedRaycastRenderer()
     {
-#if 0
+#if 1
       if (DETAILED_LOGGING) {
-        statsLog << std::flush;
+        *statsLog << "\n" << std::flush;
       }
 #endif
     }
@@ -205,19 +218,74 @@ namespace ospray {
         ++depthIndex;
       }
 
-      std::vector<int> tileVisibilities(dfb->getTotalTiles(), 0);
+      // Pre-compute the list of tiles that we actually need to render to,
+      // so we can get a better thread assignment when doing the real work
+      // TODO Will: is this going to help much? Going through all the rays
+      // to do this pre-pass may be too expensive, and instead we want
+      // to just do something coarser based on the projected regions
+      std::vector<int> tilesForFrame;
 
-      tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
+      for (const auto &region : distribModel->myRegions) {
+        const auto &projection = projectedRegions[region.id];
+#if 0
+        std::cout << "region " << region.id << " projects to "
+          << projection.bounds << "\n" << std::flush;
+#endif
+        if (projection.bounds.empty() || projection.depth < 0) {
+          continue;
+        }
+        // TODO: Should we push back by a few pixels as well just in case
+        // for the random sampling? May need to spill +/- a pixel? I'm not sure
+        const vec2i minTile(projection.bounds.lower.x / TILE_SIZE,
+                            projection.bounds.lower.y / TILE_SIZE);
+        const vec2i numTiles = fb->getNumTiles();
+        const vec2i maxTile(std::min(std::ceil(projection.bounds.upper.x / TILE_SIZE), float(numTiles.x)),
+                            std::min(std::ceil(projection.bounds.upper.y / TILE_SIZE), float(numTiles.y)));
+
+        tilesForFrame.reserve((maxTile.x - minTile.x) * (maxTile.y - minTile.y));
+        for (int y = minTile.y; y < maxTile.y; ++y) {
+          for (int x = minTile.x; x < maxTile.x; ++x) {
+            // If we share ownership of this region but aren't responsible
+            // for rendering it to this tile, don't render it.
+            const size_t tileIndex = size_t(x) + size_t(y) * numTiles.x;
+            const auto &regionOwners = distribModel->regionOwners[region.id];
+            const size_t numRegionOwners = regionOwners.size();
+            const size_t ownerRank = std::distance(regionOwners.begin(),
+                                                   regionOwners.find(globalRank()));
+            // TODO: Can we do a better than round-robin over all tiles assignment here?
+            // It could be that we end up not evenly dividing the workload.
+            const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
+            if (regionTileOwner) {
+              tilesForFrame.push_back(tileIndex);
+            }
+          }
+        }
+      }
+
+      // Be sure to include all the tiles that we're the owner for as well,
+      // in some cases none of our data might project to them.
+      for (int i = globalRank(); i < dfb->getTotalTiles(); i += numGlobalRanks()) {
+        tilesForFrame.push_back(i);
+      }
+
+      std::sort(tilesForFrame.begin(), tilesForFrame.end());
+      {
+        auto end = std::unique(tilesForFrame.begin(), tilesForFrame.end());
+        tilesForFrame.erase(end, tilesForFrame.end());
+      }
+
+      tasking::parallel_for(static_cast<int>(tilesForFrame.size()), [&](int taskIndex) {
+        const int tileIndex = tilesForFrame[taskIndex];
+
         const size_t numTiles_x = fb->getNumTiles().x;
-        const size_t tile_y = taskIndex / numTiles_x;
-        const size_t tile_x = taskIndex - tile_y*numTiles_x;
+        const size_t tile_y = tileIndex / numTiles_x;
+        const size_t tile_x = tileIndex - tile_y*numTiles_x;
         const vec2i tileID(tile_x, tile_y);
         const int32 accumID = fb->accumID(tileID);
-        const bool tileOwner = (taskIndex % numGlobalRanks()) == globalRank();
+        const bool tileOwner = (tileIndex % numGlobalRanks()) == globalRank();
+        const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
 
         if (dfb->tileError(tileID) <= errorThreshold) {
-          std::cout << "tile " << tileID * TILE_SIZE << " is below error thresh\n"
-            << std::flush;
           return;
         }
 
@@ -231,20 +299,17 @@ namespace ospray {
 
         // The first renderTile doesn't actually do any rendering, and instead
         // just computes which tiles the region projects to.
-        const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
         tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
           renderTile(&regionInfo, tile, tIdx);
         });
         regionInfo.computeVisibility = false;
 
-        // WILL: Validation check that we all find the same number of visible regions for each tile.
-        tileVisibilities[taskIndex] = std::count(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, true);
-
         // If we own the tile send the background color and the count of children for the
         // number of regions projecting to it that will be sent.
         if (tileOwner) {
           tile.generation = 0;
-          tile.children = std::count(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, true);
+          tile.children = std::count(regionInfo.regionVisible,
+              regionInfo.regionVisible + numRegions, true);
           tile.sortOrder = std::numeric_limits<int>::max();
           std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
           std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
@@ -263,21 +328,17 @@ namespace ospray {
           if (!regionInfo.regionVisible[region.id]) {
             continue;
           }
-          std::cout << "region " << region.id << " visible on " << tile.region.lower << "\n";
 
           // If we share ownership of this region but aren't responsible
           // for rendering it to this tile, don't render it.
-          // TODO: We can have a more robust distribution here if we compute
-          // the region-tile visibilities up front for all tiles, then we
-          // can find an exact mapping that correctly distributes the region's
-          // tiles to the region's owners. This assignment is basically
-          // guessing with a round robin distribution. It's likely not so
-          // bad since the regions are boxes, but anyways.
+          // Note that we do need to double check here, since we could have
+          // multiple shared regions projecting to the same tile, and we
+          // could be the region tile owner for only some of those
           const auto &regionOwners = distribModel->regionOwners[region.id];
           const size_t numRegionOwners = regionOwners.size();
           const size_t ownerRank = std::distance(regionOwners.begin(),
                                                  regionOwners.find(globalRank()));
-          const bool regionTileOwner = (taskIndex % numRegionOwners) == ownerRank;
+          const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
           if (regionTileOwner) {
             regionInfo.currentRegion = region.id;
             tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
@@ -293,41 +354,6 @@ namespace ospray {
 
       auto endRender = high_resolution_clock::now();
 
-      // WILL: Validation check that we all find the same number of visible regions for each tile.
-      std::vector<int> minTileVisibilities(dfb->getTotalTiles(), 0);
-      std::vector<int> maxTileVisibilities(dfb->getTotalTiles(), 0);
-      MPI_CALL(Reduce(tileVisibilities.data(), minTileVisibilities.data(), tileVisibilities.size(),
-                      MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD));
-      MPI_CALL(Reduce(tileVisibilities.data(), maxTileVisibilities.data(), tileVisibilities.size(),
-                      MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD));
-
-      std::vector<int> allVisibilities(dfb->getTotalTiles() * numGlobalRanks(), 0);
-      MPI_CALL(Gather(tileVisibilities.data(), dfb->getTotalTiles(), MPI_INT,
-                      allVisibilities.data(), dfb->getTotalTiles(), MPI_INT,
-                      0, MPI_COMM_WORLD));
-
-      if (globalRank() == 0) {
-        for (size_t i = 0; i < tileVisibilities.size(); ++i) {
-          const size_t numTiles_x = fb->getNumTiles().x;
-          const size_t tile_y = i / numTiles_x;
-          const size_t tile_x = i - tile_y*numTiles_x;
-          const vec2i tilebegin = vec2i(tile_x, tile_y) * TILE_SIZE;
-          if (minTileVisibilities[i] != maxTileVisibilities[i]) {
-            std::cout << "Discrepency in tile visibilites for tile " << tilebegin
-              << ": " << minTileVisibilities[i] << " vs. "
-              << maxTileVisibilities[i] << " = [";
-            for (size_t j = 0; j < numGlobalRanks(); ++j) {
-              std::cout << allVisibilities[j * dfb->getTotalTiles() + i];
-              if (j + 1 < numGlobalRanks()) {
-                std::cout << ", ";
-              }
-            }
-            std::cout << "]\n";
-          }
-        }
-        std::cout << std::flush;
-      }
-
       dfb->waitUntilFinished();
       endFrame(nullptr, channelFlags);
 
@@ -336,8 +362,8 @@ namespace ospray {
       getrusage(RUSAGE_SELF, &curUsage);
       curWall = high_resolution_clock::now();
 
-#if 0
-      if (DETAILED_LOGGING) {
+#if 1
+      if (DETAILED_LOGGING) {// && frameNumber > 5) {
         const std::array<int, 3> localTimes = {
           duration_cast<milliseconds>(endRender - startRender).count(),
           duration_cast<milliseconds>(endComposite - endRender).count(),
@@ -355,23 +381,27 @@ namespace ospray {
             << "Max render time: " << maxTimes[0] << "ms\n"
             << "Max compositing wait: " << maxTimes[1] << "ms\n"
             << "Max total time: " << maxTimes[2] << "ms\n"
+
             << "Min render time: " << minTimes[0] << "ms\n"
             << "Min compositing wait: " << minTimes[1] << "ms\n"
             << "Min total time: " << minTimes[2] << "ms\n"
             << "Compositing overhead: " << minTimes[1] << "ms\n"
-            << "============\n";
+            << "============\n" << std::flush;
         }
-        statsLog << "-----\nFrame: " << frameNumber << "\n";
+        *statsLog << "-----\nFrame: " << frameNumber << "\n";
         char hostname[1024] = {0};
         gethostname(hostname, 1023);
-        statsLog << "Rank " << globalRank() << " on " << hostname << " times:\n"
+
+        *statsLog << "Rank " << globalRank() << " on " << hostname << " times:\n"
           << "\tRendering: " << localTimes[0] << "ms\n"
           << "\tCompositing: " << localTimes[1] << "ms\n"
-          << "\tTotal: " << localTimes[2] << "ms\n";
-        dfb->reportTimings(statsLog);
-        logProcessStatistics(statsLog);
-        maml::logMessageTimings(statsLog);
-        statsLog << "-----\n";
+          << "\tTotal: " << localTimes[2] << "ms\n"
+          << "\tTouched Tiles: " << tilesForFrame.size() << "\n";
+
+        dfb->reportTimings(*statsLog);
+        logProcessStatistics(*statsLog);
+        //maml::logMessageTimings(*statsLog);
+        *statsLog << "-----\n" << std::flush;
       }
 #endif
       ++frameNumber;
@@ -421,8 +451,8 @@ namespace ospray {
       getrusage(RUSAGE_SELF, &curUsage);
       curWall = high_resolution_clock::now();
 
-#if 0
-      if (DETAILED_LOGGING) {
+#if 1
+      if (DETAILED_LOGGING && frameNumber > 5) {
         const std::array<int, 1> localTimes = {
           duration_cast<milliseconds>(endRender - startRender).count(),
         };
@@ -440,18 +470,19 @@ namespace ospray {
           std::cout << "Frame: " << frameNumber << "\n"
             << "Max render time: " << maxTimes[0] << "ms\n"
             << "Min render time: " << minTimes[0] << "ms\n"
-            << "============\n";
+            << "============\n" << std::flush;
         }
 
-        statsLog << "-----\nFrame: " << frameNumber << "\n";
+        *statsLog << "-----\nFrame: " << frameNumber << "\n";
         char hostname[1024] = {0};
         gethostname(hostname, 1023);
-        statsLog << "Rank " << rank << " on " << hostname << " times:\n"
+        *statsLog << "Rank " << rank << " on " << hostname << " times:\n"
           << "\tRendering: " << localTimes[0] << "ms\n";
-        logProcessStatistics(statsLog);
+        logProcessStatistics(*statsLog);
       }
 #endif
 
+      ++frameNumber;
       return fb->endFrame(errorThreshold);
     }
 
@@ -467,53 +498,37 @@ namespace ospray {
       // Do the bottom of the box
       vec3f pt = bounds.lower;
       ProjectedPoint proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       pt.x = bounds.upper.x;
       proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       pt.y = bounds.upper.y;
       proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       pt.x = bounds.lower.x;
       proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       // Do the top of the box
       pt.y = bounds.lower.y;
       pt.z = bounds.upper.z;
       proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       pt.x = bounds.upper.x;
       proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       pt.y = bounds.upper.y;
       proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       pt.x = bounds.lower.x;
       proj = camera->projectPoint(pt);
-      if (proj.screenPos.z > 0) {
-        screen.extend(proj.screenPos);
-      }
+      screen.extend(proj.screenPos);
 
       return screen;
     }

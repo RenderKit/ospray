@@ -281,7 +281,6 @@ namespace ospray {
               channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
       }
     }
-    dfbCreated = high_resolution_clock::now();
   }
 
   DFB::~DistributedFrameBuffer()
@@ -294,10 +293,8 @@ namespace ospray {
   void DFB::startNewFrame(const float errorThreshold)
   {
     queueTimes.clear();
-    masterWriteTimes.clear();
     workTimes.clear();
     tileGatherBuffer.clear();
-    startedFrame = high_resolution_clock::now();
 
     std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
 
@@ -318,7 +315,6 @@ namespace ospray {
 
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
-      delayedMessagesThisFrame = this->delayedMessage.size();
       _delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
 
@@ -477,13 +473,17 @@ namespace ospray {
   void DFB::waitUntilFinished()
   {
     using namespace mpicommon;
+    using namespace std::chrono;
 
-    std::cout << globalRank() << " WAITING\n" << std::flush;
+    //std::cout << globalRank() << " WAITING\n" << std::flush;
+    auto startWaitFrame = high_resolution_clock::now();
     std::unique_lock<std::mutex> lock(mutex);
     frameDoneCond.wait(lock, [&]{
       return frameIsDone;
     });
-    std::cout << globalRank() << " done with frame\n" << std::flush;
+    auto endWaitFrame = high_resolution_clock::now();
+    waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
+    //std::cout << globalRank() << " done with frame\n" << std::flush;
 
     // Gather all the tiles from the other ranks to copy into the framebuffer
     const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer);
@@ -502,6 +502,7 @@ namespace ospray {
       }
     }
 
+#if 0
     if (globalRank() == 0) {
       std::cout << "Expecting tiles: [";
       for (size_t i = 0; i < tileBytesExpected.size(); ++i) {
@@ -509,18 +510,19 @@ namespace ospray {
       }
       std::cout << "]\n" << std::flush;
     }
-
     std::cout << globalRank() << " IN GATHER\n" << std::flush;
+#endif
 
+    auto startGather = high_resolution_clock::now();
     MPI_CALL(Gatherv(tileGatherBuffer.data(), tileGatherBuffer.size(), MPI_BYTE,
                      tileGatherResult.data(), tileBytesExpected.data(),
                      processOffsets.data(), MPI_BYTE,
                      masterRank(), world.comm));
-
-    firstMasterTile = high_resolution_clock::now();
-    lastMasterTile = high_resolution_clock::now();
+    auto endGather = high_resolution_clock::now();
+    finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
 
     if (IamTheMaster()) {
+      auto startMasterWrite = high_resolution_clock::now();
       tasking::parallel_for(getTotalTiles(), [&](int tile) {
         auto *msg = reinterpret_cast<TileMessage*>(&tileGatherResult[tile * tileSize]);
         if (msg->command & MASTER_WRITE_TILE_I8) {
@@ -531,6 +533,8 @@ namespace ospray {
           throw std::runtime_error("#dfb: non-master tile in final gather!");
         }
       });
+      auto endMasterWrite = high_resolution_clock::now();
+      masterTileWriteTime = duration_cast<RealMilliseconds>(endMasterWrite - startMasterWrite);
     }
   }
 
@@ -772,20 +776,16 @@ namespace ospray {
       } else {
         throw std::runtime_error("#dfb: unknown tile type processed!");
       }
+
+#if 1
       auto finishedTask = high_resolution_clock::now();
       auto queueTime = duration_cast<duration<double, std::milli>>(startedTask - queuedTask);
       auto computeTime = duration_cast<duration<double, std::milli>>(finishedTask - startedTask);
 
       std::lock_guard<std::mutex> lock(statsMutex);
       queueTimes.push_back(queueTime);
-      if ((msg->command & MASTER_WRITE_TILE_I8) || (msg->command & MASTER_WRITE_TILE_F32)) {
-        if (masterWriteTimes.empty()) {
-          firstMasterTile = queuedTask;
-        }
-        masterWriteTimes.push_back(computeTime);
-      } else {
-        workTimes.push_back(computeTime);
-      }
+      workTimes.push_back(computeTime);
+#endif
     });
   }
 
@@ -870,8 +870,23 @@ namespace ospray {
     } else {
       if (!frameIsActive)
         throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");
+      // TODO will: is processing the tiles we produce
+      // immediately on the rendering thread causing a performance issue?
+      // Should we also schedule here?
+#if 1
       TileData *td = (TileData*)tileDesc;
       td->process(tile);
+#else
+      WriteTileMessage msgPayload;
+      msgPayload.coords = tile.region.lower;
+      // TODO: compress pixels before sending ...
+      memcpy(&msgPayload.tile, &tile, sizeof(ospray::Tile));
+      msgPayload.command = WORKER_WRITE_TILE;
+
+      auto msg = std::make_shared<mpicommon::Message>(&msgPayload,
+                                                      sizeof(msgPayload));
+      scheduleProcessing(msg);
+#endif
     }
   }
 
@@ -929,6 +944,9 @@ namespace ospray {
     const auto tileNr = tile.y * numTiles.x + tile.x;
     // Will: Why increment here?? Why was the accumID
     // incremented here and not at end frame??
+    // Could it be for some tile which we render multiple times a frame
+    // on a node? Maybe Johannes is using this for the error refinement
+    // or something?
     tileInstances[tileNr]++;
     return tileAccumID[tileNr];
   }
@@ -960,9 +978,8 @@ namespace ospray {
 
   void DFB::reportTimings(std::ostream &os)
   {
+#if 1
     std::lock_guard<std::mutex> lock(statsMutex);
-    os << "Delayed messages starting this frame: "
-      << delayedMessagesThisFrame << "\n";
 
     using Stats = pico_bench::Statistics<RealMilliseconds>;
     if (!queueTimes.empty()) {
@@ -978,14 +995,24 @@ namespace ospray {
       os << "Tile work times:\n" << workStats << "\n"; 
     }
 
-    if (mpicommon::IamTheMaster()) {
-      auto frameStart = duration_cast<RealMilliseconds>(startedFrame - dfbCreated).count();
-      auto firstTile = duration_cast<RealMilliseconds>(firstMasterTile - dfbCreated).count();
-      auto lastTile = duration_cast<RealMilliseconds>(lastMasterTile - dfbCreated).count();
-      os << "Started Frame: " << frameStart << "ms\n"
-        << "First Master Tile: " << firstTile << "ms\n"
-        << "\nFinished Last Master Tile: " << lastTile << "ms\n";
+    double localWaitTime = finalGatherTime.count();
+    os << "Gather time: " << localWaitTime << "ms\n"
+      << "Waiting for frame: " << waitFrameFinishTime.count() << "ms\n";
+
+    double maxWaitTime, minWaitTime;
+    MPI_Reduce(&localWaitTime, &maxWaitTime, 1, MPI_DOUBLE,
+        MPI_MAX, 0, mpicommon::world.comm);
+    MPI_Reduce(&localWaitTime, &minWaitTime, 1, MPI_DOUBLE,
+        MPI_MIN, 0, mpicommon::world.comm);
+
+    if (mpicommon::world.rank == 0) {
+      os << "Max gather time: " << maxWaitTime << "ms\n"
+        << "Min gather time: " << minWaitTime << "ms\n"
+        << "Master tile write loop time: " << masterTileWriteTime.count()
+        << "ms\n";
     }
+#endif
   }
 
 } // ::ospray
+

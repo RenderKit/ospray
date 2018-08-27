@@ -43,7 +43,6 @@ namespace maml {
 
   Context::~Context()
   {
-    PING;
     stop();
   }
 
@@ -192,14 +191,10 @@ namespace maml {
 
   void Context::flushRemainingMessages()
   {
-    PING;
     // TODO: flush is not correct, we could be in a state where a message
-    // is being process, which will then produce more messages to send but
+    // is being processed, which will then produce more messages to send but
     // the flushing will think all the work is done, and exit.
-    std::cout << std::flush;
     while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty() && !outbox.empty()) {
-      PING;
-      std::cout << std::flush;
       sendMessagesFromOutbox();
       pollForAndRecieveMessages();
       waitOnSomeRequests();

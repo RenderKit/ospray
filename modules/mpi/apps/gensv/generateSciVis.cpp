@@ -21,6 +21,7 @@
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
 #include "raw_reader.h"
+#include "llnlrm_reader.h"
 #include "generateSciVis.h"
 
 namespace gensv {
@@ -144,6 +145,12 @@ namespace gensv {
   DistributedRegion::DistributedRegion(box3f bounds, int id)
     : bounds(bounds), id(id) {}
 
+  SharedVolumeBrick::SharedVolumeBrick(LoadedVolume vol, DistributedRegion region)
+    : vol(vol), region(region) {}
+
+  SharedVolumeBrick::SharedVolumeBrick()
+    : region(box3f(), -1) {}
+
   enum GhostFace {
     NEITHER_FACE = 0,
     POS_FACE = 1,
@@ -244,19 +251,89 @@ namespace gensv {
     return 0;
   }
 
+  LoadedVolume loadVolumeBrick(RawReader &reader,
+                               const vec3i &brickId,
+                               const vec3sz &grid,
+                               const vec3i &dimensions,
+                               const std::string &dtype,
+                               const vec2f &valueRange);
+
   LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
                           const std::string &dtype, const vec2f &valueRange)
   {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
 
+    const vec3sz grid = vec3sz(computeGrid(numRanks));
+    const vec3sz brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+
+    const size_t dtypeSize = sizeForDtype(dtype);
+    RawReader reader(file, vec3sz(dimensions), dtypeSize);
+    return loadVolumeBrick(reader, brickId, grid, dimensions, dtype, valueRange);
+  }
+
+  std::vector<SharedVolumeBrick> loadBrickedVolume(const FileName &file,
+                                                   const vec3i &dimensions,
+                                                   const std::string &dtype,
+                                                   const vec2f &valueRange,
+                                                   const size_t nbricks,
+                                                   const size_t bricksPerRank)
+  {
+    const int numRanks = mpicommon::numGlobalRanks();
+    const int myRank = mpicommon::globalRank();
+
+    if (bricksPerRank > nbricks || bricksPerRank < nbricks / numRanks) {
+      throw std::runtime_error("Invalid bricks-per-rank for config!");
+    }
+
+    const size_t dtypeSize = sizeForDtype(dtype);
+    RawReader reader(file, vec3sz(dimensions), dtypeSize);
+    const vec3sz grid = vec3sz(computeGrid(nbricks));
+
+    std::vector<SharedVolumeBrick> bricks;
+    if (bricksPerRank == nbricks) {
+      for (size_t b = 0; b < nbricks; ++b) {
+        const vec3sz brickId(b % grid.x,
+                             (b / grid.x) % grid.y,
+                             b / (grid.x * grid.y));
+        LoadedVolume v = loadVolumeBrick(reader, brickId, grid, dimensions,
+                                         dtype, valueRange);
+        DistributedRegion region(v.bounds, b);
+        bricks.emplace_back(v, region);
+      }
+    } else {
+      // TODO: Uneven divisions? Maybe just yell at user?
+      size_t bricksPerIter = std::max(size_t(1), size_t(nbricks / numRanks));
+      for (size_t i = 0; i < bricksPerRank / bricksPerIter; ++i) {
+        size_t brickRank = (myRank + i) % numRanks;
+        for (size_t b = 0; b < nbricks; ++b) {
+          if (b % numRanks == brickRank) {
+            const vec3sz brickId(b % grid.x,
+                                 (b / grid.x) % grid.y,
+                                 b / (grid.x * grid.y));
+            LoadedVolume v = loadVolumeBrick(reader, brickId, grid, dimensions,
+                                             dtype, valueRange);
+            DistributedRegion region(v.bounds, b);
+            bricks.emplace_back(v, region);
+          }
+        }
+      }
+    }
+    return bricks;
+  }
+
+  LoadedVolume loadVolumeBrick(RawReader &reader,
+                               const vec3i &brickId,
+                               const vec3sz &grid,
+                               const vec3i &dimensions,
+                               const std::string &dtype,
+                               const vec2f &valueRange)
+  {
     LoadedVolume vol;
     vol.tfcn.set("valueRange", valueRange);
     vol.tfcn.commit();
 
-    const vec3sz grid = vec3sz(computeGrid(numRanks));
     const vec3sz brickDims = vec3sz(dimensions) / grid;
-    const vec3sz brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * vec3f(brickDims);
 
     const std::array<int, 3> ghosts = computeGhostFaces(vec3i(brickId), vec3i(grid));
@@ -284,7 +361,6 @@ namespace gensv {
     const size_t dtypeSize = sizeForDtype(dtype);
     containers::AlignedVector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
 
-    RawReader reader(file, vec3sz(dimensions), dtypeSize);
     reader.readRegion(brickId * brickDims - vec3sz(ghostOffset),
         vec3sz(fullDims), volumeData.data());
     vol.volume.setRegion(volumeData.data(), vec3i(0), vec3i(fullDims));
@@ -292,6 +368,83 @@ namespace gensv {
 
     vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
     return vol;
+  }
+
+  std::vector<SharedVolumeBrick> loadRMBricks(const FileName &bobDir,
+                                              const size_t bricksPerRank)
+  {
+    const int numRanks = mpicommon::numGlobalRanks();
+    const int myRank = mpicommon::globalRank();
+    const vec3sz grid = LLNLRMReader::blockGrid();
+    const size_t nbricks = grid.x * grid.y * grid.z;
+
+    if (bricksPerRank > nbricks || bricksPerRank < nbricks / numRanks) {
+      throw std::runtime_error("Invalid bricks-per-rank for config!");
+    }
+
+    const vec2f valueRange(0, 255);
+    const std::string dtype = "uchar";
+    const size_t dtypeSize = sizeForDtype(dtype);
+    LLNLRMReader reader(bobDir);
+
+    std::vector<SharedVolumeBrick> bricks;
+    // TODO: Uneven divisions? Maybe just yell at user?
+    size_t bricksPerIter = std::max(size_t(1), size_t(nbricks / numRanks));
+    for (size_t i = 0; i < bricksPerRank / bricksPerIter; ++i) {
+      size_t brickRank = (myRank + i) % numRanks;
+      for (size_t b = 0; b < nbricks; ++b) {
+        if (b % numRanks == brickRank) {
+          const vec3sz brickId(b % grid.x,
+              (b / grid.x) % grid.y,
+              b / (grid.x * grid.y));
+
+          LoadedVolume vol;
+          vol.tfcn.set("valueRange", valueRange);
+          vol.tfcn.commit();
+
+          const vec3sz brickDims = LLNLRMReader::blockSize();
+          const vec3f gridOrigin = vec3f(brickId) * vec3f(brickDims);
+
+          // TODO Ghost cells
+          vec3sz ghostDims(0);
+          const std::array<int, 3> ghosts = {0, 0, 0};
+          /*
+          const std::array<int, 3> ghosts = computeGhostFaces(vec3i(brickId), vec3i(grid));
+          for (size_t i = 0; i < 3; ++i) {
+            if (ghosts[i] & POS_FACE) {
+              ghostDims[i] += 1;
+            }
+            if (ghosts[i] & NEG_FACE) {
+              ghostDims[i] += 1;
+            }
+          }
+          */
+          const vec3sz fullDims = brickDims + ghostDims;
+          const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
+              ghosts[1] & NEG_FACE ? 1 : 0,
+              ghosts[2] & NEG_FACE ? 1 : 0);
+          vol.ghostGridOrigin = gridOrigin - vec3f(ghostOffset);
+
+          vol.volume = ospray::cpp::Volume("block_bricked_volume");
+          vol.volume.set("voxelType", dtype.c_str());
+          vol.volume.set("dimensions", vec3i(fullDims));
+          vol.volume.set("transferFunction", vol.tfcn);
+          vol.volume.set("gridOrigin", vol.ghostGridOrigin);
+
+          std::vector<char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
+
+          reader.loadBlock(b, volumeData);
+          vol.volume.setRegion(volumeData.data(), vec3i(0), vec3i(fullDims));
+          vol.volume.commit();
+
+          vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
+
+          DistributedRegion region(vol.bounds, b);
+          bricks.emplace_back(vol, region);
+        }
+      }
+    }
+    return bricks;
   }
 
 } // ::gensv

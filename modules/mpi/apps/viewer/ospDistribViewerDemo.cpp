@@ -37,6 +37,7 @@
 #include "common/imgui/imgui.h"
 #include "gensv/generateSciVis.h"
 #include "arcball.h"
+#include "gensv/llnlrm_reader.h"
 
 /* This app demonstrates how to write an distributed scivis style
  * interactive renderer using the distributed MPI device. Note that because
@@ -82,6 +83,18 @@ size_t nlocalBricks = 1;
 float sphereRadius = 0.005;
 bool transparentSpheres = false;
 int aoSamples = 0;
+int nBricks = -1;
+int bricksPerRank = 1;
+bool llnlrm = false;
+const int IMG_SIZE = 1024;
+
+struct RIVLFile {
+  std::string file;
+  size_t ofsVerts, numVerts;
+  size_t ofsPrims, numPrims;
+};
+
+RIVLFile rivl;
 
 // Struct for bcasting out the camera change info and general app state
 struct AppState {
@@ -90,7 +103,7 @@ struct AppState {
   vec2i fbSize;
   bool cameraChanged, quit, fbSizeChanged, tfcnChanged;
 
-  AppState() : fbSize(1024), cameraChanged(false), quit(false),
+  AppState() : fbSize(IMG_SIZE), cameraChanged(false), quit(false),
     fbSizeChanged(false)
   {}
 };
@@ -116,6 +129,16 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       case GLFW_KEY_ESCAPE:
         glfwSetWindowShouldClose(window, true);
         break;
+      case GLFW_KEY_P: {
+          const vec3f eye = state->camera.eyePos();
+          const vec3f center = state->camera.center();
+          const vec3f up = state->camera.upDir();
+          std::cout << "-vp " << eye.x << " " << eye.y << " " << eye.z
+            << "\n-vu " << up.x << " " << " " << up.y << " " << up.z
+            << "\n-vi " << center.x << " " << center.y << " " << center.z
+            << "\n";
+        }
+        break;
       default:
         break;
     }
@@ -137,9 +160,9 @@ void cursorPosCallback(GLFWwindow *window, double x, double y) {
 
     if (leftDown) {
       const vec2f mouseFrom(clamp(prev.x * 2.f / state->app.fbSize.x - 1.f,  -1.f, 1.f),
-                            clamp(1.f - 2.f * prev.y / state->app.fbSize.y, -1.f, 1.f));
+                            clamp(prev.y * 2.f / state->app.fbSize.y - 1.f,  -1.f, 1.f));
       const vec2f mouseTo(clamp(mouse.x * 2.f / state->app.fbSize.x - 1.f,  -1.f, 1.f),
-                          clamp(1.f - 2.f * mouse.y / state->app.fbSize.y, -1.f, 1.f));
+                          clamp(mouse.y * 2.f / state->app.fbSize.y - 1.f,  -1.f, 1.f));
       state->camera.rotate(mouseFrom, mouseTo);
     } else if (rightDown) {
       state->camera.zoom(mouse.y - prev.y);
@@ -204,11 +227,21 @@ int main(int argc, char **argv) {
       transparentSpheres = true;
     } else if (arg == "-ao") {
       aoSamples = std::stoi(argv[++i]);
-    } else if (arg == "-shared-bricks") {
-      sharedBrickTest = true;
+    } else if (arg == "-nbricks") {
+      nBricks = std::stoi(argv[++i]);
+    } else if (arg == "-bpr") {
+      bricksPerRank = std::stoi(argv[++i]);
+    } else if (arg == "-bob") {
+      llnlrm = true;
+    } else if (arg == "-rivl") {
+      rivl.file = argv[++i];
+      rivl.ofsVerts = std::stoull(argv[++i]);
+      rivl.numVerts = std::stoull(argv[++i]);
+      rivl.ofsPrims = std::stoull(argv[++i]);
+      rivl.numPrims = std::stoull(argv[++i]);
     }
   }
-  if (!volumeFile.empty()) {
+  if (!volumeFile.empty() && !llnlrm) {
     if (dtype.empty()) {
       std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
       std::exit(1);
@@ -242,30 +275,30 @@ void runApp()
 
   AppState app;
   Model model;
-  containers::AlignedVector<gensv::LoadedVolume> volumes;
+  std::vector<gensv::LoadedVolume> volumes;
+  std::vector<gensv::SharedVolumeBrick> bricks;
   box3f worldBounds;
   if (!volumeFile.empty()) {
-    volumes.push_back(gensv::loadVolume(volumeFile, dimensions, dtype,
-                                        valueRange));
+    if (nBricks == -1) {
+      nBricks = worldSize;
+    }
+    if (!llnlrm) {
+      bricks = gensv::loadBrickedVolume(volumeFile, dimensions,
+                                        dtype, valueRange,
+                                        nBricks, bricksPerRank);
+    } else {
+      bricks = gensv::loadRMBricks(volumeFile, bricksPerRank);
+      dimensions = gensv::LLNLRMReader::dimensions();
+    }
 
-    // Translate the volume to center it
-    const vec3f upper = vec3f(dimensions);
-    const vec3i halfLength = dimensions / 2;
-    worldBounds = box3f(vec3f(-halfLength), vec3f(halfLength));
-    volumes[0].bounds.lower -= vec3f(halfLength);
-    volumes[0].bounds.upper -= vec3f(halfLength);
-    volumes[0].volume.set("gridOrigin", volumes[0].ghostGridOrigin - vec3f(halfLength));
+    worldBounds = box3f(vec3f(0), vec3f(dimensions));
 
     // Pick a nice sphere radius for a consisten voxel size to
     // sphere size ratio
     sphereRadius *= dimensions.x;
   } else {
-    if (sharedBrickTest) {
-      volumes = gensv::makeVolumes(0, nlocalBricks, nlocalBricks);
-    } else {
-      volumes = gensv::makeVolumes(rank * nlocalBricks, nlocalBricks,
-          worldSize * nlocalBricks);
-    }
+    volumes = gensv::makeVolumes(rank * nlocalBricks, nlocalBricks,
+        worldSize * nlocalBricks);
 
     // Translate the volume to center it
     worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
@@ -277,22 +310,25 @@ void runApp()
   }
 
   std::vector<gensv::DistributedRegion> regions;
+  std::vector<box3f> ghostRegions;
+  // Generated volumes
   for (size_t i = 0; i < volumes.size(); ++i) {
     auto &v = volumes[i];
     v.volume.commit();
     model.addVolume(v.volume);
 
-    if (nSpheres != 0) {
-      auto spheres = gensv::makeSpheres(v.bounds, nSpheres, sphereRadius);
-      model.addGeometry(spheres);
-    }
-    if (sharedBrickTest) {
-      regions.emplace_back(v.bounds, i);
-      ghostRegions.push_back(worldBounds);
-    } else {
-      regions.emplace_back(v.bounds, rank * nlocalBricks + i);
-      ghostRegions.emplace_back(worldBounds);
-    }
+    regions.emplace_back(v.bounds, rank * nlocalBricks + i);
+    ghostRegions.emplace_back(worldBounds);
+  }
+
+  // Loaded bricks
+  for (size_t i = 0; i < bricks.size(); ++i) {
+    auto &v = bricks[i].vol;
+    v.volume.commit();
+    model.addVolume(v.volume);
+
+    regions.push_back(bricks[i].region);
+    ghostRegions.emplace_back(worldBounds);
   }
   // All ranks generate the same sphere data to mimic rendering a distributed
   // shared dataset
@@ -302,7 +338,30 @@ void runApp()
     model.addGeometry(spheres);
   }
 
-  Arcball arcballCamera(worldBounds, vec2i(1024, 1024));
+  if (!rivl.file.empty()) {
+    std::cout << "loading rivl " << rivl.file << "\n";
+    FILE *fp = fopen(rivl.file.c_str(), "rb");
+    std::vector<vec3f> verts(rivl.numVerts, vec3f(0));
+    std::vector<vec4i> prims(rivl.numPrims, vec4i(0));
+    if (fread(verts.data(), sizeof(vec3f), verts.size(), fp) != rivl.numVerts) {
+      throw std::runtime_error("error reading rivl verts");
+    }
+    if (fread(prims.data(), sizeof(vec4i), prims.size(), fp) != rivl.numPrims) {
+      throw std::runtime_error("error reading rivl prims");
+      
+    }
+    ospray::cpp::Data vertData(verts.size(), OSP_FLOAT3, verts.data());
+    ospray::cpp::Data primData(prims.size(), OSP_INT4, prims.data());
+    vertData.commit();
+    primData.commit();
+    ospray::cpp::Geometry mesh("triangles");
+    mesh.set("vertex", vertData);
+    mesh.set("index", primData);
+    mesh.commit();
+    model.addGeometry(mesh);
+  }
+
+  Arcball arcballCamera(worldBounds, vec2i(IMG_SIZE, IMG_SIZE));
 
   ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
       OSP_CHAR, regions.data());
@@ -475,6 +534,11 @@ void runApp()
         v.tfcn.set("colors", colorData);
         v.tfcn.set("opacities", alphaData);
         v.tfcn.commit();
+      }
+      for (auto &b : bricks) {
+        b.vol.tfcn.set("colors", colorData);
+        b.vol.tfcn.set("opacities", alphaData);
+        b.vol.tfcn.commit();
       }
 
       fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);

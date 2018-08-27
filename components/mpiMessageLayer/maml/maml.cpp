@@ -34,7 +34,6 @@ namespace maml {
       has been called */
   void init()
   {
-    PING;
     Context::singleton = make_unique<Context>();
   }
 
@@ -45,7 +44,6 @@ namespace maml {
       if they are already in flight */
   void shutdown()
   {
-    PING;
     Context::singleton = nullptr;
   }
 

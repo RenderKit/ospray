@@ -154,11 +154,9 @@ namespace ospray {
 
     using RealMilliseconds = std::chrono::duration<double, std::milli>;
     std::vector<RealMilliseconds> queueTimes;
-    std::vector<RealMilliseconds> masterWriteTimes;
     std::vector<RealMilliseconds> workTimes;
-    std::chrono::high_resolution_clock::time_point dfbCreated,
-      startedFrame, firstMasterTile, lastMasterTile;
-    size_t delayedMessagesThisFrame;
+    RealMilliseconds finalGatherTime, masterTileWriteTime,
+                     waitFrameFinishTime;
     std::mutex statsMutex;
 
     std::vector<char> tileGatherBuffer;
