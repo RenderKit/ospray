@@ -83,7 +83,9 @@ namespace ospray {
   {
     BufferedTile *addTile = new BufferedTile;
     memcpy(&addTile->tile,&tile,sizeof(tile));
+#if 0
     computeSortOrder(addTile);
+#endif
 
     this->final.region = tile.region;
     this->final.fbSize = tile.fbSize;
@@ -112,6 +114,14 @@ namespace ospray {
       }
 
       if (missingInCurrentGeneration == 0) {
+#if 1
+        // Sort for back-to-front blending
+        std::sort(bufferedTile.begin(), bufferedTile.end(),
+          [](const BufferedTile *a, const BufferedTile *b) {
+            return a->tile.sortOrder > b->tile.sortOrder;
+          });
+#endif
+
         Tile **tileArray = STACK_BUFFER(Tile*, bufferedTile.size());
         for (uint32_t i = 0; i < bufferedTile.size(); i++) {
           tileArray[i] = &bufferedTile[i]->tile;

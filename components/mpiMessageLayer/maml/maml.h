@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <ostream>
 #include "mpiCommon/MPICommon.h"
 
 #ifdef _WIN32
@@ -42,6 +43,9 @@ namespace maml {
     virtual void incoming(const std::shared_ptr<Message> &message) = 0;
     virtual ~MessageHandler() = default;
   };
+
+  // WILL: Statistics logging
+  OSPRAY_MAML_INTERFACE void logMessageTimings(std::ostream &os);
 
   /*! initialize the service for this process */
   OSPRAY_MAML_INTERFACE void init();

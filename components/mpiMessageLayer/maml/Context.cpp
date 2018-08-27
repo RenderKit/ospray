@@ -15,7 +15,9 @@
 // ======================================================================== //
 
 #include "Context.h"
+#include "apps/bench/pico_bench/pico_bench.h"
 #include <iostream>
+#include <chrono>
 
 #include "ospcommon/memory/malloc.h"
 #include "ospcommon/tasking/async.h"
@@ -26,6 +28,8 @@ using ospcommon::AsyncLoop;
 using ospcommon::make_unique;
 using ospcommon::tasking::numTaskingThreads;
 using ospcommon::utility::getEnvVar;
+
+using namespace std::chrono;
 
 namespace maml {
 
@@ -83,6 +87,7 @@ namespace maml {
         MPI_Request request;
         MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
                        msg->tag, msg->comm, &request));
+        msg->started = high_resolution_clock::now();
         pendingSends.push_back(request);
         sendCache.push_back(std::move(msg));
       }
@@ -95,12 +100,14 @@ namespace maml {
       MPI_Comm comm = it.first;
 
       /* probe if there's something incoming on this handler's comm */
-      int hasIncoming = 0;
-      MPI_Status status;
-      MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
-                      comm, &hasIncoming, &status));
-
-      if (hasIncoming) {
+      while (true) {
+        int hasIncoming = 0;
+        MPI_Status status;
+        MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
+                        comm, &hasIncoming, &status));
+        if (!hasIncoming) {
+          break;
+        }
         int size;
         MPI_CALL(Get_count(&status, MPI_BYTE, &size));
 
@@ -112,6 +119,7 @@ namespace maml {
         MPI_Request request;
         MPI_CALL(Irecv(msg->data, size, MPI_BYTE, msg->rank,
                        msg->tag, msg->comm, &request));
+        msg->started = high_resolution_clock::now();
         pendingRecvs.push_back(request);
         recvCache.push_back(std::move(msg));
       }
@@ -126,10 +134,21 @@ namespace maml {
 
       MPI_CALL(Testsome(pendingSends.size(), pendingSends.data(), &numDone,
                         done, MPI_STATUSES_IGNORE));
+      auto completed = high_resolution_clock::now();
 
       for (int i = 0; i < numDone; ++i) {
         int pendingSendCompletedIndex = done[i];
         pendingSends[pendingSendCompletedIndex] = MPI_REQUEST_NULL;
+
+        auto &msg = sendCache[pendingSendCompletedIndex];
+        const auto sendTime = duration_cast<RealMilliseconds>(completed - msg->started);
+
+        {
+          std::lock_guard<std::mutex> lock(statsMutex);
+          sendTimes.push_back(sendTime);
+          sendBandwidth.emplace_back((msg->size / sendTime.count()) * 1e-6f);
+        }
+
         sendCache[pendingSendCompletedIndex].reset();
       }
 
@@ -151,10 +170,21 @@ namespace maml {
 
       MPI_CALL(Waitsome(pendingRecvs.size(), pendingRecvs.data(), &numDone,
                         done, MPI_STATUSES_IGNORE));
+      auto completed = high_resolution_clock::now();
 
       for (int i = 0; i < numDone; ++i) {
         int pendingRecvCompletedIndex = done[i];
         pendingRecvs[pendingRecvCompletedIndex] = MPI_REQUEST_NULL;
+
+        auto &msg = recvCache[pendingRecvCompletedIndex];
+        const auto recvTime = duration_cast<RealMilliseconds>(completed - msg->started);
+
+        {
+          std::lock_guard<std::mutex> lock(statsMutex);
+          recvTimes.push_back(recvTime);
+          recvBandwidth.emplace_back((msg->size / recvTime.count()) * 1e-6f);
+        }
+
         inbox.push_back(std::move(recvCache[pendingRecvCompletedIndex]));
       }
 
@@ -237,6 +267,37 @@ namespace maml {
       processInboxThread->stop();
     }
     flushRemainingMessages();
+  }
+
+  void Context::logMessageTimings(std::ostream &os)
+  {
+    std::lock_guard<std::mutex> lock(statsMutex);
+    using Stats = pico_bench::Statistics<RealMilliseconds>;
+    using SizeStats = pico_bench::Statistics<Bandwidth>;
+    if (!sendTimes.empty()) {
+      Stats sendStats(sendTimes);
+      sendStats.time_suffix = "ms";
+      os << "Message send statistics:\n" << sendStats << "\n";
+
+      SizeStats sendBWStats(sendBandwidth);
+      sendBWStats.time_suffix = "Gb/s";
+      os << "Message send size statistics:\n" << sendBWStats << "\n";
+    }
+
+    if (!recvTimes.empty()) {
+      Stats recvStats(recvTimes);
+      recvStats.time_suffix = "ms";
+      os << "Message recv statistics:\n" << recvStats << "\n";
+
+      SizeStats recvBWStats(recvBandwidth);
+      recvBWStats.time_suffix = "Gb/s";
+      os << "Message recv size statistics:\n" << recvBWStats << "\n";
+    }
+
+    sendTimes.clear();
+    recvTimes.clear();
+    sendBandwidth.clear();
+    recvBandwidth.clear();
   }
 
 } // ::maml

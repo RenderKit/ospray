@@ -20,6 +20,7 @@
 
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/tasking/schedule.h"
+#include "apps/bench/pico_bench/pico_bench.h"
 
 #include "mpiCommon/MPICommon.h"
 #include "api/Device.h"
@@ -36,6 +37,7 @@
 
 using std::cout;
 using std::endl;
+using namespace std::chrono;
 
 namespace ospray {
 
@@ -65,7 +67,8 @@ namespace ospray {
 
       float* tileErrors(ospcommon::byte_t* data)
       {
-          return (float*)(data + sizeof(TileMessage) + sizeof(int) + numTiles * sizeof(vec2i));
+          return (float*)(data + sizeof(TileMessage)
+                          + sizeof(int) + numTiles * sizeof(vec2i));
       }
 
       static size_t size(const size_t numTiles)
@@ -260,6 +263,7 @@ namespace ospray {
               channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
       }
     }
+    dfbCreated = high_resolution_clock::now();
   }
 
   DFB::~DistributedFrameBuffer()
@@ -271,6 +275,11 @@ namespace ospray {
 
   void DFB::startNewFrame(const float errorThreshold)
   {
+    queueTimes.clear();
+    masterWriteTimes.clear();
+    workTimes.clear();
+    startedFrame = high_resolution_clock::now();
+
     std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
 
     {
@@ -283,6 +292,7 @@ namespace ospray {
 
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
+      delayedMessagesThisFrame = this->delayedMessage.size();
       _delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
 
@@ -584,6 +594,7 @@ namespace ospray {
       sendCancelRenderingMessage();
 
     if (isFrameComplete(1)) {
+      lastMasterTile = high_resolution_clock::now();
       closeCurrentFrame();
     }
 
@@ -629,25 +640,37 @@ namespace ospray {
 
   void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
   {
-    auto *msg = (TileMessage*)message->data;
-    if (msg->command & CANCEL_RENDERING) {
-      cancelRendering = true;
-      return;
-    }
+    auto queuedTask = high_resolution_clock::now();
+    tasking::schedule([=]() {
+      auto startedTask = high_resolution_clock::now();
 
-      tasking::schedule([=]() {
-        if (msg->command & MASTER_WRITE_TILE_I8) {
-          this->processMessage((MasterTileMessage_RGBA_I8*)msg);
-        } else if (msg->command & MASTER_WRITE_TILE_F32) {
-          this->processMessage((MasterTileMessage_RGBA_F32*)msg);
-        } else if (msg->command & WORKER_WRITE_TILE) {
-          this->processMessage((WriteTileMessage*)msg);
-        } else if (msg->command & WORKER_ALL_TILES_DONE) {
-          this->processMessage((AllTilesDoneMessage*)msg, message->data);
-        } else {
-          throw std::runtime_error("#dfb: unknown tile type processed!");
+      auto *msg = (TileMessage*)message->data;
+      if (msg->command & MASTER_WRITE_TILE_I8) {
+        this->processMessage((MasterTileMessage_RGBA_I8*)msg);
+      } else if (msg->command & MASTER_WRITE_TILE_F32) {
+        this->processMessage((MasterTileMessage_RGBA_F32*)msg);
+      } else if (msg->command & WORKER_WRITE_TILE) {
+        this->processMessage((WriteTileMessage*)msg);
+      } else if (msg->command & WORKER_ALL_TILES_DONE) {
+        this->processMessage((AllTilesDoneMessage*)msg, message->data);
+      } else {
+        throw std::runtime_error("#dfb: unknown tile type processed!");
+      }
+      auto finishedTask = high_resolution_clock::now();
+      auto queueTime = duration_cast<duration<double, std::milli>>(startedTask - queuedTask);
+      auto computeTime = duration_cast<duration<double, std::milli>>(finishedTask - startedTask);
+
+      std::lock_guard<std::mutex> lock(statsMutex);
+      queueTimes.push_back(queueTime);
+      if ((msg->command & MASTER_WRITE_TILE_I8) || (msg->command & MASTER_WRITE_TILE_F32)) {
+        if (masterWriteTimes.empty()) {
+          firstMasterTile = queuedTask;
         }
-      });
+        masterWriteTimes.push_back(computeTime);
+      } else {
+        workTimes.push_back(computeTime);
+      }
+    });
   }
 
   void DFB::sendAllTilesDoneMessage()
@@ -811,6 +834,39 @@ namespace ospray {
       return tileErrorRegion.refine(errorThreshold);
     else // slaves will get updated error with next sync() anyway
       return inf;
+  }
+
+  void DFB::reportTimings(std::ostream &os)
+  {
+    std::lock_guard<std::mutex> lock(statsMutex);
+    os << "Delayed messages starting this frame: "
+      << delayedMessagesThisFrame << "\n";
+
+    using Stats = pico_bench::Statistics<RealMilliseconds>;
+    if (!queueTimes.empty()) {
+      Stats queueStats(queueTimes);
+      queueStats.time_suffix = "ms";
+
+      os << "Tile Queue times:\n" << queueStats << "\n"; 
+    }
+
+    if (!workTimes.empty()) {
+      Stats workStats(workTimes);
+      workStats.time_suffix = "ms";
+      os << "Tile work times:\n" << workStats << "\n"; 
+    }
+
+    if (!masterWriteTimes.empty()) {
+      auto frameStart = duration_cast<RealMilliseconds>(startedFrame - dfbCreated).count();
+      auto firstTile = duration_cast<RealMilliseconds>(firstMasterTile - dfbCreated).count();
+      auto lastTile = duration_cast<RealMilliseconds>(lastMasterTile - dfbCreated).count();
+      os << "Started Frame: " << frameStart << "ms\n"
+        << "First Master Tile: " << firstTile << "ms\n"
+        << "\nFinished Last Master Tile: " << lastTile << "ms\n";
+      Stats masterWriteStats(masterWriteTimes);
+      masterWriteStats.time_suffix = "ms";
+      os << "Master write times:\n" << masterWriteStats << "\n"; 
+    }
   }
 
 } // ::ospray

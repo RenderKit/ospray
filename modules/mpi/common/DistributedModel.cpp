@@ -33,6 +33,19 @@ namespace ospray {
       return api::ISPCDevice::embreeDevice;
     }
 
+    DistributedRegion::DistributedRegion() : id(-1) {}
+    DistributedRegion::DistributedRegion(box3f bounds, int id)
+      : bounds(bounds), id(id)
+    {}
+    bool DistributedRegion::operator==(const ospray::mpi::DistributedRegion &b) const
+    {
+      return id == b.id;
+    }
+    bool DistributedRegion::operator<(const ospray::mpi::DistributedRegion &b) const
+    {
+      return id < b.id;
+    }
+
     DistributedModel::DistributedModel()
     {
       managedObjectType = OSP_MODEL;
@@ -46,7 +59,7 @@ namespace ospray {
 
     void DistributedModel::commit()
     {
-      othersRegions.clear();
+      allRegions.clear();
 
       // TODO: We may need to override the ISPC calls made
       // to the Model or customize the model struct on the ISPC
@@ -66,8 +79,9 @@ namespace ospray {
       // other boxes, just that we know they exist and their bounds, and that
       // they aren't ours.
       if (regionData) {
-        box3f *boxes = reinterpret_cast<box3f*>(regionData->data);
-        myRegions = std::vector<box3f>(boxes, boxes + regionData->numItems / 2);
+        auto *regions = reinterpret_cast<DistributedRegion*>(regionData->data);
+        myRegions = std::vector<DistributedRegion>(regions,
+            regions + regionData->numItems / sizeof(DistributedRegion));
       }
 
       // If the user hasn't set any regions, there's an implicit infinitely
@@ -75,7 +89,8 @@ namespace ospray {
       if (myRegions.empty()) {
         postStatusMsg("No regions found, making implicit "
                       "infinitely large region", 1);
-        myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
+        myRegions.emplace_back(box3f(vec3f(neg_inf), vec3f(pos_inf)),
+            mpicommon::globalRank());
       }
 
       // Check if we've got ghost regions set, otherwise just use the regions
@@ -89,27 +104,69 @@ namespace ospray {
       for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
           messaging::bcast(i, myRegions);
+          std::copy(myRegions.begin(), myRegions.end(),
+              std::back_inserter(allRegions));
+
+          for (const auto &r : myRegions) {
+            regionOwners[r.id].insert(i);
+          }
         } else {
-          std::vector<box3f> recv;
+          std::vector<DistributedRegion> recv;
           messaging::bcast(i, recv);
           std::copy(recv.begin(), recv.end(),
-                    std::back_inserter(othersRegions));
+              std::back_inserter(allRegions));
+
+          for (const auto &r : recv) {
+            regionOwners[r.id].insert(i);
+          }
         }
       }
+
+      // Prune down to unique regions sorted by ID.
+      std::sort(allRegions.begin(), allRegions.end());
+      auto end = std::unique(allRegions.begin(), allRegions.end());
+      allRegions.erase(end, allRegions.end());
 
       if (logLevel() >= 1) {
         for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
           if (i == mpicommon::globalRank()) {
             postStatusMsg(1) << "Rank " << mpicommon::globalRank()
-              << ": Got regions from others {";
-            for (const auto &b : othersRegions) {
+              << ": All regions in world {";
+            for (const auto &b : allRegions) {
               postStatusMsg(1) << "\t" << b << ",";
             }
-            postStatusMsg(1) << "}";
+            postStatusMsg(1) << "}\n";
+
+            postStatusMsg(1) << "Ownership Information: {";
+            for (const auto &r : regionOwners) {
+              postStatusMsg(1) << "(" << r.first << ": [";
+              for (const auto &i : r.second) {
+                postStatusMsg(1) << i << ", ";
+              }
+              postStatusMsg(1) << "])";
+            }
+            postStatusMsg(1) << "\n";
           }
+          mpicommon::world.barrier();
         }
       }
     }
 
   } // ::ospray::mpi
 } // ::ospray
+
+std::ostream& operator<<(std::ostream &os, const ospray::mpi::DistributedRegion &d) {
+  os << "DistributedRegion { " << d.bounds << ", id = " << d.id;
+  return os;
+}
+bool operator==(const ospray::mpi::DistributedRegion &a,
+                const ospray::mpi::DistributedRegion &b)
+{
+  return a.id == b.id;
+}
+bool operator<(const ospray::mpi::DistributedRegion &a,
+               const ospray::mpi::DistributedRegion &b)
+{
+  return a.id < b.id;
+}
+

@@ -16,6 +16,10 @@
 
 #pragma once
 
+#include <ostream>
+#include <unordered_map>
+#include <set>
+
 // ospray stuff
 #include "geometry/Geometry.h"
 #include "volume/Volume.h"
@@ -30,6 +34,20 @@
 namespace ospray {
   namespace mpi {
 
+    // A region is defined by its bounds and an ID, which allows us to group
+    // ranks with the same region and switch to do image-parallel rendering
+    struct DistributedRegion
+    {
+      box3f bounds;
+      int id;
+
+      DistributedRegion();
+      DistributedRegion(box3f bounds, int id);
+
+      bool operator==(const ospray::mpi::DistributedRegion &b) const;
+      bool operator<(const ospray::mpi::DistributedRegion &b) const;
+    };
+
     struct DistributedModel : public Model
     {
       DistributedModel();
@@ -42,8 +60,21 @@ namespace ospray {
       // compositing.
       virtual void commit() override;
 
-      std::vector<box3f> myRegions, othersRegions, ghostRegions;
+      // The local regions on this node
+      std::vector<DistributedRegion> myRegions;
+      // The global list of unique regions across all nodes, (including this one),
+      // sorted by region id.
+      std::vector<DistributedRegion> allRegions;
+      // The ranks which own each region
+      std::unordered_map<int, std::set<size_t>> regionOwners;
     };
 
   } // ::ospray::mpi
 } // ::ospray
+
+std::ostream& operator<<(std::ostream &os, const ospray::mpi::DistributedRegion &d);
+bool operator==(const ospray::mpi::DistributedRegion &a,
+                const ospray::mpi::DistributedRegion &b);
+bool operator<(const ospray::mpi::DistributedRegion &a,
+               const ospray::mpi::DistributedRegion &b);
+

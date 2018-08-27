@@ -60,7 +60,17 @@ namespace maml {
         stopped */
     void send(std::shared_ptr<Message> msg);
 
+    // WILL: Logging
+    void logMessageTimings(std::ostream &os);
+
   private:
+    using RealMilliseconds = std::chrono::duration<double, std::milli>;
+    std::vector<RealMilliseconds> sendTimes, recvTimes;
+
+    // Sort of a hack to put it into pico_bench
+    using Bandwidth = std::chrono::duration<double>;
+    std::vector<Bandwidth> sendBandwidth, recvBandwidth;
+    std::mutex statsMutex;
 
     // Helper functions //
 

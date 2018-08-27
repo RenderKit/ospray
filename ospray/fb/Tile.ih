@@ -38,6 +38,7 @@ struct Tile {
   uniform vec2f    rcp_fbSize;
   uniform int32    generation;
   uniform int32    children;
+  uniform int32    sortOrder;
   uniform int32    accumID;
 };
 
@@ -58,6 +59,7 @@ struct VaryingTile {
   uniform vec2f    rcp_fbSize;
   uniform int32    generation;
   uniform int32    children;
+  uniform int32    sortOrder;
   uniform int32    accumID;
 };
 

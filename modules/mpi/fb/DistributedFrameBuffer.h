@@ -148,7 +148,18 @@ namespace ospray {
     // signal the workers whether to cancel 
     bool continueRendering() const { return !cancelRendering; }
 
+    void reportTimings(std::ostream &os);
+
   private:
+
+    using RealMilliseconds = std::chrono::duration<double, std::milli>;
+    std::vector<RealMilliseconds> queueTimes;
+    std::vector<RealMilliseconds> masterWriteTimes;
+    std::vector<RealMilliseconds> workTimes;
+    std::chrono::high_resolution_clock::time_point dfbCreated,
+      startedFrame, firstMasterTile, lastMasterTile;
+    size_t delayedMessagesThisFrame;
+    std::mutex statsMutex;
 
     friend struct TileData;
     friend struct WriteMultipleTile;

@@ -141,6 +141,9 @@ namespace gensv {
     tfcn.set("opacities", opacityData);
   }
 
+  DistributedRegion::DistributedRegion(box3f bounds, int id)
+    : bounds(bounds), id(id) {}
+
   enum GhostFace {
     NEITHER_FACE = 0,
     POS_FACE = 1,

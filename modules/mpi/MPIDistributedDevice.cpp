@@ -33,6 +33,8 @@
 #include "render/distributed/DistributedRaycast.h"
 #include "common/DistributedModel.h"
 
+#include "ospcommon/tasking/tasking_system_handle.h"
+
 #ifdef OPEN_MPI
 # include <thread>
 //# define _GNU_SOURCE
@@ -113,6 +115,8 @@ namespace ospray {
 
     void MPIDistributedDevice::commit()
     {
+      Device::commit();
+
       if (!initialized) {
         int _ac = 1;
         const char *_av[] = {"ospray_mpi_distributed_device"};
@@ -139,8 +143,6 @@ namespace ospray {
         }
         initialized = true;
       }
-
-      Device::commit();
 
       masterRank = getParam<int>("masterRank", 0);
 

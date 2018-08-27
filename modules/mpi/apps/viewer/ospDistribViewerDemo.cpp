@@ -133,6 +133,7 @@ void cursorPosCallback(GLFWwindow *window, double x, double y) {
     const bool leftDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     const bool rightDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     const vec2f prev = state->prevMouse;
+    state->cameraChanged = leftDown || rightDown || middleDown;
 
     if (leftDown) {
       const vec2f mouseFrom(clamp(prev.x * 2.f / state->app.fbSize.x - 1.f,  -1.f, 1.f),
@@ -140,10 +141,10 @@ void cursorPosCallback(GLFWwindow *window, double x, double y) {
       const vec2f mouseTo(clamp(mouse.x * 2.f / state->app.fbSize.x - 1.f,  -1.f, 1.f),
                           clamp(1.f - 2.f * mouse.y / state->app.fbSize.y, -1.f, 1.f));
       state->camera.rotate(mouseFrom, mouseTo);
-      state->cameraChanged = true;
     } else if (rightDown) {
       state->camera.zoom(mouse.y - prev.y);
-      state->cameraChanged = true;
+    } else if (middleDown) {
+      state->camera.pan(vec2f(mouse.x - prev.x, prev.y - mouse.y));
     }
   }
   state->prevMouse = mouse;
@@ -160,8 +161,20 @@ void charCallback(GLFWwindow *, unsigned int c) {
   }
 }
 
-void parseArgs(int argc, char **argv)
-{
+int main(int argc, char **argv) {
+  std::string volumeFile, dtype;
+  vec3i dimensions = vec3i(-1);
+  vec2f valueRange = vec2f(-1);
+  size_t nSpheres = 0;
+  float varianceThreshold = 0.0f;
+  FileName transferFcnFile;
+  bool appInitMPI = false;
+  size_t nlocalBricks = 1;
+  float sphereRadius = 0.005;
+  bool transparentSpheres = false;
+  int aoSamples = 0;
+  bool sharedBrickTest = false;
+
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-f") {
@@ -191,6 +204,8 @@ void parseArgs(int argc, char **argv)
       transparentSpheres = true;
     } else if (arg == "-ao") {
       aoSamples = std::stoi(argv[++i]);
+    } else if (arg == "-shared-bricks") {
+      sharedBrickTest = true;
     }
   }
   if (!volumeFile.empty()) {
@@ -245,8 +260,13 @@ void runApp()
     // sphere size ratio
     sphereRadius *= dimensions.x;
   } else {
-    volumes = gensv::makeVolumes(rank * nlocalBricks, nlocalBricks,
-                                 worldSize * nlocalBricks);
+    if (sharedBrickTest) {
+      volumes = gensv::makeVolumes(0, nlocalBricks, nlocalBricks);
+    } else {
+      volumes = gensv::makeVolumes(rank * nlocalBricks, nlocalBricks,
+          worldSize * nlocalBricks);
+    }
+
     // Translate the volume to center it
     worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
     for (auto &v : volumes) {
@@ -256,13 +276,23 @@ void runApp()
     }
   }
 
-  containers::AlignedVector<box3f> regions, ghostRegions;
-  for (auto &v : volumes) {
+  std::vector<gensv::DistributedRegion> regions;
+  for (size_t i = 0; i < volumes.size(); ++i) {
+    auto &v = volumes[i];
     v.volume.commit();
     model.addVolume(v.volume);
 
-    ghostRegions.push_back(worldBounds);
-    regions.push_back(v.bounds);
+    if (nSpheres != 0) {
+      auto spheres = gensv::makeSpheres(v.bounds, nSpheres, sphereRadius);
+      model.addGeometry(spheres);
+    }
+    if (sharedBrickTest) {
+      regions.emplace_back(v.bounds, i);
+      ghostRegions.push_back(worldBounds);
+    } else {
+      regions.emplace_back(v.bounds, rank * nlocalBricks + i);
+      ghostRegions.emplace_back(worldBounds);
+    }
   }
   // All ranks generate the same sphere data to mimic rendering a distributed
   // shared dataset
@@ -272,10 +302,10 @@ void runApp()
     model.addGeometry(spheres);
   }
 
-  Arcball arcballCamera(worldBounds);
+  Arcball arcballCamera(worldBounds, vec2i(1024, 1024));
 
-  ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3, regions.data());
-  ospray::cpp::Data ghostRegionData(ghostRegions.size() * 2, OSP_FLOAT3, ghostRegions.data());
+  ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
+      OSP_CHAR, regions.data());
   model.set("regions", regionData);
   model.set("ghostRegions", ghostRegionData);
   model.commit();
@@ -342,6 +372,8 @@ void runApp()
   containers::AlignedVector<vec3f> tfcnColors;
   containers::AlignedVector<float> tfcnAlphas;
   while (!app.quit) {
+    using namespace std::chrono;
+
     if (app.cameraChanged) {
       camera.set("pos", app.v[0]);
       camera.set("dir", app.v[1]);
@@ -351,7 +383,11 @@ void runApp()
       fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
       app.cameraChanged = false;
     }
+    auto startFrame = high_resolution_clock::now();
     renderer.renderFrame(fb, OSP_FB_COLOR);
+    auto endFrame = high_resolution_clock::now();
+
+    const int renderTime = duration_cast<milliseconds>(endFrame - startFrame).count();
 
     if (rank == 0) {
       glClear(GL_COLOR_BUFFER_BIT);
@@ -362,6 +398,10 @@ void runApp()
       const auto tfcnTimeStamp = transferFcn->childrenLastModified();
 
       ImGui_ImplGlfwGL3_NewFrame();
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
+      ImGui::Text("OSPRay render time %d ms/frame", renderTime);
       tfnWidget->drawUi();
       ImGui::Render();
 
@@ -403,6 +443,7 @@ void runApp()
       camera.set("aspect", static_cast<float>(app.fbSize.x) / app.fbSize.y);
       camera.commit();
 
+      arcballCamera.updateScreen(vec2i(app.fbSize.x, app.fbSize.y));
       app.fbSizeChanged = false;
       if (rank == 0) {
         glViewport(0, 0, app.fbSize.x, app.fbSize.y);

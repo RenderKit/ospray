@@ -217,9 +217,11 @@ namespace ospDDLoader {
      * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
      * regions bounding box.
      */
-    std::vector<box3f> regions{volume.bounds};
-    ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
-        regions.data());
+    std::vector<gensv::DistributedRegion> regions{
+      gensv::DistributedRegion(volume.bounds, mpicommon::globalRank())
+    };
+    ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
+        OSP_CHAR, regions.data());
     model.set("regions", regionData);
     model.commit();
 

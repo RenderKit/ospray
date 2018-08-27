@@ -16,8 +16,10 @@
 
 #pragma once
 
+#include <fstream>
 // ospray
 #include "render/Renderer.h"
+#include "camera/PerspectiveCamera.h"
 
 namespace ospray {
   namespace mpi {
@@ -36,7 +38,7 @@ namespace ospray {
     struct DistributedRaycastRenderer : public Renderer
     {
       DistributedRaycastRenderer();
-      virtual ~DistributedRaycastRenderer() override = default;//TODO!
+      virtual ~DistributedRaycastRenderer() override;
 
       void commit() override;
 
@@ -50,6 +52,8 @@ namespace ospray {
       std::string toString() const override;
 
       int numAoSamples;
+      PerspectiveCamera *camera;
+      std::ofstream statsLog;
     };
 
   } // ::ospray::mpi

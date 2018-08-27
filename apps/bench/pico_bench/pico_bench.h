@@ -25,7 +25,7 @@ class Statistics {
 public:
 	std::string time_suffix;
 
-	Statistics(std::vector<T> s) : samples(s) {
+	Statistics(const std::vector<T> &s) : samples(s) {
 		std::sort(samples.begin(), samples.end());
 	}
 	T percentile(const float p) const {

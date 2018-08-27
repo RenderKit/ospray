@@ -49,6 +49,13 @@ namespace gensv {
     LoadedVolume();
   };
 
+  struct DistributedRegion {
+    box3f bounds;
+    int id;
+
+    DistributedRegion(box3f bounds, int id);
+  };
+
   /* Generate this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.

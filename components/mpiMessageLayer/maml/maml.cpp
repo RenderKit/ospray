@@ -21,6 +21,11 @@ namespace maml {
 
   // maml API definitions /////////////////////////////////////////////////////
 
+  void logMessageTimings(std::ostream &os)
+  {
+    Context::singleton->logMessageTimings(os);
+  }
+
   void init()
   {
     // NOTE(jda) - initialization still done statically, stubbed for future need

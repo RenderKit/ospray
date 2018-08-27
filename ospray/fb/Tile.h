@@ -54,7 +54,8 @@ namespace ospray {
     vec2f    rcp_fbSize;
     int32    generation;
     int32    children;
-    int32    accumID; // how often has been accumulated into this tile
+    int32    sortOrder;
+    int32    accumID; //!< how often has been accumulated into this tile
 
     Tile() = default;
     Tile(const vec2i &tile, const vec2i &fbsize, const int32 accumId)

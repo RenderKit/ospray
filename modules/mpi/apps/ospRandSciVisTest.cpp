@@ -197,23 +197,11 @@ namespace ospRandSciVisTest {
      * On some ranks we add some additional regions to clip the volume
      * and make some gaps, just to show usage and test multiple regions per-rank
      */
-    std::vector<box3f> regions{volume.bounds};
-    bool setGap = false;
-    if (mpicommon::numGlobalRanks() % 2 == 0) {
-      setGap = mpicommon::globalRank() % 3 == 0;
-    } else  {
-      setGap = mpicommon::globalRank() % 2 == 0;
-    }
-    if (setGap) {
-      const float step = (regions[0].upper.x - regions[0].lower.x) / 4.0;
-      const vec3f low = regions[0].lower;
-      const vec3f hi = regions[0].upper;
-      regions[0].upper.x = low.x + step;
-      regions.push_back(box3f(vec3f(low.x + step * 3, low.y, low.z),
-                                vec3f(low.x + step * 4, hi.y, hi.z)));
-    }
-    ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
-        regions.data());
+    std::vector<gensv::DistributedRegion> regions{
+      gensv::DistributedRegion(volume.bounds, mpicommon::globalRank())
+    };
+    ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
+        OSP_CHAR, regions.data());
     model.set("regions", regionData);
     model.commit();
 

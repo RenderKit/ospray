@@ -21,24 +21,25 @@
 #include "math/random.ih"
 #include "math/sampling.ih"
 
+struct DistributedRegion
+{
+  uniform box3f bounds;
+  uniform int id;
+};
+
 struct DistributedRaycastRenderer
 {
   uniform Renderer super;
-  // TODO: For now it's sufficient just to know which regions
-  // we own and their bounds, and which regions 'others' own and
-  // their bounds. With that info we can properly setup the information
-  // about the total # of tiles to expect for each image tile.
-  uniform box3f *uniform myRegions;
-  uniform int numMyRegions;
-  uniform box3f *uniform othersRegions;
-  uniform int numOthersRegions;
-  uniform box3f *uniform ghostRegions;
-  uniform int aoSamples;
+  // The list of all regions in the distributed scene, sorted by ID
+  uniform DistributedRegion *uniform regions;
+  uniform int numRegions;
 };
 
 struct RegionInfo
 {
   uniform int currentRegion;
+  uniform int currentGhostRegion;
+  uniform bool computeVisibility;
   uniform bool *uniform regionVisible;
 };
 
@@ -46,18 +47,13 @@ void DistributedRaycastRenderer_testRegions(uniform DistributedRaycastRenderer *
                                             uniform RegionInfo *uniform regionInfo,
                                             const varying ScreenSample &sample)
 {
-  for (uniform int i = 0; i < self->numMyRegions; ++i) {
-    float t0, t1;
-    intersectBox(sample.ray, self->myRegions[i], t0, t1);
-    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
-      regionInfo->regionVisible[i] = true;
-    }
-  }
-  for (uniform int i = 0; i < self->numOthersRegions; ++i) {
-    float t0, t1;
-    intersectBox(sample.ray, self->othersRegions[i], t0, t1);
-    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
-      regionInfo->regionVisible[self->numMyRegions + i] = true;
+  for (uniform int i = 0; i < self->numRegions; ++i) {
+    if (!regionInfo->regionVisible[i]) {
+      float t0, t1;
+      intersectBox(sample.ray, self->regions[i].bounds, t0, t1);
+      if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
+        regionInfo->regionVisible[i] = true;
+      }
     }
   }
 }
@@ -186,8 +182,6 @@ float DRR_computeAmbientOcclusion(uniform DistributedRaycastRenderer *uniform se
     if (ghostRegion) {
       intersectBox(aoRay, *ghostRegion, aoRay.t0, aoRay.t);
     }
-    // TODO: Clip with the corresponding ghostRegion, or region if no ghost
-    // regions provided
     if (isOccluded(self->super.model, aoRay)) {
       occlusion += 1.f;
     }
@@ -204,8 +198,14 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     (uniform DistributedRaycastRenderer *uniform)_self;
 
   uniform RegionInfo *uniform regionInfo = (uniform RegionInfo *uniform)perFrameData;
-  if (self->myRegions && regionInfo && regionInfo->currentRegion == 0) {
+  // TODO: This is basically a hack to do a tile-region visibility pre-pass
+  // without needing to modify much code. Really we'd want to do a separate
+  // pre-pass of some kind where we either project the regions to the screen,
+  // or to handle jittering the rays test rays against them until we
+  // find an intersection
+  if (self->regions && regionInfo && regionInfo->computeVisibility) {
     DistributedRaycastRenderer_testRegions(self, regionInfo, sample);
+    return;
   }
 
   // Ray offset for this sample, as a fraction of the nominal step size.
@@ -219,16 +219,16 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   }
 
   // Intersect with current region for this node's local data
-  if (self->myRegions && regionInfo) {
-    intersectBox(sample.ray, self->myRegions[regionInfo->currentRegion],
-                 sample.ray.t0, sample.ray.t);
+  if (self->regions && regionInfo) {
+    intersectBox(sample.ray, self->regions[regionInfo->currentRegion].bounds,
+        sample.ray.t0, sample.ray.t);
   }
   const float regionEnter = sample.ray.t0;
   const float regionExit = sample.ray.t;
 
   uniform box3f *uniform ghostRegion = NULL;
   if (self->ghostRegions && regionInfo) {
-    ghostRegion = &self->ghostRegions[regionInfo->currentRegion];
+    ghostRegion = &self->ghostRegions[regionInfo->currentGhostRegion];
   }
 
   Ray volRay = sample.ray;
@@ -316,31 +316,19 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
 
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
-  self->myRegions = NULL;
-  self->numMyRegions = 0;
-  self->othersRegions = NULL;
-  self->numOthersRegions = 0;
-  self->aoSamples = 0;
-  self->ghostRegions = NULL;
+  self->regions = NULL;
+  self->numRegions = 0;
 
   return self;
 }
 
 export void DistributedRaycastRenderer_setRegions(void *uniform _self,
-                                                    uniform box3f *uniform myRegions,
-                                                    uniform int numMyRegions,
-                                                    uniform box3f *uniform othersRegions,
-                                                    uniform int numOthersRegions,
-                                                    uniform int aoSamples,
-                                                    uniform box3f *uniform ghostRegions)
+                                                    void *uniform regions,
+                                                    uniform int numRegions)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
-  self->myRegions = myRegions;
-  self->numMyRegions = numMyRegions;
-  self->othersRegions = othersRegions;
-  self->numOthersRegions = numOthersRegions;
-  self->aoSamples = aoSamples;
-  self->ghostRegions = ghostRegions;
+  self->regions = (uniform DistributedRegion *uniform)regions;
+  self->numRegions = numRegions;
 }
 
