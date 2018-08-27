@@ -158,6 +158,7 @@ void cursorPosCallback(GLFWwindow *window, double x, double y) {
   if (state->prevMouse != vec2f(-1)) {
     const bool leftDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     const bool rightDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    const bool middleDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     const vec2f prev = state->prevMouse;
     state->cameraChanged = leftDown || rightDown || middleDown;
 

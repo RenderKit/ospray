@@ -86,7 +86,8 @@ namespace ospray {
   using MasterTileMessage_RGBAF32_Z_AUX = MasterTileMessage_FB_Depth_Aux<vec4f>;
   using MasterTileMessage_NONE       = MasterTileMessage;
 
-  size_t masterMsgSize(OSPFrameBufferFormat fmt, bool hasDepth) {
+  size_t masterMsgSize(OSPFrameBufferFormat fmt, bool hasDepth,
+                       bool hasNormal, bool hasAlbedo) {
     size_t msgSize = 0;
     switch (fmt) {
       case OSP_FB_NONE:
@@ -99,8 +100,12 @@ namespace ospray {
         msgSize = sizeof(MasterTileMessage_RGBA_F32);
         break;
     }
-    if (hasDepth) {
+    // Normal and Albedo also imply Depth
+    if (hasDepth || hasNormal || hasAlbedo) {
       msgSize += sizeof(float) * TILE_SIZE * TILE_SIZE;
+    }
+    if (hasNormal || hasAlbedo) {
+      msgSize += 2 * sizeof(vec3f) * TILE_SIZE * TILE_SIZE;
     }
     return msgSize;
   }
@@ -128,7 +133,8 @@ namespace ospray {
         hasNormal(hasNormal), hasAlbedo(hasAlbedo)
     {
       int command = 0;
-      const size_t msgSize = masterMsgSize(fmt, hasDepth);
+      const size_t msgSize = masterMsgSize(fmt, hasDepth,
+                                           hasNormal, hasAlbedo);
       switch (fmt) {
         case OSP_FB_NONE:
           throw std::runtime_error("Do not use per tile message for FB_NONE! (msg ctor)");
@@ -143,13 +149,10 @@ namespace ospray {
           break;
       }
       // AUX also includes depth
-      if (hasDepth || hasNormal || hasAlbedo) {
-        msgSize += sizeof(float) * TILE_SIZE * TILE_SIZE;
-        if (hasDepth)
+      if (hasDepth) {
           command |= MASTER_TILE_HAS_DEPTH;
       }
       if (hasNormal || hasAlbedo) {
-        msgSize += 2 * sizeof(vec3f) * TILE_SIZE * TILE_SIZE;
         command |= MASTER_TILE_HAS_AUX;
       }
       message = std::make_shared<mpicommon::Message>(msgSize);
@@ -277,7 +280,9 @@ namespace ospray {
     nextTileWrite = 0;
     if (colorBufferFormat != OSP_FB_NONE) {
       const size_t finalTileSize = masterMsgSize(colorBufferFormat,
-                                                 hasDepthBuffer);
+                                                 hasDepthBuffer,
+                                                 hasNormalBuffer,
+                                                 hasAlbedoBuffer);
       tileGatherBuffer.resize(myTiles.size() * finalTileSize, 0);
     }
 
@@ -460,7 +465,6 @@ namespace ospray {
     using namespace mpicommon;
     using namespace std::chrono;
 
-    //std::cout << globalRank() << " WAITING\n" << std::flush;
     auto startWaitFrame = high_resolution_clock::now();
     std::unique_lock<std::mutex> lock(mutex);
     frameDoneCond.wait(lock, [&]{
@@ -468,7 +472,6 @@ namespace ospray {
     });
     auto endWaitFrame = high_resolution_clock::now();
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
-    //std::cout << globalRank() << " done with frame\n" << std::flush;
 
     if (colorBufferFormat != OSP_FB_NONE) {
       gatherFinalTiles();
@@ -541,6 +544,7 @@ namespace ospray {
     }
 
     // Finally, tell the master that this tile is done
+    // WILL: This is no longer necessary b/c we do the final gather instead
     //auto *tileDesc = this->getTileDescFor(msg->coords);
     //TileData *td = (TileData*)tileDesc;
     //this->finalizeTileOnMaster(td);
@@ -551,8 +555,26 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpicommon::globalRank(),
                tile->begin.x,tile->begin.y));
 
-    if (pixelOp)
+    if (pixelOp) {
       pixelOp->postAccum(tile->final);
+      // WILL: I've put this back in b/c I'm pretty sure that removing it
+      // breaks pixel ops being able to effect the image in the distributed
+      // rendering (unless something else has changed)
+      if (colorBufferFormat == OSP_FB_RGBA8 || colorBufferFormat == OSP_FB_SRGBA) {
+        uint8_t *colors = reinterpret_cast<uint8_t*>(tile->color);
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
+          colors[i * 4] = clamp(tile->final.r[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 1] = clamp(tile->final.g[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 2] = clamp(tile->final.b[i] * 255.0, 0.0, 255.0);
+          colors[i * 4 + 3] = clamp(tile->final.a[i] * 255.0, 0.0, 255.0);
+        }
+      } else if (colorBufferFormat == OSP_FB_RGBA32F) {
+        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
+          tile->color[i] = vec4f(tile->final.r[i], tile->final.g[i],
+              tile->final.b[i], tile->final.a[i]);
+        }
+      }
+    }
 
     // write the final colors into the color buffer
     // normalize and write final color, and compute error
@@ -586,6 +608,7 @@ namespace ospray {
     // and completing tiles.
     if (mpicommon::IamAWorker()) {
       // TODO still send normal&albedo
+      // WILL: Why? for denoising?
       if (colorBufferFormat == OSP_FB_NONE) {
         SCOPED_LOCK(tileErrorsMutex);
         tileIDs.push_back(tile->begin/TILE_SIZE);
@@ -626,19 +649,15 @@ namespace ospray {
     throw std::runtime_error("Don't call this anymore!");
     assert(mpicommon::IamTheMaster());
 
+    // TODO WILL: Fix progress
     // TODO pixel accurate progress (tiles can be much smaller than TILE_SIZE)
     float progress = (numTilesCompletedThisFrame+1)/(float)getTotalTiles();
     if (!api::currentDevice().reportProgress(progress))
       sendCancelRenderingMessage();
 
     if (isFrameComplete(1)) {
-      lastMasterTile = high_resolution_clock::now();
       closeCurrentFrame();
     }
-
-    DBG(printf("MASTER MARKING AS COMPLETED %i,%i -> %i/%i\n",
-               tile->begin.x, tile->begin.y,
-               numTilesCompletedThisFrame, getTotalTiles()));
   }
 #endif
 
@@ -679,6 +698,8 @@ namespace ospray {
 
   void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
   {
+    // TODO: Handle cancellation messages
+
     auto queuedTask = high_resolution_clock::now();
     tasking::schedule([=]() {
       auto startedTask = high_resolution_clock::now();
@@ -715,7 +736,8 @@ namespace ospray {
     using namespace mpicommon;
     using namespace std::chrono;
 
-    const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer);
+    const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer,
+                                          hasNormalBuffer, hasAlbedoBuffer);
     std::vector<char> tileGatherResult;
     std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
     std::vector<int> processOffsets(numGlobalRanks(), 0);
@@ -855,17 +877,20 @@ namespace ospray {
     }
   }
 
+  // TODO WILL: Fix cancellation
   void DFB::sendCancelRenderingMessage()
   {
-      auto msg = std::make_shared<mpicommon::Message>(sizeof(TileMessage));
+    /*
+       auto msg = std::make_shared<mpicommon::Message>(sizeof(TileMessage));
 
-      auto out = msg->data;
-      int val = CANCEL_RENDERING;
-      memcpy(out, &val, sizeof(val));
+       auto out = msg->data;
+       int val = CANCEL_RENDERING;
+       memcpy(out, &val, sizeof(val));
 
-      // notify all; broadcast not possible, because messaging layer is active
-      for (int rank = 0; rank < mpicommon::numGlobalRanks(); rank++)
-        mpi::messaging::sendTo(rank, myId, msg);
+    // notify all; broadcast not possible, because messaging layer is active
+    for (int rank = 0; rank < mpicommon::numGlobalRanks(); rank++)
+      mpi::messaging::sendTo(rank, myId, msg);
+    */
   }
 
   void DFB::closeCurrentFrame()
