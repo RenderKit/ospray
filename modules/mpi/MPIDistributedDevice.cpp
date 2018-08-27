@@ -174,10 +174,7 @@ namespace ospray {
     OSPModel MPIDistributedDevice::newModel()
     {
       auto *instance = new DistributedModel;
-      ObjectHandle handle;
-      handle.assign(instance);
-
-      return (OSPModel)(int64)handle;
+      return (OSPModel)instance;
     }
 
     void MPIDistributedDevice::commit(OSPObject _object)
@@ -189,18 +186,18 @@ namespace ospray {
     void MPIDistributedDevice::addGeometry(OSPModel _model,
                                            OSPGeometry _geometry)
     {
-      auto &model = lookupDistributedObject<Model>(_model);
+      auto *model = lookupObject<Model>(_model);
       auto *geom  = lookupObject<Geometry>(_geometry);
 
-      model.geometry.push_back(geom);
+      model->geometry.push_back(geom);
     }
 
     void MPIDistributedDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
-      auto &model  = lookupDistributedObject<Model>(_model);
+      auto *model  = lookupObject<Model>(_model);
       auto *volume = lookupObject<Volume>(_volume);
 
-      model.volume.push_back(volume);
+      model->volume.push_back(volume);
     }
 
     OSPData MPIDistributedDevice::newData(size_t nitems, OSPDataType format,
@@ -376,24 +373,22 @@ namespace ospray {
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)
     {
-      auto &model = lookupDistributedObject<Model>(_model);
+      auto *model = lookupObject<Model>(_model);
       auto *geom  = lookupObject<Geometry>(_geometry);
 
-      //TODO: confirm this works?
-      model.geometry.erase(std::remove(model.geometry.begin(),
-                                       model.geometry.end(),
-                                       Ref<Geometry>(geom)));
+      model->geometry.erase(std::remove(model->geometry.begin(),
+                                        model->geometry.end(),
+                                        Ref<Geometry>(geom)));
     }
 
     void MPIDistributedDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
-      auto &model  = lookupDistributedObject<Model>(_model);
+      auto *model  = lookupObject<Model>(_model);
       auto *volume = lookupObject<Volume>(_volume);
 
-      //TODO: confirm this works?
-      model.volume.erase(std::remove(model.volume.begin(),
-                                     model.volume.end(),
-                                     Ref<Volume>(volume)));
+      model->volume.erase(std::remove(model->volume.begin(),
+                                      model->volume.end(),
+                                      Ref<Volume>(volume)));
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,

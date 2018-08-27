@@ -31,6 +31,7 @@
 // ospray
 #include "DistributedRaycast.h"
 #include "../../common/DistributedModel.h"
+#include "../../MPIDistributedDevice.h"
 #include "../MPILoadBalancer.h"
 #include "../../fb/DistributedFrameBuffer.h"
 // ispc exports
@@ -82,13 +83,11 @@ namespace ospray {
     struct RegionInfo
     {
       int currentRegion;
-      int currentGhostRegion;
       bool computeVisibility;
       bool *regionVisible;
 
       RegionInfo()
-        : currentRegion(0), currentGhostRegion(0),
-        computeVisibility(true), regionVisible(nullptr)
+        : currentRegion(0), computeVisibility(true), regionVisible(nullptr)
       {}
     };
 
@@ -120,6 +119,19 @@ namespace ospray {
     // Project the region onto the screen. If the object is behind the camera
     // or off-screen, the region will be empty.
     RegionScreenBounds projectRegion(const box3f &bounds, const Camera *camera);
+
+    DistributedRegion::DistributedRegion() : id(-1) {}
+    DistributedRegion::DistributedRegion(box3f bounds, int id)
+      : bounds(bounds), id(id)
+    {}
+    bool DistributedRegion::operator==(const ospray::mpi::DistributedRegion &b) const
+    {
+      return id == b.id;
+    }
+    bool DistributedRegion::operator<(const ospray::mpi::DistributedRegion &b) const
+    {
+      return id < b.id;
+    }
 
     // DistributedRaycastRenderer definitions /////////////////////////////////
 
@@ -163,11 +175,31 @@ namespace ospray {
                                  "PerspectiveCamera");
       }
 
-      if (!dynamic_cast<DistributedModel*>(model)) {
-        throw std::runtime_error("DistributedRaycastRender must use a "
-                                 "DistributedModel from the "
-                                 "MPIDistributedDevice");
+      Data *models = getParamData("models", nullptr);
+      if (models) {
+        OSPObject *handles = reinterpret_cast<OSPObject*>(models->data);
+        // TODO: This is a total hack to work around the issue with a Data array
+        // of OSP_OBJECT ObjectHandles
+        for (size_t i = 0; i < models->numBytes / sizeof(int64_t); ++i) {
+          regions.push_back(Ref<DistributedModel>(lookupObject<DistributedModel>(handles[i])));
+        }
+      } else if (model && dynamic_cast<DistributedModel*>(model)) {
+        regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(model)));
       }
+
+      Data *ghosts = getParamData("ghostModels", nullptr);
+      if (ghosts) {
+        OSPObject *handles = reinterpret_cast<OSPObject*>(ghosts->data);
+        for (size_t i = 0; i < ghosts->numBytes / sizeof(int64_t); ++i) {
+          ghostRegions.push_back(Ref<DistributedModel>(lookupObject<DistributedModel>(handles[i])));
+        }
+      } else if (getParamObject("ghostModel")) {
+        DistributedModel *ghostModel =
+          dynamic_cast<DistributedModel*>(getParamObject("ghostModel", nullptr));
+        ghostRegions.push_back(Ref<DistributedModel>(ghostModel));
+      }
+
+      exchangeModelBounds();
     }
 
     float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
@@ -175,8 +207,7 @@ namespace ospray {
     {
       using namespace std::chrono;
       using namespace mpicommon;
-      DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
-      if (!distribModel) {
+      if (regions.empty()) {
         return renderNonDistrib(fb, channelFlags);
       }
 
@@ -189,35 +220,46 @@ namespace ospray {
       dfb->startNewFrame(errorThreshold);
       dfb->beginFrame();
 
-      ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
-          distribModel->allRegions.data(),
-          distribModel->ghostRegions.data(),
-          distribModel->allRegions.size(),
-          numAoSamples);
+      std::vector<void*> regionIEs, ghostRegionIEs;
+      std::transform(regions.begin(), regions.end(), std::back_inserter(regionIEs),
+                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
+      std::transform(ghostRegions.begin(), ghostRegions.end(), std::back_inserter(ghostRegionIEs),
+                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
 
-      const size_t numRegions = distribModel->allRegions.size();
+      ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
+          allRegions.data(),
+          static_cast<int>(allRegions.size()),
+          numAoSamples,
+          regionIEs.data(), ghostRegionIEs.data());
 
       beginFrame(dfb);
 
+      const size_t numRegions = allRegions.size();
       // Do a prepass and project each region's box to the screen to see
       // which tiles it touches, and at what depth.
       std::multimap<float, size_t> regionOrdering;
       std::vector<RegionScreenBounds> projectedRegions(numRegions, RegionScreenBounds());
       for (size_t i = 0; i < projectedRegions.size(); ++i) {
-        projectedRegions[i] = projectRegion(distribModel->allRegions[i].bounds, camera);
-        // Note that these bounds are very conservative, the bounds we compute
-        // below are much tighter, and better. We just use the depth from the
-        // projection to sort the tiles later
-        projectedRegions[i].bounds.lower *= dfb->size;
-        projectedRegions[i].bounds.upper *= dfb->size;
-        regionOrdering.insert(std::make_pair(projectedRegions[i].depth, i));
-#if 0
-        if (mpicommon::globalRank() == 0) {
-          std::cout << "region " << i << " projects too {"
-            << projectedRegions[i].bounds << ", z = " 
-            << projectedRegions[i].depth << "}\n";
-        }
+        if (!allRegions[i].bounds.empty()) {
+          projectedRegions[i] = projectRegion(allRegions[i].bounds, camera);
+          // Note that these bounds are very conservative, the bounds we compute
+          // below are much tighter, and better. We just use the depth from the
+          // projection to sort the tiles later
+          projectedRegions[i].bounds.lower *= dfb->size;
+          projectedRegions[i].bounds.upper *= dfb->size;
+          regionOrdering.insert(std::make_pair(projectedRegions[i].depth, i));
+#if 1
+          if (mpicommon::globalRank() == 0) {
+            std::cout << "region " << i << " projects too {"
+              << projectedRegions[i].bounds << ", z = " 
+              << projectedRegions[i].depth << "}\n";
+          }
 #endif
+        } else {
+          projectedRegions[i] = RegionScreenBounds();
+          projectedRegions[i].depth = std::numeric_limits<float>::infinity();
+          regionOrdering.insert(std::make_pair(std::numeric_limits<float>::infinity(), i));
+        }
       }
 
       // Compute the sort order for the regions
@@ -243,10 +285,10 @@ namespace ospray {
       // to just do something coarser based on the projected regions
       std::vector<int> tilesForFrame;
 
-      for (const auto &region : distribModel->myRegions) {
-        const auto &projection = projectedRegions[region.id];
+      for (const auto &region : regions) {
+        const auto &projection = projectedRegions[region->id];
 #if 0
-        std::cout << "region " << region.id << " projects to "
+        std::cout << "region " << region->id << " projects to "
           << projection.bounds << "\n" << std::flush;
 #endif
         if (projection.bounds.empty() || projection.depth < 0) {
@@ -266,10 +308,10 @@ namespace ospray {
             // If we share ownership of this region but aren't responsible
             // for rendering it to this tile, don't render it.
             const size_t tileIndex = size_t(x) + size_t(y) * numTiles.x;
-            const auto &regionOwners = distribModel->regionOwners[region.id];
-            const size_t numRegionOwners = regionOwners.size();
-            const size_t ownerRank = std::distance(regionOwners.begin(),
-                                                   regionOwners.find(globalRank()));
+            const auto &owners = regionOwners[region->id];
+            const size_t numRegionOwners = owners.size();
+            const size_t ownerRank = std::distance(owners.begin(),
+                                                   owners.find(globalRank()));
             // TODO: Can we do a better than round-robin over all tiles assignment here?
             // It could be that we end up not evenly dividing the workload.
             const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
@@ -307,7 +349,7 @@ namespace ospray {
           return;
         }
 
-        Tile __aligned(64) tile(tileID, dfb->size, accumID);
+        Tile __aligned(64) bgtile(tileID, dfb->size, accumID);
 
         RegionInfo regionInfo;
         // The visibility entries are sorted by the region id, matching
@@ -318,57 +360,79 @@ namespace ospray {
         // The first renderTile doesn't actually do any rendering, and instead
         // just computes which tiles the region projects to.
         tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-          renderTile(&regionInfo, tile, tIdx);
+          renderTile(&regionInfo, bgtile, tIdx);
         });
         regionInfo.computeVisibility = false;
 
         // If we own the tile send the background color and the count of children for the
         // number of regions projecting to it that will be sent.
         if (tileOwner) {
-          tile.generation = 0;
-          tile.children = std::count(regionInfo.regionVisible,
-              regionInfo.regionVisible + numRegions, true);
-          tile.sortOrder = std::numeric_limits<int>::max();
-          std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
-          std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
-          std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
-          std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, bgColor.w);
-          std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
+          bgtile.generation = 0;
+          bgtile.children = std::count(regionInfo.regionVisible,
+                                       regionInfo.regionVisible + numRegions, true);
+          bgtile.sortOrder = std::numeric_limits<int>::max();
+          std::fill(bgtile.r, bgtile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
+          std::fill(bgtile.g, bgtile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
+          std::fill(bgtile.b, bgtile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
+          std::fill(bgtile.a, bgtile.a + TILE_SIZE * TILE_SIZE, bgColor.w);
+          std::fill(bgtile.z, bgtile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
 
-          fb->setTile(tile);
+          fb->setTile(bgtile);
         }
 
         // Render our regions that project to this tile and ship them off
         // to the tile owner.
-        tile.generation = 1;
-        tile.children = 0;
-        for (size_t i = 0; i < distribModel->myRegions.size(); ++i) {
-          const auto &region = distribModel->myRegions[i];
-          if (!regionInfo.regionVisible[region.id]) {
-            continue;
+        std::vector<size_t> myVisibleRegions;
+        myVisibleRegions.reserve(regions.size());
+        for (size_t i = 0; i < regions.size(); ++i) {
+          const auto &region = regions[i];
+          if (regionInfo.regionVisible[region->id]) {
+            myVisibleRegions.push_back(i);
           }
+        }
 
+        // TODO: Will it really be much benefit to run the regions in parallel
+        // as well? We already are running in parallel on the tiles and the
+        // pixels within the tiles, so adding another level may actually just
+        // give us worse cache coherence.
+#define PARALLEL_REGION_RENDERING 1
+#ifdef PARALLEL_REGION_RENDERING
+        tasking::parallel_for(myVisibleRegions.size(), [&](size_t vid) {
+          const size_t i = myVisibleRegions[vid];
+          Tile __aligned(64) tile(tileID, dfb->size, accumID);
+#else
+        for (const size_t &i : myVisibleRegions) {
+          Tile &tile = bgtile;
+#endif
+          tile.generation = 1;
+          tile.children = 0;
           // If we share ownership of this region but aren't responsible
           // for rendering it to this tile, don't render it.
           // Note that we do need to double check here, since we could have
           // multiple shared regions projecting to the same tile, and we
           // could be the region tile owner for only some of those
-          const auto &regionOwners = distribModel->regionOwners[region.id];
-          const size_t numRegionOwners = regionOwners.size();
-          const size_t ownerRank = std::distance(regionOwners.begin(),
-                                                 regionOwners.find(globalRank()));
+          const auto &region = regions[i];
+          const auto &owners = regionOwners[region->id];
+          const size_t numRegionOwners = owners.size();
+          const size_t ownerRank = std::distance(owners.begin(),
+                                                 owners.find(globalRank()));
           const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
           if (regionTileOwner) {
-            regionInfo.currentGhostRegion = i;
-            regionInfo.currentRegion = region.id;
+            RegionInfo localInfo;
+            localInfo.regionVisible = regionInfo.regionVisible;
+            localInfo.computeVisibility = false;
+            localInfo.currentRegion = i;
             tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-              renderTile(&regionInfo, tile, tIdx);
+              renderTile(&localInfo, tile, tIdx);
             });
-            tile.sortOrder = sortOrder[region.id];
-
+            tile.sortOrder = sortOrder[region->id];
             fb->setTile(tile);
           }
+#ifdef PARALLEL_REGION_RENDERING
+        });
+#else
         }
+#endif
       });
 
       auto endRender = high_resolution_clock::now();
@@ -433,6 +497,7 @@ namespace ospray {
     float DistributedRaycastRenderer::renderNonDistrib(FrameBuffer *fb,
                                                        const uint32 channelFlags)
     {
+#if 0
       using namespace mpicommon;
       auto startRender = high_resolution_clock::now();
       getrusage(RUSAGE_SELF, &prevUsage);
@@ -503,11 +568,74 @@ namespace ospray {
 
       ++frameNumber;
       return fb->endFrame(errorThreshold);
+#endif
     }
 
     std::string DistributedRaycastRenderer::toString() const
     {
       return "ospray::mpi::DistributedRaycastRenderer";
+    }
+
+    void DistributedRaycastRenderer::exchangeModelBounds() {
+      allRegions.clear();
+      
+      std::vector<DistributedRegion> myRegions;
+      myRegions.reserve(regions.size());
+      std::transform(regions.begin(), regions.end(),
+                     std::back_inserter(myRegions),
+                     [](const Ref<DistributedModel> &m) {
+                       return DistributedRegion(m->bounds, m->id);
+                     });
+
+      for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+        if (i == mpicommon::globalRank()) {
+          messaging::bcast(i, myRegions);
+          std::copy(myRegions.begin(), myRegions.end(),
+              std::back_inserter(allRegions));
+
+          for (const auto &r : myRegions) {
+            regionOwners[r.id].insert(i);
+          }
+        } else {
+          std::vector<DistributedRegion> recv;
+          messaging::bcast(i, recv);
+          std::copy(recv.begin(), recv.end(),
+              std::back_inserter(allRegions));
+
+          for (const auto &r : recv) {
+            regionOwners[r.id].insert(i);
+          }
+        }
+      }
+
+      // Prune down to unique regions sorted by ID.
+      std::sort(allRegions.begin(), allRegions.end());
+      auto end = std::unique(allRegions.begin(), allRegions.end());
+      allRegions.erase(end, allRegions.end());
+
+      if (logLevel() >= 1) {
+        for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+          if (i == mpicommon::globalRank()) {
+            postStatusMsg(1) << "Rank " << mpicommon::globalRank()
+              << ": All regions in world {";
+            for (const auto &b : allRegions) {
+              postStatusMsg(1) << "\t" << b << ",";
+            }
+            postStatusMsg(1) << "}\n";
+
+            postStatusMsg(1) << "Ownership Information: {";
+            for (const auto &r : regionOwners) {
+              postStatusMsg(1) << "(" << r.first << ": [";
+              for (const auto &i : r.second) {
+                postStatusMsg(1) << i << ", ";
+              }
+              postStatusMsg(1) << "])";
+            }
+            postStatusMsg(1) << "\n" << std::flush;
+          }
+          mpicommon::world.barrier();
+        }
+      }
     }
 
     RegionScreenBounds projectRegion(const box3f &bounds, const Camera *camera)
@@ -622,4 +750,19 @@ namespace ospray {
 
   } // ::ospray::mpi
 } // ::ospray
+
+std::ostream& operator<<(std::ostream &os, const ospray::mpi::DistributedRegion &d) {
+  os << "DistributedRegion { " << d.bounds << ", id = " << d.id;
+  return os;
+}
+bool operator==(const ospray::mpi::DistributedRegion &a,
+                const ospray::mpi::DistributedRegion &b)
+{
+  return a.id == b.id;
+}
+bool operator<(const ospray::mpi::DistributedRegion &a,
+               const ospray::mpi::DistributedRegion &b)
+{
+  return a.id < b.id;
+}
 

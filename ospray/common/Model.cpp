@@ -96,6 +96,8 @@ namespace ospray {
       bounds.extend(volBounds);
     }
 
+    ispc::Model_setBounds(getIE(), (ispc::box3f*)&bounds);
+
     rtcCommitScene(embreeSceneHandle);
   }
 

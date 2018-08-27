@@ -86,7 +86,7 @@ int aoSamples = 0;
 int nBricks = -1;
 int bricksPerRank = 1;
 bool llnlrm = false;
-const int IMG_SIZE = 1024;
+const int IMG_SIZE = 512;
 
 std::vector<std::string> osp_bricks;
 
@@ -188,7 +188,6 @@ void charCallback(GLFWwindow *, unsigned int c) {
 
 void parseArgs(int argc, char **argv)
 {
-  PING;
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-f") {
@@ -270,9 +269,8 @@ void runApp()
   const int worldSize = mpicommon::world.size;
 
   AppState app;
-  Model model;
-  std::vector<gensv::LoadedVolume> volumes;
-  std::vector<gensv::SharedVolumeBrick> bricks;
+  containers::AlignedVector<gensv::LoadedVolume> volumes;
+  containers::AlignedVector<gensv::SharedVolumeBrick> bricks;
   box3f worldBounds;
   if (!osp_bricks.empty()) {
     if (osp_bricks.size() != worldSize) {
@@ -319,35 +317,36 @@ void runApp()
     }
   }
 
-  std::vector<gensv::DistributedRegion> regions;
-  std::vector<box3f> ghostRegions;
+  containers::AlignedVector<Model> models, ghostModels;
   // Generated volumes
   for (size_t i = 0; i < volumes.size(); ++i) {
     auto &v = volumes[i];
     v.volume.commit();
-    model.addVolume(v.volume);
-
-    regions.emplace_back(v.bounds, rank * nlocalBricks + i);
-    ghostRegions.emplace_back(worldBounds);
+    Model m;
+    m.addVolume(v.volume);
+    m.set("id", int(rank * nlocalBricks + i));
+    models.push_back(m);
   }
 
   // Loaded bricks
   for (size_t i = 0; i < bricks.size(); ++i) {
     auto &v = bricks[i].vol;
     v.volume.commit();
-    model.addVolume(v.volume);
-
-    regions.push_back(bricks[i].region);
-    ghostRegions.emplace_back(worldBounds);
+    Model m;
+    m.addVolume(v.volume);
+    m.set("id", bricks[i].region.id);
+    models.push_back(m);
   }
+  /*
   // All ranks generate the same sphere data to mimic rendering a distributed
   // shared dataset
   if (nSpheres != 0) {
     auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
                                       sphereRadius, transparentSpheres);
-    model.addGeometry(spheres);
   }
+  */
 
+  /*
   if (!rivl.file.empty()) {
     std::cout << "loading rivl " << rivl.file << "\n";
     FILE *fp = fopen(rivl.file.c_str(), "rb");
@@ -370,18 +369,12 @@ void runApp()
     mesh.commit();
     model.addGeometry(mesh);
   }
+  */
+  for (auto &m : models) {
+    m.commit();
+  }
 
   Arcball arcballCamera(worldBounds, vec2i(IMG_SIZE, IMG_SIZE));
-
-  Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
-      OSP_CHAR, regions.data());
-  Data ghostRegionData(ghostRegions.size() * sizeof(box3f),
-      OSP_CHAR, ghostRegions.data());
-
-  model.set("regions", regionData);
-  model.set("ghostRegions", ghostRegionData);
-  model.set("id", rank);
-  model.commit();
 
   Camera camera("perspective");
   camera.set("pos", arcballCamera.eyePos());
@@ -395,9 +388,10 @@ void runApp()
   // TODO: The passing it as a data like this is a total hack
   // to circumvent an issue we'd run into in OSPRay passing ObjectHandles
   // as OSP_OBJECTs
-  OSPModel modelHandle = model.handle();
-  Data modelsData(sizeof(int64_t), OSP_CHAR, &modelHandle);
-  //renderer.set("model", model);
+  std::vector<OSPModel> modelHandles;
+  std::transform(models.begin(), models.end(), std::back_inserter(modelHandles),
+                 [](const Model &m) { return m.handle(); });
+  Data modelsData(sizeof(int64_t) * modelHandles.size(), OSP_CHAR, modelHandles.data());
   renderer.set("models", modelsData);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));

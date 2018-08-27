@@ -807,12 +807,10 @@ namespace ospray {
 
       auto *msg = (TileMessage*)message->data;
       if (msg->command & MASTER_WRITE_TILE_I8) {
-        PING
         std::cout << std::endl;
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
         this->processMessage((MasterTileMessage_RGBA_I8*)msg);
       } else if (msg->command & MASTER_WRITE_TILE_F32) {
-        PING
         std::cout << std::endl;
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
         this->processMessage((MasterTileMessage_RGBA_F32*)msg);
@@ -838,7 +836,6 @@ namespace ospray {
 
   void DFB::sendAllTilesDoneMessage()
   {
-    PING;
     auto msg = std::make_shared<mpicommon::Message>
             (AllTilesDoneMessage::size(tileErrors.size()));
 
