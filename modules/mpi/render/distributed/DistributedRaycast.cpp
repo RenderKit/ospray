@@ -334,12 +334,12 @@ namespace ospray {
         tilesForFrame.erase(end, tilesForFrame.end());
       }
 
-      tasking::parallel_for(static_cast<int>(tilesForFrame.size()), [&](int taskIndex) {
+      tasking::parallel_for(tilesForFrame.size(), [&](size_t taskIndex) {
         const int tileIndex = tilesForFrame[taskIndex];
 
-        const size_t numTiles_x = fb->getNumTiles().x;
-        const size_t tile_y = tileIndex / numTiles_x;
-        const size_t tile_x = tileIndex - tile_y*numTiles_x;
+        const uint32_t numTiles_x = static_cast<uint32_t>(fb->getNumTiles().x);
+        const uint32_t tile_y = tileIndex / numTiles_x;
+        const uint32_t tile_x = tileIndex - tile_y*numTiles_x;
         const vec2i tileID(tile_x, tile_y);
         const int32 accumID = fb->accumID(tileID);
         const bool tileOwner = (tileIndex % numGlobalRanks()) == globalRank();
@@ -359,7 +359,7 @@ namespace ospray {
 
         // The first renderTile doesn't actually do any rendering, and instead
         // just computes which tiles the region projects to.
-        tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
+        tasking::parallel_for(static_cast<size_t>(NUM_JOBS), [&](size_t tIdx) {
           renderTile(&regionInfo, bgtile, tIdx);
         });
         regionInfo.computeVisibility = false;

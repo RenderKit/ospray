@@ -26,3 +26,6 @@ readme.pdf
 !/modules/pluggableGeometryExample
 !/modules/simdGeometryExample
 *.vim
+.idea/
+premake.local.*
+cmake-build*/

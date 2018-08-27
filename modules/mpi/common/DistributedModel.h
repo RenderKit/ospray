@@ -25,6 +25,9 @@
 #include "volume/Volume.h"
 #include "common/Model.h"
 
+// ospray common
+#include "ospcommon/box.h"
+
 // stl
 #include <vector>
 
@@ -51,4 +54,3 @@ namespace ospray {
 
   } // ::ospray::mpi
 } // ::ospray
-

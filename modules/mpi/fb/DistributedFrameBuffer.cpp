@@ -394,7 +394,7 @@ namespace ospray {
     {
       return numTilesCompletedThisFrame == myTiles.size();
     }
-    return numTilesCompletedThisFrame == getTotalTiles();
+    return numTilesCompletedThisFrame == static_cast<int32_t>(getTotalTiles());
   }
 
   size_t DFB::ownerIDFromTileID(size_t tileID) const

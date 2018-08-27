@@ -17,4 +17,7 @@
 add_library(gensv SHARED
   generateSciVis.cpp raw_reader.cpp
   llnlrm_reader.cpp)
-
+target_link_libraries(gensv
+  ospray
+  ospray_common
+  ospray_mpi_common)

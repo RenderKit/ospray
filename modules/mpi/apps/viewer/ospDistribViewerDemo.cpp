@@ -331,6 +331,8 @@ void runApp()
   // Loaded bricks
   for (size_t i = 0; i < bricks.size(); ++i) {
     auto &v = bricks[i].vol;
+    //v.volume.set("volumeClippingBoxLower", v.bounds.lower);
+    //v.volume.set("volumeClippingBoxUpper", v.bounds.upper);
     v.volume.commit();
     Model m;
     m.addVolume(v.volume);
