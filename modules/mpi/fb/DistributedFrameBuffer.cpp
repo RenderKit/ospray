@@ -51,6 +51,12 @@ namespace ospray {
     int command {-1};
   };
 
+  struct ProgressMessage : public TileMessage
+  {
+    uint64_t numCompleted;
+    int frameID;
+  };
+
   struct MasterTileMessage : public TileMessage
   {
     vec2i coords;
@@ -289,8 +295,6 @@ namespace ospray {
 
     std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
     {
-      // startNewFrame should only be called by one thread when we start
-      // the frame right? I don't think we should need the mutex.
       SCOPED_LOCK(mutex);
       std::lock_guard<std::mutex> numTilesLock(numTilesMutex);
 
@@ -333,10 +337,15 @@ namespace ospray {
         std::fill(numTilesExpected.begin(), numTilesExpected.end(), 0);
       }
 
+      globalTilesCompletedThisFrame = 0;
       numTilesCompletedThisFrame = 0;
       if (hasAccumBuffer) {
         for (int t = 0; t < getTotalTiles(); t++) {
-          if (tileError(vec2i(t, 0)) <= errorThreshold) {
+          const uint32_t nx = static_cast<uint32_t>(getNumTiles().x);
+          const uint32_t ty = t / nx;
+          const uint32_t tx = t - ty * nx;
+          const vec2i tileID(tx, ty);
+          if (tileError(tileID) <= errorThreshold) {
             if (allTiles[t]->mine()) {
               numTilesCompletedThisFrame++;
             }
@@ -358,9 +367,15 @@ namespace ospray {
       frameIsActive = true;
     }
 
-    // might actually want to move this to a thread:
-    for (auto &msg : _delayedMessage)
+    for (auto &msg : _delayedMessage) {
+      auto *msgData = (TileMessage*)msg->data;
+      // Progress messages might have come in from the previous frame, and
+      // are irrelevant now, since they're stale.
+      // TODO WILL: I don't think for regular tile messages (which are
+      // required to finish the frame) we will ever have delayed messages.
+      // We inherently can't complete the frame without them
       scheduleProcessing(msg);
+    }
 
     if (isFrameComplete(0))
       closeCurrentFrame();
@@ -379,6 +394,19 @@ namespace ospray {
   {
     SCOPED_LOCK(numTilesMutex);
     numTilesCompletedThisFrame += numTiles;
+
+    // TODO WILL: This should only be called if the user wants progress information
+    // TODO: we can cut down network traffic by reporting only every 2 tiles
+    // we complete, though we can't rely on just numTiles for this b/c it
+    // will usually just be 1.
+    if (numTiles > 0) {
+      auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
+      ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
+      msgData->command = PROGRESS_MESSAGE;
+      msgData->numCompleted = numTiles;
+      msgData->frameID = frameID;
+      mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
+    }
 
     if (mpicommon::IamAWorker()
         || (mpicommon::IamTheMaster() && masterIsAWorker))
@@ -478,14 +506,29 @@ namespace ospray {
     auto endWaitFrame = high_resolution_clock::now();
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
 
+    // Broadcast the rendering cancellation status to the workers
+    // First we barrier to sync that this Bcast is actually picked up by the
+    // right code path. Otherwise it may match with the command receiving
+    // bcasts in the worker loop.
+    MPI_CALL(Barrier(world.comm));
+    frameIsActive = false;
+
+    // Report that we're 100% done and do a final check for cancellation
+    if (!api::currentDevice().reportProgress(1.0)) {
+      cancelRendering = true;
+    }
+
+    int renderingCancelled = cancelRendering.load();
+    MPI_CALL(Bcast(&renderingCancelled, 1, MPI_INT, masterRank(), world.comm));
+    if (renderingCancelled) {
+      PING;
+      return;
+    }
+
     if (colorBufferFormat != OSP_FB_NONE) {
       gatherFinalTiles();
     } else if (hasVarianceBuffer) {
       gatherFinalErrors();
-    } else {
-      // TODO: Not really necessary b/c the calling device does a barrier
-      // as well right?
-      MPI_CALL(Barrier(world.comm));
     }
   }
 
@@ -547,12 +590,6 @@ namespace ospray {
         }
       }
     }
-
-    // Finally, tell the master that this tile is done
-    // WILL: This is no longer necessary b/c we do the final gather instead
-    //auto *tileDesc = this->getTileDescFor(msg->coords);
-    //TileData *td = (TileData*)tileDesc;
-    //this->finalizeTileOnMaster(td);
   }
 
   void DFB::tileIsCompleted(TileData *tile)
@@ -630,23 +667,15 @@ namespace ospray {
     }
   }
 
-#if 0
-  void DFB::finalizeTileOnMaster(TileData *DBG(tile))
+  void DFB::updateProgress(ProgressMessage *msg)
   {
-    throw std::runtime_error("Don't call this anymore!");
-    assert(mpicommon::IamTheMaster());
-
-    // TODO WILL: Fix progress
-    // TODO pixel accurate progress (tiles can be much smaller than TILE_SIZE)
-    float progress = (numTilesCompletedThisFrame+1)/(float)getTotalTiles();
-    if (!api::currentDevice().reportProgress(progress))
-      sendCancelRenderingMessage();
-
-    if (isFrameComplete(1)) {
-      closeCurrentFrame();
+    globalTilesCompletedThisFrame += msg->numCompleted;
+    const float progress = globalTilesCompletedThisFrame / (float)getTotalTiles();
+    if (!api::currentDevice().reportProgress(progress)) {
+      // WILL TODO
+      //sendCancelRenderingMessage();
     }
   }
-#endif
 
   size_t DFB::numMyTiles() const
   {
@@ -670,9 +699,32 @@ namespace ospray {
 
   void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
   {
-    if (!frameIsActive) {
+    auto *msg = (TileMessage*)message->data;
+    /*
+    if (msg->command & CANCEL_RENDERING) {
+      std::cout << "Rank " << mpicommon::globalRank()
+        << " rendering was cancelled\n" << std::flush;
+      cancelRendering = true;
+      // TODO: We need to mark the frame as done as well here, in case
+      // this rank had already finished the frame and was waiting.
+      // We also then need to know to discard any additional tile messages
+      // we receive until we start the next frame.
+      closeCurrentFrame();
+      return;
+    }
+    */
+
+    // Any delayed progress messages are about the previous frame anyways,
+    // so we don't care.
+    if (!frameIsActive && !(msg->command & PROGRESS_MESSAGE)) {
       SCOPED_LOCK(mutex);
       if (!frameIsActive) {
+        // TODO WILL: When will we ever get delayed messages when
+        // the rendering is working properly? The start/end of a frame
+        // is synchronized so it shouldn't be possible for one rank to have
+        // started rendering and finishing tiles before another has even
+        // begun the frame.
+        //
         // frame is not actually active, yet - put the tile into the
         // delayed processing buffer, and return WITHOUT deleting it.
         delayedMessage.push_back(message);
@@ -685,23 +737,20 @@ namespace ospray {
 
   void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
   {
-    // TODO: Handle cancellation messages
-
     auto queuedTask = high_resolution_clock::now();
     tasking::schedule([=]() {
       auto startedTask = high_resolution_clock::now();
-
       auto *msg = (TileMessage*)message->data;
       if (msg->command & MASTER_WRITE_TILE_I8) {
-        std::cout << std::endl;
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
         this->processMessage((MasterTileMessage_RGBA_I8*)msg);
       } else if (msg->command & MASTER_WRITE_TILE_F32) {
-        std::cout << std::endl;
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
         this->processMessage((MasterTileMessage_RGBA_F32*)msg);
       } else if (msg->command & WORKER_WRITE_TILE) {
         this->processMessage((WriteTileMessage*)msg);
+      } else if (msg->command & PROGRESS_MESSAGE) {
+        updateProgress((ProgressMessage*)msg);
       } else {
         throw std::runtime_error("#dfb: unknown tile type processed!");
       }
@@ -751,7 +800,7 @@ namespace ospray {
 #if 1
     const size_t renderedTileBytes = nextTileWrite.load();
     size_t compressedSize = 0;
-    std::vector<char> compressedBuf(compressedSize, 0);
+    std::vector<char> compressedBuf;
     if (renderedTileBytes > 0) {
       auto startCompr = high_resolution_clock::now();
       compressedSize = snappy::MaxCompressedLength(renderedTileBytes);
@@ -877,20 +926,19 @@ namespace ospray {
     }
   }
 
-  // TODO WILL: Fix cancellation
   void DFB::sendCancelRenderingMessage()
   {
-    /*
-       auto msg = std::make_shared<mpicommon::Message>(sizeof(TileMessage));
+    std::cout << "SENDING CANCEL RENDERING MSG\n";
+    PING;
+    std::cout << std::flush;
+    auto msg = std::make_shared<mpicommon::Message>(sizeof(TileMessage));
 
-       auto out = msg->data;
-       int val = CANCEL_RENDERING;
-       memcpy(out, &val, sizeof(val));
+    auto out = msg->data;
+    int val = CANCEL_RENDERING;
+    memcpy(out, &val, sizeof(val));
 
-    // notify all; broadcast not possible, because messaging layer is active
     for (int rank = 0; rank < mpicommon::numGlobalRanks(); rank++)
       mpi::messaging::sendTo(rank, myId, msg);
-    */
   }
 
   void DFB::closeCurrentFrame()
@@ -898,7 +946,6 @@ namespace ospray {
     DBG(printf("rank %i CLOSES frame\n", mpicommon::globalRank()));
 
     SCOPED_LOCK(mutex);
-    frameIsActive = false;
     frameIsDone   = true;
     frameDoneCond.notify_all();
   }

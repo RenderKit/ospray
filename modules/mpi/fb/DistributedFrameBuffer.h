@@ -29,6 +29,7 @@ namespace ospray {
   struct TileDesc;
   struct TileData;
 
+  struct ProgressMessage;
   struct MasterTileMessage;
   template <typename ColorT>
   struct MasterTileMessage_FB;
@@ -59,6 +60,8 @@ namespace ospray {
     MASTER_TILE_HAS_AUX = 1 << 5,
     // abort rendering the current frame
     CANCEL_RENDERING = 1 << 6,
+    // Worker updating us on tiles completed
+    PROGRESS_MESSAGE = 1 << 7
   };
 
   class DistributedTileError : public TileError
@@ -173,10 +176,11 @@ namespace ospray {
         to the master (if required), and properly do the bookkeeping
         that this tile is now done. */
     void tileIsCompleted(TileData *tile);
-    /*! This function is called when a master write tile is completed, on the
-        master process. It only marks on the master that the tile is done, and
-        checks if we've completed rendering the frame. */
-    //void finalizeTileOnMaster(TileData *tile);
+
+    /*! This function is called when a worker reports how many tiles it's
+        completed to the master, to update the user's progress callback.
+        This is only used if the user has set a progress callback. */
+    void updateProgress(ProgressMessage *msg);
 
     //! number of tiles that "I" own
     size_t numMyTiles() const;
@@ -235,6 +239,13 @@ namespace ospray {
         the master) */
     size_t numTilesCompletedThisFrame;
 
+    /*! The total number of tiles completed by all workers during this frame,
+        to track progress for the user's progress callback. NOTE: This is
+        not the numTilesCompletedThisFrame , which tracks how many tiles
+        this rank has finished of the ones it's responsible for completing */
+    size_t globalTilesCompletedThisFrame;
+
+
     /*! The number of tiles the master is expecting to receive from each rank */
     std::vector<size_t> numTilesExpected;
 
@@ -255,13 +266,14 @@ namespace ospray {
 
     //! set to true when the frame becomes 'active', and write tile
     //! messages can be consumed.
-    bool frameIsActive;
+    std::atomic<bool> frameIsActive;
 
     /*! set to true when the framebuffer is done for the given
         frame */
     bool frameIsDone;
 
-    bool cancelRendering; // signal the workers whether to cancel 
+    //! whether or not the frame has been cancelled
+    std::atomic<bool> cancelRendering;
 
     bool masterIsAWorker {false};
 

@@ -81,6 +81,10 @@ namespace ospray {
         if ((ALLTASKS % worker.size) > worker.rank)
           NTASKS++;
 
+        // TODO WILL: The work assignment here does not match the tile
+        // ownership in the DFB, we should tweak it so that in replicated
+        // rendering each worker renders the round-robin ownership tiles
+        // that it owns in the DFB. This will cut down a lot of communication
         tasking::parallel_for(NTASKS, [&](int taskIndex) {
           const size_t tileID = taskIndex * worker.size + worker.rank;
           const size_t numTiles_x = fb->getNumTiles().x;
