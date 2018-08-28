@@ -235,6 +235,9 @@ namespace ospray {
         the master) */
     size_t numTilesCompletedThisFrame;
 
+    /*! The number of tiles the master is expecting to receive from each rank */
+    std::vector<size_t> numTilesExpected;
+
     /* protected numTilesCompletedThisFrame to ensure atomic update and compare */
     std::mutex numTilesMutex;
 

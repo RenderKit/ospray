@@ -284,6 +284,7 @@ namespace ospray {
                                                  hasNormalBuffer,
                                                  hasAlbedoBuffer);
       tileGatherBuffer.resize(myTiles.size() * finalTileSize, 0);
+      std::fill(tileGatherBuffer.begin(), tileGatherBuffer.end(), 0);
     }
 
     std::vector<std::shared_ptr<mpicommon::Message>> _delayedMessage;
@@ -327,19 +328,20 @@ namespace ospray {
       for (auto &tile : myTiles)
         tile->newFrame();
 
+      if (mpicommon::IamTheMaster()) {
+        numTilesExpected.resize(mpicommon::numGlobalRanks(), 0);
+        std::fill(numTilesExpected.begin(), numTilesExpected.end(), 0);
+      }
+
       numTilesCompletedThisFrame = 0;
       if (hasAccumBuffer) {
         for (int t = 0; t < getTotalTiles(); t++) {
           if (tileError(vec2i(t, 0)) <= errorThreshold) {
-            // TODO: This is probably an issue for the replicated
-            // rendering mode
-            //if (mpicommon::IamTheMaster() || allTiles[t]->mine())
-            // TODO: We need to know how many tiles where finished with error
-            // accumulation on the workers if we're the master so we know
-            // how many tiles they're actually going to render and send us.
             if (allTiles[t]->mine()) {
               numTilesCompletedThisFrame++;
             }
+          } else if (mpicommon::IamTheMaster()) {
+            ++numTilesExpected[allTiles[t]->ownerID];
           }
         }
       }
@@ -745,19 +747,22 @@ namespace ospray {
     const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer,
                                           hasNormalBuffer, hasAlbedoBuffer);
 
+    const size_t totalTilesExpected = std::accumulate(numTilesExpected.begin(),
+                                                      numTilesExpected.end(),
+                                                      0);
     std::vector<char> tileGatherResult;
     std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
     std::vector<int> processOffsets(numGlobalRanks(), 0);
     if (IamTheMaster()) {
-      tileGatherResult.resize(allTiles.size() * tileSize);
-      for (size_t i = 0; i < allTiles.size(); ++i) {
-        tileBytesExpected[allTiles[i]->ownerID] += tileSize;
+      tileGatherResult.resize(totalTilesExpected * tileSize);
+      for (size_t i = 0; i < numTilesExpected.size(); ++i) {
+        tileBytesExpected[i] = numTilesExpected[i] * tileSize;
       }
       size_t recvOffset = 0;
       for (int i = 0; i < numGlobalRanks(); ++i) {
 #if 0
         std::cout << "Expecting " << tileBytesExpected[i] << " bytes from " << i
-          << ", #tiles: " << tileBytesExpected[i] / tileSize << "\n" << std::flush;
+          << ", #tiles: " << numTilesExpected[i] << "\n" << std::flush;
 #endif
         processOffsets[i] = recvOffset;
         recvOffset += tileBytesExpected[i];
@@ -765,15 +770,20 @@ namespace ospray {
     }
 
 #if 1
-    auto startCompr = high_resolution_clock::now();
-    size_t compressedSize = snappy::MaxCompressedLength(tileGatherBuffer.size());
+    const size_t renderedTileBytes = nextTileWrite.load();
+    size_t compressedSize = 0;
     std::vector<char> compressedBuf(compressedSize, 0);
-    snappy::RawCompress(tileGatherBuffer.data(), tileGatherBuffer.size(),
-                        compressedBuf.data(), &compressedSize);
-    auto endCompr = high_resolution_clock::now();
+    if (renderedTileBytes > 0) {
+      auto startCompr = high_resolution_clock::now();
+      compressedSize = snappy::MaxCompressedLength(renderedTileBytes);
+      compressedBuf.resize(compressedSize, 0);
+      snappy::RawCompress(tileGatherBuffer.data(), renderedTileBytes,
+          compressedBuf.data(), &compressedSize);
+      auto endCompr = high_resolution_clock::now();
 
-    compressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
-    compressedPercent = 100.0 * (static_cast<double>(compressedSize) / tileGatherBuffer.size());
+      compressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
+      compressedPercent = 100.0 * (static_cast<double>(compressedSize) / renderedTileBytes);
+    }
 
     auto startGather = high_resolution_clock::now();
     // We've got to use an int since Gatherv only takes int counts.
@@ -803,18 +813,18 @@ namespace ospray {
     if (IamTheMaster()) {
       // Now we must decompress each ranks data to process it, though we
       // already know how much data each is sending us and where to write it.
-      startCompr = high_resolution_clock::now();
+      auto startCompr = high_resolution_clock::now();
       tasking::parallel_for(numGlobalRanks(), [&](int i) {
           snappy::RawUncompress(&compressedResults[compressedOffsets[i]],
                                 gatherSizes[i],
                                 &tileGatherResult[processOffsets[i]]);
       });
-      endCompr = high_resolution_clock::now();
+      auto endCompr = high_resolution_clock::now();
       decompressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
     }
 #else
     auto startGather = high_resolution_clock::now();
-    MPI_CALL(Gatherv(tileGatherBuffer.data(), tileGatherBuffer.size(), MPI_BYTE,
+    MPI_CALL(Gatherv(tileGatherBuffer.data(), renderedTileBytes, MPI_BYTE,
                      tileGatherResult.data(), tileBytesExpected.data(),
                      processOffsets.data(), MPI_BYTE,
                      masterRank(), world.comm));
@@ -824,7 +834,7 @@ namespace ospray {
 
     if (IamTheMaster()) {
       auto startMasterWrite = high_resolution_clock::now();
-      tasking::parallel_for(getTotalTiles(), [&](int tile) {
+      tasking::parallel_for(totalTilesExpected, [&](size_t tile) {
         auto *msg = reinterpret_cast<TileMessage*>(&tileGatherResult[tile * tileSize]);
         if (msg->command & MASTER_WRITE_TILE_I8) {
           this->processMessage((MasterTileMessage_RGBA_I8*)msg);
