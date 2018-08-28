@@ -341,20 +341,18 @@ namespace ospray {
         auto end = std::unique(tilesForFrame.begin(), tilesForFrame.end());
         tilesForFrame.erase(end, tilesForFrame.end());
 
-        if (errorThreshold > 0.0) {
-          // Filter any tiles which are finished due to reaching the
-          // error threshold. This should let TBB better allocate threads only
-          // to tiles that actually need work.
-          const uint32_t numTiles_x = static_cast<uint32_t>(fb->getNumTiles().x);
-          end = std::partition(tilesForFrame.begin(), tilesForFrame.end(),
-                               [&](const int &i){
-                                 const uint32_t tile_y = i / numTiles_x;
-                                 const uint32_t tile_x = i - tile_y*numTiles_x;
-                                 const vec2i tileID(tile_x, tile_y);
-                                 return dfb->tileError(tileID) > errorThreshold;
-                               });
-          tilesForFrame.erase(end, tilesForFrame.end());
-        }
+        // Filter any tiles which are finished due to reaching the
+        // error threshold. This should let TBB better allocate threads only
+        // to tiles that actually need work.
+        const uint32_t numTiles_x = static_cast<uint32_t>(fb->getNumTiles().x);
+        end = std::partition(tilesForFrame.begin(), tilesForFrame.end(),
+                             [&](const int &i){
+                               const uint32_t tile_y = i / numTiles_x;
+                               const uint32_t tile_x = i - tile_y*numTiles_x;
+                               const vec2i tileID(tile_x, tile_y);
+                               return dfb->tileError(tileID) > errorThreshold;
+                             });
+        tilesForFrame.erase(end, tilesForFrame.end());
       }
 
       tasking::parallel_for(tilesForFrame.size(), [&](size_t taskIndex) {
