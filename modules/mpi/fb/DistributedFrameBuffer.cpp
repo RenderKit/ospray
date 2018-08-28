@@ -562,26 +562,6 @@ namespace ospray {
 
     if (pixelOp) {
       pixelOp->postAccum(tile->final);
-      // WILL This may not actually be needed
-#if 0
-      // WILL: I've put this back in b/c I'm pretty sure that removing it
-      // breaks pixel ops being able to effect the image in the distributed
-      // rendering (unless something else has changed)
-      if (colorBufferFormat == OSP_FB_RGBA8 || colorBufferFormat == OSP_FB_SRGBA) {
-        uint8_t *colors = reinterpret_cast<uint8_t*>(tile->color);
-        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
-          colors[i * 4] = clamp(tile->final.r[i] * 255.0, 0.0, 255.0);
-          colors[i * 4 + 1] = clamp(tile->final.g[i] * 255.0, 0.0, 255.0);
-          colors[i * 4 + 2] = clamp(tile->final.b[i] * 255.0, 0.0, 255.0);
-          colors[i * 4 + 3] = clamp(tile->final.a[i] * 255.0, 0.0, 255.0);
-        }
-      } else if (colorBufferFormat == OSP_FB_RGBA32F) {
-        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
-          tile->color[i] = vec4f(tile->final.r[i], tile->final.g[i],
-              tile->final.b[i], tile->final.a[i]);
-        }
-      }
-#endif
     }
 
     // Write the final colors into the color buffer
@@ -615,8 +595,7 @@ namespace ospray {
     // Note: In the data-distributed device the master will be rendering
     // and completing tiles.
     if (mpicommon::IamAWorker()) {
-      // TODO still send normal&albedo
-      // WILL: Why? for denoising?
+      // TODO still send normal & albedo
       if (colorBufferFormat == OSP_FB_NONE) {
         SCOPED_LOCK(tileErrorsMutex);
         tileIDs.push_back(tile->begin/TILE_SIZE);
