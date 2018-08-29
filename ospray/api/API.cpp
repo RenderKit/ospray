@@ -461,19 +461,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert2(type != nullptr, "invalid material type identifier in ospNewMaterial");
-  OSPMaterial material = currentDevice().newMaterial(renderer, type);
-  if (material == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create material '" << type << "'";
-  }
-  return material;
-}
-OSPRAY_CATCH_END(nullptr)
-
 extern "C" OSPMaterial ospNewMaterial2(const char *renderer_type,
                                        const char *material_type)
 OSPRAY_CATCH_BEGIN

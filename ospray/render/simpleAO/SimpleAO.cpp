@@ -52,8 +52,6 @@ namespace ospray {
     ispc::SimpleAO_set(getIE(), numSamples, rayLength);
   }
 
-  // OSP_REGISTER_RENDERER(SimpleAO, ao);
-
   /*! \note Reintroduce aoX renderers for compatibility, they should be
             deprecated!*/
   OSP_REGISTER_RENDERER(SimpleAO(4), ao);

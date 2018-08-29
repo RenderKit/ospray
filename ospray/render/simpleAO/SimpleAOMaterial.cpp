@@ -36,5 +36,7 @@ namespace ospray {
                                  map_Kd.ptr != NULL ? map_Kd->getIE() : NULL);
     }
 
+    OSP_REGISTER_MATERIAL(ao, simpleao::Material, default);
+
   }//namespace ospray::simpleao
 }//namespace ospray

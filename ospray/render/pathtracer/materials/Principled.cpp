@@ -108,13 +108,13 @@ namespace ospray {
           thin,
           backlight.factor, backlight.map ? backlight.map->getIE() : nullptr, (const ispc::AffineSpace2f&)backlight.xform,
           thickness.factor, thickness.map ? thickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)thickness.xform,
-          
+
           outsideIor,
           (const ispc::vec3f&)outsideTransmissionColor,
           outsideTransmissionDepth);
       }
     };
 
-    OSP_REGISTER_MATERIAL(Principled,PathTracer_Principled);
+    OSP_REGISTER_MATERIAL(pathtracer, Principled, Principled);
   }
 }

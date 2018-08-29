@@ -411,40 +411,24 @@ namespace ospray {
     }
 
     /*! have given renderer create a new material */
-    OSPMaterial ISPCDevice::newMaterial(OSPRenderer _renderer,
-                                         const char *type)
+    OSPMaterial ISPCDevice::newMaterial(OSPRenderer /*_renderer*/,
+                                        const char */*type*/)
     {
-      Assert2(type != nullptr, "invalid material type identifier");
-
-      // -------------------------------------------------------
-      // first, check if there's a renderer that we can ask to create the
-      // material.
-      //
-      Renderer *renderer = (Renderer *)_renderer;
-      if (renderer) {
-        Material *material = renderer->createMaterial(type);
-        if (material) {
-          return (OSPMaterial)material;
-        }
-      }
-
-      // -------------------------------------------------------
-      // if there was no renderer, check if there's a loadable material by that
-      // name
-      //
-      Material *material = Material::createMaterial(type);
-      if (!material) return nullptr;
-      return (OSPMaterial)material;
+      NOT_IMPLEMENTED;
     }
 
     /*! have given renderer create a new material */
     OSPMaterial ISPCDevice::newMaterial(const char *renderer_type,
-                                         const char *material_type)
+                                        const char *material_type)
     {
-      auto renderer = newRenderer(renderer_type);
-      auto material = newMaterial(renderer, material_type);
-      release(renderer);
-      return material;
+      auto *mat = Material::createInstance(renderer_type, material_type);
+      if (!mat) {
+        if (debugMode) {
+          throw std::runtime_error("unknown material type '"
+                                   + std::string(material_type) + "'");
+        }
+      }
+      return (OSPMaterial)mat;
     }
 
     /*! create a new camera object (out of list of registered cameras) */

@@ -47,10 +47,9 @@ namespace ospray {
 
   Material *PathTracer::createMaterial(const char *type)
   {
-    std::string ptType = std::string("PathTracer_")+type;
     Material *material = nullptr;
     try {
-      material = Material::createMaterial(ptType.c_str());
+      material = Material::createInstance("pathtracer", type);
     } catch (const std::runtime_error &) {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
@@ -59,7 +58,7 @@ namespace ospray {
                         << "'" << " (replacing with OBJMaterial)";
       }
       numOccurrances[T]++;
-      material = Material::createMaterial("PathTracer_OBJMaterial");
+      material = Material::createInstance("pathtracer", "OBJMaterial");
     }
     return material;
   }

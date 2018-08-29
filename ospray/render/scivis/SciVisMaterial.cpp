@@ -33,19 +33,19 @@ namespace ospray {
       map_Kd = (Texture2D*)getParamObject("map_Kd",
                                           getParamObject("map_kd", nullptr));
       affine2f xform_Kd = getTextureTransform("map_Kd")
-        * getTextureTransform("map_kd"); 
+        * getTextureTransform("map_kd");
       map_Ks = (Texture2D*)getParamObject("map_Ks",
                                           getParamObject("map_ks", nullptr));
       affine2f xform_Ks = getTextureTransform("map_Ks")
-        * getTextureTransform("map_ks"); 
+        * getTextureTransform("map_ks");
       map_Ns = (Texture2D*)getParamObject("map_Ns",
                                           getParamObject("map_ns", nullptr));
       affine2f xform_Ns = getTextureTransform("map_Ns")
-        * getTextureTransform("map_ns"); 
+        * getTextureTransform("map_ns");
       map_Bump = (Texture2D*)getParamObject("map_Bump",
                                             getParamObject("map_bump",nullptr));
       affine2f xform_Bump = getTextureTransform("map_Bump")
-        * getTextureTransform("map_bump"); 
+        * getTextureTransform("map_bump");
       linear2f rot_Bump = xform_Bump.l.orthogonal().transposed();
 
       d  = getParam1f("d", 1.f);
@@ -73,9 +73,9 @@ namespace ospray {
                                volume ? volume->getIE() : nullptr);
     }
 
-    OSP_REGISTER_MATERIAL(SciVisMaterial, SciVisMaterial);
-    OSP_REGISTER_MATERIAL(SciVisMaterial, OBJMaterial);
-    OSP_REGISTER_MATERIAL(SciVisMaterial, default);
+    OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, SciVisMaterial);
+    OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, OBJMaterial);
+    OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, default);
 
   } // ::ospray::scivis
 } // ::ospray

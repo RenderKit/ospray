@@ -156,7 +156,7 @@ void Base::SetLights()
 
 void Base::SetRenderer()
 {
-  renderer = ospNewRenderer(rendererType.data());
+  renderer = ospNewRenderer(rendererType.c_str());
   ospSet1i(renderer, "aoSamples", 1);
   ospSet1f(renderer, "bgColor", 1.0f);
   ospSetObject(renderer, "model",  world);
@@ -172,7 +172,7 @@ void Base::SetFramebuffer()
 
 OSPMaterial Base::CreateMaterial(std::string type)
 {
-  OSPMaterial material = ospNewMaterial(renderer, type.data());
+  OSPMaterial material = ospNewMaterial2(rendererType.c_str(), type.data());
   EXPECT_TRUE(material);
 
   if (type == "Glass") {
@@ -322,7 +322,7 @@ void Box::SetUp()
   data = ospNewData(2, OSP_INT3, lightIndices);
   ospSetData(lightSquare, "index", data);
   ospRelease(data);
-  OSPMaterial lightMaterial = ospNewMaterial(renderer, "Luminous");
+  OSPMaterial lightMaterial = ospNewMaterial2(rendererType.c_str(), "Luminous");
   ospSetf(lightMaterial, "intensity", 20.f);
   ospSet3f(lightMaterial, "color", 1.f, 0.7f, 0.3f);
   ospCommit(lightMaterial);
@@ -381,7 +381,7 @@ void Box::SetMaterials()
 
 OSPMaterial Box::GetMaterial(std::string type)
 {
-  OSPMaterial newMaterial = ospNewMaterial(renderer, type.data());
+  OSPMaterial newMaterial = ospNewMaterial2(rendererType.c_str(), type.data());
   if (type == "OBJMaterial") {
     ospSetf(newMaterial, "Ns", 100.f);
   } else if (type == "Glass") {
@@ -700,7 +700,7 @@ void MTLMirrors::SetUp() {
   data = ospNewData(4, OSP_INT3, mirrorsIndices);
   ASSERT_TRUE(data);
   ospSetData(mirrors, "index", data);
-  OSPMaterial mirrorsMaterial = ospNewMaterial(renderer, "OBJMaterial");
+  OSPMaterial mirrorsMaterial = ospNewMaterial2(rendererType.c_str(), "OBJMaterial");
   ASSERT_TRUE(mirrorsMaterial);
   ospSet3f(mirrorsMaterial, "Kd", Kd.x, Kd.y, Kd.z);
   ospSet3f(mirrorsMaterial, "Ks", Ks.x, Ks.y, Ks.z);
@@ -719,7 +719,7 @@ void MTLMirrors::SetUp() {
   data = ospNewData(1, OSP_FLOAT4, sphereCenters);
   ASSERT_TRUE(data);
   ospSetData(light, "spheres", data);
-  ospSetMaterial(light, ospNewMaterial(renderer, "Luminous"));
+  ospSetMaterial(light, ospNewMaterial2(rendererType.c_str(), "Luminous"));
   ospCommit(light);
   AddGeometry(light);
 
@@ -862,7 +862,7 @@ void TextureVolume::SetUp()
   ospRelease(transferFun);
   ospCommit(torus);
 
-  OSPMaterial sphereMaterial = ospNewMaterial(renderer, "default");
+  OSPMaterial sphereMaterial = ospNewMaterial2(rendererType.c_str(), "default");
   OSPTexture tex = ospNewTexture("volume");
   ospSetObject(tex, "volume", torus);
   ospCommit(tex);

@@ -20,15 +20,11 @@
 
 namespace ospray {
 
-  /*! \brief creates an abstract material class of given type
-
-    The respective material type must be a registered material type
-    in either ospray proper or any already loaded module. For
-    material types specified in special modules, make sure to call
-    ospLoadModule first. */
-  Material *Material::createMaterial(const char *type)
+  Material *Material::createInstance(const char *renderer_type,
+                                     const char *material_type)
   {
-    return createInstanceHelper<Material, OSP_MATERIAL>(type);
+    std::string type = std::string(renderer_type) + "__" + material_type;
+    return createInstanceHelper<Material, OSP_MATERIAL>(type.c_str());
   }
 
   std::string Material::toString() const

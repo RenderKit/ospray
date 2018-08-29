@@ -334,7 +334,7 @@ extern "C" {
 
   /*! set callback for given Device to call when an error occurs*/
   OSPRAY_INTERFACE void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
-    
+
   //! create a new renderer of given type
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
@@ -351,9 +351,9 @@ extern "C" {
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
   //! let given renderer create a new material of given type
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
-
-  //! let given renderer create a new material of given type
+  //
+  // NOTE: ospNewMaterial(OSPRenderer, material_type) is no longer supported,
+  //       please use ospNewMaterial2() instead
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
 
   //! let given renderer create a new light of given type
