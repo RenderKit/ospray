@@ -45,25 +45,6 @@ namespace ospray {
     return "ospray::PathTracer";
   }
 
-  Material *PathTracer::createMaterial(const char *type)
-  {
-    Material *material = nullptr;
-    try {
-      material = Material::createInstance("pathtracer", type);
-    } catch (const std::runtime_error &) {
-      std::map<std::string,int> numOccurrances;
-      const std::string T = type;
-      if (numOccurrances[T] == 0) {
-        postStatusMsg() << "#osp:PT: does not know material type '" << type
-                        << "'" << " (replacing with OBJMaterial)";
-      }
-      numOccurrances[T]++;
-      material = Material::createInstance("pathtracer", "OBJMaterial");
-    }
-    return material;
-  }
-
-
   void PathTracer::generateGeometryLights(const Model *const model
       , const affine3f& xfm
       , float *const _areaPDF

@@ -360,7 +360,10 @@ extern "C" {
   OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
 
   //! let given renderer create a new light of given type
-  OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
+
+  //! let given renderer create a new light of given type
+  OSPRAY_INTERFACE OSPLight ospNewLight3(const char *light_type);
 
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot

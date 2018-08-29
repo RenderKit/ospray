@@ -127,7 +127,7 @@ int main(int argc, const char **argv) {
   OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
 
   // create and setup light for Ambient Occlusion
-  OSPLight light = ospNewLight2("scivis", "ambient");
+  OSPLight light = ospNewLight3("ambient");
   ospCommit(light);
   OSPData lights = ospNewData(1, OSP_LIGHT, &light, 0);
   ospCommit(lights);

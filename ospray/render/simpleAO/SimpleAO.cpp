@@ -23,16 +23,9 @@
 namespace ospray {
 
   //! \brief Constructor
-  SimpleAO::SimpleAO(int defaultNumSamples)
-    : defaultNumSamples(defaultNumSamples)
+  SimpleAO::SimpleAO()
   {
     ispcEquivalent = ispc::SimpleAO_create(this);
-  }
-
-  /*! \brief create a material of given type */
-  ospray::Material *SimpleAO::createMaterial(const char * /*type*/)
-  {
-    return new simpleao::Material;
   }
 
   /*! \brief common function to help printf-debugging */
@@ -47,19 +40,12 @@ namespace ospray {
   {
     Renderer::commit();
 
-    int   numSamples = getParam1i("aoSamples", defaultNumSamples);
+    int   numSamples = getParam1i("aoSamples", 1);
     float rayLength  = getParam1f("aoDistance", 1e20f);
     ispc::SimpleAO_set(getIE(), numSamples, rayLength);
   }
 
-  /*! \note Reintroduce aoX renderers for compatibility, they should be
-            deprecated!*/
-  OSP_REGISTER_RENDERER(SimpleAO(4), ao);
-  OSP_REGISTER_RENDERER(SimpleAO(1), ao1);
-  OSP_REGISTER_RENDERER(SimpleAO(2), ao2);
-  OSP_REGISTER_RENDERER(SimpleAO(4), ao4);
-  OSP_REGISTER_RENDERER(SimpleAO(8), ao8);
-  OSP_REGISTER_RENDERER(SimpleAO(16), ao16);
+  OSP_REGISTER_RENDERER(SimpleAO, ao);
 
 } // ::ospray
 

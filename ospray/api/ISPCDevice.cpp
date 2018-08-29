@@ -411,13 +411,6 @@ namespace ospray {
     }
 
     /*! have given renderer create a new material */
-    OSPMaterial ISPCDevice::newMaterial(OSPRenderer /*_renderer*/,
-                                        const char */*type*/)
-    {
-      NOT_IMPLEMENTED;
-    }
-
-    /*! have given renderer create a new material */
     OSPMaterial ISPCDevice::newMaterial(const char *renderer_type,
                                         const char *material_type)
     {
@@ -479,31 +472,11 @@ namespace ospray {
       return (OSPTransferFunction)transferFunction;
     }
 
-    /*! have given renderer create a new Light */
-    OSPLight ISPCDevice::newLight(OSPRenderer _renderer, const char *type)
+    OSPLight ISPCDevice::newLight(const char *type)
     {
-      Renderer  *renderer = (Renderer *)_renderer;
-      if (renderer) {
-        Light *light = renderer->createLight(type);
-        if (light) {
-          return (OSPLight)light;
-        }
-      }
-
-      // If there was no renderer try to see if there is a loadable light by
-      // that name
-      Light *light = Light::createLight(type);
+      Light *light = Light::createInstance(type);
       if (!light) return nullptr;
       return (OSPLight)light;
-    }
-
-    OSPLight ISPCDevice::newLight(const char *renderer_type,
-                                   const char *light_type)
-    {
-      auto renderer = newRenderer(renderer_type);
-      auto light = newLight(renderer, light_type);
-      release(renderer);
-      return light;
     }
 
     /*! create a new Texture object */

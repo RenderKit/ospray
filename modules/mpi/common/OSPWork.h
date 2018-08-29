@@ -204,42 +204,19 @@ namespace ospray {
       struct NewLight : public Work
       {
         NewLight() = default;
-        NewLight(const char* type, OSPRenderer renderer, ObjectHandle handle)
-          : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
+        NewLight(const char* type, ObjectHandle handle)
+          : type(type), handle(handle)
         {}
 
         void run() override;
 
         void serialize(WriteStream &b) const override
-        { b << (int64)rendererHandle << (int64)handle << type; }
+        { b << (int64)handle << type; }
 
         void deserialize(ReadStream &b) override
-        { b >> rendererHandle.i64 >> handle.i64 >> type; }
+        { b >> handle.i64 >> type; }
 
         std::string  type;
-        ObjectHandle rendererHandle;
-        ObjectHandle handle;
-      };
-
-      struct NewLight2 : public Work
-      {
-        NewLight2() = default;
-        NewLight2(const char *renderer_type,
-                  const char *light_type,
-                  ObjectHandle handle)
-          : rendererType(renderer_type), lightType(light_type), handle(handle)
-        {}
-
-        void run() override;
-
-        void serialize(WriteStream &b) const override
-        { b << (int64)handle << rendererType << lightType; }
-
-        void deserialize(ReadStream &b) override
-        { b >> handle.i64 >> rendererType >> lightType; }
-
-        std::string  rendererType;
-        std::string  lightType;
         ObjectHandle handle;
       };
 
