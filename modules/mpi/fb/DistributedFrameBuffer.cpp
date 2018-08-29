@@ -393,11 +393,10 @@ namespace ospray {
     SCOPED_LOCK(numTilesMutex);
     numTilesCompletedThisFrame += numTiles;
 
-    // TODO WILL: This should only be called if the user wants progress information
     // TODO: we can cut down network traffic by reporting only every 2 tiles
     // we complete, though we can't rely on just numTiles for this b/c it
     // will usually just be 1.
-    if (numTiles > 0) {
+    if (reportRenderingProgress && numTiles > 0) {
       auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
       ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
       msgData->command = PROGRESS_MESSAGE;
@@ -505,12 +504,12 @@ namespace ospray {
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
 
     mpi::messaging::disableAsyncMessaging();
-    frameIsActive = false;
     // Broadcast the rendering cancellation status to the workers
     // First we barrier to sync that this Bcast is actually picked up by the
     // right code path. Otherwise it may match with the command receiving
     // bcasts in the worker loop.
     MPI_CALL(Barrier(world.comm));
+    frameIsActive = false;
 
     // Report that we're 100% done and do a final check for cancellation
     if (!api::currentDevice().reportProgress(1.0)) {
@@ -787,7 +786,7 @@ namespace ospray {
       }
       size_t recvOffset = 0;
       for (int i = 0; i < numGlobalRanks(); ++i) {
-#if 1
+#if 0
         std::cout << "Expecting " << tileBytesExpected[i] << " bytes from " << i
           << ", #tiles: " << numTilesExpected[i] << "\n" << std::flush;
 #endif
@@ -1063,6 +1062,9 @@ namespace ospray {
   void DFB::beginFrame()
   {
     cancelRendering = false;
+    reportRenderingProgress = api::currentDevice().hasProgressCallback();
+    MPI_CALL(Bcast(&reportRenderingProgress, 1, MPI_INT,
+                   mpicommon::masterRank(), mpicommon::world.comm));
     mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }

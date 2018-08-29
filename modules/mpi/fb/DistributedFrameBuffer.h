@@ -277,6 +277,8 @@ namespace ospray {
 
     bool masterIsAWorker {false};
 
+    int reportRenderingProgress;
+
     //! condition that gets triggered when the frame is done
     std::condition_variable frameDoneCond;
 
