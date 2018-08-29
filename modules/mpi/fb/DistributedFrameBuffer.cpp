@@ -670,8 +670,7 @@ namespace ospray {
     globalTilesCompletedThisFrame += msg->numCompleted;
     const float progress = globalTilesCompletedThisFrame / (float)getTotalTiles();
     if (!api::currentDevice().reportProgress(progress)) {
-      // WILL TODO
-      //sendCancelRenderingMessage();
+      sendCancelRenderingMessage();
     }
   }
 
@@ -926,6 +925,14 @@ namespace ospray {
 
   void DFB::sendCancelRenderingMessage()
   {
+    PING;
+    // WILL: Because we don't have a threaded MPI and the master
+    // in replicated rendering will just be waiting in the bcast when
+    // we call cancel, the message would never actually be sent out this
+    // frame. It would actually be delayed and sent the following frame.
+    // Instead, the best we can do without a threaded MPI at this point
+    // is to just cancel the final gathering stage.
+    cancelRendering = true;
     /*
     std::cout << "SENDING CANCEL RENDERING MSG\n";
     PING;
