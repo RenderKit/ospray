@@ -492,12 +492,17 @@ IF(OSPRAY_BUILD_ISPC_DEVICE)
   )
 ENDIF()
 
-# build ospTutorial, for testing
-ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
-TARGET_LINK_LIBRARIES(ospTutorial ospray)
-# C++ version
-ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
-TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
+OPTION(OSPRAY_ENABLE_TUTORIAL
+  "Build the tutorial executable" ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_TUTORIAL)
+IF(OSPRAY_ENABLE_TUTORIAL)
+  # build ospTutorial, for demonstration and API testing
+  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
+  TARGET_LINK_LIBRARIES(ospTutorial ospray)
+  # C++ version
+  ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
+  TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
+ENDIF()
 
 ##############################################################
 # Configure find_package files
