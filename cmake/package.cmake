@@ -168,7 +168,7 @@ ELSE() # Linux specific settings
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.linux")
   ELSE()
     SET(CPACK_GENERATOR RPM)
-    SET(CPACK_COMPONENTS_ALL lib devel apps mpi)
+    SET(CPACK_COMPONENTS_ALL lib devel apps mpi test)
     SET(CPACK_RPM_COMPONENT_INSTALL ON)
 
     # dependencies
@@ -183,6 +183,7 @@ ELSE() # Linux specific settings
       SET(CPACK_RPM_apps_PACKAGE_REQUIRES "ospray-lib >= ${OSPRAY_VERSION}")
       SET(CPACK_RPM_devel_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}, ispc >= ${ISPC_VERSION_REQUIRED}")
       SET(CPACK_RPM_mpi_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
+      SET(CPACK_RPM_test_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
     ENDIF()
 
     SET(CPACK_RPM_PACKAGE_RELEASE 1)
