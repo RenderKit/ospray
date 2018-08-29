@@ -50,7 +50,6 @@ namespace maml {
     // WILL: Logging
     void logMessageTimings(std::ostream &os);
 
-  private:
     /*! start the service; from this point on maml is free to use MPI
       calls to send/receive messages; if your MPI library is not
       thread safe the app should _not_ do any MPI calls until 'stop()'
@@ -63,6 +62,8 @@ namespace maml {
       receives any more messages (until the next 'start()' call) even
       if they are already in flight */
     void stop();
+
+  private:
 
     // Helper functions //
 
@@ -117,10 +118,10 @@ namespace maml {
     // NOTE(jda) - these are only used when _not_ using the tasking sytem...
     std::mutex tasksMutex;
     bool tasksAreRunning {false};
-    std::thread sendReceiveThread, processInboxThread;
+    //std::thread sendReceiveThread, processInboxThread;
     std::atomic<bool> quitThreads{false};
-    //std::unique_ptr<ospcommon::AsyncLoop> sendReceiveThread;
-    //std::unique_ptr<ospcommon::AsyncLoop> processInboxThread;
+    std::unique_ptr<ospcommon::AsyncLoop> sendReceiveThread;
+    std::unique_ptr<ospcommon::AsyncLoop> processInboxThread;
 
     std::mutex statsMutex;
     using CompressionPercent = std::chrono::duration<double>;

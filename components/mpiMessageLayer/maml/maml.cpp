@@ -54,9 +54,19 @@ namespace maml {
     Context::singleton->registerHandlerFor(comm,handler);
   }
 
+  void start()
+  {
+    Context::singleton->start();
+  }
+
   bool isRunning()
   {
     return Context::singleton->isRunning();
+  }
+
+  void stop()
+  {
+    Context::singleton->stop();
   }
 
   /*! send given messsage to given comm:rank. Once this function has

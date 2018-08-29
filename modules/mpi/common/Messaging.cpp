@@ -127,8 +127,7 @@ namespace ospray {
 
       void enableAsyncMessaging()
       {
-        // WILL: It's always enabled
-        //maml::start();
+        maml::start();
       }
 
       void sendTo(int globalRank, ObjectHandle object,
@@ -145,8 +144,7 @@ namespace ospray {
 
       void disableAsyncMessaging()
       {
-        // WILL: It's always enabled
-        //maml::stop();
+        maml::stop();
       }
 
     } // ::ospray::mpi::messaging
