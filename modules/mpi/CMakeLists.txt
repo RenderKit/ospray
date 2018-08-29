@@ -27,12 +27,11 @@ IF (OSPRAY_MODULE_MPI)
 
   SET(OSPRAY_DEFAULT_COMPONENT mpi)
 
-  find_package(Snappy REQUIRED)
-
   OSPRAY_CONFIGURE_MPI()
 
   OSPRAY_BUILD_COMPONENT(mpiCommon)
   OSPRAY_BUILD_COMPONENT(mpiMessageLayer)
+  OSPRAY_BUILD_COMPONENT(snappy)
 
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
@@ -63,7 +62,7 @@ IF (OSPRAY_MODULE_MPI)
     ospray_module_ispc
     ospray_mpi_common
     ospray_mpi_maml
-    Snappy::snappy
+    snappy
   )
 
   ##############################################################
