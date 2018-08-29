@@ -365,9 +365,11 @@ namespace ospray {
       return createLocalObject<Geometry, OSPGeometry>(type);
     }
 
-    OSPMaterial MPIDistributedDevice::newMaterial(const char *, const char *)
+    OSPMaterial MPIDistributedDevice::newMaterial(const char *renderer_type,
+                                                  const char *material_type)
     {
-      NOT_IMPLEMENTED;
+      auto *instance = Material::createInstance(renderer_type, material_type);
+      return (OSPMaterial)instance;
     }
 
     OSPTransferFunction
@@ -427,14 +429,16 @@ namespace ospray {
       }
     }
 
-    void MPIDistributedDevice::setMaterial(OSPGeometry, OSPMaterial)
+    void MPIDistributedDevice::setMaterial(OSPGeometry _geom, OSPMaterial _mat)
     {
-      NOT_IMPLEMENTED;
+      auto *geom = lookupObject<Geometry>(_geom);
+      auto *mat  = lookupObject<Material>(_mat);
+      geom->setMaterial(mat);
     }
 
-    OSPTexture MPIDistributedDevice::newTexture(const char *)
+    OSPTexture MPIDistributedDevice::newTexture(const char *type)
     {
-      NOT_IMPLEMENTED;
+      return createLocalObject<Texture, OSPTexture>(type);
     }
 
     void MPIDistributedDevice::sampleVolume(float **,
