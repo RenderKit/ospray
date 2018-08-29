@@ -185,24 +185,7 @@ namespace ospRandSciVisTest {
     // when computing the automatically picked camera position.
     box3f worldBounds(vec3f(0), vec3f(1));
 
-    /* The regions listing specifies the data regions that this rank owns
-     * and is responsible for rendering. All volumes and geometry on the rank
-     * should be contained within these bounds and will be clipped against them.
-     * In the case of ghost regions or splitting geometry across the region border
-     * it's up to the user to ensure the other rank also has the geometry being
-     * split and renders the correct region bounds. The region data is specified
-     * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
-     * regions bounding box.
-     *
-     * On some ranks we add some additional regions to clip the volume
-     * and make some gaps, just to show usage and test multiple regions per-rank
-     */
-    std::vector<gensv::DistributedRegion> regions{
-      gensv::DistributedRegion(volume.bounds, mpicommon::globalRank())
-    };
-    ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
-        OSP_CHAR, regions.data());
-    model.set("regions", regionData);
+    model.set("id", mpicommon::world.rank);
     model.commit();
 
     auto camera = ospray::cpp::Camera("perspective");
