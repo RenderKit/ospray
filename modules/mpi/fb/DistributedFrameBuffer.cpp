@@ -339,23 +339,19 @@ namespace ospray {
 
       globalTilesCompletedThisFrame = 0;
       numTilesCompletedThisFrame = 0;
-      if (hasAccumBuffer) {
-        for (int t = 0; t < getTotalTiles(); t++) {
-          const uint32_t nx = static_cast<uint32_t>(getNumTiles().x);
-          const uint32_t ty = t / nx;
-          const uint32_t tx = t - ty * nx;
-          const vec2i tileID(tx, ty);
-          if (tileError(tileID) <= errorThreshold) {
-            if (allTiles[t]->mine()) {
-              numTilesCompletedThisFrame++;
-            }
-          } else if (mpicommon::IamTheMaster()) {
-            ++numTilesExpected[allTiles[t]->ownerID];
+      for (int t = 0; t < getTotalTiles(); t++) {
+        const uint32_t nx = static_cast<uint32_t>(getNumTiles().x);
+        const uint32_t ty = t / nx;
+        const uint32_t tx = t - ty * nx;
+        const vec2i tileID(tx, ty);
+        if (hasAccumBuffer && tileError(tileID) <= errorThreshold) {
+          if (allTiles[t]->mine()) {
+            numTilesCompletedThisFrame++;
           }
+        } else if (mpicommon::IamTheMaster()) {
+          ++numTilesExpected[allTiles[t]->ownerID];
         }
       }
-      std::cout << "Finished " << numTilesCompletedThisFrame
-        << " based on error threshold\n" << std::flush;
 
       frameIsDone = false;
 
@@ -401,7 +397,7 @@ namespace ospray {
     // TODO: we can cut down network traffic by reporting only every 2 tiles
     // we complete, though we can't rely on just numTiles for this b/c it
     // will usually just be 1.
-    if (false) {//numTiles > 0) {
+    if (numTiles > 0) {
       auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
       ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
       msgData->command = PROGRESS_MESSAGE;
@@ -410,19 +406,9 @@ namespace ospray {
       mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
     }
 
-    std::cout << "Num tiles done: " << numTilesCompletedThisFrame
-      << ", my tiles: " << myTiles.size() << "\n" << std::flush;
-
-    for (auto &t : myTiles) {
-      std::cout << "Tile " << t->tileID
-        << (t->isComplete() ? " complete" : " unfinished")
-        << "\n" << std::flush;
-    }
-
     if (mpicommon::IamAWorker()
         || (mpicommon::IamTheMaster() && masterIsAWorker))
     {
-      PING;
       return numTilesCompletedThisFrame == myTiles.size();
     }
     return numTilesCompletedThisFrame == static_cast<int32_t>(getTotalTiles());
@@ -510,8 +496,6 @@ namespace ospray {
     using namespace mpicommon;
     using namespace std::chrono;
 
-    PING;
-
     auto startWaitFrame = high_resolution_clock::now();
     std::unique_lock<std::mutex> lock(mutex);
     frameDoneCond.wait(lock, [&]{
@@ -520,22 +504,13 @@ namespace ospray {
     auto endWaitFrame = high_resolution_clock::now();
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
 
-    for (auto &t : myTiles) {
-      std::cout << "In waituntilfinished, tile " << t->tileID
-        << (t->isComplete() ? " complete" : " unfinished")
-        << "\n" << std::flush;
-    }
-
-    PING;
-
     mpi::messaging::disableAsyncMessaging();
-    PING;
+    frameIsActive = false;
     // Broadcast the rendering cancellation status to the workers
     // First we barrier to sync that this Bcast is actually picked up by the
     // right code path. Otherwise it may match with the command receiving
     // bcasts in the worker loop.
     MPI_CALL(Barrier(world.comm));
-    frameIsActive = false;
 
     // Report that we're 100% done and do a final check for cancellation
     if (!api::currentDevice().reportProgress(1.0)) {
@@ -666,9 +641,6 @@ namespace ospray {
         const size_t n = nextTileWrite.fetch_add(tileMsg->size);
         std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
       }
-      std::cout << "Finished " << tile->begin << ", id "
-        << tile->begin.x /TILE_SIZE + (tile->begin.y /TILE_SIZE) * numTiles.x << "\n"
-        << std::flush;
 
       if (isFrameComplete(1)) {
         closeCurrentFrame();
@@ -687,10 +659,6 @@ namespace ospray {
         const size_t n = nextTileWrite.fetch_add(tileMsg->size);
         std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
       }
-      PING;
-      std::cout << "Finished " << tile->begin << ", id "
-        << tile->begin.x /TILE_SIZE + (tile->begin.y /TILE_SIZE) * numTiles.x << "\n"
-        << std::flush;
 
       if (isFrameComplete(1)) {
         closeCurrentFrame();
@@ -979,7 +947,6 @@ namespace ospray {
     DBG(printf("rank %i CLOSES frame\n", mpicommon::globalRank()));
 
     SCOPED_LOCK(mutex);
-    PING;
     frameIsDone   = true;
     frameDoneCond.notify_all();
   }
@@ -1001,8 +968,8 @@ namespace ospray {
                                                       sizeof(msgPayload));
 
       int dstRank = tileDesc->ownerID;
-      printf("rank %i: send tile %i,%i to %i\n",mpicommon::globalRank(),
-                 tileDesc->begin.x,tileDesc->begin.y,dstRank);
+      DBG(printf("rank %i: send tile %i,%i to %i\n",mpicommon::globalRank(),
+                 tileDesc->begin.x,tileDesc->begin.y,dstRank));
       mpi::messaging::sendTo(dstRank, myId, msg);
     } else {
       if (!frameIsActive)
@@ -1095,7 +1062,6 @@ namespace ospray {
 
   void DFB::beginFrame()
   {
-    PING;
     cancelRendering = false;
     mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();

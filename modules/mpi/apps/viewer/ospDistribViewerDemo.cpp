@@ -439,7 +439,7 @@ void runApp()
   renderer.commit();
   assert(renderer);
 
-  const int fbFlags = OSP_FB_COLOR;// | OSP_FB_ACCUM | OSP_FB_VARIANCE;
+  const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE;
   OSPFrameBufferFormat fbColorFormat = OSP_FB_SRGBA;
   if (fbnone) {
     fbColorFormat = OSP_FB_NONE;
