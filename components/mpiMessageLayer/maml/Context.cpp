@@ -140,7 +140,6 @@ namespace maml {
 
       int rank = 0;
       MPI_CALL(Comm_rank(msg->comm, &rank));
-      std::cout << "Sending to " << msg->rank << "\n" << std::flush;
       // Don't send to ourself, just forward to the inbox directly
       if (rank == msg->rank) {
         inbox.push_back(std::move(msg));
@@ -179,7 +178,6 @@ namespace maml {
         MPI_CALL(Irecv(msg->data, size, MPI_BYTE, msg->rank,
                        msg->tag, msg->comm, &request));
 
-        std::cout << "Recving from " << msg->rank << "\n" << std::flush;
         msg->started = high_resolution_clock::now();
 
         pendingRecvs.push_back(request);
@@ -214,7 +212,6 @@ namespace maml {
           if (DETAILED_LOGGING) {
             std::lock_guard<std::mutex> lock(statsMutex);
             Message *msg = sendCache[msgId].get();
-            std::cout << "Completed send to " << msg->rank << "\n" << std::flush;
             sendTimes.push_back(duration_cast<RealMilliseconds>(completed - msg->started));
           }
 
@@ -226,7 +223,6 @@ namespace maml {
           if (DETAILED_LOGGING) {
             std::lock_guard<std::mutex> lock(statsMutex);
             Message *msg = recvCache[msgId].get();
-            std::cout << "Completed recv from " << msg->rank << "\n" << std::flush;
             recvTimes.push_back(duration_cast<RealMilliseconds>(completed - msg->started));
           }
 
@@ -259,30 +255,12 @@ namespace maml {
 
   void Context::flushRemainingMessages()
   {
-    PING;
-    PRINT(pendingRecvs.empty());
-    PRINT(pendingSends.empty());
-    PRINT(inbox.empty());
-    PRINT(outbox.empty());
-    // TODO: flush is not correct, we could be in a state where a message
-    // is being processed, which will then produce more messages to send but
-    // the flushing will think all the work is done, and exit.
-    while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty() && !outbox.empty()) {
-      PRINT(pendingRecvs.empty());
-      PRINT(pendingSends.empty());
-      PRINT(inbox.empty());
-      PRINT(outbox.empty());
+    while (!pendingRecvs.empty() || !pendingSends.empty() || !inbox.empty() || !outbox.empty()) {
       sendMessagesFromOutbox();
       pollForAndRecieveMessages();
       waitOnSomeRequests();
       processInboxMessages();
-      PRINT(pendingRecvs.empty());
-      PRINT(pendingSends.empty());
-      PRINT(inbox.empty());
-      PRINT(outbox.empty());
-      PING;
     }
-    PING;
   }
 
   /*! start the service; from this point on maml is free to use MPI
@@ -293,7 +271,6 @@ namespace maml {
   {
     std::lock_guard<std::mutex> lock(tasksMutex);
     if (!isRunning()) {
-      PING;
       tasksAreRunning = true;
 
       auto launchMethod = AsyncLoop::LaunchMethod::AUTO;
@@ -306,21 +283,15 @@ namespace maml {
 
       if (!sendReceiveThread.get()) {
         sendReceiveThread = make_unique<AsyncLoop>([&](){
-        //sendReceiveThread = std::thread([&](){
-          //while (!quitThreads) {
-            sendMessagesFromOutbox();
-            pollForAndRecieveMessages();
-            waitOnSomeRequests();
-          //}
+          sendMessagesFromOutbox();
+          pollForAndRecieveMessages();
+          waitOnSomeRequests();
         }, launchMethod);
       }
 
       if (!processInboxThread.get()) {
         processInboxThread = make_unique<AsyncLoop>([&](){
-        //processInboxThread = std::thread([&](){
-          //while (!quitThreads) {
-            processInboxMessages();
-          //}
+          processInboxMessages();
         }, launchMethod);
       }
 
@@ -345,7 +316,6 @@ namespace maml {
   {
     std::lock_guard<std::mutex> lock(tasksMutex);
     if (tasksAreRunning) {
-      PING;
       quitThreads = true;
       if (sendReceiveThread) {
         sendReceiveThread->stop();
@@ -353,8 +323,6 @@ namespace maml {
       if (processInboxThread) {
         processInboxThread->stop();
       }
-      //sendReceiveThread.join();
-      //processInboxThread.join();
 
       tasksAreRunning = false;
       flushRemainingMessages();
