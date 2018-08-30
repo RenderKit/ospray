@@ -25,6 +25,13 @@
 namespace ospray {
   namespace scivis {
 
+    SciVisRenderer::SciVisRenderer()
+    {
+      externalNameFromAPI = "scivis";
+
+      ispcEquivalent = ispc::SciVisRenderer_create(this);
+    }
+
     void SciVisRenderer::commit()
     {
       Renderer::commit();
@@ -72,12 +79,13 @@ namespace ospray {
                                oneSidedLighting);
     }
 
-    SciVisRenderer::SciVisRenderer()
-    {
-      ispcEquivalent = ispc::SciVisRenderer_create(this);
-    }
-
+    OSP_REGISTER_RENDERER(SciVisRenderer, rt);
+    OSP_REGISTER_RENDERER(SciVisRenderer, raytracer);
     OSP_REGISTER_RENDERER(SciVisRenderer, scivis);
+    OSP_REGISTER_RENDERER(SciVisRenderer, sv);
+    OSP_REGISTER_RENDERER(SciVisRenderer, obj);
+    OSP_REGISTER_RENDERER(SciVisRenderer, OBJ);
+    OSP_REGISTER_RENDERER(SciVisRenderer, dvr);
 
   } // ::ospray::scivis
 } // ::ospray

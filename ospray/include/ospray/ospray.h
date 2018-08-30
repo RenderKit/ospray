@@ -350,10 +350,9 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *material_type);
+
   //! let given renderer create a new material of given type
-  //
-  // NOTE: ospNewMaterial(OSPRenderer, material_type) is no longer supported,
-  //       please use ospNewMaterial2() instead
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
 
   //! let given renderer create a new light of given type

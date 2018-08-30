@@ -23,8 +23,10 @@
 namespace ospray {
 
   //! \brief Constructor
-  SimpleAO::SimpleAO()
+  SimpleAO::SimpleAO(int defaultNumSamples) : numSamples(defaultNumSamples)
   {
+    externalNameFromAPI = "ao";
+
     ispcEquivalent = ispc::SimpleAO_create(this);
   }
 
@@ -45,7 +47,13 @@ namespace ospray {
     ispc::SimpleAO_set(getIE(), numSamples, rayLength);
   }
 
-  OSP_REGISTER_RENDERER(SimpleAO, ao);
+  OSP_REGISTER_RENDERER(SimpleAO(4), ao);
+
+  OSP_REGISTER_RENDERER(SimpleAO(1),  ao1);
+  OSP_REGISTER_RENDERER(SimpleAO(2),  ao2);
+  OSP_REGISTER_RENDERER(SimpleAO(4),  ao4);
+  OSP_REGISTER_RENDERER(SimpleAO(8),  ao8);
+  OSP_REGISTER_RENDERER(SimpleAO(16), ao16);
 
 } // ::ospray
 

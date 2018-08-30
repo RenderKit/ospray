@@ -45,6 +45,7 @@ namespace ospray {
         registerWorkUnit<NewPixelOp>(registry);
 
         registerWorkUnit<NewMaterial>(registry);
+        registerWorkUnit<NewMaterial2>(registry);
         registerWorkUnit<NewLight>(registry);
 
         registerWorkUnit<NewData>(registry);
@@ -298,6 +299,15 @@ namespace ospray {
       // ospNewMaterial ///////////////////////////////////////////////////////
 
       void NewMaterial::run()
+      {
+        auto *renderer = (Renderer*)rendererHandle.lookup();
+        auto rendererType = renderer->externalNameFromAPI;
+        auto *material = Material::createInstance(rendererType.c_str(),
+                                                  materialType.c_str());
+        handle.assign(material);
+      }
+
+      void NewMaterial2::run()
       {
         auto *material = Material::createInstance(rendererType.c_str(),
                                                   materialType.c_str());

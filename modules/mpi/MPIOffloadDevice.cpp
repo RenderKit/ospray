@@ -736,11 +736,21 @@ namespace ospray {
     }
 
     /*! have given renderer create a new material */
+    OSPMaterial MPIOffloadDevice::newMaterial(OSPRenderer renderer,
+                                              const char *material_type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewMaterial work(renderer, material_type, handle);
+      processWork(work);
+      return (OSPMaterial)(int64)handle;
+    }
+
+    /*! have given renderer create a new material */
     OSPMaterial MPIOffloadDevice::newMaterial(const char *renderer_type,
                                               const char *material_type)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewMaterial work(renderer_type, material_type, handle);
+      work::NewMaterial2 work(renderer_type, material_type, handle);
       processWork(work);
       return (OSPMaterial)(int64)handle;
     }

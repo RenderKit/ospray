@@ -180,9 +180,33 @@ namespace ospray {
       struct NewMaterial : public Work
       {
         NewMaterial() = default;
-        NewMaterial(const char *renderer_type,
+        NewMaterial(OSPRenderer renderer,
                     const char *material_type,
                     ObjectHandle handle)
+          : rendererHandle((ObjectHandle&)renderer),
+            materialType(material_type),
+            handle(handle)
+        {}
+
+        void run() override;
+
+        void serialize(WriteStream &b) const override
+        { b << (int64)handle << (int64)rendererHandle << materialType; }
+
+        void deserialize(ReadStream &b) override
+        { b >> handle.i64 >> rendererHandle.i64 >> materialType; }
+
+        ObjectHandle rendererHandle;
+        std::string  materialType;
+        ObjectHandle handle;
+      };
+
+      struct NewMaterial2 : public Work
+      {
+        NewMaterial2() = default;
+        NewMaterial2(const char *renderer_type,
+                     const char *material_type,
+                     ObjectHandle handle)
           : rendererType(renderer_type),
             materialType(material_type),
             handle(handle)

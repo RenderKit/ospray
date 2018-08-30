@@ -46,10 +46,14 @@ namespace ospray {
    */
   struct SimpleAO : public Renderer
   {
-    SimpleAO();
+    SimpleAO(int defaultNumSamples = 1);
     virtual ~SimpleAO() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
+
+  private:
+
+    int numSamples{1};
   };
 
 } // ::ospray

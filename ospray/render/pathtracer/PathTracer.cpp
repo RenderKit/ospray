@@ -32,6 +32,8 @@ namespace ospray {
 
   PathTracer::PathTracer()
   {
+    externalNameFromAPI = "pathtracer";
+
     ispcEquivalent = ispc::PathTracer_create(this);
   }
 

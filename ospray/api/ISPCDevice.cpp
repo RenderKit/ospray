@@ -410,6 +410,13 @@ namespace ospray {
       return (OSPGeometry)geometry;
     }
 
+    OSPMaterial ISPCDevice::newMaterial(OSPRenderer _renderer,
+                                        const char *material_type)
+    {
+      auto *renderer = reinterpret_cast<Renderer*>(_renderer);
+      return newMaterial(renderer->externalNameFromAPI.c_str(), material_type);
+    }
+
     /*! have given renderer create a new material */
     OSPMaterial ISPCDevice::newMaterial(const char *renderer_type,
                                         const char *material_type)
