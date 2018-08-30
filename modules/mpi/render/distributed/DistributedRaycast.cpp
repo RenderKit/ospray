@@ -18,11 +18,13 @@
 #include <limits>
 #include <map>
 #include <utility>
+#ifndef _WIN32
 #include <sys/times.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#endif
 #include <fstream>
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
@@ -41,8 +43,10 @@ namespace ospray {
   namespace mpi {
     using namespace std::chrono;
 
+#ifndef _WIN32
     static rusage prevUsage = {0};
     static rusage curUsage = {0};
+#endif
     static high_resolution_clock::time_point prevWall, curWall;
     static size_t frameNumber = 0;
 
@@ -56,6 +60,7 @@ namespace ospray {
     }
 
     void logProcessStatistics(std::ostream &os) {
+#ifndef _WIN32
       const double elapsedCpu = curUsage.ru_utime.tv_sec + curUsage.ru_stime.tv_sec
                                 - (prevUsage.ru_utime.tv_sec + prevUsage.ru_stime.tv_sec)
                                 + 1e-6f * (curUsage.ru_utime.tv_usec + curUsage.ru_stime.tv_usec
@@ -78,6 +83,7 @@ namespace ospray {
           }
         }
       }
+#endif
     }
 
     struct RegionInfo
@@ -229,7 +235,9 @@ namespace ospray {
       }
 
       auto startRender = high_resolution_clock::now();
+#ifndef _WIN32
       getrusage(RUSAGE_SELF, &prevUsage);
+#endif
       prevWall = high_resolution_clock::now();
 
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
@@ -459,7 +467,10 @@ namespace ospray {
 
       auto endComposite = high_resolution_clock::now();
 
+
+#ifndef _WIN32
       getrusage(RUSAGE_SELF, &curUsage);
+#endif
       curWall = high_resolution_clock::now();
 
 #if 1
@@ -516,7 +527,9 @@ namespace ospray {
     {
       using namespace mpicommon;
       auto startRender = high_resolution_clock::now();
+#ifndef _WIN32
       getrusage(RUSAGE_SELF, &prevUsage);
+#endif
       prevWall = high_resolution_clock::now();
 
       fb->beginFrame();
@@ -548,7 +561,9 @@ namespace ospray {
       endFrame(nullptr, channelFlags);
 
       auto endRender = high_resolution_clock::now();
+#ifndef _WIN32
       getrusage(RUSAGE_SELF, &curUsage);
+#endif
       curWall = high_resolution_clock::now();
 
 #if 1
