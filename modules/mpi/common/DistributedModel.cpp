@@ -48,6 +48,9 @@ namespace ospray {
     {
       Model::commit();
       id = getParam1i("id", -1);
+      if (id == -1) {
+        throw std::runtime_error("#osp:error An id must be set for the model");
+      }
       // TODO: We should take an optional clipping box to shrink the
       // model's bounds, for example if we want to clip some sphere
       // or other geometry to be smaller and contained within the actual
