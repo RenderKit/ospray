@@ -17,6 +17,7 @@
 #include "library.h"
 #include "FileName.h"
 #include "sysinfo.h"
+#include "ospray/version.h"
 
 // std
 #ifdef _WIN32
@@ -137,48 +138,63 @@ namespace ospcommon {
   Library::Library(const std::string& name)
   {
     std::string file = name;
+    std::string errorMsg;
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
+    if (lib == nullptr) {
+      DWORD err = GetLastError(); 
+      LPTSTR lpMsgBuf;
+      FormatMessage(
+          FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+          FORMAT_MESSAGE_FROM_SYSTEM |
+          FORMAT_MESSAGE_IGNORE_INSERTS,
+          NULL,
+          err,
+          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+          (LPTSTR)&lpMsgBuf,
+          0, NULL );
+
+      errorMsg = lpMsgBuf;
+
+      LocalFree(lpMsgBuf);
+    }
+
 #else
 #if defined(__MACOSX__) || defined(__APPLE__)
-    std::string fullName = "lib"+file+".dylib";
+    std::string fullName = "lib" + file + ".dylib";
 #else
-    std::string fullName = "lib"+file+".so";
+    std::string fullName = "lib" + file + ".so";
 #endif
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (lib == nullptr) {
-      PRINT(dlerror());
+      errorMsg = dlerror(); // remember original error
+      // retry with SOVERSION in case symlinks are missing
+      std::string soversion(TOSTRING(OSPRAY_SOVERSION));
+#if defined(__MACOSX__) || defined(__APPLE__)
+      fullName = "lib" + file + "." + soversion + ".dylib";
+#else
+      fullName += "." + soversion;
+#endif
+      lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
     }
 #endif
 
-    // iw: do NOT use this 'hack' that tries to find the
-    // library in another location: first it shouldn't be used in
-    // the first place (if you want a shared library, put it
-    // into your LD_LIBRARY_PATH!; second, it messes up the 'real'
-    // errors when the first library couldn't be opened (because
-    // whatever error messaes there were - depedencies, missing
-    // symbols, etc - get overwritten by that second dlopen,
-    // which almost always returns 'file not found')
+    // do NOT try to find the library in another location
+    // if you want that use LD_LIBRARY_PATH or equivalents
 
     if (lib == nullptr) {
-
-      std::string foundISA,foundPrec;
-      lib = tryLoadingMostIsaSpecificLib(name,foundISA,foundPrec);
+      std::string foundISA, foundPrec;
+      lib = tryLoadingMostIsaSpecificLib(name, foundISA, foundPrec);
       if (lib) {
-        std::cout << "#osp: found isa-specific lib for library " << name << ", most specific ISA=" << foundISA << ", using precision=" << foundPrec << std::endl;
+        std::cout << "#osp: found isa-specific lib for library " << name
+          << ", most specific ISA=" << foundISA << ", using precision="
+          << foundPrec << std::endl;
         return;
       }
 
-
-#ifdef _WIN32
-      // TODO: Must use GetLastError and FormatMessage on windows
-      // to log out the error that occurred when calling LoadLibrary
-      throw std::runtime_error("could not open module lib "+name);
-#else
-      // dlerror() is cleared after each call and will return null at this point.
-      throw std::runtime_error("could not open module lib "+name);
-#endif
+      throw std::runtime_error("could not open module lib " + name
+          + ": " + errorMsg);
     }
   }
 
