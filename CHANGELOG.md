@@ -13,8 +13,6 @@ Version History
 -   Applications can get information about the progress of rendering the
     current frame, and optionally cancel it, by registering a callback
     function via `ospSetProgressFunc()`
--   `ospNewMaterial()` is no longer supported nor implemented, all apps must
-    update to use `ospNewMaterial2()` instead
 -   Lights are not tied to the renderer type, so a new function `ospNewLight3()`
     was introduced to implement this. Please convert all uses of `ospNewLight()`
     and/or `ospNewLight2()` to `ospNewLight3()`
