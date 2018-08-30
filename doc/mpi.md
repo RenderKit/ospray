@@ -171,40 +171,63 @@ the application can create a communicator with one rank per-node to then
 run OSPRay on one process per-node. The remaining ranks on each node
 can then aggregate their data to the OSPRay process for rendering.
 
-There are also two optional parameters available on the OSPModel created
-using the distributed device, which can be set to tell OSPRay about your
-application's data distribution.
+The model used by the distributed device takes three additional parameters,
+to allow users to express their data distribution to OSPRay.
+All models should be disjoint to ensure correct sort-last compositing.
 
   ---------- ----------------- ----------------------------------------------
   Type       Name              Description
   ---------- ----------------- ----------------------------------------------
-  `box3f[]`  regions           [data] array of boxes which bound the data owned by
-                               the current rank, used for sort-last compositing.
-                               The global set of regions specified by all ranks
-                               must be disjoint for correct compositing.
+  `int`      id                An integer that uniquely identifies this piece
+                               of distributed data. For example, in a common
+                               case of one sub-brick per-rank, this would
+                               just be the region's MPI rank. Multiple ranks
+                               can specify models with the same ID, in which
+                               case the rendering work for the model will be
+                               shared among them.
 
-  `box3f[]`  ghostRegions      Optional [data] array of boxes which bound the ghost data on
-                               each rank. Using these shared data between nodes
-                               can be used for computing secondary ray effects
-                               such as ambient occlusion. If specifying ghostRegions,
-                               there should be one ghostRegion for each region.
+  `vec3f`    region.lower      Override the original model geometry + volume
+                               bounds with a custom lower bound position. This
+                               can be used to clip geometry in the case the
+                               objects cross over to another region owned by
+                               a different node. For example, rendering a set
+                               of spheres with radius.
+                               
+  `vec3f`    region.upper      Override the original model geometry + volume
+                               bounds with a custom upper bound position.
   ------ ------------ -------------------------------------------------------
   : Parameters for the distributed OSPModel
 
-See the distributed device examples in the MPI module for examples.
-
 The renderer supported when using the distributed device is the
 `mpi_raycast` renderer. This renderer is an experimental renderer and
-currently only supports ambient occlusion (on the local data only). To
+currently only supports ambient occlusion (on the local data only, with
+optional ghost data). To
 compute correct ambient occlusion across the distributed data the
 application is responsible for replicating ghost data and specifying the
-ghostRegions and regions as described above.
+ghost models and models as described above.
 
   ---------- ----------------- -------- -------------------------------------
   Type       Name               Default Description
   ---------- ----------------- -------- -------------------------------------
-  int        aoSamples                0  number of rays per sample to compute
-                                         ambient occlusion
+  OSPModel   model                      the [model] to render
+  OSPModel   ghostModel            NULL the optional [model] containing the
+                                        ghost geometry for ambient occlusion
+  OSPModel[] models                NULL optionally, you can have each rank
+                                        own multiple [model]s which it's
+                                        responsible for rendering, in which
+                                        case you will specify a list of models
+                                        instead of just one.
+  OSPModel[] ghostModels           NULL when rendering a list of models, each
+                                        model can be associated with an
+                                        individual ghostModel, specified by
+                                        this list. If only the `ghostModel`
+                                        is set, then that is used for AO on all
+                                        models.
+  int        aoSamples                0 number of rays per sample to compute
+                                        ambient occlusion
   ------ ------------ -------------------------------------------------------
-  : Parameters for the distributed OSPModel
+  : Parameters for the `mpi_raycast` renderer
+
+See the distributed device examples in the MPI module for examples.
+
 
