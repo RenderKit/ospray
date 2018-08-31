@@ -42,14 +42,13 @@ set(TESTS_SOURCES
 	sources/ospray_test_tools.cpp
 	)
 
-ospray_create_application(ospray_test_suite
+ospray_create_test(ospray_test_suite
   ospray_test_suite.cpp
   ${TESTS_SOURCES}
 LINK
   gtest_main
   ospray
   ospray_common
-COMPONENT test
 )
 SET_TARGET_PROPERTIES(ospray_test_suite PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests)

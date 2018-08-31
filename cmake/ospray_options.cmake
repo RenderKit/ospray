@@ -138,7 +138,7 @@ INCLUDE(configure_embree)
 OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
 
-OPTION(OSPRAY_ENABLE_TESTING ON)
+OPTION(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
 
 IF (OSPRAY_ENABLE_TESTING)
   ENABLE_TESTING()
