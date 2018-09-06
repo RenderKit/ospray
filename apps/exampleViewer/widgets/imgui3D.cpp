@@ -540,10 +540,8 @@ namespace ospray {
       case '-':
         motionSpeed /= 1.5f;
         break;
+      case 27 /*ESC*/:
       case 'q':
-        std::cout << "'q' to quit is disabled, use 'Q' to quit instead"
-                  << std::endl;
-        break;
       case 'Q':
         exitRequestedByUser = true;
         break;
