@@ -128,8 +128,6 @@ namespace ospray {
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const;
 
-    std::string externalName() const;
-
     /*! return the ISPC equivalent of this class */
     void *getIE() const;
 
@@ -206,8 +204,6 @@ namespace ospray {
 
     /*! \brief subtype of this ManagedObject */
     OSPDataType managedObjectType {OSP_UNKNOWN};
-
-    std::string externalNameFromAPI;
   };
 
   // Inlined ManagedObject definitions ////////////////////////////////////////

@@ -84,8 +84,10 @@ typedef int ssize_t;
       Object *ospray_create_##object_name##__##external_name()                 \
   {                                                                            \
     auto *instance = new InternalClass;                                        \
-    if (instance->externalNameFromAPI.empty())                                 \
-      instance->externalNameFromAPI = TOSTRING(external_name);                 \
+    if (instance->getParam<std::string>("externalNameFromAPI", "").empty()) {  \
+      instance->setParam<std::string>("externalNameFromeAPI",                  \
+                                      TOSTRING(external_name));                \
+    }                                                                          \
     return instance;                                                           \
   }                                                                            \
   /* additional declaration to avoid "extra ;" -Wpedantic warnings */          \

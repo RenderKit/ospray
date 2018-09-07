@@ -301,7 +301,7 @@ namespace ospray {
       void NewMaterial::run()
       {
         auto *renderer = (Renderer*)rendererHandle.lookup();
-        auto rendererType = renderer->externalNameFromAPI;
+        auto rendererType = renderer->getParamString("externalNameFromAPI");
         auto *material = Material::createInstance(rendererType.c_str(),
                                                   materialType.c_str());
         handle.assign(material);

@@ -258,8 +258,6 @@ namespace ospray {
 
       bool reportProgress(const float);
 
-      std::string externalNameFromAPI;
-
     private:
 
       bool committed {false};

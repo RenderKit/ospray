@@ -335,7 +335,8 @@ namespace ospray {
                                         const char *material_type)
     {
       auto *renderer = reinterpret_cast<Renderer*>(_renderer);
-      return newMaterial(renderer->externalNameFromAPI.c_str(), material_type);
+      auto name = renderer->getParamString("externalNameFromAPI");
+      return newMaterial(name.c_str(), material_type);
     }
 
     /*! have given renderer create a new material */

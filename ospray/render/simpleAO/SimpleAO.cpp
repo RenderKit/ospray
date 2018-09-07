@@ -25,7 +25,7 @@ namespace ospray {
   //! \brief Constructor
   SimpleAO::SimpleAO(int defaultNumSamples) : numSamples(defaultNumSamples)
   {
-    externalNameFromAPI = "ao";
+    setParam<std::string>("externalNameFromAPI", "ao");
 
     ispcEquivalent = ispc::SimpleAO_create(this);
   }

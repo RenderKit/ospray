@@ -27,7 +27,7 @@ namespace ospray {
 
     SciVisRenderer::SciVisRenderer()
     {
-      externalNameFromAPI = "scivis";
+      setParam<std::string>("externalNameFromAPI", "scivis");
 
       ispcEquivalent = ispc::SciVisRenderer_create(this);
     }
