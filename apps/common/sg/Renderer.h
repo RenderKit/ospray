@@ -66,7 +66,6 @@ namespace ospray {
       OSPRenderer ospRenderer {nullptr};
       OSPData lightsData {nullptr};
       TimeStamp lightsBuildTime;
-      TimeStamp frameMTime;
       float variance {inf};
       std::string createdType = "none";
     };
