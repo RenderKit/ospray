@@ -30,6 +30,7 @@ namespace ospray {
 
     // maximum number of regions: all regions are of size 3 are split in half
     errorRegion.reserve(divRoundUp(tiles * 2, 3));
+    clear();
   }
 
   TileError::~TileError()
