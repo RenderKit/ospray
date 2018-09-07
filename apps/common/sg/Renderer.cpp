@@ -156,8 +156,7 @@ namespace ospray {
 
     Renderer::~Renderer()
     {
-      if (lightsData)
-        ospRelease(lightsData);
+      ospRelease(lightsData);
     }
 
     void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb, int flags)
@@ -218,8 +217,7 @@ namespace ospray {
             lights.push_back(light);
         }
 
-        if (lightsData)
-          ospRelease(lightsData);
+        ospRelease(lightsData);
         lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
         ospCommit(lightsData);
         lightsBuildTime.renew();
@@ -271,8 +269,7 @@ namespace ospray {
       if (!ospRenderer || rendererType != createdType) {
         auto setRenderer = [&](OSPRenderer handle, const std::string &rType) {
           Node::traverse(MarkAllAsModified{});
-          if (ospRenderer)
-            ospRelease(ospRenderer);
+          ospRelease(ospRenderer);
           ospRenderer = handle;
           createdType = rType;
           ospCommit(ospRenderer);

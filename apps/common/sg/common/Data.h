@@ -38,7 +38,7 @@ namespace ospray {
 
       virtual ~DataBuffer() override
       {
-        if(data) ospRelease(data);
+        ospRelease(data);
       }
 
       virtual std::string toString() const override
@@ -54,10 +54,8 @@ namespace ospray {
 
       void markAsModified() override
       {
-        if (data) {
-          ospRelease(data);
-          data = nullptr;
-        }
+        ospRelease(data);
+        data = nullptr;
 
         Node::markAsModified();
       }

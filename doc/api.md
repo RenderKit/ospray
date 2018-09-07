@@ -274,7 +274,7 @@ given object anymore, call
     void ospRelease(OSPObject);
 
 This decreases its reference count and if the count reaches `0` the
-object will automatically get deleted.
+object will automatically get deleted. Passing `NULL` is not an error.
 
 ### Parameters
 
