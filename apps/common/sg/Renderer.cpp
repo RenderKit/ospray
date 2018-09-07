@@ -271,6 +271,8 @@ namespace ospray {
       if (!ospRenderer || rendererType != createdType) {
         auto setRenderer = [&](OSPRenderer handle, const std::string &rType) {
           Node::traverse(MarkAllAsModified{});
+          if (ospRenderer)
+            ospRelease(ospRenderer);
           ospRenderer = handle;
           createdType = rType;
           ospCommit(ospRenderer);
