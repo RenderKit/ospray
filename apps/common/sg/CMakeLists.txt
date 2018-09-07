@@ -97,6 +97,7 @@ ospray_create_library(ospray_sg SHARED
   common/Common.cpp
   common/Data.cpp
   common/FrameBuffer.cpp
+  common/ToneMapper.cpp
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
@@ -193,6 +194,7 @@ ospray_install_sdk_headers(
   common/Common.h
   common/Data.h
   common/FrameBuffer.h
+  common/ToneMapper.h
   common/Instance.h
   common/Light.h
   common/Material.h

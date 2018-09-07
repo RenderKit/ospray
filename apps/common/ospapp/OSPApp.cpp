@@ -281,7 +281,6 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         renderer["minContribution"] = 0.1f;
         renderer["maxDepth"] = 3;
 
-        framebuffer["toneMapping"] = false;
         framebuffer["useVarianceBuffer"] = false;
         addPlane = false;
       }
@@ -811,22 +810,22 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
 
     void OSPApp::setupToneMapping(sg::Node &frameBuffer)
     {
+      auto &toneMapper = frameBuffer.createChild("toneMapper", "ToneMapper");
+      toneMapper["enabled"] = !fast;
       if (aces) {
-        frameBuffer["toneMapping"] = true;
-        frameBuffer["contrast"] = 1.6773f;
-        frameBuffer["shoulder"] = 0.9714f;
-        frameBuffer["midIn"] = 0.18f;
-        frameBuffer["midOut"] = 0.18f;
-        frameBuffer["hdrMax"] = 11.0785f;
-        frameBuffer["acesColor"] = true;
+        toneMapper["contrast"] = 1.6773f;
+        toneMapper["shoulder"] = 0.9714f;
+        toneMapper["midIn"] = 0.18f;
+        toneMapper["midOut"] = 0.18f;
+        toneMapper["hdrMax"] = 11.0785f;
+        toneMapper["acesColor"] = true;
       } else if (filmic) {
-        frameBuffer["toneMapping"] = true;
-        frameBuffer["contrast"] = 1.1759f;
-        frameBuffer["shoulder"] = 0.9746f;
-        frameBuffer["midIn"] = 0.18f;
-        frameBuffer["midOut"] = 0.18f;
-        frameBuffer["hdrMax"] = 6.3704f;
-        frameBuffer["acesColor"] = false;
+        toneMapper["contrast"] = 1.1759f;
+        toneMapper["shoulder"] = 0.9746f;
+        toneMapper["midIn"] = 0.18f;
+        toneMapper["midOut"] = 0.18f;
+        toneMapper["hdrMax"] = 6.3704f;
+        toneMapper["acesColor"] = false;
       }
     }
 

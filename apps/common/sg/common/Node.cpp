@@ -443,8 +443,7 @@ namespace ospray {
                            bool& traverseChildren)
     {
       if (operation == "commit") {
-        if (lastModified() >= lastCommitted() ||
-            childrenLastModified() >= lastCommitted())
+        if (subtreeModifiedButNotCommitted())
           preCommit(ctx);
         else
           traverseChildren = false;
@@ -453,9 +452,7 @@ namespace ospray {
 
     void Node::postTraverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "commit" &&
-          (lastModified() >= lastCommitted() ||
-           childrenLastModified() >= lastCommitted())) {
+      if (operation == "commit" && subtreeModifiedButNotCommitted()) {
         postCommit(ctx);
         markAsCommitted();
       }
