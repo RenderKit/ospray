@@ -46,11 +46,8 @@ namespace ospray {
       OSPFrameBuffer handle() const;
 
      private:
-      // create the ospray framebuffer for this class
-      void createFB();
-
-      // destroy the ospray framebuffer created via createFB()
-      void destroyFB();
+      // create/update the ospray framebuffer for this class
+      void updateFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
       vec2i committed_size {0};

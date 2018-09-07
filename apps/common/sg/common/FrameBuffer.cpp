@@ -36,7 +36,7 @@ namespace ospray {
       createChild("useAccumBuffer", "bool", true);
       createChild("useVarianceBuffer", "bool", true);
 
-      createFB();
+      updateFB();
     }
 
     void FrameBuffer::postCommit(RenderContext &)
@@ -60,8 +60,7 @@ namespace ospray {
         std::string displayWall = child("displayWall").valueAs<std::string>();
         this->displayWallStream = displayWall;
 
-        destroyFB();
-        createFB();
+        updateFB();
 
         if (displayWall != "") {
           // TODO move into own sg::Node
@@ -129,8 +128,13 @@ namespace ospray {
       return ospFrameBuffer;
     };
 
-    void ospray::sg::FrameBuffer::createFB()
+    void ospray::sg::FrameBuffer::updateFB()
     {
+      // workaround insufficient detection of new framebuffer in sg::Frame:
+      // create the new FB first and release the old afterwards to ensure a
+      // different address / handle
+      auto oldFrameBuffer = ospFrameBuffer;
+
       committed_size = child("size").valueAs<vec2i>();
 
       committed_format = OSP_FB_NONE;
@@ -148,13 +152,10 @@ namespace ospray {
                                          (useAccum ? OSP_FB_ACCUM : 0) |
                                          (useVariance ? OSP_FB_VARIANCE : 0));
       setValue(ospFrameBuffer);
+      ospRelease(oldFrameBuffer);
       toneMapperActive = false;
     }
 
-    void ospray::sg::FrameBuffer::destroyFB()
-    {
-      ospRelease(ospFrameBuffer);
-    }
 
     OSP_REGISTER_SG_NODE(FrameBuffer);
 
