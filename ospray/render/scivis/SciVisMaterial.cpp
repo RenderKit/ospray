@@ -77,5 +77,13 @@ namespace ospray {
     OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, OBJMaterial);
     OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, default);
 
+    // NOTE(jda) - support all renderer aliases
+    OSP_REGISTER_MATERIAL(rt, SciVisMaterial, default);
+    OSP_REGISTER_MATERIAL(raytracer, SciVisMaterial, default);
+    OSP_REGISTER_MATERIAL(sv, SciVisMaterial, default);
+    OSP_REGISTER_MATERIAL(obj, SciVisMaterial, default);
+    OSP_REGISTER_MATERIAL(OBJ, SciVisMaterial, default);
+    OSP_REGISTER_MATERIAL(dvr, SciVisMaterial, default);
+
   } // ::ospray::scivis
 } // ::ospray

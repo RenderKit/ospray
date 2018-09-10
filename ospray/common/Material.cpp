@@ -20,11 +20,39 @@
 
 namespace ospray {
 
+  // Helper functions /////////////////////////////////////////////////////////
+
+  static Material* tryToCreateMaterial(const std::string &renderer_type,
+                                       const std::string &material_type)
+  {
+    std::string type = std::string(renderer_type) + "__" + material_type;
+    Material *mat = nullptr;
+    try {
+      mat = createInstanceHelper<Material, OSP_MATERIAL>(type.c_str());
+    } catch (const std::runtime_error &) {
+      // ignore...
+    }
+    return mat;
+  }
+
+  // Material definitions /////////////////////////////////////////////////////
+
   Material *Material::createInstance(const char *renderer_type,
                                      const char *material_type)
   {
-    std::string type = std::string(renderer_type) + "__" + material_type;
-    return createInstanceHelper<Material, OSP_MATERIAL>(type.c_str());
+    // Try to create the given material
+    auto mat = tryToCreateMaterial(renderer_type, material_type);
+    if (mat != nullptr)
+      return mat;
+
+    // Looks like we failed to create the given type, try default as a backup
+    mat = tryToCreateMaterial(renderer_type, "default");
+    if (mat != nullptr)
+      return mat;
+
+    // The renderer doesn't even provide a default material, provide a generic
+    // one (that it will ignore) so API calls still work for the application
+    return new Material;
   }
 
   std::string Material::toString() const
