@@ -64,5 +64,6 @@ namespace ospray {
     };
 
     OSP_REGISTER_MATERIAL(pathtracer, ThinGlass, ThinGlass);
+    OSP_REGISTER_MATERIAL(pt, ThinGlass, ThinGlass);
   }
 }

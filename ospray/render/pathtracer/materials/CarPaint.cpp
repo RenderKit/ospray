@@ -82,5 +82,6 @@ namespace ospray {
     };
 
     OSP_REGISTER_MATERIAL(pathtracer, CarPaint, CarPaint);
+    OSP_REGISTER_MATERIAL(pt, CarPaint, CarPaint);
   }
 }

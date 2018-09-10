@@ -79,5 +79,7 @@ namespace ospray {
 
     OSP_REGISTER_MATERIAL(pathtracer, OBJMaterial, OBJMaterial);
     OSP_REGISTER_MATERIAL(pathtracer, OBJMaterial, default);
+    OSP_REGISTER_MATERIAL(pt, OBJMaterial, OBJMaterial);
+    OSP_REGISTER_MATERIAL(pt, OBJMaterial, default);
   }
 }

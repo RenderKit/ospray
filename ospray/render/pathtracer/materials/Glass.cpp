@@ -60,5 +60,7 @@ namespace ospray {
 
     OSP_REGISTER_MATERIAL(pathtracer, Glass, Glass);
     OSP_REGISTER_MATERIAL(pathtracer, Glass, Dielectric);
+    OSP_REGISTER_MATERIAL(pt, Glass, Glass);
+    OSP_REGISTER_MATERIAL(pt, Glass, Dielectric);
   }
 }
