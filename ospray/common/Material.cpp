@@ -37,9 +37,12 @@ namespace ospray {
 
   // Material definitions /////////////////////////////////////////////////////
 
-  Material *Material::createInstance(const char *renderer_type,
-                                     const char *material_type)
+  Material *Material::createInstance(const char *_renderer_type,
+                                     const char *_material_type)
   {
+    std::string renderer_type = _renderer_type;
+    std::string material_type = _material_type;
+
     // Try to create the given material
     auto mat = tryToCreateMaterial(renderer_type, material_type);
     if (mat != nullptr)
@@ -52,7 +55,13 @@ namespace ospray {
 
     // The renderer doesn't even provide a default material, provide a generic
     // one (that it will ignore) so API calls still work for the application
-    return new Material;
+    if (material_type == "OBJMaterial" ||
+        material_type == "SciVisMaterial" ||
+        material_type == "default") {
+      return new Material;
+    } else {
+      return nullptr;
+    }
   }
 
   std::string Material::toString() const
