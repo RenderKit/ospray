@@ -50,6 +50,11 @@ namespace ospray {
       if (frameCancelled.exchange(false))
         return; // actually a continue
 
+      if (!sgFB) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        return; // actually a continue
+      }
+
       // NOTE(jda) - Spin here until the consumer has had the chance to update
       //             to the latest frame.
       while(state == ExecState::RUNNING && newPixels == true);

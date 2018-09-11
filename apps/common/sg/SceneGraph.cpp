@@ -124,7 +124,7 @@ namespace ospray {
 
       if (accumBudgetReached || varianceReached) {
         etaSeconds = elapsedSeconds();
-        return fbNode;//XXX false;
+        return nullptr;
       }
 
       if (numAccumulatedFrames == 0)
