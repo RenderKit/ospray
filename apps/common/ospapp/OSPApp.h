@@ -66,7 +66,7 @@ namespace ospray {
       void addGeneratorNodesToWorld(sg::Node &renderer);
       void addAnimatedImporterNodesToWorld(sg::Node &renderer);
       void setupCamera(sg::Node &renderer);
-      void setupToneMapping(sg::Node &renderer);
+      void setupToneMapping(sg::Node &fb, sg::Node &fb2);
       void addPlaneToScene(sg::Node &renderer);
       void printHelp();
 

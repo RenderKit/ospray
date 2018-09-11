@@ -170,6 +170,9 @@ namespace ospray {
        // position and size when not in fullscreen
        vec2i windowedPos;
        vec2i windowedSize;
+       // during navigation
+       float navRenderResolutionScale {1.0};
+       vec2i navRenderSize;
        /*! camera speed modifier - affects how many units the camera
           _moves_ with each unit on the screen */
        float motionSpeed {-1.f};

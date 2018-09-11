@@ -166,13 +166,17 @@ namespace ospray {
     {
       windowSize = newSize;
       renderSize = windowSize * renderResolutionScale;
+      navRenderSize = windowSize * navRenderResolutionScale;
 
       if (fixedRenderAspect > 0.f) {
         float aspectCorrection = fixedRenderAspect * newSize.y / newSize.x;
-        if (aspectCorrection > 1.f)
+        if (aspectCorrection > 1.f) {
           renderSize.y /= aspectCorrection;
-        else
+          navRenderSize.y /= aspectCorrection;
+        } else {
           renderSize.x *= aspectCorrection;
+          navRenderSize.x *= aspectCorrection;
+        }
       }
 
       glViewport(0, 0, newSize.x, newSize.y);

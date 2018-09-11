@@ -328,6 +328,7 @@ namespace ospray {
   {
     ImGui3DWidget::reshape(newSize);
     scenegraph->child("frameBuffer")["size"].setValue(renderSize);
+    scenegraph->child("navFrameBuffer")["size"].setValue(navRenderSize);
   }
 
   void ImGuiViewer::keypress(char key)

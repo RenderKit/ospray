@@ -275,7 +275,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       auto &framebuffer = root["frameBuffer"];
 
       if (fast) {
-        renderer["spp"] = -1;
+        renderer["spp"] = 1;
         renderer["shadowsEnabled"] = false;
         renderer["aoTransparencyEnabled"] = false;
         renderer["minContribution"] = 0.1f;
@@ -291,7 +291,12 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       addAnimatedImporterNodesToWorld(renderer);
 
       framebuffer["size"] = vec2i(width, height);
-      setupToneMapping(framebuffer);
+      auto &navFB = root.createChild("navFrameBuffer", "FrameBuffer");
+      navFB["useAccumBuffer"] = false;
+      navFB["useVarianceBuffer"] = false;
+
+      setupToneMapping(framebuffer, navFB);
+
       root.traverse(sg::VerifyNodes(true));
       root.commit();
 
@@ -808,7 +813,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         camera["aspect"] = width / (float)height;
     }
 
-    void OSPApp::setupToneMapping(sg::Node &frameBuffer)
+    void OSPApp::setupToneMapping(sg::Node &frameBuffer, sg::Node &fb2)
     {
       auto &toneMapper = frameBuffer.createChild("toneMapper", "ToneMapper");
       toneMapper["enabled"] = !fast;
@@ -827,6 +832,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
         toneMapper["hdrMax"] = 6.3704f;
         toneMapper["acesColor"] = false;
       }
+      fb2.setChild("toneMapper", toneMapper.shared_from_this());
     }
 
     void OSPApp::addAnimatedImporterNodesToWorld(sg::Node &renderer)
