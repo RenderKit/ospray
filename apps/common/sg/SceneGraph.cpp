@@ -93,17 +93,24 @@ namespace ospray {
       }
     }
 
-    void Frame::renderFrame(bool verifyCommit)
+    std::shared_ptr<FrameBuffer> Frame::renderFrame(bool verifyCommit)
     {
-      auto rendererNode = child("renderer").nodeAs<Renderer>();
-      auto fbNode = child("frameBuffer").nodeAs<FrameBuffer>();
-
       if (verifyCommit) {
         Node::traverse(VerifyNodes{});
         commit();
       }
 
       traverse("render");
+
+      auto fb1Node = child("frameBuffer").nodeAs<FrameBuffer>();
+      auto fb2Node = child("navFrameBuffer").nodeAs<FrameBuffer>();
+      // use nav FB?
+      auto fbNode = (numAccumulatedFrames == 0 &&
+          fb1Node->child("size").valueAs<vec2i>() !=
+          fb2Node->child("size").valueAs<vec2i>()) ?
+        fb2Node : fb1Node;
+
+      auto rendererNode = child("renderer").nodeAs<Renderer>();
 
       const bool accumBudgetReached = frameAccumulationLimit >= 0 &&
         numAccumulatedFrames >= frameAccumulationLimit;
@@ -117,7 +124,7 @@ namespace ospray {
 
       if (accumBudgetReached || varianceReached) {
         etaSeconds = elapsedSeconds();
-        return;
+        return fbNode;//XXX false;
       }
 
       if (numAccumulatedFrames == 0)
@@ -147,6 +154,7 @@ namespace ospray {
 
       // whichever is earlier
       etaSeconds = std::min(etaVariance, etaAccumulation);
+      return fbNode;
     }
 
     OSPPickResult Frame::pick(const vec2f &pickPos)

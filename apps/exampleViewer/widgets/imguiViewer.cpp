@@ -328,7 +328,9 @@ namespace ospray {
   {
     ImGui3DWidget::reshape(newSize);
     scenegraph->child("frameBuffer")["size"].setValue(renderSize);
-    scenegraph->child("navFrameBuffer")["size"].setValue(navRenderSize);
+    // only resize 2nd FB if needed
+    //if (renderResolutionScale != navRenderResolutionScale)
+      scenegraph->child("navFrameBuffer")["size"].setValue(navRenderSize);
   }
 
   void ImGuiViewer::keypress(char key)
@@ -464,8 +466,10 @@ namespace ospray {
       camera.markAsModified();
 
       // don't cancel the first frame, otherwise it is hard to navigate
-      if (scenegraph->frameId() > 0 && cancelFrameOnInteraction)
+      if (scenegraph->frameId() > 0 && cancelFrameOnInteraction) {
         cancelRendering = true;
+        renderEngine.setFrameCancelled();
+      }
 
       viewPort.modified = false;
     }
@@ -609,6 +613,35 @@ namespace ospray {
         }
 
         if (scale != renderResolutionScale)
+          reshape(windowSize);
+
+        ImGui::EndMenu();
+      }
+
+      if (ImGui::BeginMenu("Scale Resolution while Navigating")) {
+        float scale = navRenderResolutionScale;
+        if (ImGui::MenuItem("0.25x")) navRenderResolutionScale = 0.25f;
+        if (ImGui::MenuItem("0.50x")) navRenderResolutionScale = 0.5f;
+        if (ImGui::MenuItem("0.75x")) navRenderResolutionScale = 0.75f;
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("1.00x")) navRenderResolutionScale = 1.f;
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("1.25x")) navRenderResolutionScale = 1.25f;
+        if (ImGui::MenuItem("2.00x")) navRenderResolutionScale = 2.0f;
+        if (ImGui::MenuItem("4.00x")) navRenderResolutionScale = 4.0f;
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("custom")) {
+          ImGui::InputFloat("x##fb_scaling", &navRenderResolutionScale);
+          ImGui::EndMenu();
+        }
+
+        if (scale != navRenderResolutionScale)
           reshape(windowSize);
 
         ImGui::EndMenu();

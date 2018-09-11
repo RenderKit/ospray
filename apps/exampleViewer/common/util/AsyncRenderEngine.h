@@ -45,18 +45,13 @@ namespace ospray {
     AsyncRenderEngine(std::shared_ptr<sg::Frame> root);
     ~AsyncRenderEngine();
 
-    // Properties //
-
-    void setFbSize(const vec2i &size);
-
-    // Method to say that an objects needs to be comitted before next frame //
-
     void pick(const vec2f &screenPos);
 
     // Engine conrols //
 
     void start(int numThreads = -1);
     void stop();
+    void setFrameCancelled();
 
     ExecState runningState() const;
 
@@ -98,6 +93,7 @@ namespace ospray {
     std::unique_ptr<AsyncLoop> backgroundThread;
 
     std::atomic<ExecState> state{ExecState::INVALID};
+    std::atomic<bool> frameCancelled {false};
 
     int numOsprayThreads {-1};
 

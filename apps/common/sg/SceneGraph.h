@@ -62,7 +62,7 @@ namespace ospray {
 
       // Frame interface //
 
-      void renderFrame(bool verifyCommit = true);
+      std::shared_ptr<FrameBuffer> renderFrame(bool verifyCommit = true);
 
       OSPPickResult pick(const vec2f &pickPos);
 
