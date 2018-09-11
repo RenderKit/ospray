@@ -241,7 +241,10 @@ namespace ospray {
         return renderNonDistrib(fb, channelFlags);
       }
 
+#if 0
       auto startRender = high_resolution_clock::now();
+#endif
+
 #ifndef _WIN32
       getrusage(RUSAGE_SELF, &prevUsage);
 #endif
@@ -467,20 +470,21 @@ namespace ospray {
 #endif
       });
 
+#if 0
       auto endRender = high_resolution_clock::now();
+#endif
 
       dfb->waitUntilFinished();
       endFrame(nullptr, channelFlags);
 
+#if 0
       auto endComposite = high_resolution_clock::now();
-
 
 #ifndef _WIN32
       getrusage(RUSAGE_SELF, &curUsage);
 #endif
       curWall = high_resolution_clock::now();
 
-#if 0
       if (DETAILED_LOGGING && frameNumber > 5) {
         const std::array<int, 3> localTimes {
           duration_cast<milliseconds>(endRender - startRender).count(),

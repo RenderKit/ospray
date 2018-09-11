@@ -366,7 +366,6 @@ namespace ospray {
     }
 
     for (auto &msg : _delayedMessage) {
-      auto *msgData = (TileMessage*)msg->data;
       // Progress messages might have come in from the previous frame, and
       // are irrelevant now, since they're stale.
       // TODO WILL: I don't think for regular tile messages (which are
