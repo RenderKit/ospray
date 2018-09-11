@@ -410,7 +410,7 @@ namespace ospray {
     {
       return numTilesCompletedThisFrame == myTiles.size();
     }
-    return numTilesCompletedThisFrame == static_cast<int32_t>(getTotalTiles());
+    return numTilesCompletedThisFrame == static_cast<size_t>(getTotalTiles());
   }
 
   size_t DFB::ownerIDFromTileID(size_t tileID) const
@@ -740,10 +740,8 @@ namespace ospray {
       auto *msg = (TileMessage*)message->data;
       if (msg->command & MASTER_WRITE_TILE_I8) {
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
-        this->processMessage((MasterTileMessage_RGBA_I8*)msg);
       } else if (msg->command & MASTER_WRITE_TILE_F32) {
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
-        this->processMessage((MasterTileMessage_RGBA_F32*)msg);
       } else if (msg->command & WORKER_WRITE_TILE) {
         this->processMessage((WriteTileMessage*)msg);
       } else if (msg->command & PROGRESS_MESSAGE) {
@@ -752,7 +750,6 @@ namespace ospray {
         throw std::runtime_error("#dfb: unknown tile type processed!");
       }
 
-#if 1
       auto finishedTask = high_resolution_clock::now();
       auto queueTime = duration_cast<duration<double, std::milli>>(startedTask - queuedTask);
       auto computeTime = duration_cast<duration<double, std::milli>>(finishedTask - startedTask);
@@ -760,7 +757,6 @@ namespace ospray {
       std::lock_guard<std::mutex> lock(statsMutex);
       queueTimes.push_back(queueTime);
       workTimes.push_back(computeTime);
-#endif
     });
   }
 
@@ -914,7 +910,7 @@ namespace ospray {
           const vec2i *tileID = reinterpret_cast<vec2i*>(tileGatherResult.data() + processOffsets[rank]);
           const float *error = reinterpret_cast<float*>(tileGatherResult.data() + processOffsets[rank]
                                                         + tilesFromRank[rank] * sizeof(vec2i));
-          for (size_t i = 0; i < tilesFromRank[rank]; ++i) {
+          for (int i = 0; i < tilesFromRank[rank]; ++i) {
             if (error[i] < (float)inf) {
               tileErrorRegion.update(tileID[i], error[i]);
             }
@@ -1088,9 +1084,8 @@ namespace ospray {
 
     memset(tileInstances, 0, sizeof(int32)*getTotalTiles()); // XXX needed?
 
-    for (size_t i = 0; i < getTotalTiles(); ++i) {
+    for (int i = 0; i < getTotalTiles(); ++i)
       ++tileAccumID[i];
-    }
 
     if (mpicommon::IamTheMaster()) // only refine on master
       return tileErrorRegion.refine(errorThreshold);
@@ -1108,13 +1103,13 @@ namespace ospray {
       Stats queueStats(queueTimes);
       queueStats.time_suffix = "ms";
 
-      os << "Tile Queue times:\n" << queueStats << "\n"; 
+      os << "Tile Queue times:\n" << queueStats << "\n";
     }
 
     if (!workTimes.empty()) {
       Stats workStats(workTimes);
       workStats.time_suffix = "ms";
-      os << "Tile work times:\n" << workStats << "\n"; 
+      os << "Tile work times:\n" << workStats << "\n";
     }
 
     double localWaitTime = finalGatherTime.count();

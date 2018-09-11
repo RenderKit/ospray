@@ -89,7 +89,7 @@ namespace ospDDLoader {
     size_t ofsPrims, numPrims;
   };
 
-  RIVLFile rivl;
+  static RIVLFile rivl;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {

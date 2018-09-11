@@ -189,11 +189,11 @@ namespace maml {
   void Context::waitOnSomeRequests()
   {
     if (!pendingSends.empty() || !pendingRecvs.empty()) {
-      const int totalMessages = pendingSends.size() + pendingRecvs.size();
+      const size_t totalMessages = pendingSends.size() + pendingRecvs.size();
       int *done = STACK_BUFFER(int, totalMessages);
       MPI_Request *mergedRequests = STACK_BUFFER(MPI_Request, totalMessages);
 
-      for (int i = 0; i < totalMessages; ++i) {
+      for (size_t i = 0; i < totalMessages; ++i) {
         if (i < pendingSends.size()) {
           mergedRequests[i] = pendingSends[i];
         } else {
@@ -207,7 +207,7 @@ namespace maml {
       auto completed = high_resolution_clock::now();
 
       for (int i = 0; i < numDone; ++i) {
-        int msgId = done[i];
+        size_t msgId = done[i];
         if (msgId < pendingSends.size()) {
           if (DETAILED_LOGGING) {
             std::lock_guard<std::mutex> lock(statsMutex);
@@ -312,7 +312,7 @@ namespace maml {
     if they are already in fligh
     WILL: Don't actually stop, for reasons described above flush messages
   */
-  void Context::stop() 
+  void Context::stop()
   {
     std::lock_guard<std::mutex> lock(tasksMutex);
     if (tasksAreRunning) {

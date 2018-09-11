@@ -410,7 +410,7 @@ namespace gensv {
 
           // TODO Ghost cells
           vec3sz ghostDims(0);
-          const std::array<int, 3> ghosts = {0, 0, 0};
+          const std::array<int, 3> ghosts = {{0, 0, 0}};
           /*
           const std::array<int, 3> ghosts = computeGhostFaces(vec3i(brickId), vec3i(grid));
           for (size_t i = 0; i < 3; ++i) {

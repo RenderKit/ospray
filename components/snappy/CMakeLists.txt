@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.1)
 project(Snappy VERSION 1.1.7 LANGUAGES C CXX)
 
+##############################################################################
+# NOTE(jda) - This was added because Snappy does not always build cleanly
+#             without warnings on newer compilers...
+ospray_disable_compiler_warnings()
+##############################################################################
+
 # BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to make
 # it prominent in the GUI.
 option(BUILD_SHARED_LIBS "Build shared libraries(DLLs)." OFF)

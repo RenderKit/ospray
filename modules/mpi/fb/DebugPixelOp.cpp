@@ -2,9 +2,10 @@
 #include "ospcommon/utility/SaveImage.h"
 #include "DebugPixelOp.h"
 
-using namespace ospray;
+namespace ospray {
 
-inline float convert_srgb(const float x) {
+inline float convert_srgb(const float x)
+{
   if (x < 0.0031308) {
     return 12.92 * x;
   } else {
@@ -12,18 +13,24 @@ inline float convert_srgb(const float x) {
   }
 }
 
-void DebugPixelOp::commit() {
+void DebugPixelOp::commit()
+{
   prefix = getParamString("prefix", "");
 }
 
-PixelOp::Instance* DebugPixelOp::createInstance(FrameBuffer *fb, PixelOp::Instance *prev) {
+PixelOp::Instance*
+DebugPixelOp::createInstance(FrameBuffer *, PixelOp::Instance *)
+{
   return new Instance(prefix);
 }
 
 DebugPixelOp::Instance::Instance(const std::string &prefix)
   : prefix(prefix)
-{}
-void DebugPixelOp::Instance::postAccum(Tile &tile) {
+{
+}
+
+void DebugPixelOp::Instance::postAccum(Tile &tile)
+{
   const int tile_x = tile.region.lower.x / TILE_SIZE;
   const int tile_y = (tile.fbSize.y - tile.region.upper.y) / TILE_SIZE;
   const int tile_id = tile_x + tile_y * (tile.fbSize.x / TILE_SIZE);
@@ -42,9 +49,12 @@ void DebugPixelOp::Instance::postAccum(Tile &tile) {
   }
   ospcommon::utility::writePPM(file, w, h, reinterpret_cast<uint32_t*>(data.data()));
 }
-std::string DebugPixelOp::Instance::toString() const {
+
+std::string DebugPixelOp::Instance::toString() const
+{
   return "DebugPixelOp::Instance";
 }
 
 OSP_REGISTER_PIXEL_OP(DebugPixelOp, debug);
 
+} // ::ospray

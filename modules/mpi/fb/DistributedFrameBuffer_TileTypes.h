@@ -171,7 +171,7 @@ namespace ospray {
         written into / composited into this dfb tile */
     void process(const ospray::Tile &tile) override;
 
-    bool isComplete() const { return missingInCurrentGeneration == 0; }
+    bool isComplete() const override { return missingInCurrentGeneration == 0; }
 
     struct BufferedTile
     {

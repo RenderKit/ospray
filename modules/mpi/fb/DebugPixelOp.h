@@ -23,10 +23,12 @@ namespace ospray {
   // image you can use ImageMagick's montage command:
   // montage `ls *.ppm | sort -V` -geometry +0+0 -tile MxN out.jpg
   // where M is the number of tiles along X, and N the number of tiles along Y
-  struct DebugPixelOp : public PixelOp {
+  struct DebugPixelOp : public PixelOp
+  {
     void commit() override;
 
-    struct Instance : public PixelOp::Instance {
+    struct Instance : public PixelOp::Instance
+    {
       Instance(const std::string &prefix);
       void postAccum(Tile &tile) override;
       std::string toString() const override;
@@ -34,7 +36,8 @@ namespace ospray {
       std::string prefix;
     };
 
-    PixelOp::Instance* createInstance(FrameBuffer *fb, PixelOp::Instance *prev) override;
+    PixelOp::Instance* createInstance(FrameBuffer *fb,
+                                      PixelOp::Instance *prev) override;
 
     std::string prefix;
   };

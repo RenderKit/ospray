@@ -44,8 +44,15 @@ namespace ospray {
     using namespace std::chrono;
 
 #ifndef _WIN32
-    static rusage prevUsage = {0};
-    static rusage curUsage = {0};
+    static rusage createBlank_rusage()
+    {
+      rusage tmp;
+      std::memset(&tmp, 0, sizeof(rusage));
+      return tmp;
+    }
+
+    static rusage prevUsage = createBlank_rusage();
+    static rusage curUsage = createBlank_rusage();
 #endif
     static high_resolution_clock::time_point prevWall, curWall;
     static size_t frameNumber = 0;
@@ -264,7 +271,7 @@ namespace ospray {
 #if 0
           if (mpicommon::globalRank() == 0) {
             std::cout << "region " << i << " projects too {"
-              << projectedRegions[i].bounds << ", z = " 
+              << projectedRegions[i].bounds << ", z = "
               << projectedRegions[i].depth << "}\n";
           }
 #endif
@@ -473,9 +480,9 @@ namespace ospray {
 #endif
       curWall = high_resolution_clock::now();
 
-#if 1
+#if 0
       if (DETAILED_LOGGING && frameNumber > 5) {
-        const std::array<int, 3> localTimes = {
+        const std::array<int, 3> localTimes {
           duration_cast<milliseconds>(endRender - startRender).count(),
           duration_cast<milliseconds>(endComposite - endRender).count(),
           duration_cast<milliseconds>(endComposite - startRender).count()
@@ -566,7 +573,7 @@ namespace ospray {
 #endif
       curWall = high_resolution_clock::now();
 
-#if 1
+#if 0
       if (DETAILED_LOGGING && frameNumber > 5) {
         const std::array<int, 1> localTimes = {
           duration_cast<milliseconds>(endRender - startRender).count(),
@@ -608,7 +615,7 @@ namespace ospray {
 
     void DistributedRaycastRenderer::exchangeModelBounds() {
       allRegions.clear();
-      
+
       std::vector<DistributedRegion> myRegions;
       myRegions.reserve(regions.size());
       std::transform(regions.begin(), regions.end(),
@@ -643,6 +650,7 @@ namespace ospray {
       auto end = std::unique(allRegions.begin(), allRegions.end());
       allRegions.erase(end, allRegions.end());
 
+#if 0
       if (logLevel() >= 1) {
         for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
           if (i == mpicommon::globalRank()) {
@@ -666,6 +674,7 @@ namespace ospray {
           mpicommon::world.barrier();
         }
       }
+#endif
     }
 
     RegionScreenBounds projectRegion(const box3f &bounds, const Camera *camera)
