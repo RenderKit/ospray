@@ -537,7 +537,9 @@ namespace ospray {
                                                        const uint32 channelFlags)
     {
       using namespace mpicommon;
+#if 0
       auto startRender = high_resolution_clock::now();
+#endif
 #ifndef _WIN32
       getrusage(RUSAGE_SELF, &prevUsage);
 #endif
@@ -571,7 +573,9 @@ namespace ospray {
 
       endFrame(nullptr, channelFlags);
 
+#if 0
       auto endRender = high_resolution_clock::now();
+#endif
 #ifndef _WIN32
       getrusage(RUSAGE_SELF, &curUsage);
 #endif
