@@ -48,6 +48,14 @@ namespace ospray {
 
       window.setColorMap(defaultTransferFunction);
 
+      // emulate former negative spp behavior
+      auto &renderer = root->child("renderer");
+      int spp = renderer["spp"].valueAs<int>();
+      if (spp < 1) {
+        window.navRenderResolutionScale = ::powf(2, spp);
+        renderer["spp"] = 1;
+      }
+
       imgui3D::run();
     }
 

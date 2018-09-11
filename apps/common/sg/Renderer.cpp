@@ -87,7 +87,7 @@ namespace ospray {
                   NodeFlags::required | NodeFlags::gui_slider,
                   "the number of samples rendered per pixel. The higher "
                   "the number, the smoother the resulting image.");
-      child("spp").setMinMax(-8,128);
+      child("spp").setMinMax(1,128);
 
       createChild("minContribution", "float", 0.001f,
                   NodeFlags::required |

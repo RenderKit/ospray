@@ -275,7 +275,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       auto &framebuffer = root["frameBuffer"];
 
       if (fast) {
-        renderer["spp"] = 1;
+        renderer["spp"] = -1;
         renderer["shadowsEnabled"] = false;
         renderer["aoTransparencyEnabled"] = false;
         renderer["minContribution"] = 0.1f;
