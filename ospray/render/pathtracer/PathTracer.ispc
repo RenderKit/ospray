@@ -463,25 +463,19 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
 {
   uniform FrameBuffer *uniform fb = self->super.fb;
 
-  uniform int32 spp = self->super.spp;
-  const uniform int blocks = tile.accumID > 0 || spp > 0 ?
-                               1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE/blocks);
+  const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE);
 
   for (uint32 i=begin+programIndex;i<end;i+=programCount) {
-    const uint32 ix = tile.region.lower.x + z_order.xs[i*blocks];
-    const uint32 iy = tile.region.lower.y + z_order.ys[i*blocks];
+    const uint32 ix = tile.region.lower.x + z_order.xs[i];
+    const uint32 iy = tile.region.lower.y + z_order.ys[i];
     if (ix >= fb->size.x || iy >= fb->size.y)
       continue;
 
     ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy, tile.accumID);
 
-    for (uniform int p = 0; p < blocks; p++) {
-      const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
-      setTile(tile, pixel, screenSample);
-    }
+    const uint32 pixel = z_order.xs[i] + (z_order.ys[i] * TILE_SIZE);
+    setTile(tile, pixel, screenSample);
   }
 }
 

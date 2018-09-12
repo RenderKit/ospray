@@ -59,135 +59,72 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
   const uniform int32 spp = self->spp;
 
-  if (spp >= 1) {
-    ScreenSample screenSample;
-    screenSample.z = inf;
-    screenSample.alpha = 0.f;
+  ScreenSample screenSample;
+  screenSample.z = inf;
+  screenSample.alpha = 0.f;
 
-    CameraSample cameraSample;
+  CameraSample cameraSample;
 
-    const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-    const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
-    const uniform int startSampleID = max(tile.accumID, 0)*spp;
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
+  const uniform int startSampleID = max(tile.accumID, 0)*spp;
 
-    for (uniform uint32 i = begin; i < end; i += programCount) {
-      const uint32 index = i + programIndex;
-      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
-      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+  for (uniform uint32 i = begin; i < end; i += programCount) {
+    const uint32 index = i + programIndex;
+    screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
+    screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
 
-      if ((screenSample.sampleID.x >= fb->size.x) |
-          (screenSample.sampleID.y >= fb->size.y))
-        continue;
+    if ((screenSample.sampleID.x >= fb->size.x) |
+        (screenSample.sampleID.y >= fb->size.y))
+      continue;
 
-      float tMax = infinity;
-      // set ray t value for early ray termination if we have a maximum depth
-      // texture
-      if (self->maxDepthTexture) {
-        // always sample center of pixel
-        vec2f depthTexCoord;
-        depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
-        depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
+    float tMax = infinity;
+    // set ray t value for early ray termination if we have a maximum depth
+    // texture
+    if (self->maxDepthTexture) {
+      // always sample center of pixel
+      vec2f depthTexCoord;
+      depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
+      depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-        DifferentialGeometry lookup;
-        initDgFromTexCoord(lookup, depthTexCoord);
-        tMax = min(get1f(self->maxDepthTexture, lookup), infinity);
-      }
-      vec3f col = make_vec3f(0.f);
-      float alpha = 0.f;
-      vec3f normal = make_vec3f(0.f);
-      vec3f albedo = make_vec3f(0.f);
-      const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-      for (uniform uint32 s = 0; s < spp; s++) {
-        const float pixel_du = precomputedHalton2(startSampleID+s);
-        const float pixel_dv = precomputedHalton3(startSampleID+s);
-        screenSample.sampleID.z = startSampleID+s;
-
-        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du)
-                                * fb->rcpSize.x;
-        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv)
-                                * fb->rcpSize.y;
-
-        // TODO: fix correlations / better RNG
-        cameraSample.lens.x = precomputedHalton3(startSampleID+s);
-        cameraSample.lens.y = precomputedHalton5(startSampleID+s);
-
-        camera->initRay(camera,screenSample.ray,cameraSample);
-        screenSample.ray.t = min(screenSample.ray.t, tMax);
-
-        self->renderSample(self,perFrameData,screenSample);
-        col = col + screenSample.rgb;
-        alpha += screenSample.alpha;
-        normal = normal + screenSample.normal;
-        albedo = albedo + screenSample.albedo;
-      }
-      const float rspp = rcpf(spp);
-      screenSample.rgb = col * rspp;
-      screenSample.alpha = alpha * rspp;
-      screenSample.normal = transposed(camera->frame) * (normal * rspp);
-      screenSample.albedo = albedo * rspp;
-      setTile(tile, pixel, screenSample);
+      DifferentialGeometry lookup;
+      initDgFromTexCoord(lookup, depthTexCoord);
+      tMax = min(get1f(self->maxDepthTexture, lookup), infinity);
     }
-  } else {
-    const float pixel_du = precomputedHalton2(tile.accumID);
-    const float pixel_dv = precomputedHalton3(tile.accumID);
-
-    ScreenSample screenSample;
-    screenSample.sampleID.z = tile.accumID;
-    screenSample.z = inf;
-    screenSample.alpha = 0.f;
-
-    CameraSample cameraSample;
-    // TODO: fix correlations / better RNG
-    cameraSample.lens.x = precomputedHalton3(tile.accumID);
-    cameraSample.lens.y = precomputedHalton5(tile.accumID);
-
-    const uniform int blocks = tile.accumID > 0
-                               || spp > 0 ? 1 : min(1 << -2 * spp,
-                                                    TILE_SIZE*TILE_SIZE);
-
-    const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-    const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB,
-                                  TILE_SIZE*TILE_SIZE/blocks);
-
-    for (uint32 i = begin + programIndex; i < end; i+=programCount) {
-      screenSample.sampleID.x = tile.region.lower.x + z_order.xs[i*blocks];
-      screenSample.sampleID.y = tile.region.lower.y + z_order.ys[i*blocks];
-      if ((screenSample.sampleID.x >= fb->size.x) |
-          (screenSample.sampleID.y >= fb->size.y)) {
-        continue;
-      }
+    vec3f col = make_vec3f(0.f);
+    float alpha = 0.f;
+    vec3f normal = make_vec3f(0.f);
+    vec3f albedo = make_vec3f(0.f);
+    const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+    for (uniform uint32 s = 0; s < spp; s++) {
+      const float pixel_du = precomputedHalton2(startSampleID+s);
+      const float pixel_dv = precomputedHalton3(startSampleID+s);
+      screenSample.sampleID.z = startSampleID+s;
 
       cameraSample.screen.x = (screenSample.sampleID.x + pixel_du)
-                              * fb->rcpSize.x;
+        * fb->rcpSize.x;
       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv)
-                              * fb->rcpSize.y;
+        * fb->rcpSize.y;
+
+      // TODO: fix correlations / better RNG
+      cameraSample.lens.x = precomputedHalton3(startSampleID+s);
+      cameraSample.lens.y = precomputedHalton5(startSampleID+s);
 
       camera->initRay(camera,screenSample.ray,cameraSample);
-
-      // set ray t value for early ray termination if we have a maximum depth
-      // texture
-      if (self->maxDepthTexture) {
-        // always sample center of pixel
-        vec2f depthTexCoord;
-        depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
-        depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
-
-        DifferentialGeometry lookup;
-        initDgFromTexCoord(lookup, depthTexCoord);
-        const float tMax = get1f(self->maxDepthTexture, lookup);
-        screenSample.ray.t = min(screenSample.ray.t, tMax);
-      }
+      screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       self->renderSample(self,perFrameData,screenSample);
-      screenSample.normal = transposed(camera->frame) * screenSample.normal;
-
-      for (uniform int p = 0; p < blocks; p++) {
-        const uint32 pixel = z_order.xs[i*blocks+p]
-                             + (z_order.ys[i*blocks+p] * TILE_SIZE);
-        assert(pixel < TILE_SIZE*TILE_SIZE);
-        setTile(tile, pixel, screenSample);
-      }
+      col = col + screenSample.rgb;
+      alpha += screenSample.alpha;
+      normal = normal + screenSample.normal;
+      albedo = albedo + screenSample.albedo;
     }
+    const float rspp = rcpf(spp);
+    screenSample.rgb = col * rspp;
+    screenSample.alpha = alpha * rspp;
+    screenSample.normal = transposed(camera->frame) * (normal * rspp);
+    screenSample.albedo = albedo * rspp;
+    setTile(tile, pixel, screenSample);
   }
 }
 
