@@ -19,36 +19,81 @@
 namespace ospcommon {
   namespace networking {
 
-      SocketFabric::SocketFabric(const uint16_t port)
-        : socket(nullptr), buffer(64 * 1024, 0)
-      {
-        ospcommon::socket_t listenSock = ospcommon::bind(port);
-        socket = ospcommon::listen(listenSock);
-      }
+    // Static helper functions ////////////////////////////////////////////////
 
-      SocketFabric::SocketFabric(const std::string &hostname, const uint16_t port)
-        : socket(ospcommon::connect(hostname.c_str(), port)),
-        buffer(64 * 1024, 0)
-      {}
-
-      SocketFabric::~SocketFabric() {
+    static void closeIfExists(ospcommon::socket_t socket)
+    {
+      if (socket)
         ospcommon::close(socket);
-      }
+    }
 
-      void SocketFabric::send(void *mem, size_t s) {
-        // A bit annoying, because the ospcommon::Socket wrapper does its
-        // own internal buffering, however a Fabric is unbuffered and is
-        // made buffered by using the buffered data streams
-        ospcommon::write(socket, mem, s);
-        ospcommon::flush(socket);
-      }
+    // SocketFabric definitions ///////////////////////////////////////////////
 
-      size_t SocketFabric::read(void *&mem) {
-        const size_t s = ospcommon::read_some(socket, buffer.data(),
-                                              buffer.size());
-        mem = buffer.data();
-        return s;
-      }
+    SocketFabric::SocketFabric(const std::string &hostname, const uint16_t port)
+      : socket(ospcommon::connect(hostname.c_str(), port)),
+      buffer(64 * 1024, 0)
+    {}
+
+    SocketFabric::SocketFabric(ospcommon::socket_t socket)
+      : socket(socket),
+      buffer(64 * 1024, 0)
+    {}
+
+    SocketFabric::~SocketFabric()
+    {
+      closeIfExists(socket);
+    }
+
+    SocketFabric::SocketFabric(SocketFabric &&other)
+      : socket(other.socket),
+      buffer(64 * 1024, 0)
+    {
+      // Note: the buffered socket destructor does not call shutdown
+      other.socket = nullptr;
+    }
+
+    SocketFabric& SocketFabric::operator=(SocketFabric &&other)
+    {
+      closeIfExists(socket);
+
+      socket = other.socket;
+      other.socket = nullptr;
+
+      return *this;
+    }
+
+    void SocketFabric::send(const void *mem, size_t s)
+    {
+      // A bit annoying, because the ospcommon::Socket wrapper does its
+      // own internal buffering, however a Fabric is unbuffered and is
+      // made buffered by using the buffered data streams
+      ospcommon::write(socket, mem, s);
+      ospcommon::flush(socket);
+    }
+
+    size_t SocketFabric::read(void *&mem)
+    {
+      const size_t s = ospcommon::read_some(socket, buffer.data(),
+          buffer.size());
+      mem = buffer.data();
+      return s;
+    }
+
+    // SocketListener definitions /////////////////////////////////////////////
+
+    SocketListener::SocketListener(const uint16_t port)
+      : socket(ospcommon::bind(port))
+    {}
+
+    SocketListener::~SocketListener()
+    {
+      closeIfExists(socket);
+    }
+
+    SocketFabric SocketListener::accept()
+    {
+      return SocketFabric(ospcommon::listen(socket));
+    }
   }
 }
 

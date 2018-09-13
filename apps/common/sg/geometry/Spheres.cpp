@@ -22,9 +22,12 @@ namespace ospray {
 
     Spheres::Spheres() : Geometry("spheres") {}
 
-    box3f Spheres::bounds() const
+    box3f Spheres::computeBounds() const
     {
-      box3f bounds = empty;
+      box3f bbox = bounds();
+
+      if (bbox != box3f(empty))
+        return bbox;
 
       if (hasChild("spheres")) {
         auto spheres = child("spheres").nodeAs<DataBuffer>();
@@ -52,11 +55,13 @@ namespace ospray {
           if (offset_radius >= 0)
             radius = *(float*)(base + i + offset_radius);
           box3f sphereBounds(center - radius, center + radius);
-          bounds.extend(sphereBounds);
+          bbox.extend(sphereBounds);
         }
       }
 
-      return bounds;
+      child("bounds") = bbox;
+
+      return bbox;
     }
 
     OSP_REGISTER_SG_NODE(Spheres);

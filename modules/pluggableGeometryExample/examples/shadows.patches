@@ -1,0 +1,14 @@
+# a sample file of patches. any line that does not contain three
+# floats is ignored, and any set of four successive 3-float lines
+# form one bi-linear patch
+
+-1 -1 0
+2 -1 0
+-1 2 0
+2 2 .1
+
+0 0 -.02
+1 0 -.02
+0 1 -.02
+1 1 -.1
+

@@ -23,8 +23,11 @@
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
+extern "C" OSPRAY_SDK_INTERFACE RTCDevice ispc_embreeDevice();
+
 namespace ospray {
   namespace api {
+
 
     struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     {
@@ -149,7 +152,8 @@ namespace ospray {
       OSPGeometry newGeometry(const char *type) override;
 
       /*! have given renderer create a new material */
-      OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) override;
+      OSPMaterial newMaterial(OSPRenderer renderer,
+                              const char *material_type) override;
 
       /*! have given renderer create a new material */
       OSPMaterial newMaterial(const char *renderer_type,
@@ -165,15 +169,10 @@ namespace ospray {
       OSPTransferFunction newTransferFunction(const char *type) override;
 
       /*! have given renderer create a new Light */
-      OSPLight newLight(OSPRenderer _renderer, const char *type) override;
+      OSPLight newLight(const char *light_type) override;
 
-      /*! have given renderer create a new Light */
-      OSPLight newLight(const char *renderer_type,
-                        const char *light_type) override;
-
-      /*! create a new Texture2D object */
-      OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
-          void *data, const uint32 flags) override;
+      /*! create a new Texture object */
+      OSPTexture newTexture(const char *type) override;
 
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
@@ -185,6 +184,9 @@ namespace ospray {
 
         if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
+
+        if whichChannel&OSP_FB_NORMAL!=0, clear the normal buffer to 0,0,1.
+        if whichChannel&OSP_FB_ALBEDO!=0, clear the albedo buffer to 0,0,0.
       */
       void frameBufferClear(OSPFrameBuffer _fb,
                                     const uint32 fbChannelFlags) override;

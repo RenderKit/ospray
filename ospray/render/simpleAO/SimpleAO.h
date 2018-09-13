@@ -43,25 +43,17 @@ namespace ospray {
     (semi-)randomly rotated to give different directions every frame
     (this is far from optimal regarding how well the samples are
     distributed, but seems OK for accumulation).
-
-    To further improve frame rate there's a template parameter
-    NUM_SAMPLES_PER_FRAME that allows for selecting subsets of these
-    samples (only 1,2,4,8, and 16 are allowed). I.e., whereas AO16
-    would usually trace the orginal 16 samples in the first frame, and
-    a rotated version of that in the second, with
-    NUM_SAMPLES_PER_FRAME set to 8 it would trace the original 8
-    samples in the first frame, the next 8 in the second, then
-    rotation of the first 8 in the third, etc.
    */
   struct SimpleAO : public Renderer
   {
-    SimpleAO(int defaultNumSamples);
+    SimpleAO(int defaultNumSamples = 1);
     virtual ~SimpleAO() override = default;
     virtual std::string toString() const override;
-    virtual ospray::Material *createMaterial(const char *type) override;
     virtual void commit() override;
 
-    int defaultNumSamples;
+  private:
+
+    int numSamples{1};
   };
 
 } // ::ospray

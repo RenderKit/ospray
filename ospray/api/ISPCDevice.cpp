@@ -26,6 +26,7 @@
 #include "render/LoadBalancer.h"
 #include "common/Material.h"
 #include "common/Library.h"
+#include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #include "lights/Light.h"
 #include "fb/LocalFB.h"
@@ -93,30 +94,11 @@ namespace ospray {
                                    const uint32 channels)
     {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
-      bool hasDepthBuffer    = (channels & OSP_FB_DEPTH) != 0;
-      bool hasAccumBuffer    = (channels & OSP_FB_ACCUM) != 0;
-      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE) != 0;
 
-      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,
-                                             hasAccumBuffer,
-                                             hasVarianceBuffer);
+      FrameBuffer *fb = new LocalFrameBuffer(size, colorBufferFormat, channels);
       return (OSPFrameBuffer)fb;
     }
 
-
-      /*! clear the specified channel(s) of the frame buffer specified in
-       *  'whichChannels'
-
-        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.
-
-        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.
-
-        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
-        and reset accumID.
-      */
     void ISPCDevice::frameBufferClear(OSPFrameBuffer _fb,
                                        const uint32 fbChannelFlags)
     {
@@ -124,24 +106,18 @@ namespace ospray {
       fb->clear(fbChannelFlags);
     }
 
-
     /*! map frame buffer */
     const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,
-                                            OSPFrameBufferChannel channel)
+                                           OSPFrameBufferChannel channel)
     {
       LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
-      switch (channel) {
-      case OSP_FB_COLOR: return fb->mapColorBuffer();
-      case OSP_FB_DEPTH: return fb->mapDepthBuffer();
-      default: return nullptr;
-      }
+      return fb->mapBuffer(channel);
     }
 
     /*! unmap previously mapped frame buffer */
     void ISPCDevice::frameBufferUnmap(const void *mapped,
                                        OSPFrameBuffer _fb)
     {
-      Assert2(_fb != nullptr, "invalid framebuffer");
       FrameBuffer *fb = (FrameBuffer *)_fb;
       fb->unmap(mapped);
     }
@@ -149,15 +125,13 @@ namespace ospray {
     /*! create a new model */
     OSPModel ISPCDevice::newModel()
     {
-      Model *model = new Model;
-      return (OSPModel)model;
+      return (OSPModel)new Model;
     }
 
     /*! finalize a newly specified model */
     void ISPCDevice::commit(OSPObject _object)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert2(object,"null object in ISPCDevice::commit()");
       object->commit();
     }
 
@@ -165,21 +139,14 @@ namespace ospray {
     void ISPCDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert2(model,"null model in ISPCDevice::addModel()");
-
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(geometry,"null geometry in ISPCDevice::addGeometry()");
-
       model->geometry.push_back(geometry);
     }
 
     void ISPCDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert2(model, "null model in ISPCDevice::removeGeometry");
-
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(geometry, "null geometry in ISPCDevice::removeGeometry");
 
       auto it = std::find_if(model->geometry.begin(),
                              model->geometry.end(),
@@ -196,21 +163,14 @@ namespace ospray {
     void ISPCDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
       Model *model = (Model *) _model;
-      Assert2(model, "null model in ISPCDevice::addVolume()");
-
       Volume *volume = (Volume *) _volume;
-      Assert2(volume, "null volume in ISPCDevice::addVolume()");
-
       model->volume.push_back(volume);
     }
 
     void ISPCDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
       Model *model = (Model *)_model;
-      Assert2(model, "null model in ISPCDevice::removeVolume");
-
       Volume *volume = (Volume *)_volume;
-      Assert2(volume, "null volume in ISPCDevice::removeVolume");
 
       auto it = std::find_if(model->volume.begin(),
                              model->volume.end(),
@@ -237,8 +197,6 @@ namespace ospray {
                                 const char *s)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
       object->setParam<std::string>(bufName, s);
     }
 
@@ -248,16 +206,12 @@ namespace ospray {
                                  void *v)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
       object->setParam(bufName, v);
     }
 
     void ISPCDevice::removeParam(OSPObject _object, const char *name)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(name != nullptr && "invalid identifier for object parameter");
       object->removeParam(name);
     }
 
@@ -267,9 +221,6 @@ namespace ospray {
                             const int f)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, f);
     }
 
@@ -279,9 +230,6 @@ namespace ospray {
                              const bool b)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, b);
     }
 
@@ -291,9 +239,6 @@ namespace ospray {
                               const float f)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, f);
     }
 
@@ -301,8 +246,7 @@ namespace ospray {
     int ISPCDevice::setRegion(OSPVolume handle, const void *source,
                               const vec3i &index, const vec3i &count)
     {
-      Volume *volume = (Volume *) handle;
-      Assert(volume != nullptr && "invalid volume object handle");
+      Volume *volume = (Volume *)handle;
       return volume->setRegion(source, index, count);
     }
 
@@ -312,9 +256,6 @@ namespace ospray {
                               const vec2f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, v);
     }
 
@@ -324,9 +265,6 @@ namespace ospray {
                               const vec3f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, v);
     }
 
@@ -336,9 +274,6 @@ namespace ospray {
                               const vec4f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, v);
     }
 
@@ -348,9 +283,6 @@ namespace ospray {
                               const vec2i &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, v);
     }
 
@@ -360,9 +292,6 @@ namespace ospray {
                               const vec3i &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       object->setParam(bufName, v);
     }
 
@@ -373,27 +302,13 @@ namespace ospray {
     {
       ManagedObject *target = (ManagedObject *)_target;
       ManagedObject *value  = (ManagedObject *)_value;
-
-      Assert(target != nullptr  && "invalid target object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
-
       target->setParam(bufName, value);
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */
     OSPPixelOp ISPCDevice::newPixelOp(const char *type)
     {
-      Assert(type != nullptr && "invalid render type identifier");
-      PixelOp *pixelOp = PixelOp::createInstance(type);
-      if (!pixelOp) {
-        if (debugMode) {
-          throw std::runtime_error("unknown pixelOp type '" +
-                                   std::string(type) + "'");
-        }
-        else
-          return nullptr;
-      }
-      return (OSPPixelOp)pixelOp;
+      return (OSPPixelOp)PixelOp::createInstance(type);
     }
 
     /*! set a frame buffer's pixel op object */
@@ -401,158 +316,64 @@ namespace ospray {
     {
       FrameBuffer *fb = (FrameBuffer*)_fb;
       PixelOp *po = (PixelOp*)_op;
-      assert(fb);
-      assert(po);
       fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer ISPCDevice::newRenderer(const char *type)
     {
-      Assert(type != nullptr && "invalid render type identifier");
-      Renderer *renderer = Renderer::createInstance(type);
-      if (!renderer) {
-        if (debugMode) {
-          throw std::runtime_error("unknown renderer type '" +
-                                   std::string(type) + "'");
-        }
-        else
-          return nullptr;
-      }
-      return (OSPRenderer)renderer;
+      return (OSPRenderer)Renderer::createInstance(type);
     }
 
     /*! create a new geometry object (out of list of registered geometrys) */
     OSPGeometry ISPCDevice::newGeometry(const char *type)
     {
-      Assert(type != nullptr && "invalid render type identifier");
-      Geometry *geometry = Geometry::createInstance(type);
-      if (!geometry) return nullptr;
-      return (OSPGeometry)geometry;
+      return (OSPGeometry)Geometry::createInstance(type);
     }
 
-    /*! have given renderer create a new material */
     OSPMaterial ISPCDevice::newMaterial(OSPRenderer _renderer,
-                                         const char *type)
+                                        const char *material_type)
     {
-      Assert2(type != nullptr, "invalid material type identifier");
-
-      // -------------------------------------------------------
-      // first, check if there's a renderer that we can ask to create the
-      // material.
-      //
-      Renderer *renderer = (Renderer *)_renderer;
-      if (renderer) {
-        Material *material = renderer->createMaterial(type);
-        if (material) {
-          return (OSPMaterial)material;
-        }
-      }
-
-      // -------------------------------------------------------
-      // if there was no renderer, check if there's a loadable material by that
-      // name
-      //
-      Material *material = Material::createMaterial(type);
-      if (!material) return nullptr;
-      return (OSPMaterial)material;
+      auto *renderer = reinterpret_cast<Renderer*>(_renderer);
+      auto name = renderer->getParamString("externalNameFromAPI");
+      return newMaterial(name.c_str(), material_type);
     }
 
     /*! have given renderer create a new material */
     OSPMaterial ISPCDevice::newMaterial(const char *renderer_type,
-                                         const char *material_type)
+                                        const char *material_type)
     {
-      auto renderer = newRenderer(renderer_type);
-      auto material = newMaterial(renderer, material_type);
-      release(renderer);
-      return material;
+      return (OSPMaterial)Material::createInstance(renderer_type,
+                                                   material_type);
     }
 
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera ISPCDevice::newCamera(const char *type)
     {
-      Assert(type != nullptr && "invalid camera type identifier");
-      Camera *camera = Camera::createInstance(type);
-      if (!camera) {
-        if (debugMode) {
-          throw std::runtime_error("unknown camera type '"
-                                   + std::string(type) + "'");
-        }
-        else
-          return nullptr;
-      }
-      return (OSPCamera)camera;
+      return (OSPCamera)Camera::createInstance(type);
     }
 
     /*! create a new volume object (out of list of registered volumes) */
     OSPVolume ISPCDevice::newVolume(const char *type)
     {
-      Assert(type != nullptr && "invalid volume type identifier");
-      Volume *volume = Volume::createInstance(type);
-      if (!volume) {
-        if (debugMode) {
-          throw std::runtime_error("unknown volume type '" +
-                                   std::string(type) + "'");
-        }
-        else
-          return nullptr;
-      }
-      return (OSPVolume)volume;
+      return (OSPVolume)Volume::createInstance(type);
     }
 
     /*! create a new volume object (out of list of registered volumes) */
     OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
     {
-      Assert(type != nullptr && "invalid transfer function type identifier");
-      auto *transferFunction = TransferFunction::createInstance(type);
-      if (!transferFunction) {
-        if (debugMode) {
-          throw std::runtime_error("unknown transfer function type '" +
-                                   std::string(type) + "'");
-        }
-        else
-          return nullptr;
-      }
-      return (OSPTransferFunction)transferFunction;
+      return (OSPTransferFunction)TransferFunction::createInstance(type);
     }
 
-    /*! have given renderer create a new Light */
-    OSPLight ISPCDevice::newLight(OSPRenderer _renderer, const char *type)
+    OSPLight ISPCDevice::newLight(const char *type)
     {
-      Renderer  *renderer = (Renderer *)_renderer;
-      if (renderer) {
-        Light *light = renderer->createLight(type);
-        if (light) {
-          return (OSPLight)light;
-        }
-      }
-
-      // If there was no renderer try to see if there is a loadable light by
-      // that name
-      Light *light = Light::createLight(type);
-      if (!light) return nullptr;
-      return (OSPLight)light;
+      return (OSPLight)Light::createInstance(type);
     }
 
-    OSPLight ISPCDevice::newLight(const char *renderer_type,
-                                   const char *light_type)
+    /*! create a new Texture object */
+    OSPTexture ISPCDevice::newTexture(const char *type)
     {
-      auto renderer = newRenderer(renderer_type);
-      auto light = newLight(renderer, light_type);
-      release(renderer);
-      return light;
-    }
-
-    /*! create a new Texture2D object */
-    OSPTexture2D ISPCDevice::newTexture2D(const vec2i &size,
-        const OSPTextureFormat type, void *data, const uint32 flags)
-    {
-      Assert(size.x > 0 &&
-             "Width must be greater than 0 in ISPCDevice::newTexture2D");
-      Assert(size.y > 0 &&
-             "Height must be greater than 0 in ISPCDevice::newTexture2D");
-      Texture2D *tx = Texture2D::createTexture(size, type, data, flags);
-      return (OSPTexture2D)tx;
+      return (OSPTexture)Texture::createInstance(type);
     }
 
     /*! load module */
@@ -563,24 +384,13 @@ namespace ospray {
 
     /*! call a renderer to render a frame buffer */
     float ISPCDevice::renderFrame(OSPFrameBuffer _fb,
-                                   OSPRenderer    _renderer,
-                                   const uint32   fbChannelFlags)
+                                  OSPRenderer    _renderer,
+                                  const uint32   fbChannelFlags)
     {
       FrameBuffer *fb       = (FrameBuffer *)_fb;
       Renderer    *renderer = (Renderer *)_renderer;
 
-      Assert(fb != nullptr && "invalid frame buffer handle");
-      Assert(renderer != nullptr && "invalid renderer handle");
-
-      try {
-        return renderer->renderFrame(fb, fbChannelFlags);
-      } catch (const std::runtime_error &e) {
-        postStatusMsg() << "================================================\n"
-                        << "# >>> ospray fatal error <<< \n"
-                        << std::string(e.what()) + '\n'
-                        << "================================================";
-        exit(1);
-      }
+      return renderer->renderFrame(fb, fbChannelFlags);
     }
 
     //! release (i.e., reduce refcount of) given object
@@ -605,30 +415,22 @@ namespace ospray {
     {
       Geometry *geometry = (Geometry*)_geometry;
       Material *material = (Material*)_material;
-      assert(geometry);
-      assert(material);
       geometry->setMaterial(material);
     }
 
     OSPPickResult ISPCDevice::pick(OSPRenderer _renderer,
-                                    const vec2f &screenPos)
+                                   const vec2f &screenPos)
     {
-      Assert(_renderer != nullptr && "invalid renderer handle");
       Renderer *renderer = (Renderer*)_renderer;
-
       return renderer->pick(screenPos);
     }
 
     void ISPCDevice::sampleVolume(float **results,
-                                   OSPVolume _volume,
-                                   const vec3f *worldCoordinates,
-                                   const size_t &count)
+                                  OSPVolume _volume,
+                                  const vec3f *worldCoordinates,
+                                  const size_t &count)
     {
       Volume *volume = (Volume *)_volume;
-
-      Assert2(volume, "invalid volume handle");
-      Assert2(worldCoordinates, "invalid worldCoordinates");
-
       volume->computeSamples(results, worldCoordinates, count);
     }
 

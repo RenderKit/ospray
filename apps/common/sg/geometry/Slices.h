@@ -27,7 +27,7 @@ namespace ospray {
       Slices();
 
       // return bounding box of all primitives
-      box3f bounds() const override;
+      box3f computeBounds() const override;
 
       void preTraverse(RenderContext &ctx,
                        const std::string& operation,

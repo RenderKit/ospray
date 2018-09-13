@@ -18,52 +18,35 @@
 
 #include "BSDF.ih"
 
-struct LambertTransmission
-{
-  BSDF super;
-
-  vec3f R;
-};
-
-inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF* uniform super,
+inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF* uniform self,
                                              const vec3f& wo, const vec3f& wi)
 {
-  const varying LambertTransmission* uniform self = (const varying LambertTransmission* uniform)super;
   BSDF_EvalRes res;
-  float cosThetaI = max(-dot(wi, getN(super)), 0.f);
+  float cosThetaI = max(-dot(wi, getN(self)), 0.f);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
-  res.value = self->R * one_over_pi * cosThetaI;
+  res.value = self->albedo * one_over_pi * cosThetaI;
   return res;
 }
 
-inline BSDF_SampleRes LambertTransmission_sample(const varying BSDF* uniform super,
+inline BSDF_SampleRes LambertTransmission_sample(const varying BSDF* uniform self,
                                                  const vec3f& wo, const vec2f& s, float ss)
 {
-  const varying LambertTransmission* uniform self = (const varying LambertTransmission* uniform)super;
   const vec3f localDir = cosineSampleHemisphere(s);
   BSDF_SampleRes res;
-  res.wi = neg(getFrame(super) * localDir);
+  res.wi = neg(getFrame(self) * localDir);
   res.pdf = cosineSampleHemispherePDF(localDir);
   res.type = BSDF_DIFFUSE_TRANSMISSION;
-  res.weight = self->R;
+  res.weight = self->albedo;
   return res;
-}
-
-inline void LambertTransmission_Constructor(varying LambertTransmission* uniform self, 
-                                            const varying linear3f* uniform frame,
-                                            vec3f R)
-{
-  BSDF_Constructor(&self->super, BSDF_DIFFUSE_TRANSMISSION,
-                   LambertTransmission_eval, LambertTransmission_sample,
-                   frame);
-  self->R = R;
 }
 
 inline varying BSDF* uniform LambertTransmission_create(uniform ShadingContext* uniform ctx, 
                                                         const varying linear3f* uniform frame,
                                                         const varying vec3f& R)
 {
-  varying LambertTransmission* uniform self = (varying LambertTransmission* uniform)ShadingContext_alloc(ctx, sizeof(LambertTransmission));
-  LambertTransmission_Constructor(self, frame, R);
-  return &self->super;
+  varying BSDF* uniform self = (varying BSDF* uniform)ShadingContext_alloc(ctx, sizeof(BSDF));
+  BSDF_Constructor(self, R, BSDF_DIFFUSE_TRANSMISSION,
+                   LambertTransmission_eval, LambertTransmission_sample,
+                   frame);
+  return self;
 }

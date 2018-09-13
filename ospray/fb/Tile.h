@@ -38,22 +38,23 @@ namespace ospray {
       floats. */
   struct OSPRAY_SDK_INTERFACE __aligned(64) Tile
   {
-    // 'red' component; in float.
-    float r[TILE_SIZE*TILE_SIZE];
-    // 'green' component; in float.
-    float g[TILE_SIZE*TILE_SIZE];
-    // 'blue' component; in float.
-    float b[TILE_SIZE*TILE_SIZE];
-    // 'alpha' component; in float.
-    float a[TILE_SIZE*TILE_SIZE];
-    // 'depth' component; in float.
-    float z[TILE_SIZE*TILE_SIZE];
-    region2i region; /*!< screen region that this corresponds to */
-    vec2i    fbSize; /*!< total frame buffer size, for the camera */
+    float    r[TILE_SIZE*TILE_SIZE];  // 'red' component
+    float    g[TILE_SIZE*TILE_SIZE];  // 'green' component
+    float    b[TILE_SIZE*TILE_SIZE];  // 'blue' component
+    float    a[TILE_SIZE*TILE_SIZE];  // 'alpha' component
+    float    z[TILE_SIZE*TILE_SIZE];  // 'depth' component
+    float    nx[TILE_SIZE*TILE_SIZE]; // normal x
+    float    ny[TILE_SIZE*TILE_SIZE]; // normal y
+    float    nz[TILE_SIZE*TILE_SIZE]; // normal z
+    float    ar[TILE_SIZE*TILE_SIZE]; // albedo red
+    float    ag[TILE_SIZE*TILE_SIZE]; // albedo green
+    float    ab[TILE_SIZE*TILE_SIZE]; // albedo blue
+    region2i region; // screen region that this corresponds to
+    vec2i    fbSize; // total frame buffer size, for the camera
     vec2f    rcp_fbSize;
     int32    generation;
     int32    children;
-    int32    accumID; //!< how often has been accumulated into this tile
+    int32    accumID; // how often has been accumulated into this tile
 
     Tile() = default;
     Tile(const vec2i &tile, const vec2i &fbsize, const int32 accumId)

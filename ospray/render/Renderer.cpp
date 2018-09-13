@@ -33,7 +33,7 @@ namespace ospray {
   {
     autoEpsilon = getParam1i("autoEpsilon", true);
     epsilon = getParam1f("epsilon", 1e-6f);
-    spp = getParam1i("spp", 1);
+    spp = std::max(1, getParam1i("spp", 1));
     const int32 maxDepth = getParam1i("maxDepth", 20);
     const float minContribution = getParam1f("minContribution", 0.001f);
     errorThreshold = getParam1f("varianceThreshold", 0.f);

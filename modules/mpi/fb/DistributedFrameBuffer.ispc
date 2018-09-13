@@ -63,9 +63,9 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
       accum->g[i] = acc.y;
       accum->b[i] = acc.z;
       accum->a[i] = acc.w;
-                                                                             
+
       acc = acc * rcpAccumID;
-                                                                             
+
       if (accumulateVariance) {
         varying vec4f vari = make_vec4f(0.f);
         if (accumID > 1)
@@ -76,7 +76,7 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
         variance->g[i] = vari.y;
         variance->b[i] = vari.z;
         variance->a[i] = vari.w;
-                                                                             
+
         /* invert alpha (bright alpha is more important */
         const float den2 = reduce_add(make_vec3f(acc)) + (1.f-acc.w);
         if (den2 > 0.0f) {
@@ -97,13 +97,6 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
       errf = reduce_add(err) * rsqrtf(size.x*size.y);
   }
   return errf;
-}
-
-inline vec4f soa_to_aos4f(const vec4f s)
-{
-  vec4f a;
-  soa_to_aos4(s.x, s.y, s.z, s.w, (uniform float*uniform)&a);
-  return a;
 }
 
 // variant that only accumulates (without computing error)
@@ -131,6 +124,52 @@ export void DFB_accumulateTileSimple(const VaryingTile *uniform tile,
       variance->g[i] += col.y;
       variance->b[i] += col.z;
       variance->a[i] += col.w;
+    }
+  }
+}
+
+// accumulate normal and albedo
+export void DFB_accumulateAuxTile(const VaryingTile *uniform tile
+    , Tile *uniform final
+    , VaryingTile *uniform accum
+    )
+{
+  const uniform vec2i size = box_size(tile->region);
+  const uniform int maxi = size.y*(TILE_SIZE/programCount);
+  if (tile->accumID < 1)
+    for (uniform int i = 0; i < maxi; i++) {
+      const float fnx = tile->nx[i];
+      const float fny = tile->ny[i];
+      const float fnz = tile->nz[i];
+      accum->nx[i] = fnx;
+      accum->ny[i] = fny;
+      accum->nz[i] = fnz;
+      soa_to_aos3(fnx, fny, fnz, final->nx + 3*programCount*i);
+      const float far = tile->ar[i];
+      const float fag = tile->ag[i];
+      const float fab = tile->ab[i];
+      accum->ar[i] = far;
+      accum->ag[i] = fag;
+      accum->ab[i] = fab;
+      soa_to_aos3(far, fag, fab, final->ar + 3*programCount*i);
+    }
+  else {
+    const uniform float rcpAccumID = rcpf(tile->accumID+1);
+    for (uniform int i = 0; i < maxi; i++) {
+      accum->nx[i] += tile->nx[i];
+      accum->ny[i] += tile->ny[i];
+      accum->nz[i] += tile->nz[i];
+      const float fnx = accum->nx[i] * rcpAccumID;
+      const float fny = accum->ny[i] * rcpAccumID;
+      const float fnz = accum->nz[i] * rcpAccumID;
+      soa_to_aos3(fnx, fny, fnz, final->nx + 3*programCount*i);
+      accum->ar[i] += tile->ar[i];
+      accum->ag[i] += tile->ag[i];
+      accum->ab[i] += tile->ab[i];
+      const float far = accum->ar[i] * rcpAccumID;
+      const float fag = accum->ag[i] * rcpAccumID;
+      const float fab = accum->ab[i] * rcpAccumID;
+      soa_to_aos3(far, fag, fab, final->ar + 3*programCount*i);
     }
   }
 }
@@ -167,7 +206,6 @@ export uniform float DFB_computeErrorForTile(const uniform vec2i &size,
 export void DFB_writeTile_##name(const VaryingTile *uniform tile,               \
                                  void *uniform _color)                          \
 {                                                                               \
-  const uniform int accumID = tile->accumID;                                    \
   const uniform vec2i size = box_size(tile->region);                            \
   const uniform int maxi = size.y*(TILE_SIZE/programCount);                     \
   dst_fmt *uniform color = (dst_fmt*uniform)_color;                             \
@@ -179,6 +217,12 @@ export void DFB_writeTile_##name(const VaryingTile *uniform tile,               
 
 template_writeTile(RGBA8, varying uint32, cvt_uint32);
 template_writeTile(SRGBA, varying uint32, linear_to_srgba8);
+inline vec4f soa_to_aos4f(const vec4f s)
+{
+  vec4f a;
+  soa_to_aos4(s.x, s.y, s.z, s.w, (uniform float*uniform)&a);
+  return a;
+}
 template_writeTile(RGBA32F, varying vec4f, soa_to_aos4f);
 #undef template_writeTile
 

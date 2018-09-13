@@ -43,25 +43,46 @@ struct Model
   uniform int32 volumeCount;
 };
 
-/*! trace a ray (using embree where possible) */
-inline void traceRay(uniform Model *uniform model, varying Ray &ray)
+struct UserIntersectionContext
 {
-  uniform RTCIntersectContext context;
-  rtcInitIntersectContext(&context);
+  RTCIntersectContext ectx;
+  void *uniform userPtr;
+};
+
+inline void traceRay(uniform Model *uniform model,
+                     varying Ray &ray,
+                     void *uniform userPtr)
+{
+  uniform UserIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+  context.userPtr = userPtr;
   rtcIntersectV(model->embreeSceneHandle,
-                &context,
+                &context.ectx,
                 (varying RTCRayHit* uniform)&ray);
 }
 
-/*! determine if ray is occluded (using embree where possible) */
-inline bool isOccluded(uniform Model *uniform model, varying Ray &ray)
+inline void traceRay(uniform Model *uniform model,
+                     varying Ray &ray)
 {
-  uniform RTCIntersectContext context;
-  rtcInitIntersectContext(&context);
+  traceRay(model, ray, NULL);
+}
+
+inline bool isOccluded(uniform Model *uniform model,
+                       varying Ray &ray,
+                       void *uniform userPtr)
+{
+  uniform UserIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+  context.userPtr = userPtr;
   rtcOccludedV(model->embreeSceneHandle,
-               &context,
+               &context.ectx,
                (varying RTCRay* uniform)&ray);
   return ray.t < ray.t0;
+}
+
+inline bool isOccluded(uniform Model *uniform model, varying Ray &ray)
+{
+  return isOccluded(model, ray, NULL);
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of
@@ -76,6 +97,9 @@ inline void postIntersect(uniform Model *uniform model,
                           const varying Ray &ray,
                           uniform int64 flags)
 {
+  dg.primID = ray.primID;
+  dg.st     = make_vec2f(ray.u, ray.v);
+
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
   dg.material = NULL;

@@ -25,7 +25,7 @@ namespace ospray {
 
     class OSPExampleViewer : public OSPApp
     {
-      void render(const std::shared_ptr<ospray::sg::Node> &) override;
+      void render(const std::shared_ptr<sg::Frame> &) override;
       int parseCommandLine(int &ac, const char **&av) override;
 
       bool fullscreen = false;
@@ -33,10 +33,9 @@ namespace ospray {
       std::string initialTextForNodeSearch;
     };
 
-    void OSPExampleViewer::render(
-        const std::shared_ptr<ospray::sg::Node> &renderer)
+    void OSPExampleViewer::render(const std::shared_ptr<sg::Frame> &root)
     {
-      ospray::ImGuiViewer window(renderer);
+      ospray::ImGuiViewer window(root);
 
       window.create("OSPRay Example Viewer App",
                     fullscreen, vec2i(width, height));
@@ -46,6 +45,16 @@ namespace ospray {
 
       if (!initialTextForNodeSearch.empty())
         window.setInitialSearchBoxText(initialTextForNodeSearch);
+
+      window.setColorMap(defaultTransferFunction);
+
+      // emulate former negative spp behavior
+      auto &renderer = root->child("renderer");
+      int spp = renderer["spp"].valueAs<int>();
+      if (spp < 1) {
+        window.navRenderResolutionScale = ::powf(2, spp);
+        renderer["spp"] = 1;
+      }
 
       imgui3D::run();
     }

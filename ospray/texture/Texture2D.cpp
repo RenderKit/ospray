@@ -17,45 +17,54 @@
 #include "Texture2D.h"
 #include "Texture2D_ispc.h"
 
-namespace ospray {
+#include "../common/Data.h"
 
-  Texture2D::~Texture2D()
-  {
-    if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
-      delete [] (unsigned char *)data;
-  }
+namespace ospray {
 
   std::string Texture2D::toString() const
   {
     return "ospray::Texture2D";
   }
 
-  Texture2D *Texture2D::createTexture(const vec2i &_size,
-      const OSPTextureFormat type, void *data, const int flags)
+  void Texture2D::commit()
   {
-    auto size = _size;
-    Texture2D *tx = new Texture2D;
+    auto size = getParam<vec2i>("size", vec2i(-1, -1));
 
-    tx->size = size;
-    tx->type = type;
-    tx->flags = flags;
-    tx->managedObjectType = OSP_TEXTURE;
-
-    const size_t bytes = sizeOf(type) * size.x * size.y;
-
-    assert(data);
-
-    if (flags & OSP_TEXTURE_SHARED_BUFFER) {
-      tx->data = data;
-    } else {
-      tx->data = new unsigned char[bytes];
-      memcpy(tx->data, data, bytes);
+    if (size.x < 0 || size.y < 0) {
+      std::stringstream ss;
+      ss << "'size' param on Texture2D must be positive! got " << size;
+      throw std::runtime_error(ss.str());
     }
 
-    tx->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
-                                                tx->data, type, flags);
+    auto texData = getParamData("data", nullptr);
 
-    return tx;
+    if (!texData->data)
+      throw std::runtime_error("no texel data provided to Texture2D");
+
+    type  = static_cast<OSPTextureFormat>(
+      getParam1i("type", OSP_TEXTURE_FORMAT_INVALID)
+    );
+    flags = getParam1i("flags", 0);
+
+    const size_t numBytesExpected = sizeOf(type) * size.x * size.y;
+
+    if (numBytesExpected != texData->numBytes) {
+      std::stringstream ss;
+      ss << "'size' and 'data' parameters disagree on memory size!\n";
+      ss << "expected #bytes: " << numBytesExpected;
+      ss << "   given #bytes: " << texData->numBytes;
+      throw std::runtime_error(ss.str());
+    }
+
+    this->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
+                                                  texData->data, type, flags);
   }
+
+  OSP_REGISTER_TEXTURE(Texture2D, texture2d);
+  OSP_REGISTER_TEXTURE(Texture2D, texture2D);
+  OSP_REGISTER_TEXTURE(Texture2D, image2d);
+  OSP_REGISTER_TEXTURE(Texture2D, image2D);
+  OSP_REGISTER_TEXTURE(Texture2D, 2d);
+  OSP_REGISTER_TEXTURE(Texture2D, 2D);
 
 } // ::ospray

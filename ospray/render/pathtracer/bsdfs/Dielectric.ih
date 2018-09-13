@@ -71,7 +71,8 @@ inline void Dielectric_Constructor(varying Dielectric* uniform self,
                                    const varying linear3f* uniform frame,
                                    float eta)
 {
-  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+  BSDF_Constructor(&self->super, make_vec3f(1.0f),
+                   BSDF_SPECULAR,
                    Dielectric_eval, Dielectric_sample,
                    frame);
   self->eta = eta;

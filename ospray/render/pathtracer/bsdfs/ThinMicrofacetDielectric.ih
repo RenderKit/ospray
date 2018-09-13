@@ -153,7 +153,8 @@ inline void ThinMicrofacetDielectric_Constructor(varying ThinMicrofacetDielectri
                                                  const varying linear3f* uniform frame,
                                                  float eta, float roughness, float anisotropy, vec3f attenuation)
 {
-  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION | BSDF_SPECULAR_TRANSMISSION,
+  BSDF_Constructor(&self->super, expf(attenuation),
+                   BSDF_GLOSSY_REFLECTION | BSDF_SPECULAR_TRANSMISSION,
                    ThinMicrofacetDielectric_eval, ThinMicrofacetDielectric_sample,
                    frame);
 

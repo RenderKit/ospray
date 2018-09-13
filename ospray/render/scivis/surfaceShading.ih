@@ -30,6 +30,7 @@ struct SciVisShadingInfo
   vec3f Ks;
   float Ns;
   vec3f shadingNormal;
+  vec3f albedo;
 
   float local_opacity;
 };

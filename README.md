@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.6.1 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.7.0 of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -203,9 +203,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -257,7 +257,7 @@ prefixed by convention with “`--osp:`”) are understood:
 <caption>Command line parameters accepted by OSPRay’s <code>ospInit</code>.</caption>
 <colgroup>
 <col style="width: 36%" />
-<col style="width: 61%" />
+<col style="width: 60%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -713,13 +713,13 @@ or else an `OSPVolume` handle.
 The common parameters understood by all volume variants are summarized
 in the table below.
 
-<table style="width:97%;">
+<table style="width:98%;">
 <caption>Configuration parameters shared by all volume types.</caption>
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 32%" />
-<col style="width: 13%" />
-<col style="width: 40%" />
+<col style="width: 23%" />
+<col style="width: 27%" />
+<col style="width: 11%" />
+<col style="width: 34%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -731,66 +731,72 @@ in the table below.
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">OSPTransferFunction</td>
+<td style="text-align: left;">transferFunction</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"><a href="#transfer-function">transfer function</a> to use</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">vec2f</td>
 <td style="text-align: left;">voxelRange</td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;">minimum and maximum of the scalar values</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">gradientShadingEnabled</td>
 <td style="text-align: right;">false</td>
 <td style="text-align: left;">volume is rendered with surface shading wrt. to normalized gradient</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">preIntegration</td>
 <td style="text-align: right;">false</td>
 <td style="text-align: left;">use pre-integration for <a href="#transfer-function">transfer function</a> lookups</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">singleShade</td>
 <td style="text-align: right;">true</td>
 <td style="text-align: left;">shade only at the point of maximum intensity</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">adaptiveSampling</td>
 <td style="text-align: right;">true</td>
 <td style="text-align: left;">adapt ray step size based on opacity</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">adaptiveScalar</td>
 <td style="text-align: right;">15</td>
 <td style="text-align: left;">modifier for adaptive step size</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">adaptiveMaxSamplingRate</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">maximum sampling rate for adaptive sampling</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">samplingRate</td>
 <td style="text-align: right;">0.125</td>
 <td style="text-align: left;">sampling rate of the volume (this is the minimum step size for adaptive sampling)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">specular</td>
 <td style="text-align: right;">gray 0.3</td>
 <td style="text-align: left;">specular color for shading</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">volumeClippingBoxLower</td>
 <td style="text-align: right;">disabled</td>
 <td style="text-align: left;">lower coordinate (in object-space) to clip the volume values</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">volumeClippingBoxUpper</td>
 <td style="text-align: right;">disabled</td>
@@ -850,7 +856,7 @@ summarized in the table below.
 <col style="width: 12%" />
 <col style="width: 18%" />
 <col style="width: 18%" />
-<col style="width: 48%" />
+<col style="width: 47%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -951,7 +957,7 @@ only support `float` voxels.
 <col style="width: 13%" />
 <col style="width: 18%" />
 <col style="width: 18%" />
-<col style="width: 47%" />
+<col style="width: 46%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1068,10 +1074,10 @@ counterclockwise.
 <table style="width:98%;">
 <caption>Additional configuration parameters for unstructured volumes.</caption>
 <colgroup>
-<col style="width: 14%" />
-<col style="width: 25%" />
+<col style="width: 15%" />
+<col style="width: 26%" />
 <col style="width: 12%" />
-<col style="width: 44%" />
+<col style="width: 43%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1219,8 +1225,8 @@ of specifying the data of center position and radius within a
 <colgroup>
 <col style="width: 16%" />
 <col style="width: 22%" />
-<col style="width: 26%" />
-<col style="width: 32%" />
+<col style="width: 27%" />
+<col style="width: 31%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1316,10 +1322,10 @@ listed in the table below.
 <table style="width:98%;">
 <caption>Parameters defining a cylinders geometry.</caption>
 <colgroup>
-<col style="width: 17%" />
+<col style="width: 18%" />
 <col style="width: 27%" />
-<col style="width: 11%" />
-<col style="width: 40%" />
+<col style="width: 12%" />
+<col style="width: 39%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1399,9 +1405,9 @@ table below.
 <table style="width:97%;">
 <caption>Parameters defining a streamlines geometry.</caption>
 <colgroup>
-<col style="width: 22%" />
+<col style="width: 23%" />
 <col style="width: 21%" />
-<col style="width: 53%" />
+<col style="width: 52%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1532,7 +1538,7 @@ all renderers are
 <col style="width: 18%" />
 <col style="width: 24%" />
 <col style="width: 12%" />
-<col style="width: 42%" />
+<col style="width: 41%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1611,13 +1617,13 @@ created by passing the type string “`scivis`” or “`raytracer`” to
 understood by all renderers the SciVis renderer supports the following
 special parameters:
 
-<table style="width:98%;">
+<table style="width:97%;">
 <caption>Special parameters understood by the SciVis renderer.</caption>
 <colgroup>
+<col style="width: 16%" />
+<col style="width: 31%" />
 <col style="width: 18%" />
-<col style="width: 29%" />
-<col style="width: 17%" />
-<col style="width: 32%" />
+<col style="width: 31%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1665,10 +1671,10 @@ special parameters:
 <td style="text-align: left;">background color and alpha (RGBA)</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">OSPTexture2D</td>
+<td style="text-align: left;">OSPTexture</td>
 <td style="text-align: left;">maxDepthTexture</td>
 <td style="text-align: right;">NULL</td>
-<td style="text-align: left;">screen-sized float <a href="#texture">texture</a> with maximum far distance per pixel</td>
+<td style="text-align: left;">screen-sized float <a href="#texture">texture</a> with maximum far distance per pixel (use texture type ‘texture2d’)</td>
 </tr>
 </tbody>
 </table>
@@ -1705,10 +1711,10 @@ supports the following special parameters:
 <table style="width:97%;">
 <caption>Special parameters understood by the path tracer.</caption>
 <colgroup>
-<col style="width: 18%" />
-<col style="width: 22%" />
+<col style="width: 16%" />
+<col style="width: 23%" />
 <col style="width: 12%" />
-<col style="width: 43%" />
+<col style="width: 44%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1732,7 +1738,7 @@ supports the following special parameters:
 <td style="text-align: left;">samples are clamped to this value before they are accumulated into the framebuffer</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">OSPTexture2D</td>
+<td style="text-align: left;">OSPTexture</td>
 <td style="text-align: left;">backplate</td>
 <td style="text-align: right;">NULL</td>
 <td style="text-align: left;"><a href="#texture">texture</a> image used as background, replacing visible lights in infinity (e.g. the <a href="#hdri-light">HDRI light</a>)</td>
@@ -1780,9 +1786,9 @@ feature/performance trade-offs:
 <caption>Parameters understood by Models</caption>
 <colgroup>
 <col style="width: 17%" />
-<col style="width: 20%" />
+<col style="width: 21%" />
 <col style="width: 13%" />
-<col style="width: 45%" />
+<col style="width: 44%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1974,7 +1980,7 @@ parameters:
 <table style="width:97%;">
 <caption>Special parameters accepted by the HDRI light.</caption>
 <colgroup>
-<col style="width: 20%" />
+<col style="width: 19%" />
 <col style="width: 9%" />
 <col style="width: 68%" />
 </colgroup>
@@ -1997,7 +2003,7 @@ parameters:
 <td style="text-align: left;">direction to which the center of the texture will be mapped to (analog to <a href="#panoramic-camera">panoramic camera</a>)</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">OSPTexture2D</td>
+<td style="text-align: left;">OSPTexture</td>
 <td style="text-align: left;">map</td>
 <td style="text-align: left;">environment map in latitude / longitude format</td>
 </tr>
@@ -2057,14 +2063,14 @@ format](http://paulbourke.net/dataformats/mtl/) of Lightwave’s OBJ scene
 files. To create an OBJ material pass the type string “`OBJMaterial`” to
 `ospNewMaterial2`. Its main parameters are
 
-| Type         | Name      |    Default| Description                                        |
-|:-------------|:----------|----------:|:---------------------------------------------------|
-| vec3f        | Kd        |  white 0.8| diffuse color                                      |
-| vec3f        | Ks        |      black| specular color                                     |
-| float        | Ns        |         10| shininess (Phong exponent), usually in \[2–10^4^\] |
-| float        | d         |     opaque| opacity                                            |
-| vec3f        | Tf        |      black| transparency filter color                          |
-| OSPTexture2D | map\_Bump |       NULL| normal map                                         |
+| Type       | Name      |    Default| Description                                        |
+|:-----------|:----------|----------:|:---------------------------------------------------|
+| vec3f      | Kd        |  white 0.8| diffuse color                                      |
+| vec3f      | Ks        |      black| specular color                                     |
+| float      | Ns        |         10| shininess (Phong exponent), usually in \[2–10^4^\] |
+| float      | d         |     opaque| opacity                                            |
+| vec3f      | Tf        |      black| transparency filter color                          |
+| OSPTexture | map\_Bump |       NULL| normal map                                         |
 
 : Main parameters of the OBJ material.
 
@@ -2135,7 +2141,7 @@ table below.
 <col style="width: 9%" />
 <col style="width: 24%" />
 <col style="width: 12%" />
-<col style="width: 51%" />
+<col style="width: 50%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -2320,13 +2326,13 @@ material for rendering different types of car paints. To create a
 CarPaint material, pass the type string “`CarPaint`” to
 `ospNewMaterial2`. Its parameters are listed in the table below.
 
-<table style="width:98%;">
+<table style="width:97%;">
 <caption>Parameters of the CarPaint material.</caption>
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 22%" />
 <col style="width: 12%" />
-<col style="width: 52%" />
+<col style="width: 51%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -2656,19 +2662,33 @@ parameters of lights: [`color` and `intensity`](#lights).
 
 ### Texture
 
-To create a new 2D texture of size `size` (in pixels) and with the given
-format and flags use
+OSPRay currently implements only one texture type (`texture2d`), but is
+open for extension to other types by applications. More types may be
+added in future releases.
+
+To create a new texture use
 
 ``` {.cpp}
-OSPTexture2D ospNewTexture2D(const vec2i &size,
-                             const OSPTextureFormat,
-                             void *source = NULL,
-                             const uint32_t textureCreationFlags = 0);
+OSPTexture ospNewTexture(const char *type);
 ```
 
 The call returns `NULL` if the texture could not be created with the
-given parameters, or else an `OSPTexture2D` handle to the created
-texture. The supported texture formats are:
+given parameters, or else an `OSPTexture` handle to the created texture.
+Parameters
+
+| Type    | Name  | Description                        |
+|:--------|:------|:-----------------------------------|
+| vec2f   | size  | size of the textures               |
+| int     | type  | `OSPTextureFormat` for the texture |
+| int     | flags | special attribute flags for this   |
+|         |       | texture, currently only responds   |
+|         |       | to `OSP_TEXTURE_FILTER_NEAREST` or |
+|         |       | no flags                           |
+| OSPData | data  | the actual texel data              |
+
+: Parameters of `texture2D` texture type
+
+The supported texture formats for `texture2d` are:
 
 | Name                  | Description                                                 |
 |:----------------------|:------------------------------------------------------------|
@@ -2681,17 +2701,14 @@ texture. The supported texture formats are:
 | OSP\_TEXTURE\_R8      | 8 bit \[0–255\] linear single component                     |
 | OSP\_TEXTURE\_R32F    | 32 bit float single component                               |
 
-: Supported texture formats by `ospNewTexture2D`, i.e. valid constants
-of type `OSPTextureFormat`.
+: Supported texture formats by `texture2D`, i.e. valid constants of type
+`OSPTextureFormat`.
 
 The texel data addressed by `source` starts with the texels in the lower
-left corner of the texture image, like in OpenGL. Similar to
-[data](#data) buffers the texel data can be shared by the application by
-specifying the `OSP_TEXTURE_SHARED_BUFFER` flag. Per default a texture
+left corner of the texture image, like in OpenGL. Per default a texture
 fetch is filtered by performing bi-linear interpolation of the nearest
 2×2 texels; if instead fetching only the nearest texel is desired
 (i.e. no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
-Both texture creating flags can be combined with a bitwise OR.
 
 ### Texture Transformations
 
@@ -2923,17 +2940,19 @@ The parameter `frameBufferChannels` specifies which channels the
 framebuffer holds, and can be combined together by bitwise OR from the
 values of `OSPFrameBufferChannel` listed in the table below.
 
-| Name              | Description                                                                                     |
-|:------------------|:------------------------------------------------------------------------------------------------|
-| OSP\_FB\_COLOR    | RGB color including alpha                                                                       |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float             |
-| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                  |
-| OSP\_FB\_VARIANCE | estimate of the current variance if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
+| Name              | Description                                                                                              |
+|:------------------|:---------------------------------------------------------------------------------------------------------|
+| OSP\_FB\_COLOR    | RGB color including alpha                                                                                |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float                      |
+| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                           |
+| OSP\_FB\_VARIANCE | for estimation of the current noise level if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
+| OSP\_FB\_NORMAL   | accumulated screen-space normal of the first hit, as vec3f                                               |
+| OSP\_FB\_ALBEDO   | accumulated material albedo (color without illumination) at the first hit, as vec3f                      |
 
 : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
 naming optional information the framebuffer can store. These values can
 be combined by bitwise OR when passed to `ospNewFrameBuffer` or
-`ospClearFrameBuffer`.
+`ospFrameBufferClear`.
 
 If a certain channel value is *not* specified, the given buffer channel
 will not be present. Note that ospray makes a very clear distinction
@@ -2961,7 +2980,7 @@ const void *ospMapFrameBuffer(OSPFrameBuffer,
                               const OSPFrameBufferChannel = OSP_FB_COLOR);
 ```
 
-Note that only `OSP_FB_COLOR` or `OSP_FB_DEPTH` can be mapped. The
+Note that `OSP_FB_ACCUM` or `OSP_FB_VARIANCE` cannot be mapped. The
 origin of the screen coordinate system in OSPRay is the lower left
 corner (as in OpenGL), thus the first pixel addressed by the returned
 pointer is the lower left pixel of the image.
@@ -2980,10 +2999,10 @@ void ospFrameBufferClear(OSPFrameBuffer, const uint32_t frameBufferChannels);
 ```
 
 When selected, `OSP_FB_COLOR` will clear the color buffer to black
-`(0, 0, 0, 0)`, `OSP_FB_DEPTH` will clear the depth buffer to `inf`,
-`OSP_FB_ACCUM` will clear the accumulation buffer to black, resets the
-accumulation counter `accumID` and also clears the variance buffer (if
-present) to `inf`.
+`(0, 0, 0, 0)`, `OSP_FB_DEPTH` will clear the depth buffer to `inf`.
+`OSP_FB_ACCUM` will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
+`OSP_FB_NORMAL`, and `OSP_FB_ALBEDO`, if present) and resets the
+accumulation counter `accumID`.
 
 ### Pixel Operation {#pixel-operation .unnumbered}
 
@@ -3005,7 +3024,7 @@ To set a pixel operation to the given framebuffer use
 void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
 ```
 
-#### Tone Mapper
+#### Tone Mapper {#tone-mapper .unnumbered}
 
 The tone mapper is a pixel operation which implements a generic filmic
 tone mapping operator. Using the default parameters it approximates the
@@ -3018,9 +3037,9 @@ below.
 <caption>Parameters accepted by the tone mapper.</caption>
 <colgroup>
 <col style="width: 10%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 54%" />
+<col style="width: 15%" />
+<col style="width: 17%" />
+<col style="width: 53%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3107,6 +3126,32 @@ additionally the framebuffer has an `OSP_FB_VARIANCE` channel then
 rendered image, otherwise `inf` is returned. The estimated variance can
 be used by the application as a quality indicator and thus to decide
 whether to stop or to continue progressive rendering.
+
+### Progress and Cancel {#progress-and-cancel .unnumbered}
+
+To be informed about the progress of rendering the current frame the
+application can register a callback function of type
+
+``` {.cpp}
+typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
+```
+
+via
+
+``` {.cpp}
+void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
+```
+
+The provided user pointer `userPtr` is passed as first argument to the
+callback function[^6] and the reported progress is in (0–1\]. If the
+callback function returns zero than the application requests to cancel
+rendering, i.e. the current `ospRenderFrame` will return at the first
+opportunity and the content of the frambuffer will be undefined.
+Therefore, better clear the framebuffer with `ospFrameBufferClear` then
+before a subsequent call of `ospRenderFrame`.
+
+Passing `NULL` as `OSPProgressFunc` function pointer disables the
+progress callback.
 
 Parallel Rendering with MPI
 ===========================
@@ -3304,7 +3349,7 @@ application’s data distribution.
 <colgroup>
 <col style="width: 14%" />
 <col style="width: 23%" />
-<col style="width: 60%" />
+<col style="width: 59%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3528,7 +3573,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.c`[^6]. On Linux build it in the build directory
+at `apps/ospTutorial.c`[^7]. On Linux build it in the build directory
 with
 
     gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
@@ -3716,6 +3761,9 @@ page.
 [^5]: This is currently not implemented, i.e. all channels of the
     framebuffer are always updated.
 
-[^6]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^6]: That way applications can also register a member function of a C++
+    class together with the `this` pointer as `userPtr`.
+
+[^7]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
     `apps/ospTutorial.cpp`.

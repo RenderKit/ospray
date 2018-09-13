@@ -22,10 +22,6 @@ struct Velvety
 {
   BSDF super;
 
-  /*! The reflectance parameter. The vale 0 means no reflection,
-   *  and 1 means full reflection. */
-  vec3f R;
-
   /*! The falloff of horizon scattering. 0 no falloff,
    *  and inf means maximum falloff. */
   float f;
@@ -42,7 +38,7 @@ inline BSDF_EvalRes Velvety_eval(const varying BSDF* uniform super,
   const float sinThetaO = sqrt(1.0f - cosThetaO * cosThetaO);
   const float horizonScatter = pow(sinThetaO, self->f);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
-  res.value =  (horizonScatter * cosThetaI * one_over_pi) * self->R;
+  res.value =  (horizonScatter * cosThetaI * one_over_pi) * self->super.albedo;
   return res;
 }
 
@@ -64,11 +60,10 @@ inline BSDF_SampleRes Velvety_sample(const varying BSDF* uniform super,
 inline void Velvety_Constructor(varying Velvety* uniform self, const varying linear3f* uniform frame,
                                 vec3f R, float f)
 {
-  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
+  BSDF_Constructor(&self->super, R, BSDF_DIFFUSE_REFLECTION,
                    Velvety_eval, Velvety_sample,
                    frame);
 
-  self->R = R;
   self->f = f;
 }
 

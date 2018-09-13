@@ -178,7 +178,8 @@ inline void MicrofacetSheenLayer_Constructor(varying MicrofacetSheenLayer* unifo
                                              vec3f R, float roughness,
                                              float weight)
 {
-  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION | substrate->type,
+  BSDF_Constructor(&self->super, lerp(weight*0.1f, substrate->albedo, R), // lean towards substrate (sheen is only at edge)
+                    BSDF_DIFFUSE_REFLECTION | substrate->type,
                    MicrofacetSheenLayer_eval, MicrofacetSheenLayer_sample,
                    frame);
 

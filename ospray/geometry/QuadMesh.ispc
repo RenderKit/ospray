@@ -63,12 +63,12 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
 #if 1 // bilinear for quads
   if (index.z == index.w)
     uv = make_vec4f(1.f-u-v, u, v, 0.f);
-  else 
+  else
     uv = make_vec4f((1-v)*(1-u), (1-v)*u, v*u, v*(1-u));
 #else // always as triangles
   if (u+v < 1.0f)
     uv = make_vec4f(1.f-u-v, u, 0.f, v);
-  else 
+  else
     uv = make_vec4f(0.f, 1.f-v, u+v-1.f, 1.f-u);
 #endif
 
@@ -100,8 +100,7 @@ static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
     const vec2f c = gather_vec2f(huge_mesh, texcoord, index.z);
     const vec2f d = gather_vec2f(huge_mesh, texcoord, index.w);
     dg.st = quad_interpolate(uv, a, b, c, d);
-  } else
-    dg.st = make_vec2f(0.0f, 0.0f);
+  }
 
   if (flags & DG_TANGENTS) {
     uniform bool fallback = true;

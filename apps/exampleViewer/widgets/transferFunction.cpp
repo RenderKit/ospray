@@ -37,6 +37,7 @@ static float lerp(const float a, const float b, const float t)
 }
 
 namespace ospray {
+namespace imgui3D {
 
 TransferFunction::Line::Line() :
   line({vec2f(0, 0),
@@ -107,7 +108,6 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> tfn) :
   rgbaLines[1].color = 0xff00ff00;
   rgbaLines[2].color = 0xffff0000;
   rgbaLines[3].color = 0xffffffff;
-  loadColorMapPresets();
   setColorMap(false);
 }
 
@@ -147,9 +147,21 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
   return *this;
 }
 
+void TransferFunction::setColorMapByName(std::string name, bool useOpacities)
+{
+  for (int i =0; i < transferFunctions.size(); i++)
+  {
+    if (name == transferFunctions[i].name)
+    {
+      tfcnSelection = i;
+      setColorMap(useOpacities);
+      return;
+    }
+  }
+}
+
 void TransferFunction::drawUi()
 {
-  if (ImGui::Begin("Transfer Function")){
     ImGui::Text("Left click and drag to add/move points\nRight click to remove\n");
     ImGui::InputText("filename", textBuffer.data(), textBuffer.size() - 1);
 
@@ -183,7 +195,7 @@ void TransferFunction::drawUi()
     }
 
     vec2f canvasPos(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
-    vec2f canvasSize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
+    vec2f canvasSize(ImGui::GetContentRegionAvail().x, std::min(ImGui::GetContentRegionAvail().y, 255.0f));
     // Force some min size of the editor
     if (canvasSize.x < 50.f){
       canvasSize.x = 50.f;
@@ -245,12 +257,12 @@ void TransferFunction::drawUi()
       }
     }
     draw_list->PopClipRect();
-  }
-  ImGui::End();
 }
 
 void TransferFunction::render()
 {
+  if (!transferFcn)
+    return;
   const int samples = transferFcn->child("numSamples").valueAs<int>();
   // Upload to GL if the transfer function has changed
   if (!paletteTex) {
@@ -275,13 +287,6 @@ void TransferFunction::render()
 
     // Sample the palette then upload the data
     std::vector<uint8_t> palette(samples * 4, 0);
-    auto colors = sg::createNode("colors",
-                                 "DataVector3f")->nodeAs<sg::DataVector3f>();
-    auto alpha  = sg::createNode("alpha",
-                                 "DataVector2f")->nodeAs<sg::DataVector2f>();
-
-    colors->v.resize(samples);
-    alpha->v.resize(samples);
 
     // Step along the alpha line and sample it
     std::array<std::vector<vec2f>::const_iterator, 4> lit = {
@@ -303,11 +308,8 @@ void TransferFunction::render()
         sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
       }
       for (size_t j = 0; j < 3; ++j) {
-        colors->v[i][j] = sampleColor[j];
         palette[i * 4 + j] = clamp(sampleColor[j] * 255.0, 0.0, 255.0);
       }
-      alpha->v[i].x = x;
-      alpha->v[i].y = clamp(sampleColor[3], 0.f, 1.f);
       palette[i * 4 + 3] = 255;
     }
 
@@ -315,12 +317,33 @@ void TransferFunction::render()
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, samples, 1, GL_RGBA,
                     GL_UNSIGNED_BYTE, static_cast<const void*>(palette.data()));
 
-    transferFcn->add(colors);
-    transferFcn->add(alpha);
+    auto &colorCP = *transferFcn->child("colorControlPoints").nodeAs<sg::DataVector4f>();
+    auto &opacityCP = *transferFcn->child("opacityControlPoints").nodeAs<sg::DataVector2f>();
+    opacityCP.clear();
+    colorCP.clear();
+    for (auto line : rgbaLines[3].line)
+      opacityCP.push_back(line);
+    int i = 0;
+    for (auto line : rgbaLines[0].line) {
+      colorCP.push_back(vec4f(line.x, line.y, 0.f, 0.f));
+      colorCP.v.back()[2] = rgbaLines[1].line[i].y;
+      colorCP.v.back()[3] = rgbaLines[2].line[i].y;
+      i++;
+    }
 
     // NOTE(jda) - HACK! colors array isn't updating, so we have to forcefully
     //             say "make sure you update yourself"...???
-    colors->markAsModified();
+    opacityCP.markAsModified();
+    colorCP.markAsModified();
+
+    // NOTE(jda) - MORE HACKS! (ugh)
+    auto &colors    = *transferFcn->child("colors").nodeAs<sg::DataBuffer>();
+    auto &opacities = *transferFcn->child("opacities").nodeAs<sg::DataBuffer>();
+
+    colors.markAsModified();
+    opacities.markAsModified();
+
+    transferFcn->updateChildDataValues();
 
     if (prevBinding)
       glBindTexture(GL_TEXTURE_2D, prevBinding);
@@ -331,10 +354,14 @@ void TransferFunction::render()
 
 void TransferFunction::load(const ospcommon::FileName &fileName)
 {
-  tfn::TransferFunction loaded(fileName);
-  transferFunctions.emplace_back(fileName);
-  tfcnSelection = transferFunctions.size() - 1;
-  setColorMap(true);
+  try {
+    tfn::TransferFunction loaded(fileName);
+    transferFunctions.emplace_back(fileName);
+    tfcnSelection = transferFunctions.size() - 1;
+    setColorMap(true);
+  } catch (const std::runtime_error &e) {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+  }
 }
 
 void TransferFunction::save(const ospcommon::FileName &fileName) const
@@ -380,11 +407,17 @@ void TransferFunction::save(const ospcommon::FileName &fileName) const
     output.rgbValues.push_back(vec3f(sampleColor[0], sampleColor[1], sampleColor[2]));
   }
 
-  output.save(fileName);
+  try {
+    output.save(fileName);
+  } catch (const std::runtime_error &e) {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+  }
 }
 
 void TransferFunction::setColorMap(const bool useOpacity)
 {
+  if (transferFunctions.size() < 1)
+    return;
   const auto &colors    = transferFunctions[tfcnSelection].rgbValues;
   const auto &opacities = transferFunctions[tfcnSelection].opacityValues;
 
@@ -408,6 +441,22 @@ void TransferFunction::setColorMap(const bool useOpacity)
     }
   }
   fcnChanged = true;
+}
+void TransferFunction::loadColorMapPresets(std::shared_ptr<sg::Node> tfPresets)
+{
+  for (auto preset : tfPresets->children())
+  {
+    std::vector<vec3f> colors;
+    std::vector<vec2f> opacities;
+    auto& tfPreset = *preset.second->nodeAs<sg::TransferFunction>();
+    auto& colorsDV = tfPreset["colors"].nodeAs<sg::DataVector3f>()->v;
+    for (auto color : colorsDV)
+      colors.push_back(color);
+    auto& opacitiesDV = tfPreset["opacityControlPoints"].nodeAs<sg::DataVector2f>()->v;
+    for (auto opacity : opacitiesDV)
+      opacities.push_back(opacity);
+    transferFunctions.emplace_back(tfPreset.name(), colors, opacities, 0, 1, 1);
+  }
 }
 
 void TransferFunction::loadColorMapPresets()
@@ -464,5 +513,6 @@ void TransferFunction::loadColorMapPresets()
   colors.clear();
 }
 
+}// ::imgui3D
 }// ::ospray
 

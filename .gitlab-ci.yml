@@ -31,7 +31,7 @@ variables:
   only:
     - devel
     - master
-    - release-1.6.x
+    - /^release-.*$/
 
 .job_template: &test_job
   stage: test-build
@@ -51,7 +51,7 @@ variables:
 .job_template: &test_job_windows
   <<: *test_job
   script:
-    - cmd call /c 'scripts\tests\run_tests.bat'
+    - scripts\tests\run_tests.bat
   artifacts:
     paths:
       - tests.xml
@@ -115,7 +115,7 @@ build-centos6-icc:
   script:
     - module load gcc/4.8.2
     - module load intel
-    - module load embree/3.1.0
+    - module load embree
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -129,7 +129,7 @@ build-centos6-icc15:
   script:
     - module load gcc/4.8.2
     - module load intel/2015
-    - module load embree/3.1.0
+    - module load embree
     - module load tbb
     - export CC=icc
     - export CXX=icpc
@@ -167,7 +167,7 @@ build-osx-clang:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"v140^" ^"OSPRAY_MODULE_MPI=ON^"'
+    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140" "ON"
   tags:
     - msvc14
     - win7
@@ -179,7 +179,7 @@ build-windows-msvc14:
 build-windows-msvc15:
   <<: *build_job_shell
   script:
-    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 15 2017 Win64^" ^"v141^" ^"OSPRAY_MODULE_MPI=OFF^"'
+    - scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141" "OFF"
   tags:
     - msvc15
     - win7
@@ -191,7 +191,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - cmd call /c 'scripts\build_gitlab\win.bat ^"Visual Studio 14 2015 Win64^" ^"Intel C++ Compiler 18.0^" ^"OSPRAY_MODULE_MPI=ON^"'
+    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0" "ON"
   tags:
     - icc18
     - win7
@@ -347,7 +347,7 @@ pdf:
     - make pdf
   only:
     - devel
-    - release-1.6.x
+    - /^release-.*$/
     - master
   artifacts:
     paths:
@@ -375,7 +375,7 @@ release-linux-icc:
     - module load cmake
     - module load gcc/4.8.2
     - module load intel
-    - module load embree/3.1.0
+    - module load embree
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh
@@ -405,7 +405,7 @@ release-osx-clang:
 release-windows:
   <<: *release_job
   script:
-    - cmd call /c 'scripts\release\win.bat'
+    - scripts\release\win.bat
   tags:
     - msvc
     - win7

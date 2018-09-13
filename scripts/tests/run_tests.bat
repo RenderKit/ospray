@@ -33,6 +33,9 @@ set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
 
 call build\regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
 
-exit /B %ERRORLEBEL%
-
+:abort
 endlocal
+:end
+
+rem propagate any error to calling PowerShell script:
+exit

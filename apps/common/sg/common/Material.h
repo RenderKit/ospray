@@ -17,7 +17,7 @@
 #pragma once
 
 #include "NodeList.h"
-#include "Texture2D.h"
+#include "../texture/Texture.h"
 
 namespace ospray {
   namespace sg {
@@ -41,7 +41,7 @@ namespace ospray {
       //! vector of textures used by the material
       // Carson: what is this?  seems to be used by RIVL.  Is this supposed to be map_Kd?
       // how do I use a vector of textures?
-      std::vector<std::shared_ptr<Texture2D>> textures;
+      std::vector<std::shared_ptr<Texture>> textures;
 
       OSPRenderer ospRenderer {nullptr};
     };

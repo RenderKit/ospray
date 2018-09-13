@@ -51,11 +51,11 @@ namespace ospray {
     using string_pair = std::pair<std::string, std::string>;
 
 #define OSPSG_REGISTER_GENERATE_FUNCTION(function, name)                       \
-    extern "C" void ospray_sg_generate_##name(                                 \
+    extern "C" OSPRAY_DLLEXPORT void ospray_sg_generate_##name(                \
       std::shared_ptr<Node> world,                                             \
       const std::vector<string_pair> &params)                                  \
     {                                                                          \
-      function(world, params);                                               \
+      function(world, params);                                                 \
     }                                                                          \
     /* additional declaration to avoid "extra ;" -Wpedantic warnings */        \
     void ospray_sg_import_##name()

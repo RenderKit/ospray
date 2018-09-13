@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <memory>
+
 // ospray
 #include "ospray/fb/LocalFB.h"
 // ospray_mpi
@@ -29,10 +31,12 @@ namespace ospray {
 
   struct AllTilesDoneMessage;
   struct MasterTileMessage;
-  template <typename FBType>
+  template <typename ColorT>
   struct MasterTileMessage_FB;
   template <typename ColorT>
   struct MasterTileMessage_FB_Depth;
+  template <typename ColorT>
+  struct MasterTileMessage_FB_Depth_Aux;
   struct WriteTileMessage;
 
   /*! color buffer and depth buffer on master */
@@ -58,6 +62,10 @@ namespace ospray {
     WORKER_ALL_TILES_DONE  = 1 << 4,
     // Modifier to indicate the tile also has depth values
     MASTER_TILE_HAS_DEPTH = 1,
+    // Indicates that the tile additionally also has normal and/or albedo values
+    MASTER_TILE_HAS_AUX = 1 << 5,
+    // abort rendering the current frame
+    CANCEL_RENDERING = 1 << 6,
   };
 
   class DistributedTileError : public TileError
@@ -73,9 +81,7 @@ namespace ospray {
     DistributedFrameBuffer(const vec2i &numPixels,
                            ObjectHandle myHandle,
                            ColorBufferFormat,
-                           bool hasDepthBuffer,
-                           bool hasAccumBuffer,
-                           bool hasVarianceBuffer,
+                           const uint32 channels,
                            bool masterIsAWorker = false);
 
     ~DistributedFrameBuffer() override ;
@@ -84,8 +90,7 @@ namespace ospray {
     // framebuffer / device interface
     // ==================================================================
 
-    const void *mapDepthBuffer() override;
-    const void *mapColorBuffer() override;
+    const void *mapBuffer(OSPFrameBufferChannel channel) override;
     void unmap(const void *mappedMem) override;
 
     /*! \brief clear (the specified channels of) this frame buffer
@@ -132,13 +137,16 @@ namespace ospray {
     //! process an client-to-master all-tiles-are-done message */
     void processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data);
     //! process a (non-empty) write tile message at the master
-    template <typename FBType>
-    void processMessage(MasterTileMessage_FB<FBType> *msg);
+    template <typename ColorT>
+    void processMessage(MasterTileMessage_FB<ColorT> *msg);
 
     //! process a client-to-client write tile message */
     void processMessage(WriteTileMessage *msg);
 
     size_t ownerIDFromTileID(size_t tileID) const;
+
+    // signal the workers whether to cancel 
+    bool continueRendering() const { return !cancelRendering; }
 
   private:
 
@@ -194,9 +202,9 @@ namespace ospray {
     /*! Compose and send all-tiles-done message including tile errors. */
     void sendAllTilesDoneMessage();
 
-    // Data members ///////////////////////////////////////////////////////////
+    void sendCancelRenderingMessage();
 
-    ObjectHandle myID;
+    // Data members ///////////////////////////////////////////////////////////
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     int32 *tileInstances; //< how many copies of this tile are active, usually 1
@@ -208,7 +216,7 @@ namespace ospray {
     /*! local frame buffer on the master used for storing the final
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
-    Ref<LocalFrameBuffer> localFBonMaster;
+    std::unique_ptr<LocalFrameBuffer> localFBonMaster;
 
     FrameMode frameMode;
 
@@ -241,6 +249,8 @@ namespace ospray {
         frame */
     bool frameIsDone;
 
+    bool cancelRendering; // signal the workers whether to cancel 
+
     bool masterIsAWorker {false};
 
     //! condition that gets triggered when the frame is done
@@ -260,51 +270,5 @@ namespace ospray {
     std::vector< vec2i > tileIDs;
     std::vector< float > tileErrors;
   };
-
-  // Inlined definitions //////////////////////////////////////////////////////
-
-  template <typename FBType>
-  inline void
-  DistributedFrameBuffer::processMessage(MasterTileMessage_FB<FBType> *msg)
-  {
-    if (hasVarianceBuffer) {
-      const vec2i tileID = msg->coords/TILE_SIZE;
-      if (msg->error < (float)inf)
-        tileErrorRegion.update(tileID, msg->error);
-    }
-
-    vec2i numPixels = getNumPixels();
-
-    MasterTileMessage_FB_Depth<FBType> *depth = nullptr;
-    if (msg->command & MASTER_TILE_HAS_DEPTH) {
-      depth = reinterpret_cast<MasterTileMessage_FB_Depth<FBType>*>(msg);
-    }
-
-    FBType *color = reinterpret_cast<FBType*>(localFBonMaster->colorBuffer);
-    for (int iy = 0; iy < TILE_SIZE; iy++) {
-      int iiy = iy + msg->coords.y;
-      if (iiy >= numPixels.y) {
-        continue;
-      }
-
-      for (int ix = 0; ix < TILE_SIZE; ix++) {
-        int iix = ix + msg->coords.x;
-        if (iix >= numPixels.x) {
-          continue;
-        }
-
-        color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
-        if (depth) {
-          localFBonMaster->depthBuffer[iix + iiy * numPixels.x]
-            = depth->depth[ix + iy * TILE_SIZE];
-        }
-      }
-    }
-
-    // Finally, tell the master that this tile is done
-    auto *tileDesc = this->getTileDescFor(msg->coords);
-    TileData *td = (TileData*)tileDesc;
-    this->finalizeTileOnMaster(td);
-  }
 
 } // ::ospray

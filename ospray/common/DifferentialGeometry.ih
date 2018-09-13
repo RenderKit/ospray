@@ -22,7 +22,8 @@ struct Geometry;
 struct Model;
 struct Material;
 
-typedef enum {
+typedef enum
+{
   DG_FACEFORWARD = (1<<0), /*!< face-forward normals */
   DG_NORMALIZE   = (1<<1), /*!< normalize normals */
 //  DG_WORLD_SPACE = (1<<2) obsolete: is always done
@@ -41,7 +42,8 @@ typedef enum {
 
 /*! differential geometry information that gives more detailed
     information on the actual geometry that a ray has hit */
-struct DifferentialGeometry {
+struct DifferentialGeometry
+{
   vec3f P;  //!< location of the hit-point
   vec3f Ng; /*!< geometry normal if DG_NG was set, possibly not
                normalized/facefordwarded if DG_NORMALIZE and/or
@@ -55,6 +57,7 @@ struct DifferentialGeometry {
   vec4f color; /*! interpolated vertex color (rgba) if DG_COLOR was set;
                  defaults to vec4f(1.f) if queried but not present in geometry
                  */
+  int32 primID; /*!< hit primitive (-1 if no hit) */
   int32 materialID; /*!< hack for now - the materialID as stored in
                       "prim.materialID" array (-1 if that value isn't
                       specified) */
@@ -64,3 +67,4 @@ struct DifferentialGeometry {
 
   float epsilon; //!< adaptive epsilon */
 };
+

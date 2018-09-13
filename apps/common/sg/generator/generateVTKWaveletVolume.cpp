@@ -15,11 +15,13 @@
 // ======================================================================== //
 
 // ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/utility/StringManip.h"
 // sg
 #include "../common/Data.h"
 #include "Generator.h"
+#include "../geometry/TriangleMesh.h"
+#include "../volume/Volume.h"
 // vtk
 #include <vtkImageData.h>
 #include <vtkMarchingCubes.h>
@@ -33,14 +35,18 @@ namespace ospray {
     void generateVTKWaveletVolume(const std::shared_ptr<Node> &world,
                                   const std::vector<string_pair> &params)
     {
-      auto volume_node = createNode("wavelet", "StructuredVolume");
-      auto iso_node    = createNode("wavelet_isosurface", "TriangleMesh");
+      auto volume_node =
+        createNode("wavelet", "StructuredVolume")->nodeAs<StructuredVolume>();
+
+      auto iso_node =
+        createNode("wavelet_isosurface", "TriangleMesh")->nodeAs<TriangleMesh>();
 
       // get generator parameters
 
       vec3i dims(256, 256, 256);
-      std::vector<float> isoValues;
-      std::vector<vec4f> slices;
+      bool addSphereProbe = false;
+      containers::AlignedVector<float> isoValues;
+      containers::AlignedVector<vec4f> slices;
 
       for (auto &p : params) {
         if (p.first == "dimensions" || p.first == "dims") {
@@ -57,6 +63,8 @@ namespace ospray {
                        std::atoi(string_dims[2].c_str()));
         } else if (p.first == "viewSlice") {
           slices.emplace_back(1.f, 0.f, 0.f, dims.x / 2.f);
+        } else if (p.first == "sphereProbe" || p.first == "addProbe") {
+          addSphereProbe = true;
         } else if (p.first == "isosurfaces" || p.first == "isovalues") {
           auto string_isos = ospcommon::utility::split(p.second, '/');
           for (const auto &s : string_isos)
@@ -201,6 +209,27 @@ namespace ospray {
 
           // add slices to world
           world->add(slices_node);
+        } else if (addSphereProbe) {
+          auto probe_node = createNode("sphere_probe", "Spheres");
+
+          auto probe_data = std::make_shared<DataVector3f>();
+          probe_data->v.emplace_back(halfDims);
+          probe_data->setName("spheres");
+
+          probe_node->add(probe_data);
+
+          probe_node->createChild("radius", "float", 1.f);
+          probe_node->createChild("bytes_per_sphere", "int", int(sizeof(vec3f)));
+
+          // add volume texture
+          auto texture_node = createNode("volume_texture", "TextureVolume");
+          texture_node->setChild("volume", volume_node);
+
+          auto &default_material = probe_node->child("materialList")["default"];
+          default_material.setChild("map_Kd", texture_node);
+
+          // add probe to world
+          world->add(probe_node);
         } else {
           // add volume to world
           world->add(volume_node);

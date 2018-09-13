@@ -169,28 +169,8 @@ namespace ospDDLoader {
                            });
   }
 
-  extern "C" int main(int ac, const char **av)
+  void run_renderer()
   {
-    parseCommandLine(ac, av);
-    if (volumeFile.empty()) {
-      std::cerr << "Error: -f <volume file.raw> is required\n";
-      return 1;
-    }
-    if (dtype.empty()) {
-      std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
-      return 1;
-    }
-    if (dimensions == vec3i(-1)) {
-      std::cerr << "Error: -dims X Y Z is required to pass volume dims\n";
-      return 1;
-    }
-    if (valueRange == vec2f(-1)) {
-      std::cerr << "Error: -range X Y is required to set transfer function range\n";
-      return 1;
-    }
-
-    initialize_ospray();
-
     ospray::cpp::Model model;
     gensv::LoadedVolume volume = gensv::loadVolume(volumeFile, dimensions,
                                                    dtype, valueRange);
@@ -284,9 +264,31 @@ namespace ospDDLoader {
       std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
         << numFrames / seconds << " frames per second" << std::endl;
     }
+  }
 
-    mpicommon::world.barrier();
+  extern "C" int main(int ac, const char **av)
+  {
+    parseCommandLine(ac, av);
+    if (volumeFile.empty()) {
+      std::cerr << "Error: -f <volume file.raw> is required\n";
+      return 1;
+    }
+    if (dtype.empty()) {
+      std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
+      return 1;
+    }
+    if (dimensions == vec3i(-1)) {
+      std::cerr << "Error: -dims X Y Z is required to pass volume dims\n";
+      return 1;
+    }
+    if (valueRange == vec2f(-1)) {
+      std::cerr << "Error: -range X Y is required to set transfer function range\n";
+      return 1;
+    }
 
+    initialize_ospray();
+
+    ospShutdown();
     return 0;
   }
 

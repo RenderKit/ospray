@@ -29,12 +29,11 @@ namespace ospcommon {
     /*! A fabrich which sends and recieves over a TCP socket connection */
     struct OSPCOMMON_INTERFACE SocketFabric : public Fabric
     {
-      /*! Setup the connection by listening for an incoming
-          connection on the desired port */
-      SocketFabric(const uint16_t port);
       /*! Connecting to another socket on the host on the desired port */
       SocketFabric(const std::string &hostname, const uint16_t port);
       ~SocketFabric() override;
+      SocketFabric(SocketFabric &&other);
+      SocketFabric& operator=(SocketFabric &&other);
 
       SocketFabric(const SocketFabric&) = delete;
       SocketFabric& operator=(const SocketFabric&) = delete;
@@ -42,15 +41,40 @@ namespace ospcommon {
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
         delivered */
-      void send(void *mem, size_t s) override;
+      void send(const void *mem, size_t s) override;
 
       /*! receive some block of data - whatever the sender has sent -
         and give us size and pointer to this data */
       size_t read(void *&mem) override;
 
     private:
+
+      explicit SocketFabric(ospcommon::socket_t socket);
+      friend struct SocketListener;
+
+      // Data //
+
       ospcommon::socket_t socket;
       std::vector<char> buffer;
+    };
+
+    /*! An abstraction for listening on a socket for connections,
+     * for each accepted connection a SocketFabric will be returned */
+    struct OSPCOMMON_INTERFACE SocketListener
+    {
+      /*! Setup the connection by listening for an incoming
+          connection on the desired port */
+      SocketListener(const uint16_t port);
+      ~SocketListener();
+
+      SocketListener(const SocketListener&) = delete;
+      SocketListener& operator=(const SocketListener&) = delete;
+
+      SocketFabric accept();
+
+    private:
+
+      ospcommon::socket_t socket;
     };
 
   } // ::ospcommon::networking

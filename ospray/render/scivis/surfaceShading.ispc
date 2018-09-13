@@ -25,6 +25,7 @@ void initShadingInfo(varying SciVisShadingInfo &info)
   info.Ns = 0.f;
   info.Kd = make_vec3f(0.f);
   info.Ks = make_vec3f(0.f);
+  info.albedo = make_vec3f(0.f);
 
   info.local_opacity = 0.f;
 }
@@ -46,19 +47,19 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
     foreach_unique (mat in scivisMaterial) {
       // textures modify (mul) values, see
       //   http://paulbourke.net/dataformats/mtl/
-      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f) * dg.color.w;
+      info.d = mat->d * get1f(mat->map_d, dg, 1.f) * dg.color.w;
       info.Kd = mat->Kd * make_vec3f(dg.color);
       if (valid(mat->map_Kd) ){
-        vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
+        vec4f Kd_from_map = get4f(mat->map_Kd, dg);
         info.Kd = info.Kd * make_vec3f(Kd_from_map);
         info.d *= Kd_from_map.w;
       }
-      info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
-      info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
+      info.Ks = mat->Ks * get3f(mat->map_Ks, dg, make_vec3f(1.f));
+      info.Ns = mat->Ns * get1f(mat->map_Ns, dg, 1.f);
       // normal mapping
       if (valid(mat->map_Bump)) {
         // get normal from texture
-        vec3f localNormal = getNormal(mat->map_Bump, dg.st);
+        vec3f localNormal = getNormal(mat->map_Bump, dg);
         vec2f rotNormal = mat->rot_Bump * make_vec2f(localNormal.x, localNormal.y);
         localNormal.x = rotNormal.x; localNormal.y = rotNormal.y;
         // transform to world space and align to tangents/texture coordinates
@@ -68,6 +69,8 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
       }
     }
   }
+
+  info.albedo = info.d * (info.Kd + info.Ks);
 
   // convert from Phong exponent to Blinn
   info.Ns *= 4.0f;

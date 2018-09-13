@@ -17,13 +17,16 @@
 #include "Importer.h"
 
 #include "../volume/AMRVolume.h"
-
+#include "../common/NodeParameter.h"
+#include "../common/NodeList.h"
+// ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/utility/StringManip.h"
 
 namespace ospray {
   namespace sg {
 
-    static void importStructuredVolume(std::shared_ptr<Node> world,
+    static void importStructuredVolume(const std::shared_ptr<Node> &world,
                                        const xml::Node &xmlNode)
     {
       using SVFF = StructuredVolumeFromFile;
@@ -31,8 +34,11 @@ namespace ospray {
                                "StructuredVolumeFromFile")->nodeAs<SVFF>();
 
       vec3i dimensions(-1);
+      vec3f gridSpacing = volume->child("gridSpacing").valueAs<vec3f>();
       std::string volumeFileName = "";
       std::string voxelType = "";
+
+      containers::AlignedVector<vec4f> slices;
 
       for (const auto &child : xmlNode.child) {
         if (child.name == "dimensions")
@@ -41,8 +47,24 @@ namespace ospray {
           voxelType = child.content;
         else if (child.name == "filename")
           volumeFileName = child.content;
-        else if (child.name == "samplingRate") {
+        else if (child.name == "slice") {
+          auto components = utility::split(child.content, " ");
+          if (components.size() != 4) {
+            std::cerr << "WARNING: .osp files must have slices defined as 4 "
+                      << "floats separated by spaces! Ignoring..." << std::endl;
+            continue;
+          }
+
+          slices.emplace_back(
+            std::atof(components[0].c_str()),
+            std::atof(components[1].c_str()),
+            std::atof(components[2].c_str()),
+            std::atof(components[3].c_str())
+          );
+        } else if (child.name == "samplingRate") {
           // Silently ignore
+        } else if (child.name == "gridSpacing") {
+          gridSpacing = toVec3f(child.content.c_str());
         } else {
           throw std::runtime_error("unknown old-style osp file "
                                    "component volume::" + child.name);
@@ -54,11 +76,48 @@ namespace ospray {
 
       volume->child("dimensions") = dimensions;
       volume->child("voxelType") = voxelType;
+      volume->child("gridSpacing") = gridSpacing;
 
       world->add(volume);
+
+      if (!slices.empty()) {
+        // scale 4th component of slices by the dimension of the volume
+        // (input value is on [0,1]), and add to scene
+        for (auto &slice : slices)
+          slice.w *= (dimensions * gridSpacing).x;
+
+        auto slices_node = createNode("slices", "Slices");
+
+#if 1 // enable for having values show up as widgets, disable for simple array
+        auto slices_data = std::make_shared<NodeList<NodeParam<vec4f>>>();
+        slices_data->setName("slices_list");
+
+        for (size_t i = 0; i < slices.size(); ++i) {
+          auto slice_node = std::make_shared<NodeParam<vec4f>>();
+          slice_node->setName("slice" + std::to_string(i));
+          slice_node->setType("vec4f");
+          slice_node->setValue(slices[i]);
+          slices_data->push_back(slice_node);
+        }
+
+        slices_node->add(slices_data);
+        slices_node->setChild("volume", volume);
+#else
+        auto slices_data = std::make_shared<DataVector4f>();
+        slices_data->v = slices;
+        slices_data->setName("planes");
+
+        slices_node->add(slices_data);
+#endif
+
+        slices_node->setChild("volume", volume);
+
+        // add slices to world
+        world->add(slices_node);
+      }
     }
 
-    static void importRAW2AMRVolume(std::shared_ptr<Node> world,
+    static void importRAW2AMRVolume(const std::shared_ptr<Node> &world,
                                     const std::string &originalFileName,
                                     const xml::Node &xmlNode)
     {
@@ -89,7 +148,7 @@ namespace ospray {
     }
 
 #ifdef OSPRAY_APPS_SG_CHOMBO
-    static void importCHOMBOFromOSP(std::shared_ptr<Node> world,
+    static void importCHOMBOFromOSP(const std::shared_ptr<Node> &world,
                                     const std::string &originalFileName,
                                     const xml::Node &xmlNode)
     {
@@ -111,7 +170,8 @@ namespace ospray {
     }
 #endif
 
-    void loadOSP(std::shared_ptr<Node> world, const std::string &fileName)
+    void loadOSP(const std::shared_ptr<Node> &world,
+                 const std::string &fileName)
     {
       std::cout << "#osp:sg: starting to read OSPRay XML file '" << fileName
                 << "'" << std::endl;

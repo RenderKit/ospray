@@ -73,7 +73,7 @@ namespace gensv {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
 
-    std::vector<Sphere> spheres(numSpheres);
+    containers::AlignedVector<Sphere> spheres(numSpheres);
 
     // To simulate loading a shared dataset all ranks generate the same
     // sphere data.
@@ -122,7 +122,7 @@ namespace gensv {
   }
 
   LoadedVolume::LoadedVolume() : volume(nullptr), tfcn("piecewise_linear") {
-    const std::vector<vec3f> colors = {
+    const containers::AlignedVector<vec3f> colors = {
       vec3f(0, 0, 0.56),
       vec3f(0, 0, 1),
       vec3f(0, 1, 1),
@@ -131,7 +131,7 @@ namespace gensv {
       vec3f(1, 0, 0),
       vec3f(0.5, 0, 0)
     };
-    const std::vector<float> opacities = {0.0001, 1.0};
+    const containers::AlignedVector<float> opacities = {0.0001, 1.0};
     ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
     ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
     colorsData.commit();
@@ -197,10 +197,13 @@ namespace gensv {
     vol.volume.set("gridSpacing", gridSpacing);
     vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
-    std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z, 0);
-    for (size_t i = 0; i < volumeData.size(); ++i) {
+    containers::AlignedVector<unsigned char> volumeData(
+      fullDims.x * fullDims.y * fullDims.z, 0
+    );
+
+    for (size_t i = 0; i < volumeData.size(); ++i)
       volumeData[i] = brickNum;
-    }
+
     vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
     vol.volume.commit();
 
@@ -212,11 +215,11 @@ namespace gensv {
     return makeBrick(mpicommon::globalRank(), mpicommon::numGlobalRanks());
   }
 
-  std::vector<LoadedVolume> makeVolumes(const size_t firstBrick,
-                                        const size_t numMine,
-                                        const size_t numBricks)
+  containers::AlignedVector<LoadedVolume> makeVolumes(const size_t firstBrick,
+                                                      const size_t numMine,
+                                                      const size_t numBricks)
   {
-    std::vector<LoadedVolume> volumes;
+    containers::AlignedVector<LoadedVolume> volumes;
     for (size_t i = firstBrick; i < firstBrick + numMine; ++i) {
       volumes.push_back(makeBrick(i, numBricks));
     }
@@ -276,7 +279,7 @@ namespace gensv {
     vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
-    std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
+    containers::AlignedVector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
 
     RawReader reader(file, vec3sz(dimensions), dtypeSize);
     reader.readRegion(brickId * brickDims - vec3sz(ghostOffset),

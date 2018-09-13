@@ -14,20 +14,39 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "TextureVolume.h"
 
-/*! \file panoramiccamera.ih \brief Defines the ISPC-side Panoramic Camera class */
+namespace ospray {
+  namespace sg {
 
-#include "Camera.ih"
-#include "math/LinearSpace.ih"
+    // TextureVolume definitions //////////////////////////////////////////////////
 
-/*! \brief A plain panoramic ("PinHole") camera; no depth of field  */
-struct PanoramicCamera {
-  /*! \brief The parent class info required for this camera to
-    'inherit' from Camera */
-  Camera super;
+    TextureVolume::TextureVolume() : Texture("volume") {}
 
-  vec3f pos;       /*!< \brief position of this camera */
-  linear3f frame;  /*!< \brief camera coordinate frame, i.e. (main direction, up, right) */
-};
+    std::string TextureVolume::toString() const
+    {
+      return "ospray::sg::TextureVolume";
+    }
 
+    void TextureVolume::postCommit(RenderContext &ctx)
+    {
+      auto ospTexture = valueAs<OSPTexture>();
+
+      auto &volume = child("volume");
+      ospSetObject(ospTexture, "volume", volume.valueAs<OSPVolume>());
+
+      Texture::postCommit(ctx);
+    }
+
+    void TextureVolume::preTraverse(RenderContext &ctx,
+                                    const std::string& operation,
+                                    bool& traverseChildren)
+    {
+      traverseChildren = (operation != "render");
+      Node::preTraverse(ctx, operation, traverseChildren);
+    }
+
+    OSP_REGISTER_SG_NODE(TextureVolume);
+
+  } // ::ospray::sg
+} // ::ospray

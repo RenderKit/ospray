@@ -26,7 +26,6 @@
 #include "ospray/version.h"
 
 #include <stdio.h>
-#include <GLFW/glfw3.h>
 
 #ifdef _WIN32
 #  define snprintf(buf,len, format,...) _snprintf_s(buf, len,len, format, __VA_ARGS__)
@@ -44,37 +43,20 @@
 #include <stdexcept>
 #include <string>
 
-extern "C" void glDrawPixels( GLsizei width, GLsizei height,
-                              GLenum format, GLenum type,
-                              const GLvoid *pixels );
-
 using ospcommon::utility::getEnvVar;
 
 namespace ospray {
   namespace imgui3D {
 
-    bool dumpScreensDuringAnimation = false;
     bool ImGui3DWidget::showGui = false;
 
     static ImGui3DWidget *currentWidget = nullptr;
 
     // Class definitions //////////////////////////////////////////////////////
 
-    /*! write given frame buffer to file, in PPM P6 format. */
-    void saveFrameBufferToFile(const char *fileName,
-                               const uint32_t *pixel,
-                               const uint32_t sizeX, const uint32_t sizeY)
-    {
-      utility::writePPM(fileName, sizeX, sizeY, pixel);
-      std::cout << "#osp:glut3D: saved framebuffer to file " << fileName
-        << std::endl;
-    }
-
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
     bool ImGui3DWidget::animating = false;
-
-    // InspectCenter Glut3DWidget::INSPECT_CENTER;
 
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
@@ -122,17 +104,17 @@ namespace ospray {
     void ImGui3DWidget::mouseButton(int button, int action, int mods)
     {}
 
-    ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
+    ImGui3DWidget::ImGui3DWidget(ResizeMode resizeMode,
                                  ManipulatorMode initialManipulator) :
       lastMousePos(-1,-1),
       currMousePos(-1,-1),
+      fullScreen(false),
       windowSize(-1,-1),
       rotateSpeed(.003f),
-      frameBufferMode(frameBufferMode),
+      resizeMode(resizeMode),
       fontScale(2.f),
-      ucharFB(nullptr),
-	  moveModeManipulator(nullptr),
-	  inspectCenterManipulator(nullptr)
+      moveModeManipulator(nullptr),
+      inspectCenterManipulator(nullptr)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("ERROR: Can't create more than one ImGui3DWidget!");
@@ -157,7 +139,8 @@ namespace ospray {
       currButton[0] = currButton[1] = currButton[2] = GLFW_RELEASE;
 
       displayTime=-1.f;
-      renderTime=-1.f;
+      renderFPS=0.f;
+      renderFPSsmoothed=0.f;
       guiTime=-1.f;
       totalTime=-1.f;
     }
@@ -182,7 +165,28 @@ namespace ospray {
     void ImGui3DWidget::reshape(const vec2i &newSize)
     {
       windowSize = newSize;
+      renderSize = windowSize * renderResolutionScale;
+      navRenderSize = windowSize * navRenderResolutionScale;
+
+      if (fixedRenderAspect > 0.f) {
+        float aspectCorrection = fixedRenderAspect * newSize.y / newSize.x;
+        if (aspectCorrection > 1.f) {
+          renderSize.y /= aspectCorrection;
+          navRenderSize.y /= aspectCorrection;
+        } else {
+          renderSize.x *= aspectCorrection;
+          navRenderSize.x *= aspectCorrection;
+        }
+      }
+
+      glViewport(0, 0, newSize.x, newSize.y);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(0.0, windowSize.x, 0.0, windowSize.y, -1.0, 1.0);
+
       viewPort.aspect = newSize.x/float(newSize.y);
+      viewPort.modified = true;
     }
 
     void ImGui3DWidget::display()
@@ -193,31 +197,41 @@ namespace ospray {
         hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
-
-      if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
-        glDrawPixels(windowSize.x, windowSize.y,
-                     GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
-#ifndef _WIN32
-        if (ImGui3DWidget::animating && dumpScreensDuringAnimation) {
-          char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
-          static const char *dumpFileRoot;
-          if (!dumpFileRoot) {
-            auto rc = mkstemp(tmpFileName);
-            (void)rc;
-            dumpFileRoot = tmpFileName;
-          }
-
-          char fileName[100000];
-          snprintf(fileName,sizeof(fileName),"%s_%08ld.ppm",dumpFileRoot,times(nullptr));
-          saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
-        }
-#endif
-      } else if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
-        glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, floatFB);
-      } else {
-        glClearColor(0.f,0.f,0.f,1.f);
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+      // Draw a textured quad
+      float aspectCorrection = fbAspect * windowSize.y / windowSize.x;
+      vec2f border(0.f);
+      switch (resizeMode) {
+        case RESIZE_LETTERBOX:
+          if (aspectCorrection > 1.f)
+            border.y = 1.f - aspectCorrection;
+          else
+            border.x = 1.f - 1.f / aspectCorrection;
+          break;
+        case RESIZE_CROP:
+          if (aspectCorrection > 1.f)
+            border.x = 1.f - 1.f / aspectCorrection;
+          else
+            border.y = 1.f - aspectCorrection;
+          break;
+        case RESIZE_KEEPFOVY:
+          border.x = 1.f - 1.f / aspectCorrection;
+          break;
+        case RESIZE_FILL:
+          // nop
+          break;
       }
+      border *= 0.5f;
+
+      glBegin(GL_QUADS);
+      glTexCoord2f(border.x, border.y);
+      glVertex3f(0, 0, 0);
+      glTexCoord2f(border.x, 1.f - border.y);
+      glVertex3f(0, windowSize.y, 0);
+      glTexCoord2f(1.f - border.x, 1.f - border.y);
+      glVertex3f(windowSize.x, windowSize.y, 0);
+      glTexCoord2f(1.f - border.x, border.y);
+      glVertex3f(windowSize.x, 0, 0);
+      glEnd();
     }
 
     void ImGui3DWidget::buildGui()
@@ -261,8 +275,11 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title, const bool fullScreen, const vec2i windowSize)
+    void ImGui3DWidget::create(const char *title,
+                               const bool fullScreen_,
+                               const vec2i windowSize)
     {
+      fullScreen = fullScreen_;
       // Setup window
       auto error_callback = [](int error, const char* description) {
         fprintf(stderr, "Error %d: %s\n", error, description);
@@ -276,14 +293,14 @@ namespace ospray {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-      auto size = windowSize;
+      windowedSize = windowSize;
 
       auto defaultSizeFromEnv =
           getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
 
       if (defaultSizeFromEnv) {
         int rc = sscanf(defaultSizeFromEnv.value().c_str(),
-                        "%dx%d", &size.x, &size.y);
+                        "%dx%d", &windowedSize.x, &windowedSize.y);
         if (rc != 2) {
           throw std::runtime_error("could not parse"
                                    " OSPRAY_APPS_DEFAULT_WINDOW_SIZE "
@@ -298,16 +315,34 @@ namespace ospray {
         if(mode == nullptr) {
           throw std::runtime_error("could not get video mode");
         }
+        // request "windowed full screen" window
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
         window = glfwCreateWindow(mode->width, mode->height,
                                   title, monitor, nullptr);
+        // calculate position when going out of fullscreen
+        // this is actually the job of the window manager, but there is no
+        // (easy) way to ask where it would have placed a window
+        windowedPos = max(vec2i(0), vec2i(mode->width, mode->height) - windowedSize)/2;
       }
       else
-        window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
+        window = glfwCreateWindow(windowedSize.x, windowedSize.y, title,
+            nullptr, nullptr);
+
 
       glfwMakeContextCurrent(window);
 
       // NOTE(jda) - move key handler registration into this class
       ImGui_ImplGlfwGL3_Init(window, true);
+
+      glfwSetFramebufferSizeCallback(
+        window,
+        [](GLFWwindow*, int neww, int newh) {
+          ImGui3DWidget::activeWindow->reshape(vec2i(neww, newh));
+        }
+      );
 
       glfwSetCursorPosCallback(
         window,
@@ -338,6 +373,22 @@ namespace ospray {
         }
       );
 
+      // setup GL state
+      glDisable(GL_LIGHTING);
+      glColor3f(1, 1, 1);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
+      glGenTextures(1, &fbTexture);
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, fbTexture);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      // for letterboxing
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
       currentWidget = this;
     }
 
@@ -347,8 +398,6 @@ namespace ospray {
         throw std::runtime_error("ImGuiViewer window not created/set!");
 
       auto *window = currentWidget->window;
-
-      int display_w = 0, display_h = 0;
 
       ImFontConfig config;
       config.MergeMode = false;
@@ -363,6 +412,13 @@ namespace ospray {
         currentWidget->fontScale = 1.f;
       }
       #endif
+
+      // make sure the widget matches the initial size of the window
+      vec2i displaySize;
+      glfwGetFramebufferSize(window, &displaySize.x, &displaySize.y);
+      currentWidget->reshape(displaySize);
+
+      currentWidget->startAsyncRendering();
 
       // Main loop
       while (!glfwWindowShouldClose(window) &&
@@ -393,13 +449,14 @@ namespace ospray {
           ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.,1.,1.,1.f));
           ImGui::SetWindowFontScale(currentWidget->fontScale*1.0f);
           font->Scale = 6.f;
-          ImGui::Text("%s", ("OSPRay v" + std::string(OSPRAY_VERSION)).c_str());
+          ImGui::Text("%s", ("OSPRay v" + std::string(OSPRAY_VERSION)
+                + std::string(OSPRAY_VERSION_NOTE)).c_str());
           font->Scale = 1.f;
           ImGui::SetWindowFontScale(currentWidget->fontScale*0.7f);
           ImGui::PopStyleColor(1);
 
           std::stringstream ss;
-          ss << 1.f/currentWidget->renderTime;
+          ss << currentWidget->renderFPSsmoothed;
           ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.2f, .2f, 1.f, 1.f));
           ImGui::Text("%s", ("fps: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
@@ -407,19 +464,6 @@ namespace ospray {
 
           ImGui::End();
         }
-
-        timer.start();
-        int new_w = 0, new_h = 0;
-        glfwGetFramebufferSize(window, &new_w, &new_h);
-
-        if (new_w != display_w || new_h != display_h) {
-          display_w = new_w;
-          display_h = new_h;
-          currentWidget->reshape(vec2i(display_w, display_h));
-        }
-
-        glViewport(0, 0, new_w, new_h);
-        timer.stop();
 
         timer.start();
         // Render OSPRay frame
@@ -446,31 +490,40 @@ namespace ospray {
     void ImGui3DWidget::keypress(char key)
     {
       switch (key) {
-      case '!': {
-        if (ImGui3DWidget::animating) {
-          dumpScreensDuringAnimation = !dumpScreensDuringAnimation;
-        } else {
-          char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
-          static const char *dumpFileRoot;
-#ifndef _WIN32
-          if (!dumpFileRoot) {
-            auto rc = mkstemp(tmpFileName);
-            (void)rc;
-            dumpFileRoot = tmpFileName;
-          }
-#endif
-          char fileName[100000];
-          static int frameDumpSequenceID = 0;
-          snprintf(fileName, sizeof(fileName), "%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
-          if (ucharFB)
-            saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
-          return;
-        }
-
-        break;
-      }
       case 'C':
         PRINT(viewPort);
+        break;
+      case 'f':
+        fullScreen = !fullScreen;
+
+        if (fullScreen) {
+          // remember window placement for going out of fullscreen
+          glfwGetWindowPos(window, &windowedPos.x, &windowedPos.y);
+          glfwGetWindowSize(window, &windowedSize.x, &windowedSize.y);
+          // find monitor the window is on
+          int count;
+          const vec2i winCenter = windowedPos + windowedSize/2;
+          GLFWmonitor** monitors = glfwGetMonitors(&count);
+          // per default use primary monitor
+          GLFWmonitor* monitor = monitors[0];
+          const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+          for (int m = 1; m < count; m++) {
+            range_t<vec2i> area;
+            glfwGetMonitorPos(monitors[m], &area.lower.x, &area.lower.y);
+            auto *curMode = glfwGetVideoMode(monitors[m]);
+            area.upper = area.lower + vec2i(curMode->width, curMode->height);
+            if (area.contains(winCenter)) {
+              monitor = monitors[m];
+              mode = curMode;
+              break;
+            }
+          }
+          glfwSetWindowMonitor(window, monitor, 0, 0,
+              mode->width, mode->height, mode->refreshRate);
+        } else {
+          glfwSetWindowMonitor(window, nullptr, windowedPos.x, windowedPos.y,
+              windowedSize.x, windowedSize.y, GLFW_DONT_CARE);
+        }
         break;
       case 'g':
         showGui = !showGui;

@@ -38,7 +38,7 @@ struct CarPaint
   float normal; // scale
   TextureParam normalMap;
   linear2f normalRot;
-  
+
   float flakeScale;
   TextureParam flakeScaleMap;
 
@@ -53,7 +53,7 @@ struct CarPaint
 
   float flakeRoughness;
   TextureParam flakeRoughnessMap;
-  
+
   // dielectric clear coat reflectivity in [0, 1]
   float coat;
   TextureParam coatMap;
@@ -61,10 +61,10 @@ struct CarPaint
   // dielectric clear coat index of refraction in [1, 3]
   float coatIor;
   TextureParam coatIorMap;
-  
+
   float coatThickness;
   TextureParam coatThicknessMap;
-  
+
   float coatRoughness;
   TextureParam coatRoughnessMap;
 
@@ -98,17 +98,17 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
 
   varying linear3f* uniform frame =
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
-    
-  const float flakeDensity = clamp(self->flakeDensity * get1f(self->flakeDensityMap, dg.st, 1.f));
+
+  const float flakeDensity = clamp(self->flakeDensity * get1f(self->flakeDensityMap, dg, 1.f));
   int flakeMask = 0;
   varying linear3f* uniform flakeFrame = NULL;
 
   // metallic flakes in the clear coat layer
   if (flakeDensity > EPS)
   {
-    const float flakeScale = max(self->flakeScale * get1f(self->flakeScaleMap, dg.st, 1.f), 0.f);
-    const float flakeSpread = max(self->flakeSpread * get1f(self->flakeSpreadMap, dg.st, 1.f), 0.f);
-    const float flakeJitter = clamp(self->flakeJitter * get1f(self->flakeJitterMap, dg.st, 1.f));
+    const float flakeScale = max(self->flakeScale * get1f(self->flakeScaleMap, dg, 1.f), 0.f);
+    const float flakeSpread = max(self->flakeSpread * get1f(self->flakeSpreadMap, dg, 1.f), 0.f);
+    const float flakeJitter = clamp(self->flakeJitter * get1f(self->flakeJitterMap, dg, 1.f));
 
     Flakes flakes;
     flakes.scale = flakeScale;
@@ -126,7 +126,7 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
       const uniform vec3f flakeK = make_vec3f(9.30200672f, 6.27604008f, 4.89433956f);
       Fresnel* uniform flakeFresnel = FresnelConductorRGBUniform_create(ctx, flakeEta, flakeK);
 
-      const float flakeRoughness = max(self->flakeRoughness * get1f(self->flakeRoughnessMap, dg.st, 1.f), 0.f);
+      const float flakeRoughness = max(self->flakeRoughness * get1f(self->flakeRoughnessMap, dg, 1.f), 0.f);
       if (flakeRoughness < EPS)
         bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
       else
@@ -137,45 +137,45 @@ const varying BSDF* varying CarPaint_getBSDF(const uniform PathTraceMaterial* un
   // base diffuse layer
   if (!flakeMask)
   {
-    const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg.st, make_vec3f(1.f)) * make_vec3f(dg.color));
-    const float roughness = max(self->roughness * get1f(self->roughnessMap, dg.st, 1.f), 0.f);
+    const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg, make_vec3f(1.f)) * make_vec3f(dg.color));
+    const float roughness = max(self->roughness * get1f(self->roughnessMap, dg, 1.f), 0.f);
 
     if (roughness < EPS)
       bsdf = Lambert_create(ctx, frame, baseColor);
     else
       bsdf = OrenNayar_create(ctx, frame, baseColor, roughness);
   }
- 
+
   // clear coat layer
-  const float coat = max(self->coat * get1f(self->coatMap, dg.st, 1.f), 0.f);
+  const float coat = max(self->coat * get1f(self->coatMap, dg, 1.f), 0.f);
   if (coat > EPS)
   {
-    float coatIor = self->coatIor * get1f(self->coatIorMap, dg.st, 1.f);
+    float coatIor = self->coatIor * get1f(self->coatIorMap, dg, 1.f);
     if (coatIor < 1.f) coatIor = rcp(coatIor);
     coatIor = clamp(coatIor, 1.f, 3.f); // clamp to common range due to LUTs
     if (abs(coatIor-1.f) > EPS)
     {
       // compute the final coat color
-      const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg.st, make_vec3f(1.f)));
+      const vec3f coatColor = clamp(self->coatColor * get3f(self->coatColorMap, dg, make_vec3f(1.f)));
       vec3f coatFinalColor = coatColor;
       if (flakeMask)
       {
-        const float flipflopFalloff = clamp(self->flipflopFalloff * get1f(self->flipflopFalloffMap, dg.st, 1.f));
+        const float flipflopFalloff = clamp(self->flipflopFalloff * get1f(self->flipflopFalloffMap, dg, 1.f));
         if (flipflopFalloff < 1.f-EPS)
         {
           // pearlescent flakes
-          const vec3f flipflopColor = clamp(self->flipflopColor * get3f(self->flipflopColorMap, dg.st, make_vec3f(1.f)));
+          const vec3f flipflopColor = clamp(self->flipflopColor * get3f(self->flipflopColorMap, dg, make_vec3f(1.f)));
           const float cosThetaO = max(-dot(ray.dir, flakeFrame->vz), 0.f);
           const float weight = pow(1.f - cosThetaO, rcp(1.f - flipflopFalloff)); // use Schlick for the blending weight
           coatFinalColor = lerp(weight, coatColor, flipflopColor);
         }
       }
 
-      const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg.st, 1.f), 0.f);
-      const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg.st, 1.f), 0.f);
+      const float coatThickness = max(self->coatThickness * get1f(self->coatThicknessMap, dg, 1.f), 0.f);
+      const float coatRoughness = max(self->coatRoughness * get1f(self->coatRoughnessMap, dg, 1.f), 0.f);
       varying linear3f* uniform coatFrame =
           LinearSpace3f_create(ctx, makeShadingFrame(dg, self->coatNormalMap, self->coatNormalRot, self->coatNormal));
-      
+
       if (coatRoughness < EPS)
       {
         bsdf = DielectricLayer_create(ctx, coatFrame, bsdf, rcp(coatIor), coatFinalColor, coatThickness, 1.f);
@@ -238,7 +238,7 @@ export void* uniform PathTracer_CarPaint_set(void* uniform _self,
 
   self->flakeRoughness = flakeRoughness;
   self->flakeRoughnessMap = make_TextureParam((uniform Texture2D*)flakeRoughnessMap, flakeRoughnessXform);
-  
+
   self->coat = coat;
   self->coatMap = make_TextureParam((uniform Texture2D*)coatMap, coatXform);
 
@@ -247,10 +247,10 @@ export void* uniform PathTracer_CarPaint_set(void* uniform _self,
 
   self->coatColor = coatColor;
   self->coatColorMap = make_TextureParam((uniform Texture2D*)coatColorMap, coatColorXform);
-  
+
   self->coatThickness = coatThickness;
   self->coatThicknessMap = make_TextureParam((uniform Texture2D*)coatThicknessMap, coatThicknessXform);
-  
+
   self->coatRoughness = coatRoughness;
   self->coatRoughnessMap = make_TextureParam((uniform Texture2D*)coatRoughnessMap, coatRoughnessXform);
 

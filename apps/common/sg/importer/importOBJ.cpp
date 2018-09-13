@@ -18,8 +18,9 @@
 
 // sg
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "sg/geometry/QuadMesh.h"
+#include "sg/texture/Texture2D.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION  // define this in only *one* .cc
 #include "../3rdParty/tiny_obj_loader.h"
@@ -162,6 +163,8 @@ namespace ospray {
         sgMaterials->push_back(matNodePtr);
       }
 
+      Texture2D::clearTextureCache();
+
       return sgMaterials;
     }
 
@@ -174,13 +177,55 @@ namespace ospray {
       std::string err;
       const std::string containingPath = fileName.path();
 
-      std::cout << "parsing OBJ input file... \n";
-      bool ret = tinyobj::LoadObj(&attrib,
-                                  &shapes,
-                                  &materials,
-                                  &err,
-                                  fileName.c_str(),
-                                  containingPath.c_str());
+      // Try to load scene without auto-triangulation.  If point, lines,
+      // or polygons are found; reload the scene as a triangle mesh.
+      bool ret;
+      bool needsReload = false;
+      do {
+        ret = tinyobj::LoadObj(&attrib,
+                               &shapes,
+                               &materials,
+                               &err,
+                               fileName.c_str(),
+                               containingPath.c_str(),
+                               needsReload);  // triangulate meshes if true
+
+        auto numQuads = 0;
+        auto numTriangles = 0;
+        needsReload = false;
+        for (auto &shape : shapes) {
+          for (auto numVertsInFace : shape.mesh.num_face_vertices) {
+            numTriangles += (numVertsInFace == 3);
+            numQuads += (numVertsInFace == 4);
+
+            if (numVertsInFace < 3) {
+              std::cerr << "Warning: less than 3 verts in face!\n" <<
+                           "         Lines and points not supported.\n";
+              needsReload = true;
+            }
+            if (numVertsInFace > 4) {
+              std::cerr << "Warning: more than 4 verts in face!\n" <<
+                           "         Polygons not supported.\n";
+              needsReload = true;
+              break;
+            }
+          }
+        }
+
+        if (needsReload) {
+          std::cerr << "         Reloading as a triangle mesh.\n";
+
+          // Clear vectors from previous load
+          shapes.clear();
+          materials.clear();
+          attrib.vertices.clear();
+          attrib.normals.clear();
+          attrib.texcoords.clear();
+        } else {
+          std::cout << "... found " << numTriangles << " triangles " <<
+                       "and " << numQuads << " quads.\n";
+        }
+      } while (needsReload);
 
 #if 0 // NOTE(jda) - enable if you want to see warnings from TinyOBJ
       if (!err.empty())
@@ -198,7 +243,7 @@ namespace ospray {
       std::string base_name = fileName.name() + '_';
       int shapeId           = 0;
 
-      std::cout << "...adding found triangle groups to the scene...\n";
+      std::cout << "...adding found triangle & quad groups to the scene...\n";
 
       size_t shapeCounter = 0;
       size_t numShapes    = shapes.size();
@@ -210,25 +255,19 @@ namespace ospray {
       world->add(objInstance);
 #endif
       for (auto &shape : shapes) {
-        for (int numVertsInFace : shape.mesh.num_face_vertices) {
-          if (numVertsInFace != 3) {
-            std::cerr << "Warning: more thant 3 verts in face!";
-            PRINT(numVertsInFace);
-          }
-        }
 
         if (shapeCounter++ > (increment * incrementer + 1))
           std::cout << incrementer++ * 10 << "%\n";
 
         auto name = base_name + std::to_string(shapeId++) + '_' + shape.name;
-        auto mesh = createNode(name, "TriangleMesh")->nodeAs<TriangleMesh>();
+        auto mesh = createNode(name, "QuadMesh")->nodeAs<QuadMesh>();
 
         auto v = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
         auto numSrcIndices = shape.mesh.indices.size();
         v->v.reserve(numSrcIndices);
 
-        auto vi = createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
-        vi->v.reserve(numSrcIndices / 3);
+        auto vi = createNode("index", "DataVector4i")->nodeAs<DataVector4i>();
+        vi->v.reserve(numSrcIndices / 4);
 
         auto vn = createNode("vertex.normal", "DataVector3f")->nodeAs<DataVector3f>();
         vn->v.reserve(numSrcIndices);
@@ -237,44 +276,38 @@ namespace ospray {
             createNode("vertex.texcoord", "DataVector2f")->nodeAs<DataVector2f>();
         vt->v.reserve(numSrcIndices);
 
-        for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
-          auto idx0 = shape.mesh.indices[i + 0];
-          auto idx1 = shape.mesh.indices[i + 1];
-          auto idx2 = shape.mesh.indices[i + 2];
+        // OSPRay doesn't support separate arrays for vertex, normal & texcoord
+        // indices.  So, reindex by creating a single index array then push_back
+        // attribs according to each of their own index arrays.
+        // Put all indices into a single vec4.  Triangles duplicate the last
+        // index.
+        size_t i = 0;
+        for (int numVertsInFace : shape.mesh.num_face_vertices) {
+          auto isQuad = (numVertsInFace == 4);
+          // when a Quad then use same splitting diagonale in OSPRay/Embree as
+          // tinyOBJ would use
+          auto prim_indices = isQuad ? vec4i(3, 0, 1, 2) : vec4i(0, 1, 2, 2);
+          vi->push_back(i + prim_indices);
+          i += numVertsInFace;
+        }
 
-          auto prim = vec3i(i + 0, i + 1, i + 2);
-          vi->push_back(prim);
+        for (size_t i = 0; i < numSrcIndices; i++) {
+          auto idx = shape.mesh.indices[i];
 
-          v->push_back(vec3f(attrib.vertices[idx0.vertex_index * 3 + 0],
-                             attrib.vertices[idx0.vertex_index * 3 + 1],
-                             attrib.vertices[idx0.vertex_index * 3 + 2]));
-          v->push_back(vec3f(attrib.vertices[idx1.vertex_index * 3 + 0],
-                             attrib.vertices[idx1.vertex_index * 3 + 1],
-                             attrib.vertices[idx1.vertex_index * 3 + 2]));
-          v->push_back(vec3f(attrib.vertices[idx2.vertex_index * 3 + 0],
-                             attrib.vertices[idx2.vertex_index * 3 + 1],
-                             attrib.vertices[idx2.vertex_index * 3 + 2]));
+          v->push_back(vec3f(attrib.vertices[idx.vertex_index * 3 + 0],
+                             attrib.vertices[idx.vertex_index * 3 + 1],
+                             attrib.vertices[idx.vertex_index * 3 + 2]));
 
           // TODO create missing normals&texcoords if only some faces have them
-          if (!attrib.normals.empty() && idx0.normal_index != -1) {
-            vn->push_back(vec3f(attrib.normals[idx0.normal_index * 3 + 0],
-                                attrib.normals[idx0.normal_index * 3 + 1],
-                                attrib.normals[idx0.normal_index * 3 + 2]));
-            vn->push_back(vec3f(attrib.normals[idx1.normal_index * 3 + 0],
-                                attrib.normals[idx1.normal_index * 3 + 1],
-                                attrib.normals[idx1.normal_index * 3 + 2]));
-            vn->push_back(vec3f(attrib.normals[idx2.normal_index * 3 + 0],
-                                attrib.normals[idx2.normal_index * 3 + 1],
-                                attrib.normals[idx2.normal_index * 3 + 2]));
+          if (!attrib.normals.empty() && idx.normal_index != -1) {
+            vn->push_back(vec3f(attrib.normals[idx.normal_index * 3 + 0],
+                                attrib.normals[idx.normal_index * 3 + 1],
+                                attrib.normals[idx.normal_index * 3 + 2]));
           }
 
-          if (!attrib.texcoords.empty() && idx0.texcoord_index != -1) {
-            vt->push_back(vec2f(attrib.texcoords[idx0.texcoord_index * 2 + 0],
-                                attrib.texcoords[idx0.texcoord_index * 2 + 1]));
-            vt->push_back(vec2f(attrib.texcoords[idx1.texcoord_index * 2 + 0],
-                                attrib.texcoords[idx1.texcoord_index * 2 + 1]));
-            vt->push_back(vec2f(attrib.texcoords[idx2.texcoord_index * 2 + 0],
-                                attrib.texcoords[idx2.texcoord_index * 2 + 1]));
+          if (!attrib.texcoords.empty() && idx.texcoord_index != -1) {
+            vt->push_back(vec2f(attrib.texcoords[idx.texcoord_index * 2 + 0],
+                                attrib.texcoords[idx.texcoord_index * 2 + 1]));
           }
         }
 

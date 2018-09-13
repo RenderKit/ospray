@@ -62,18 +62,18 @@ namespace ospray {
 
     private:
 
-      void importURL(std::shared_ptr<Node> world,
+      void importURL(const std::shared_ptr<Node> &world,
                      const FileName &fileName,
                      const FormatURL &fu) const;
-      void importRegistryFileLoader(std::shared_ptr<Node> world,
+      void importRegistryFileLoader(const std::shared_ptr<Node> &world,
                                     const std::string &type,
                                     const FileName &fileName) const;
-      void importDefaultExtensions(std::shared_ptr<Node> world,
-                                   const FileName &filename) const;
+      void importDefaultExtensions(const std::shared_ptr<Node> &world,
+                                   const FileName &filename);
     };
 
     /*! prototype for any scene graph importer function */
-    using ImporterFunction = void (*)(std::shared_ptr<Node> world,
+    using ImporterFunction = void (*)(const std::shared_ptr<Node> &world,
                                       const FileName &fileName);
 
     /*! declare an importer function for a given file extension */
@@ -97,18 +97,22 @@ namespace ospray {
                                    const FileName &fileName);
 
     /*! import an PLY model, and add its contents to the given world */
-    OSPSG_INTERFACE void importPLY(std::shared_ptr<Node> &world,
+    OSPSG_INTERFACE void importPLY(const std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
 #ifdef OSPRAY_APPS_SG_VTK
-    OSPSG_INTERFACE void importUnstructuredVolume(const std::shared_ptr<Node> &world,
-                                                  const FileName &fileName);
+    OSPSG_INTERFACE
+    void importUnstructuredVolume(const std::shared_ptr<Node> &world,
+                                  const FileName &fileName);
 
     OSPSG_INTERFACE void importVTKPolyData(const std::shared_ptr<Node> &world,
                                            const FileName &fileName);
 
     OSPSG_INTERFACE void importVTI(const std::shared_ptr<Node> &world,
-                                           const FileName &fileName);
+                                   const FileName &fileName);
+
+    OSPSG_INTERFACE void importVTIs(const std::shared_ptr<Node> &world,
+                                    const std::vector<FileName> &fileNames);
 #endif
 
     /*! import an X3D-format model, and add its contents to the given world */
@@ -120,21 +124,23 @@ namespace ospray {
 
 #ifdef OSPRAY_APPS_SG_CHOMBO
     /*! chombo amr */
-    OSPSG_INTERFACE void importCHOMBO(std::shared_ptr<Node> world,
+    OSPSG_INTERFACE void importCHOMBO(const std::shared_ptr<Node> &world,
                                       const FileName &fileName);
 #endif
 
     OSPSG_INTERFACE
-    void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName);
+    void loadOSP(const std::shared_ptr<Node> &world,
+                 const std::string &fileName);
 
     OSPSG_INTERFACE
-    std::shared_ptr<sg::Node> readXML(const std::string &fileName);
+    std::shared_ptr<Node> readXML(const std::string &fileName);
 
     OSPSG_INTERFACE
-    void importRIVL(std::shared_ptr<Node> world, const std::string &fileName);
+    void importRIVL(const std::shared_ptr<Node> &world,
+                    const FileName &fileName);
 
     OSPSG_INTERFACE
-    std::shared_ptr<sg::Node> loadOSG(const std::string &fileName);
+    std::shared_ptr<Node> loadOSG(const std::string &fileName);
 
     OSPSG_INTERFACE
     void loadOSPSG(const std::shared_ptr<Node> &world,
@@ -148,8 +154,9 @@ namespace ospray {
     // Macro to register importers ////////////////////////////////////////////
 
 #define OSPSG_REGISTER_IMPORT_FUNCTION(function, name)                         \
-    extern "C" void ospray_sg_import_##name(std::shared_ptr<Node> world,       \
-                                            const FileName fileName)           \
+    extern "C" OSPRAY_DLLEXPORT                                                \
+    void ospray_sg_import_##name(const std::shared_ptr<Node> &world,           \
+                                 const FileName fileName)                      \
     {                                                                          \
       function(world, fileName);                                               \
     }                                                                          \

@@ -373,7 +373,8 @@ namespace ospray {
 
     // Import HDF5 CHOMBO files ///////////////////////////////////////////////
 
-    void importCHOMBO(std::shared_ptr<Node> world, const FileName &fileName)
+    void importCHOMBO(const std::shared_ptr<Node> &world,
+                      const FileName &fileName)
     {
       auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
       parseAMRChomboFile(node, fileName);

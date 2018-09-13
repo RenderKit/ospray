@@ -22,6 +22,8 @@
 
 #include "ospcommon/memory/malloc.h"
 
+#include "texture/Texture2D.h"
+
 namespace ospray {
   namespace sg {
 
@@ -64,15 +66,17 @@ namespace ospray {
                   "scivis: standard whitted style ray tracer. "
                   "pathtracer/pt: photo-realistic path tracer");
 
+      updateRenderer();
+
       std::vector<Any> whiteList;
-      for (auto &v : globalWhiteList)
-        whiteList.push_back(v);
+      std::copy(globalWhiteList.begin(),
+                globalWhiteList.end(),
+                std::back_inserter(whiteList));
 
       child("rendererType").setWhiteList(whiteList);
       createChild("world",
                   "Model").setDocumentation("model containing scene objects");
-      createChild("camera", "PerspectiveCamera");
-      createChild("frameBuffer", "FrameBuffer");
+
       createChild("lights");
 
       createChild("bgColor", "vec3f", vec3f(0.15f, 0.15f, 0.15f),
@@ -83,7 +87,7 @@ namespace ospray {
                   NodeFlags::required | NodeFlags::gui_slider,
                   "the number of samples rendered per pixel. The higher "
                   "the number, the smoother the resulting image.");
-      child("spp").setMinMax(-8,128);
+      child("spp").setMinMax(1,128);
 
       createChild("minContribution", "float", 0.001f,
                   NodeFlags::required |
@@ -134,6 +138,7 @@ namespace ospray {
       createChild("oneSidedLighting", "bool", true, NodeFlags::required);
       createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
 
+      createChild("useGeometryLights", "bool", true, NodeFlags::required);
       createChild("backplate", "Texture2D");
       auto backplate = child("backplate").nodeAs<Texture2D>();
       backplate->size.x = 1;
@@ -145,26 +150,17 @@ namespace ospray {
       backplate->data = memory::alignedMalloc(sizeof(unsigned char) * backplate->size.y * stride);
       vec3f bgColor = child("bgColor").valueAs<vec3f>();
       memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
-      createChild("useBackplate", "bool", true, NodeFlags::none, "use\
-           backplate for path tracer");
+      createChild("useBackplate", "bool", true, NodeFlags::none,
+                  "use backplate for path tracer");
     }
 
     Renderer::~Renderer()
     {
-      if (lightsData)
-        ospRelease(lightsData);
+      ospRelease(lightsData);
     }
 
-    void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb,
-                               int flags,
-                               bool verifyCommit)
+    void Renderer::renderFrame(std::shared_ptr<FrameBuffer> fb, int flags)
     {
-      RenderContext ctx;
-      if (verifyCommit) {
-        Node::traverse(VerifyNodes{});
-        traverse(ctx, "commit");
-      }
-      traverse(ctx, "render");
       variance = ospRenderFrame(fb->valueAs<OSPFrameBuffer>(),
                                 ospRenderer,
                                 flags);
@@ -198,17 +194,82 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (child("camera").hasChild("aspect") &&
-          child("frameBuffer")["size"].lastModified() >
-          child("camera")["aspect"].lastCommitted()) {
+      auto backplate = child("backplate").nodeAs<Texture2D>();
+      vec3f bgColor = child("bgColor").valueAs<vec3f>();
+      memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
+      backplate->markAsModified();
 
-        auto fbSize = child("frameBuffer")["size"].valueAs<vec2i>();
-        child("camera")["aspect"] = fbSize.x / float(fbSize.y);
+      ctx.ospRenderer = ospRenderer;
+      ctx.ospRendererType = createdType;
+      ctx.world = child("world").nodeAs<sg::Model>();
+    }
+
+    void Renderer::postCommit(RenderContext &ctx)
+    {
+      if (lightsData == nullptr ||
+          lightsBuildTime < child("lights").childrenLastModified())
+      {
+        // create and setup light list
+        std::vector<OSPLight> lights;
+        for(auto &lightNode : child("lights").children()) {
+          auto light = lightNode.second->valueAs<OSPLight>();
+          if (light)
+            lights.push_back(light);
+        }
+
+        ospRelease(lightsData);
+        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+        ospCommit(lightsData);
+        lightsBuildTime.renew();
       }
+
+      // complete setup of renderer
+      ospSetObject(ospRenderer, "lights", lightsData);
+      ospSetObject(ospRenderer, "backplate", child("backplate").valueAs<OSPObject>());
+
+      auto &world = child("world");
+
+      if (world.childrenLastModified() > lastCommitted()) {
+        world.finalize(ctx);
+        ospSetObject(ospRenderer, "model", world.valueAs<OSPObject>());
+        if (child("autoEpsilon").valueAs<bool>()) {
+          const box3f bounds = world["bounds"].valueAs<box3f>();
+          const float diam = length(bounds.size());
+          float logDiam = ospcommon::log(diam);
+          if (logDiam < 0.f) {
+            logDiam = -1.f/logDiam;
+          }
+          const float epsilon = 1e-5f*logDiam;
+          ospSet1f(ospRenderer, "epsilon", epsilon);
+          ospSet1f(ospRenderer, "aoDistance", diam*0.3);
+        }
+      }
+
+      if (!child("useBackplate").valueAs<bool>())
+        ospSetObject(ospRenderer, "backplate", nullptr);
+
+      ospCommit(ospRenderer);
+    }
+
+    OSPPickResult Renderer::pick(const vec2f &pickPos)
+    {
+      OSPPickResult result;
+      ospPick(&result, ospRenderer, (const osp::vec2f&)pickPos);
+      return result;
+    }
+
+    float Renderer::getLastVariance() const
+    {
+      return variance;
+    }
+
+    void Renderer::updateRenderer()
+    {
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
         auto setRenderer = [&](OSPRenderer handle, const std::string &rType) {
           Node::traverse(MarkAllAsModified{});
+          ospRelease(ospRenderer);
           ospRenderer = handle;
           createdType = rType;
           ospCommit(ospRenderer);
@@ -228,101 +289,6 @@ namespace ospray {
           child("rendererType").setValue(createdType);
         }
       }
-
-      auto backplate = child("backplate").nodeAs<Texture2D>();
-      vec3f bgColor = child("bgColor").valueAs<vec3f>();
-      memcpy(backplate->data, &bgColor.x, backplate->channels*backplate->depth);
-      backplate->markAsModified();
-
-      ctx.ospRenderer = ospRenderer;
-      ctx.ospRendererType = rendererType;
-      ctx.world = child("world").nodeAs<sg::Model>();
-    }
-
-    void Renderer::postCommit(RenderContext &ctx)
-    {
-      bool modified = lastModified() > frameMTime;
-      if (!modified) {
-        for (const auto& c : children()) {
-          // ignore changes to the frame buffer/tone mapper
-          if (c.second->lastModified() > frameMTime
-              || (c.second->childrenLastModified() > frameMTime
-              && c.first != "frameBuffer"))
-          {
-            modified = true;
-            break;
-          }
-        }
-      }
-
-      if (modified) {
-        ospFrameBufferClear(
-          (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
-          OSP_FB_COLOR | OSP_FB_ACCUM
-        );
-
-        if (lightsData == nullptr ||
-          lightsBuildTime < child("lights").childrenLastModified())
-        {
-          // create and setup light list
-          std::vector<OSPLight> lights;
-          for(auto &lightNode : child("lights").children())
-          {
-            auto light = lightNode.second->valueAs<OSPLight>();
-            if (light)
-              lights.push_back(light);
-          }
-
-          if (lightsData)
-            ospRelease(lightsData);
-          lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
-          ospCommit(lightsData);
-          lightsBuildTime.renew();
-        }
-
-        // complete setup of renderer
-        ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
-        ospSetObject(ospRenderer, "lights", lightsData);
-        ospSetObject(ospRenderer, "backplate", child("backplate").valueAs<OSPObject>());
-
-        if (child("world").childrenLastModified() > frameMTime)
-        {
-          child("world").finalize(ctx);
-          ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
-          if (child("autoEpsilon").valueAs<bool>()) {
-            const box3f bounds = child("world")["bounds"].valueAs<box3f>();
-            const float diam = length(bounds.size());
-            float logDiam = ospcommon::log(diam);
-            if (logDiam < 0.f)
-            {
-              logDiam = -1.f/logDiam;
-            }
-            const float epsilon = 1e-5f*logDiam;
-            ospSet1f(ospRenderer, "epsilon", epsilon);
-            ospSet1f(ospRenderer, "aoDistance", diam*0.3);
-          }
-
-        }
-
-        if (!child("useBackplate").valueAs<bool>())
-          ospSetObject(ospRenderer, "backplate", nullptr);
-
-        ospCommit(ospRenderer);
-        frameMTime.renew();
-      }
-
-    }
-
-    OSPPickResult Renderer::pick(const vec2f &pickPos)
-    {
-      OSPPickResult result;
-      ospPick(&result, ospRenderer, (const osp::vec2f&)pickPos);
-      return result;
-    }
-
-    float Renderer::getLastVariance() const
-    {
-      return variance;
     }
 
     OSP_REGISTER_SG_NODE(Renderer);

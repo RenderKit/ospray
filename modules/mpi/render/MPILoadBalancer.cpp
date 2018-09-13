@@ -31,8 +31,6 @@ namespace ospray {
 
     using namespace mpicommon;
 
-#define MAX_TILE_SIZE 128
-
     namespace staticLoadBalancer {
 
       // staticLoadBalancer::Master definitions ///////////////////////////////
@@ -100,10 +98,12 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          tasking::parallel_for(numJobs(renderer->spp, accumID),
-                                [&](size_t tid) {
-            renderer->renderTile(perFrameData, tile, tid);
-          });
+          if (dfb->continueRendering()) {
+            tasking::parallel_for(numJobs(renderer->spp, accumID),
+                                  [&](size_t tid) {
+              renderer->renderTile(perFrameData, tile, tid);
+            });
+          }
 
           fb->setTile(tile);
         });
@@ -337,10 +337,13 @@ namespace ospray {
 
         while (!frameActive);// PRINT(frameActive); // XXX busy wait for valid perFrameData
 
-        tasking::parallel_for(numJobs(renderer->spp, task.accumId),
-                              [&](size_t tid) {
-          renderer->renderTile(perFrameData, tile, tid);
-        });
+        auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        if (dfb->continueRendering()) {
+          tasking::parallel_for(numJobs(renderer->spp, task.accumId),
+                                [&](size_t tid) {
+            renderer->renderTile(perFrameData, tile, tid);
+          });
+        }
 
         if (tilesAvailable)
           requestTile(); // XXX here or after setTile?

@@ -102,7 +102,9 @@ typedef enum
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
-  OSP_FB_VARIANCE=(1<<3)
+  OSP_FB_VARIANCE=(1<<3),
+  OSP_FB_NORMAL=(1<<4), // in screenspace
+  OSP_FB_ALBEDO=(1<<5)
 } OSPFrameBufferChannel;
 
 /*! flags that can be passed to OSPNewData; can be OR'ed together */
@@ -165,7 +167,7 @@ namespace osp {
   struct Material         : public ManagedObject {};
   struct Volume           : public ManagedObject {};
   struct TransferFunction : public ManagedObject {};
-  struct Texture2D        : public ManagedObject {};
+  struct Texture          : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
 
@@ -189,7 +191,7 @@ typedef osp::Material          *OSPMaterial;
 typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
-typedef osp::Texture2D         *OSPTexture2D;
+typedef osp::Texture           *OSPTexture  ;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
 
@@ -234,7 +236,7 @@ typedef struct _OSPManagedObject *OSPManagedObject,
   *OSPLight,
   *OSPVolume,
   *OSPTransferFunction,
-  *OSPTexture2D,
+  *OSPTexture,
   *OSPObject,
   *OSPPixelOp;
 
@@ -243,6 +245,9 @@ typedef struct _OSPManagedObject *OSPManagedObject,
 #define OSP_DEFAULT_VAL(a) /* no default arguments on C99 */
 
 #endif
+
+/* old (and deprecated) name for OSPTexture */
+OSP_DEPRECATED typedef OSPTexture OSPTexture2D;
 
 #ifdef __cplusplus
 extern "C" {
@@ -321,6 +326,15 @@ extern "C" {
                                         OSPRenderer,
                                         const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
+  /*! progress and cancel callback function type
+        progress is in (0..1]
+        returned "bool" value != 0 indicates ospRenderFrame should continue rendering
+  */
+  typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
+
+  /*! set callback for given Device to call when an error occurs*/
+  OSPRAY_INTERFACE void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
+
   //! create a new renderer of given type
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
@@ -336,17 +350,20 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
-  //! let given renderer create a new material of given type
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
+  //! (deprecated, use ospNewMaterial2) let given renderer create a new material of given type
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *material_type);
 
-  //! let given renderer create a new material of given type
+  //! create a new material of given type for a renderer of given type
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
 
-  //! let given renderer create a new light of given type
+  //! (deprecated, use ospNewLight3) let given renderer create a new light of given type
   OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
 
-  //! let given renderer create a new light of given type
-  OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
+  //! (deprecated, use ospNewLight3) create a new light of given type for a renderer of given type
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
+
+  //! create a new light of given type
+  OSPRAY_INTERFACE OSPLight ospNewLight3(const char *light_type);
 
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot
@@ -387,19 +404,29 @@ extern "C" {
   /*! \detailed return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 
-  //! \brief create a new Texture2D with the given parameters
-  /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
+  //! \brief create a new Texture
+  OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
+
+  //! \brief (deprecated, use ospNewTexture("texture2d") instead)
+  //         create a new Texture2D with the given parameters
+  /*! \detailed return 'NULL' if the texture could not be created with the given
+                parameters */
 #ifdef __cplusplus
-  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
-                                                const OSPTextureFormat,
-                                                void *source = NULL,
-                                                const uint32_t textureCreationFlags = 0);
+  OSPRAY_INTERFACE OSP_DEPRECATED OSPTexture ospNewTexture2D(
+    const osp::vec2i &size,
+    const OSPTextureFormat,
+    void *source = NULL,
+    const uint32_t textureCreationFlags = 0
+  );
 #else
-  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(const osp_vec2i *size,
-                                                const OSPTextureFormat,
-                                                void *source,
-                                                const uint32_t textureCreationFlags);
+  OSPRAY_INTERFACE OSP_DEPRECATED OSPTexture ospNewTexture2D(
+    const osp_vec2i *size,
+    const OSPTextureFormat,
+    void *source,
+    const uint32_t textureCreationFlags
+  );
 #endif
+
   //! \brief clears the specified channel(s) of the frame buffer
   /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
@@ -519,10 +546,7 @@ extern "C" {
 #endif
 
 
-  /*! \brief free a framebuffer
-
-    due to refcounting the frame buffer may not immediately be deleted
-    at this time */
+  /*! \brief (deprecated, use ospRelease instead) free a framebuffer */
   OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */

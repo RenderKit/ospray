@@ -29,12 +29,6 @@ void Volume_Constructor(Volume *uniform self,
   // default bounding box; should be set to correct value by derived volume.
   self->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
 
-// #ifdef EXP_DATA_PARALLEL
-//   // initialize - by default - 'not data parallel'
-//   self->dataParallel.numPieces = 0;
-//   self->dataParallel.numMine   = 0;
-// #endif
-
   // other defaults are set during Volume::updateEditableParameters().
 }
 

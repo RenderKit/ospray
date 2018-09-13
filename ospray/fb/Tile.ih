@@ -22,11 +22,17 @@
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
 struct Tile {
-  uniform float  r[TILE_SIZE*TILE_SIZE]; /*!< red */
-  uniform float  g[TILE_SIZE*TILE_SIZE]; /*!< green */
-  uniform float  b[TILE_SIZE*TILE_SIZE]; /*!< blue */
-  uniform float  a[TILE_SIZE*TILE_SIZE]; /*!< alpha */
-  uniform float  z[TILE_SIZE*TILE_SIZE]; /*!< depth */
+  uniform float    r[TILE_SIZE*TILE_SIZE];  // red
+  uniform float    g[TILE_SIZE*TILE_SIZE];  // green
+  uniform float    b[TILE_SIZE*TILE_SIZE];  // blue
+  uniform float    a[TILE_SIZE*TILE_SIZE];  // alpha
+  uniform float    z[TILE_SIZE*TILE_SIZE];  // depth
+  uniform float    nx[TILE_SIZE*TILE_SIZE]; // normal x
+  uniform float    ny[TILE_SIZE*TILE_SIZE]; // normal y
+  uniform float    nz[TILE_SIZE*TILE_SIZE]; // normal z
+  uniform float    ar[TILE_SIZE*TILE_SIZE]; // albedo red
+  uniform float    ag[TILE_SIZE*TILE_SIZE]; // albedo green
+  uniform float    ab[TILE_SIZE*TILE_SIZE]; // albedo blue
   uniform region2i region;
   uniform vec2i    fbSize;
   uniform vec2f    rcp_fbSize;
@@ -36,11 +42,17 @@ struct Tile {
 };
 
 struct VaryingTile {
-  varying float  r[TILE_SIZE*TILE_SIZE/programCount]; /*!< red */
-  varying float  g[TILE_SIZE*TILE_SIZE/programCount]; /*!< green */
-  varying float  b[TILE_SIZE*TILE_SIZE/programCount]; /*!< blue */
-  varying float  a[TILE_SIZE*TILE_SIZE/programCount]; /*!< alpha */
-  varying float  z[TILE_SIZE*TILE_SIZE/programCount]; /*!< depth */
+  varying float    r[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    g[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    b[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    a[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    z[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    nx[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    ny[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    nz[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    ar[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    ag[TILE_SIZE*TILE_SIZE/programCount];
+  varying float    ab[TILE_SIZE*TILE_SIZE/programCount];
   uniform region2i region;
   uniform vec2i    fbSize;
   uniform vec2f    rcp_fbSize;
@@ -48,14 +60,6 @@ struct VaryingTile {
   uniform int32    children;
   uniform int32    accumID;
 };
-
-inline vec4f setRGBA(uniform Tile &tile, varying uint32 i, const varying vec4f rgba)
-{ 
-  tile.r[i] = rgba.x;
-  tile.g[i] = rgba.y;
-  tile.b[i] = rgba.z;
-  tile.a[i] = rgba.w;
-}
 
 inline void setRGBA(uniform Tile &tile, const varying uint32 i,
                     const varying vec3f rgb, const varying float alpha=0.f)
@@ -87,20 +91,14 @@ inline void setRGBA(uniform Tile &tile, const varying uint32 i,
   tile.a[i] = rgba.w;
 }
 
-inline varying vec4f getRGBA(uniform Tile &tile, const varying uint32 i)
-{ return make_vec4f(tile.r[i],tile.g[i],tile.b[i],tile.a[i]); }
-
-// /*! get N RGBA elements from the tile - from (ix,iy) to (ix+N,iy),
-//     where N is the varying width */
-// inline void getRGBAPacket(varying vec4f &ret, 
-//                           uniform Tile &tile, 
-//                           uniform uint32 ix, 
-//                           uniform uint32 iy)
-// {
-//   const uint32 ofs = (iy*TILE_SIZE+ix)+programIndex;
-//   ret.x = tile.r[ofs];
-//   ret.y = tile.g[ofs];
-//   ret.z = tile.b[ofs];
-//   ret.w = tile.a[ofs];
-// }
+inline void setNormalAlbedo(uniform Tile &tile, const uint32 i,
+                    const vec3f normal, const vec3f albedo)
+{
+  tile.nx[i] = normal.x;
+  tile.ny[i] = normal.y;
+  tile.nz[i] = normal.z;
+  tile.ar[i] = albedo.x;
+  tile.ag[i] = albedo.y;
+  tile.ab[i] = albedo.z;
+}
 

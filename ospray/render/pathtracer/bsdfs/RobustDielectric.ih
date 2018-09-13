@@ -187,7 +187,8 @@ inline void RobustDielectric_Constructor(varying RobustDielectric* uniform self,
 
   const varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
 
-  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+  BSDF_Constructor(&self->super, make_vec3f(1.0f),
+                   BSDF_SPECULAR,
                    RobustDielectric_eval, RobustDielectric_sample,
                    frame);
   self->eta = eta;

@@ -42,15 +42,8 @@ namespace ospray {
   {
   public:
 
-    AsyncRenderEngine(std::shared_ptr<sg::Renderer> sgRenderer,
-                      std::shared_ptr<sg::Renderer> sgRendererDW);
+    AsyncRenderEngine(std::shared_ptr<sg::Frame> root);
     ~AsyncRenderEngine();
-
-    // Properties //
-
-    void setFbSize(const vec2i &size);
-
-    // Method to say that an objects needs to be comitted before next frame //
 
     void pick(const vec2f &screenPos);
 
@@ -58,6 +51,7 @@ namespace ospray {
 
     void start(int numThreads = -1);
     void stop();
+    void setFrameCancelled();
 
     ExecState runningState() const;
 
@@ -65,15 +59,30 @@ namespace ospray {
 
     bool   hasNewFrame() const;
     double lastFrameFps() const;
-    float  getLastVariance() const;
+    double lastFrameFpsSmoothed() const;
 
     bool          hasNewPickResult();
     OSPPickResult getPickResult();
 
-    const std::vector<uint32_t> &mapFramebuffer();
-    void                         unmapFramebuffer();
-
+    class Framebuffer
+    {
+    public:
+      vec2i size() const noexcept { return size_; }
+      OSPFrameBufferFormat format() const noexcept { return format_; }
+      void resize(const vec2i& size, const OSPFrameBufferFormat format);
+      void copy(const uint8_t* src) { if (src) memcpy(buf.data(), src, bytes); }
+      const uint8_t* data() const noexcept { return buf.data(); }
     private:
+      vec2i size_;
+      OSPFrameBufferFormat format_;
+      size_t bytes;
+      std::vector<uint8_t> buf;
+    };
+
+    const Framebuffer& mapFramebuffer();
+    void unmapFramebuffer();
+
+  private:
 
     // Helper functions //
 
@@ -84,20 +93,15 @@ namespace ospray {
     std::unique_ptr<AsyncLoop> backgroundThread;
 
     std::atomic<ExecState> state{ExecState::INVALID};
+    std::atomic<bool> frameCancelled {false};
 
     int numOsprayThreads {-1};
 
-    std::shared_ptr<sg::Renderer> scenegraph;
-    std::shared_ptr<sg::Renderer> scenegraphDW;
+    std::shared_ptr<sg::Frame> scenegraph;
 
-    utility::TransactionalValue<vec2i> fbSize;
     utility::TransactionalValue<vec2f> pickPos;
     utility::TransactionalValue<OSPPickResult> pickResult;
-
-    int nPixels {0};
-
-    std::mutex fbMutex;
-    utility::DoubleBufferedValue<std::vector<uint32_t>> pixelBuffers;
+    utility::DoubleBufferedValue<Framebuffer> frameBuffers;
 
     std::atomic<bool> newPixels {false};
 

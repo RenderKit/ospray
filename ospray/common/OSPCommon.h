@@ -83,8 +83,13 @@ typedef int ssize_t;
   extern "C" OSPRAY_DLLEXPORT                                                  \
       Object *ospray_create_##object_name##__##external_name()                 \
   {                                                                            \
-    return new InternalClass;                                                  \
-  } \
+    auto *instance = new InternalClass;                                        \
+    if (instance->getParam<std::string>("externalNameFromAPI", "").empty()) {  \
+      instance->setParam<std::string>("externalNameFromeAPI",                  \
+                                      TOSTRING(external_name));                \
+    }                                                                          \
+    return instance;                                                           \
+  }                                                                            \
   /* additional declaration to avoid "extra ;" -Wpedantic warnings */          \
   Object *ospray_create_##object_name##__##external_name()
 
@@ -133,9 +138,6 @@ namespace ospray {
     OSPRAY_CORE_INTERFACE void free64(void *ptr);
   }
 
-  /*! size of OSPDataType */
-  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
-
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_CORE_INTERFACE OSPDataType typeForString(const char *string);
   /*! Convert a type string to an OSPDataType. */
@@ -144,6 +146,9 @@ namespace ospray {
 
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_CORE_INTERFACE std::string stringForType(OSPDataType type);
+
+  /*! size of OSPDataType */
+  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! size of OSPTextureFormat */
   OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPTextureFormat);
@@ -289,5 +294,45 @@ namespace ospray {
     return typeid(*v).name();
   }
 
+  // Infer (compile time) OSP_DATA_TYPE from input type ///////////////////////
+
+  template <typename T>
+  struct OSPTypeFor { static constexpr int value = OSP_UNKNOWN; };
+
+#define OSPTYPEFOR_SPECIALIZATION(type, osp_type) \
+  template <> struct OSPTypeFor<type> { static constexpr int value = osp_type; };
+
+  OSPTYPEFOR_SPECIALIZATION(const char *, OSP_STRING);
+  OSPTYPEFOR_SPECIALIZATION(const char [], OSP_STRING);
+  OSPTYPEFOR_SPECIALIZATION(char, OSP_CHAR);
+  OSPTYPEFOR_SPECIALIZATION(unsigned char, OSP_UCHAR);
+  OSPTYPEFOR_SPECIALIZATION(short, OSP_SHORT);
+  OSPTYPEFOR_SPECIALIZATION(unsigned short, OSP_USHORT);
+  OSPTYPEFOR_SPECIALIZATION(int32_t, OSP_INT);
+  OSPTYPEFOR_SPECIALIZATION(vec2i, OSP_INT2);
+  OSPTYPEFOR_SPECIALIZATION(vec3i, OSP_INT3);
+  OSPTYPEFOR_SPECIALIZATION(vec4i, OSP_INT4);
+  OSPTYPEFOR_SPECIALIZATION(uint32_t, OSP_UINT);
+  OSPTYPEFOR_SPECIALIZATION(vec2ui, OSP_UINT2);
+  OSPTYPEFOR_SPECIALIZATION(vec3ui, OSP_UINT3);
+  OSPTYPEFOR_SPECIALIZATION(vec4ui, OSP_UINT4);
+  OSPTYPEFOR_SPECIALIZATION(int64_t, OSP_LONG);
+  OSPTYPEFOR_SPECIALIZATION(vec2l, OSP_LONG2);
+  OSPTYPEFOR_SPECIALIZATION(vec3l, OSP_LONG3);
+  OSPTYPEFOR_SPECIALIZATION(vec4l, OSP_LONG4);
+  OSPTYPEFOR_SPECIALIZATION(uint64_t, OSP_ULONG);
+  OSPTYPEFOR_SPECIALIZATION(vec2ul, OSP_ULONG2);
+  OSPTYPEFOR_SPECIALIZATION(vec3ul, OSP_ULONG3);
+  OSPTYPEFOR_SPECIALIZATION(vec4ul, OSP_ULONG4);
+  OSPTYPEFOR_SPECIALIZATION(float, OSP_FLOAT);
+  OSPTYPEFOR_SPECIALIZATION(vec2f, OSP_FLOAT2);
+  OSPTYPEFOR_SPECIALIZATION(vec3f, OSP_FLOAT3);
+  OSPTYPEFOR_SPECIALIZATION(vec3fa, OSP_FLOAT3A);
+  OSPTYPEFOR_SPECIALIZATION(vec4f, OSP_FLOAT4);
+  OSPTYPEFOR_SPECIALIZATION(double, OSP_DOUBLE);
+
+  OSPTYPEFOR_SPECIALIZATION(OSPObject, OSP_OBJECT);
+
+#undef OSPTYPEFOR_SPECIALIZATION
 
 } // ::ospray

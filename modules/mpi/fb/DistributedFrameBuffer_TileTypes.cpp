@@ -70,6 +70,11 @@ namespace ospray {
       (ispc::VaryingTile*)&variance,
       dfb->hasAccumBuffer,
       dfb->hasVarianceBuffer);
+    if (dfb->hasNormalBuffer || dfb->hasAlbedoBuffer)
+      ispc::DFB_accumulateAuxTile((const ispc::VaryingTile*)&tile
+          , (ispc::Tile*)&final
+          , (ispc::VaryingTile*)&accum
+          );
   }
 
   /*! called exactly once for each ospray::Tile that needs to get
@@ -164,11 +169,17 @@ namespace ospray {
       if (!tileBuffered && (tile.accumID & 1) == 0) {
         memcpy(&bufferedTile, &tile, sizeof(ospray::Tile));
         tileBuffered = true;
-      } else
+      } else {
         ispc::DFB_accumulateTileSimple(
           (const ispc::VaryingTile*)&tile,
           (ispc::VaryingTile*)&accum,
           (ispc::VaryingTile*)&variance);
+        if (dfb->hasNormalBuffer || dfb->hasAlbedoBuffer)
+          ispc::DFB_accumulateAuxTile((const ispc::VaryingTile*)&tile
+              , (ispc::Tile*)&final
+              , (ispc::VaryingTile*)&accum
+              );
+      }
       done = --instances == 0;
     }
 
@@ -202,6 +213,11 @@ namespace ospray {
             , dfb->hasAccumBuffer
             , false // disable accumulation of variance
             );
+        if (dfb->hasNormalBuffer || dfb->hasAlbedoBuffer)
+          ispc::DFB_accumulateAuxTile((const ispc::VaryingTile*)&bufferedTile
+              , (ispc::Tile*)&final
+              , (ispc::VaryingTile*)&accum
+              );
         // but still need to update the error
         error = DFB_computeErrorForTile((ispc::vec2i&)sz
             , (ispc::VaryingTile*)&accum

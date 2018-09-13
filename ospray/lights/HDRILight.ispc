@@ -70,7 +70,10 @@ Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
   res.pdf = sample2d.pdf * one_over_two_pi_sqr * rcp(sinTheta);
 
   res.dist = inf;
-  res.weight = get3f(self->map, sample2d.uv) * self->intensity / res.pdf;
+
+  DifferentialGeometry lookup;
+  initDgFromTexCoord(lookup, sample2d.uv);
+  res.weight = get3f(self->map, lookup) * self->intensity / res.pdf;
 
   return res;
 }
@@ -94,7 +97,9 @@ Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
   const float v = acos(localDir.z) * one_over_pi;
   const vec2f uv = make_vec2f(u, v);
 
-  res.radiance = get3f(self->map, uv) * self->intensity;
+  DifferentialGeometry lookup;
+  initDgFromTexCoord(lookup, uv);
+  res.radiance = get3f(self->map, lookup) * self->intensity;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
@@ -123,7 +128,9 @@ task unmasked void HDRILight_calcRowImportance(const HDRILight* uniform const se
   foreach(x = 0 ... width) {
     const vec2f coord = make_vec2f(x * self->rcpSize.x, fy);
     // using bilinear filtering is indeed what we want
-    const vec3f col = get3f(self->map, coord);
+    DifferentialGeometry lookup;
+    initDgFromTexCoord(lookup, coord);
+    const vec3f col = get3f(self->map, lookup);
     importance[y*width + x] = sinTheta * luminance(col);
   }
   row_importance[y] = Distribution1D_create(width, importance + y*width);

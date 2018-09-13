@@ -20,15 +20,10 @@
 
 #undef NDEBUG
 
-// O_LARGEFILE is a GNU extension.
-#ifdef __APPLE__
-#define  O_LARGEFILE  0
-#endif
-
 // sg
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "sg/texture/Texture2D.h"
 //
 #include "../3rdParty/ply.h"
 
@@ -88,9 +83,9 @@ namespace ospray {
         {(char*)"nx", PLY_FLOAT, PLY_FLOAT, offsetof(::ospray::sg::ply::Vertex,normal[X]), 0, 0, 0, 0},
         {(char*)"ny", PLY_FLOAT, PLY_FLOAT, offsetof(::ospray::sg::ply::Vertex,normal[Y]), 0, 0, 0, 0},
         {(char*)"nz", PLY_FLOAT, PLY_FLOAT, offsetof(::ospray::sg::ply::Vertex,normal[Z]), 0, 0, 0, 0},
-        {(char*)"diffuse_red", PLY_UCHAR, PLY_UCHAR, offsetof(::ospray::sg::ply::Vertex,red), 0, 0, 0, 0},
-        {(char*)"diffuse_green", PLY_UCHAR, PLY_UCHAR, offsetof(::ospray::sg::ply::Vertex,green), 0, 0, 0, 0},
-        {(char*)"diffuse_blue", PLY_UCHAR, PLY_UCHAR, offsetof(::ospray::sg::ply::Vertex,blue), 0, 0, 0, 0},
+        {(char*)"red", PLY_UCHAR, PLY_UCHAR, offsetof(::ospray::sg::ply::Vertex,red), 0, 0, 0, 0},
+        {(char*)"green", PLY_UCHAR, PLY_UCHAR, offsetof(::ospray::sg::ply::Vertex,green), 0, 0, 0, 0},
+        {(char*)"blue", PLY_UCHAR, PLY_UCHAR, offsetof(::ospray::sg::ply::Vertex,blue), 0, 0, 0, 0},
       };
       enum {
         VTX_X = 0,
@@ -121,7 +116,6 @@ namespace ospray {
         int vertices = 0;
 
         int has_x, has_y, has_z;
-        int has_face_blue=0; // face colors
         int has_nx=0, has_ny=0, has_nz=0;
         int has_fverts=0;
 
@@ -132,6 +126,7 @@ namespace ospray {
 
 
         auto pos = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
+        auto col = createNode("vertex.color", "DataVector4f")->nodeAs<DataVector4f>();
         auto nor = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
         auto idx = createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
 
@@ -202,12 +197,12 @@ namespace ospray {
               } else if (equal_strings("nz", plist[j]->name)) {
                 ply_get_property (ply, elem_name, &vert_props[VTX_NZ]);  /* z */
                 has_nz = TRUE;
-              } else if (equal_strings("diffuse_red", plist[j]->name)) {
-                ply_get_property (ply, elem_name, &vert_props[VTX_RED]);  /* z */
-              } else if (equal_strings("diffuse_green", plist[j]->name)) {
-                ply_get_property (ply, elem_name, &vert_props[VTX_GREEN]);  /* z */
-              } else if (equal_strings("diffuse_blue", plist[j]->name)) {
-                ply_get_property (ply, elem_name, &vert_props[VTX_BLUE]);  /* z */
+              } else if (equal_strings("red", plist[j]->name)) {
+                ply_get_property (ply, elem_name, &vert_props[VTX_RED]);
+              } else if (equal_strings("green", plist[j]->name)) {
+                ply_get_property (ply, elem_name, &vert_props[VTX_GREEN]);
+              } else if (equal_strings("blue", plist[j]->name)) {
+                ply_get_property (ply, elem_name, &vert_props[VTX_BLUE]);
               }
             }
 
@@ -215,8 +210,7 @@ namespace ospray {
                                      offsetof(Vertex,other_props));
 
             /* test for necessary properties */
-            if ((!has_x) || (!has_y) || (!has_z))
-            {
+            if ((!has_x) || (!has_y) || (!has_z)) {
               fprintf(stderr, "Vertices don't have x, y, and z\n");
               exit(-1);
             }
@@ -225,6 +219,7 @@ namespace ospray {
             if (has_nx && has_ny && has_nz)
               nor->v.resize(vertices);
             pos->v.resize(vertices);
+            col->v.resize(vertices);
 
             /* grab all the vertex elements */
             for (int j=0; j<vertices; j++) {
@@ -232,6 +227,12 @@ namespace ospray {
               memset(&tmp, 0, sizeof(tmp));
               ply_get_element (ply, (void *) &tmp);
               pos->v[j] = vec3f(tmp.coord[0],tmp.coord[1],tmp.coord[2]);
+              col->v[j] = vec4f(
+                tmp.red / 255.f,
+                tmp.green / 255.f,
+                tmp.blue / 255.f,
+                1.f
+              );
               if (has_nx && has_ny && has_nz)
                 nor->v[j] = vec3f(tmp.normal[0],tmp.normal[1],tmp.normal[2]);
             }
@@ -269,18 +270,8 @@ namespace ospray {
             for (int j=0; j<num_elems; j++)  {
               Face tmp;
               ply_get_element (ply, (void *) &tmp);
-              if (!has_face_blue) {
-                tmp.red = tmp.green = tmp.blue = 255;
-              }
               if (tmp.nverts == 3 && tmp.verts != nullptr) {
-                // if (has_face_blue)
-                //   material = getMaterial(tmp.red,tmp.green,tmp.blue);;
-
-                vec3i vtx;
-                vtx.x = tmp.verts[0]; //builder.addVertex(pos[tmp.verts[0]]);
-                vtx.y = tmp.verts[1]; //builder.addVertex(pos[tmp.verts[1]]);
-                vtx.z = tmp.verts[2]; //builder.addVertex(pos[tmp.verts[2]]);
-                idx->v.push_back(vtx);
+                idx->v.emplace_back(tmp.verts[0], tmp.verts[1], tmp.verts[2]);
               } else {
                 PRINT((int)tmp.nverts);
                 FATAL("can only read ply files made up of triangles...");
@@ -328,16 +319,18 @@ namespace ospray {
 
         mesh->add(idx);
         mesh->add(pos);
+        mesh->add(col);
         if (!nor->v.empty())
           mesh->add(nor);
       }
 
     } // ::ospray::sg::ply
 
-    void importPLY(std::shared_ptr<Node> &world, const FileName &fileName)
+    void importPLY(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
       auto mesh = sg::createNode(fileName.name(),
                                  "TriangleMesh")->nodeAs<TriangleMesh>();
+      //mesh->remove("materialList");
       ply::readFile(fileName.str(), mesh);
       world->add(mesh);
     }

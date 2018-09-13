@@ -47,8 +47,8 @@ const varying BSDF* varying MetallicPaint_getBSDF(const uniform PathTraceMateria
   varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
 
   const vec3f color = self->baseColor * make_vec3f(dg.color)
-    * get3f(self->map_baseColor, dg.st, make_vec3f(1.f));
-  MultiBSDF_add(bsdf, 
+    * get3f(self->map_baseColor, dg, make_vec3f(1.f));
+  MultiBSDF_add(bsdf,
                 Lambert_create(ctx, shadingFrame, color),
                 1.f,
                 luminance(color));

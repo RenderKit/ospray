@@ -67,7 +67,7 @@ namespace ospray {
 
   void ObjectHandle::assign(ManagedObject *object) const
   {
-    objectByHandle[*this] = object;
+    objectByHandle[i64] = object;
   }
 
   void ObjectHandle::freeObject() const

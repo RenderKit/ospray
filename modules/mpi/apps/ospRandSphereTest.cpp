@@ -206,14 +206,9 @@ namespace ospRandSphereTest {
                            });
   }
 
-  extern "C" int main(int ac, const char **av)
+  void run_benchmark()
   {
     using namespace std::chrono;
-
-    parseCommandLine(ac, av);
-
-    initialize_ospray();
-
     ospray::cpp::Model model;
     auto spheres = makeSpheres();
     model.addGeometry(spheres.first);
@@ -281,7 +276,16 @@ namespace ospRandSphereTest {
       std::cout << "\noutput: 'randomSphereTestLocal.ppm'" << std::endl;
 
     }
+  }
 
+  extern "C" int main(int ac, const char **av)
+  {
+    parseCommandLine(ac, av);
+
+    initialize_ospray();
+    run_benchmark();
+
+    ospShutdown();
     return 0;
   }
 

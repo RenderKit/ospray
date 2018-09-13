@@ -22,9 +22,12 @@ namespace ospray {
 
     Cylinders::Cylinders() : Geometry("cylinders") {}
 
-    box3f Cylinders::bounds() const
+    box3f Cylinders::computeBounds() const
     {
-      box3f bounds = empty;
+      box3f bbox = bounds();
+
+      if (bbox != box3f(empty))
+        return bbox;
 
       if (hasChild("cylinders")) {
         auto cylinders = child("cylinders").nodeAs<DataBuffer>();
@@ -56,14 +59,16 @@ namespace ospray {
           vec3f &v1 = *(vec3f*)(base + i + offset_v1);
           if (offset_radius >= 0)
             radius = *(float*)(base + i + offset_radius);
-          // TODO less conservative bounds
+          // TODO less conservative bbox
           box3f cylinderBounds(ospcommon::min(v0, v1) - radius,
                                ospcommon::max(v0, v1) + radius);
-          bounds.extend(cylinderBounds);
+          bbox.extend(cylinderBounds);
         }
       }
 
-      return bounds;
+      child("bounds") = bbox;
+
+      return bbox;
     }
 
     OSP_REGISTER_SG_NODE(Cylinders);

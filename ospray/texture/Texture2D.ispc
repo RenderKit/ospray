@@ -98,13 +98,15 @@ inline vec2i nearest_coords(const uniform Texture2D *uniform self, const vec2f p
   return make_vec2i(tc);
 }
 
-struct BilinCoords {
+struct BilinCoords
+{
   vec2i st0;
   vec2i st1;
   vec2f frac;
 };
 
-inline BilinCoords bilinear_coords(const uniform Texture2D *uniform self, const vec2f p)
+inline BilinCoords bilinear_coords(const uniform Texture2D *uniform self,
+                                   const vec2f p)
 {
   BilinCoords coords;
 
@@ -130,9 +132,7 @@ inline BilinCoords bilinear_coords(const uniform Texture2D *uniform self, const 
 
 inline vec4f bilerp(const vec2f frac, const vec4f c00, const vec4f c01, const vec4f c10, const vec4f c11)
 {
-  return lerp(frac.y,
-              lerp(frac.x, c00, c01),
-              lerp(frac.x, c10, c11));
+  return lerp(frac.y, lerp(frac.x, c00, c01), lerp(frac.x, c10, c11));
 }
 
 
@@ -142,15 +142,15 @@ inline vec4f bilerp(const vec2f frac, const vec4f c00, const vec4f c01, const ve
 #define __define_tex_get(FMT)                                                \
                                                                              \
 static vec4f Texture2D_nearest_##FMT(const uniform Texture2D *uniform self,  \
-    const vec2f &p)                                                          \
+                                     const DifferentialGeometry &dg)         \
 {                                                                            \
-  return getTexel_##FMT(self, nearest_coords(self, p));                      \
+  return getTexel_##FMT(self, nearest_coords(self, dg.st));                  \
 }                                                                            \
                                                                              \
 static vec4f Texture2D_bilinear_##FMT(const uniform Texture2D *uniform self, \
-    const vec2f &p)                                                          \
+                                     const DifferentialGeometry &dg)         \
 {                                                                            \
-  BilinCoords cs = bilinear_coords(self, p);                                 \
+  BilinCoords cs = bilinear_coords(self, dg.st);                             \
                                                                              \
   const vec4f c00 = getTexel_##FMT(self, make_vec2i(cs.st0.x, cs.st0.y));    \
   const vec4f c01 = getTexel_##FMT(self, make_vec2i(cs.st1.x, cs.st0.y));    \
@@ -174,7 +174,7 @@ static vec4f Texture2D_bilinear_##FMT(const uniform Texture2D *uniform self, \
   FCT(SRGB)                    \
   FCT(RGB32F)                  \
   FCT(R8)                      \
-  FCT(R32F)   
+  FCT(R32F)
 
 __foreach_fetcher(__define_tex_get)
 
@@ -189,16 +189,16 @@ static uniform Texture2D_get Texture2D_get_addr(const uniform uint32 type,
 
 
 static vec3f Texture2D_Normal_neutral(const uniform Texture2D *uniform self,
-                                      const vec2f &)
+                                      const DifferentialGeometry &)
 {
   return make_vec3f(0.f, 0.f, 1.f);
 }
 
 #define __define_tex_getN_flt(NAME, C)                                 \
 static vec3f Texture2D_N_##NAME(const uniform Texture2D *uniform self, \
-    const vec2f &p)                                                    \
+                                const DifferentialGeometry &dg)        \
 {                                                                      \
-  return make_vec3f(Texture2D_##NAME(self, p)) * C - 1.f;              \
+  return make_vec3f(Texture2D_##NAME(self, dg)) * C - 1.f;             \
 }
 
 #define __define_tex_getN(FMT, C)          \

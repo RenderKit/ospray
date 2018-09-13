@@ -26,7 +26,7 @@
 #include "common/Library.h"
 #include "common/Model.h"
 #include "geometry/TriangleMesh.h"
-#include "texture/Texture2D.h"
+#include "texture/Texture.h"
 
 namespace ospray {
   namespace mpi {
@@ -47,10 +47,9 @@ namespace ospray {
         registerWorkUnit<NewMaterial>(registry);
         registerWorkUnit<NewMaterial2>(registry);
         registerWorkUnit<NewLight>(registry);
-        registerWorkUnit<NewLight2>(registry);
 
         registerWorkUnit<NewData>(registry);
-        registerWorkUnit<NewTexture2d>(registry);
+        registerWorkUnit<NewTexture>(registry);
 
         registerWorkUnit<CommitObject>(registry);
         registerWorkUnit<CommandRelease>(registry);
@@ -185,17 +184,12 @@ namespace ospray {
 
       void CreateFrameBuffer::run()
       {
-        const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
-        const bool hasAccumBuffer    = channels & OSP_FB_ACCUM;
-        const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
 
         FrameBuffer *fb
           = new DistributedFrameBuffer(dimensions, handle,
-                                       format, hasDepthBuffer,
-                                       hasAccumBuffer, hasVarianceBuffer);
+                                       format, channels);
         handle.assign(fb);
       }
 
@@ -306,30 +300,17 @@ namespace ospray {
 
       void NewMaterial::run()
       {
-        Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        Material *material = nullptr;
-        if (renderer)
-          material = renderer->createMaterial(type.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // material type.
-        if (!material) material = Material::createMaterial(type.c_str());
+        auto *renderer = (Renderer*)rendererHandle.lookup();
+        auto rendererType = renderer->getParamString("externalNameFromAPI");
+        auto *material = Material::createInstance(rendererType.c_str(),
+                                                  materialType.c_str());
         handle.assign(material);
       }
 
       void NewMaterial2::run()
       {
-        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
-
-        Material *material = nullptr;
-        if (renderer)
-          material = renderer->createMaterial(materialType.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // material type.
-        if (!material)
-          material = Material::createMaterial(materialType.c_str());
-
+        auto *material = Material::createInstance(rendererType.c_str(),
+                                                  materialType.c_str());
         handle.assign(material);
       }
 
@@ -337,31 +318,8 @@ namespace ospray {
 
       void NewLight::run()
       {
-        Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        Light *light = nullptr;
-        if (renderer)
-          light = renderer->createLight(type.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // light type.
-        if (!light) light = Light::createLight(type.c_str());
-        handle.assign(light);
-      }
-
-      void NewLight2::run()
-      {
-        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
-
-        Light *light = nullptr;
-        if (renderer)
-          light = renderer->createLight(lightType.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // light type.
-        if (!light)
-          light = Light::createLight(lightType.c_str());
-
-        handle.assign(light);
+        auto *material = Light::createInstance(type.c_str());
+        handle.assign(material);
       }
 
       // ospNewData ///////////////////////////////////////////////////////////
@@ -440,44 +398,6 @@ namespace ospray {
         b >> handle.i64 >> nItems >> fmt >> flags >> copiedData;
         dataView = copiedData;
         format = (OSPDataType)fmt;
-      }
-
-      // ospNewTexture2d //////////////////////////////////////////////////////
-
-      NewTexture2d::NewTexture2d(ObjectHandle handle,
-                                 vec2i dimensions,
-                                 OSPTextureFormat format,
-                                 void *texture,
-                                 uint32 flags)
-        : handle(handle),
-          dimensions(dimensions),
-          format(format),
-          flags(flags)
-      {
-        size_t sz = ospray::sizeOf(format) * dimensions.x * dimensions.y;
-        data.resize(sz);
-        std::memcpy(data.data(), texture, sz);
-      }
-
-      void NewTexture2d::run()
-      {
-        Texture2D *texture =
-            Texture2D::createTexture(dimensions, format, data.data(),
-                                     flags & ~OSP_TEXTURE_SHARED_BUFFER);
-        Assert(texture);
-        handle.assign(texture);
-      }
-
-      void NewTexture2d::serialize(WriteStream &b) const
-      {
-        b << (int64)handle << dimensions << (int32)format << flags << data;
-      }
-
-      void NewTexture2d::deserialize(ReadStream &b)
-      {
-        int32 fmt;
-        b >> handle.i64 >> dimensions >> fmt >> flags >> data;
-        format = (OSPTextureFormat)fmt;
       }
 
       // ospSetRegion /////////////////////////////////////////////////////////

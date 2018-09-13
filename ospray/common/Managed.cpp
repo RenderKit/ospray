@@ -19,7 +19,6 @@
 
 namespace ospray {
 
-  /*! \brief destructor */
   ManagedObject::~ManagedObject()
   {
     // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check

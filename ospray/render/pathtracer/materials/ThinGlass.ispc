@@ -41,7 +41,7 @@ static inline const vec3f getAttenuation(const ThinGlass* uniform self,
     + logf(make_vec3f(dg.color)) * self->attenuationScale;
 
   if (valid(self->map_attenuationColor)) {
-    vec3f attenuationColor = get3f(self->map_attenuationColor, dg.st);
+    vec3f attenuationColor = get3f(self->map_attenuationColor, dg);
     attenuation = attenuation + logf(attenuationColor) * self->attenuationScale;
   }
 

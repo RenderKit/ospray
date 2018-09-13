@@ -35,7 +35,16 @@ struct ScreenSample {
   vec3f rgb;
   float alpha;
   float z;
+  vec3f normal;
+  vec3f albedo;
 };
+
+inline void setTile(uniform Tile &tile, const varying uint32 pixel,
+    const varying ScreenSample screenSample)
+{
+  setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
+  setNormalAlbedo(tile, pixel, screenSample.normal, screenSample.albedo);
+}
 
 /*! Render a given screen sample (as specified in sampleID), and
   returns the radiance in 'retVal'. sampleID.x and .y refer to the

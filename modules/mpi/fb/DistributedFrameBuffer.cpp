@@ -22,6 +22,7 @@
 #include "ospcommon/tasking/schedule.h"
 
 #include "mpiCommon/MPICommon.h"
+#include "api/Device.h"
 
 #ifdef _WIN32
 #  include <windows.h> // for Sleep
@@ -76,10 +77,10 @@ namespace ospray {
 
   /*! message sent to the master when a tile is finished. TODO:
       compress the color data */
-  template <typename FBType>
+  template <typename ColorT>
   struct MasterTileMessage_FB : public MasterTileMessage
   {
-    FBType color[TILE_SIZE * TILE_SIZE];
+    ColorT color[TILE_SIZE * TILE_SIZE];
   };
 
   template <typename ColorT>
@@ -87,17 +88,20 @@ namespace ospray {
   {
     float depth[TILE_SIZE * TILE_SIZE];
   };
-  // TODO: Maybe we want to add a separate MasterTileMessage_FBD
-  // that has an additional depth channel it ships along? If we
-  // only care about colors I don't want to force the added
-  // 4 * TILE_SIZE * TILE_SIZE bytes on the messaging system
-  // since it will add quite a bit of overhead.
+
+  template <typename ColorT>
+  struct MasterTileMessage_FB_Depth_Aux : public MasterTileMessage_FB_Depth<ColorT>
+  {
+    vec3f normal[TILE_SIZE * TILE_SIZE];
+    vec3f albedo[TILE_SIZE * TILE_SIZE];
+  };
 
   using MasterTileMessage_RGBA_I8    = MasterTileMessage_FB<uint32>;
-  using MasterTileMessage_RGBA_F32   = MasterTileMessage_FB<vec4f>;
   using MasterTileMessage_RGBA_I8_Z  = MasterTileMessage_FB_Depth<uint32>;
+  using MasterTileMessage_RGBA8_Z_AUX = MasterTileMessage_FB_Depth_Aux<uint32>;
   using MasterTileMessage_RGBA_F32   = MasterTileMessage_FB<vec4f>;
   using MasterTileMessage_RGBA_F32_Z = MasterTileMessage_FB_Depth<vec4f>;
+  using MasterTileMessage_RGBAF32_Z_AUX = MasterTileMessage_FB_Depth_Aux<vec4f>;
   using MasterTileMessage_NONE       = MasterTileMessage;
 
   /*! It's a real PITA do try and do this using the message structs
@@ -107,6 +111,8 @@ namespace ospray {
   {
     OSPFrameBufferFormat colorFormat;
     bool hasDepth;
+    bool hasNormal;
+    bool hasAlbedo;
     size_t pixelSize;
     MasterTileMessage_NONE *header;
 
@@ -114,8 +120,10 @@ namespace ospray {
     std::shared_ptr<mpicommon::Message> message;
 
     MasterTileMessageBuilder(OSPFrameBufferFormat fmt, bool hasDepth,
+        bool hasNormal, bool hasAlbedo,
         vec2i coords, float error)
-      : colorFormat(fmt), hasDepth(hasDepth)
+      : colorFormat(fmt), hasDepth(hasDepth),
+        hasNormal(hasNormal), hasAlbedo(hasAlbedo)
     {
       int command = 0;
       size_t msgSize = 0;
@@ -134,9 +142,15 @@ namespace ospray {
           pixelSize = sizeof(vec4f);
           break;
       }
-      if (hasDepth) {
+      // AUX also includes depth
+      if (hasDepth || hasNormal || hasAlbedo) {
         msgSize += sizeof(float) * TILE_SIZE * TILE_SIZE;
-        command = command | MASTER_TILE_HAS_DEPTH;
+        if (hasDepth)
+          command |= MASTER_TILE_HAS_DEPTH;
+      }
+      if (hasNormal || hasAlbedo) {
+        msgSize += 2 * sizeof(vec3f) * TILE_SIZE * TILE_SIZE;
+        command |= MASTER_TILE_HAS_AUX;
       }
       message = std::make_shared<mpicommon::Message>(msgSize);
       header = reinterpret_cast<MasterTileMessage_NONE*>(message->data);
@@ -157,6 +171,25 @@ namespace ospray {
                      + sizeof(MasterTileMessage_NONE)
                      + pixelSize * TILE_SIZE * TILE_SIZE);
         std::copy(depth, depth + TILE_SIZE * TILE_SIZE, out);
+      }
+    }
+    void setNormal(const vec3f *normal) {
+      if (hasNormal) {
+        auto out = reinterpret_cast<vec3f*>(message->data
+                     + sizeof(MasterTileMessage_NONE)
+                     + pixelSize * TILE_SIZE * TILE_SIZE
+                     + sizeof(float) * TILE_SIZE * TILE_SIZE);
+        std::copy(normal, normal + TILE_SIZE * TILE_SIZE, out);
+      }
+    }
+    void setAlbedo(const vec3f *albedo) {
+      if (hasAlbedo) {
+        auto out = reinterpret_cast<vec3f*>(message->data
+                     + sizeof(MasterTileMessage_NONE)
+                     + pixelSize * TILE_SIZE * TILE_SIZE
+                     + sizeof(float) * TILE_SIZE * TILE_SIZE
+                     + sizeof(vec3f) * TILE_SIZE * TILE_SIZE);
+        std::copy(albedo, albedo + TILE_SIZE * TILE_SIZE, out);
       }
     }
   };
@@ -190,13 +223,10 @@ namespace ospray {
   DFB::DistributedFrameBuffer(const vec2i &numPixels,
                               ObjectHandle myId,
                               ColorBufferFormat colorBufferFormat,
-                              bool hasDepthBuffer,
-                              bool hasAccumBuffer,
-                              bool hasVarianceBuffer,
+                              const uint32 channels,
                               bool masterIsAWorker)
     : MessageHandler(myId),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
-                  hasAccumBuffer,hasVarianceBuffer),
+      FrameBuffer(numPixels, colorBufferFormat, channels),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_MULTIPLE),
@@ -224,11 +254,10 @@ namespace ospray {
                  << "format; creating distributed frame buffer WITHOUT having a "
                  << "mappable copy on the master" << endl);
       } else {
-        localFBonMaster = new LocalFrameBuffer(numPixels,
-                                               colorBufferFormat,
-                                               hasDepthBuffer,
-                                               false,
-                                               false);
+        localFBonMaster
+          = ospcommon::make_unique<LocalFrameBuffer>(numPixels,
+              colorBufferFormat,
+              channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
       }
     }
   }
@@ -378,26 +407,14 @@ namespace ospray {
     createTiles();
   }
 
-  const void *DFB::mapDepthBuffer()
+  const void *DFB::mapBuffer(OSPFrameBufferChannel channel)
   {
     if (!localFBonMaster) {
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the depth "
-                               "buffer of a frame buffer that doesn't have a "
-                               "host-side color buffer");
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' a frame "
+                      "buffer that doesn't have a host-side correspondence");
     }
     assert(localFBonMaster);
-    return localFBonMaster->mapDepthBuffer();
-  }
-
-  const void *DFB::mapColorBuffer()
-  {
-    if (!localFBonMaster) {
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the color "
-                               "buffer of a frame buffer that doesn't have a "
-                               "host-side color buffer");
-    }
-    assert(localFBonMaster);
-    return localFBonMaster->mapColorBuffer();
+    return localFBonMaster->mapBuffer(channel);
   }
 
   void DFB::unmap(const void *mappedMem)
@@ -417,7 +434,7 @@ namespace ospray {
     frameDoneCond.wait(lock, [&]{return frameIsDone;});
   }
 
-void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
+  void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
   {
     if (hasVarianceBuffer) {
       auto tileIDs = msg->tileIDs(data);
@@ -441,28 +458,68 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
     td->process(msg->tile);
   }
 
+  template <typename ColorT>
+  void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
+  {
+    if (hasVarianceBuffer) {
+      const vec2i tileID = msg->coords/TILE_SIZE;
+      if (msg->error < (float)inf)
+        tileErrorRegion.update(tileID, msg->error);
+    }
+
+    vec2i numPixels = getNumPixels();
+
+    MasterTileMessage_FB_Depth<ColorT> *depth = nullptr;
+    if (hasDepthBuffer && msg->command & MASTER_TILE_HAS_DEPTH) {
+      depth = reinterpret_cast<MasterTileMessage_FB_Depth<ColorT>*>(msg);
+    }
+
+    MasterTileMessage_FB_Depth_Aux<ColorT> *aux = nullptr;
+    if (msg->command & MASTER_TILE_HAS_AUX)
+      aux = reinterpret_cast<MasterTileMessage_FB_Depth_Aux<ColorT>*>(msg);
+
+    ColorT *color = reinterpret_cast<ColorT*>(localFBonMaster->colorBuffer);
+    for (int iy = 0; iy < TILE_SIZE; iy++) {
+      int iiy = iy + msg->coords.y;
+      if (iiy >= numPixels.y) {
+        continue;
+      }
+
+      for (int ix = 0; ix < TILE_SIZE; ix++) {
+        int iix = ix + msg->coords.x;
+        if (iix >= numPixels.x) {
+          continue;
+        }
+
+        color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
+        if (depth) {
+          localFBonMaster->depthBuffer[iix + iiy * numPixels.x]
+            = depth->depth[ix + iy * TILE_SIZE];
+        }
+        if (aux) {
+          if (hasNormalBuffer)
+            localFBonMaster->normalBuffer[iix + iiy * numPixels.x] =
+              aux->normal[ix + iy * TILE_SIZE];
+          if (hasAlbedoBuffer)
+            localFBonMaster->albedoBuffer[iix + iiy * numPixels.x] =
+              aux->albedo[ix + iy * TILE_SIZE];
+        }
+      }
+    }
+
+    // Finally, tell the master that this tile is done
+    auto *tileDesc = this->getTileDescFor(msg->coords);
+    TileData *td = (TileData*)tileDesc;
+    this->finalizeTileOnMaster(td);
+  }
+
   void DFB::tileIsCompleted(TileData *tile)
   {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpicommon::globalRank(),
                tile->begin.x,tile->begin.y));
 
-    if (pixelOp) {
+    if (pixelOp)
       pixelOp->postAccum(tile->final);
-      if (colorBufferFormat == OSP_FB_RGBA8 || colorBufferFormat == OSP_FB_SRGBA) {
-        uint8_t *colors = reinterpret_cast<uint8_t*>(tile->color);
-        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
-          colors[i * 4] = clamp(tile->final.r[i] * 255.0, 0.0, 255.0);
-          colors[i * 4 + 1] = clamp(tile->final.g[i] * 255.0, 0.0, 255.0);
-          colors[i * 4 + 2] = clamp(tile->final.b[i] * 255.0, 0.0, 255.0);
-          colors[i * 4 + 3] = clamp(tile->final.a[i] * 255.0, 0.0, 255.0);
-        }
-      } else if (colorBufferFormat == OSP_FB_RGBA32F) {
-        for (size_t i = 0; i < TILE_SIZE * TILE_SIZE; ++i) {
-          tile->color[i] = vec4f(tile->final.r[i], tile->final.g[i],
-              tile->final.b[i], tile->final.a[i]);
-        }
-      }
-    }
 
     // write the final colors into the color buffer
     // normalize and write final color, and compute error
@@ -477,21 +534,23 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
       default:
       break;
     }
-
     DFB_writeTile((ispc::VaryingTile*)&tile->final, &tile->color);
 
     auto msg = [&]{
       MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
+                                   hasNormalBuffer, hasAlbedoBuffer,
                                    tile->begin, tile->error);
       msg.setColor(tile->color);
       msg.setDepth(tile->final.z);
+      msg.setNormal((vec3f*)tile->final.nx);
+      msg.setAlbedo((vec3f*)tile->final.ar);
       return msg;
     };
 
     // Note: In the data-distributed device the master will be rendering
     // and completing tiles.
     if (mpicommon::IamAWorker()) {
-      if(colorBufferFormat == OSP_FB_NONE) {
+      if(colorBufferFormat == OSP_FB_NONE) { // TODO still send normal&albedo
         SCOPED_LOCK(tileErrorsMutex);
         tileIDs.push_back(tile->begin/TILE_SIZE);
         tileErrors.push_back(tile->error);
@@ -518,7 +577,12 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
   void DFB::finalizeTileOnMaster(TileData *DBG(tile))
   {
     assert(mpicommon::IamTheMaster());
-    /*! we will not do anything with the tile other than mark it's done */
+
+    // TODO pixel accurate progress (tiles can be much smaller than TILE_SIZE)
+    float progress = (numTilesCompletedThisFrame+1)/(float)getTotalTiles();
+    if (!api::currentDevice().reportProgress(progress))
+      sendCancelRenderingMessage();
+
     if (isFrameComplete(1)) {
       closeCurrentFrame();
     }
@@ -565,8 +629,13 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
   void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
   {
+    auto *msg = (TileMessage*)message->data;
+    if (msg->command & CANCEL_RENDERING) {
+      cancelRendering = true;
+      return;
+    }
+
       tasking::schedule([=]() {
-        auto *msg = (TileMessage*)message->data;
         if (msg->command & MASTER_WRITE_TILE_I8) {
           this->processMessage((MasterTileMessage_RGBA_I8*)msg);
         } else if (msg->command & MASTER_WRITE_TILE_F32) {
@@ -604,6 +673,19 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
       }
 
       mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
+  }
+
+  void DFB::sendCancelRenderingMessage()
+  {
+      auto msg = std::make_shared<mpicommon::Message>(sizeof(TileMessage));
+
+      auto out = msg->data;
+      int val = CANCEL_RENDERING;
+      memcpy(out, &val, sizeof(val));
+
+      // notify all; broadcast not possible, because messaging layer is active
+      for (int rank = 0; rank < mpicommon::numGlobalRanks(); rank++)
+        mpi::messaging::sendTo(rank, myId, msg);
   }
 
   void DFB::closeCurrentFrame()
@@ -668,6 +750,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
         TileData *td = this->myTiles[taskIndex];
         assert(td);
         const auto bytes = TILE_SIZE * TILE_SIZE * sizeof(float);
+        // XXX needed? DFB_accumulateTile writes when accumId==0
         if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
           memset(td->accum.r, 0, bytes);
           memset(td->accum.g, 0, bytes);
@@ -715,6 +798,7 @@ void DFB::processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data)
 
   void DFB::beginFrame()
   {
+    cancelRendering = false;
     mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }

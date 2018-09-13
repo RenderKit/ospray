@@ -24,16 +24,15 @@
 #include <vtkCellData.h>
 #include <vtkCellTypes.h>
 #include <vtkDataSet.h>
+#include <vtkPointData.h>
 #include <vtkXMLImageDataReader.h>
 
 namespace ospray {
   namespace sg {
 
-    //! import VTK .vti files made up of 3d regular structured grids.
-    void importVTI(const std::shared_ptr<Node> &world,
-                           const FileName &fileName)
+    std::shared_ptr<Node> importVTI_createVolumeNode(const FileName &fileName)
     {
-      auto volumeNode = createNode("vtiVolume", "StructuredVolume");
+      auto volumeNode = createNode(fileName.base()+"_volume", "StructuredVolume");
 
       vtkSmartPointer<vtkXMLImageDataReader> reader =
           vtkSmartPointer<vtkXMLImageDataReader>::New();
@@ -42,23 +41,29 @@ namespace ospray {
       reader->GetOutput()->Register(reader);
 
       auto output = reader->GetOutput();
-      std::string voxelType = output->GetScalarTypeAsString();
+      std::string voxelType = output->GetPointData()->GetArray(0)->GetDataTypeAsString();
+      void* voxelData = output->GetPointData()->GetArray(0)->GetVoidPointer(0);
       if (output->GetDataDimension() != 3)
         throw std::runtime_error("vti importer only supports 3d datasets");
       vec3i dims(output->GetDimensions()[0], output->GetDimensions()[1],
           output->GetDimensions()[2]);
       auto numVoxels = dims.product();
 
+      std::cout << "vtiimporter voxelType: " << voxelType << " dimensions: " << dims.x
+                << " " << dims.y << " " << dims.z
+                << " number of scalars: " << output->GetNumberOfScalarComponents()
+                << std::endl;
+
       std::shared_ptr<Node> voxelDataNode;
       if (voxelType == "float") {
         voxelDataNode = std::make_shared<DataArray1f>(
-              (float*)output->GetScalarPointer(), numVoxels);
+              (float*)voxelData, numVoxels);
       } else if (voxelType == "unsigned char") {
         voxelDataNode = std::make_shared<DataArray1uc>(
-              (unsigned char*)output->GetScalarPointer(), numVoxels);
+              (unsigned char*)voxelData, numVoxels);
       } else if (voxelType == "int") {
         voxelDataNode = std::make_shared<DataArray1i>(
-              (int*)output->GetScalarPointer(), numVoxels);
+              (int*)voxelData, numVoxels);
       }  //TODO: support short, unsigned short
       else
         throw std::runtime_error("unsupported voxel type in vti loader: " + voxelType);
@@ -67,7 +72,28 @@ namespace ospray {
       volumeNode->child("voxelType") = voxelType;
       volumeNode->child("dimensions") = dims;
 
-      world->add(volumeNode);
+      return volumeNode;
     }
+
+    //! import VTK .vti files made up of 3d regular structured grids.
+    void importVTI(const std::shared_ptr<Node> &world,
+                           const FileName &fileName)
+    {
+      world->add(importVTI_createVolumeNode(fileName));
+    }
+
+    //! import multiple VTK .vti files with the same tf
+    void importVTIs(const std::shared_ptr<Node> &world,
+                           const std::vector<FileName> &fileNames)
+    {
+      auto tf = createNode("transferFunction", "TransferFunction");
+      for(auto file : fileNames)
+      {
+        auto volume = importVTI_createVolumeNode(file);
+        volume->add(tf);
+        world->add(volume);
+      }
+    }
+
   }  // ::ospray::sg
 }  // ::ospray

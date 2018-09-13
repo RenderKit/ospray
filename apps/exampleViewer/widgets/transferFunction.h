@@ -34,15 +34,25 @@
 #include "common/sg/transferFunction/TransferFunction.h"
 
 namespace ospray {
+  namespace imgui3D {
 
   class OSPRAY_IMGUI3D_INTERFACE TransferFunction
   {
   public:
 
-    TransferFunction(std::shared_ptr<sg::TransferFunction> tfn);
+    TransferFunction(std::shared_ptr<sg::TransferFunction> tfn = nullptr);
     ~TransferFunction();
     TransferFunction(const TransferFunction &t);
     TransferFunction& operator=(const TransferFunction &t);
+
+    void setSGTF(std::shared_ptr<sg::TransferFunction> tf) {
+      if (tf != transferFcn) {
+        fcnChanged = true;
+        transferFcn = tf;
+      }
+    }
+
+    void loadColorMapPresets(std::shared_ptr<sg::Node> tfPresets);
     /* Draw the transfer function editor widget, returns true if the
      * transfer function changed
     */
@@ -55,6 +65,8 @@ namespace ospray {
     void load(const ospcommon::FileName &fileName);
     // Save the current transfer function out to the file
     void save(const ospcommon::FileName &fileName) const;
+
+    void setColorMapByName(std::string name, bool useOpacities = false);
 
     struct Line
     {
@@ -118,5 +130,6 @@ namespace ospray {
     void loadColorMapPresets();
   };
 
+  }// ::imgui3D
 }// ::ospray
 

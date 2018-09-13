@@ -19,22 +19,22 @@ ospray_disable_compiler_warnings()
 ##############################################################
 # Google Test
 ##############################################################
-OSPRAY_BUILD_COMPONENT(ospcommon/testing/gtest)
+ospray_build_component(ospcommon/testing/gtest)
 
-MARK_AS_ADVANCED(gtest_build_samples)
-MARK_AS_ADVANCED(gtest_build_tests)
-MARK_AS_ADVANCED(gtest_disable_pthreads)
-MARK_AS_ADVANCED(gtest_force_shared_crt)
-MARK_AS_ADVANCED(gtest_hide_internal_symbols)
+mark_as_advanced(gtest_build_samples)
+mark_as_advanced(gtest_build_tests)
+mark_as_advanced(gtest_disable_pthreads)
+mark_as_advanced(gtest_force_shared_crt)
+mark_as_advanced(gtest_hide_internal_symbols)
 
 ##############################################################
 # Tests
 ##############################################################
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/ospray/include)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/components)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/tests/include)
+include_directories(${CMAKE_SOURCE_DIR}/ospray/include)
+include_directories(${CMAKE_SOURCE_DIR}/components)
+include_directories(${CMAKE_SOURCE_DIR}/tests/include)
 
-SET(TESTS_SOURCES
+set(TESTS_SOURCES
 	sources/ospray_environment.cpp
 	sources/ospray_test_fixture.cpp
 	sources/ospray_test_geometry.cpp
@@ -42,13 +42,16 @@ SET(TESTS_SOURCES
 	sources/ospray_test_tools.cpp
 	)
 
-ADD_EXECUTABLE(ospray_test_suite ospray_test_suite.cpp ${TESTS_SOURCES})
+ospray_create_test(ospray_test_suite
+  ospray_test_suite.cpp
+  ${TESTS_SOURCES}
+LINK
+  gtest_main
+  ospray
+  ospray_common
+)
 SET_TARGET_PROPERTIES(ospray_test_suite PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests)
-
-TARGET_LINK_LIBRARIES(ospray_test_suite gtest_main)
-TARGET_LINK_LIBRARIES(ospray_test_suite ospray)
-TARGET_LINK_LIBRARIES(ospray_test_suite ospray_common)
 
 # Baseline images for tests and benchmarks
 include(ExternalData)
@@ -59,6 +62,7 @@ set(ExternalData_URL_TEMPLATES
 	)
 
 set(ExternalData_OBJECT_STORES
+  "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests/baseline"
 	"/opt/ospray/test-data"
 	"//sdvis-nas/NAS/OSPRay/test-data"
 	)
@@ -81,4 +85,5 @@ ExternalData_Expand_Arguments(ospray_bench_data
 	)
 ExternalData_Add_Target(ospray_bench_data)
 set_target_properties(ospray_bench_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
+add_dependencies(ospray_test_suite ospray_test_data)
 

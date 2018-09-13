@@ -46,8 +46,7 @@ cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
 rem create ZIP files
-cmake -D OSPRAY_ZIP_MODE=ON ^
-..
+cmake -D OSPRAY_ZIP_MODE=ON ..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
@@ -56,3 +55,6 @@ cd ..
 :abort
 endlocal
 :end
+
+rem propagate any error to calling PowerShell script
+exit

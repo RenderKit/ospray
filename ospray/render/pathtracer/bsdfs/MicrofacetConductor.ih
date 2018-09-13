@@ -119,17 +119,18 @@ inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform
                                             const varying linear3f* uniform frame,
                                             Fresnel* uniform fresnel, float roughness, float anisotropy)
 {
-  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
+  // Energy compensation
+  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  vec3f Favg = fresnel->evalAvg(fresnel);
+  self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
+
+  BSDF_Constructor(&self->super, Favg * self->Eavg, // TODO better estimate
+                   BSDF_GLOSSY_REFLECTION,
                    MicrofacetConductor_eval, MicrofacetConductor_sample,
                    frame);
   self->fresnel = fresnel;
   self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->roughness = roughness;
-
-  // Energy compensation
-  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
-  vec3f Favg = fresnel->evalAvg(fresnel);
-  self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
 }
 
 inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx,

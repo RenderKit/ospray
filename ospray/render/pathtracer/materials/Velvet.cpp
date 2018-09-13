@@ -48,6 +48,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(Velvet,PathTracer_Velvet);
+    OSP_REGISTER_MATERIAL(pathtracer, Velvet, Velvet);
+    OSP_REGISTER_MATERIAL(pt, Velvet, Velvet);
   }
 }

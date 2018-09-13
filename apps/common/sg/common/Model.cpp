@@ -73,7 +73,7 @@ namespace ospray {
 
       // reset bounding box
       child("bounds") = box3f(empty);
-      child("bounds") = computeBounds();
+      computeBounds();
     }
 
     OSP_REGISTER_SG_NODE(Model);

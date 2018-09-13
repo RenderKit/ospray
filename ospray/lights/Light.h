@@ -26,7 +26,7 @@ namespace ospray {
     virtual ~Light() override = default;
 
     //! Create a light of the given type
-    static Light *createLight(const char *type);
+    static Light *createInstance(const char *type);
 
     //! Copy understood parameters into class members
     virtual void commit() override;

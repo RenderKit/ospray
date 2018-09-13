@@ -45,15 +45,15 @@ const varying BSDF* varying Alloy_getBSDF(const uniform PathTraceMaterial* unifo
   varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
 
   const vec3f color = self->color * make_vec3f(dg.color)
-    * get3f(self->map_color, dg.st, make_vec3f(1.f));
+    * get3f(self->map_color, dg, make_vec3f(1.f));
 
   const vec3f edgeColor = self->edgeColor
-    * get3f(self->map_edgeColor, dg.st, make_vec3f(1.f));
+    * get3f(self->map_edgeColor, dg, make_vec3f(1.f));
 
   Fresnel *uniform fresnel = FresnelSchlick_create(ctx, color, edgeColor);
 
   const float roughness = self->roughness
-    * get1f(self->map_roughness, dg.st, 1.f);
+    * get1f(self->map_roughness, dg, 1.f);
 
   if (roughness == 0.0f)
     return Conductor_create(ctx, frame, fresnel);

@@ -17,6 +17,7 @@
 #pragma once
 
 #define TILE_SIZE @OSPRAY_TILE_SIZE@
+#define MAX_TILE_SIZE @OSPRAY_MAX_STACK_TILE_SIZE@
 
 /*! number of pixels that each job in a parallel rendertile task
     executes together. Must be a multipel of the maximum possible

@@ -25,7 +25,6 @@ struct OrenNayar
 {
   BSDF super;
 
-  vec3f R; // reflectance
   float roughness;
 };
 
@@ -39,8 +38,8 @@ inline BSDF_EvalRes OrenNayar_eval(const varying BSDF* uniform super,
   float cosThetaI = max(dot(wi, getN(super)), 0.f);
 
   float s = dot(wo, wi) - cosThetaO * cosThetaI;
-  float sInvt = (s > 0.f) ? (s * rcp(max(cosThetaO, cosThetaI))) : s;
-  res.value = self->R * (cosThetaI * (1.f + self->roughness * sInvt) * rcp(pi + (pi/2.f - 2.f/3.f) * self->roughness));
+  float sInvt = (s > 0.f) ? (s * rcp_safe(max(cosThetaO, cosThetaI))) : s;
+  res.value = self->super.albedo * (cosThetaI * (1.f + self->roughness * sInvt) * rcp(pi + (pi/2.f - 2.f/3.f) * self->roughness));
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
   return res;
 }
@@ -63,11 +62,10 @@ inline void OrenNayar_Constructor(varying OrenNayar* uniform self,
                                   const varying linear3f* uniform frame,
                                   const vec3f& R, float roughness)
 {
-  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
+  BSDF_Constructor(&self->super, R, BSDF_DIFFUSE_REFLECTION,
                    OrenNayar_eval, OrenNayar_sample,
                    frame);
 
-  self->R = R;
   self->roughness = roughness;
 }
 

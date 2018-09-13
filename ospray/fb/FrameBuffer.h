@@ -32,13 +32,10 @@ namespace ospray {
 
     FrameBuffer(const vec2i &size,
                 ColorBufferFormat colorBufferFormat,
-                bool hasDepthBuffer,
-                bool hasAccumBuffer,
-                bool hasVarianceBuffer = false);
+                const uint32 channels);
     virtual ~FrameBuffer() override = default;
 
-    virtual const void *mapDepthBuffer() = 0;
-    virtual const void *mapColorBuffer() = 0;
+    virtual const void *mapBuffer(OSPFrameBufferChannel channel) = 0;
 
     virtual void unmap(const void *mappedMem) = 0;
     virtual void setTile(Tile &tile) = 0;
@@ -77,6 +74,9 @@ namespace ospray {
     vec2i numTiles;
     vec2i maxValidPixelID;
 
+    /*! buffer format of the color buffer */
+    ColorBufferFormat colorBufferFormat;
+
     /*! indicates whether the app requested this frame buffer to have
         an (application-mappable) depth buffer */
     bool hasDepthBuffer;
@@ -84,9 +84,8 @@ namespace ospray {
         an accumulation buffer */
     bool hasAccumBuffer;
     bool hasVarianceBuffer;
-
-    /*! buffer format of the color buffer */
-    ColorBufferFormat colorBufferFormat;
+    bool hasNormalBuffer;
+    bool hasAlbedoBuffer;
 
     //! This marks the global number of frames that have been rendered since
     //! the last ospFramebufferClear() has been called.

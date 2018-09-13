@@ -16,20 +16,26 @@
 
 #include "Slices.h"
 #include "../common/Data.h"
+#include "../volume/Volume.h"
 
 namespace ospray {
   namespace sg {
 
     Slices::Slices() : Geometry("slices") {}
 
-    box3f Slices::bounds() const
+    box3f Slices::computeBounds() const
     {
-      box3f bounds = empty;
+      box3f bbox = bounds();
+
+      if (bbox != box3f(empty))
+        return bbox;
 
       if (hasChild("volume"))
-        bounds = child("volume").bounds();
+        bbox = child("volume").nodeAs<Volume>()->computeBounds();
 
-      return bounds;
+      child("bounds") = bbox;
+
+      return bbox;
     }
 
     void Slices::postRender(RenderContext& ctx)
@@ -38,6 +44,19 @@ namespace ospray {
       if (ospGeometry && hasChild("volume")) {
         auto ospVolume = child("volume").valueAs<OSPObject>();
         ospSetObject(ospGeometry, "volume", ospVolume);
+      }
+
+      if (ospGeometry && hasChild("slices_list")) {
+        std::vector<vec4f> slices;
+
+        auto &slices_list = child("slices_list");
+
+        for (auto &child : slices_list.children())
+          slices.push_back(child.second->valueAs<vec4f>());
+
+        auto slices_data = ospNewData(slices.size(), OSP_FLOAT4, slices.data());
+        ospSetObject(ospGeometry, "planes", slices_data);
+        ospRelease(slices_data);
       }
 
       Geometry::postRender(ctx);

@@ -127,6 +127,8 @@ else()
   )
 
   ospray_install_sdk_headers(
+    containers/aligned_allocator.h
+    containers/AlignedVector.h
     containers/TransactionalBuffer.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
@@ -195,7 +197,9 @@ else()
 
   ## Build Test Apps ##
 
-  add_library(ospray_test_main STATIC testing/catch_main.cpp)
+  if (OSPRAY_ENABLE_TESTING)
+    add_library(ospray_test_main STATIC testing/catch_main.cpp)
+  endif()
 
   # containers/AlignedVector
   ospray_create_test(test_AlignedVector

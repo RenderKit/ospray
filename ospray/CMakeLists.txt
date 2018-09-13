@@ -71,6 +71,7 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
 
   ispc_tasksys.cpp
 
+  api/ISPCDevice.h
   api/ISPCDevice.cpp
 
   common/ObjectHandle.cpp
@@ -107,6 +108,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/TriangleMesh.cpp
   geometry/QuadMesh.ispc
   geometry/QuadMesh.cpp
+  geometry/Curves.cpp
+  geometry/Curves.ispc
   geometry/StreamLines.cpp
   geometry/StreamLines.ispc
   geometry/Instance.ispc
@@ -138,6 +141,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   math/box.ispc
   math/Distribution1D.ispc
   math/Distribution2D.ispc
+  math/sobol.ih
+  math/sobol.ispc
   math/spectrum.h
   math/spectrum.ih
   math/spectrum.ispc
@@ -192,8 +197,11 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/materials/Mix.ispc
   render/pathtracer/materials/Mix.cpp
 
+  texture/Texture.cpp
   texture/Texture2D.cpp
   texture/Texture2D.ispc
+  texture/TextureVolume.cpp
+  texture/TextureVolume.ispc
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
@@ -249,7 +257,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   camera/OrthographicCamera.h
   camera/OrthographicCamera.ih
   camera/PanoramicCamera.h
-  camera/PanoramicCamera.ih
   camera/PerspectiveCamera.h
   camera/PerspectiveCamera.ih
   DESTINATION camera
@@ -267,7 +274,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   common/ObjectHandle.h
   common/OSPCommon.h
   common/OSPCommon.ih
-  common/Ray.h
   common/Ray.ih
   common/Texture.h
   common/Util.h
@@ -287,6 +293,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  geometry/Curves.h
   geometry/Cylinders.h
   geometry/Geometry.h
   geometry/Geometry.ih
@@ -343,9 +350,11 @@ OSPRAY_INSTALL_SDK_HEADERS(
 #TODO: all the specific renderer headers...
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  texture/Texture.h
   texture/Texture2D.h
   texture/Texture2D.ih
   texture/TextureParam.ih
+  texture/TextureVolume.h
   DESTINATION texture
 )
 
@@ -483,12 +492,17 @@ IF(OSPRAY_BUILD_ISPC_DEVICE)
   )
 ENDIF()
 
-# build ospTutorial, for testing
-ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
-TARGET_LINK_LIBRARIES(ospTutorial ospray)
-# C++ version
-ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
-TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
+OPTION(OSPRAY_ENABLE_TUTORIAL
+  "Build the tutorial executable" ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_TUTORIAL)
+IF(OSPRAY_ENABLE_TUTORIAL)
+  # build ospTutorial, for demonstration and API testing
+  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
+  TARGET_LINK_LIBRARIES(ospTutorial ospray)
+  # C++ version
+  ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
+  TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
+ENDIF()
 
 ##############################################################
 # Configure find_package files

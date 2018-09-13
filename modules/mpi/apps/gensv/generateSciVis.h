@@ -17,6 +17,7 @@
 #pragma once
 
 #include "ospcommon/FileName.h"
+#include "ospcommon/containers/AlignedVector.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
@@ -72,9 +73,9 @@ namespace gensv {
    * Returns the ghostGridOrigin of the volume which may be outside the bounding
    * box, due to the ghost voxels.
    */
-  std::vector<LoadedVolume> makeVolumes(const size_t firstBrick,
-                                        const size_t numMine,
-                                        const size_t numBricks);
+  containers::AlignedVector<LoadedVolume> makeVolumes(const size_t firstBrick,
+                                                      const size_t numMine,
+                                                      const size_t numBricks);
 
   /* Load this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number

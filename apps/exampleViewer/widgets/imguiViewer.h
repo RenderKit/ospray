@@ -19,6 +19,7 @@
 #include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
+#include "transferFunction.h"
 
 #include "common/sg/SceneGraph.h"
 #include "common/sg/Renderer.h"
@@ -33,27 +34,32 @@ namespace ospray {
   {
   public:
 
-    ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph);
+    ImGuiViewer(const std::shared_ptr<sg::Frame> &scenegraph);
 
-    ImGuiViewer(const std::shared_ptr<sg::Renderer> &scenegraph,
-                const std::shared_ptr<sg::Renderer> &scenegraphDW);
-
-    ~ImGuiViewer();
+    ~ImGuiViewer() override;
 
     void setInitialSearchBoxText(const std::string &text);
+    void setColorMap(std::string name);
+
+    template <typename CALLBACK_T>
+    void addCustomUICallback(const std::string &name, CALLBACK_T &&f);
+
+    void startAsyncRendering() override;
+
+    void setViewportToSgCamera();
+    void setDefaultViewportToCurrent();
 
   protected:
 
     enum PickMode { PICK_CAMERA, PICK_NODE };
 
-    void mouseButton(int button, int action, int mods);
+    void mouseButton(int button, int action, int mods) override;
     void reshape(const ospcommon::vec2i &newSize) override;
     void keypress(char key) override;
 
     void resetView();
     void resetDefaultView();
     void printViewport();
-    void saveScreenshot(const std::string &basename);
     void toggleRenderingPaused();
 
     void display() override;
@@ -65,17 +71,10 @@ namespace ospray {
     void guiMenuView();
     void guiMenuMPI();
 
-    void guiCarDemo();
-
     void guiRenderStats();
+    void guiRenderCustomWidgets();
+    void guiTransferFunction();
     void guiFindNode();
-
-    void guiSingleNode(const std::string &baseText,
-                       std::shared_ptr<sg::Node> node);
-    void guiNodeContextMenu(const std::string &name,
-                            std::shared_ptr<sg::Node> node);
-
-    void guiSGTree(const std::string &name, std::shared_ptr<sg::Node> node);
 
     void guiSearchSGNodes();
 
@@ -83,28 +82,50 @@ namespace ospray {
 
     // Data //
 
-    double lastFrameFPS;
     double lastGUITime;
     double lastDisplayTime;
     double lastTotalTime;
-    float lastVariance;
 
-    ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
+    bool saveScreenshot {false}; // write next mapped framebuffer to disk
+    bool cancelFrameOnInteraction {true};
 
-    std::shared_ptr<sg::Node> scenegraph;
-    std::shared_ptr<sg::Node> scenegraphDW;
+    float frameProgress {0.f};
+    std::atomic<bool> cancelRendering {false};
+    int progressCallback(const float progress);
+    static int progressCallbackWrapper(void * ptr, const float progress);
+
+    std::shared_ptr<sg::Frame> scenegraph;
+    std::shared_ptr<sg::Renderer> renderer;
 
     std::string nodeNameForSearch;
     std::vector<std::shared_ptr<sg::Node>> collectedNodesFromSearch;
 
+    using UICallback = std::function<void(sg::Frame &)>;
+    using NamedUICallback = std::pair<std::string, UICallback>;
+
+    std::vector<NamedUICallback> customPanes;
+
     AsyncRenderEngine renderEngine;
-    std::vector<uint32_t> pixelBuffer;
 
     bool useDynamicLoadBalancer{false};
     int  numPreAllocatedTiles{4};
 
     PickMode lastPickQueryType {PICK_CAMERA};
+
+    imgui3D::TransferFunction transferFunctionWidget;
+    int transferFunctionSelection{0};
   };
+
+  // Inlined definitions //////////////////////////////////////////////////////
+
+  template <typename CALLBACK_T>
+  inline void
+  ImGuiViewer::addCustomUICallback(const std::string &name, CALLBACK_T &&f)
+  {
+    // TODO: static_assert the signature of CALLBACK_T::operator()
+
+    customPanes.push_back({name, f});
+  }
 
 }// namespace ospray

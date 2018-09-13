@@ -21,11 +21,6 @@
 struct Minneart
 {
   BSDF super;
-
-  /*! The reflectance parameter. The vale 0 means no reflection,
-   *  and 1 means full reflection. */
-  vec3f R;
-
   /*! The amount of backscattering. A value of 0 means lambertian
    *  diffuse, and inf means maximum backscattering. */
   float b;
@@ -40,7 +35,7 @@ inline BSDF_EvalRes Minneart_eval(const varying BSDF* uniform super,
   const float cosThetaI = clamp(dot(wi,getN(super)));
   const float backScatter = pow(clamp(dot(wo,wi)), self->b);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
-  res.value = (backScatter * cosThetaI * one_over_pi) * self->R;
+  res.value = (backScatter * cosThetaI * one_over_pi) * self->super.albedo;
   return res;
 }
 
@@ -62,11 +57,10 @@ inline BSDF_SampleRes Minneart_sample(const varying BSDF* uniform super,
 inline void Minneart_Constructor(varying Minneart* uniform self, const varying linear3f* uniform frame,
                                  vec3f R, float b)
 {
-  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
+  BSDF_Constructor(&self->super, R, BSDF_DIFFUSE_REFLECTION,
                    Minneart_eval, Minneart_sample,
                    frame);
 
-  self->R = R;
   self->b = b;
 }
 

@@ -58,7 +58,7 @@ namespace ospray {
     RTCScene embreeSceneHandle = model->embreeSceneHandle;
 
     vertexData = getParamData("vertex");
-    normalData = getParamData("vertex.normal");
+    normalData = getParamData("vertex.normal",getParamData("normal"));
     colorData  = getParamData("vertex.color");
     texcoordData = getParamData("vertex.texcoord");
     indexData  = getParamData("index");

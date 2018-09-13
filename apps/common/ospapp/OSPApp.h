@@ -56,7 +56,7 @@ namespace ospray {
 
      protected:
 
-      virtual void render(const std::shared_ptr<sg::Node> &) = 0;
+      virtual void render(const std::shared_ptr<sg::Frame> &) = 0;
       virtual int parseCommandLine(int &ac, const char **&av) = 0;
 
       int initializeOSPRay(int *argc, const char *argv[]);
@@ -66,7 +66,7 @@ namespace ospray {
       void addGeneratorNodesToWorld(sg::Node &renderer);
       void addAnimatedImporterNodesToWorld(sg::Node &renderer);
       void setupCamera(sg::Node &renderer);
-      void setupToneMapping(sg::Node &renderer);
+      void setupToneMapping(sg::Node &fb, sg::Node &fb2);
       void addPlaneToScene(sg::Node &renderer);
       void printHelp();
 
@@ -99,10 +99,9 @@ namespace ospray {
       CmdLineParam<float> apertureRadius = CmdLineParam<float>(0.f);
       CmdLineParam<float> fovy = CmdLineParam<float>(60.f);
 
-
       std::vector<clFile> files;
       std::vector<clGeneratorCfg> generators;
-      std::vector<std::vector<clFile> > animatedFiles;
+      std::vector<std::vector<clFile>> animatedFiles;
       int matrix_i = 1, matrix_j = 1, matrix_k = 1;
       std::string hdriLightFile;
       bool addDefaultLights = false;
@@ -112,6 +111,8 @@ namespace ospray {
       bool debug = false;
       std::string initialRendererType;
       box3f bboxWithoutPlane;
+      std::vector<std::string> tfFiles;
+      std::string defaultTransferFunction = "Jet";
 
       bool addPlane =
           utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(0);
@@ -120,12 +121,13 @@ namespace ospray {
           utility::getEnvVar<int>("OSPRAY_APPS_FAST_MODE").value_or(0);
 
      private:
+
       void parseGeneralCommandLine(int &ac, const char **&av);
 
       // parse command line arguments containing the format:
       //  -sg:nodeName:...:nodeName=value,value,value -- changes value
       //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
-      void parseCommandLineSG(int ac, const char **&av, sg::Node &root);
+      void parseCommandLineSG(int ac, const char **&av, sg::Frame &root);
     };
 
   } // ::ospray::app

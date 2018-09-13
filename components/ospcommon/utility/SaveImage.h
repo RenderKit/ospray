@@ -26,7 +26,8 @@
 namespace ospcommon {
   namespace utility {
 
-    template <typename COMP_T, int N_COMP, typename PIXEL_T, bool FLIP>
+    template <typename COMP_T, int N_COMP, typename PIXEL_T, int PIXEL_COMP,
+             bool FLIP>
     inline void writeImage(const std::string &fileName,
           const char *const header,
           const int sizeX, const int sizeY,
@@ -42,7 +43,7 @@ namespace ospcommon {
         auto *in = (const COMP_T*)&pixel[(FLIP?sizeY-1-y:y)*sizeX];
         for (int x = 0; x < sizeX; x++)
           for (int c = 0; c < N_COMP; c++)
-            out[N_COMP*x + c] = in[4*x + (N_COMP==1?3:c)];
+            out[N_COMP*x + c] = in[PIXEL_COMP*x + (N_COMP==1?3:c)];
         fwrite(out, N_COMP*sizeX, sizeof(COMP_T), file);
       }
       fprintf(file, "\n");
@@ -53,16 +54,16 @@ namespace ospcommon {
                          const int sizeX, const int sizeY,
                          const uint32_t *pixel)
     {
-      writeImage<unsigned char, 3, uint32_t, true>(fileName, "P6\n%i %i\n255\n",
-          sizeX, sizeY, pixel);
+      writeImage<unsigned char, 3, uint32_t, 4, true>(fileName,
+          "P6\n%i %i\n255\n", sizeX, sizeY, pixel);
     }
 
     inline void writePGM(const std::string &fileName,
                          const int sizeX, const int sizeY,
                          const uint32_t *pixel)
     {
-      writeImage<unsigned char, 1, uint32_t, true>(fileName, "P5\n%i %i\n255\n",
-          sizeX, sizeY, pixel);
+      writeImage<unsigned char, 1, uint32_t, 4, true>(fileName,
+          "P5\n%i %i\n255\n", sizeX, sizeY, pixel);
     }
 
     template <typename T>
@@ -70,9 +71,11 @@ namespace ospcommon {
                          const int sizeX, const int sizeY,
                          const T *p)
     {
-      static_assert(std::is_same<T,vec4f>::value||std::is_same<T,vec3fa>::value,
-          "writePFM needs pixels as vec3fa* or vec4f*");
-      writeImage<float, 3, T, false>(fName, "PF\n%i %i\n-1.0\n", sizeX, sizeY, p);
+      static_assert(std::is_same<T,vec4f>::value||std::is_same<T,vec3fa>::value
+          ||std::is_same<T,vec3f>::value,
+          "writePFM needs pixels as vec3f(a)* or vec4f*");
+      writeImage<float, 3, T, std::is_same<T,vec3f>::value? 3:4, false>(fName,
+          "PF\n%i %i\n-1.0\n", sizeX, sizeY, p);
     }
 
   } // ::ospcommon::utility

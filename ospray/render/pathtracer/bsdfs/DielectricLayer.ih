@@ -143,7 +143,11 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
                                         varying BSDF* varying substrate, float eta, vec3f transmittance, float thickness,
                                         float weight)
 {
-  BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION | substrate->type,
+  self->Favg = fresnelDielectricAvg(eta) * weight;
+  // XXX check
+  const vec3f albedo = substrate->albedo * ((1.0f - weight) +
+      pow(transmittance, thickness) * (1.f - self->Favg));
+  BSDF_Constructor(&self->super, albedo, BSDF_SPECULAR_REFLECTION | substrate->type,
                    DielectricLayer_eval, DielectricLayer_sample,
                    frame);
 
@@ -151,10 +155,6 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
   self->eta = (eta <= 1.f) ? eta : rcp(eta);
   self->transmittance = transmittance;
   self->thickness = thickness;
-
-  // Energy conservation
-  self->Favg = fresnelDielectricAvg(eta) * weight;
-  
   self->weight = weight;
 }
 

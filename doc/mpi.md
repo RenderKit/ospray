@@ -182,7 +182,7 @@ application's data distribution.
                                the current rank, used for sort-last compositing.
                                The global set of regions specified by all ranks
                                must be disjoint for correct compositing.
-        
+
   `box3f[]`  ghostRegions      Optional [data] array of boxes which bound the ghost data on
                                each rank. Using these shared data between nodes
                                can be used for computing secondary ray effects
@@ -193,10 +193,11 @@ application's data distribution.
 
 See the distributed device examples in the MPI module for examples.
 
-The renderer supported when using the distributed device is the `mpi_raycast` renderer.
-This renderer is an experimental renderer and currently only supports ambient occlusion
-(on the local data only). To compute correct ambient occlusion across the distributed
-data the application is responsible for replicating ghost data and specifying the
+The renderer supported when using the distributed device is the
+`mpi_raycast` renderer. This renderer is an experimental renderer and
+currently only supports ambient occlusion (on the local data only). To
+compute correct ambient occlusion across the distributed data the
+application is responsible for replicating ghost data and specifying the
 ghostRegions and regions as described above.
 
   ---------- ----------------- -------- -------------------------------------

@@ -252,7 +252,7 @@ inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* unifo
                                              const varying linear3f* uniform frame,
                                              float eta, float roughness, float anisotropy)
 {
-  BSDF_Constructor(&self->super,
+  BSDF_Constructor(&self->super, make_vec3f(0.9f), // TODO better estimate
                    BSDF_GLOSSY | BSDF_DIFFUSE,
                    MicrofacetDielectric_eval, MicrofacetDielectric_sample,
                    frame);

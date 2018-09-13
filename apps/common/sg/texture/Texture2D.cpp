@@ -29,50 +29,70 @@ OIIO_NAMESPACE_USING
 namespace ospray {
   namespace sg {
 
-    Texture2D::Texture2D()
-    {
-      setValue((OSPTexture2D)nullptr);
-    }
+    // static helper functions ////////////////////////////////////////////////
 
-    Texture2D::~Texture2D()
+    OSPTextureFormat
+    osprayTextureFormat(int depth, int channels, bool preferLinear = false)
     {
-      if (data) alignedFree(data);
-    }
-
-    void Texture2D::preCommit(RenderContext &)
-    {
-      OSPTextureFormat type = OSP_TEXTURE_R8;
-
       if (depth == 1) {
-        if( channels == 1 ) type = OSP_TEXTURE_R8;
+        if( channels == 1 ) return OSP_TEXTURE_R8;
         if( channels == 3 )
-          type = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+          return preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
         if( channels == 4 )
-          type = preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
+          return preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
       } else if (depth == 4) {
-        if( channels == 1 ) type = OSP_TEXTURE_R32F;
-        if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
-        if( channels == 4 ) type = OSP_TEXTURE_RGBA32F;
+        if( channels == 1 ) return OSP_TEXTURE_R32F;
+        if( channels == 3 ) return OSP_TEXTURE_RGB32F;
+        if( channels == 4 ) return OSP_TEXTURE_RGBA32F;
       }
 
-      void* dat = data;
-      if (!dat && texelData)
-        dat = texelData->base();
-      if (!dat)
-      {
-        setValue((OSPTexture2D)nullptr);
-        std::cout << "Texture2D: image data null\n";
+      return OSP_TEXTURE_FORMAT_INVALID;
+    }
+
+    // Texture2D definitions //////////////////////////////////////////////////
+
+    Texture2D::Texture2D() : Texture("texture2d") {}
+
+    void Texture2D::preCommit(RenderContext &ctx)
+    {
+      if (committed)
         return;
+
+      Texture::preCommit(ctx);
+
+      auto ospTexture = valueAs<OSPTexture>();
+
+      auto type = osprayTextureFormat(depth, channels, preferLinear);
+
+      if (data == nullptr)
+        data = texelData.get() != nullptr ? texelData->base() : nullptr;
+      else {
+        const auto dataSize = size.x * size.y * channels * depth;
+        texelData =
+          std::make_shared<sg::DataArray1uc>((unsigned char*)data, dataSize);
       }
 
-      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
-      setValue(ospTexture2D);
-      ospCommit(ospTexture2D);
+      if (data == nullptr)
+        throw std::runtime_error("committed a Texture2D node with null data!");
+
+      ospSet1i(ospTexture, "type", (int)type);
+      ospSet1i(ospTexture, "flags", nearestFilter ? OSP_TEXTURE_FILTER_NEAREST : 0);
+      ospSet2i(ospTexture, "size", size.x, size.y);
+      ospSetObject(ospTexture, "data", texelData->getOSP());
+    }
+
+    void Texture2D::postCommit(RenderContext &)
+    {
+      if (committed)
+        return;
+      auto ospTexture = valueAs<OSPTexture>();
+      ospCommit(ospTexture);
+      committed = true;
     }
 
     std::string Texture2D::toString() const
     {
-      return "ospray::viewer::sg::Texture2D";
+      return "ospray::sg::Texture2D";
     }
 
     //! \brief load texture from given file.
@@ -85,13 +105,7 @@ namespace ospray {
     {
       FileName fileName = fileNameAbs;
       std::string fileNameBase = fileNameAbs;
-      /* WARNING: this cache means that every texture ever loaded will
-         forever keep at least one refcount - ie, no texture will ever
-         auto-die!!! (to fix this we'd have to add a dedicated
-         'clearTextureCache', or move this caching fucntionality into
-         a CachedTextureLoader objec that each parser creates and
-         destroys) */
-      static std::map<std::string,std::shared_ptr<Texture2D> > textureCache;
+
       if (textureCache.find(fileName.str()) != textureCache.end())
         return textureCache[fileName.str()];
 
@@ -102,6 +116,7 @@ namespace ospray {
       ImageInput *in = ImageInput::open(fileName.str().c_str());
       if (!in) {
         std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
+        tex.reset();
       } else {
         const ImageSpec &spec = in->spec();
 
@@ -215,6 +230,7 @@ namespace ospray {
             }
         } catch(const std::runtime_error &e) {
           std::cerr << e.what() << std::endl;
+          tex.reset();
         }
       } else if (ext == "pfm") {
         try {
@@ -288,6 +304,7 @@ namespace ospray {
           }
         } catch(const std::runtime_error &e) {
           std::cerr << e.what() << std::endl;
+          tex.reset();
         }
       }
       else {
@@ -306,6 +323,7 @@ namespace ospray {
         tex->nearestFilter = nearestFilter;
         if (!pixels) {
           std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
+          tex.reset();
         } else {
           tex->data = alignedMalloc(sizeof(unsigned char) * tex->size.x*tex->size.y*tex->channels*tex->depth);
           // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
@@ -327,11 +345,20 @@ namespace ospray {
         }
       }
 #endif
-      textureCache[fileName.str()] = tex;
+
+      if (tex.get() != nullptr)
+        textureCache[fileName.str()] = tex;
+
       return tex;
+    }
+
+    void Texture2D::clearTextureCache()
+    {
+      textureCache.clear();
     }
 
     OSP_REGISTER_SG_NODE(Texture2D);
 
+    std::map<std::string,std::shared_ptr<Texture2D> > Texture2D::textureCache;
   } // ::ospray::sg
 } // ::ospray

@@ -50,7 +50,7 @@ namespace ospray {
               getParamObject("colorMap", nullptr));
         affine2f xform_attenuationColor =
           getTextureTransform("map_attenuationColor")
-          * getTextureTransform("colorMap"); 
+          * getTextureTransform("colorMap");
 
         ispc::PathTracer_ThinGlass_set(getIE()
             , eta
@@ -63,6 +63,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(ThinGlass,PathTracer_ThinGlass);
+    OSP_REGISTER_MATERIAL(pathtracer, ThinGlass, ThinGlass);
+    OSP_REGISTER_MATERIAL(pt, ThinGlass, ThinGlass);
   }
 }
