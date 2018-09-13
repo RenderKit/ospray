@@ -19,6 +19,9 @@ Version History
 -   Added sheenTint parameter to Principled material
 -   Added baseNormal parameter to Principled material
 -   Added low-discrepancy sampling to path tracer
+-   The `spp` parameter on the renderer no longer supports values less than 1,
+    instead applications should render to a separate, lower resolution
+    frame buffer during interaction to achieve the same behavior
 
 ### Changes in v1.6.1:
 
