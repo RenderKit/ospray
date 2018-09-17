@@ -430,8 +430,8 @@ void runApp()
                  [](const Model &m) { return m.handle(); });
   Data ghostModelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
 
-  renderer.set("models", modelsData);
-  renderer.set("ghostModels", ghostModelsData);
+  renderer.set("model", modelsData);
+  renderer.set("ghostModel", ghostModelsData);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));
   renderer.set("varianceThreshold", varianceThreshold);

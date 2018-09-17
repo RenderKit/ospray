@@ -212,12 +212,12 @@ ghost models and models as described above.
   OSPModel   model                      the [model] to render
   OSPModel   ghostModel            NULL the optional [model] containing the
                                         ghost geometry for ambient occlusion
-  OSPModel[] models                NULL optionally, you can have each rank
+  OSPModel[] model                 NULL optionally, you can have each rank
                                         own multiple [model]s which it's
                                         responsible for rendering, in which
                                         case you will specify a list of models
                                         instead of just one.
-  OSPModel[] ghostModels           NULL when rendering a list of models, each
+  OSPModel[] ghostModel            NULL when rendering a list of models, each
                                         model can be associated with an
                                         individual ghostModel, specified by
                                         this list. If only the `ghostModel`

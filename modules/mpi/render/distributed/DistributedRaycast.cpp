@@ -192,27 +192,28 @@ namespace ospray {
                                  "PerspectiveCamera");
       }
 
-      Data *models = getParamData("models", nullptr);
-      if (models) {
-        ManagedObject **handles = reinterpret_cast<ManagedObject**>(models->data);
+      ManagedObject *models = getParamObject("model", nullptr);
+      Data *modelsData = dynamic_cast<Data*>(models);
+      if (modelsData) {
+        ManagedObject **handles = reinterpret_cast<ManagedObject**>(modelsData->data);
         // TODO: This is a total hack to work around the issue with a Data array
         // of OSP_OBJECT ObjectHandles
-        for (size_t i = 0; i < models->numItems; ++i) {
+        for (size_t i = 0; i < modelsData->numItems; ++i) {
           regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
         }
       } else if (model && dynamic_cast<DistributedModel*>(model)) {
         regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(model)));
       }
 
-      Data *ghosts = getParamData("ghostModels", nullptr);
-      if (ghosts) {
-        ManagedObject **handles = reinterpret_cast<ManagedObject**>(ghosts->data);
-        for (size_t i = 0; i < ghosts->numItems; ++i) {
+      ManagedObject *ghosts = getParamObject("ghostModel", nullptr);
+      Data *ghostsData = dynamic_cast<Data*>(ghosts);
+      if (ghostsData) {
+        ManagedObject **handles = reinterpret_cast<ManagedObject**>(ghostsData->data);
+        for (size_t i = 0; i < ghostsData->numItems; ++i) {
           ghostRegions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
         }
-      } else if (getParamObject("ghostModel")) {
-        DistributedModel *ghostModel =
-          dynamic_cast<DistributedModel*>(getParamObject("ghostModel", nullptr));
+      } else if (ghosts && dynamic_cast<DistributedModel*>(ghosts)) {
+        DistributedModel *ghostModel = dynamic_cast<DistributedModel*>(ghosts);
         ghostRegions.push_back(Ref<DistributedModel>(ghostModel));
       }
 
