@@ -15,13 +15,16 @@
 ## ======================================================================== ##
 
 OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
-OPTION(OSPRAY_MODULE_MPI_APPS "MPI parallel device" OFF)
+OPTION(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
+  ${OSPRAY_APPS_EXAMPLEVIEWER})
 
-# Note (Qi) because those apps depend on lib_tfb, we have to make sure
-#           ospray example viewer (thus the lib_tfn) is built
-if (NOT OSPRAY_APPS_EXAMPLEVIEWER)
-  SET(OSPRAY_MODULE_MPI_APPS OFF)
-endif (NOT OSPRAY_APPS_EXAMPLEVIEWER)
+# Note: the MPI example viewer depends on tfn lib, so we must make sure that
+# was built.
+IF (NOT TARGET ospray_tfn OR NOT TARGET ospray_imgui_util_sg
+    OR NOT TARGET ospray_imgui3d_sg)
+  MESSAGE(FATAL_ERROR "ospray_tfn library is required for the MPI example app,"
+    " please set -DOSPRAY_APPS_EXAMPLEVIEWER=ON as well")
+ENDIF ()
 
 IF (OSPRAY_MODULE_MPI)
 
