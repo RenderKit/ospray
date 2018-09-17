@@ -57,15 +57,6 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     gensv
   )
 
-  ospray_create_application(ospTestMultiBricks
-    ospTestMultiBricks.cpp
-  LINK
-    ospray
-    ospray_common
-    ospray_mpi_common
-    ${MPI_CXX_LIBRARIES}
-  )
-
   IF (OSPRAY_MODULE_MPI_APPS)
     INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
     ADD_SUBDIRECTORY(viewer)
