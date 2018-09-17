@@ -919,7 +919,6 @@ namespace ospray {
 
   void DFB::sendCancelRenderingMessage()
   {
-    PING;
     // WILL: Because we don't have a threaded MPI and the master
     // in replicated rendering will just be waiting in the bcast when
     // we call cancel, the message would never actually be sent out this
