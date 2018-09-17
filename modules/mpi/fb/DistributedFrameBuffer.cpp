@@ -518,7 +518,6 @@ namespace ospray {
     int renderingCancelled = cancelRendering.load();
     MPI_CALL(Bcast(&renderingCancelled, 1, MPI_INT, masterRank(), world.comm));
     if (renderingCancelled) {
-      PING;
       return;
     }
 
@@ -1047,8 +1046,7 @@ namespace ospray {
       return 0;
 
     const auto tileNr = tile.y * numTiles.x + tile.x;
-    // Will: Why increment here?? Why was the accumID
-    // incremented here and not at end frame??
+    // Will: Why was the accumID incremented here and not at end frame?
     // Could it be for some tile which we render multiple times a frame
     // on a node? Maybe Johannes is using this for the error refinement
     // or something?
