@@ -36,7 +36,7 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
   LINK
     ospray
     ospray_mpi_common
-    gensv
+    ospray_gensv
   )
 
   OSPRAY_CREATE_TEST(ospDDLoader-test
@@ -45,7 +45,7 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray
     ospray_mpi_common
     ospray_tfn
-    gensv
+    ospray_gensv
   )
 
   ospray_create_application(ospDDLoader
@@ -54,7 +54,7 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray
     ospray_mpi_common
     ospray_tfn
-    gensv
+    ospray_gensv
   )
 
   IF (OSPRAY_MODULE_MPI_APPS)

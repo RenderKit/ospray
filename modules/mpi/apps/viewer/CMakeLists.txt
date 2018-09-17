@@ -36,7 +36,7 @@ LINK
   ospray_imgui3d_sg
   ospray_sg
   ospray_tfn
-  gensv
+  ospray_gensv
   glfw
 )
 
