@@ -409,6 +409,8 @@ namespace ospray {
     {
       return numTilesCompletedThisFrame == myTiles.size();
     }
+    // Note: This test is not actually going to ever be true on the master,
+    // because it doesn't finish tiles until the gather at the end of the frame
     return numTilesCompletedThisFrame == static_cast<size_t>(getTotalTiles());
   }
 
@@ -503,6 +505,7 @@ namespace ospray {
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
 
     mpi::messaging::disableAsyncMessaging();
+
     // Broadcast the rendering cancellation status to the workers
     // First we barrier to sync that this Bcast is actually picked up by the
     // right code path. Otherwise it may match with the command receiving

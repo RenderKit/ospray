@@ -88,13 +88,13 @@ namespace ospray {
       expectedInNextGeneration += tile.children;
 
       if (missingInCurrentGeneration < 0) {
+        // TODO: Log to error
         std::cout << "negative missing on " << mpicommon::globalRank()
           << ", missing = " << missingInCurrentGeneration
           << ", expectedInNex = " << expectedInNextGeneration
           << ", current generation = " << currentGeneration
           << ", tile = " << tile.region.lower
           << "\n";
-        PING;
         std::cout << std::flush;
       }
 
@@ -110,13 +110,13 @@ namespace ospray {
             expectedInNextGeneration += bt->tile.children;
           }
           if (missingInCurrentGeneration < 0) {
+            // TODO: Log to error
             std::cout << "negative missing on " << mpicommon::globalRank()
               << ", missing = " << missingInCurrentGeneration
               << ", expectedInNex = " << expectedInNextGeneration
               << ", current generation = " << currentGeneration
               << ", tile = " << tile.region.lower
               << "\n";
-            PING;
             std::cout << std::flush;
           }
         }
@@ -124,13 +124,13 @@ namespace ospray {
     }
 
     if (missingInCurrentGeneration < 0) {
+      // TODO: Log to error
       std::cout << "negative missing on " << mpicommon::globalRank()
         << ", missing = " << missingInCurrentGeneration
         << ", expectedInNex = " << expectedInNextGeneration
         << ", current generation = " << currentGeneration
         << ", tile = " << tile.region.lower
         << "\n";
-      PING;
       std::cout << std::flush;
     }
 

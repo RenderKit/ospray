@@ -106,6 +106,7 @@ namespace ospray {
         std::vector<TileVector> preferredTiles; // per worker default queue
         std::vector<bool> workerNotified; // worker knows we're done?
         int numPreAllocated{4};
+        DistributedFrameBuffer *dfb{nullptr};
       };
 
       /*! \brief the 'slave' in a tile-based master-slave load balancer

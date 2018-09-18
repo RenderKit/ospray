@@ -150,7 +150,8 @@ namespace ospray {
       // dynamicLoadBalancer::Master definitions ///////////////////////////////
 
       Master::Master(ObjectHandle handle, int _numPreAllocated)
-        : MessageHandler(handle), numPreAllocated(_numPreAllocated)
+        : MessageHandler(handle),
+        numPreAllocated(_numPreAllocated)
       {
         preferredTiles.resize(worker.size);
         workerNotified.resize(worker.size);
@@ -181,6 +182,13 @@ namespace ospray {
         if (queue->empty()) {
           workerNotified[worker] = true;
           task.tilesExhausted = true;
+          // If we told all the workers that we're out of tiles, then we're
+          // done with this frame.
+          const auto notNotified = std::find(workerNotified.begin(),
+                                             workerNotified.end(), false);
+          if (notNotified == workerNotified.end()) {
+            dfb->closeCurrentFrame();
+          }
         } else {
           task = queue->back();
           queue->pop_back();
@@ -252,7 +260,7 @@ namespace ospray {
           , const uint32 /*channelFlags*/
           )
       {
-        DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
         for (size_t i = 0; i < workerNotified.size(); ++i)
