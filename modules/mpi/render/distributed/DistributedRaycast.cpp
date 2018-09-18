@@ -153,7 +153,6 @@ namespace ospray {
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
-#if 1
       auto logging = utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
       DETAILED_LOGGING = std::stoi(logging) != 0;
 
@@ -165,16 +164,13 @@ namespace ospray {
           + std::to_string(rank) + ".txt";
         statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
       }
-#endif
     }
 
     DistributedRaycastRenderer::~DistributedRaycastRenderer()
     {
-#if 1
       if (DETAILED_LOGGING) {
         *statsLog << "\n" << std::flush;
       }
-#endif
     }
 
     void DistributedRaycastRenderer::commit()
@@ -242,9 +238,7 @@ namespace ospray {
         return renderNonDistrib(fb, channelFlags);
       }
 
-#if 0
       auto startRender = high_resolution_clock::now();
-#endif
 
 #ifndef _WIN32
       getrusage(RUSAGE_SELF, &prevUsage);
@@ -471,14 +465,11 @@ namespace ospray {
 #endif
       });
 
-#if 0
       auto endRender = high_resolution_clock::now();
-#endif
 
       dfb->waitUntilFinished();
       endFrame(nullptr, channelFlags);
 
-#if 0
       auto endComposite = high_resolution_clock::now();
 
 #ifndef _WIN32
@@ -526,7 +517,6 @@ namespace ospray {
         maml::logMessageTimings(*statsLog);
         *statsLog << "-----\n" << std::flush;
       }
-#endif
       ++frameNumber;
       return dfb->endFrame(errorThreshold);
     }
@@ -538,9 +528,7 @@ namespace ospray {
                                                        const uint32 channelFlags)
     {
       using namespace mpicommon;
-#if 0
       auto startRender = high_resolution_clock::now();
-#endif
 #ifndef _WIN32
       getrusage(RUSAGE_SELF, &prevUsage);
 #endif
@@ -574,15 +562,12 @@ namespace ospray {
 
       endFrame(nullptr, channelFlags);
 
-#if 0
       auto endRender = high_resolution_clock::now();
-#endif
 #ifndef _WIN32
       getrusage(RUSAGE_SELF, &curUsage);
 #endif
       curWall = high_resolution_clock::now();
 
-#if 0
       if (DETAILED_LOGGING && frameNumber > 5) {
         const std::array<int, 1> localTimes = {
           duration_cast<milliseconds>(endRender - startRender).count(),
@@ -611,7 +596,6 @@ namespace ospray {
           << "\tRendering: " << localTimes[0] << "ms\n";
         logProcessStatistics(*statsLog);
       }
-#endif
 
       ++frameNumber;
       return fb->endFrame(errorThreshold);
