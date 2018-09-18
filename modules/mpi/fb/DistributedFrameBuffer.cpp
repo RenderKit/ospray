@@ -1048,12 +1048,11 @@ namespace ospray {
       return 0;
 
     const auto tileNr = tile.y * numTiles.x + tile.x;
-    // Will: Why was the accumID incremented here and not at end frame?
-    // Could it be for some tile which we render multiple times a frame
-    // on a node? Maybe Johannes is using this for the error refinement
-    // or something?
+    // Note: we increment here and not in endframe because we
+    // can render the same tile multiple times with different accumulation
+    // IDs when using dynamic load balancing.
     tileInstances[tileNr]++;
-    return tileAccumID[tileNr];
+    return tileAccumID[tileNr]++;
   }
 
   float DFB::tileError(const vec2i &tile)
@@ -1082,9 +1081,6 @@ namespace ospray {
     }
 
     memset(tileInstances, 0, sizeof(int32)*getTotalTiles()); // XXX needed?
-
-    for (int i = 0; i < getTotalTiles(); ++i)
-      ++tileAccumID[i];
 
     if (mpicommon::IamTheMaster()) // only refine on master
       return tileErrorRegion.refine(errorThreshold);
