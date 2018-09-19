@@ -439,7 +439,8 @@ namespace ospray {
       // Turning on the compression past 64 ranks seems to be a good
       // balancing point for cost of compressing vs. performance gain
       auto enableCompression =
-        OSPRAY_FORCE_COMPRESSION.value_or(mpicommon::numGlobalRanks() >= 16);
+        OSPRAY_FORCE_COMPRESSION.value_or(
+            mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
       maml::init(enableCompression);
 

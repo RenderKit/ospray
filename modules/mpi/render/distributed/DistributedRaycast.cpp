@@ -354,6 +354,8 @@ namespace ospray {
         auto end = std::unique(tilesForFrame.begin(), tilesForFrame.end());
         tilesForFrame.erase(end, tilesForFrame.end());
 
+#define PARTITION_OUT_FINISHED_TILES 1
+#if PARTITION_OUT_FINISHED_TILES
         // Filter any tiles which are finished due to reaching the
         // error threshold. This should let TBB better allocate threads only
         // to tiles that actually need work.
@@ -366,6 +368,7 @@ namespace ospray {
                                return dfb->tileError(tileID) > errorThreshold;
                              });
         tilesForFrame.erase(end, tilesForFrame.end());
+#endif
       }
 
       tasking::parallel_for(tilesForFrame.size(), [&](size_t taskIndex) {
@@ -378,6 +381,12 @@ namespace ospray {
         const int32 accumID = fb->accumID(tileID);
         const bool tileOwner = (tileIndex % numGlobalRanks()) == globalRank();
         const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
+
+#if !PARTITION_OUT_FINISHED_TILES
+        if (dfb->tileError(tileID) <= errorThreshold) {
+          return;
+        }
+#endif
 
         Tile __aligned(64) bgtile(tileID, dfb->size, accumID);
 
@@ -426,7 +435,7 @@ namespace ospray {
         // pixels within the tiles, so adding another level may actually just
         // give us worse cache coherence.
 #define PARALLEL_REGION_RENDERING 1
-#ifdef PARALLEL_REGION_RENDERING
+#if PARALLEL_REGION_RENDERING
         tasking::parallel_for(myVisibleRegions.size(), [&](size_t vid) {
           const size_t i = myVisibleRegions[vid];
           Tile __aligned(64) tile(tileID, dfb->size, accumID);
@@ -458,7 +467,7 @@ namespace ospray {
             tile.sortOrder = sortOrder[region->id];
             fb->setTile(tile);
           }
-#ifdef PARALLEL_REGION_RENDERING
+#if PARALLEL_REGION_RENDERING
         });
 #else
         }

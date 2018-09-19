@@ -53,6 +53,7 @@ IF (OSPRAY_MODULE_MPI)
     fb/DistributedFrameBuffer.cpp
     fb/DistributedFrameBuffer.ispc
     fb/DistributedFrameBuffer_TileTypes.cpp
+    fb/DistributedFrameBuffer_TileMessages.cpp
 
     fb/DebugPixelOp.cpp
 

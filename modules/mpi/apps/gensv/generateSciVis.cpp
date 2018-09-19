@@ -410,7 +410,7 @@ namespace gensv {
 
           // TODO Ghost cells
           vec3sz ghostDims(0);
-          const std::array<int, 3> ghosts = {{0, 0, 0}};
+          //const std::array<int, 3> ghosts = {{0, 0, 0}};
           /*
           const std::array<int, 3> ghosts = computeGhostFaces(vec3i(brickId), vec3i(grid));
           for (size_t i = 0; i < 3; ++i) {
@@ -423,10 +423,13 @@ namespace gensv {
           }
           */
           const vec3sz fullDims = brickDims + ghostDims;
+          /*
           const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
               ghosts[1] & NEG_FACE ? 1 : 0,
               ghosts[2] & NEG_FACE ? 1 : 0);
-          vol.ghostGridOrigin = gridOrigin - vec3f(ghostOffset);
+              */
+          //vol.ghostGridOrigin = gridOrigin - vec3f(ghostOffset);
+          vol.ghostGridOrigin = gridOrigin - vec3f(0);
 
           vol.volume = ospray::cpp::Volume("block_bricked_volume");
           vol.volume.set("voxelType", dtype.c_str());

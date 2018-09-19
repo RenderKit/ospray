@@ -22,47 +22,13 @@
 #include "ospray/fb/LocalFB.h"
 // ospray_mpi
 #include "../common/Messaging.h"
+#include "DistributedFrameBuffer_TileMessages.h"
 // std
 #include <condition_variable>
 
 namespace ospray {
   struct TileDesc;
   struct TileData;
-
-  struct ProgressMessage;
-  struct MasterTileMessage;
-  template <typename ColorT>
-  struct MasterTileMessage_FB;
-  template <typename ColorT>
-  struct MasterTileMessage_FB_Depth;
-  template <typename ColorT>
-  struct MasterTileMessage_FB_Depth_Aux;
-  struct WriteTileMessage;
-
-  /*! color buffer and depth buffer on master */
-  enum COMMANDTAG {
-    /*! command tag that identifies a CommLayer::message as a write
-      tile command. this is a command using for sending a tile of
-      new samples to another instance of the framebuffer (the one
-      that actually owns that tile) for processing and 'writing' of
-      that tile on that owner node. */
-    WORKER_WRITE_TILE = 1 << 1,
-    /*! command tag used for sending 'final' tiles from the tile
-        owner to the master frame buffer. Note that we *do* send a
-        message back ot the master even in cases where the master
-        does not actually care about the pixel data - we still have
-        to let the master know when we're done. */
-    MASTER_WRITE_TILE_I8 = 1 << 2,
-    MASTER_WRITE_TILE_F32 = 1 << 3,
-    // Modifier to indicate the tile also has depth values
-    MASTER_TILE_HAS_DEPTH = 1 << 4,
-    // Indicates that the tile additionally also has normal and/or albedo values
-    MASTER_TILE_HAS_AUX = 1 << 5,
-    // abort rendering the current frame
-    CANCEL_RENDERING = 1 << 6,
-    // Worker updating us on tiles completed
-    PROGRESS_MESSAGE = 1 << 7
-  };
 
   class DistributedTileError : public TileError
   {

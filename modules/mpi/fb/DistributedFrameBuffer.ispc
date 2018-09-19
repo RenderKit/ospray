@@ -144,6 +144,8 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile
       accum->nx[i] = fnx;
       accum->ny[i] = fny;
       accum->nz[i] = fnz;
+      // TODO: Is it not safe to assume the nx/ny/nz are packed in memory?
+      // It seems like this soa to aos conversion should not be needed
       soa_to_aos3(fnx, fny, fnz, final->nx + 3*programCount*i);
       const float far = tile->ar[i];
       const float fag = tile->ag[i];
