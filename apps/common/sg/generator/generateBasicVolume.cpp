@@ -33,7 +33,7 @@ namespace ospray {
 
       // get generator parameters
 
-      vec3i dims(100, 100, 100);
+      vec3l dims(100, 100, 100);
 
       for (auto &p : params) {
         if (p.first == "dimensions" || p.first == "dims") {
@@ -45,7 +45,7 @@ namespace ospray {
             continue;
           }
 
-          dims = vec3i(std::atoi(string_dims[0].c_str()),
+          dims = vec3l(std::atoi(string_dims[0].c_str()),
                        std::atoi(string_dims[1].c_str()),
                        std::atoi(string_dims[2].c_str()));
         } else {
@@ -64,7 +64,7 @@ namespace ospray {
       const float r = 0.03f * reduce_max(dims);
       const float R = 0.08f * reduce_max(dims);
 
-      tasking::parallel_for(dims.z, [&](int z) {
+      tasking::parallel_for(dims.z, [&](int64_t z) {
         for (int y = 0; y < dims.y; ++y) {
           for (int x = 0; x < dims.x; ++x) {
             const float X = x - dims.x / 2;
@@ -88,7 +88,7 @@ namespace ospray {
       // volume attributes
 
       volume_node->child("voxelType")  = std::string("float");
-      volume_node->child("dimensions") = dims;
+      volume_node->child("dimensions") = vec3i(dims);
 
       // add volume to world
 
