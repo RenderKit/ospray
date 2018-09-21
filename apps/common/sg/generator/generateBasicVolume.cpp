@@ -61,8 +61,21 @@ namespace ospray {
 
       float *voxels = new float[numVoxels];
 
-      for (int i = 0; i < numVoxels; ++i)
-        voxels[i] = float(i);
+      const float r = 0.03f * reduce_max(dims);
+      const float R = 0.08f * reduce_max(dims);
+
+      tasking::parallel_for(dims.z, [&](int z) {
+        for (int y = 0; y < dims.y; ++y) {
+          for (int x = 0; x < dims.x; ++x) {
+            const float X = x - dims.x / 2;
+            const float Y = y - dims.y / 2;
+            const float Z = z - dims.z / 2;
+
+            float d = (R - std::sqrt(X*X + Y*Y));
+            voxels[dims.x * dims.y * z + dims.x * y + x] = r*r - d*d - Z*Z;
+          }
+        }
+      });
 
       // create data nodes
 
