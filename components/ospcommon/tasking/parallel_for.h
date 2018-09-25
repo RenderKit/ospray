@@ -33,7 +33,7 @@ namespace ospcommon {
       static_assert(is_valid_index<INDEX_T>::value,
                     "ospcommon::tasking::parallel_for() requires the type"
                     " INDEX_T to be unsigned char, short, int, uint, long,"
-                    " or size_t.");
+                    " long long, or size_t.");
 
       static_assert(has_operator_method_matching_param<TASK_T, INDEX_T>::value,
                     "ospcommon::tasking::parallel_for() requires the "
