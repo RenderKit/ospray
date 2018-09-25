@@ -9,6 +9,7 @@
 [tutorial]: #tutorial
 [camera]: #cameras
 [volume]: #volumes
+[texture transformations]: #texture2d-transformations
 [path tracer]: #path-tracer
 [point light]: #point-light-sphere-light
 [Compiling OSPRay]: #compiling-ospray

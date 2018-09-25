@@ -576,7 +576,7 @@ void ospRelease(OSPObject);
 ```
 
 This decreases its reference count and if the count reaches `0` the
-object will automatically get deleted.
+object will automatically get deleted. Passing `NULL` is not an error.
 
 ### Parameters
 
@@ -1824,11 +1824,10 @@ feature/performance trade-offs:
 
 ### Lights
 
-To let the given `renderer` create a new light source of given type
-`type` use
+To create a new light source of given type `type` use
 
 ``` {.cpp}
-OSPLight ospNewLight(OSPRenderer renderer, const char *type);
+OSPLight ospNewLight3(const char *type);
 ```
 
 The call returns `NULL` if that type of light is not known by the
@@ -1850,7 +1849,7 @@ The following light types are supported by most OSPRay renderers.
 The distant light (or traditionally the directional light) is thought to
 be very far away (outside of the scene), thus its light arrives (almost)
 as parallel rays. It is created by passing the type string “`distant`”
-to `ospNewLight`. In addition to the [general parameters](#lights)
+to `ospNewLight3`. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following
 special parameters:
 
@@ -1870,7 +1869,7 @@ about 0.53°.
 
 The sphere light (or the special case point light) is a light emitting
 uniformly in all directions. It is created by passing the type string
-“`sphere`” to `ospNewLight`. In addition to the [general
+“`sphere`” to `ospNewLight3`. In addition to the [general
 parameters](#lights) understood by all lights the sphere light supports
 the following special parameters:
 
@@ -1888,7 +1887,7 @@ tracer](#path-tracer)).
 #### Spot Light
 
 The spot light is a light emitting into a cone of directions. It is
-created by passing the type string “`spot`” to `ospNewLight`. In
+created by passing the type string “`spot`” to `ospNewLight3`. In
 addition to the [general parameters](#lights) understood by all lights
 the spot light supports the special parameters listed in the table.
 
@@ -1948,7 +1947,7 @@ tracer](#path-tracer)).
 
 The quad[^3] light is a planar, procedural area light source emitting
 uniformly on one side into the half space. It is created by passing the
-type string “`quad`” to `ospNewLight`. In addition to the [general
+type string “`quad`” to `ospNewLight3`. In addition to the [general
 parameters](#lights) understood by all lights the spot light supports
 the following special parameters:
 
@@ -1973,7 +1972,7 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-“`hdri`” to `ospNewLight`. In addition to the [parameter
+“`hdri`” to `ospNewLight3`. In addition to the [parameter
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
@@ -2023,7 +2022,7 @@ the HDRI light.
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-“`ambient`” to `ospNewLight`.
+“`ambient`” to `ospNewLight3`.
 
 Note that the [SciVis renderer](#scivis-renderer) uses ambient lights to
 control the color and intensity of the computed ambient occlusion (AO).
@@ -2119,7 +2118,7 @@ mesh](#triangle-mesh) with `vertex.texcoord` provided. The color
 textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
 encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
 linear format (and only the first component is used). Additionally, all
-textures support [texture transformations](#texture-transformations).
+textures support [texture transformations](#texture2d-transformations).
 
 <img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" />
 
@@ -2228,73 +2227,85 @@ table below.
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">normal</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: left;">normal map/scale</td>
+<td style="text-align: left;">default normal map/scale for all layers</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">baseNormal</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">base normal map/scale (overrides default normal)</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: right;">false</td>
 <td style="text-align: left;">flag specifying whether the material is thin or solid</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">thickness</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">thickness of the material (thin only), affects the amount of color attenuation due to specular transmission</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">backlight</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">amount of diffuse transmission (thin only) in [0–2], 1 is 50% reflection and 50% transmission, 2 is transmission only</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coat</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">clear coat layer weight in [0–1]</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coatIor</td>
 <td style="text-align: right;">1.5</td>
 <td style="text-align: left;">clear coat index of refraction</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">coatColor</td>
 <td style="text-align: right;">white</td>
 <td style="text-align: left;">clear coat color tint</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coatThickness</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">clear coat thickness, affects the amount of color attenuation</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coatRoughness</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">clear coat roughness in [0–1], 0 is perfectly smooth</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">coatNormal</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: left;">clear coat normal map/scale</td>
+<td style="text-align: left;">clear coat normal map/scale (overrides default normal)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">sheen</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">sheen layer weight in [0–1]</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">sheenColor</td>
 <td style="text-align: right;">white</td>
 <td style="text-align: left;">sheen color tint</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">sheenTint</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">how much sheen is tinted from sheenColor towards baseColor</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
@@ -2315,7 +2326,7 @@ table below.
 
 All parameters can be textured by passing a [texture](#texture) handle,
 suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
-transformations](#texture-transformations) are supported as well.
+transformations](#texture2d-transformations) are supported as well.
 
 <img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" />
 
@@ -2446,7 +2457,7 @@ CarPaint material, pass the type string “`CarPaint`” to
 
 All parameters can be textured by passing a [texture](#texture) handle,
 suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
-transformations](#texture-transformations) are supported as well.
+transformations](#texture2d-transformations) are supported as well.
 
 <img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" />
 
@@ -2529,7 +2540,7 @@ coefficients, based on data from https://refractiveindex.info/.
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
 [texture](#texture) `map_roughness` ([texture
-transformations](#texture-transformations) are supported as well) to
+transformations](#texture2d-transformations) are supported as well) to
 create interesting edging effects.
 
 <img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
@@ -2557,7 +2568,7 @@ for reflectivity at normal incidence `color`. As in [Metal](#metal) the
 `roughness` parameter controls the variation of microfacets and thus how
 polished the alloy will look. All parameters can be textured by passing
 a [texture](#texture) handle, prefixed with “`map_`”; [texture
-transformations](#texture-transformations) are supported as well.
+transformations](#texture2d-transformations) are supported as well.
 
 <img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
 
@@ -2606,7 +2617,7 @@ type string “`ThinGlass`” to `ospNewMaterial2`. Its parameters are
 For convenience the attenuation is controlled the same way as with the
 [Glass](#glass) material. Additionally, the color due to attenuation can
 be modulated with a [texture](#texture) `map_attenuationColor` ([texture
-transformations](#texture-transformations) are supported as well). If
+transformations](#texture2d-transformations) are supported as well). If
 present, the color component of [geometries](#geometries) is also used
 for the attenuation color. The `thickness` parameter sets the (virtual)
 thickness and allows for easy exchange of parameters with the (real)
@@ -2637,7 +2648,7 @@ to `ospNewMaterial2`. Its parameters are listed in the table below.
 
 The color of the base coat `baseColor` can be textured by a
 [texture](#texture) `map_baseColor`, which also supports [texture
-transformations](#texture-transformations). If present, the color
+transformations](#texture2d-transformations). If present, the color
 component of [geometries](#geometries) is also used for the color of the
 base coat. parameter `flakeAmount` controls the proportion of flakes in
 the base coat, so when setting it to 1 the `baseColor` will not be
@@ -2662,9 +2673,9 @@ parameters of lights: [`color` and `intensity`](#lights).
 
 ### Texture
 
-OSPRay currently implements only one texture type (`texture2d`), but is
-open for extension to other types by applications. More types may be
-added in future releases.
+OSPRay currently implements two texture types (`texture2d` and `volume`)
+and is open for extension to other types by applications. More types may
+be added in future releases.
 
 To create a new texture use
 
@@ -2674,7 +2685,11 @@ OSPTexture ospNewTexture(const char *type);
 
 The call returns `NULL` if the texture could not be created with the
 given parameters, or else an `OSPTexture` handle to the created texture.
-Parameters
+
+#### Texture2D
+
+The `texture2D` texture type implements an image-based texture, where
+its parameters are as follows
 
 | Type    | Name  | Description                        |
 |:--------|:------|:-----------------------------------|
@@ -2707,10 +2722,27 @@ The supported texture formats for `texture2d` are:
 The texel data addressed by `source` starts with the texels in the lower
 left corner of the texture image, like in OpenGL. Per default a texture
 fetch is filtered by performing bi-linear interpolation of the nearest
-2×2 texels; if instead fetching only the nearest texel is desired
-(i.e. no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
+2×2 texels; if instead fetching only the nearest texel is desired (
+i.e. no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
-### Texture Transformations
+#### TextureVolume
+
+The `volume` texture type implements texture lookups based on 3D world
+coordinates of the surface hit point on the associated geometry. If the
+given hit point is within the attached volume, the volume is sampled and
+classified with the transfer function attached to the volume. This
+implements the ability to visualize volume values (as colored by its
+transfer function) on arbitrary surfaces inside the volume (as opposed
+to an isosurface showing a particular value in the volume). Its
+parameters are as follows
+
+| Type      | Name   | Description                           |
+|:----------|:-------|:--------------------------------------|
+| OSPVolume | volume | volume used to generate color lookups |
+
+: Parameters of `volume` texture type
+
+### Texture2D Transformations
 
 All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
