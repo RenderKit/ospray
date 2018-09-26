@@ -14,10 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
-PROJECT(OSPRay)
+SET(CMAKE_DISABLE_SOURCE_CHANGES ON)
+SET(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 CMAKE_POLICY(SET CMP0003 NEW) # since 2.6
@@ -30,9 +28,17 @@ ENDIF()
 IF(POLICY CMP0042)
   CMAKE_POLICY(SET CMP0042 NEW) # since 3.0
 ENDIF()
+IF(POLICY CMP0048)
+  CMAKE_POLICY(SET CMP0048 OLD) # since 3.0
+ENDIF()
 IF(POLICY CMP0054)
   CMAKE_POLICY(SET CMP0054 OLD) # since 3.1
 ENDIF()
+IF(POLICY CMP0074)
+  CMAKE_POLICY(SET CMP0074 NEW) # since 3.12
+ENDIF()
+
+PROJECT(OSPRay)
 
 # configure directories for components we are going to include
 SET(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
