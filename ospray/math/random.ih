@@ -316,9 +316,9 @@ inline void LDSampler_init(varying LDSampler* uniform self, unsigned int pixelID
 
   unsigned int hash = 0;
   hash = MurmurHash3_mix(hash, pixelID);
-  hash = MurmurHash3_finalize(hash);
+  self->scramble = MurmurHash3_finalize(hash);
 
-  self->scramble = hash;
+  hash = MurmurHash3_mix(hash, sampleIndex);
   self->lcg = MurmurHash3_finalize(hash);
 }
 
