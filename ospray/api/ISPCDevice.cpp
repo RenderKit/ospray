@@ -212,6 +212,10 @@ namespace ospray {
     void ISPCDevice::removeParam(OSPObject _object, const char *name)
     {
       ManagedObject *object = (ManagedObject *)_object;
+      // ManagedObjects have to be decref before removing them
+      ManagedObject *existing = object->getParam<ManagedObject*>(name, nullptr);
+      if (existing)
+          existing->refDec();
       object->removeParam(name);
     }
 
