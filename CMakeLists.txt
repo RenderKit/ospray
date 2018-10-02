@@ -77,6 +77,13 @@ INCLUDE(components/configure.cmake)
 ADD_SUBDIRECTORY(ospray)
 
 ##############################################################
+# OSPRay tutorials
+##############################################################
+IF (OSPRAY_ENABLE_TUTORIALS)
+  ADD_SUBDIRECTORY(tutorials)
+ENDIF()
+
+##############################################################
 # OSPRay sample apps; at the end: they may need modules
 ##############################################################
 IF (OSPRAY_ENABLE_APPS)

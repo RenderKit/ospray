@@ -134,6 +134,7 @@ INCLUDE(GNUInstallDirs)
 # Must be before ISA config and package
 INCLUDE(configure_embree)
 
+OPTION(OSPRAY_ENABLE_TUTORIALS "Enable the 'tutorials' subtree in the build." ON)
 
 OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
