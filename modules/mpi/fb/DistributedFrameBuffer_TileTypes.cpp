@@ -88,14 +88,13 @@ namespace ospray {
       expectedInNextGeneration += tile.children;
 
       if (missingInCurrentGeneration < 0) {
-        // TODO: Log to error
-        std::cout << "negative missing on " << mpicommon::globalRank()
+        std::stringstream str;
+        str << "negative missing on " << mpicommon::globalRank()
           << ", missing = " << missingInCurrentGeneration
           << ", expectedInNex = " << expectedInNextGeneration
           << ", current generation = " << currentGeneration
-          << ", tile = " << tile.region.lower
-          << "\n";
-        std::cout << std::flush;
+          << ", tile = " << tile.region.lower;
+        handleError(OSP_INVALID_OPERATION, str.str());
       }
 
       while (missingInCurrentGeneration == 0 && expectedInNextGeneration > 0) {
@@ -110,28 +109,26 @@ namespace ospray {
             expectedInNextGeneration += bt->tile.children;
           }
           if (missingInCurrentGeneration < 0) {
-            // TODO: Log to error
-            std::cout << "negative missing on " << mpicommon::globalRank()
+            std::stringstream str;
+            str << "negative missing on " << mpicommon::globalRank()
               << ", missing = " << missingInCurrentGeneration
               << ", expectedInNex = " << expectedInNextGeneration
               << ", current generation = " << currentGeneration
-              << ", tile = " << tile.region.lower
-              << "\n";
-            std::cout << std::flush;
+              << ", tile = " << tile.region.lower;
+            handleError(OSP_INVALID_OPERATION, str.str());
           }
         }
       }
     }
 
     if (missingInCurrentGeneration < 0) {
-      // TODO: Log to error
-      std::cout << "negative missing on " << mpicommon::globalRank()
+      std::stringstream str;
+      str << "negative missing on " << mpicommon::globalRank()
         << ", missing = " << missingInCurrentGeneration
         << ", expectedInNex = " << expectedInNextGeneration
         << ", current generation = " << currentGeneration
-        << ", tile = " << tile.region.lower
-        << "\n";
-      std::cout << std::flush;
+        << ", tile = " << tile.region.lower;
+      handleError(OSP_INVALID_OPERATION, str.str());
     }
 
     if (missingInCurrentGeneration == 0) {
