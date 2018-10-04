@@ -25,8 +25,6 @@
 // ospray
 #include "ospray/common/ObjectHandle.h"
 
-#define OSP_MPI_COMPRESSION_THRESHOLD 16
-
 namespace ospray {
   namespace mpi {
     namespace messaging {

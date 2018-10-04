@@ -15,8 +15,6 @@
 ## ======================================================================== ##
 
 OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
-OPTION(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
-  ${OSPRAY_APPS_EXAMPLEVIEWER})
 
 # Note: the MPI example viewer depends on tfn lib, so we must make sure that
 # was built.
@@ -27,6 +25,12 @@ IF (NOT TARGET ospray_tfn OR NOT TARGET ospray_imgui_util_sg
 ENDIF ()
 
 IF (OSPRAY_MODULE_MPI)
+  OPTION(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
+    ${OSPRAY_APPS_EXAMPLEVIEWER})
+
+  SET(OSP_MPI_COMPRESSION_THRESHOLD 16 CACHE STRING
+    "Min. number of ranks to enable message compression at (number)" )
+  MARK_AS_ADVANCED(OSP_MPI_COMPRESSION_THRESHOLD)
 
   SET(OSPRAY_DEFAULT_COMPONENT mpi)
 
@@ -68,6 +72,8 @@ IF (OSPRAY_MODULE_MPI)
     ospray_mpi_maml
     snappy
   )
+  target_compile_definitions(ospray_module_mpi PUBLIC
+    -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 
   ##############################################################
   # MPI DEVICE - mpi worker
