@@ -105,7 +105,7 @@ export void Volume_setVolumeClippingBox(void *uniform _self, const uniform box3f
 }
 
 export void Volume_setAffineTransformations(void *uniform _self,
-					                                  const uniform AffineSpace3f &xfm,
+                                            const uniform AffineSpace3f &xfm,
                                             const uniform AffineSpace3f &rcp_xfm)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
