@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.7.0 of OSPRay. For changes and new features
+This is release v1.7.0 (devel) of OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
 more information.
 
@@ -3196,8 +3196,8 @@ Prerequisites for MPI Mode
 --------------------------
 
 In addition to the standard build requirements of OSPRay, you must have
-the following items available in your environment in order to build&run
-OSPRay in MPI mode:
+the following items available in your environment in order to build &
+run OSPRay in MPI mode:
 
 -   An MPI enabled multi-node environment, such as an HPC cluster
 -   An MPI implementation you can build against (i.e. Intel MPI,
@@ -3256,7 +3256,7 @@ have a lot of variance in how expensive each tile is to render.
 |:-----|:--------------------|--------:|:--------------------------------------|
 | bool | dynamicLoadBalancer |    false| whether to use dynamic load balancing |
 
-: Parameters specific to the `mpi_offload` device
+: Parameters specific to the `mpi_offload` device.
 
 ### Distributed Rendering
 
@@ -3303,7 +3303,7 @@ ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
 
     mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer <scene file> --osp:mpi
 
-### Separate Application&Worker Launches
+### Separate Application & Worker Launches
 
 The second option is to explicitly launch the app on rank 0 and worker
 ranks on the other nodes. This is done by running `ospray_mpi_worker` on
@@ -3349,7 +3349,7 @@ device.
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>void*</code></td>
+<td style="text-align: left;">void*</td>
 <td style="text-align: left;">worldCommunicator</td>
 <td style="text-align: left;">A pointer to the <code>MPI_Comm</code> which should be used as OSPRay’s world communicator. This will set how many ranks OSPRay should expect to participate in rendering. The default is <code>MPI_COMM_WORLD</code> where all ranks are expected to participate in rendering.</td>
 </tr>
@@ -3372,12 +3372,12 @@ can create a communicator with one rank per-node to then run OSPRay on
 one process per-node. The remaining ranks on each node can then
 aggregate their data to the OSPRay process for rendering.
 
-There are also two optional parameters available on the OSPModel created
-using the distributed device, which can be set to tell OSPRay about your
-application’s data distribution.
+The model used by the distributed device takes three additional
+parameters, to allow users to express their data distribution to OSPRay.
+All models should be disjoint to ensure correct sort-last compositing.
 
-<table style="width:97%;">
-<caption>Parameters for the distributed OSPModel</caption>
+<table style="width:98%;">
+<caption>Parameters for the distributed <code>OSPModel</code>.</caption>
 <colgroup>
 <col style="width: 14%" />
 <col style="width: 23%" />
@@ -3392,36 +3392,39 @@ application’s data distribution.
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>box3f[]</code></td>
-<td style="text-align: left;">regions</td>
-<td style="text-align: left;"><a href="#data">data</a> array of boxes which bound the data owned by the current rank, used for sort-last compositing. The global set of regions specified by all ranks must be disjoint for correct compositing.</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">id</td>
+<td style="text-align: left;">An integer that uniquely identifies this piece of distributed data. For example, in a common case of one sub-brick per-rank, this would just be the region’s MPI rank. Multiple ranks can specify models with the same ID, in which case the rendering work for the model will be shared among them.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>box3f[]</code></td>
-<td style="text-align: left;">ghostRegions</td>
-<td style="text-align: left;">Optional <a href="#data">data</a> array of boxes which bound the ghost data on each rank. Using these shared data between nodes can be used for computing secondary ray effects such as ambient occlusion. If specifying ghostRegions, there should be one ghostRegion for each region.</td>
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">region.lower</td>
+<td style="text-align: left;">Override the original model geometry + volume bounds with a custom lower bound position. This can be used to clip geometry in the case the objects cross over to another region owned by a different node. For example, rendering a set of spheres with radius.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">region.upper</td>
+<td style="text-align: left;">Override the original model geometry + volume bounds with a custom upper bound position.</td>
 </tr>
 </tbody>
 </table>
 
-: Parameters for the distributed OSPModel
-
-See the distributed device examples in the MPI module for examples.
+: Parameters for the distributed `OSPModel`.
 
 The renderer supported when using the distributed device is the
 `mpi_raycast` renderer. This renderer is an experimental renderer and
-currently only supports ambient occlusion (on the local data only). To
-compute correct ambient occlusion across the distributed data the
-application is responsible for replicating ghost data and specifying the
-ghostRegions and regions as described above.
+currently only supports ambient occlusion (on the local data only, with
+optional ghost data). To compute correct ambient occlusion across the
+distributed data the application is responsible for replicating ghost
+data and specifying the ghost models and models as described above.
 
-<table style="width:97%;">
-<caption>Parameters for the distributed OSPModel</caption>
+<table style="width:98%;">
+<caption>Parameters for the <code>mpi_raycast</code> renderer.</caption>
 <colgroup>
+<col style="width: 25%" />
 <col style="width: 14%" />
-<col style="width: 23%" />
-<col style="width: 11%" />
-<col style="width: 48%" />
+<col style="width: 12%" />
+<col style="width: 44%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3433,6 +3436,18 @@ ghostRegions and regions as described above.
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">OSPModel/OSPModel[]</td>
+<td style="text-align: left;">model</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;">the <a href="#model">model</a> to render, can optionally be a <a href="#data">data</a> array of multiple models</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">OSPModel/OSPModel[]</td>
+<td style="text-align: left;">ghostModel</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;">the optional <a href="#model">model</a> containing the ghost geometry for ambient occlusion; when setting a <a href="#data">data</a> array for both <code>model</code> and <code>ghostModel</code>, each individual ghost model shadows only its corresponding model</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">aoSamples</td>
 <td style="text-align: right;">0</td>
@@ -3441,7 +3456,9 @@ ghostRegions and regions as described above.
 </tbody>
 </table>
 
-: Parameters for the distributed OSPModel
+: Parameters for the `mpi_raycast` renderer.
+
+See the distributed device examples in the MPI module for examples.
 
 Scenegraph
 ==========
