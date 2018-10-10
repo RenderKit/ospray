@@ -65,11 +65,11 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
   // set GLFW callbacks
   glfwSetFramebufferSizeCallback(
       glfwWindow, [](GLFWwindow *, int newWidth, int newHeight) {
-        activeWindow->reshape(ospcommon::vec2i({newWidth, newHeight}));
+        activeWindow->reshape(ospcommon::vec2i{newWidth, newHeight});
       });
 
   glfwSetCursorPosCallback(glfwWindow, [](GLFWwindow *, double x, double y) {
-    activeWindow->motion(ospcommon::vec2f({x, y}));
+    activeWindow->motion(ospcommon::vec2f{x, y});
   });
 
   // OSPRay setup
@@ -87,19 +87,19 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   ospSetVec3f(camera,
               "pos",
-              osp::vec3f({arcballCamera->eyePos().x,
-                          arcballCamera->eyePos().y,
-                          arcballCamera->eyePos().z}));
+              osp::vec3f{arcballCamera->eyePos().x,
+                         arcballCamera->eyePos().y,
+                         arcballCamera->eyePos().z});
   ospSetVec3f(camera,
               "dir",
-              osp::vec3f({arcballCamera->lookDir().x,
-                          arcballCamera->lookDir().y,
-                          arcballCamera->lookDir().z}));
+              osp::vec3f{arcballCamera->lookDir().x,
+                         arcballCamera->lookDir().y,
+                         arcballCamera->lookDir().z});
   ospSetVec3f(camera,
               "up",
-              osp::vec3f({arcballCamera->upDir().x,
-                          arcballCamera->upDir().y,
-                          arcballCamera->upDir().z}));
+              osp::vec3f{arcballCamera->upDir().x,
+                         arcballCamera->upDir().y,
+                         arcballCamera->upDir().z});
 
   ospCommit(camera);
 
@@ -216,19 +216,19 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
       ospSetf(camera, "aspect", windowSize.x / (float)windowSize.y);
       ospSetVec3f(camera,
                   "pos",
-                  osp::vec3f({arcballCamera->eyePos().x,
-                              arcballCamera->eyePos().y,
-                              arcballCamera->eyePos().z}));
+                  osp::vec3f{arcballCamera->eyePos().x,
+                             arcballCamera->eyePos().y,
+                             arcballCamera->eyePos().z});
       ospSetVec3f(camera,
                   "dir",
-                  osp::vec3f({arcballCamera->lookDir().x,
-                              arcballCamera->lookDir().y,
-                              arcballCamera->lookDir().z}));
+                  osp::vec3f{arcballCamera->lookDir().x,
+                             arcballCamera->lookDir().y,
+                             arcballCamera->lookDir().z});
       ospSetVec3f(camera,
                   "up",
-                  osp::vec3f({arcballCamera->upDir().x,
-                              arcballCamera->upDir().y,
-                              arcballCamera->upDir().z}));
+                  osp::vec3f{arcballCamera->upDir().x,
+                             arcballCamera->upDir().y,
+                             arcballCamera->upDir().z});
 
       ospCommit(camera);
     }

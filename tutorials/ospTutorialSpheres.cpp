@@ -46,22 +46,22 @@ OSPGeometry createGroundPlaneGeometry()
   // extent of plane in the (x, z) directions
   const float planeExtent = 1.5f;
 
-  const ospcommon::vec3f up   = ospcommon::vec3f({0.f, 1.f, 0.f});
-  const ospcommon::vec4f gray = ospcommon::vec4f({0.9f, 0.9f, 0.9f, 0.75f});
+  const ospcommon::vec3f up   = ospcommon::vec3f{0.f, 1.f, 0.f};
+  const ospcommon::vec4f gray = ospcommon::vec4f{0.9f, 0.9f, 0.9f, 0.75f};
 
   vertices.push_back(
-      Vertex({ospcommon::vec3f({-planeExtent, -1.f, -planeExtent}), up, gray}));
+      Vertex{ospcommon::vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
   vertices.push_back(
-      Vertex({ospcommon::vec3f({planeExtent, -1.f, -planeExtent}), up, gray}));
+      Vertex{ospcommon::vec3f{planeExtent, -1.f, -planeExtent}, up, gray});
   vertices.push_back(
-      Vertex({ospcommon::vec3f({planeExtent, -1.f, planeExtent}), up, gray}));
+      Vertex{ospcommon::vec3f{planeExtent, -1.f, planeExtent}, up, gray});
   vertices.push_back(
-      Vertex({ospcommon::vec3f({-planeExtent, -1.f, planeExtent}), up, gray}));
+      Vertex{ospcommon::vec3f{-planeExtent, -1.f, planeExtent}, up, gray});
 
-  quadIndices.push_back(QuadIndex({startingIndex,
-                                   startingIndex + 1,
-                                   startingIndex + 2,
-                                   startingIndex + 3}));
+  quadIndices.push_back(QuadIndex{startingIndex,
+                                  startingIndex + 1,
+                                  startingIndex + 2,
+                                  startingIndex + 3});
 
   // stripes on ground plane
   const float stripeWidth  = 0.025f;
@@ -69,7 +69,7 @@ OSPGeometry createGroundPlaneGeometry()
   const size_t numStripes  = 10;
 
   const ospcommon::vec4f stripeColor =
-      ospcommon::vec4f({1.0f, 0.1f, 0.1f, 1.f});
+      ospcommon::vec4f{1.0f, 0.1f, 0.1f, 1.f};
 
   for (size_t i = 0; i < numStripes; i++) {
     // the center coordinate of the stripe, either in the x or z direction
@@ -83,51 +83,51 @@ OSPGeometry createGroundPlaneGeometry()
     startingIndex = vertices.size();
 
     vertices.push_back(
-        Vertex({ospcommon::vec3f({-paddedExtent, yLevel, coord - stripeWidth}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{-paddedExtent, yLevel, coord - stripeWidth},
+               up,
+               stripeColor});
     vertices.push_back(
-        Vertex({ospcommon::vec3f({paddedExtent, yLevel, coord - stripeWidth}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{paddedExtent, yLevel, coord - stripeWidth},
+               up,
+               stripeColor});
     vertices.push_back(
-        Vertex({ospcommon::vec3f({paddedExtent, yLevel, coord + stripeWidth}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{paddedExtent, yLevel, coord + stripeWidth},
+               up,
+               stripeColor});
     vertices.push_back(
-        Vertex({ospcommon::vec3f({-paddedExtent, yLevel, coord + stripeWidth}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{-paddedExtent, yLevel, coord + stripeWidth},
+               up,
+               stripeColor});
 
-    quadIndices.push_back(QuadIndex({startingIndex,
-                                     startingIndex + 1,
-                                     startingIndex + 2,
-                                     startingIndex + 3}));
+    quadIndices.push_back(QuadIndex{startingIndex,
+                                    startingIndex + 1,
+                                    startingIndex + 2,
+                                    startingIndex + 3});
 
     // z-direction stripes
     startingIndex = vertices.size();
 
     vertices.push_back(
-        Vertex({ospcommon::vec3f({coord - stripeWidth, yLevel, -paddedExtent}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{coord - stripeWidth, yLevel, -paddedExtent},
+               up,
+               stripeColor});
     vertices.push_back(
-        Vertex({ospcommon::vec3f({coord + stripeWidth, yLevel, -paddedExtent}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{coord + stripeWidth, yLevel, -paddedExtent},
+               up,
+               stripeColor});
     vertices.push_back(
-        Vertex({ospcommon::vec3f({coord + stripeWidth, yLevel, paddedExtent}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{coord + stripeWidth, yLevel, paddedExtent},
+               up,
+               stripeColor});
     vertices.push_back(
-        Vertex({ospcommon::vec3f({coord - stripeWidth, yLevel, paddedExtent}),
-                up,
-                stripeColor}));
+        Vertex{ospcommon::vec3f{coord - stripeWidth, yLevel, paddedExtent},
+               up,
+               stripeColor});
 
-    quadIndices.push_back(QuadIndex({startingIndex,
-                                     startingIndex + 1,
-                                     startingIndex + 2,
-                                     startingIndex + 3}));
+    quadIndices.push_back(QuadIndex{startingIndex,
+                                    startingIndex + 1,
+                                    startingIndex + 2,
+                                    startingIndex + 3});
   }
 
   // create OSPRay data objects
@@ -323,7 +323,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          ospcommon::vec2i({1024, 768}),
+          ospcommon::vec2i{1024, 768},
           ospcommon::box3f(ospcommon::vec3f(-1.f), ospcommon::vec3f(1.f)),
           model,
           renderer));
