@@ -134,6 +134,9 @@ void GLFWOSPRayWindow::setModel(OSPModel newModel)
 
   // commit the renderer
   ospCommit(renderer);
+
+  // clear frame buffer
+  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 }
 
 void GLFWOSPRayWindow::registerDisplayCallback(
@@ -230,6 +233,7 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
       ospCommit(camera);
     }
   }
+
   previousMouse = mouse;
 }
 
