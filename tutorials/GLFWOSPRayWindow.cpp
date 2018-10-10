@@ -110,7 +110,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
   ospCommit(renderer);
 
   // trigger window reshape events with current window size
-  reshape(windowSize);
+  glfwGetFramebufferSize(glfwWindow, &this->windowSize.x, &this->windowSize.y);
+  reshape(this->windowSize);
 }
 
 GLFWOSPRayWindow::~GLFWOSPRayWindow()
