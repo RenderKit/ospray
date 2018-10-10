@@ -234,6 +234,9 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
+  // clock used to compute frame rate
+  static auto displayStart = std::chrono::high_resolution_clock::now();
+
   // if a display callback has been registered, call it
   if (displayCallback) {
     displayCallback(this);
@@ -281,4 +284,16 @@ void GLFWOSPRayWindow::display()
 
   // swap buffers
   glfwSwapBuffers(glfwWindow);
+
+  // display frame rate in window title
+  auto displayEnd = std::chrono::high_resolution_clock::now();
+  auto durationMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd - displayStart);
+  displayStart = displayEnd;
+
+  const float frameRate = 1000.f / float(durationMilliseconds.count());
+
+  std::stringstream windowTitle;
+  windowTitle << "OSPRay: " << std::setprecision(3) << frameRate << " fps";
+
+  glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
 }
