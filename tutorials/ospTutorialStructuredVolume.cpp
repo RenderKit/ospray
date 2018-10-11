@@ -126,12 +126,8 @@ OSPVolume createRandomVolume(size_t numPoints, size_t volumeDimension)
   // set the transfer function on the volume
   ospSetObject(volume, "transferFunction", transferFunction);
 
-  // other volume attributes attributes
-  ospSet1f(volume, "samplingRate", 1.f);
-  //ospSet1i(volume, "gradientShadingEnabled", 1);
-  //ospSet1i(volume, "preIntegration", 1);
-  //ospSet1i(volume, "singleShade", 1);
-  ospSet1i(volume, "adaptiveSampling", 0);
+  // enable gradient shading
+  ospSet1i(volume, "gradientShadingEnabled", 1);
 
   // commit the volume
   ospCommit(volume);
@@ -175,7 +171,6 @@ OSPRenderer createRenderer()
   ospCommit(lightsData);
 
   // complete setup of renderer
-  ospSet1i(renderer, "aoSamples", 1);
   ospSetData(renderer, "lights", lightsData);
   ospCommit(renderer);
 
