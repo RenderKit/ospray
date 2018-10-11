@@ -9,8 +9,8 @@ Prerequisites for MPI Mode
 --------------------------
 
 In addition to the standard build requirements of OSPRay, you must have
-the following items available in your environment in order to build&run
-OSPRay in MPI mode:
+the following items available in your environment in order to
+build & run OSPRay in MPI mode:
 
 -   An MPI enabled multi-node environment, such as an HPC cluster
 -   An MPI implementation you can build against (i.e. Intel MPI,
@@ -65,11 +65,11 @@ Please note that these options will likely only pay off for scenes which
 have heavy rendering load (e.g. path tracing a non-trivial scene) and
 have a lot of variance in how expensive each tile is to render.
 
-  Type  Name                  Default Description
-  ----- -------------------- -------- --------------------------------------
-  bool  dynamicLoadBalancer     false whether to use dynamic load balancing
-  ----- -------------------- -------- --------------------------------------
-  : Parameters specific to the `mpi_offload` device
+  Type  Name                  Default  Description
+  ----- -------------------- --------  --------------------------------------
+  bool  dynamicLoadBalancer     false  whether to use dynamic load balancing
+  ----- -------------------- --------  --------------------------------------
+  : Parameters specific to the `mpi_offload` device.
 
 ### Distributed Rendering
 
@@ -116,7 +116,7 @@ ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
 
     mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer <scene file> --osp:mpi
 
-### Separate Application&Worker Launches
+### Separate Application & Worker Launches
 
 The second option is to explicitly launch the app on rank 0 and worker
 ranks on the other nodes. This is done by running `ospray_mpi_worker` on
@@ -146,65 +146,82 @@ changes to the application.
 The following additional parameter can be set on the `mpi_distributed`
 device.
 
-  ------- ----------------- ----------------------------------------------
-  Type    Name              Description
-  ------- ----------------- ----------------------------------------------
-  `void*` worldCommunicator  A pointer to the `MPI_Comm` which should be
-                             used as OSPRay's world communicator. This will
-                             set how many ranks OSPRay should expect to
-                             participate in rendering. The default is
-                             `MPI_COMM_WORLD` where all ranks are expected
-                             to participate in rendering.
-  ------ ------------ ----------------------------------------------------
+  ------ ------------------ ----------------------------------------------------
+  Type   Name               Description
+  ------ ------------------ ----------------------------------------------------
+  void*  worldCommunicator  A pointer to the `MPI_Comm` which should be used as
+                            OSPRay's world communicator. This will set how many
+                            ranks OSPRay should expect to participate in
+                            rendering. The default is `MPI_COMM_WORLD` where all
+                            ranks are expected to participate in rendering.
+  ------ ------------------ ----------------------------------------------------
   : Parameters for the `mpi_distributed` device.
 
 By setting the `worldCommunicator` parameter to a different communicator
 than `MPI_COMM_WORLD` the client application can tune how OSPRay is run
 within its processes. The default uses `MPI_COMM_WORLD` and thus expects
-all processes to also participate in rendering, thus if a subset of processes
-do not call collectives like `ospRenderFrame` the application would hang.
+all processes to also participate in rendering, thus if a subset of
+processes do not call collectives like `ospRenderFrame` the application
+would hang.
 
-For example, an MPI parallel application may be
-run with one process per-core, however OSPRay is multithreaded and will
-perform best when run with one process per-node. By splitting `MPI_COMM_WORLD`
-the application can create a communicator with one rank per-node to then
-run OSPRay on one process per-node. The remaining ranks on each node
-can then aggregate their data to the OSPRay process for rendering.
+For example, an MPI parallel application may be run with one process
+per-core, however OSPRay is multithreaded and will perform best when run
+with one process per-node. By splitting `MPI_COMM_WORLD` the application
+can create a communicator with one rank per-node to then run OSPRay on
+one process per-node. The remaining ranks on each node can then
+aggregate their data to the OSPRay process for rendering.
 
-There are also two optional parameters available on the OSPModel created
-using the distributed device, which can be set to tell OSPRay about your
-application's data distribution.
+The model used by the distributed device takes three additional
+parameters, to allow users to express their data distribution to OSPRay.
+All models should be disjoint to ensure correct sort-last compositing.
 
-  ---------- ----------------- ----------------------------------------------
-  Type       Name              Description
-  ---------- ----------------- ----------------------------------------------
-  `box3f[]`  regions           [data] array of boxes which bound the data owned by
-                               the current rank, used for sort-last compositing.
-                               The global set of regions specified by all ranks
-                               must be disjoint for correct compositing.
+  ------ ------------- ---------------------------------------------------------
+  Type   Name          Description
+  ------ ------------- ---------------------------------------------------------
+  int    id            An integer that uniquely identifies this piece of
+                       distributed data. For example, in a common case of one
+                       sub-brick per-rank, this would just be the region's MPI
+                       rank. Multiple ranks can specify models with the same ID,
+                       in which case the rendering work for the model will be
+                       shared among them.
 
-  `box3f[]`  ghostRegions      Optional [data] array of boxes which bound the ghost data on
-                               each rank. Using these shared data between nodes
-                               can be used for computing secondary ray effects
-                               such as ambient occlusion. If specifying ghostRegions,
-                               there should be one ghostRegion for each region.
-  ------ ------------ -------------------------------------------------------
-  : Parameters for the distributed OSPModel
+  vec3f  region.lower  Override the original model geometry + volume bounds with
+                       a custom lower bound position. This can be used to clip
+                       geometry in the case the objects cross over to another
+                       region owned by a different node. For example, rendering
+                       a set of spheres with radius.
 
-See the distributed device examples in the MPI module for examples.
+  vec3f  region.upper  Override the original model geometry + volume bounds with
+                       a custom upper bound position.
+  ------ ------------- ---------------------------------------------------------
+  : Parameters for the distributed `OSPModel`.
 
 The renderer supported when using the distributed device is the
 `mpi_raycast` renderer. This renderer is an experimental renderer and
-currently only supports ambient occlusion (on the local data only). To
-compute correct ambient occlusion across the distributed data the
-application is responsible for replicating ghost data and specifying the
-ghostRegions and regions as described above.
+currently only supports ambient occlusion (on the local data only, with
+optional ghost data). To compute correct ambient occlusion across the
+distributed data the application is responsible for replicating ghost
+data and specifying the ghost models and models as described above.
 
-  ---------- ----------------- -------- -------------------------------------
-  Type       Name               Default Description
-  ---------- ----------------- -------- -------------------------------------
-  int        aoSamples                0  number of rays per sample to compute
-                                         ambient occlusion
-  ------ ------------ -------------------------------------------------------
-  : Parameters for the distributed OSPModel
+  -------------------- ----------- --------  -----------------------------------
+  Type                 Name         Default  Description
+  -------------------- ----------- --------  -----------------------------------
+  OSPModel/OSPModel[]  model           NULL  the [model] to render, can
+                                             optionally be a [data] array of
+                                             multiple models
+
+  OSPModel/OSPModel[]  ghostModel      NULL  the optional [model] containing the
+                                             ghost geometry for ambient
+                                             occlusion; when setting a [data]
+                                             array for both `model` and
+                                             `ghostModel`, each individual
+                                             ghost model shadows only its
+                                             corresponding model
+
+  int                  aoSamples          0  number of rays per sample to
+                                             compute ambient occlusion
+  -------------------- ----------- --------  -----------------------------------
+  : Parameters for the `mpi_raycast` renderer.
+
+See the distributed device examples in the MPI module for examples.
 

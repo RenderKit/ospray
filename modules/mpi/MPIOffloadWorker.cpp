@@ -104,7 +104,15 @@ namespace ospray {
     {
       auto &device = ospray::api::Device::current;
 
-      maml::init();
+      auto OSPRAY_FORCE_COMPRESSION =
+        utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
+      // Turning on the compression past 64 ranks seems to be a good
+      // balancing point for cost of compressing vs. performance gain
+      auto enableCompression =
+        OSPRAY_FORCE_COMPRESSION.value_or(
+            mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
+
+      maml::init(enableCompression);
 
       // NOTE(jda) - This guard guarentees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left

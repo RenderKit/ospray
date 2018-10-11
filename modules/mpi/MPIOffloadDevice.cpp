@@ -373,10 +373,7 @@ namespace ospray {
 
     // MPIDevice definitions //////////////////////////////////////////////////
 
-    MPIOffloadDevice::MPIOffloadDevice()
-    {
-      maml::init();
-    }
+    MPIOffloadDevice::MPIOffloadDevice() {}
 
     MPIOffloadDevice::~MPIOffloadDevice()
     {
@@ -436,6 +433,16 @@ namespace ospray {
                                    "start.");
         }
       }
+
+      auto OSPRAY_FORCE_COMPRESSION =
+        utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
+      // Turning on the compression past 64 ranks seems to be a good
+      // balancing point for cost of compressing vs. performance gain
+      auto enableCompression =
+        OSPRAY_FORCE_COMPRESSION.value_or(
+            mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
+
+      maml::init(enableCompression);
 
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */

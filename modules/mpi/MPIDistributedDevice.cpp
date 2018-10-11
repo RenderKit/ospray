@@ -22,6 +22,7 @@
 #include "ospray/lights/Light.h"
 #include "ospray/transferFunction/TransferFunction.h"
 #include "ospray/api/ISPCDevice.h"
+#include "ospcommon/utility/getEnvVar.h"
 //mpiCommon
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi
@@ -32,6 +33,8 @@
 //distributed objects
 #include "render/distributed/DistributedRaycast.h"
 #include "common/DistributedModel.h"
+
+#include "ospcommon/tasking/tasking_system_handle.h"
 
 #ifdef OPEN_MPI
 # include <thread>
@@ -62,29 +65,6 @@ namespace ospray {
       return (API_TYPE)(int64)handle;
     }
 
-    template <typename OSPRAY_TYPE>
-    inline OSPRAY_TYPE& lookupDistributedObject(OSPObject obj)
-    {
-      auto &handle = reinterpret_cast<ObjectHandle&>(obj);
-      auto *object = (OSPRAY_TYPE*)handle.lookup();
-
-      if (!object)
-        throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
-
-      return *object;
-    }
-
-    template <typename OSPRAY_TYPE>
-    inline OSPRAY_TYPE* lookupObject(OSPObject obj)
-    {
-      auto &handle = reinterpret_cast<ObjectHandle&>(obj);
-      if (handle.defined()) {
-        return (OSPRAY_TYPE*)handle.lookup();
-      } else {
-        return (OSPRAY_TYPE*)obj;
-      }
-    }
-
     static void embreeErrorFunc(void *, const RTCError code, const char* str)
     {
       postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
@@ -93,10 +73,7 @@ namespace ospray {
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
 
-    MPIDistributedDevice::MPIDistributedDevice()
-    {
-      maml::init();
-    }
+    MPIDistributedDevice::MPIDistributedDevice() {}
 
     MPIDistributedDevice::~MPIDistributedDevice()
     {
@@ -113,6 +90,8 @@ namespace ospray {
 
     void MPIDistributedDevice::commit()
     {
+      Device::commit();
+
       if (!initialized) {
         int _ac = 1;
         const char *_av[] = {"ospray_mpi_distributed_device"};
@@ -122,9 +101,7 @@ namespace ospray {
         shouldFinalizeMPI = mpicommon::init(&_ac, _av, setComm == nullptr);
 
         if (setComm) {
-          MPI_CALL(Comm_dup(*setComm, &mpicommon::world.comm));
-          MPI_CALL(Comm_rank(mpicommon::world.comm, &mpicommon::world.rank));
-          MPI_CALL(Comm_size(mpicommon::world.comm, &mpicommon::world.size));
+          mpicommon::world.setTo(*setComm);
         }
 
         auto &embreeDevice = api::ISPCDevice::embreeDevice;
@@ -138,9 +115,17 @@ namespace ospray {
           assert(erc == RTC_ERROR_NONE);
         }
         initialized = true;
-      }
 
-      Device::commit();
+        auto OSPRAY_FORCE_COMPRESSION =
+          utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
+        // Turning on the compression past 64 ranks seems to be a good
+        // balancing point for cost of compressing vs. performance gain
+        auto enableCompression =
+          OSPRAY_FORCE_COMPRESSION.value_or(
+              mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
+
+        maml::init(enableCompression);
+      }
 
       masterRank = getParam<int>("masterRank", 0);
 
@@ -190,10 +175,7 @@ namespace ospray {
     OSPModel MPIDistributedDevice::newModel()
     {
       auto *instance = new DistributedModel;
-      ObjectHandle handle;
-      handle.assign(instance);
-
-      return (OSPModel)(int64)handle;
+      return reinterpret_cast<OSPModel>(instance);
     }
 
     void MPIDistributedDevice::commit(OSPObject _object)
@@ -205,18 +187,18 @@ namespace ospray {
     void MPIDistributedDevice::addGeometry(OSPModel _model,
                                            OSPGeometry _geometry)
     {
-      auto &model = lookupDistributedObject<Model>(_model);
+      auto *model = lookupObject<Model>(_model);
       auto *geom  = lookupObject<Geometry>(_geometry);
 
-      model.geometry.push_back(geom);
+      model->geometry.push_back(geom);
     }
 
     void MPIDistributedDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
-      auto &model  = lookupDistributedObject<Model>(_model);
+      auto *model  = lookupObject<Model>(_model);
       auto *volume = lookupObject<Volume>(_volume);
 
-      model.volume.push_back(volume);
+      model->volume.push_back(volume);
     }
 
     OSPData MPIDistributedDevice::newData(size_t nitems, OSPDataType format,
@@ -392,30 +374,29 @@ namespace ospray {
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)
     {
-      auto &model = lookupDistributedObject<Model>(_model);
+      auto *model = lookupObject<Model>(_model);
       auto *geom  = lookupObject<Geometry>(_geometry);
 
-      //TODO: confirm this works?
-      model.geometry.erase(std::remove(model.geometry.begin(),
-                                       model.geometry.end(),
-                                       Ref<Geometry>(geom)));
+      model->geometry.erase(std::remove(model->geometry.begin(),
+                                        model->geometry.end(),
+                                        Ref<Geometry>(geom)));
     }
 
     void MPIDistributedDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
-      auto &model  = lookupDistributedObject<Model>(_model);
+      auto *model  = lookupObject<Model>(_model);
       auto *volume = lookupObject<Volume>(_volume);
 
-      //TODO: confirm this works?
-      model.volume.erase(std::remove(model.volume.begin(),
-                                     model.volume.end(),
-                                     Ref<Volume>(volume)));
+      model->volume.erase(std::remove(model->volume.begin(),
+                                      model->volume.end(),
+                                      Ref<Volume>(volume)));
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
                                             OSPRenderer _renderer,
                                             const uint32 fbChannelFlags)
     {
+      mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
       auto &renderer = lookupDistributedObject<Renderer>(_renderer);
       auto result    = renderer.renderFrame(&fb, fbChannelFlags);

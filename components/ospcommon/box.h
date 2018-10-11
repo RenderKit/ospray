@@ -73,6 +73,23 @@ namespace ospcommon {
     return true;
   }
 
+  template <typename scalar_t, bool A>
+  inline bool touchingOrOverlapping(const box_t<scalar_t, 2, A> &a,
+                                    const box_t<scalar_t, 2, A> &b)
+  {
+    if (a.lower.x > b.upper.x)
+      return false;
+    if (a.lower.y > b.upper.y)
+      return false;
+
+    if (b.lower.x > a.upper.x)
+      return false;
+    if (b.lower.y > a.upper.y)
+      return false;
+
+    return true;
+  }
+
   /*! compute the intersection of two boxes */
   template <typename T, int N, bool A>
   inline box_t<T, N, A> intersectionOf(const box_t<T, N, A> &a,

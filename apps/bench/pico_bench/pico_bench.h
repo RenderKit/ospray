@@ -25,7 +25,7 @@ class Statistics {
 public:
 	std::string time_suffix;
 
-	Statistics(std::vector<T> s) : samples(s) {
+	Statistics(const std::vector<T> &s) : samples(s) {
 		std::sort(samples.begin(), samples.end());
 	}
 	T percentile(const float p) const {
@@ -117,6 +117,7 @@ private:
 template<typename T>
 class Benchmarker {
 	const size_t MAX_ITER;
+	const size_t WARM_UPS;
 	const T MAX_RUNTIME;
 
 	template<typename Fn>
@@ -137,20 +138,23 @@ public:
 
 	// Benchmark the functions either max_iter times or until max_runtime seconds have elapsed
 	// max_runtime should be > 0
-	Benchmarker(const size_t max_iter, const std::chrono::seconds max_runtime)
-		: MAX_ITER(max_iter), MAX_RUNTIME(std::chrono::duration_cast<T>(max_runtime))
+	Benchmarker(const size_t max_iter, const std::chrono::seconds max_runtime, const size_t warm_ups = 1)
+		: MAX_ITER(max_iter), WARM_UPS(warm_ups), MAX_RUNTIME(std::chrono::duration_cast<T>(max_runtime))
 	{}
 	// Create a benchmarker that will run the function for the desired number of iterations,
 	// regardless of how long it takes
-	Benchmarker(const size_t max_iter) : MAX_ITER(max_iter), MAX_RUNTIME(0)
+	Benchmarker(const size_t max_iter, const size_t warm_ups = 1)
+    : MAX_ITER(max_iter), WARM_UPS(warm_ups), MAX_RUNTIME(0)
 	{}
 
 #ifdef PICO_BENCH_NO_DECLVAL
 	template<typename Fn>
 	stats_type operator()(Fn _fn) const {
 		BenchWrapper<Fn> fn{_fn};
-		// Do a single un-timed warm up run
-		fn();
+		// Do the warm up runs
+    for (size_t i = 0; i < WARM_UPS; ++i) {
+      fn();
+    }
 		T elapsed{0};
 		std::vector<T> samples;
 		for (size_t i = 0; i < MAX_ITER && (MAX_RUNTIME.count() == 0 || elapsed < MAX_RUNTIME);
@@ -171,8 +175,10 @@ public:
 	typename std::enable_if<std::is_same<decltype(std::declval<Fn>()()), T>::value,
 		stats_type>::type
 	operator()(Fn fn) const {
-		// Do a single un-timed warm up run
-		fn();
+		// Do a the warm up runs
+    for (size_t i = 0; i < WARM_UPS; ++i) {
+      fn();
+    }
 		T elapsed{0};
 		std::vector<T> samples;
 		for (size_t i = 0; i < MAX_ITER && (MAX_RUNTIME.count() == 0 || elapsed < MAX_RUNTIME);

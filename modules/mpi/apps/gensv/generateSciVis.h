@@ -49,6 +49,21 @@ namespace gensv {
     LoadedVolume();
   };
 
+  struct DistributedRegion {
+    box3f bounds;
+    int id;
+
+    DistributedRegion(box3f bounds, int id);
+  };
+
+  struct SharedVolumeBrick {
+    LoadedVolume vol;
+    DistributedRegion region;
+
+    SharedVolumeBrick(LoadedVolume vol, DistributedRegion region);
+    SharedVolumeBrick();
+  };
+
   /* Generate this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
@@ -85,5 +100,18 @@ namespace gensv {
    */
   LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
                           const std::string &dtype, const vec2f &valueRange);
+
+  containers::AlignedVector<SharedVolumeBrick>
+    loadBrickedVolume(const FileName &file,
+                      const vec3i &dimensions,
+                      const std::string &dtype,
+                      const vec2f &valueRange,
+                      const size_t nbricks,
+                      const size_t bricksPerRank);
+
+  containers::AlignedVector<SharedVolumeBrick>
+    loadRMBricks(const FileName &bobDir, const size_t bricksPerRank);
+
+  SharedVolumeBrick loadOSPBrick(const FileName &ospFile, const vec2f &valueRange);
 }
 

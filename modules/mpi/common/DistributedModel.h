@@ -16,10 +16,17 @@
 
 #pragma once
 
+#include <ostream>
+#include <unordered_map>
+#include <set>
+
 // ospray stuff
 #include "geometry/Geometry.h"
 #include "volume/Volume.h"
 #include "common/Model.h"
+
+// ospray common
+#include "ospcommon/box.h"
 
 // stl
 #include <vector>
@@ -42,7 +49,7 @@ namespace ospray {
       // compositing.
       virtual void commit() override;
 
-      std::vector<box3f> myRegions, othersRegions, ghostRegions;
+      int id;
     };
 
   } // ::ospray::mpi

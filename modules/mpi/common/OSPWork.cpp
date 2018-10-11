@@ -484,6 +484,7 @@ namespace ospray {
 
       void RenderFrame::run()
       {
+        mpicommon::world.barrier();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);

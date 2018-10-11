@@ -19,6 +19,7 @@
 // std
 #include <memory>
 #include <vector>
+#include <chrono>
 
 // mpi
 #define OMPI_SKIP_MPICXX 1
@@ -146,6 +147,9 @@ namespace mpicommon {
     ospcommon::byte_t *data {nullptr};
     size_t             size {0};
     /*! @} */
+    // TODO WILL: Profiling info, when this message started sending
+    // or receiving
+    std::chrono::high_resolution_clock::time_point started;
   };
 
   /*! a message whose payload is owned by the user, and which we do

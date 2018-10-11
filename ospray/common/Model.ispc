@@ -68,6 +68,13 @@ export void Model_init(void *uniform _model,
     model->volumes = NULL;
 }
 
+export void Model_setBounds(void *uniform _model,
+                            uniform box3f *uniform bounds)
+{
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+  model->bounds = *bounds;
+}
+
 export void *uniform Model_getEmbreeSceneHandle(void *uniform _model)
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;

@@ -106,7 +106,8 @@ namespace ospray {
     // film plane, then find the vector to this point from the origin of the
     // film plane (screenDir) and project this point onto the x/y axes of
     // the plane.
-    const vec3f r = normalize(p - pos);
+    const vec3f v = p - pos;
+    const vec3f r = normalize(v);
     const float denom = dot(-r, -dir);
     if (denom == 0.0) {
       return ProjectedPoint(vec3f(-1, -1,
@@ -117,7 +118,7 @@ namespace ospray {
     const vec3f screenDir = r * t - dir_00;
     const vec2f sp = vec2f(dot(screenDir, normalize(dir_du)),
                            dot(screenDir, normalize(dir_dv))) / imgPlaneSize;
-    const float depth = length(p - pos);
+    const float depth = sign(t) * length(v);
     // TODO: Depth of field radius
     return ProjectedPoint(vec3f(sp.x, sp.y, depth), 0);
   }

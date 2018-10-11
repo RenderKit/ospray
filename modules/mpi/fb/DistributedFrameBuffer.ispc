@@ -144,6 +144,8 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile
       accum->nx[i] = fnx;
       accum->ny[i] = fny;
       accum->nz[i] = fnz;
+      // TODO: Is it not safe to assume the nx/ny/nz are packed in memory?
+      // It seems like this soa to aos conversion should not be needed
       soa_to_aos3(fnx, fny, fnz, final->nx + 3*programCount*i);
       const float far = tile->ar[i];
       const float fag = tile->ag[i];
@@ -280,6 +282,7 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                   uniform int begin_frag, uniform int end_frag)
 {
   for (uniform int frag = begin_frag; frag < end_frag; ++frag) {
+#if 1
     for (uniform int i = 1; i < numTiles; ++i) {
       for (uniform int j = i; j > 0; --j) {
         VaryingTile *uniform ta = tileArray[j];
@@ -289,6 +292,7 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
         swapFragments(ta,tb,frag);
       }
     }
+#endif
 
     vec3f acc_col = make_vec3f(0,0,0);
     float acc_alpha = 0.f;

@@ -38,6 +38,14 @@ namespace ospray {
       floats. */
   struct OSPRAY_SDK_INTERFACE __aligned(64) Tile
   {
+    region2i region; // screen region that this corresponds to
+    vec2i    fbSize; // total frame buffer size, for the camera
+    vec2f    rcp_fbSize;
+    int32    generation;
+    int32    children;
+    int32    sortOrder;
+    int32    accumID; //!< how often has been accumulated into this tile
+    float    pad[4]; //!< padding to match the ISPC-side layout
     float    r[TILE_SIZE*TILE_SIZE];  // 'red' component
     float    g[TILE_SIZE*TILE_SIZE];  // 'green' component
     float    b[TILE_SIZE*TILE_SIZE];  // 'blue' component
@@ -49,12 +57,6 @@ namespace ospray {
     float    ar[TILE_SIZE*TILE_SIZE]; // albedo red
     float    ag[TILE_SIZE*TILE_SIZE]; // albedo green
     float    ab[TILE_SIZE*TILE_SIZE]; // albedo blue
-    region2i region; // screen region that this corresponds to
-    vec2i    fbSize; // total frame buffer size, for the camera
-    vec2f    rcp_fbSize;
-    int32    generation;
-    int32    children;
-    int32    accumID; // how often has been accumulated into this tile
 
     Tile() = default;
     Tile(const vec2i &tile, const vec2i &fbsize, const int32 accumId)

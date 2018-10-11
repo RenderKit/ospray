@@ -105,8 +105,8 @@ export void Volume_setVolumeClippingBox(void *uniform _self, const uniform box3f
 }
 
 export void Volume_setAffineTransformations(void *uniform _self,
-					    const uniform AffineSpace3f &xfm,
-					    const uniform AffineSpace3f &rcp_xfm)
+                                            const uniform AffineSpace3f &xfm,
+                                            const uniform AffineSpace3f &rcp_xfm)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
   self->xfm = xfm;
@@ -116,7 +116,14 @@ export void Volume_setAffineTransformations(void *uniform _self,
 export void Volume_getBoundingBox(uniform box3f *uniform ret, void *uniform _self)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  *ret = self->boundingBox;
+  // If we have a clip box then the actual volume bounds are the intersection
+  // of the volume bounds and the clip box
+  cif (ne(self->volumeClippingBox.lower, self->volumeClippingBox.upper)) {
+    ret->lower = max(self->boundingBox.lower, self->volumeClippingBox.lower);
+    ret->upper = min(self->boundingBox.upper, self->volumeClippingBox.upper);
+  } else {
+    *ret = self->boundingBox;
+  }
 }
 
 export void Volume_computeSamples(void *uniform _self,

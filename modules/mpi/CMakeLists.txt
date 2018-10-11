@@ -16,7 +16,21 @@
 
 OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
 
+# Note: the MPI example viewer depends on tfn lib, so we must make sure that
+# was built.
+IF (NOT TARGET ospray_tfn OR NOT TARGET ospray_imgui_util_sg
+    OR NOT TARGET ospray_imgui3d_sg)
+  MESSAGE(FATAL_ERROR "ospray_tfn library is required for the MPI example app,"
+    " please set -DOSPRAY_APPS_EXAMPLEVIEWER=ON as well")
+ENDIF ()
+
 IF (OSPRAY_MODULE_MPI)
+  OPTION(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
+    ${OSPRAY_APPS_EXAMPLEVIEWER})
+
+  SET(OSP_MPI_COMPRESSION_THRESHOLD 16 CACHE STRING
+    "Min. number of ranks to enable message compression at (number)" )
+  MARK_AS_ADVANCED(OSP_MPI_COMPRESSION_THRESHOLD)
 
   SET(OSPRAY_DEFAULT_COMPONENT mpi)
 
@@ -24,6 +38,7 @@ IF (OSPRAY_MODULE_MPI)
 
   OSPRAY_BUILD_COMPONENT(mpiCommon)
   OSPRAY_BUILD_COMPONENT(mpiMessageLayer)
+  OSPRAY_BUILD_COMPONENT(snappy)
 
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
@@ -42,6 +57,9 @@ IF (OSPRAY_MODULE_MPI)
     fb/DistributedFrameBuffer.cpp
     fb/DistributedFrameBuffer.ispc
     fb/DistributedFrameBuffer_TileTypes.cpp
+    fb/DistributedFrameBuffer_TileMessages.cpp
+
+    fb/DebugPixelOp.cpp
 
     render/MPILoadBalancer.cpp
     render/distributed/DistributedRaycast.cpp
@@ -52,7 +70,10 @@ IF (OSPRAY_MODULE_MPI)
     ospray_module_ispc
     ospray_mpi_common
     ospray_mpi_maml
+    snappy
   )
+  target_compile_definitions(ospray_module_mpi PUBLIC
+    -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 
   ##############################################################
   # MPI DEVICE - mpi worker
@@ -67,7 +88,8 @@ IF (OSPRAY_MODULE_MPI)
   ##############################################################
   # Test apps
   ##############################################################
-
-  ADD_SUBDIRECTORY(apps)
+  IF (OSPRAY_MODULE_MPI_APPS)
+    ADD_SUBDIRECTORY(apps)
+  ENDIF (OSPRAY_MODULE_MPI_APPS)
 
 ENDIF (OSPRAY_MODULE_MPI)

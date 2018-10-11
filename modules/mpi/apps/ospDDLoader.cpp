@@ -27,10 +27,12 @@
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
+#include "../../../apps/bench/pico_bench/pico_bench.h"
 #include <tfn_lib/tfn_lib.h>
 // stl
 #include <random>
 #include "gensv/generateSciVis.h"
+#include "gensv/llnlrm_reader.h"
 
 /* This app demonstrates how to write a distributed scivis style
  * batch renderer using the distributed MPI device. Note that because
@@ -70,12 +72,24 @@ namespace ospDDLoader {
   static int   numFrames         = 32;
   static int   logLevel          = 0;
   static FileName transferFcn;
+  static bool llnlrm = false;
+  static int aoSamples = 0;
 
   static vec3f up;
   static vec3f pos;
   static vec3f gaze;
   static float fovy = 60.f;
   static bool customView = false;
+  static int nbricks = -1;
+  static int bricksPerRank = 1;
+
+  struct RIVLFile {
+    std::string file;
+    size_t ofsVerts, numVerts;
+    size_t ofsPrims, numPrims;
+  };
+
+  static RIVLFile rivl;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
@@ -91,7 +105,7 @@ namespace ospDDLoader {
 
     camera.set("pos", pos);
     camera.set("dir", gaze - pos);
-    camera.set("up",  up );
+    camera.set("up",  up);
     camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
 
     camera.commit();
@@ -139,6 +153,20 @@ namespace ospDDLoader {
         customView = true;
       } else if (arg == "-fv" || arg == "--fovy") {
         fovy = atof(av[++i]);
+      } else if (arg == "-nbricks") {
+        nbricks = atoi(av[++i]);
+      } else if (arg == "-bpr" ) {
+        bricksPerRank = atoi(av[++i]);
+      } else if (arg == "-bob") {
+        llnlrm = true;
+      } else if (arg == "-rivl") {
+        rivl.file = av[++i];
+        rivl.ofsVerts = std::stoull(av[++i]);
+        rivl.numVerts = std::stoull(av[++i]);
+        rivl.ofsPrims = std::stoull(av[++i]);
+        rivl.numPrims = std::stoull(av[++i]);
+      } else if (arg == "-ao") {
+        aoSamples = std::stoi(av[++i]);
       }
     }
   }
@@ -171,9 +199,23 @@ namespace ospDDLoader {
 
   void run_renderer()
   {
+    ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
+    fb.clear(OSP_FB_ACCUM);
+
     ospray::cpp::Model model;
-    gensv::LoadedVolume volume = gensv::loadVolume(volumeFile, dimensions,
-                                                   dtype, valueRange);
+    if (nbricks == -1) {
+      nbricks = mpicommon::numGlobalRanks();
+    }
+
+    containers::AlignedVector<gensv::SharedVolumeBrick> bricks;
+    if (!llnlrm) {
+      bricks = gensv::loadBrickedVolume(volumeFile, dimensions,
+                                        dtype, valueRange,
+                                        nbricks, bricksPerRank);
+    } else {
+      bricks = gensv::loadRMBricks(volumeFile, bricksPerRank);
+      dimensions = gensv::LLNLRMReader::dimensions();
+    }
 
     if (!transferFcn.str().empty()) {
       tfn::TransferFunction fcn(transferFcn);
@@ -197,16 +239,12 @@ namespace ospDDLoader {
       colorData.commit();
       opacityData.commit();
 
-      volume.tfcn.set("colors", colorData);
-      volume.tfcn.set("opacities", opacityData);
-      volume.tfcn.commit();
+      for (auto &v : bricks) {
+        v.vol.tfcn.set("colors", colorData);
+        v.vol.tfcn.set("opacities", opacityData);
+        v.vol.tfcn.commit();
+      }
     }
-
-    model.addVolume(volume.volume);
-
-    // We must use the global world bounds, not our local bounds
-    // when computing the automatically picked camera position.
-    box3f worldBounds(vec3f(0), vec3f(dimensions) - vec3f(1));
 
     /* The regions listing specifies the data regions that this rank owns
      * and is responsible for rendering. All volumes and geometry on the rank
@@ -217,12 +255,48 @@ namespace ospDDLoader {
      * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
      * regions bounding box.
      */
-    std::vector<box3f> regions{volume.bounds};
-    ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
-        regions.data());
+    box3f worldBounds(vec3f(0), vec3f(dimensions) - vec3f(1));
+    std::vector<gensv::DistributedRegion> regions;
+    std::vector<box3f> ghostRegions;
+    for (auto &b : bricks) {
+      regions.push_back(b.region);
+      model.addVolume(b.vol.volume);
+      // Since the mesh is fully replicated, the whole world bounds
+      // is the ghost region
+      ghostRegions.emplace_back(worldBounds);
+    }
+    if (!rivl.file.empty()) {
+      std::cout << "loading rivl " << rivl.file << "\n";
+      FILE *fp = fopen(rivl.file.c_str(), "rb");
+      std::vector<vec3f> verts(rivl.numVerts, vec3f(0));
+      std::vector<vec4i> prims(rivl.numPrims, vec4i(0));
+      if (fread(verts.data(), sizeof(vec3f), verts.size(), fp) != rivl.numVerts) {
+        throw std::runtime_error("error reading rivl verts");
+      }
+      if (fread(prims.data(), sizeof(vec4i), prims.size(), fp) != rivl.numPrims) {
+        throw std::runtime_error("error reading rivl prims");
+
+      }
+      ospray::cpp::Data vertData(verts.size(), OSP_FLOAT3, verts.data());
+      ospray::cpp::Data primData(prims.size(), OSP_INT4, prims.data());
+      vertData.commit();
+      primData.commit();
+      ospray::cpp::Geometry mesh("triangles");
+      mesh.set("vertex", vertData);
+      mesh.set("index", primData);
+      mesh.commit();
+      model.addGeometry(mesh);
+    }
+    ospray::cpp::Data regionData(regions.size() * sizeof(gensv::DistributedRegion),
+        OSP_CHAR, regions.data());
+    ospray::cpp::Data ghostRegionData(ghostRegions.size() * sizeof(box3f),
+        OSP_CHAR, ghostRegions.data());
     model.set("regions", regionData);
+    model.set("ghostRegions", ghostRegionData);
     model.commit();
 
+    // We must use the global world bounds, not our local bounds
+    // when computing the automatically picked camera position.
     auto camera = ospray::cpp::Camera("perspective");
     setupCamera(camera, worldBounds);
 
@@ -230,28 +304,30 @@ namespace ospDDLoader {
     // knows how to read the region information from the model and render
     // the distributed data.
     ospray::cpp::Renderer renderer = ospray::cpp::Renderer("mpi_raycast");
-    renderer.set("world", model);
     renderer.set("model", model);
     renderer.set("camera", camera);
+    renderer.set("aoSamples", aoSamples);
     renderer.set("bgColor", vec3f(0.02));
     renderer.commit();
 
-    ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
-    fb.clear(OSP_FB_ACCUM);
-
-
     mpicommon::world.barrier();
 
-    auto frameStartTime = ospcommon::getSysTime();
+		using namespace std::chrono;
+    int frame = 0;
+    // Run 5 warm up frames
+    pico_bench::Benchmarker<milliseconds> bencher(numFrames, 5);
 
-    for (int i = 0; i < numFrames; ++i) {
-      if (mpicommon::IamTheMaster())
-        std::cout << "rendering frame " << i << std::endl;
-
-      renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-    }
-
-    double seconds = ospcommon::getSysTime() - frameStartTime;
+		auto stats = bencher([&](){
+			auto start = high_resolution_clock::now();
+			renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+			auto end = high_resolution_clock::now();
+			if (mpicommon::IamTheMaster()) {
+				std::cout << "Frame: " << frame << " took: "
+					<< duration_cast<milliseconds>(end - start).count() << "ms\n";
+			}
+			++frame;
+		});
+    stats.time_suffix = "ms";
 
     // Only the OSPRay master rank will have the final framebuffer which
     // can be saved out or displayed to the user, the others only store
@@ -261,8 +337,7 @@ namespace ospDDLoader {
       utility::writePPM("ddLoaderTest.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'ddLoaderTest.ppm'" << std::endl;
-      std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
-        << numFrames / seconds << " frames per second" << std::endl;
+      std::cout << stats << std::endl << std::flush;
     }
   }
 
@@ -273,20 +348,25 @@ namespace ospDDLoader {
       std::cerr << "Error: -f <volume file.raw> is required\n";
       return 1;
     }
-    if (dtype.empty()) {
-      std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
-      return 1;
-    }
-    if (dimensions == vec3i(-1)) {
-      std::cerr << "Error: -dims X Y Z is required to pass volume dims\n";
-      return 1;
-    }
-    if (valueRange == vec2f(-1)) {
-      std::cerr << "Error: -range X Y is required to set transfer function range\n";
-      return 1;
+    if (!llnlrm) {
+      if (dtype.empty()) {
+        std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
+        return 1;
+      }
+      if (dimensions == vec3i(-1)) {
+        std::cerr << "Error: -dims X Y Z is required to pass volume dims\n";
+        return 1;
+      }
+      if (valueRange == vec2f(-1)) {
+        std::cerr << "Error: -range X Y is required to set transfer function range\n";
+        return 1;
+      }
     }
 
     initialize_ospray();
+    // TODO WILL: This probably breaks the test app, but is what I need
+    // for the benchmarking
+    run_renderer();
 
     ospShutdown();
     return 0;

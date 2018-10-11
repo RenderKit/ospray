@@ -18,6 +18,7 @@ SET(MAML_LIBRARY ospray_mpi_maml)
 
 OSPRAY_CONFIGURE_MPI()
 
+OSPRAY_BUILD_COMPONENT(snappy)
 OSPRAY_BUILD_COMPONENT(mpiCommon)
 
 # ------------------------------------------------------------------
@@ -28,6 +29,7 @@ OSPRAY_CREATE_LIBRARY(${MAML_LIBRARY}
   maml/Context.cpp
 LINK
   ospray_mpi_common
+  snappy
 COMPONENT mpi
 )
 
@@ -57,4 +59,3 @@ OSPRAY_CREATE_TEST(mamlTestMessageSwarm
   LINK
   ${MAML_LIBRARY}
 )
-

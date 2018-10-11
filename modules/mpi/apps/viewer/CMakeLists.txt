@@ -16,9 +16,14 @@
 
 ospray_disable_compiler_warnings()
 
+# TODO Will: Is this also going to work smoothly with an installed GLFW3?
+find_package(glfw3 QUIET)
+if (TARGET glfw)
+  get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/apps/common
-                    ${CMAKE_SOURCE_DIR}/apps/exampleViewer
-                    ${GLFW_INCLUDE_DIRS})
+                    ${CMAKE_SOURCE_DIR}/apps/exampleViewer)
 
 ospray_create_application(ospDistribViewerDemo
   ospDistribViewerDemo.cpp
@@ -31,7 +36,7 @@ LINK
   ospray_imgui3d_sg
   ospray_sg
   ospray_tfn
-  gensv
-  ${GLFW_LIBRARY}
+  ospray_gensv
+  glfw
 )
 

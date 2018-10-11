@@ -220,6 +220,8 @@ namespace ospray {
       virtual void commit();
       bool isCommitted();
 
+      bool hasProgressCallback() { return progressCallback != nullptr; }
+
       // Public Data //
 
       int numThreads {-1};

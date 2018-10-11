@@ -9,6 +9,8 @@
 [tutorial]: #tutorial
 [camera]: #cameras
 [volume]: #volumes
+[model]: #model
+[data]: #data
 [texture transformations]: #texture2d-transformations
 [path tracer]: #path-tracer
 [point light]: #point-light-sphere-light

@@ -41,6 +41,8 @@ struct Model
   //! volumes contained in the model
   uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
+
+  uniform box3f bounds;
 };
 
 struct UserIntersectionContext
