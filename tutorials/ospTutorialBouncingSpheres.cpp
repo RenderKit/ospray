@@ -49,7 +49,8 @@ std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
   std::vector<Sphere> spheres(numSpheres);
 
   for (auto &s : spheres) {
-    s.maxHeight = centerDistribution(gen);
+    // maximum height above y=-1 ground plane
+    s.maxHeight = 1.f + centerDistribution(gen);
 
     s.center.x = centerDistribution(gen);
     s.center.y = s.maxHeight;
@@ -322,12 +323,12 @@ void updateSpheresCoordinates()
 
   for (auto &s : g_spheres) {
     const float g = 9.81f;
-    const float T = sqrtf(2.f*s.maxHeight/g);
+    const float T = sqrtf(8.f*s.maxHeight/g);
     const float Vmax = sqrtf(2.f*s.maxHeight*g);
 
-    float tRemainder = fmod(T+t, 2.f*T);
+    float tRemainder = fmod(0.5f*T+t, T);
 
-    s.center.y = -1.f + 0.5f*s.radius + -g*tRemainder*tRemainder*0.5f + Vmax*tRemainder;
+    s.center.y = -1.f + s.radius - 0.5f*g*tRemainder*tRemainder + Vmax*tRemainder;
   }
 
   // increment by fixed time interval, rather than actual elapsed time
