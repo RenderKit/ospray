@@ -275,16 +275,9 @@ OSPRenderer createRenderer()
   OSPLight ambientLight = ospNewLight3("ambient");
   ospCommit(ambientLight);
 
-  // create a sphere light
-  OSPLight sphereLight = ospNewLight3("sphere");
-  ospSet3f(sphereLight, "position", 0.f, 0.f, 0.f);
-  ospSet1f(sphereLight, "radius", 0.1f);
-  ospSet3f(sphereLight, "color", 1.f, 1.f, 0.f);
-  ospCommit(sphereLight);
-
   // create lights data containing all lights
-  OSPLight lights[]  = {ambientLight, sphereLight};
-  OSPData lightsData = ospNewData(2, OSP_LIGHT, lights, 0);
+  OSPLight lights[]  = {ambientLight};
+  OSPData lightsData = ospNewData(1, OSP_LIGHT, lights, 0);
   ospCommit(lightsData);
 
   // complete setup of renderer
