@@ -178,6 +178,9 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
 
   // update camera
   arcballCamera->updateWindowSize(windowSize);
+
+  ospSetf(camera, "aspect", windowSize.x / (float)windowSize.y);
+  ospCommit(camera);
 }
 
 void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
