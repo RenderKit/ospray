@@ -253,7 +253,7 @@ OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial = ospNewMaterial2("pathtracer", "ThinGlass");
-  ospSet1f(glassMaterial, "attenuationDistance", 0.05f);
+  ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
   ospSetMaterial(g_spheresGeometry, glassMaterial);
