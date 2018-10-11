@@ -38,6 +38,17 @@ LINK
   ${OPENGL_LIBRARIES}
 )
 
+ospray_create_application(ospTutorialBouncingSpheres
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  ospTutorialBouncingSpheres.cpp
+LINK
+  ospray
+  ospray_common
+  glfw
+  ${OPENGL_LIBRARIES}
+)
+
 ospray_create_application(ospTutorialStructuredVolume
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
