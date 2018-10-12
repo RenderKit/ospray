@@ -97,10 +97,12 @@ OSPVolume createRandomVolume(size_t numPoints, size_t volumeDimension)
   }
 
   // set the volume data
-  ospSetRegion(volume,
-               volumeData,
-               osp::vec3i{0, 0, 0},
-               osp::vec3i{volumeDimension, volumeDimension, volumeDimension});
+  ospSetRegion(
+      volume,
+      volumeData,
+      osp::vec3i{0, 0, 0},
+      osp::vec3i{
+          int(volumeDimension), int(volumeDimension), int(volumeDimension)});
 
   // create a transfer function mapping volume values to color and opacity
   OSPTransferFunction transferFunction =

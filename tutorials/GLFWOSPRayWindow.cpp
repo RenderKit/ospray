@@ -69,7 +69,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
       });
 
   glfwSetCursorPosCallback(glfwWindow, [](GLFWwindow *, double x, double y) {
-    activeWindow->motion(ospcommon::vec2f{x, y});
+    activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
   });
 
   // OSPRay setup
@@ -83,7 +83,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   // create camera
   camera = ospNewCamera("perspective");
-  ospSetf(camera, "aspect", windowSize.x / (float)windowSize.y);
+  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
 
   ospSetVec3f(camera,
               "pos",
@@ -179,7 +179,7 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   // update camera
   arcballCamera->updateWindowSize(windowSize);
 
-  ospSetf(camera, "aspect", windowSize.x / (float)windowSize.y);
+  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
   ospCommit(camera);
 }
 
@@ -216,7 +216,7 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
     if (cameraChanged) {
       ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
-      ospSetf(camera, "aspect", windowSize.x / (float)windowSize.y);
+      ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
       ospSetVec3f(camera,
                   "pos",
                   osp::vec3f{arcballCamera->eyePos().x,
@@ -295,7 +295,9 @@ void GLFWOSPRayWindow::display()
 
   // display frame rate in window title
   auto displayEnd = std::chrono::high_resolution_clock::now();
-  auto durationMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd - displayStart);
+  auto durationMilliseconds =
+      std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
+                                                            displayStart);
   displayStart = displayEnd;
 
   const float frameRate = 1000.f / float(durationMilliseconds.count());
