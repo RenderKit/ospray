@@ -52,25 +52,32 @@ namespace ospray {
     auto prim_materialIDData = getParamData("prim.materialID");
     auto geom_materialID = getParam1i("geom.materialID",-1);
 
+    //check for valid params
+    if (!vertexData)
+      throw std::runtime_error("subdivision must have 'vertex' array");
+    if (!indexData)
+      throw std::runtime_error("subdivision must have 'index' array");
+    if (!facesData)
+      throw std::runtime_error("subdivision must have 'face' array");
+    if (vertexData->type != OSP_FLOAT3)
+      throw std::runtime_error("unsupported subdivision 'vertex' data type");
+    if (colorsData && colorsData->type != OSP_FLOAT4)
+      throw std::runtime_error("unsupported subdivision 'vertex.texcoord' data type");
+    if (texcoordData && texcoordData->type != OSP_FLOAT2)
+      throw std::runtime_error("unsupported subdivision 'vertex.color' data type");
+    if (indexData->type != OSP_INT && indexData->type != OSP_UINT)
+      throw std::runtime_error("unsupported subdivision 'index' data type");
+
     int* index = (int*)indexData->data;
     vec3f* vertex = (vec3f*)vertexData->data;
     float* colors = (float*)colorsData->data;
     int* faces = (int*)facesData->data;
-    vec2i* edge_crease_indices = (vec2i*)edge_crease_indicesData->data;
-    float* edge_crease_weights = (float*)edge_crease_weightsData->data;
-    int* vertex_crease_indices = (int*)vertex_crease_indicesData->data;
-    float* vertex_crease_weights = (float*)vertex_crease_weightsData->data;
+    vec2i* edge_crease_indices = edge_crease_indicesData ? (vec2i*)edge_crease_indicesData->data : nullptr;
+    float* edge_crease_weights = edge_crease_weights ? (float*)edge_crease_weightsData->data : nullptr;
+    int* vertex_crease_indices = vertex_crease_indicesData ? (int*)vertex_crease_indicesData->data : nullptr;
+    float* vertex_crease_weights = vertex_crease_weights ? (float*)vertex_crease_weightsData->data : nullptr;
     uint32_t* prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
     vec2f* texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
-
-    if (vertexData->type != OSP_FLOAT3)
-      throw std::runtime_error("unsupported subdivision.vertex data type");
-
-    if (colorsData && colorsData->type != OSP_FLOAT4)
-      throw std::runtime_error("unsupported subdivision.colors data type");
-
-    if (indexData->type != OSP_INT && indexData->type != OSP_UINT)
-      throw std::runtime_error("unsupported subdivision.index data type");
 
     auto geom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 
@@ -81,15 +88,19 @@ namespace ospray {
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_FACE, 0, RTC_FORMAT_UINT,
                                faces, 0, sizeof(unsigned int), facesData->size());
 
-    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,    0,
+    if (edge_crease_indices && edge_crease_weighs) {
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,    0,
                                RTC_FORMAT_UINT2, edge_crease_indices,   0, 2*sizeof(unsigned int), 0);
-    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,   0,
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,   0,
                                RTC_FORMAT_FLOAT, edge_crease_weights,   0, sizeof(float), 0);
+    }
 
-    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,  0,
+    if (vertex_crease_indicies && vertex_crease_weights) {
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,  0,
                                RTC_FORMAT_UINT,  vertex_crease_indices, 0, sizeof(unsigned int), 0);
-    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT, 0,
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT, 0,
                                RTC_FORMAT_FLOAT, vertex_crease_weights, 0, sizeof(float), 0);
+    }
 
     if (colors) {
       rtcSetGeometryVertexAttributeCount(geom,1);
