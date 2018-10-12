@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <iterator>
 #include <memory>
 #include <random>
 #include "GLFWOSPRayWindow.h"
