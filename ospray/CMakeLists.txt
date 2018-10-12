@@ -68,7 +68,6 @@ SET(OSPRAY_SOURCES
 )
 
 SET(OSPRAY_ISPC_DEVICE_SOURCES
-
   ispc_tasksys.cpp
 
   api/ISPCDevice.h
@@ -331,6 +330,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
   math/LinearSpace.ih
   math/math.ih
   math/random.ih
+  math/sobol.ih
   math/sampling.ih
   math/vec.ih
   math/spectrum.h
