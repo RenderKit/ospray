@@ -158,7 +158,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
     = (uniform Spheres *uniform)args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
 
-  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
   // from here on it's the original intersection code from ospray/embree2
@@ -166,29 +166,33 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
     self->data + self->stride*((uniform int64)primID);
   uniform float radius = self->radius;
   if (self->offset_radius >= 0) {
-    radius = *((uniform float *uniform)(spherePtr+self->offset_radius));
+    radius = *((uniform float *uniform)(spherePtr + self->offset_radius));
   }
-  uniform vec3f center =
-    *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-  const float approxDist = dot(center - ray->org, ray->dir);
-  const vec3f closeOrg = ray->org + approxDist * ray->dir;
-  const vec3f A = center - closeOrg;
+  uniform vec3f center = *((uniform vec3f*)(spherePtr + self->offset_center));
 
-  const float a = dot(ray->dir,ray->dir);
-  const float b = 2.f*dot(ray->dir,A);
-  const float c = dot(A,A)-radius*radius;
+  const float rd2 = 1.0f/dot(ray->dir, ray->dir); // 1/a
+  const vec3f CO = center - ray->org;
+  const float projCO = dot(CO, ray->dir)*rd2; // in ray-space
+  const vec3f perp = CO - projCO * ray->dir;
+  const float l2 = dot(perp, perp);
+  const float r2 = sqr(radius);
+  if (l2 > r2) return;
 
-  const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return;
-
-  const float srad = sqrt(radical);
-
-  const float t_in = (b - srad) *rcpf(2.f*a) + approxDist;
-  const float t_out= (b + srad) *rcpf(2.f*a) + approxDist;
+  float d = sqrt((r2 - l2)*rd2); 
+#if 1
+  const float t_in = projCO - d;
+  const float t_out = projCO + d;
+#else // TODO: verify
+  const float t1 = projCO + floatbits(signbits(projCO)^intbits(d));
+  const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
+  const float t_in = min(t1, t2);
+  const float t_out = max(t1, t2);
+#endif
 
   bool hit = false;
   if (t_in > ray->t0 && t_in < ray->t) {
     hit = true;
+    d *= -1.f;
     ray->t = t_in;
   } else if (t_out > (ray->t0 + self->epsilon) && t_out < ray->t) {
     hit = true;
@@ -204,7 +208,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
       ray->instID = args->context->instID[0];
       // cannot easily be moved to postIntersect
       // we need hit in object space, in postIntersect it is in world-space
-      ray->Ng = ray->org + ray->t*ray->dir - center;
+      ray->Ng = d * ray->dir - perp;
     }
   }
 }
