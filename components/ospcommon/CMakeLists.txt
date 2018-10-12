@@ -155,6 +155,7 @@ else()
   ospray_install_sdk_headers(
     tasking/async.h
     tasking/parallel_for.h
+    tasking/parallel_foreach.h
     tasking/schedule.h
     tasking/tasking_system_handle.h
 
@@ -171,20 +172,22 @@ else()
 
   ospray_install_sdk_headers(
     utility/Any.h
+    utility/ArgumentList.h
     utility/ArrayView.h
     utility/CodeTimer.h
     utility/DataView.h
     utility/demangle.h
     utility/DoubleBufferedValue.h
     utility/getEnvVar.h
+    utility/Observer.h
     utility/OnScopeExit.h
     utility/Optional.h
     utility/ParameterizedObject.h
     utility/PseudoURL.h
     utility/SaveImage.h
     utility/StringManip.h
-    utility/TransactionalValue.h
     utility/TimeStamp.h
+    utility/TransactionalValue.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
   )
