@@ -88,18 +88,28 @@ namespace ospray {
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_FACE, 0, RTC_FORMAT_UINT,
                                faces, 0, sizeof(unsigned int), facesData->size());
 
-    if (edge_crease_indices && edge_crease_weighs) {
-      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,    0,
-                               RTC_FORMAT_UINT2, edge_crease_indices,   0, 2*sizeof(unsigned int), 0);
-      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,   0,
-                               RTC_FORMAT_FLOAT, edge_crease_weights,   0, sizeof(float), 0);
+    if (edge_crease_indices && edge_crease_weights) {
+      if (edge_crease_indicesData->size() != edge_crease_weightsData->size())
+        postStatusMsg(1) << "subdivision edge crease indices size does not match weights";
+      else
+      {
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,    0,
+                                 RTC_FORMAT_UINT2, edge_crease_indices,   0, 2*sizeof(unsigned int), 0);
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,   0,
+                                 RTC_FORMAT_FLOAT, edge_crease_weights,   0, sizeof(float), 0);
+      }
     }
 
-    if (vertex_crease_indicies && vertex_crease_weights) {
-      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,  0,
-                               RTC_FORMAT_UINT,  vertex_crease_indices, 0, sizeof(unsigned int), 0);
-      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT, 0,
-                               RTC_FORMAT_FLOAT, vertex_crease_weights, 0, sizeof(float), 0);
+    if (vertex_crease_indices && vertex_crease_weights) {
+      if (vertex_crease_indicesData->size() != vertex_crease_weightsData->size())
+        postStatusMsg(1) << "subdivision vertex crease indices size does not match weights";
+      else
+      {
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,  0,
+                                 RTC_FORMAT_UINT,  vertex_crease_indices, 0, sizeof(unsigned int), 0);
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT, 0,
+                                 RTC_FORMAT_FLOAT, vertex_crease_weights, 0, sizeof(float), 0);
+      }
     }
 
     if (colors) {
