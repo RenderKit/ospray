@@ -18,14 +18,16 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
+using namespace ospcommon;
+
 struct Sphere
 {
   // initial (maximum) height of the sphere, at which it has 0 velocity
   float maxHeight;
 
-  ospcommon::vec3f center;
+  vec3f center;
   float radius;
-  ospcommon::vec4f color;
+  vec4f color;
 };
 
 // track the spheres data, geometry, and model globally so we can update them
@@ -33,7 +35,6 @@ struct Sphere
 static std::vector<Sphere> g_spheres;
 static OSPGeometry g_spheresGeometry;
 static OSPModel g_model;
-
 
 std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
 {
@@ -73,9 +74,9 @@ OSPGeometry createGroundPlaneGeometry()
 
   struct Vertex
   {
-    ospcommon::vec3f position;
-    ospcommon::vec3f normal;
-    ospcommon::vec4f color;
+    vec3f position;
+    vec3f normal;
+    vec4f color;
   };
 
   struct QuadIndex
@@ -95,30 +96,23 @@ OSPGeometry createGroundPlaneGeometry()
   // extent of plane in the (x, z) directions
   const float planeExtent = 1.5f;
 
-  const ospcommon::vec3f up   = ospcommon::vec3f{0.f, 1.f, 0.f};
-  const ospcommon::vec4f gray = ospcommon::vec4f{0.9f, 0.9f, 0.9f, 0.75f};
+  const vec3f up   = vec3f{0.f, 1.f, 0.f};
+  const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
 
-  vertices.push_back(
-      Vertex{ospcommon::vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(
-      Vertex{ospcommon::vec3f{planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(
-      Vertex{ospcommon::vec3f{planeExtent, -1.f, planeExtent}, up, gray});
-  vertices.push_back(
-      Vertex{ospcommon::vec3f{-planeExtent, -1.f, planeExtent}, up, gray});
+  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
+  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, -planeExtent}, up, gray});
+  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, planeExtent}, up, gray});
+  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, planeExtent}, up, gray});
 
-  quadIndices.push_back(QuadIndex{startingIndex,
-                                  startingIndex + 1,
-                                  startingIndex + 2,
-                                  startingIndex + 3});
+  quadIndices.push_back(QuadIndex{
+      startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3});
 
   // stripes on ground plane
   const float stripeWidth  = 0.025f;
   const float paddedExtent = planeExtent + stripeWidth;
   const size_t numStripes  = 10;
 
-  const ospcommon::vec4f stripeColor =
-      ospcommon::vec4f{1.0f, 0.1f, 0.1f, 1.f};
+  const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
 
   for (size_t i = 0; i < numStripes; i++) {
     // the center coordinate of the stripe, either in the x or z direction
@@ -131,22 +125,14 @@ OSPGeometry createGroundPlaneGeometry()
     // x-direction stripes
     startingIndex = vertices.size();
 
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{-paddedExtent, yLevel, coord - stripeWidth},
-               up,
-               stripeColor});
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{paddedExtent, yLevel, coord - stripeWidth},
-               up,
-               stripeColor});
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{paddedExtent, yLevel, coord + stripeWidth},
-               up,
-               stripeColor});
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{-paddedExtent, yLevel, coord + stripeWidth},
-               up,
-               stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{-paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{-paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
 
     quadIndices.push_back(QuadIndex{startingIndex,
                                     startingIndex + 1,
@@ -156,22 +142,14 @@ OSPGeometry createGroundPlaneGeometry()
     // z-direction stripes
     startingIndex = vertices.size();
 
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{coord - stripeWidth, yLevel, -paddedExtent},
-               up,
-               stripeColor});
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{coord + stripeWidth, yLevel, -paddedExtent},
-               up,
-               stripeColor});
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{coord + stripeWidth, yLevel, paddedExtent},
-               up,
-               stripeColor});
-    vertices.push_back(
-        Vertex{ospcommon::vec3f{coord - stripeWidth, yLevel, paddedExtent},
-               up,
-               stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{coord - stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{coord + stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{coord + stripeWidth, yLevel, paddedExtent}, up, stripeColor});
+    vertices.push_back(Vertex{
+        vec3f{coord - stripeWidth, yLevel, paddedExtent}, up, stripeColor});
 
     quadIndices.push_back(QuadIndex{startingIndex,
                                     startingIndex + 1,
@@ -180,9 +158,9 @@ OSPGeometry createGroundPlaneGeometry()
   }
 
   // create OSPRay data objects
-  std::vector<ospcommon::vec3f> positionVector;
-  std::vector<ospcommon::vec3f> normalVector;
-  std::vector<ospcommon::vec4f> colorVector;
+  std::vector<vec3f> positionVector;
+  std::vector<vec3f> normalVector;
+  std::vector<vec4f> colorVector;
 
   std::transform(vertices.begin(),
                  vertices.end(),
@@ -322,13 +300,14 @@ void updateSpheresCoordinates()
   static float t = 0.f;
 
   for (auto &s : g_spheres) {
-    const float g = 9.81f;
-    const float T = sqrtf(8.f*s.maxHeight/g);
-    const float Vmax = sqrtf(2.f*s.maxHeight*g);
+    const float g    = 9.81f;
+    const float T    = sqrtf(8.f * s.maxHeight / g);
+    const float Vmax = sqrtf(2.f * s.maxHeight * g);
 
-    float tRemainder = fmod(0.5f*T+t, T);
+    float tRemainder = ospcommon::fmod(0.5f * T + t, T);
 
-    s.center.y = -1.f + s.radius - 0.5f*g*tRemainder*tRemainder + Vmax*tRemainder;
+    s.center.y = -1.f + s.radius - 0.5f * g * tRemainder * tRemainder +
+                 Vmax * tRemainder;
   }
 
   // increment by fixed time interval, rather than actual elapsed time
@@ -337,9 +316,10 @@ void updateSpheresCoordinates()
 
 void updateSpheresGeometry()
 {
-  // create new spheres data for the updated center coordinates, and assign to geometry
-  OSPData spheresData =
-      ospNewData(g_spheres.size() * sizeof(Sphere), OSP_UCHAR, g_spheres.data());
+  // create new spheres data for the updated center coordinates, and assign to
+  // geometry
+  OSPData spheresData = ospNewData(
+      g_spheres.size() * sizeof(Sphere), OSP_UCHAR, g_spheres.data());
 
   ospSetData(g_spheresGeometry, "spheres", spheresData);
 
@@ -351,7 +331,7 @@ void updateSpheresGeometry()
 }
 
 // updates the bouncing spheres' coordinates, geometry, and model
-void displayCallback(GLFWOSPRayWindow * glfwOSPRayWindow)
+void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
 {
   // update the spheres coordinates and geometry
   updateSpheresCoordinates();
@@ -390,12 +370,10 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          ospcommon::vec2i{1024, 768},
-          ospcommon::box3f(ospcommon::vec3f(-1.f), ospcommon::vec3f(1.f)),
-          g_model,
-          renderer));
+          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), g_model, renderer));
 
-  // register a callback with the GLFW OSPRay window to update the model every frame
+  // register a callback with the GLFW OSPRay window to update the model every
+  // frame
   glfwOSPRayWindow->registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)>(displayCallback));
 

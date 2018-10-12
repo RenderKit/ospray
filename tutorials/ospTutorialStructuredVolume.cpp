@@ -18,6 +18,7 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
+using namespace ospcommon;
 
 // creates a volume in the bounding box [(-1,-1,-1), (1,1,1)] with values based
 // on weighted inverse-square distances to randomly generated points
@@ -25,7 +26,7 @@ OSPVolume createRandomVolume(size_t numPoints, size_t volumeDimension)
 {
   struct Point
   {
-    ospcommon::vec3f center;
+    vec3f center;
     float weight;
   };
 
@@ -50,41 +51,44 @@ OSPVolume createRandomVolume(size_t numPoints, size_t volumeDimension)
   // create a structured volume and assign attributes
   OSPVolume volume = ospNewVolume("block_bricked_volume");
 
-  ospSet3i(volume, "dimensions", volumeDimension, volumeDimension, volumeDimension);
+  ospSet3i(
+      volume, "dimensions", volumeDimension, volumeDimension, volumeDimension);
   ospSetString(volume, "voxelType", "float");
   ospSet3f(volume, "gridOrigin", -1.f, -1.f, -1.f);
 
   const float gridSpacing = 2.f / float(volumeDimension);
   ospSet3f(volume, "gridSpacing", gridSpacing, gridSpacing, gridSpacing);
 
-  // get world coordinate in [-1.f, 1.f] from logical coordinates in [0, volumeDimension)
-  auto logicalToWorldCoordinates = [volumeDimension](size_t i, size_t j, size_t k)
-  {
-    return ospcommon::vec3f(-1.f + float(i) / float(volumeDimension - 1) * 2.f,
-                            -1.f + float(j) / float(volumeDimension - 1) * 2.f,
-                            -1.f + float(k) / float(volumeDimension - 1) * 2.f);
-
+  // get world coordinate in [-1.f, 1.f] from logical coordinates in [0,
+  // volumeDimension)
+  auto logicalToWorldCoordinates = [volumeDimension](
+                                       size_t i, size_t j, size_t k) {
+    return vec3f(-1.f + float(i) / float(volumeDimension - 1) * 2.f,
+                 -1.f + float(j) / float(volumeDimension - 1) * 2.f,
+                 -1.f + float(k) / float(volumeDimension - 1) * 2.f);
   };
 
   // generate volume values
-  float * volumeData = new float[volumeDimension*volumeDimension*volumeDimension];
+  float *volumeData =
+      new float[volumeDimension * volumeDimension * volumeDimension];
 
-  for (size_t k=0; k<volumeDimension; k++) {
-    for (size_t j=0; j<volumeDimension; j++) {
-      for (size_t i=0; i<volumeDimension; i++) {
-
+  for (size_t k = 0; k < volumeDimension; k++) {
+    for (size_t j = 0; j < volumeDimension; j++) {
+      for (size_t i = 0; i < volumeDimension; i++) {
         // index in array
-        size_t index = k*volumeDimension*volumeDimension + j*volumeDimension + i;
+        size_t index =
+            k * volumeDimension * volumeDimension + j * volumeDimension + i;
 
         // compute volume value
         float value = 0.f;
 
         for (auto &p : points) {
-          ospcommon::vec3f pointCoordinate = logicalToWorldCoordinates(i, j, k);
-          const float distance = ospcommon::length(pointCoordinate - p.center);
+          vec3f pointCoordinate = logicalToWorldCoordinates(i, j, k);
+          const float distance  = length(pointCoordinate - p.center);
 
-          // contribution proportional to weighted inverse-square distance (i.e. gravity)
-          value += p.weight / (distance*distance);
+          // contribution proportional to weighted inverse-square distance (i.e.
+          // gravity)
+          value += p.weight / (distance * distance);
         }
 
         volumeData[index] = value;
@@ -93,26 +97,32 @@ OSPVolume createRandomVolume(size_t numPoints, size_t volumeDimension)
   }
 
   // set the volume data
-  ospSetRegion(volume, volumeData,
-                       osp::vec3i{0, 0, 0},
-                       osp::vec3i{volumeDimension, volumeDimension, volumeDimension});
+  ospSetRegion(volume,
+               volumeData,
+               osp::vec3i{0, 0, 0},
+               osp::vec3i{volumeDimension, volumeDimension, volumeDimension});
 
   // create a transfer function mapping volume values to color and opacity
-  OSPTransferFunction transferFunction = ospNewTransferFunction("piecewise_linear");
+  OSPTransferFunction transferFunction =
+      ospNewTransferFunction("piecewise_linear");
 
-  std::vector<ospcommon::vec3f> transferFunctionColors;
+  std::vector<vec3f> transferFunctionColors;
   std::vector<float> transferFunctionOpacities;
 
-  transferFunctionColors.push_back(ospcommon::vec3f(0.f, 0.f, 1.f));
-  transferFunctionColors.push_back(ospcommon::vec3f(0.f, 1.f, 0.f));
-  transferFunctionColors.push_back(ospcommon::vec3f(1.f, 0.f, 0.f));
+  transferFunctionColors.push_back(vec3f(0.f, 0.f, 1.f));
+  transferFunctionColors.push_back(vec3f(0.f, 1.f, 0.f));
+  transferFunctionColors.push_back(vec3f(1.f, 0.f, 0.f));
 
   transferFunctionOpacities.push_back(0.f);
   transferFunctionOpacities.push_back(0.01f);
   transferFunctionOpacities.push_back(0.05f);
 
-  OSPData transferFunctionColorsData = ospNewData(transferFunctionColors.size(), OSP_FLOAT3, transferFunctionColors.data());
-  OSPData transferFunctionOpacitiesData = ospNewData(transferFunctionOpacities.size(), OSP_FLOAT, transferFunctionOpacities.data());
+  OSPData transferFunctionColorsData = ospNewData(
+      transferFunctionColors.size(), OSP_FLOAT3, transferFunctionColors.data());
+  OSPData transferFunctionOpacitiesData =
+      ospNewData(transferFunctionOpacities.size(),
+                 OSP_FLOAT,
+                 transferFunctionOpacities.data());
 
   ospSetData(transferFunction, "colors", transferFunctionColorsData);
   ospSetData(transferFunction, "opacities", transferFunctionOpacitiesData);
@@ -206,10 +216,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          ospcommon::vec2i{1024, 768},
-          ospcommon::box3f(ospcommon::vec3f(-1.f), ospcommon::vec3f(1.f)),
-          model,
-          renderer));
+          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), model, renderer));
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
