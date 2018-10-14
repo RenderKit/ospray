@@ -57,16 +57,23 @@ namespace ospray {
       throw std::runtime_error("subdivision must have 'vertex' array");
     if (!indexData)
       throw std::runtime_error("subdivision must have 'index' array");
-    if (!facesData)
-      throw std::runtime_error("subdivision must have 'face' array");
+    // if face is not specified and index is of type (u)int4, a cage mesh is specified
+    if (!(facesData || (indexData->type == OSP_INT4 || indexData->type == OSP_UINT4)))
+      throw std::runtime_error("subdivision must have 'face' array or (u)int4 index");
+    else if (!facesData) {
+      // generate faces for quad cage mesh
+      const size_t numFaces = indexData->size()/4;
+      std::vector<uint> faces(numFaces, 4);
+      facesData = new ospray::Data(numFaces, OSP_UINT, faces.data());
+    }
+    if (facesData && indexData->type != OSP_INT && indexData->type != OSP_UINT)
+      throw std::runtime_error("unsupported subdivision 'face' data type");
     if (vertexData->type != OSP_FLOAT3)
       throw std::runtime_error("unsupported subdivision 'vertex' data type");
     if (colorsData && colorsData->type != OSP_FLOAT4)
       throw std::runtime_error("unsupported subdivision 'vertex.texcoord' data type");
     if (texcoordData && texcoordData->type != OSP_FLOAT2)
       throw std::runtime_error("unsupported subdivision 'vertex.color' data type");
-    if (indexData->type != OSP_INT && indexData->type != OSP_UINT)
-      throw std::runtime_error("unsupported subdivision 'index' data type");
 
     int* index = (int*)indexData->data;
     vec3f* vertex = (vec3f*)vertexData->data;
