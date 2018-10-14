@@ -48,7 +48,8 @@ namespace ospray {
     auto vertex_crease_weightsData = getParamData("vertexCrease.weight");
     auto colorsData = getParamData("vertex.color",getParamData("color"));
     auto texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
-    auto edgeLevel = getParam1f("edgeLevel", 5.f);
+    auto level = getParam1f("level", 5.f);
+    auto indexLevelData = getParamData("index.level");
     auto prim_materialIDData = getParamData("prim.materialID");
     auto geom_materialID = getParam1i("geom.materialID",-1);
 
@@ -79,6 +80,7 @@ namespace ospray {
     vec3f* vertex = (vec3f*)vertexData->data;
     float* colors = (float*)colorsData->data;
     int* faces = (int*)facesData->data;
+    float* indexLevel = indexLevelData ? (float*)indexLevelData->data : nullptr;
     vec2i* edge_crease_indices = edge_crease_indicesData ? (vec2i*)edge_crease_indicesData->data : nullptr;
     float* edge_crease_weights = edge_crease_weights ? (float*)edge_crease_weightsData->data : nullptr;
     int* vertex_crease_indices = vertex_crease_indicesData ? (int*)vertex_crease_indicesData->data : nullptr;
@@ -131,7 +133,12 @@ namespace ospray {
           RTC_FORMAT_FLOAT2, texcoord, 0, sizeof(vec2f), texcoordData->size());
     }
 
-    rtcSetGeometryTessellationRate(geom, edgeLevel);
+    if (!indexLevelData)
+      rtcSetGeometryTessellationRate(geom, level);
+    else {
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_LEVEL, 0, RTC_FORMAT_FLOAT, indexLevel,
+                                 0, sizeof(float), indexLevelData->size());
+    }
 
     rtcCommitGeometry(geom);
     auto eGeomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
