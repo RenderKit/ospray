@@ -54,7 +54,7 @@ namespace ospcommon {
             "ospray::amr::loadRaw(): read incomplete data ...");
       fclose(file);
 
-      return volume;
+      return std::move(volume);
     }
 
     template <typename T>
@@ -94,7 +94,7 @@ namespace ospcommon {
       std::shared_ptr<ActualArray3D<T>> volume =
           std::make_shared<ActualArray3D<T>>(dims, mem);
 
-      return volume;
+      return std::move(volume);
 #endif
     }
 
