@@ -66,6 +66,36 @@ static void Subdivision_postIntersect(uniform Geometry *uniform _self,
   }
 }
 
+SampleAreaRes Subdivision_sampleArea(
+    const Geometry *uniform const _self
+    , const int32 primID
+    , const uniform affine3f &xfm
+    , const uniform affine3f &
+    , const vec2f& s
+    )
+{
+  const Subdivision *const uniform self = (const Subdivision *uniform)_self;
+  SampleAreaRes res;
+
+  //TODO: use rtc subdiv functions to determine bounds of prim
+
+  return res;
+}
+
+void Subdivision_getAreas(
+    const Geometry *const uniform _self
+    , const int32 *const uniform primIDs
+    , const uniform int32 numPrims
+    , const uniform affine3f &xfm
+    , float *const uniform areas
+    )
+{
+  const Subdivision *const uniform self = (const Subdivision *uniform)_self;
+
+  //TODO: use rtc subdiv functions to determine bounds of prim
+
+}
+
 void Subdivision_Constructor(uniform Subdivision *uniform mesh,
                              void *uniform cppEquivalent,
                              uniform Model *uniform model,
@@ -86,6 +116,8 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
   mesh->prim_materialID = prim_materialID;
   mesh->geom_materialID = geom_materialID;
   mesh->texcoord = texcoord;
+  mesh->super.getAreas = Subdivision_getAreas;
+  mesh->super.sampleArea = Subdivision_sampleArea;
 }
 
 

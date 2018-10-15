@@ -82,9 +82,9 @@ namespace ospray {
     int* faces = (int*)facesData->data;
     float* indexLevel = indexLevelData ? (float*)indexLevelData->data : nullptr;
     vec2i* edge_crease_indices = edge_crease_indicesData ? (vec2i*)edge_crease_indicesData->data : nullptr;
-    float* edge_crease_weights = edge_crease_weights ? (float*)edge_crease_weightsData->data : nullptr;
+    float* edge_crease_weights = edge_crease_weightsData ? (float*)edge_crease_weightsData->data : nullptr;
     int* vertex_crease_indices = vertex_crease_indicesData ? (int*)vertex_crease_indicesData->data : nullptr;
-    float* vertex_crease_weights = vertex_crease_weights ? (float*)vertex_crease_weightsData->data : nullptr;
+    float* vertex_crease_weights = vertex_crease_weightsData ? (float*)vertex_crease_weightsData->data : nullptr;
     uint32_t* prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
     vec2f* texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
 
