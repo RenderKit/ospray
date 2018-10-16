@@ -18,221 +18,221 @@
 # Global configuration options
 ##############################################################
 
-SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 8)
-SET(OSPRAY_VERSION_PATCH 0)
-SET(OSPRAY_SOVERSION 0)
-SET(OSPRAY_VERSION_GITHASH 0)
-SET(OSPRAY_VERSION_NOTE "")
-IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
-  FIND_PACKAGE(Git)
-  IF (GIT_FOUND)
-    EXECUTE_PROCESS(
+set(OSPRAY_VERSION_MAJOR 1)
+set(OSPRAY_VERSION_MINOR 8)
+set(OSPRAY_VERSION_PATCH 0)
+set(OSPRAY_SOVERSION 0)
+set(OSPRAY_VERSION_GITHASH 0)
+set(OSPRAY_VERSION_NOTE "")
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+  find_package(Git)
+  if (GIT_FOUND)
+    execute_process(
       COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
       OUTPUT_VARIABLE "OSPRAY_VERSION_GITHASH"
       ERROR_QUIET
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-    STRING(SUBSTRING ${OSPRAY_VERSION_GITHASH} 0 8 OSPRAY_VERSION_GITHASH_SHORT)
-    EXECUTE_PROCESS(
+    string(SUBSTRING ${OSPRAY_VERSION_GITHASH} 0 8 OSPRAY_VERSION_GITHASH_SHORT)
+    execute_process(
       COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
       OUTPUT_VARIABLE "OSPRAY_VERSION_GITBRANCH"
       ERROR_QUIET
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-    IF (NOT OSPRAY_VERSION_GITBRANCH MATCHES "^master$|^release-")
-      IF (NOT OSPRAY_VERSION_GITBRANCH STREQUAL "HEAD")
-        SET(OSPRAY_VERSION_NOTE "-${OSPRAY_VERSION_GITBRANCH}")
-      ENDIF()
-      SET(OSPRAY_VERSION_NOTE "${OSPRAY_VERSION_NOTE} (${OSPRAY_VERSION_GITHASH_SHORT})")
-    ENDIF()
-  ENDIF()
-ENDIF()
+    if (NOT OSPRAY_VERSION_GITBRANCH MATCHES "^master$|^release-")
+      if (NOT OSPRAY_VERSION_GITBRANCH STREQUAL "HEAD")
+        set(OSPRAY_VERSION_NOTE "-${OSPRAY_VERSION_GITBRANCH}")
+      endif()
+      set(OSPRAY_VERSION_NOTE "${OSPRAY_VERSION_NOTE} (${OSPRAY_VERSION_GITHASH_SHORT})")
+    endif()
+  endif()
+endif()
 
-SET(OSPRAY_VERSION
+set(OSPRAY_VERSION
   ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
 )
 
-SET(EMBREE_VERSION_REQUIRED 3.2.0)
+set(EMBREE_VERSION_REQUIRED 3.2.0)
 
-SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
-IF (WIN32)
-  IF (NOT OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)
-    SET(CMAKE_CONFIGURATION_TYPES "${CONFIGURATION_TYPES}"
+set(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
+if (WIN32)
+  if (NOT OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)
+    set(CMAKE_CONFIGURATION_TYPES "${CONFIGURATION_TYPES}"
         CACHE STRING "List of generated configurations." FORCE)
-    SET(OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET ON
+    set(OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET ON
         CACHE INTERNAL "Default CMake configuration types set.")
-  ENDIF()
-ELSE()
-  IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
-  ENDIF()
-  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
-ENDIF()
+  endif()
+else()
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
+  endif()
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
+endif()
 
-IF("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  SET(OSPRAY_BUILD_DEBUG          TRUE )
-  SET(OSPRAY_BUILD_RELWITHDEBINFO FALSE)
-  SET(OSPRAY_BUILD_RELEASE        FALSE)
-ELSEIF("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-  SET(OSPRAY_BUILD_DEBUG          FALSE)
-  SET(OSPRAY_BUILD_RELWITHDEBINFO TRUE )
-  SET(OSPRAY_BUILD_RELEASE        FALSE)
-ELSE()# Release
-  SET(OSPRAY_BUILD_DEBUG          FALSE)
-  SET(OSPRAY_BUILD_RELWITHDEBINFO FALSE)
-  SET(OSPRAY_BUILD_RELEASE        TRUE )
-ENDIF()
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  set(OSPRAY_BUILD_DEBUG          TRUE )
+  set(OSPRAY_BUILD_RELWITHDEBINFO FALSE)
+  set(OSPRAY_BUILD_RELEASE        FALSE)
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+  set(OSPRAY_BUILD_DEBUG          FALSE)
+  set(OSPRAY_BUILD_RELWITHDEBINFO TRUE )
+  set(OSPRAY_BUILD_RELEASE        FALSE)
+else()# Release
+  set(OSPRAY_BUILD_DEBUG          FALSE)
+  set(OSPRAY_BUILD_RELWITHDEBINFO FALSE)
+  set(OSPRAY_BUILD_RELEASE        TRUE )
+endif()
 
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 #include bindir - that's where OSPConfig.h and ospray/version.h will be put
-INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
+include_directories(${PROJECT_BINARY_DIR})
 
-IF (WIN32)
+if (WIN32)
   # avoid problematic min/max defines of windows.h
   ADD_DEFINITIONS(-DNOMINMAX)
-ENDIF()
+endif()
 
 ##############################################################
 # OSPRay specific build options and configuration selection
 ##############################################################
 
-OSPRAY_CONFIGURE_COMPILER()
-OSPRAY_CONFIGURE_TASKING_SYSTEM()
+ospray_configure_compiler()
+ospray_configure_tasking_system()
 
-OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable use of Embree's stream intersection")
-MARK_AS_ADVANCED(OSPRAY_USE_EMBREE_STREAMS) # feature not implemented yet
+option(OSPRAY_USE_EMBREE_STREAMS "Enable use of Embree's stream intersection")
+mark_as_advanced(OSPRAY_USE_EMBREE_STREAMS) # feature not implemented yet
 
-SET(OSPRAY_TILE_SIZE 64 CACHE STRING "Tile size (x,y dimensions)")
-SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
-MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
+set(OSPRAY_TILE_SIZE 64 CACHE STRING "Tile size (x,y dimensions)")
+set_property(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
+mark_as_advanced(OSPRAY_TILE_SIZE)
 
-IF (WIN32)
-  SET(TILE_STACK_DEFAULT_SIZE 64)
-ELSEIF (APPLE)
-  SET(TILE_STACK_DEFAULT_SIZE 32)
-ELSE ()
-  SET(TILE_STACK_DEFAULT_SIZE 128)
-ENDIF()
+if (WIN32)
+  set(TILE_STACK_DEFAULT_SIZE 64)
+elseif (APPLE)
+  set(TILE_STACK_DEFAULT_SIZE 32)
+else ()
+  set(TILE_STACK_DEFAULT_SIZE 128)
+endif()
 
-SET(OSPRAY_MAX_STACK_TILE_SIZE ${TILE_STACK_DEFAULT_SIZE} CACHE STRING
+set(OSPRAY_MAX_STACK_TILE_SIZE ${TILE_STACK_DEFAULT_SIZE} CACHE STRING
     "Max size for tile to remain allocated on the stack")
-SET_PROPERTY(CACHE OSPRAY_MAX_STACK_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
-MARK_AS_ADVANCED(OSPRAY_MAX_STACK_TILE_SIZE)
+set_property(CACHE OSPRAY_MAX_STACK_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
+mark_as_advanced(OSPRAY_MAX_STACK_TILE_SIZE)
 
-SET(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
+set(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
     "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
-MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
+mark_as_advanced(OSPRAY_PIXELS_PER_JOB)
 
 
 # make Embree's INSTALLs happy
-INCLUDE(GNUInstallDirs)
+include(GNUInstallDirs)
 
 # Must be before ISA config and package
-INCLUDE(configure_embree)
+include(configure_embree)
 
-OPTION(OSPRAY_ENABLE_TUTORIALS "Enable the 'tutorials' subtree in the build." ON)
+option(OSPRAY_ENABLE_TUTORIALS "Enable the 'tutorials' subtree in the build." ON)
 
-OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
-MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
+option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
+mark_as_advanced(OSPRAY_ENABLE_APPS)
 
-OPTION(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
+option(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
 
-IF (OSPRAY_ENABLE_TESTING)
+if (OSPRAY_ENABLE_TESTING)
   ENABLE_TESTING()
-ENDIF()
+endif()
 
 ##############################################################
-# create binary packages; before any INSTALL() invocation/definition
+# create binary packages; before any install() invocation/definition
 ##############################################################
 
-OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
-MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
+option(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
+mark_as_advanced(OSPRAY_ZIP_MODE)
 
-OPTION(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packages and install")
-MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
+option(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packages and install")
+mark_as_advanced(OSPRAY_INSTALL_DEPENDENCIES)
 
-INCLUDE(package)
+include(package)
 
 ##############################################################
 # redistribute TBB and Embree
 ##############################################################
 
-IF (OSPRAY_INSTALL_DEPENDENCIES)
-  MACRO(OSPRAY_INSTALL_NAMELINK NAME TARGET_NAME)
-    EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink
+if (OSPRAY_INSTALL_DEPENDENCIES)
+  macro(OSPRAY_INSTALL_NAMELINK NAME TARGET_NAME)
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink
                     ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so)
-    INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
 
     # If the shared lib we're copying is named with a specific version, also
     # create a major version suffixed symlink
-    STRING(REGEX MATCH "([0-9]+)[.]([0-9]+)[.]([0-9]+)" VERSION_STRING ${TARGET_NAME})
+    string(REGEX MATCH "([0-9]+)[.]([0-9]+)[.]([0-9]+)" VERSION_STRING ${TARGET_NAME})
     if (CMAKE_MATCH_0)
-      EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink
+      execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink
                       ${TARGET_NAME}
                       ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1})
-      INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1}
+      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}.so.${CMAKE_MATCH_1}
               DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
     endif()
-  ENDMACRO()
+  endmacro()
 
-  IF (OSPRAY_TASKING_TBB)
-    IF (WIN32)
-      SET(TBB_DLL_HINTS
+  if (OSPRAY_TASKING_TBB)
+    if (WIN32)
+      set(TBB_DLL_HINTS
         HINTS
         ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
         ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
         ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER}
         ${TBB_ROOT}/bin
       )
-      FIND_FILE(TBB_DLL tbb.dll ${TBB_DLL_HINTS})
-      FIND_FILE(TBB_DLL_DEBUG tbb_debug.dll ${TBB_DLL_HINTS})
-      FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll ${TBB_DLL_HINTS})
-      FIND_FILE(TBB_DLL_MALLOC_DEBUG tbbmalloc_debug.dll ${TBB_DLL_HINTS})
-      MARK_AS_ADVANCED(TBB_DLL)
-      MARK_AS_ADVANCED(TBB_DLL_DEBUG)
-      MARK_AS_ADVANCED(TBB_DLL_MALLOC)
-      MARK_AS_ADVANCED(TBB_DLL_MALLOC_DEBUG)
-      INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
+      find_file(TBB_DLL tbb.dll ${TBB_DLL_HINTS})
+      find_file(TBB_DLL_DEBUG tbb_debug.dll ${TBB_DLL_HINTS})
+      find_file(TBB_DLL_MALLOC tbbmalloc.dll ${TBB_DLL_HINTS})
+      find_file(TBB_DLL_MALLOC_DEBUG tbbmalloc_debug.dll ${TBB_DLL_HINTS})
+      mark_as_advanced(TBB_DLL)
+      mark_as_advanced(TBB_DLL_DEBUG)
+      mark_as_advanced(TBB_DLL_MALLOC)
+      mark_as_advanced(TBB_DLL_MALLOC_DEBUG)
+      install(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
               DESTINATION ${CMAKE_INSTALL_BINDIR}
               CONFIGURATIONS Release RelWithDebInfo COMPONENT redist)
-      INSTALL(PROGRAMS ${TBB_DLL_DEBUG} ${TBB_DLL_MALLOC_DEBUG}
+      install(PROGRAMS ${TBB_DLL_DEBUG} ${TBB_DLL_MALLOC_DEBUG}
               DESTINATION ${CMAKE_INSTALL_BINDIR}
               CONFIGURATIONS Debug COMPONENT redist)
-    ELSE()
-      INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
+    else()
+      install(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
               DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-      IF (NOT APPLE)
+      if (NOT APPLE)
         get_filename_component(TBB_LIBNAME ${TBB_LIBRARY} NAME)
         get_filename_component(TBB_MALLOC_LIBNAME ${TBB_LIBRARY_MALLOC} NAME)
         OSPRAY_INSTALL_NAMELINK(tbb ${TBB_LIBNAME})
         OSPRAY_INSTALL_NAMELINK(tbbmalloc ${TBB_MALLOC_LIBNAME})
-      ENDIF()
-    ENDIF()
-  ENDIF()
+      endif()
+    endif()
+  endif()
 
-  IF (WIN32)
-    GET_FILENAME_COMPONENT(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)
-    SET(EMBREE_DLL_HINTS
+  if (WIN32)
+    get_filename_component(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)
+    set(EMBREE_DLL_HINTS
       ${EMBREE_LIB_DIR}
       ${EMBREE_LIB_DIR}/../bin
       ${embree_DIR}/../../../bin
       ${embree_DIR}/../bin
     )
-    FIND_FILE(EMBREE_DLL embree3.dll HINTS ${EMBREE_DLL_HINTS})
-    MARK_AS_ADVANCED(EMBREE_DLL)
-    INSTALL(PROGRAMS ${EMBREE_DLL}
+    find_file(EMBREE_DLL embree3.dll HINTS ${EMBREE_DLL_HINTS})
+    mark_as_advanced(EMBREE_DLL)
+    install(PROGRAMS ${EMBREE_DLL}
             DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
-  ELSE()
-    INSTALL(PROGRAMS ${EMBREE_LIBRARY}
+  else()
+    install(PROGRAMS ${EMBREE_LIBRARY}
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-    IF (NOT APPLE)
+    if (NOT APPLE)
       get_filename_component(EMBREE_LIBNAME ${EMBREE_LIBRARY} NAME)
       OSPRAY_INSTALL_NAMELINK(embree ${EMBREE_LIBNAME})
-    ENDIF()
-  ENDIF()
-ENDIF()
+    endif()
+  endif()
+endif()
