@@ -16,22 +16,22 @@
 
 # Test app which generates data-parallel groups of spheres ####################
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
+include_directories(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
 
-IF (NOT WIN32)# Internal Compiler Error on MSVC12...
+if (NOT WIN32)# Internal Compiler Error on MSVC12...
 
-  ADD_SUBDIRECTORY(gensv)
+  add_subdirectory(gensv)
 
-  OSPRAY_CONFIGURE_MPI()
+  ospray_configure_mpi()
 
-  OSPRAY_CREATE_TEST(ospRandSphereTest
+  ospray_create_test(ospRandSphereTest
     ospRandSphereTest.cpp
   LINK
     ospray
     ospray_mpi_common
   )
 
-  OSPRAY_CREATE_TEST(ospRandSciVisTest
+  ospray_create_test(ospRandSciVisTest
     ospRandSciVisTest.cpp
   LINK
     ospray
@@ -39,7 +39,7 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray_gensv
   )
 
-  OSPRAY_CREATE_TEST(ospDDLoader-test
+  ospray_create_test(ospDDLoader-test
     ospDDLoader.cpp
   LINK
     ospray
@@ -57,9 +57,9 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray_gensv
   )
 
-  IF (OSPRAY_MODULE_MPI_APPS)
-    INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-    ADD_SUBDIRECTORY(viewer)
-  ENDIF()
+  if (OSPRAY_MODULE_MPI_APPS)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+    add_subdirectory(viewer)
+  endif()
 
-ENDIF()
+endif()

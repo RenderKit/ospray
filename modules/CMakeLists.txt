@@ -14,9 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_DEFAULT_COMPONENT modules)
+set(OSPRAY_DEFAULT_COMPONENT modules)
 
-INCLUDE_DIRECTORIES(
+include_directories(
   ${PROJECT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}/ospray
@@ -27,7 +27,7 @@ INCLUDE_DIRECTORIES(
   ${EMBREE_INCLUDE_DIRS}
 )
 
-INCLUDE_DIRECTORIES_ISPC(
+include_directories_ispc(
   ${PROJECT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}/ospray
@@ -35,9 +35,9 @@ INCLUDE_DIRECTORIES_ISPC(
   ${EMBREE_INCLUDE_DIRS}
 )
 
-FILE(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
-FOREACH(plugin ${plugins})
-  IF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${plugin}/CMakeLists.txt)
-    ADD_SUBDIRECTORY(${plugin})
-  ENDIF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${plugin}/CMakeLists.txt)
-ENDFOREACH(plugin ${plugins})
+file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
+foreach(plugin ${plugins})
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${plugin}/CMakeLists.txt)
+    add_subdirectory(${plugin})
+  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${plugin}/CMakeLists.txt)
+endforeach(plugin ${plugins})
