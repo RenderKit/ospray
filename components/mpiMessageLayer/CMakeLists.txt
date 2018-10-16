@@ -18,7 +18,7 @@ set(MAML_LIBRARY ospray_mpi_maml)
 
 ospray_configure_mpi()
 
-ospray_build_component(snappy)
+ospray_build_component(snappy EXCLUDE_FROM_ALL)
 ospray_build_component(mpiCommon)
 
 # ------------------------------------------------------------------

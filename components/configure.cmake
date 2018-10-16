@@ -29,7 +29,7 @@ include_directories(${OSPRAY_COMPONENTS_ROOT})
 
 # the macro any part of ospray can use to request ospray to
 # include/build a specific component
-macro(OSPRAY_BUILD_COMPONENT comp)
+macro(ospray_build_component comp)
   set(CURRENT_COMPONENT_DIR ${COMPONENTS_DIR}/${comp})
   if(NOT EXISTS ${CURRENT_COMPONENT_DIR})
     message(FATAL_ERROR "Could not find component '${comp}'!")
@@ -50,7 +50,7 @@ macro(OSPRAY_BUILD_COMPONENT comp)
     unset(OSPRAY_DEFAULT_COMPONENT)
 
     add_subdirectory(${CURRENT_COMPONENT_DIR}
-      ${CMAKE_BINARY_DIR}/built_components/${comp} EXCLUDE_FROM_ALL)
+      ${CMAKE_BINARY_DIR}/built_components/${comp} ${ARGN})
 
     set(OSPRAY_DEFAULT_COMPONENT ${DEFAULT_COMPONENT})
 

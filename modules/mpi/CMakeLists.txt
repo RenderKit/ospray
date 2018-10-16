@@ -38,7 +38,7 @@ if (OSPRAY_MODULE_MPI)
 
   ospray_build_component(mpiCommon)
   ospray_build_component(mpiMessageLayer)
-  ospray_build_component(snappy)
+  ospray_build_component(snappy EXCLUDE_FROM_ALL)
 
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
