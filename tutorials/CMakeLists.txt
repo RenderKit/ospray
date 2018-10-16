@@ -25,9 +25,14 @@ if (TARGET glfw)
   get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 endif()
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-)
+include_directories(${CMAKE_SOURCE_DIR}/ospray/include)
+
+# build ospTutorial, for demonstration and API testing
+add_executable(ospTutorial ospTutorial.c)
+target_link_libraries(ospTutorial ospray)
+# C++ version
+add_executable(ospTutorialCpp ospTutorial.cpp)
+target_link_libraries(ospTutorialCpp ospray)
 
 ospray_create_application(ospTutorialSpheres
   ArcballCamera.cpp
