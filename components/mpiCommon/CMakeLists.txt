@@ -14,9 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CONFIGURE_MPI()
+ospray_configure_mpi()
 
-OSPRAY_CREATE_LIBRARY(ospray_mpi_common
+ospray_create_library(ospray_mpi_common
 
   MPICommon.cpp
   MPIBcastFabric.cpp
@@ -30,11 +30,11 @@ LINK
 COMPONENT mpi
 )
 
-SET(MPICOMMON_SDK_INSTALL_LOC
+set(MPICOMMON_SDK_INSTALL_LOC
   ../mpiCommon #NOTE: this is "next" to the SDK/ directory
 )
 
-OSPRAY_INSTALL_SDK_HEADERS(
+ospray_install_sdk_headers(
   MPICommon.h
   MPIBcastFabric.h
   DESTINATION ${MPICOMMON_SDK_INSTALL_LOC}

@@ -14,10 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CONFIGURE_MPI()
-OSPRAY_BUILD_COMPONENT(mpiCommon)
+ospray_configure_mpi()
+ospray_build_component(mpiCommon)
 
-OSPRAY_CREATE_LIBRARY(ospray_mpi_service
+ospray_create_library(ospray_mpi_service
   MPIService.cpp
 LINK
   ospray_mpi_common
