@@ -15,18 +15,18 @@
 ## ======================================================================== ##
 
 ## Macro for printing CMake variables ##
-MACRO(PRINT var)
-  MESSAGE("${var} = ${${var}}")
-ENDMACRO()
+macro(print var)
+  message("${var} = ${${var}}")
+endmacro()
 
 ## Macro to print a warning message that only appears once ##
-MACRO(OSPRAY_WARN_ONCE identifier message)
-  SET(INTERNAL_WARNING "OSPRAY_WARNED_${identifier}")
-  IF(NOT ${INTERNAL_WARNING})
-    MESSAGE(WARNING ${message})
-    SET(${INTERNAL_WARNING} ON CACHE INTERNAL "Warned about '${message}'")
-  ENDIF()
-ENDMACRO()
+macro(ospray_warn_once IDENTIFIER MESSAGE)
+  set(INTERNAL_WARNING "OSPRAY_WARNED_${IDENTIFIER}")
+  if(NOT ${INTERNAL_WARNING})
+    message(WARNING ${MESSAGE})
+    set(${INTERNAL_WARNING} ON CACHE INTERNAL "Warned about '${MESSAGE}'")
+  endif()
+endmacro()
 
 
 # workaround link issues to Embree ISPC exports
@@ -34,154 +34,153 @@ ENDMACRO()
 # code) when compiling for multiple targets. Thus, when only one OSPRay ISA is
 # selected, but Embree was compiled for multiple ISAs, we need to add a
 # second, different, supported dummy target.
-MACRO(OSPRAY_FIX_ISPC_TARGET_LIST)
-  LIST(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
-  IF (NUM_TARGETS EQUAL 1)
-    IF (EMBREE_ISA_SUPPORTS_SSE2)
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse2)
-    ELSEIF (EMBREE_ISA_SUPPORTS_SSE4 AND
+macro(ospray_fix_ispc_target_list)
+  list(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
+  if (NUM_TARGETS EQUAL 1)
+    if (EMBREE_ISA_SUPPORTS_SSE2)
+      list(APPEND OSPRAY_ISPC_TARGET_LIST sse2)
+    elseif (EMBREE_ISA_SUPPORTS_SSE4 AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "sse4")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse4)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX AND
+      list(APPEND OSPRAY_ISPC_TARGET_LIST sse4)
+    elseif (EMBREE_ISA_SUPPORTS_AVX AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX2 AND
+      list(APPEND OSPRAY_ISPC_TARGET_LIST avx)
+    elseif (EMBREE_ISA_SUPPORTS_AVX2 AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx2")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx2)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512KNL AND
+      list(APPEND OSPRAY_ISPC_TARGET_LIST avx2)
+    elseif (EMBREE_ISA_SUPPORTS_AVX512KNL AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512knl-i32x16")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
-    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512SKX AND
+      list(APPEND OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
+    elseif (EMBREE_ISA_SUPPORTS_AVX512SKX AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512skx-i32x16")
-      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
-    ENDIF()
-  ENDIF()
-ENDMACRO()
+      list(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
+    endif()
+  endif()
+endmacro()
 
 ## Macro configure ISA targets for ispc ##
-MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
+macro(ospray_configure_ispc_isa)
 
-  SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
+  set(OSPRAY_BUILD_ISA "ALL" CACHE STRING
       "Target ISA (SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, or ALL)")
-  STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
+  string(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
-  OPTION(OSPRAY_BUILD_ISA_SCALAR
+  option(OSPRAY_BUILD_ISA_SCALAR
          "Include 'SCALAR' target (WARNING: may not work!)" OFF)
-  MARK_AS_ADVANCED(OSPRAY_BUILD_ISA_SCALAR)
+  mark_as_advanced(OSPRAY_BUILD_ISA_SCALAR)
 
-  IF (OSPRAY_BUILD_ISA_SCALAR)
-    SET(OSPRAY_SUPPORTED_ISAS SCALAR)
-  ENDIF()
+  if (OSPRAY_BUILD_ISA_SCALAR)
+    set(OSPRAY_SUPPORTED_ISAS SCALAR)
+  endif()
 
-  IF(EMBREE_ISA_SUPPORTS_SSE4)
-    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE4)
-  ENDIF()
-  IF(EMBREE_ISA_SUPPORTS_AVX)
-    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX)
-  ENDIF()
-  IF(EMBREE_ISA_SUPPORTS_AVX2)
-    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX2)
-  ENDIF()
-  IF(EMBREE_ISA_SUPPORTS_AVX512KNL)
-    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512KNL)
-  ENDIF()
-  IF(EMBREE_ISA_SUPPORTS_AVX512SKX)
-    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512SKX)
-  ENDIF()
+  if(EMBREE_ISA_SUPPORTS_SSE4)
+    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE4)
+  endif()
+  if(EMBREE_ISA_SUPPORTS_AVX)
+    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX)
+  endif()
+  if(EMBREE_ISA_SUPPORTS_AVX2)
+    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX2)
+  endif()
+  if(EMBREE_ISA_SUPPORTS_AVX512KNL)
+    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512KNL)
+  endif()
+  if(EMBREE_ISA_SUPPORTS_AVX512SKX)
+    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512SKX)
+  endif()
 
-  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS
+  set_property(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS
                ALL ${OSPRAY_SUPPORTED_ISAS})
 
-  UNSET(OSPRAY_ISPC_TARGET_LIST)
+  unset(OSPRAY_ISPC_TARGET_LIST)
+  if (OSPRAY_BUILD_ISA STREQUAL "ALL")
 
-  IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+    if(EMBREE_ISA_SUPPORTS_SSE4)
+      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
+      message(STATUS "OSPRay SSE4 ISA target enabled.")
+    endif()
+    if(EMBREE_ISA_SUPPORTS_AVX)
+      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx)
+      message(STATUS "OSPRay AVX ISA target enabled.")
+    endif()
+    if(EMBREE_ISA_SUPPORTS_AVX2)
+      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
+      message(STATUS "OSPRay AVX2 ISA target enabled.")
+    endif()
+    if(EMBREE_ISA_SUPPORTS_AVX512KNL)
+      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512knl-i32x16)
+      message(STATUS "OSPRay AVX512KNL ISA target enabled.")
+    endif()
+    if(EMBREE_ISA_SUPPORTS_AVX512SKX)
+      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512skx-i32x16)
+      message(STATUS "OSPRay AVX512SKX ISA target enabled.")
+    endif()
 
-    IF(EMBREE_ISA_SUPPORTS_SSE4)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
-      MESSAGE(STATUS "OSPRay SSE4 ISA target enabled.")
-    ENDIF()
-    IF(EMBREE_ISA_SUPPORTS_AVX)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx)
-      MESSAGE(STATUS "OSPRay AVX ISA target enabled.")
-    ENDIF()
-    IF(EMBREE_ISA_SUPPORTS_AVX2)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
-      MESSAGE(STATUS "OSPRay AVX2 ISA target enabled.")
-    ENDIF()
-    IF(EMBREE_ISA_SUPPORTS_AVX512KNL)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512knl-i32x16)
-      MESSAGE(STATUS "OSPRay AVX512KNL ISA target enabled.")
-    ENDIF()
-    IF(EMBREE_ISA_SUPPORTS_AVX512SKX)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512skx-i32x16)
-      MESSAGE(STATUS "OSPRay AVX512SKX ISA target enabled.")
-    ENDIF()
+  elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512SKX")
 
-  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512SKX")
+    if(NOT EMBREE_ISA_SUPPORTS_AVX512SKX)
+      message(FATAL_ERROR "Your Embree build does not support AVX512SKX!")
+    endif()
+    set(OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
 
-    IF(NOT EMBREE_ISA_SUPPORTS_AVX512SKX)
-      MESSAGE(FATAL_ERROR "Your Embree build does not support AVX512SKX!")
-    ENDIF()
-    SET(OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
+  elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512KNL")
 
-  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512KNL")
+    if(NOT EMBREE_ISA_SUPPORTS_AVX512KNL)
+      message(FATAL_ERROR "Your Embree build does not support AVX512KNL!")
+    endif()
+    set(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
 
-    IF(NOT EMBREE_ISA_SUPPORTS_AVX512KNL)
-      MESSAGE(FATAL_ERROR "Your Embree build does not support AVX512KNL!")
-    ENDIF()
-    SET(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
+  elseif (OSPRAY_BUILD_ISA STREQUAL "AVX2")
 
-  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
+    if(NOT EMBREE_ISA_SUPPORTS_AVX2)
+      message(FATAL_ERROR "Your Embree build does not support AVX2!")
+    endif()
+    set(OSPRAY_ISPC_TARGET_LIST avx2)
 
-    IF(NOT EMBREE_ISA_SUPPORTS_AVX2)
-      MESSAGE(FATAL_ERROR "Your Embree build does not support AVX2!")
-    ENDIF()
-    SET(OSPRAY_ISPC_TARGET_LIST avx2)
+  elseif (OSPRAY_BUILD_ISA STREQUAL "AVX")
 
-  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
+    if(NOT EMBREE_ISA_SUPPORTS_AVX)
+      message(FATAL_ERROR "Your Embree build does not support AVX!")
+    endif()
+    set(OSPRAY_ISPC_TARGET_LIST avx)
 
-    IF(NOT EMBREE_ISA_SUPPORTS_AVX)
-      MESSAGE(FATAL_ERROR "Your Embree build does not support AVX!")
-    ENDIF()
-    SET(OSPRAY_ISPC_TARGET_LIST avx)
+  elseif (OSPRAY_BUILD_ISA STREQUAL "SSE4")
 
-  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE4")
+    if(NOT EMBREE_ISA_SUPPORTS_SSE4)
+      message(FATAL_ERROR "Your Embree build does not support SSE4!")
+    endif()
+    set(OSPRAY_ISPC_TARGET_LIST sse4)
 
-    IF(NOT EMBREE_ISA_SUPPORTS_SSE4)
-      MESSAGE(FATAL_ERROR "Your Embree build does not support SSE4!")
-    ENDIF()
-    SET(OSPRAY_ISPC_TARGET_LIST sse4)
-
-  ELSE ()
-    MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. "
+  else()
+    message(ERROR "Invalid OSPRAY_BUILD_ISA value. "
                   "Please select one of ${OSPRAY_SUPPORTED_ISAS}, or ALL.")
-  ENDIF()
+  endif()
 
-  OSPRAY_FIX_ISPC_TARGET_LIST()
-ENDMACRO()
+  ospray_fix_ispc_target_list()
+endmacro()
 
 ## Target creation macros ##
 
-MACRO(OSPRAY_ADD_LIBRARY name type)
-  SET(ISPC_SOURCES "")
-  SET(OTHER_SOURCES "")
-  FOREACH(src ${ARGN})
-    GET_FILENAME_COMPONENT(ext ${src} EXT)
-    IF (ext STREQUAL ".ispc")
-      SET(ISPC_SOURCES ${ISPC_SOURCES} ${src})
-    ELSE ()
-      SET(OTHER_SOURCES ${OTHER_SOURCES} ${src})
-    ENDIF ()
-  ENDFOREACH()
-  OSPRAY_ISPC_COMPILE(${ISPC_SOURCES})
-  ADD_LIBRARY(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
-ENDMACRO()
+macro(ospray_add_library name type)
+  set(ISPC_SOURCES "")
+  set(OTHER_SOURCES "")
+  foreach(src ${ARGN})
+    get_filename_component(ext ${src} EXT)
+    if (ext STREQUAL ".ispc")
+      set(ISPC_SOURCES ${ISPC_SOURCES} ${src})
+    else()
+      set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
+    endif ()
+  endforeach()
+  ospray_ispc_compile(${ISPC_SOURCES})
+  add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+endmacro()
 
 ## Target install macros for OSPRay libraries ##
-INCLUDE(GNUInstallDirs)
+include(GNUInstallDirs)
 
-MACRO(OSPRAY_INSTALL_LIBRARY name component)
-  INSTALL(TARGETS ${name}
+macro(ospray_install_library name component)
+  install(TARGETS ${name}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
       NAMELINK_SKIP
@@ -197,7 +196,7 @@ MACRO(OSPRAY_INSTALL_LIBRARY name component)
   # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
   # given no ARCHIVE DESTINATION for static library target" error. Installing
   # these components twice doesn't hurt anything.
-  INSTALL(TARGETS ${name}
+  install(TARGETS ${name}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
       NAMELINK_ONLY
@@ -206,58 +205,57 @@ MACRO(OSPRAY_INSTALL_LIBRARY name component)
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
   )
-ENDMACRO()
+endmacro()
 
 ## Target versioning macro ##
 
-MACRO(OSPRAY_SET_LIBRARY_VERSION name)
-  SET_TARGET_PROPERTIES(${name}
+macro(ospray_set_library_version name)
+  set_target_properties(${name}
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-ENDMACRO()
+endmacro()
 
-
-# Helper function to return arguments of OSPRAY_CREATE_ in separate
+# Helper function to return arguments of ospray_create_ in separate
 # variables, prefixed with PREFIX
-FUNCTION(OSPRAY_SPLIT_CREATE_ARGS PREFIX)
-  SET(MY_SOURCES "")
-  SET(LIBS "")
-  SET(MY_EXCLUDE_FROM_ALL FALSE)
-  SET(MY_COMPONENT ${OSPRAY_DEFAULT_COMPONENT})
-  SET(CURRENT_LIST MY_SOURCES)
+function(ospray_split_create_args PREFIX)
+  set(MY_SOURCES "")
+  set(LIBS "")
+  set(MY_EXCLUDE_FROM_ALL FALSE)
+  set(MY_COMPONENT ${OSPRAY_DEFAULT_COMPONENT})
+  set(CURRENT_LIST MY_SOURCES)
 
-  FOREACH(arg ${ARGN})
-    IF ("${arg}" STREQUAL "LINK")
-      SET(CURRENT_LIST LIBS)
-    ELSEIF ("${arg}" STREQUAL "EXCLUDE_FROM_ALL")
-      SET(MY_EXCLUDE_FROM_ALL TRUE)
-    ELSEIF ("${arg}" STREQUAL "COMPONENT")
-      SET(CURRENT_LIST MY_COMPONENT)
-    ELSE()
-      LIST(APPEND ${CURRENT_LIST} ${arg})
-    ENDIF ()
-  ENDFOREACH()
+  foreach(arg ${ARGN})
+    if ("${arg}" STREQUAL "LINK")
+      set(CURRENT_LIST LIBS)
+    elseif ("${arg}" STREQUAL "EXCLUDE_FROM_ALL")
+      set(MY_EXCLUDE_FROM_ALL TRUE)
+    elseif ("${arg}" STREQUAL "COMPONENT")
+      set(CURRENT_LIST MY_COMPONENT)
+    else()
+      list(APPEND ${CURRENT_LIST} ${arg})
+    endif ()
+  endforeach()
 
   # COMPONENT only required when installed
-  IF (NOT ${MY_EXCLUDE_FROM_ALL})
-    LIST(LENGTH MY_COMPONENT COMPONENTS)
-    IF (COMPONENTS EQUAL 0)
-      MESSAGE(STATUS "No COMPONENT for installation specified! Using default COMPONENT name \"${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME}\"")
-      SET(MY_COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
-    ELSE()
-      LIST(GET MY_COMPONENT -1 MY_COMPONENT)
-    ENDIF()
-  ENDIF()
+  if (NOT ${MY_EXCLUDE_FROM_ALL})
+    list(LENGTH MY_COMPONENT COMPONENTS)
+    if (COMPONENTS EQUAL 0)
+      message(STATUS "No COMPONENT for installation specified! Using default COMPONENT name \"${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME}\"")
+      set(MY_COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
+    else()
+      list(GET MY_COMPONENT -1 MY_COMPONENT)
+    endif()
+  endif()
 
-  SET(${PREFIX}_SOURCES ${MY_SOURCES} PARENT_SCOPE)
-  SET(${PREFIX}_LIBS ${LIBS} PARENT_SCOPE)
-  SET(${PREFIX}_EXCLUDE_FROM_ALL ${MY_EXCLUDE_FROM_ALL} PARENT_SCOPE)
-  SET(${PREFIX}_COMPONENT ${MY_COMPONENT} PARENT_SCOPE)
-ENDFUNCTION()
+  set(${PREFIX}_SOURCES ${MY_SOURCES} PARENT_SCOPE)
+  set(${PREFIX}_LIBS ${LIBS} PARENT_SCOPE)
+  set(${PREFIX}_EXCLUDE_FROM_ALL ${MY_EXCLUDE_FROM_ALL} PARENT_SCOPE)
+  set(${PREFIX}_COMPONENT ${MY_COMPONENT} PARENT_SCOPE)
+endfunction()
 
 ## Conveniance macro for creating OSPRay libraries ##
 # Usage
 #
-#   OSPRAY_CREATE_LIBRARY(<name> source1 [source2 ...]
+#   ospray_create_library(<name> source1 [source2 ...]
 #                         [LINK lib1 [lib2 ...]]
 #                         [EXCLUDE_FROM_ALL]
 #                         [COMPONENT component])
@@ -270,23 +268,23 @@ ENDFUNCTION()
 # OSPRAY_DEFAULT_COMPONENT which can be overridden individually with
 # COMPONENT.
 
-MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
-  OSPRAY_SPLIT_CREATE_ARGS(LIBRARY ${ARGN})
+macro(ospray_create_library LIBRARY_NAME)
+  ospray_split_create_args(LIBRARY ${ARGN})
 
-  OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
-  TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${LIBRARY_LIBS})
-  OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-  IF(${LIBRARY_EXCLUDE_FROM_ALL})
-    SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-  ELSE()
-    OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME} ${LIBRARY_COMPONENT})
-  ENDIF()
-ENDMACRO()
+  ospray_add_library(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
+  target_link_libraries(${LIBRARY_NAME} ${LIBRARY_LIBS})
+  ospray_set_library_version(${LIBRARY_NAME})
+  if(${LIBRARY_EXCLUDE_FROM_ALL})
+    set_target_properties(${LIBRARY_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  else()
+    ospray_install_library(${LIBRARY_NAME} ${LIBRARY_COMPONENT})
+  endif()
+endmacro()
 
 ## Conveniance macro for creating OSPRay applications ##
 # Usage
 #
-#   OSPRAY_CREATE_APPLICATION(<name> source1 [source2 ...]
+#   ospray_create_application(<name> source1 [source2 ...]
 #                             [LINK lib1 [lib2 ...]]
 #                             [EXCLUDE_FROM_ALL]
 #                             [COMPONENT component])
@@ -299,247 +297,247 @@ ENDMACRO()
 # OSPRAY_DEFAULT_COMPONENT which can be overridden individually with
 # COMPONENT.
 
-MACRO(OSPRAY_CREATE_APPLICATION APP_NAME)
-  OSPRAY_SPLIT_CREATE_ARGS(APP ${ARGN})
+macro(ospray_create_application APP_NAME)
+  ospray_split_create_args(APP ${ARGN})
 
-  ADD_EXECUTABLE(${APP_NAME} ${APP_SOURCES})
-  TARGET_LINK_LIBRARIES(${APP_NAME} ${APP_LIBS})
-  IF (WIN32)
-    SET_TARGET_PROPERTIES(${APP_NAME} PROPERTIES VERSION ${OSPRAY_VERSION})
-  ENDIF()
-  IF(${APP_EXCLUDE_FROM_ALL})
-    SET_TARGET_PROPERTIES(${APP_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-  ELSE()
-    INSTALL(TARGETS ${APP_NAME}
+  add_executable(${APP_NAME} ${APP_SOURCES})
+  target_link_libraries(${APP_NAME} ${APP_LIBS})
+  if (WIN32)
+    set_target_properties(${APP_NAME} PROPERTIES VERSION ${OSPRAY_VERSION})
+  endif()
+  if(${APP_EXCLUDE_FROM_ALL})
+    set_target_properties(${APP_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  else()
+    install(TARGETS ${APP_NAME}
       DESTINATION ${CMAKE_INSTALL_BINDIR}
       COMPONENT ${APP_COMPONENT}
     )
-  ENDIF()
-ENDMACRO()
+  endif()
+endmacro()
 
 ## Conveniance macro for creating OSPRay test applications ##
-# Usage - same as OSPRAY_CREATE_APPLICATION
+# Usage - same as ospray_create_application
 #
 # Will build the app if 'OSPRAY_ENABLE_TESTING=ON' in CMake
 
-MACRO(OSPRAY_CREATE_TEST)
-  IF (OSPRAY_ENABLE_TESTING)
-    OSPRAY_CREATE_APPLICATION(
+macro(ospray_create_test)
+  if (OSPRAY_ENABLE_TESTING)
+    ospray_create_application(
       ${ARGN}
       COMPONENT test
     )
-  ENDIF()
-ENDMACRO()
+  endif()
+endmacro()
 
 ## Conveniance macro for installing OSPRay headers ##
 # Usage
 #
-#   OSPRAY_INSTALL_SDK_HEADERS(header1 [header2 ...] [DESTINATION destination])
+#   ospray_install_sdk_headers(header1 [header2 ...] [DESTINATION destination])
 #
 # will install headers into ${CMAKE_INSTALL_PREFIX}/ospray/SDK/${destination},
 # where destination is optional.
 
-MACRO(OSPRAY_INSTALL_SDK_HEADERS)
-  SET(HEADERS "")
-  SET(MY_DESTINATION "")
+macro(ospray_install_sdk_headers)
+  set(HEADERS "")
+  set(MY_DESTINATION "")
 
-  SET(CURRENT_LIST HEADERS)
-  FOREACH(arg ${ARGN})
-    IF ("${arg}" STREQUAL "DESTINATION")
-      SET(CURRENT_LIST MY_DESTINATION)
-    ELSE()
-      LIST(APPEND ${CURRENT_LIST} ${arg})
-    ENDIF ()
-  ENDFOREACH()
+  set(CURRENT_LIST HEADERS)
+  foreach(arg ${ARGN})
+    if ("${arg}" STREQUAL "DESTINATION")
+      set(CURRENT_LIST MY_DESTINATION)
+    else()
+      list(APPEND ${CURRENT_LIST} ${arg})
+    endif ()
+  endforeach()
 
-  INSTALL(FILES ${HEADERS}
+  install(FILES ${HEADERS}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/${MY_DESTINATION}
     COMPONENT devel
   )
-ENDMACRO()
+endmacro()
 
 ## Compiler configuration macros ##
 
-MACRO(OSPRAY_CONFIGURE_COMPILER)
+macro(ospray_configure_compiler)
   # unhide compiler to make it easier for users to see what they are using
-  MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
+  mark_as_advanced(CLEAR CMAKE_CXX_COMPILER)
 
-  OPTION(OSPRAY_STRICT_BUILD "Build with additional warning flags" ON)
-  MARK_AS_ADVANCED(OSPRAY_STRICT_BUILD)
+  option(OSPRAY_STRICT_BUILD "Build with additional warning flags" ON)
+  mark_as_advanced(OSPRAY_STRICT_BUILD)
 
-  OPTION(OSPRAY_WARN_AS_ERRORS "Treat warnings as errors" OFF)
-  MARK_AS_ADVANCED(OSPRAY_WARN_AS_ERRORS)
+  option(OSPRAY_WARN_AS_ERRORS "Treat warnings as errors" OFF)
+  mark_as_advanced(OSPRAY_WARN_AS_ERRORS)
 
-  SET(OSPRAY_COMPILER_ICC   FALSE)
-  SET(OSPRAY_COMPILER_GCC   FALSE)
-  SET(OSPRAY_COMPILER_CLANG FALSE)
-  SET(OSPRAY_COMPILER_MSVC  FALSE)
+  set(OSPRAY_COMPILER_ICC   FALSE)
+  set(OSPRAY_COMPILER_GCC   FALSE)
+  set(OSPRAY_COMPILER_CLANG FALSE)
+  set(OSPRAY_COMPILER_MSVC  FALSE)
 
-  IF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-    SET(OSPRAY_COMPILER_ICC TRUE)
-    IF(WIN32) # icc on Windows behaves like msvc
-      INCLUDE(msvc)
-    ELSE()
-      INCLUDE(icc)
-    ENDIF()
-  ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    SET(OSPRAY_COMPILER_GCC TRUE)
-    INCLUDE(gcc)
-  ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    SET(OSPRAY_COMPILER_CLANG TRUE)
-    INCLUDE(clang)
-  ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
-    SET(OSPRAY_COMPILER_MSVC TRUE)
-    INCLUDE(msvc)
-  ELSE()
-    MESSAGE(FATAL_ERROR
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    set(OSPRAY_COMPILER_ICC TRUE)
+    if(WIN32) # icc on Windows behaves like msvc
+      include(msvc)
+    else()
+      include(icc)
+    endif()
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    set(OSPRAY_COMPILER_GCC TRUE)
+    include(gcc)
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(OSPRAY_COMPILER_CLANG TRUE)
+    include(clang)
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+    set(OSPRAY_COMPILER_MSVC TRUE)
+    include(msvc)
+  else()
+    message(FATAL_ERROR
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
-  ENDIF()
+  endif()
 
-  IF (WIN32)
+  if (WIN32)
     # increase stack to 8MB (the default size of 1MB is too small for our apps)
     # note: linker options are independent of compiler (icc or MSVC)
-    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
-  ENDIF()
-ENDMACRO()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
+  endif()
+endmacro()
 
-MACRO(OSPRAY_DISABLE_COMPILER_WARNINGS)
-  IF (NOT OSPRAY_COMPILER_MSVC)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-  #ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
-  ENDIF()
-ENDMACRO()
+macro(ospray_disable_compiler_warnings)
+  if (NOT OSPRAY_COMPILER_MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+  #elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+  endif()
+endmacro()
 
 ## Tasking system configuration macro ##
 
-MACRO(OSPRAY_CONFIGURE_TASKING_SYSTEM)
+macro(ospray_configure_tasking_system)
   # -------------------------------------------------------
   # Setup tasking system build configuration
   # -------------------------------------------------------
 
   # NOTE(jda) - Notice that this implies that OSPRAY_CONFIGURE_COMPILER() has
   #             been called before this macro!
-  IF(OSPRAY_COMPILER_ICC)
-    SET(CILK_STRING "Cilk")
-  ENDIF()
+  if(OSPRAY_COMPILER_ICC)
+    set(CILK_STRING "Cilk")
+  endif()
 
-  SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
+  set(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
       "Per-node thread tasking system [TBB,OpenMP,Cilk,LibDispatch,Internal,Debug]")
 
-  SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY
+  set_property(CACHE OSPRAY_TASKING_SYSTEM PROPERTY
                STRINGS TBB ${CILK_STRING} OpenMP Internal LibDispatch Debug)
-  MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
+  mark_as_advanced(OSPRAY_TASKING_SYSTEM)
 
   # NOTE(jda) - Make the OSPRAY_TASKING_SYSTEM build option case-insensitive
-  STRING(TOUPPER ${OSPRAY_TASKING_SYSTEM} OSPRAY_TASKING_SYSTEM_ID)
+  string(TOUPPER ${OSPRAY_TASKING_SYSTEM} OSPRAY_TASKING_SYSTEM_ID)
 
-  SET(OSPRAY_TASKING_TBB         FALSE)
-  SET(OSPRAY_TASKING_CILK        FALSE)
-  SET(OSPRAY_TASKING_OPENMP      FALSE)
-  SET(OSPRAY_TASKING_INTERNAL    FALSE)
-  SET(OSPRAY_TASKING_LIBDISPATCH FALSE)
-  SET(OSPRAY_TASKING_DEBUG       FALSE)
+  set(OSPRAY_TASKING_TBB         FALSE)
+  set(OSPRAY_TASKING_CILK        FALSE)
+  set(OSPRAY_TASKING_OPENMP      FALSE)
+  set(OSPRAY_TASKING_INTERNAL    FALSE)
+  set(OSPRAY_TASKING_LIBDISPATCH FALSE)
+  set(OSPRAY_TASKING_DEBUG       FALSE)
 
-  IF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "TBB")
-    SET(OSPRAY_TASKING_TBB TRUE)
-  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "CILK")
-    SET(OSPRAY_TASKING_CILK TRUE)
-  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "OPENMP")
-    SET(OSPRAY_TASKING_OPENMP TRUE)
-  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "INTERNAL")
-    SET(OSPRAY_TASKING_INTERNAL TRUE)
-  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "LIBDISPATCH")
-    SET(OSPRAY_TASKING_LIBDISPATCH TRUE)
-  ELSE()
-    SET(OSPRAY_TASKING_DEBUG TRUE)
-  ENDIF()
+  if(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "TBB")
+    set(OSPRAY_TASKING_TBB TRUE)
+  elseif(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "CILK")
+    set(OSPRAY_TASKING_CILK TRUE)
+  elseif(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "OPENMP")
+    set(OSPRAY_TASKING_OPENMP TRUE)
+  elseif(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "INTERNAL")
+    set(OSPRAY_TASKING_INTERNAL TRUE)
+  elseif(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "LIBDISPATCH")
+    set(OSPRAY_TASKING_LIBDISPATCH TRUE)
+  else()
+    set(OSPRAY_TASKING_DEBUG TRUE)
+  endif()
 
-  UNSET(TASKING_SYSTEM_LIBS)
+  unset(TASKING_SYSTEM_LIBS)
 
-  IF(OSPRAY_TASKING_TBB)
-    FIND_PACKAGE(TBB REQUIRED)
-    ADD_DEFINITIONS(-DOSPRAY_TASKING_TBB)
-    INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
-    SET(TASKING_SYSTEM_LIBS ${TBB_LIBRARIES})
-  ELSE(OSPRAY_TASKING_TBB)
-    UNSET(TBB_INCLUDE_DIR          CACHE)
-    UNSET(TBB_LIBRARY              CACHE)
-    UNSET(TBB_LIBRARY_DEBUG        CACHE)
-    UNSET(TBB_LIBRARY_MALLOC       CACHE)
-    UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
-    IF(OSPRAY_TASKING_OPENMP)
-      FIND_PACKAGE(OpenMP)
-      IF (OPENMP_FOUND)
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        IF(OSPRAY_COMPILER_ICC) # workaround linker issue #115
-          SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -liomp5")
-        ENDIF()
-        ADD_DEFINITIONS(-DOSPRAY_TASKING_OMP)
-      ENDIF()
-    ELSEIF(OSPRAY_TASKING_CILK)
-      ADD_DEFINITIONS(-DOSPRAY_TASKING_CILK)
-      IF (OSPRAY_COMPILER_GCC OR OSPRAY_COMPILER_CLANG)
-        OSPRAY_WARN_ONCE(UNSAFE_USE_OF_CILK
+  if(OSPRAY_TASKING_TBB)
+    find_package(TBB REQUIRED)
+    add_definitions(-DOSPRAY_TASKING_TBB)
+    include_directories(${TBB_INCLUDE_DIRS})
+    set(TASKING_SYSTEM_LIBS ${TBB_LIBRARIES})
+  else(OSPRAY_TASKING_TBB)
+    unset(TBB_INCLUDE_DIR          CACHE)
+    unset(TBB_LIBRARY              CACHE)
+    unset(TBB_LIBRARY_DEBUG        CACHE)
+    unset(TBB_LIBRARY_MALLOC       CACHE)
+    unset(TBB_LIBRARY_MALLOC_DEBUG CACHE)
+    if(OSPRAY_TASKING_OPENMP)
+      find_package(OpenMP)
+      if (OPENMP_FOUND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        if(OSPRAY_COMPILER_ICC) # workaround linker issue #115
+          set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -liomp5")
+        endif()
+        add_definitions(-DOSPRAY_TASKING_OMP)
+      endif()
+    elseif(OSPRAY_TASKING_CILK)
+      add_definitions(-DOSPRAY_TASKING_CILK)
+      if (OSPRAY_COMPILER_GCC OR OSPRAY_COMPILER_CLANG)
+        ospray_warn_once(UNSAFE_USE_OF_CILK
             "You are using Cilk with GCC or Clang...use at your own risk!")
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fcilkplus")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcilkplus")
-      ENDIF()
-    ELSEIF(OSPRAY_TASKING_INTERNAL)
-      ADD_DEFINITIONS(-DOSPRAY_TASKING_INTERNAL)
-    ELSEIF(OSPRAY_TASKING_LIBDISPATCH)
-      FIND_PACKAGE(libdispatch REQUIRED)
-      INCLUDE_DIRECTORIES(${LIBDISPATCH_INCLUDE_DIRS})
-      SET(TASKING_SYSTEM_LIBS ${LIBDISPATCH_LIBRARIES})
-      ADD_DEFINITIONS(-DOSPRAY_TASKING_LIBDISPATCH)
-    ELSE()#Debug
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fcilkplus")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcilkplus")
+      endif()
+    elseif(OSPRAY_TASKING_INTERNAL)
+      add_definitions(-DOSPRAY_TASKING_INTERNAL)
+    elseif(OSPRAY_TASKING_LIBDISPATCH)
+      find_package(libdispatch REQUIRED)
+      include_directories(${LIBDISPATCH_INCLUDE_DIRS})
+      set(TASKING_SYSTEM_LIBS ${LIBDISPATCH_LIBRARIES})
+      add_definitions(-DOSPRAY_TASKING_LIBDISPATCH)
+    else()#Debug
       # Do nothing, will fall back to scalar code (useful for debugging)
-    ENDIF()
-  ENDIF(OSPRAY_TASKING_TBB)
-ENDMACRO()
+    endif()
+  endif(OSPRAY_TASKING_TBB)
+endmacro()
 
 ## MPI configuration macro ##
 
-MACRO(OSPRAY_CONFIGURE_MPI)
-  IF (WIN32) # FindMPI does not find Intel MPI on Windows, we need to help here
-    FIND_PACKAGE(MPI)
+macro(OSPRAY_CONFIGURE_MPI)
+  if (WIN32) # FindMPI does not find Intel MPI on Windows, we need to help here
+    find_package(MPI)
 
     # need to strip quotes, otherwise CMake treats it as relative path
-    STRING(REGEX REPLACE "^\"|\"$" "" MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
+    string(REGEX REPLACE "^\"|\"$" "" MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
 
-    IF (NOT MPI_CXX_FOUND)
+    if (NOT MPI_CXX_FOUND)
       # try again, hinting the compiler wrappers
-      SET(MPI_CXX_COMPILER mpicxx.bat)
-      SET(MPI_C_COMPILER mpicc.bat)
-      FIND_PACKAGE(MPI)
+      set(MPI_CXX_COMPILER mpicxx.bat)
+      set(MPI_C_COMPILER mpicc.bat)
+      find_package(MPI)
 
-      IF (NOT MPI_CXX_LIBRARIES)
-        SET(MPI_LIB_PATH ${MPI_CXX_INCLUDE_PATH}\\..\\lib)
+      if (NOT MPI_CXX_LIBRARIES)
+        set(MPI_LIB_PATH ${MPI_CXX_INCLUDE_PATH}\\..\\lib)
 
-        SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
-        FIND_LIBRARY(MPI_LIB NAMES impi HINTS ${MPI_LIB_PATH})
-        SET(MPI_C_LIB ${MPI_LIB})
-        SET(MPI_C_LIBRARIES ${MPI_LIB} CACHE STRING "MPI C libraries to link against" FORCE)
+        set(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+        find_library(MPI_LIB NAMES impi HINTS ${MPI_LIB_PATH})
+        set(MPI_C_LIB ${MPI_LIB})
+        set(MPI_C_LIBRARIES ${MPI_LIB} CACHE STRING "MPI C libraries to link against" FORCE)
 
-        SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
-        FIND_LIBRARY(MPI_LIB NAMES impicxx HINTS ${MPI_LIB_PATH})
-        SET(MPI_CXX_LIBRARIES ${MPI_C_LIB} ${MPI_LIB} CACHE STRING "MPI CXX libraries to link against" FORCE)
-        SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for MPI lib detection" FORCE)
-      ENDIF()
-    ENDIF()
-  ELSE()
-    FIND_PACKAGE(MPI REQUIRED)
-  ENDIF()
+        set(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+        find_library(MPI_LIB NAMES impicxx HINTS ${MPI_LIB_PATH})
+        set(MPI_CXX_LIBRARIES ${MPI_C_LIB} ${MPI_LIB} CACHE STRING "MPI CXX libraries to link against" FORCE)
+        set(MPI_LIB "MPI_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for MPI lib detection" FORCE)
+      endif()
+    endif()
+  else()
+    find_package(MPI REQUIRED)
+  endif()
 
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
-  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
 
-  INCLUDE_DIRECTORIES(SYSTEM ${MPI_CXX_INCLUDE_PATH})
-ENDMACRO()
+  include_directories(SYSTEM ${MPI_CXX_INCLUDE_PATH})
+endmacro()
 
-# Keep backwards compatible CONFIGURE_MPI() macro, but warn of deprecation
-MACRO(CONFIGURE_MPI)
-  OSPRAY_WARN_ONCE(CONFIGURE_MPI_DEPRECATION
-                   "CONFIGURE_MPI() is deprecated, use new OSPRAY_CONFIGURE_MPI().")
-  OSPRAY_CONFIGURE_MPI()
-ENDMACRO()
+# Keep backwards compatible configure_mpi() macro, but warn of deprecation
+macro(configure_mpi)
+  ospray_warn_once(CONFIGURE_MPI_DEPRECATION
+                   "configure_mpi() is deprecated, use new ospray_configure_mpi().")
+  ospray_configure_mpi()
+endmacro()
