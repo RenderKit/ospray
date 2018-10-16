@@ -182,6 +182,8 @@ namespace ospray {
       ghostRegionIEs.clear();
 
       numAoSamples = getParam1i("aoSamples", 0);
+      epsilon = getParam1f("epsilon", 1e-6f);
+
       camera = reinterpret_cast<PerspectiveCamera*>(getParamObject("camera"));
       if (!camera) {
         throw std::runtime_error("DistributedRaycastRender only supports "
@@ -192,13 +194,11 @@ namespace ospray {
       Data *modelsData = dynamic_cast<Data*>(models);
       if (modelsData) {
         ManagedObject **handles = reinterpret_cast<ManagedObject**>(modelsData->data);
-        // TODO: This is a total hack to work around the issue with a Data array
-        // of OSP_OBJECT ObjectHandles
         for (size_t i = 0; i < modelsData->numItems; ++i) {
-          regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
+          regions.push_back(dynamic_cast<DistributedModel*>(handles[i]));
         }
       } else if (model && dynamic_cast<DistributedModel*>(model)) {
-        regions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(model)));
+        regions.push_back(dynamic_cast<DistributedModel*>(model));
       }
 
       ManagedObject *ghosts = getParamObject("ghostModel", nullptr);
@@ -206,26 +206,33 @@ namespace ospray {
       if (ghostsData) {
         ManagedObject **handles = reinterpret_cast<ManagedObject**>(ghostsData->data);
         for (size_t i = 0; i < ghostsData->numItems; ++i) {
-          ghostRegions.push_back(Ref<DistributedModel>(dynamic_cast<DistributedModel*>(handles[i])));
+          ghostRegions.push_back(dynamic_cast<DistributedModel*>(handles[i]));
         }
       } else if (ghosts && dynamic_cast<DistributedModel*>(ghosts)) {
-        DistributedModel *ghostModel = dynamic_cast<DistributedModel*>(ghosts);
-        ghostRegions.push_back(Ref<DistributedModel>(ghostModel));
+        ghostRegions.push_back(dynamic_cast<DistributedModel*>(ghosts));
       }
+
+      std::transform(regions.begin(), regions.end(), std::back_inserter(regionIEs),
+                     [](const DistributedModel *m) { return m->getIE(); });
+      std::transform(ghostRegions.begin(), ghostRegions.end(), std::back_inserter(ghostRegionIEs),
+                     [](const DistributedModel *m) { return m->getIE(); });
+
 
       exchangeModelBounds();
 
-      std::transform(regions.begin(), regions.end(), std::back_inserter(regionIEs),
-                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
-      std::transform(ghostRegions.begin(), ghostRegions.end(), std::back_inserter(ghostRegionIEs),
-                     [](const Ref<DistributedModel> &m) { return m->getIE(); });
+      // We need to compute the epsilon adjustment here to get it right in
+      // case we took an OSPData of models instead of a single model
+      const float diameter = regions[0]->bounds.empty() ?
+        1.0f : length(regions[0]->bounds.size());
+      epsilon *= diameter;
 
-      ispc::DistributedRaycastRenderer_setRegions(getIE(),
-                                                  allRegions.data(),
-                                                  static_cast<int>(allRegions.size()),
-                                                  numAoSamples,
-                                                  regionIEs.data(),
-                                                  ghostRegionIEs.data());
+      ispc::DistributedRaycastRenderer_set(getIE(),
+                                           allRegions.data(),
+                                           static_cast<int>(allRegions.size()),
+                                           numAoSamples,
+                                           regionIEs.data(),
+                                           ghostRegionIEs.data(),
+                                           epsilon);
     }
 
     float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
@@ -622,7 +629,7 @@ namespace ospray {
       myRegions.reserve(regions.size());
       std::transform(regions.begin(), regions.end(),
                      std::back_inserter(myRegions),
-                     [](const Ref<DistributedModel> &m) {
+                     [](const DistributedModel *m) {
                        return DistributedRegion(m->bounds, m->id);
                      });
 

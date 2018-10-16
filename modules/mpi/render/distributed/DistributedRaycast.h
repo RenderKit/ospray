@@ -76,7 +76,7 @@ namespace ospray {
       PerspectiveCamera *camera;
       std::unique_ptr<std::ofstream> statsLog;
 
-      std::vector<Ref<DistributedModel>> regions, ghostRegions;
+      std::vector<DistributedModel*> regions, ghostRegions;
       std::vector<void*> regionIEs, ghostRegionIEs;
       // The global list of unique regions across all nodes, (including this one),
       // sorted by region id.

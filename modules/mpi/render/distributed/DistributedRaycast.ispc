@@ -351,15 +351,21 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   return self;
 }
 
-export void DistributedRaycastRenderer_setRegions(void *uniform _self,
-                                                  void *uniform regions,
-                                                  uniform int uniform numRegions,
-                                                  uniform int uniform aoSamples,
-                                                  void *uniform *uniform myRegions,
-                                                  void *uniform *uniform ghostRegions)
+export void DistributedRaycastRenderer_set(void *uniform _self,
+                                           void *uniform regions,
+                                           const uniform int uniform numRegions,
+                                           const uniform int uniform aoSamples,
+                                           void *uniform *uniform myRegions,
+                                           void *uniform *uniform ghostRegions,
+                                           const uniform float epsilon)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
+  // Correct the params the parent probably got wrong if we took
+  // a list of OSPModels
+  self->super.model = NULL;
+  self->super.epsilon = epsilon;
+
   self->regions = (uniform DistributedRegion *uniform)regions;
   self->numRegions = numRegions;
   self->aoSamples = aoSamples;

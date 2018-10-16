@@ -426,9 +426,9 @@ void runApp()
   Data modelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
 
   std::vector<OSPModel> ghostModelHandles;
-  std::transform(ghostModels.begin(), ghostModels.end(), std::back_inserter(modelHandles),
+  std::transform(ghostModels.begin(), ghostModels.end(), std::back_inserter(ghostModelHandles),
                  [](const Model &m) { return m.handle(); });
-  Data ghostModelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
+  Data ghostModelsData(ghostModelHandles.size(), OSP_OBJECT, ghostModelHandles.data());
 
   renderer.set("model", modelsData);
   renderer.set("ghostModel", ghostModelsData);
