@@ -64,7 +64,7 @@ namespace ospray {
     else if (!facesData) {
       // generate faces for quad cage mesh
       const size_t numFaces = indexData->size()/4;
-      std::vector<uint> faces(numFaces, 4);
+      std::vector<uint32_t> faces(numFaces, 4);
       facesData = new ospray::Data(numFaces, OSP_UINT, faces.data());
     }
     if (facesData && indexData->type != OSP_INT && indexData->type != OSP_UINT)
