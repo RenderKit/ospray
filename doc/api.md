@@ -708,11 +708,12 @@ the following parameters:
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
   vec3f[]            vertex                [data] array of vertex positions
-  vec4f[]            vertex.color          [data] array of vertex colors (RGBA/RGB)
+  vec4f[]            vertex.color          [data] array of vertex colors (RGBA)
   vec2f[]            vertex.texcoord       [data] array of vertex texture coordinates
-  vec4i[]            index                 [data] array of quad indices (into the vertex array(s))
-  uint[]             face                  [data] array of faces
-  float              edgeLevel             level of tesselation, default is 5
+  float              level                 global level of tesselation, default is 5
+  uint[]/vec4i[]     index                 [data] array of indices (into the vertex array(s))
+  float[]            index.level           [data] array of per-edge levels of tesselation, overrides global level
+  uint[]             face                  [data] array holding the number of indices/edges (3 to 15) per face
   vec2i[]            edgeCrease.index      [data] array of edge crease indices
   float[]            edgeCrease.weight     [data] array of edge crease weights
   uint[]             vertexCrease.index    [data] array of vertex crease indices
@@ -720,8 +721,10 @@ the following parameters:
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
-The `vertex`, `index`, and `face` arrays are mandatory to create a valid
-subdivision surface. Optionally supported are edge and vertex creases.
+The `vertex`, and `index` arrays are mandatory to create a valid
+subdivision surface. If no `face` array is present then a pure quad
+mesh is assumed (and indices must be of type `vec4i`).
+Optionally supported are edge and vertex creases.
 
 ### Spheres
 
