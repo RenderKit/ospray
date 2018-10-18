@@ -175,7 +175,6 @@ build-windows-msvc14:
     paths:
       - build/Release
       - build/regression_tests
-      - build/CMakeCache.txt
     expire_in: 3 day
 
 build-windows-msvc15:
@@ -189,7 +188,6 @@ build-windows-msvc15:
     paths:
       - build/Release
       - build/regression_tests
-      - build/CMakeCache.txt
     expire_in: 3 day
 
 build-windows-icc:
@@ -203,7 +201,6 @@ build-windows-icc:
     paths:
       - build/Release
       - build/regression_tests
-      - build/CMakeCache.txt
     expire_in: 3 day
 
 build-scan-kw:
