@@ -25,6 +25,15 @@ set BASELINE_DIR=build\regression_tests\baseline\
 
 set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
 
+cd build
+cmake ^
+-D OSPRAY_ENABLE_TESTING=ON ^
+..
+
+cmake --build . --config Release --target ospray_test_data -- /m /nologo ^
+  && ctest . -C Release
+cd ..
+
 call build\regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
 
 :abort

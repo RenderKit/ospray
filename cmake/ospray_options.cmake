@@ -91,10 +91,10 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 #include bindir - that's where OSPConfig.h and ospray/version.h will be put
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
 
-IF (WIN32)
+if (WIN32)
   # avoid problematic min/max defines of windows.h
-  ADD_DEFINITIONS(-DNOMINMAX)
-ENDIF()
+  add_definitions(-DNOMINMAX)
+endif()
 
 ##############################################################
 # OSPRay specific build options and configuration selection
@@ -138,7 +138,8 @@ INCLUDE(configure_embree)
 OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
 
-OPTION(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
+option(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
+option(OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES "Automatically download test images during build." ON)
 
 IF (OSPRAY_ENABLE_TESTING)
   ENABLE_TESTING()

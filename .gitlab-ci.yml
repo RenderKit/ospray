@@ -174,7 +174,8 @@ build-windows-msvc14:
   artifacts:
     paths:
       - build/Release
-      - build/regression_tests/baseline
+      - build/regression_tests
+      - build/CMakeCache.txt
     expire_in: 3 day
 
 build-windows-msvc15:
@@ -187,7 +188,8 @@ build-windows-msvc15:
   artifacts:
     paths:
       - build/Release
-      - build/regression_tests/baseline
+      - build/regression_tests
+      - build/CMakeCache.txt
     expire_in: 3 day
 
 build-windows-icc:
@@ -200,7 +202,8 @@ build-windows-icc:
   artifacts:
     paths:
       - build/Release
-      - build/regression_tests/baseline
+      - build/regression_tests
+      - build/CMakeCache.txt
     expire_in: 3 day
 
 build-scan-kw:
