@@ -20,12 +20,6 @@ setlocal
 echo Running tests
 md failed
 
-cd build
-del CMakeCache.txt
-cmake -G "Visual Studio 15 2017 Win64" -DOSPRAY_ENABLE_TESTING=ON ..
-cmake --build . --config Release --target ospray_test_data -- /m /nologo
-cd ..
-
 set OSP_LIBS=build\Release
 set BASELINE_DIR=build\regression_tests\baseline\
 
