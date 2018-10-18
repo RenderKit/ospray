@@ -26,7 +26,7 @@ set BASELINE_DIR=build\regression_tests\baseline\
 set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
 
 cd build
-cmake ^
+cmake -G "Visual Studio 15 2017 Win64" ^
 -D OSPRAY_ENABLE_TESTING=ON ^
 ..
 
