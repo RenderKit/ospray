@@ -61,24 +61,26 @@ namespace ospray {
                               " have a valid bounding box. epsilons for"
                               " ray offsets may be wrong");
     }
-    const vec3f v000(b.lower.x,b.lower.y,b.lower.z);
-    const vec3f v001(b.upper.x,b.lower.y,b.lower.z);
-    const vec3f v010(b.lower.x,b.upper.y,b.lower.z);
-    const vec3f v011(b.upper.x,b.upper.y,b.lower.z);
-    const vec3f v100(b.lower.x,b.lower.y,b.upper.z);
-    const vec3f v101(b.upper.x,b.lower.y,b.upper.z);
-    const vec3f v110(b.lower.x,b.upper.y,b.upper.z);
-    const vec3f v111(b.upper.x,b.upper.y,b.upper.z);
+    else {
+      const vec3f v000(b.lower.x,b.lower.y,b.lower.z);
+      const vec3f v001(b.upper.x,b.lower.y,b.lower.z);
+      const vec3f v010(b.lower.x,b.upper.y,b.lower.z);
+      const vec3f v011(b.upper.x,b.upper.y,b.lower.z);
+      const vec3f v100(b.lower.x,b.lower.y,b.upper.z);
+      const vec3f v101(b.upper.x,b.lower.y,b.upper.z);
+      const vec3f v110(b.lower.x,b.upper.y,b.upper.z);
+      const vec3f v111(b.upper.x,b.upper.y,b.upper.z);
 
-    bounds = empty;
-    bounds.extend(xfmPoint(xfm,v000));
-    bounds.extend(xfmPoint(xfm,v001));
-    bounds.extend(xfmPoint(xfm,v010));
-    bounds.extend(xfmPoint(xfm,v011));
-    bounds.extend(xfmPoint(xfm,v100));
-    bounds.extend(xfmPoint(xfm,v101));
-    bounds.extend(xfmPoint(xfm,v110));
-    bounds.extend(xfmPoint(xfm,v111));
+      bounds = empty;
+      bounds.extend(xfmPoint(xfm,v000));
+      bounds.extend(xfmPoint(xfm,v001));
+      bounds.extend(xfmPoint(xfm,v010));
+      bounds.extend(xfmPoint(xfm,v011));
+      bounds.extend(xfmPoint(xfm,v100));
+      bounds.extend(xfmPoint(xfm,v101));
+      bounds.extend(xfmPoint(xfm,v110));
+      bounds.extend(xfmPoint(xfm,v111));
+    }
 
     rtcSetGeometryTransform(embreeGeom,0,RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,&xfm);
     rtcCommitGeometry(embreeGeom);
