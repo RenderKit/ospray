@@ -589,14 +589,13 @@ the index order for each tetrahedron does not matter, as OSPRay
 internally calculates vertex normals to ensure proper sampling and
 interpolation.
 
-For wedge cells, each wedge is formed by a group of six indices into
-the vertices and data value.  Vertex ordering is the same as
-`VTK_WEDGE` - three bottom vertices counterclockwise, then top three
-counterclockwise.
+For wedge cells, each wedge is formed by a group of six indices into the
+vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
+three bottom vertices counterclockwise, then top three counterclockwise.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
 indices into the vertices and data value. Vertex ordering is the same as
-`VTK_HEXAHEDRON` -- four bottom vertices counterclockwise, then top four
+`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
 counterclockwise.
 
   -------- ------------------  -------  ---------------------------------------
