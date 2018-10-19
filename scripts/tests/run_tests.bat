@@ -30,11 +30,9 @@ cmake -G "Visual Studio 15 2017 Win64" ^
 -D OSPRAY_ENABLE_TESTING=ON ^
 ..
 
-cmake --build . --config Release --target ospray_test_data -- /m /nologo ^
-  && ctest . -C Release
-cd ..
+cmake --build . --config Release --target ospray_test_data -- /m /nologo
 
-call build\regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
+call regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
 
 :abort
 endlocal
