@@ -313,7 +313,7 @@ inline Fresnel* uniform FresnelConductorArtistic_create(ShadingContext* uniform 
   const vec3f k2 = (sqr(n + 1.f) * r - sqr(n - 1.f)) / (1.f - r);
   
   self->eta = n;
-  self->k = sqrt(k2);
+  self->k = sqrt_safe(k2); // prevent NaN if k2==-0.0f (happens if r==0.0f)
 
   self->r = r;
   self->g = g;
