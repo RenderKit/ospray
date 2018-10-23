@@ -91,7 +91,7 @@ namespace ospray {
 
     template <typename VISITOR_T>
     using is_valid_visitor_t =
-        traits::enable_if_t<is_valid_visitor<VISITOR_T>::value>;
+        ospcommon::traits::enable_if_t<is_valid_visitor<VISITOR_T>::value>;
 
   }  // namespace sg
 }  // namespace ospray
