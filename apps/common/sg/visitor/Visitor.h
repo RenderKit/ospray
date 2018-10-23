@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "ospcommon/TypeTraits.h"
+
 namespace ospray {
   namespace sg {
 
