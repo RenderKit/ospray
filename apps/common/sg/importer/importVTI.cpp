@@ -61,6 +61,7 @@ namespace ospray {
       } else if (voxelType == "unsigned char") {
         voxelDataNode = std::make_shared<DataArray1uc>(
               (unsigned char*)voxelData, numVoxels);
+        voxelType = "uchar";
       } else if (voxelType == "int") {
         voxelDataNode = std::make_shared<DataArray1i>(
               (int*)voxelData, numVoxels);

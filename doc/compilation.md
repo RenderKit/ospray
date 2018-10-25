@@ -35,9 +35,10 @@ before you can build OSPRay you need the following prerequisites:
     system, which we recommend for performance and flexibility reasons.
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
--   OSPRay also heavily uses [Embree], installing version 3.1 or newer
+-   OSPRay also heavily uses [Embree], installing version 3.2 or newer
     is required. If Embree is not found by CMake its location can be
-    hinted with the variable `embree_DIR`.
+    hinted with the variable `embree_DIR`. NOTE: Windows users should
+    use Embree v3.2.2 or later.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be

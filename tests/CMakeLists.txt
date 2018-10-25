@@ -50,7 +50,7 @@ LINK
   ospray
   ospray_common
 )
-SET_TARGET_PROPERTIES(ospray_test_suite PROPERTIES
+set_target_properties(ospray_test_suite PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests)
 
 # Baseline images for tests and benchmarks
@@ -85,5 +85,8 @@ ExternalData_Expand_Arguments(ospray_bench_data
 	)
 ExternalData_Add_Target(ospray_bench_data)
 set_target_properties(ospray_bench_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
-add_dependencies(ospray_test_suite ospray_test_data)
+
+if (OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES)
+  add_dependencies(ospray_test_suite ospray_test_data)
+endif()
 

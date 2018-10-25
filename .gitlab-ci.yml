@@ -38,9 +38,7 @@ variables:
   tags:
     - docker
   script:
-    - cd $CI_PROJECT_DIR/build
-    - make ospray_test_data
-    - ../scripts/tests/run_tests.sh
+    - scripts/tests/run_tests.sh
   artifacts:
     paths:
       - $CI_PROJECT_DIR/build/tests.xml
@@ -173,7 +171,8 @@ build-windows-msvc14:
     - win7
   artifacts:
     paths:
-      - build
+      - build/Release
+      - build/regression_tests
     expire_in: 3 day
 
 build-windows-msvc15:
@@ -185,7 +184,8 @@ build-windows-msvc15:
     - win7
   artifacts:
     paths:
-      - build
+      - build/Release
+      - build/regression_tests
     expire_in: 3 day
 
 build-windows-icc:
@@ -197,7 +197,8 @@ build-windows-icc:
     - win7
   artifacts:
     paths:
-      - build
+      - build/Release
+      - build/regression_tests
     expire_in: 3 day
 
 build-scan-kw:
@@ -245,9 +246,7 @@ test-ubuntu1404-gcc:
   <<: *test_job
   image: ospray/docker-images:ubuntu14.04
   script:
-    - cd $CI_PROJECT_DIR/build
-    - make ospray_test_data
-    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ ../scripts/tests/run_tests.sh
+    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ scripts/tests/run_tests.sh
   dependencies:
     - build-ubuntu1404-gcc
 
@@ -255,9 +254,7 @@ test-ubuntu1604-gcc:
   <<: *test_job
   image: ospray/docker-images:ubuntu16.04
   script:
-    - cd $CI_PROJECT_DIR/build
-    - make ospray_test_data
-    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ ../scripts/tests/run_tests.sh
+    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ scripts/tests/run_tests.sh
   dependencies:
     - build-ubuntu1604-gcc
 

@@ -861,8 +861,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           }
         }
         importString.erase(importString.end()-1);
-        if (importString != "")
-        {
+        if (importString != "") {
           auto importerNode_ptr = sg::createNode(animatedFile[0].file, "Importer");
           auto &importerNode = *importerNode_ptr;
           importerNode["fileName"] = importString;
@@ -873,13 +872,11 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
           for (auto tf : transferFunctions)
             renderer["transferFunctions"].add(tf);
 
-          if (animatedFile.size() > 1)
-          {
+          if (animatedFile.size() > 1) {
             auto &anim_selector = importerNode.child("selector")["index"].createChild(
                 "anim_" + animatedFile[0].file, "Animator");
 
-            anim_selector.createChild("value2", "int");
-            anim_selector["value2"] = int(animatedFile.size());
+            anim_selector.createChild("value2", "int", int(animatedFile.size()));
             animation.setChild("anim_selector", anim_selector.shared_from_this());
           }
         }
