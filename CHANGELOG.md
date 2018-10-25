@@ -3,7 +3,7 @@ Version History
 
 ### Changes in v1.7.1:
 
--   Fixed issue where the `Principled` material would somtimes show up
+-   Fixed issue where the `Principled` material would sometimes show up
     incorrectly as black
 -   Fixed issue where some headers were missing from install packages
 
