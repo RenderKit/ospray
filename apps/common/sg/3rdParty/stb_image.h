@@ -6538,7 +6538,7 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
                two_back = out - 2 * stride; 
             }
 
-            if (delays) {
+            if (delays && *delays) {
                (*delays)[layers - 1U] = g.delay; 
             }
          }
