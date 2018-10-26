@@ -96,7 +96,7 @@ namespace ospray {
                   " to speed-up rendering.");
       child("minContribution").setMinMax(0.f, 0.1f);
 
-      createChild("maxContribution", "float", 5.f,
+      createChild("maxContribution", "float", 3.f,
                   NodeFlags::required |
                   NodeFlags::gui_slider,
                   "sample contributions above this value will be ignored."
