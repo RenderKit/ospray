@@ -627,10 +627,12 @@ __lift_unary_fct(logf)
 __lift_unary_fct(floor)
 __lift_unary_fct(abs)
 __lift_unary_fct(rcp)
+__lift_unary_fct(rcp_safe)
 __lift_unary_fct(exp)
 __lift_unary_fct(frac)
 __lift_unary_fct(sqr)
 __lift_unary_fct(sqrt)
+__lift_unary_fct(sqrt_safe)
 
 #undef __lift_unary_fct
 

@@ -93,7 +93,7 @@ include_directories(${PROJECT_BINARY_DIR})
 
 if (WIN32)
   # avoid problematic min/max defines of windows.h
-  ADD_DEFINITIONS(-DNOMINMAX)
+  add_definitions(-DNOMINMAX)
 endif()
 
 ##############################################################
@@ -140,9 +140,10 @@ option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 mark_as_advanced(OSPRAY_ENABLE_APPS)
 
 option(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
+option(OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES "Automatically download test images during build." ON)
 
 if (OSPRAY_ENABLE_TESTING)
-  ENABLE_TESTING()
+  enable_testing()
 endif()
 
 ##############################################################
@@ -232,7 +233,7 @@ if (OSPRAY_INSTALL_DEPENDENCIES)
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
     if (NOT APPLE)
       get_filename_component(EMBREE_LIBNAME ${EMBREE_LIBRARY} NAME)
-      OSPRAY_INSTALL_NAMELINK(embree ${EMBREE_LIBNAME})
+      ospray_install_namelink(embree ${EMBREE_LIBNAME})
     endif()
   endif()
 endif()

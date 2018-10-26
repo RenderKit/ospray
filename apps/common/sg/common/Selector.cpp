@@ -21,7 +21,6 @@ namespace ospray {
 
     Selector::Selector()
     {
-      setValue(0.f);
       createChild("index", "int", 0);
     }
 
