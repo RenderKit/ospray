@@ -118,8 +118,9 @@ way to configure OSPRay and to create the Visual Studio solution files:
     does not exist yet CMake will create it).
 
 -   Click "Configure" and select as generator the Visual Studio version
-    you have, for Win64 (32\ bit builds are not supported by OSPRay),
-    e.g. "Visual Studio 15 2017 Win64".
+    you have (OSPRay needs Visual Studio 14 2015 or newer), for Win64
+    (32\ bit builds are not supported by OSPRay), e.g. "Visual Studio 15
+    2017 Win64".
 
 -   If the configuration fails because some dependencies could not be
     found then follow the instructions given in the error message, e.g.
