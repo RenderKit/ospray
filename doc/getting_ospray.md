@@ -35,6 +35,8 @@ installer as well as a ZIP archive:
 
 [ospray-<OSPRAY_VERSION>.msi](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.msi)
 [ospray-<OSPRAY_VERSION>.windows.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.windows.zip)
+You may need to additionally install the [x64 Microsoft^\*^ Visual C++^\*^ 2015
+Redistributable](https://www.microsoft.com/download/details.aspx?id=53840).
 
 The source code of the latest OSPRay version can be downloaded here:
 

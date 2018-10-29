@@ -19,6 +19,10 @@ ospray_disable_compiler_warnings()
 ##############################################################
 # Google Test
 ##############################################################
+if (NOT USE_STATIC_RUNTIME)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
+
 ospray_build_component(ospcommon/testing/gtest)
 
 mark_as_advanced(gtest_build_samples)
