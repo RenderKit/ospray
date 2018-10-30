@@ -51,7 +51,7 @@ namespace ospray {
                 << std::endl;
 
       remove("data");
-      auto wsg = createChild("data", "Transform").shared_from_this();
+      auto wsg = createChild("data", "Instance")["model"].shared_from_this();
 
       importRegistryGenerator(wsg, lastType, lastParams);
     }
