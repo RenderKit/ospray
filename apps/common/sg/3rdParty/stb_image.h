@@ -1,7 +1,7 @@
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcomma"
 #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
 #pragma clang diagnostic ignored "-Wunused-parameter"
-#pragma clang diagnostic ignored "-Wcomma"
 
 /* stb_image - v2.19 - public domain image loader - http://nothings.org/stb
                                   no warranty implied; use at your own risk
@@ -3601,7 +3601,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
       int k;
       unsigned int i,j;
       stbi_uc *output;
-      stbi_uc *coutput[4];
+      stbi_uc *coutput[4] = {};
 
       stbi__resample res_comp[4];
 
@@ -3736,8 +3736,9 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
 
 static void *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
 {
-   unsigned char* result;
+   unsigned char* result = nullptr;
    stbi__jpeg* j = (stbi__jpeg*) stbi__malloc(sizeof(stbi__jpeg));
+   if (!j) return result;
    STBI_NOTUSED(ri);
    j->s = s;
    stbi__setup_jpeg(j);
@@ -3750,6 +3751,7 @@ static int stbi__jpeg_test(stbi__context *s)
 {
    int r;
    stbi__jpeg* j = (stbi__jpeg*)stbi__malloc(sizeof(stbi__jpeg));
+   if (!j) return stbi__err("outofmem", "Out of memory");
    j->s = s;
    stbi__setup_jpeg(j);
    r = stbi__decode_jpeg_header(j, STBI__SCAN_type);
@@ -3774,7 +3776,8 @@ static int stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp)
 {
    int result;
    stbi__jpeg* j = (stbi__jpeg*) (stbi__malloc(sizeof(stbi__jpeg)));
-   if (j) j->s = s;
+   if (!j) return stbi__err("outofmem", "Out of memory");
+   j->s = s;
    result = stbi__jpeg_info_raw(j, x, y, comp);
    STBI_FREE(j);
    return result;
@@ -4555,6 +4558,7 @@ static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint3
 
    // de-interlacing
    final = (stbi_uc *) stbi__malloc_mad3(a->s->img_x, a->s->img_y, out_bytes, 0);
+   if (!final) return stbi__err("outofmem", "Out of memory");
    for (p=0; p < 7; ++p) {
       int xorig[] = { 0,4,0,2,0,1,0 };
       int yorig[] = { 0,0,4,0,2,0,1 };
@@ -6094,11 +6098,13 @@ static void *stbi__pic_load(stbi__context *s,int *px,int *py,int *comp,int req_c
 
    // intermediate buffer is RGBA
    result = (stbi_uc *) stbi__malloc_mad3(x, y, 4, 0);
+   if (!result) return stbi__errpuc("outofmem", "Out of memory");
    memset(result, 0xff, x*y*4);
 
    if (!stbi__pic_load_core(s,x,y,comp, result)) {
       STBI_FREE(result);
       result=0;
+      return nullptr;
    }
    *px = x;
    *py = y;
@@ -6206,6 +6212,7 @@ static int stbi__gif_header(stbi__context *s, stbi__gif *g, int *comp, int is_in
 static int stbi__gif_info_raw(stbi__context *s, int *x, int *y, int *comp)
 {
    stbi__gif* g = (stbi__gif*) stbi__malloc(sizeof(stbi__gif));
+   if (!g) return stbi__err("outofmem", "Out of memory");
    if (!stbi__gif_header(s, g, comp, 1)) {
       STBI_FREE(g);
       stbi__rewind( s );
@@ -6534,8 +6541,10 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
                }
             } else {
                out = (stbi_uc*)stbi__malloc( layers * stride ); 
+               if (!out) return stbi__errpuc("outofmem", "Out of memory");
                if (delays) {
                   *delays = (int*) stbi__malloc( layers * sizeof(int) ); 
+                  if (!*delays) return stbi__errpuc("outofmem", "Out of memory");
                }
             }
             memcpy( out + ((layers - 1) * stride), u, stride ); 
