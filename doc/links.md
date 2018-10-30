@@ -1,5 +1,6 @@
 
 [Embree]: https://embree.github.io/
+[Intel Embree]: https://embree.github.io/
 [news/updates]: https://www.ospray.org/news.html
 [getting OSPRay]: https://www.ospray.org/downloads.html
 [OSPRay Demos and Examples]: https://www.ospray.org/demos.html

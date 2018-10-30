@@ -1,17 +1,19 @@
 OSPRay
 ======
 
-This is release v1.7.1 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.8.0 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
 
-OSPRay is an **o**pen source, **s**calable, and **p**ortable **ray**
-tracing engine for high-performance, high-fidelity visualization on
-Intel® Architecture CPUs. OSPRay is released under the permissive
-[Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0).
+Intel® OSPRay is an **o**pen source, **s**calable, and **p**ortable
+**ray** tracing engine for high-performance, high-fidelity visualization
+on Intel Architecture CPUs. OSPRay is part of the [Intel Rendering
+Framework](https://software.intel.com/en-us/rendering-framework) and is
+released under the permissive [Apache 2.0
+license](http://www.apache.org/licenses/LICENSE-2.0).
 
 The purpose of OSPRay is to provide an open, powerful, and easy-to-use
 rendering library that allows one to easily build applications that use
@@ -20,11 +22,12 @@ surface- and volume-based visualizations). OSPRay is completely
 CPU-based, and runs on anything from laptops, to workstations, to
 compute nodes in HPC systems.
 
-OSPRay internally builds on top of [Embree](https://embree.github.io/)
-and [ISPC (Intel® SPMD Program Compiler)](https://ispc.github.io/), and
-fully utilizes modern instruction sets like Intel® SSE4, AVX, AVX2, and
-AVX-512 to achieve high rendering performance, thus a CPU with support
-for at least SSE4.1 is required to run OSPRay.
+OSPRay internally builds on top of [Intel
+Embree](https://embree.github.io/) and [ISPC (Intel SPMD Program
+Compiler)](https://ispc.github.io/), and fully utilizes modern
+instruction sets like Intel SSE4, AVX, AVX2, and AVX-512 to achieve high
+rendering performance, thus a CPU with support for at least SSE4.1 is
+required to run OSPRay.
 
 OSPRay Support and Contact
 --------------------------
@@ -37,7 +40,7 @@ via [OSPRay’s GitHub Issue
 Tracker](https://github.com/ospray/OSPRay/issues) (or, if you should
 happen to have a fix for it,you can also send us a pull request); for
 missing features please contact us via email at
-<a href="mailto:ospray@googlegroups.com" class="email">ospray@googlegroups.com</a>.
+<ospray@googlegroups.com>.
 
 For recent news, updates, and announcements, please see our complete
 [news/updates](https://www.ospray.org/news.html) page.
@@ -166,8 +169,9 @@ way to configure OSPRay and to create the Visual Studio solution files:
     does not exist yet CMake will create it).
 
 -   Click “Configure” and select as generator the Visual Studio version
-    you have, for Win64 (32 bit builds are not supported by OSPRay),
-    e.g. “Visual Studio 15 2017 Win64”.
+    you have (OSPRay needs Visual Studio 14 2015 or newer), for Win64
+    (32 bit builds are not supported by OSPRay), e.g. “Visual Studio 15
+    2017 Win64”.
 
 -   If the configuration fails because some dependencies could not be
     found then follow the instructions given in the error message,
@@ -1064,12 +1068,12 @@ matter, as OSPRay internally calculates vertex normals to ensure proper
 sampling and interpolation.
 
 For wedge cells, each wedge is formed by a group of six indices into the
-vertices and data value. Vertex ordering is the same as `VTK_WEDGE` -
+vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
 three bottom vertices counterclockwise, then top three counterclockwise.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
 indices into the vertices and data value. Vertex ordering is the same as
-`VTK_HEXAHEDRON` – four bottom vertices counterclockwise, then top four
+`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
 counterclockwise.
 
 <table style="width:98%;">
@@ -2178,7 +2182,7 @@ mesh](#triangle-mesh) with `vertex.texcoord` provided. The color
 textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
 encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
 linear format (and only the first component is used). Additionally, all
-textures support \[texture transformations\].
+textures support [texture transformations](#texture2d-transformations).
 
 <figure>
 <img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
@@ -2385,12 +2389,12 @@ table below.
 : Parameters of the Principled material.
 
 All parameters can be textured by passing a [texture](#texture) handle,
-suffixed with “`Map`” (e.g., “`baseColorMap`”); \[texture
-transformations\] are supported as well.
+suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
+transformations](#texture2d-transformations) are supported as well.
 
-<figure>
-<img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
-</figure>#### CarPaint
+<img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" />
+
+#### CarPaint
 
 The CarPaint material is a specialized version of the Principled
 material for rendering different types of car paints. To create a
@@ -2516,12 +2520,12 @@ CarPaint material, pass the type string “`CarPaint`” to
 : Parameters of the CarPaint material.
 
 All parameters can be textured by passing a [texture](#texture) handle,
-suffixed with “`Map`” (e.g., “`baseColorMap`”); \[texture
-transformations\] are supported as well.
+suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
+transformations](#texture2d-transformations) are supported as well.
 
-<figure>
-<img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
-</figure>#### Metal
+<img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" />
+
+#### Metal
 
 The [path tracer](#path-tracer) offers a physical metal, supporting
 changing roughness and realistic color shifts at edges. To create a
@@ -2599,12 +2603,13 @@ coefficients, based on data from https://refractiveindex.info/.
 
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
-[texture](#texture) `map_roughness` (\[texture transformations\] are
-supported as well) to create interesting edging effects.
+[texture](#texture) `map_roughness` ([texture
+transformations](#texture2d-transformations) are supported as well) to
+create interesting edging effects.
 
-<figure>
-<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" /><figcaption>Rendering of golden Metal material with textured roughness.</figcaption>
-</figure>#### Alloy
+<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
+
+#### Alloy
 
 The [path tracer](#path-tracer) offers an alloy material, which behaves
 similar to [Metal](#metal), but allows for more intuitive and flexible
@@ -2626,12 +2631,12 @@ present, the color component of [geometries](#geometries) is also used
 for reflectivity at normal incidence `color`. As in [Metal](#metal) the
 `roughness` parameter controls the variation of microfacets and thus how
 polished the alloy will look. All parameters can be textured by passing
-a [texture](#texture) handle, prefixed with “`map_`”; \[texture
-transformations\] are supported as well.
+a [texture](#texture) handle, prefixed with “`map_`”; [texture
+transformations](#texture2d-transformations) are supported as well.
 
-<figure>
-<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
-</figure>#### Glass
+<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
+
+#### Glass
 
 The [path tracer](#path-tracer) offers a realistic a glass material,
 supporting refraction and volumetric attenuation (i.e. the transparency
@@ -2706,20 +2711,20 @@ to `ospNewMaterial2`. Its parameters are listed in the table below.
 : Parameters of the MetallicPaint material.
 
 The color of the base coat `baseColor` can be textured by a
-[texture](#texture) `map_baseColor`, which also supports \[texture
-transformations\]. If present, the color component of
-[geometries](#geometries) is also used for the color of the base coat.
-parameter `flakeAmount` controls the proportion of flakes in the base
-coat, so when setting it to 1 the `baseColor` will not be visible. The
-shininess of the metallic component is governed by `flakeSpread`, which
-controls the variation of the orientation of the flakes, similar to the
-`roughness` parameter of [Metal](#metal). Note that the effect of the
-metallic flakes is currently only computed on average, thus individual
-flakes are not visible.
+[texture](#texture) `map_baseColor`, which also supports [texture
+transformations](#texture2d-transformations). If present, the color
+component of [geometries](#geometries) is also used for the color of the
+base coat. parameter `flakeAmount` controls the proportion of flakes in
+the base coat, so when setting it to 1 the `baseColor` will not be
+visible. The shininess of the metallic component is governed by
+`flakeSpread`, which controls the variation of the orientation of the
+flakes, similar to the `roughness` parameter of [Metal](#metal). Note
+that the effect of the metallic flakes is currently only computed on
+average, thus individual flakes are not visible.
 
-<figure>
-<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" /><figcaption>Rendering of a MetallicPaint material.</figcaption>
-</figure>#### Luminous
+<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" />
+
+#### Luminous
 
 The [path tracer](#path-tracer) supports the Luminous material which
 emits light uniformly in all directions and which can thus be used to
@@ -3255,8 +3260,8 @@ Prerequisites for MPI Mode
 --------------------------
 
 In addition to the standard build requirements of OSPRay, you must have
-the following items available in your environment in order to build&run
-OSPRay in MPI mode:
+the following items available in your environment in order to build &
+run OSPRay in MPI mode:
 
 -   An MPI enabled multi-node environment, such as an HPC cluster
 -   An MPI implementation you can build against (i.e. Intel MPI,
@@ -3315,7 +3320,7 @@ have a lot of variance in how expensive each tile is to render.
 |:-----|:--------------------|--------:|:--------------------------------------|
 | bool | dynamicLoadBalancer |    false| whether to use dynamic load balancing |
 
-: Parameters specific to the `mpi_offload` device
+: Parameters specific to the `mpi_offload` device.
 
 ### Distributed Rendering
 
@@ -3362,7 +3367,7 @@ ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
 
     mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer <scene file> --osp:mpi
 
-### Separate Application&Worker Launches
+### Separate Application & Worker Launches
 
 The second option is to explicitly launch the app on rank 0 and worker
 ranks on the other nodes. This is done by running `ospray_mpi_worker` on
@@ -3408,7 +3413,7 @@ device.
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>void*</code></td>
+<td style="text-align: left;">void*</td>
 <td style="text-align: left;">worldCommunicator</td>
 <td style="text-align: left;">A pointer to the <code>MPI_Comm</code> which should be used as OSPRay’s world communicator. This will set how many ranks OSPRay should expect to participate in rendering. The default is <code>MPI_COMM_WORLD</code> where all ranks are expected to participate in rendering.</td>
 </tr>
@@ -3431,16 +3436,16 @@ can create a communicator with one rank per-node to then run OSPRay on
 one process per-node. The remaining ranks on each node can then
 aggregate their data to the OSPRay process for rendering.
 
-There are also two optional parameters available on the OSPModel created
-using the distributed device, which can be set to tell OSPRay about your
-application’s data distribution.
+The model used by the distributed device takes three additional
+parameters, to allow users to express their data distribution to OSPRay.
+All models should be disjoint to ensure correct sort-last compositing.
 
-<table style="width:97%;">
-<caption>Parameters for the distributed OSPModel</caption>
+<table style="width:98%;">
+<caption>Parameters for the distributed <code>OSPModel</code>.</caption>
 <colgroup>
-<col style="width: 14%" />
-<col style="width: 23%" />
-<col style="width: 60%" />
+<col style="width: 8%" />
+<col style="width: 17%" />
+<col style="width: 71%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3451,31 +3456,34 @@ application’s data distribution.
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>box3f[]</code></td>
-<td style="text-align: left;">regions</td>
-<td style="text-align: left;"><a href="#data">data</a> array of boxes which bound the data owned by the current rank, used for sort-last compositing. The global set of regions specified by all ranks must be disjoint for correct compositing.</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">id</td>
+<td style="text-align: left;">An integer that uniquely identifies this piece of distributed data. For example, in a common case of one sub-brick per-rank, this would just be the region’s MPI rank. Multiple ranks can specify models with the same ID, in which case the rendering work for the model will be shared among them.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>box3f[]</code></td>
-<td style="text-align: left;">ghostRegions</td>
-<td style="text-align: left;">Optional <a href="#data">data</a> array of boxes which bound the ghost data on each rank. Using these shared data between nodes can be used for computing secondary ray effects such as ambient occlusion. If specifying ghostRegions, there should be one ghostRegion for each region.</td>
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">region.lower</td>
+<td style="text-align: left;">Override the original model geometry + volume bounds with a custom lower bound position. This can be used to clip geometry in the case the objects cross over to another region owned by a different node. For example, rendering a set of spheres with radius.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">region.upper</td>
+<td style="text-align: left;">Override the original model geometry + volume bounds with a custom upper bound position.</td>
 </tr>
 </tbody>
 </table>
 
-: Parameters for the distributed OSPModel
-
-See the distributed device examples in the MPI module for examples.
+: Parameters for the distributed `OSPModel`.
 
 The renderer supported when using the distributed device is the
 `mpi_raycast` renderer. This renderer is an experimental renderer and
-currently only supports ambient occlusion (on the local data only). To
-compute correct ambient occlusion across the distributed data the
-application is responsible for replicating ghost data and specifying the
-ghostRegions and regions as described above.
+currently only supports ambient occlusion (on the local data only, with
+optional ghost data). To compute correct ambient occlusion across the
+distributed data the application is responsible for replicating ghost
+data and specifying the ghost models and models as described above.
 
-<table style="width:97%;">
-<caption>Parameters for the distributed OSPModel</caption>
+<table style="width:98%;">
+<caption>Parameters for the <code>mpi_raycast</code> renderer.</caption>
 <colgroup>
 <col style="width: 14%" />
 <col style="width: 23%" />
@@ -3492,6 +3500,18 @@ ghostRegions and regions as described above.
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">OSPModel/OSPModel[]</td>
+<td style="text-align: left;">model</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;">the <a href="#model">model</a> to render, can optionally be a <a href="#data">data</a> array of multiple models</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">OSPModel/OSPModel[]</td>
+<td style="text-align: left;">ghostModel</td>
+<td style="text-align: right;">NULL</td>
+<td style="text-align: left;">the optional <a href="#model">model</a> containing the ghost geometry for ambient occlusion; when setting a <a href="#data">data</a> array for both <code>model</code> and <code>ghostModel</code>, each individual ghost model shadows only its corresponding model</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">aoSamples</td>
 <td style="text-align: right;">0</td>
@@ -3500,7 +3520,9 @@ ghostRegions and regions as described above.
 </tbody>
 </table>
 
-: Parameters for the distributed OSPModel
+: Parameters for the `mpi_raycast` renderer.
+
+See the distributed device examples in the MPI module for examples.
 
 Scenegraph
 ==========
