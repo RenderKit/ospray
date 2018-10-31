@@ -71,7 +71,7 @@ namespace ospray {
         auto v1 = dims_converter.reshape(i) * 10;
         auto v2 = v1;
 
-        v1.z = 0.f;
+        v2.z += 8;
 
         cylinder_vertices->v[(2 * i) + 0] = v1;
         cylinder_vertices->v[(2 * i) + 1] = v2;
