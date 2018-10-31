@@ -58,10 +58,15 @@ unmasked void Cylinders_bounds(const RTCBoundsFunctionArguments *uniform args)
   uniform float radius = offr ? *((float *uniform)(cylinderPtr + self->offset_radius)) : self->radius;
   uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
   uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
-  // TODO less conservative bounds
+
+  uniform vec3f a2 = sqr(v0 - v1);
+  uniform float d2 = a2.x + a2.y + a2.z;
+  uniform vec3f a = make_vec3f(a2.y + a2.z, a2.x + a2.z, a2.x + a2.y);
+  uniform vec3f dr = radius * sqrt(a/d2);
+
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
-  *out = make_box3fa(min(v0,v1) - radius,
-                     max(v0,v1) + radius);
+  *out = make_box3fa(min(v0,v1) - dr,
+                     max(v0,v1) + dr);
 }
 
 void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
