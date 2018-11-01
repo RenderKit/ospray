@@ -39,6 +39,8 @@ class GLFWOSPRayWindow
   void registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)> callback);
 
+  void registerImGuiCallback(std::function<void()> callback);
+
   void mainLoop();
 
  protected:
@@ -68,4 +70,7 @@ class GLFWOSPRayWindow
 
   // optional registered display callback, called before every display()
   std::function<void(GLFWOSPRayWindow *)> displayCallback;
+
+  // optional registered ImGui callback, called during every frame to build UI
+  std::function<void()> uiCallback;
 };

@@ -18,6 +18,9 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <imgui.h>
+#include "imgui/imgui_impl_glfw_gl3.h"
+
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
@@ -51,6 +54,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
   // make the window's context current
   glfwMakeContextCurrent(glfwWindow);
 
+  ImGui_ImplGlfwGL3_Init(glfwWindow, true);
+
   // set initial OpenGL state
   glEnable(GL_TEXTURE_2D);
   glDisable(GL_LIGHTING);
@@ -69,7 +74,9 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
       });
 
   glfwSetCursorPosCallback(glfwWindow, [](GLFWwindow *, double x, double y) {
-    activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
+    ImGuiIO &io = ImGui::GetIO();
+    if (!io.WantCaptureMouse)
+      activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
   });
 
   // OSPRay setup
@@ -116,6 +123,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
 GLFWOSPRayWindow::~GLFWOSPRayWindow()
 {
+  ImGui_ImplGlfwGL3_Shutdown();
   // cleanly terminate GLFW
   glfwTerminate();
 }
@@ -145,10 +153,17 @@ void GLFWOSPRayWindow::registerDisplayCallback(
   displayCallback = callback;
 }
 
+void GLFWOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
+{
+  uiCallback = callback;
+}
+
 void GLFWOSPRayWindow::mainLoop()
 {
   // continue until the user closes the window
   while (!glfwWindowShouldClose(glfwWindow)) {
+    ImGui_ImplGlfwGL3_NewFrame();
+
     display();
 
     // poll and process events
@@ -245,6 +260,13 @@ void GLFWOSPRayWindow::display()
   // clock used to compute frame rate
   static auto displayStart = std::chrono::high_resolution_clock::now();
 
+  if (uiCallback) {
+    ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
+    ImGui::Begin("Tutorial Controls", nullptr, flags);
+    uiCallback();
+    ImGui::End();
+  }
+
   // if a display callback has been registered, call it
   if (displayCallback) {
     displayCallback(this);
@@ -289,6 +311,10 @@ void GLFWOSPRayWindow::display()
   glVertex2f(windowSize.x, 0.f);
 
   glEnd();
+
+  if (uiCallback) {
+    ImGui::Render();
+  }
 
   // swap buffers
   glfwSwapBuffers(glfwWindow);
