@@ -185,9 +185,9 @@ if (OSPRAY_INSTALL_DEPENDENCIES)
     if (WIN32)
       set(TBB_DLL_HINTS
         HINTS
-        ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
-        ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
-        ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER}
+        ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/vc14
+        ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/vc14
+        ${TBB_ROOT}/bin/${TBB_ARCH}/vc14
         ${TBB_ROOT}/bin
       )
       find_file(TBB_DLL tbb.dll ${TBB_DLL_HINTS})
