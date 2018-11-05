@@ -44,56 +44,25 @@ static void Subdivision_postIntersect(uniform Geometry *uniform _self,
   if (flags & DG_NS) {
     vec3f dPdu,dPdv;
     foreach_unique (geomID in ray.geomID) {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX,0,NULL,&dPdu.x,&dPdv.x,3);
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,
+                       ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX,0,NULL,&dPdu.x,&dPdv.x,3);
     }
     dg.Ns = cross(dPdu,dPdv);
   }
   //get colors
   if (flags & DG_COLOR) {
-    vec4f color;
     foreach_unique (geomID in ray.geomID) {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,0,&color.x,NULL,NULL,4);
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,
+                       ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,0,&dg.color.x,NULL,NULL,4);
     }
-    dg.color = make_vec4f(color);
   }
   //get texcoords
   if (flags & DG_TEXCOORD && self->texcoord) {
-    vec2f tex;
     foreach_unique (geomID in ray.geomID) {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,0,&tex.x,NULL,NULL,2);
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,
+                       ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,1,&dg.st.x,NULL,NULL,2);
     }
-    dg.st = tex;
   }
-}
-
-SampleAreaRes Subdivision_sampleArea(
-    const Geometry *uniform const _self
-    , const int32 primID
-    , const uniform affine3f &xfm
-    , const uniform affine3f &
-    , const vec2f& s
-    )
-{
-  const Subdivision *const uniform self = (const Subdivision *uniform)_self;
-  SampleAreaRes res;
-
-  //TODO: use rtc subdiv functions to determine bounds of prim
-
-  return res;
-}
-
-void Subdivision_getAreas(
-    const Geometry *const uniform _self
-    , const int32 *const uniform primIDs
-    , const uniform int32 numPrims
-    , const uniform affine3f &xfm
-    , float *const uniform areas
-    )
-{
-  const Subdivision *const uniform self = (const Subdivision *uniform)_self;
-
-  //TODO: use rtc subdiv functions to determine bounds of prim
-
 }
 
 void Subdivision_Constructor(uniform Subdivision *uniform mesh,
@@ -116,8 +85,6 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
   mesh->prim_materialID = prim_materialID;
   mesh->geom_materialID = geom_materialID;
   mesh->texcoord = texcoord;
-  mesh->super.getAreas = Subdivision_getAreas;
-  mesh->super.sampleArea = Subdivision_sampleArea;
 }
 
 

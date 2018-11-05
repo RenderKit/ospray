@@ -52,6 +52,7 @@ namespace ospray {
     auto indexLevelData = getParamData("index.level");
     auto prim_materialIDData = getParamData("prim.materialID");
     auto geom_materialID = getParam1i("geom.materialID",-1);
+    size_t numFaces = 0;
 
     //check for valid params
     if (!vertexData)
@@ -59,27 +60,25 @@ namespace ospray {
     if (!indexData)
       throw std::runtime_error("subdivision must have 'index' array");
     // if face is not specified and index is of type (u)int4, a cage mesh is specified
+    bool generateFacesData = false;
     if (!(facesData || (indexData->type == OSP_INT4 || indexData->type == OSP_UINT4)))
       throw std::runtime_error("subdivision must have 'face' array or (u)int4 index");
     else if (!facesData) {
-      // generate faces for quad cage mesh
-      const size_t numFaces = indexData->size()/4;
-      std::vector<uint32_t> faces(numFaces, 4);
-      facesData = new ospray::Data(numFaces, OSP_UINT, faces.data());
+      generateFacesData = true;
     }
-    if (facesData && indexData->type != OSP_INT && indexData->type != OSP_UINT)
+    if ((generateFacesData || facesData) && indexData->type != OSP_INT && indexData->type != OSP_UINT)
       throw std::runtime_error("unsupported subdivision 'face' data type");
     if (vertexData->type != OSP_FLOAT3)
       throw std::runtime_error("unsupported subdivision 'vertex' data type");
     if (colorsData && colorsData->type != OSP_FLOAT4)
-      throw std::runtime_error("unsupported subdivision 'vertex.texcoord' data type");
-    if (texcoordData && texcoordData->type != OSP_FLOAT2)
       throw std::runtime_error("unsupported subdivision 'vertex.color' data type");
+    if (texcoordData && texcoordData->type != OSP_FLOAT2)
+      throw std::runtime_error("unsupported subdivision 'vertex.texcoord' data type");
 
-    int* index = (int*)indexData->data;
-    vec3f* vertex = (vec3f*)vertexData->data;
-    float* colors = (float*)colorsData->data;
-    int* faces = (int*)facesData->data;
+    int* index = indexData ? (int*)indexData->data : nullptr;
+    vec3f* vertex = vertexData ? (vec3f*)vertexData->data : nullptr;
+    float* colors = colorsData ?(float*)colorsData->data : nullptr;
+    unsigned int* faces = facesData ? (unsigned int*)facesData->data : nullptr;
     float* indexLevel = indexLevelData ? (float*)indexLevelData->data : nullptr;
     vec2i* edge_crease_indices = edge_crease_indicesData ? (vec2i*)edge_crease_indicesData->data : nullptr;
     float* edge_crease_weights = edge_crease_weightsData ? (float*)edge_crease_weightsData->data : nullptr;
@@ -87,6 +86,14 @@ namespace ospray {
     float* vertex_crease_weights = vertex_crease_weightsData ? (float*)vertex_crease_weightsData->data : nullptr;
     uint32_t* prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
     vec2f* texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
+
+    if (generateFacesData) {
+      // generate faces for quad cage mesh
+      numFaces = indexData->size()/4;
+      generatedFacesData.resize(numFaces, 4);
+      faces = generatedFacesData.data();
+    } else if (facesData)
+      numFaces = facesData->size();
 
     auto geom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 
