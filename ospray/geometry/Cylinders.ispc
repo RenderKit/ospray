@@ -82,64 +82,57 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
-
-
-  uniform uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder*primID;
+  uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder * primID;
   uniform float radius = self->radius;
   if (self->offset_radius >= 0) {
     radius = *((float *uniform)(cylinderPtr + self->offset_radius));
   }
-  uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
-  uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
+  const uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
+  const uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
 
-  const vec3f center = 0.5f*(v0 + v1);
-  const float approxDist = dot(center - ray->org, ray->dir);
-  const vec3f closeOrg = ray->org + approxDist * ray->dir;
+  const vec3f d = ray->dir;
+  const uniform vec3f s = v1 - v0; // axis
+  const vec3f sxd = cross(s, d);
+  const float a = dot(sxd, sxd); // (s x d)^2
+  if (a == 0.f)
+    return;
 
-  const vec3f A = v0 - closeOrg;
-  const vec3f B = v1 - closeOrg;
+  const vec3f f = v0 - ray->org;
+  const vec3f sxf = cross(s, f);
+  const float ra = 1.0f/a;
+  const float ts = dot(sxd, sxf) * ra; // (s x d)(s x f) / (s x d)^2, in ray-space
+  const vec3f fp = f - ts * d; // f' = v0 - closest point to axis
 
-  const vec3f V = ray->dir;
-  const vec3f AB = B - A;
+  const uniform float s2 = dot(s, s); // s^2
+  const vec3f perp = cross(s, fp); // s x f'
+  const float c = sqr(radius) * s2 - dot(perp, perp); //  r^2 s^2 - (s x f')^2
+  if (c < 0.f)
+    return;
 
-  const vec3f AOxAB  = cross(AB,A);
-  const vec3f VxAB   = cross(V,AB);
-  const float ab2    = dot(AB,AB);
-  const float a      = dot(VxAB,VxAB);
-  if (a == 0.f) return;
-  const float b      = 2 * dot(VxAB,AOxAB);
-  const float c      = dot(AOxAB,AOxAB) - (sqr(radius) * ab2);
+  float td = sqrt(c * ra);
+  const float t_in = ts - td;
+  const float t_out = ts + td;
 
-  // clip to near and far cap of cylinder
-  const float rVAB = rcp(dot(V,AB));
-  const float tA = dot(AB,A) * rVAB + approxDist;
-  const float tB = dot(AB,B) * rVAB + approxDist;
-  const float tAB0 = max(ray->t0,min(tA,tB));
-  const float tAB1 = min(ray->t, max(tA,tB));
-
-  // ------------------------------------------------------------------
-  // abc formula: t0,1 = (-b +- sqrt(b^2-4*a*c)) / 2a
-  //
-  const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return;
-
-  const float srad = sqrt(radical);
-
-  const float t_in = (- b - srad) *rcpf(2.f*a) + approxDist;
-  const float t_out= (- b + srad) *rcpf(2.f*a) + approxDist;
+  // clip to cylinder caps
+  const float rsd = rcp(dot(s, d));
+  const float tA = dot(s, f) * rsd;
+  const float tS = s2 * rsd;
+  const float tB = tA + tS;
+  const float tmin = max(ray->t0, min(tA, tB));
+  const float tmax = min(ray->t, max(tA, tB));
 
   bool hit = false;
-
-  if (t_in >= (tAB0) && t_in <= (tAB1)) {
+  if (t_in > tmin && t_in < tmax) {
     hit = true;
+    td *= -1.f;
     ray->t = t_in;
-  } else if (t_out >= (tAB0+self->epsilon) && t_out <= (tAB1)) {
+  } else if (t_out > (tmin + self->epsilon * rsqrt(dot(d, d))) && t_out < tmax) {
     hit = true;
     ray->t = t_out;
   }
 
   if (hit) {
-    if (isOcclusionTest) {
+    cif (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
@@ -147,10 +140,8 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
       ray->geomID = self->super.geomID;
       // cannot easily be moved to postIntersect
       // we need hit in object-space, in postIntersect it is in world-space
-      const vec3f P = ray->org + ray->t*ray->dir - v0;
-      const vec3f V = cross(P,AB);
-      ray->Ng = cross(AB,V);
-      ray->u = (ray->t-tA)*rcp(tB-tA);
+      ray->u = (ray->t - tA) * rcp(tS);
+      ray->Ng = td * d - fp - ray->u * s;
     }
   }
 }
