@@ -59,7 +59,7 @@ inline void intersectSphere(varying Ray &ray,
   if (l2 > r2)
     return;
 
-  const float td = sqrt((r2 - l2) * rd2); 
+  const float td = sqrt((r2 - l2) * rd2);
   const float sph_t_in = projCO - td;
   const float sph_t_out = projCO + td;
 

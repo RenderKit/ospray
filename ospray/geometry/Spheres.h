@@ -94,9 +94,6 @@ namespace ospray {
       color. color of sphere i will be read as colorFormat color from
       'colorOffset+i*colorStride */
     size_t colorOffset;
-
-
-    float epsilon;  //epsilon for intersections
   };
   /*! @} */
 

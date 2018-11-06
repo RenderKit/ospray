@@ -134,16 +134,14 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
 unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  uniform Spheres *uniform self = (uniform Spheres *uniform)args->geometryUserPtr;
+  Spheres *uniform self = (Spheres *uniform)args->geometryUserPtr;
   uniform int primID = args->primID;
-  uniform uint8 *uniform spherePtr = self->data
-    + self->stride*((uniform int64)primID);
+  uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
   uniform bool offr = self->offset_radius >= 0;
   uniform float radius =
     offr ? *((uniform float *uniform)(spherePtr+self->offset_radius)) :
     self->radius;
-  uniform vec3f center =
-    *((uniform vec3f*uniform)(spherePtr+self->offset_center));
+  uniform vec3f center = *((vec3f*uniform)(spherePtr+self->offset_center));
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(center - radius, center + radius);
 }
@@ -154,36 +152,36 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
 
-  uniform Spheres *uniform self
-    = (uniform Spheres *uniform)args->geometryUserPtr;
-  uniform unsigned int primID = args->primID;
+  Spheres *uniform self = (Spheres *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
   // from here on it's the original intersection code from ospray/embree2
-  uniform uint8 *uniform spherePtr =
-    self->data + self->stride*((uniform int64)primID);
+  uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
   uniform float radius = self->radius;
   if (self->offset_radius >= 0) {
-    radius = *((uniform float *uniform)(spherePtr + self->offset_radius));
+    radius = *((float *uniform)(spherePtr + self->offset_radius));
   }
-  uniform vec3f center = *((uniform vec3f*)(spherePtr + self->offset_center));
+  uniform vec3f center = *((vec3f*uniform)(spherePtr + self->offset_center));
 
-  const float rd2 = 1.0f/dot(ray->dir, ray->dir); // 1/a
+  const vec3f d = ray->dir;
+  const float rd2 = 1.0f / dot(d, d); // 1/a
   const vec3f CO = center - ray->org;
-  const float projCO = dot(CO, ray->dir)*rd2; // in ray-space
-  const vec3f perp = CO - projCO * ray->dir;
+  const float projCO = dot(CO, d) * rd2; // in ray-space
+  const vec3f perp = CO - projCO * d;
   const float l2 = dot(perp, perp);
-  const float r2 = sqr(radius);
-  if (l2 > r2) return;
+  const uniform float r2 = sqr(radius);
+  if (l2 > r2)
+    return;
 
-  float d = sqrt((r2 - l2)*rd2); 
+  float td = sqrt((r2 - l2) * rd2);
 #if 1
-  const float t_in = projCO - d;
-  const float t_out = projCO + d;
+  const float t_in = projCO - td;
+  const float t_out = projCO + td;
 #else // TODO: verify
-  const float t1 = projCO + floatbits(signbits(projCO)^intbits(d));
+  const float t1 = projCO + floatbits(signbits(projCO)^intbits(td));
   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
   const float t_in = min(t1, t2);
   const float t_out = max(t1, t2);
@@ -192,7 +190,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   bool hit = false;
   if (t_in > ray->t0 && t_in < ray->t) {
     hit = true;
-    d *= -1.f;
+    td *= -1.f;
     ray->t = t_in;
   } else if (t_out > (ray->t0 + self->epsilon) && t_out < ray->t) {
     hit = true;
@@ -200,7 +198,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   }
 
   if (hit) {
-    if (isOcclusionTest) {
+    cif (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
@@ -208,7 +206,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
       ray->instID = args->context->instID[0];
       // cannot easily be moved to postIntersect
       // we need hit in object space, in postIntersect it is in world-space
-      ray->Ng = d * ray->dir - perp;
+      ray->Ng = td * d - perp;
     }
   }
 }
