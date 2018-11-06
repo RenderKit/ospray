@@ -74,3 +74,14 @@ LINK
   glfw
   ${OPENGL_LIBRARIES}
 )
+
+ospray_create_application(ospTutorialUnstructuredVolume
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  ospTutorialUnstructuredVolume.cpp
+LINK
+  ospray
+  ospray_common
+  glfw
+  ${OPENGL_LIBRARIES}
+)
