@@ -1215,6 +1215,33 @@ mesh. A quad is internally handled as a pair of two triangles, thus
 mixing triangles and quad is supported by encoding a triangle as a quad
 with the last two vertex indices being identical (`w=z`).
 
+### Subdivision
+
+A mesh consisting of subdivision surfaces, created by specifying a
+geomtry of type “`subdivision`”. Once created, a subdivision recognizes
+the following parameters:
+
+| Type               | Name              | Description                                                                   |
+|:-------------------|:------------------|:------------------------------------------------------------------------------|
+| vec3f\[\]          | vertex            | [data](#data) array of vertex positions                                       |
+| vec4f\[\]          | vertex.color      | [data](#data) array of vertex colors (RGBA)                                   |
+| vec2f\[\]          | vertex.texcoord   | [data](#data) array of vertex texture coordinates                             |
+| float              | level             | global level of tesselation, default is 5                                     |
+| uint\[\]/vec4i\[\] | index             | [data](#data) array of indices (into the vertex array(s))                     |
+| float\[\]          | index.level       | [data](#data) array of per-edge levels of tesselation, overrides global level |
+| uint\[\]           | face              | [data](#data) array holding the number of indices/edges (3 to 15) per face    |
+| vec2i\[\]          | edgeCrease.index  | [data](#data) array of edge crease indices                                    |
+| float\[\]          | edgeCrease.weight | [data](#data) array of edge crease weights                                    |
+| uint\[\]           | vertexCrease.inde | x [data](#data) array of vertex crease indices                                |
+| float\[\]          | vertexCrease.weig | ht [data](#data) array of vertex crease weights                               |
+
+: Parameters defining a Subdivision geometry.
+
+The `vertex` and `index` arrays are mandatory to create a valid
+subdivision surface. If no `face` array is present then a pure quad mesh
+is assumed (and indices must be of type `vec4i`). Optionally supported
+are edge and vertex creases.
+
 ### Spheres
 
 A geometry consisting of individual spheres, each of which can have an

@@ -721,7 +721,7 @@ the following parameters:
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
-The `vertex`, and `index` arrays are mandatory to create a valid
+The `vertex` and `index` arrays are mandatory to create a valid
 subdivision surface. If no `face` array is present then a pure quad
 mesh is assumed (and indices must be of type `vec4i`).
 Optionally supported are edge and vertex creases.
