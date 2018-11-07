@@ -52,79 +52,77 @@ namespace ospray {
     auto indexLevelData = getParamData("index.level");
     auto prim_materialIDData = getParamData("prim.materialID");
     auto geom_materialID = getParam1i("geom.materialID",-1);
-    size_t numFaces = 0;
 
     //check for valid params
-    if (!vertexData)
-      throw std::runtime_error("subdivision must have 'vertex' array");
+    if (!vertexData || vertexData->type != OSP_FLOAT3)
+      throw std::runtime_error("subdivision must have 'vertex' array of type float3");
     if (!indexData)
       throw std::runtime_error("subdivision must have 'index' array");
-    // if face is not specified and index is of type (u)int4, a cage mesh is specified
-    bool generateFacesData = false;
-    if (!(facesData || (indexData->type == OSP_INT4 || indexData->type == OSP_UINT4)))
-      throw std::runtime_error("subdivision must have 'face' array or (u)int4 index");
-    else if (!facesData) {
-      generateFacesData = true;
+
+    size_t numFaces = 0;
+    uint32_t* faces = nullptr;
+    if (facesData) {
+      if (indexData->type != OSP_INT && indexData->type != OSP_UINT)
+        throw std::runtime_error("subdivision 'face' data type must be (u)int");
+      generatedFacesData.clear();
+      numFaces = facesData->size();
+      faces = (uint32_t*)facesData->data;
+    } else {
+      if (indexData->type != OSP_INT4 && indexData->type != OSP_UINT4)
+        throw std::runtime_error("subdivision must have 'face' array or (u)int4 'index'");
+      // if face is not specified and index is of type (u)int4, a quad cage mesh is specified
+      numFaces = indexData->size()/4;
+      generatedFacesData.resize(numFaces, 4);
+      faces = generatedFacesData.data();
     }
-    if ((generateFacesData || facesData) && indexData->type != OSP_INT && indexData->type != OSP_UINT)
-      throw std::runtime_error("unsupported subdivision 'face' data type");
-    if (vertexData->type != OSP_FLOAT3)
-      throw std::runtime_error("unsupported subdivision 'vertex' data type");
+
     if (colorsData && colorsData->type != OSP_FLOAT4)
       throw std::runtime_error("unsupported subdivision 'vertex.color' data type");
     if (texcoordData && texcoordData->type != OSP_FLOAT2)
       throw std::runtime_error("unsupported subdivision 'vertex.texcoord' data type");
 
-    int* index = indexData ? (int*)indexData->data : nullptr;
-    vec3f* vertex = vertexData ? (vec3f*)vertexData->data : nullptr;
+    vec3f* vertex = (vec3f*)vertexData->data;
     float* colors = colorsData ?(float*)colorsData->data : nullptr;
-    unsigned int* faces = facesData ? (unsigned int*)facesData->data : nullptr;
     float* indexLevel = indexLevelData ? (float*)indexLevelData->data : nullptr;
-    vec2i* edge_crease_indices = edge_crease_indicesData ? (vec2i*)edge_crease_indicesData->data : nullptr;
-    float* edge_crease_weights = edge_crease_weightsData ? (float*)edge_crease_weightsData->data : nullptr;
-    int* vertex_crease_indices = vertex_crease_indicesData ? (int*)vertex_crease_indicesData->data : nullptr;
-    float* vertex_crease_weights = vertex_crease_weightsData ? (float*)vertex_crease_weightsData->data : nullptr;
     uint32_t* prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
     vec2f* texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
-
-    if (generateFacesData) {
-      // generate faces for quad cage mesh
-      numFaces = indexData->size()/4;
-      generatedFacesData.resize(numFaces, 4);
-      faces = generatedFacesData.data();
-    } else if (facesData)
-      numFaces = facesData->size();
 
     auto geom = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3,
                                vertex, 0, sizeof(vec3f), vertexData->size());
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT,
-                               index, 0, sizeof(unsigned int), indexData->size());
+        indexData->data, 0, sizeof(unsigned int), indexData->size());
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_FACE, 0, RTC_FORMAT_UINT,
-                               faces, 0, sizeof(unsigned int), facesData->size());
+        faces, 0, sizeof(unsigned int), numFaces);
 
-    if (edge_crease_indices && edge_crease_weights) {
-      if (edge_crease_indicesData->size() != edge_crease_weightsData->size())
+    if (edge_crease_indicesData && edge_crease_weightsData) {
+      size_t edge_creases = edge_crease_indicesData->size();
+      if (edge_creases != edge_crease_weightsData->size())
         postStatusMsg(1) << "subdivision edge crease indices size does not match weights";
       else
       {
-        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,    0,
-                                 RTC_FORMAT_UINT2, edge_crease_indices,   0, 2*sizeof(unsigned int), 0);
-        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,   0,
-                                 RTC_FORMAT_FLOAT, edge_crease_weights,   0, sizeof(float), 0);
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_INDEX, 0,
+            RTC_FORMAT_UINT2, edge_crease_indicesData->data, 0,
+            2*sizeof(unsigned int), edge_creases);
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT, 0,
+            RTC_FORMAT_FLOAT, edge_crease_weightsData->data, 0, sizeof(float),
+            edge_creases);
       }
     }
 
-    if (vertex_crease_indices && vertex_crease_weights) {
-      if (vertex_crease_indicesData->size() != vertex_crease_weightsData->size())
+    if (vertex_crease_indicesData && vertex_crease_weightsData) {
+      size_t vertex_creases = vertex_crease_indicesData->size();
+      if (vertex_creases != vertex_crease_weightsData->size())
         postStatusMsg(1) << "subdivision vertex crease indices size does not match weights";
       else
       {
-        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,  0,
-                                 RTC_FORMAT_UINT,  vertex_crease_indices, 0, sizeof(unsigned int), 0);
-        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT, 0,
-                                 RTC_FORMAT_FLOAT, vertex_crease_weights, 0, sizeof(float), 0);
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,
+            0, RTC_FORMAT_UINT, vertex_crease_indicesData->data, 0,
+            sizeof(unsigned int), vertex_creases);
+        rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT,
+            0, RTC_FORMAT_FLOAT, vertex_crease_weightsData->data, 0,
+            sizeof(float), vertex_creases);
       }
     }
 
@@ -161,7 +159,7 @@ namespace ospray {
     //TODO: must factor in displacement into bounds....
 
 
-    postStatusMsg(2) << "  created subdivision (" << facesData->size() << " faces "
+    postStatusMsg(2) << "  created subdivision (" << numFaces << " faces "
                      << ", " << vertexData->size() << " vertices)\n"
                      << "  mesh bounds " << bounds;
 
