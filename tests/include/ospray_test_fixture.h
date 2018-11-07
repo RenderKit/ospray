@@ -209,8 +209,8 @@ private:
   std::vector<float> volumetricData;
 };
 
-// Fixture for tests rendering few connected cylinder segments. It's parametrized with type of
-// material used and radius of the segments.
+// Fixture for tests rendering a Subdivision mesh. It's parametrized with type of
+// material used.
 class Subdivision : public Base, public ::testing::TestWithParam<std::tuple<const char*, const char*, float>> {
 public:
   Subdivision();
