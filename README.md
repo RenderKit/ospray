@@ -2757,7 +2757,7 @@ its parameters are as follows
 
 | Type    | Name  | Description                        |
 |:--------|:------|:-----------------------------------|
-| vec2f   | size  | size of the textures               |
+| vec2i   | size  | size of the textures               |
 | int     | type  | `OSPTextureFormat` for the texture |
 | int     | flags | special attribute flags for this   |
 |         |       | texture, currently only responds   |
