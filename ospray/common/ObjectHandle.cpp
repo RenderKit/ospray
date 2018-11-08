@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  static std::map<int64,Ref<ospray::ManagedObject>> objectByHandle;
+  static std::map<int64, ospray::ManagedObject*> objectByHandle;
   static std::stack<int64> freedHandles;
 
   //! next unassigned ID on this node
@@ -74,7 +74,7 @@ namespace ospray {
   {
     auto it = objectByHandle.find(i64);
     Assert(it != objectByHandle.end());
-    it->second = nullptr;
+    it->second->refDec();
     objectByHandle.erase(it);
   }
 
@@ -112,13 +112,13 @@ namespace ospray {
 #endif
       return nullptr;
     }
-    return it->second.ptr;
+    return it->second;
   }
 
   ObjectHandle ObjectHandle::lookup(ManagedObject *object)
   {
     for (auto it = objectByHandle.begin(); it != objectByHandle.end(); it++) {
-      if (it->second.ptr == object) return(ObjectHandle(it->first));
+      if (it->second == object) return(ObjectHandle(it->first));
     }
 
     return(nullHandle);
