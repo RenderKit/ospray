@@ -108,6 +108,7 @@ else()
     library.h
     LinearSpace.h
     math.h
+    multidim_index_sequence.h
     platform.h
     Quaternion.h
     range.h

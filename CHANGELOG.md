@@ -1,6 +1,13 @@
 Version History
 ---------------
 
+### Changes in v1.7.2:
+
+-   Fix issue in `mpi_offload` device where `ospRelease` would sometimes not
+    correctly free objects
+-   Fix issue in `ospray_sg` where structured volumes would not properly
+    release the underlying OSPRay object handles
+
 ### Changes in v1.7.1:
 
 -   Fixed issue where the `Principled` material would sometimes show up
