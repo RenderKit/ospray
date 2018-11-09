@@ -18,8 +18,8 @@
 
 /*! \todo move to api - it's also used in coi, and not mpi specific */
 
-#include "common/OSPCommon.h"
 #include "common/Managed.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
 
@@ -65,14 +65,19 @@ namespace ospray {
     void freeObject() const;
 
     int32 ownerRank() const;
-    int32 objID()     const;
+    int32 objID() const;
 
     /*! cast to int64 to allow fast operations with this type */
     operator int64() const;
 
     // Data members //
 
-    struct { int32 ID; int32 owner; } i32;
+    struct
+    {
+      int32 ID;
+      int32 owner;
+    } i32;
+
     int64 i64;
   };
 
@@ -90,4 +95,4 @@ namespace ospray {
     return !(a == b);
   }
 
-} // ::ospray
+}  // namespace ospray

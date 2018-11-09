@@ -317,7 +317,7 @@ prefixed by convention with “`--osp:`”) are understood:
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>--osp:device:&lt;name&gt;</code></td>
-<td style="text-align: left;">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
+<td style="text-align: left;">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>--osp:setaffinity &lt;n&gt;</code></td>
@@ -2786,8 +2786,8 @@ The supported texture formats for `texture2d` are:
 The texel data addressed by `source` starts with the texels in the lower
 left corner of the texture image, like in OpenGL. Per default a texture
 fetch is filtered by performing bi-linear interpolation of the nearest
-2×2 texels; if instead fetching only the nearest texel is desired (
-i.e. no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
+2×2 texels; if instead fetching only the nearest texel is desired (i.e.
+no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
 #### TextureVolume
 
@@ -3039,7 +3039,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | Name              | Description                                                                                              |
 |:------------------|:---------------------------------------------------------------------------------------------------------|
 | OSP\_FB\_COLOR    | RGB color including alpha                                                                                |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float                      |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (\_not\_ to the image plane), as linear 32 bit float                    |
 | OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                           |
 | OSP\_FB\_VARIANCE | for estimation of the current noise level if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
 | OSP\_FB\_NORMAL   | accumulated screen-space normal of the first hit, as vec3f                                               |

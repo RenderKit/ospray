@@ -108,6 +108,12 @@ namespace ospray {
                   NodeFlags::gui_slider).setMinMax(0.f,255.f);
     }
 
+    Volume::~Volume()
+    {
+      if (isosurfacesGeometry)
+        ospRelease(isosurfacesGeometry);
+    }
+
     std::string Volume::toString() const
     {
       return "ospray::sg::Volume";
@@ -199,6 +205,9 @@ namespace ospray {
       ospVolume = ospNewVolume("shared_structured_volume");
       setValue(ospVolume);
 
+      if (isosurfacesGeometry)
+        ospRelease(isosurfacesGeometry);
+
       isosurfacesGeometry = ospNewGeometry("isosurfaces");
       ospSetObject(isosurfacesGeometry, "volume", ospVolume);
 
@@ -277,6 +286,9 @@ namespace ospray {
 
       if (!fileLoaded) {
         auto voxelType  = child("voxelType").valueAs<std::string>();
+
+        if (isosurfacesGeometry)
+          ospRelease(isosurfacesGeometry);
 
         isosurfacesGeometry = ospNewGeometry("isosurfaces");
         ospSetObject(isosurfacesGeometry, "volume", ospVolume);
