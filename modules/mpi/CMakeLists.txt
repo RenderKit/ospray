@@ -16,14 +16,6 @@
 
 option(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
 
-# Note: the MPI example viewer depends on tfn lib, so we must make sure that
-# was built.
-if (NOT TARGET ospray_tfn OR NOT TARGET ospray_imgui_util_sg
-    OR NOT TARGET ospray_imgui3d_sg)
-  message(FATAL_ERROR "ospray_tfn library is required for the MPI example app,"
-    " please set -DOSPRAY_APPS_EXAMPLEVIEWER=ON as well")
-endif ()
-
 if (OSPRAY_MODULE_MPI)
   option(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
     ${OSPRAY_APPS_EXAMPLEVIEWER})
@@ -89,6 +81,14 @@ if (OSPRAY_MODULE_MPI)
   # Test apps
   ##############################################################
   if (OSPRAY_MODULE_MPI_APPS)
+    # Note: the MPI example viewer depends on tfn lib, so we must make sure that
+    # was built.
+    if (NOT TARGET ospray_tfn OR NOT TARGET ospray_imgui_util_sg
+        OR NOT TARGET ospray_imgui3d_sg)
+      message(FATAL_ERROR "ospray_tfn library is required for the MPI example app,"
+        " please set -DOSPRAY_APPS_EXAMPLEVIEWER=ON as well")
+    endif ()
+
     add_subdirectory(apps)
   endif (OSPRAY_MODULE_MPI_APPS)
 
