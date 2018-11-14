@@ -103,7 +103,7 @@ protected:
 // parametrized with renderer, sphere radius, (signed) distance, and whether the sphere is in origin
 // TODO generalize for other geometries as well, reusing SingleObject 
 // TODO also test scaled instances (which changes the length of ray.dir)
-class SpherePrecision : public Base, public ::testing::TestWithParam<std::tuple<const char* /*renderer*/, float /*radius*/, float/*distance*/, bool/*move_cam*/>> {
+class SpherePrecision : public Base, public ::testing::TestWithParam<std::tuple<float /*radius*/, float/*distance*/, bool/*move_cam*/, const char* /*renderer*/>> {
 public:
   SpherePrecision();
   virtual void SetUp();

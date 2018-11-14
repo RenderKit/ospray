@@ -296,10 +296,10 @@ TEST_P(SpherePrecision, sphere) {
   PerformRenderTest();
 }
 INSTANTIATE_TEST_CASE_P(Intersection, SpherePrecision, ::testing::Combine(
-      ::testing::Values("scivis", "pathtracer"),
       ::testing::Values(0.01f, 1.0f, 100.0f, 1.e5f),
       ::testing::Values(10.0f, 1000.0f, 4000.0f, 1.e6f),
-      ::testing::Values(true, false)
+      ::testing::Values(true, false),
+      ::testing::Values("scivis", "pathtracer")
       ));
 
 TEST_P(Box, basicScene) {

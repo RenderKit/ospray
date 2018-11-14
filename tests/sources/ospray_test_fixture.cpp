@@ -232,11 +232,10 @@ void SingleObject::SetMaterial()
 SpherePrecision::SpherePrecision()
 {
   auto params = GetParam();
-  rendererType = std::get<0>(params);
-  radius = std::get<1>(params);
-  dist = std::get<2>(params);
-  move_cam = std::get<3>(params);
-  testName += rendererType;
+  radius = std::get<0>(params);
+  dist = std::get<1>(params);
+  move_cam = std::get<2>(params);
+  rendererType = std::get<3>(params);
 }
 
 void SpherePrecision::SetUp()
@@ -251,16 +250,16 @@ void SpherePrecision::SetUp()
   ospSet3f(camera, "up", 0.f, 1.f, 0.f);
   ospSet1f(camera, "fovy", fov);
 
-  ospSet1i(renderer, "aoSamples", 8);
+  ospSet1i(renderer, "aoSamples", 4);
   ospSet1i(renderer, "shadowsEnabled", 1);
 
-  ospSet1i(renderer, "spp", 1);
+  ospSet1i(renderer, "spp", 4);
   ospSet4f(renderer, "bgColor", 0.2f, 0.2f, 0.4f, 1.0f);
   ospSet1i(renderer, "maxDepth", 2);
 
   OSPGeometry sphere = ospNewGeometry("spheres");
 
-  float sph_center_r[]{-radius*0.1, 0.0f, cent, radius, radius*0.3, 0.0f, cent, radius*0.9f};
+  float sph_center_r[]{-radius*0.5, 0.0f, cent, radius, radius*0.8, 0.0f, cent, radius*0.9f};
   auto data = ospNewData(2, OSP_FLOAT4, sph_center_r);
   ospCommit(data);
   ospSetData(sphere, "spheres", data);
@@ -280,7 +279,7 @@ void SpherePrecision::SetUp()
   OSPLight distant = ospNewLight(renderer, "distant");
   ASSERT_TRUE(distant) << "Failed to create lights";
   ospSetf(distant, "intensity", 3.0f);
-  ospSet3f(distant, "direction", 1.0f, 1.0f, 1.0f);
+  ospSet3f(distant, "direction", 0.3f, 2.0f, 0.8f);
   ospSet3f(distant, "color", 1.0f, 0.5f, 0.5f);
   ospSet1f(distant, "angularDiameter", 1.0f);
   ospCommit(distant);

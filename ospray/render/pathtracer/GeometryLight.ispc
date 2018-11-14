@@ -67,7 +67,7 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
 
   // normalized light vector
   res.dir = dir / dist;
-  res.dist = dist;
+  res.dist = dist - calcEpsilon(as.pos, dist);
 
   // convert to pdf wrt. solid angle
   const float cosd = dot(as.normal, res.dir);

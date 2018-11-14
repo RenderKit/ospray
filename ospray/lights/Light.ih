@@ -24,7 +24,7 @@ struct Light_SampleRes
 {
   vec3f weight;  //!< radiance that arrives at the given point divided by pdf
   vec3f dir;     //!< direction towards the light source
-  float dist;    //!< largest valid t_far value for a shadow ray
+  float dist;    //!< largest valid t_far value for a shadow ray, including epsilon to avoid self-intersection
   float pdf;     //!< probability density that this sample was taken
 };
 

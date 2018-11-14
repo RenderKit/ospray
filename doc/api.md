@@ -1312,7 +1312,7 @@ white room would hardly be discernible, as can be seen in the figure
 below).
 
 ![Comparison of diffuse rooms with 100% reflecting white paint (left)
-and realistic 80% reflecting white paint (right), which leads to in
+and realistic 80% reflecting white paint (right), which leads to
 higher overall contrast. Note that exposure has been adjusted to achieve
 similar brightness levels.][imgDiffuseRooms]
 

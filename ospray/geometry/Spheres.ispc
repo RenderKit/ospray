@@ -39,7 +39,6 @@ struct Spheres {
   int        offset_colorID;
 
   float      radius;
-  float      epsilon;
   int        materialID;
 
   uint8      *color;
@@ -188,11 +187,12 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
 #endif
 
   bool hit = false;
-  if (t_in > ray->t0 && t_in < ray->t) {
+  // avoid short-circuiting &&
+  if (and(ray->t0 < t_in, t_in <= ray->t)) {
     hit = true;
     td *= -1.f;
     ray->t = t_in;
-  } else if (t_out > (ray->t0 + self->epsilon) && t_out < ray->t) {
+  } else if (and(ray->t0 < t_out, t_out <= ray->t)) {
     hit = true;
     ray->t = t_out;
   }
@@ -370,17 +370,6 @@ export void SpheresGeometry_set(void  *uniform _self
   self->offset_colorID    = offset_colorID;
 
   self->huge_mesh = huge_mesh;
-
-  // Why a log function?
-  self->epsilon = log(self->radius);
-  if (self->epsilon < 0.f)
-    self->epsilon = -1.f/self->epsilon;
-
-  // This can occur if the radius is < 1 in some cases, so make sure
-  // epsilon is not too big
-  if (self->epsilon > self->radius / 100.0) {
-    self->epsilon = self->radius / 100.0;
-  }
 
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom,numSpheres);

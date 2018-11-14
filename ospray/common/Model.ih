@@ -115,7 +115,7 @@ inline void postIntersect(uniform Model *uniform model,
   }
 
   dg.P = ray.org + ray.t * ray.dir;
-  dg.epsilon = getIntersectionError(dg.P, ray.t);
+  dg.epsilon = calcEpsilon(dg.P, ray.t);
 
   // a first hack for instancing: problem is that ospray assumes that
   // 'ray.geomid' specifies the respective sub-geometry of a model

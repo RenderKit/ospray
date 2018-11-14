@@ -68,3 +68,7 @@ struct DifferentialGeometry
   float epsilon; //!< adaptive epsilon */
 };
 
+inline float calcEpsilon(const vec3f& P, float t)
+{
+  return reduce_max(make_vec4f(abs(P), t)) * 0x1.fp-21;
+}

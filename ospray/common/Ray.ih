@@ -155,8 +155,3 @@ inline void rayTransform(Ray &ray,
     // -- Ng
     ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
-
-inline float getIntersectionError(const vec3f& P, float t)
-{
-  return max(t, reduce_max(abs(P))) * 0x1.fp-18;
-}

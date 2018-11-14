@@ -147,11 +147,9 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         // to set t to infinity, this ray is going to be sent off the back!
 
         // iw, 6-6-18: adding at least a ulp to the ray distance, to
-        // guarantee forward progress - apparentlyt he epsilon can at
+        // guarantee forward progress - apparently the epsilon can at
         // times be so small that it vanishes when adding,
-        const float ulpRayT = geometryRay.t * (1/(float)(1<<17));
-        geometryRay.t0
-          = geometryRay.t + max(renderer->super.epsilon,ulpRayT);
+        geometryRay.t0 = geometryRay.t * 1.000001f;
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;
@@ -180,8 +178,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
                                  void *uniform perFrameData,
                                  varying ScreenSample &sample)
 {
-  SciVisRenderer *uniform renderer
-    = (SciVisRenderer *uniform) _self;
+  SciVisRenderer *uniform renderer = (SciVisRenderer *uniform) _self;
 
   // Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);

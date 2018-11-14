@@ -37,12 +37,6 @@ inline float misHeuristic(float pdf1, float pdf2)
   return pdf1 > 1e17f ? 1.0f : p;
 }
 
-inline float getEpsilon(const uniform PathTracer* uniform self,
-                        const DifferentialGeometry& dg)
-{
-  return self->super.autoEpsilon ? dg.epsilon : self->super.epsilon;
-}
-
 // TODO use intersection filters
 vec3f transparentShadow(const uniform PathTracer* uniform self,
                         vec3f lightContrib,
@@ -87,7 +81,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
       if (m != NULL)
         m->selectNextMedium(m, dg, medium);
 
-    shadowRay.t0 = shadowRay.t + getEpsilon(self, dg);
+    shadowRay.t0 = shadowRay.t + dg.epsilon;
     shadowRay.t = tOriginal;
     shadowRay.primID = -1;
     shadowRay.geomID = -1;
@@ -119,7 +113,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   DifferentialGeometry lastDg;
   // P and N also used by light eval
   lastDg.P = ray.org;
-  lastDg.epsilon = getIntersectionError(ray.org, 0.f);
+  lastDg.epsilon = calcEpsilon(ray.org, 0.f);
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
@@ -149,11 +143,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       // light loop (will also handle MIS)
       if (shadowCatcherDist <= ray.t && shadowCatcherDist > ray.t0) {
         // "postIntersect" of shadowCatcher plane
-        dg.P = ray.org + shadowCatcherDist * ray.dir;
-        dg.epsilon = getIntersectionError(dg.P, shadowCatcherDist);
         dg.Ns = dg.Ng = make_vec3f(self->shadowCatcherPlane);
         if (dot(ray.dir, dg.Ng) >= 0.f)
           dg.Ns = dg.Ng = neg(dg.Ng);
+        const float eps = calcEpsilon(dg.P, shadowCatcherDist);
+        dg.P = ray.org + shadowCatcherDist * ray.dir + eps * dg.Ng;
 
         vec3f unshaded = make_vec3f(0.f); // illumination without occluders
         vec3f shaded = make_vec3f(0.f); // illumination including shadows
@@ -176,8 +170,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
           // test for shadows
           Ray shadowRay;
-          setRay(shadowRay, dg.P, ls.dir,
-              getEpsilon(self, dg), ls.dist - getEpsilon(self, dg), ray.time);
+          setRay(shadowRay, dg.P, ls.dir, 0.0f, ls.dist - eps, ray.time);
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
@@ -203,7 +196,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     const vec3f wo = neg(ray.dir);
 
-    float  maxLightDist;
+    float maxLightDist;
     // environment shading when nothing hit
     if (noHit(ray)) {
       maxLightDist = inf; // include envLights (i.e. the ones in infinity)
@@ -315,8 +308,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
         // test for shadows
         Ray shadowRay;
-        setRay(shadowRay, dg.P, ls.dir,
-               getEpsilon(self, dg), ls.dist - getEpsilon(self, dg), ray.time);
+        float eps = dg.epsilon;
+        if (dot(dg.Ng, ls.dir) < 0.f)
+          eps = -eps;
+        setRay(shadowRay, dg.P + eps * dg.Ng, ls.dir, 0.f, ls.dist - dg.epsilon, ray.time);
 
         const vec3f nextLw = Lw * fe.value;
 
@@ -369,7 +364,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // update currentMedium if we hit a medium interface
     // TODO: support nested dielectrics
+    float eps = dg.epsilon;
     if (fs.type & BSDF_TRANSMISSION) {
+      eps = -eps;
       foreach_unique(m in material) {
         if (m != NULL)
           m->selectNextMedium(m, dg, currentMedium);
@@ -385,7 +382,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);
-    setRay(ray, dg.P, fs.wi, getEpsilon(self, dg), inf, ray.time);
+    setRay(ray, dg.P + eps * dg.Ng, fs.wi, 0.f, inf, ray.time);
     depth++;
     sampleDim += numBounceSampleDims;
   } while (reduce_max(Lw) > self->super.minContribution);

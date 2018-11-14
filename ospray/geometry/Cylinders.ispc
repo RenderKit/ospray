@@ -39,7 +39,6 @@ struct Cylinders {
   int   offset_materialID;
   int   offset_colorID;
   int32 bytesPerCylinder;
-  float epsilon;
 
   uint8 *color;
   int    color_stride;
@@ -122,11 +121,12 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
   const float tmax = min(ray->t, max(tA, tB));
 
   bool hit = false;
-  if (t_in > tmin && t_in < tmax) {
+  // avoid short-circuiting &&
+  if (and(tmin < t_in, t_in <= tmax)) {
     hit = true;
     td *= -1.f;
     ray->t = t_in;
-  } else if (t_out > (tmin + self->epsilon * rsqrt(dot(d, d))) && t_out < tmax) {
+  } else if (and(tmin < t_out, t_out <= tmax)) {
     hit = true;
     ray->t = t_out;
   }
@@ -325,10 +325,6 @@ export void CylindersGeometry_set(void *uniform _self
   self->offset_radius     = offset_radius;
   self->offset_materialID = offset_materialID;
   self->offset_colorID    = offset_colorID;
-
-  self->epsilon = log(self->radius);
-  if (self->epsilon < 0.f)
-    self->epsilon = -1.f/self->epsilon;
 
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom,numCylinders);

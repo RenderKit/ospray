@@ -1,6 +1,14 @@
 Version History
 ---------------
 
+### Changes in v1.8.0:
+
+-   Automatic epsilon handling
+-   Fixed artifacts for scaled instances of spheres, cylinders and
+    streamlines
+-   Improvements to precision of intersections with cylinders and
+    streamlines
+
 ### Changes in v1.7.2:
 
 -   Fix issue in `mpi_offload` device where `ospRelease` would sometimes not
