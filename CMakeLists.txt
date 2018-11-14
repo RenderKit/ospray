@@ -50,7 +50,12 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 #   built by ospray. If a libraries is created using the
 #   macro 'ospray_create_library', the library will be added into
 #   this list automatically.
-SET(OSPRAY_TARGET_LIST "" CACHE INTERNAL "" FORCE)
+#
+# --> changed from: SET(OSPRAY_TARGET_LIST "" CACHE INTERNAL "" FORCE)
+DEFINE_PROPERTY(GLOBAL PROPERTY OSPRAY_TARGETS_EXPORT
+  BRIEF_DOCS "OSPRay export targets"
+  FULL_DOCS  "OSPRay targets that should be exported"
+)
 
 ##############################################################
 # CMake modules and macro files
@@ -108,6 +113,7 @@ ENDIF()
 ##############################################################
 # Configure find_package files
 ##############################################################
+
 # Note (Qi): I moved this command from ospray/CMakeLists.txt
 #   to here because we want to export all the targets built
 #   by ospray. In order to do that, we must have all the targets

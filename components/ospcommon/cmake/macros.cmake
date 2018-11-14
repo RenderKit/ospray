@@ -183,31 +183,20 @@ INCLUDE(GNUInstallDirs)
 MACRO(OSPRAY_INSTALL_LIBRARY name component export)
 
   IF ("${export}" STREQUAL "TRUE")
-    INSTALL(TARGETS ${name}
-      EXPORT ${name}-targets
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    SET(_export_args EXPORT ${name}-targets)
+  ENDIF ()
+
+  INSTALL(TARGETS ${name} ${_export_args}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
       NAMELINK_SKIP
-      # on Windows put the dlls into bin
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    # on Windows put the dlls into bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
       COMPONENT ${component}
-      # ... and the import lib into the devel package
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    # ... and the import lib into the devel package
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
-      )
-  ELSE()
-    INSTALL(TARGETS ${name}
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT ${component}
-      NAMELINK_SKIP
-      # on Windows put the dlls into bin
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT ${component}
-      # ... and the import lib into the devel package
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      COMPONENT devel
-      )
-  ENDIF()
+  )
 
   # Install the namelink in the devel component. This command also includes the
   # RUNTIME and ARCHIVE components a second time to prevent an "install TARGETS
@@ -226,19 +215,17 @@ MACRO(OSPRAY_INSTALL_LIBRARY name component export)
 
   IF ("${export}" STREQUAL "TRUE")
     # Export targets to install directory
-    # Note (Qi): this creates one file per target, thus we have to include all of them
-    #   when compiling ospray related applications
-    SET(OSPRAY_TARGET_LIST ${OSPRAY_TARGET_LIST} ${name} CACHE INTERNAL "" FORCE)
+    # Note (Qi): this creates one file per target, thus we have to include all
+    #   of them when compiling ospray related applications
+    # --> changed from:
+    # SET(OSPRAY_TARGET_LIST ${OSPRAY_TARGET_LIST} ${name}
+    #     CACHE INTERNAL "" FORCE)
+    SET_PROPERTY(GLOBAL APPEND PROPERTY OSPRAY_TARGETS_EXPORT ${name})
     install(EXPORT ${name}-targets
       FILE ospray-${name}-targets.cmake
       NAMESPACE ospray::
       DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}
-      )
-    # # Export targets to build directory. (Untested)
-    # # Note (Qi): this might not be necessary actually
-    # # Note (Qi): this creates one file osprayTargets.cmake that contains all the targets
-    # export(TARGETS ${name} NAMESPACE ospray::
-    #   APPEND FILE ${CMAKE_BINARY_DIR}/cmake/osprayTargets.cmake)
+    )
   ENDIF ()
 
 ENDMACRO()

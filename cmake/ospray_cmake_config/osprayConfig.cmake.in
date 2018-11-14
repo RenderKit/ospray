@@ -246,7 +246,7 @@ find_package_MESSAGE(ospray "Found OSPRay: ${OSPRAY_LIBRARY}"
 
 # Include modern cmake targets
 if (NOT CMAKE_VERSION VERSION_LESS "3.0")
-  foreach(f @OSPRAY_TARGET_LIST@)
+  foreach(f @_export_targets@)
     # include all the target files
     include("${OSPRAY_CMAKE_ROOT}/ospray-${f}-targets.cmake")
     # Note (Qi): this is actually not necessary, but this prevents compilation errors when someone
@@ -254,5 +254,4 @@ if (NOT CMAKE_VERSION VERSION_LESS "3.0")
     set_target_properties(ospray::${f}
       PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${OSPRAY_INCLUDE_DIRS}")
   endforeach()
-
 endif()
