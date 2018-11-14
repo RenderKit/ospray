@@ -228,6 +228,72 @@ void SingleObject::SetMaterial()
   material = CreateMaterial(materialType);
 }
 
+
+SpherePrecision::SpherePrecision()
+{
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  radius = std::get<1>(params);
+  dist = std::get<2>(params);
+  move_cam = std::get<3>(params);
+  testName += rendererType;
+}
+
+void SpherePrecision::SetUp()
+{
+  Base::SetUp();
+
+  float fov = std::min(150.f*std::tan(radius/std::abs(dist)), 120.0f);
+  float cent = move_cam ? 0.0f : dist+radius;
+
+  ospSet3f(camera, "pos", 0.f, 0.f, move_cam ? -dist - radius : 0.0f);
+  ospSet3f(camera, "dir", 0.f, 0.f, 1.f);
+  ospSet3f(camera, "up", 0.f, 1.f, 0.f);
+  ospSet1f(camera, "fovy", fov);
+
+  ospSet1i(renderer, "aoSamples", 8);
+  ospSet1i(renderer, "shadowsEnabled", 1);
+
+  ospSet1i(renderer, "spp", 1);
+  ospSet4f(renderer, "bgColor", 0.2f, 0.2f, 0.4f, 1.0f);
+  ospSet1i(renderer, "maxDepth", 2);
+
+  OSPGeometry sphere = ospNewGeometry("spheres");
+
+  float sph_center_r[]{-radius*0.1, 0.0f, cent, radius, radius*0.3, 0.0f, cent, radius*0.9f};
+  auto data = ospNewData(2, OSP_FLOAT4, sph_center_r);
+  ospCommit(data);
+  ospSetData(sphere, "spheres", data);
+  ospRelease(data);
+
+  OSPMaterial sphereMaterial = ospNewMaterial2(rendererType.c_str(), "default");
+  ospSet1f(sphereMaterial, "d", 1.0f);
+  ospCommit(sphereMaterial);
+  ospSetMaterial(sphere, sphereMaterial);
+  ospRelease(sphereMaterial);
+
+  ospSet1i(sphere, "offset_radius", 12);
+  ospCommit(sphere);
+
+  ospAddGeometry(world,sphere);
+
+  OSPLight distant = ospNewLight(renderer, "distant");
+  ASSERT_TRUE(distant) << "Failed to create lights";
+  ospSetf(distant, "intensity", 3.0f);
+  ospSet3f(distant, "direction", 1.0f, 1.0f, 1.0f);
+  ospSet3f(distant, "color", 1.0f, 0.5f, 0.5f);
+  ospSet1f(distant, "angularDiameter", 1.0f);
+  ospCommit(distant);
+  AddLight(distant);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient) << "Failed to create lights";
+  ospSetf(ambient, "intensity", 0.1f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
+
 Box::Box()
 {
   rendererType = "pathtracer";
