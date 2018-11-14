@@ -16,4 +16,5 @@
 
 if (NOT WIN32)
   ospray_create_application(ospRawToAmr raw2amr.cpp LINK ospray_common)
+  ospray_create_application(ospRawToVtu raw2vtu.cpp LINK ospray_common)
 endif()

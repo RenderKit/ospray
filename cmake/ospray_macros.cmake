@@ -56,7 +56,8 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
 endmacro()
 
 macro(ospray_determine_embree_isa_support)
-  if (EMBREE_MAX_ISA STREQUAL "NONE")
+  if (EMBREE_MAX_ISA STREQUAL "DEFAULT" OR
+      EMBREE_MAX_ISA STREQUAL "NONE")
     set(EMBREE_ISA_SUPPORTS_SSE2      ${EMBREE_ISA_SSE2})
     set(EMBREE_ISA_SUPPORTS_SSE4      ${EMBREE_ISA_SSE42})
     set(EMBREE_ISA_SUPPORTS_AVX       ${EMBREE_ISA_AVX})

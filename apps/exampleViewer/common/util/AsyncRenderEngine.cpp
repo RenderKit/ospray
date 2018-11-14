@@ -24,10 +24,9 @@ namespace ospray {
   AsyncRenderEngine::AsyncRenderEngine(std::shared_ptr<sg::Frame> root)
     : scenegraph(root)
   {
-    auto sgFB = scenegraph->child("frameBuffer").nodeAs<sg::FrameBuffer>();
     auto renderer = scenegraph->child("renderer").nodeAs<sg::Renderer>();
 
-    backgroundThread = make_unique<AsyncLoop>([&, sgFB, renderer](){
+    backgroundThread = make_unique<AsyncLoop>([&, renderer](){
       state = ExecState::RUNNING;
 
       if (commitDeviceOnAsyncLoopThread) {
@@ -45,8 +44,16 @@ namespace ospray {
         pickResult = scenegraph->pick(pickPos.ref());
 
       fps.start();
-      scenegraph->renderFrame();
+      auto sgFB = scenegraph->renderFrame();
       fps.stop();
+
+      if (frameCancelled.exchange(false))
+        return; // actually a continue
+
+      if (!sgFB) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        return; // actually a continue
+      }
 
       // NOTE(jda) - Spin here until the consumer has had the chance to update
       //             to the latest frame.
@@ -112,6 +119,11 @@ namespace ospray {
   ExecState AsyncRenderEngine::runningState() const
   {
     return state;
+  }
+
+  void AsyncRenderEngine::setFrameCancelled()
+  {
+    frameCancelled = true;
   }
 
   bool AsyncRenderEngine::hasNewFrame() const

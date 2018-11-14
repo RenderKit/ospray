@@ -21,6 +21,8 @@ ospray_create_library(ospray_imgui3d_sg
   imguiViewer.cpp
   transferFunction.cpp
   cameraManipulator.cpp
+
+  sg_imgui/ospray_sg_ui.cpp
 LINK
   ospray
   ospray_common

@@ -25,21 +25,20 @@ namespace ospray {
     {
     public:
 
-      Light(const std::string &renderer_type, const std::string &light_type);
+      Light(const std::string &light_type);
       Light(const Light &copy);
       Light(OSPLight existing);
     };
 
     // Inlined function definitions ///////////////////////////////////////////
 
-    inline Light::Light(const std::string &renderer_type,
-                        const std::string &light_type)
+    inline Light::Light(const std::string &light_type)
     {
-      auto c = ospNewLight2(renderer_type.c_str(), light_type.c_str());
+      auto c = ospNewLight3(light_type.c_str());
       if (c) {
         ospObject = c;
       } else {
-        throw std::runtime_error("Failed to create OSPLight (of type '"+renderer_type+"'::'"+light_type+"')!");
+        throw std::runtime_error("Failed to create OSPLight (of type '"+light_type+"')!");
       }
     }
 

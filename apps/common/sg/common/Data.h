@@ -38,7 +38,7 @@ namespace ospray {
 
       virtual ~DataBuffer() override
       {
-        if(data) ospRelease(data);
+        ospRelease(data);
       }
 
       virtual std::string toString() const override
@@ -54,10 +54,8 @@ namespace ospray {
 
       void markAsModified() override
       {
-        if (data) {
-          ospRelease(data);
-          data = nullptr;
-        }
+        ospRelease(data);
+        data = nullptr;
 
         Node::markAsModified();
       }
@@ -217,7 +215,7 @@ namespace ospray {
         const auto *in_first = static_cast<const T*>(data);
         const auto *in_last  = in_first + num;
         std::copy(in_first, in_last, std::back_inserter(node->v));
-        return node;
+        return std::move(node);
       } else {
         // Use the buffer directly (non-owning)
         return std::make_shared<ARRAY_NODE_TYPE>((T*)data, num, false);

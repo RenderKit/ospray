@@ -14,5 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(gensv generateSciVis.cpp raw_reader.cpp)
+ospray_create_library(ospray_gensv
+  generateSciVis.cpp
+  raw_reader.cpp
+  llnlrm_reader.cpp
+LINK
+  ospray
+  ospray_common
+  ospray_mpi_common
+)
 

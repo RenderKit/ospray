@@ -21,49 +21,53 @@
 #include "math/random.ih"
 #include "math/sampling.ih"
 
+struct DistributedRegion
+{
+  uniform box3f bounds;
+  uniform int id;
+};
+
 struct DistributedRaycastRenderer
 {
   uniform Renderer super;
-  // TODO: For now it's sufficient just to know which regions
-  // we own and their bounds, and which regions 'others' own and
-  // their bounds. With that info we can properly setup the information
-  // about the total # of tiles to expect for each image tile.
-  uniform box3f *uniform myRegions;
-  uniform int numMyRegions;
-  uniform box3f *uniform othersRegions;
-  uniform int numOthersRegions;
-  uniform box3f *uniform ghostRegions;
+  // The list of all regions in the distributed scene, sorted by ID
+  uniform DistributedRegion *uniform regions;
+  uniform int numRegions;
   uniform int aoSamples;
+  uniform Model *uniform *uniform myRegions;
+  uniform Model *uniform *uniform ghostRegions;
 };
 
 struct RegionInfo
 {
   uniform int currentRegion;
+  uniform bool computeVisibility;
   uniform bool *uniform regionVisible;
 };
+
+uniform bool isempty(uniform box3f &box) {
+  return box.upper.x < box.lower.x
+    || box.upper.y < box.lower.y
+    || box.upper.z < box.lower.z;
+}
 
 void DistributedRaycastRenderer_testRegions(uniform DistributedRaycastRenderer *uniform self,
                                             uniform RegionInfo *uniform regionInfo,
                                             const varying ScreenSample &sample)
 {
-  for (uniform int i = 0; i < self->numMyRegions; ++i) {
-    float t0, t1;
-    intersectBox(sample.ray, self->myRegions[i], t0, t1);
-    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
-      regionInfo->regionVisible[i] = true;
-    }
-  }
-  for (uniform int i = 0; i < self->numOthersRegions; ++i) {
-    float t0, t1;
-    intersectBox(sample.ray, self->othersRegions[i], t0, t1);
-    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
-      regionInfo->regionVisible[self->numMyRegions + i] = true;
+  for (uniform int i = 0; i < self->numRegions; ++i) {
+    if (!regionInfo->regionVisible[i] && !isempty(self->regions[i].bounds)) {
+      float t0, t1;
+      intersectBox(sample.ray, self->regions[i].bounds, t0, t1);
+      if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
+        regionInfo->regionVisible[i] = true;
+      }
     }
   }
 }
 
 // TODO: The main scivis renderer does this in a really strange way
-Volume* DRR_intersectVolumes(uniform DistributedRaycastRenderer *uniform self,
+Volume* DRR_intersectVolumes(uniform Model *uniform model,
                              varying Ray &ray,
                              const float regionEnter,
                              const float regionExit,
@@ -73,8 +77,8 @@ Volume* DRR_intersectVolumes(uniform DistributedRaycastRenderer *uniform self,
   Ray volumeRay = ray;
   vec2f interval = make_vec2f(regionExit);
 
-  for (uniform int32 i = 0; i < self->super.model->volumeCount; ++i) {
-    Volume *uniform v = self->super.model->volumes[i];
+  for (uniform int32 i = 0; i < model->volumeCount; ++i) {
+    Volume *uniform v = model->volumes[i];
     float t0, t1;
     intersectBox(volumeRay, v->boundingBox, t0, t1);
 
@@ -151,10 +155,11 @@ vec4f DRR_integrateVolumeSegment(uniform DistributedRaycastRenderer *uniform sel
 }
 
 float DRR_computeAmbientOcclusion(uniform DistributedRaycastRenderer *uniform self,
+                                  uniform Model *uniform model,
+                                  uniform Model *uniform ghostModel,
                                   const varying vec3i &sampleID,
                                   const varying DifferentialGeometry &dg,
-                                  const varying vec3f &shadingNormal,
-                                  const uniform box3f *uniform ghostRegion)
+                                  const varying vec3f &shadingNormal)
 {
   const int accumID = sampleID.z;
   const int ix = sampleID.x;
@@ -183,12 +188,10 @@ float DRR_computeAmbientOcclusion(uniform DistributedRaycastRenderer *uniform se
     Ray aoRay;
     setRay(aoRay, dg.P + (self->super.epsilon * shadingNormal), aoDir,
            self->super.epsilon, 1e20f);
-    if (ghostRegion) {
-      intersectBox(aoRay, *ghostRegion, aoRay.t0, aoRay.t);
-    }
-    // TODO: Clip with the corresponding ghostRegion, or region if no ghost
-    // regions provided
-    if (isOccluded(self->super.model, aoRay)) {
+
+    if (isOccluded(model, aoRay)
+        || (ghostModel && isOccluded(ghostModel, aoRay)))
+    {
       occlusion += 1.f;
     }
   }
@@ -204,8 +207,19 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     (uniform DistributedRaycastRenderer *uniform)_self;
 
   uniform RegionInfo *uniform regionInfo = (uniform RegionInfo *uniform)perFrameData;
-  if (self->myRegions && regionInfo && regionInfo->currentRegion == 0) {
+
+  // TODO WILL: It makes no sense that this fixes the visibility test issue.
+  sample.ray.t = infinity;
+  sample.ray.t0 = 1e-6f;
+
+  // TODO: This is basically a hack to do a tile-region visibility pre-pass
+  // without needing to modify much code. Really we'd want to do a separate
+  // pre-pass of some kind where we either project the regions to the screen,
+  // or to handle jittering the rays test rays against them until we
+  // find an intersection
+  if (self->regions && regionInfo && regionInfo->computeVisibility) {
     DistributedRaycastRenderer_testRegions(self, regionInfo, sample);
+    return;
   }
 
   // Ray offset for this sample, as a fraction of the nominal step size.
@@ -218,26 +232,35 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     rayOffset -= 1.f;
   }
 
+  uniform Model *uniform model = NULL;
+  uniform Model *uniform ghostModel = NULL;
+  if (regionInfo) {
+    model = self->myRegions[regionInfo->currentRegion];
+    // TODO: Maybe allow people to set just one ghost region,
+    // instead of requiring they always have equal number of regions
+    // and ghost regions. May make some use cases easier, and reduce memory
+    // overhead for those cases.
+    if (self->ghostRegions) {
+      ghostModel = self->ghostRegions[regionInfo->currentRegion];
+    }
+  } else {
+    model = self->super.model;
+  }
+
   // Intersect with current region for this node's local data
-  if (self->myRegions && regionInfo) {
-    intersectBox(sample.ray, self->myRegions[regionInfo->currentRegion],
-                 sample.ray.t0, sample.ray.t);
+  if (self->regions && regionInfo) {
+    intersectBox(sample.ray, model->bounds, sample.ray.t0, sample.ray.t);
   }
   const float regionEnter = sample.ray.t0;
   const float regionExit = sample.ray.t;
 
-  uniform box3f *uniform ghostRegion = NULL;
-  if (self->ghostRegions && regionInfo) {
-    ghostRegion = &self->ghostRegions[regionInfo->currentRegion];
-  }
-
   Ray volRay = sample.ray;
   Ray geomRay = sample.ray;
-  Volume *volume = DRR_intersectVolumes(self, volRay, regionEnter,
+  Volume *volume = DRR_intersectVolumes(model, volRay, regionEnter,
                                         regionExit, rayOffset);
 
-  traceRay(self->super.model, geomRay);
-  sample.z = min(geomRay.t, volRay.t);
+  traceRay(model, geomRay);
+  sample.z = min(geomRay.t, volRay.t0);
 
   // Loop through the hits, we should integrate the volume to the first
   // geometry hit point, if the hit of the geometry is inside the volume
@@ -250,12 +273,12 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     vec4f currentContribution = make_vec4f(0);
     // Shade the current volume interval if it's before the next geometry
     if (firstHit == volRay.t0) {
-      const uniform float volumeEpsilon = 0.0001;
+      const uniform float volumeEpsilon = 0.001;
       // See if we exited the current volume
       if (volRay.t0 >= volRay.t) {
         volRay.t0 = volRay.t + volumeEpsilon;
         volRay.t = regionExit;
-        Volume *volume = DRR_intersectVolumes(self, volRay, regionEnter,
+        Volume *volume = DRR_intersectVolumes(model, volRay, regionEnter,
                                               regionExit, rayOffset);
       } else {
         if (any(volume == NULL)) {
@@ -271,8 +294,8 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       // Shade the current geometry hit
       DifferentialGeometry dg;
       dg.color = make_vec4f(0.f);
-      postIntersect(self->super.model, dg, geomRay,
-          DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
+      postIntersect(model, dg, geomRay,
+                    DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
       const vec3f matColor = make_vec3f(dg.color);
       const vec3f specColor = make_vec3f(0.6);
       const vec3f viewDir = normalize(negate(geomRay.dir));
@@ -287,19 +310,23 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       }
       float occlusion = 1.0;
       if (self->aoSamples > 0) {
-        occlusion = DRR_computeAmbientOcclusion(self, sample.sampleID,
-                                                dg, dgNormal, ghostRegion);
+        occlusion = DRR_computeAmbientOcclusion(self,
+                                                model,
+                                                ghostModel,
+                                                sample.sampleID,
+                                                dg,
+                                                dgNormal);
       }
       currentContribution = make_vec4f(geomColor * occlusion, dg.color.w);
 
+      geomRay.t0 = geomRay.t + self->super.epsilon;
+      geomRay.t = regionExit;
+      geomRay.primID = -1;
+      geomRay.geomID = -1;
+      geomRay.instID = -1;
       // Find the next geometry hit by the ray, if it wasn't opaque
       if (dg.color.w < 0.99) {
-        geomRay.t0 = geomRay.t + self->super.epsilon;
-        geomRay.t = regionExit;
-        geomRay.primID = -1;
-        geomRay.geomID = -1;
-        geomRay.instID = -1;
-        traceRay(self->super.model, geomRay);
+        traceRay(model, geomRay);
       }
     }
     color = color + (1.0 - color.w) * currentContribution;
@@ -316,31 +343,33 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
 
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
-  self->myRegions = NULL;
-  self->numMyRegions = 0;
-  self->othersRegions = NULL;
-  self->numOthersRegions = 0;
+  self->regions = NULL;
+  self->numRegions = 0;
   self->aoSamples = 0;
   self->ghostRegions = NULL;
 
   return self;
 }
 
-export void DistributedRaycastRenderer_setRegions(void *uniform _self,
-                                                    uniform box3f *uniform myRegions,
-                                                    uniform int numMyRegions,
-                                                    uniform box3f *uniform othersRegions,
-                                                    uniform int numOthersRegions,
-                                                    uniform int aoSamples,
-                                                    uniform box3f *uniform ghostRegions)
+export void DistributedRaycastRenderer_set(void *uniform _self,
+                                           void *uniform regions,
+                                           const uniform int uniform numRegions,
+                                           const uniform int uniform aoSamples,
+                                           void *uniform *uniform myRegions,
+                                           void *uniform *uniform ghostRegions,
+                                           const uniform float epsilon)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
-  self->myRegions = myRegions;
-  self->numMyRegions = numMyRegions;
-  self->othersRegions = othersRegions;
-  self->numOthersRegions = numOthersRegions;
+  // Correct the params the parent probably got wrong if we took
+  // a list of OSPModels
+  self->super.model = NULL;
+  self->super.epsilon = epsilon;
+
+  self->regions = (uniform DistributedRegion *uniform)regions;
+  self->numRegions = numRegions;
   self->aoSamples = aoSamples;
-  self->ghostRegions = ghostRegions;
+  self->myRegions = (uniform Model *uniform *uniform)myRegions;
+  self->ghostRegions = (uniform Model *uniform *uniform)ghostRegions;
 }
 

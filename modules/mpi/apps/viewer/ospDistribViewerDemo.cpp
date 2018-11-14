@@ -37,6 +37,7 @@
 #include "common/imgui/imgui.h"
 #include "gensv/generateSciVis.h"
 #include "arcball.h"
+#include "gensv/llnlrm_reader.h"
 
 /* This app demonstrates how to write an distributed scivis style
  * interactive renderer using the distributed MPI device. Note that because
@@ -82,6 +83,21 @@ size_t nlocalBricks = 1;
 float sphereRadius = 0.005;
 bool transparentSpheres = false;
 int aoSamples = 0;
+int nBricks = -1;
+int bricksPerRank = 1;
+bool llnlrm = false;
+bool fbnone = false;
+const int IMG_SIZE = 512;
+
+std::vector<std::string> osp_bricks;
+
+struct RIVLFile {
+  std::string file;
+  size_t ofsVerts, numVerts;
+  size_t ofsPrims, numPrims;
+};
+
+RIVLFile rivl;
 
 // Struct for bcasting out the camera change info and general app state
 struct AppState {
@@ -90,7 +106,7 @@ struct AppState {
   vec2i fbSize;
   bool cameraChanged, quit, fbSizeChanged, tfcnChanged;
 
-  AppState() : fbSize(1024), cameraChanged(false), quit(false),
+  AppState() : fbSize(IMG_SIZE), cameraChanged(false), quit(false),
     fbSizeChanged(false)
   {}
 };
@@ -116,6 +132,16 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       case GLFW_KEY_ESCAPE:
         glfwSetWindowShouldClose(window, true);
         break;
+      case GLFW_KEY_P: {
+          const vec3f eye = state->camera.eyePos();
+          const vec3f center = state->camera.center();
+          const vec3f up = state->camera.upDir();
+          std::cout << "-vp " << eye.x << " " << eye.y << " " << eye.z
+            << "\n-vu " << up.x << " " << " " << up.y << " " << up.z
+            << "\n-vi " << center.x << " " << center.y << " " << center.z
+            << "\n";
+        }
+        break;
       default:
         break;
     }
@@ -132,18 +158,20 @@ void cursorPosCallback(GLFWwindow *window, double x, double y) {
   if (state->prevMouse != vec2f(-1)) {
     const bool leftDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     const bool rightDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    const bool middleDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     const vec2f prev = state->prevMouse;
+    state->cameraChanged = leftDown || rightDown || middleDown;
 
     if (leftDown) {
       const vec2f mouseFrom(clamp(prev.x * 2.f / state->app.fbSize.x - 1.f,  -1.f, 1.f),
-                            clamp(1.f - 2.f * prev.y / state->app.fbSize.y, -1.f, 1.f));
+                            clamp(prev.y * 2.f / state->app.fbSize.y - 1.f,  -1.f, 1.f));
       const vec2f mouseTo(clamp(mouse.x * 2.f / state->app.fbSize.x - 1.f,  -1.f, 1.f),
-                          clamp(1.f - 2.f * mouse.y / state->app.fbSize.y, -1.f, 1.f));
+                          clamp(mouse.y * 2.f / state->app.fbSize.y - 1.f,  -1.f, 1.f));
       state->camera.rotate(mouseFrom, mouseTo);
-      state->cameraChanged = true;
     } else if (rightDown) {
       state->camera.zoom(mouse.y - prev.y);
-      state->cameraChanged = true;
+    } else if (middleDown) {
+      state->camera.pan(vec2f(mouse.x - prev.x, prev.y - mouse.y));
     }
   }
   state->prevMouse = mouse;
@@ -191,9 +219,28 @@ void parseArgs(int argc, char **argv)
       transparentSpheres = true;
     } else if (arg == "-ao") {
       aoSamples = std::stoi(argv[++i]);
+    } else if (arg == "-nbricks") {
+      nBricks = std::stoi(argv[++i]);
+    } else if (arg == "-bpr") {
+      bricksPerRank = std::stoi(argv[++i]);
+    } else if (arg == "-bob") {
+      llnlrm = true;
+    } else if (arg == "-rivl") {
+      rivl.file = argv[++i];
+      rivl.ofsVerts = std::stoull(argv[++i]);
+      rivl.numVerts = std::stoull(argv[++i]);
+      rivl.ofsPrims = std::stoull(argv[++i]);
+      rivl.numPrims = std::stoull(argv[++i]);
+    } else if (arg == "-osp-brick") {
+      ++i;
+      for (; i < argc && argv[i][0] != '-'; ++i) {
+        osp_bricks.push_back(argv[i]);
+      }
+    } else if (arg == "-fb-none") {
+      fbnone = true;
     }
   }
-  if (!volumeFile.empty()) {
+  if (!volumeFile.empty() && !llnlrm) {
     if (dtype.empty()) {
       std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
       std::exit(1);
@@ -218,35 +265,61 @@ void runApp()
   ospLoadModule("mpi");
   Device device("mpi_distributed");
   device.set("masterRank", 0);
-  ospDeviceSetStatusFunc(device.handle(), [](const char *msg) { std::cout << msg << "\n"; });
+  ospDeviceSetStatusFunc(device.handle(),
+                         [](const char *msg) {
+                           std::cout << "OSP Status: " << msg << "\n";
+                         });
+  ospDeviceSetErrorFunc(device.handle(),
+                        [](OSPError err, const char *msg) {
+                          std::cout << "OSP Error: " <<  msg << "\n";
+                        });
   device.commit();
   device.setCurrent();
 
   const int rank = mpicommon::world.rank;
   const int worldSize = mpicommon::world.size;
+  std::cout << "Rank " << rank << "/" << worldSize << "\n";
 
   AppState app;
-  Model model;
   containers::AlignedVector<gensv::LoadedVolume> volumes;
+  containers::AlignedVector<gensv::SharedVolumeBrick> bricks;
   box3f worldBounds;
-  if (!volumeFile.empty()) {
-    volumes.push_back(gensv::loadVolume(volumeFile, dimensions, dtype,
-                                        valueRange));
+  if (!osp_bricks.empty()) {
+    if (osp_bricks.size() != worldSize) {
+      throw std::runtime_error("OSP Brick count must match number of ranks");
+    }
+    const std::string my_brick = osp_bricks[rank];
+    bricks.push_back(gensv::loadOSPBrick(my_brick, valueRange));
 
-    // Translate the volume to center it
-    const vec3f upper = vec3f(dimensions);
-    const vec3i halfLength = dimensions / 2;
-    worldBounds = box3f(vec3f(-halfLength), vec3f(halfLength));
-    volumes[0].bounds.lower -= vec3f(halfLength);
-    volumes[0].bounds.upper -= vec3f(halfLength);
-    volumes[0].volume.set("gridOrigin", volumes[0].ghostGridOrigin - vec3f(halfLength));
+    MPI_Allreduce(&bricks[0].region.bounds.lower, &worldBounds.lower, 3,
+                  MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(&bricks[0].region.bounds.upper, &worldBounds.upper, 3,
+                  MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+
+    std::cout << "World bounds: " << worldBounds << "\n";
+
+  } else if (!volumeFile.empty()) {
+    if (nBricks == -1) {
+      nBricks = worldSize;
+    }
+    if (!llnlrm) {
+      bricks = gensv::loadBrickedVolume(volumeFile, dimensions,
+                                        dtype, valueRange,
+                                        nBricks, bricksPerRank);
+    } else {
+      bricks = gensv::loadRMBricks(volumeFile, bricksPerRank);
+      dimensions = gensv::LLNLRMReader::dimensions();
+    }
+
+    worldBounds = box3f(vec3f(0), vec3f(dimensions));
 
     // Pick a nice sphere radius for a consisten voxel size to
     // sphere size ratio
     sphereRadius *= dimensions.x;
   } else {
     volumes = gensv::makeVolumes(rank * nlocalBricks, nlocalBricks,
-                                 worldSize * nlocalBricks);
+        worldSize * nlocalBricks);
+
     // Translate the volume to center it
     worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
     for (auto &v : volumes) {
@@ -256,29 +329,87 @@ void runApp()
     }
   }
 
-  containers::AlignedVector<box3f> regions, ghostRegions;
-  for (auto &v : volumes) {
+  containers::AlignedVector<Model> models, ghostModels;
+  // Generated volumes
+  for (size_t i = 0; i < volumes.size(); ++i) {
+    auto &v = volumes[i];
     v.volume.commit();
-    model.addVolume(v.volume);
+    Model m;
+    m.addVolume(v.volume);
+    // All ranks generate the same sphere data to mimic rendering a distributed
+    // shared dataset
+    if (nSpheres != 0) {
+      auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
+                                        sphereRadius, transparentSpheres);
+      m.addGeometry(spheres);
+      // If we're setting spheres we need to enforce an explicit region bound
+      m.set("region.lower", v.bounds.lower);
+      m.set("region.upper", v.bounds.upper);
 
-    ghostRegions.push_back(worldBounds);
-    regions.push_back(v.bounds);
+      Model g;
+      g.addGeometry(spheres);
+      ghostModels.push_back(g);
+    }
+    m.set("id", int(rank * nlocalBricks + i));
+    models.push_back(m);
   }
-  // All ranks generate the same sphere data to mimic rendering a distributed
-  // shared dataset
-  if (nSpheres != 0) {
-    auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
-                                      sphereRadius, transparentSpheres);
-    model.addGeometry(spheres);
+
+  // Loaded bricks
+  for (size_t i = 0; i < bricks.size(); ++i) {
+    auto &v = bricks[i].vol;
+    v.volume.commit();
+    Model m;
+    m.addVolume(v.volume);
+    // All ranks generate the same sphere data to mimic rendering a distributed
+    // shared dataset
+    if (nSpheres != 0) {
+      auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
+                                        sphereRadius, transparentSpheres);
+      m.addGeometry(spheres);
+      // If we're setting spheres we need to enforce an explicit region bound
+      m.set("region.lower", v.bounds.lower);
+      m.set("region.upper", v.bounds.upper);
+
+      Model g;
+      g.addGeometry(spheres);
+      ghostModels.push_back(g);
+    }
+    m.set("id", bricks[i].region.id);
+    models.push_back(m);
   }
 
-  Arcball arcballCamera(worldBounds);
+  /*
+  if (!rivl.file.empty()) {
+    std::cout << "loading rivl " << rivl.file << "\n";
+    FILE *fp = fopen(rivl.file.c_str(), "rb");
+    std::vector<vec3f> verts(rivl.numVerts, vec3f(0));
+    std::vector<vec4i> prims(rivl.numPrims, vec4i(0));
+    if (fread(verts.data(), sizeof(vec3f), verts.size(), fp) != rivl.numVerts) {
+      throw std::runtime_error("error reading rivl verts");
+    }
+    if (fread(prims.data(), sizeof(vec4i), prims.size(), fp) != rivl.numPrims) {
+      throw std::runtime_error("error reading rivl prims");
+      
+    }
+    Data vertData(verts.size(), OSP_FLOAT3, verts.data());
+    Data primData(prims.size(), OSP_INT4, prims.data());
+    vertData.commit();
+    primData.commit();
+    Geometry mesh("triangles");
+    mesh.set("vertex", vertData);
+    mesh.set("index", primData);
+    mesh.commit();
+    model.addGeometry(mesh);
+  }
+  */
+  for (auto &m : models) {
+    m.commit();
+  }
+  for (auto &m : ghostModels) {
+    m.commit();
+  }
 
-  ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3, regions.data());
-  ospray::cpp::Data ghostRegionData(ghostRegions.size() * 2, OSP_FLOAT3, ghostRegions.data());
-  model.set("regions", regionData);
-  model.set("ghostRegions", ghostRegionData);
-  model.commit();
+  Arcball arcballCamera(worldBounds, vec2i(IMG_SIZE, IMG_SIZE));
 
   Camera camera("perspective");
   camera.set("pos", arcballCamera.eyePos());
@@ -288,8 +419,19 @@ void runApp()
   camera.commit();
 
   Renderer renderer("mpi_raycast");
-  // Should just do 1 set here, which is read?
-  renderer.set("model", model);
+
+  std::vector<OSPModel> modelHandles;
+  std::transform(models.begin(), models.end(), std::back_inserter(modelHandles),
+                 [](const Model &m) { return m.handle(); });
+  Data modelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
+
+  std::vector<OSPModel> ghostModelHandles;
+  std::transform(ghostModels.begin(), ghostModels.end(), std::back_inserter(ghostModelHandles),
+                 [](const Model &m) { return m.handle(); });
+  Data ghostModelsData(ghostModelHandles.size(), OSP_OBJECT, ghostModelHandles.data());
+
+  renderer.set("model", modelsData);
+  renderer.set("ghostModel", ghostModelsData);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));
   renderer.set("varianceThreshold", varianceThreshold);
@@ -297,8 +439,20 @@ void runApp()
   renderer.commit();
   assert(renderer);
 
-  FrameBuffer fb(app.fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
-  fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+  const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE;
+  OSPFrameBufferFormat fbColorFormat = OSP_FB_SRGBA;
+  if (fbnone) {
+    fbColorFormat = OSP_FB_NONE;
+  }
+  FrameBuffer fb(app.fbSize, fbColorFormat, fbFlags);
+  if (fbnone) {
+    PixelOp pixelOp("debug");
+    pixelOp.set("prefix", "distrib-viewer");
+    pixelOp.commit();
+    fb.setPixelOp(pixelOp);
+  }
+  fb.commit();
+  fb.clear(fbFlags);
 
   mpicommon::world.barrier();
 
@@ -323,6 +477,7 @@ void runApp()
     windowState = std::make_shared<WindowState>(app, arcballCamera);
     transferFcn = std::make_shared<ospray::sg::TransferFunction>();
     tfnWidget = std::make_shared<ospray::imgui3D::TransferFunction>(transferFcn);
+    tfnWidget->loadColorMapPresets();
     if (!transferFcnFile.str().empty()) {
       tfnWidget->load(transferFcnFile);
     }
@@ -342,26 +497,38 @@ void runApp()
   containers::AlignedVector<vec3f> tfcnColors;
   containers::AlignedVector<float> tfcnAlphas;
   while (!app.quit) {
+    using namespace std::chrono;
+
     if (app.cameraChanged) {
       camera.set("pos", app.v[0]);
       camera.set("dir", app.v[1]);
       camera.set("up", app.v[2]);
       camera.commit();
 
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+      fb.clear(fbFlags);
       app.cameraChanged = false;
     }
+    auto startFrame = high_resolution_clock::now();
     renderer.renderFrame(fb, OSP_FB_COLOR);
+    auto endFrame = high_resolution_clock::now();
+
+    const int renderTime = duration_cast<milliseconds>(endFrame - startFrame).count();
 
     if (rank == 0) {
       glClear(GL_COLOR_BUFFER_BIT);
-      uint32_t *img = (uint32_t*)fb.map(OSP_FB_COLOR);
-      glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
-      fb.unmap(img);
+      if (!fbnone) {
+        uint32_t *img = (uint32_t*)fb.map(OSP_FB_COLOR);
+        glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
+        fb.unmap(img);
+      }
 
       const auto tfcnTimeStamp = transferFcn->childrenLastModified();
 
       ImGui_ImplGlfwGL3_NewFrame();
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
+      ImGui::Text("OSPRay render time %d ms/frame", renderTime);
       tfnWidget->drawUi();
       ImGui::Render();
 
@@ -375,11 +542,12 @@ void runApp()
       tfnWidget->render();
 
       if (transferFcn->childrenLastModified() != tfcnTimeStamp) {
+        transferFcn->child("valueRange").setValue(valueRange);
+        transferFcn->updateChildDataValues();
         tfcnColors = transferFcn->child("colors").nodeAs<ospray::sg::DataVector3f>()->v;
-        const auto &ospAlpha = transferFcn->child("alpha").nodeAs<ospray::sg::DataVector2f>()->v;
+        const auto &ospAlpha = transferFcn->child("opacities").nodeAs<ospray::sg::DataVector1f>()->v;
         tfcnAlphas.clear();
-        std::transform(ospAlpha.begin(), ospAlpha.end(), std::back_inserter(tfcnAlphas),
-            [](const vec2f &a) { return a.y; });
+        std::copy(ospAlpha.begin(), ospAlpha.end(), std::back_inserter(tfcnAlphas));
         app.tfcnChanged = true;
       }
 
@@ -398,11 +566,12 @@ void runApp()
     MPI_Bcast(&app, sizeof(AppState), MPI_BYTE, 0, MPI_COMM_WORLD);
 
     if (app.fbSizeChanged) {
-      fb = FrameBuffer(app.fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+      fb = FrameBuffer(app.fbSize, OSP_FB_SRGBA, fbFlags);
+      fb.clear(fbFlags);
       camera.set("aspect", static_cast<float>(app.fbSize.x) / app.fbSize.y);
       camera.commit();
 
+      arcballCamera.updateScreen(vec2i(app.fbSize.x, app.fbSize.y));
       app.fbSizeChanged = false;
       if (rank == 0) {
         glViewport(0, 0, app.fbSize.x, app.fbSize.y);
@@ -435,8 +604,13 @@ void runApp()
         v.tfcn.set("opacities", alphaData);
         v.tfcn.commit();
       }
+      for (auto &b : bricks) {
+        b.vol.tfcn.set("colors", colorData);
+        b.vol.tfcn.set("opacities", alphaData);
+        b.vol.tfcn.commit();
+      }
 
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+      fb.clear(fbFlags);
       app.tfcnChanged = false;
     }
   }

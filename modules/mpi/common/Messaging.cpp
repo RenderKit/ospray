@@ -72,7 +72,8 @@ namespace ospray {
         if (obj != objectListeners.end()) {
           obj->second->incoming(message);
         } else {
-          postStatusMsg() << "WARNING: No destination for incoming message!";
+          postStatusMsg() << "WARNING: No destination for incoming message "
+            << "with tag " << message->tag << ", size = " << message->size;
         }
       }
 

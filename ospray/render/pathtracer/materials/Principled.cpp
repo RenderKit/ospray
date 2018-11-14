@@ -51,6 +51,7 @@ namespace ospray {
         MaterialParam1f anisotropy = getMaterialParam1f("anisotropy", 0.f);
         MaterialParam1f rotation = getMaterialParam1f("rotation", 0.f);
         MaterialParam1f normal = getMaterialParam1f("normal", 1.f);
+        MaterialParam1f baseNormal = getMaterialParam1f("baseNormal", 1.f);
 
         MaterialParam1f coat = getMaterialParam1f("coat", 0.f);
         MaterialParam1f coatIor = getMaterialParam1f("coatIor", 1.5f);
@@ -61,6 +62,7 @@ namespace ospray {
 
         MaterialParam1f sheen = getMaterialParam1f("sheen", 0.f);
         MaterialParam3f sheenColor = getMaterialParam3f("sheenColor", vec3f(1.f));
+        MaterialParam1f sheenTint = getMaterialParam1f("sheenTint", 0.f);
         MaterialParam1f sheenRoughness = getMaterialParam1f("sheenRoughness", 0.2f);
 
         MaterialParam1f opacity = getMaterialParam1f("opacity", 1.f);
@@ -87,6 +89,7 @@ namespace ospray {
           anisotropy.factor, anisotropy.map ? anisotropy.map->getIE() : nullptr, (const ispc::AffineSpace2f&)anisotropy.xform,
           rotation.factor, rotation.map ? rotation.map->getIE() : nullptr, (const ispc::AffineSpace2f&)rotation.xform,
           normal.factor, normal.map ? normal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)normal.xform, (const ispc::LinearSpace2f&)normal.rot,
+          baseNormal.factor, baseNormal.map ? baseNormal.map->getIE() : nullptr, (const ispc::AffineSpace2f&)baseNormal.xform, (const ispc::LinearSpace2f&)baseNormal.rot,
 
           coat.factor, coat.map ? coat.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coat.xform,
           coatIor.factor, coatIor.map ? coatIor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)coatIor.xform,
@@ -97,6 +100,7 @@ namespace ospray {
 
           sheen.factor, sheen.map ? sheen.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheen.xform,
           (const ispc::vec3f&)sheenColor.factor, sheenColor.map ? sheenColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenColor.xform,
+          sheenTint.factor, sheenTint.map ? sheenTint.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenTint.xform,
           sheenRoughness.factor, sheenRoughness.map ? sheenRoughness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)sheenRoughness.xform,
 
           opacity.factor, opacity.map ? opacity.map->getIE() : nullptr, (const ispc::AffineSpace2f&)opacity.xform,
@@ -104,13 +108,14 @@ namespace ospray {
           thin,
           backlight.factor, backlight.map ? backlight.map->getIE() : nullptr, (const ispc::AffineSpace2f&)backlight.xform,
           thickness.factor, thickness.map ? thickness.map->getIE() : nullptr, (const ispc::AffineSpace2f&)thickness.xform,
-          
+
           outsideIor,
           (const ispc::vec3f&)outsideTransmissionColor,
           outsideTransmissionDepth);
       }
     };
 
-    OSP_REGISTER_MATERIAL(Principled,PathTracer_Principled);
+    OSP_REGISTER_MATERIAL(pathtracer, Principled, Principled);
+    OSP_REGISTER_MATERIAL(pt, Principled, Principled);
   }
 }

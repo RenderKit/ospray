@@ -26,7 +26,6 @@
 #include "ospray/version.h"
 
 #include <stdio.h>
-#include <GLFW/glfw3.h>
 
 #ifdef _WIN32
 #  define snprintf(buf,len, format,...) _snprintf_s(buf, len,len, format, __VA_ARGS__)
@@ -44,31 +43,16 @@
 #include <stdexcept>
 #include <string>
 
-extern "C" void glDrawPixels( GLsizei width, GLsizei height,
-                              GLenum format, GLenum type,
-                              const GLvoid *pixels );
-
 using ospcommon::utility::getEnvVar;
 
 namespace ospray {
   namespace imgui3D {
 
-    bool dumpScreensDuringAnimation = false;
     bool ImGui3DWidget::showGui = false;
 
     static ImGui3DWidget *currentWidget = nullptr;
 
     // Class definitions //////////////////////////////////////////////////////
-
-    /*! write given frame buffer to file, in PPM P6 format. */
-    void saveFrameBufferToFile(const char *fileName,
-                               const uint32_t *pixel,
-                               const uint32_t sizeX, const uint32_t sizeY)
-    {
-      utility::writePPM(fileName, sizeX, sizeY, pixel);
-      std::cout << "#osp:glut3D: saved framebuffer to file " << fileName
-        << std::endl;
-    }
 
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
@@ -120,18 +104,17 @@ namespace ospray {
     void ImGui3DWidget::mouseButton(int button, int action, int mods)
     {}
 
-    ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
+    ImGui3DWidget::ImGui3DWidget(ResizeMode resizeMode,
                                  ManipulatorMode initialManipulator) :
       lastMousePos(-1,-1),
       currMousePos(-1,-1),
       fullScreen(false),
       windowSize(-1,-1),
       rotateSpeed(.003f),
-      frameBufferMode(frameBufferMode),
+      resizeMode(resizeMode),
       fontScale(2.f),
-      ucharFB(nullptr),
-	  moveModeManipulator(nullptr),
-	  inspectCenterManipulator(nullptr)
+      moveModeManipulator(nullptr),
+      inspectCenterManipulator(nullptr)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("ERROR: Can't create more than one ImGui3DWidget!");
@@ -182,7 +165,26 @@ namespace ospray {
     void ImGui3DWidget::reshape(const vec2i &newSize)
     {
       windowSize = newSize;
+      renderSize = windowSize * renderResolutionScale;
+      navRenderSize = windowSize * navRenderResolutionScale;
+
+      if (fixedRenderAspect > 0.f) {
+        float aspectCorrection = fixedRenderAspect * newSize.y / newSize.x;
+        if (aspectCorrection > 1.f) {
+          renderSize.y /= aspectCorrection;
+          navRenderSize.y /= aspectCorrection;
+        } else {
+          renderSize.x *= aspectCorrection;
+          navRenderSize.x *= aspectCorrection;
+        }
+      }
+
       glViewport(0, 0, newSize.x, newSize.y);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(0.0, windowSize.x, 0.0, windowSize.y, -1.0, 1.0);
+
       viewPort.aspect = newSize.x/float(newSize.y);
       viewPort.modified = true;
     }
@@ -195,14 +197,41 @@ namespace ospray {
         hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
-      if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
-        glDrawPixels(fbSize.x, fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
-      } else if (frameBufferMode == ImGui3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
-        glDrawPixels(fbSize.x, fbSize.y, GL_RGBA, GL_FLOAT, floatFB);
-      } else {
-        glClearColor(0.f,0.f,0.f,1.f);
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+      // Draw a textured quad
+      float aspectCorrection = fbAspect * windowSize.y / windowSize.x;
+      vec2f border(0.f);
+      switch (resizeMode) {
+        case RESIZE_LETTERBOX:
+          if (aspectCorrection > 1.f)
+            border.y = 1.f - aspectCorrection;
+          else
+            border.x = 1.f - 1.f / aspectCorrection;
+          break;
+        case RESIZE_CROP:
+          if (aspectCorrection > 1.f)
+            border.x = 1.f - 1.f / aspectCorrection;
+          else
+            border.y = 1.f - aspectCorrection;
+          break;
+        case RESIZE_KEEPFOVY:
+          border.x = 1.f - 1.f / aspectCorrection;
+          break;
+        case RESIZE_FILL:
+          // nop
+          break;
       }
+      border *= 0.5f;
+
+      glBegin(GL_QUADS);
+      glTexCoord2f(border.x, border.y);
+      glVertex3f(0, 0, 0);
+      glTexCoord2f(border.x, 1.f - border.y);
+      glVertex3f(0, windowSize.y, 0);
+      glTexCoord2f(1.f - border.x, 1.f - border.y);
+      glVertex3f(windowSize.x, windowSize.y, 0);
+      glTexCoord2f(1.f - border.x, border.y);
+      glVertex3f(windowSize.x, 0, 0);
+      glEnd();
     }
 
     void ImGui3DWidget::buildGui()
@@ -246,7 +275,9 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title, const bool fullScreen_, const vec2i windowSize)
+    void ImGui3DWidget::create(const char *title,
+                               const bool fullScreen_,
+                               const vec2i windowSize)
     {
       fullScreen = fullScreen_;
       // Setup window
@@ -341,6 +372,22 @@ namespace ospray {
             ImGui3DWidget::activeWindow->keypress(c);
         }
       );
+
+      // setup GL state
+      glDisable(GL_LIGHTING);
+      glColor3f(1, 1, 1);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
+      glGenTextures(1, &fbTexture);
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, fbTexture);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      // for letterboxing
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
       currentWidget = this;
     }
@@ -443,29 +490,6 @@ namespace ospray {
     void ImGui3DWidget::keypress(char key)
     {
       switch (key) {
-      case '!': {
-        if (ImGui3DWidget::animating) {
-          dumpScreensDuringAnimation = !dumpScreensDuringAnimation;
-        } else {
-          char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
-          static const char *dumpFileRoot;
-#ifndef _WIN32
-          if (!dumpFileRoot) {
-            auto rc = mkstemp(tmpFileName);
-            (void)rc;
-            dumpFileRoot = tmpFileName;
-          }
-#endif
-          char fileName[100000];
-          static int frameDumpSequenceID = 0;
-          snprintf(fileName, sizeof(fileName), "%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
-          if (ucharFB)
-            saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
-          return;
-        }
-
-        break;
-      }
       case 'C':
         PRINT(viewPort);
         break;

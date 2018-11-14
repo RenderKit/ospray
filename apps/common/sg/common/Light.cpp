@@ -29,10 +29,10 @@ namespace ospray {
       this->type = type;
     }
 
-    void Light::preCommit(RenderContext &ctx)
+    void Light::preCommit(RenderContext &)
     {
       if (!valueAs<OSPLight>())
-        setValue(ospNewLight2(ctx.ospRendererType.c_str(), type.c_str()));
+        setValue(ospNewLight3(type.c_str()));
     }
 
     void Light::postCommit(RenderContext &)

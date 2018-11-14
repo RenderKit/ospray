@@ -18,6 +18,7 @@
 
 using OSPRayTestScenes::Sierpinski;
 using OSPRayTestScenes::Torus;
+using OSPRayTestScenes::TextureVolume;
 
 TEST_P(Sierpinski, simple) {
   PerformRenderTest();
@@ -37,3 +38,8 @@ TEST_P(Torus, simple) {
 
 INSTANTIATE_TEST_CASE_P(Renderers, Torus, ::testing::Values("scivis", "pathtracer"));
 
+TEST_P(TextureVolume, simple) {
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_CASE_P(Renderers, TextureVolume, ::testing::Values("scivis"));

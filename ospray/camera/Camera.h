@@ -17,7 +17,6 @@
 #pragma once
 
 #include "common/Managed.h"
-#include "common/Ray.h"
 
 namespace ospray {
 
@@ -41,6 +40,8 @@ namespace ospray {
 
     virtual void commit() override;
 
+    // Project the world space point to the screen, and return the screen-space
+    // point (in normalized screen-space coordinates) along with the depth
     virtual ProjectedPoint projectPoint(const vec3f &p) const;
 
     static Camera *createInstance(const char *identifier);

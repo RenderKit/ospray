@@ -142,8 +142,8 @@ namespace ospray {
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
       /*! have given renderer create a new material */
-      virtual OSPMaterial newMaterial(OSPRenderer _renderer,
-                                      const char *type) = 0;
+      virtual OSPMaterial newMaterial(OSPRenderer renderer,
+                                      const char *material_type) = 0;
 
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(const char *renderer_type,
@@ -153,11 +153,7 @@ namespace ospray {
       virtual OSPTexture newTexture(const char *type) = 0;
 
       /*! have given renderer create a new Light */
-      virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
-
-      /*! have given renderer create a new Light */
-      virtual OSPLight newLight(const char *renderer_type,
-                                const char *light_type) = 0;
+      virtual OSPLight newLight(const char *light_type) = 0;
 
       /*! clear the specified channel(s) in 'fbChannelFlags'
 
@@ -223,6 +219,8 @@ namespace ospray {
 
       virtual void commit();
       bool isCommitted();
+
+      bool hasProgressCallback() { return progressCallback != nullptr; }
 
       // Public Data //
 

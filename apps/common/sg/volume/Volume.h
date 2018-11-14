@@ -26,6 +26,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Volume : public Renderable
     {
       Volume();
+      virtual ~Volume() override;
 
       virtual std::string toString() const override;
 

@@ -18,8 +18,8 @@
 #include "ospcommon/containers/AlignedVector.h"
 // sg
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "sg/texture/Texture2D.h"
 // xml lib
 #include "ospcommon/xml/XML.h"
 // std

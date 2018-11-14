@@ -274,7 +274,7 @@ given object anymore, call
     void ospRelease(OSPObject);
 
 This decreases its reference count and if the count reaches `0` the
-object will automatically get deleted.
+object will automatically get deleted. Passing `NULL` is not an error.
 
 ### Parameters
 
@@ -589,14 +589,13 @@ the index order for each tetrahedron does not matter, as OSPRay
 internally calculates vertex normals to ensure proper sampling and
 interpolation.
 
-For wedge cells, each wedge is formed by a group of six indices into
-the vertices and data value.  Vertex ordering is the same as
-`VTK_WEDGE` - three bottom vertices counterclockwise, then top three
-counterclockwise.
+For wedge cells, each wedge is formed by a group of six indices into the
+vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
+three bottom vertices counterclockwise, then top three counterclockwise.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
 indices into the vertices and data value. Vertex ordering is the same as
-`VTK_HEXAHEDRON` -- four bottom vertices counterclockwise, then top four
+`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
 counterclockwise.
 
   -------- ------------------  -------  ---------------------------------------
@@ -1108,10 +1107,9 @@ feature/performance trade-offs:
 
 ### Lights
 
-To let the given `renderer` create a new light source of given type
-`type` use
+To create a new light source of given type `type` use
 
-    OSPLight ospNewLight(OSPRenderer renderer, const char *type);
+    OSPLight ospNewLight3(const char *type);
 
 The call returns `NULL` if that type of light is not known by the
 renderer, or else an `OSPLight` handle to the created light source.
@@ -1135,7 +1133,7 @@ not about `color`.
 The distant light (or traditionally the directional light) is thought to
 be very far away (outside of the scene), thus its light arrives (almost)
 as parallel rays. It is created by passing the type string "`distant`"
-to `ospNewLight`. In addition to the [general parameters](#lights)
+to `ospNewLight3`. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following special
 parameters:
 
@@ -1154,7 +1152,7 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 
 The sphere light (or the special case point light) is a light emitting
 uniformly in all directions. It is created by passing the type string
-"`sphere`" to `ospNewLight`. In addition to the [general
+"`sphere`" to `ospNewLight3`. In addition to the [general
 parameters](#lights) understood by all lights the sphere light supports
 the following special parameters:
 
@@ -1172,7 +1170,7 @@ tracer]).
 #### Spot Light
 
 The spot light is a light emitting into a cone of directions. It is
-created by passing the type string "`spot`" to `ospNewLight`. In
+created by passing the type string "`spot`" to `ospNewLight3`. In
 addition to the [general parameters](#lights) understood by all lights
 the spot light supports the special parameters listed in the table.
 
@@ -1206,7 +1204,7 @@ tracer]).
 
 The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
 uniformly on one side into the half space. It is created by passing the
-type string "`quad`" to `ospNewLight`. In addition to the [general
+type string "`quad`" to `ospNewLight3`. In addition to the [general
 parameters](#lights) understood by all lights the spot light supports
 the following special parameters:
 
@@ -1230,7 +1228,7 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [parameter
+"`hdri`" to `ospNewLight3`. In addition to the [parameter
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
@@ -1255,7 +1253,7 @@ Note that the currently only the [path tracer] supports the HDRI light.
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-"`ambient`" to `ospNewLight`.
+"`ambient`" to `ospNewLight3`.
 
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
@@ -1395,7 +1393,9 @@ listed in the table below.
   float  rotation                   0  rotation of the direction of anisotropy in [0–1], 1 is
                                        going full circle
 
-  float  normal                     1  normal map/scale
+  float  normal                     1  default normal map/scale for all layers
+
+  float  baseNormal                 1  base normal map/scale (overrides default normal)
 
   bool   thin                   false  flag specifying whether the material is thin or solid
 
@@ -1417,11 +1417,13 @@ listed in the table below.
 
   float  coatRoughness              0  clear coat roughness in [0–1], 0 is perfectly smooth
 
-  float  coatNormal                 1  clear coat normal map/scale
+  float  coatNormal                 1  clear coat normal map/scale (overrides default normal)
 
   float  sheen                      0  sheen layer weight in [0–1]
 
   vec3f  sheenColor             white  sheen color tint
+
+  float  sheenTint                  0  how much sheen is tinted from sheenColor towards baseColor
 
   float  sheenRoughness           0.2  sheen roughness in [0–1], 0 is perfectly smooth
 
@@ -1673,7 +1675,7 @@ parameters of lights: [`color` and `intensity`](#lights).
 
 ### Texture
 
-OSPRay currently implements only one texture type (`texture2d`), but is
+OSPRay currently implements two texture types (`texture2d` and `volume`) and is
 open for extension to other types by applications. More types may be
 added in future releases.
 
@@ -1683,7 +1685,12 @@ To create a new texture use
 
 The call returns `NULL` if the texture could not be created with the
 given parameters, or else an `OSPTexture` handle to the created
-texture. Parameters
+texture.
+
+#### Texture2D
+
+The `texture2D` texture type implements an image-based texture, where its
+parameters are as follows
 
   Type    Name         Description
   ------- ------------ ----------------------------------
@@ -1719,7 +1726,23 @@ fetch is filtered by performing bi-linear interpolation of the nearest
 2×2 texels; if instead fetching only the nearest texel is desired (i.e.
 no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
-### Texture Transformations
+#### TextureVolume
+
+The `volume` texture type implements texture lookups based on 3D world
+coordinates of the surface hit point on the associated geometry. If the given
+hit point is within the attached volume, the volume is sampled and classified
+with the transfer function attached to the volume. This implements the ability
+to visualize volume values (as colored by its transfer function) on arbitrary
+surfaces inside the volume (as opposed to an isosurface showing a particular
+value in the volume). Its parameters are as follows
+
+  Type      Name         Description
+  --------- ------------ -------------------------------------------
+  OSPVolume volume       volume used to generate color lookups
+  --------- ------------ -------------------------------------------
+  : Parameters of `volume` texture type
+
+### Texture2D Transformations
 
 All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this

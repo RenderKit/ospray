@@ -22,6 +22,14 @@
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
 struct Tile {
+  uniform region2i region;
+  uniform vec2i    fbSize;
+  uniform vec2f    rcp_fbSize;
+  uniform int32    generation;
+  uniform int32    children;
+  uniform int32    sortOrder;
+  uniform int32    accumID;
+  uniform float    pad[4]; // padding to match the varying tile layout
   uniform float    r[TILE_SIZE*TILE_SIZE];  // red
   uniform float    g[TILE_SIZE*TILE_SIZE];  // green
   uniform float    b[TILE_SIZE*TILE_SIZE];  // blue
@@ -33,15 +41,19 @@ struct Tile {
   uniform float    ar[TILE_SIZE*TILE_SIZE]; // albedo red
   uniform float    ag[TILE_SIZE*TILE_SIZE]; // albedo green
   uniform float    ab[TILE_SIZE*TILE_SIZE]; // albedo blue
-  uniform region2i region;
-  uniform vec2i    fbSize;
-  uniform vec2f    rcp_fbSize;
-  uniform int32    generation;
-  uniform int32    children;
-  uniform int32    accumID;
 };
 
 struct VaryingTile {
+  uniform region2i region; // 4 ints
+  uniform vec2i    fbSize; // 2 ints
+  uniform vec2f    rcp_fbSize; // 2 floats
+  uniform int32    generation;
+  uniform int32    children;
+  uniform int32    sortOrder;
+  uniform int32    accumID;
+  uniform float    pad[4]; // explicit padding to match on SSE, this padding is
+                           // implicitly added on AVX and AVX512 to align the
+                           // vectors though. We need it here to match on SSE
   varying float    r[TILE_SIZE*TILE_SIZE/programCount];
   varying float    g[TILE_SIZE*TILE_SIZE/programCount];
   varying float    b[TILE_SIZE*TILE_SIZE/programCount];
@@ -53,12 +65,6 @@ struct VaryingTile {
   varying float    ar[TILE_SIZE*TILE_SIZE/programCount];
   varying float    ag[TILE_SIZE*TILE_SIZE/programCount];
   varying float    ab[TILE_SIZE*TILE_SIZE/programCount];
-  uniform region2i region;
-  uniform vec2i    fbSize;
-  uniform vec2f    rcp_fbSize;
-  uniform int32    generation;
-  uniform int32    children;
-  uniform int32    accumID;
 };
 
 inline void setRGBA(uniform Tile &tile, const varying uint32 i,

@@ -31,7 +31,7 @@ namespace ospray {
       {
         ispcEquivalent = ispc::PathTracer_MetallicPaint_create();
       }
-      
+
       virtual void commit() override
       {
         const vec3f& color = getParam3f("baseColor",
@@ -44,7 +44,7 @@ namespace ospray {
         const vec3f& flakeColor = getParam3f("flakeColor", vec3f(RGB_AL_COLOR));
         const float flakeSpread = getParamf("flakeSpread", 0.5f);
         const float eta = getParamf("eta",  1.5f);
-        
+
         ispc::PathTracer_MetallicPaint_set(getIE()
             , (const ispc::vec3f&)color
             , map_color ? map_color->getIE() : nullptr
@@ -57,6 +57,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(MetallicPaint,PathTracer_MetallicPaint);
+    OSP_REGISTER_MATERIAL(pathtracer, MetallicPaint, MetallicPaint);
+    OSP_REGISTER_MATERIAL(pt, MetallicPaint, MetallicPaint);
   }
 }

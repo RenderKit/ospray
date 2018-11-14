@@ -23,7 +23,7 @@ namespace ospray {
 
     struct OBJMaterial : public ospray::Material
     {
-      //! \brief common function to help printf-debugging 
+      //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
       virtual std::string toString() const  override
       { return "ospray::pathtracer::OBJMaterial"; }
@@ -37,13 +37,13 @@ namespace ospray {
         Texture2D *map_d  = (Texture2D*)getParamObject("map_d");
         affine2f xform_d  = getTextureTransform("map_d");
         Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap")));
-        affine2f xform_Kd = getTextureTransform("map_Kd") * getTextureTransform("map_kd") * getTextureTransform("colorMap"); 
+        affine2f xform_Kd = getTextureTransform("map_Kd") * getTextureTransform("map_kd") * getTextureTransform("colorMap");
         Texture2D *map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks"));
-        affine2f xform_Ks = getTextureTransform("map_Ks") * getTextureTransform("map_ks"); 
+        affine2f xform_Ks = getTextureTransform("map_Ks") * getTextureTransform("map_ks");
         Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns"));
-        affine2f xform_Ns = getTextureTransform("map_Ns") * getTextureTransform("map_ns"); 
+        affine2f xform_Ns = getTextureTransform("map_Ns") * getTextureTransform("map_ns");
         Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", getParamObject("normalMap", getParamObject("bumpMap"))));
-        affine2f xform_Bump = getTextureTransform("map_Bump") * getTextureTransform("map_bump") * getTextureTransform("normalMap") * getTextureTransform("BumpMap"); 
+        affine2f xform_Bump = getTextureTransform("map_Bump") * getTextureTransform("map_bump") * getTextureTransform("normalMap") * getTextureTransform("BumpMap");
         linear2f rot_Bump   = xform_Bump.l.orthogonal().transposed();
 
         const float d = getParam1f("d", getParam1f("alpha", 1.f));
@@ -77,7 +77,9 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_OBJMaterial);
-    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_default);
+    OSP_REGISTER_MATERIAL(pathtracer, OBJMaterial, OBJMaterial);
+    OSP_REGISTER_MATERIAL(pathtracer, OBJMaterial, default);
+    OSP_REGISTER_MATERIAL(pt, OBJMaterial, OBJMaterial);
+    OSP_REGISTER_MATERIAL(pt, OBJMaterial, default);
   }
 }

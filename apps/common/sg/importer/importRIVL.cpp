@@ -17,10 +17,10 @@
 #undef NDEBUG
 
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
 #include "sg/common/Instance.h"
 #include "sg/geometry/TriangleMesh.h"
-#include "common/sg/visitor/PrintNodes.h"
+#include "sg/texture/Texture2D.h"
+#include "sg/visitor/PrintNodes.h"
 
 // stl
 #include <map>

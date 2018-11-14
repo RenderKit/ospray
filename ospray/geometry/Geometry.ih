@@ -25,6 +25,7 @@
 // embree
 #include "embree3/rtcore.isph"
 
+struct Geometry;
 
 /*! Geometries are supposed to fill certain members of DifferentialGeometry:
     calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,

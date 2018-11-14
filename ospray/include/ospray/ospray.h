@@ -334,7 +334,7 @@ extern "C" {
 
   /*! set callback for given Device to call when an error occurs*/
   OSPRAY_INTERFACE void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
-    
+
   //! create a new renderer of given type
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
@@ -350,17 +350,20 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
-  //! let given renderer create a new material of given type
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *type);
+  //! (deprecated, use ospNewMaterial2) let given renderer create a new material of given type
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *material_type);
 
-  //! let given renderer create a new material of given type
+  //! create a new material of given type for a renderer of given type
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
 
-  //! let given renderer create a new light of given type
+  //! (deprecated, use ospNewLight3) let given renderer create a new light of given type
   OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
 
-  //! let given renderer create a new light of given type
-  OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
+  //! (deprecated, use ospNewLight3) create a new light of given type for a renderer of given type
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
+
+  //! create a new light of given type
+  OSPRAY_INTERFACE OSPLight ospNewLight3(const char *light_type);
 
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot
@@ -404,7 +407,8 @@ extern "C" {
   //! \brief create a new Texture
   OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
 
-  //! \brief create a new Texture2D with the given parameters
+  //! \brief (deprecated, use ospNewTexture("texture2d") instead)
+  //         create a new Texture2D with the given parameters
   /*! \detailed return 'NULL' if the texture could not be created with the given
                 parameters */
 #ifdef __cplusplus
@@ -542,10 +546,7 @@ extern "C" {
 #endif
 
 
-  /*! \brief free a framebuffer
-
-    due to refcounting the frame buffer may not immediately be deleted
-    at this time */
+  /*! \brief (deprecated, use ospRelease instead) free a framebuffer */
   OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */

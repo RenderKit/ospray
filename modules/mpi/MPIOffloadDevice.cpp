@@ -373,10 +373,7 @@ namespace ospray {
 
     // MPIDevice definitions //////////////////////////////////////////////////
 
-    MPIOffloadDevice::MPIOffloadDevice()
-    {
-      maml::init();
-    }
+    MPIOffloadDevice::MPIOffloadDevice() {}
 
     MPIOffloadDevice::~MPIOffloadDevice()
     {
@@ -436,6 +433,16 @@ namespace ospray {
                                    "start.");
         }
       }
+
+      auto OSPRAY_FORCE_COMPRESSION =
+        utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
+      // Turning on the compression past 64 ranks seems to be a good
+      // balancing point for cost of compressing vs. performance gain
+      auto enableCompression =
+        OSPRAY_FORCE_COMPRESSION.value_or(
+            mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
+
+      maml::init(enableCompression);
 
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */
@@ -736,11 +743,11 @@ namespace ospray {
     }
 
     /*! have given renderer create a new material */
-    OSPMaterial MPIOffloadDevice::newMaterial(OSPRenderer _renderer,
-                                              const char *type)
+    OSPMaterial MPIOffloadDevice::newMaterial(OSPRenderer renderer,
+                                              const char *material_type)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewMaterial work(type, _renderer, handle);
+      work::NewMaterial work(renderer, material_type, handle);
       processWork(work);
       return (OSPMaterial)(int64)handle;
     }
@@ -766,20 +773,10 @@ namespace ospray {
     }
 
     /*! have given renderer create a new Light */
-    OSPLight MPIOffloadDevice::newLight(OSPRenderer _renderer, const char *type)
+    OSPLight MPIOffloadDevice::newLight(const char *type)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewLight work(type, _renderer, handle);
-      processWork(work);
-      return (OSPLight)(int64)handle;
-    }
-
-    /*! have given renderer create a new Light */
-    OSPLight MPIOffloadDevice::newLight(const char *renderer_type,
-                                        const char *light_type)
-    {
-      ObjectHandle handle = allocateHandle();
-      work::NewLight2 work(renderer_type, light_type, handle);
+      work::NewLight work(type, handle);
       processWork(work);
       return (OSPLight)(int64)handle;
     }

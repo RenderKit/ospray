@@ -49,11 +49,13 @@ namespace ospray {
 
       auto rHandle = rendererNode->valueAs<OSPRenderer>();
       auto cHandle = child("camera").valueAs<OSPCamera>();
-      auto fHandle = child("frameBuffer").valueAs<OSPFrameBuffer>();
 
+      // XXX this is not sufficient (at least for FB):
+      // the FB can be released and re-created (i.e. on size change) and per
+      // (high) chance get the same handle (which is just the heap address when
+      // using the local device)
       bool newRenderer = currentRenderer != rHandle;
       bool newCamera = currentCamera != cHandle;
-      bool newFB = currentFB != fHandle;
 
       if (newRenderer)
         currentRenderer = rHandle;
@@ -61,23 +63,26 @@ namespace ospray {
       if (newCamera)
         currentCamera = cHandle;
 
-      if (newFB)
-        currentFB = fHandle;
-
       if (newRenderer || newCamera)
         ospSetObject(rHandle, "camera", cHandle);
 
       bool rChanged = rendererNode->subtreeModifiedButNotCommitted();
       bool cChanged = child("camera").subtreeModifiedButNotCommitted();
 
-      clearFB = newFB || newCamera || newRenderer || rChanged || cChanged;
+      clearFB = newCamera || newRenderer || rChanged || cChanged;
 
       frameAccumulationLimit = child("frameAccumulationLimit").valueAs<int>();
     }
 
     void Frame::postCommit(RenderContext &)
     {
-      if (clearFB) {
+      // after commit of child FB, which can lead to a new handle
+      auto fHandle = child("frameBuffer").valueAs<OSPFrameBuffer>();
+      bool newFB = currentFB != fHandle;
+      if (newFB)
+        currentFB = fHandle;
+
+      if (newFB || clearFB) {
         child("frameBuffer").nodeAs<FrameBuffer>()->clear();
 
         clearFB = false;
@@ -88,17 +93,24 @@ namespace ospray {
       }
     }
 
-    void Frame::renderFrame(bool verifyCommit)
+    std::shared_ptr<FrameBuffer> Frame::renderFrame(bool verifyCommit)
     {
-      auto rendererNode = child("renderer").nodeAs<Renderer>();
-      auto fbNode = child("frameBuffer").nodeAs<FrameBuffer>();
-
       if (verifyCommit) {
         Node::traverse(VerifyNodes{});
         commit();
       }
 
       traverse("render");
+
+      auto fb1Node = child("frameBuffer").nodeAs<FrameBuffer>();
+      auto fb2Node = child("navFrameBuffer").nodeAs<FrameBuffer>();
+      // use nav FB?
+      auto fbNode = (numAccumulatedFrames == 0 &&
+          fb1Node->child("size").valueAs<vec2i>() !=
+          fb2Node->child("size").valueAs<vec2i>()) ?
+        fb2Node : fb1Node;
+
+      auto rendererNode = child("renderer").nodeAs<Renderer>();
 
       const bool accumBudgetReached = frameAccumulationLimit >= 0 &&
         numAccumulatedFrames >= frameAccumulationLimit;
@@ -112,7 +124,7 @@ namespace ospray {
 
       if (accumBudgetReached || varianceReached) {
         etaSeconds = elapsedSeconds();
-        return;
+        return nullptr;
       }
 
       if (numAccumulatedFrames == 0)
@@ -142,6 +154,7 @@ namespace ospray {
 
       // whichever is earlier
       etaSeconds = std::min(etaVariance, etaAccumulation);
+      return fbNode;
     }
 
     OSPPickResult Frame::pick(const vec2f &pickPos)

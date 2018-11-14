@@ -47,7 +47,6 @@ namespace ospray {
         registerWorkUnit<NewMaterial>(registry);
         registerWorkUnit<NewMaterial2>(registry);
         registerWorkUnit<NewLight>(registry);
-        registerWorkUnit<NewLight2>(registry);
 
         registerWorkUnit<NewData>(registry);
         registerWorkUnit<NewTexture>(registry);
@@ -301,30 +300,17 @@ namespace ospray {
 
       void NewMaterial::run()
       {
-        Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        Material *material = nullptr;
-        if (renderer)
-          material = renderer->createMaterial(type.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // material type.
-        if (!material) material = Material::createMaterial(type.c_str());
+        auto *renderer = (Renderer*)rendererHandle.lookup();
+        auto rendererType = renderer->getParamString("externalNameFromAPI");
+        auto *material = Material::createInstance(rendererType.c_str(),
+                                                  materialType.c_str());
         handle.assign(material);
       }
 
       void NewMaterial2::run()
       {
-        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
-
-        Material *material = nullptr;
-        if (renderer)
-          material = renderer->createMaterial(materialType.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // material type.
-        if (!material)
-          material = Material::createMaterial(materialType.c_str());
-
+        auto *material = Material::createInstance(rendererType.c_str(),
+                                                  materialType.c_str());
         handle.assign(material);
       }
 
@@ -332,31 +318,8 @@ namespace ospray {
 
       void NewLight::run()
       {
-        Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        Light *light = nullptr;
-        if (renderer)
-          light = renderer->createLight(type.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // light type.
-        if (!light) light = Light::createLight(type.c_str());
-        handle.assign(light);
-      }
-
-      void NewLight2::run()
-      {
-        Ref<Renderer> renderer = Renderer::createInstance(rendererType.c_str());
-
-        Light *light = nullptr;
-        if (renderer)
-          light = renderer->createLight(lightType.c_str());
-
-        // No renderer present or the renderer doesn't intercept this
-        // light type.
-        if (!light)
-          light = Light::createLight(lightType.c_str());
-
-        handle.assign(light);
+        auto *material = Light::createInstance(type.c_str());
+        handle.assign(material);
       }
 
       // ospNewData ///////////////////////////////////////////////////////////
@@ -521,6 +484,7 @@ namespace ospray {
 
       void RenderFrame::run()
       {
+        mpicommon::world.barrier();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);

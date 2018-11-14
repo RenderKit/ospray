@@ -122,7 +122,7 @@ inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform
   // Energy compensation
   self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
   vec3f Favg = fresnel->evalAvg(fresnel);
-  self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
+  self->fmsScale = sqr(Favg) * self->Eavg / (1.f - Favg * (1.f - self->Eavg)); // Stephen Hill's tweak
 
   BSDF_Constructor(&self->super, Favg * self->Eavg, // TODO better estimate
                    BSDF_GLOSSY_REFLECTION,

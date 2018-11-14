@@ -212,6 +212,7 @@ namespace ospRandSphereTest {
     ospray::cpp::Model model;
     auto spheres = makeSpheres();
     model.addGeometry(spheres.first);
+    model.set("id", mpicommon::world.rank);
     model.commit();
 
     auto camera = ospray::cpp::Camera("perspective");

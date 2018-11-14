@@ -17,34 +17,40 @@
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-PROJECT(OSPRay)
-
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-CMAKE_POLICY(SET CMP0003 NEW) # since 2.6
-IF(POLICY CMP0015)
-  CMAKE_POLICY(SET CMP0015 NEW) # since 2.8.1
-ENDIF()
-IF(POLICY CMP0020)
-  CMAKE_POLICY(SET CMP0020 NEW) # since 2.8.11
-ENDIF()
+cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0003 NEW) # since 2.6
+if(POLICY CMP0015)
+  cmake_policy(SET CMP0015 NEW) # since 2.8.1
+endif()
+if(POLICY CMP0020)
+  cmake_policy(SET CMP0020 NEW) # since 2.8.11
+endif()
 IF(POLICY CMP0022)
   # Avoid warning: Target "xxx" has an INTERFACE_LINK_LIBRARIES property 
   # which differs from its LINK_INTERFACE_LIBRARIES properties.
   CMAKE_POLICY(SET CMP0022 NEW) # since 2.8.11
 ENDIF()
-IF(POLICY CMP0042)
-  CMAKE_POLICY(SET CMP0042 NEW) # since 3.0
-ENDIF()
-IF(POLICY CMP0054)
-  CMAKE_POLICY(SET CMP0054 OLD) # since 3.1
-ENDIF()
+if(POLICY CMP0042)
+  cmake_policy(SET CMP0042 NEW) # since 3.0
+endif()
+if(POLICY CMP0048)
+  cmake_policy(SET CMP0048 OLD) # since 3.0
+endif()
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 OLD) # since 3.1
+endif()
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW) # since 3.12
+endif()
+
+project(OSPRay)
 
 # configure directories for components we are going to include
-SET(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-SET(COMPONENTS_DIR ${OSPRAY_DIR}/components)
-SET(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
+set(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(COMPONENTS_DIR ${OSPRAY_DIR}/components)
+set(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 
 # Note (Qi): here I am creating a global list for all the libraries
 #   built by ospray. If a libraries is created using the
@@ -61,15 +67,15 @@ DEFINE_PROPERTY(GLOBAL PROPERTY OSPRAY_TARGETS_EXPORT
 # CMake modules and macro files
 ##############################################################
 
-INCLUDE(macros)
-INCLUDE(ospray_macros)
-INCLUDE(ospray_options)
-INCLUDE(ispc)
+include(macros)
+include(ospray_macros)
+include(ospray_options)
+include(ispc)
 
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
-ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
+add_subdirectory(${OSPCOMMON_DIR})
 
 ##############################################################
 # OSPRay components
@@ -78,20 +84,27 @@ ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 # component is its own little piece that builds some applications,
 # libraries, etc, and may have dependencies to other components.
 ##############################################################
-INCLUDE(components/configure.cmake)
+include(components/configure.cmake)
 
 ##############################################################
 # the OSPRay library
 ##############################################################
 
-ADD_SUBDIRECTORY(ospray)
+add_subdirectory(ospray)
+
+##############################################################
+# OSPRay tutorials
+##############################################################
+if (OSPRAY_ENABLE_TUTORIALS)
+  add_subdirectory(tutorials)
+endif()
 
 ##############################################################
 # OSPRay sample apps; at the end: they may need modules
 ##############################################################
-IF (OSPRAY_ENABLE_APPS)
-  ADD_SUBDIRECTORY(apps)
-ENDIF()
+if (OSPRAY_ENABLE_APPS)
+  add_subdirectory(apps)
+endif()
 
 ##############################################################
 # OSPRay modules
@@ -101,14 +114,14 @@ ENDIF()
 # module (which by definition is OPTIONAL) - so those go
 # AT THE BACK, only AFTER ALL OTHER PARTS OF OSPRAY ARE BUILT
 ##############################################################
-ADD_SUBDIRECTORY(modules)
+add_subdirectory(modules)
 
 ##############################################################
 # Google Test
 ##############################################################
-IF (OSPRAY_ENABLE_TESTING)
-  ADD_SUBDIRECTORY(tests)
-ENDIF()
+if (OSPRAY_ENABLE_TESTING)
+  add_subdirectory(tests)
+endif()
 
 ##############################################################
 # Configure find_package files
@@ -123,17 +136,17 @@ INCLUDE(${CMAKE_SOURCE_DIR}/cmake/ospray_cmake_config.cmake)
 ##############################################################
 # add target for running clang-format
 ##############################################################
-OPTION(OSPRAY_ENABLE_TARGET_CLANGFORMAT
+option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
        "Enable 'format' target, requires clang-format too" OFF)
-INCLUDE(clang-format)
+include(clang-format)
 
 # create a configure file that both ospray and ispc can read the cmake config
 # from needs to be at the end, after all cache variables have been set
-CONFIGURE_FILE(ospray/common/OSPConfig.h.in OSPConfig.h)
-INSTALL(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
+configure_file(ospray/common/OSPConfig.h.in OSPConfig.h)
+install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
   COMPONENT devel
 )
 
 # has to be last
-INCLUDE(CPack)
+include(CPack)

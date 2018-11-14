@@ -22,51 +22,13 @@
 #include "ospray/fb/LocalFB.h"
 // ospray_mpi
 #include "../common/Messaging.h"
+#include "DistributedFrameBuffer_TileMessages.h"
 // std
 #include <condition_variable>
 
 namespace ospray {
   struct TileDesc;
   struct TileData;
-
-  struct AllTilesDoneMessage;
-  struct MasterTileMessage;
-  template <typename ColorT>
-  struct MasterTileMessage_FB;
-  template <typename ColorT>
-  struct MasterTileMessage_FB_Depth;
-  template <typename ColorT>
-  struct MasterTileMessage_FB_Depth_Aux;
-  struct WriteTileMessage;
-
-  /*! color buffer and depth buffer on master */
-  enum COMMANDTAG {
-    /*! command tag that identifies a CommLayer::message as a write
-      tile command. this is a command using for sending a tile of
-      new samples to another instance of the framebuffer (the one
-      that actually owns that tile) for processing and 'writing' of
-      that tile on that owner node. */
-    WORKER_WRITE_TILE = 1 << 1,
-    /*! command tag used for sending 'final' tiles from the tile
-        owner to the master frame buffer. Note that we *do* send a
-        message back ot the master even in cases where the master
-        does not actually care about the pixel data - we still have
-        to let the master know when we're done. */
-    MASTER_WRITE_TILE_I8 = 1 << 2,
-    MASTER_WRITE_TILE_F32 = 1 << 3,
-    /*! command tag used for sending 'final' tiles from the tile
-        owner to the master frame buffer. We do send only one message
-        after all worker tiles are processed. This only applies for
-        the FB_NONE case where the master does not care about the
-        pixel data. */
-    WORKER_ALL_TILES_DONE  = 1 << 4,
-    // Modifier to indicate the tile also has depth values
-    MASTER_TILE_HAS_DEPTH = 1,
-    // Indicates that the tile additionally also has normal and/or albedo values
-    MASTER_TILE_HAS_AUX = 1 << 5,
-    // abort rendering the current frame
-    CANCEL_RENDERING = 1 << 6,
-  };
 
   class DistributedTileError : public TileError
   {
@@ -134,8 +96,6 @@ namespace ospray {
     //! recipient's job to properly delete the message.
     void incoming(const std::shared_ptr<mpicommon::Message> &message) override;
 
-    //! process an client-to-master all-tiles-are-done message */
-    void processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data);
     //! process a (non-empty) write tile message at the master
     template <typename ColorT>
     void processMessage(MasterTileMessage_FB<ColorT> *msg);
@@ -148,7 +108,20 @@ namespace ospray {
     // signal the workers whether to cancel 
     bool continueRendering() const { return !cancelRendering; }
 
+    void reportTimings(std::ostream &os);
+
   private:
+
+    using RealMilliseconds = std::chrono::duration<double, std::milli>;
+    std::vector<RealMilliseconds> queueTimes;
+    std::vector<RealMilliseconds> workTimes;
+    RealMilliseconds finalGatherTime, masterTileWriteTime,
+                     waitFrameFinishTime, compressTime, decompressTime;
+    double compressedPercent;
+    std::mutex statsMutex;
+
+    std::vector<char> tileGatherBuffer;
+    std::atomic<size_t> nextTileWrite;
 
     friend struct TileData;
     friend struct WriteMultipleTile;
@@ -169,10 +142,11 @@ namespace ospray {
         to the master (if required), and properly do the bookkeeping
         that this tile is now done. */
     void tileIsCompleted(TileData *tile);
-    /*! This function is called when a master write tile is completed, on the
-        master process. It only marks on the master that the tile is done, and
-        checks if we've completed rendering the frame. */
-    void finalizeTileOnMaster(TileData *tile);
+
+    /*! This function is called when a worker reports how many tiles it's
+        completed to the master, to update the user's progress callback.
+        This is only used if the user has set a progress callback. */
+    void updateProgress(ProgressMessage *msg);
 
     //! number of tiles that "I" own
     size_t numMyTiles() const;
@@ -199,8 +173,13 @@ namespace ospray {
     /*! Offloads processing of incoming message to tasking system */
     void scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message);
 
-    /*! Compose and send all-tiles-done message including tile errors. */
-    void sendAllTilesDoneMessage();
+    /*! Gather the final tiles from the other ranks to the master rank to
+     * copy into the framebuffer */
+    void gatherFinalTiles();
+
+    /*! Gather the tile IDs and error info from the other ranks to the master,
+     * for OSP_FB_NONE rendering, where we only track that info on the master */
+    void gatherFinalErrors();
 
     void sendCancelRenderingMessage();
 
@@ -226,6 +205,16 @@ namespace ospray {
         the master) */
     size_t numTilesCompletedThisFrame;
 
+    /*! The total number of tiles completed by all workers during this frame,
+        to track progress for the user's progress callback. NOTE: This is
+        not the numTilesCompletedThisFrame , which tracks how many tiles
+        this rank has finished of the ones it's responsible for completing */
+    size_t globalTilesCompletedThisFrame;
+
+
+    /*! The number of tiles the master is expecting to receive from each rank */
+    std::vector<size_t> numTilesExpected;
+
     /* protected numTilesCompletedThisFrame to ensure atomic update and compare */
     std::mutex numTilesMutex;
 
@@ -243,15 +232,18 @@ namespace ospray {
 
     //! set to true when the frame becomes 'active', and write tile
     //! messages can be consumed.
-    bool frameIsActive;
+    std::atomic<bool> frameIsActive;
 
     /*! set to true when the framebuffer is done for the given
         frame */
     bool frameIsDone;
 
-    bool cancelRendering; // signal the workers whether to cancel 
+    //! whether or not the frame has been cancelled
+    std::atomic<bool> cancelRendering;
 
     bool masterIsAWorker {false};
+
+    int reportRenderingProgress;
 
     //! condition that gets triggered when the frame is done
     std::condition_variable frameDoneCond;
@@ -265,7 +257,7 @@ namespace ospray {
     std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
 
     /*! Gather all tile errors in the optimized FB_NONE case to send them out
-        in the single AllTilesDoneMessage. */
+        in the single gatherv. */
     std::mutex tileErrorsMutex;
     std::vector< vec2i > tileIDs;
     std::vector< float > tileErrors;

@@ -31,9 +31,8 @@ namespace ospray {
   void Geometry::setMaterial(Material *mat)
   {
     if (!mat) {
-      postStatusMsg() << "#osp: warning - tried to set NULL material; ignoring"
-                      << "#osp: warning. (note this means that object may not "
-                      << " get any material at all!)";
+      postStatusMsg("#osp: warning - tried to set NULL material; ignoring. "
+          "(Note this means that object may not get any material at all!)");
       return;
     }
 
@@ -46,9 +45,8 @@ namespace ospray {
   void Geometry::setMaterialList(Data *matListData)
   {
     if (!matListData || matListData->numItems == 0) {
-      postStatusMsg() << "#osp: warning - tried to set NULL material list; ignoring"
-                      << "#osp: warning. (note this means that object may not "
-                      << " get any material at all!)";
+      postStatusMsg("#osp: warning - tried to set NULL material list, ignoring."
+          " (Note this means that object may not get any material at all!)");
       return;
     }
 

@@ -14,29 +14,31 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(MAML_LIBRARY ospray_mpi_maml)
+set(MAML_LIBRARY ospray_mpi_maml)
 
-OSPRAY_CONFIGURE_MPI()
+ospray_configure_mpi()
 
-OSPRAY_BUILD_COMPONENT(mpiCommon)
+ospray_build_component(snappy EXCLUDE_FROM_ALL)
+ospray_build_component(mpiCommon)
 
 # ------------------------------------------------------------------
 # The MAML library itself
 # ------------------------------------------------------------------
-OSPRAY_CREATE_LIBRARY(${MAML_LIBRARY}
+ospray_create_library(${MAML_LIBRARY}
   maml/maml.cpp
   maml/Context.cpp
 LINK
   ospray_mpi_common
+  snappy
 COMPONENT mpi
 EXPORT
 )
 
-SET(MAML_SDK_INSTALL_LOC
+set(MAML_SDK_INSTALL_LOC
   ../maml #NOTE: this is "next" to the SDK/ directory
 )
 
-OSPRAY_INSTALL_SDK_HEADERS(
+ospray_install_sdk_headers(
   maml/maml.h
   DESTINATION ${MAML_SDK_INSTALL_LOC}
 )
@@ -45,17 +47,16 @@ OSPRAY_INSTALL_SDK_HEADERS(
 # tests and examples
 # ------------------------------------------------------------------
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
+include_directories(${CMAKE_CURRENT_LIST_DIR})
 
-OSPRAY_CREATE_TEST(mamlTest
+ospray_create_test(mamlTest
   apps/mamlTest.cpp
   LINK
   ${MAML_LIBRARY}
 )
 
-OSPRAY_CREATE_TEST(mamlTestMessageSwarm
+ospray_create_test(mamlTestMessageSwarm
   apps/testMessageSwarm.cpp
   LINK
   ${MAML_LIBRARY}
 )
-

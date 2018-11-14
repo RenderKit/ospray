@@ -15,7 +15,10 @@
 // ======================================================================== //
 
 #include "Context.h"
+#include "apps/bench/pico_bench/pico_bench.h"
+#include <snappy.h>
 #include <iostream>
+#include <chrono>
 
 #include "ospcommon/memory/malloc.h"
 #include "ospcommon/tasking/async.h"
@@ -26,11 +29,23 @@ using ospcommon::AsyncLoop;
 using ospcommon::make_unique;
 using ospcommon::tasking::numTaskingThreads;
 using ospcommon::utility::getEnvVar;
+using ospcommon::byte_t;
+
+using namespace std::chrono;
 
 namespace maml {
 
   /*! the singleton object that handles all the communication */
-  std::unique_ptr<Context> Context::singleton = make_unique<Context>();
+  std::unique_ptr<Context> Context::singleton;
+
+  Context::Context(bool enableCompression)
+    : compressMessages(enableCompression)
+  {
+    auto logging = getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
+    DETAILED_LOGGING = std::stoi(logging) != 0;
+
+    start();
+  }
 
   Context::~Context()
   {
@@ -59,30 +74,80 @@ namespace maml {
     stopped */
   void Context::send(std::shared_ptr<Message> msg)
   {
-    outbox.push_back(msg);
+    // The message uses malloc/free, so use that instead of new/delete
+    if (compressMessages) {
+      auto startCompr = high_resolution_clock::now();
+      byte_t *compressed = (byte_t*)malloc(snappy::MaxCompressedLength(msg->size));
+      size_t compressedSize = 0;
+      snappy::RawCompress(reinterpret_cast<const char*>(msg->data), msg->size,
+          reinterpret_cast<char*>(compressed), &compressedSize);
+      free(msg->data);
+
+      auto endCompr = high_resolution_clock::now();
+      if (DETAILED_LOGGING) {
+        std::lock_guard<std::mutex> lock(statsMutex);
+        compressTimes.push_back(duration_cast<RealMilliseconds>(endCompr - startCompr));
+        compressedSizes.emplace_back(100.0 * (static_cast<double>(compressedSize) / msg->size));
+      }
+
+      msg->data = compressed;
+      msg->size = compressedSize;
+    }
+
+    outbox.push_back(std::move(msg));
   }
 
   void Context::processInboxMessages()
   {
-    if (!inbox.empty()) {
-      auto incomingMessages = inbox.consume();
+    auto incomingMessages = inbox.consume();
 
-      for (auto &message : incomingMessages) {
-        auto *handler = handlers[message->comm];
-        handler->incoming(message);
+    for (auto &msg : incomingMessages) {
+      auto *handler = handlers[msg->comm];
+
+      if (compressMessages) {
+        auto startCompr = high_resolution_clock::now();
+        // Decompress the message before handing it off
+        size_t uncompressedSize = 0;
+        snappy::GetUncompressedLength(reinterpret_cast<const char*>(msg->data),
+            msg->size, &uncompressedSize);
+        byte_t *uncompressed = (byte_t*)malloc(uncompressedSize);
+        snappy::RawUncompress(reinterpret_cast<const char*>(msg->data),
+            msg->size, reinterpret_cast<char*>(uncompressed));
+        free(msg->data);
+        const size_t compressedSize = msg->size;
+
+        auto endCompr = high_resolution_clock::now();
+        if (DETAILED_LOGGING) {
+          std::lock_guard<std::mutex> lock(statsMutex);
+          decompressTimes.push_back(duration_cast<RealMilliseconds>(endCompr - startCompr));
+          compressedSizes.emplace_back(100.0 * (static_cast<double>(compressedSize) / uncompressedSize));
+        }
+
+        msg->data = uncompressed;
+        msg->size = uncompressedSize;
       }
+
+      handler->incoming(msg);
     }
   }
 
   void Context::sendMessagesFromOutbox()
   {
-    if (!outbox.empty()) {
-      auto outgoingMessages = outbox.consume();
+    auto outgoingMessages = outbox.consume();
 
-      for (auto &msg : outgoingMessages) {
-        MPI_Request request;
+    for (auto &msg : outgoingMessages) {
+      MPI_Request request;
+
+      int rank = 0;
+      MPI_CALL(Comm_rank(msg->comm, &rank));
+      // Don't send to ourself, just forward to the inbox directly
+      if (rank == msg->rank) {
+        inbox.push_back(std::move(msg));
+      } else {
         MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
-                       msg->tag, msg->comm, &request));
+              msg->tag, msg->comm, &request));
+        msg->started = high_resolution_clock::now();
+
         pendingSends.push_back(request);
         sendCache.push_back(std::move(msg));
       }
@@ -98,7 +163,7 @@ namespace maml {
       int hasIncoming = 0;
       MPI_Status status;
       MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
-                      comm, &hasIncoming, &status));
+            comm, &hasIncoming, &status));
 
       if (hasIncoming) {
         int size;
@@ -112,27 +177,63 @@ namespace maml {
         MPI_Request request;
         MPI_CALL(Irecv(msg->data, size, MPI_BYTE, msg->rank,
                        msg->tag, msg->comm, &request));
+
+        msg->started = high_resolution_clock::now();
+
         pendingRecvs.push_back(request);
         recvCache.push_back(std::move(msg));
       }
     }
   }
 
-  void Context::waitOnSomeSendRequests()
+  void Context::waitOnSomeRequests()
   {
-    if (!pendingSends.empty()) {
-      int numDone = 0;
-      int *done = STACK_BUFFER(int, pendingSends.size());
+    if (!pendingSends.empty() || !pendingRecvs.empty()) {
+      const size_t totalMessages = pendingSends.size() + pendingRecvs.size();
+      int *done = STACK_BUFFER(int, totalMessages);
+      MPI_Request *mergedRequests = STACK_BUFFER(MPI_Request, totalMessages);
 
-      MPI_CALL(Testsome(pendingSends.size(), pendingSends.data(), &numDone,
-                        done, MPI_STATUSES_IGNORE));
-
-      for (int i = 0; i < numDone; ++i) {
-        int pendingSendCompletedIndex = done[i];
-        pendingSends[pendingSendCompletedIndex] = MPI_REQUEST_NULL;
-        sendCache[pendingSendCompletedIndex].reset();
+      for (size_t i = 0; i < totalMessages; ++i) {
+        if (i < pendingSends.size()) {
+          mergedRequests[i] = pendingSends[i];
+        } else {
+          mergedRequests[i] = pendingRecvs[i - pendingSends.size()];
+        }
       }
 
+      int numDone = 0;
+      MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
+                        done, MPI_STATUSES_IGNORE));
+      auto completed = high_resolution_clock::now();
+
+      for (int i = 0; i < numDone; ++i) {
+        size_t msgId = done[i];
+        if (msgId < pendingSends.size()) {
+          if (DETAILED_LOGGING) {
+            std::lock_guard<std::mutex> lock(statsMutex);
+            Message *msg = sendCache[msgId].get();
+            sendTimes.push_back(duration_cast<RealMilliseconds>(completed - msg->started));
+          }
+
+          pendingSends[msgId] = MPI_REQUEST_NULL;
+          sendCache[msgId] = nullptr;
+        } else {
+          msgId -= pendingSends.size();
+
+          if (DETAILED_LOGGING) {
+            std::lock_guard<std::mutex> lock(statsMutex);
+            Message *msg = recvCache[msgId].get();
+            recvTimes.push_back(duration_cast<RealMilliseconds>(completed - msg->started));
+          }
+
+          inbox.push_back(std::move(recvCache[msgId]));
+
+          pendingRecvs[msgId] = MPI_REQUEST_NULL;
+          recvCache[msgId] = nullptr;
+        }
+      }
+
+      // Clean up anything we sent
       sendCache.erase(std::remove(sendCache.begin(),
                                   sendCache.end(),
                                   nullptr), sendCache.end());
@@ -140,24 +241,8 @@ namespace maml {
       pendingSends.erase(std::remove(pendingSends.begin(),
                                      pendingSends.end(),
                                      MPI_REQUEST_NULL), pendingSends.end());
-    }
-  }
 
-  void Context::waitOnSomeRecvRequests()
-  {
-    if (!pendingRecvs.empty()) {
-      int numDone = 0;
-      int *done = STACK_BUFFER(int, pendingRecvs.size());
-
-      MPI_CALL(Waitsome(pendingRecvs.size(), pendingRecvs.data(), &numDone,
-                        done, MPI_STATUSES_IGNORE));
-
-      for (int i = 0; i < numDone; ++i) {
-        int pendingRecvCompletedIndex = done[i];
-        pendingRecvs[pendingRecvCompletedIndex] = MPI_REQUEST_NULL;
-        inbox.push_back(std::move(recvCache[pendingRecvCompletedIndex]));
-      }
-
+      // Clean up anything we received
       recvCache.erase(std::remove(recvCache.begin(),
                                   recvCache.end(),
                                   nullptr), recvCache.end());
@@ -170,11 +255,10 @@ namespace maml {
 
   void Context::flushRemainingMessages()
   {
-    sendMessagesFromOutbox();
-
-    while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty()) {
-      waitOnSomeRecvRequests();
-      waitOnSomeSendRequests();
+    while (!pendingRecvs.empty() || !pendingSends.empty() || !inbox.empty() || !outbox.empty()) {
+      sendMessagesFromOutbox();
+      pollForAndRecieveMessages();
+      waitOnSomeRequests();
       processInboxMessages();
     }
   }
@@ -185,6 +269,7 @@ namespace maml {
     has been called */
   void Context::start()
   {
+    std::lock_guard<std::mutex> lock(tasksMutex);
     if (!isRunning()) {
       tasksAreRunning = true;
 
@@ -200,9 +285,7 @@ namespace maml {
         sendReceiveThread = make_unique<AsyncLoop>([&](){
           sendMessagesFromOutbox();
           pollForAndRecieveMessages();
-
-          waitOnSomeSendRequests();
-          waitOnSomeRecvRequests();
+          waitOnSomeRequests();
         }, launchMethod);
       }
 
@@ -226,17 +309,69 @@ namespace maml {
     if the mpi layer is not thread safe the app is then free to use
     MPI calls of its own, but it should not expect that this node
     receives any more messages (until the next 'start()' call) even
-    if they are already in flight */
+    if they are already in fligh
+    WILL: Don't actually stop, for reasons described above flush messages
+  */
   void Context::stop()
   {
-    tasksAreRunning = false;
-    if (sendReceiveThread) {
-      sendReceiveThread->stop();
+    std::lock_guard<std::mutex> lock(tasksMutex);
+    if (tasksAreRunning) {
+      quitThreads = true;
+      if (sendReceiveThread) {
+        sendReceiveThread->stop();
+      }
+      if (processInboxThread) {
+        processInboxThread->stop();
+      }
+
+      tasksAreRunning = false;
+      flushRemainingMessages();
     }
-    if (processInboxThread) {
-      processInboxThread->stop();
+  }
+
+  void Context::logMessageTimings(std::ostream &os)
+  {
+    if (!DETAILED_LOGGING) {
+      return;
     }
-    flushRemainingMessages();
+    std::lock_guard<std::mutex> lock(statsMutex);
+    using Stats = pico_bench::Statistics<RealMilliseconds>;
+    using CompressedStats = pico_bench::Statistics<CompressionPercent>;
+    if (!sendTimes.empty()) {
+      Stats sendStats(sendTimes);
+      sendStats.time_suffix = "ms";
+      os << "Message send statistics:\n" << sendStats << "\n";
+    }
+
+    if (!recvTimes.empty()) {
+      Stats recvStats(recvTimes);
+      recvStats.time_suffix = "ms";
+      os << "Message recv statistics:\n" << recvStats << "\n";
+    }
+
+    if (!compressTimes.empty()) {
+      Stats stats(compressTimes);
+      stats.time_suffix = "ms";
+      os << "Compression statistics:\n" << stats << "\n";
+    }
+
+    if (!decompressTimes.empty()) {
+      Stats stats(decompressTimes);
+      stats.time_suffix = "ms";
+      os << "Decompression statistics:\n" << stats << "\n";
+    }
+
+    if (!compressedSizes.empty()) {
+      CompressedStats stats(compressedSizes);
+      stats.time_suffix = "%";
+      os << "Compressed Size statistics:\n" << stats << "\n";
+    }
+
+    sendTimes.clear();
+    recvTimes.clear();
+    compressTimes.clear();
+    decompressTimes.clear();
+    compressedSizes.clear();
   }
 
 } // ::maml

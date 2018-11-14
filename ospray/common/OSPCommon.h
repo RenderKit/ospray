@@ -83,8 +83,13 @@ typedef int ssize_t;
   extern "C" OSPRAY_DLLEXPORT                                                  \
       Object *ospray_create_##object_name##__##external_name()                 \
   {                                                                            \
-    return new InternalClass;                                                  \
-  } \
+    auto *instance = new InternalClass;                                        \
+    if (instance->getParam<std::string>("externalNameFromAPI", "").empty()) {  \
+      instance->setParam<std::string>("externalNameFromeAPI",                  \
+                                      TOSTRING(external_name));                \
+    }                                                                          \
+    return instance;                                                           \
+  }                                                                            \
   /* additional declaration to avoid "extra ;" -Wpedantic warnings */          \
   Object *ospray_create_##object_name##__##external_name()
 

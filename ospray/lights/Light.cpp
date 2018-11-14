@@ -33,7 +33,7 @@ namespace ospray {
     return "ospray::Light";
   }
 
-  Light *Light::createLight(const char *type)
+  Light *Light::createInstance(const char *type)
   {
     return createInstanceHelper<Light, OSP_LIGHT>(type);
   }

@@ -1,5 +1,6 @@
 
 [Embree]: https://embree.github.io/
+[Intel Embree]: https://embree.github.io/
 [news/updates]: https://www.ospray.org/news.html
 [getting OSPRay]: https://www.ospray.org/downloads.html
 [OSPRay Demos and Examples]: https://www.ospray.org/demos.html
@@ -9,6 +10,9 @@
 [tutorial]: #tutorial
 [camera]: #cameras
 [volume]: #volumes
+[model]: #model
+[data]: #data
+[texture transformations]: #texture2d-transformations
 [path tracer]: #path-tracer
 [point light]: #point-light-sphere-light
 [Compiling OSPRay]: #compiling-ospray

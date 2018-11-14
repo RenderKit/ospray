@@ -204,7 +204,6 @@ namespace ospray {
 
     /*! \brief subtype of this ManagedObject */
     OSPDataType managedObjectType {OSP_UNKNOWN};
-
   };
 
   // Inlined ManagedObject definitions ////////////////////////////////////////

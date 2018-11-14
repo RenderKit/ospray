@@ -19,8 +19,8 @@
 # Though not actually required we guard each module 'moduleName' with
 # a OSPRAY_MODULE_MODULENAME flag that enables/disables its building.
 #
-OPTION(OSPRAY_MODULE_BILINEAR_PATCH "Build pluggable geometry example module  (a Bilinear Patch)" OFF)
-IF (OSPRAY_MODULE_BILINEAR_PATCH)
+option(OSPRAY_MODULE_BILINEAR_PATCH "Build pluggable geometry example module  (a Bilinear Patch)" OFF)
+if (OSPRAY_MODULE_BILINEAR_PATCH)
 
   # build the actual new ospray geometry type.  since this plug in
   # directly into the ospray core, we'll put it into a
@@ -30,9 +30,9 @@ IF (OSPRAY_MODULE_BILINEAR_PATCH)
   # libospray_module_<moduleName>.so library that defiens the actual
   # core geometry type.
   #
-  ADD_SUBDIRECTORY(ospray)
+  add_subdirectory(ospray)
 
   # add sg plugin for '.patches' files
-  ADD_SUBDIRECTORY(sg)
+  add_subdirectory(sg)
 
-ENDIF (OSPRAY_MODULE_BILINEAR_PATCH)
+endif (OSPRAY_MODULE_BILINEAR_PATCH)

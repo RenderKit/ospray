@@ -80,9 +80,15 @@ struct Principled
   float rotation;
   TextureParam rotationMap;
 
+  // default normal map for all layers
   float normal; // scale
   TextureParam normalMap;
   linear2f normalRot;
+
+  // base normal map (overrides default normal)
+  float baseNormal; // scale
+  TextureParam baseNormalMap;
+  linear2f baseNormalRot;
 
   // dielectric clear coat weight in [0, 1]
   float coat;
@@ -101,6 +107,7 @@ struct Principled
   float coatRoughness;
   TextureParam coatRoughnessMap;
 
+  // clear coat normal map (overrides default normal)
   float coatNormal; // scale
   TextureParam coatNormalMap;
   linear2f coatNormalRot;
@@ -111,6 +118,10 @@ struct Principled
 
   vec3f sheenColor;
   TextureParam sheenColorMap;
+
+  // sheen tint in [0, 1]
+  float sheenTint;
+  TextureParam sheenTintMap;
 
   float sheenRoughness;
   TextureParam sheenRoughnessMap;
@@ -147,13 +158,13 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
   const uniform Principled* uniform self = (const uniform Principled* uniform)super;
   varying BSDF* varying bsdf = NULL;
 
-  // create the base shading frame
+  // create the default shading frame
   varying linear3f* uniform frame =
     LinearSpace3f_create(ctx, makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
   const float rotation = clamp(self->rotation * get1f(self->rotationMap, dg, 1.f));
-  if (rotation > 0.f)
+  const float theta = 2.f * pi * rotation;
+  if (theta > 0.f)
   {
-    const float theta = 2.f * pi * rotation;
     frame->vx = rotate(frame->vx, frame->vz, theta);
     frame->vy = cross(frame->vz, frame->vx);
   }
@@ -161,6 +172,18 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
   const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f));
   if (opacity > EPS)
   {
+    varying linear3f* uniform baseFrame = frame;
+    if (self->baseNormalMap.map)
+    {
+      baseFrame = LinearSpace3f_create(ctx,
+        makeShadingFrame(dg, self->baseNormalMap, self->baseNormalRot, self->baseNormal));
+      if (theta > 0.f)
+      {
+        baseFrame->vx = rotate(baseFrame->vx, baseFrame->vz, theta);
+        baseFrame->vy = cross(baseFrame->vz, baseFrame->vx);
+      }
+    }
+
     varying BSDF* uniform baseBsdf = MultiBSDF_create(ctx);
 
     const vec3f baseColor = clamp(self->baseColor * get3f(self->baseColorMap, dg, make_vec3f(1.f)) * make_vec3f(dg.color));
@@ -198,14 +221,14 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         if (diffuseReflection > EPS)
         {
           if (roughness < EPS)
-            plasticBsdf = Lambert_create(ctx, frame, diffuseColor);
+            plasticBsdf = Lambert_create(ctx, baseFrame, diffuseColor);
           else
-            plasticBsdf = OrenNayar_create(ctx, frame, diffuseColor, roughness);
+            plasticBsdf = OrenNayar_create(ctx, baseFrame, diffuseColor, roughness);
         }
 
         if (diffuseTransmission > EPS)
         {
-          varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, frame, diffuseColor);
+          varying BSDF* uniform diffuseTransmissionBsdf = LambertTransmission_create(ctx, baseFrame, diffuseColor);
 
           if (plasticBsdf)
           {
@@ -225,11 +248,11 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
         {
           if (roughness < EPS)
           {
-            plasticBsdf = DielectricLayer_create(ctx, frame, plasticBsdf, eta, make_vec3f(1.f), 1.f, specular);
+            plasticBsdf = DielectricLayer_create(ctx, baseFrame, plasticBsdf, eta, make_vec3f(1.f), 1.f, specular);
           }
           else
           {
-            plasticBsdf = MicrofacetDielectricLayer_create(ctx, frame, plasticBsdf,
+            plasticBsdf = MicrofacetDielectricLayer_create(ctx, baseFrame, plasticBsdf,
               eta, make_vec3f(1.f), 1.f, roughness, anisotropy, specular);
           }
         }
@@ -249,9 +272,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
           {
             // solid
             if (roughness < EPS && !self->roughnessMap.map) // use microfacet if textured due to different transparent shadow behavior
-              glassBsdf = Dielectric_create(ctx, frame, eta);
+              glassBsdf = Dielectric_create(ctx, baseFrame, eta);
             else
-              glassBsdf = MicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy);
+              glassBsdf = MicrofacetDielectric_create(ctx, baseFrame, eta, roughness, anisotropy);
           }
           else
           {
@@ -261,14 +284,14 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
             const vec3f attenuation = logf(transmissionColor) / self->transmissionDepth * thickness;
 
             if (roughness < EPS)
-              glassBsdf = ThinDielectric_create(ctx, frame, eta, attenuation);
+              glassBsdf = ThinDielectric_create(ctx, baseFrame, eta, attenuation);
             else
-              glassBsdf = ThinMicrofacetDielectric_create(ctx, frame, eta, roughness, anisotropy, attenuation);
+              glassBsdf = ThinMicrofacetDielectric_create(ctx, baseFrame, eta, roughness, anisotropy, attenuation);
           }
         }
         else
         {
-          glassBsdf = Transmission_create(ctx, frame, make_vec3f(1.f));
+          glassBsdf = Transmission_create(ctx, baseFrame, make_vec3f(1.f));
         }
 
         MultiBSDF_add(baseBsdf, glassBsdf, glass, glass);
@@ -284,9 +307,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
       Fresnel* uniform fresnel = FresnelConductorArtistic_create(ctx, baseColor, edgeColor);
       varying BSDF* varying conductorBsdf;
       if (roughness < EPS)
-        conductorBsdf = Conductor_create(ctx, frame, fresnel);
+        conductorBsdf = Conductor_create(ctx, baseFrame, fresnel);
       else
-        conductorBsdf = MicrofacetConductor_create(ctx, frame, fresnel, roughness, anisotropy);
+        conductorBsdf = MicrofacetConductor_create(ctx, baseFrame, fresnel, roughness, anisotropy);
 
       MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
     }
@@ -334,7 +357,9 @@ const varying BSDF* varying Principled_getBSDF(const uniform PathTraceMaterial* 
     const float sheen = clamp(self->sheen * get1f(self->sheenMap, dg, 1.f));
     if (sheen > EPS)
     {
-      const vec3f sheenColor = clamp(self->sheenColor * get3f(self->sheenColorMap, dg, make_vec3f(1.f)));
+      vec3f sheenColor = clamp(self->sheenColor * get3f(self->sheenColorMap, dg, make_vec3f(1.f)));
+      const float sheenTint = clamp(self->sheenTint * get1f(self->sheenTintMap, dg, 1.f));
+      sheenColor = lerp(sheenTint, sheenColor, baseColor);
       const float sheenRoughness = clamp(self->sheenRoughness * get1f(self->sheenRoughnessMap, dg, 1.f));
 
       bsdf = MicrofacetSheenLayer_create(ctx, coatFrame, bsdf, sheenColor, sheenRoughness, sheen);
@@ -521,6 +546,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float anisotropy, void* uniform anisotropyMap, const uniform affine2f& anisotropyXform,
     uniform float rotation, void* uniform rotationMap, const uniform affine2f& rotationXform,
     uniform float normal, void* uniform normalMap, const uniform affine2f& normalXform, const uniform linear2f& normalRot,
+    uniform float baseNormal, void* uniform baseNormalMap, const uniform affine2f& baseNormalXform, const uniform linear2f& baseNormalRot,
     uniform float coat, void* uniform coatMap, const uniform affine2f& coatXform,
     uniform float coatIor, void* uniform coatIorMap, const uniform affine2f& coatIorXform,
     const uniform vec3f& coatColor, void* uniform coatColorMap, const uniform affine2f& coatColorXform,
@@ -529,6 +555,7 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
     uniform float coatNormal, void* uniform coatNormalMap, const uniform affine2f& coatNormalXform, const uniform linear2f& coatNormalRot,
     uniform float sheen, void* uniform sheenMap, const uniform affine2f& sheenXform,
     const uniform vec3f& sheenColor, void* uniform sheenColorMap, const uniform affine2f& sheenColorXform,
+    uniform float sheenTint, void* uniform sheenTintMap, const uniform affine2f& sheenTintXform,
     uniform float sheenRoughness, void* uniform sheenRoughnessMap, const uniform affine2f& sheenRoughnessXform,
     uniform float opacity, void* uniform opacityMap, const uniform affine2f& opacityXform,
     uniform bool thin,
@@ -580,6 +607,10 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
   self->normalMap = make_TextureParam((uniform Texture2D*)normalMap, normalXform);
   self->normalRot = normalRot;
 
+  self->baseNormal = baseNormal;
+  self->baseNormalMap = make_TextureParam((uniform Texture2D*)baseNormalMap, baseNormalXform);
+  self->baseNormalRot = baseNormalRot;
+
   self->coat = coat;
   self->coatMap = make_TextureParam((uniform Texture2D*)coatMap, coatXform);
 
@@ -604,6 +635,9 @@ export void* uniform PathTracer_Principled_set(void* uniform _self,
 
   self->sheenColor = sheenColor;
   self->sheenColorMap = make_TextureParam((uniform Texture2D*)sheenColorMap, sheenColorXform);
+
+  self->sheenTint = sheenTint;
+  self->sheenTintMap = make_TextureParam((uniform Texture2D*)sheenTintMap, sheenTintXform);
 
   self->sheenRoughness = sheenRoughness;
   self->sheenRoughnessMap = make_TextureParam((uniform Texture2D*)sheenRoughnessMap, sheenRoughnessXform);
@@ -647,6 +681,7 @@ export void* uniform PathTracer_Principled_create()
     0.f, NULL, xform, // anisotropy
     0.f, NULL, xform, // rotation
     1.f, NULL, xform, make_LinearSpace2f_identity(), // normal
+    1.f, NULL, xform, make_LinearSpace2f_identity(), // baseNormal
     0.f, NULL, xform, // coat
     1.5f, NULL, xform, // coatIor
     make_vec3f(1.f), NULL, xform, // coatColor
@@ -655,6 +690,7 @@ export void* uniform PathTracer_Principled_create()
     1.f, NULL, xform, make_LinearSpace2f_identity(), // coatNormal
     0.f, NULL, xform, // sheen
     make_vec3f(1.f), NULL, xform, // sheenColor
+    0.f, NULL, xform, // sheenTint
     0.2f, NULL, xform, // sheenRoughness
     1.f, NULL, xform, // opacity
     false, // thin

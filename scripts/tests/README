@@ -6,7 +6,17 @@ Running Tests
 Compile OSPRay in a build directory of your choosing. We will refer
 to this directory as ${OSPRAY_BUILD_DIR}.
 
-2. Generate baseline images
+2. Generate baseline images (OPTIONAL)
+
+images should download automatically when OSPRAY_TESTING is on.  Only
+generate new images for a test that has changed.  To generate new images for a specific
+test run ./regression_tests/ospray_test_suite --gtest_filter="*TESTNAME*" --dump-img
+which will create images in a folder called baseline.
+
+To add these to ospray, call md5sum on the resulting .png files.  Add a .png.md5 file to
+tests/baseling/TESTNAME.png.md5 with the value of the checksum.  rename
+the .png file to be the checksum value, and then send this to OSPRay Devs who
+will upload it to sdvis.org under /var/www/html/ospray/download/baseline/benchmark-data/MD5.
 
 In ${OSPRAY_BUILD_DIR}, run the "generate_baseline.sh" script:
 
@@ -21,3 +31,8 @@ To verify whether a change to the codebase broke anything, run
 This will run all tests and compare their results with baseline
 images generated in step 2.
 
+4.  To run an individual test
+./regression_tests/ospray_test_suite --gtest_list_tests
+this will output a list of test names
+./regression_tests/ospray_test_suite --gest_filter="*NAME*"
+will run a single test

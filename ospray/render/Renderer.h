@@ -71,12 +71,6 @@ namespace ospray {
     /*! \brief called by the load balancer to render one tile of "samples" */
     virtual void renderTile(void *perFrameData, Tile &tile, size_t jobID) const;
 
-    /*! \brief create a material of given type */
-    virtual Material *createMaterial(const char *type);
-
-    /*! \brief create a light of given type */
-    virtual Light *createLight(const char *type);
-
     virtual OSPPickResult pick(const vec2f &screenPos);
 
     Model *model {nullptr};
@@ -104,20 +98,6 @@ namespace ospray {
       (OSP_TEXTURE_FILTER_NEAREST). */
     Ref<Texture2D> maxDepthTexture;
   };
-
-  // Inlined function definitions /////////////////////////////////////////////
-
-  inline Material *Renderer::createMaterial(const char *type)
-  {
-    UNUSED(type);
-    return nullptr;
-  }
-
-  inline Light *Renderer::createLight(const char *type)
-  {
-    UNUSED(type);
-    return nullptr;
-  }
 
   /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"

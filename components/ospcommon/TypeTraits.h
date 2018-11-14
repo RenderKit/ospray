@@ -68,6 +68,7 @@ namespace ospcommon {
                 std::is_same<TYPE, int>::value ||
                 std::is_same<TYPE, unsigned>::value ||
                 std::is_same<TYPE, long>::value ||
+                std::is_same<TYPE, long long>::value ||
                 std::is_same<TYPE, size_t>::value
       };
     };

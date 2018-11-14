@@ -141,8 +141,7 @@ namespace ospray {
       updateTransform(ctx);
       cachedTransform=ctx.currentTransform;
 
-      if (ospInstance)
-        ospRelease(ospInstance);
+      ospRelease(ospInstance);
       ospInstance = nullptr;
 
       auto model = child("model").valueAs<OSPModel>();
