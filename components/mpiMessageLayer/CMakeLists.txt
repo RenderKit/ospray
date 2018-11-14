@@ -29,10 +29,11 @@ ospray_create_library(${MAML_LIBRARY}
   maml/Context.cpp
 LINK
   ospray_mpi_common
-  snappy
 COMPONENT mpi
 EXPORT
 )
+
+target_link_libraries(${MAML_LIBRARY} PRIVATE snappy)
 
 set(MAML_SDK_INSTALL_LOC
   ../maml #NOTE: this is "next" to the SDK/ directory

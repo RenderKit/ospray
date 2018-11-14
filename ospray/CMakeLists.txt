@@ -478,6 +478,10 @@ COMPONENT
 EXPORT
 )
 
+target_include_directories(ospray PUBLIC
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
 option(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
 mark_as_advanced(OSPRAY_BUILD_ISPC_DEVICE)
 

@@ -70,8 +70,8 @@ if (OSPRAY_MODULE_MPI)
     ospray_module_ispc
     ospray_mpi_common
     ospray_mpi_maml
-    snappy
   )
+  target_link_libraries(ospray_module_mpi PRIVATE snappy)
   target_compile_definitions(ospray_module_mpi PUBLIC
     -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 

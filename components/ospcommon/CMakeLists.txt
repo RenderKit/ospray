@@ -92,6 +92,10 @@ else()
   EXPORT
   )
 
+  target_include_directories(ospray_common PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray>
+  )
+
   ## Install headers ##
 
   set(OSPCOMMON_SDK_INSTALL_LOC

@@ -179,13 +179,13 @@ endmacro()
 ## Target install macros for OSPRay libraries ##
 include(GNUInstallDirs)
 
-macro(ospray_install_library name component)
+macro(ospray_install_library name component export)
 
   if("${export}" STREQUAL "TRUE")
     set(_export_args EXPORT ${name}-targets)
   endif()
 
-  install(TARGETS ${name}
+  install(TARGETS ${name} ${_export_args}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
       NAMELINK_SKIP
