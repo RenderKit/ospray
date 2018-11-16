@@ -258,23 +258,50 @@ void SpherePrecision::SetUp()
   ospSet1i(renderer, "maxDepth", 2);
 
   OSPGeometry sphere = ospNewGeometry("spheres");
+  OSPGeometry inst_sphere = ospNewGeometry("spheres");
 
-  float sph_center_r[]{-radius*0.5, 0.0f, cent, radius, radius*0.8, 0.0f, cent, radius*0.9f};
-  auto data = ospNewData(2, OSP_FLOAT4, sph_center_r);
+  float sph_center_r[]{
+    -0.5f*radius, -0.3f*radius, cent,      radius,
+     0.8f*radius, -0.3f*radius, cent, 0.9f*radius,
+     0.8f*radius,  1.5f*radius, cent, 0.9f*radius,
+     0.f, 0.f, 0.f, 90.f*radius
+  };
+  auto data = ospNewData(3, OSP_FLOAT4, sph_center_r);
   ospCommit(data);
   ospSetData(sphere, "spheres", data);
+  ospRelease(data);
+
+  data = ospNewData(1, OSP_FLOAT4, sph_center_r+3*4);
+  ospCommit(data);
+  ospSetData(inst_sphere, "spheres", data);
   ospRelease(data);
 
   OSPMaterial sphereMaterial = ospNewMaterial2(rendererType.c_str(), "default");
   ospSet1f(sphereMaterial, "d", 1.0f);
   ospCommit(sphereMaterial);
   ospSetMaterial(sphere, sphereMaterial);
+  ospSetMaterial(inst_sphere, sphereMaterial);
   ospRelease(sphereMaterial);
 
   ospSet1i(sphere, "offset_radius", 12);
   ospCommit(sphere);
 
-  ospAddGeometry(world,sphere);
+  ospSet1i(inst_sphere, "offset_radius", 12);
+  ospCommit(inst_sphere);
+
+  ospAddGeometry(world, sphere);
+
+  OSPModel inst = ospNewModel();
+  ospAddGeometry(inst, inst_sphere);
+  ospRelease(inst_sphere);
+  osp::affine3f xf{
+    0.01, 0, 0,
+    0, 0.01, 0,
+    0, 0, 0.01,
+   -0.5f*radius, 1.6f*radius, cent
+  };
+  ospAddGeometry(world, ospNewInstance(inst, xf));
+  ospRelease(inst);
 
   OSPLight distant = ospNewLight(renderer, "distant");
   ASSERT_TRUE(distant) << "Failed to create lights";
