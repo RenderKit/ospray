@@ -78,7 +78,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         (screenSample.sampleID.y >= fb->size.y))
       continue;
 
-    float tMax = infinity;
+    float tMax = inf;
     // set ray t value for early ray termination if we have a maximum depth
     // texture
     if (self->maxDepthTexture) {
@@ -89,7 +89,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
       DifferentialGeometry lookup;
       initDgFromTexCoord(lookup, depthTexCoord);
-      tMax = min(get1f(self->maxDepthTexture, lookup), infinity);
+      tMax = min(get1f(self->maxDepthTexture, lookup), inf);
     }
     vec3f col = make_vec3f(0.f);
     float alpha = 0.f;

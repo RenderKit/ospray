@@ -36,7 +36,7 @@ void PanoramicCamera_initRay(Camera *uniform self,
 
   const float time = Camera_shutterTime(self, sample.time);
   const vec3f org = self->org;
-  setRay(ray, org, dir, self->nearClip, infinity, time);
+  setRay(ray, org, dir, self->nearClip, inf, time);
 }
 
 /*! create a new ispc-side version of a panoramiccamera - with given

@@ -382,7 +382,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);
-    setRay(ray, dg.P + eps * dg.Ng, fs.wi, 0.f, inf, ray.time);
+    setRay(ray, dg.P + eps * dg.Ng, fs.wi, ray.time);
     depth++;
     sampleDim += numBounceSampleDims;
   } while (reduce_max(Lw) > self->super.minContribution);

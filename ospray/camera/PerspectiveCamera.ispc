@@ -53,7 +53,7 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
   }
 
   const float time = Camera_shutterTime(_self, sample.time);
-  setRay(ray, org, normalize(dir), self->super.nearClip, infinity, time);
+  setRay(ray, org, normalize(dir), self->super.nearClip, inf, time);
 }
 
 /*! create a new ispc-side version of a perspectivecamera - with given

@@ -64,9 +64,6 @@ struct Ray {
   int instID;  //!< instance ID
 };
 
-// XXX why not inf??
-#define infinity (1e20f)
-
 /*! returns whether a ray has hit anything or not */
 inline bool noHit(const Ray &ray)
 { return ray.geomID < 0; }
@@ -74,26 +71,6 @@ inline bool noHit(const Ray &ray)
 /*! returns whether a ray has hit anything or not */
 inline bool hadHit(const Ray &ray)
 { return !noHit(ray); }
-
-/*! initialize a new ray with given parameters */
-inline void setRay(Ray &ray,
-                   const vec3f &ray_org,
-                   const vec3f &ray_dir,
-                   const float time = 0.f)
-{
-  ray.org = ray_org;
-  ray.dir = ray_dir;
-  if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
-  if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
-  if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
-  ray.t0  = 1e-6f;
-  ray.t   = infinity;
-  ray.time = time;
-  ray.mask = -1;
-  ray.geomID = -1;
-  ray.primID = -1;
-  ray.instID = -1;
-}
 
 /*! initialize a new ray with given parameters */
 inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
@@ -108,6 +85,15 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
   ray.geomID = -1;
   ray.primID = -1;
   ray.instID = -1;
+}
+
+/*! initialize a new ray with given parameters */
+inline void setRay(Ray &ray,
+                   const vec3f &ray_org,
+                   const vec3f &ray_dir,
+                   const float time = 0.f)
+{
+  setRay(ray, ray_org, ray_dir, 0.f, inf, time);
 }
 
 /*! helper function that performs a ray-plane test */

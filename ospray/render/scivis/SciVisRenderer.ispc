@@ -193,7 +193,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   // Provide the renderer to the intersector as it contains all
   // volumes, geometries, etc.
   vec4f color = make_vec4f(0.0f);
-  float depth = infinity;
+  float depth = inf;
   sample.normal = make_vec3f(0.0f);
   sample.albedo = make_vec3f(0.0f);
 
@@ -258,7 +258,6 @@ export void SciVisRenderer_set(void *uniform _self,
   self->numLights = numLights;
   self->oneSidedLighting = oneSidedLighting;
 
-
   // pre-computations:
   self->needToDoAO
     =  (self->aoSamples > 0)
@@ -272,7 +271,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
   self->super.beginFrame = SciVisRenderer_beginFrame;
-  SciVisRenderer_set(self, false, 4, infinity, make_vec3f(0.25f), false, NULL, 0, true);
+  SciVisRenderer_set(self, false, 4, inf, make_vec3f(0.25f), false, NULL, 0, true);
 
   return self;
 }

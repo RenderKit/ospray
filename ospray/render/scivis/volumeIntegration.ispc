@@ -299,7 +299,7 @@ Volume *SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform
 
   // The ray with bounds for the first intersected volume.
   Ray volumeRay = ray;
-  volumeRay.t0  = infinity;
+  volumeRay.t0  = inf;
 
   // Test each volume and find the first intersection.
   for (uniform int32 i = 0; i < renderer->super.model->volumeCount; i++) {

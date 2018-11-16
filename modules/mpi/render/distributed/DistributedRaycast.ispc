@@ -209,7 +209,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   uniform RegionInfo *uniform regionInfo = (uniform RegionInfo *uniform)perFrameData;
 
   // TODO WILL: It makes no sense that this fixes the visibility test issue.
-  sample.ray.t = infinity;
+  sample.ray.t = inf;
   sample.ray.t0 = 1e-6f;
 
   // TODO: This is basically a hack to do a tile-region visibility pre-pass
