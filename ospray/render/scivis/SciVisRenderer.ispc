@@ -67,6 +67,9 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
     albedo = info.albedo;
   }
 
+  // already advance segment
+  ray.t0 = ray.t + dg.epsilon;
+
   return make_vec4f(color, info.local_opacity);
 }
 
@@ -146,10 +149,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         // TODO WILL: Because the compute geom sample is now going
         // to set t to infinity, this ray is going to be sent off the back!
 
-        // iw, 6-6-18: adding at least a ulp to the ray distance, to
-        // guarantee forward progress - apparently the epsilon can at
-        // times be so small that it vanishes when adding,
-        geometryRay.t0 = geometryRay.t * 1.000001f;
+        // geometryRay.t0 is alreay updated in computeGeometrySample
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;
@@ -216,7 +216,7 @@ SciVisRenderer_beginFrame(uniform Renderer *uniform _self,
   uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
   self->super.fb = fb;
   Model *uniform model = self->super.model;
-  self->volumeEpsilon = self->super.epsilon;
+  self->volumeEpsilon = ulpEpsilon;
 
   if (model->volumeCount) {
     // Ray epsilon based on bounding box of all volumes.

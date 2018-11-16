@@ -242,7 +242,7 @@ void SpherePrecision::SetUp()
 {
   Base::SetUp();
 
-  float fov = std::min(150.f*std::tan(radius/std::abs(dist)), 120.0f);
+  float fov = 160.0f * std::min(std::tan(radius/std::abs(dist)), 1.0f);
   float cent = move_cam ? 0.0f : dist+radius;
 
   ospSet3f(camera, "pos", 0.f, 0.f, move_cam ? -dist - radius : 0.0f);

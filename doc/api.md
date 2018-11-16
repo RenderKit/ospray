@@ -956,9 +956,6 @@ all renderers are
 
   OSPLight[]  lights                       [data] array with handles of the [lights]
 
-  float       epsilon              10^-6^  ray epsilon to avoid self-intersections,
-                                           relative to scene diameter
-
   int         spp                       1  samples per pixel
 
   int         maxDepth                 20  maximum ray recursion depth

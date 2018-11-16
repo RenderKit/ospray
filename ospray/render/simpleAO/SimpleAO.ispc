@@ -20,6 +20,7 @@
 #include "render/util.ih"
 #include "math/math.ih"
 #include "math/random.ih"
+#include "math/sampling.ih"
 #include "common/Model.ih"
 #include "render/Renderer.ih"
 #include "render/simpleAO/SimpleAOMaterial.ih"
@@ -30,32 +31,6 @@ struct SimpleAO
   uniform int samplesPerFrame;
   uniform float aoRayLength;
 };
-
-void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
-{
-  biNorm0 = make_vec3f(1.f,0.f,0.f);
-  if (abs(dot(biNorm0,gNormal)) > .95f)
-    biNorm0 = make_vec3f(0.f,1.f,0.f);
-  biNorm1 = normalize(cross(biNorm0,gNormal));
-  biNorm0 = normalize(cross(biNorm1,gNormal));
-}
-
-inline vec3f getRotatedHaltonDir(const vec3f &gNormal,
-                                 const vec3f &biNorm0,
-                                 const vec3f &biNorm1,
-                                 uniform int sampleID,
-                                 const vec2f &rot,
-                                 const uniform float epsilon)
-{
-  const vec2f halton = HaltonSequence_get2D(sampleID);
-  const vec2f r = CranleyPattersonRotation(halton,rot);
-
-  const float w = sqrt(1.f-r.y);
-  const float x = cos((2.f*M_PI)*r.x)*w;
-  const float y = sin((2.f*M_PI)*r.x)*w;
-  const float z = sqrt(r.y)+epsilon;
-  return x*biNorm0+y*biNorm1+z*gNormal;
-}
 
 inline void shade_ao(uniform SimpleAO *uniform self,
                      varying vec3f &color,
@@ -99,20 +74,18 @@ inline void shade_ao(uniform SimpleAO *uniform self,
   const vec2f rot = RandomTEA__getFloats(rng);
 
   int hits = 0;
-  vec3f biNormU,biNormV;
   const vec3f N = dg.Ns;
-  getBinormals(biNormU,biNormV,N);
+  const linear3f localToWorld = frame(N);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec3f ao_dir = getRotatedHaltonDir(N, biNormU, biNormV,
-                                             sampleCnt*accumID+i,rot,
-                                             self->super.epsilon);
+    const vec2f halton = HaltonSequence_get2D(sampleCnt * accumID + i);
+    const vec2f r = CranleyPattersonRotation(halton, rot);
+    const vec3f local_ao_dir = cosineSampleHemisphere(r);
+    const vec3f ao_dir = localToWorld * local_ao_dir;
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P + (1e-3f * N), ao_dir);
-    ao_ray.t0 = self->super.epsilon;
-    ao_ray.t  = self->aoRayLength - self->super.epsilon;
-    if (dot(ao_ray.dir, N) < 0.05f || isOccluded(self->super.model,ao_ray))
+    setRay(ao_ray, dg.P, ao_dir, 0.0f, self->aoRayLength);
+    if (dot(ao_dir, N) < 0.05f || isOccluded(self->super.model, ao_ray))
       hits++;
   }
 

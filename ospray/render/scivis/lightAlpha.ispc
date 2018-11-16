@@ -40,9 +40,11 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
   while (1) {
     traceRay(model,ray);
 
+    float eps = 0.f;
     if (ray.geomID >= 0) { // surfaces
       DifferentialGeometry dg;
       postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
+      eps = dg.epsilon;
 
       uniform SciVisMaterial *scivisMaterial =
         (uniform SciVisMaterial *)dg.material;
@@ -97,7 +99,7 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
     if (--remaining_depth <= 0)
       return alpha;
 
-    ray.t0 = org_t + self->super.epsilon;
+    ray.t0 = org_t + eps;
     ray.t = org_t_max;
     ray.primID = -1;
     ray.geomID = -1;

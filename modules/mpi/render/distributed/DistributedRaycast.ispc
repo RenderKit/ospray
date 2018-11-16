@@ -186,8 +186,7 @@ float DRR_computeAmbientOcclusion(uniform DistributedRaycastRenderer *uniform se
     }
 
     Ray aoRay;
-    setRay(aoRay, dg.P + (self->super.epsilon * shadingNormal), aoDir,
-           self->super.epsilon, 1e20f);
+    setRay(aoRay, dg.P, aoDir);
 
     if (isOccluded(model, aoRay)
         || (ghostModel && isOccluded(ghostModel, aoRay)))
@@ -319,7 +318,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       }
       currentContribution = make_vec4f(geomColor * occlusion, dg.color.w);
 
-      geomRay.t0 = geomRay.t + self->super.epsilon;
+      geomRay.t0 = geomRay.t + dg.epsilon;
       geomRay.t = regionExit;
       geomRay.primID = -1;
       geomRay.geomID = -1;
@@ -356,15 +355,13 @@ export void DistributedRaycastRenderer_set(void *uniform _self,
                                            const uniform int uniform numRegions,
                                            const uniform int uniform aoSamples,
                                            void *uniform *uniform myRegions,
-                                           void *uniform *uniform ghostRegions,
-                                           const uniform float epsilon)
+                                           void *uniform *uniform ghostRegions)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
   // Correct the params the parent probably got wrong if we took
   // a list of OSPModels
   self->super.model = NULL;
-  self->super.epsilon = epsilon;
 
   self->regions = (uniform DistributedRegion *uniform)regions;
   self->numRegions = numRegions;

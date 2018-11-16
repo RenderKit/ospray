@@ -99,7 +99,6 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
 
   float occlusion = 0.f;
   const linear3f localToWorld = frame(shadingNormal);
-  const vec3f ao_org = dg.P + dg.epsilon * dg.Ns;
 
   for (uniform int i = 0; i < self->aoSamples; i++) {
     const vec2f halton = HaltonSequence_get2D(accumID * self->aoSamples + i);
@@ -113,7 +112,7 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
     }
 
     Ray ao_ray;
-    setRay(ao_ray, ao_org, ao_dir, 0.f, self->aoDistance);
+    setRay(ao_ray, dg.P, ao_dir, 0.f, self->aoDistance);
 
     if (isOccluded(self->super.model, ao_ray))
       occlusion += 1.f;
@@ -147,8 +146,6 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
                          const varying vec3i &sampleID,
                          const uniform float quality)
 {
-  const vec3f P = dg.P;
-
   //calculate shading for all lights
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
@@ -173,12 +170,11 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
       if (self->shadowsEnabled) {
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > self->super.minContribution) {
-          float eps = dg.epsilon;
+          vec3f P = dg.P;
           if (dot(dg.Ng, light.dir) < 0.0f)
-            eps = -eps; 
+            P = P - (2.f * dg.epsilon) * dg.Ng;
           Ray shadowRay;
-          setRay(shadowRay, P + eps * dg.Ng, light.dir, 0.0f,
-              light.dist - dg.epsilon, ray.time);
+          setRay(shadowRay, P, light.dir, 0.0f, light.dist, ray.time);
           const float light_alpha = lightAlpha(self, shadowRay,
               self->super.model,
               max_contrib,

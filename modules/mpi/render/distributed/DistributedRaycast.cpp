@@ -182,7 +182,6 @@ namespace ospray {
       ghostRegionIEs.clear();
 
       numAoSamples = getParam1i("aoSamples", 0);
-      epsilon = getParam1f("epsilon", 1e-6f);
 
       camera = reinterpret_cast<PerspectiveCamera*>(getParamObject("camera"));
       if (!camera) {
@@ -220,19 +219,12 @@ namespace ospray {
 
       exchangeModelBounds();
 
-      // We need to compute the epsilon adjustment here to get it right in
-      // case we took an OSPData of models instead of a single model
-      const float diameter = regions[0]->bounds.empty() ?
-        1.0f : length(regions[0]->bounds.size());
-      epsilon *= diameter;
-
       ispc::DistributedRaycastRenderer_set(getIE(),
                                            allRegions.data(),
                                            static_cast<int>(allRegions.size()),
                                            numAoSamples,
                                            regionIEs.data(),
-                                           ghostRegionIEs.data(),
-                                           epsilon);
+                                           ghostRegionIEs.data());
     }
 
     float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,

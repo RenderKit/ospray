@@ -106,10 +106,10 @@ inline void postIntersect(uniform Model *uniform model,
   dg.materialID = -1; // make sure this is properly initialized
   dg.material = NULL;
 
-  if (flags & DG_COLOR)
+  cif (flags & DG_COLOR)
     dg.color = make_vec4f(1.f);
 
-  if (flags & DG_TANGENTS) {
+  cif (flags & DG_TANGENTS) {
     dg.dPds = make_vec3f(1.f, 0.f, 0.f);
     dg.dPdt = make_vec3f(0.f, 1.f, 0.f);
   }
@@ -158,16 +158,25 @@ inline void postIntersect(uniform Model *uniform model,
 #define  DG_NG_NORMALIZE   (DG_NG | DG_NORMALIZE)
 #define  DG_NS_NORMALIZE   (DG_NS | DG_NORMALIZE)
 
-  if ((flags & DG_NG_NORMALIZE) == DG_NG_NORMALIZE)
-    dg.Ng = normalize(dg.Ng);
-  if ((flags & DG_NS_NORMALIZE) == DG_NS_NORMALIZE)
+
+  vec3f ffnng = normalize(dg.Ng);
+
+  cif ((flags & DG_NG_NORMALIZE) == DG_NG_NORMALIZE)
+    dg.Ng = ffnng;
+  cif ((flags & DG_NS_NORMALIZE) == DG_NS_NORMALIZE)
     dg.Ns = normalize(dg.Ns);
 
-  if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
-    if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);
-  if ((flags & DG_NS_FACEFORWARD) == DG_NS_FACEFORWARD)
+  const bool flip = dot(ray.dir, dg.Ng) >= 0.f;
+  if (flip)
+    ffnng = neg(ffnng);
+
+  cif ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
+    if (flip)
+      dg.Ng = neg(dg.Ng);
+  cif ((flags & DG_NS_FACEFORWARD) == DG_NS_FACEFORWARD)
     if (dot(dg.Ng,dg.Ns) < 0.f) dg.Ns = neg(dg.Ns);
 
+  dg.P = dg.P + dg.epsilon * ffnng;
 #undef  DG_NG_FACEFORWARD
 #undef  DG_NS_FACEFORWARD
 #undef  DG_NG_NORMALIZE

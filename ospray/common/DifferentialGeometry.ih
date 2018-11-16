@@ -44,7 +44,7 @@ typedef enum
     information on the actual geometry that a ray has hit */
 struct DifferentialGeometry
 {
-  vec3f P;  //!< location of the hit-point
+  vec3f P;  //!< location of the hit-point, includes epsilon offset towards front side
   vec3f Ng; /*!< geometry normal if DG_NG was set, possibly not
                normalized/facefordwarded if DG_NORMALIZE and/or
                DG_FACEFORWARD weren't specified */
@@ -68,7 +68,10 @@ struct DifferentialGeometry
   float epsilon; //!< adaptive epsilon */
 };
 
+// assumed precision of intersection routines
+#define ulpEpsilon 0x1.fp-21
+
 inline float calcEpsilon(const vec3f& P, float t)
 {
-  return reduce_max(make_vec4f(abs(P), t)) * 0x1.fp-21;
+  return reduce_max(make_vec4f(abs(P), t)) * ulpEpsilon;
 }

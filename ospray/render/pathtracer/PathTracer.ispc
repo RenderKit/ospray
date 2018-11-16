@@ -170,7 +170,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
           // test for shadows
           Ray shadowRay;
-          setRay(shadowRay, dg.P, ls.dir, 0.0f, ls.dist - eps, ray.time);
+          setRay(shadowRay, dg.P, ls.dir, 0.0f, ls.dist, ray.time);
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
@@ -308,10 +308,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
         // test for shadows
         Ray shadowRay;
-        float eps = dg.epsilon;
+        vec3f org = dg.P;
         if (dot(dg.Ng, ls.dir) < 0.f)
-          eps = -eps;
-        setRay(shadowRay, dg.P + eps * dg.Ng, ls.dir, 0.f, ls.dist - dg.epsilon, ray.time);
+          org = org - (2.0f * dg.epsilon) * dg.Ng;
+        setRay(shadowRay, org, ls.dir, 0.f, ls.dist, ray.time);
 
         const vec3f nextLw = Lw * fe.value;
 
@@ -364,9 +364,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // update currentMedium if we hit a medium interface
     // TODO: support nested dielectrics
-    float eps = dg.epsilon;
+    vec3f ray_org = dg.P;
     if (fs.type & BSDF_TRANSMISSION) {
-      eps = -eps;
+      ray_org = ray_org - (2.0f * dg.epsilon) * dg.Ng;
       foreach_unique(m in material) {
         if (m != NULL)
           m->selectNextMedium(m, dg, currentMedium);
@@ -382,7 +382,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);
-    setRay(ray, dg.P + eps * dg.Ng, fs.wi, ray.time);
+    setRay(ray, ray_org, fs.wi, ray.time);
     depth++;
     sampleDim += numBounceSampleDims;
   } while (reduce_max(Lw) > self->super.minContribution);

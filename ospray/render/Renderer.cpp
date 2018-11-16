@@ -31,8 +31,6 @@ namespace ospray {
 
   void Renderer::commit()
   {
-    autoEpsilon = getParam1i("autoEpsilon", true);
-    epsilon = getParam1f("epsilon", 1e-6f);
     spp = std::max(1, getParam1i("spp", 1));
     const int32 maxDepth = std::max(0, getParam1i("maxDepth", 20));
     const float minContribution = getParam1f("minContribution", 0.001f);
@@ -54,17 +52,10 @@ namespace ospray {
 
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
-      if (model) {
-        const float diameter = model->bounds.empty() ?
-                               1.0f : length(model->bounds.size());
-        epsilon *= diameter;
-      }
 
       ispc::Renderer_set(getIE()
           , model ? model->getIE() : nullptr
           , camera ? camera->getIE() : nullptr
-          , autoEpsilon
-          , epsilon
           , spp
           , maxDepth
           , minContribution
