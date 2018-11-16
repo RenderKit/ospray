@@ -182,7 +182,7 @@ include(GNUInstallDirs)
 macro(ospray_install_library name component export)
 
   if("${export}" STREQUAL "TRUE")
-    set(_export_args EXPORT ${name}-targets)
+    set(_export_args EXPORT osprayTargets)
   endif()
 
   install(TARGETS ${name} ${_export_args}
@@ -211,21 +211,6 @@ macro(ospray_install_library name component export)
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
   )
-
-  if ("${export}" STREQUAL "TRUE")
-    # Export targets to install directory
-    # Note (Qi): this creates one file per target, thus we have to include all
-    #   of them when compiling ospray related applications
-    # --> changed from:
-    # SET(OSPRAY_TARGET_LIST ${OSPRAY_TARGET_LIST} ${name}
-    #     CACHE INTERNAL "" FORCE)
-    set_property(GLOBAL APPEND PROPERTY OSPRAY_TARGETS_EXPORT ${name})
-    install(EXPORT ${name}-targets
-      FILE ospray-${name}-targets.cmake
-      NAMESPACE ospray::
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}
-    )
-  endif()
 
 endmacro()
 

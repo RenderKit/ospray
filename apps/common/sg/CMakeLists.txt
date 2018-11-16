@@ -157,7 +157,6 @@ ospray_create_library(ospray_sg SHARED
   ${CHOMBO_SRCS}
 
 LINK
-
   ospray
   ospray_common
   ospray_tfn
@@ -165,7 +164,6 @@ LINK
   ${HDF5_LIBRARIES}
   ${VTK_LIBRARIES}
   ${OPENIMAGEIO_LIBRARIES}
-
 )
 
 ## Install headers in SDK ##
