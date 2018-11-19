@@ -273,9 +273,8 @@ void GLFWOSPRayWindow::display()
   // clock used to compute frame rate
   static auto displayStart = std::chrono::high_resolution_clock::now();
 
-    ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
-    ImGui::Begin("Tutorial Controls", nullptr, flags);
   if (showUi && uiCallback) {
+    ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
     ImGui::Begin("Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
     uiCallback();
     ImGui::End();
