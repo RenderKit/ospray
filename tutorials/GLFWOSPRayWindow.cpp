@@ -30,9 +30,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
     : windowSize(windowSize),
       worldBounds(worldBounds),
       model(model),
-      renderer(renderer),
-      framebuffer(nullptr),
-      showUi(true)
+      renderer(renderer)
 {
   if (activeWindow != nullptr)
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -80,17 +78,16 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
       activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
   });
 
-  glfwSetKeyCallback(
-      glfwWindow,
-      [](GLFWwindow *, int key, int, int action, int) {
-        if (action == GLFW_PRESS) {
-          switch (key) {
-          case GLFW_KEY_G:
-            activeWindow->showUi = !(activeWindow->showUi);
-            break;
-          }
-        }
-      });
+  glfwSetKeyCallback(glfwWindow,
+                     [](GLFWwindow *, int key, int, int action, int) {
+                       if (action == GLFW_PRESS) {
+                         switch (key) {
+                         case GLFW_KEY_G:
+                           activeWindow->showUi = !(activeWindow->showUi);
+                           break;
+                         }
+                       }
+                     });
 
   // OSPRay setup
 
@@ -275,7 +272,8 @@ void GLFWOSPRayWindow::display()
 
   if (showUi && uiCallback) {
     ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
-    ImGui::Begin("Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
+    ImGui::Begin(
+        "Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
     uiCallback();
     ImGui::End();
   }

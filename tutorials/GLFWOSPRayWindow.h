@@ -52,27 +52,27 @@ class GLFWOSPRayWindow
 
   ospcommon::vec2i windowSize;
   ospcommon::box3f worldBounds;
-  OSPModel model;
-  OSPRenderer renderer;
+  OSPModel model       = nullptr;
+  OSPRenderer renderer = nullptr;
 
   // GLFW window instance
-  GLFWwindow *glfwWindow;
+  GLFWwindow *glfwWindow = nullptr;
 
   // Arcball camera instance
   std::unique_ptr<ArcballCamera> arcballCamera;
 
   // OSPRay objects managed by this class
-  OSPCamera camera;
-  OSPFrameBuffer framebuffer;
+  OSPCamera camera           = nullptr;
+  OSPFrameBuffer framebuffer = nullptr;
 
   // OpenGL framebuffer texture
-  GLuint framebufferTexture;
+  GLuint framebufferTexture = 0;
 
   // optional registered display callback, called before every display()
   std::function<void(GLFWOSPRayWindow *)> displayCallback;
 
   // toggles display of ImGui UI, if an ImGui callback is provided
-  bool showUi;
+  bool showUi = true;
 
   // optional registered ImGui callback, called during every frame to build UI
   std::function<void()> uiCallback;
