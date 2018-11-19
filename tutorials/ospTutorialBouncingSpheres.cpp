@@ -284,9 +284,6 @@ OSPRenderer createRenderer()
   // set the lights to the renderer
   ospSetData(renderer, "lights", lightsData);
 
-  // increase the samples per pixel
-  ospSet1i(renderer, "spp", 4);
-
   // commit the renderer
   ospCommit(renderer);
 
