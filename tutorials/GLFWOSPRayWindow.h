@@ -71,6 +71,9 @@ class GLFWOSPRayWindow
   // optional registered display callback, called before every display()
   std::function<void(GLFWOSPRayWindow *)> displayCallback;
 
+  // toggles display of ImGui UI, if an ImGui callback is provided
+  bool showUi;
+
   // optional registered ImGui callback, called during every frame to build UI
   std::function<void()> uiCallback;
 };

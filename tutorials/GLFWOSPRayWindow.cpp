@@ -31,7 +31,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
       worldBounds(worldBounds),
       model(model),
       renderer(renderer),
-      framebuffer(nullptr)
+      framebuffer(nullptr),
+      showUi(true)
 {
   if (activeWindow != nullptr)
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -78,6 +79,18 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
     if (!io.WantCaptureMouse)
       activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
   });
+
+  glfwSetKeyCallback(
+      glfwWindow,
+      [](GLFWwindow *, int key, int, int action, int) {
+        if (action == GLFW_PRESS) {
+          switch (key) {
+          case GLFW_KEY_G:
+            activeWindow->showUi = !(activeWindow->showUi);
+            break;
+          }
+        }
+      });
 
   // OSPRay setup
 
@@ -260,9 +273,10 @@ void GLFWOSPRayWindow::display()
   // clock used to compute frame rate
   static auto displayStart = std::chrono::high_resolution_clock::now();
 
-  if (uiCallback) {
     ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
     ImGui::Begin("Tutorial Controls", nullptr, flags);
+  if (showUi && uiCallback) {
+    ImGui::Begin("Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
     uiCallback();
     ImGui::End();
   }
@@ -312,7 +326,7 @@ void GLFWOSPRayWindow::display()
 
   glEnd();
 
-  if (uiCallback) {
+  if (showUi && uiCallback) {
     ImGui::Render();
   }
 
