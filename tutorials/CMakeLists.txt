@@ -22,7 +22,9 @@ find_package(OpenGL 2 REQUIRED)
 
 find_package(glfw3 QUIET)
 if (TARGET glfw)
-  get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+  get_property(glfw3_INCLUDE_DIRS TARGET glfw
+    PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+  )
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/ospray/include)
@@ -38,9 +40,11 @@ ospray_create_application(ospTutorialSpheres
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   ospTutorialSpheres.cpp
+  imgui/imgui_impl_glfw_gl3.cpp
 LINK
   ospray
   ospray_common
+  ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}
 )
@@ -49,9 +53,11 @@ ospray_create_application(ospTutorialBouncingSpheres
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   ospTutorialBouncingSpheres.cpp
+  imgui/imgui_impl_glfw_gl3.cpp
 LINK
   ospray
   ospray_common
+  ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}
 )
@@ -60,9 +66,11 @@ ospray_create_application(ospTutorialStructuredVolume
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   ospTutorialStructuredVolume.cpp
+  imgui/imgui_impl_glfw_gl3.cpp
 LINK
   ospray
   ospray_common
+  ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}
 )

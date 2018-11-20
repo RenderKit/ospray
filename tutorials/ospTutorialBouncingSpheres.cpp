@@ -19,6 +19,8 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
+#include <imgui.h>
+
 using namespace ospcommon;
 
 struct Sphere
@@ -282,9 +284,6 @@ OSPRenderer createRenderer()
   // set the lights to the renderer
   ospSetData(renderer, "lights", lightsData);
 
-  // increase the samples per pixel
-  ospSet1i(renderer, "spp", 4);
-
   // commit the renderer
   ospCommit(renderer);
 
@@ -377,6 +376,14 @@ int main(int argc, const char **argv)
   // frame
   glfwOSPRayWindow->registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)>(displayCallback));
+
+  glfwOSPRayWindow->registerImGuiCallback([=]() {
+    static int spp = 1;
+    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
+      ospSet1i(renderer, "spp", spp);
+      ospCommit(renderer);
+    }
+  });
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
