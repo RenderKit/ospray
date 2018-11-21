@@ -17,6 +17,8 @@
 #include <vector>
 #include "GLFWOSPRayWindow.h"
 
+#include <imgui.h>
+
 using namespace ospcommon;
 
 // Create a single unstructured volume consisting of three differently shaped
@@ -226,6 +228,14 @@ int main(int argc, const char **argv)
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), model, renderer));
+
+  glfwOSPRayWindow->registerImGuiCallback([=]() {
+    static int spp = 1;
+    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
+      ospSet1i(renderer, "spp", spp);
+      ospCommit(renderer);
+    }
+  });
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
