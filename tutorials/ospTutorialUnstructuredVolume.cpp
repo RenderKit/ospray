@@ -25,70 +25,71 @@ using namespace ospcommon;
 // cells: tetrahedron, hexahedron and wedge. 
 OSPVolume createVolume()
 {
-  // create an unstructured volume
+  // create an unstructured volume object
   OSPVolume volume = ospNewVolume("unstructured_volume");
 
   // build and set volume cells
   {
-    // define tetrahedron parameters
-    const float tSize = 0.5f;
-    const float tX = .6f, tY = -.2f, tZ = 0.f;
-
     // define hexahedron parameters
-    const float hSize = 0.5f;
-    const float hX = -.0f, hY = .2f, hZ = 0.f;
+    const float hSize = .5f;
+    const float hX = -.5f, hY = -.5f, hZ = 0.f;
 
     // define wedge parameters
-    const float wSize = 0.5f;
-    const float wX = -.6f, wY = -.2f, wZ = 0.f;
+    const float wSize = .5f;
+    const float wX = .5f, wY = -.5f, wZ = 0.f;
 
-    // define vertcies
-    std::vector<vec3f> vertices = {
+    // define tetrahedron parameters
+    const float tSize = .5f;
+    const float tX = .5f, tY = .5f, tZ = 0.f;
 
-        // tetrahedron
-        { -tSize + tX, -tSize + tY, -tSize + tZ },
-        {  tSize + tX, -tSize + tY, -tSize + tZ },
-        {    0.f + tX, -tSize + tY,  tSize + tZ },
-        {    0.f + tX,  tSize + tY,    0.f + tZ },
-
+    // define vertex positions, duplicated vertices
+    // that can be shared between cells are commented out
+    std::vector<vec3f> vertices =
+    {
         // hexahedron bottom quad
-        { -hSize + hX, -hSize + hY,  hSize + hZ },
-        {  hSize + hX, -hSize + hY,  hSize + hZ },
-        {  hSize + hX, -hSize + hY, -hSize + hZ },
-        { -hSize + hX, -hSize + hY, -hSize + hZ },
+        { -hSize + hX, -hSize + hY,  hSize + hZ },    // 0
+        {  hSize + hX, -hSize + hY,  hSize + hZ },    // 1
+        {  hSize + hX, -hSize + hY, -hSize + hZ },    // 2
+        { -hSize + hX, -hSize + hY, -hSize + hZ },    // 3
         // hexahedron top quad
-        { -hSize + hX,  hSize + hY,  hSize + hZ },
-        {  hSize + hX,  hSize + hY,  hSize + hZ },
-        {  hSize + hX,  hSize + hY, -hSize + hZ },
-        { -hSize + hX,  hSize + hY, -hSize + hZ },
+        { -hSize + hX,  hSize + hY,  hSize + hZ },    // 4
+        {  hSize + hX,  hSize + hY,  hSize + hZ },    // 5
+        {  hSize + hX,  hSize + hY, -hSize + hZ },    // 6
+        { -hSize + hX,  hSize + hY, -hSize + hZ },    // 7
 
-        // wedge bottom triangle
-        { -wSize + wX, -wSize + wY, -wSize + wZ },
-        {  wSize + wX, -wSize + wY, -wSize + wZ },
-        {    0.f + wX, -wSize + wY,  wSize + wZ },
-        // wedge top triangle
-        { -wSize + wX,  wSize + wY, -wSize + wZ },
-        {  wSize + wX,  wSize + wY, -wSize + wZ },
-        {    0.f + wX,  wSize + wY,  wSize + wZ }
+        // wedge bottom triangle, sharing 2 hexahedron vertices
+        // { -wSize + wX, -wSize + wY, -wSize + wZ }, // 1
+        {  wSize + wX, -wSize + wY,    0.f + wZ },    // 8
+        // { -wSize + wX, -wSize + wY,  wSize + wZ }, // 2
+        // wedge top triangle, sharing 2 hexahedron vertices
+        // { -wSize + wX,  wSize + wY, -wSize + wZ }, // 5
+        {  wSize + wX,  wSize + wY,    0.f + wZ },    // 9
+        // { -wSize + wX,  wSize + wY,  wSize + wZ }, // 6
+
+        // tetrahedron, sharing 3 vertices
+        // { -tSize + tX, -tSize + tY, -tSize + tZ }, // 5
+        // {  tSize + tX, -tSize + tY,    0.f + tZ }, // 9
+        // { -tSize + tX, -tSize + tY,  tSize + tZ }, // 6
+        {    0.f + tX,  tSize + tY,    0.f + tZ }     // 10
     };
 
     // define cell field value
     std::vector<float> cellFields = { 0.2f, 5.f, 9.8f };
 
-    // define indices to form hexahedral
-    std::vector<vec4i> indices = {
+    // shape cells by defining indices
+    std::vector<vec4i> indices =
+    {
+        // hexahedron
+        {  0,  1,  2,  3 },
+        {  4,  5,  6,  7 },
+
+        // wedge
+        { -2, -2,  1,  8 },
+        {  2,  5,  9,  6 },
 
         // tetrahedron
         { -1, -1, -1, -1 },
-        {  0,  1,  2,  3 },
-
-        // hexahedron
-        {  4,  5,  6,  7 },
-        {  8,  9, 10, 11 },
-
-        // wedge
-        { -2, -2, 12, 13 },
-        { 14, 15, 16, 17 }
+        {  5,  9,  6, 10 }
     };
 
     // create data objects
@@ -117,10 +118,12 @@ OSPVolume createVolume()
         ospNewTransferFunction("piecewise_linear");
 
     // prepare color and opacity data
-    std::vector<vec3f> tfColors = {
+    std::vector<vec3f> tfColors =
+    {
         { 0.f, 0.f, 1.f },
         { 0.f, 1.f, 0.f },
-        { 1.f, 0.f, 0.f } };
+        { 1.f, 0.f, 0.f }
+    };
     std::vector<float> tfOpacities = { 0.01f, 0.01f, 0.01f };
 
     // create data objects
