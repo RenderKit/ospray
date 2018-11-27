@@ -164,6 +164,7 @@ static void Cylinders_postIntersect(Geometry *uniform _self,
 {
   uniform Cylinders *uniform self = (uniform Cylinders *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
+  dg.epsilon = self->radius * ulpEpsilon;
 
   if ((flags & DG_COLOR) && self->color) {
     uint32 colorID = 0;

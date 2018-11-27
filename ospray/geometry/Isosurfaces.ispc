@@ -119,6 +119,8 @@ static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
   }
 
   dg.Ng = dg.Ns;
+  // we use just a few solver iterations, hence a rather huge error
+  dg.epsilon = ray.t * (2048.f*ulpEpsilon);
 
   if (flags & DG_COLOR) {
    TransferFunction *uniform xf = self->volume->transferFunction;
