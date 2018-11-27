@@ -90,6 +90,12 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
   dg.Ng = dg.Ns = ray.Ng;
 
+  uint8 * spherePtr = self->data + self->stride*((int64)ray.primID);
+  float radius = self->radius;
+  if (self->offset_radius >= 0)
+    radius = *((float *)(spherePtr + self->offset_radius));
+  dg.epsilon = radius * ulpEpsilon;
+
   if ((flags & DG_COLOR) && self->color) {
     uint32 colorID = 0;
     if (self->offset_colorID >= 0) {
@@ -157,7 +163,6 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
-  // from here on it's the original intersection code from ospray/embree2
   uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
   uniform float radius = self->radius;
   if (self->offset_radius >= 0) {
@@ -168,6 +173,8 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   const vec3f d = ray->dir;
   const float rd2 = 1.0f / dot(d, d); // 1/a
   const vec3f CO = center - ray->org;
+  // transformation to avoid missing a small sphere which is far away:
+  // the standard c=CO^2-r^2 would quickly loose term r due to float arithmetic
   const float projCO = dot(CO, d) * rd2; // in ray-space
   const vec3f perp = CO - projCO * d;
   const float l2 = dot(perp, perp);
@@ -176,15 +183,22 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
     return;
 
   float td = sqrt((r2 - l2) * rd2);
-#if 1
   const float t_in = projCO - td;
   const float t_out = projCO + td;
-#else // TODO: verify
-  const float t1 = projCO + floatbits(signbits(projCO)^intbits(td));
-  const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
-  const float t_in = min(t1, t2);
-  const float t_out = max(t1, t2);
-#endif
+  // above solutions are problematic if rays starts close to the sphere
+  // (due to catastrophic cancellation, because then |projCO| ~ td)
+  // the usual recommendation is to choose the one solution with same sign:
+  //   const float t1 = projCO + floatbits(signbits(projCO)|intbits(td));
+  // and compute the other solution via t1*t2=c/a:
+  //   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
+  // this however does not help, in paricular for large sphere, because |CO| ~ r
+  // slightly better alternative, but costly sqrt:
+  //   const float f = sqrt(dot(CO, CO));
+  //   const float t2 = (f - radius) * (f + radius) / t1 * rd2;
+  // the only variant I found that has high enough precision to avoid
+  // self-intersections of 2ndary rays is to (re-)compute most terms (CO, dot,
+  // r2, t2) with doubles; large spheres are a rare usecase for OSPRay, thus we
+  // use instead as a workaround an additional, radius-dependent epsilon
 
   bool hit = false;
   // avoid short-circuiting &&

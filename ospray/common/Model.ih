@@ -115,7 +115,7 @@ inline void postIntersect(uniform Model *uniform model,
   }
 
   dg.P = ray.org + ray.t * ray.dir;
-  dg.epsilon = calcEpsilon(dg.P, ray.t);
+  dg.epsilon = 0.f; // per default no geometry-type specific epsilon
 
   // a first hack for instancing: problem is that ospray assumes that
   // 'ray.geomid' specifies the respective sub-geometry of a model
@@ -151,6 +151,9 @@ inline void postIntersect(uniform Model *uniform model,
       }
     }
   }
+
+  // merge geometry-type specific epsilon with general epsilon
+  dg.epsilon = max(dg.epsilon, calcEpsilon(dg.P, ray.t));
 
 // some useful combinations; enums unfortunately don't work :-(
 #define  DG_NG_FACEFORWARD (DG_NG | DG_FACEFORWARD)

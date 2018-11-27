@@ -44,6 +44,7 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
   }
   dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
   dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
+  // TODO scale dg.epsilon as well?
 
   if (flags & DG_TANGENTS) {
     dg.dPds = xfmVector(self->xfm,dg.dPds);
