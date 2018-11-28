@@ -584,12 +584,14 @@ OSPRAY_CATCH_BEGIN
                                 data,
                                 sharedBuffer ? OSP_DATA_SHARED_BUFFER : 0);
 
+  ospCommit(data_handle);
   ospSetObject(texture, "data", data_handle);
   ospRelease(data_handle);
 
   ospSet1i(texture, "type", static_cast<int>(type));
   ospSet1i(texture, "flags", static_cast<int>(flags));
   ospSet2i(texture, "size", size.x, size.y);
+  ospCommit(texture);
 
   return texture;
 }

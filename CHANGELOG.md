@@ -4,6 +4,7 @@ Version History
 ### Changes in v1.7.3:
 
 -   Make sure a "`default`" device can always be created
+-   Fix `ospNewTexture2D` (completely implementing old behaviour)
 
 ### Changes in v1.7.2:
 
