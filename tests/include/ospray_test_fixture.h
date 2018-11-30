@@ -199,5 +199,15 @@ private:
   std::vector<float> volumetricData;
 };
 
+// Test a texture colored by a volume.  Creates a sphere colored by the torus volume
+// It's parametrized with type of the renderer.
+class DepthCompositeVolume : public Base, public ::testing::TestWithParam<const char*> {
+public:
+  DepthCompositeVolume();
+  virtual void SetUp();
+private:
+  std::vector<float> volumetricData;
+};
+
 } // namespace OSPRayTestScenes
 
