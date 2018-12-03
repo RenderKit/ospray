@@ -25,23 +25,22 @@ namespace OSPRayTestScenes {
 //creates a torus
 // volumetric data: stores data of torus
 // returns created ospvolume of torus
-static OSPVolume CreateTorus(std::vector<float>& volumetricData)
+static OSPVolume CreateTorus(std::vector<float>& volumetricData, const int size)
 {
-  int size = 250;
-
   volumetricData.resize(size*size*size, 0);
 
-  float r = 30;
-  float R = 80;
+  const float r = 30;
+  const float R = 80;
+  const int size_2 = size/2;
 
   for (int x = 0; x < size; ++x) {
     for (int y = 0; y < size; ++y) {
       for (int z = 0; z < size; ++z) {
-        float X = x - size / 2;
-        float Y = y - size / 2;
-        float Z = z - size / 2;
+        const float X = x - size_2;
+        const float Y = y - size_2;
+        const float Z = z - size_2;
 
-        float d = (R - std::sqrt(X*X + Y*Y));
+        const float d = (R - std::sqrt(X*X + Y*Y));
         volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
       }
     }
@@ -642,7 +641,7 @@ void Torus::SetUp()
 
   ospSet1f(renderer, "epsilon", 0.01);
 
-  OSPVolume torus = CreateTorus(volumetricData);
+  OSPVolume torus = CreateTorus(volumetricData, 256);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
@@ -915,7 +914,7 @@ void TextureVolume::SetUp()
 
   ospSet1f(renderer, "epsilon", 0.01);
 
-  OSPVolume torus = CreateTorus(volumetricData);
+  OSPVolume torus = CreateTorus(volumetricData, 256);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
@@ -972,24 +971,24 @@ void DepthCompositeVolume::SetUp()
 {
   Base::SetUp();
 
-  float cam_pos[] = {0.f, 0.f, 1.0f};
-  float cam_up[] = {0.f, 1.f, 0.f};
-  float cam_view[] = {0.0f, 0.f, -1.f};
+  const float cam_pos[] = {0.f, 0.f, 1.0f};
+  const float cam_up[] = {0.f, 1.f, 0.f};
+  const float cam_view[] = {0.0f, 0.f, -1.f};
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
 
   ospSet1f(renderer, "epsilon", 0.01);
 
-  OSPVolume torus = CreateTorus(volumetricData);
+  OSPVolume torus = CreateTorus(volumetricData, 256);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
-  float colors[] = {
+  const float colors[] = {
     1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f
   };
-  float opacites[] = { 1.0f, 1.0f };
+  const float opacites[] = { 0.05f, 0.1f };
   OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
   ospSetData(transferFun, "colors", tfColorData);
   ospRelease(tfColorData);
@@ -1007,7 +1006,7 @@ void DepthCompositeVolume::SetUp()
   float* data = new float[imgSize.x*imgSize.y];
   for (size_t y = 0; y < imgSize.y; y++) {
     for (size_t x = 0; x < imgSize.x; x++) {
-      size_t index = imgSize.x*y + x;
+      const size_t index = imgSize.x*y + x;
       if (x < imgSize.x/3) {
         data[index] = 999.f;
       } else if (x < (imgSize.x*2)/3) {
