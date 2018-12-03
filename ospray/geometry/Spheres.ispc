@@ -191,7 +191,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   //   const float t1 = projCO + floatbits(signbits(projCO)|intbits(td));
   // and compute the other solution via t1*t2=c/a:
   //   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
-  // this however does not help, in paricular for large sphere, because |CO| ~ r
+  // this however does not help, in particular for large spheres, because |CO| ~ r
   // slightly better alternative, but costly sqrt:
   //   const float f = sqrt(dot(CO, CO));
   //   const float t2 = (f - radius) * (f + radius) / t1 * rd2;

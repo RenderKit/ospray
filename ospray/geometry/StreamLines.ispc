@@ -100,9 +100,10 @@ inline void intersectCylinder(varying Ray &ray,
   const float rsd = rcp(dot(s, d));
   const float tA = dot(s, f) * rsd;
   const float tB = tA + s2 * rsd;
-
-  const float cyl_t_in = max(tin, min(tA, tB));
-  const float cyl_t_out = min(tout, max(tA, tB));
+  // rsd (and thus tA and tB) can be NaN if the ray is perfectly perpendicular
+  // to the cylinder; filter NaNs by having tin/tout as 2nd argument to min/max
+  const float cyl_t_in = max(min(tA, tB), tin);
+  const float cyl_t_out = min(max(tA, tB), tout);
 
   if (cyl_t_in < cyl_t_out) {
     t_in = cyl_t_in;

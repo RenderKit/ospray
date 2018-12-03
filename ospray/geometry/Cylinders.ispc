@@ -117,8 +117,10 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
   const float tA = dot(s, f) * rsd;
   const float tS = s2 * rsd;
   const float tB = tA + tS;
-  const float tmin = max(ray->t0, min(tA, tB));
-  const float tmax = min(ray->t, max(tA, tB));
+  // rsd (and thus tA and tB) can be NaN if the ray is perfectly perpendicular
+  // to the cylinder; filter NaNs by having ray t as 2nd argument to min/max
+  const float tmin = max(min(tA, tB), ray->t0);
+  const float tmax = min(max(tA, tB), ray->t);
 
   bool hit = false;
   // avoid short-circuiting &&
