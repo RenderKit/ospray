@@ -636,6 +636,7 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
       const float t_hit = t0 + (t1 - t0) * ((piso - p0) / (p1 - p0));
       if (t_hit < ray.t) {
         ray.t = t_hit;
+        ray.u = (t1 - t0) * 0.125f;
         ray.geomID = geomID;
         ray.primID = i;
         return;
@@ -717,6 +718,7 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
       const float t_hit = t0 + (t1 - t0) * ((piso - p0) / (p1 - p0));
       if (t_hit < ray.t) {
         ray.t = t_hit;
+        ray.u = (t1 - t0) * 0.125f;
         ray.geomID = geomID;
         ray.primID = iso;
         return;
@@ -776,6 +778,7 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
       const float t_hit = t0 + (t1 - t0) * ((piso - p0) / (p1 - p0));
       if (t_hit < ray.t) {
         ray.t = t_hit;
+        ray.u = (t1 - t0) * 0.125f;
         ray.geomID = geomID;
         ray.primID = iso;
         return;

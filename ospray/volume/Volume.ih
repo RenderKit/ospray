@@ -92,6 +92,7 @@ struct Volume {
                                       uniform float *uniform isovalues,
                                       uniform int numIsovalues,
                                       uniform size_t geomID,
+                // ray.u contains ray-space intersection error, i.e. the epsilon
                                       varying Ray &ray);
 
   /*! Bounding box for the volume in world coordinates.

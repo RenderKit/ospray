@@ -153,7 +153,7 @@ inline void postIntersect(uniform Model *uniform model,
   }
 
   // merge geometry-type specific epsilon with general epsilon
-  dg.epsilon = max(dg.epsilon, calcEpsilon(dg.P, ray.t));
+  dg.epsilon = max(dg.epsilon, calcEpsilon(dg.P, ray.dir, ray.t));
 
 // some useful combinations; enums unfortunately don't work :-(
 #define  DG_NG_FACEFORWARD (DG_NG | DG_FACEFORWARD)

@@ -146,7 +146,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         dg.Ns = dg.Ng = make_vec3f(self->shadowCatcherPlane);
         if (dot(ray.dir, dg.Ng) >= 0.f)
           dg.Ns = dg.Ng = neg(dg.Ng);
-        const float eps = calcEpsilon(dg.P, shadowCatcherDist);
+        const float eps = calcEpsilon(dg.P, ray.dir, shadowCatcherDist);
         dg.P = ray.org + shadowCatcherDist * ray.dir + eps * dg.Ng;
 
         vec3f unshaded = make_vec3f(0.f); // illumination without occluders

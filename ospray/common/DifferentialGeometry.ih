@@ -65,13 +65,21 @@ struct DifferentialGeometry
   uniform Geometry *geometry; /*! pointer to hit-point's geometry */
   uniform Material *material; /*! pointer to hit-point's material */
 
-  float epsilon; //!< adaptive epsilon */
+  float epsilon; //!< adaptive epsilon, isotropic in object-space */
 };
 
 // assumed precision of intersection routines
 #define ulpEpsilon 0x1.fp-21
 
-inline float calcEpsilon(const vec3f& P, float t)
+inline float calcEpsilon(const vec3f& P, const vec3f& dir, float t)
 {
-  return reduce_max(make_vec4f(abs(P), t)) * ulpEpsilon;
+  // convert ray-space t to object-/world-space using max(dir) instead of
+  // costly length; the error is at most sqrt(3)~1.7, quite acceptable for eps
+  return reduce_max(make_vec4f(abs(P), reduce_max(dir)*t)) * ulpEpsilon;
+}
+
+inline float calcEpsilon(const vec3f& P, float dist)
+{
+  const vec3f dummy_dir = make_vec3f(1.0f);
+  return calcEpsilon(P, dummy_dir, dist);
 }
