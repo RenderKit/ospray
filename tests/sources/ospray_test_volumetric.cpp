@@ -46,26 +46,6 @@ TEST_P(TextureVolume, simple) {
 INSTANTIATE_TEST_CASE_P(Renderers, TextureVolume, ::testing::Values("scivis"));
 
 TEST_P(DepthCompositeVolume, simple) {
- OSPTexture2D depthTex = ospNewTexture("texture2D");
- osp::vec2i size = imgSize;
- float* data = new float[size.x*size.y];
- for (size_t y = 0; y < size.y; y++) {
-   for (size_t x = 0; x < size.x; x++) {
-     size_t index = size.y*y + x;
-     if (x < size.x/3) {
-       data[index] = 999.f;
-     } else if (x < (size.x*2)/3) {
-       data[index] = 0.1f;
-     } else {
-       data[index] = 0.00001f;
-     }
-   }
- }
- auto ospData = ospNewData(size.x*size.y, OSP_FLOAT, data);
- ospSet1i(depthTex, "type", (int)OSP_TEXTURE_R32F);
- ospSet1i(depthTex, "flags", 0);
- ospSet2i(depthTex, "size", size.x, size.y);
- ospSetObject(depthTex, "data", ospData);
  PerformRenderTest();
 }
 

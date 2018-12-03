@@ -20,6 +20,47 @@ extern OSPRayEnvironment * ospEnv;
 
 namespace OSPRayTestScenes {
 
+//helper functions
+
+//creates a torus
+// volumetric data: stores data of torus
+// returns created ospvolume of torus
+static OSPVolume CreateTorus(std::vector<float>& volumetricData)
+{
+  int size = 250;
+
+  volumetricData.resize(size*size*size, 0);
+
+  float r = 30;
+  float R = 80;
+
+  for (int x = 0; x < size; ++x) {
+    for (int y = 0; y < size; ++y) {
+      for (int z = 0; z < size; ++z) {
+        float X = x - size / 2;
+        float Y = y - size / 2;
+        float Z = z - size / 2;
+
+        float d = (R - std::sqrt(X*X + Y*Y));
+        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
+      }
+    }
+  }
+
+  OSPVolume torus = ospNewVolume("shared_structured_volume");
+  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
+                                  volumetricData.data(),
+                                  OSP_DATA_SHARED_BUFFER);
+  ospSetData(torus, "voxelData", voxelsData);
+  ospRelease(voxelsData);
+  ospSet3i(torus, "dimensions", size, size, size);
+  ospSetString(torus, "voxelType", "float");
+  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
+  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
+  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  return torus;
+}
+
 Base::Base()
 {
   const ::testing::TestCase* const testCase = ::testing::UnitTest::GetInstance()->current_test_case();
@@ -106,7 +147,7 @@ void Base::PerformRenderTest()
 
   ospFrameBufferClear(framebuffer, OSP_FB_ACCUM);
 
-  RenderFrame(OSP_FB_COLOR | OSP_FB_ACCUM);
+  RenderFrame(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
   uint32_t* framebuffer_data = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
   if(ospEnv->GetDumpImg()) {
@@ -167,7 +208,7 @@ void Base::SetRenderer()
 void Base::SetFramebuffer()
 {
   framebuffer = ospNewFrameBuffer(imgSize, frameBufferFormat,
-                                  OSP_FB_COLOR | OSP_FB_ACCUM);
+                                  OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
 }
 
 OSPMaterial Base::CreateMaterial(std::string type)
@@ -601,37 +642,7 @@ void Torus::SetUp()
 
   ospSet1f(renderer, "epsilon", 0.01);
 
-  int size = 250;
-
-  volumetricData.resize(size*size*size, 0);
-
-  float r = 30;
-  float R = 80;
-
-  for (int x = 0; x < size; ++x) {
-    for (int y = 0; y < size; ++y) {
-      for (int z = 0; z < size; ++z) {
-        float X = x - size / 2;
-        float Y = y - size / 2;
-        float Z = z - size / 2;
-
-        float d = (R - std::sqrt(X*X + Y*Y));
-        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
-      }
-    }
-  }
-
-  OSPVolume torus = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
-                                  volumetricData.data(),
-                                  OSP_DATA_SHARED_BUFFER);
-  ospSetData(torus, "voxelData", voxelsData);
-  ospRelease(voxelsData);
-  ospSet3i(torus, "dimensions", size, size, size);
-  ospSetString(torus, "voxelType", "float");
-  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
-  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
-  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  OSPVolume torus = CreateTorus(volumetricData);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
@@ -904,37 +915,7 @@ void TextureVolume::SetUp()
 
   ospSet1f(renderer, "epsilon", 0.01);
 
-  int size = 250;
-
-  volumetricData.resize(size*size*size, 0);
-
-  float r = 30;
-  float R = 80;
-
-  for (int x = 0; x < size; ++x) {
-    for (int y = 0; y < size; ++y) {
-      for (int z = 0; z < size; ++z) {
-        float X = x - size / 2;
-        float Y = y - size / 2;
-        float Z = z - size / 2;
-
-        float d = (R - std::sqrt(X*X + Y*Y));
-        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
-      }
-    }
-  }
-
-  OSPVolume torus = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
-                                  volumetricData.data(),
-                                  OSP_DATA_SHARED_BUFFER);
-  ospSetData(torus, "voxelData", voxelsData);
-  ospRelease(voxelsData);
-  ospSet3i(torus, "dimensions", size, size, size);
-  ospSetString(torus, "voxelType", "float");
-  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
-  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
-  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  OSPVolume torus = CreateTorus(volumetricData);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
@@ -942,7 +923,7 @@ void TextureVolume::SetUp()
     1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f
   };
-  float opacites[] = { 1.0f, 1.0f };
+  float opacites[] = { 0.05f, 0.1f };
   OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
   ospSetData(transferFun, "colors", tfColorData);
   ospRelease(tfColorData);
@@ -986,50 +967,21 @@ DepthCompositeVolume::DepthCompositeVolume()
   rendererType = GetParam();
 }
 
+
 void DepthCompositeVolume::SetUp()
 {
   Base::SetUp();
 
-  float cam_pos[] = {-0.7f, -1.4f, 0.f};
-  float cam_up[] = {0.f, 0.f, -1.f};
-  float cam_view[] = {0.5f, 1.f, 0.f};
+  float cam_pos[] = {0.f, 0.f, 1.0f};
+  float cam_up[] = {0.f, 1.f, 0.f};
+  float cam_view[] = {0.0f, 0.f, -1.f};
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
 
   ospSet1f(renderer, "epsilon", 0.01);
 
-  int size = 250;
-
-  volumetricData.resize(size*size*size, 0);
-
-  float r = 30;
-  float R = 80;
-
-  for (int x = 0; x < size; ++x) {
-    for (int y = 0; y < size; ++y) {
-      for (int z = 0; z < size; ++z) {
-        float X = x - size / 2;
-        float Y = y - size / 2;
-        float Z = z - size / 2;
-
-        float d = (R - std::sqrt(X*X + Y*Y));
-        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
-      }
-    }
-  }
-
-  OSPVolume torus = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
-                                  volumetricData.data(),
-                                  OSP_DATA_SHARED_BUFFER);
-  ospSetData(torus, "voxelData", voxelsData);
-  ospRelease(voxelsData);
-  ospSet3i(torus, "dimensions", size, size, size);
-  ospSetString(torus, "voxelType", "float");
-  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
-  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
-  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  OSPVolume torus = CreateTorus(volumetricData);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
@@ -1049,13 +1001,41 @@ void DepthCompositeVolume::SetUp()
   ospRelease(transferFun);
   ospCommit(torus);
 
+  AddVolume(torus);
+
+  OSPTexture2D depthTex = ospNewTexture("texture2D");
+  float* data = new float[imgSize.x*imgSize.y];
+  for (size_t y = 0; y < imgSize.y; y++) {
+    for (size_t x = 0; x < imgSize.x; x++) {
+      size_t index = imgSize.x*y + x;
+      if (x < imgSize.x/3) {
+        data[index] = 999.f;
+      } else if (x < (imgSize.x*2)/3) {
+        data[index] = 0.75f;
+      } else {
+        data[index] = 0.00001f;
+      }
+    }
+  }
+  auto ospData = ospNewData(imgSize.x*imgSize.y, OSP_FLOAT, data);
+  ospCommit(ospData);
+  delete[] data;
+  ospSet1i(depthTex, "type", (int)OSP_TEXTURE_R32F);
+  ospSet1i(depthTex, "flags", OSP_TEXTURE_FILTER_NEAREST);
+  ospSet2i(depthTex, "size", imgSize.x, imgSize.y);
+  ospSetObject(depthTex, "data", ospData);
+  ospCommit(depthTex);
+  ospRelease(ospData);
+
+  ospSetObject(renderer, "maxDepthTexture", depthTex);
+  ospRelease(depthTex);
+
   OSPLight ambient = ospNewLight(renderer, "ambient");
   ASSERT_TRUE(ambient) << "Failed to create lights";
   ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
   AddLight(ambient);
 }
-
 
 } // namespace OSPRayTestScenes
 
