@@ -14,38 +14,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_DEFAULT_COMPONENT apps)
-
-INCLUDE_DIRECTORIES(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}
-  common
+ospray_create_library(ospray_testing
+  ospray_testing.cpp
+LINK
+  ospray
 )
 
-# benchmark application which has no windowing framework dependencies
-OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
-OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
-OPTION(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
-
-ADD_SUBDIRECTORY(common/ospray_testing)
-
-# common utilities
-IF(OSPRAY_APPS_BENCHMARK OR OSPRAY_APPS_EXAMPLEVIEWER)
-  ADD_SUBDIRECTORY(common/ospapp)
-  ADD_SUBDIRECTORY(common/sg)
-  ADD_SUBDIRECTORY(common/tfn_lib)
-ENDIF()
-
-IF(OSPRAY_APPS_BENCHMARK)
-  ADD_SUBDIRECTORY(bench)
-ENDIF()
-
-IF (OSPRAY_APPS_EXAMPLEVIEWER)
-  ADD_SUBDIRECTORY(exampleViewer)
-ENDIF()
-
-IF (OSPRAY_APPS_UTILITIES)
-  ADD_SUBDIRECTORY(utility)
-ENDIF()
+# TODO: export header includes
+# TODO: install headers
