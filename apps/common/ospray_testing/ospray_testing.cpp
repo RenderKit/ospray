@@ -16,6 +16,8 @@
 
 // ospray_testing
 #include "ospray_testing.h"
+#include "lights/Lights.h"
+#include "objectFactory.h"
 // ospcommon
 #include "ospcommon/box.h"
 
@@ -66,6 +68,11 @@ extern "C" OSPCamera ospTestingNewDefaultCamera(osp::box3f _bounds)
 
 extern "C" OSPData ospTestingNewLights(const char *lighting_set_name)
 {
-  // TODO
-  return nullptr;
+  auto *lightsCreator = ospray::testing::objectFactory<ospray::testing::Lights>(
+      "testing_lights", lighting_set_name);
+
+  if (lightsCreator != nullptr)
+    return lightsCreator->createLights();
+  else
+    return nullptr;
 }

@@ -16,6 +16,8 @@
 
 ospray_create_library(ospray_testing
   ospray_testing.cpp
+
+  lights/AmbientOnly.cpp
 LINK
   ospray
 )
