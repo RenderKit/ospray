@@ -17,6 +17,7 @@
 //ospcommon
 #include "ospcommon/utility/OnScopeExit.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "ospcommon/library.h"
 
 //ospray
 #include "common/OSPCommon.h"
@@ -235,6 +236,7 @@ extern "C" void ospShutdown()
 OSPRAY_CATCH_BEGIN
 {
   Device::current.reset();
+  LibraryRepository::cleanupInstance();
 }
 OSPRAY_CATCH_END()
 
