@@ -46,6 +46,8 @@ namespace ospcommon {
       static LibraryRepository* getInstance();
       static void cleanupInstance();
 
+      ~LibraryRepository();
+
       /* add a library to the repo */
       void add(const std::string& name);
 
@@ -60,7 +62,7 @@ namespace ospcommon {
     private:
       static std::unique_ptr<LibraryRepository> instance;
       LibraryRepository() = default;
-      std::map<std::string, std::unique_ptr<Library>> repo;
+      std::map<std::string, Library*> repo;
   };
 }
 

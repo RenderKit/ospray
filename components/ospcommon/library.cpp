@@ -270,12 +270,18 @@ namespace ospcommon {
     LibraryRepository::instance.reset();
   }
 
+  LibraryRepository::~LibraryRepository()
+  {
+    for (auto &l : repo)
+      delete l.second;
+  }
+
   void LibraryRepository::add(const std::string &name)
   {
-    if (repo.find(name) != repo.end())
+    if (libraryExists(name))
       return;  // lib already loaded.
 
-    repo[name] = ospcommon::make_unique<Library>(name);
+    repo[name] = new Library(name);
   }
 
   void *LibraryRepository::getSymbol(const std::string &name) const
@@ -293,8 +299,7 @@ namespace ospcommon {
     // OSPRay core lib
 #ifdef _WIN32
     // look in exe (i.e. when OSPRay is linked statically into the application)
-    repo["exedefault"] =
-        std::unique_ptr<Library>(new Library(GetModuleHandle(0)));
+    repo["exedefault"] = new Library(GetModuleHandle(0));
 
     // look in ospray.dll (i.e. when linked dynamically)
 #if 0
@@ -308,12 +313,10 @@ namespace ospcommon {
     VirtualQuery(functionInOSPRayDLL, &mbi, sizeof(mbi));
     repo["dlldefault"] = new Library(mbi.AllocationBase);
 #else
-    repo["ospray"] =
-        std::unique_ptr<Library>(new Library(std::string("ospray")));
+    repo["ospray"] = new Library(std::string("ospray"));
 #endif
 #else
-    repo["ospray"] =
-        std::unique_ptr<Library>(new Library(RTLD_DEFAULT));
+    repo["ospray"] = new Library(RTLD_DEFAULT);
 #endif
   }
 
