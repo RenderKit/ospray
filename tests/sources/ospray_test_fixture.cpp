@@ -922,7 +922,7 @@ void TextureVolume::SetUp()
     1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f
   };
-  float opacites[] = { 0.05f, 0.1f };
+  float opacites[] = { 1.0f, 1.0f };
   OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
   ospSetData(transferFun, "colors", tfColorData);
   ospRelease(tfColorData);
