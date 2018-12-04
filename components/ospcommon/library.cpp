@@ -234,7 +234,7 @@ namespace ospcommon {
   {
     if (freeLibOnDelete) {
 #ifdef _WIN32
-      FreeLibrary(lib);
+      FreeLibrary((HMODULE)lib);
 #else
       dlclose(lib);
 #endif
@@ -275,7 +275,7 @@ namespace ospcommon {
     if (repo.find(name) != repo.end())
       return;  // lib already loaded.
 
-    repo[name] = make_unique<Library>(name);
+    repo[name] = ospcommon::make_unique<Library>(name);
   }
 
   void *LibraryRepository::getSymbol(const std::string &name) const
@@ -309,7 +309,7 @@ namespace ospcommon {
     repo["dlldefault"] = new Library(mbi.AllocationBase);
 #else
     repo["ospray"] =
-        std::unqiue_ptr<Library>(new Library(std::string("ospray")));
+        std::unique_ptr<Library>(new Library(std::string("ospray")));
 #endif
 #else
     repo["ospray"] =
