@@ -5,6 +5,7 @@ Version History
 
 -   Make sure a "`default`" device can always be created
 -   Fix `ospNewTexture2D` (completely implementing old behaviour)
+-   Cleanup any shared object handles from the OS created from `ospLoadModule()`
 
 ### Changes in v1.7.2:
 
