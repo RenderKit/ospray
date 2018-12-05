@@ -18,18 +18,26 @@
 
 // ospray
 #include "../ospray_testing.h"
+// ospcommon
+#include "ospcommon/vec.h"
 // stl
 #include <string>
+#include <vector>
 
 namespace ospray {
   namespace testing {
 
     struct TransferFunction
     {
+      TransferFunction();
       virtual ~TransferFunction() = default;
 
-      virtual OSPTransferFunction createTransferFunction(
-          osp::vec2f value_range) const = 0;
+      OSPTransferFunction createTransferFunction(osp::vec2f value_range) const;
+
+      protected:
+
+      std::vector<ospcommon::vec3f> colors;
+      std::vector<float> opacities;
     };
 
   }  // namespace testing

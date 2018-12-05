@@ -15,35 +15,39 @@
 // ======================================================================== //
 
 #include "TransferFunction.h"
-// stl
-#include <vector>
-// ospcommon
-#include "ospcommon/box.h"
+
 using namespace ospcommon;
 
 namespace ospray {
   namespace testing {
 
-    struct Jet : public TransferFunction
+    TransferFunction::TransferFunction()
     {
-      Jet();
-      ~Jet() override = default;
-    };
-
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    Jet::Jet()
-    {
-      colors.emplace_back(0       , 0, 0.562493);
-      colors.emplace_back(0       , 0, 1       );
-      colors.emplace_back(0       , 1, 1       );
-      colors.emplace_back(0.500008, 1, 0.500008);
-      colors.emplace_back(1       , 1, 0       );
-      colors.emplace_back(1       , 0, 0       );
-      colors.emplace_back(0.500008, 0, 0       );
+      opacities.emplace_back(0.0f);
+      opacities.emplace_back(0.1f);
     }
 
-    OSP_REGISTER_TESTING_TRANSFER_FUNCTION(Jet, jet);
+    OSPTransferFunction TransferFunction::createTransferFunction(
+        osp::vec2f value_range) const
+    {
+      // create a transfer function mapping volume values to color and opacity
+      OSPTransferFunction transferFunction =
+          ospNewTransferFunction("piecewise_linear");
+
+      OSPData cData = ospNewData(colors.size(), OSP_FLOAT3, colors.data());
+      OSPData oData = ospNewData(opacities.size(), OSP_FLOAT, opacities.data());
+
+      ospSetData(transferFunction, "colors", cData);
+      ospSetData(transferFunction, "opacities", oData);
+
+      // the transfer function will apply over this volume value range
+      ospSet2f(transferFunction, "valueRange", value_range.x, value_range.y);
+
+      // commit the transfer function
+      ospCommit(transferFunction);
+
+      return transferFunction;
+    }
 
   }  // namespace testing
 }  // namespace ospray

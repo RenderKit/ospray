@@ -23,6 +23,7 @@ ospray_create_library(ospray_testing
 
   transferFunction/Grayscale.cpp
   transferFunction/Jet.cpp
+  transferFunction/TransferFunction.cpp
 
   volume/SimpleVolume.cpp
 LINK

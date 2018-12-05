@@ -26,50 +26,16 @@ namespace ospray {
 
     struct Grayscale : public TransferFunction
     {
-      Grayscale()           = default;
+      Grayscale();
       ~Grayscale() override = default;
-
-      OSPTransferFunction createTransferFunction(
-          osp::vec2f value_range) const override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTransferFunction Grayscale::createTransferFunction(
-        osp::vec2f value_range) const
+    Grayscale::Grayscale()
     {
-      // create a transfer function mapping volume values to color and opacity
-      OSPTransferFunction transferFunction =
-          ospNewTransferFunction("piecewise_linear");
-
-      std::vector<vec3f> transferFunctionColors;
-      std::vector<float> transferFunctionOpacities;
-
-      transferFunctionColors.push_back(vec3f(0.f, 0.f, 0.f));
-      transferFunctionColors.push_back(vec3f(1.f, 1.f, 1.f));
-
-      transferFunctionOpacities.push_back(0.f);
-      transferFunctionOpacities.push_back(0.1f);
-
-      OSPData transferFunctionColorsData =
-          ospNewData(transferFunctionColors.size(),
-                     OSP_FLOAT3,
-                     transferFunctionColors.data());
-      OSPData transferFunctionOpacitiesData =
-          ospNewData(transferFunctionOpacities.size(),
-                     OSP_FLOAT,
-                     transferFunctionOpacities.data());
-
-      ospSetData(transferFunction, "colors", transferFunctionColorsData);
-      ospSetData(transferFunction, "opacities", transferFunctionOpacitiesData);
-
-      // the transfer function will apply over this volume value range
-      ospSet2f(transferFunction, "valueRange", value_range.x, value_range.y);
-
-      // commit the transfer function
-      ospCommit(transferFunction);
-
-      return transferFunction;
+      colors.emplace_back(0.f, 0.f, 0.f);
+      colors.emplace_back(1.f, 1.f, 1.f);
     }
 
     OSP_REGISTER_TESTING_TRANSFER_FUNCTION(Grayscale, grayscale);
