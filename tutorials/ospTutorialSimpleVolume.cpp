@@ -34,7 +34,7 @@ OSPModel createModel()
   // add in generated volume and transfer function
   auto test_volume = ospTestingNewVolume("simple_volume");
 
-  auto tfn = ospTestingNewTransferFunction(test_volume.voxelRange, "grayscale");
+  auto tfn = ospTestingNewTransferFunction(test_volume.voxelRange, "jet");
   ospSetObject(test_volume.volume, "transferFunction", tfn);
   ospCommit(test_volume.volume);
 
