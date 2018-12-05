@@ -9,6 +9,12 @@ Version History
 -   Improvements to precision of intersections with cylinders and
     streamlines
 
+### Changes in v1.7.3:
+
+-   Make sure a "`default`" device can always be created
+-   Fix `ospNewTexture2D` (completely implementing old behaviour)
+-   Cleanup any shared object handles from the OS created from `ospLoadModule()`
+
 ### Changes in v1.7.2:
 
 -   Fix issue in `mpi_offload` device where `ospRelease` would sometimes not
