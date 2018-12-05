@@ -27,7 +27,10 @@ if (TARGET glfw)
   )
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/ospray/include)
+include_directories(
+  ${CMAKE_SOURCE_DIR}/ospray/include
+  ${CMAKE_SOURCE_DIR}/apps/common/ospray_testing
+)
 
 # build ospTutorial, for demonstration and API testing
 add_executable(ospTutorial ospTutorial.c)
@@ -42,8 +45,7 @@ ospray_create_application(ospTutorialSpheres
   ospTutorialSpheres.cpp
   imgui/imgui_impl_glfw_gl3.cpp
 LINK
-  ospray
-  ospray_common
+  ospray_testing
   ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}

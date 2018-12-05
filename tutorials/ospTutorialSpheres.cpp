@@ -19,6 +19,8 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
+#include "ospray_testing.h"
+
 #include <imgui.h>
 
 using namespace ospcommon;
@@ -164,80 +166,14 @@ OSPGeometry createGroundPlaneGeometry()
   return planeGeometry;
 }
 
-OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
-{
-  struct Sphere
-  {
-    vec3f center;
-    float radius;
-    vec4f color;
-  };
-
-  // create random number distributions for sphere center, radius, and color
-  std::random_device rd;
-  std::mt19937 gen(rd());
-
-  std::uniform_real_distribution<float> centerDistribution(-1.f, 1.f);
-  std::uniform_real_distribution<float> radiusDistribution(0.05f, 0.15f);
-  std::uniform_real_distribution<float> colorDistribution(0.5f, 1.f);
-
-  // populate the spheres
-  std::vector<Sphere> spheres(numSpheres);
-
-  for (auto &s : spheres) {
-    s.center.x = centerDistribution(gen);
-    s.center.y = centerDistribution(gen);
-    s.center.z = centerDistribution(gen);
-
-    s.radius = radiusDistribution(gen);
-
-    s.color.x = colorDistribution(gen);
-    s.color.y = colorDistribution(gen);
-    s.color.z = colorDistribution(gen);
-    s.color.w = colorDistribution(gen);
-  }
-
-  // create a data object with all the sphere information
-  OSPData spheresData =
-      ospNewData(numSpheres * sizeof(Sphere), OSP_UCHAR, spheres.data());
-
-  // create the sphere geometry, and assign attributes
-  OSPGeometry spheresGeometry = ospNewGeometry("spheres");
-
-  ospSetData(spheresGeometry, "spheres", spheresData);
-  ospSet1i(spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
-  ospSet1i(spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
-  ospSet1i(spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
-
-  ospSetData(spheresGeometry, "color", spheresData);
-  ospSet1i(spheresGeometry, "color_offset", int(offsetof(Sphere, color)));
-  ospSet1i(spheresGeometry, "color_format", int(OSP_FLOAT4));
-  ospSet1i(spheresGeometry, "color_stride", int(sizeof(Sphere)));
-
-  // create glass material and assign to geometry
-  OSPMaterial glassMaterial = ospNewMaterial2("pathtracer", "ThinGlass");
-  ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
-  ospCommit(glassMaterial);
-
-  ospSetMaterial(spheresGeometry, glassMaterial);
-
-  // commit the spheres geometry
-  ospCommit(spheresGeometry);
-
-  // release handles we no longer need
-  ospRelease(spheresData);
-  ospRelease(glassMaterial);
-
-  return spheresGeometry;
-}
-
 OSPModel createModel()
 {
   // create the "world" model which will contain all of our geometries
   OSPModel world = ospNewModel();
 
-  // add in spheres geometry (100 of them)
-  ospAddGeometry(world, createRandomSpheresGeometry(100));
+  // add in spheres geometry
+  OSPTestingGeometry spheres = ospTestingNewGeometry("spheres", "pathtracer");
+  ospAddGeometry(world, spheres.geometry);
 
   // add in a ground plane geometry
   ospAddGeometry(world, createGroundPlaneGeometry());
@@ -253,21 +189,11 @@ OSPRenderer createRenderer()
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer("pathtracer");
 
-  // create an ambient light
-  OSPLight ambientLight = ospNewLight3("ambient");
-  ospCommit(ambientLight);
-
-  // create lights data containing all lights
-  OSPLight lights[]  = {ambientLight};
-  OSPData lightsData = ospNewData(1, OSP_LIGHT, lights, 0);
-  ospCommit(lightsData);
-
-  // complete setup of renderer
+  OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);
-  ospCommit(renderer);
-
-  // release handles we no longer need
   ospRelease(lightsData);
+
+  ospCommit(renderer);
 
   return renderer;
 }

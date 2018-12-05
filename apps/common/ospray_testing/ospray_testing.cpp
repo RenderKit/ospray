@@ -16,6 +16,7 @@
 
 // ospray_testing
 #include "ospray_testing.h"
+#include "geometry/Geometry.h"
 #include "lights/Lights.h"
 #include "objectFactory.h"
 // ospcommon
@@ -32,8 +33,14 @@ extern "C" OSPRenderer ospTestingNewRenderer(const char *type)
 extern "C" OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
                                                     const char *renderer_type)
 {
-  // TODO
-  return {};
+  auto geometryCreator =
+      ospray::testing::objectFactory<ospray::testing::Geometry>(
+          "testing_geometry", geom_type);
+
+  if (geometryCreator != nullptr)
+    return geometryCreator->createGeometry(renderer_type);
+  else
+    return {};
 }
 
 extern "C" OSPTestingVolume ospTestingNewVolume(const char *geom_type)
