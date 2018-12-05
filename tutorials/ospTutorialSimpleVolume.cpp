@@ -32,7 +32,7 @@ OSPModel createModel()
   OSPModel world = ospNewModel();
 
   // add in generated volume and transfer function
-  auto test_volume = ospTestingNewVolume("simple_volume");
+  auto test_volume = ospTestingNewVolume("simple_structured_volume");
 
   auto tfn = ospTestingNewTransferFunction(test_volume.voxelRange, "jet");
   ospSetObject(test_volume.volume, "transferFunction", tfn);

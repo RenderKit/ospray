@@ -25,10 +25,10 @@ using namespace ospcommon;
 namespace ospray {
   namespace testing {
 
-    struct SimpleVolume : public Volume
+    struct SimpleStructuredVolume : public Volume
     {
-      SimpleVolume()           = default;
-      ~SimpleVolume() override = default;
+      SimpleStructuredVolume()           = default;
+      ~SimpleStructuredVolume() override = default;
 
       OSPTestingVolume createVolume() const override;
 
@@ -39,7 +39,7 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingVolume SimpleVolume::createVolume() const
+    OSPTestingVolume SimpleStructuredVolume::createVolume() const
     {
       OSPVolume volume = ospNewVolume("shared_structured_volume");
 
@@ -94,8 +94,9 @@ namespace ospray {
       return retval;
     }
 
-    OSP_REGISTER_TESTING_VOLUME(SimpleVolume, volume);
-    OSP_REGISTER_TESTING_VOLUME(SimpleVolume, simple_volume);
+    OSP_REGISTER_TESTING_VOLUME(SimpleStructuredVolume, structured_volume);
+    OSP_REGISTER_TESTING_VOLUME(SimpleStructuredVolume,
+                                simple_structured_volume);
 
   }  // namespace testing
 }  // namespace ospray
