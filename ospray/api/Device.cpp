@@ -57,8 +57,11 @@ namespace ospray {
       //             valid library for core ospray in our main symbol lookup
       //             table.
       auto &repo = *LibraryRepository::getInstance();
-      if (!repo.libraryExists("ospray"))
+      if (!repo.libraryExists("ospray")) {
         repo.addDefaultLibrary();
+        // also load the local device, otherwise ospNewDevice("default") fails
+        repo.add("ospray_module_ispc");
+      }
 
       return objectFactory<Device, OSP_DEVICE>(type);
     }
