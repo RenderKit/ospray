@@ -28,6 +28,7 @@ namespace ospray {
     {
       RandomSpheres() = default;
       RandomSpheres(int numSpheres) : numSpheres(numSpheres) {}
+      ~RandomSpheres() override = default;
 
       OSPTestingGeometry createGeometry(
           const std::string &renderer_type) const override;
@@ -108,7 +109,7 @@ namespace ospray {
 
       OSPTestingGeometry retval;
       retval.geometry = spheresGeometry;
-      retval.bounds   = reinterpret_cast<osp::box3f&>(bounds);
+      retval.bounds   = reinterpret_cast<osp::box3f &>(bounds);
 
       return retval;
     }

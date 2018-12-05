@@ -20,6 +20,10 @@ ospray_create_library(ospray_testing
   geometry/RandomSpheres.cpp
 
   lights/AmbientOnly.cpp
+
+  transferFunction/Grayscale.cpp
+
+  volume/SimpleVolume.cpp
 LINK
   ospray
 )

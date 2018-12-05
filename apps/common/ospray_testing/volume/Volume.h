@@ -24,22 +24,20 @@
 namespace ospray {
   namespace testing {
 
-    struct Geometry
+    struct Volume
     {
-      virtual ~Geometry() = default;
+      virtual ~Volume() = default;
 
-      virtual OSPTestingGeometry createGeometry(
-          const std::string &renderer_type) const = 0;
+      virtual OSPTestingVolume createVolume() const = 0;
     };
 
   }  // namespace testing
 }  // namespace ospray
 
-#define OSP_REGISTER_TESTING_GEOMETRY(InternalClassName, Name) \
-  extern "C" ospray::testing::Geometry                         \
-      *ospray_create_testing_geometry__##Name()                \
-  {                                                            \
-    return new InternalClassName;                              \
-  }                                                            \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */ \
-  ospray::testing::Geometry *ospray_create_testing_geometry__##Name()
+#define OSP_REGISTER_TESTING_VOLUME(InternalClassName, Name)                 \
+  extern "C" ospray::testing::Volume *ospray_create_testing_volume__##Name() \
+  {                                                                          \
+    return new InternalClassName;                                            \
+  }                                                                          \
+  /* Extra declaration to avoid "extra ;" pedantic warnings */               \
+  ospray::testing::Volume *ospray_create_testing_volume__##Name()

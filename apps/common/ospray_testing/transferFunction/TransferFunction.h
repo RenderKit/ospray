@@ -24,22 +24,23 @@
 namespace ospray {
   namespace testing {
 
-    struct Geometry
+    struct TransferFunction
     {
-      virtual ~Geometry() = default;
+      virtual ~TransferFunction() = default;
 
-      virtual OSPTestingGeometry createGeometry(
-          const std::string &renderer_type) const = 0;
+      virtual OSPTransferFunction createTransferFunction(
+          osp::vec2f value_range) const = 0;
     };
 
   }  // namespace testing
 }  // namespace ospray
 
-#define OSP_REGISTER_TESTING_GEOMETRY(InternalClassName, Name) \
-  extern "C" ospray::testing::Geometry                         \
-      *ospray_create_testing_geometry__##Name()                \
-  {                                                            \
-    return new InternalClassName;                              \
-  }                                                            \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */ \
-  ospray::testing::Geometry *ospray_create_testing_geometry__##Name()
+#define OSP_REGISTER_TESTING_TRANSFER_FUNCTION(InternalClassName, Name) \
+  extern "C" ospray::testing::TransferFunction                          \
+      *ospray_create_testing_transfer_function__##Name()                \
+  {                                                                     \
+    return new InternalClassName;                                       \
+  }                                                                     \
+  /* Extra declaration to avoid "extra ;" pedantic warnings */          \
+  ospray::testing::TransferFunction                                     \
+      *ospray_create_testing_transfer_function__##Name()

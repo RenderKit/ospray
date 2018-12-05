@@ -37,8 +37,10 @@ typedef struct
   OSPVolume volume;
 #ifdef __cplusplus
   osp::box3f bounds;
+  osp::vec2f voxelRange;
 #else
   osp_box3f bounds;
+  osp_vec2f voxelRange;
 #endif
 } OSPTestingVolume;
 
@@ -52,11 +54,20 @@ OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
                                              OSP_DEFAULT_VAL(= "scivis"));
 
 /* Create an OSPRay geometry (from a registered name) */
-OSPTestingVolume ospTestingNewVolume(const char *geom_type);
+OSPTestingVolume ospTestingNewVolume(const char *volume_type);
+
+/* Create an OSPRay geometry (from a registered name) */
+OSPTransferFunction ospTestingNewTransferFunction(
+#ifdef __cplusplus
+    osp::vec2f voxelRange,
+#else
+    osp_vec2f voxelRange,
+#endif
+    const char *tf_name OSP_DEFAULT_VAL(= "grayscale"));
 
 /* Create an OSPRay perspective camera which looks at the center of the given
  * bounding box
- * 
+ *
  * NOTE: this only sets 'dir', 'pos', and 'up'
  */
 #ifdef __cplusplus

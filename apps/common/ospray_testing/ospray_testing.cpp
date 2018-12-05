@@ -19,8 +19,11 @@
 #include "geometry/Geometry.h"
 #include "lights/Lights.h"
 #include "objectFactory.h"
+#include "transferFunction/TransferFunction.h"
+#include "volume/Volume.h"
 // ospcommon
 #include "ospcommon/box.h"
+#include "ospcommon/utility/OnScopeExit.h"
 
 using namespace ospcommon;
 
@@ -37,16 +40,40 @@ extern "C" OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
       ospray::testing::objectFactory<ospray::testing::Geometry>(
           "testing_geometry", geom_type);
 
+  utility::OnScopeExit cleanup([=]() { delete geometryCreator; });
+
   if (geometryCreator != nullptr)
     return geometryCreator->createGeometry(renderer_type);
   else
     return {};
 }
 
-extern "C" OSPTestingVolume ospTestingNewVolume(const char *geom_type)
+extern "C" OSPTestingVolume ospTestingNewVolume(const char *volume_type)
 {
-  // TODO
-  return {};
+  auto volumeCreator = ospray::testing::objectFactory<ospray::testing::Volume>(
+      "testing_volume", volume_type);
+
+  utility::OnScopeExit cleanup([=]() { delete volumeCreator; });
+
+  if (volumeCreator != nullptr)
+    return volumeCreator->createVolume();
+  else
+    return {};
+}
+
+extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp::vec2f range,
+                                                             const char *name)
+{
+  auto tfnCreator =
+      ospray::testing::objectFactory<ospray::testing::TransferFunction>(
+          "testing_transfer_function", name);
+
+  utility::OnScopeExit cleanup([=]() { delete tfnCreator; });
+
+  if (tfnCreator != nullptr)
+    return tfnCreator->createTransferFunction(range);
+  else
+    return {};
 }
 
 extern "C" OSPCamera ospTestingNewDefaultCamera(osp::box3f _bounds)
