@@ -39,6 +39,8 @@ OSPModel createModel()
   ospCommit(test_volume.volume);
 
   ospAddVolume(world, test_volume.volume);
+  ospRelease(test_volume.volume);
+  ospRelease(tfn);
 
   // commit the world model
   ospCommit(world);

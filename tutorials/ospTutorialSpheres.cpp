@@ -174,6 +174,7 @@ OSPModel createModel()
   // add in spheres geometry
   OSPTestingGeometry spheres = ospTestingNewGeometry("spheres", "pathtracer");
   ospAddGeometry(world, spheres.geometry);
+  ospRelease(spheres.geometry);
 
   // add in a ground plane geometry
   ospAddGeometry(world, createGroundPlaneGeometry());
