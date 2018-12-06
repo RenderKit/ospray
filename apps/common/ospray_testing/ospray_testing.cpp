@@ -16,9 +16,9 @@
 
 // ospray_testing
 #include "ospray_testing.h"
+#include "detail/objectFactory.h"
 #include "geometry/Geometry.h"
 #include "lights/Lights.h"
-#include "objectFactory.h"
 #include "transferFunction/TransferFunction.h"
 #include "volume/Volume.h"
 // ospcommon
