@@ -94,6 +94,8 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
   float radius = self->radius;
   if (self->offset_radius >= 0)
     radius = *((float *)(spherePtr + self->offset_radius));
+  // make epsilon large enough to not get lost when computing
+  // |CO| = |center-ray.org| ~ radius for 2ndary rays
   dg.epsilon = radius * ulpEpsilon;
 
   if ((flags & DG_COLOR) && self->color) {
@@ -191,8 +193,8 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   //   const float t1 = projCO + floatbits(signbits(projCO)|intbits(td));
   // and compute the other solution via t1*t2=c/a:
   //   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
-  // this however does not help, in particular for large spheres, because |CO| ~ r
-  // slightly better alternative, but costly sqrt:
+  // this is more precise, but still problematic in particular for large
+  // spheres, because |CO| ~ r; slightly better alternative, but costly sqrt:
   //   const float f = sqrt(dot(CO, CO));
   //   const float t2 = (f - radius) * (f + radius) / t1 * rd2;
   // the only variant I found that has high enough precision to avoid
