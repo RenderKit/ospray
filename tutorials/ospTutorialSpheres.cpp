@@ -166,39 +166,6 @@ OSPGeometry createGroundPlaneGeometry()
   return planeGeometry;
 }
 
-OSPModel createModel()
-{
-  // create the "world" model which will contain all of our geometries
-  OSPModel world = ospNewModel();
-
-  // add in spheres geometry
-  OSPTestingGeometry spheres = ospTestingNewGeometry("spheres", "pathtracer");
-  ospAddGeometry(world, spheres.geometry);
-  ospRelease(spheres.geometry);
-
-  // add in a ground plane geometry
-  ospAddGeometry(world, createGroundPlaneGeometry());
-
-  // commit the world model
-  ospCommit(world);
-
-  return world;
-}
-
-OSPRenderer createRenderer()
-{
-  // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("pathtracer");
-
-  OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "lights", lightsData);
-  ospRelease(lightsData);
-
-  ospCommit(renderer);
-
-  return renderer;
-}
-
 int main(int argc, const char **argv)
 {
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
@@ -215,17 +182,34 @@ int main(int argc, const char **argv)
         exit(error);
       });
 
-  // create OSPRay model
-  OSPModel model = createModel();
+  // create the "world" model which will contain all of our geometries
+  OSPModel world = ospNewModel();
+
+  // add in spheres geometry
+  OSPTestingGeometry spheres = ospTestingNewGeometry("spheres", "pathtracer");
+  ospAddGeometry(world, spheres.geometry);
+  ospRelease(spheres.geometry);
+
+  // add in a ground plane geometry
+  ospAddGeometry(world, createGroundPlaneGeometry());
+
+  // commit the world model
+  ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = createRenderer();
+  OSPRenderer renderer = ospNewRenderer("pathtracer");
+
+  OSPData lightsData = ospTestingNewLights("ambient_only");
+  ospSetData(renderer, "lights", lightsData);
+  ospRelease(lightsData);
+
+  ospCommit(renderer);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), model, renderer));
+          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([=]() {
     static int spp = 1;
@@ -237,6 +221,10 @@ int main(int argc, const char **argv)
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
+
+  // cleanup remaining objects
+  ospRelease(world);
+  ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();

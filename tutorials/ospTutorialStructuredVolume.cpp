@@ -24,8 +24,22 @@
 
 using namespace ospcommon;
 
-OSPModel createModel()
+int main(int argc, const char **argv)
 {
+  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
+  // e.g. "--osp:debug"
+  OSPError initError = ospInit(&argc, argv);
+
+  if (initError != OSP_NO_ERROR)
+    return initError;
+
+  // set an error callback to catch any OSPRay errors and exit the application
+  ospDeviceSetErrorFunc(
+      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
+        std::cerr << "OSPRay error: " << errorDetails << std::endl;
+        exit(error);
+      });
+
   // create the "world" model which will contain all of our geometries / volumes
   OSPModel world = ospNewModel();
 
@@ -43,11 +57,6 @@ OSPModel createModel()
   // commit the world model
   ospCommit(world);
 
-  return world;
-}
-
-OSPRenderer createRenderer()
-{
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer("scivis");
 
@@ -57,36 +66,11 @@ OSPRenderer createRenderer()
 
   ospCommit(renderer);
 
-  return renderer;
-}
-
-int main(int argc, const char **argv)
-{
-  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
-  // e.g. "--osp:debug"
-  OSPError initError = ospInit(&argc, argv);
-
-  if (initError != OSP_NO_ERROR)
-    return initError;
-
-  // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
-
-  // create OSPRay model
-  OSPModel model = createModel();
-
-  // create OSPRay renderer
-  OSPRenderer renderer = createRenderer();
-
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), model, renderer));
+          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([=]() {
     static int spp = 1;
@@ -98,6 +82,10 @@ int main(int argc, const char **argv)
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
+
+  // cleanup remaining objects
+  ospRelease(world);
+  ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();
