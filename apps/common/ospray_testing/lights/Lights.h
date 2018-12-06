@@ -23,6 +23,8 @@ namespace ospray {
 
     struct Lights
     {
+      virtual ~Lights() = default;
+
       virtual OSPData createLights() const = 0;
     };
 

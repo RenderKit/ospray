@@ -21,6 +21,8 @@ namespace ospray {
 
     struct AmbientOnly : public Lights
     {
+      ~AmbientOnly() override = default;
+
       OSPData createLights() const override;
     };
 

@@ -39,8 +39,7 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingGeometry RandomSpheres::createGeometry(
-        const std::string &renderer_type) const
+    OSPTestingGeometry RandomSpheres::createGeometry(const std::string &) const
     {
       struct Sphere
       {
