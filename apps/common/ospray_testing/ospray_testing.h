@@ -18,6 +18,18 @@
 
 #include <ospray/ospray.h>
 
+#ifdef _WIN32
+#ifdef ospray_testing_EXPORTS
+#define OSPRAY_TESTING_INTERFACE __declspec(dllexport)
+#else
+#define OSPRAY_TESTING_INTERFACE __declspec(dllimport)
+#endif
+#define OSPRAY_TESTING_DLLEXPORT __declspec(dllexport)
+#else
+#define OSPRAY_TESTING_INTERFACE
+#define OSPRAY_TESTING_DLLEXPORT
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,18 +57,22 @@ typedef struct
 } OSPTestingVolume;
 
 /* Create an OSPRay renderer with sensible defaults for testing */
+OSPRAY_TESTING_INTERFACE
 OSPRenderer ospTestingNewRenderer(const char *type OSP_DEFAULT_VAL(= "scivis"));
 
 /* Create an OSPRay geometry (from a registered name), with the given renderer
  * type to create materials */
+OSPRAY_TESTING_INTERFACE
 OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
                                          const char *renderer_type
                                              OSP_DEFAULT_VAL(= "scivis"));
 
 /* Create an OSPRay geometry (from a registered name) */
+OSPRAY_TESTING_INTERFACE
 OSPTestingVolume ospTestingNewVolume(const char *volume_type);
 
 /* Create an OSPRay geometry (from a registered name) */
+OSPRAY_TESTING_INTERFACE
 OSPTransferFunction ospTestingNewTransferFunction(
 #ifdef __cplusplus
     osp::vec2f voxelRange,
@@ -70,6 +86,7 @@ OSPTransferFunction ospTestingNewTransferFunction(
  *
  * NOTE: this only sets 'dir', 'pos', and 'up'
  */
+OSPRAY_TESTING_INTERFACE
 #ifdef __cplusplus
 OSPCamera ospTestingNewDefaultCamera(osp::box3f bounds);
 #else
@@ -77,6 +94,7 @@ OSPCamera ospTestingNewDefaultCamera(osp_box3f bounds);
 #endif
 
 /* Create a list of lights, using a given preset name */
+OSPRAY_TESTING_INTERFACE
 OSPData ospTestingNewLights(
     const char *lighting_set_name OSP_DEFAULT_VAL(= "ambient_only"));
 

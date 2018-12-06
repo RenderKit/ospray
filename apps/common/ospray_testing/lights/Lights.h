@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/ospray.h"
+#include "../ospray_testing.h"
 
 namespace ospray {
   namespace testing {
@@ -30,6 +30,7 @@ namespace ospray {
 }  // namespace ospray
 
 #define OSP_REGISTER_TESTING_LIGHTS(InternalClassName, Name)                 \
+  OSPRAY_TESTING_DLLEXPORT                                                   \
   extern "C" ospray::testing::Lights *ospray_create_testing_lights__##Name() \
   {                                                                          \
     return new InternalClassName;                                            \

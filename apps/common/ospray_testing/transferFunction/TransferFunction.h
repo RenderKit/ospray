@@ -34,8 +34,7 @@ namespace ospray {
 
       OSPTransferFunction createTransferFunction(osp::vec2f value_range) const;
 
-      protected:
-
+     protected:
       std::vector<ospcommon::vec3f> colors;
       std::vector<float> opacities;
     };
@@ -44,6 +43,7 @@ namespace ospray {
 }  // namespace ospray
 
 #define OSP_REGISTER_TESTING_TRANSFER_FUNCTION(InternalClassName, Name) \
+  OSPRAY_TESTING_DLLEXPORT                                              \
   extern "C" ospray::testing::TransferFunction                          \
       *ospray_create_testing_transfer_function__##Name()                \
   {                                                                     \

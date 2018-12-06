@@ -35,6 +35,7 @@ namespace ospray {
 }  // namespace ospray
 
 #define OSP_REGISTER_TESTING_VOLUME(InternalClassName, Name)                 \
+  OSPRAY_TESTING_DLLEXPORT                                                   \
   extern "C" ospray::testing::Volume *ospray_create_testing_volume__##Name() \
   {                                                                          \
     return new InternalClassName;                                            \
