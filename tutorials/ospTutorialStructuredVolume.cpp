@@ -44,17 +44,22 @@ int main(int argc, const char **argv)
   OSPModel world = ospNewModel();
 
   // add in generated volume and transfer function
-  auto test_volume = ospTestingNewVolume("gravity_spheres_volume");
+#if 0
+  OSPTestingVolume test_data = ospTestingNewVolume("simple_structured_volume");
+#else
+  OSPTestingVolume test_data = ospTestingNewVolume("gravity_spheres_volume");
+#endif
 
-  auto tfn = ospTestingNewTransferFunction(osp::vec2f{0.f, 10.f}, "rgb");
-  ospSetObject(test_volume.volume, "transferFunction", tfn);
-  ospCommit(test_volume.volume);
+  OSPTransferFunction tfn =
+      ospTestingNewTransferFunction(test_data.voxelRange, "jet");
 
-  ospAddVolume(world, test_volume.volume);
-  ospRelease(test_volume.volume);
+  ospSetObject(test_data.volume, "transferFunction", tfn);
+  ospCommit(test_data.volume);
+
+  ospAddVolume(world, test_data.volume);
+  ospRelease(test_data.volume);
   ospRelease(tfn);
 
-  // commit the world model
   ospCommit(world);
 
   // create OSPRay renderer
@@ -68,9 +73,11 @@ int main(int argc, const char **argv)
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
-  auto glfwOSPRayWindow =
-      std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
+  auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
+      new GLFWOSPRayWindow(vec2i{1024, 768},
+                           reinterpret_cast<box3f &>(test_data.bounds),
+                           world,
+                           renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([=]() {
     static int spp = 1;

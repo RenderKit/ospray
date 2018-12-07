@@ -134,8 +134,9 @@ namespace ospray {
 
       // create OSPRay objects and return results
 
-      const auto range  = voxelRange.toVec2f();
-      const auto bounds = box3f(vec3f(0.f), vec3f(volumeDimension) * 1.f);
+      const auto range = vec2f(0.f, 10.f);  // voxelRange.toVec2f();
+      const auto bounds =
+          box3f(vec3f(-1.f), vec3f(-1.f) + volumeDimension * gridSpacing);
 
       OSPTestingVolume retval;
       retval.volume     = volume;

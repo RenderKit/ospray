@@ -64,18 +64,6 @@ LINK
   ${OPENGL_LIBRARIES}
 )
 
-ospray_create_application(ospTutorialSimpleVolume
-  ArcballCamera.cpp
-  GLFWOSPRayWindow.cpp
-  ospTutorialSimpleVolume.cpp
-  imgui/imgui_impl_glfw_gl3.cpp
-LINK
-  ospray_testing
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-)
-
 ospray_create_application(ospTutorialStructuredVolume
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
