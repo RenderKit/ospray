@@ -48,9 +48,12 @@ int main(int argc, const char **argv)
   OSPModel world = ospNewModel();
 
   // add in generated volume and transfer function
-  auto test_volume = ospTestingNewVolume("simple_unstructured_volume");
+  OSPTestingVolume test_volume =
+      ospTestingNewVolume("simple_unstructured_volume");
 
-  auto tfn = ospTestingNewTransferFunction(test_volume.voxelRange, "jet");
+  OSPTransferFunction tfn =
+      ospTestingNewTransferFunction(test_volume.voxelRange, "jet");
+
   ospSetObject(test_volume.volume, "transferFunction", tfn);
   ospCommit(test_volume.volume);
 

@@ -124,17 +124,9 @@ namespace ospray {
                               int(volumeDimension),
                               int(volumeDimension)});
 
-      // calculate voxel range
-
-      range1f voxelRange;
-      std::for_each(voxels.begin(), voxels.end(), [&](float &v) {
-        if (!std::isnan(v))
-          voxelRange.extend(v);
-      });
-
       // create OSPRay objects and return results
 
-      const auto range = vec2f(0.f, 10.f);  // voxelRange.toVec2f();
+      const auto range = vec2f(0.f, 10.f);
       const auto bounds =
           box3f(vec3f(-1.f), vec3f(-1.f) + volumeDimension * gridSpacing);
 
