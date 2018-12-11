@@ -72,6 +72,11 @@ namespace ospray {
       clearFB = newCamera || newRenderer || rChanged || cChanged;
 
       frameAccumulationLimit = child("frameAccumulationLimit").valueAs<int>();
+      // when frameAccumulationLimit is active, render at least 2 frames,
+      // otherwise the view is stuck showing the stale navigation framebuffer
+      // for no accumulation, disable the accumBuffer
+      if (frameAccumulationLimit >= 0)
+        frameAccumulationLimit = std::max(frameAccumulationLimit, 2);
     }
 
     void Frame::postCommit(RenderContext &)
