@@ -142,9 +142,8 @@ namespace ospray {
 
 
     if (numPrints < 5) {
-      postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris "
-                       << ", " << numVerts << " vertices)\n"
-                       << "  mesh bounds " << bounds;
+      postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
+                       << numVerts << " vertices)\n  mesh bounds " << bounds;
     }
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),
