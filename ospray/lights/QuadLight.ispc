@@ -110,8 +110,8 @@ Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
 //! Set the parameters of an ispc-side QuadLight object
 export void QuadLight_set(void* uniform super,
                           const uniform vec3f& position,
-                          const uniform vec3f& edge2,
                           const uniform vec3f& edge1,
+                          const uniform vec3f& edge2,
                           const uniform vec3f& radiance)
 {
   uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;
