@@ -658,40 +658,40 @@ is being used. The enum type `OSPDataType` describes the different data
 types that can be represented in OSPRay; valid constants are listed in
 the table below.
 
-| Type/Name               | Description                                   |
-|:------------------------|:----------------------------------------------|
-| OSP\_DEVICE             | API device object reference                   |
-| OSP\_VOID\_PTR          | void pointer                                  |
-| OSP\_DATA               | data reference                                |
-| OSP\_OBJECT             | generic object reference                      |
-| OSP\_CAMERA             | camera object reference                       |
-| OSP\_FRAMEBUFFER        | framebuffer object reference                  |
-| OSP\_LIGHT              | light object reference                        |
-| OSP\_MATERIAL           | material object reference                     |
-| OSP\_TEXTURE            | texture object reference                      |
-| OSP\_RENDERER           | renderer object reference                     |
-| OSP\_MODEL              | model object reference                        |
-| OSP\_GEOMETRY           | geometry object reference                     |
-| OSP\_VOLUME             | volume object reference                       |
-| OSP\_TRANSFER\_FUNCTION | transfer function object reference            |
-| OSP\_PIXEL\_OP          | pixel operation object reference              |
-| OSP\_STRING             | C-style zero-terminated character string      |
-| OSP\_CHAR               | 8 bit signed character scalar                 |
-| OSP\_UCHAR              | 8 bit unsigned character scalar               |
-| OSP\_UCHAR\[234\]       | … and \[234\]-element vector                  |
-| OSP\_USHORT             | 16 bit unsigned integer scalar                |
-| OSP\_INT                | 32 bit signed integer scalar                  |
-| OSP\_INT\[234\]         | … and \[234\]-element vector                  |
-| OSP\_UINT               | 32 bit unsigned integer scalar                |
-| OSP\_UINT\[234\]        | … and \[234\]-element vector                  |
-| OSP\_LONG               | 64 bit signed integer scalar                  |
-| OSP\_LONG\[234\]        | … and \[234\]-element vector                  |
-| OSP\_ULONG              | 64 bit unsigned integer scalar                |
-| OSP\_ULONG\[234\]       | … and \[234\]-element vector                  |
-| OSP\_FLOAT              | 32 bit single precision floating point scalar |
-| OSP\_FLOAT\[234\]       | … and \[234\]-element vector                  |
-| OSP\_FLOAT3A            | … and aligned 3-element vector                |
-| OSP\_DOUBLE             | 64 bit double precision floating point scalar |
+| Type/Name               | Description                                                       |
+|:------------------------|:------------------------------------------------------------------|
+| OSP\_DEVICE             | API device object reference                                       |
+| OSP\_VOID\_PTR          | void pointer                                                      |
+| OSP\_DATA               | data reference                                                    |
+| OSP\_OBJECT             | generic object reference                                          |
+| OSP\_CAMERA             | camera object reference                                           |
+| OSP\_FRAMEBUFFER        | framebuffer object reference                                      |
+| OSP\_LIGHT              | light object reference                                            |
+| OSP\_MATERIAL           | material object reference                                         |
+| OSP\_TEXTURE            | texture object reference                                          |
+| OSP\_RENDERER           | renderer object reference                                         |
+| OSP\_MODEL              | model object reference                                            |
+| OSP\_GEOMETRY           | geometry object reference                                         |
+| OSP\_VOLUME             | volume object reference                                           |
+| OSP\_TRANSFER\_FUNCTION | transfer function object reference                                |
+| OSP\_PIXEL\_OP          | pixel operation object reference                                  |
+| OSP\_STRING             | C-style zero-terminated character string                          |
+| OSP\_CHAR               | 8 bit signed character scalar                                     |
+| OSP\_UCHAR              | 8 bit unsigned character scalar                                   |
+| OSP\_UCHAR\[234\]       | … and \[234\]-element vector                                      |
+| OSP\_USHORT             | 16 bit unsigned integer scalar                                    |
+| OSP\_INT                | 32 bit signed integer scalar                                      |
+| OSP\_INT\[234\]         | … and \[234\]-element vector                                      |
+| OSP\_UINT               | 32 bit unsigned integer scalar                                    |
+| OSP\_UINT\[234\]        | … and \[234\]-element vector                                      |
+| OSP\_LONG               | 64 bit signed integer scalar                                      |
+| OSP\_LONG\[234\]        | … and \[234\]-element vector                                      |
+| OSP\_ULONG              | 64 bit unsigned integer scalar                                    |
+| OSP\_ULONG\[234\]       | … and \[234\]-element vector                                      |
+| OSP\_FLOAT              | 32 bit single precision floating point scalar                     |
+| OSP\_FLOAT\[234\]       | … and \[234\]-element vector                                      |
+| OSP\_FLOAT3A            | … and 3-element vector with padding (same size as an OSP\_FLOAT4) |
+| OSP\_DOUBLE             | 64 bit double precision floating point scalar                     |
 
 : Valid named constants for `OSPDataType`.
 
@@ -827,7 +827,7 @@ specified.
 The first variant shares the voxel data with the application. Such a
 volume type is created by passing the type string
 “`shared_structured_volume`” to `ospNewVolume`. The voxel data is laid
-out in memory in XYZ order and provided to the volume via a
+out in memory in xyz-order[^2] and provided to the volume via a
 [data](#data) buffer parameter named “`voxelData`”.
 
 The second regular grid variant is optimized for rendering performance:
@@ -845,7 +845,7 @@ OSPError ospSetRegion(OSPVolume, void *source,
 
 The voxel data pointed to by `source` is copied into the given volume
 starting at position `regionCoords`, must be of size `regionSize` and be
-placed in memory in XYZ order. Note that OSPRay distinguishes between
+placed in memory in xyz-order. Note that OSPRay distinguishes between
 volume data and volume parameters. This function must be called only
 after all volume parameters (in particular `dimensions` and `voxelType`,
 see below) have been set and *before* `ospCommit(volume)` is called. If
@@ -1632,30 +1632,24 @@ all renderers are
 <td style="text-align: left;"><a href="#data">data</a> array with handles of the <a href="#lights">lights</a></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">epsilon</td>
-<td style="text-align: right;">10<sup>-6</sup></td>
-<td style="text-align: left;">ray epsilon to avoid self-intersections, relative to scene diameter</td>
-</tr>
-<tr class="odd">
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">spp</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">samples per pixel</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">maxDepth</td>
 <td style="text-align: right;">20</td>
 <td style="text-align: left;">maximum ray recursion depth</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">minContribution</td>
 <td style="text-align: right;">0.001</td>
 <td style="text-align: left;">sample contributions below this value will be neglected to speed-up rendering</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">varianceThreshold</td>
 <td style="text-align: right;">0</td>
@@ -1745,9 +1739,10 @@ special parameters:
 
 : Special parameters understood by the SciVis renderer.
 
-Note that the intensity (and color) of AO is controlled via an [ambient
-light](#ambient-light). If `aoSamples` is zero (the default) then
-ambient lights cause ambient illumination (without occlusion).
+Note that the intensity (and color) of AO is deduced from an [ambient
+light](#ambient-light) in the `lights` array.[^3] If `aoSamples` is zero
+(the default) then ambient lights cause ambient illumination (without
+occlusion).
 
 Per default the background of the rendered image will be transparent
 black, i.e. the alpha channel holds the opacity of the rendered objects.
@@ -1896,7 +1891,7 @@ OSPLight ospNewLight3(const char *type);
 
 The call returns `NULL` if that type of light is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
-light sources[^2] accept the following parameters:
+light sources[^4] accept the following parameters:
 
 | Type     | Name      |  Default| Description                            |
 |:---------|:----------|--------:|:---------------------------------------|
@@ -1904,7 +1899,7 @@ light sources[^2] accept the following parameters:
 | float    | intensity |        1| intensity of the light (a factor)      |
 | bool     | isVisible |     true| whether the light can be directly seen |
 
-: Parameters accepted by the all lights.
+: Parameters accepted by all lights.
 
 The following light types are supported by most OSPRay renderers.
 
@@ -2000,8 +1995,8 @@ the spot light supports the special parameters listed in the table.
 
 : Special parameters accepted by the spot light.
 
-![Angles used by
-SpotLight.](https://ospray.github.io/images/spot_light.png)
+![Angles used by the spot
+light.](https://ospray.github.io/images/spot_light.png)
 
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
@@ -2009,10 +2004,10 @@ tracer](#path-tracer)).
 
 #### Quad Light
 
-The quad[^3] light is a planar, procedural area light source emitting
+The quad[^5] light is a planar, procedural area light source emitting
 uniformly on one side into the half space. It is created by passing the
 type string “`quad`” to `ospNewLight3`. In addition to the [general
-parameters](#lights) understood by all lights the spot light supports
+parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
 | Type     | Name     | Description                                          |
@@ -2023,8 +2018,8 @@ the following special parameters:
 
 : Special parameters accepted by the quad light.
 
-![Defining a Quad
-Light.](https://ospray.github.io/images/quad_light.png)
+![Defining a quad light which emits towards the
+reader.](https://ospray.github.io/images/quad_light.png)
 
 The emission side is determined by the cross product of `edge1`×`edge2`.
 Note that only renderers that use stochastic sampling (like the path
@@ -2151,7 +2146,7 @@ white room would hardly be discernible, as can be seen in the figure
 below).
 
 <figure>
-<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to in higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to in higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
+<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
 </figure>If present, the color component of [geometries](#geometries) is
 also used for the diffuse color `Kd` and the alpha component is also
 used for the opacity `d`.
@@ -2162,7 +2157,7 @@ with `Tf`.
 Normal mapping can simulate small geometric features via the texture
 `map_Bump`. The normals $n$ in the normal map are wrt. the local
 tangential shading coordinate system and are encoded as $½(n+1)$, thus a
-texel $(0.5, 0.5, 1)$[^4] represents the unperturbed shading normal
+texel $(0.5, 0.5, 1)$[^6] represents the unperturbed shading normal
 $(0, 0, 1)$. Because of this encoding an sRGB gamma [texture](#texture)
 format is ignored and normals are always fetched as linear from a normal
 map. Note that the orientation of normal maps is important for a
@@ -2680,10 +2675,10 @@ type string “`ThinGlass`” to `ospNewMaterial2`. Its parameters are
 
 For convenience the attenuation is controlled the same way as with the
 [Glass](#glass) material. Additionally, the color due to attenuation can
-be modulated with a [texture](#texture) `map_attenuationColor`
-(\[texture transformations\] are supported as well). If present, the
-color component of [geometries](#geometries) is also used for the
-attenuation color. The `thickness` parameter sets the (virtual)
+be modulated with a [texture](#texture) `map_attenuationColor` ([texture
+transformations](#texture2d-transformations) are supported as well). If
+present, the color component of [geometries](#geometries) is also used
+for the attenuation color. The `thickness` parameter sets the (virtual)
 thickness and allows for easy exchange of parameters with the (real)
 [Glass](#glass) material; internally just the ratio between
 `attenuationDistance` and `thickness` is used to calculate the resulting
@@ -2893,7 +2888,7 @@ supports the special parameters listed in the table below.
 <tr class="even">
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">aspect</td>
-<td style="text-align: left;">ratio of width by height of the frame</td>
+<td style="text-align: left;">ratio of width by height of the frame (and image region)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">float</td>
@@ -2925,8 +2920,8 @@ supports the special parameters listed in the table below.
 
 : Parameters accepted by the perspective camera.
 
-Note that when setting the `aspect` ratio a non-default image region
-(using `imageStart` & `imageEnd`) needs to be regarded.
+Note that when computing the `aspect` ratio a potentially set image
+region (using `imageStart` & `imageEnd`) needs to be regarded as well.
 
 In architectural photography it is often desired for aesthetic reasons
 to display the vertical edges of buildings or walls vertically in the
@@ -3039,7 +3034,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | Name              | Description                                                                                              |
 |:------------------|:---------------------------------------------------------------------------------------------------------|
 | OSP\_FB\_COLOR    | RGB color including alpha                                                                                |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (\_not\_ to the image plane), as linear 32 bit float                    |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float                      |
 | OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                           |
 | OSP\_FB\_VARIANCE | for estimation of the current noise level if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
 | OSP\_FB\_NORMAL   | accumulated screen-space normal of the first hit, as vec3f                                               |
@@ -3213,7 +3208,7 @@ float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
 ```
 
 The third parameter specifies what channel(s) of the framebuffer is
-written to[^5]. What to render and how to render it depends on the
+written to[^7]. What to render and how to render it depends on the
 renderer’s parameters. If the framebuffer supports accumulation (i.e. it
 was created with `OSP_FB_ACCUM`) then successive calls to
 `ospRenderFrame` will progressively refine the rendered image. If
@@ -3239,7 +3234,7 @@ void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
 ```
 
 The provided user pointer `userPtr` is passed as first argument to the
-callback function[^6] and the reported progress is in (0–1\]. If the
+callback function[^8] and the reported progress is in (0–1\]. If the
 callback function returns zero than the application requests to cancel
 rendering, i.e. the current `ospRenderFrame` will return at the first
 opportunity and the content of the frambuffer will be undefined.
@@ -3686,7 +3681,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.c`[^7]. On Linux build it in the build directory
+at `apps/ospTutorial.c`[^9]. On Linux build it in the build directory
 with
 
     gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
@@ -3864,19 +3859,25 @@ page.
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
     be searched in `~/Projects/ispc-v1.9.2-linux`
 
-[^2]: The [HDRI Light](#hdri-light) is an exception, it knows about
+[^2]: For consecutive memory addresses the x-index of the corresponding
+    voxel changes the quickest.
+
+[^3]: If there are multiple ambient lights then their contribution is
+    added
+
+[^4]: The [HDRI light](#hdri-light) is an exception, it knows about
     `intensity`, but not about `color`.
 
-[^3]: actually a parallelogram
+[^5]: actually a parallelogram
 
-[^4]: respectively $(127, 127, 255)$ for 8 bit textures
+[^6]: respectively $(127, 127, 255)$ for 8 bit textures
 
-[^5]: This is currently not implemented, i.e. all channels of the
+[^7]: This is currently not implemented, i.e. all channels of the
     framebuffer are always updated.
 
-[^6]: That way applications can also register a member function of a C++
+[^8]: That way applications can also register a member function of a C++
     class together with the `this` pointer as `userPtr`.
 
-[^7]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^9]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
     `apps/ospTutorial.cpp`.
