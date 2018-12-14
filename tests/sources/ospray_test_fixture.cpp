@@ -1088,7 +1088,7 @@ void Subdivision::SetUp()
   };
 
   float cube_vertex_crease_weights[8] = {
-          inf, inf,inf, inf, inf, inf, inf, inf
+          2, 2, 2, 2, 2, 2, 2, 2
   };
 
   unsigned int cube_vertex_crease_indices[8] = {
@@ -1096,7 +1096,7 @@ void Subdivision::SetUp()
   };
 
   float cube_edge_crease_weights[12] = {
-          inf, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf, inf
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
   };
 
   unsigned int cube_edge_crease_indices[24] =
@@ -1127,7 +1127,7 @@ void Subdivision::SetUp()
   ospSetData(subd, "vertexCrease.weight", vertex_crease_weights);
   auto colors = ospNewData(8, OSP_FLOAT4, cube_colors);
   ospSetData(subd, "color", colors);
-  ospSet1f(subd, "edgeLevel", 256.0f);
+  ospSet1f(subd, "level", 128.0f);
   ospSetMaterial(subd, CreateMaterial(materialType));
 
   ospCommit(subd);
@@ -1135,9 +1135,9 @@ void Subdivision::SetUp()
 
   ospSet1f(renderer, "epsilon", 0.001f);
 
-  float cam_pos[] = {-1.5f, 2.f, 0.7f};
-  float cam_view[] = {1.5f, -2.f, -0.7f};
-  float cam_up[] = {0.f, 1.f, 1.f};
+  float cam_pos[] = {-1.5f, 2.f, 1.7f};
+  float cam_view[] = {1.5f, -2.f, -1.7f};
+  float cam_up[] = {0.f, 1.f, 0.f};
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up", cam_up);

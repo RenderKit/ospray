@@ -101,7 +101,7 @@ protected:
 
 // Fixture class to test cornercases of intersection precision and epsilon handling;
 // parametrized with renderer, sphere radius, distance factor, and whether the sphere is in origin
-// TODO generalize for other geometries as well, reusing SingleObject 
+// TODO generalize for other geometries as well, reusing SingleObject
 class SpherePrecision : public Base, public ::testing::TestWithParam<std::tuple<float /*radius*/, float/*factor*/, bool/*move_cam*/, const char* /*renderer*/>> {
 public:
   SpherePrecision();
