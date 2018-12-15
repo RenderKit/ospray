@@ -48,6 +48,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(MixMaterial,PathTracer_MixMaterial);
+    OSP_REGISTER_MATERIAL(pathtracer, MixMaterial, MixMaterial);
+    OSP_REGISTER_MATERIAL(pt, MixMaterial, MixMaterial);
   }
 }

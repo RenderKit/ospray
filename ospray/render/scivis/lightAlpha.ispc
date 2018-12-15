@@ -53,9 +53,9 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
         material_opacity = dg.color.w;
       } else {
         foreach_unique( mat in scivisMaterial ) {
-          material_opacity = mat->d * get1f(mat->map_d, dg.st, 1.f);
+          material_opacity = mat->d * get1f(mat->map_d, dg, 1.f);
           if (hasAlpha(mat->map_Kd)) {
-            vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
+            vec4f Kd_from_map = get4f(mat->map_Kd,dg);
             material_opacity *= Kd_from_map.w;
           }
         }
@@ -74,7 +74,7 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
     float tBegin = max(org_t0, ray.t0);
     float tEnd = min(org_t, ray.t + self->volumeEpsilon);
 
-    if (volume && tBegin < tEnd) { 
+    if (volume && tBegin < tEnd) {
       // print("found volume intersection!\n");
       // Provide ray offset for use with isosurface geometries (this value
       // ignored elsewhere).
@@ -83,13 +83,13 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
       foreach_unique (v in volume) {
         vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.98f, true, rayOffset, sampleID, quality);
         material_opacity = volumeColor.w;
-      } 
+      }
 
       alpha = alpha * (1.f - material_opacity);
 
       if (alpha * weight < ALPHA_THRESHOLD)
         return 0.f;
-    } 
+    }
 
 
     if (!volume && ray.geomID < 0)

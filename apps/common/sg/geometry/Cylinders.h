@@ -27,9 +27,7 @@ namespace ospray {
       Cylinders();
 
       // return bounding box of all primitives
-      box3f bounds() const override;
-
-      OSPGeometry ospGeometry {nullptr};
+      box3f computeBounds() const override;
     };
 
   } // ::ospray::sg

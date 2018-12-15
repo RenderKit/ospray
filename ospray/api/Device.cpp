@@ -23,8 +23,6 @@
 #include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
-// embree
-#include "embree2/rtcore.h"
 
 #include <map>
 
@@ -59,8 +57,11 @@ namespace ospray {
       //             valid library for core ospray in our main symbol lookup
       //             table.
       auto &repo = *LibraryRepository::getInstance();
-      if (!repo.libraryExists("ospray"))
+      if (!repo.libraryExists("ospray")) {
         repo.addDefaultLibrary();
+        // also load the local device, otherwise ospNewDevice("default") fails
+        repo.add("ospray_module_ispc");
+      }
 
       return objectFactory<Device, OSP_DEVICE>(type);
     }
@@ -76,12 +77,12 @@ namespace ospray {
       }
 
       auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
-      debugMode = OSPRAY_DEBUG.value_or(getParam<int>("debug", 0));
+      debugMode = OSPRAY_DEBUG.value_or(getParam<bool>("debug", 0));
 
       auto OSPRAY_TRACE_API = utility::getEnvVar<int>("OSPRAY_TRACE_API");
-      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam<int>("traceApi", 0));
+      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam<bool>("traceApi", 0));
 
-      if (traceAPI) {
+      if (traceAPI && !apiTraceEnabled) {
         auto streamPtr =
           std::make_shared<std::ofstream>("ospray_api_trace.txt");
 
@@ -89,7 +90,11 @@ namespace ospray {
           auto &stream = *streamPtr;
           stream << message << std::endl;
         };
+      } else if (!traceAPI) {
+        trace_fcn = [](const char *) {};
       }
+
+      apiTraceEnabled = traceAPI;
 
       auto OSPRAY_LOG_LEVEL = utility::getEnvVar<int>("OSPRAY_LOG_LEVEL");
       logLevel = OSPRAY_LOG_LEVEL.value_or(getParam<int>("logLevel", 0));
@@ -101,7 +106,7 @@ namespace ospray {
           utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
 
       auto dst = OSPRAY_LOG_OUTPUT.value_or(
-        getParam<std::string>("logOutput", "none")
+        getParam<std::string>("logOutput", "")
       );
 
       if (dst == "cout")
@@ -115,7 +120,7 @@ namespace ospray {
           utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
 
       dst = OSPRAY_ERROR_OUTPUT.value_or(
-        getParam<std::string>("errorOutput", "none")
+        getParam<std::string>("errorOutput", "")
       );
 
       if (dst == "cout")
@@ -130,11 +135,11 @@ namespace ospray {
         numThreads = 1;
       }
 
+      threadAffinity = AUTO_DETECT;
+
       auto OSPRAY_SET_AFFINITY = utility::getEnvVar<int>("OSPRAY_SET_AFFINITY");
-      if (OSPRAY_SET_AFFINITY) {
-        threadAffinity = OSPRAY_SET_AFFINITY.value() == 0 ? DEAFFINITIZE :
-                                                            AFFINITIZE;
-      }
+      if (OSPRAY_SET_AFFINITY)
+        threadAffinity = OSPRAY_SET_AFFINITY.value();
 
       threadAffinity = getParam<int>("setAffinity", threadAffinity);
 
@@ -156,6 +161,23 @@ namespace ospray {
     Device &currentDevice()
     {
       return *Device::current;
+    }
+
+    bool Device::reportProgress(const float progress)
+    {
+      if (!progressCallback)
+        return true;
+
+      bool cont = true;
+
+      // user callback may not be thread safe
+      // if one update is currently in progress (no pun intended) we do not
+      // need to wait/block, but just skip it.
+      if (progressMutex.try_lock()) {
+        cont = progressCallback(progressUserPtr, progress);
+        progressMutex.unlock();
+      }
+      return cont;
     }
 
     std::string generateEmbreeDeviceCfg(const Device &device)

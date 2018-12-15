@@ -56,15 +56,17 @@ namespace ospray {
 
      protected:
 
-      virtual void render(const std::shared_ptr<sg::Node> &) = 0;
+      virtual void render(const std::shared_ptr<sg::Frame> &) = 0;
       virtual int parseCommandLine(int &ac, const char **&av) = 0;
 
       int initializeOSPRay(int *argc, const char *argv[]);
 
       void addLightsToScene(sg::Node &renderer);
       void addImporterNodesToWorld(sg::Node &renderer);
+      void addGeneratorNodesToWorld(sg::Node &renderer);
       void addAnimatedImporterNodesToWorld(sg::Node &renderer);
       void setupCamera(sg::Node &renderer);
+      void setupToneMapping(sg::Node &fb, sg::Node &fb2);
       void addPlaneToScene(sg::Node &renderer);
       void printHelp();
 
@@ -83,6 +85,12 @@ namespace ospray {
         clTransform transform;
       };
 
+      struct clGeneratorCfg
+      {
+        std::string type;
+        std::string params;
+      };
+
       int width = 1024;
       int height = 768;
       CmdLineParam<vec3f> up = CmdLineParam<vec3f>({ 0, 1, 0 });
@@ -91,30 +99,35 @@ namespace ospray {
       CmdLineParam<float> apertureRadius = CmdLineParam<float>(0.f);
       CmdLineParam<float> fovy = CmdLineParam<float>(60.f);
 
-
       std::vector<clFile> files;
-      std::vector<std::vector<clFile> > animatedFiles;
+      std::vector<clGeneratorCfg> generators;
+      std::vector<std::vector<clFile>> animatedFiles;
       int matrix_i = 1, matrix_j = 1, matrix_k = 1;
       std::string hdriLightFile;
       bool addDefaultLights = false;
       bool noDefaultLights = false;
+      bool aces = false;
+      bool filmic = false;
       bool debug = false;
       std::string initialRendererType;
       box3f bboxWithoutPlane;
+      std::vector<std::string> tfFiles;
+      std::string defaultTransferFunction = "Jet";
 
       bool addPlane =
-          utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(1);
+          utility::getEnvVar<int>("OSPRAY_APPS_GROUND_PLANE").value_or(0);
 
       bool fast =
           utility::getEnvVar<int>("OSPRAY_APPS_FAST_MODE").value_or(0);
 
      private:
+
       void parseGeneralCommandLine(int &ac, const char **&av);
 
       // parse command line arguments containing the format:
       //  -sg:nodeName:...:nodeName=value,value,value -- changes value
       //  -sg:nodeName:...:nodeName+=name,type        -- adds new child node
-      void parseCommandLineSG(int ac, const char **&av, sg::Node &root);
+      void parseCommandLineSG(int ac, const char **&av, sg::Frame &root);
     };
 
   } // ::ospray::app

@@ -1,0 +1,39 @@
+\IfFileExists{ospray-doc/intel-spec.cls}
+{
+  \documentclass[oneside]{ospray-doc/intel-spec}
+}{
+  \documentclass[oneside]{report}
+  \newcommand{\copyrightyears}[1] {}
+  \newcommand{\trademarkacknowledgement}[1] {}
+  \newcommand{\ftcdisclaimer}{}
+  \newcommand{\ftcoptimizationnotice}{}
+  \newcommand{\makedisclaimers}{}
+  \newcommand{\version}[1] { \author{Version ##1} }
+}
+
+\include{preamble}
+
+\begin{document}
+\title{OSPRay\vskip0.3\baselineskip\LARGE
+\noindent An Open, Scalable, Parallel, Ray Tracing Based Rendering Engine
+for High-Fidelity Visualization}
+\version{\osprayversion}
+
+\maketitle
+\tableofcontents
+
+\input{tmp/overview}
+\input{tmp/changelog}
+\input{tmp/compilation}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
+\hypersetup{bookmarksdepth=2}
+\input{tmp/api}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+\hypersetup{bookmarksdepth=1}
+\input{tmp/mpi}
+\input{tmp/scenegraph}
+\input{tmp/examples}
+
+\makedisclaimers
+
+\end{document}

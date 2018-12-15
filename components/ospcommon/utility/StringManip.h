@@ -61,6 +61,21 @@ namespace ospcommon {
       return elems;
     }
 
+    /* split a string on a set of delimiters */
+    inline std::vector<std::string> split(const std::string &input, 
+                                          const std::string &delim)
+    {
+      std::vector<std::string> tokens;
+      size_t pos = 0;
+      while (1) {
+        size_t begin = input.find_first_not_of(delim,pos);
+        if (begin == input.npos) return tokens;
+        size_t end = input.find_first_of(delim,begin);
+        tokens.push_back(input.substr(begin,(end==input.npos)?input.npos:(end-begin)));
+        pos = end;
+      }
+    }
+
     /* return lower case version of the input string */
     inline std::string lowerCase(const std::string &str)
     {

@@ -88,6 +88,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(Metal,PathTracer_Metal);
+    OSP_REGISTER_MATERIAL(pathtracer, Metal, Metal);
+    OSP_REGISTER_MATERIAL(pt, Metal, Metal);
   }
 }

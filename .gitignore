@@ -7,6 +7,7 @@ build*
 tags
 .ycm_extra_conf.pyc
 *.autosave
+*DS_Store*
 *.gz
 *.rpm
 *.zip
@@ -17,9 +18,11 @@ deps
 tbb
 embree
 ispc
-ospray-doc
+./ospray-doc
+readme.pdf
 !/modules
 /modules/*
 !/modules/mpi
 !/modules/pluggableGeometryExample
 !/modules/simdGeometryExample
+Session.vim

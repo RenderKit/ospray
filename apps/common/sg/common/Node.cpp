@@ -90,6 +90,11 @@ namespace ospray {
       return properties.documentation;
     }
 
+    std::vector<Any> Node::whitelist() const
+    {
+      return properties.whitelist;
+    }
+
     void Node::setName(const std::string &v)
     {
       properties.name = v;
@@ -223,6 +228,12 @@ namespace ospray {
       }
     }
 
+    bool Node::subtreeModifiedButNotCommitted() const
+    {
+      return (lastModified() > lastCommitted()) ||
+             (childrenLastModified() > lastCommitted());
+    }
+
     // Parent-child structual interface ///////////////////////////////////////
 
     bool Node::hasChild(const std::string &name) const
@@ -297,6 +308,19 @@ namespace ospray {
       throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
+    std::vector<std::shared_ptr<Node> > Node::childrenRecursive(const std::string &name)
+    {
+      std::vector<std::shared_ptr<Node> > found;
+      if (hasChild(name))
+        found.push_back(child(name).shared_from_this());
+
+      for (auto &child : properties.children) {
+          std::vector<std::shared_ptr<Node> > found2 = child.second->childrenRecursive(name);
+          found.insert(found.end(), found2.begin(),found2.end());
+      }
+      return found;
+    }
+
     const std::map<std::string, std::shared_ptr<Node>>& Node::children() const
     {
       return properties.children;
@@ -346,6 +370,7 @@ namespace ospray {
                         const std::shared_ptr<Node> &node)
     {
       properties.children[name] = node;
+      node->setParent(*this);
     }
 
     bool Node::hasParent() const
@@ -418,8 +443,7 @@ namespace ospray {
                            bool& traverseChildren)
     {
       if (operation == "commit") {
-        if (lastModified() >= lastCommitted() ||
-            childrenLastModified() >= lastCommitted())
+        if (subtreeModifiedButNotCommitted())
           preCommit(ctx);
         else
           traverseChildren = false;
@@ -428,9 +452,7 @@ namespace ospray {
 
     void Node::postTraverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "commit" &&
-          (lastModified() >= lastCommitted() ||
-           childrenLastModified() >= lastCommitted())) {
+      if (operation == "commit" && subtreeModifiedButNotCommitted()) {
         postCommit(ctx);
         markAsCommitted();
       }

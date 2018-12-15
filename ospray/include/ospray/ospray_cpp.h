@@ -28,6 +28,6 @@
 #include "ospray_cpp/Model.h"
 #include "ospray_cpp/PixelOp.h"
 #include "ospray_cpp/Renderer.h"
-#include "ospray_cpp/Texture2D.h"
+#include "ospray_cpp/Texture.h"
 #include "ospray_cpp/TransferFunction.h"
 #include "ospray_cpp/Volume.h"

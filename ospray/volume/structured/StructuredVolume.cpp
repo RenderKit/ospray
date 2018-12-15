@@ -24,7 +24,8 @@ namespace ospray {
 
   StructuredVolume::~StructuredVolume()
   {
-    if (ispcEquivalent) ispc::StructuredVolume_destroy(ispcEquivalent);
+    if (ispcEquivalent)
+      ispc::StructuredVolume_destroy(ispcEquivalent);
   }
 
   std::string StructuredVolume::toString() const
@@ -43,12 +44,11 @@ namespace ospray {
 
     // Get the volume dimensions.
     this->dimensions = getParam3i("dimensions", vec3i(0));
-    exitOnCondition(reduce_min(this->dimensions) <= 0,
-                    "invalid volume dimensions");
+    if (reduce_min(this->dimensions) <= 0)
+      throw std::runtime_error("invalid volume dimensions!");
 
     // Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
-
 
     this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
 

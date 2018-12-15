@@ -1,0 +1,52 @@
+// ======================================================================== //
+// Copyright 2009-2018 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+inline BSDF_EvalRes LambertTransmission_eval(const varying BSDF* uniform self,
+                                             const vec3f& wo, const vec3f& wi)
+{
+  BSDF_EvalRes res;
+  float cosThetaI = max(-dot(wi, getN(self)), 0.f);
+  res.pdf = cosineSampleHemispherePDF(cosThetaI);
+  res.value = self->albedo * one_over_pi * cosThetaI;
+  return res;
+}
+
+inline BSDF_SampleRes LambertTransmission_sample(const varying BSDF* uniform self,
+                                                 const vec3f& wo, const vec2f& s, float ss)
+{
+  const vec3f localDir = cosineSampleHemisphere(s);
+  BSDF_SampleRes res;
+  res.wi = neg(getFrame(self) * localDir);
+  res.pdf = cosineSampleHemispherePDF(localDir);
+  res.type = BSDF_DIFFUSE_TRANSMISSION;
+  res.weight = self->albedo;
+  return res;
+}
+
+inline varying BSDF* uniform LambertTransmission_create(uniform ShadingContext* uniform ctx, 
+                                                        const varying linear3f* uniform frame,
+                                                        const varying vec3f& R)
+{
+  varying BSDF* uniform self = (varying BSDF* uniform)ShadingContext_alloc(ctx, sizeof(BSDF));
+  BSDF_Constructor(self, R, BSDF_DIFFUSE_TRANSMISSION,
+                   LambertTransmission_eval, LambertTransmission_sample,
+                   frame);
+  return self;
+}

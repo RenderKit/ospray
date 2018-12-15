@@ -1,0 +1,109 @@
+<div class= "title">  
+  <h1> OSPRay </h1>
+  <h2> A Ray Tracing Based Rendering Engine for High-Fidelity Visualization </h2>
+</div>
+<hr>
+<div class="teaser-img">
+  <div class="fadein">
+   <img id="f1" src="images/rm_volume.jpg">
+   <img id="f2" class="fade" src="images/rm_volume_ao_shadows.jpg"></div><!-- do not change formatting here! -->
+</div>
+<script type="text/javascript">
+el=document.getElementById("f2");
+el.addEventListener("click", function(e) {
+ e.preventDefault;
+ el.classList.remove("fade");
+ void el.offsetWidth;
+ el.classList.add("fade");
+}, false);
+</script>
+<hr>
+<div class="teaser-features">
+<div class="feature">
+  <img src="images/heptane_bubbly_osp.jpg">
+  <div class="container">
+  <h2> Interactive CPU Rendering </h2>
+  <p>OSPRay features interactive CPU rendering capabilities geared towards
+Scientific Visualization applications. Advanced shading effects such as
+Ambient Occlusion, shadows, and transparency can be rendered interactively,
+enabling new insights into data exploration.</p>
+  </div>
+</div>
+
+<div class="feature feature-alt">
+  <img src="images/mag_pt.jpg">
+  <div class="container">
+ <h2> Global Illumination </h2>
+  
+  <p>
+   OSPRay includes a path tracer capable of interactively rendering
+   photorealistic global illumination.
+  </p>
+  </div>
+</div>
+
+<div class="feature">
+  <img src="images/rm_volume2.jpg">
+  <div class="container">
+  <h2> Volume Rendering </h2>
+  
+  <p>
+   OSPRay supports high-fidelity interactive direct volume rendering with a
+   number of state of the art features.
+  </p>
+  </div>
+</div>
+
+<div class="feature feature-alt">
+  <img src="images/dns_small.jpg">
+  <div class="container">
+ <h2> MPI Distributed </h2>
+  
+  <p>
+   Run on large scale distributed-memory systems with a high-performance MPI
+   backend.  Shown is a 450GB direct numerical simulation dataset running
+   interactively at TACC's Maverick cluster.
+  </p>
+  </div>
+</div>
+
+<div class="feature">
+ <a href="displaywall.html">
+  <img src="gallery/ospray_stallion-thumb.jpg">
+  <div class="container">
+  <h2> Display Walls </h2>
+  
+  <p>
+   OSPRay parallel rendering on TACC's "Stallion" display wall.
+  </p>
+  </div>
+ </a>
+</div>
+
+<div class="feature feature-alt">
+ <a href="pvospray.html">
+  <img src="related_projects/vtk-paraview/screenshot-paraview-fiu-thumb.jpg">
+  <div class="container">
+ <h2> ParaView </h2>
+  
+  <p>
+   OSPRay is directly integrated into ParaView 5.x. Implementations for
+   VisIt, VMD, and other popular tools have also been developed.
+  </p>
+  </div>
+ </a>
+</div>
+
+<div class="feature">
+  <img src="images/code.jpg">
+  <div class="container">
+ <h2> Open Source </h2>
+  
+  <p>
+   OSPRay is Open Sourced under the Apache 2.0 license.
+  </p>
+  </div>
+</div>
+<p/>
+<hr>
+</div>

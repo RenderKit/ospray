@@ -23,13 +23,6 @@ export LD_LIBRARY_PATH=
 mkdir -p build_release
 cd build_release
 
-# fetch docu pdf (in correct version)
-BRANCH=$CI_BUILD_REF_NAME
-if [ -z $BRANCH ]; then
-  BRANCH=`git rev-parse --abbrev-ref HEAD`
-fi
-wget -O readme.pdf --progress=dot:mega -c http://sdvis.org/ospray/download/OSPRay_readme_$BRANCH.pdf
-
 # set release settings
 cmake -L \
 -G "Visual Studio 14 2015 Win64" \

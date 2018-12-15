@@ -31,3 +31,11 @@ Notes:
   similarly possible to write new renderers, new camera types, new
   volume types, etc.
 
+Running the Example
+===================
+
+Build OSPRay (make sure that OSPRAY_MODULE_BILINEAR_PATCH is on!), then in your build directory, do a 
+
+      ./ospExampleViewer --sg:module bilinear_patches ../modules/pluggableGeometryExample/examples/shadows.patches --renderer pt 
+
+

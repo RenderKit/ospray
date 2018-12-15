@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "ospcommon/TypeTraits.h"
+
 namespace ospray {
   namespace sg {
 
@@ -42,18 +44,17 @@ namespace ospray {
       virtual ~Visitor() = default;
     };
 
-    inline void Visitor::postChildren(Node &, TraversalContext &)
-    {
-    }
+    inline void Visitor::postChildren(Node &, TraversalContext &) {}
 
     // Visitor type traits ////////////////////////////////////////////////////
 
-    //NOTE(jda) - This checks at compile time if T implements the method
+    // NOTE(jda) - This checks at compile time if T implements the method
     //            'bool T::visit(Node &node, TraversalContext &ctx)'.
 //#ifdef _WIN32
 #if 1
     template <typename T>
-    using has_valid_visit_operator_method = traits::has_operator_method<T>;
+    using has_valid_visit_operator_method =
+        ospcommon::traits::has_operator_method<T>;
 #else
     template <typename T>
     struct has_valid_visit_operator_method
@@ -61,9 +62,9 @@ namespace ospray {
       using TASK_T = typename std::decay<T>::type;
 
       template <typename P1, typename P2>
-      using t_param       = bool(TASK_T::*)(P1&, P2&);
+      using t_param = bool (TASK_T::*)(P1 &, P2 &);
       template <typename P1, typename P2>
-      using t_param_const = bool(TASK_T::*)(P1&, P2&) const;
+      using t_param_const = bool (TASK_T::*)(P1 &, P2 &) const;
       using operator_t    = decltype(&TASK_T::operator());
 
       using params_are_valid =
@@ -85,12 +86,12 @@ namespace ospray {
 
       static const bool value =
           (std::is_base_of<Visitor, BASIC_VISITOR_T>::value ||
-          has_valid_visit_operator_method<VISITOR_T>::value);
+           has_valid_visit_operator_method<VISITOR_T>::value);
     };
 
     template <typename VISITOR_T>
     using is_valid_visitor_t =
-        traits::enable_if_t<is_valid_visitor<VISITOR_T>::value>;
+        ospcommon::traits::enable_if_t<is_valid_visitor<VISITOR_T>::value>;
 
-  } // ::ospray::sg
-} // ::ospray
+  }  // namespace sg
+}  // namespace ospray

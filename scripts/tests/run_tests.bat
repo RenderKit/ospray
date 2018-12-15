@@ -20,20 +20,24 @@ setlocal
 echo Running tests
 md failed
 
-cd build
-del CMakeCache.txt
-cmake -G "Visual Studio 15 2017 Win64" ..
-cmake --build . --config Release --target ospray_test_data -- /m /nologo
-cd ..
-
 set OSP_LIBS=build\Release
-set EMBREE_DIR=C:\Program Files\Intel\Embree v2.16.1 x64
 set BASELINE_DIR=build\regression_tests\baseline\
 
 set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
 
+cd build
+cmake -G "Visual Studio 15 2017 Win64" ^
+-D OSPRAY_ENABLE_TESTING=ON ^
+..
+
+cmake --build . --config Release --target ospray_test_data -- /m /nologo
+cd ..
+
 call build\regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
 
-exit /B %ERRORLEBEL%
-
+:abort
 endlocal
+:end
+
+rem propagate any error to calling PowerShell script:
+exit

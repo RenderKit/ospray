@@ -160,6 +160,42 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
   return errf;
 }
 
+// accumulate into a (valid) normal or albedo buffer
+export void LocalFrameBuffer_accumulateAuxTile(void *uniform _fb
+    , const uniform Tile &tile
+    , uniform vec3f *uniform aux
+    , const varying float * uniform ax
+    , const varying float * uniform ay
+    , const varying float * uniform az
+    )
+{
+  uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
+
+  const uniform float accumID = tile.accumID;
+  const uniform float accScale = rcpf(tile.accumID + 1);
+  aux += (uniform uint64)tile.region.lower.y * fb->super.size.x;
+
+  for (uniform uint32 iiy=tile.region.lower.y; iiy<tile.region.upper.y; iiy++) {
+    uniform uint32 chunkID = (iiy-tile.region.lower.y)*(TILE_SIZE/programCount);
+
+    for (uint32 iix = tile.region.lower.x + programIndex;
+         iix < tile.region.upper.x; iix += programCount, chunkID++) {
+
+      varying vec3f acc = make_vec3f(0.f);
+      if (tile.accumID > 0)
+        acc = aux[iix];
+      unmasked {
+        acc.x = (acc.x * accumID + ax[chunkID]) * accScale;
+        acc.y = (acc.y * accumID + ay[chunkID]) * accScale;
+        acc.z = (acc.z * accumID + az[chunkID]) * accScale;
+      }
+      aux[iix] = acc;
+    }
+
+    aux += fb->super.size.x;
+  }
+}
+
 export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              const uniform uint32 size_x,
                                              const uniform uint32 size_y,
@@ -168,6 +204,8 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              void *uniform depthBuffer,
                                              void *uniform accumBuffer,
                                              void *uniform varianceBuffer,
+                                             void *uniform normalBuffer,
+                                             void *uniform albedoBuffer,
                                              void *uniform tileAccumID)
 {
   uniform LocalFB *uniform self = uniform new uniform LocalFB;
@@ -178,6 +216,8 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   self->depthBuffer = (uniform float *uniform)depthBuffer;
   self->accumBuffer = (uniform vec4f *uniform)accumBuffer;
   self->varianceBuffer = (uniform vec4f *uniform)varianceBuffer;
+  self->normalBuffer = (uniform vec3f *uniform)normalBuffer;
+  self->albedoBuffer = (uniform vec3f *uniform)albedoBuffer;
   self->numTiles = (self->super.size+(TILE_SIZE-1))/TILE_SIZE;
   self->tileAccumID = (uniform int32 *uniform)tileAccumID;
 

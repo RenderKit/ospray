@@ -20,15 +20,48 @@
 
 namespace ospray {
 
-  /*! \brief creates an abstract material class of given type
+  // Helper functions /////////////////////////////////////////////////////////
 
-    The respective material type must be a registered material type
-    in either ospray proper or any already loaded module. For
-    material types specified in special modules, make sure to call
-    ospLoadModule first. */
-  Material *Material::createMaterial(const char *type)
+  static Material* tryToCreateMaterial(const std::string &renderer_type,
+                                       const std::string &material_type)
   {
-    return createInstanceHelper<Material, OSP_MATERIAL>(type);
+    std::string type = std::string(renderer_type) + "__" + material_type;
+    Material *mat = nullptr;
+    try {
+      mat = createInstanceHelper<Material, OSP_MATERIAL>(type.c_str());
+    } catch (const std::runtime_error &) {
+      // ignore...
+    }
+    return mat;
+  }
+
+  // Material definitions /////////////////////////////////////////////////////
+
+  Material *Material::createInstance(const char *_renderer_type,
+                                     const char *_material_type)
+  {
+    std::string renderer_type = _renderer_type;
+    std::string material_type = _material_type;
+
+    // Try to create the given material
+    auto mat = tryToCreateMaterial(renderer_type, material_type);
+    if (mat != nullptr)
+      return mat;
+
+    // Looks like we failed to create the given type, try default as a backup
+    mat = tryToCreateMaterial(renderer_type, "default");
+    if (mat != nullptr)
+      return mat;
+
+    // The renderer doesn't even provide a default material, provide a generic
+    // one (that it will ignore) so API calls still work for the application
+    if (material_type == "OBJMaterial" ||
+        material_type == "SciVisMaterial" ||
+        material_type == "default") {
+      return new Material;
+    } else {
+      return nullptr;
+    }
   }
 
   std::string Material::toString() const
@@ -68,5 +101,26 @@ namespace ospray {
     return xform;
   }
 
+  MaterialParam1f Material::getMaterialParam1f(const char *name, float valIfNotFound)
+  {
+    const std::string mapName = std::string(name) + "Map";
+    MaterialParam1f param;
+    param.map = (Texture2D*)getParamObject(mapName.c_str());
+    param.xform = getTextureTransform(mapName.c_str());
+    param.rot = param.xform.l.orthogonal().transposed();
+    param.factor = getParam1f(name, param.map ? 1.f : valIfNotFound);
+    return param;
+  }
+
+  MaterialParam3f Material::getMaterialParam3f(const char *name, vec3f valIfNotFound)
+  {
+    const std::string mapName = std::string(name) + "Map";
+    MaterialParam3f param;
+    param.map = (Texture2D*)getParamObject(mapName.c_str());
+    param.xform = getTextureTransform(mapName.c_str());
+    param.rot = param.xform.l.orthogonal().transposed();
+    param.factor = getParam3f(name, param.map ? vec3f(1.f) : valIfNotFound);
+    return param;
+  }
 
 } // ::ospray

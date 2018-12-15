@@ -29,7 +29,7 @@ namespace ospray {
     return i >= i0 && i < i1;
   }
 
-  TriangleMesh::TriangleMesh() 
+  TriangleMesh::TriangleMesh()
   {
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
@@ -47,7 +47,7 @@ namespace ospray {
       postStatusMsg(2) << "(all future printouts for triangle mesh creation "
                        << "will be omitted)";
     }
-    
+
     if (numPrints < 5)
       postStatusMsg(2) << "ospray: finalizing trianglemesh ...";
 
@@ -90,7 +90,7 @@ namespace ospray {
     this->normal = normalData ? (float*)normalData->data : nullptr;
     this->color  = colorData ? (vec4f*)colorData->data : nullptr;
     this->texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
-    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr; 
+    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
 
     size_t numTris  = -1;
     size_t numVerts = -1;
@@ -126,20 +126,20 @@ namespace ospray {
       throw std::runtime_error("unsupported trianglemesh.vertex.normal data type");
     }
 
-    eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
-                               numTris,numVerts);
-
-    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
-                 (void*)this->vertex,0,
-                 sizeOf(vertexData->type));
-    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
-                 (void*)this->index,0,
-                 sizeOf(indexData->type));
+    auto eMeshGeom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_TRIANGLE);
+    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT3,
+                               indexData->data,0,numCompsInTri*sizeof(int),numTris);
+    rtcSetSharedGeometryBuffer(eMeshGeom,RTC_BUFFER_TYPE_VERTEX,0,RTC_FORMAT_FLOAT3,
+                               vertexData->data,0,numCompsInVtx*sizeof(int),numVerts);
+    rtcCommitGeometry(eMeshGeom);
+    eMeshID = rtcAttachGeometry(embreeSceneHandle,eMeshGeom);
+    rtcReleaseGeometry(eMeshGeom);
 
     bounds = empty;
-    
+
     for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
-      bounds.extend(*(vec3f*)(vertex + i));
+      bounds.extend(*(vec3f*)((float *)vertexData->data + i));
+
 
     if (numPrints < 5) {
       postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris "
@@ -147,7 +147,9 @@ namespace ospray {
                        << "  mesh bounds " << bounds;
     }
 
-    ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
+    ispc::TriangleMesh_set(getIE(),model->getIE(),
+                           eMeshGeom,
+                           eMeshID,
                            numTris,
                            numCompsInTri,
                            numCompsInVtx,

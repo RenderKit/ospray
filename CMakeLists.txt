@@ -73,10 +73,6 @@ ADD_SUBDIRECTORY(ospray)
 ##############################################################
 # OSPRay sample apps; at the end: they may need modules
 ##############################################################
-
-OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
-MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
-
 IF (OSPRAY_ENABLE_APPS)
   ADD_SUBDIRECTORY(apps)
 ENDIF()
@@ -94,7 +90,9 @@ ADD_SUBDIRECTORY(modules)
 ##############################################################
 # Google Test
 ##############################################################
-ADD_SUBDIRECTORY(tests)
+IF (OSPRAY_ENABLE_TESTING)
+  ADD_SUBDIRECTORY(tests)
+ENDIF()
 
 ##############################################################
 # add target for running clang-format

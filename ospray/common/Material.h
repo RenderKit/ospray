@@ -20,6 +20,21 @@
 
 namespace ospray {
 
+  struct Texture2D;
+
+  /*! \brief helper structure to store a uniform or textured material parameter */
+  template <typename T>
+  struct MaterialParam
+  {
+    T factor;
+    Texture2D* map;
+    affine2f xform;
+    linear2f rot;
+  };
+
+  using MaterialParam1f = MaterialParam<float>;
+  using MaterialParam3f = MaterialParam<vec3f>;
+
   /*! \brief implements the basic abstraction for anything that is a 'material'.
 
     Note that different renderers will probably define different materials, so the same "logical" material (such a as a "diffuse gray" material) may look differently */
@@ -47,27 +62,22 @@ namespace ospray {
      */
     affine2f getTextureTransform(const char* texture_name);
 
+    /*! \brief helper function to get a uniform or texture material parameter */
+    MaterialParam1f getMaterialParam1f(const char *name, float valIfNotFound);
+    MaterialParam3f getMaterialParam3f(const char *name, vec3f valIfNotFound);
+
     /*! \brief creates an abstract material class of given type
 
       The respective material type must be a registered material type
       in either ospray proper or any already loaded module. For
       material types specified in special modules, make sure to call
       ospLoadModule first. */
-    static Material *createMaterial(const char *identifier);
+    static Material *createInstance(const char *renderer_type,
+                                    const char *material_type);
   };
 
-
-  /*! \brief registers a internal ospray::'ClassName' material under
-      the externally accessible name "external_name"
-
-      \internal This currently works by defining a extern "C" function
-      with a given predefined name that creates a new instance of this
-      material. By having this symbol in the shared lib ospray can
-      lateron always get a handle to this fct and create an instance
-      of this material.
-  */
-#define OSP_REGISTER_MATERIAL(InternalClass, external_name) \
+#define OSP_REGISTER_MATERIAL(renderer_name, InternalClass, external_name)     \
   OSP_REGISTER_OBJECT(::ospray::Material, material, \
-                      InternalClass, external_name)
+                      InternalClass, renderer_name##__##external_name)
 
 } // ::ospray

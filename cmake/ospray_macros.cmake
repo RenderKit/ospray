@@ -31,11 +31,10 @@ endfunction()
 
 function(ospray_verify_embree_features)
   ospray_check_embree_feature(ISPC_SUPPORT ISPC)
-  ospray_check_embree_feature(INTERSECTION_FILTER "intersection filter")
-  ospray_check_embree_feature(INTERSECTION_FILTER_RESTORE "intersection filter")
-  ospray_check_embree_feature(GEOMETRY_TRIANGLES "triangle geometries")
+  ospray_check_embree_feature(FILTER_FUNCTION "intersection filter")
+  ospray_check_embree_feature(GEOMETRY_TRIANGLE "triangle geometries")
+  ospray_check_embree_feature(GEOMETRY_CURVE "spline curve geometries")
   ospray_check_embree_feature(GEOMETRY_USER "user geometries")
-  ospray_check_embree_feature(GEOMETRY_HAIR "spline curve geometries")
   ospray_check_embree_feature(RAY_PACKETS "ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
@@ -51,12 +50,6 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
             " directory.")
   else()
     message(STATUS "Found Embree v${EMBREE_VERSION}: ${EMBREE_LIBRARY}")
-  endif()
-
-  # workaround issue in Embree v2.15.0-v2.16.4
-  # where embree-config.cmake returned the symlink in EMBREE_LIBRARY
-  if (IS_SYMLINK ${EMBREE_LIBRARY})
-    get_filename_component(EMBREE_LIBRARY ${EMBREE_LIBRARY} REALPATH)
   endif()
 
   set(EMBREE_LIBRARIES ${EMBREE_LIBRARY})

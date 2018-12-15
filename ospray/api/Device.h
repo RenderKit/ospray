@@ -91,6 +91,9 @@ namespace ospray {
       virtual void setObject(OSPObject object, const char *bufName, OSPObject obj) = 0;
 
       /*! assign (named) float parameter to an object */
+      virtual void setBool(OSPObject object, const char *bufName, const bool f) = 0;
+
+      /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f) = 0;
 
       /*! assign (named) vec2f parameter to an object */
@@ -139,23 +142,18 @@ namespace ospray {
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
       /*! have given renderer create a new material */
-      virtual OSPMaterial newMaterial(OSPRenderer _renderer,
-                                      const char *type) = 0;
+      virtual OSPMaterial newMaterial(OSPRenderer renderer,
+                                      const char *material_type) = 0;
 
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(const char *renderer_type,
                                       const char *material_type) = 0;
 
       /*! create a new Texture2D object */
-      virtual OSPTexture2D newTexture2D(const vec2i &size,
-          const OSPTextureFormat, void *data, const uint32 flags) = 0;
+      virtual OSPTexture newTexture(const char *type) = 0;
 
       /*! have given renderer create a new Light */
-      virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
-
-      /*! have given renderer create a new Light */
-      virtual OSPLight newLight(const char *renderer_type,
-                                const char *light_type) = 0;
+      virtual OSPLight newLight(const char *light_type) = 0;
 
       /*! clear the specified channel(s) in 'fbChannelFlags'
 
@@ -227,9 +225,13 @@ namespace ospray {
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
+      bool apiTraceEnabled {false};
 
-      enum OSP_THREAD_AFFINITY {AUTO_DETECT, AFFINITIZE, DEAFFINITIZE};
+      enum OSP_THREAD_AFFINITY
+      {DEAFFINITIZE = 0, AFFINITIZE = 1, AUTO_DETECT = 2};
+
       int threadAffinity {AUTO_DETECT};
+
       /*! logging level (cmdline: --osp:loglevel \<n\>) */
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
@@ -246,6 +248,15 @@ namespace ospray {
 
       OSPError    lastErrorCode = OSP_NO_ERROR;
       std::string lastErrorMsg  = "no error";// no braced initializer for MSVC12
+
+      /* TODO
+      std::function<int(void*, const float)>
+      progress_fcn { [](void*, const float){ return 1; } };*/
+      OSPProgressFunc progressCallback {nullptr};
+      void *progressUserPtr;
+      std::mutex progressMutex; // protect user callback function
+
+      bool reportProgress(const float);
 
     private:
 

@@ -49,6 +49,11 @@ inline vec3f uniformSampleHemisphere(const vec2f s)
   return cartesian(phi, sinTheta, cosTheta);
 }
 
+inline float uniformSampleHemispherePDF()
+{
+  return one_over_two_pi;
+}
+
 /// cosine-weighted sampling of hemisphere oriented along the +z-axis
 ////////////////////////////////////////////////////////////////////////////////
 

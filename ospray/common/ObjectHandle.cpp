@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  static std::map<int64,Ref<ospray::ManagedObject>> objectByHandle;
+  static std::map<int64, ospray::ManagedObject *> objectByHandle;
   static std::stack<int64> freedHandles;
 
   //! next unassigned ID on this node
@@ -31,7 +31,7 @@ namespace ospray {
 
   void ObjectHandle::free()
   {
-    freedHandles.push((int64)*this);
+    freedHandles.push((int64) * this);
   }
 
   ObjectHandle::ObjectHandle()
@@ -45,13 +45,9 @@ namespace ospray {
     }
   }
 
-  ObjectHandle::ObjectHandle(int64 i) : i64(i)
-  {
-  }
+  ObjectHandle::ObjectHandle(int64 i) : i64(i) {}
 
-  ObjectHandle::ObjectHandle(const ObjectHandle &other) : i64(other.i64)
-  {
-  }
+  ObjectHandle::ObjectHandle(const ObjectHandle &other) : i64(other.i64) {}
 
   ObjectHandle &ObjectHandle::operator=(const ObjectHandle &other)
   {
@@ -67,14 +63,13 @@ namespace ospray {
 
   void ObjectHandle::assign(ManagedObject *object) const
   {
-    objectByHandle[*this] = object;
+    objectByHandle[i64] = object;
   }
 
   void ObjectHandle::freeObject() const
   {
     auto it = objectByHandle.find(i64);
-    Assert(it != objectByHandle.end());
-    it->second = nullptr;
+    it->second->refDec();
     objectByHandle.erase(it);
   }
 
@@ -95,35 +90,39 @@ namespace ospray {
 
   bool ObjectHandle::defined() const
   {
-    auto it = objectByHandle.find(i64);
-    return it != objectByHandle.end();
+    return objectByHandle.find(i64) != objectByHandle.end();
   }
 
   ManagedObject *ObjectHandle::lookup() const
   {
-    if (i64 == 0) return nullptr;
+    if (i64 == 0)
+      return nullptr;
 
     auto it = objectByHandle.find(i64);
     if (it == objectByHandle.end()) {
 #ifndef NDEBUG
       // iw - made this into a warning only; the original code had
       // this throw an actual exceptoin, but that may be overkill
-      std::cout << "#osp: WARNING: ospray is trying to look up object handle "+std::to_string(i64)+" that isn't defined!" << std::endl;
+      std::cout << "#osp: WARNING: ospray is trying to look up object handle " +
+                       std::to_string(i64) + " that isn't defined!"
+                << std::endl;
 #endif
       return nullptr;
     }
-    return it->second.ptr;
+
+    return it->second;
   }
 
   ObjectHandle ObjectHandle::lookup(ManagedObject *object)
   {
     for (auto it = objectByHandle.begin(); it != objectByHandle.end(); it++) {
-      if (it->second.ptr == object) return(ObjectHandle(it->first));
+      if (it->second == object)
+        return (ObjectHandle(it->first));
     }
 
-    return(nullHandle);
+    return (nullHandle);
   }
 
   OSPRAY_SDK_INTERFACE const ObjectHandle nullHandle(0);
 
-} // ::ospray
+}  // namespace ospray

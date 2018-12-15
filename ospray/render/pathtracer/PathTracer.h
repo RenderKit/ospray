@@ -27,10 +27,9 @@ namespace ospray {
     virtual ~PathTracer() override;
     virtual std::string toString() const override;
     virtual void commit() override;
-    virtual Material *createMaterial(const char *type) override;
 
     void generateGeometryLights(const Model *const, const affine3f& xfm,
-                                const affine3f& rcp_xfm, float *const areaPDF);
+                                float *const areaPDF);
     void destroyGeometryLights();
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights

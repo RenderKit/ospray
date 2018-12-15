@@ -22,11 +22,12 @@
 #include "../volume/Volume.ih"
 
 // embree stuff
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
+#include "embree3/rtcore.isph"
 
-struct Model {
+extern "C" RTCDevice uniform ispc_embreeDevice();
 
+struct Model
+{
   /*! the scene handle we can use to tell embree to trace rays against this scene */
   uniform RTCScene embreeSceneHandle;
 
@@ -40,22 +41,48 @@ struct Model {
   //! volumes contained in the model
   uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
-
 };
 
-/*! trace a ray (using embree where possible) */
+struct UserIntersectionContext
+{
+  RTCIntersectContext ectx;
+  void *uniform userPtr;
+};
+
+inline void traceRay(uniform Model *uniform model,
+                     varying Ray &ray,
+                     void *uniform userPtr)
+{
+  uniform UserIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+  context.userPtr = userPtr;
+  rtcIntersectV(model->embreeSceneHandle,
+                &context.ectx,
+                (varying RTCRayHit* uniform)&ray);
+}
+
 inline void traceRay(uniform Model *uniform model,
                      varying Ray &ray)
 {
-  rtcIntersect(model->embreeSceneHandle,(varying RTCRay&)ray);
+  traceRay(model, ray, NULL);
 }
 
-/*! determine if ray is occluded (using embree where possible) */
 inline bool isOccluded(uniform Model *uniform model,
-                     varying Ray &ray)
+                       varying Ray &ray,
+                       void *uniform userPtr)
 {
-  rtcOccluded(model->embreeSceneHandle,(varying RTCRay&)ray);
-  return ray.geomID >= 0;
+  uniform UserIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+  context.userPtr = userPtr;
+  rtcOccludedV(model->embreeSceneHandle,
+               &context.ectx,
+               (varying RTCRay* uniform)&ray);
+  return ray.t < ray.t0;
+}
+
+inline bool isOccluded(uniform Model *uniform model, varying Ray &ray)
+{
+  return isOccluded(model, ray, NULL);
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of
@@ -70,12 +97,20 @@ inline void postIntersect(uniform Model *uniform model,
                           const varying Ray &ray,
                           uniform int64 flags)
 {
+  dg.primID = ray.primID;
+  dg.st     = make_vec2f(ray.u, ray.v);
+
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
   dg.material = NULL;
 
   if (flags & DG_COLOR)
     dg.color = make_vec4f(1.f);
+
+  if (flags & DG_TANGENTS) {
+    dg.dPds = make_vec3f(1.f, 0.f, 0.f);
+    dg.dPdt = make_vec3f(0.f, 1.f, 0.f);
+  }
 
   dg.P = ray.org + ray.t * ray.dir;
   dg.epsilon = getIntersectionError(dg.P, ray.t);

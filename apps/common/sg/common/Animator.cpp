@@ -39,8 +39,10 @@ namespace ospray {
       if (!hasChild("value1")) { //TODO: support moving it?
         const std::string type = parent().type();
         createChild("value1", type);
-        createChild("value2", type);
-        child("value2") = parent().value();
+        if (!hasChild("value2")) {
+          createChild("value2", type);
+          child("value2") = parent().value();
+        }
         setValue(parent().value());
       }
       parent().setValue(value());

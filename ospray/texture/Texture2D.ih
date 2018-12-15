@@ -18,16 +18,18 @@
 
 #include "ospray/OSPTexture.h"
 #include "math/vec.ih"
+#include "../common/DifferentialGeometry.ih"
 
 struct Texture2D;
 
 typedef varying vec4f (*Texture2D_get)(const uniform Texture2D *uniform self,
-                                       const varying vec2f &p);
+                                       const varying DifferentialGeometry &dg);
 
 typedef varying vec3f (*Texture2D_getN)(const uniform Texture2D *uniform self,
-                                        const varying vec2f &p);
+                                        const varying DifferentialGeometry &dg);
 
-struct Texture2D {
+struct Texture2D
+{
   vec2i         size;
   vec2f         sizef;     // size, as floats; slightly smaller than 'size' to avoid range checks
   vec2f         halfTexel; // 0.5/size, needed for bilinear filtering and clamp-to-edge
@@ -37,7 +39,7 @@ struct Texture2D {
   bool          hasAlpha; // 4 channel texture?
 };
 
-// XXX won't work with MIPmapping: clean implementation with clamping on integer coords needed then 
+// XXX won't work with MIPmapping: clean implementation with clamping on integer coords needed then
 inline vec2f clamp2edge(const uniform Texture2D *uniform self, const vec2f p)
 {
   return clamp(p, self->halfTexel, 1.0f - self->halfTexel);
@@ -58,9 +60,9 @@ inline uniform bool hasAlpha(const uniform Texture2D *uniform self)
   \note self may NOT be NULL!
 */
 inline float get1f(const uniform Texture2D *uniform self,
-                   const varying vec2f where)
+                   const varying DifferentialGeometry &dg)
 {
-  vec4f ret = self->get(self, where);
+  vec4f ret = self->get(self, dg);
   return ret.x;
 }
 
@@ -74,9 +76,9 @@ inline float get1f(const uniform Texture2D *uniform self,
   \note self may NOT be NULL!
 */
 inline vec3f get3f(const uniform Texture2D *uniform self,
-                   const varying vec2f where)
+                   const varying DifferentialGeometry &dg)
 {
-  vec4f ret = self->get(self, where);
+  vec4f ret = self->get(self, dg);
   return make_vec3f(ret);
 }
 
@@ -90,43 +92,59 @@ inline vec3f get3f(const uniform Texture2D *uniform self,
   \note self may NOT be NULL!
 */
 inline vec4f get4f(const uniform Texture2D *uniform self,
-                   const varying vec2f where)
+                   const varying DifferentialGeometry &dg)
 {
-  return self->get(self, where);
+  return self->get(self, dg);
 }
 
 /*! helper function that returns the sampled values interpreted as a normal */
 inline vec3f getNormal(const uniform Texture2D *uniform self,
-                       const varying vec2f where)
+                       const varying DifferentialGeometry &dg)
 {
   if (self == NULL) return make_vec3f(0.f, 0.f, 1.f);
-  else return self->getNormal(self, where);
+  else return self->getNormal(self, dg);
 }
 
 
 /*! helper function: get1f() with a default value if the texture is NULL */
 inline float get1f(const uniform Texture2D *uniform self,
-                   const varying vec2f where,
+                   const varying DifferentialGeometry &dg,
                    const varying float defaultValue)
 {
   if (self == NULL) return defaultValue;
-  else return get1f(self,where);
+  else return get1f(self, dg);
 }
 
 /*! helper function: get3f() with a default value if the texture is NULL */
 inline vec3f get3f(const uniform Texture2D *uniform self,
-                   const varying vec2f where,
+                   const varying DifferentialGeometry &dg,
                    const varying vec3f defaultValue)
 {
   if (self == NULL) return defaultValue;
-  else return get3f(self,where);
+  else return get3f(self, dg);
 }
 
 /*! helper function: get4f() with a default value if the texture is NULL */
 inline vec4f get4f(const uniform Texture2D *uniform self,
-                   const varying vec2f where,
+                   const varying DifferentialGeometry &dg,
                    const varying vec4f defaultValue)
 {
   if (self == NULL) return defaultValue;
-  else return get4f(self,where);
+  else return get4f(self, dg);
 }
+
+#if 0 // crashes ISPC!
+inline DifferentialGeometry dgFromTexCoord(const varying vec2f &c)
+{
+  DifferentialGeometry dg;
+  dg.primID = -1;
+  dg.st = c;
+  return dg;
+}
+#else
+inline void initDgFromTexCoord(DifferentialGeometry &dg, const varying vec2f &c)
+{
+  dg.primID = -1;
+  dg.st = c;
+}
+#endif

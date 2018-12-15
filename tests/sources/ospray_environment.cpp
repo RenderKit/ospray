@@ -16,15 +16,13 @@
 
 #include "ospray_environment.h"
 
-OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv) : dumpImg(false),
+OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv) :
+  dumpImg(false),
   rendererType("scivis"),
-  imgSize( {
-  1920,1080
-}),
-deviceType("default"),
-baselineDir("baseline"),
-failedDir("failed")
-
+  imgSize({ 1920,1080 }),
+  deviceType("default"),
+  baselineDir("baseline"),
+  failedDir("failed")
 {
   ParsArgs(argc, argv);
   ospLoadModule("ispc");
@@ -36,6 +34,11 @@ failedDir("failed")
   }
   ospDeviceCommit(device);
   ospSetCurrentDevice(device);
+}
+
+OSPRayEnvironment::~OSPRayEnvironment()
+{
+  ospShutdown();
 }
 
 void OSPRayEnvironment::ParsArgs(int argc, char **argv) {

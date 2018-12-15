@@ -16,6 +16,7 @@
 
 INCLUDE(GNUInstallDirs)
 
+SET(CMAKE_INSTALL_SCRIPTDIR scripts)
 IF (OSPRAY_ZIP_MODE)
   # in tgz / zip let's have relative RPath
   SET(CMAKE_SKIP_INSTALL_RPATH OFF)
@@ -40,6 +41,7 @@ ELSE()
   IF (NOT WIN32)
     # for RPMs install docu in versioned folder
     SET(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_DOCDIR}-${OSPRAY_VERSION})
+    SET(CMAKE_INSTALL_SCRIPTDIR ${CMAKE_INSTALL_DATAROOTDIR}/OSPRay-${OSPRAY_VERSION}/scripts)
   ENDIF()
 ENDIF()
 
@@ -60,7 +62,13 @@ INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/ospray/include/ospray
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/LICENSE.txt DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/README.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
-INSTALL(FILES ${CMAKE_BINARY_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
+INSTALL(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
+
+##############################################################
+# install bench script
+##############################################################
+
+INSTALL(PROGRAMS ${PROJECT_SOURCE_DIR}/scripts/bench/run_benchmark.py DESTINATION ${CMAKE_INSTALL_SCRIPTDIR} COMPONENT apps)
 
 ##############################################################
 # CPack specific stuff
@@ -95,11 +103,15 @@ SET(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed ren
 SET(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
 SET(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, imgui) that may or may not be already installed on your system.")
 
+SET(CPACK_COMPONENT_TEST_DISPLAY_NAME "Test Suite")
+SET(CPACK_COMPONENT_TEST_DESCRIPTION "Tools for testing the correctness of various aspects of OSPRay.")
+
 # dependencies between components
 SET(CPACK_COMPONENT_DEVEL_DEPENDS lib)
 SET(CPACK_COMPONENT_APPS_DEPENDS lib)
 SET(CPACK_COMPONENT_MPI_DEPENDS lib)
 SET(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
+SET(CPACK_COMPONENT_TEST_DEPENDS lib)
 
 # point to readme and license files
 SET(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
@@ -161,10 +173,13 @@ ELSE() # Linux specific settings
   ELSE()
     SET(CPACK_GENERATOR RPM)
     SET(CPACK_COMPONENTS_ALL lib devel apps mpi)
+    IF (OSPRAY_ENABLE_TESTING)
+      LIST(APPEND CPACK_COMPONENTS_ALL test)
+    ENDIF()
     SET(CPACK_RPM_COMPONENT_INSTALL ON)
 
     # dependencies
-    SET(OSPLIB_REQS "embree-lib >= ${EMBREE_VERSION_REQUIRED}")
+    SET(OSPLIB_REQS "embree3-lib >= ${EMBREE_VERSION_REQUIRED}")
     IF (CMAKE_VERSION VERSION_LESS "3.4.0")
       OSPRAY_WARN_ONCE(RPM_PACKAGING "You need at least v3.4.0 of CMake for generating RPMs")
       SET(CPACK_RPM_PACKAGE_REQUIRES ${OSPLIB_REQS})
@@ -175,6 +190,7 @@ ELSE() # Linux specific settings
       SET(CPACK_RPM_apps_PACKAGE_REQUIRES "ospray-lib >= ${OSPRAY_VERSION}")
       SET(CPACK_RPM_devel_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}, ispc >= ${ISPC_VERSION_REQUIRED}")
       SET(CPACK_RPM_mpi_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
+      SET(CPACK_RPM_test_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
     ENDIF()
 
     SET(CPACK_RPM_PACKAGE_RELEASE 1)

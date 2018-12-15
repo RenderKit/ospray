@@ -64,6 +64,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(Alloy,PathTracer_Alloy);
+    OSP_REGISTER_MATERIAL(pathtracer, Alloy, Alloy);
+    OSP_REGISTER_MATERIAL(pt, Alloy, Alloy);
   }
 }

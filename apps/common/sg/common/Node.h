@@ -29,6 +29,7 @@
 #include "ospcommon/utility/TimeStamp.h"
 #include "ospcommon/xml/XML.h"
 #include "ospcommon/vec.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {
@@ -48,7 +49,8 @@ namespace ospray {
       valid_blacklist = 1 << 4,  //! validity determined by blacklist
       gui_slider = 1 << 5,
       gui_color = 1 << 6,
-      gui_combo = 1 << 7
+      gui_combo = 1 << 7,
+      gui_readonly = 1 << 8
     };
 
     // Base Node class definition /////////////////////////////////////////////
@@ -74,7 +76,10 @@ namespace ospray {
       virtual void serialize(sg::Serialization::State &state);
 
       template <typename T>
-      std::shared_ptr<T> nodeAs();
+      std::shared_ptr<T> nodeAs(); // static cast (faster, but not safe!)
+
+      template <typename T>
+      std::shared_ptr<T> tryNodeAs(); // dynamic cast (slower, but can check)
 
       // Properties ///////////////////////////////////////////////////////////
 
@@ -84,6 +89,7 @@ namespace ospray {
       Any         max()           const;
       NodeFlags   flags()         const;
       std::string documentation() const;
+      std::vector<Any> whitelist() const;
 
       void setName(const std::string &v);
       void setType(const std::string &v);
@@ -146,6 +152,9 @@ namespace ospray {
       virtual void markAsModified();
       virtual void setChildrenModified(TimeStamp t);
 
+      //! Did this Node (or decendants) get modified and not (yet) committed?
+      bool subtreeModifiedButNotCommitted() const;
+
       // Parent-child structual interface /////////////////////////////////////
 
       using NodeLink = std::pair<std::string, std::shared_ptr<Node>>;
@@ -159,6 +168,7 @@ namespace ospray {
       Node& operator[] (const std::string &c) const;
 
       Node& childRecursive(const std::string &name);
+      std::vector<std::shared_ptr<Node> > childrenRecursive(const std::string &name);
       bool hasChildRecursive(const std::string &name);
 
       const std::map<std::string, std::shared_ptr<Node>>& children() const;
@@ -292,6 +302,15 @@ namespace ospray {
       return std::static_pointer_cast<T>(shared_from_this());
     }
 
+    template <typename T>
+    inline std::shared_ptr<T> Node::tryNodeAs()
+    {
+      static_assert(std::is_base_of<Node, T>::value,
+                    "Can only use tryNodeAs<T> to cast to an ospray::sg::Node"
+                    " type! 'T' must be a child of ospray::sg::Node!");
+      return std::dynamic_pointer_cast<T>(shared_from_this());
+    }
+
     //! just for convenience; add a typed 'setParam' function
     template <typename T>
     inline Node &Node::createChildWithValue(const std::string &name,
@@ -414,7 +433,7 @@ namespace ospray {
     DECLARE_VALUEAS_SPECIALIZATION(OSPLight)
     DECLARE_VALUEAS_SPECIALIZATION(OSPVolume)
     DECLARE_VALUEAS_SPECIALIZATION(OSPTransferFunction)
-    DECLARE_VALUEAS_SPECIALIZATION(OSPTexture2D)
+    DECLARE_VALUEAS_SPECIALIZATION(OSPTexture)
     DECLARE_VALUEAS_SPECIALIZATION(OSPPixelOp)
 
 #undef DECLARE_VALUEAS_SPECIALIZATION
@@ -458,7 +477,7 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
-    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
+    extern "C" OSPRAY_DLLEXPORT ospray::sg::Node*                       \
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
       return new InternalClassName;                                     \

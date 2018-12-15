@@ -19,9 +19,11 @@
 #include "OSPApp.h"
 #include "common/sg/SceneGraph.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "sg/generator/Generator.h"
+#include "sg/module/Module.h"
+#include "sg/texture/Texture2D.h"
 #include "sg/visitor/PrintNodes.h"
 #include "sg/visitor/VerifyNodes.h"
-#include "sg/module/Module.h"
 
 namespace ospray {
   namespace app {
@@ -52,34 +54,127 @@ namespace ospray {
 
     void OSPApp::printHelp()
     {
-      std::cout << "./ospApp [params] -sg:[params] [files]" << std::endl;
-      std::cout << "params..." << std::endl
-                << "\t" << "-f --fast //prioritizes performance over advanced rendering features" << std::endl
-                << "\t" << "-sg:node:...:node=value //modify a node value" << std::endl
-                << "\t" << "-sg:node:...:node+=name,type //modify a node value" << std::endl
-                << "\t" << "-r --renderer //renderer type.  scivis, pathtracer, ao1, raycast" << std::endl
-                << "\t" << "-d --debug //debug output" << std::endl
-                << "\t" << "-m --module //load custom ospray module" << std::endl
-                << "\t" << "--matrix int int int //create an array of load models of dimensions xyz" << std::endl
-                << "\t" << "--add-plane //add a ground plane (default for non-fast mode)" << std::endl
-                << "\t" << "--no-plane //remove ground plane" << std::endl
-                << "\t" << "--no-lights //no default lights" << std::endl
-                << "\t" << "--add-lights //default lights" << std::endl
-                << "\t" << "--hdri-light filename //add an hdri light" << std::endl
-                << "\t" << "--translate float float float //translate transform" << std::endl
-                << "\t" << "--scale float float float //scale transform" << std::endl
-                << "\t" << "--rotate float float float //rotate transform" << std::endl
-                << "\t" << "--animation //adds subsequent import files to a timeseries" << std::endl
-                << "\t" << "--file //adds subsequent import files without a timeseries" << std::endl
-                << "\t" << "-w int //window width" << std::endl
-                << "\t" << "-h int //window height" << std::endl
-                << "\t" << "--size int int //window width height" << std::endl
-                << "\t" << "-vp float float float //camera position xyz" << std::endl
-                << "\t" << "-vu float float float //camera up xyz" << std::endl
-                << "\t" << "-vi float float float //camera direction xyz" << std::endl
-                << "\t" << "-vf float //camera field of view" << std::endl
-                << "\t" << "-ar float //camera aperture radius" << std::endl
-                << std::endl;
+      std::cout <<
+R"text(
+./ospApp [parameters] [scene_files]
+
+general app-parameters:
+
+    -f --fast
+        prioritizes performance over advanced rendering features
+    -sg:node:...:node=value
+        modify a node value
+    -sg:node:...:node+=name,type
+        modify a node value
+    -r --renderer [renderer_type]
+        renderer type --> scivis, pathtracer, ao, raycast, etc...
+    -d --debug
+        debug output
+    -m --module [module_name]
+        load custom ospray module
+    --matrix [int] [int] [int]
+        create an array of load models of dimensions xyz
+    --add-plane
+        add a ground plane
+    --no-plane
+        remove ground plane
+    --no-lights
+        no default lights
+    --add-lights
+        default lights
+    -tf --transferFunction [string]
+        default transferFunction
+    -ltf --loadTransferFunction [file]
+        load transfer function preset from file
+    --hdri-light [filename]
+        add an hdri light
+    --translate [float] [float] [float]
+        translate transform
+    --scale [float] [float] [float]
+        scale transform
+    --rotate [float] [float] [float]
+        rotate transform
+    --animation
+        adds subsequent import files to a timeseries
+    --static
+        adds subsequent import files without a timeseries
+    -w [int]
+        window width
+    -h [int]
+        window height
+    --size [int] [int]
+        window width height
+    -sd
+        alias for window size = 640x480
+    -hd
+        alias for window size = 1920x1080
+    -4k
+        alias for window size = 3840x2160
+    -8k
+        alias for window size = 7680x4320
+    -vp [float] [float] [float]
+        camera position xyz
+    -vu [float] [float] [float]
+        camera up xyz
+    -vi [float] [float] [float]
+        camera direction xyz
+    -vf [float]
+        camera field of view
+    -ar [float]
+        camera aperture radius
+    --aces
+        use ACES tone mapping
+    --filmic
+        use filmic tone mapping
+
+scene data generators through command line options:
+
+usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
+
+    types:
+
+      basicVolume: generate a volume with linearly increasing voxel values
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  the 3D dimensions of the volume
+
+      cylinders: generate a block of cylinders in {X,Y} grid of length Z
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  number of cylinders to generate in X,Y 2D dimensions, use Z for length
+              radius=[float]
+                  radius of cylinders
+
+      cube: generate a simple cube as a QuadMesh
+
+      gridOfSpheres: generate a block of gridded sphere centers of uniform radius
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  number of spheres to generate in each 3D dimension
+
+      spheres: generate a block of random sphere centers of uniform radius
+          parameters:
+              numSpheres=[int]
+                  number of spheres to generate
+              radius=[float]
+                  radius of spheres
+
+      unstructuredHex: generate a simple unstructured volume as hexes
+
+      unstructuredTet: generate a simple unstructured volume as tets
+
+      unstructuredWedge: generate a simple unstructured volume as wedges
+
+      vtkWavelet: generate the vtkWavelet volume (requries VTK support compiled in)
+          parameters:
+              [dimensions,dims]=[intxintxint]
+                  number of spheres to generate in each 3D dimension
+              [isovalues,isosurfaces]=[value1/value2/value3...]
+                  use vtkMarchingCubes filter to generate isosurfaces instead of the volume
+              viewSlice
+                  add a slice to the middle of the volume in the X/Y plane
+)text"
+      << std::endl;
     }
 
     int OSPApp::main(int argc, const char *argv[])
@@ -93,13 +188,91 @@ namespace ospray {
 
       parseGeneralCommandLine(argc, argv);
 
-      auto rendererPtr = sg::createNode("renderer", "Renderer");
-      auto &renderer = *rendererPtr;
+      auto rootPtr = sg::createNode("frame0", "Frame")->nodeAs<sg::Frame>();
+
+      auto &root     = *rootPtr;
+      auto &renderer = root["renderer"];
 
       if (!initialRendererType.empty())
         renderer["rendererType"] = initialRendererType;
 
       renderer.createChild("animationcontroller", "AnimationController");
+      renderer.createChild("transferFunctions", "Node");
+
+      //transfer function presets
+      auto& tfPresets = renderer.createChild("transferFunctionPresets", "Node");
+
+      auto addPreset = [&](std::string name,
+                           std::vector<vec3f> colors,
+                           std::shared_ptr<sg::Node>presets) {
+        auto& preset = *presets->createChild(name, "TransferFunction").nodeAs<sg::TransferFunction>();
+        auto& colors4f = *preset["colorControlPoints"].nodeAs<sg::DataVector4f>();
+        colors4f.clear();
+        for(size_t i = 0; i < colors.size(); i++) {
+          colors4f.push_back(vec4f(i/float(colors.size()-1), colors[i].x,
+              colors[i].y, colors[i].z));
+        }
+        preset.updateChildDataValues();
+      };
+
+      std::vector<vec3f> colors;
+      // The presets have no existing opacity value
+      const std::vector<vec2f> opacities;
+      // From the old volume viewer, these are based on ParaView
+      // Jet transfer function
+      colors.push_back(vec3f(0       , 0, 0.562493));
+      colors.push_back(vec3f(0       , 0, 1       ));
+      colors.push_back(vec3f(0       , 1, 1       ));
+      colors.push_back(vec3f(0.500008, 1, 0.500008));
+      colors.push_back(vec3f(1       , 1, 0       ));
+      colors.push_back(vec3f(1       , 0, 0       ));
+      colors.push_back(vec3f(0.500008, 0, 0       ));
+      addPreset("Jet", colors, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0        , 0          , 0          ));
+      colors.push_back(vec3f(0        , 0.120394   , 0.302678   ));
+      colors.push_back(vec3f(0        , 0.216587   , 0.524575   ));
+      colors.push_back(vec3f(0.0552529, 0.345022   , 0.659495   ));
+      colors.push_back(vec3f(0.128054 , 0.492592   , 0.720287   ));
+      colors.push_back(vec3f(0.188952 , 0.641306   , 0.792096   ));
+      colors.push_back(vec3f(0.327672 , 0.784939   , 0.873426   ));
+      colors.push_back(vec3f(0.60824  , 0.892164   , 0.935546   ));
+      colors.push_back(vec3f(0.881376 , 0.912184   , 0.818097   ));
+      colors.push_back(vec3f(0.9514   , 0.835615   , 0.449271   ));
+      colors.push_back(vec3f(0.904479 , 0.690486   , 0          ));
+      colors.push_back(vec3f(0.854063 , 0.510857   , 0          ));
+      colors.push_back(vec3f(0.777096 , 0.330175   , 0.000885023));
+      colors.push_back(vec3f(0.672862 , 0.139086   , 0.00270085 ));
+      colors.push_back(vec3f(0.508812 , 0          , 0          ));
+      colors.push_back(vec3f(0.299413 , 0.000366217, 0.000549325));
+      colors.push_back(vec3f(0.0157473, 0.00332647 , 0          ));
+      addPreset("Ice Fire", colors, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0.231373, 0.298039 , 0.752941));
+      colors.push_back(vec3f(0.865003, 0.865003 , 0.865003));
+      colors.push_back(vec3f(0.705882, 0.0156863, 0.14902));
+      addPreset("Cool Warm", colors, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0, 0, 1));
+      colors.push_back(vec3f(1, 0, 0));
+      addPreset("Blue Red", colors, tfPresets.shared_from_this());
+      colors.clear();
+
+      colors.push_back(vec3f(0));
+      colors.push_back(vec3f(1));
+      addPreset("Grayscale", colors, tfPresets.shared_from_this());
+      colors.clear();
+
+      for (const auto& tfFile : tfFiles) {
+        auto& tf = *renderer["transferFunctionPresets"].createChild("loadedTF",
+          "TransferFunction").nodeAs<sg::TransferFunction>();
+        tf.loadParaViewTF(tfFile);
+      }
+
+      auto &framebuffer = root["frameBuffer"];
 
       if (fast) {
         renderer["spp"] = -1;
@@ -107,32 +280,47 @@ namespace ospray {
         renderer["aoTransparencyEnabled"] = false;
         renderer["minContribution"] = 0.1f;
         renderer["maxDepth"] = 3;
-        renderer["frameBuffer"]["toneMapping"] = false;
-        renderer["frameBuffer"]["useVarianceBuffer"] = false;
+
+        framebuffer["useVarianceBuffer"] = false;
         addPlane = false;
       }
 
       addLightsToScene(renderer);
-      addImporterNodesToWorld(renderer);
+      addImporterNodesToWorld(root);
+      addGeneratorNodesToWorld(renderer);
       addAnimatedImporterNodesToWorld(renderer);
-      addPlaneToScene(renderer);
-      setupCamera(renderer);
 
-      renderer["frameBuffer"]["size"] = vec2i(width, height);
-      renderer.traverse(sg::VerifyNodes{});
-      renderer.commit();
+      framebuffer["size"] = vec2i(width, height);
+      auto &navFB = root.createChild("navFrameBuffer", "FrameBuffer");
+      navFB["useAccumBuffer"] = false;
+      navFB["useVarianceBuffer"] = false;
+
+      setupToneMapping(framebuffer, navFB);
+
+      root.traverse(sg::VerifyNodes(true));
+      root.commit();
+
+      // sensible default for orthographic camera, before command line parsing
+      auto &camera = root["camera"];
+      if (camera.hasChild("height")) {
+        auto bbox = renderer["world"].bounds();
+        camera["height"] = bbox.empty() ? 1.f : 0.5f * length(bbox.size());
+      }
 
       // last, to be able to modify all created SG nodes
-      parseCommandLineSG(argc, argv, renderer);
+      parseCommandLineSG(argc, argv, root);
+
+      // after parseCommandLineSG (may have changed world bounding box)
+      addPlaneToScene(renderer);
+      setupCamera(root);
 
       if (debug)
-        renderer.traverse(sg::PrintNodes{});
+        root.traverse(sg::PrintNodes{});
 
-      // recommit in case any command line options modified the scene graph
-      renderer.traverse(sg::VerifyNodes{});
-      renderer.commit();
+      render(rootPtr);
 
-      render(rendererPtr);
+      rootPtr.reset();
+      ospShutdown();
 
       return 0;
     }
@@ -189,6 +377,16 @@ namespace ospray {
           addDefaultLights = true;
           removeArgs(ac, av, i, 1);
           --i;
+        } else if (arg == "--transferFunction" ||
+          arg == "-tf") {
+          defaultTransferFunction = std::string(av[i+1]);
+          removeArgs(ac, av, i, 2);
+          --i;
+        } else if (arg == "--loadTransferFunction" ||
+          arg == "-ltf") {
+          tfFiles.push_back(av[i+1]);
+          removeArgs(ac, av, i, 2);
+          --i;
         } else if (arg == "--hdri-light") {
           hdriLightFile = av[i + 1];
           removeArgs(ac, av, i, 2);
@@ -220,7 +418,7 @@ namespace ospray {
           fast = true;
         } else if (arg == "--no-fast" || arg == "-nf") {
           fast = false;
-        } else if (arg == "--file") {
+        } else if (arg == "--static" || arg == "--file") {
           inAnimation = false;
           removeArgs(ac, av, i, 1);
           --i;
@@ -237,6 +435,18 @@ namespace ospray {
           height = atoi(av[i + 2]);
           removeArgs(ac, av, i, 3);
           --i;
+        } else if (arg == "-sd") {
+          width  = 640;
+          height = 480;
+        } else if (arg == "-hd") {
+          width  = 1920;
+          height = 1080;
+        } else if (arg == "-4k") {
+          width  = 3840;
+          height = 2160;
+        } else if (arg == "-8k") {
+          width  = 7680;
+          height = 4320;
         } else if (arg == "-vp") {
           vec3f posVec;
           posVec.x = atof(av[i + 1]);
@@ -269,6 +479,16 @@ namespace ospray {
           apertureRadius = atof(av[i + 1]);
           removeArgs(ac, av, i, 2);
           --i;
+        } else if (arg == "--aces") {
+          aces = true;
+          filmic = false;
+          removeArgs(ac, av, i, 1);
+          --i;
+        } else if (arg == "--filmic") {
+          filmic = true;
+          aces = false;
+          removeArgs(ac, av, i, 1);
+          --i;
         } else if (arg.compare(0, 4, "-sg:") == 0) {
           // SG parameters are validated by prefix only.
           // Later different function is used for parsing this type parameters.
@@ -281,6 +501,13 @@ namespace ospray {
           currentCLTransform = clTransform();
           removeArgs(ac, av, i, 1);
           --i;
+        } else if (utility::beginsWith(arg, "--generate:")) {
+          auto splitValues = utility::split(arg, ':');
+          auto type = splitValues[1];
+          std::string params = splitValues.size() > 2 ? splitValues[2] : "";
+          generators.push_back({type, params});
+          removeArgs(ac, av, i, 1);
+          --i;
         } else {
           std::cerr << "Error: unknown parameter '" << arg << "'." << std::endl;
           printHelp();
@@ -289,7 +516,7 @@ namespace ospray {
       }
     }
 
-    void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Node &root)
+    void OSPApp::parseCommandLineSG(int ac, const char **&av, sg::Frame &root)
     {
       for (int i = 1; i < ac; i++) {
         std::string arg(av[i]);
@@ -326,20 +553,27 @@ namespace ospray {
           ss << arg.substr(0, f);
           std::string child;
           std::reference_wrapper<sg::Node> node_ref = root;
-          try {
-            while (ss >> child) {
-              node_ref = node_ref.get().childRecursive(child);
+          std::vector<std::shared_ptr<sg::Node>> children;
+          while (ss >> child) {
+            try {
+              if (ss.eof())
+                children = node_ref.get().childrenRecursive(child);
+              else
+                node_ref = node_ref.get().childRecursive(child);
+            } catch (...) {
+              std::cerr << "Warning: could not find child: " << child << std::endl;
             }
           }
-          catch (const std::runtime_error &) {
-            std::cerr << "Warning: unknown sg::Node '" << child
-                      << "', ignoring option '" << orgarg << "'." << std::endl;
+
+          if (children.empty()) {
+            std::cerr << "Warning: no children found for " << av[i] << " lookup\n";
+            continue;
           }
-          auto &node = node_ref.get();
 
           std::stringstream vals(value);
 
           if (addNode) {
+            auto &node = *children[0];
             std::string name, type;
             vals >> name >> type;
             try {
@@ -351,41 +585,55 @@ namespace ospray {
                         << std::endl;
             }
           } else { // set node value
-
-            // TODO: more generic implementation
-            if (node.valueIsType<std::string>()) {
-              node.setValue(value);
-            } else if (node.valueIsType<float>()) {
-              float x;
-              vals >> x;
-              node.setValue(x);
-            } else if (node.valueIsType<int>()) {
-              int x;
-              vals >> x;
-              node.setValue(x);
-            } else if (node.valueIsType<bool>()) {
-              bool x;
-              vals >> x;
-              node.setValue(x);
-            } else if (node.valueIsType<ospcommon::vec3f>()) {
-              float x, y, z;
-              vals >> x >> y >> z;
-              node.setValue(ospcommon::vec3f(x, y, z));
-            } else if (node.valueIsType<ospcommon::vec2i>()) {
-              int x, y;
-              vals >> x >> y;
-              node.setValue(ospcommon::vec2i(x, y));
-            } else
-              try {
-                auto &vec = dynamic_cast<sg::DataVector1f &>(node);
-                float f;
-                while (vals.good()) {
-                  vals >> f;
-                  vec.push_back(f);
+            for (auto nodePtr : children)
+            {
+              auto &node = *nodePtr;
+              // TODO: more generic implementation
+              if (node.valueIsType<std::string>()) {
+                node.setValue(value);
+              } else if (node.valueIsType<float>()) {
+                float x;
+                vals >> x;
+                node.setValue(x);
+              } else if (node.valueIsType<int>()) {
+                int x;
+                vals >> x;
+                node.setValue(x);
+              } else if (node.valueIsType<bool>()) {
+                bool x;
+                vals >> x;
+                node.setValue(x);
+              } else if (node.valueIsType<ospcommon::vec3f>()) {
+                float x, y, z;
+                vals >> x >> y >> z;
+                node.setValue(ospcommon::vec3f(x, y, z));
+              } else if (node.valueIsType<ospcommon::vec3i>()) {
+                int x, y, z;
+                vals >> x >> y >> z;
+                node.setValue(ospcommon::vec3i(x, y, z));
+              } else if (node.valueIsType<ospcommon::vec2i>()) {
+                int x, y;
+                vals >> x >> y;
+                node.setValue(ospcommon::vec2i(x, y));
+              } else if (node.valueIsType<ospcommon::vec2f>()) {
+                float x, y;
+                vals >> x >> y;
+                node.setValue(ospcommon::vec2f(x, y));
+              } else {
+                try {
+                  auto &vec = dynamic_cast<sg::DataVector1f &>(node);
+                  float f;
+                  while (vals.good()) {
+                    vals >> f;
+                    vec.push_back(f);
+                  }
+                } catch (...) {
+                  std::cerr << "Cannot set value of node '" << node.name()
+                            << "' on the command line!"
+                            << " The expected value type is not (yet) handled."
+                            << std::endl;
                 }
               }
-            catch (...) {
-              std::cerr << "Unexpected exception" << std::endl;
             }
           }
         }
@@ -394,8 +642,6 @@ namespace ospray {
 
     void OSPApp::addLightsToScene(sg::Node &renderer)
     {
-      renderer.verify();
-      renderer.commit();
       auto &lights = renderer["lights"];
 
       if (noDefaultLights == false &&
@@ -405,7 +651,7 @@ namespace ospray {
           sun["color"] = vec3f(1.f, 247.f / 255.f, 201.f / 255.f);
           sun["direction"] = vec3f(0.462f, -1.f, -.1f);
           sun["intensity"] = 3.0f;
-          sun["angularDiameter"] = 0.8f;
+          sun["angularDiameter"] = 0.53f;
 
           auto &bounce = lights.createChild("bounce", "DirectionalLight");
           bounce["color"] = vec3f(202.f / 255.f, 216.f / 255.f, 255.f / 255.f);
@@ -426,16 +672,15 @@ namespace ospray {
         auto tex = sg::Texture2D::load(hdriLightFile, false);
         tex->setName("map");
         auto &hdri = lights.createChild("hdri", "HDRILight");
-        tex->verify();
-        tex->commit();
         hdri.add(tex);
+        renderer.verify(); //TODO: this should not be necessary
+        sg::Texture2D::clearTextureCache();
       }
-      renderer.verify();
-      renderer.commit();
     }
 
-    void OSPApp::addImporterNodesToWorld(sg::Node &renderer)
+    void OSPApp::addImporterNodesToWorld(sg::Node &root)
     {
+      auto &renderer = root["renderer"];
       auto &world = renderer["world"];
       auto &animation = renderer["animationcontroller"];
 
@@ -443,7 +688,7 @@ namespace ospray {
         FileName fn = file.file;
         if (fn.ext() == "ospsg")
         {
-          auto& cam = renderer["camera"];
+          auto& cam = root["camera"];
           auto dirTS = cam["dir"].lastModified();
           auto posTS = cam["pos"].lastModified();
           auto upTS = cam["up"].lastModified();
@@ -478,22 +723,23 @@ namespace ospray {
                     importerNode.childRecursive("adaptiveMaxSamplingRate") = 0.2f;
                 }
 
+                auto transferFunctions = importerNode.childrenRecursive("transferFunction");
+                for (auto tf : transferFunctions)
+                  renderer["transferFunctions"].add(tf);
+
                 transform["scale"] = file.transform.scale;
                 transform["rotation"] = file.transform.rotation;
                 if (files.size() < 2 && animatedFiles.empty()) {
                   auto &rotation =
                       transform["rotation"].createChild("animator", "Animator");
 
-                  rotation.verify();
-                  rotation.commit();
-                  rotation.child("value1") = vec3f(0.f, 0.f, 0.f);
-                  rotation.child("value2") = vec3f(0.f, 2.f * 3.14f, 0.f);
+                  rotation.createChild("value1", "vec3f", vec3f(0.f, 0.f, 0.f));
+                  rotation.createChild("value2", "vec3f", vec3f(0.f, 2.f * 3.14f, 0.f));
+                  rotation.setValue(vec3f(0.0f, 0.0f, 0.0f));
 
                   animation.setChild("rotation", rotation.shared_from_this());
                 }
 
-                renderer.verify();
-                renderer.commit();
                 auto bounds = importerNode_ptr->computeBounds();
                 auto size = bounds.upper - bounds.lower;
                 float maxSize = max(max(size.x, size.y), size.z);
@@ -509,8 +755,31 @@ namespace ospray {
       }
     }
 
-    void OSPApp::setupCamera(sg::Node &renderer)
+    void OSPApp::addGeneratorNodesToWorld(sg::Node &renderer)
     {
+      auto &world = renderer["world"];
+
+      for (const auto &g : generators) {
+        auto generatorNode =
+          world.createChild("generator", "Generator").nodeAs<sg::Generator>();
+
+        generatorNode->child("generatorType") = g.type;
+        generatorNode->child("parameters")    = g.params;
+
+        if (fast) {
+          if (generatorNode->hasChildRecursive("gradientShadingEnabled"))
+            generatorNode->childRecursive("gradientShadingEnabled") = false;
+          if (generatorNode->hasChildRecursive("adaptiveMaxSamplingRate"))
+            generatorNode->childRecursive("adaptiveMaxSamplingRate") = 0.2f;
+        }
+
+        generatorNode->generateData();
+      }
+    }
+
+    void OSPApp::setupCamera(sg::Node &root)
+    {
+      auto &renderer = root["renderer"];
       auto &world = renderer["world"];
       auto bbox = bboxWithoutPlane;
       if (bbox.empty())
@@ -526,21 +795,21 @@ namespace ospray {
       if (!up.isOverridden())
         up = vec3f(0.f, 1.f, 0.f);
 
-      auto &camera = renderer["camera"];
+      auto &camera = root["camera"];
       camera["pos"] = pos.getValue();
       camera["dir"] = normalize(gaze.getValue() - pos.getValue());
       camera["up"] = up.getValue();
 
-      // NOTE: Stash computed gaze point in the camera for apps, invalid once
-      //       camera moves unless also updated by the app!
+      // XXX hack: consumed and removed in constructor of ImGuiViewer
       camera.createChild("gaze", "vec3f", gaze.getValue());
 
-      if (camera.hasChild("fovy"))
+      if (camera.hasChild("fovy") && fovy.isOverridden())
         camera["fovy"] = fovy.getValue();
-      if (camera.hasChild("apertureRadius"))
+      if (camera.hasChild("apertureRadius") && apertureRadius.isOverridden())
         camera["apertureRadius"] = apertureRadius.getValue();
       if (camera.hasChild("focusdistance"))
         camera["focusdistance"] = length(pos.getValue() - gaze.getValue());
+<<<<<<< HEAD
 
       // orthographic camera adjustments
       if (camera.hasChild("height"))
@@ -550,6 +819,32 @@ namespace ospray {
 
       renderer.verify();
       renderer.commit();
+=======
+      if (camera.hasChild("aspect"))
+        camera["aspect"] = width / (float)height;
+    }
+
+    void OSPApp::setupToneMapping(sg::Node &frameBuffer, sg::Node &fb2)
+    {
+      auto &toneMapper = frameBuffer.createChild("toneMapper", "ToneMapper");
+      toneMapper["enabled"] = !fast;
+      if (aces) {
+        toneMapper["contrast"] = 1.6773f;
+        toneMapper["shoulder"] = 0.9714f;
+        toneMapper["midIn"] = 0.18f;
+        toneMapper["midOut"] = 0.18f;
+        toneMapper["hdrMax"] = 11.0785f;
+        toneMapper["acesColor"] = true;
+      } else if (filmic) {
+        toneMapper["contrast"] = 1.1759f;
+        toneMapper["shoulder"] = 0.9746f;
+        toneMapper["midIn"] = 0.18f;
+        toneMapper["midOut"] = 0.18f;
+        toneMapper["hdrMax"] = 6.3704f;
+        toneMapper["acesColor"] = false;
+      }
+      fb2.setChild("toneMapper", toneMapper.shared_from_this());
+>>>>>>> master
     }
 
     void OSPApp::addAnimatedImporterNodesToWorld(sg::Node &renderer)
@@ -567,37 +862,45 @@ namespace ospray {
         transform["scale"] = animatedFile[0].transform.scale;
         transform["position"] = animatedFile[0].transform.translate;
         transform["rotation"] = animatedFile[0].transform.rotation;
-        auto &selector =
-            transform.createChild("selector_" + animatedFile[0].file,
-                                  "Selector");
 
+        std::string importString;
         for (auto file : animatedFile) {
           FileName fn = file.file;
           if (fn.ext() == "ospsg")
             sg::loadOSPSG(renderer.shared_from_this(), fn.str());
           else {
-            auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-            auto &importerNode = *importerNode_ptr;
-            importerNode["fileName"] = fn.str();
-            selector.add(importerNode_ptr);
+            importString += file.file + ",";
           }
         }
-        auto &anim_selector = selector["index"].createChild(
-            "anim_" + animatedFile[0].file, "Animator");
+        importString.erase(importString.end()-1);
+        if (importString != "") {
+          auto importerNode_ptr = sg::createNode(animatedFile[0].file, "Importer");
+          auto &importerNode = *importerNode_ptr;
+          importerNode["fileName"] = importString;
+          transform.add(importerNode_ptr);
+          transform.markAsModified();
 
-        anim_selector.verify();
-        anim_selector.commit();
-        anim_selector["value2"] = int(animatedFile.size());
-        animation.setChild("anim_selector", anim_selector.shared_from_this());
+          auto transferFunctions = importerNode.childrenRecursive("transferFunction");
+          for (auto tf : transferFunctions)
+            renderer["transferFunctions"].add(tf);
+
+          if (animatedFile.size() > 1) {
+            auto &anim_selector = importerNode.child("selector")["index"].createChild(
+                "anim_" + animatedFile[0].file, "Animator");
+
+            anim_selector.createChild("value2", "int", int(animatedFile.size()));
+            animation.setChild("anim_selector", anim_selector.shared_from_this());
+          }
+        }
       }
     }
 
     void OSPApp::addPlaneToScene(sg::Node &renderer)
     {
-      auto &world = renderer["world"];
       if (addPlane == false) {
         return;
       }
+      auto &world = renderer["world"];
       auto bbox = world.bounds();
       if (bbox.empty()) {
         bbox.lower = vec3f(-5, 0, -5);
@@ -630,9 +933,6 @@ namespace ospray {
       planeMaterial["Kd"] = vec3f(0.3f);
       planeMaterial["Ks"] = vec3f(0.0f);
       planeMaterial["Ns"] = 10.f;
-
-      renderer.verify();
-      renderer.commit();
     }
 
   } // ::ospray::app

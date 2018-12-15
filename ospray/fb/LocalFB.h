@@ -31,14 +31,14 @@ namespace ospray {
     float     *depthBuffer; /*!< one float per pixel, may be NULL */
     vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
     vec4f     *varianceBuffer; /*!< one RGBA per pixel, may be NULL, accumulates every other sample, for variance estimation / stopping */
+    vec3f     *normalBuffer; /*!< accumulated screenspace normal per pixel, may be NULL */
+    vec3f     *albedoBuffer; /*!< accumulated, one RGB per pixel, may be NULL */
     int32     *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     TileError  tileErrorRegion; /*!< holds error per tile and adaptive regions, for variance estimation / stopping */
 
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,
-                     bool hasDepthBuffer,
-                     bool hasAccumBuffer,
-                     bool hasVarianceBuffer,
+                     const uint32 channels,
                      void *colorBufferToUse=nullptr);
     virtual ~LocalFrameBuffer() override;
 
@@ -52,8 +52,7 @@ namespace ospray {
     void beginFrame() override;
     float endFrame(const float errorThreshold) override;
 
-    const void *mapColorBuffer() override;
-    const void *mapDepthBuffer() override;
+    const void *mapBuffer(OSPFrameBufferChannel channel) override;
     void unmap(const void *mappedMem) override;
     void clear(const uint32 fbChannelFlags) override;
   };

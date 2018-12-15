@@ -61,7 +61,7 @@ namespace mpicommon {
   /*! send exact number of bytes - the fabric can do that through
     multiple smaller messages, but all bytes have to be
     delivered */
-  void MPIBcastFabric::send(void *mem, size_t size)
+  void MPIBcastFabric::send(const void *_mem, size_t size)
   {
     assert(size < (1LL<<30));
     uint32_t sz32 = size;
@@ -76,6 +76,8 @@ namespace mpicommon {
     // locking out the send/recv threads
     waitForBcast(request);
 
+    // NOTE(jda) - UGH! MPI doesn't let us send const data!
+    void *mem = const_cast<void*>(_mem);
     MPI_CALL(Bcast(mem, sz32, MPI_BYTE, sendRank, group.comm));
   }
 

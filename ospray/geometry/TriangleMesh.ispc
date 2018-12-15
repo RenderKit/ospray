@@ -21,10 +21,15 @@
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_geometry.isph"
-#include "embree2/rtcore_geometry_user.isph"
+int32 TriangleMesh_getMaterialID(
+    const Geometry *uniform const _self
+    , const int32 primID
+    )
+{
+  // TODO: gather material ID from index array if indexSize==4
+  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
+  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
+}
 
 static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
                                        uniform Model    *uniform model,
@@ -63,8 +68,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
     const vec2f b = gather_vec2f(huge_mesh, texcoord, index.y);
     const vec2f c = gather_vec2f(huge_mesh, texcoord, index.z);
     dg.st = interpolate(bary, a, b, c);
-  } else
-    dg.st = make_vec2f(0.0f, 0.0f);
+  }
 
   if (flags & DG_TANGENTS) {
     uniform bool fallback = true;
@@ -98,15 +102,8 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
     }
   }
 
-  if (flags & DG_MATERIALID) {
-    if (self->prim_materialID) {
-      dg.materialID = self->prim_materialID[ray.primID];
-    }
-    // TODO: gather material ID from index array if indexSize==4
-    else {
-      dg.materialID = self->geom_materialID;
-    }
-  }
+  if (flags & DG_MATERIALID)
+    dg.materialID = TriangleMesh_getMaterialID(_self, ray.primID);
 }
 
 SampleAreaRes TriangleMesh_sampleArea(
@@ -139,15 +136,6 @@ SampleAreaRes TriangleMesh_sampleArea(
   return res;
 }
 
-int32 TriangleMesh_getMaterialID(
-    const Geometry *uniform const _self
-    , const int32 primID
-    )
-{
-  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
-  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
-}
-
 void TriangleMesh_getAreas(
     const Geometry *const uniform _self
     , const int32 *const uniform primIDs
@@ -178,7 +166,8 @@ void TriangleMesh_getAreas(
 void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               void *uniform cppEquivalent,
                               uniform Model *uniform model,
-                              uniform int32  geomID,
+                              RTCGeometry geom,
+                              uniform int32 geomID,
                               uniform int32  numTriangles,
                               uniform int32  idxSize,
                               uniform int32  vtxSize,
@@ -196,7 +185,9 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
 {
   Geometry_Constructor(&mesh->super,cppEquivalent,
                        TriangleMesh_postIntersect,
-                       model,geomID,
+                       model,
+                       geom,
+                       geomID,
                        materialList);
   mesh->super.getMaterialID = TriangleMesh_getMaterialID;
   mesh->super.getAreas = TriangleMesh_getAreas;
@@ -219,14 +210,15 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   TriangleMesh *uniform mesh = uniform new TriangleMesh;
-  TriangleMesh_Constructor(mesh, cppEquivalent,
-                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, true, false);
+  TriangleMesh_Constructor(mesh, cppEquivalent, NULL, NULL, 0, 0, 0, 0, 0,
+                           NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, true, false);
   return mesh;
 }
 
 export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       void *uniform _model,
-                                      uniform int32  geomID,
+                                      RTCGeometry geom,
+                                      uniform int32 geomID,
                                       uniform int32  numTriangles,
                                       uniform int32  idxSize,
                                       uniform int32  vtxSize,
@@ -248,6 +240,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
   TriangleMesh_Constructor(mesh,
                            mesh->super.cppEquivalent,
                            model,
+                           geom,
                            geomID,
                            numTriangles,
                            idxSize, vtxSize, norSize,

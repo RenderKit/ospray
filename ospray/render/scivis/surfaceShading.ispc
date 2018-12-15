@@ -25,6 +25,7 @@ void initShadingInfo(varying SciVisShadingInfo &info)
   info.Ns = 0.f;
   info.Kd = make_vec3f(0.f);
   info.Ks = make_vec3f(0.f);
+  info.albedo = make_vec3f(0.f);
 
   info.local_opacity = 0.f;
 }
@@ -46,19 +47,19 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
     foreach_unique (mat in scivisMaterial) {
       // textures modify (mul) values, see
       //   http://paulbourke.net/dataformats/mtl/
-      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f) * dg.color.w;
+      info.d = mat->d * get1f(mat->map_d, dg, 1.f) * dg.color.w;
       info.Kd = mat->Kd * make_vec3f(dg.color);
       if (valid(mat->map_Kd) ){
-        vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
+        vec4f Kd_from_map = get4f(mat->map_Kd, dg);
         info.Kd = info.Kd * make_vec3f(Kd_from_map);
         info.d *= Kd_from_map.w;
       }
-      info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
-      info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
+      info.Ks = mat->Ks * get3f(mat->map_Ks, dg, make_vec3f(1.f));
+      info.Ns = mat->Ns * get1f(mat->map_Ns, dg, 1.f);
       // normal mapping
       if (valid(mat->map_Bump)) {
         // get normal from texture
-        vec3f localNormal = getNormal(mat->map_Bump, dg.st);
+        vec3f localNormal = getNormal(mat->map_Bump, dg);
         vec2f rotNormal = mat->rot_Bump * make_vec2f(localNormal.x, localNormal.y);
         localNormal.x = rotNormal.x; localNormal.y = rotNormal.y;
         // transform to world space and align to tangents/texture coordinates
@@ -68,6 +69,8 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
       }
     }
   }
+
+  info.albedo = info.d * (info.Kd + info.Ks);
 
   // convert from Phong exponent to Blinn
   info.Ns *= 4.0f;
@@ -91,14 +94,16 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
   // init TEA RNG //
   RandomTEA rng_state;
   varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, (self->super.fb->size.x * iy) + ix, accumID);
+  RandomTEA__Constructor(rng, 0x290374, (self->super.fb->size.x * iy) + ix);
+  const vec2f rot = RandomTEA__getFloats(rng);
 
   float occlusion = 0.f;
   const linear3f localToWorld = frame(shadingNormal);
 
   for (uniform int i = 0; i < self->aoSamples; i++) {
-    const vec2f s = RandomTEA__getFloats(rng);
-    const vec3f local_ao_dir = cosineSampleHemisphere(s);
+    const vec2f halton = HaltonSequence_get2D(accumID * self->aoSamples + i);
+    const vec2f r = CranleyPattersonRotation(halton, rot);
+    const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
@@ -111,7 +116,7 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
            self->super.epsilon, self->aoDistance);
 
     if (self->aoTransparencyEnabled) {
-      const float rayOffset = self->super.epsilon*(1.f + s.x);
+      const float rayOffset = self->super.epsilon*(1.f + r.x);
       occlusion += (1.f - lightAlpha(self, ao_ray, self->super.model, 1.0f,
                                      rayOffset, sampleID, 0.2f));
     } else if (isOccluded(self->super.model, ao_ray))
@@ -133,7 +138,7 @@ void shadeAO(const uniform SciVisRenderer *uniform self,
   float ao = 1.0f;
   if (self->needToDoAO)
     ao = calculateAO(self, sampleID, dg, info.shadingNormal);
-  
+
   color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
 }
 

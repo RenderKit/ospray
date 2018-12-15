@@ -24,6 +24,7 @@ struct ToneMapperPixelOp
 {
   uniform float exposure;   // linear exposure adjustment
   uniform float a, b, c, d; // coefficients
+  uniform bool acesColor;   // ACES color transform flag
 };
 
 // ACES input transform matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT * REC709_2_XYZ_PRI_MAT
@@ -43,9 +44,11 @@ static const uniform LinearSpace3f acesOutputMat = {
 inline vec3f toneMap(const ToneMapperPixelOp* uniform self, const vec3f& col)
 {
   vec3f x = col * self->exposure;
-  x = acesInputMat * x;
+  if (self->acesColor)
+    x = acesInputMat * x;
   x = pow(x, self->a) / (pow(x, self->a * self->d) * self->b + self->c);
-  x = acesOutputMat * x;
+  if (self->acesColor)
+    x = acesOutputMat * x;
   x = clamp(x, make_vec3f(0.f), make_vec3f(1.f));
   return x;
 }
@@ -58,12 +61,14 @@ export void* uniform ToneMapperPixelOp_create()
   self->b = 1.f;
   self->c = 0.f;
   self->d = 1.f;
+  self->acesColor = false;
   return self;
 }
 
 export void ToneMapperPixelOp_set(void* uniform _self,
                                   uniform float exposure,
-                                  uniform float a, uniform float b, uniform float c, uniform float d)
+                                  uniform float a, uniform float b, uniform float c, uniform float d,
+                                  uniform bool acesColor)
 {
   ToneMapperPixelOp* uniform self = (ToneMapperPixelOp* uniform)_self;
   self->exposure = exposure;
@@ -71,6 +76,7 @@ export void ToneMapperPixelOp_set(void* uniform _self,
   self->b = b;
   self->c = c;
   self->d = d;
+  self->acesColor = acesColor;
 }
 
 export void ToneMapperPixelOp_apply(const void* uniform _self,

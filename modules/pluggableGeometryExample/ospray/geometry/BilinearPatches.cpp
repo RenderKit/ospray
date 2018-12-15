@@ -86,6 +86,18 @@ namespace ospray {
       ispc::BilinearPatches_finalize(getIE(),model->getIE(),
                                      (float*)patchesDataPointer,
                                      numPatchesInInput);
+
+      /* important: set our bounding box, else renderer can't compute
+         global bounding box, and may get confused with epsilon
+         compuatations */
+      bounds = empty;
+      const Patch *patch = (const Patch *)patchesDataPointer;
+      for (uint32_t i = 0; i < numPatchesInInput; i++) {
+        bounds.extend(patch[i].controlPoint[0][0]);
+        bounds.extend(patch[i].controlPoint[0][1]);
+        bounds.extend(patch[i].controlPoint[1][0]);
+        bounds.extend(patch[i].controlPoint[1][1]);
+      }
     }
 
 

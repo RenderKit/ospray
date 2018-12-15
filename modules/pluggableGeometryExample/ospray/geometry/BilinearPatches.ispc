@@ -20,11 +20,7 @@
 #include "math/LinearSpace.ih"
 #include "common/Ray.ih"
 #include "common/Model.ih"
-#include "ospray/geometry/Geometry.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
+#include "geometry/Geometry.ih"
 
 /*! input data for a single patch */
 struct Patch {
@@ -96,12 +92,15 @@ export void BilinearPatches_destroy(void *uniform _self)
     to be able to tell it the bounding box for each primitimve. this
     is the callback embree calls for querying the (uniform) bounding
     box for a single given primitmive 'primID' */
-unmasked void BilinearPatches_bounds(BilinearPatches *uniform self,
-                                     uniform size_t primID,
-                                     uniform box3fa &bbox)
+unmasked void BilinearPatches_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
+  uniform BilinearPatches *uniform self
+    = (uniform BilinearPatches *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
   Patch *uniform patch = self->patchArray+primID;
-  bbox = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),make_vec3fa(patch->v00)),
+
+  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
+  *out = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),make_vec3fa(patch->v00)),
                                           make_vec3fa(patch->v01)),
                                make_vec3fa(patch->v10)),
                     make_vec3fa(patch->v11));
@@ -111,6 +110,7 @@ unmasked void BilinearPatches_bounds(BilinearPatches *uniform self,
 
 
 bool recursiveBisection(varying Ray &ray,
+                        const uniform bool isOcclusionTest,
                         const varying LinearSpace3f &frame,
                         const uniform vec3f p00,
                         const uniform vec3f p01,
@@ -157,19 +157,21 @@ bool recursiveBisection(varying Ray &ray,
 
   if (recursionsLeft == 0) {
     const float t = 0.25*(t0+t1+t2+t3);
-    if (t < ray.t0 || t >= ray.t) return false;
+    if (t <= ray.t0 || t >= ray.t) return false;
 
-    ray.t = t;
-    ray.u = uc;
-    ray.v = vc;
-
-    const vec3f pu0 = p00+ray.u*(p01-p00);
-    const vec3f pu1 = p10+ray.u*(p11-p10);
-
-    const vec3f pv0 = p00+ray.v*(p10-p00);
-    const vec3f pv1 = p01+ray.v*(p11-p01);
-
-    ray.Ng = cross(pu1-pu0,pv1-pv0);
+    if (!isOcclusionTest) {
+      ray.t = t;
+      ray.u = uc;
+      ray.v = vc;
+      
+      const vec3f pu0 = p00+ray.u*(p01-p00);
+      const vec3f pu1 = p10+ray.u*(p11-p10);
+      
+      const vec3f pv0 = p00+ray.v*(p10-p00);
+      const vec3f pv1 = p01+ray.v*(p11-p01);
+      
+      ray.Ng = cross(pu1-pu0,pv1-pv0);
+    }
     return true;
   } else {
     const uniform vec3f p0c = 0.5f*(p01+p00);
@@ -179,11 +181,15 @@ bool recursiveBisection(varying Ray &ray,
     const uniform vec3f pcc = 0.25f*(p00+p01+p10+p11);
 
     bool hit = false;
-    hit |= recursiveBisection(ray,frame, p00,p0c,pc0,pcc, u0,uc, v0,vc, recursionsLeft-1);
-    hit |= recursiveBisection(ray,frame, pc0,pcc,p10,p1c, u0,uc, vc,v1, recursionsLeft-1);
+    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+                              p00,p0c,pc0,pcc, u0,uc, v0,vc, recursionsLeft-1);
+    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+                              pc0,pcc,p10,p1c, u0,uc, vc,v1, recursionsLeft-1);
 
-    hit |= recursiveBisection(ray,frame, p0c,p01,pcc,pc1, uc,u1, v0,vc, recursionsLeft-1);
-    hit |= recursiveBisection(ray,frame, pcc,pc1,p1c,p11, uc,u1, vc,v1, recursionsLeft-1);
+    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+                              p0c,p01,pcc,pc1, uc,u1, v0,vc, recursionsLeft-1);
+    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+                              pcc,pc1,p1c,p11, uc,u1, vc,v1, recursionsLeft-1);
     return hit;
   }
 }
@@ -194,23 +200,49 @@ bool recursiveBisection(varying Ray &ray,
   very simple recursive test here - this is neither fast nor elegant,
   but does show that you can do mere arbitray stuff in a ISPC kernel,
   including 'true' recusion. */
-void BilinearPatches_intersect(BilinearPatches *uniform self,
-                               varying Ray &ray,
-                               uniform size_t primID)
+void BilinearPatches_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
+                              const uniform bool isOcclusionTest)
 {
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+
+  uniform BilinearPatches *uniform self
+    = (uniform BilinearPatches *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+
+  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+
   Patch *uniform patch = self->patchArray+primID;
 
   // create a simple coordinate system with x and y directions
   // orthogonal to the ray
-  const LinearSpace3f coordSys = frame(ray.dir);
+  const LinearSpace3f coordSys = frame(ray->dir);
 
-  if (recursiveBisection(ray,coordSys,
-                         patch->v00,patch->v01,patch->v10,patch->v11,
-                         0.f,1.f, 0.f,1.f,
-                         /* number of bisections */ 10)) {
-    ray.geomID = self->super.geomID;
-    ray.primID = primID;
+  bool hit = recursiveBisection(*ray,isOcclusionTest,coordSys,
+                                patch->v00,patch->v01,patch->v10,patch->v11,
+                                0.f,1.f, 0.f,1.f,
+                                /* number of bisections */ 10);
+
+  if (hit) {
+    if (isOcclusionTest) {
+      ray->t = neg_inf;
+    } else {
+      ray->primID = primID;
+      ray->geomID = self->super.geomID;
+      ray->instID = args->context->instID[0];
+    }
   }
+}
+
+unmasked void BilinearPatches_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  BilinearPatches_intersect_kernel(args,false);
+}
+
+unmasked void BilinearPatches_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  BilinearPatches_intersect_kernel(args,true);
 }
 
 
@@ -241,19 +273,23 @@ export void BilinearPatches_finalize(void *uniform _self,
 
   // create a new embree geometry with numpathces prims, in the model
   // that this goemetry is in.
-  uint32 uniform geomID = rtcNewUserGeometry(model->embreeSceneHandle,numPatches);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+  rtcSetGeometryUserPrimitiveCount(geom,numPatches);
 
   // set 'us' as user data (this will be the first arg in intersect()
   // and computebounds() callbacks
-  rtcSetUserData(model->embreeSceneHandle,geomID,self);
+  rtcSetGeometryUserData(geom,self);
 
   // set function pointers:
-  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
-                       (uniform RTCBoundsFunc)&BilinearPatches_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCIntersectFuncVarying)&BilinearPatches_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
-                         (uniform RTCOccludedFuncVarying)&BilinearPatches_intersect);
+  rtcSetGeometryBoundsFunction
+    (geom,(uniform RTCBoundsFunction)&BilinearPatches_bounds, self);
+  rtcSetGeometryIntersectFunction
+    (geom,(uniform RTCIntersectFunctionN)&BilinearPatches_intersect);
+  rtcSetGeometryOccludedFunction
+    (geom,(uniform RTCOccludedFunctionN)&BilinearPatches_occluded);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
 }
 
 

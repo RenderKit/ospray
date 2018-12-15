@@ -52,12 +52,12 @@ const varying BSDF* varying Metal_getBSDF(const uniform PathTraceMaterial* unifo
     fresnel = FresnelConductorRGBUniform_create(ctx, self->etaRGB, self->kRGB);
 
   const float roughness = self->roughness
-    * get1f(self->map_roughness, dg.st, 1.f);
+    * get1f(self->map_roughness, dg, 1.f);
 
   if (roughness == 0.0f)
     return Conductor_create(ctx, frame, fresnel);
   else
-    return MicrofacetConductor_create(ctx, frame, fresnel, roughness);
+    return MicrofacetConductor_create(ctx, frame, fresnel, roughness, 0.f);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

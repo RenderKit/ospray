@@ -18,7 +18,11 @@
 #pragma once
 
 /*! OSPRay format constants for Texture creation */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_TEXTURE_RGBA8,
   OSP_TEXTURE_SRGBA,
   OSP_TEXTURE_RGBA32F,
@@ -39,7 +43,11 @@ typedef enum {
 } OSPTextureFormat;
 
 /*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
-typedef enum {
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
   OSP_TEXTURE_SHARED_BUFFER = (1<<0),
   OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
 } OSPTextureCreationFlags;

@@ -230,8 +230,12 @@ namespace maml {
   void Context::stop()
   {
     tasksAreRunning = false;
-    sendReceiveThread->stop();
-    processInboxThread->stop();
+    if (sendReceiveThread) {
+      sendReceiveThread->stop();
+    }
+    if (processInboxThread) {
+      processInboxThread->stop();
+    }
     flushRemainingMessages();
   }
 

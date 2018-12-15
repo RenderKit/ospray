@@ -1,0 +1,4 @@
+[submodule "doc-binaries"]
+	path = doc/ospray-doc
+	url = ../ospray-doc.git
+	branch = .

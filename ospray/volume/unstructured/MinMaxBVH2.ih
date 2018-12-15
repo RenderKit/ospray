@@ -84,3 +84,19 @@ void traverse(uniform MinMaxBVH2 &bvh,
               uniform intersectAndSamplePrim sampleFunc,
               float &result,
               const vec3f &samplePos);
+
+typedef void (*intersectIsoRay)(void *uniform userData,
+                                uniform float *uniform isovalues,
+                                uniform int numIsovalues,
+                                uniform size_t geomID,
+                                uniform uint64 id,
+                                varying Ray &ray);
+
+void traverseRay(uniform MinMaxBVH2 &bvh,
+                 void *uniform userPtr,
+                 uniform vec2f isoRange,
+                 uniform intersectIsoRay isoRayFunc,
+                 uniform float *uniform isovalues,
+                 uniform int numIsovalues,
+                 uniform size_t geomID,
+                 varying Ray &ray);

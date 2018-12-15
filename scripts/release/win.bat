@@ -20,9 +20,6 @@ setlocal
 md build_release
 cd build_release
 
-rem fetch docu pdf (in correct version)
-python -c "from urllib import urlretrieve; urlretrieve('http://sdvis.org/ospray/download/OSPRay_readme_%CI_BUILD_REF_NAME%.pdf', 'readme.pdf')
-
 rem set release settings
 cmake -L ^
 -G "Visual Studio 14 2015 Win64" ^
@@ -49,8 +46,7 @@ cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
 rem create ZIP files
-cmake -D OSPRAY_ZIP_MODE=ON ^
-..
+cmake -D OSPRAY_ZIP_MODE=ON ..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
@@ -59,3 +55,6 @@ cd ..
 :abort
 endlocal
 :end
+
+rem propagate any error to calling PowerShell script
+exit

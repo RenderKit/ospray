@@ -19,16 +19,19 @@
 
 namespace ospray {
 
+  LinearTransferFunction::LinearTransferFunction()
+  {
+    ispcEquivalent = ispc::LinearTransferFunction_createInstance();
+  }
+
   LinearTransferFunction::~LinearTransferFunction()
   {
     if (ispcEquivalent)
       ispc::LinearTransferFunction_freeMemory(ispcEquivalent);
   }
+
   void LinearTransferFunction::commit()
   {
-    // Create the equivalent ISPC transfer function.
-    if (ispcEquivalent == nullptr) createEquivalentISPC();
-
     // Retrieve the color and opacity values.
     colorValues   = getParamData("colors", nullptr);
     opacityValues = getParamData("opacities", nullptr);
@@ -37,15 +40,15 @@ namespace ospray {
 
     // Set the color values.
     if (colorValues) {
-      ispc::LinearTransferFunction_setColorValues(ispcEquivalent, 
-                                                  colorValues->numItems, 
+      ispc::LinearTransferFunction_setColorValues(ispcEquivalent,
+                                                  colorValues->numItems,
                                                   (ispc::vec3f*)colorValues->data);
     }
 
     // Set the opacity values.
     if (opacityValues) {
-      ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent, 
-                                                    opacityValues->numItems, 
+      ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent,
+                                                    opacityValues->numItems,
                                                     (float *)opacityValues->data);
     }
 
@@ -61,20 +64,6 @@ namespace ospray {
   std::string LinearTransferFunction::toString() const
   {
     return "ospray::LinearTransferFunction";
-  }
-
-  void LinearTransferFunction::createEquivalentISPC()
-  {
-    // The equivalent ISPC transfer function must not exist yet.
-    exitOnCondition(ispcEquivalent != nullptr,
-                    "attempt to overwrite an existing ISPC transfer function");
-
-    // Create the equivalent ISPC transfer function.
-    ispcEquivalent = ispc::LinearTransferFunction_createInstance();
-
-    // The object may not have been created.
-    exitOnCondition(ispcEquivalent == nullptr,
-                    "unable to create ISPC transfer function");
   }
 
   // A piecewise linear transfer function.

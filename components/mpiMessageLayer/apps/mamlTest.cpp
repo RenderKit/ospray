@@ -37,6 +37,7 @@ extern "C" int main(int ac, char **av)
 {
   MPI_CALL(Init(&ac, &av));
   ospcommon::tasking::initTaskingSystem();
+  maml::init();
 
   std::mt19937 rng(std::random_device{}());
   std::uniform_int_distribution<int> distrib(0, 255);
@@ -80,6 +81,8 @@ extern "C" int main(int ac, char **av)
            rate.c_str());
     MPI_CALL(Barrier(MPI_COMM_WORLD));
   }
+
+  maml::shutdown();
 
   MPI_CALL(Barrier(MPI_COMM_WORLD));
   MPI_Finalize();

@@ -48,7 +48,9 @@ struct Camera
                     'lens' value; if not, this value can remain
                     unused. */
 
-  float nearClip; //!< \brief near clipping plane.
+  vec3f org;      //!< camera position
+  linear3f frame; //!< camera coordinate frame, i.e. (right, up, neg direction)
+  float nearClip; //!< near clipping plane
   box2f subImage; //!< viewable tile / subregion to compute, [0..1]^2 x [0..1]^2
   region1f shutter; //!< camera shutter open start and end time, in [0..1]
 };

@@ -31,7 +31,7 @@ namespace ospray {
 
     private:
 
-      void render(const std::shared_ptr<sg::Node> &) override;
+      void render(const std::shared_ptr<sg::Frame> &) override;
       int parseCommandLine(int &ac, const char **&av) override;
 
       template <typename T>
@@ -48,24 +48,26 @@ namespace ospray {
                         //             options
     }
 
-    void OSPBenchmark::render(const std::shared_ptr<sg::Node> &root)
+    void OSPBenchmark::render(const std::shared_ptr<sg::Frame> &root)
     {
-      auto renderer = root->nodeAs<sg::Renderer>();
-      auto fb       = renderer->child("frameBuffer").nodeAs<sg::FrameBuffer>();
-
       for (size_t i = 0; i < numWarmupFrames; ++i)
-        renderer->renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+        root->renderFrame();
+
+      // NOTE(jda) - allow 0 bench frames to enable testing only data load times
+      if (numBenchFrames <= 0)
+        return;
 
       auto benchmarker =
           pico_bench::Benchmarker<std::chrono::milliseconds>{ numBenchFrames };
 
       auto stats = benchmarker([&]() {
-        renderer->renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+        root->renderFrame();
         // TODO: measure just ospRenderFrame() time from within ospray_sg
         // return std::chrono::milliseconds{500};
       });
 
       if (!imageOutputFile.empty()) {
+        auto fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
         auto *srcPB = (const uint32_t *)fb->map();
         utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
         fb->unmap(srcPB);

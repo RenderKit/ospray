@@ -110,7 +110,7 @@ namespace ospray {
         }
       }
 
-      void importPatches(std::shared_ptr<Node> world,
+      void importPatches(const std::shared_ptr<Node> &world,
                          const FileName &fileName)
       {
         std::vector<Patch> patches;
@@ -145,7 +145,7 @@ namespace ospray {
       /*! module registry function that initalizes this module with the
         scene graph - in our case, we register a importer for '*.patches'
         files */
-      extern "C" void ospray_init_module_sg_bilinear_patches()
+      extern "C" void ospray_sg_bilinear_patches_init()
       {
         ospLoadModule("bilinear_patches");
         ospray::sg::declareImporterForFileExtension("patches",importPatches);

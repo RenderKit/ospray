@@ -30,7 +30,7 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      box3f bounds() const override;
+      box3f computeBounds() const override;
 
       void preCommit(RenderContext& ctx) override;
 

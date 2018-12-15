@@ -64,7 +64,7 @@ namespace ospray {
     struct RenderContext;
 
     //! map the given file to memory and return that pointer
-    const unsigned char* mapFile(const std::string &fileName);
+    OSPSG_INTERFACE const unsigned char* mapFile(const std::string &fileName);
 
   } // ::ospray::sg
 } // ::ospray

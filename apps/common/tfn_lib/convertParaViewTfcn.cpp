@@ -21,6 +21,10 @@
 #include <string>
 #include "json/json.h"
 #include "tfn_lib.h"
+#include <common/sg/transferFunction/TransferFunction.h>
+#include <common/sg/SceneGraph.h>
+#include <common/sg/transferFunction/TransferFunction.h>
+
 
 const static std::string USAGE =
   "Usage: ./ospCvtParaViewTfcn <paraview_fcn.json> <out_fcn.tfn>\n"
@@ -29,6 +33,7 @@ const static std::string USAGE =
   "    transfer function format used by OSPRay's sample apps\n";
 
 using namespace ospcommon;
+using namespace ospray;
 
 inline float cvtSrgb(const float x) {
   if (x <= 0.0031308) {
@@ -38,79 +43,22 @@ inline float cvtSrgb(const float x) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
   if (argc < 3 || std::strcmp(argv[1], "-h") == 0 || std::strcmp(argv[1], "--help") == 0) {
     std::cout << USAGE;
     return 1;
   }
 
-  std::ifstream paraViewFile(argv[1]);
-  if (!paraViewFile.is_open()) {
-    throw std::runtime_error("#ospCvtParaViewTfcn: Error - failed to open file " + std::string(argv[2]));
-  }
-  Json::Value paraViewFcn;
-  paraViewFile >> paraViewFcn;
-  if (paraViewFcn.isArray()) {
-    std::cout << "#ospCvtParaViewTfcn: Found array of transfer functions, exporting the first one\n";
-    paraViewFcn = paraViewFcn[0];
-  }
-  if (!paraViewFcn.isObject()) {
-    throw std::runtime_error("#ospCvtParaViewTfcn: Error - no transfer function object to import!\n");
-  }
+  ospInit(&argc, argv);
+  auto tfNode = sg::createNode("tfImporter", "TransferFunction")->nodeAs<sg::TransferFunction>();
+  tfNode->loadParaViewTF(std::string(argv[1]));
 
-  std::string tfcnName;
-  if (paraViewFcn["Name"].type() == Json::stringValue) {
-    tfcnName = paraViewFcn["Name"].asString();
-    std::cout << "#ospCvtParaViewTfcn: Converting transfer function '" << tfcnName << "'\n";
-  } else {
-    throw std::runtime_error("#ospCvtParaViewTfcn: Error - failed to read transfer function name\n");
-  }
-
-  if (paraViewFcn["ColorSpace"].type() == Json::stringValue
-      && paraViewFcn["ColorSpace"].asString() == "Diverging") {
-    std::cout << "#ospCvtParaViewTfcn: WARNING: ParaView's diverging color space "
-      << "interpolation is not supported, colors may be incorrect\n";
-  }
-
-
-  // Read the value, opacity pairs and ignore the strange extra 0.5, 0 entries
-  std::cout << "#ospCvtParaViewTfcn: Reading value, opacity pairs\n";
   std::vector<vec2f> opacities;
-  Json::Value pvOpacities = paraViewFcn["Points"];
-  if (!pvOpacities.isArray()) {
-    std::cout << "#ospCvtParaViewTfcn: No opacity data, setting default of linearly increasing [0, 1]\n";
-    opacities.push_back(vec2f(0.f, 0.f));
-    opacities.push_back(vec2f(1.f, 1.f));
-  } else {
-    // We the first 2 of every 4 values which are the (value, opacity) pair
-    // followed by some random (0.5, 0) value pair that ParaView throws in there
-    for (Json::Value::ArrayIndex i = 0; i < pvOpacities.size(); i += 4) {
-      const float val = pvOpacities[i].asFloat();
-      const float opacity = pvOpacities[i + 1].asFloat();
-      opacities.push_back(vec2f(val, opacity));
-    }
-  }
-  const float dataValueMin = opacities[0].x;
-  const float dataValueMax = opacities.back().x;
-  // Re-scale the opacity value entries into [0, 1]
-  for (auto &v : opacities) {
-    v.x = (v.x - dataValueMin) / (dataValueMax - dataValueMin);
-  }
-
-  // Read the (val, RGB) pairs
-  std::cout << "#ospCvtParaViewTfcn: Reading value, r, g, b tuples\n";
   std::vector<vec4f> rgbPoints;
-  Json::Value pvColors = paraViewFcn["RGBPoints"];
-  if (!pvColors.isArray()) {
-    throw std::runtime_error("#ospCvtParaViewTfcn: Error - failed to find value, r, g, b 'RGBPoints' array\n");
-  }
-  for (Json::Value::ArrayIndex i = 0; i < pvColors.size(); i += 4) {
-    const float val = (pvColors[i].asFloat() - dataValueMin) / (dataValueMax - dataValueMin);
-    const float r = pvColors[i + 1].asFloat();
-    const float g = pvColors[i + 2].asFloat();
-    const float b = pvColors[i + 3].asFloat();
-    rgbPoints.push_back(vec4f(val, r, g, b));
-  }
+  for (auto opacity : tfNode->child("opacityControlPoints").nodeAs<sg::DataVector2f>()->v)
+    opacities.emplace_back(opacity);
+  for (auto color : tfNode->child("colorControlPoints").nodeAs<sg::DataVector4f>()->v)
+    rgbPoints.emplace_back(color);
 
   // Sample the color values since the piecewise_linear transferfunction doesn't
   // allow for value, RGB pairs to be set and assumes the RGB values are spaced uniformly
@@ -149,7 +97,7 @@ int main(int argc, char **argv) {
     rgbSamples.push_back(color);
   }
 
-  tfn::TransferFunction converted(tfcnName, rgbSamples, opacities, 0, 1.0, 0.5f);
+  tfn::TransferFunction converted(tfNode->name(), rgbSamples, opacities, 0, 1.0, 0.5f);
   converted.save(argv[2]);
 
   return 0;

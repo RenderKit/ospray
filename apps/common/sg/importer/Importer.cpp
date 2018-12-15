@@ -95,7 +95,7 @@ namespace ospray {
 
     // for now, let's hardcode the importers - should be moved to a
     // registry at some point ...
-    void importFileType_points(std::shared_ptr<Node> &world,
+    void importFileType_points(const std::shared_ptr<Node> &world,
                                const FileName &url);
 
 
@@ -140,33 +140,29 @@ namespace ospray {
       std::shared_ptr<FormatURL> fu;
       try {
         fu = std::make_shared<FormatURL>(fileName.c_str());
-      } catch (std::runtime_error e) {
+      } catch (const std::runtime_error &) {
         /* this failed so this was not a file type url ... */
         fu = nullptr;
       }
 
+      std::cout << "loading... " << fileName.str() << std::endl;
       if (fu) {
         importURL(wsg, fileName, *fu);
       } else if (utility::beginsWith(fileName, "--import:")) {
         auto splitValues = utility::split(fileName, ':');
-        bool isGenerator = (splitValues.size() == 2);
-
         auto type = splitValues[1];
-
-        if (isGenerator)
-          importRegistryGenerator(wsg, type);
-        else {
-          auto file = splitValues[2];
-          importRegistryFileLoader(wsg, type, FileName(file));
-        }
+        auto file = splitValues[2];
+        importRegistryFileLoader(wsg, type, FileName(file));
       } else {
+        std::cout << "default load...\n";
         importDefaultExtensions(wsg, fileName);
       }
+      std::cout << "loaded\n";
 
       loadedFileName = fileName.str();
     }
 
-    void Importer::importURL(std::shared_ptr<Node> world,
+    void Importer::importURL(const std::shared_ptr<Node> &world,
                              const FileName &fileName,
                              const FormatURL &fu) const
     {
@@ -182,70 +178,16 @@ namespace ospray {
       }
     }
 
-    // TODO: Implement a registry for data "generators" which don't require
-    //       an input file.
-    void Importer::importRegistryGenerator(std::shared_ptr<Node> /*world*/,
-                                           const std::string &/*type*/) const
-    {
-      #if 0
-      // Function pointer type for creating a concrete instance of a subtype of
-      // this class.
-      using importFunction = void(*)(std::shared_ptr<Node>, const FileName &);
-
-      // Function pointers corresponding to each subtype.
-      static std::map<std::string, importFunction> symbolRegistry;
-
-      // Find the creation function for the subtype if not already known.
-      if (symbolRegistry.count(type) == 0) {
-        postStatusMsg(2) << "#ospray: trying to look up "
-                         << type_string << " type '" << type
-                         << "' for the first time";
-
-        // Construct the name of the creation function to look for.
-        std::string creationFunctionName = "ospray_create_" + type_string
-                                           +  "__" + type;
-
-        // Look for the named function.
-        symbolRegistry[type] =
-            (creationFunctionPointer)getSymbol(creationFunctionName);
-
-        // The named function may not be found if the requested subtype is not
-        // known.
-        if (!symbolRegistry[type]) {
-          postStatusMsg(1) << "  WARNING: unrecognized " << type_string
-                           << " type '" << type << "'.";
-        }
-      }
-
-      // Create a concrete instance of the requested subtype.
-      auto *object = symbolRegistry[type] ? (*symbolRegistry[type])() : nullptr;
-
-      // Denote the subclass type in the ManagedObject base class.
-      if (object) {
-        object->managedObjectType = OSP_TYPE;
-      }
-      else {
-        symbolRegistry.erase(type);
-        throw std::runtime_error("Could not find " + type_string + " of type: "
-          + type + ".  Make sure you have the correct OSPRay libraries linked.");
-      }
-
-      return object;
-      #endif
-    }
-
-    void Importer::importRegistryFileLoader(std::shared_ptr<Node> world,
+    void Importer::importRegistryFileLoader(const std::shared_ptr<Node> &world,
                                             const std::string &type,
                                             const FileName &fileName) const
     {
-      using importFunction = void(*)(std::shared_ptr<Node>, const FileName &);
-
-      static std::map<std::string, importFunction> symbolRegistry;
+      static std::map<std::string, ImporterFunction> symbolRegistry;
 
       if (symbolRegistry.count(type) == 0) {
         std::string creationFunctionName = "ospray_sg_import_" + type;
         symbolRegistry[type] =
-            (importFunction)getSymbol(creationFunctionName);
+            (ImporterFunction)getSymbol(creationFunctionName);
       }
 
       auto fcn = symbolRegistry[type];
@@ -265,41 +207,81 @@ namespace ospray {
           != importerForExtension.end();
     }
 
-    void Importer::importDefaultExtensions(std::shared_ptr<Node> world,
-                                           const FileName &fileName) const
+    void Importer::importDefaultExtensions(const std::shared_ptr<Node> &world,
+                                           const FileName &fileNamen)
     {
-      auto ext = fileName.ext();
+      std::cout << "importDefaultExtensions \"" << fileNamen.str() << "\"" << std::endl;
+      std::vector<FileName> files;
+      //check for multiple files
+      if (fileNamen.str().find(",") != std::string::npos) {
+        std::cout << "parsing import file series" << std::endl;
+        // file series
+        std::string filestr = fileNamen.str();
+        std::replace(filestr.begin(),filestr.end(),',',' ');
+        std::stringstream ss(filestr);
+        std::string file;
+        while (ss >> file)
+          files.push_back(FileName(file));
 
-      if (hasImporterForExtension(ext)) {
-        std::cout << "#sg: found importer for extension '" << ext << "'"
-                  << std::endl;
-        ImporterFunction importer = importerForExtension[ext];
-        importer(world,fileName);
-      } else if (ext == "obj") {
-        sg::importOBJ(world, fileName);
-      } else if (ext == "ply") {
-        sg::importPLY(world, fileName);
-      } else if (ext == "osg" || ext == "osp") {
-        sg::loadOSP(world, fileName);
-      } else if (ext == "osx") {
-        sg::importOSX(world, fileName);
-      } else if (ext == "xml") {
-        sg::importRIVL(world, fileName);
-      } else if (ext == "x3d") {
-        sg::importX3D(world, fileName);
-      } else if (ext == "xyz" || ext == "xyz2" || ext == "xyz3") {
-        sg::importXYZ(world, fileName);
+        if (files.size() > 0) {
+          auto ext = files[0].ext(); //TODO: check that they are all homogeneous
+          createChild("selector", "Selector");
 #ifdef OSPRAY_APPS_SG_VTK
-      } else if (ext == "vtu" || ext == "vtk" || ext == "off") {
-        sg::importUnstructuredVolume(world, fileName);
+          if (ext == "vti") {
+            sg::importVTIs(child("selector").shared_from_this(), files);
+            return;
+          }
+#endif
+        }
+      } else {
+        std::cout << "single file import" << std::endl;
+        files.push_back(fileNamen);
+      }
+
+      //load files individually
+      for (auto fileName : files)
+      {
+        auto ext = fileName.ext();
+
+        if (hasImporterForExtension(ext)) {
+          std::cout << "#sg: found importer for extension '" << ext << "'"
+                    << std::endl;
+          ImporterFunction importer = importerForExtension[ext];
+          importer(world,fileName);
+        } else if (ext == "obj") {
+          sg::importOBJ(world, fileName);
+        } else if (ext == "ply") {
+          sg::importPLY(world, fileName);
+        } else if (ext == "osg" || ext == "osp") {
+          sg::loadOSP(world, fileName);
+        } else if (ext == "osx") {
+          sg::importOSX(world, fileName);
+        } else if (ext == "xml") {
+          sg::importRIVL(world, fileName);
+        } else if (ext == "x3d") {
+          sg::importX3D(world, fileName);
+        } else if (ext == "xyz" || ext == "xyz2" || ext == "xyz3") {
+          sg::importXYZ(world, fileName);
+#ifdef OSPRAY_APPS_SG_VTK
+        } else if (ext == "vtu" || ext == "vtk" || ext == "off"
+           #ifdef OSPRAY_APPS_SG_VTK_XDMF
+                   || ext == "xdmf"
+           #endif
+                   ) {
+          sg::importUnstructuredVolume(world, fileName);
+        } else if (ext == "vtp") {
+          sg::importVTKPolyData(world, fileName);
+        } else if (ext == "vti") {
+          sg::importVTI(world, fileName);
 #endif
 #ifdef OSPRAY_APPS_SG_CHOMBO
-      } else if (ext == "hdf5") {
-        sg::importCHOMBO(world, fileName);
+        } else if (ext == "hdf5") {
+          sg::importCHOMBO(world, fileName);
 #endif
-      } else {
-        std::cout << "unsupported file format\n";
-        return;
+        } else {
+          std::cout << "unsupported file format\n";
+          return;
+        }
       }
     }
 

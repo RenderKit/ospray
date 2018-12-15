@@ -51,22 +51,18 @@ namespace ospray {
 
     // Allocate memory for returned volume samples
     *results = (float *)malloc(count * sizeof(float));
-    exitOnCondition(*results == nullptr, "error allocating memory");
 
-    // Allocate memory for ISPC-computed volume samples using Embree's new to
-    // enforce alignment
-    float *ispcResults = new float[count];
-    exitOnCondition(ispcResults == nullptr, "error allocating memory");
+    std::vector<float> ispcResults(count);
+    float *ptr = ispcResults.data();
 
     // Compute the sample values.
     ispc::Volume_computeSamples(ispcEquivalent,
-                                &ispcResults,
+                                &ptr,
                                 (const ispc::vec3f *)worldCoordinates,
                                 count);
 
     // Copy samples and free ISPC results memory
-    memcpy(*results, ispcResults, count * sizeof(float));
-    delete[] ispcResults;
+    memcpy(*results, ptr, count * sizeof(float));
   }
 
   void Volume::finish()
@@ -119,9 +115,12 @@ namespace ospray {
     ispc::Volume_setNs(ispcEquivalent, Ns);
 
     // Set the transfer function.
-    TransferFunction *transferFunction =
-        (TransferFunction *) getParamObject("transferFunction", nullptr);
-    exitOnCondition(transferFunction == nullptr, "no transfer function specified");
+    auto *transferFunction =
+        (TransferFunction *)getParamObject("transferFunction", nullptr);
+
+    if (transferFunction == nullptr)
+      throw std::runtime_error("no transfer function specified on the volume!");
+
     ispc::Volume_setTransferFunction(ispcEquivalent, transferFunction->getIE());
 
     // Set the volume clipping box (empty by default for no clipping).

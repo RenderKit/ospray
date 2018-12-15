@@ -32,6 +32,8 @@ namespace ospray {
 
   PathTracer::PathTracer()
   {
+    setParam<std::string>("externalNameFromAPI", "pathtracer");
+
     ispcEquivalent = ispc::PathTracer_create(this);
   }
 
@@ -45,27 +47,8 @@ namespace ospray {
     return "ospray::PathTracer";
   }
 
-  Material *PathTracer::createMaterial(const char *type)
-  {
-    std::string ptType = std::string("PathTracer_")+type;
-    Material *material = Material::createMaterial(ptType.c_str());
-    if (!material) {
-      std::map<std::string,int> numOccurrances;
-      const std::string T = type;
-      if (numOccurrances[T] == 0) {
-        postStatusMsg() << "#osp:PT: does not know material type '" << type
-                        << "'" << " (replacing with OBJMaterial)";
-      }
-      numOccurrances[T]++;
-      material = Material::createMaterial("PathTracer_OBJMaterial");
-    }
-    return material;
-  }
-
-
   void PathTracer::generateGeometryLights(const Model *const model
       , const affine3f& xfm
-      , const affine3f& rcp_xfm
       , float *const _areaPDF
       )
   {
@@ -75,8 +58,7 @@ namespace ospray {
       Ref<Instance> inst = geo.dynamicCast<Instance>();
       if (inst) {
         const affine3f instXfm = xfm * inst->xfm;
-        const affine3f rcpXfm = rcp(instXfm);
-        generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
+        generateGeometryLights(inst->instancedScene.ptr, instXfm,
             &(inst->areaPDF[0]));
       } else
         if (geo->materialList) {
@@ -91,9 +73,10 @@ namespace ospray {
 
           if (hasEmissive) {
             if (ispc::GeometryLight_isSupported(geo->getIE())) {
+              const affine3f rcpXfm = rcp(xfm);
               void* light = ispc::GeometryLight_create(geo->getIE()
                   , (const ispc::AffineSpace3f&)xfm
-                  , (const ispc::AffineSpace3f&)rcp_xfm
+                  , (const ispc::AffineSpace3f&)rcpXfm
                   , _areaPDF+i);
 
               // check whether the geometry has any emissive primitives
@@ -122,10 +105,13 @@ namespace ospray {
 
     destroyGeometryLights();
     lightArray.clear();
+    geometryLights = 0;
 
-    if (model) {
+    const bool useGeometryLights = getParam1i("useGeometryLights", true);
+
+    if (model && useGeometryLights) {
       areaPDF.resize(model->geometry.size());
-      generateGeometryLights(model, affine3f(one), affine3f(one), &areaPDF[0]);
+      generateGeometryLights(model, affine3f(one), &areaPDF[0]);
       geometryLights = lightArray.size();
     }
 

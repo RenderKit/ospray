@@ -21,17 +21,29 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 option(OSPRAY_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
 
 if(OSPRAY_SG_VTK)
+  option(OSPRAY_SG_VTK_XDMF "Enable VTK XDMF loader for ospray_sg" OFF)
+  if (OSPRAY_SG_VTK_XDMF)
+    set(XDMF_COMPONENT vtkIOXdmf2)
+    add_definitions(-DOSPRAY_APPS_SG_VTK_XDMF=1)
+  endif()
+
   find_package(VTK COMPONENTS REQUIRED
     vtkIOLegacy
     vtkIOXML
     vtkIOXMLParser
     vtkIOExport
     vtksys
+    ${XDMF_COMPONENT}
   )
 
   include(${VTK_USE_FILE})
 
-  set(SG_VTK_SRCS importer/importUnstructuredVolume.cpp)
+  set(SG_VTK_SRCS
+    importer/importUnstructuredVolume.cpp
+    importer/importVTKPolyData.cpp
+    importer/importVTI.cpp
+    generator/generateVTKWaveletVolume.cpp
+  )
 
   add_definitions(-DOSPRAY_APPS_SG_VTK=1)
 endif()
@@ -68,9 +80,12 @@ ospray_create_library(ospray_sg SHARED
   SceneGraph.cpp
   Renderer.cpp
 
-  geometry/Geometry.cpp
-  geometry/Spheres.cpp
+  geometry/Curves.cpp
   geometry/Cylinders.cpp
+  geometry/Geometry.cpp
+  geometry/QuadMesh.cpp
+  geometry/Slices.cpp
+  geometry/Spheres.cpp
   geometry/StreamLines.cpp
   geometry/TriangleMesh.cpp
 
@@ -82,6 +97,7 @@ ospray_create_library(ospray_sg SHARED
   common/Common.cpp
   common/Data.cpp
   common/FrameBuffer.cpp
+  common/ToneMapper.cpp
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
@@ -89,7 +105,6 @@ ospray_create_library(ospray_sg SHARED
   common/Renderable.cpp
   common/RenderContext.h
   common/Serialization.cpp
-  common/Texture2D.cpp
   common/Transform.cpp
   common/Model.cpp
   common/Instance.cpp
@@ -109,6 +124,17 @@ ospray_create_library(ospray_sg SHARED
 
   3rdParty/ply.cpp
 
+  # scene graph generators
+  generator/Generator.cpp
+  generator/generateBasicVolume.cpp
+  generator/generateCube.cpp
+  generator/generateCurves.cpp
+  generator/generateCylinders.cpp
+  generator/generateGridOfSpheres.cpp
+  generator/generateRandomQuads.cpp
+  generator/generateRandomSpheres.cpp
+  generator/generateUnstructuredVolume.cpp
+
   # scene graph importers
   importer/Importer.cpp
   importer/importPoints.cpp
@@ -123,12 +149,18 @@ ospray_create_library(ospray_sg SHARED
 
   importer/detail_xyz/Model.cpp
 
+  texture/Texture.cpp
+  texture/Texture2D.cpp
+  texture/TextureVolume.cpp
+
   ${SG_VTK_SRCS}
   ${CHOMBO_SRCS}
 
 LINK
   ospray
   ospray_common
+  ospray_tfn
+  ospray_json
   ${HDF5_LIBRARIES}
   ${VTK_LIBRARIES}
   ${OPENIMAGEIO_LIBRARIES}
@@ -162,6 +194,7 @@ ospray_install_sdk_headers(
   common/Common.h
   common/Data.h
   common/FrameBuffer.h
+  common/ToneMapper.h
   common/Instance.h
   common/Light.h
   common/Material.h
@@ -174,15 +207,22 @@ ospray_install_sdk_headers(
   common/RuntimeError.h
   common/Selector.h
   common/Serialization.h
-  common/Texture2D.h
   common/Transform.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/common
 )
 
 ospray_install_sdk_headers(
+  generator/Generator.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/generator
+)
+
+ospray_install_sdk_headers(
+  geometry/Curves.h
   geometry/Cylinders.h
   geometry/Geometry.h
+  geometry/QuadMesh.h
   geometry/Spheres.h
   geometry/StreamLines.h
   geometry/TriangleMesh.h
@@ -200,6 +240,14 @@ ospray_install_sdk_headers(
   module/Module.h
 
   DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/module
+)
+
+ospray_install_sdk_headers(
+  texture/Texture.h
+  texture/Texture2D.h
+  texture/TextureVolume.h
+
+  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/texture
 )
 
 ospray_install_sdk_headers(

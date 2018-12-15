@@ -33,7 +33,8 @@ namespace ospray {
       ~Renderer() override;
       virtual std::string toString() const override;
 
-      void renderFrame(std::shared_ptr<FrameBuffer> fb, int flags = 0, bool verifyCommit = true);
+      void renderFrame(std::shared_ptr<FrameBuffer> fb,
+                       int flags = OSP_FB_COLOR | OSP_FB_ACCUM);
 
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
@@ -47,14 +48,24 @@ namespace ospray {
       OSPPickResult pick(const vec2f &pickPos);
       float getLastVariance() const;
 
+      // Global whitelist values for rendererType //
+
+      static std::vector<std::string> globalRendererTypeWhiteList();
+      static void setGlobalRendererTypeWhiteList(std::vector<std::string> list);
+
     private:
+
+      friend struct Frame;
+
+      // Helper functions //
+
+      void updateRenderer();
 
       // Data members //
 
       OSPRenderer ospRenderer {nullptr};
       OSPData lightsData {nullptr};
       TimeStamp lightsBuildTime;
-      TimeStamp frameMTime;
       float variance {inf};
       std::string createdType = "none";
     };

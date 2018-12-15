@@ -16,17 +16,18 @@
 
 #include "library.h"
 #include "FileName.h"
+#include "ospray/version.h"
 #include "sysinfo.h"
 
 // std
 #ifdef _WIN32
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#  include <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
 #else
-#  include <sys/times.h>
-#  include <dlfcn.h>
+#include <dlfcn.h>
+#include <sys/times.h>
 #endif
 
 namespace ospcommon {
@@ -39,13 +40,13 @@ namespace ospcommon {
     {
 #ifdef _WIN32
       if (subFunc != 0)
-        throw std::runtime_error("windows cpuID doesn't support subfunc parameters");
-      __cpuid((int*)&eax,func);
+        throw std::runtime_error(
+            "windows cpuID doesn't support subfunc parameters");
+      __cpuid((int *)&eax, func);
 #else
-      asm volatile ("cpuid"
-                    : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-                    : "a"(func), "c"(subFunc)
-                    );
+      asm volatile("cpuid"
+                   : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                   : "a"(func), "c"(subFunc));
 #endif
     }
 
@@ -53,118 +54,199 @@ namespace ospcommon {
 
     /*! avx512bw - only found in skylake x (and following models like
         canonlake etc) */
-    static inline bool has_avx512bw() { return CpuID(7).ebx & (1<<30); }
+    static inline bool has_avx512bw()
+    {
+      return CpuID(7).ebx & (1 << 30);
+    }
 
     /*! avx512bw - only found in knights series etc */
-    static inline bool has_avx512er() { return CpuID(7).ebx & (1<<27); }
+    static inline bool has_avx512er()
+    {
+      return CpuID(7).ebx & (1 << 27);
+    }
 
     /*! avx512f - the common subset of all avx512 machines (both skl and knl) */
-    static inline bool has_avx512f()  { return CpuID(7).ebx & (1<<16); }
+    static inline bool has_avx512f()
+    {
+      return CpuID(7).ebx & (1 << 16);
+    }
 
-    static inline bool has_avx2()     { return CpuID(7).ebx & (1<<5);  }
-    static inline bool has_avx()      { return CpuID(1).ecx & (1<<28); }
-    static inline bool has_sse42()    { return CpuID(1).ecx & (1<<20); }
+    static inline bool has_avx2()
+    {
+      return CpuID(7).ebx & (1 << 5);
+    }
+    static inline bool has_avx()
+    {
+      return CpuID(1).ecx & (1 << 28);
+    }
+    static inline bool has_sse42()
+    {
+      return CpuID(1).ecx & (1 << 20);
+    }
   };
 
   void *loadIsaLibrary(const std::string &name,
                        const std::string desiredISAname,
-                       std::string &foundISAname)
+                       std::string &foundISAname,
+                       std::string &foundPrec)
   {
+    std::string precision       = "float";
+    const char *use_double_flag = getenv("OSPRAY_USE_DOUBLES");
+    if (use_double_flag && atoi(use_double_flag)) {
+      precision = "double";
+    }
+
     std::string file = name;
-    void *lib = nullptr;
+    void *lib        = nullptr;
 #ifdef _WIN32
-    std::string fullName = file+".dll";
-    lib = LoadLibrary(fullName.c_str());
+    std::string fullName = file + ".dll";
+    lib                  = LoadLibrary(fullName.c_str());
 #else
+    std::string fullName =
+        "lib" + file + "_" + desiredISAname + "_" + precision;
+
 #if defined(__MACOSX__) || defined(__APPLE__)
-    std::string fullName = "lib"+file+".dylib";
+    fullName += ".dylib";
 #else
-    std::string fullName = "lib"+file+"_"+desiredISAname+".so";
+    fullName += ".so";
 #endif
+
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+
     if (!lib) {
-      //      PRINT(dlerror());
+      PRINT(dlerror());
       foundISAname = "";
-    } else
+    } else {
+      std::cout << "#osp: loaded library *** " << fullName << " ***"
+                << std::endl;
       foundISAname = desiredISAname;
+      foundPrec = precision;
+    }
 #endif
     return lib;
   }
-
 
   /*! try loading the most isa-specific lib that is a) supported on
       this platform, and b) that can be found as a shared
       library. will return the most isa-specific lib (ie, if both avx
       and sse are available, and th ecpu supports at least avx (or
       more), it'll return avx, not sse*/
-  void *tryLoadingMostIsaSpecificLib(const std::string &name, std::string &foundISA)
+  void *tryLoadingMostIsaSpecificLib(const std::string &name,
+                                     std::string &foundISA,
+                                     std::string &foundPrec)
   {
     void *lib = NULL;
 
+    // try 'native' first
+    if ((lib = loadIsaLibrary(name, "native", foundISA, foundPrec)) != NULL)
+      return lib;
+
+    // no 'native found': assume build several isas explicitly for distribution:
     // try KNL:
-    if (CpuID::has_avx512er() && (lib = loadIsaLibrary(name,"knl",foundISA))) return lib;
+    if (CpuID::has_avx512er() &&
+        (lib = loadIsaLibrary(name, "knl", foundISA, foundPrec)))
+      return lib;
     // try SKL:
-    if (CpuID::has_avx512bw() && (lib = loadIsaLibrary(name,"skx",foundISA))) return lib;
+    if (CpuID::has_avx512bw() &&
+        (lib = loadIsaLibrary(name, "skx", foundISA, foundPrec)))
+      return lib;
     // try avx2:
-    if (CpuID::has_avx2() && (lib = loadIsaLibrary(name,"avx2",foundISA))) return lib;
+    if (CpuID::has_avx2() &&
+        (lib = loadIsaLibrary(name, "avx2", foundISA, foundPrec)))
+      return lib;
     // try avx1:
-    if (CpuID::has_avx() && (lib = loadIsaLibrary(name,"avx",foundISA))) return lib;
+    if (CpuID::has_avx() &&
+        (lib = loadIsaLibrary(name, "avx", foundISA, foundPrec)))
+      return lib;
     // try sse4.2:
-    if (CpuID::has_sse42() && (lib = loadIsaLibrary(name,"sse42",foundISA))) return lib;
+    if (CpuID::has_sse42() &&
+        (lib = loadIsaLibrary(name, "sse4", foundISA, foundPrec)))
+      return lib;
 
     // couldn't find any hardware-specific libs - return null, and let
     // caller try to load a generic, non-isa specific lib instead
     return NULL;
   }
 
-  Library::Library(const std::string& name)
+  Library::Library(const std::string &name) : libraryName(name)
   {
     std::string file = name;
-
-    std::string foundISA;
-    lib = tryLoadingMostIsaSpecificLib(name,foundISA);
-    if (lib) {
-      std::cout << "#osp: found isa-speicific lib for library " << name << ", most specific ISA=" << foundISA << std::endl;
-      return;
-    }
-
+    std::string errorMsg;
 #ifdef _WIN32
-    std::string fullName = file+".dll";
-    lib = LoadLibrary(fullName.c_str());
+    std::string fullName = file + ".dll";
+    lib                  = LoadLibrary(fullName.c_str());
+    if (lib == nullptr) {
+      DWORD err = GetLastError();
+      LPTSTR lpMsgBuf;
+      FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                        FORMAT_MESSAGE_FROM_SYSTEM |
+                        FORMAT_MESSAGE_IGNORE_INSERTS,
+                    NULL,
+                    err,
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                    (LPTSTR)&lpMsgBuf,
+                    0,
+                    NULL);
+
+      errorMsg = lpMsgBuf;
+
+      LocalFree(lpMsgBuf);
+    }
 #else
 #if defined(__MACOSX__) || defined(__APPLE__)
-    std::string fullName = "lib"+file+".dylib";
+    std::string fullName = "lib" + file + ".dylib";
 #else
-    std::string fullName = "lib"+file+".so";
+    std::string fullName = "lib" + file + ".so";
 #endif
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    if (lib == nullptr) {
+      errorMsg = dlerror();  // remember original error
+      // retry with SOVERSION in case symlinks are missing
+      std::string soversion(TOSTRING(OSPRAY_SOVERSION));
+#if defined(__MACOSX__) || defined(__APPLE__)
+      fullName = "lib" + file + "." + soversion + ".dylib";
+#else
+      fullName += "." + soversion;
+#endif
+      lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    }
 #endif
 
-    // iw: do NOT use this 'hack' that tries to find the
-    // library in another location: first it shouldn't be used in
-    // the first place (if you want a shared library, put it
-    // into your LD_LIBRARY_PATH!; second, it messes up the 'real'
-    // errors when the first library couldn't be opened (because
-    // whatever error messaes there were - depedencies, missing
-    // symbols, etc - get overwritten by that second dlopen,
-    // which almost always returns 'file not found')
+    // do NOT try to find the library in another location
+    // if you want that use LD_LIBRARY_PATH or equivalents
 
     if (lib == nullptr) {
+      std::string foundISA, foundPrec;
+      lib = tryLoadingMostIsaSpecificLib(name, foundISA, foundPrec);
+      if (lib) {
+        std::cout << "#osp: found isa-specific lib for library " << name
+                  << ", most specific ISA=" << foundISA
+                  << ", using precision=" << foundPrec << std::endl;
+        return;
+      }
+
+      throw std::runtime_error("could not open module lib " + name + ": " +
+                               errorMsg);
+    }
+  }
+
+  Library::~Library()
+  {
+    if (freeLibOnDelete) {
 #ifdef _WIN32
-      // TODO: Must use GetLastError and FormatMessage on windows
-      // to log out the error that occurred when calling LoadLibrary
-      throw std::runtime_error("could not open module lib "+name);
+      FreeLibrary((HMODULE)lib);
 #else
-      const char* error = dlerror();
-      throw std::runtime_error("could not open module lib "+name
-          +" due to "+error);
+      dlclose(lib);
 #endif
     }
   }
 
-  Library::Library(void* const _lib) : lib(_lib) {}
+  Library::Library(void *const _lib)
+      : libraryName("<pre-loaded>"), lib(_lib), freeLibOnDelete(false)
+  {
+  }
 
-  void* Library::getSymbol(const std::string& sym) const
+  void *Library::getSymbol(const std::string &sym) const
   {
 #ifdef _WIN32
     return GetProcAddress((HMODULE)lib, sym.c_str());
@@ -173,26 +255,36 @@ namespace ospcommon {
 #endif
   }
 
+  std::unique_ptr<LibraryRepository> LibraryRepository::instance;
 
-  LibraryRepository* LibraryRepository::instance = nullptr;
-
-  LibraryRepository* LibraryRepository::getInstance()
+  LibraryRepository *LibraryRepository::getInstance()
   {
-    if (instance == nullptr)
-      instance = new LibraryRepository;
+    if (instance.get() == nullptr)
+      instance = std::unique_ptr<LibraryRepository>(new LibraryRepository);
 
-    return instance;
+    return instance.get();
   }
 
-  void LibraryRepository::add(const std::string& name)
+  void LibraryRepository::cleanupInstance()
   {
-    if (repo.find(name) != repo.end())
-      return; // lib already loaded.
+    LibraryRepository::instance.reset();
+  }
+
+  LibraryRepository::~LibraryRepository()
+  {
+    for (auto &l : repo)
+      delete l.second;
+  }
+
+  void LibraryRepository::add(const std::string &name)
+  {
+    if (libraryExists(name))
+      return;  // lib already loaded.
 
     repo[name] = new Library(name);
   }
 
-  void* LibraryRepository::getSymbol(const std::string& name) const
+  void *LibraryRepository::getSymbol(const std::string &name) const
   {
     void *sym = nullptr;
     for (auto lib = repo.cbegin(); sym == nullptr && lib != repo.end(); ++lib)
@@ -203,7 +295,8 @@ namespace ospcommon {
 
   void LibraryRepository::addDefaultLibrary()
   {
-    // already populate the repo with "virtual" libs, representing the default OSPRay core lib
+    // already populate the repo with "virtual" libs, representing the default
+    // OSPRay core lib
 #ifdef _WIN32
     // look in exe (i.e. when OSPRay is linked statically into the application)
     repo["exedefault"] = new Library(GetModuleHandle(0));
@@ -231,8 +324,4 @@ namespace ospcommon {
   {
     return repo.find(name) != repo.end();
   }
-
-  LibraryRepository::LibraryRepository()
-  {
-  }
-}
+}  // namespace ospcommon

@@ -17,6 +17,7 @@
 //ospcommon
 #include "ospcommon/utility/OnScopeExit.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "ospcommon/library.h"
 
 //ospray
 #include "common/OSPCommon.h"
@@ -121,6 +122,15 @@ OSPRAY_CATCH_BEGIN
         return OSP_INVALID_ARGUMENT;
       }
 
+      if (av == "--osp:stream") {
+        removeArgs(*_ac,_av,i,1);
+        loadLocalModule("stream");
+        currentDevice.reset(Device::createDevice("stream"));
+
+        --i;
+        continue;
+      }
+
       auto moduleSwitch = av.substr(0, 13);
       if (moduleSwitch == "--osp:module:") {
         removeArgs(*_ac,_av,i,1);
@@ -221,6 +231,14 @@ OSPRAY_CATCH_BEGIN
   return OSP_NO_ERROR;
 }
 OSPRAY_CATCH_END(OSP_INVALID_OPERATION)
+
+extern "C" void ospShutdown()
+OSPRAY_CATCH_BEGIN
+{
+  Device::current.reset();
+  LibraryRepository::cleanupInstance();
+}
+OSPRAY_CATCH_END()
 
 extern "C" OSPDevice ospNewDevice(const char *deviceType)
 OSPRAY_CATCH_BEGIN
@@ -445,14 +463,15 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
+extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer,
+                                      const char *material_type)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  Assert2(type != nullptr, "invalid material type identifier in ospNewMaterial");
-  OSPMaterial material = currentDevice().newMaterial(renderer, type);
+  auto material = currentDevice().newMaterial(renderer, material_type);
   if (material == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create material '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create material '"
+                     << material_type << "'";
   }
   return material;
 }
@@ -472,12 +491,12 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
+extern "C" OSPLight ospNewLight(OSPRenderer, const char *type)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(type != nullptr, "invalid light type identifier in ospNewLight");
-  OSPLight light = currentDevice().newLight(renderer, type);
+  OSPLight light = currentDevice().newLight(type);
   if (light == nullptr) {
     postStatusMsg(1) << "#ospray: could not create light '" << type << "'";
   }
@@ -485,12 +504,25 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPLight ospNewLight2(const char *renderer_type,
+extern "C" OSPLight ospNewLight2(const char */*renderer_type*/,
                                  const char *light_type)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  OSPLight light = currentDevice().newLight(renderer_type, light_type);
+  OSPLight light = currentDevice().newLight(light_type);
+  if (light == nullptr) {
+    postStatusMsg(1) << "#ospray: could not create light '"
+                     << light_type << "'";
+  }
+  return light;
+}
+OSPRAY_CATCH_END(nullptr)
+
+extern "C" OSPLight ospNewLight3(const char *light_type)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  OSPLight light = currentDevice().newLight(light_type);
   if (light == nullptr) {
     postStatusMsg(1) << "#ospray: could not create light '"
                      << light_type << "'";
@@ -512,16 +544,58 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
-                                        const OSPTextureFormat type,
-                                        void *data,
-                                        const uint32_t flags)
+extern "C" OSPTexture ospNewTexture(const char *type)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  OSPTexture texture = currentDevice().newTexture(type);
+  if (texture == nullptr) {
+    postStatusMsg(1) << "#ospray: could not create texture '" << type << "'";
+  }
+  return texture;
+}
+OSPRAY_CATCH_END(nullptr)
+
+extern "C" OSPTexture ospNewTexture2D(const osp::vec2i &size,
+                                      const OSPTextureFormat type,
+                                      void *data,
+                                      const uint32_t _flags)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
-  return currentDevice().newTexture2D((const vec2i&)size, type, data, flags);
+
+  auto texture = ospNewTexture("texture2d");
+
+  if (texture == nullptr)
+    return nullptr;
+
+  auto flags = _flags; // because the input value is declared const, use a copy
+
+  bool sharedBuffer = flags & OSP_TEXTURE_SHARED_BUFFER;
+
+  flags &= ~OSP_TEXTURE_SHARED_BUFFER;
+
+  const auto texelBytes  = sizeOf(type);
+  const auto totalTexels = size.x * size.y;
+  const auto totalBytes  = totalTexels * texelBytes;
+
+  auto data_handle = ospNewData(totalBytes,
+                                OSP_RAW,
+                                data,
+                                sharedBuffer ? OSP_DATA_SHARED_BUFFER : 0);
+
+  ospCommit(data_handle);
+  ospSetObject(texture, "data", data_handle);
+  ospRelease(data_handle);
+
+  ospSet1i(texture, "type", static_cast<int>(type));
+  ospSet1i(texture, "flags", static_cast<int>(flags));
+  ospSet2i(texture, "size", size.x, size.y);
+  ospCommit(texture);
+
+  return texture;
 }
 OSPRAY_CATCH_END(nullptr)
 
@@ -597,6 +671,14 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospDeviceSet1b(OSPDevice _object, const char *id, int32_t x)
+OSPRAY_CATCH_BEGIN
+{
+  Device *object = (Device *)_object;
+  object->setParam(id, static_cast<bool>(x));
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
 OSPRAY_CATCH_BEGIN
 {
@@ -651,11 +733,28 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
+extern "C" void ospSetProgressFunc(OSPProgressFunc callback, void* userPtr)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().progressCallback = callback;
+  currentDevice().progressUserPtr = userPtr;
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().setString(_object, id, s);
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSet1b(OSPObject _object, const char *id, int x)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setBool(_object, id, static_cast<bool>(x));
 }
 OSPRAY_CATCH_END()
 

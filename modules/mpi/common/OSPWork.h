@@ -165,6 +165,7 @@ namespace ospray {
       using NewVolume           = NewObjectT<Volume>;
       using NewGeometry         = NewObjectT<Geometry>;
       using NewTransferFunction = NewObjectT<TransferFunction>;
+      using NewTexture          = NewObjectT<Texture>;
 
       // Specializations for objects
       template<>
@@ -179,20 +180,24 @@ namespace ospray {
       struct NewMaterial : public Work
       {
         NewMaterial() = default;
-        NewMaterial(const char* type, OSPRenderer renderer, ObjectHandle handle)
-          : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
+        NewMaterial(OSPRenderer renderer,
+                    const char *material_type,
+                    ObjectHandle handle)
+          : rendererHandle((ObjectHandle&)renderer),
+            materialType(material_type),
+            handle(handle)
         {}
 
         void run() override;
 
         void serialize(WriteStream &b) const override
-        { b << (int64)rendererHandle << (int64)handle << type; }
+        { b << (int64)handle << (int64)rendererHandle << materialType; }
 
         void deserialize(ReadStream &b) override
-        { b >> rendererHandle.i64 >> handle.i64 >> type; }
+        { b >> handle.i64 >> rendererHandle.i64 >> materialType; }
 
-        std::string  type;
         ObjectHandle rendererHandle;
+        std::string  materialType;
         ObjectHandle handle;
       };
 
@@ -223,42 +228,19 @@ namespace ospray {
       struct NewLight : public Work
       {
         NewLight() = default;
-        NewLight(const char* type, OSPRenderer renderer, ObjectHandle handle)
-          : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
+        NewLight(const char* type, ObjectHandle handle)
+          : type(type), handle(handle)
         {}
 
         void run() override;
 
         void serialize(WriteStream &b) const override
-        { b << (int64)rendererHandle << (int64)handle << type; }
+        { b << (int64)handle << type; }
 
         void deserialize(ReadStream &b) override
-        { b >> rendererHandle.i64 >> handle.i64 >> type; }
+        { b >> handle.i64 >> type; }
 
         std::string  type;
-        ObjectHandle rendererHandle;
-        ObjectHandle handle;
-      };
-
-      struct NewLight2 : public Work
-      {
-        NewLight2() = default;
-        NewLight2(const char *renderer_type,
-                  const char *light_type,
-                  ObjectHandle handle)
-          : rendererType(renderer_type), lightType(light_type), handle(handle)
-        {}
-
-        void run() override;
-
-        void serialize(WriteStream &b) const override
-        { b << (int64)handle << rendererType << lightType; }
-
-        void deserialize(ReadStream &b) override
-        { b >> handle.i64 >> rendererType >> lightType; }
-
-        std::string  rendererType;
-        std::string  lightType;
         ObjectHandle handle;
       };
 
@@ -290,32 +272,6 @@ namespace ospray {
 
         int32 flags;
       };
-
-
-      struct NewTexture2d : public Work
-      {
-        NewTexture2d() = default;
-        NewTexture2d(ObjectHandle handle, vec2i dimensions,
-                     OSPTextureFormat format, void *texture, uint32 flags);
-
-        void run() override;
-
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
-        void serialize(WriteStream &b) const override;
-
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
-        void deserialize(ReadStream &b) override;
-
-        ObjectHandle        handle;
-        vec2i               dimensions;
-        OSPTextureFormat    format;
-        std::vector<byte_t> data;
-        uint32              flags;
-      };
-
 
       struct SetRegion : public Work
       {

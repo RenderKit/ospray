@@ -21,6 +21,10 @@
 
 namespace ospray {
 
+  ProjectedPoint::ProjectedPoint(const vec3f &pos, float radius)
+    : screenPos(pos), radius(radius)
+  {}
+
   Camera *Camera::createInstance(const char *type)
   {
     return createInstanceHelper<Camera, OSP_CAMERA>(type);
@@ -45,13 +49,24 @@ namespace ospray {
     shutterOpen = getParam1f("shutterOpen", 0.0f);
     shutterClose = getParam1f("shutterClose", 0.0f);
 
+    linear3f frame;
+    frame.vz = -normalize(dir);
+    frame.vx = normalize(cross(up, frame.vz));
+    frame.vy = cross(frame.vz, frame.vx);
+
     ispc::Camera_set(getIE()
+        , (const ispc::vec3f&)pos
+        , (const ispc::LinearSpace3f&)frame
         , nearClip
         , (const ispc::vec2f&)imageStart
         , (const ispc::vec2f&)imageEnd
         , shutterOpen
         , shutterClose
         );
+  }
+
+  ProjectedPoint Camera::projectPoint(const vec3f &) const {
+    NOTIMPLEMENTED;
   }
 
 } // ::ospray

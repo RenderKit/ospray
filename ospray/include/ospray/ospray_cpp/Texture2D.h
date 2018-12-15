@@ -16,30 +16,4 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
-
-namespace ospray {
-namespace cpp    {
-
-class Texture2D : public ManagedObject_T<OSPTexture2D>
-{
-public:
-
-  Texture2D(const Texture2D &copy);
-  Texture2D(OSPTexture2D existing);
-};
-
-// Inlined function definitions ///////////////////////////////////////////////
-
-inline Texture2D::Texture2D(const Texture2D &copy) :
-  ManagedObject_T<OSPTexture2D>(copy.handle())
-{
-}
-
-inline Texture2D::Texture2D(OSPTexture2D existing) :
-  ManagedObject_T<OSPTexture2D>(existing)
-{
-}
-
-}// namespace cpp
-}// namespace ospray
+#include <Texture.h>

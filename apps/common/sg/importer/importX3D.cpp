@@ -14,10 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 // sg
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
+#include "sg/texture/Texture2D.h"
 // xml lib
 #include "ospcommon/xml/XML.h"
 // std
@@ -59,7 +61,7 @@ namespace ospray {
       return v;
     }
 
-    void parseVectorOfVec3fas(std::vector<vec3fa> &vec, const std::string &str)
+    void parseVectorOfVec3fas(containers::AlignedVector<vec3fa> &vec, const std::string &str)
     {
       char *s = strdup(str.c_str());
       char *tok = strtok(s,delim);
@@ -68,7 +70,7 @@ namespace ospray {
       free(s);
     }
 
-    void parseVectorOfVec3fs(std::vector<vec3f> &vec, const std::string &str)
+    void parseVectorOfVec3fs(containers::AlignedVector<vec3f> &vec, const std::string &str)
     {
       char *s = strdup(str.c_str());
       char *tok = strtok(s,delim);
@@ -77,7 +79,7 @@ namespace ospray {
       free(s);
     }
 
-    void parseVectorOfColors(std::vector<vec4f> &vec, const std::string &str)
+    void parseVectorOfColors(containers::AlignedVector<vec4f> &vec, const std::string &str)
     {
       char *s = strdup(str.c_str());
       char *tok = strtok(s,delim);
@@ -105,7 +107,7 @@ namespace ospray {
 
       char *s = strdup(coordIndex.c_str()); coordIndex = "";
       char *tok = strtok(s,delim);
-      std::vector<int> ID;
+      containers::AlignedVector<int> ID;
       while (tok) {
         long thisID = atol(tok);
         if (thisID == -1) {

@@ -39,9 +39,10 @@ namespace ospray {
     // to 'setRegion', and only a final commit at the
     // end. 'dimensions' etc may/will _not_ be committed before
     // setregion.
-    exitOnCondition(ispcEquivalent == nullptr,
-                    "the volume data must be set via ospSetRegion() "
-                    "prior to commit for this volume type");
+    if(ispcEquivalent == nullptr) {
+      throw std::runtime_error("the volume data must be set via ospSetRegion() "
+                               "prior to commit for this volume type");
+    }
 
     // StructuredVolume commit actions.
     StructuredVolume::commit();
@@ -56,7 +57,7 @@ namespace ospray {
       const vec3i &regionCoords,
       // size of the region that we're writing to, MUST be the same as the
       // dimensions of source[][][]
-                                    const vec3i &regionSize)
+      const vec3i &regionSize)
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
@@ -99,15 +100,17 @@ namespace ospray {
   {
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");
-    exitOnCondition(getVoxelType() == OSP_UNKNOWN,
-                    "unrecognized voxel type (must be set before calling "
-                    "ospSetRegion())");
+    if(getVoxelType() == OSP_UNKNOWN) {
+      throw std::runtime_error("unrecognized voxel type (must be set before "
+                               "calling ospSetRegion())");
+    }
 
     // Get the volume dimensions.
     this->dimensions = getParam3i("dimensions", vec3i(0));
-    exitOnCondition(reduce_min(this->dimensions) <= 0,
-                    "invalid volume dimensions (must be set before calling "
-                    "ospSetRegion())");
+    if(reduce_min(this->dimensions) <= 0) {
+      throw std::runtime_error("invalid volume dimensions (must be set before "
+                               "calling ospSetRegion())");
+    }
 
     // Create an ISPC GhostBlockBrickedVolume object and assign type-specific
     // function pointers.

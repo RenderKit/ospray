@@ -23,11 +23,11 @@ import csv
 import sys
 import math
 
+# Global constants ############################################################
+
 # Various constants
 CSV_FIELD_NAMES = ["test name", "max", "min", "median", "median abs dev",
                    "mean", "std dev", "no. of samples"]
-DEFAULT_IMG_WIDTH = 1024
-DEFAULT_IMG_HEIGHT = 1024
 DEFAULT_IMG_DIR = "bench_output"
 EXE_NAME = "ospBenchmark"
 RESULTS_RE = re.compile(r'.*(Statistics.*)', re.DOTALL)
@@ -35,38 +35,28 @@ FLOAT_RE = re.compile(r'-?\d+(?:\.\d+)?')
 ERROR_RE = re.compile(r'.*(?:#ospsg: FATAL )([^\n\r]*).*', re.DOTALL)
 SCORE_DIFF_PERCENT = 15.0
 MAX_DIFF_PER_PIXEL = 0
+
 TEST_PARAMETERS = {
-    "fiu1": ("test_data/fiu-groundwater.xml", "-vp 500.804565 277.327850 -529.199829 "
-        "-vu 0.000000 1.000000 0.000000 -vi 21.162066 -62.059830 -559.833313", ""),
-    "fiu2": ("test_data/fiu-groundwater.xml", "-vp -29.490566 80.756294 -526.728516 "
-        "-vu 0.000000 1.000000 0.000000 -vi 21.111689 12.973234 -443.164886", ""),
-
-    "heptane1": ("test_data/csafe-heptane-302-volume.osp",
-        "-vp 286.899994 422.800018 -30.200012 -vu 0 1 0 -vi 151.000000 151.000000 151.000000", ""),
-    "heptane2": ("test_data/csafe-heptane-302-volume.osp",
-        "-vp -36.2362 86.8541 230.026 -vu 0 0 1 -vi 150.5 150.5 150.5", ""),
-
-    "llnl_iso1": ("test_data/llnl-2048-iso.xml", "-vp 3371.659912 210.557999 -443.156006 "
-        "-vu -0.000000 -0.000000 -1.000000 -vi 1439.359985 1005.450012 871.119019", ""),
-    "llnl_iso2": ("test_data/llnl-2048-iso.xml", "-vp 2056.597168 999.748108 402.587219 "
-        "-vu -0.000000 -0.000000 -1.000000 -vi 1439.358887 1005.449951 871.118164", ""),
-
-    "magnetic1": ("test_data/magnetic-512-volume.osp",
-        "-vp 255.5 -1072.12 255.5 -vu 0 0 1 -vi 255.5 255.5 255.5", ""),
-    "magnetic2": ("test_data/magnetic-512-volume.osp",
-        "-vp 431.923 -99.5843 408.068 -vu 0 0 1 -vi 255.5 255.5 255.5", ""),
-    "magnetic3": ("test_data/magnetic-512-volume.osp",
-        "-vp 431.923 -99.5843 408.068 -vu 0 0 1 -vi 255.5 255.5 255.5", ""),
-
-    "sponza1": ("test_data/crytek-sponza/sponza.obj", "-vp 667.492554 186.974228 76.008301 ",
-        "-vu 0.000000 1.000000 0.000000 -vi 84.557503 188.199417 -38.148270"),
-
-    "san_miguel1": ("test_data/san-miguel/sanMiguel.obj", "-vp -2.198506 3.497189 23.826025 ",
-        "-vu 0.000000 1.000000 0.000000 -vi -2.241950 2.781175 21.689358"),
-
-    "sibenik1": ("test_data/sibenik/sibenik.obj", "-vp -17.734447 -13.788272 3.443677 ",
-        "-vu 0.000000 1.000000 0.000000 -vi -2.789550 -10.993323 0.331822"),
+     "spheres-sd-1spp": ("--generate:spheres", "-sd", "-sg:spp=1")
+    ,"spheres-hd-1spp": ("--generate:spheres", "-hd", "-sg:spp=1")
+    ,"spheres-4k-1spp": ("--generate:spheres", "-4k", "-sg:spp=1")
+    ,"spheres-8k-1spp": ("--generate:spheres", "-8k", "-sg:spp=1")
+    ,"spheres-sd-8spp": ("--generate:spheres", "-sd", "-sg:spp=8")
+    ,"spheres-hd-8spp": ("--generate:spheres", "-hd", "-sg:spp=8")
+    ,"spheres-4k-8spp": ("--generate:spheres", "-4k", "-sg:spp=8")
+    ,"spheres-8k-8spp": ("--generate:spheres", "-8k", "-sg:spp=8")
 }
+
+# Stable tests for future version comparisons
+LEGACY_TEST_PARAMETERS = {
+     "spheres-hd-1spp": ("--generate:spheres", "-hd", "-sg:spp=1")
+    ,"spheres-4k-1spp": ("--generate:spheres", "-4k", "-sg:spp=1")
+    ,"spheres-hd-8spp": ("--generate:spheres", "-hd", "-sg:spp=8")
+    ,"spheres-4k-8spp": ("--generate:spheres", "-4k", "-sg:spp=8")
+}
+RUN_LEGACY = False
+
+# Function definitions ########################################################
 
 # Takes a string "xxx" and prints "=== xxx ==="
 def print_headline(line):
@@ -143,21 +133,21 @@ def print_tests_list():
 
 # Runs a test and returns its exit code, stdout and stderr
 def run_single_test(test_name, exe, img_dir, use_scivis):
-    filename, camera, params = TEST_PARAMETERS[test_name]
+    filename, fbSize, params = TEST_PARAMETERS[test_name]
     results = []
 
-    command_sv = "{} {} {} -bf 100 -wf 50 -r sv" \
+    command_sv = "{} {} {} -bf 8 -wf 8 -r sv" \
         " -i {}/test_{}_scivis {}" \
-        .format(exe, filename, camera, img_dir, test_name, params)
+        .format(exe, filename, fbSize, img_dir, test_name, params)
 
-    command_pt = "{} {} {} -bf 100 -wf 50 -r pt" \
-        " -i {}/test_{}_pt {}".format(exe,filename, camera, img_dir, test_name, params)
+    command_pt = "{} {} {} -bf 8 -wf 8 -r pt" \
+        " -i {}/test_{}_pt {}".format(exe,filename, fbSize, img_dir, test_name, params)
 
     command = command_sv if use_scivis else command_pt
 
     print "Running \"{}\"".format(command.strip())
 
-    child = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     test_output = child.communicate()
     test_retcode = child.returncode
 
@@ -165,7 +155,7 @@ def run_single_test(test_name, exe, img_dir, use_scivis):
 
 # Checks if return code, stdandard output and generated images are correct
 def analyze_results(test_name, retcode, output, output_csv, img_dir, baseline_score, args):
-    if retcode != 0:
+    if retcode != 0 and abs(retcode) != 11: #non-zero (but can segfault on exit...!)
         return False, "subprocess returned with exit code {}".format(retcode)
 
     stdout = output[0]
@@ -204,22 +194,27 @@ def run_tests(args):
         output_csv.writerow(CSV_FIELD_NAMES)
 
     baseline_score = {} if not args.baseline else get_baseline_score(args.baseline)
-    bench_img_width = DEFAULT_IMG_WIDTH if not args.width else args.width
-    bench_img_height = DEFAULT_IMG_HEIGHT if not args.height else args.height
     tests_to_run = set(args.tests.split(',')) if args.tests else set(TEST_PARAMETERS)
+
 
     use_sv_options = [False] if args.renderer == "pt" else \
         [True] if args.renderer == "scivis" else [True, False]
     tests_to_run = set([(name, sv) for name in tests_to_run for sv in use_sv_options])
 
-    exe = "./{} -w {} -h {}".format(EXE_NAME, bench_img_width, bench_img_height)
+    exe = EXE_NAME
+    if args.app_location != "":
+        exe = args.app_location + "/" + exe
     img_dir = DEFAULT_IMG_DIR
-
-    print "All tests run at {} x {}".format(bench_img_width, bench_img_height)
 
     # Create images directory
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
+
+    # Setup MPI run command
+    run_mpi = args.mpi_wrapper != ""
+
+    if run_mpi:
+        exe ="{} {} --osp:mpi".format(args.mpi_wrapper, exe)
 
     failed_tests = 0
 
@@ -240,12 +235,10 @@ def run_tests(args):
 
     sys.exit(failed_tests)
 
+# Main execution ##############################################################
+
 # Command line arguments parsing
 parser = argparse.ArgumentParser()
-parser.add_argument("--width", help="width of the image, default {}".format(DEFAULT_IMG_WIDTH),
-                    type=int)
-parser.add_argument("--height", help="height of the image, default {}".format(DEFAULT_IMG_HEIGHT),
-                    type=int)
 parser.add_argument("--tests",
                     help="takes comma-separated list of tests to run; if not specified, all tests "
                     "are run")
@@ -254,9 +247,16 @@ parser.add_argument("--output", help="output file name")
 parser.add_argument("--baseline",
                     help="results of previous benchmark that will serve as a reference")
 parser.add_argument("--reference", help="path to directory with reference images")
+parser.add_argument("--legacy-tests", help="run the subset of test used for version comparisons", action="store_true")
 parser.add_argument("--renderer", help="type of renderer used",
                     choices=["both", "scivis", "pt"], default="both")
+parser.add_argument("--app-location", help="path to ospBenchmark", default="")
+parser.add_argument("--mpi-wrapper", help="path to file which is used to wrap ospBenchmark with an MPI launch", default="")
 args = parser.parse_args()
+
+# Set the list of tests we intend on using
+if args.legacy_tests:
+    TEST_PARAMETERS = LEGACY_TEST_PARAMETERS
 
 if args.tests_list:
     print_tests_list()

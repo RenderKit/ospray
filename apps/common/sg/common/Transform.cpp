@@ -24,7 +24,6 @@ namespace ospray {
     Transform::Transform()
       : worldTransform(ospcommon::one)
     {
-      createChild("bounds", "box3f");
       createChild("visible", "bool", true);
       createChild("position", "vec3f");
       createChild("rotation", "vec3f", vec3f(0),
@@ -99,4 +98,4 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
-  
+

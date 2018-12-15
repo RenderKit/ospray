@@ -26,6 +26,7 @@ IF(OSPRAY_STRICT_BUILD)
   SET(OSPRAY_CXX_FLAGS "-Wno-keyword-macro ${OSPRAY_CXX_FLAGS}") #useful for unit testing
 
   # Should try to fix and remove...
+  SET(OSPRAY_CXX_FLAGS "-Wno-unknown-warning-option ${OSPRAY_CXX_FLAGS}") #don't warn if pragmas are unknown
   SET(OSPRAY_CXX_FLAGS "-Wno-conversion ${OSPRAY_CXX_FLAGS}")
   SET(OSPRAY_CXX_FLAGS "-Wno-reserved-id-macro ${OSPRAY_CXX_FLAGS}")
   SET(OSPRAY_CXX_FLAGS "-Wno-double-promotion ${OSPRAY_CXX_FLAGS}")
@@ -50,6 +51,7 @@ IF(OSPRAY_STRICT_BUILD)
   SET(OSPRAY_CXX_FLAGS "-Wno-over-aligned ${OSPRAY_CXX_FLAGS}")
   SET(OSPRAY_CXX_FLAGS "-Wno-shadow ${OSPRAY_CXX_FLAGS}")
   SET(OSPRAY_CXX_FLAGS "-Wno-format-nonliteral ${OSPRAY_CXX_FLAGS}")
+  SET(OSPRAY_CXX_FLAGS "-Wno-cast-qual ${OSPRAY_CXX_FLAGS}") #Embree v3.x issue
 
   # Options selected for Clang 5.0+
   SET(OSPRAY_CXX_FLAGS "-Weverything ${OSPRAY_CXX_FLAGS}")
@@ -66,6 +68,5 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DNDEBUG -g -O3 -Wstrict-aliasing=1")
 SET(CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS}")
 
 IF (APPLE)
-  SET(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.8 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.8 features
-  SET(CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}") # link against C++11 stdlib
+  SET(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.9 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.9 features
 ENDIF()

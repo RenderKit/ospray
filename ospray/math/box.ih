@@ -37,19 +37,19 @@ struct box2i {
 };
 
 //! a 3-d float bounding box
-struct box3f { 
+struct box3f {
   vec3f lower;
   vec3f upper;
 };
 
 //! a 3-d int bounding box
-struct box3i { 
+struct box3i {
   vec3i lower;
   vec3i upper;
 };
 
 //! a 3-d float bounding box with aligned vec3f coordinates
-struct box3fa { 
+struct box3fa {
   vec3fa lower;
   // int32 align0;
   vec3fa upper;
@@ -57,7 +57,7 @@ struct box3fa {
 };
 
 //! a 4-d float bounding box
-struct box4f { 
+struct box4f {
   vec4f lower;
   vec4f upper;
 };
@@ -123,7 +123,7 @@ inline uniform box1f box_extend(const uniform box1f &a, const uniform box1f &b)
   MAKE_BOX_CONSTRUCTORS_uv_2T(univary,f)                                       \
 
 #define MAKE_BOX_CONSTRUCTORS_uv(univary)                                      \
-  MAKE_BOX_CONSTRUCTORS_uv_2(univary)           
+  MAKE_BOX_CONSTRUCTORS_uv_2(univary)
 
 MAKE_BOX_CONSTRUCTORS_uv(uniform)
 MAKE_BOX_CONSTRUCTORS_uv(varying)
@@ -186,7 +186,7 @@ MAKE_BOX_CONSTRUCTORS_uv_2T_empty(f)
   MAKE_BOX_CONSTRUCTORS_uv_3T(univary,fa)
 
 #define MAKE_BOX_CONSTRUCTORS_uv(univary)                                      \
-  MAKE_BOX_CONSTRUCTORS_uv_3(univary)           
+  MAKE_BOX_CONSTRUCTORS_uv_3(univary)
 
 MAKE_BOX_CONSTRUCTORS_uv(uniform)
 MAKE_BOX_CONSTRUCTORS_uv(varying)
@@ -235,6 +235,12 @@ MAKE_BOX_OPERATIONS_uv(varying)
 #undef MAKE_BOX_OPERATIONS_uv_N_T
 #undef MAKE_BOX_OPERATIONS_uv_N
 #undef MAKE_BOX_OPERATIONS_uv
+
+inline bool box_contains(const uniform box3f& bbox, const varying vec3f& p)
+{
+    return p.x >= bbox.lower.x && p.y >= bbox.lower.y && p.z >= bbox.lower.z &&
+           p.x <= bbox.upper.x && p.y <= bbox.upper.y && p.z <= bbox.upper.z;
+}
 
 //! print given box to stdout
 void print_box(const uniform box3f &bbox);

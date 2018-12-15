@@ -57,7 +57,6 @@ public:
   ~Base();
 
   virtual void SetUp();
-  virtual void TearDown();
   Base& operator=(const Base&) = delete;
   Base(const Base&) = delete;
 
@@ -175,6 +174,16 @@ public:
 private:
   float radius;
   std::string materialType;
+};
+
+// Test a texture colored by a volume.  Creates a sphere colored by the torus volume
+// It's parametrized with type of the renderer.
+class TextureVolume : public Base, public ::testing::TestWithParam<const char*> {
+public:
+  TextureVolume();
+  virtual void SetUp();
+private:
+  std::vector<float> volumetricData;
 };
 
 } // namespace OSPRayTestScenes

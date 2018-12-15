@@ -45,6 +45,7 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
 
+  common/ospray.rc
   common/OSPCommon.cpp
 
   include/ospray/ospray.h
@@ -67,10 +68,11 @@ SET(OSPRAY_SOURCES
 )
 
 SET(OSPRAY_ISPC_DEVICE_SOURCES
+  ispc_tasksys.cpp
 
+  api/ISPCDevice.h
   api/ISPCDevice.cpp
 
-  common/ospray.rc
   common/ObjectHandle.cpp
   common/Data.cpp
   common/Managed.cpp
@@ -103,6 +105,10 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Geometry.cpp
   geometry/TriangleMesh.ispc
   geometry/TriangleMesh.cpp
+  geometry/QuadMesh.ispc
+  geometry/QuadMesh.cpp
+  geometry/Curves.cpp
+  geometry/Curves.ispc
   geometry/StreamLines.cpp
   geometry/StreamLines.ispc
   geometry/Instance.ispc
@@ -134,6 +140,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   math/box.ispc
   math/Distribution1D.ispc
   math/Distribution2D.ispc
+  math/sobol.ih
+  math/sobol.ispc
   math/spectrum.h
   math/spectrum.ih
   math/spectrum.ispc
@@ -161,6 +169,7 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
   render/pathtracer/GeometryLight.ispc
+  render/pathtracer/bsdfs/MicrofacetAlbedoTables.ispc
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp
@@ -187,8 +196,11 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/materials/Mix.ispc
   render/pathtracer/materials/Mix.cpp
 
+  texture/Texture.cpp
   texture/Texture2D.cpp
   texture/Texture2D.ispc
+  texture/TextureVolume.cpp
+  texture/TextureVolume.ispc
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
@@ -244,7 +256,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   camera/OrthographicCamera.h
   camera/OrthographicCamera.ih
   camera/PanoramicCamera.h
-  camera/PanoramicCamera.ih
   camera/PerspectiveCamera.h
   camera/PerspectiveCamera.ih
   DESTINATION camera
@@ -262,7 +273,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   common/ObjectHandle.h
   common/OSPCommon.h
   common/OSPCommon.ih
-  common/Ray.h
   common/Ray.ih
   common/Texture.h
   common/Util.h
@@ -282,6 +292,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  geometry/Curves.h
   geometry/Cylinders.h
   geometry/Geometry.h
   geometry/Geometry.ih
@@ -293,6 +304,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
   geometry/StreamLines.h
   geometry/TriangleMesh.h
   geometry/TriangleMesh.ih
+  geometry/QuadMesh.h
+  geometry/QuadMesh.ih
   DESTINATION geometry
 )
 
@@ -317,6 +330,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
   math/LinearSpace.ih
   math/math.ih
   math/random.ih
+  math/sobol.ih
   math/sampling.ih
   math/vec.ih
   math/spectrum.h
@@ -336,9 +350,11 @@ OSPRAY_INSTALL_SDK_HEADERS(
 #TODO: all the specific renderer headers...
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  texture/Texture.h
   texture/Texture2D.h
   texture/Texture2D.ih
   texture/TextureParam.ih
+  texture/TextureVolume.h
   DESTINATION texture
 )
 
@@ -461,22 +477,32 @@ COMPONENT
   lib
 )
 
-OSPRAY_CREATE_LIBRARY(ospray_module_ispc
-  ${OSPRAY_ISPC_DEVICE_SOURCES}
-LINK
-  ${OSPRAY_LIBS}
-  ospray
-  ${EMBREE_LIBRARIES}
-COMPONENT
-  lib
-)
+OPTION(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
+MARK_AS_ADVANCED(OSPRAY_BUILD_ISPC_DEVICE)
 
-# build ospTutorial, for testing
-ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
-TARGET_LINK_LIBRARIES(ospTutorial ospray)
-# C++ version
-ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
-TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
+IF(OSPRAY_BUILD_ISPC_DEVICE)
+  OSPRAY_CREATE_LIBRARY(ospray_module_ispc
+    ${OSPRAY_ISPC_DEVICE_SOURCES}
+  LINK
+    ${OSPRAY_LIBS}
+    ospray
+    ${EMBREE_LIBRARIES}
+  COMPONENT
+    lib
+  )
+ENDIF()
+
+OPTION(OSPRAY_ENABLE_TUTORIAL
+  "Build the tutorial executable" ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_TUTORIAL)
+IF(OSPRAY_ENABLE_TUTORIAL)
+  # build ospTutorial, for demonstration and API testing
+  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
+  TARGET_LINK_LIBRARIES(ospTutorial ospray)
+  # C++ version
+  ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
+  TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
+ENDIF()
 
 ##############################################################
 # Configure find_package files

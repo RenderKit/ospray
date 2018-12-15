@@ -14,31 +14,29 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "PanoramicCamera.ih"
+#include "Camera.ih"
 #include "math/sampling.ih"
 
-void PanoramicCamera_initRay(uniform Camera *uniform _self,
+void PanoramicCamera_initRay(Camera *uniform self,
                              varying Ray &ray,
                              const varying CameraSample &sample)
 {
-  uniform PanoramicCamera *uniform self = (uniform PanoramicCamera *uniform)_self;
-
-  const vec2f screen = Camera_subRegion(_self, sample.screen);
-
-  const vec3f org = self->pos;
+  const vec2f screen = Camera_subRegion(self, sample.screen);
 
   const float phi = two_pi * screen.x;
-  const float theta = -M_PI * screen.y;
+  const float theta = M_PI * screen.y;
 
   float sinTheta, cosTheta;
   sincos(theta, &sinTheta, &cosTheta);
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
-  // transform into camera frame
-  const vec3f dir = self->frame * localDir;
+  // trnasform to camera- and then to world-space
+  const vec3f dir = self->frame *
+    make_vec3f(-localDir.y, -localDir.z, localDir.x);
 
-  const float time = Camera_shutterTime(_self, sample.time);
-  setRay(ray, org, dir, self->super.nearClip, infinity, time);
+  const float time = Camera_shutterTime(self, sample.time);
+  const vec3f org = self->org;
+  setRay(ray, org, dir, self->nearClip, infinity, time);
 }
 
 /*! create a new ispc-side version of a panoramiccamera - with given
@@ -47,18 +45,9 @@ void PanoramicCamera_initRay(uniform Camera *uniform _self,
     parameters */
 export void *uniform PanoramicCamera_create(void *uniform cppE)
 {
-  uniform PanoramicCamera *uniform cam = uniform new uniform PanoramicCamera;
-  cam->super.cppEquivalent = cppE;
-  cam->super.initRay = PanoramicCamera_initRay;
-  cam->super.doesDOF = false;
+  Camera *uniform cam = uniform new Camera;
+  cam->cppEquivalent = cppE;
+  cam->initRay = PanoramicCamera_initRay;
+  cam->doesDOF = false;
   return cam;
-}
-
-export void PanoramicCamera_set(void *uniform _self, 
-                                const uniform vec3f &pos,
-                                const uniform linear3f &frame)
-{
-  uniform PanoramicCamera *uniform self = (uniform PanoramicCamera *uniform)_self;
-  self->pos = pos;
-  self->frame = frame;
 }

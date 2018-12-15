@@ -55,7 +55,6 @@ namespace ospray {
     inline API_TYPE createDistributedObject(const char *type)
     {
       auto *instance = OSPRAY_TYPE::createInstance(type);
-      instance->refInc();
 
       ObjectHandle handle;
       handle.assign(instance);
@@ -94,8 +93,15 @@ namespace ospray {
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
 
+    MPIDistributedDevice::MPIDistributedDevice()
+    {
+      maml::init();
+    }
+
     MPIDistributedDevice::~MPIDistributedDevice()
     {
+      maml::shutdown();
+
       if (shouldFinalizeMPI) {
         try {
           MPI_CALL(Finalize());
@@ -124,16 +130,13 @@ namespace ospray {
         auto &embreeDevice = api::ISPCDevice::embreeDevice;
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-
-        rtcDeviceSetErrorFunction2(embreeDevice, embreeErrorFunc, nullptr);
-
-        RTCError erc = rtcDeviceGetError(embreeDevice);
-        if (erc != RTC_NO_ERROR) {
+        rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
+        RTCError erc = rtcGetDeviceError(embreeDevice);
+        if (erc != RTC_ERROR_NONE) {
           // why did the error function not get called !?
           postStatusMsg() << "#osp:init: embree internal error number " << erc;
-          assert(erc == RTC_NO_ERROR);
+          assert(erc == RTC_ERROR_NONE);
         }
-
         initialized = true;
       }
 
@@ -150,21 +153,10 @@ namespace ospray {
                                             const OSPFrameBufferFormat mode,
                                             const uint32 channels)
     {
-      const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
-      const bool hasAccumBuffer    = channels & OSP_FB_ACCUM;
-      const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-
       ObjectHandle handle;
-
-      auto *instance = new DistributedFrameBuffer(size, handle, mode,
-                                                  hasDepthBuffer,
-                                                  hasAccumBuffer,
-                                                  hasVarianceBuffer,
+      auto *instance = new DistributedFrameBuffer(size, handle, mode, channels,
                                                   true);
-      instance->refInc();
-
       handle.assign(instance);
-
       return (OSPFrameBuffer)(int64)handle;
     }
 
@@ -178,11 +170,7 @@ namespace ospray {
 
       auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
 
-      switch (channel) {
-      case OSP_FB_COLOR: return fb.mapColorBuffer();
-      case OSP_FB_DEPTH: return fb.mapDepthBuffer();
-      default: return nullptr;
-      }
+      return fb.mapBuffer(channel);
     }
 
     void MPIDistributedDevice::frameBufferUnmap(const void *mapped,
@@ -202,8 +190,6 @@ namespace ospray {
     OSPModel MPIDistributedDevice::newModel()
     {
       auto *instance = new DistributedModel;
-      instance->refInc();
-
       ObjectHandle handle;
       handle.assign(instance);
 
@@ -237,7 +223,6 @@ namespace ospray {
                                           const void *init, int flags)
     {
       auto *instance = new Data(nitems, format, init, flags);
-      instance->refInc();
       return (OSPData)instance;
     }
 
@@ -273,6 +258,14 @@ namespace ospray {
     int MPIDistributedDevice::loadModule(const char *name)
     {
       return loadLocalModule(name);
+    }
+
+    void MPIDistributedDevice::setBool(OSPObject _object,
+                                       const char *bufName,
+                                       const bool b)
+    {
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->setParam(bufName, b);
     }
 
     void MPIDistributedDevice::setFloat(OSPObject _object,
@@ -377,9 +370,11 @@ namespace ospray {
       NOT_IMPLEMENTED;
     }
 
-    OSPMaterial MPIDistributedDevice::newMaterial(const char *, const char *)
+    OSPMaterial MPIDistributedDevice::newMaterial(const char *renderer_type,
+                                                  const char *material_type)
     {
-      NOT_IMPLEMENTED;
+      auto *instance = Material::createInstance(renderer_type, material_type);
+      return (OSPMaterial)instance;
     }
 
     OSPTransferFunction
@@ -389,31 +384,10 @@ namespace ospray {
                                OSPTransferFunction>(type);
     }
 
-    OSPLight MPIDistributedDevice::newLight(OSPRenderer _renderer,
-                                            const char *type)
+    OSPLight MPIDistributedDevice::newLight(const char *type)
     {
-      auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-      auto *light    = renderer.createLight(type);
-
-      if (light == nullptr)
-        light = Light::createLight(type);
-
-      if (light) {
-        return (OSPLight)light;
-      } else {
-        return nullptr;
-      }
+      return createLocalObject<Light, OSPLight>(type);
     }
-
-    OSPLight MPIDistributedDevice::newLight(const char *renderer_type,
-                                            const char *light_type)
-    {
-      auto renderer = newRenderer(renderer_type);
-      auto light = newLight(renderer, light_type);
-      release(renderer);
-      return light;
-    }
-
 
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)
@@ -454,21 +428,22 @@ namespace ospray {
       if (!_obj) return;
       auto *obj = lookupObject<ManagedObject>(_obj);
       obj->refDec();
+      auto &handle = reinterpret_cast<ObjectHandle&>(_obj);
+      if (handle.defined()) {
+        handle.freeObject();
+      }
     }
 
-    void MPIDistributedDevice::setMaterial(OSPGeometry, OSPMaterial)
+    void MPIDistributedDevice::setMaterial(OSPGeometry _geom, OSPMaterial _mat)
     {
-      NOT_IMPLEMENTED;
+      auto *geom = lookupObject<Geometry>(_geom);
+      auto *mat  = lookupObject<Material>(_mat);
+      geom->setMaterial(mat);
     }
 
-    OSPTexture2D MPIDistributedDevice::newTexture2D(
-      const vec2i &,
-      const OSPTextureFormat,
-      void *,
-      const uint32
-    )
+    OSPTexture MPIDistributedDevice::newTexture(const char *type)
     {
-      NOT_IMPLEMENTED;
+      return createLocalObject<Texture, OSPTexture>(type);
     }
 
     void MPIDistributedDevice::sampleVolume(float **,

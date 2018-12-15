@@ -30,6 +30,7 @@ namespace ospray {
 
     // maximum number of regions: all regions are of size 3 are split in half
     errorRegion.reserve(divRoundUp(tiles * 2, 3));
+    clear();
   }
 
   TileError::~TileError()
@@ -65,6 +66,18 @@ namespace ospray {
   {
     if (tiles <= 0)
       return inf;
+
+    float maxErr = 0.f;
+    float sumActErr = 0.f;
+    int actTiles = 0;
+    for (int i = 0; i < tiles; i++) {
+      maxErr = std::max(maxErr, tileErrorBuffer[i]);
+      if (tileErrorBuffer[i] > errorThreshold) {
+        sumActErr += tileErrorBuffer[i];
+        actTiles++;
+      }
+    }
+    const float error = actTiles ? sumActErr / actTiles : maxErr;
 
     // process regions first, but don't process newly split regions again
     int regions = errorThreshold > 0.f ? errorRegion.size() : 0;
@@ -114,6 +127,6 @@ namespace ospray {
       }
     }
 
-    return *std::max_element(tileErrorBuffer, tileErrorBuffer + tiles);
+    return error;
   }
 } // ::ospray
