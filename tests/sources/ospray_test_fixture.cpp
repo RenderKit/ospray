@@ -514,9 +514,8 @@ void Box::SetMaterials()
 OSPMaterial Box::GetMaterial(std::string type)
 {
   OSPMaterial newMaterial = ospNewMaterial2(rendererType.c_str(), type.data());
-  if (type == "OBJMaterial") {
-    ospSetf(newMaterial, "Ns", 100.f);
-  } else if (type == "Glass") {
+  // defaults for "OBJMaterial"
+  if (type == "Glass") {
     ospSetf(newMaterial, "eta", 1.4);
   } else if (type == "Luminous") {
     ospSetf(newMaterial, "intensity", 0.7f);
@@ -639,8 +638,6 @@ void Torus::SetUp()
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
 
-  ospSet1f(renderer, "epsilon", 0.01);
-
   OSPVolume torus = CreateTorus(volumetricData, 256);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
@@ -693,8 +690,6 @@ void SlicedCube::SetUp()
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
-
-  ospSet1f(renderer, "epsilon", 0.01);
 
   int size = 100;
 
@@ -846,8 +841,6 @@ void Pipes::SetUp()
 {
   Base::SetUp();
 
-  ospSet1f(renderer, "epsilon", 0.001f);
-
   float cam_pos[] = {-7.f, 2.f, 0.7f};
   float cam_view[] = {7.f, -2.f, -0.7f};
   float cam_up[] = {0.f, 0.f, 1.f};
@@ -912,8 +905,6 @@ void TextureVolume::SetUp()
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
 
-  ospSet1f(renderer, "epsilon", 0.01);
-
   OSPVolume torus = CreateTorus(volumetricData, 256);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
@@ -977,8 +968,6 @@ void DepthCompositeVolume::SetUp()
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
-
-  ospSet1f(renderer, "epsilon", 0.01);
 
   OSPVolume torus = CreateTorus(volumetricData, 256);
 

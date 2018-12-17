@@ -303,24 +303,20 @@ INSTANTIATE_TEST_CASE_P(Intersection, SpherePrecision, ::testing::Combine(
       ::testing::Values("scivis", "pathtracer")
       ));
 
+
 TEST_P(Box, basicScene) {
   PerformRenderTest();
 }
 
-#if 0 // Broken PT tests...image diffs changed too much...
 INSTANTIATE_TEST_CASE_P(MaterialPairs, Box, ::testing::Combine(::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values("OBJMaterial", "Glass", "Luminous")));
-#endif
+
 
 TEST_P(Pipes, simple) {
   PerformRenderTest();
 }
 
 INSTANTIATE_TEST_CASE_P(Scivis, Pipes, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
-
-// Tests disabled due to issues for pathtracer renderer with streamlines
-#if 0 // TODO: these tests will break future tests...
-INSTANTIATE_TEST_CASE_P(Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values(0.1f, 0.4f)));
-#endif
+INSTANTIATE_TEST_CASE_P(Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Luminous"), ::testing::Values(0.1f, 0.4f)));
 
 
 TEST_P(Subdivision, simple) {
