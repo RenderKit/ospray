@@ -304,7 +304,7 @@ usage --> "--generate:type[:parameter1=value,parameter2=value,...]"
       auto &camera = root["camera"];
       if (camera.hasChild("height")) {
         auto bbox = renderer["world"].bounds();
-        camera["height"] = bbox.empty() ? 1.f : 0.5f * length(bbox.size());
+        camera["height"] = bbox.empty() ? 1.f : 0.8f * length(bbox.size());
       }
 
       // last, to be able to modify all created SG nodes
