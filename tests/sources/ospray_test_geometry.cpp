@@ -327,5 +327,5 @@ TEST_P(Subdivision, simple) {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Scivis, Subdivision, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
-INSTANTIATE_TEST_CASE_P(Pathtracer, Subdivision, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
+INSTANTIATE_TEST_CASE_P(Scivis, Subdivision, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial")));
+INSTANTIATE_TEST_CASE_P(Pathtracer, Subdivision, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial")));

@@ -1133,8 +1133,6 @@ void Subdivision::SetUp()
   ospCommit(subd);
   AddGeometry(subd);
 
-  ospSet1f(renderer, "epsilon", 0.001f);
-
   float cam_pos[] = {-1.5f, 2.f, 1.7f};
   float cam_view[] = {1.5f, -2.f, -1.7f};
   float cam_up[] = {0.f, 1.f, 0.f};
