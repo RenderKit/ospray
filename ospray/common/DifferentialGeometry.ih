@@ -75,7 +75,7 @@ inline float calcEpsilon(const vec3f& P, const vec3f& dir, float t)
 {
   // convert ray-space t to object-/world-space using max(dir) instead of
   // costly length; the error is at most sqrt(3)~1.7, quite acceptable for eps
-  return reduce_max(make_vec4f(abs(P), reduce_max(dir)*t)) * ulpEpsilon;
+  return reduce_max(make_vec4f(abs(P), reduce_max(abs(dir))*t)) * ulpEpsilon;
 }
 
 inline float calcEpsilon(const vec3f& P, float dist)

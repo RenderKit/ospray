@@ -46,7 +46,8 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
   dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
   // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
   // isotropic anyway and hence cannot better handle non-uniform scaling)
-  dg.epsilon *= max(self->xfm.l.vx.x, max(self->xfm.l.vy.y, self->xfm.l.vz.z));
+  dg.epsilon *= max(abs(self->xfm.l.vx.x),
+      max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
   if (flags & DG_TANGENTS) {
     dg.dPds = xfmVector(self->xfm,dg.dPds);
