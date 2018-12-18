@@ -38,6 +38,7 @@ namespace ospray {
       vec2i size() const;
       OSPFrameBufferFormat format() const;
 
+      virtual void postTraverse(RenderContext &, const std::string&) override;
       virtual void postCommit(RenderContext &ctx) override;
 
       /*! \brief returns a std::string with the c++ name of this class */

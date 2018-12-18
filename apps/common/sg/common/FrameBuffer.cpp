@@ -39,6 +39,19 @@ namespace ospray {
       updateFB();
     }
 
+    void FrameBuffer::postTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      Node::postTraverse(ctx, operation);
+      if (operation == "commit") {
+        // ensure we can react on changed tonemapper (which could be shared by
+        // multiple framebuffers but is only commited once)
+        bool toneMapperEnabled = hasChild("toneMapper")
+          && child("toneMapper").child("enabled").valueAs<bool>();
+        if (toneMapperActive ^ toneMapperEnabled)
+          postCommit(ctx);
+      }
+    }
+
     void FrameBuffer::postCommit(RenderContext &)
     {
       bool removeToneMapper = false;
