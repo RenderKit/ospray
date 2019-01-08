@@ -206,6 +206,7 @@ build-scan-kw:
   image: ospray-kw-centos7
   script:
     - /tmp/build-scan-kw.sh
+    - test -s $CI_PROJECT_DIR/kw_build_number
   tags:
     - kw-scan-docker
   artifacts:
