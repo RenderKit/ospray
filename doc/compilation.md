@@ -123,8 +123,8 @@ way to configure OSPRay and to create the Visual Studio solution files:
     2017 Win64".
 
 -   If the configuration fails because some dependencies could not be
-    found then follow the instructions given in the error message, e.g.
-    set the variable `embree_DIR` to the folder where Embree was
+    found then follow the instructions given in the error message,
+    e.g. set the variable `embree_DIR` to the folder where Embree was
     installed.
 
 -   Optionally change the default build options, and then click

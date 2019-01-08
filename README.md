@@ -170,7 +170,7 @@ way to configure OSPRay and to create the Visual Studio solution files:
 
 -   Click “Configure” and select as generator the Visual Studio version
     you have (OSPRay needs Visual Studio 14 2015 or newer), for Win64
-    (32 bit builds are not supported by OSPRay), e.g. “Visual Studio 15
+    (32 bit builds are not supported by OSPRay), e.g. “Visual Studio 15
     2017 Win64”.
 
 -   If the configuration fails because some dependencies could not be
@@ -208,9 +208,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -2147,7 +2147,9 @@ below).
 
 <figure>
 <img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
-</figure>If present, the color component of [geometries](#geometries) is
+</figure>
+
+If present, the color component of [geometries](#geometries) is
 also used for the diffuse color `Kd` and the alpha component is also
 used for the opacity `d`.
 
@@ -2169,7 +2171,9 @@ or invert its green channel.
 
 <figure>
 <img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." width="60.0%" /><figcaption>Normal map representing an exalted square pyramidal frustum.</figcaption>
-</figure>All parameters (except `Tf`) can be textured by passing a
+</figure>
+
+All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with “`map_`”. The fetched texels
 are multiplied by the respective parameter value. Texturing requires
 [geometries](#geometries) with texture coordinates, e.g. a [triangle
@@ -2181,7 +2185,9 @@ textures support [texture transformations](#texture2d-transformations).
 
 <figure>
 <img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
-</figure>#### Principled
+</figure>
+
+#### Principled
 
 The Principled material is the most complex material offered by the
 [path tracer](#path-tracer), which is capable of producing a wide
@@ -2387,7 +2393,9 @@ All parameters can be textured by passing a [texture](#texture) handle,
 suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
 transformations](#texture2d-transformations) are supported as well.
 
-<img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" />
+<figure>
+<img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
+</figure>
 
 #### CarPaint
 
@@ -2518,7 +2526,9 @@ All parameters can be textured by passing a [texture](#texture) handle,
 suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
 transformations](#texture2d-transformations) are supported as well.
 
-<img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" />
+<figure>
+<img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
+</figure>
 
 #### Metal
 
@@ -2602,7 +2612,9 @@ how polished the metal will look. The roughness can be modified by a
 transformations](#texture2d-transformations) are supported as well) to
 create interesting edging effects.
 
-<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" />
+<figure>
+<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" /><figcaption>Rendering of golden Metal material with textured roughness.</figcaption>
+</figure>
 
 #### Alloy
 
@@ -2629,7 +2641,9 @@ polished the alloy will look. All parameters can be textured by passing
 a [texture](#texture) handle, prefixed with “`map_`”; [texture
 transformations](#texture2d-transformations) are supported as well.
 
-<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" />
+<figure>
+<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
+</figure>
 
 #### Glass
 
@@ -2653,7 +2667,9 @@ trough a glass of thickness `attenuationDistance`.
 
 <figure>
 <img src="https://ospray.github.io/images/material_Glass.jpg" alt="Rendering of a Glass material with orange attenuation." width="60.0%" /><figcaption>Rendering of a Glass material with orange attenuation.</figcaption>
-</figure>#### ThinGlass
+</figure>
+
+#### ThinGlass
 
 The [path tracer](#path-tracer) offers a thin glass material useful for
 objects with just a single surface, most prominently windows. It models
@@ -2686,9 +2702,13 @@ attenuation and thus the material appearance.
 
 <figure>
 <img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" /><figcaption>Rendering of a ThinGlass material with red attenuation.</figcaption>
-</figure><figure>
+</figure>
+
+<figure>
 <img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" /><figcaption>Example image of a colored window made with textured attenuation of the ThinGlass material.</figcaption>
-</figure>#### MetallicPaint
+</figure>
+
+#### MetallicPaint
 
 The [path tracer](#path-tracer) offers a metallic paint material,
 consisting of a base coat with optional flakes and a clear coat. To
@@ -2717,7 +2737,9 @@ flakes, similar to the `roughness` parameter of [Metal](#metal). Note
 that the effect of the metallic flakes is currently only computed on
 average, thus individual flakes are not visible.
 
-<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" />
+<figure>
+<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" /><figcaption>Rendering of a MetallicPaint material.</figcaption>
+</figure>
 
 #### Luminous
 
@@ -2730,7 +2752,9 @@ parameters of lights: [`color` and `intensity`](#lights).
 
 <figure>
 <img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" /><figcaption>Rendering of a yellow Luminous material.</figcaption>
-</figure>### Texture
+</figure>
+
+### Texture
 
 OSPRay currently implements two texture types (`texture2d` and `volume`)
 and is open for extension to other types by applications. More types may
@@ -2937,11 +2961,17 @@ images below.
 
 <figure>
 <img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." width="60.0%" /><figcaption>Example image created with the perspective camera, featuring depth of field.</figcaption>
-</figure><figure>
+</figure>
+
+<figure>
 <img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
-</figure><figure>
+</figure>
+
+<figure>
 <img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." width="90.0%" /><figcaption>Example 3D stereo image using <code>stereoMode</code> side-by-side.</figcaption>
-</figure>#### Orthographic Camera
+</figure>
+
+#### Orthographic Camera
 
 The orthographic camera implements a simple camera with orthographic
 projection, without support for depth of field or motion blur. It is
@@ -2965,7 +2995,9 @@ and `imageEnd`, and both methods can be combined. In any case, the
 
 <figure>
 <img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." width="60.0%" /><figcaption>Example image created with the orthographic camera.</figcaption>
-</figure>#### Panoramic Camera
+</figure>
+
+#### Panoramic Camera
 
 The panoramic camera implements a simple camera without support for
 motion blur. It captures the complete surrounding with a latitude /
@@ -2976,7 +3008,9 @@ by using the [general parameters](#cameras) understood by all cameras.
 
 <figure>
 <img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." width="90.0%" /><figcaption>Latitude / longitude map created with the panoramic camera.</figcaption>
-</figure>### Picking
+</figure>
+
+### Picking
 
 To get the world-space position of the geometry (if any) seen at \[0–1\]
 normalized screen-space pixel coordinates `screenPos` use

@@ -141,7 +141,8 @@ images/%:
 ### markdown
 ########################################################################
 
-convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g'
+# also works around pandoc #5121, should be fixed in v2.5.1
+convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g' -e "s@^</figure>@\0\n\n@"
 
 tmp/api.md: api.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
