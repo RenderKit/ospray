@@ -309,6 +309,7 @@ namespace ospray {
         }
       }
 
+      glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
       if (fullScreen) {
         auto *monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
@@ -374,6 +375,7 @@ namespace ospray {
       );
 
       // setup GL state
+      glEnable(GL_FRAMEBUFFER_SRGB);
       glDisable(GL_LIGHTING);
       glColor3f(1, 1, 1);
 

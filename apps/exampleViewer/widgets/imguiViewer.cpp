@@ -482,14 +482,16 @@ namespace ospray {
       auto fbSize = mappedFB.size();
       auto fbData = mappedFB.data();
       GLenum texelType;
+      GLenum texFormat = GL_RGBA; // default linear
       std::string filename("ospexampleviewer");
       switch (mappedFB.format()) {
         default: /* fallthrough */
         case OSP_FB_NONE:
           fbData = nullptr;
           break;
-        case OSP_FB_RGBA8: /* fallthrough */
-        case OSP_FB_SRGBA:
+        case OSP_FB_SRGBA: /* fallthrough */
+          texFormat = GL_SRGB_ALPHA;
+        case OSP_FB_RGBA8:
           texelType = GL_UNSIGNED_BYTE;
           if (saveScreenshot) {
             filename += ".ppm";
@@ -509,7 +511,7 @@ namespace ospray {
       if (fbData) {
         fbAspect = fbSize.x/float(fbSize.y);
         glBindTexture(GL_TEXTURE_2D, fbTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbSize.x, fbSize.y, 0, GL_RGBA,
+        glTexImage2D(GL_TEXTURE_2D, 0, texFormat, fbSize.x, fbSize.y, 0, GL_RGBA,
             texelType, fbData);
       } else
         fbAspect = 1.f;

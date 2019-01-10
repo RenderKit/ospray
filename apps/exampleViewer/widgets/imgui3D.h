@@ -29,6 +29,12 @@
 #ifndef GL_CLAMP_TO_BORDER
 #define GL_CLAMP_TO_BORDER                0x812D
 #endif
+#ifndef GL_SRGB_ALPHA
+#define GL_SRGB_ALPHA                     0x8C42
+#endif
+#ifndef GL_FRAMEBUFFER_SRGB
+#define GL_FRAMEBUFFER_SRGB               0x8DB9
+#endif
 
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
