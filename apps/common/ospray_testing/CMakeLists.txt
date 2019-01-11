@@ -35,34 +35,8 @@ LINK
 
 # TODO: export header includes
 
-set(OSPTESTING_SDK_INSTALL_LOC ../ospray_testing)
-
-ospray_install_sdk_headers(
-  ospray_testing.h
-  DESTINATION ${OSPTESTING_SDK_INSTALL_LOC}
-)
-
-ospray_install_sdk_headers(
-  detail/objectFactory.h
-  DESTINATION ${OSPTESTING_SDK_INSTALL_LOC}/detail
-)
-
-ospray_install_sdk_headers(
-  geometry/Geometry.h
-  DESTINATION ${OSPTESTING_SDK_INSTALL_LOC}/geometry
-)
-
-ospray_install_sdk_headers(
-  lights/Lights.h
-  DESTINATION ${OSPTESTING_SDK_INSTALL_LOC}/lights
-)
-
-ospray_install_sdk_headers(
-  transferFunction/TransferFunction.h
-  DESTINATION ${OSPTESTING_SDK_INSTALL_LOC}/transferFunction
-)
-
-ospray_install_sdk_headers(
-  volume/Volume.h
-  DESTINATION ${OSPTESTING_SDK_INSTALL_LOC}/volume
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  FILES_MATCHING
+  PATTERN *.h
 )

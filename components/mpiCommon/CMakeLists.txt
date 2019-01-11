@@ -17,25 +17,17 @@
 ospray_configure_mpi()
 
 ospray_create_library(ospray_mpi_common
-
   MPICommon.cpp
   MPIBcastFabric.cpp
-
 LINK
-
   ${MPI_C_LIBRARIES}
   ospray_common
   ospray
-
 COMPONENT mpi
 )
 
-set(MPICOMMON_SDK_INSTALL_LOC
-  ../mpiCommon #NOTE: this is "next" to the SDK/ directory
-)
-
-ospray_install_sdk_headers(
-  MPICommon.h
-  MPIBcastFabric.h
-  DESTINATION ${MPICOMMON_SDK_INSTALL_LOC}
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  FILES_MATCHING
+  PATTERN *.h
 )

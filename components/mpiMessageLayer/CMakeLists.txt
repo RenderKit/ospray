@@ -33,14 +33,7 @@ LINK
 COMPONENT mpi
 )
 
-set(MAML_SDK_INSTALL_LOC
-  ../maml #NOTE: this is "next" to the SDK/ directory
-)
-
-ospray_install_sdk_headers(
-  maml/maml.h
-  DESTINATION ${MAML_SDK_INSTALL_LOC}
-)
+install(FILES maml/maml.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/maml)
 
 # ------------------------------------------------------------------
 # tests and examples

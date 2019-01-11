@@ -28,6 +28,17 @@ macro(ospray_warn_once IDENTIFIER MESSAGE)
   endif()
 endmacro()
 
+## Get a list of subdirectories (single level) under a given directory
+macro(get_subdirectories result curdir)
+  file(GLOB children RELATIVE ${curdir} ${curdir}/*)
+  set(dirlist "")
+  foreach(child ${children})
+    if(IS_DIRECTORY ${curdir}/${child})
+      list(APPEND dirlist ${child})
+    endif()
+  endforeach()
+  set(${result} ${dirlist})
+endmacro()
 
 # workaround link issues to Embree ISPC exports
 # ISPC only adds the ISA suffix during name mangling (and dynamic dispatch
@@ -327,33 +338,6 @@ macro(ospray_create_test)
       COMPONENT test
     )
   endif()
-endmacro()
-
-## Conveniance macro for installing OSPRay headers ##
-# Usage
-#
-#   ospray_install_sdk_headers(header1 [header2 ...] [DESTINATION destination])
-#
-# will install headers into ${CMAKE_INSTALL_PREFIX}/ospray/SDK/${destination},
-# where destination is optional.
-
-macro(ospray_install_sdk_headers)
-  set(HEADERS "")
-  set(MY_DESTINATION "")
-
-  set(CURRENT_LIST HEADERS)
-  foreach(arg ${ARGN})
-    if ("${arg}" STREQUAL "DESTINATION")
-      set(CURRENT_LIST MY_DESTINATION)
-    else()
-      list(APPEND ${CURRENT_LIST} ${arg})
-    endif ()
-  endforeach()
-
-  install(FILES ${HEADERS}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/${MY_DESTINATION}
-    COMPONENT devel
-  )
 endmacro()
 
 ## Compiler configuration macros ##

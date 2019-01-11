@@ -93,110 +93,12 @@ else()
 
   ## Install headers ##
 
-  set(OSPCOMMON_SDK_INSTALL_LOC
-    ../ospcommon #NOTE: this is "next" to the SDK/ directory
-  )
-
-  ospray_install_sdk_headers(
-    AffineSpace.h
-    AsyncLoop.h
-    box.h
-    common.h
-    constants.h
-    FileName.h
-    intrinsics.h
-    library.h
-    LinearSpace.h
-    math.h
-    multidim_index_sequence.h
-    platform.h
-    Quaternion.h
-    range.h
-    sysinfo.h
-    thread.h
-    TypeTraits.h
-    vec.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}
-  )
-
-  ospray_install_sdk_headers(
-    array3D/Array3D.h
-    array3D/for_each.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/array3D
-  )
-
-  ospray_install_sdk_headers(
-    containers/aligned_allocator.h
-    containers/AlignedVector.h
-    containers/TransactionalBuffer.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
-  )
-
-  ospray_install_sdk_headers(
-    memory/DeletedUniquePtr.h
-    memory/malloc.h
-    memory/RefCount.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/memory
-  )
-
-  ospray_install_sdk_headers(
-    networking/BufferedDataStreaming.h
-    networking/DataStreaming.h
-    networking/Fabric.h
-    networking/Socket.h
-    networking/SocketFabric.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/networking
-  )
-
-  ospray_install_sdk_headers(
-    tasking/async.h
-    tasking/parallel_for.h
-    tasking/parallel_foreach.h
-    tasking/schedule.h
-    tasking/tasking_system_handle.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking
-  )
-
-  ospray_install_sdk_headers(
-    tasking/detail/parallel_for.inl
-    tasking/detail/schedule.inl
-    tasking/detail/TaskSys.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking/detail
-  )
-
-  ospray_install_sdk_headers(
-    utility/Any.h
-    utility/ArgumentList.h
-    utility/ArrayView.h
-    utility/CodeTimer.h
-    utility/DataView.h
-    utility/demangle.h
-    utility/DoubleBufferedValue.h
-    utility/getEnvVar.h
-    utility/Observer.h
-    utility/OnScopeExit.h
-    utility/Optional.h
-    utility/ParameterizedObject.h
-    utility/PseudoURL.h
-    utility/SaveImage.h
-    utility/StringManip.h
-    utility/TimeStamp.h
-    utility/TransactionalValue.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
-  )
-
-  ospray_install_sdk_headers(
-    xml/XML.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/xml
+  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+    FILES_MATCHING
+    PATTERN *.h
+    PATTERN *.inl
+    PATTERN *.cmake
   )
 
   ## Build Test Apps ##
