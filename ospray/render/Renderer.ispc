@@ -122,7 +122,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
     const float rspp = rcpf(spp);
     screenSample.rgb = col * rspp;
     screenSample.alpha = alpha * rspp;
-    screenSample.normal = transposed(camera->frame) * (normal * rspp);
+    screenSample.normal = normal * rspp;
     screenSample.albedo = albedo * rspp;
     setTile(tile, pixel, screenSample);
   }

@@ -103,7 +103,7 @@ typedef enum
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
   OSP_FB_VARIANCE=(1<<3),
-  OSP_FB_NORMAL=(1<<4), // in screenspace
+  OSP_FB_NORMAL=(1<<4), // in world-space
   OSP_FB_ALBEDO=(1<<5)
 } OSPFrameBufferChannel;
 

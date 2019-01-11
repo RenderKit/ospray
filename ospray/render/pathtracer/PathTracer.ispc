@@ -445,7 +445,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   const float rspp = rcpf(spp);
   screenSample.rgb = screenSample.rgb * rspp;
   screenSample.alpha = screenSample.alpha * rspp;
-  screenSample.normal = transposed(camera->frame) * (screenSample.normal*rspp);
+  screenSample.normal = screenSample.normal * rspp;
   screenSample.albedo = screenSample.albedo * rspp;
 
   return screenSample;
