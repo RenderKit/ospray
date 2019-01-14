@@ -63,10 +63,26 @@ namespace ospray {
 
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
       if (sgFB->auxBuffers()) {
+        if (asynchronousDenoising) {
           std::lock_guard<std::mutex> lock(denoiserMutex);
           denoisers.back().copy(sgFB);
           newBuffers = true;
           denoiserCond.notify_all();
+        } else {
+          // NOTE(jda) - Spin here until the consumer has had the chance to update
+          //             to the latest frame.
+          while(state == ExecState::RUNNING && newPixels == true);
+
+          // work just on denoisers.front
+          denoiseFps.start();
+          frameBuffers.back().resize(sgFB->size(), OSP_FB_RGBA32F);
+          denoisers.front().map(sgFB, (vec4f*)frameBuffers.back().data());
+          denoisers.front().execute();
+          denoisers.front().unmap(sgFB);
+          denoiseFps.stop();
+
+          newPixels = true;
+        }
       } else
 #endif
       {
@@ -132,9 +148,13 @@ namespace ospray {
       needCommit = true;
       size_ = fbSize;
       color.resize(elements);
+      committed_color = color.data();
       normal.resize(elements);
+      committed_normal = normal.data();
       albedo.resize(elements);
+      committed_albedo = albedo.data();
       result_.resize(elements);
+      committed_result = result_.data();
     }
     const vec4f *buf4 = (const vec4f *)fb->map(OSP_FB_COLOR);
     std::copy(buf4, buf4 + elements, color.begin());
@@ -147,22 +167,52 @@ namespace ospray {
     fb->unmap(buf3);
   }
 
+  void AsyncRenderEngine::Denoiser::map(std::shared_ptr<sg::FrameBuffer> fb, vec4f* res_buf)
+  {
+    const vec4f *col_buf = (const vec4f *)fb->map(OSP_FB_COLOR);
+    const vec3f *nor_buf = (const vec3f *)fb->map(OSP_FB_NORMAL);
+    const vec3f *alb_buf = (const vec3f *)fb->map(OSP_FB_ALBEDO);
+
+    auto fbSize = fb->size();
+    if (fbSize != size_
+        || committed_color != col_buf
+        || committed_normal != nor_buf
+        || committed_albedo != alb_buf
+        || committed_result != res_buf
+       )
+    {
+      needCommit = true;
+      size_ = fbSize;
+      committed_color = col_buf;
+      committed_normal = nor_buf;
+      committed_albedo = alb_buf;
+      committed_result = res_buf;
+    }
+  }
+
+  void AsyncRenderEngine::Denoiser::unmap(std::shared_ptr<sg::FrameBuffer> fb)
+  {
+    fb->unmap(committed_color);
+    fb->unmap(committed_normal);
+    fb->unmap(committed_albedo);
+  }
+
   void AsyncRenderEngine::Denoiser::execute()
   {
     if (needCommit) {
-      filter.setImage("color", color.data(), oidn::Format::Float3,
+      filter.setImage("color", (void*)committed_color, oidn::Format::Float3,
           size_.x, size_.y, 0, sizeof(vec4f));
 
-      filter.setImage("normal", normal.data(), oidn::Format::Float3,
+      filter.setImage("normal", (void*)committed_normal, oidn::Format::Float3,
           size_.x, size_.y, 0, sizeof(vec3f));
 
-      filter.setImage("albedo", albedo.data(), oidn::Format::Float3, 
+      filter.setImage("albedo", (void*)committed_albedo, oidn::Format::Float3, 
           size_.x, size_.y, 0, sizeof(vec3f));
 
-      filter.setImage("output", result_.data(), oidn::Format::Float3,
+      filter.setImage("output", committed_result, oidn::Format::Float3,
           size_.x, size_.y, 0, sizeof(vec4f));
 
-      filter.set1i("hdr", 1);
+      filter.set1i("hdr", 1); // XXX depend on TMO and/or color source format (float vs. int8)
       filter.commit();
       needCommit = false;
     }

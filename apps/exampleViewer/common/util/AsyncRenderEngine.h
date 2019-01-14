@@ -121,6 +121,8 @@ namespace ospray {
       void init(oidn::DeviceRef &dev);
       vec2i size() const noexcept { return size_; }
       void copy(std::shared_ptr<sg::FrameBuffer>);
+      void map(std::shared_ptr<sg::FrameBuffer>, vec4f* res_buf);
+      void unmap(std::shared_ptr<sg::FrameBuffer>);
       void execute();
       const vec4f* result() const noexcept { return result_.data(); }
     private:
@@ -130,6 +132,10 @@ namespace ospray {
       std::vector<vec3f> normal;
       std::vector<vec3f> albedo;
       std::vector<vec4f> result_;
+      const vec4f* committed_color;
+      const vec3f* committed_normal;
+      const vec3f* committed_albedo;
+      vec4f* committed_result;
       oidn::FilterRef filter;
     };
 
@@ -142,6 +148,7 @@ namespace ospray {
     utility::CodeTimer denoiseFps;
     bool newBuffers {false};
     bool denoiserStop {true};
+    bool asynchronousDenoising {false};
     std::condition_variable denoiserCond;
     std::mutex denoiserMutex;
 
