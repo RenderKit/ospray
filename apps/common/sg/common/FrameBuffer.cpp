@@ -136,6 +136,11 @@ namespace ospray {
       return committed_format;
     };
 
+    bool FrameBuffer::toneMapped() const
+    {
+      return toneMapperActive;
+    };
+
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
     bool FrameBuffer::auxBuffers() const
     {

@@ -144,7 +144,10 @@ namespace ospray {
   {
     auto fbSize = fb->size();
     const auto elements = fbSize.x * fbSize.y;
-    if (fbSize != size_) {
+    if (fbSize != size_
+        || committed_hdr != !fb->toneMapped()
+       )
+    {
       needCommit = true;
       size_ = fbSize;
       color.resize(elements);
@@ -155,6 +158,7 @@ namespace ospray {
       committed_albedo = albedo.data();
       result_.resize(elements);
       committed_result = result_.data();
+      committed_hdr = !fb->toneMapped();
     }
     const vec4f *buf4 = (const vec4f *)fb->map(OSP_FB_COLOR);
     std::copy(buf4, buf4 + elements, color.begin());
@@ -179,6 +183,7 @@ namespace ospray {
         || committed_normal != nor_buf
         || committed_albedo != alb_buf
         || committed_result != res_buf
+        || committed_hdr != !fb->toneMapped()
        )
     {
       needCommit = true;
@@ -187,6 +192,7 @@ namespace ospray {
       committed_normal = nor_buf;
       committed_albedo = alb_buf;
       committed_result = res_buf;
+      committed_hdr = !fb->toneMapped();
     }
   }
 
@@ -212,7 +218,7 @@ namespace ospray {
       filter.setImage("output", committed_result, oidn::Format::Float3,
           size_.x, size_.y, 0, sizeof(vec4f));
 
-      filter.set1i("hdr", 1); // XXX depend on TMO and/or color source format (float vs. int8)
+      filter.set("hdr", committed_hdr);
       filter.commit();
       needCommit = false;
     }

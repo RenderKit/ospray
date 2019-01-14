@@ -37,6 +37,7 @@ namespace ospray {
 
       vec2i size() const;
       OSPFrameBufferFormat format() const;
+      bool toneMapped() const;
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
       bool auxBuffers() const;
 #endif
