@@ -27,11 +27,6 @@ if (TARGET glfw)
   )
 endif()
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/apps/common/ospray_testing
-)
-
 # build ospTutorial, for demonstration and API testing
 add_executable(ospTutorial ospTutorial.c)
 target_link_libraries(ospTutorial ospray)

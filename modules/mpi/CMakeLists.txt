@@ -26,14 +26,10 @@ if (OSPRAY_MODULE_MPI)
 
   set(OSPRAY_DEFAULT_COMPONENT mpi)
 
-  ospray_configure_mpi()
-
   ospray_build_component(mpiCommon)
   ospray_build_component(mpiMessageLayer)
   ospray_build_component(snappy EXCLUDE_FROM_ALL)
 
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR})
   include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
 
   ospray_create_library(ospray_module_mpi
@@ -64,6 +60,14 @@ if (OSPRAY_MODULE_MPI)
     ospray_mpi_maml
     snappy
   )
+
+  target_include_directories(ospray_module_mpi
+    PUBLIC
+      ${CMAKE_CURRENT_SOURCE_DIR}/..
+    PRIVATE
+      ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
   target_compile_definitions(ospray_module_mpi PUBLIC
     -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 

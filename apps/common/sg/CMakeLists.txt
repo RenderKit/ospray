@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 ## VTK support ##
 
 option(OSPRAY_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
@@ -24,7 +22,6 @@ if(OSPRAY_SG_VTK)
   option(OSPRAY_SG_VTK_XDMF "Enable VTK XDMF loader for ospray_sg" OFF)
   if (OSPRAY_SG_VTK_XDMF)
     set(XDMF_COMPONENT vtkIOXdmf2)
-    add_definitions(-DOSPRAY_APPS_SG_VTK_XDMF=1)
   endif()
 
   find_package(VTK COMPONENTS REQUIRED
@@ -44,8 +41,6 @@ if(OSPRAY_SG_VTK)
     importer/importVTI.cpp
     generator/generateVTKWaveletVolume.cpp
   )
-
-  add_definitions(-DOSPRAY_APPS_SG_VTK=1)
 endif()
 
 ## Chombo AMR loader support ##
@@ -54,11 +49,7 @@ option(OSPRAY_SG_CHOMBO "AMR Chombo Reader (requires HDF5)" OFF)
 
 if(OSPRAY_SG_CHOMBO)
   find_package(HDF5 REQUIRED)
-  if(HDF5_FOUND)
-    include_directories(${HDF5_INCLUDE_DIRS})
-  endif()
   set(CHOMBO_SRCS importer/importAMRChombo.cpp)
-  add_definitions(-DOSPRAY_APPS_SG_CHOMBO=1)
 endif()
 
 ## OpenImageIO support ##
@@ -67,10 +58,7 @@ option(OSPRAY_SG_OPENIMAGEIO "Enable OpenImageIO support" OFF)
 
 if(OSPRAY_SG_OPENIMAGEIO)
   find_package(OpenImageIO 1.6.5)
-  if (OPENIMAGEIO_FOUND)
-    add_definitions(-DUSE_OPENIMAGEIO)
-    include_directories(${OPENIMAGEIO_INCLUDE_DIRS})
-  else()
+  if (NOT OPENIMAGEIO_FOUND)
     message(STATUS "OpenImageIO not found. Using stb_image instead.")
   endif()
 endif()
@@ -166,6 +154,31 @@ LINK
   ${OPENIMAGEIO_LIBRARIES}
   ${OPENIMAGEDENOISE}
 )
+
+target_include_directories(ospray_sg
+  PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}
+)
+
+## Setup additional compile config for optional dependencies ##
+
+if(OSPRAY_SG_CHOMBO)
+  target_include_directories(ospray_sg PRIVATE ${HDF5_INCLUDE_DIRS})
+  target_compile_definitions(ospray_sg PUBLIC -DOSPRAY_APPS_SG_CHOMBO=1)
+endif()
+
+if(OSPRAY_SG_OPENIMAGEIO AND OPENIMAGEIO_FOUND)
+  target_include_directories(ospray_sg PRIVATE ${OPENIMAGEIO_INCLUDE_DIRS})
+  target_compile_definitions(ospray_sg PRIVATE -DUSE_OPENIMAGEIO)
+endif()
+
+if(OSPRAY_SG_VTK)
+  if (OSPRAY_SG_VTK_XDMF)
+    target_compile_definitions(ospray_sg PRIVATE -DOSPRAY_APPS_SG_VTK_XDMF=1)
+  endif()
+
+  target_compile_definitions(ospray_sg PUBLIC -DOSPRAY_APPS_SG_VTK=1)
+endif()
 
 ## Install headers in SDK ##
 

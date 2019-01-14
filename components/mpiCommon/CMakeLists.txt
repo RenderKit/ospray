@@ -29,6 +29,7 @@ COMPONENT mpi
 target_include_directories(ospray_mpi_common
   PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
+    ${OSPRAY_MPI_INCLUDES}
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}

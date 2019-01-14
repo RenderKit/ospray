@@ -88,9 +88,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
-#include bindir - that's where OSPConfig.h and ospray/version.h will be put
-include_directories(${PROJECT_BINARY_DIR})
-
 if (WIN32)
   # avoid problematic min/max defines of windows.h
   add_definitions(-DNOMINMAX)

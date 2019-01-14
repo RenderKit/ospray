@@ -22,9 +22,6 @@ if (TARGET glfw)
   get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/apps/common
-                    ${CMAKE_SOURCE_DIR}/apps/exampleViewer)
-
 ospray_create_application(ospDistribViewerDemo
   ospDistribViewerDemo.cpp
   arcball.cpp
@@ -38,5 +35,12 @@ LINK
   ospray_tfn
   ospray_gensv
   glfw
+)
+
+target_include_directories(ospDistribViewerDemo
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/apps
+    ${CMAKE_SOURCE_DIR}/apps/exampleViewer
+    ${CMAKE_CURRENT_LIST_DIR}/..
 )
 

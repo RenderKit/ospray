@@ -16,13 +16,9 @@
 
 # Test app which generates data-parallel groups of spheres ####################
 
-include_directories(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
-
 if (NOT WIN32)# Internal Compiler Error on MSVC12...
 
   add_subdirectory(gensv)
-
-  ospray_configure_mpi()
 
   ospray_create_test(ospRandSphereTest
     ospRandSphereTest.cpp
@@ -58,7 +54,6 @@ if (NOT WIN32)# Internal Compiler Error on MSVC12...
   )
 
   if (OSPRAY_MODULE_MPI_APPS)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     add_subdirectory(viewer)
   endif()
 

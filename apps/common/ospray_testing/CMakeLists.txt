@@ -33,7 +33,10 @@ LINK
   ospray
 )
 
-# TODO: export header includes
+target_include_directories(ospray_testing
+  PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}
+)
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray

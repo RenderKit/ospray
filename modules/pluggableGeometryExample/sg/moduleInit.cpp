@@ -25,9 +25,9 @@
 #include "ospcommon/vec.h"
 #include "ospcommon/box.h"
 
-#include "common/sg/common/Data.h"
-#include "common/sg/geometry/Geometry.h"
-#include "common/sg/importer/Importer.h"
+#include "sg/common/Data.h"
+#include "sg/geometry/Geometry.h"
+#include "sg/importer/Importer.h"
 
 namespace ospray {
   namespace sg {

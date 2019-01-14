@@ -21,6 +21,7 @@ ospray_create_library(ospray_imgui
   imguifilesystem/imguifilesystem.cpp
 LINK
   ${OPENGL_LIBRARIES}
+  ospray_common
 )
 
 target_include_directories(

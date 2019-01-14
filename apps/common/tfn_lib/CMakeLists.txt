@@ -14,17 +14,25 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CREATE_LIBRARY(ospray_tfn tfn_lib.cpp LINK ospray_common)
-OSPRAY_CREATE_LIBRARY(ospray_json jsoncpp.cpp LINK ospray_common)
-SET_TARGET_PROPERTIES(ospray_json PROPERTIES DEFINE_SYMBOL JSON_DLL_BUILD)
+ospray_create_library(ospray_tfn tfn_lib.cpp LINK ospray_common)
 
-OPTION(OSPRAY_APPS_PARAVIEW_TFN_CVT
+target_include_directories(ospray_tfn
+  PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+ospray_create_library(ospray_json jsoncpp.cpp LINK ospray_common)
+set_target_properties(ospray_json PROPERTIES DEFINE_SYMBOL JSON_DLL_BUILD)
+
+option(OSPRAY_APPS_PARAVIEW_TFN_CVT
   "Build ParaView to OSPRay viewer transfer function converter"
   ON
 )
 
-IF (OSPRAY_APPS_PARAVIEW_TFN_CVT)
-  OSPRAY_CREATE_APPLICATION(ospCvtParaViewTfcn
+if (OSPRAY_APPS_PARAVIEW_TFN_CVT)
+  ospray_create_application(ospCvtParaViewTfcn
     convertParaViewTfcn.cpp
   LINK
     ospray
@@ -34,4 +42,4 @@ IF (OSPRAY_APPS_PARAVIEW_TFN_CVT)
     ospray_json
     ospray_tfn
   )
-ENDIF()
+endif()

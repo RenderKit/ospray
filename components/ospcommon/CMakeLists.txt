@@ -93,6 +93,9 @@ else()
 
   target_include_directories(ospray_common
     PUBLIC
+      ${CMAKE_CURRENT_LIST_DIR}/..
+      ${TASKING_SYSTEM_INCLUDES}
+    PRIVATE
       ${CMAKE_CURRENT_LIST_DIR}
   )
 

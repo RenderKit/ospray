@@ -16,7 +16,6 @@
 
 #include "library.h"
 #include "FileName.h"
-#include "ospray/version.h"
 #include "sysinfo.h"
 
 // std

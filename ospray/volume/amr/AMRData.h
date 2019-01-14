@@ -19,7 +19,7 @@
 // amr base
 #include "ospcommon/array3D/Array3D.h"
 // ospray
-#include "ospray/common/Data.h"
+#include "common/Data.h"
 
 namespace ospray {
   namespace amr {

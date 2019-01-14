@@ -16,9 +16,9 @@
 
 #pragma once
 
-// ospray d
-#include "ospray/common/Data.h"
-#include "ospray/common/Model.h"
+// ospray
+#include "common/Data.h"
+#include "common/Model.h"
 
 namespace ospray {
 

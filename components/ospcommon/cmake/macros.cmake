@@ -441,7 +441,7 @@ macro(ospray_configure_tasking_system)
   if(OSPRAY_TASKING_TBB)
     find_package(TBB REQUIRED)
     add_definitions(-DOSPRAY_TASKING_TBB)
-    include_directories(${TBB_INCLUDE_DIRS})
+    set(TASKING_SYSTEM_INCLUDES ${TBB_INCLUDE_DIRS})
     set(TASKING_SYSTEM_LIBS ${TBB_LIBRARIES})
   else(OSPRAY_TASKING_TBB)
     unset(TBB_INCLUDE_DIR          CACHE)
@@ -471,7 +471,7 @@ macro(ospray_configure_tasking_system)
       add_definitions(-DOSPRAY_TASKING_INTERNAL)
     elseif(OSPRAY_TASKING_LIBDISPATCH)
       find_package(libdispatch REQUIRED)
-      include_directories(${LIBDISPATCH_INCLUDE_DIRS})
+      set(TASKING_SYSTEM_INCLUDES ${LIBDISPATCH_INCLUDE_DIRS})
       set(TASKING_SYSTEM_LIBS ${LIBDISPATCH_LIBRARIES})
       add_definitions(-DOSPRAY_TASKING_LIBDISPATCH)
     else()#Debug
@@ -482,7 +482,7 @@ endmacro()
 
 ## MPI configuration macro ##
 
-macro(OSPRAY_CONFIGURE_MPI)
+macro(ospray_configure_mpi)
   if (WIN32) # FindMPI does not find Intel MPI on Windows, we need to help here
     find_package(MPI)
 
@@ -516,7 +516,7 @@ macro(OSPRAY_CONFIGURE_MPI)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
 
-  include_directories(SYSTEM ${MPI_CXX_INCLUDE_PATH})
+  set(OSPRAY_MPI_INCLUDES "SYSTEM ${MPI_CXX_INCLUDE_PATH}")
 endmacro()
 
 # Keep backwards compatible configure_mpi() macro, but warn of deprecation

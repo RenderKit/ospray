@@ -34,9 +34,6 @@ mark_as_advanced(gtest_hide_internal_symbols)
 ##############################################################
 # Tests
 ##############################################################
-include_directories(${CMAKE_SOURCE_DIR}/ospray/include)
-include_directories(${CMAKE_SOURCE_DIR}/components)
-include_directories(${CMAKE_SOURCE_DIR}/tests/include)
 
 set(TESTS_SOURCES
 	sources/ospray_environment.cpp
@@ -54,6 +51,14 @@ LINK
   ospray
   ospray_common
 )
+
+target_include_directories(ospray_test_suite
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_SOURCE_DIR}/components
+    ${CMAKE_SOURCE_DIR}/tests/include
+)
+
 set_target_properties(ospray_test_suite PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests)
 

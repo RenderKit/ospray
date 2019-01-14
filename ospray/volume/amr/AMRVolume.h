@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray
-#include "ospray/volume/Volume.h"
+#include "volume/Volume.h"
 // amr base
 #include "AMRAccel.h"
 

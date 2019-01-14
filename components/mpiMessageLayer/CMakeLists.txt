@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_configure_mpi()
-
 ospray_build_component(snappy EXCLUDE_FROM_ALL)
 ospray_build_component(mpiCommon)
 

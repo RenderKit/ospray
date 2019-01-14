@@ -25,8 +25,6 @@
 set(OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS "" CACHE INTERNAL "" FORCE)
 set(OSPRAY_COMPONENTS_ROOT "${PROJECT_SOURCE_DIR}/components" CACHE INTERNAL "" FORCE)
 
-include_directories(${OSPRAY_COMPONENTS_ROOT})
-
 # the macro any part of ospray can use to request ospray to
 # include/build a specific component
 macro(ospray_build_component comp)

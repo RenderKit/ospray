@@ -14,32 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
+option(EXP_NEW_BB_VOLUME_KERNELS
+       "Experimental new block/bricked volume layout" ON)
 mark_as_advanced(EXP_NEW_BB_VOLUME_KERNELS)
-
-# NOTE(jda) - PThread hint used by both Embree and OSPRay
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-set(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
-find_package(Threads REQUIRED)
 
 # -------------------------------------------------------
 # Setup ospray include directories and source files
 # -------------------------------------------------------
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${PROJECT_BINARY_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-)
-include_directories_ispc(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${PROJECT_BINARY_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-)
 
 set(OSPRAY_SOURCES
   api/API.cpp
@@ -240,7 +221,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/amr/method_octant.ispc
 )
 
-
 # -------------------------------------------------------
 # Install API headers
 # -------------------------------------------------------
@@ -257,16 +237,8 @@ foreach(dir ${SUBDIRS})
 endforeach()
 
 ##############################################################
-# build the ospray library (using flags and compilers as configured by
-# configureOSPRAY() and/or configureMPI()
+# Build the ospray library
 ##############################################################
-
-
-set(OSPRAY_LIBS
-  ospray_common
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
-)
 
 if (WIN32)
   list(APPEND OSPRAY_LIBS ws2_32)
@@ -296,23 +268,55 @@ endif()
 ospray_create_library(ospray
   ${OSPRAY_SOURCES}
 LINK
-  ${OSPRAY_LIBS}
+  ospray_common
 COMPONENT
   lib
 )
+
+target_include_directories(ospray
+  PUBLIC
+    ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_SOURCE_DIR}/ospray
+    ${CMAKE_SOURCE_DIR}
+    ${PROJECT_BINARY_DIR}
+)
+
+##############################################################
+# Build ISPC device
+##############################################################
 
 option(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
 mark_as_advanced(OSPRAY_BUILD_ISPC_DEVICE)
 
 if(OSPRAY_BUILD_ISPC_DEVICE)
+
+  # NOTE(jda) - PThread hint used by both Embree and OSPRay
+  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+  set(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
+  find_package(Threads REQUIRED)
+
+  include_directories_ispc(
+    ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_SOURCE_DIR}/ospray
+    ${CMAKE_SOURCE_DIR}
+    ${PROJECT_BINARY_DIR}
+    ${EMBREE_INCLUDE_DIRS}
+  )
+
   ospray_create_library(ospray_module_ispc
     ${OSPRAY_ISPC_DEVICE_SOURCES}
   LINK
-    ${OSPRAY_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${CMAKE_DL_LIBS}
     ospray
     ${EMBREE_LIBRARIES}
   COMPONENT
     lib
+  )
+
+  target_include_directories(ospray_module_ispc
+    PUBLIC
+      ${EMBREE_INCLUDE_DIRS}
   )
 endif()
 

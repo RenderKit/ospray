@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Context.h"
-#include "apps/bench/pico_bench/pico_bench.h"
 #include <snappy.h>
 #include <iostream>
 #include <chrono>
@@ -329,11 +328,12 @@ namespace maml {
     }
   }
 
-  void Context::logMessageTimings(std::ostream &os)
+  void Context::logMessageTimings(std::ostream &/*os*/)
   {
     if (!DETAILED_LOGGING) {
       return;
     }
+#if 0 // can't depend on pico_bench here from apps/ directory
     std::lock_guard<std::mutex> lock(statsMutex);
     using Stats = pico_bench::Statistics<RealMilliseconds>;
     using CompressedStats = pico_bench::Statistics<CompressionPercent>;
@@ -366,6 +366,7 @@ namespace maml {
       stats.time_suffix = "%";
       os << "Compressed Size statistics:\n" << stats << "\n";
     }
+#endif
 
     sendTimes.clear();
     recvTimes.clear();
