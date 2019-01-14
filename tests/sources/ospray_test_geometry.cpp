@@ -189,30 +189,43 @@ OSPGeometry getSphereInterleavedLayout() {
   return sphere;
 }
 
-OSPGeometry getStreamline() {
-  float vertex[] = { 2.0f, -1.0f, 3.0f, 0.0f,
-                     0.4f, 0.5f, 8.0f, -2.0f,
-                     0.0f, 1.0f, 3.0f, 0.0f
+OSPGeometry getStreamline(bool constantRadius=true) {
+  float vertex[] = { 2.0f, -1.0f, 3.0f,
+                     0.0f, 0.4f, 0.5f,
+                     8.0f, -2.0f, 0.0f,
+                     1.0f, 3.0f, 0.0f
                    };
   float color[] =  { 0.0f, 1.0f, 0.0f, 1.0f,
                      0.0f, 0.0f, 1.0f, 1.0f,
                      1.0f, 0.0f, 0.0f, 1.0f
                    };
   int index[] =  { 0, 1};
+  float radii[] = {.1f,.3f,.5f};
+
   OSPGeometry streamlines = ospNewGeometry("streamlines");
   EXPECT_TRUE(streamlines);
   OSPData data = ospNewData(3, OSP_FLOAT3A, vertex);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "vertex", data);
+  ospRelease(data);
+  if (!constantRadius) {
+    data = ospNewData(3, OSP_FLOAT, radii);
+    EXPECT_TRUE(data);
+    ospCommit(data);
+    ospSetData(streamlines, "vertex.radius", data);
+    ospRelease(data);
+  }
   data = ospNewData(3, OSP_FLOAT4, color);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "vertex.color", data);
+  ospRelease(data);
   data = ospNewData(2, OSP_INT, index);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "index", data);
+  ospRelease(data);
   ospSet1f(streamlines, "radius", 0.5f);
   ospCommit(streamlines);
 
@@ -283,6 +296,14 @@ TEST_P(SingleObject, simpleCylinder) {
 // single streamline
 TEST_P(SingleObject, simpleStreamlines) {
   OSPGeometry streamlines = ::getStreamline();
+  ospSetMaterial(streamlines, GetMaterial());
+  ospCommit(streamlines);
+  AddGeometry(streamlines);
+  PerformRenderTest();
+}
+
+TEST_P(SingleObject, simpleStreamlinesVariableRadii) {
+  OSPGeometry streamlines = ::getStreamline(false);
   ospSetMaterial(streamlines, GetMaterial());
   ospCommit(streamlines);
   AddGeometry(streamlines);
