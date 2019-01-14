@@ -21,7 +21,7 @@
 #include <imgui.h>
 #include <imconfig.h>
 
-#include "ospcommon/math.h"
+#include "ospcommon/ospmath.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "tfn_lib/tfn_lib.h"

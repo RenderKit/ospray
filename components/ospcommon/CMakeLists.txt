@@ -81,7 +81,7 @@ else()
     constants.h
     intrinsics.h
     LinearSpace.h
-    math.h
+    ospmath.h
     platform.h
     Quaternion.h
     TypeTraits.h
@@ -89,6 +89,11 @@ else()
   LINK
     ${LINK_LIBS}
   COMPONENT lib
+  )
+
+  target_include_directories(ospray_common
+    PUBLIC
+      ${CMAKE_CURRENT_LIST_DIR}
   )
 
   ## Install headers ##

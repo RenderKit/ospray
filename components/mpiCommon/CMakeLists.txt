@@ -26,6 +26,11 @@ LINK
 COMPONENT mpi
 )
 
+target_include_directories(ospray_mpi_common
+  PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}
+)
+
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
   FILES_MATCHING
