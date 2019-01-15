@@ -187,9 +187,6 @@ macro(ospray_add_library name type)
   add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
 endmacro()
 
-## Target install macros for OSPRay libraries ##
-include(GNUInstallDirs)
-
 macro(ospray_install_library name component)
   install(TARGETS ${name}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

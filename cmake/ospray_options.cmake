@@ -124,10 +124,6 @@ set(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
     "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 mark_as_advanced(OSPRAY_PIXELS_PER_JOB)
 
-
-# make Embree's INSTALLs happy
-include(GNUInstallDirs)
-
 # Must be before ISA config and package
 include(configure_embree)
 

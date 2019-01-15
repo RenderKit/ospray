@@ -47,6 +47,9 @@ set(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 
+## Target install macros for OSPRay libraries ##
+include(GNUInstallDirs)
+
 ##############################################################
 # CMake modules and macro files
 ##############################################################
