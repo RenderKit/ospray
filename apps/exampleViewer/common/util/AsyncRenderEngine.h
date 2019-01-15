@@ -140,6 +140,7 @@ namespace ospray {
       const vec3f* committed_albedo;
       vec4f* committed_result;
       bool committed_hdr;
+      bool committed_async;
       oidn::FilterRef filter;
     };
 

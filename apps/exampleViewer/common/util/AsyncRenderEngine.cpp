@@ -73,12 +73,12 @@ namespace ospray {
           //             to the latest frame.
           while(state == ExecState::RUNNING && newPixels == true);
 
-          // work just on denoisers.front
+          // work just on denoisers.back
           denoiseFps.start();
           frameBuffers.back().resize(sgFB->size(), OSP_FB_RGBA32F);
-          denoisers.front().map(sgFB, (vec4f*)frameBuffers.back().data());
-          denoisers.front().execute();
-          denoisers.front().unmap(sgFB);
+          denoisers.back().map(sgFB, (vec4f*)frameBuffers.back().data());
+          denoisers.back().execute();
+          denoisers.back().unmap(sgFB);
           denoiseFps.stop();
 
           newPixels = true;
@@ -146,9 +146,11 @@ namespace ospray {
     const auto elements = fbSize.x * fbSize.y;
     if (fbSize != size_
         || committed_hdr != !fb->toneMapped()
+        || !committed_async
        )
     {
       needCommit = true;
+      committed_async = true;
       size_ = fbSize;
       color.resize(elements);
       committed_color = color.data();
@@ -184,9 +186,11 @@ namespace ospray {
         || committed_albedo != alb_buf
         || committed_result != res_buf
         || committed_hdr != !fb->toneMapped()
+        || committed_async
        )
     {
       needCommit = true;
+      committed_async = false;
       size_ = fbSize;
       committed_color = col_buf;
       committed_normal = nor_buf;
