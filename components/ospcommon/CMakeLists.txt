@@ -99,6 +99,11 @@ else()
       ${CMAKE_CURRENT_LIST_DIR}
   )
 
+  target_compile_definitions(ospray_common
+    PUBLIC
+      ${TASKING_SYSTEM_DEFINITIONS}
+  )
+
   ## Install headers ##
 
   install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
