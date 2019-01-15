@@ -6,6 +6,7 @@ Version History
 -   Added new "`subdivision`" geometry type to support subdivision
     surfaces
 -   Automatic epsilon handling
+-   Add support for Intel® Open Image Denoise
 -   Normals in framebuffer channel `OSP_FB_NORMAL` are now in
     world-space
 -   Fixed artifacts for scaled instances of spheres, cylinders and

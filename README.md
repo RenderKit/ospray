@@ -87,10 +87,15 @@ before you can build OSPRay you need the following prerequisites:
     system, which we recommend for performance and flexibility reasons.
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
--   OSPRay also heavily uses [Embree](https://embree.github.io/),
+-   OSPRay also heavily uses Intel [Embree](https://embree.github.io/),
     installing version 3.2 or newer is required. If Embree is not found
     by CMake its location can be hinted with the variable `embree_DIR`.
     NOTE: Windows users should use Embree v3.2.2 or later.
+-   If available OSPRay’s [Example Viewer](#example-viewer) can be
+    compiled with support for Intel [Open Image
+    Denoise](http://www.openimagedenoise.org/) by enabling
+    `OSPRAY_APPS_ENABLE_DENOISER`. You may need to hint the location of
+    the library with the CMake variable `OpenImageDenoise_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -3098,7 +3103,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float                      |
 | OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                           |
 | OSP\_FB\_VARIANCE | for estimation of the current noise level if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
-| OSP\_FB\_NORMAL   | accumulated screen-space normal of the first hit, as vec3f                                               |
+| OSP\_FB\_NORMAL   | accumulated world-space normal of the first hit, as vec3f                                                |
 | OSP\_FB\_ALBEDO   | accumulated material albedo (color without illumination) at the first hit, as vec3f                      |
 
 : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
