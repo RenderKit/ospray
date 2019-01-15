@@ -125,7 +125,7 @@ Oct 2016: OSPRay at IEEE Vis
 The paper "[OSPRay – A CPU Ray Tracing Framework for Scientific
 Visualization](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper.pdf)"
 (49MB, [smaller version](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper_small.pdf)
-1.8MB) has been accepted at IEEE Vis. Also available are the [slides of
+1.8MB) has been accepted at IEEE Vis. Available as well are the [slides of
 the talk](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_talk.pdf)
 by Ingo Wald. Additionally, [Jim Jeffers gave a
 talk](http://www.sdvis.org/presentations/IEEEVis2016_SDVis.pdf)
@@ -179,13 +179,13 @@ Dec 7, 2015: Version v0.8.3 now released on GitHub
 New release version 0.8.3 is now available on the [OSPRay GitHub
 page](https://github.com/ospray/OSPRay).
 
-Nov, 2015: Visualization of the 10TB Walls Dataset
---------------------------------------------------
+Nov, 2015: Visualization of the 10TB Walls Data Set
+---------------------------------------------------
 
 [![](gallery/walls_4k-thumb.png)](gallery.html)
 
 [SGI](http://www.sgi.com/) featured the visualization of the 10TB
-`walls` dataset at [SC15](http://sc15.supercomputing.org/) in Austin,
+`walls` data set at [SC15](http://sc15.supercomputing.org/) in Austin,
 Texas. More details in [SGI's
 blog](http://blog.sgi.com/accelerating-scientific-discovery-through-visualization/).
 Additional images and a movie are available in the
@@ -237,7 +237,7 @@ Andreas Hildebrandt, head of the [Software Engineering and
 Bioinformatics group at the University of
 Mainz](http://bio.informatik.uni-mainz.de/) is currently creating an
 OSPRay rendering module for their [BALLView](http://www.ball-project.org/ballview/)
-package, a standalone molecular modelling and visualization application
+package, a standalone molecular modeling and visualization application
 for the "BALL" Biochemical Algorithm Library.
 
 
@@ -278,7 +278,7 @@ Following our announcement at Supercomputing 2014, an early "alpha"
 version of OSPRay is now available on
 [GitHub](https://github.com/ospray/OSPRay). The main purpose of this
 "alpha" release is to give interested parties an early indication of the
-capabilities, features, and performance they can can expect from the
+capabilities, features, and performance they can expect from the
 eventual 1.0 version (which we anticipate releasing in 2015), as well as
 to give early adopters "something" to experiment with that is
 unencumbered by NDAs.
@@ -286,7 +286,7 @@ unencumbered by NDAs.
 Being an "alpha"-level release a certain amount of bugs, as-yet-missing
 features, or any other issues in the current version cannot be ruled
 out; however, we are committed to eradicating all such issues as soon as
-possible, and will constantly be posting bugfix-releases fox fixed
+possible, and will constantly be posting bugfix-releases for fixed
 issues. Should you find any such issues please report them immediately
 via [OSPRay's GitHub Issue
 Tracker](https://github.com/ospray/OSPRay/issues) (or send us a pull

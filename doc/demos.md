@@ -140,8 +140,8 @@ acknowledge via [this paper](http://arxiv.org/abs/1405.4040).*
     `./ospExampleViewer llnl-2048-iso.xml`
 
 
-CSAFE Heptane Gas Dataset
--------------------------
+CSAFE Heptane Gas Data Set
+--------------------------
 
 [![](demos/CSAFEHeptane/csafe-heptane-302-volume-thumbnail.jpg)](demos/CSAFEHeptane/csafe-heptane-302-volume.png)
 
@@ -198,7 +198,7 @@ using this model.*
 
 ### Demo Highlights
 
--   Dataset captured from VTK-based ParaView through TACC's GLURay tool.
+-   Data set captured from VTK-based ParaView through TACC's GLURay tool.
 -   Streamlines in this data set are actually tessellated. OSPRay could
     do them natively, but ParaView tessellates internally.
 -   Model size roughly 8 million triangles
@@ -221,7 +221,7 @@ using this model.*
 
 [![](demos/xfrog/xfrog-small.jpg)](demos/xfrog/xfrog.png)
 
-*Model courtesy Oliver Deussen, University of Konstanz; modelled via the
+*Model courtesy Oliver Deussen, University of Konstanz; modeled via the
 [XFrog](http://www.xfrog.com) tool. Please acknowledge accordingly when
 using this model.*
 
@@ -257,7 +257,7 @@ using this model.*
     streamlines.
 -   The streamlines are not tessellated, but OSPRay's actual
     "`streamlines`" primitive (essentially, a set of smoothly connected
-    cylinders), which makes for a very memory-efficient representation.
+    cylinders), which makes for a memory-efficient representation.
 -   Ambient occlusion greatly helps in understanding the shape of the
     streamlines (when rendered with local-only shading, it looks like a
     "lint ball").

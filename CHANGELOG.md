@@ -19,7 +19,7 @@ Version History
 ### Changes in v1.7.3:
 
 -   Make sure a "`default`" device can always be created
--   Fixed `ospNewTexture2D` (completely implementing old behaviour)
+-   Fixed `ospNewTexture2D` (completely implementing old behavior)
 -   Cleanup any shared object handles from the OS created from
     `ospLoadModule()`
 
@@ -57,7 +57,7 @@ Version History
 -   Added low-discrepancy sampling to path tracer
 -   The `spp` parameter on the renderer no longer supports values less
     than 1, instead applications should render to a separate, lower
-    resolution frame buffer during interaction to achieve the same
+    resolution framebuffer during interaction to achieve the same
     behavior
 
 ### Changes in v1.6.1:
@@ -96,7 +96,7 @@ Version History
 -   Added ability to configure Embree scene flags via `OSPModel`
     parameters
 -   `ospFreeFrameBuffer()` has been deprecated in favor of using
-    `ospRelease()` to free frame buffer handles
+    `ospRelease()` to free framebuffer handles
 -   Fixed memory leak caused by incorrect parameter reference counts in
     ispc device
 -   Fixed occasional crashes in the `mpi_offload` device on shutdown
@@ -117,7 +117,7 @@ Version History
 -   `ospray_sg` headers are now installed alongside the SDK
 -   Core OSPRay ispc device now implemented as a module
     -   Devices which implement the public API are no longer required to
-        link the dependencies to core OSPRay (e.g. Embree v2.x)
+        link the dependencies to core OSPRay (e.g., Embree v2.x)
     -   By default, `ospInit()` will load the ispc module if a device
         was not created via `--osp:mpi` or `--osp:device:[name]`
 -   MPI devices can now accept an existing world communicator instead of
@@ -152,7 +152,7 @@ Version History
         renderer
     -   Fixed an issue with camera lens samples not initialized when
         `spp` <= 0
-    -   Fixed an issue in ospExampleViewer when specifying multiple data
+    -   Fixed an issue in `ospExampleViewer` when specifying multiple data
         files
 -   The C99 tutorial is now indicated as the default; the C++ wrappers
     do not change the semantics of the API (memory management) so the
@@ -171,7 +171,7 @@ Version History
     -   No more image jittering with MPI rendering when no accumulation
         buffer is used
 -   Improved path tracer materials
-    -   Also support RGB `eta`/`k` for Metal
+    -   Additionally support RGB `eta`/`k` for Metal
     -   Added Alloy material, a "metal" with textured color
 -   Minimum required Embree version is now v2.15
 
@@ -196,8 +196,8 @@ Version History
     and `mpi_maml` infrastructure libraries
 -   Major sample app cleanups
     -   `ospray_sg` library is the new basis for building apps, which is
-        a scenegraph implementation
-    -   Old (unused) libraries have been removed: miniSG, commandline,
+        a scene graph implementation
+    -   Old (unused) libraries have been removed: miniSG, command line,
         importer, loaders, and scripting
     -   Some removed functionality (such as scripting) may be
         reintroduced in the new infrastructure later, though most
@@ -233,12 +233,12 @@ Version History
 -   Support of Intel® AVX-512 for next generation Intel® Xeon® processor
     (codename Skylake), thus new minimum ISPC version is 1.9.1
 -   Thread affinity of OSPRay's tasking system can now be controlled via
-    either device parameter `setAffinity`, or commandline parameter
+    either device parameter `setAffinity`, or command line parameter
     `osp:setaffinity`, or environment variable `OSPRAY_SET_AFFINITY`
 -   Changed behavior of the background color in the SciVis renderer:
     `bgColor` now includes alpha and is always blended (no
-    `backgroundEnabled` anymore). To disable the background don't set
-    bgColor, or set it to transparent black (0, 0, 0, 0)
+    `backgroundEnabled` anymore). To disable the background do not set
+    `bgColor`, or set it to transparent black (0, 0, 0, 0)
 -   Geometries "`spheres`" and "`cylinders`" now support texture
     coordinates
 -   The GLUT- and Qt-based demo viewer applications have been replaced
@@ -319,7 +319,7 @@ Version History
     -   Single sided lighting (enabled by default)
     -   Many new volume rendering specific features
         -   Adaptive sampling to help improve the correctness of
-            rendering high frequency volume data
+            rendering high-frequency volume data
         -   Pre-integration of transfer function for higher fidelity
             images
         -   Ambient occlusion
@@ -495,13 +495,13 @@ changes.
 -   OSPRay now uses C++11 features, requiring up to date compiler and
     standard library versions (GCC v4.8.0)
 -   Optimization of volume sampling resulting in volume rendering
-    speedups of up to 1.5x
+    speedups of up to 1.5×
 -   Updates to path tracer
     -   Reworked material system
     -   Added texture transformations and colored transparency in OBJ
         material
     -   Support for alpha and depth components of framebuffer
--   Added thinlens camera, i.e. support for depth of field
+-   Added thinlens camera, i.e., support for depth of field
 -   Tasking system has been updated to use Intel Threading Building
     Blocks (Intel TBB)
 -   The `ospGet*()` API calls have been deprecated and will be removed
@@ -580,12 +580,12 @@ changes.
         `gridSpacing` parameters
     -   New `shared_structured_volume` volume type that allows voxel
         data to be provided by applications through a shared data buffer
-    -   New API call to set subregions of volume data (`ospSetRegion()`)
+    -   New API call to set (sub-)regions of volume data (`ospSetRegion()`)
 -   Added a subsampling-mode, enabled with a negative `spp` parameter;
     the first frame after scene changes is rendered with reduced
     resolution, increasing interactivity
 -   Added multi-target ISA support: OSPRay will now select the
-    appropriate ISA at run time
+    appropriate ISA at runtime
 -   Added support for the Stanford SEP file format to the seismic
     module
 -   Added `--osp:numthreads <n>` command line option to restrict the

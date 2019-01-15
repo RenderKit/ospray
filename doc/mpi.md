@@ -13,7 +13,7 @@ the following items available in your environment in order to
 build & run OSPRay in MPI mode:
 
 -   An MPI enabled multi-node environment, such as an HPC cluster
--   An MPI implementation you can build against (i.e. Intel MPI,
+-   An MPI implementation you can build against (i.e., Intel MPI,
     MVAPICH2, etc...)
 
 Enabling the MPI Module in your Build
@@ -48,8 +48,8 @@ application treats the OSPRay API the same as with local rendering.
 However, OSPRay uses multiple MPI connected nodes to evenly distribute
 frame rendering work, where each node contains a full copy of all scene
 data. This method is most effective for scenes which can fit into
-memory, but are very expensive to render: for example, path tracing with
-many samples-per-pixel is very compute heavy, making it a good situation
+memory, but are expensive to render: for example, path tracing with
+many samples-per-pixel is compute heavy, making it a good situation
 to use the offload feature. This can be done with any application which
 already uses OSPRay for local rendering without the need for any code
 changes.
@@ -59,11 +59,11 @@ dynamic load balancing, which can be beneficial in certain contexts.
 This load balancing refers to the distribution of tile rendering work
 across nodes: thread-level load balancing on each node is still dynamic
 with the thread tasking system. The options for enabling/controlling the
-dynamic load balacing features on the `mpi_offload` device are found in
+dynamic load balancing features on the `mpi_offload` device are found in
 the table below, which can be changed while the application is running.
 Please note that these options will likely only pay off for scenes which
-have heavy rendering load (e.g. path tracing a non-trivial scene) and
-have a lot of variance in how expensive each tile is to render.
+have heavy rendering load (e.g., path tracing a non-trivial scene) and
+have much variance in how expensive each tile is to render.
 
   Type  Name                  Default  Description
   ----- -------------------- --------  --------------------------------------
@@ -78,13 +78,13 @@ The "distributed" rendering mode is where a MPI distributed application
 frames. In this case, the API expects all calls (both created objects
 and parameters) to be the same on every application rank, except each
 rank can specify arbitrary geometries and volumes. Each renderer will
-have its own limitations on the topology of the data (i.e. overlapping
+have its own limitations on the topology of the data (i.e., overlapping
 data regions, concave data, etc.), but the API calls will only differ
-for scene objects. Thus all other calls (i.e. setting camera, creating
+for scene objects. Thus all other calls (i.e., setting camera, creating
 framebuffer, rendering frame, etc.) will all be assumed to be identical,
 but only rendering a frame and committing the model must be in
 lock-step. This mode targets using all available aggregate memory for
-very large scenes and for "in-situ" visualization where the data is
+huge scenes and for "in-situ" visualization where the data is
 already distributed by a simulation app.
 
 Running an Application with the "offload" Device

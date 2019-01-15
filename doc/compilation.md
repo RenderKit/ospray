@@ -82,7 +82,7 @@ CMake is easy:
         cd ospray/build
 
     (We do recommend having separate build directories for different
-    configurations such as release, debug, etc).
+    configurations such as release, debug, etc.).
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
@@ -102,7 +102,7 @@ CMake is easy:
         ccmake ..
 
 -   Make sure to properly set build mode and enable the components you
-    need, etc; then type 'c'onfigure and 'g'enerate. When back on the
+    need, etc.; then type 'c'onfigure and 'g'enerate. When back on the
     command prompt, build it using
 
         make
@@ -123,12 +123,12 @@ way to configure OSPRay and to create the Visual Studio solution files:
 
 -   Click "Configure" and select as generator the Visual Studio version
     you have (OSPRay needs Visual Studio 14 2015 or newer), for Win64
-    (32\ bit builds are not supported by OSPRay), e.g. "Visual Studio 15
+    (32\ bit builds are not supported by OSPRay), e.g., "Visual Studio 15
     2017 Win64".
 
 -   If the configuration fails because some dependencies could not be
     found then follow the instructions given in the error message,
-    e.g. set the variable `embree_DIR` to the folder where Embree was
+    e.g., set the variable `embree_DIR` to the folder where Embree was
     installed.
 
 -   Optionally change the default build options, and then click
@@ -148,7 +148,7 @@ console. In the Visual Studio command prompt type:
     cmake -G "Visual Studio 15 2017 Win64" [-D VARIABLE=value] ..
     cmake --build . --config Release
 
-Use `-D` to set variables for CMake, e.g. the path to Embree with "`-D
+Use `-D` to set variables for CMake, e.g., the path to Embree with "`-D
 embree_DIR=\path\to\embree`".
 
 You can also build only some projects with the `--target` switch.

@@ -17,5 +17,5 @@
 [path tracer]: #path-tracer
 [point light]: #point-light-sphere-light
 [Compiling OSPRay]: #compiling-ospray
-[scenegraph]: #scenegraph
+[scene graph]: #scene-graph
 [Parallel Rendering with MPI]: #parallel-rendering-with-mpi
