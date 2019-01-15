@@ -302,6 +302,15 @@ namespace ospray {
     frameCancelled = true;
   }
 
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+  void AsyncRenderEngine::setAsyncDenoising(const bool enabled)
+  {
+    stop();
+    asynchronousDenoising = enabled;
+    start();
+  }
+#endif
+
   bool AsyncRenderEngine::hasNewFrame() const
   {
     return newPixels;

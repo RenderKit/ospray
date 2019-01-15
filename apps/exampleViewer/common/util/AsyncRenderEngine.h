@@ -57,6 +57,9 @@ namespace ospray {
     void start(int numThreads = -1);
     void stop();
     void setFrameCancelled();
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    void setAsyncDenoising(const bool);
+#endif
 
     ExecState runningState() const;
 
@@ -152,7 +155,6 @@ namespace ospray {
     bool asynchronousDenoising {false};
     std::condition_variable denoiserCond;
     std::mutex denoiserMutex;
-
 #endif
 
   };

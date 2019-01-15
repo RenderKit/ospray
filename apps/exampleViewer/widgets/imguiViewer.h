@@ -112,6 +112,9 @@ namespace ospray {
     AsyncRenderEngine renderEngine;
 
     bool useDynamicLoadBalancer{false};
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    bool asyncDenoising{false};
+#endif
     int  numPreAllocatedTiles{4};
 
     PickMode lastPickQueryType {PICK_CAMERA};

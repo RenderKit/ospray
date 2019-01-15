@@ -742,6 +742,14 @@ namespace ospray {
         }
       }
 
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      if (ImGui::Checkbox("Denoise Asynchronously",
+            &asyncDenoising))
+      {
+        renderEngine.setAsyncDenoising(asyncDenoising);
+      }
+#endif
+
       ImGui::EndMenu();
     }
   }
