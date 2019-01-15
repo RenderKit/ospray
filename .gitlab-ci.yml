@@ -101,16 +101,22 @@ build-ubuntu1404-gcc:
     expire_in: 3 day
 
 build-centos6-gcc:
-  <<: *build_job_docker
-  image: ospray/docker-images:centos6
-  artifacts:
-    paths:
-      - $CI_PROJECT_DIR
-    expire_in: 3 day
+  <<: *build_job_shell
+  script:
+    - module load cmake
+    - module load gcc/4.8.2
+    - module load embree
+    - module load tbb
+    - export CC=gcc
+    - export CXX=g++
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - centos6
 
 build-centos6-icc:
   <<: *build_job_shell
   script:
+    - module load cmake
     - module load gcc/4.8.2
     - module load intel
     - module load embree
@@ -125,6 +131,7 @@ build-centos6-icc:
 build-centos6-icc15:
   <<: *build_job_shell
   script:
+    - module load cmake
     - module load gcc/4.8.2
     - module load intel/2015
     - module load embree
