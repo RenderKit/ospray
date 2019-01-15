@@ -40,6 +40,12 @@ endif()
 
 project(OSPRay)
 
+set(CMAKE_C_STANDARD   99)
+set(CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_C_STANDARD_REQUIRED   ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # configure directories for components we are going to include
 set(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(COMPONENTS_DIR ${OSPRAY_DIR}/components)

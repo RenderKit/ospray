@@ -14,17 +14,17 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(COMMON_CXX_FLAGS "/EHsc /MP /GR /bigobj /D NOMINMAX ")
+set(COMMON_CXX_FLAGS "/EHsc /MP /GR /bigobj /D NOMINMAX ")
 
-SET(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${COMMON_CXX_FLAGS}")
-SET(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        ${COMMON_CXX_FLAGS} /Ox /fp:fast /Oi /Gy ")
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${COMMON_CXX_FLAGS} /Ox /fp:fast /Oi /Gy ")
+set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${COMMON_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        ${COMMON_CXX_FLAGS} /Ox /fp:fast /Oi /Gy ")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${COMMON_CXX_FLAGS} /Ox /fp:fast /Oi /Gy ")
 
 # optionally use static runtime library
-OPTION(USE_STATIC_RUNTIME "Use the static version of the C/C++ runtime library.")
-MARK_AS_ADVANCED(USE_STATIC_RUNTIME)
-IF (USE_STATIC_RUNTIME)
-  FOREACH(FLAG
+option(USE_STATIC_RUNTIME "Use the static version of the C/C++ runtime library.")
+mark_as_advanced(USE_STATIC_RUNTIME)
+if (USE_STATIC_RUNTIME)
+  foreach(FLAG
     CMAKE_CXX_FLAGS_DEBUG
     CMAKE_CXX_FLAGS_RELEASE
     CMAKE_CXX_FLAGS_RELWITHDEBINFO
@@ -32,6 +32,6 @@ IF (USE_STATIC_RUNTIME)
     CMAKE_C_FLAGS_RELEASE
     CMAKE_C_FLAGS_RELWITHDEBINFO
   )
-    STRING(REPLACE "/MD" "/MT" ${FLAG} ${${FLAG}})
-  ENDFOREACH()
-ENDIF()
+    string(REPLACE "/MD" "/MT" ${FLAG} ${${FLAG}})
+  endforeach()
+endif()
