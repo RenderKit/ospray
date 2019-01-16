@@ -514,7 +514,7 @@ macro(ospray_configure_mpi)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
 
-  set(OSPRAY_MPI_INCLUDES "SYSTEM ${MPI_CXX_INCLUDE_PATH}")
+  set(OSPRAY_MPI_INCLUDES ${MPI_CXX_INCLUDE_PATH})
 endmacro()
 
 # Keep backwards compatible configure_mpi() macro, but warn of deprecation
