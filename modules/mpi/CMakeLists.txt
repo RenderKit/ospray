@@ -55,11 +55,12 @@ if (OSPRAY_MODULE_MPI)
   )
 
   target_link_libraries(ospray_module_mpi
+    PRIVATE
+      snappy
     PUBLIC
       ospray_module_ispc
       ospray_mpi_common
       ospray_mpi_maml
-      snappy
   )
 
   target_include_directories(ospray_module_mpi
