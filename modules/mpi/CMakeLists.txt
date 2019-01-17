@@ -75,11 +75,8 @@ if (OSPRAY_MODULE_MPI)
   # MPI DEVICE - mpi worker
   ##############################################################
 
-  ospray_create_application(ospray_mpi_worker
-    mpi_offload_worker_main.cpp
-  LINK
-    ospray_module_ispc
-  )
+  ospray_create_application(ospray_mpi_worker mpi_offload_worker_main.cpp)
+  target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
 
   ##############################################################
   # Test apps

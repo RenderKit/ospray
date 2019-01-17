@@ -29,17 +29,20 @@ endif()
 
 # build ospTutorial, for demonstration and API testing
 add_executable(ospTutorial ospTutorial.c)
-target_link_libraries(ospTutorial ospray)
+target_link_libraries(ospTutorial PRIVATE ospray)
 # C++ version
 add_executable(ospTutorialCpp ospTutorial.cpp)
-target_link_libraries(ospTutorialCpp ospray)
+target_link_libraries(ospTutorialCpp PRIVATE ospray)
 
 ospray_create_application(ospTutorialSpheres
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   ospTutorialSpheres.cpp
   imgui/imgui_impl_glfw_gl3.cpp
-LINK
+)
+
+target_link_libraries(ospTutorialSpheres
+PRIVATE
   ospray_testing
   ospray_imgui
   glfw
@@ -51,7 +54,10 @@ ospray_create_application(ospTutorialBouncingSpheres
   GLFWOSPRayWindow.cpp
   ospTutorialBouncingSpheres.cpp
   imgui/imgui_impl_glfw_gl3.cpp
-LINK
+)
+
+target_link_libraries(ospTutorialBouncingSpheres
+PRIVATE
   ospray
   ospray_common
   ospray_imgui
@@ -64,7 +70,10 @@ ospray_create_application(ospTutorialStructuredVolume
   GLFWOSPRayWindow.cpp
   ospTutorialStructuredVolume.cpp
   imgui/imgui_impl_glfw_gl3.cpp
-LINK
+)
+
+target_link_libraries(ospTutorialStructuredVolume
+PRIVATE
   ospray_testing
   ospray_imgui
   glfw
@@ -76,7 +85,10 @@ ospray_create_application(ospTutorialUnstructuredVolume
   GLFWOSPRayWindow.cpp
   ospTutorialUnstructuredVolume.cpp
   imgui/imgui_impl_glfw_gl3.cpp
-LINK
+)
+
+target_link_libraries(ospTutorialUnstructuredVolume
+PRIVATE
   ospray_testing
   ospray_imgui
   glfw

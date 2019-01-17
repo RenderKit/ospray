@@ -143,8 +143,10 @@ ospray_create_library(ospray_sg SHARED
 
   ${SG_VTK_SRCS}
   ${CHOMBO_SRCS}
+)
 
-LINK
+target_link_libraries(ospray_sg
+PUBLIC
   ospray
   ospray_common
   ospray_tfn

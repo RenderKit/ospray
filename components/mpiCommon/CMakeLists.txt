@@ -17,13 +17,16 @@
 ospray_configure_mpi()
 
 ospray_create_library(ospray_mpi_common
-  MPICommon.cpp
-  MPIBcastFabric.cpp
-LINK
-  ${MPI_C_LIBRARIES}
-  ospray_common
-  ospray
-COMPONENT mpi
+    MPICommon.cpp
+    MPIBcastFabric.cpp
+  COMPONENT mpi
+)
+
+target_link_libraries(ospray_mpi_common
+  PUBLIC
+    ${MPI_C_LIBRARIES}
+    ospray_common
+    #ospray
 )
 
 target_include_directories(ospray_mpi_common

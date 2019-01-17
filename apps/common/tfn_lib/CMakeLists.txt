@@ -24,7 +24,8 @@ target_include_directories(ospray_tfn
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-ospray_create_library(ospray_json jsoncpp.cpp LINK ospray_common)
+ospray_create_library(ospray_json jsoncpp.cpp)
+target_link_libraries(ospray_json PUBLIC ospray_common)
 set_target_properties(ospray_json PROPERTIES DEFINE_SYMBOL JSON_DLL_BUILD)
 
 option(OSPRAY_APPS_PARAVIEW_TFN_CVT
@@ -33,9 +34,10 @@ option(OSPRAY_APPS_PARAVIEW_TFN_CVT
 )
 
 if (OSPRAY_APPS_PARAVIEW_TFN_CVT)
-  ospray_create_application(ospCvtParaViewTfcn
-    convertParaViewTfcn.cpp
-  LINK
+  ospray_create_application(ospCvtParaViewTfcn convertParaViewTfcn.cpp)
+
+  target_link_libraries(ospCvtParaViewTfcn
+  PRIVATE
     ospray
     ospray_common
     ospray_app

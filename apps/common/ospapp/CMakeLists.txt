@@ -14,8 +14,5 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CREATE_LIBRARY(ospray_app STATIC
-  OSPApp.cpp
-LINK
-  ospray_sg
-)
+ospray_create_library(ospray_app STATIC OSPApp.cpp)
+target_link_libraries(ospray_app PUBLIC ospray_sg)

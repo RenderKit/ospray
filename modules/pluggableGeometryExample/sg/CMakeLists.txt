@@ -14,12 +14,5 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_create_library(ospray_module_sg_bilinear_patches
-  moduleInit.cpp
-
-  # this depends on ospray core:
-  LINK
-  ospray_sg
-)
-
-
+ospray_create_library(ospray_module_sg_bilinear_patches moduleInit.cpp)
+target_link_libraries(ospray_module_sg_bilinear_patches PUBLIC ospray_sg)

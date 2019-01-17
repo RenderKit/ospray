@@ -267,11 +267,10 @@ endif()
 
 ospray_create_library(ospray
   ${OSPRAY_SOURCES}
-LINK
-  ospray_common
-COMPONENT
-  lib
+COMPONENT lib
 )
+
+target_link_libraries(ospray PUBLIC ospray_common)
 
 target_include_directories(ospray
   PUBLIC
@@ -305,13 +304,15 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   ospray_create_library(ospray_module_ispc
     ${OSPRAY_ISPC_DEVICE_SOURCES}
-  LINK
+  COMPONENT lib
+  )
+
+  target_link_libraries(ospray_module_ispc
+  PUBLIC
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
     ospray
     ${EMBREE_LIBRARIES}
-  COMPONENT
-    lib
   )
 
   target_include_directories(ospray_module_ispc

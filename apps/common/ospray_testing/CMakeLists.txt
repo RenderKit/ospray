@@ -29,9 +29,9 @@ ospray_create_library(ospray_testing
   volume/GravitySpheresVolume.cpp
   volume/SimpleStructuredVolume.cpp
   volume/SimpleUnstructuredVolume.cpp
-LINK
-  ospray
 )
+
+target_link_libraries(ospray_testing PUBLIC ospray)
 
 target_include_directories(ospray_testing
   PUBLIC

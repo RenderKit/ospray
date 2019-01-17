@@ -86,10 +86,10 @@ else()
     Quaternion.h
     TypeTraits.h
     vec.h
-  LINK
-    ${LINK_LIBS}
   COMPONENT lib
   )
+
+  target_link_libraries(ospray_common PUBLIC ${LINK_LIBS})
 
   target_include_directories(ospray_common
     PUBLIC

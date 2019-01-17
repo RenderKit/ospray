@@ -40,14 +40,8 @@ install(FILES maml/maml.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/maml)
 # tests and examples
 # ------------------------------------------------------------------
 
-ospray_create_test(mamlTest
-    apps/mamlTest.cpp
-  LINK
-    ospray_mpi_maml
-)
+ospray_create_test(mamlTest apps/mamlTest.cpp)
+target_link_libraries(mamlTest PRIVATE ospray_mpi_maml)
 
-ospray_create_test(mamlTestMessageSwarm
-    apps/testMessageSwarm.cpp
-  LINK
-    ospray_mpi_maml
-)
+ospray_create_test(mamlTestMessageSwarm apps/testMessageSwarm.cpp)
+target_link_libraries(mamlTestMessageSwarm PRIVATE ospray_mpi_maml)

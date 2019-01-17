@@ -49,13 +49,8 @@ ospray_create_library(ospray_module_bilinear_patches
   # on a previously computed ray-prim intersection)
   geometry/BilinearPatches.ispc
 
-  # pieces for loading data into the OSPRay example viewer app
-#  sg/Patch.cpp
-
   # and finally, the module init code (not doing much, but must be there)
   moduleInit.cpp
-
-  # this depends on ospray core:
-  LINK
-  ospray_module_ispc
 )
+
+target_link_libraries(ospray_module_bilinear_patches PUBLIC ospray_module_ispc)

@@ -14,12 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_configure_mpi()
 ospray_build_component(mpiCommon)
 
-ospray_create_library(ospray_mpi_service
-  MPIService.cpp
-LINK
-  ospray_mpi_common
-COMPONENT mpi
-)
+ospray_create_library(ospray_mpi_service MPIService.cpp COMPONENT mpi)
+target_link_libraries(ospray_mpi_service PUBLIC ospray_mpi_common)
