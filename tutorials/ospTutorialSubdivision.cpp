@@ -186,7 +186,8 @@ int main(int argc, const char **argv)
   OSPModel world = ospNewModel();
 
   // add in subdivision geometry
-  OSPTestingGeometry subdivisionGeometry = ospTestingNewGeometry("subdivision_cube", "pathtracer");
+  OSPTestingGeometry subdivisionGeometry =
+      ospTestingNewGeometry("subdivision_cube", "pathtracer");
   ospAddGeometry(world, subdivisionGeometry.geometry);
   ospRelease(subdivisionGeometry.geometry);
 
@@ -216,6 +217,15 @@ int main(int argc, const char **argv)
     if (ImGui::SliderInt("spp", &spp, 1, 64)) {
       ospSet1i(renderer, "spp", spp);
       ospCommit(renderer);
+    }
+
+    static float subdivisionLevel = 1.f;
+    if (ImGui::SliderFloat("subdivision level", &subdivisionLevel, 1.f, 25.f)) {
+      ospSet1f(subdivisionGeometry.geometry, "level", subdivisionLevel);
+      ospCommit(subdivisionGeometry.geometry);
+      ospCommit(world);
+
+      GLFWOSPRayWindow::getActiveWindow()->clearFrameBuffer();
     }
   });
 

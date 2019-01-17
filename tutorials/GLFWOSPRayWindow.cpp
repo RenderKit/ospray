@@ -138,6 +138,11 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
   glfwTerminate();
 }
 
+GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
+{
+  return activeWindow;
+}
+
 OSPModel GLFWOSPRayWindow::getModel()
 {
   return model;
@@ -154,6 +159,11 @@ void GLFWOSPRayWindow::setModel(OSPModel newModel)
   ospCommit(renderer);
 
   // clear frame buffer
+  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+}
+
+void GLFWOSPRayWindow::clearFrameBuffer()
+{
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 }
 

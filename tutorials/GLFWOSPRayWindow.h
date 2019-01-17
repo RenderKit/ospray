@@ -33,8 +33,12 @@ class GLFWOSPRayWindow
 
   ~GLFWOSPRayWindow();
 
+  static GLFWOSPRayWindow * getActiveWindow();
+
   OSPModel getModel();
   void setModel(OSPModel newModel);
+
+  void clearFrameBuffer();
 
   void registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)> callback);
