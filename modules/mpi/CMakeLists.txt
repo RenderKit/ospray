@@ -59,6 +59,7 @@ if (OSPRAY_MODULE_MPI)
       ospray_module_ispc
       ospray_mpi_common
       ospray_mpi_maml
+      snappy
   )
 
   target_include_directories(ospray_module_mpi
