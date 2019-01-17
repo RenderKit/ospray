@@ -178,8 +178,3 @@ install(
     "${PROJECT_BINARY_DIR}/SnappyConfigVersion.cmake"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Snappy"
 )
-
-##############################################################################
-# NOTE(jda) - Add Snappy to OSPRay exports
-ospray_install_library(snappy mpi)
-##############################################################################

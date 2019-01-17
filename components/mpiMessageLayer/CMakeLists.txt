@@ -23,11 +23,10 @@ ospray_build_component(mpiCommon)
 ospray_create_library(ospray_mpi_maml
     maml/maml.cpp
     maml/Context.cpp
-  LINK
-    ospray_mpi_common
-    snappy
   COMPONENT mpi
 )
+
+target_link_libraries(ospray_mpi_maml PRIVATE snappy PUBLIC ospray_mpi_common)
 
 target_include_directories(ospray_mpi_maml
   PUBLIC

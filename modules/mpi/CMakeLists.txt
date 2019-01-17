@@ -52,13 +52,13 @@ if (OSPRAY_MODULE_MPI)
     render/MPILoadBalancer.cpp
     render/distributed/DistributedRaycast.cpp
     render/distributed/DistributedRaycast.ispc
+  )
 
-  LINK
-
-    ospray_module_ispc
-    ospray_mpi_common
-    ospray_mpi_maml
-    snappy
+  target_link_libraries(ospray_module_mpi
+    PUBLIC
+      ospray_module_ispc
+      ospray_mpi_common
+      ospray_mpi_maml
   )
 
   target_include_directories(ospray_module_mpi
