@@ -27,6 +27,7 @@ namespace ospray {
 #endif
   {
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
+    denoiserDevice.commit();
     denoisers.front().init(denoiserDevice);
     denoisers.back().init(denoiserDevice);
 #endif
