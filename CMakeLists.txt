@@ -22,7 +22,9 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW) # since 3.12
 endif()
 
-project(OSPRay)
+include(cmake/ospray_version.cmake)
+
+project(OSPRay VERSION ${OSPRAY_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD   99)
 set(CMAKE_CXX_STANDARD 11)
