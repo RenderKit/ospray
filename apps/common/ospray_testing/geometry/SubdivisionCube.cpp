@@ -101,6 +101,13 @@ namespace ospray {
       ospSetData(subd, "color", colors);
       ospSet1f(subd, "level", 128.0f);
 
+      // create glass material and assign to geometry
+      OSPMaterial glassMaterial = ospNewMaterial2("pathtracer", "ThinGlass");
+      ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
+      ospCommit(glassMaterial);
+
+      ospSetMaterial(subd, glassMaterial);
+
       ospCommit(subd);
 
       OSPTestingGeometry retval;
