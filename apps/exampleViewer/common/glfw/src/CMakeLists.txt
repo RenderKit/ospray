@@ -53,6 +53,12 @@ if (APPLE)
 endif()
 
 add_library(glfw ${glfw_SOURCES} ${glfw_HEADERS})
+
+##############################################################################
+## Custom OSPRay additions
+ospray_install_library(glfw apps)
+##############################################################################
+
 set_target_properties(glfw PROPERTIES
                       OUTPUT_NAME ${GLFW_LIB_NAME}
                       VERSION ${GLFW_VERSION}
