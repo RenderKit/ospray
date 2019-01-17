@@ -205,7 +205,7 @@ set(OSPRAY_TESTING_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_testing${LIBRARY_SUFFIX}
 include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
-set(OSPRAY_LIBRARIES ospray)
+set(OSPRAY_LIBRARIES ospray::ospray)
 
 if(OSPRAY_MPI_ENABLED)
   set(OSPRAY_MPI_LIBRARIES
@@ -214,7 +214,7 @@ if(OSPRAY_MPI_ENABLED)
   )
 endif()
 
-set(OSPRAY_SG_LIBRARIES ospray_sg)
+set(OSPRAY_SG_LIBRARIES ospray::ospray_sg)
 
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})

@@ -203,7 +203,7 @@ macro(ospray_install_library name component)
 
   install(EXPORT ospray_Exports
     DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
-    #NAMESPACE ospray::
+    NAMESPACE ospray::
   )
 
   # Install the namelink in the devel component. This command also includes the
@@ -392,7 +392,6 @@ endmacro()
 macro(ospray_disable_compiler_warnings)
   if (NOT OSPRAY_COMPILER_MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-  #elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
   endif()
 endmacro()
 
