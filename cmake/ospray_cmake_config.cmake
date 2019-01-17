@@ -36,8 +36,6 @@ set(OSPRAY_MODULE_FILES
   osprayUse.cmake
 )
 
-set(OSPRAY_CMAKECONFIG_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
-
 ## find relative path to make package relocatable
 # this is a bit involved to handle these cases:
 #   - CMAKE_INSTALL_LIBDIR is overridden by the user

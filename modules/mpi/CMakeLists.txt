@@ -30,6 +30,9 @@ if (OSPRAY_MODULE_MPI)
   ospray_build_component(mpiMessageLayer)
   ospray_build_component(snappy EXCLUDE_FROM_ALL)
 
+  # NOTE(jda) - we manaully install Snappy targets and exports here, best place?
+  ospray_install_library(snappy devel)
+
   include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
 
   ospray_create_library(ospray_module_mpi
@@ -63,7 +66,7 @@ if (OSPRAY_MODULE_MPI)
 
   target_include_directories(ospray_module_mpi
     PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/..
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     PRIVATE
       ${CMAKE_CURRENT_BINARY_DIR}
   )

@@ -189,6 +189,7 @@ endmacro()
 
 macro(ospray_install_library name component)
   install(TARGETS ${name}
+    EXPORT ospray_Exports
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
       NAMELINK_SKIP
@@ -198,6 +199,11 @@ macro(ospray_install_library name component)
     # ... and the import lib into the devel package
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
+  )
+
+  install(EXPORT ospray_Exports
+    DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
+    #NAMESPACE ospray::
   )
 
   # Install the namelink in the devel component. This command also includes the

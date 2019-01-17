@@ -157,7 +157,8 @@ LINK
 
 target_include_directories(ospray_sg
   PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/sg>
 )
 
 ## Setup additional compile config for optional dependencies ##

@@ -35,7 +35,8 @@ LINK
 
 target_include_directories(ospray_testing
   PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/ospray_testing>
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}

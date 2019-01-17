@@ -18,7 +18,8 @@ ospray_create_library(ospray_tfn tfn_lib.cpp LINK ospray_common)
 
 target_include_directories(ospray_tfn
   PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+    #$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/tfn_lib>
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

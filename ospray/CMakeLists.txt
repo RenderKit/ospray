@@ -275,10 +275,10 @@ COMPONENT
 
 target_include_directories(ospray
   PUBLIC
-    ${CMAKE_SOURCE_DIR}/ospray/include
-    ${CMAKE_SOURCE_DIR}/ospray
-    ${CMAKE_SOURCE_DIR}
-    ${PROJECT_BINARY_DIR}
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 ##############################################################
@@ -317,6 +317,10 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
   target_include_directories(ospray_module_ispc
     PUBLIC
       ${EMBREE_INCLUDE_DIRS}
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 endif()
 
