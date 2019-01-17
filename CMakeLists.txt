@@ -18,22 +18,6 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 cmake_minimum_required(VERSION 3.1)
-cmake_policy(SET CMP0003 NEW) # since 2.6
-if(POLICY CMP0015)
-  cmake_policy(SET CMP0015 NEW) # since 2.8.1
-endif()
-if(POLICY CMP0020)
-  cmake_policy(SET CMP0020 NEW) # since 2.8.11
-endif()
-if(POLICY CMP0042)
-  cmake_policy(SET CMP0042 NEW) # since 3.0
-endif()
-if(POLICY CMP0048)
-  cmake_policy(SET CMP0048 OLD) # since 3.0
-endif()
-if(POLICY CMP0054)
-  cmake_policy(SET CMP0054 OLD) # since 3.1
-endif()
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW) # since 3.12
 endif()
