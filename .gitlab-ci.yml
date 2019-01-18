@@ -110,6 +110,9 @@ build-centos6-gcc:
     - export CC=gcc
     - export CXX=g++
     - scripts/build_gitlab/linux.sh
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR
   tags:
     - centos6
 
