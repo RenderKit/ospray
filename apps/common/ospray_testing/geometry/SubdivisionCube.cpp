@@ -19,6 +19,8 @@
 #include "ospcommon/box.h"
 using namespace ospcommon;
 
+#include <vector>
+
 namespace ospray {
   namespace testing {
 
@@ -36,83 +38,98 @@ namespace ospray {
     OSPTestingGeometry SubdivisionCube::createGeometry(
         const std::string &) const
     {
-      box3f cube_bounds(-1.f, 1.f);
+      box3f bounds(-1.f, 1.f);
 
-      float cube_vertices[8][3] = {{-1.0f, -1.0f, -1.0f},
-                                   {1.0f, -1.0f, -1.0f},
-                                   {1.0f, -1.0f, 1.0f},
-                                   {-1.0f, -1.0f, 1.0f},
-                                   {-1.0f, 1.0f, -1.0f},
-                                   {1.0f, 1.0f, -1.0f},
-                                   {1.0f, 1.0f, 1.0f},
-                                   {-1.0f, 1.0f, 1.0f}};
+      std::vector<vec3f> vertices = {{-1.0f, -1.0f, -1.0f},
+                                     {1.0f, -1.0f, -1.0f},
+                                     {1.0f, -1.0f, 1.0f},
+                                     {-1.0f, -1.0f, 1.0f},
+                                     {-1.0f, 1.0f, -1.0f},
+                                     {1.0f, 1.0f, -1.0f},
+                                     {1.0f, 1.0f, 1.0f},
+                                     {-1.0f, 1.0f, 1.0f}};
 
-      float cube_colors[8][4] = {{0.0f, 0.0f, 0.0f, 1.f},
-                                 {1.0f, 0.0f, 0.0f, 1.f},
-                                 {1.0f, 0.0f, 1.0f, 1.f},
-                                 {0.0f, 0.0f, 1.0f, 1.f},
-                                 {0.0f, 1.0f, 0.0f, 1.f},
-                                 {1.0f, 1.0f, 0.0f, 1.f},
-                                 {1.0f, 1.0f, 1.0f, 1.f},
-                                 {0.0f, 1.0f, 1.0f, 1.f}};
+      std::vector<vec4f> colors = {{0.0f, 0.0f, 0.0f, 1.f},
+                                   {1.0f, 0.0f, 0.0f, 1.f},
+                                   {1.0f, 0.0f, 1.0f, 1.f},
+                                   {0.0f, 0.0f, 1.0f, 1.f},
+                                   {0.0f, 1.0f, 0.0f, 1.f},
+                                   {1.0f, 1.0f, 0.0f, 1.f},
+                                   {1.0f, 1.0f, 1.0f, 1.f},
+                                   {0.0f, 1.0f, 1.0f, 1.f}};
 
-      unsigned int cube_indices[24] = {
+      std::vector<unsigned int> indices = {
           0, 4, 5, 1, 1, 5, 6, 2, 2, 6, 7, 3,
           0, 3, 7, 4, 4, 7, 6, 5, 0, 1, 2, 3,
       };
 
-      unsigned int cube_faces[6] = {4, 4, 4, 4, 4, 4};
+      std::vector<unsigned int> faces = {4, 4, 4, 4, 4, 4};
 
-      float cube_vertex_crease_weights[8] = {2, 2, 2, 2, 2, 2, 2, 2};
+      std::vector<float> vertexCreaseWeights = {2, 2, 2, 2, 2, 2, 2, 2};
 
-      unsigned int cube_vertex_crease_indices[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+      std::vector<unsigned int> vertexCreaseIndices = {0, 1, 2, 3, 4, 5, 6, 7};
 
-      float cube_edge_crease_weights[12] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+      std::vector<float> edgeCreaseWeights = {
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
-      unsigned int cube_edge_crease_indices[24] = {
+      std::vector<unsigned int> edgeCreaseIndices = {
           0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
           6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7,
       };
 
-      int numIndices = 24;
-      int numFaces   = 6;
-      int faceSize   = 4;
+      OSPGeometry geometry = ospNewGeometry("subdivision");
 
-      auto subd     = ospNewGeometry("subdivision");
-      auto vertices = ospNewData(8, OSP_FLOAT3, cube_vertices);
-      ospSetData(subd, "vertex", vertices);
-      auto indices = ospNewData(numIndices, OSP_UINT, cube_indices);
-      ospSetData(subd, "index", indices);
-      auto faces = ospNewData(numFaces, OSP_UINT, cube_faces);
-      ospSetData(subd, "face", faces);
-      auto edge_crease_indices =
-          ospNewData(12, OSP_UINT2, cube_edge_crease_indices);
-      ospSetData(subd, "edgeCrease.index", edge_crease_indices);
-      auto edge_crease_weights =
-          ospNewData(12, OSP_FLOAT, cube_edge_crease_weights);
-      ospSetData(subd, "edgeCrease.weight", edge_crease_weights);
-      auto vertex_crease_indices =
-          ospNewData(8, OSP_UINT, cube_vertex_crease_indices);
-      ospSetData(subd, "vertexCrease.index", vertex_crease_indices);
-      auto vertex_crease_weights =
-          ospNewData(8, OSP_FLOAT, cube_vertex_crease_weights);
-      ospSetData(subd, "vertexCrease.weight", vertex_crease_weights);
-      auto colors = ospNewData(8, OSP_FLOAT4, cube_colors);
-      ospSetData(subd, "color", colors);
-      ospSet1f(subd, "level", 128.0f);
+      OSPData verticesData = ospNewData(8, OSP_FLOAT3, vertices.data());
+      ospSetData(geometry, "vertex", verticesData);
+      ospRelease(verticesData);
+
+      OSPData indicesData =
+          ospNewData(indices.size(), OSP_UINT, indices.data());
+      ospSetData(geometry, "index", indicesData);
+      ospRelease(indicesData);
+
+      OSPData facesData = ospNewData(faces.size(), OSP_UINT, faces.data());
+      ospSetData(geometry, "face", facesData);
+      ospRelease(facesData);
+
+      OSPData edgeCreaseIndicesData =
+          ospNewData(12, OSP_UINT2, edgeCreaseIndices.data());
+      ospSetData(geometry, "edgeCrease.index", edgeCreaseIndicesData);
+      ospRelease(edgeCreaseIndicesData);
+
+      OSPData edgeCreaseWeightsData =
+          ospNewData(12, OSP_FLOAT, edgeCreaseWeights.data());
+      ospSetData(geometry, "edgeCrease.weight", edgeCreaseWeightsData);
+      ospRelease(edgeCreaseWeightsData);
+
+      OSPData vertexCreaseIndicesData =
+          ospNewData(8, OSP_UINT, vertexCreaseIndices.data());
+      ospSetData(geometry, "vertexCrease.index", vertexCreaseIndicesData);
+      ospRelease(vertexCreaseIndicesData);
+
+      OSPData vertexCreaseWeightsData =
+          ospNewData(8, OSP_FLOAT, vertexCreaseWeights.data());
+      ospSetData(geometry, "vertexCrease.weight", vertexCreaseWeightsData);
+      ospRelease(vertexCreaseWeightsData);
+
+      OSPData colorsData = ospNewData(8, OSP_FLOAT4, colors.data());
+      ospSetData(geometry, "color", colorsData);
+      ospRelease(colorsData);
+
+      ospSet1f(geometry, "level", 5.0f);
 
       // create OBJ material and assign to geometry
       OSPMaterial objMaterial = ospNewMaterial2("scivis", "OBJMaterial");
       ospSet3f(objMaterial, "Ks", 0.5f, 0.5f, 0.5f);
       ospCommit(objMaterial);
 
-      ospSetMaterial(subd, objMaterial);
+      ospSetMaterial(geometry, objMaterial);
 
-      ospCommit(subd);
+      ospCommit(geometry);
 
       OSPTestingGeometry retval;
-      retval.geometry = subd;
-      retval.bounds   = reinterpret_cast<osp::box3f &>(cube_bounds);
+      retval.geometry = geometry;
+      retval.bounds   = reinterpret_cast<osp::box3f &>(bounds);
 
       return retval;
     }
