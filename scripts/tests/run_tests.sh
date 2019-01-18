@@ -15,18 +15,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-rm -rf failed
-mkdir failed
-
 cd build
 cmake \
 -D OSPRAY_ENABLE_TESTING=ON \
 ..
 
 make -j 4 ospray_test_data
-cd ..
 
-build/regression_tests/ospray_test_suite --gtest_output=xml:build/tests.xml --baseline-dir=build/regression_tests/baseline/ --failed-dir=build/failed
+regression_tests/ospray_test_suite --gtest_output=xml:tests.xml --baseline-dir=regression_tests/baseline/ --failed-dir=failed
 FAILED=$(echo $?)
 
 exit $FAILED

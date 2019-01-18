@@ -33,18 +33,21 @@ variables:
     - master
     - /^release-.*$/
 
-.job_template: &test_job
+.job_template: &test_job_shell
   stage: test-build
-  tags:
-    - docker
-  script:
-    - scripts/tests/run_tests.sh
   artifacts:
     paths:
       - $CI_PROJECT_DIR/build/tests.xml
       - $CI_PROJECT_DIR/build/failed
     expire_in: 1 week
     when: always
+
+.job_template: &test_job
+  <<: *test_job_shell
+  script:
+    - scripts/tests/run_tests.sh
+  tags:
+    - docker
 
 .job_template: &test_job_windows
   <<: *test_job
@@ -248,10 +251,19 @@ test-centos7-gcc:
     - build-centos7-gcc
 
 test-centos6-gcc:
-  <<: *test_job
-  image: ospray/docker-images:centos6
+  <<: *test_job_shell
+  script:
+    - module load cmake
+    - module load gcc/4.8.2
+    - module load embree
+    - module load tbb
+    - export CC=gcc
+    - export CXX=g++
+    - scripts/tests/run_tests.sh
   dependencies:
     - build-centos6-gcc
+  tags:
+    - centos6
 
 test-ubuntu1404-gcc:
   <<: *test_job
