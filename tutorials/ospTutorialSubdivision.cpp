@@ -148,7 +148,7 @@ OSPGeometry createGroundPlaneGeometry()
   ospSetData(planeGeometry, "index", indexData);
 
   // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial2("pathtracer", "OBJMaterial");
+  OSPMaterial material = ospNewMaterial2("scivis", "OBJMaterial");
   ospCommit(material);
 
   ospSetMaterial(planeGeometry, material);
@@ -187,7 +187,7 @@ int main(int argc, const char **argv)
 
   // add in subdivision geometry
   OSPTestingGeometry subdivisionGeometry =
-      ospTestingNewGeometry("subdivision_cube", "pathtracer");
+      ospTestingNewGeometry("subdivision_cube", "scivis");
   ospAddGeometry(world, subdivisionGeometry.geometry);
   ospRelease(subdivisionGeometry.geometry);
 
@@ -198,9 +198,9 @@ int main(int argc, const char **argv)
   ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("pathtracer");
+  OSPRenderer renderer = ospNewRenderer("scivis");
 
-  OSPData lightsData = ospTestingNewLights("ambient_only");
+  OSPData lightsData = ospTestingNewLights("ambient_and_directional");
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
 
