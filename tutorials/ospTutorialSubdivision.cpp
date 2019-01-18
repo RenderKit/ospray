@@ -228,15 +228,10 @@ int main(int argc, const char **argv)
       GLFWOSPRayWindow::getActiveWindow()->clearFrameBuffer();
     }
 
-    static float vertexCreaseWeight = 1.f;
+    static float vertexCreaseWeight = 2.f;
     if (ImGui::SliderFloat(
             "vertex crease weights", &vertexCreaseWeight, 0.f, 5.f)) {
-      // vertex crease indices for the cube
-      std::vector<unsigned int> vertexCreaseIndices(8);
-      std::iota(vertexCreaseIndices.begin(), vertexCreaseIndices.end(), 0);
-
-      OSPData vertexCreaseIndicesData = ospNewData(
-          vertexCreaseIndices.size(), OSP_UINT, vertexCreaseIndices.data());
+      // vertex crease indices already set on cube geometry
 
       // vertex crease weights; use a constant weight for each vertex
       std::vector<float> vertexCreaseWeights(8);
@@ -248,14 +243,33 @@ int main(int argc, const char **argv)
           vertexCreaseWeights.size(), OSP_FLOAT, vertexCreaseWeights.data());
 
       ospSetData(subdivisionGeometry.geometry,
-                 "vertexCrease.index",
-                 vertexCreaseIndicesData);
-      ospRelease(vertexCreaseIndicesData);
-
-      ospSetData(subdivisionGeometry.geometry,
                  "vertexCrease.weight",
                  vertexCreaseWeightsData);
       ospRelease(vertexCreaseWeightsData);
+
+      ospCommit(subdivisionGeometry.geometry);
+      ospCommit(world);
+
+      GLFWOSPRayWindow::getActiveWindow()->clearFrameBuffer();
+    }
+
+    static float edgeCreaseWeight = 2.f;
+    if (ImGui::SliderFloat(
+            "edge crease weights", &edgeCreaseWeight, 0.f, 5.f)) {
+      // edge crease indices already set on cube geometry
+
+      // edge crease weights; use a constant weight for each edge
+      std::vector<float> edgeCreaseWeights(12);
+      std::fill(
+          edgeCreaseWeights.begin(), edgeCreaseWeights.end(), edgeCreaseWeight);
+
+      OSPData edgeCreaseWeightsData = ospNewData(
+          edgeCreaseWeights.size(), OSP_FLOAT, edgeCreaseWeights.data());
+
+      ospSetData(subdivisionGeometry.geometry,
+                 "edgeCrease.weight",
+                 edgeCreaseWeightsData);
+      ospRelease(edgeCreaseWeightsData);
 
       ospCommit(subdivisionGeometry.geometry);
       ospCommit(world);
