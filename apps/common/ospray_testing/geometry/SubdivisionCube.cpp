@@ -67,7 +67,7 @@ namespace ospray {
 
       unsigned int cube_vertex_crease_indices[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
-      float cube_edge_crease_weights[12] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+      float cube_edge_crease_weights[12] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
       unsigned int cube_edge_crease_indices[24] = {
           0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
