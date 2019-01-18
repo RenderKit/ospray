@@ -219,8 +219,8 @@ int main(int argc, const char **argv)
       ospCommit(renderer);
     }
 
-    static float subdivisionLevel = 1.f;
-    if (ImGui::SliderFloat("subdivision level", &subdivisionLevel, 1.f, 25.f)) {
+    static int subdivisionLevel = 5;
+    if (ImGui::SliderInt("subdivision level", &subdivisionLevel, 1, 10)) {
       ospSet1f(subdivisionGeometry.geometry, "level", subdivisionLevel);
       ospCommit(subdivisionGeometry.geometry);
       ospCommit(world);
