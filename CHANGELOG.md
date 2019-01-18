@@ -3,6 +3,11 @@ Version History
 
 ### Changes in v1.8.0:
 
+-   Refactored CMake to use newer CMake concepts
+    -   All targets are now exported in OSPRay installs and can be consumed
+        by client projects with associated includes, libraries, and definitions
+    -   OSPRay now requires CMake v3.1 to build
+    -   See documentation for more details
 -   Added new "`subdivision`" geometry type to support subdivision
     surfaces
 -   Automatic epsilon handling
