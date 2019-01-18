@@ -768,6 +768,8 @@ namespace ospray {
       }
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
       ImGui::Text("Denoising rate: %.1f fps", denoiseFPS);
+      if (!asyncDenoising)
+        ImGui::Text("Total frame rate: %.1f fps", 1.f/(1.f/renderFPS + 1.f/denoiseFPS));
 #endif
       ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
