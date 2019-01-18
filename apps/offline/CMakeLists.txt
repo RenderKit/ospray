@@ -14,45 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_DEFAULT_COMPONENT apps)
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}
-  common
+OSPRAY_CREATE_APPLICATION(ospOffline
+  offline.cpp
+LINK
+  ospray_app
 )
-
-# benchmark application which has no windowing framework dependencies
-option(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
-# offline application which generates images files for offline use
-option(OSPRAY_APPS_OFFLINE "Build ospOffline application." ON)
-option(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
-option(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
-
-add_subdirectory(common/ospray_testing)
-
-# common utilities
-if(OSPRAY_APPS_BENCHMARK OR OSPRAY_APPS_EXAMPLEVIEWER)
-  add_subdirectory(common/ospapp)
-  add_subdirectory(common/sg)
-  add_subdirectory(common/tfn_lib)
-endif()
-
-if(OSPRAY_APPS_BENCHMARK)
-  add_subdirectory(bench)
-endif()
-
-if(OSPRAY_APPS_OFFLINE)
-  add_subdirectory(offline)
-endif()
-
-
-if(OSPRAY_APPS_EXAMPLEVIEWER)
-  add_subdirectory(exampleViewer)
-endif()
-
-if(OSPRAY_APPS_UTILITIES)
-  add_subdirectory(utility)
-endif()
