@@ -21,6 +21,7 @@ ospray_create_library(ospray_testing
   geometry/SubdivisionCube.cpp
 
   lights/AmbientOnly.cpp
+  lights/AmbientAndDirectional.cpp
 
   transferFunction/Grayscale.cpp
   transferFunction/Jet.cpp
