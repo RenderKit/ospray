@@ -113,6 +113,8 @@ else()
     PATTERN *.h
     PATTERN *.inl
     PATTERN *.cmake
+    PATTERN *tests* EXCLUDE
+    PATTERN *testing* EXCLUDE
   )
 
   ## Build Test Apps ##
