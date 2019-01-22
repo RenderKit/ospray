@@ -541,9 +541,7 @@ namespace ospray {
     vec4f texBorderCol(0.f); // default black
     // TODO be more sophisticated (depending on renderer type, fb mode (sRGB))
     if (renderer->child("useBackplate").valueAs<bool>()) {
-      auto col = renderer->child("bgColor").valueAs<vec3f>();
-      const float g = 1.f/2.2f;
-      texBorderCol = vec4f(powf(col.x, g), powf(col.y, g), powf(col.z, g), 0.f);
+      texBorderCol = vec4f(renderer->child("bgColor").valueAs<vec3f>(), 0.f);
     }
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &texBorderCol[0]);
 
