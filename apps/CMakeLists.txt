@@ -14,9 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_DEFAULT_COMPONENT apps)
+set(OSPRAY_DEFAULT_COMPONENT apps)
 
-INCLUDE_DIRECTORIES(
+include_directories(
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}/ospray
   ${CMAKE_SOURCE_DIR}
@@ -25,27 +25,27 @@ INCLUDE_DIRECTORIES(
 )
 
 # benchmark application which has no windowing framework dependencies
-OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
-OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
-OPTION(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
+option(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
+option(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
+option(OSPRAY_APPS_UTILITIES "Build utility apps" ON)
 
-ADD_SUBDIRECTORY(common/ospray_testing)
+add_subdirectory(common/ospray_testing)
 
 # common utilities
-IF(OSPRAY_APPS_BENCHMARK OR OSPRAY_APPS_EXAMPLEVIEWER)
-  ADD_SUBDIRECTORY(common/ospapp)
-  ADD_SUBDIRECTORY(common/sg)
-  ADD_SUBDIRECTORY(common/tfn_lib)
-ENDIF()
+if(OSPRAY_APPS_BENCHMARK OR OSPRAY_APPS_EXAMPLEVIEWER)
+  add_subdirectory(common/ospapp)
+  add_subdirectory(common/sg)
+  add_subdirectory(common/tfn_lib)
+endif()
 
-IF(OSPRAY_APPS_BENCHMARK)
-  ADD_SUBDIRECTORY(bench)
-ENDIF()
+if(OSPRAY_APPS_BENCHMARK)
+  add_subdirectory(bench)
+endif()
 
-IF (OSPRAY_APPS_EXAMPLEVIEWER)
-  ADD_SUBDIRECTORY(exampleViewer)
-ENDIF()
+if(OSPRAY_APPS_EXAMPLEVIEWER)
+  add_subdirectory(exampleViewer)
+endif()
 
-IF (OSPRAY_APPS_UTILITIES)
-  ADD_SUBDIRECTORY(utility)
-ENDIF()
+if(OSPRAY_APPS_UTILITIES)
+  add_subdirectory(utility)
+endif()

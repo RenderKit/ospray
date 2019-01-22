@@ -102,15 +102,6 @@ mark_as_advanced(OSPRAY_ENABLE_APPS)
 option(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
 option(OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES "Automatically download test images during build." ON)
 
-# needs to be here at top-level dir, so that modules/apps see the define
-option(OSPRAY_APPS_ENABLE_DENOISER "Use image denoiser in example viewer")
-if (OSPRAY_APPS_ENABLE_DENOISER)
-  find_package(OpenImageDenoise)
-  add_definitions(-DOSPRAY_APPS_ENABLE_DENOISER)
-  set(OPENIMAGEDENOISE OpenImageDenoise)
-  get_target_property(OPENIMAGEDENOISE_LIBRARY OpenImageDenoise IMPORTED_LOCATION_RELEASE)
-endif()
-
 if (OSPRAY_ENABLE_TESTING)
   enable_testing()
 endif()
