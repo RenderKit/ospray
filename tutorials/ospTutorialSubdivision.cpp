@@ -219,9 +219,9 @@ int main(int argc, const char **argv)
       ospCommit(renderer);
     }
 
-    static int subdivisionLevel = 5;
-    if (ImGui::SliderInt("subdivision level", &subdivisionLevel, 1, 10)) {
-      ospSet1f(subdivisionGeometry.geometry, "level", subdivisionLevel);
+    static int tessellationLevel = 5;
+    if (ImGui::SliderInt("tessellation level", &tessellationLevel, 1, 10)) {
+      ospSet1f(subdivisionGeometry.geometry, "level", tessellationLevel);
       ospCommit(subdivisionGeometry.geometry);
       ospCommit(world);
 
