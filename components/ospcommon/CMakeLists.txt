@@ -112,7 +112,6 @@ else()
     FILES_MATCHING
     PATTERN *.h
     PATTERN *.inl
-    PATTERN *.cmake
     PATTERN *tests* EXCLUDE
     PATTERN *testing* EXCLUDE
   )
