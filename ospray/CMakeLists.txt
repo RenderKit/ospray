@@ -231,10 +231,10 @@ foreach(dir ${SUBDIRS})
   if (NOT "${dir}" STREQUAL ospray)
     install(DIRECTORY ${dir}
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
+      COMPONENT devel
       FILES_MATCHING
       PATTERN *.h
       PATTERN *.ih
-      COMPONENT devel
     )
   endif()
 endforeach()

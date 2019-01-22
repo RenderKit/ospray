@@ -54,8 +54,6 @@ LINK
 
 target_include_directories(ospray_test_suite
   PRIVATE
-    ${CMAKE_SOURCE_DIR}/ospray/include
-    ${CMAKE_SOURCE_DIR}/components
     ${CMAKE_SOURCE_DIR}/tests/include
 )
 
