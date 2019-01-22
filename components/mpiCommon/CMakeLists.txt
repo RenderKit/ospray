@@ -26,7 +26,6 @@ target_link_libraries(ospray_mpi_common
   PUBLIC
     ${MPI_C_LIBRARIES}
     ospray_common
-    #ospray
 )
 
 target_include_directories(ospray_mpi_common
@@ -40,4 +39,5 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
   FILES_MATCHING
   PATTERN *.h
+  COMPONENT mpi
 )

@@ -34,7 +34,10 @@ target_include_directories(ospray_mpi_maml
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/maml>
 )
 
-install(FILES maml/maml.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/maml)
+install(FILES maml/maml.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/maml
+  COMPONENT mpi
+)
 
 # ------------------------------------------------------------------
 # tests and examples

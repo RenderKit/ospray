@@ -191,4 +191,5 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   PATTERN *.h
   PATTERN *3rdParty* EXCLUDE
   PATTERN importer/detail_xyz EXCLUDE
+  COMPONENT devel
 )

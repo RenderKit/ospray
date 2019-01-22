@@ -234,6 +234,7 @@ foreach(dir ${SUBDIRS})
       FILES_MATCHING
       PATTERN *.h
       PATTERN *.ih
+      COMPONENT devel
     )
   endif()
 endforeach()

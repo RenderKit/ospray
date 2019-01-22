@@ -114,6 +114,7 @@ else()
     PATTERN *.inl
     PATTERN *tests* EXCLUDE
     PATTERN *testing* EXCLUDE
+    COMPONENT devel
   )
 
   ## Build Test Apps ##
