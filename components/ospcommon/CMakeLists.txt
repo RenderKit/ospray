@@ -103,6 +103,12 @@ else()
   target_compile_definitions(ospray_common
     PUBLIC
       ${TASKING_SYSTEM_DEFINITIONS}
+    PRIVATE
+      # NOTE(jda) - OSPRAY_SOVERSION fallbacks in library.cpp should be handled
+      #             in the Library object's interface directly, where libospray
+      #             would inject versioning information independant of ospcommon
+      #             version.
+      -DOSPRAY_SOVERSION=${OSPRAY_SOVERSION}
   )
 
   ## Install headers ##
