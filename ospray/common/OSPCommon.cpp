@@ -269,7 +269,10 @@ namespace ospray {
       case OSP_TEXTURE_RGB8:
       case OSP_TEXTURE_SRGB:           return sizeof(vec3uc);
       case OSP_TEXTURE_RGB32F:         return sizeof(vec3f);
-      case OSP_TEXTURE_R8:             return sizeof(uint8);
+      case OSP_TEXTURE_R8:
+      case OSP_TEXTURE_L8:             return sizeof(uint8);
+      case OSP_TEXTURE_RA8:
+      case OSP_TEXTURE_LA8:            return sizeof(vec2uc);
       case OSP_TEXTURE_R32F:           return sizeof(float);
       case OSP_TEXTURE_FORMAT_INVALID: break;
     }

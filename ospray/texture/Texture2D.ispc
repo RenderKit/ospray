@@ -44,11 +44,40 @@ inline vec4f getTexel_RGB8(const uniform Texture2D *uniform self, const vec2i i)
   return make_vec4f(make_vec3f((float)r, (float)g, (float)b)*(1.f/255.f), 1.f);
 }
 
+inline vec4f getTexel_RA8(const uniform Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  const uniform uint8 *uniform texel = (const uniform uint8 *uniform)self->data;
+  const uint32 texelOfs = 2*(i.y*self->size.x + i.x);
+  const uint32 c = texel[texelOfs];
+  const uint32 a = texel[texelOfs+1];
+  return make_vec4f((float)c, 0.f, 0.f, (float)a)*(1.f/255.f);
+}
+
 inline vec4f getTexel_R8(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   const uint8 c = ((const uniform uint8 *uniform)self->data)[i.y*self->size.x + i.x];
-  return make_vec4f(c*(1.f/255.f), 0.0f, 0.0f, 1.f);
+  return make_vec4f((float)c*(1.f/255.f), 0.f, 0.f, 1.f);
+}
+
+// LA8 is used by Bistro Luminance-Alpha textures (ie grayscale with alpha)
+inline vec4f getTexel_LA8(const uniform Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  const uniform uint8 *uniform texel = (const uniform uint8 *uniform)self->data;
+  const uint32 texelOfs = 2*(i.y*self->size.x + i.x);
+  const uint32 l = texel[texelOfs];
+  const uint32 a = texel[texelOfs+1];
+  return make_vec4f(make_vec3f((float)l), (float)a)*(1.f/255.f);
+}
+
+// L8 is gray-scale version of R8, used by Bistro Luminance textures
+inline vec4f getTexel_L8(const uniform Texture2D *uniform self, const vec2i i)
+{
+  assert(self);
+  const uint8 l = ((const uniform uint8 *uniform)self->data)[i.y*self->size.x + i.x];
+  return make_vec4f(make_vec3f((float)l)*(1.f/255.f), 1.f);
 }
 
 inline vec4f getTexel_SRGBA(const uniform Texture2D *uniform self, const vec2i i)
@@ -172,8 +201,11 @@ static vec4f Texture2D_bilinear_##FMT(const uniform Texture2D *uniform self, \
   FCT(RGBA32F)                 \
   FCT(RGB8)                    \
   FCT(SRGB)                    \
+  FCT(LA8)                     \
+  FCT(RA8)                     \
   FCT(RGB32F)                  \
   FCT(R8)                      \
+  FCT(L8)                      \
   FCT(R32F)
 
 __foreach_fetcher(__define_tex_get)
@@ -253,7 +285,8 @@ export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
   self->data = data;
   self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
   self->getNormal = Texture2D_getN_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
-  self->hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA || type == OSP_TEXTURE_RGBA32F;
+  self->hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA
+                || type == OSP_TEXTURE_RGBA32F || type == OSP_TEXTURE_LA8;
 
   return self;
 }
