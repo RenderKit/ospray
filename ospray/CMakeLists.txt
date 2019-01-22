@@ -228,12 +228,14 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 get_subdirectories(SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
 
 foreach(dir ${SUBDIRS})
-  install(DIRECTORY ${dir}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
-    FILES_MATCHING
-    PATTERN *.h
-    PATTERN *.ih
-  )
+  if (NOT "${dir}" STREQUAL ospray)
+    install(DIRECTORY ${dir}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
+      FILES_MATCHING
+      PATTERN *.h
+      PATTERN *.ih
+    )
+  endif()
 endforeach()
 
 ##############################################################
