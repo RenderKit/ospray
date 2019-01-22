@@ -534,7 +534,8 @@ namespace ospray {
       }
 
       renderEngine.unmapFramebuffer();
-    }
+    } else // limit GUI rendering to 60fps
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
     // set border color TODO maybe move to application
     vec4f texBorderCol(0.f); // default black
