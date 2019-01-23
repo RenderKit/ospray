@@ -222,13 +222,13 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 )
 
 # -------------------------------------------------------
-# Install API headers
+# Install SDK headers
 # -------------------------------------------------------
 
 get_subdirectories(SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
 
 foreach(dir ${SUBDIRS})
-  if (NOT "${dir}" STREQUAL ospray)
+  if (NOT "${dir}" STREQUAL include)
     install(DIRECTORY ${dir}
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
       COMPONENT devel
