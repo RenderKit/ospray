@@ -163,16 +163,16 @@ Finding OSPRay with CMake
 =========================
 
 Client applications using OSPRay can find it with CMake's
-`find_package()` command. For example:
+`find_package()` command. For example,
 
     find_package(ospray 1.8.0 REQUIRED)
 
-finds OSPRay according to where `ospray_DIR` points to OSPRay's config
-file: `osprayConfig.cmake`. This file can be found in\
-`${install_location}/[lib|lib64]/cmake`, where `ospray_DIR` can be
-specified as either an environment variable or CMake variable in the
-client CMake build. Once OSPRay is found, the following is all that is
-required to use OSPRay:
+finds OSPRay via OSPRay's configuration file `osprayConfig.cmake`^[This
+file is usually in
+`${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake
+does not find it automatically, then specify its location in variable
+`ospray_DIR` (either an environment variable or CMake variable).]. Once
+found, the following is all that is required to use OSPRay:
 
     target_link_libraries(${client_target} ospray::ospray)
 
@@ -187,4 +187,4 @@ therefore all targets locally used in the OSPRay source tree can be
 accessed from an install. For example, `ospray_common` can be consumed
 directly via the `ospray::ospray_common` target. All targets have their
 libraries, includes, and definitions attached to them for public
-consumption (please report bugs if one is found!).
+consumption (please [report bugs] if this is broken!).

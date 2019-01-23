@@ -8,6 +8,7 @@
 [OSPRayReadme]: http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation"
 [gensv/generateSciVis.cpp]: https://github.com/ospray/ospray/blob/devel/modules/mpi/apps/gensv/generateSciVis.cpp#L213
 
+[report bugs]: #ospray-support-and-contact
 [tutorial]: #tutorial
 [camera]: #cameras
 [volume]: #volumes
