@@ -32,7 +32,7 @@ submodule:
 
 if_is_devel_then = if [[ "${CI_BUILD_REF_NAME}" == "devel" || (-d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel") ]] ; then
 
-tmp/version: ../cmake/ospray_options.cmake $(wildcard ../.git/HEAD)
+tmp/version: ../cmake/ospray_version.cmake $(wildcard ../.git/HEAD)
 	sed -n $< -e "s/^SET(OSPRAY_VERSION_MAJOR \([0-9]\+\))/\1./ip" | tr -d '\n' > $@
 	sed -n $< -e "s/^SET(OSPRAY_VERSION_MINOR \([0-9]\+\))/\1./ip" | tr -d '\n' >> $@
 	sed -n $< -e "s/^SET(OSPRAY_VERSION_PATCH \([0-9]\+\))/\1/ip" | tr -d '\n' >> $@
