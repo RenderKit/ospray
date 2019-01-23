@@ -196,18 +196,4 @@ if (OSPRAY_INSTALL_DEPENDENCIES)
       ospray_install_namelink(embree ${EMBREE_LIBNAME})
     endif()
   endif()
-
-  if (OSPRAY_APPS_ENABLE_DENOISER)
-    if (WIN32)
-      install(PROGRAMS ${OPENIMAGEDENOISE_LIBRARY}
-              DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
-    else()
-      install(PROGRAMS ${OPENIMAGEDENOISE_LIBRARY}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-      if (NOT APPLE)
-        get_filename_component(OIDN_LIBNAME ${OPENIMAGEDENOISE_LIBRARY} NAME)
-        ospray_install_namelink(OpenImageDenoise ${OIDN_LIBNAME})
-      endif()
-    endif()
-  endif()
 endif()

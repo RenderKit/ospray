@@ -195,6 +195,22 @@ endif()
 
 if (OSPRAY_APPS_ENABLE_DENOISER)
   target_compile_definitions(ospray_sg PUBLIC -DOSPRAY_APPS_ENABLE_DENOISER=1)
+
+  ## redistribute OpenImageDenoise
+  if (OSPRAY_INSTALL_DEPENDENCIES)
+    get_target_property(OIDN_LIB OpenImageDenoise IMPORTED_LOCATION_RELEASE)
+    if (WIN32)
+      install(PROGRAMS ${OIDN_LIB}
+              DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+    else()
+      install(PROGRAMS ${OIDN_LIB}
+              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+      if (NOT APPLE)
+        get_filename_component(OIDN_LIBNAME ${OIDN_LIB} NAME)
+        ospray_install_namelink(OpenImageDenoise ${OIDN_LIBNAME})
+      endif()
+    endif()
+  endif()
 endif()
 
 ## Install headers in SDK ##
