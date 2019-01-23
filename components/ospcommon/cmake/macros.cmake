@@ -204,6 +204,7 @@ macro(ospray_install_library name component)
   install(EXPORT ospray_Exports
     DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
     NAMESPACE ospray::
+    COMPONENT devel
   )
 
   # Install the namelink in the devel component. This command also includes the
