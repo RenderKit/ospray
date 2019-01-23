@@ -41,6 +41,7 @@ target_include_directories(ospray_testing
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  COMPONENT devel
   FILES_MATCHING
   PATTERN *.h
 )
