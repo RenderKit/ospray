@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_DEFAULT_COMPONENT tutorials)
+set(OSPRAY_DEFAULT_COMPONENT apps)
 
 # prefer libGL over libOpenGl for better compatibility with SWR
 set(OpenGL_GL_PREFERENCE "LEGACY")
