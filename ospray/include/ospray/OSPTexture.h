@@ -30,10 +30,10 @@ typedef enum
   OSP_TEXTURE_SRGB,
   OSP_TEXTURE_RGB32F,
   OSP_TEXTURE_R8,
-  OSP_TEXTURE_RA8,
-  OSP_TEXTURE_L8,
-  OSP_TEXTURE_LA8,
   OSP_TEXTURE_R32F,
+  OSP_TEXTURE_L8,
+  OSP_TEXTURE_RA8,
+  OSP_TEXTURE_LA8,
   /*! denotes an unknown texture format, so we can properly initialize parameters */
   OSP_TEXTURE_FORMAT_INVALID = 0xff,
 /* TODO

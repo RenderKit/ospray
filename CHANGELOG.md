@@ -4,16 +4,21 @@ Version History
 ### Changes in v1.8.0:
 
 -   Refactored CMake to use newer CMake concepts
-    -   All targets are now exported in OSPRay installs and can be consumed
-        by client projects with associated includes, libraries, and definitions
+    -   All targets are now exported in OSPRay installs and can be
+        consumed by client projects with associated includes, libraries,
+        and definitions
     -   OSPRay now requires CMake v3.1 to build
     -   See documentation for more details
 -   Added new "`subdivision`" geometry type to support subdivision
     surfaces
+-   Added support for texture formats `L8`, `LA8` (gamma-encoded
+    luminance), and `RA8` (linear two component). Note that the enum
+    `OSP_TEXTURE_FORMAT_INVALID` changed its value, thus recompilation
+    may be necessary.
 -   Automatic epsilon handling
--   Add support for Intel® Open Image Denoise
 -   Normals in framebuffer channel `OSP_FB_NORMAL` are now in
     world-space
+-   Added support for Intel® Open Image Denoise to the Example Viewer
 -   Fixed artifacts for scaled instances of spheres, cylinders and
     streamlines
 -   Improvements to precision of intersections with cylinders and
