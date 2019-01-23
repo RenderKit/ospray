@@ -37,7 +37,7 @@ target_include_directories(ospray_mpi_common
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
-  COMPONENT mpi
+  COMPONENT devel
   FILES_MATCHING
   PATTERN *.h
 )
