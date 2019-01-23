@@ -119,8 +119,9 @@ else()
     FILES_MATCHING
     PATTERN *.h
     PATTERN *.inl
-    PATTERN *tests* EXCLUDE
-    PATTERN *testing* EXCLUDE
+    PATTERN */cmake* EXCLUDE
+    PATTERN */tests* EXCLUDE
+    PATTERN */testing* EXCLUDE
   )
 
   ## Build Test Apps ##
