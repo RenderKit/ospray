@@ -69,7 +69,10 @@ namespace ospray {
       if (!imageOutputFile.empty()) {
         auto fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
         auto *srcPB = (const uint32_t *)fb->map();
-        utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
+        if (fb->format() == OSP_FB_RGBA32F)
+          utility::writePFM(imageOutputFile + ".pfm", width, height, (vec4f*)srcPB);
+        else
+          utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
         fb->unmap(srcPB);
       }
 
