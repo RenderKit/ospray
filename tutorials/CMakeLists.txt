@@ -70,7 +70,10 @@ ospray_create_application(ospTutorialSubdivision
   GLFWOSPRayWindow.cpp
   ospTutorialSubdivision.cpp
   imgui/imgui_impl_glfw_gl3.cpp
-LINK
+)
+
+target_link_libraries(ospTutorialSubdivision
+PRIVATE
   ospray_testing
   ospray_imgui
   glfw
