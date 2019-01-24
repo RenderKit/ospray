@@ -14,7 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CREATE_APPLICATION(ospBenchmark
+ospray_build_component(pico_bench)
+
+ospray_create_application(ospBenchmark
   bench.cpp
 LINK
   ospray_app
