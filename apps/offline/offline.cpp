@@ -96,6 +96,8 @@ ospOffline specific parameters:
     {
       auto renderer = root->child("renderer").nodeAs<sg::Renderer>();
       auto fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+      // disable use of "navFrameBuffer" for first frame
+      root->child("navFrameBuffer")["size"] = fb->size();
       auto &camera = root->child("camera");
       std::string suffix;
       float variance;
@@ -109,11 +111,6 @@ ospOffline specific parameters:
 
       if (optDenoiser)
         fb->child("useDenoiser") = true;
-
-      // Render one warmup frame then clear accumulation.
-      // XXX: First image has been empty without doing this
-      root->renderFrame();
-      camera.markAsModified();
 
       do {
         // Clear accum and start fresh
