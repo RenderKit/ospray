@@ -140,7 +140,7 @@ Version History
         be extended with new scene data importers via modules or the SDK
     -   Updated `ospTutorial` examples to properly call `ospRelease()`
     -   New options in the `ospExampleViewer` GUI to showcase new
-        features (sRGB frame buffers, tone mapping, etc.)
+        features (sRGB framebuffers, tone mapping, etc.)
 -   General bug fixes
     -   Fixes to geometries with multiple emissive materials
     -   Improvements to precision of ray-sphere intersections

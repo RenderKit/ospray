@@ -209,6 +209,33 @@ example applications use
 
     cmake --build . --config Release --target ospray -- /m
 
+Finding OSPRay with CMake
+=========================
+
+Client applications using OSPRay can find it with CMake’s
+`find_package()` command. For example,
+
+    find_package(ospray 1.8.0 REQUIRED)
+
+finds OSPRay via OSPRay’s configuration file `osprayConfig.cmake`[^2].
+Once found, the following is all that is required to use OSPRay:
+
+    target_link_libraries(${client_target} ospray::ospray)
+
+This will automatically propogate all required include paths, linked
+libraries, and compiler definitions to the client CMake target (either
+an executable or library).
+
+Advanced users may want to link to additional targets which are exported
+in OSPRay’s CMake config, which includes all installed modules. All
+targets built with OSPRay are exported in the `ospray::` namespace,
+therefore all targets locally used in the OSPRay source tree can be
+accessed from an install. For example, `ospray_common` can be consumed
+directly via the `ospray::ospray_common` target. All targets have their
+libraries, includes, and definitions attached to them for public
+consumption (please [report bugs](#ospray-support-and-contact) if this
+is broken!).
+
 Documentation
 =============
 
@@ -832,7 +859,7 @@ specified.
 The first variant shares the voxel data with the application. Such a
 volume type is created by passing the type string
 “`shared_structured_volume`” to `ospNewVolume`. The voxel data is laid
-out in memory in xyz-order[^2] and provided to the volume via a
+out in memory in xyz-order[^3] and provided to the volume via a
 [data](#data) buffer parameter named “`voxelData`”.
 
 The second regular grid variant is optimized for rendering performance:
@@ -1772,7 +1799,7 @@ special parameters:
 : Special parameters understood by the SciVis renderer.
 
 Note that the intensity (and color) of AO is deduced from an [ambient
-light](#ambient-light) in the `lights` array.[^3] If `aoSamples` is zero
+light](#ambient-light) in the `lights` array.[^4] If `aoSamples` is zero
 (the default) then ambient lights cause ambient illumination (without
 occlusion).
 
@@ -1923,7 +1950,7 @@ OSPLight ospNewLight3(const char *type);
 
 The call returns `NULL` if that type of light is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
-light sources[^4] accept the following parameters:
+light sources[^5] accept the following parameters:
 
 | Type     | Name      |  Default| Description                            |
 |:---------|:----------|--------:|:---------------------------------------|
@@ -2036,7 +2063,7 @@ tracer](#path-tracer)).
 
 #### Quad Light
 
-The quad[^5] light is a planar, procedural area light source emitting
+The quad[^6] light is a planar, procedural area light source emitting
 uniformly on one side into the half-space. It is created by passing the
 type string “`quad`” to `ospNewLight3`. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
@@ -2191,7 +2218,7 @@ with `Tf`.
 Normal mapping can simulate small geometric features via the texture
 `map_Bump`. The normals $n$ in the normal map are wrt. the local
 tangential shading coordinate system and are encoded as $½(n+1)$, thus a
-texel $(0.5, 0.5, 1)$[^6] represents the unperturbed shading normal
+texel $(0.5, 0.5, 1)$[^7] represents the unperturbed shading normal
 $(0, 0, 1)$. Because of this encoding an sRGB gamma [texture](#texture)
 format is ignored and normals are always fetched as linear from a normal
 map. Note that the orientation of normal maps is important for a
@@ -2829,6 +2856,9 @@ The supported texture formats for `texture2d` are:
 | OSP\_TEXTURE\_SRGB    | 8 bit sRGB gamma encoded components red, green, blue        |
 | OSP\_TEXTURE\_RGB32F  | 32 bit float components red, green, blue                    |
 | OSP\_TEXTURE\_R8      | 8 bit \[0–255\] linear single component                     |
+| OSP\_TEXTURE\_RA8     | 8 bit \[0–255\] linear two component                        |
+| OSP\_TEXTURE\_L8      | 8 bit \[0–255\] gamma encoded luminance                     |
+| OSP\_TEXTURE\_LA8     | 8 bit \[0–255\] gamma encoded luminance, and linear alpha   |
 | OSP\_TEXTURE\_R32F    | 32 bit float single component                               |
 
 : Supported texture formats by `texture2D`, i.e., valid constants of
@@ -2996,7 +3026,7 @@ images below.
 </figure>
 
 <figure>
-<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
+<img src="https://ospray.github.io/images/camera_architectural.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
 </figure>
 
 <figure>
@@ -3274,7 +3304,7 @@ float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
 ```
 
 The third parameter specifies what channel(s) of the framebuffer is
-written to[^7]. What to render and how to render it depends on the
+written to[^8]. What to render and how to render it depends on the
 renderer’s parameters. If the framebuffer supports accumulation (i.e.,
 it was created with `OSP_FB_ACCUM`) then successive calls to
 `ospRenderFrame` will progressively refine the rendered image. If
@@ -3300,10 +3330,10 @@ void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
 ```
 
 The provided user pointer `userPtr` is passed as first argument to the
-callback function[^8] and the reported progress is in (0–1\]. If the
+callback function[^9] and the reported progress is in (0–1\]. If the
 callback function returns zero than the application requests to cancel
 rendering, i.e., the current `ospRenderFrame` will return at the first
-opportunity and the content of the frame buffer will be undefined.
+opportunity and the content of the framebuffer will be undefined.
 Therefore, better clear the framebuffer with `ospFrameBufferClear` then
 before a subsequent call of `ospRenderFrame`.
 
@@ -3748,7 +3778,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.c`[^9]. On Linux build it in the build directory
+at `apps/ospTutorial.c`[^10]. On Linux build it in the build directory
 with
 
     gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
@@ -3926,25 +3956,31 @@ page.
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
     be searched in `~/Projects/ispc-v1.9.2-linux`
 
-[^2]: For consecutive memory addresses the x-index of the corresponding
+[^2]: This file is usually in
+    `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake
+    does not find it automatically, then specify its location in
+    variable `ospray_DIR` (either an environment variable or CMake
+    variable).
+
+[^3]: For consecutive memory addresses the x-index of the corresponding
     voxel changes the quickest.
 
-[^3]: If there are multiple ambient lights then their contribution is
+[^4]: If there are multiple ambient lights then their contribution is
     added
 
-[^4]: The [HDRI light](#hdri-light) is an exception, it knows about
+[^5]: The [HDRI light](#hdri-light) is an exception, it knows about
     `intensity`, but not about `color`.
 
-[^5]: actually a parallelogram
+[^6]: actually a parallelogram
 
-[^6]: respectively $(127, 127, 255)$ for 8 bit textures
+[^7]: respectively $(127, 127, 255)$ for 8 bit textures
 
-[^7]: This is currently not implemented, i.e., all channels of the
+[^8]: This is currently not implemented, i.e., all channels of the
     framebuffer are always updated.
 
-[^8]: That way applications can also register a member function of a C++
+[^9]: That way applications can also register a member function of a C++
     class together with the `this` pointer as `userPtr`.
 
-[^9]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^10]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
     `apps/ospTutorial.cpp`.

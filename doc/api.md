@@ -2124,7 +2124,7 @@ function of a C++ class together with the `this` pointer as `userPtr`.]
 and the reported progress is in (0–1]. If the callback function returns
 zero than the application requests to cancel rendering, i.e., the current
 `ospRenderFrame` will return at the first opportunity and the content of
-the frame buffer will be undefined. Therefore, better clear the
+the framebuffer will be undefined. Therefore, better clear the
 framebuffer with `ospFrameBufferClear` then before a subsequent call of
 `ospRenderFrame`.
 
