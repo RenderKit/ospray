@@ -42,8 +42,6 @@ namespace maml {
   {
     auto logging = getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
     DETAILED_LOGGING = std::stoi(logging) != 0;
-
-    start();
   }
 
   Context::~Context()
@@ -134,6 +132,7 @@ namespace maml {
   {
     auto outgoingMessages = outbox.consume();
 
+    auto mpilock = mpicommon::acquireMPILock();
     for (auto &msg : outgoingMessages) {
       MPI_Request request;
 
@@ -155,6 +154,7 @@ namespace maml {
 
   void Context::pollForAndRecieveMessages()
   {
+    auto mpilock = mpicommon::acquireMPILock();
     for (auto &it : handlers) {
       MPI_Comm comm = it.first;
 
@@ -188,6 +188,7 @@ namespace maml {
   void Context::waitOnSomeRequests()
   {
     if (!pendingSends.empty() || !pendingRecvs.empty()) {
+
       const size_t totalMessages = pendingSends.size() + pendingRecvs.size();
       int *done = STACK_BUFFER(int, totalMessages);
       MPI_Request *mergedRequests = STACK_BUFFER(MPI_Request, totalMessages);
@@ -201,8 +202,11 @@ namespace maml {
       }
 
       int numDone = 0;
-      MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
-                        done, MPI_STATUSES_IGNORE));
+      {
+        auto mpilock = mpicommon::acquireMPILock();
+        MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
+              done, MPI_STATUSES_IGNORE));
+      }
       auto completed = high_resolution_clock::now();
 
       for (int i = 0; i < numDone; ++i) {

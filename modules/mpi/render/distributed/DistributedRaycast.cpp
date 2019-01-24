@@ -18,13 +18,6 @@
 #include <limits>
 #include <map>
 #include <utility>
-#ifndef _WIN32
-#include <sys/times.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <unistd.h>
-#endif
 #include <fstream>
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
@@ -36,6 +29,7 @@
 #include "../../MPIDistributedDevice.h"
 #include "../MPILoadBalancer.h"
 #include "../../fb/DistributedFrameBuffer.h"
+#include "../../common/Profiling.h"
 // ispc exports
 #include "DistributedRaycast_ispc.h"
 
@@ -43,55 +37,9 @@ namespace ospray {
   namespace mpi {
     using namespace std::chrono;
 
-#ifndef _WIN32
-    static rusage createBlank_rusage()
-    {
-      rusage tmp;
-      std::memset(&tmp, 0, sizeof(rusage));
-      return tmp;
-    }
-
-    static rusage prevUsage = createBlank_rusage();
-    static rusage curUsage = createBlank_rusage();
-#endif
-    static high_resolution_clock::time_point prevWall, curWall;
     static size_t frameNumber = 0;
 
     static bool DETAILED_LOGGING = false;
-
-    bool startsWith(const std::string &a, const std::string &prefix) {
-      if (a.size() < prefix.size()) {
-        return false;
-      }
-      return std::equal(prefix.begin(), prefix.end(), a.begin());
-    }
-
-    void logProcessStatistics(std::ostream &os) {
-#ifndef _WIN32
-      const double elapsedCpu = curUsage.ru_utime.tv_sec + curUsage.ru_stime.tv_sec
-                                - (prevUsage.ru_utime.tv_sec + prevUsage.ru_stime.tv_sec)
-                                + 1e-6f * (curUsage.ru_utime.tv_usec + curUsage.ru_stime.tv_usec
-                                           - (prevUsage.ru_utime.tv_usec + prevUsage.ru_stime.tv_usec));
-
-      const double elapsedWall = duration_cast<duration<double>>(curWall - prevWall).count();
-      os << "\tCPU: " << elapsedCpu / elapsedWall * 100.0 << "%\n";
-
-
-      std::ifstream procStatus("/proc/" + std::to_string(getpid()) + "/status");
-      std::string line;
-      const static std::vector<std::string> propPrefixes{
-        "Threads", "Cpus_allowed_list", "VmSize", "VmRSS"
-      };
-      while (std::getline(procStatus, line)) {
-        for (const auto &p : propPrefixes) {
-          if (startsWith(line, p)) {
-            os << "\t" << line << "\n";
-            break;
-          }
-        }
-      }
-#endif
-    }
 
     struct RegionInfo
     {
@@ -149,7 +97,7 @@ namespace ospray {
     // DistributedRaycastRenderer definitions /////////////////////////////////
 
     DistributedRaycastRenderer::DistributedRaycastRenderer()
-      : numAoSamples(0), camera(nullptr)
+      : numAoSamples(0), shadowsEnabled(false), camera(nullptr)
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
@@ -182,6 +130,7 @@ namespace ospray {
       ghostRegionIEs.clear();
 
       numAoSamples = getParam1i("aoSamples", 0);
+      shadowsEnabled = getParam1i("shadowsEnabled", 0);
 
       camera = reinterpret_cast<PerspectiveCamera*>(getParamObject("camera"));
       if (!camera) {
@@ -216,13 +165,13 @@ namespace ospray {
       std::transform(ghostRegions.begin(), ghostRegions.end(), std::back_inserter(ghostRegionIEs),
                      [](const DistributedModel *m) { return m->getIE(); });
 
-
       exchangeModelBounds();
 
       ispc::DistributedRaycastRenderer_set(getIE(),
                                            allRegions.data(),
                                            static_cast<int>(allRegions.size()),
                                            numAoSamples,
+                                           shadowsEnabled,
                                            regionIEs.data(),
                                            ghostRegionIEs.data());
     }
@@ -237,17 +186,11 @@ namespace ospray {
         return renderNonDistrib(fb, channelFlags);
       }
 
-      auto startRender = high_resolution_clock::now();
-
-#ifndef _WIN32
-      getrusage(RUSAGE_SELF, &prevUsage);
-#endif
-      prevWall = high_resolution_clock::now();
+      ProfilingPoint startRender;
 
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
       dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
       dfb->startNewFrame(errorThreshold);
-      dfb->beginFrame();
 
       beginFrame(dfb);
 
@@ -478,18 +421,13 @@ namespace ospray {
       dfb->waitUntilFinished();
       endFrame(nullptr, channelFlags);
 
-      auto endComposite = high_resolution_clock::now();
-
-#ifndef _WIN32
-      getrusage(RUSAGE_SELF, &curUsage);
-#endif
-      curWall = high_resolution_clock::now();
+      ProfilingPoint endComposite;
 
       if (DETAILED_LOGGING && frameNumber > 5) {
         const std::array<int, 3> localTimes {
-          duration_cast<milliseconds>(endRender - startRender).count(),
-          duration_cast<milliseconds>(endComposite - endRender).count(),
-          duration_cast<milliseconds>(endComposite - startRender).count()
+          duration_cast<milliseconds>(endRender - startRender.time).count(),
+          duration_cast<milliseconds>(endComposite.time - endRender).count(),
+          duration_cast<milliseconds>(endComposite.time - startRender.time).count()
         };
         std::array<int, 3> maxTimes = {0};
         std::array<int, 3> minTimes = {0};
@@ -521,7 +459,7 @@ namespace ospray {
           << "\tTouched Tiles: " << tilesForFrame.size() << "\n";
 
         dfb->reportTimings(*statsLog);
-        logProcessStatistics(*statsLog);
+        logProfilingData(*statsLog, startRender, endComposite);
         maml::logMessageTimings(*statsLog);
         *statsLog << "-----\n" << std::flush;
       }
@@ -536,13 +474,7 @@ namespace ospray {
                                                        const uint32 channelFlags)
     {
       using namespace mpicommon;
-      auto startRender = high_resolution_clock::now();
-#ifndef _WIN32
-      getrusage(RUSAGE_SELF, &prevUsage);
-#endif
-      prevWall = high_resolution_clock::now();
-
-      fb->beginFrame();
+      ProfilingPoint startRender;
 
       beginFrame(fb);
 
@@ -570,15 +502,11 @@ namespace ospray {
 
       endFrame(nullptr, channelFlags);
 
-      auto endRender = high_resolution_clock::now();
-#ifndef _WIN32
-      getrusage(RUSAGE_SELF, &curUsage);
-#endif
-      curWall = high_resolution_clock::now();
+      ProfilingPoint endRender;
 
       if (DETAILED_LOGGING && frameNumber > 5) {
         const std::array<int, 1> localTimes = {
-          duration_cast<milliseconds>(endRender - startRender).count(),
+          duration_cast<milliseconds>(endRender.time - startRender.time).count(),
         };
         std::array<int, 1> maxTimes = {0};
         std::array<int, 1> minTimes = {0};
@@ -602,7 +530,7 @@ namespace ospray {
         gethostname(hostname, 1023);
         *statsLog << "Rank " << rank << " on " << hostname << " times:\n"
           << "\tRendering: " << localTimes[0] << "ms\n";
-        logProcessStatistics(*statsLog);
+        logProfilingData(*statsLog, startRender, endRender);
       }
 
       ++frameNumber;
@@ -651,8 +579,8 @@ namespace ospray {
       auto end = std::unique(allRegions.begin(), allRegions.end());
       allRegions.erase(end, allRegions.end());
 
-#if 0
-      if (logLevel() >= 1) {
+#if 1
+      if (logLevel() >= 3) {
         for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
           if (i == mpicommon::globalRank()) {
             postStatusMsg(1) << "Rank " << mpicommon::globalRank()

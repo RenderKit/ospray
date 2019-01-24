@@ -49,21 +49,6 @@ namespace gensv {
     LoadedVolume();
   };
 
-  struct DistributedRegion {
-    box3f bounds;
-    int id;
-
-    DistributedRegion(box3f bounds, int id);
-  };
-
-  struct SharedVolumeBrick {
-    LoadedVolume vol;
-    DistributedRegion region;
-
-    SharedVolumeBrick(LoadedVolume vol, DistributedRegion region);
-    SharedVolumeBrick();
-  };
-
   /* Generate this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
@@ -77,21 +62,6 @@ namespace gensv {
    */
   LoadedVolume makeVolume();
 
-  /* Generate bricks of volume data based on some gridding. The volumes are
-   * placed in cells of the grid computed in 'computeGrid' based on the number
-   * of ranks with each rank owning a specific cell in the gridding.
-   * The coloring is based on color-mapping the ranks id. Each region
-   * can have more than one brick in the total gridding.
-   * The region occupied by the volume is then used to be the rank's
-   * overall region bounds and will be the bounding box for the
-   * generated geometry as well.
-   * Returns the ghostGridOrigin of the volume which may be outside the bounding
-   * box, due to the ghost voxels.
-   */
-  containers::AlignedVector<LoadedVolume> makeVolumes(const size_t firstBrick,
-                                                      const size_t numMine,
-                                                      const size_t numBricks);
-
   /* Load this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
@@ -100,18 +70,5 @@ namespace gensv {
    */
   LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
                           const std::string &dtype, const vec2f &valueRange);
-
-  containers::AlignedVector<SharedVolumeBrick>
-    loadBrickedVolume(const FileName &file,
-                      const vec3i &dimensions,
-                      const std::string &dtype,
-                      const vec2f &valueRange,
-                      const size_t nbricks,
-                      const size_t bricksPerRank);
-
-  containers::AlignedVector<SharedVolumeBrick>
-    loadRMBricks(const FileName &bobDir, const size_t bricksPerRank);
-
-  SharedVolumeBrick loadOSPBrick(const FileName &ospFile, const vec2f &valueRange);
 }
 

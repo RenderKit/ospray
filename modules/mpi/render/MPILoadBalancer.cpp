@@ -14,9 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <fstream>
+#include <chrono>
+
 // ours
 #include "MPILoadBalancer.h"
 #include "../fb/DistributedFrameBuffer.h"
+#include "../common/Profiling.h"
 // ospray
 #include "ospray/render/Renderer.h"
 // ospcommon
@@ -31,9 +35,33 @@ namespace ospray {
 
     using namespace mpicommon;
 
+    using namespace std::chrono;
+
+    static size_t frameNumber = 0;
+
+    static bool REPL_DETAILED_LOGGING = false;
+
     namespace staticLoadBalancer {
 
       // staticLoadBalancer::Master definitions ///////////////////////////////
+      static std::unique_ptr<std::ofstream> statsLog = nullptr;
+      void openStatsLog() {
+        auto logging = utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
+        REPL_DETAILED_LOGGING = std::stoi(logging) != 0;
+
+        if (REPL_DETAILED_LOGGING) {
+          int rank;
+          MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+          auto job_name = utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
+          std::string statsLogFile = job_name + std::string("-rank")
+            + std::to_string(rank) + ".txt";
+          statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
+        }
+      }
+
+      Master::Master() {
+        openStatsLog();
+      }
 
       float Master::renderFrame(Renderer *renderer,
                                 FrameBuffer *fb,
@@ -41,6 +69,8 @@ namespace ospray {
       {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
+
+        ProfilingPoint startRender;
 
         dfb->startNewFrame(renderer->errorThreshold);
         dfb->beginFrame();
@@ -51,6 +81,25 @@ namespace ospray {
            anything ourselves */
         dfb->waitUntilFinished();
 
+        ProfilingPoint endRender;
+
+        if (REPL_DETAILED_LOGGING) {
+          *statsLog << "-----\nFrame: " << frameNumber << "\n";
+          char hostname[1024] = {0};
+          gethostname(hostname, 1023);
+
+          *statsLog << "Master rank " << globalRank() << " on " << hostname << "\n"
+            << "Frame took: "
+            << duration_cast<milliseconds>(endRender.time - startRender.time).count()
+            << "ms\n";
+
+          dfb->reportTimings(*statsLog);
+          logProfilingData(*statsLog, startRender, endRender);
+          maml::logMessageTimings(*statsLog);
+          *statsLog << "-----\n" << std::flush;
+        }
+        ++frameNumber;
+
         return dfb->endFrame(renderer->errorThreshold);
       }
 
@@ -60,12 +109,17 @@ namespace ospray {
       }
 
       // staticLoadBalancer::Slave definitions ////////////////////////////////
+      Slave::Slave() {
+        openStatsLog();
+      }
 
       float Slave::renderFrame(Renderer *renderer,
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+
+        ProfilingPoint startRender;
 
         dfb->startNewFrame(renderer->errorThreshold);
         // dfb->beginFrame(); is called by renderer->beginFrame:
@@ -112,9 +166,32 @@ namespace ospray {
 
           fb->setTile(tile);
         });
+        auto endRender = high_resolution_clock::now();
 
         dfb->waitUntilFinished();
         renderer->endFrame(perFrameData,channelFlags);
+
+        ProfilingPoint endComposite;
+
+        if (REPL_DETAILED_LOGGING) {
+          *statsLog << "-----\nFrame: " << frameNumber << "\n";
+          char hostname[1024] = {0};
+          gethostname(hostname, 1023);
+
+          *statsLog << "Worker rank " << globalRank() << " on " << hostname << "\n"
+            << "Frame took: "
+            << duration_cast<milliseconds>(endComposite.time - startRender.time).count()
+            << "ms\n"
+            << "Local rendering took: "
+            << duration_cast<milliseconds>(endRender - startRender.time).count()
+            << "ms\n";
+
+          dfb->reportTimings(*statsLog);
+          logProfilingData(*statsLog, startRender, endComposite);
+          maml::logMessageTimings(*statsLog);
+          *statsLog << "-----\n" << std::flush;
+        }
+        ++frameNumber;
 
         return dfb->endFrame(inf); // irrelevant return value on slave, still
                                    // call to stop maml layer

@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <thread>
 #include <snappy.h>
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_TileTypes.h"
@@ -142,6 +143,9 @@ namespace ospray {
       if (pixelOp)
         pixelOp->beginFrame();
 
+      lastProgressReport = std::chrono::high_resolution_clock::now();
+      renderingProgressTiles = 0;
+
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
       _delayedMessage = this->delayedMessage;
@@ -207,6 +211,8 @@ namespace ospray {
       scheduleProcessing(msg);
     }
 
+    mpi::messaging::enableAsyncMessaging();
+
     if (isFrameComplete(0))
       closeCurrentFrame();
   }
@@ -225,16 +231,22 @@ namespace ospray {
     SCOPED_LOCK(numTilesMutex);
     numTilesCompletedThisFrame += numTiles;
 
-    // TODO: we can cut down network traffic by reporting only every 2 tiles
-    // we complete, though we can't rely on just numTiles for this b/c it
-    // will usually just be 1.
-    if (reportRenderingProgress && numTiles > 0) {
-      auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
-      ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
-      msgData->command = PROGRESS_MESSAGE;
-      msgData->numCompleted = numTiles;
-      msgData->frameID = frameID;
-      mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
+    if (reportRenderingProgress) {
+      renderingProgressTiles += numTiles;
+
+      auto now = std::chrono::high_resolution_clock::now();
+      auto timeSinceUpdate = duration_cast<milliseconds>(now - lastProgressReport);
+      if (timeSinceUpdate.count() >= 1000) {
+        auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
+        ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
+        msgData->command = PROGRESS_MESSAGE;
+        msgData->numCompleted = renderingProgressTiles;
+        msgData->frameID = frameID;
+        mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
+
+        renderingProgressTiles = 0;
+        lastProgressReport = now;
+      }
     }
 
     if (mpicommon::IamAWorker()
@@ -334,27 +346,41 @@ namespace ospray {
     frameDoneCond.wait(lock, [&]{
       return frameIsDone;
     });
-    auto endWaitFrame = high_resolution_clock::now();
-    waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
-
-    mpi::messaging::disableAsyncMessaging();
 
     // Broadcast the rendering cancellation status to the workers
     // First we barrier to sync that this Bcast is actually picked up by the
     // right code path. Otherwise it may match with the command receiving
     // bcasts in the worker loop.
-    MPI_CALL(Barrier(world.comm));
+    MPI_Request allFrameFinished;
+    {
+      auto mpilock = mpicommon::acquireMPILock();
+      MPI_CALL(Ibarrier(world.comm, &allFrameFinished));
+    }
+
+    int barrierFinished = 0;
+    while (!barrierFinished) {
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      auto mpilock = mpicommon::acquireMPILock();
+      MPI_CALL(Test(&allFrameFinished, &barrierFinished, MPI_STATUS_IGNORE));
+    }
+
     frameIsActive = false;
+    mpi::messaging::disableAsyncMessaging();
+
+    auto endWaitFrame = high_resolution_clock::now();
+    waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
 
     // Report that we're 100% done and do a final check for cancellation
-    if (!api::currentDevice().reportProgress(1.0)) {
+    if (reportRenderingProgress && !api::currentDevice().reportProgress(1.0)) {
       cancelRendering = true;
     }
 
-    int renderingCancelled = cancelRendering.load();
-    MPI_CALL(Bcast(&renderingCancelled, 1, MPI_INT, masterRank(), world.comm));
-    if (renderingCancelled) {
-      return;
+    if (reportRenderingProgress) {
+      int renderingCancelled = cancelRendering.load();
+      MPI_CALL(Bcast(&renderingCancelled, 1, MPI_INT, masterRank(), world.comm));
+      if (renderingCancelled) {
+        return;
+      }
     }
 
     if (colorBufferFormat != OSP_FB_NONE) {
@@ -505,7 +531,7 @@ namespace ospray {
   {
     globalTilesCompletedThisFrame += msg->numCompleted;
     const float progress = globalTilesCompletedThisFrame / (float)getTotalTiles();
-    if (!api::currentDevice().reportProgress(progress)) {
+    if (reportRenderingProgress && !api::currentDevice().reportProgress(progress)) {
       sendCancelRenderingMessage();
     }
   }
@@ -601,13 +627,14 @@ namespace ospray {
     using namespace mpicommon;
     using namespace std::chrono;
 
+    auto preGatherComputeStart = high_resolution_clock::now();
+
     const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer,
                                           hasNormalBuffer, hasAlbedoBuffer);
 
     const size_t totalTilesExpected = std::accumulate(numTilesExpected.begin(),
                                                       numTilesExpected.end(),
                                                       0);
-    std::vector<char> tileGatherResult;
     std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
     std::vector<int> processOffsets(numGlobalRanks(), 0);
     if (IamTheMaster()) {
@@ -629,7 +656,6 @@ namespace ospray {
 #if 1
     const size_t renderedTileBytes = nextTileWrite.load();
     size_t compressedSize = 0;
-    std::vector<char> compressedBuf;
     if (renderedTileBytes > 0) {
       auto startCompr = high_resolution_clock::now();
       compressedSize = snappy::MaxCompressedLength(renderedTileBytes);
@@ -643,6 +669,8 @@ namespace ospray {
     }
 
     auto startGather = high_resolution_clock::now();
+    preGatherDuration = duration_cast<RealMilliseconds>(startGather - preGatherComputeStart);
+
     // We've got to use an int since Gatherv only takes int counts.
     // However, it's pretty unlikely we'll reach the point where someone
     // is sending 2GB in final tile data from a single process
@@ -660,7 +688,7 @@ namespace ospray {
       offset += gatherSizes[i];
     }
 
-    std::vector<char> compressedResults(offset, 0);
+    compressedResults.resize(offset, 0);
     MPI_CALL(Gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
                      compressedResults.data(), gatherSizes.data(),
                      compressedOffsets.data(), MPI_BYTE,
@@ -881,7 +909,6 @@ namespace ospray {
     reportRenderingProgress = api::currentDevice().hasProgressCallback();
     MPI_CALL(Bcast(&reportRenderingProgress, 1, MPI_INT,
                    mpicommon::masterRank(), mpicommon::world.comm));
-    mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }
 
@@ -926,7 +953,8 @@ namespace ospray {
     os << "Gather time: " << localWaitTime << "ms\n"
       << "Waiting for frame: " << waitFrameFinishTime.count() << "ms\n"
       << "Compress time: " << compressTime.count() << "ms\n"
-      << "Compressed buffer size: " << compressedPercent << "%\n";
+      << "Compressed buffer size: " << compressedPercent << "%\n"
+      << "Pre-gather compute time: " << preGatherDuration.count() << "ms\n";
 
     double maxWaitTime, minWaitTime;
     MPI_Reduce(&localWaitTime, &maxWaitTime, 1, MPI_DOUBLE,

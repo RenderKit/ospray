@@ -27,11 +27,11 @@ Arcball::Arcball(const box3f &worldBounds, const vec2i &screenDims)
 {
   vec3f diag = worldBounds.size();
   zoomSpeed = max(length(diag) / 150.0, 0.001);
-  diag = max(diag, vec3f(0.3f * length(diag)));
+  diag = max(diag, vec3f(0.3 * length(diag)));
 
   centerTranslation = AffineSpace3f::translate(-worldBounds.center());
-  translation = AffineSpace3f::translate(vec3f(0, 0, length(diag)));
-  updateCamera();
+  translation = AffineSpace3f::translate(vec3f(0, 0, 0.9 * length(diag)));
+  rotate(vec2f(0.5, 0.5), vec2f(0.7, 0.4));
 }
 void Arcball::rotate(const vec2f &from, const vec2f &to) {
   rotation = screenToArcball(to) * screenToArcball(from) * rotation;

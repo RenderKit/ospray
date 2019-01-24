@@ -37,6 +37,7 @@ namespace ospray {
       */
       struct Master : public TiledLoadBalancer
       {
+        Master();
         float renderFrame(Renderer *tiledRenderer,
                           FrameBuffer *fb,
                           const uint32 channelFlags) override;
@@ -52,6 +53,7 @@ namespace ospray {
       */
       struct Slave : public TiledLoadBalancer
       {
+        Slave();
         float renderFrame(Renderer *tiledRenderer,
                           FrameBuffer *fb,
                           const uint32 channelFlags) override;

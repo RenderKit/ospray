@@ -41,6 +41,7 @@ if (OSPRAY_MODULE_MPI)
     common/Messaging.cpp
     common/DistributedModel.cpp
     common/DistributedModel.ispc
+    common/Profiling.cpp
 
     fb/DistributedFrameBuffer.cpp
     fb/DistributedFrameBuffer.ispc

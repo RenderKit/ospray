@@ -16,31 +16,31 @@
 
 #pragma once
 
-#include <cstdio>
-#include "ospcommon/containers/AlignedVector.h"
-#include "ospcommon/FileName.h"
-#include "ospcommon/vec.h"
-#include "raw_reader.h"
+#ifndef _WIN32
+#include <sys/times.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
 
-namespace gensv {
+#include <chrono>
+#include <ostream>
 
-class LLNLRMReader {
-  ospcommon::FileName bobDir;
-  int timestep;
+namespace ospray {
+  namespace mpi {
 
-public:
-  // The directory format should be .*/bobNNN where NNN is the timestep
-  LLNLRMReader(const ospcommon::FileName &bobDir);
-  void loadBlock(const size_t blockID,
-                 ospcommon::containers::AlignedVector<char> &data) const;
-  static size_t numBlocks();
-  static vec3sz blockGrid();
-  static vec3sz blockSize();
-  static vec3sz dimensions();
-};
+    struct ProfilingPoint {
+#ifndef _WIN32
+      rusage usage;
+#endif
+      std::chrono::high_resolution_clock::time_point time;
 
-// we can also hard-code in to read the mesh the format for that
-// is pretty straightforward.
+      ProfilingPoint();
+    };
 
+    void logProfilingData(std::ostream &os, const ProfilingPoint &start,
+                          const ProfilingPoint &end);
+  }
 }
 

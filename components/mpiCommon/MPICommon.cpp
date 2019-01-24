@@ -17,6 +17,7 @@
 #include "MPICommon.h"
 
 namespace mpicommon {
+  static std::mutex mpiMutex;
 
   OSPRAY_MPI_INTERFACE bool mpiIsThreaded = false;
 
@@ -146,12 +147,28 @@ namespace mpicommon {
       /* MPI was already initialized by the app that called us! */
       MPI_Query_thread(&provided);
     }
+    if (provided != MPI_THREAD_MULTIPLE && provided != MPI_THREAD_SERIALIZED) {
+      throw std::runtime_error("MPI initialization error: The MPI runtime must"
+                               " support either MPI_THREAD_MULTIPLE or"
+                               " MPI_THREAD_SERIALIZED.");
+    }
     mpiIsThreaded = provided == MPI_THREAD_MULTIPLE;
 
     if (useCommWorld) {
       world.setTo(MPI_COMM_WORLD);
     }
     return !initialized;
+  }
+
+  std::unique_lock<std::mutex> acquireMPILock()
+  {
+    if (!mpiIsThreaded) {
+      return std::unique_lock<std::mutex>(mpiMutex);
+    } else {
+      // If we have a threaded MPI "defer" the lock, to just never lock it,
+      // since we don't need to.
+      return std::unique_lock<std::mutex>(mpiMutex, std::defer_lock);
+    }
   }
 
 } // ::mpicommon

@@ -20,6 +20,7 @@
 #include "render/util.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
+#include "render/scivis/SciVisMaterial.ih"
 
 struct DistributedRegion
 {
@@ -34,6 +35,7 @@ struct DistributedRaycastRenderer
   uniform DistributedRegion *uniform regions;
   uniform int numRegions;
   uniform int aoSamples;
+  uniform bool shadowsEnabled;
   uniform Model *uniform *uniform myRegions;
   uniform Model *uniform *uniform ghostRegions;
 };
@@ -295,18 +297,41 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       dg.color = make_vec4f(0.f);
       postIntersect(model, dg, geomRay,
                     DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
-      const vec3f matColor = make_vec3f(dg.color);
-      const vec3f specColor = make_vec3f(0.6);
+
+      vec3f specColor = make_vec3f(0.6);
+      float shininess = 20.f;
+      if (dg.material) {
+        SciVisMaterial *mat = (SciVisMaterial*)dg.material;
+        dg.color = make_vec4f(mat->Kd, mat->d);
+        specColor = mat->Ks;
+        shininess = mat->Ns;
+      }
+      vec3f matColor = make_vec3f(dg.color);
       const vec3f viewDir = normalize(negate(geomRay.dir));
-      // TODO: read the light params?
-      const vec3f lightDir = normalize(make_vec3f(1.0));
-      const vec3f dgNormal = normalize(dg.Ns);
+      // TODO: read the light params
+      const vec3f lightDir = normalize(make_vec3f(0.25, -0.25, 0.2));
+      vec3f dgNormal = normalize(dg.Ns);
+      if (dot(dgNormal, viewDir) < 0.0) {
+        dgNormal = neg(dgNormal);
+      }
+
+      Ray shadowRay;
+      setRay(shadowRay, dg.P, lightDir);
       // Hard-coded Blinn-Phong. TODO: Materials API support
       vec3f geomColor = matColor * make_vec3f(0.1);
       if (dot(lightDir, dgNormal) > 0.0) {
-        geomColor = geomColor + matColor * dot(lightDir, dgNormal)
-          + specColor * pow(dot(dgNormal, normalize(viewDir + lightDir)), 20);
+        bool occluded = false;
+        if (self->shadowsEnabled) {
+          occluded = isOccluded(model, shadowRay)
+            || (ghostModel && isOccluded(ghostModel, shadowRay));
+        }
+
+        if (!occluded) {
+          geomColor = geomColor + matColor * dot(lightDir, dgNormal)
+            + specColor * pow(dot(dgNormal, normalize(viewDir + lightDir)), shininess);
+        }
       }
+
       float occlusion = 1.0;
       if (self->aoSamples > 0) {
         occlusion = DRR_computeAmbientOcclusion(self,
@@ -316,6 +341,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
                                                 dg,
                                                 dgNormal);
       }
+
       currentContribution = make_vec4f(geomColor * occlusion, dg.color.w);
 
       geomRay.t0 = geomRay.t + dg.epsilon;
@@ -345,6 +371,7 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   self->regions = NULL;
   self->numRegions = 0;
   self->aoSamples = 0;
+  self->shadowsEnabled = false;
   self->ghostRegions = NULL;
 
   return self;
@@ -352,8 +379,9 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
 
 export void DistributedRaycastRenderer_set(void *uniform _self,
                                            void *uniform regions,
-                                           const uniform int uniform numRegions,
-                                           const uniform int uniform aoSamples,
+                                           const uniform int numRegions,
+                                           const uniform int aoSamples,
+                                           const uniform bool shadowsEnabled,
                                            void *uniform *uniform myRegions,
                                            void *uniform *uniform ghostRegions)
 {
@@ -361,11 +389,14 @@ export void DistributedRaycastRenderer_set(void *uniform _self,
     (uniform DistributedRaycastRenderer *uniform)_self;
   // Correct the params the parent probably got wrong if we took
   // a list of OSPModels
-  self->super.model = NULL;
+  if (regions != NULL) {
+    self->super.model = NULL;
+  }
 
   self->regions = (uniform DistributedRegion *uniform)regions;
   self->numRegions = numRegions;
   self->aoSamples = aoSamples;
+  self->shadowsEnabled = shadowsEnabled;
   self->myRegions = (uniform Model *uniform *uniform)myRegions;
   self->ghostRegions = (uniform Model *uniform *uniform)ghostRegions;
 }

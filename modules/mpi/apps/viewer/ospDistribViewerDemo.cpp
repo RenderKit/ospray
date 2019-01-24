@@ -18,9 +18,13 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <random>
+#if SHOW_WINDOW
 #include <GLFW/glfw3.h>
+#endif
 #include <mpiCommon/MPICommon.h>
 #include <mpi.h>
+#include "ospcommon/utility/SaveImage.h"
 #include "ospray/ospray_cpp/Camera.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/Device.h"
@@ -37,7 +41,7 @@
 #include "common/imgui/imgui.h"
 #include "gensv/generateSciVis.h"
 #include "arcball.h"
-#include "gensv/llnlrm_reader.h"
+#include "common/sg/3rdParty/tiny_obj_loader.h"
 
 /* This app demonstrates how to write an distributed scivis style
  * interactive renderer using the distributed MPI device. Note that because
@@ -75,29 +79,16 @@ std::string volumeFile = "";
 std::string dtype = "";
 vec3i dimensions = vec3i(-1);
 vec2f valueRange = vec2f(-1);
+
 size_t nSpheres = 0;
-float varianceThreshold = 0.0f;
 FileName transferFcnFile;
-bool appInitMPI = false;
-size_t nlocalBricks = 1;
-float sphereRadius = 0.005;
+float sphereRadius = 1.0;
 bool transparentSpheres = false;
+
 int aoSamples = 0;
-int nBricks = -1;
-int bricksPerRank = 1;
-bool llnlrm = false;
-bool fbnone = false;
-const int IMG_SIZE = 512;
+int shadowsEnabled = 0;
 
-std::vector<std::string> osp_bricks;
-
-struct RIVLFile {
-  std::string file;
-  size_t ofsVerts, numVerts;
-  size_t ofsPrims, numPrims;
-};
-
-RIVLFile rivl;
+vec2i imgSize(512, 512);
 
 // Struct for bcasting out the camera change info and general app state
 struct AppState {
@@ -106,7 +97,7 @@ struct AppState {
   vec2i fbSize;
   bool cameraChanged, quit, fbSizeChanged, tfcnChanged;
 
-  AppState() : fbSize(IMG_SIZE), cameraChanged(false), quit(false),
+  AppState() : fbSize(imgSize), cameraChanged(false), quit(false),
     fbSizeChanged(false)
   {}
 };
@@ -125,6 +116,7 @@ struct WindowState {
   {}
 };
 
+#if SHOW_WINDOW
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   WindowState *state = static_cast<WindowState*>(glfwGetWindowUserPointer(window));
   if (action == GLFW_PRESS) {
@@ -171,7 +163,7 @@ void cursorPosCallback(GLFWwindow *window, double x, double y) {
     } else if (rightDown) {
       state->camera.zoom(mouse.y - prev.y);
     } else if (middleDown) {
-      state->camera.pan(vec2f(mouse.x - prev.x, prev.y - mouse.y));
+      state->camera.pan(vec2f(prev.x - mouse.x, prev.y - mouse.y));
     }
   }
   state->prevMouse = mouse;
@@ -187,6 +179,7 @@ void charCallback(GLFWwindow *, unsigned int c) {
     io.AddInputCharacter((unsigned short)c);
   }
 }
+#endif
 
 void parseArgs(int argc, char **argv)
 {
@@ -205,42 +198,23 @@ void parseArgs(int argc, char **argv)
       valueRange.y = std::atof(argv[++i]);
     } else if (arg == "-spheres") {
       nSpheres = std::atol(argv[++i]);
-    } else if (arg == "-variance") {
-      varianceThreshold = std::atof(argv[++i]);
     } else if (arg == "-tfn") {
       transferFcnFile = argv[++i];
-    } else if (arg == "-appMPI") {
-      appInitMPI = true;
-    } else if (arg == "-nlocal-bricks") {
-      nlocalBricks = std::stol(argv[++i]);
     } else if (arg == "-radius") {
       sphereRadius = std::stof(argv[++i]);
     } else if (arg == "-transparent-spheres") {
       transparentSpheres = true;
     } else if (arg == "-ao") {
       aoSamples = std::stoi(argv[++i]);
-    } else if (arg == "-nbricks") {
-      nBricks = std::stoi(argv[++i]);
-    } else if (arg == "-bpr") {
-      bricksPerRank = std::stoi(argv[++i]);
-    } else if (arg == "-bob") {
-      llnlrm = true;
-    } else if (arg == "-rivl") {
-      rivl.file = argv[++i];
-      rivl.ofsVerts = std::stoull(argv[++i]);
-      rivl.numVerts = std::stoull(argv[++i]);
-      rivl.ofsPrims = std::stoull(argv[++i]);
-      rivl.numPrims = std::stoull(argv[++i]);
-    } else if (arg == "-osp-brick") {
-      ++i;
-      for (; i < argc && argv[i][0] != '-'; ++i) {
-        osp_bricks.push_back(argv[i]);
-      }
-    } else if (arg == "-fb-none") {
-      fbnone = true;
+    } else if (arg == "-w") {
+      imgSize.x = std::atoi(argv[++i]);
+    } else if (arg == "-h") {
+      imgSize.y = std::atoi(argv[++i]);
+    } else if (arg == "-shadows") {
+      shadowsEnabled = 1;
     }
   }
-  if (!volumeFile.empty() && !llnlrm) {
+  if (!volumeFile.empty()) {
     if (dtype.empty()) {
       std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
       std::exit(1);
@@ -251,10 +225,6 @@ void parseArgs(int argc, char **argv)
     }
     if (valueRange == vec2f(-1)) {
       std::cerr << "Error: -range X Y is required to set transfer function range\n";
-      std::exit(1);
-    }
-    if (nlocalBricks != 1) {
-      std::cerr << "Error: -nlocal-bricks only makes supported for generated volumes\n";
       std::exit(1);
     }
   }
@@ -281,135 +251,46 @@ void runApp()
   std::cout << "Rank " << rank << "/" << worldSize << "\n";
 
   AppState app;
-  containers::AlignedVector<gensv::LoadedVolume> volumes;
-  containers::AlignedVector<gensv::SharedVolumeBrick> bricks;
+  gensv::LoadedVolume volume;
   box3f worldBounds;
-  if (!osp_bricks.empty()) {
-    if (osp_bricks.size() != worldSize) {
-      throw std::runtime_error("OSP Brick count must match number of ranks");
-    }
-    const std::string my_brick = osp_bricks[rank];
-    bricks.push_back(gensv::loadOSPBrick(my_brick, valueRange));
 
-    MPI_Allreduce(&bricks[0].region.bounds.lower, &worldBounds.lower, 3,
-                  MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
-    MPI_Allreduce(&bricks[0].region.bounds.upper, &worldBounds.upper, 3,
-                  MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
-
-    std::cout << "World bounds: " << worldBounds << "\n";
-
-  } else if (!volumeFile.empty()) {
-    if (nBricks == -1) {
-      nBricks = worldSize;
-    }
-    if (!llnlrm) {
-      bricks = gensv::loadBrickedVolume(volumeFile, dimensions,
-                                        dtype, valueRange,
-                                        nBricks, bricksPerRank);
-    } else {
-      bricks = gensv::loadRMBricks(volumeFile, bricksPerRank);
-      dimensions = gensv::LLNLRMReader::dimensions();
-    }
-
+  if (!volumeFile.empty()) {
+    volume = gensv::loadVolume(volumeFile,
+                                dimensions,
+                                dtype,
+                                valueRange);
     worldBounds = box3f(vec3f(0), vec3f(dimensions));
-
-    // Pick a nice sphere radius for a consisten voxel size to
-    // sphere size ratio
-    sphereRadius *= dimensions.x;
   } else {
-    volumes = gensv::makeVolumes(rank * nlocalBricks, nlocalBricks,
-        worldSize * nlocalBricks);
+    volume = gensv::makeVolume();
 
-    // Translate the volume to center it
-    worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
-    for (auto &v : volumes) {
-      v.bounds.lower -= vec3f(0.5f);
-      v.bounds.upper -= vec3f(0.5f);
-      v.volume.set("gridOrigin", v.ghostGridOrigin - vec3f(0.5f));
-    }
+    const vec3f upperBound = vec3f(128) * gensv::computeGrid(worldSize);
+    worldBounds = box3f(vec3f(0), upperBound);
   }
 
-  containers::AlignedVector<Model> models, ghostModels;
-  // Generated volumes
-  for (size_t i = 0; i < volumes.size(); ++i) {
-    auto &v = volumes[i];
-    v.volume.commit();
-    Model m;
-    m.addVolume(v.volume);
-    // All ranks generate the same sphere data to mimic rendering a distributed
-    // shared dataset
-    if (nSpheres != 0) {
-      auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
-                                        sphereRadius, transparentSpheres);
-      m.addGeometry(spheres);
-      // If we're setting spheres we need to enforce an explicit region bound
-      m.set("region.lower", v.bounds.lower);
-      m.set("region.upper", v.bounds.upper);
+  Model model;
+  Model ghostModel;
+  volume.volume.commit();
+  model.addVolume(volume.volume);
 
-      Model g;
-      g.addGeometry(spheres);
-      ghostModels.push_back(g);
-    }
-    m.set("id", int(rank * nlocalBricks + i));
-    models.push_back(m);
+  // All ranks generate the same sphere data to mimic rendering a distributed
+  // shared dataset
+  if (nSpheres != 0) {
+    auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
+        sphereRadius, transparentSpheres);
+    model.addGeometry(spheres);
+
+    ghostModel.addGeometry(spheres);
+    ghostModel.set("id", rank);
+    ghostModel.commit();
   }
 
-  // Loaded bricks
-  for (size_t i = 0; i < bricks.size(); ++i) {
-    auto &v = bricks[i].vol;
-    v.volume.commit();
-    Model m;
-    m.addVolume(v.volume);
-    // All ranks generate the same sphere data to mimic rendering a distributed
-    // shared dataset
-    if (nSpheres != 0) {
-      auto spheres = gensv::makeSpheres(worldBounds, nSpheres,
-                                        sphereRadius, transparentSpheres);
-      m.addGeometry(spheres);
-      // If we're setting spheres we need to enforce an explicit region bound
-      m.set("region.lower", v.bounds.lower);
-      m.set("region.upper", v.bounds.upper);
+  // Clip off any ghost voxels or spheres
+  model.set("region.lower", volume.bounds.lower);
+  model.set("region.upper", volume.bounds.upper);
+  model.set("id", rank);
+  model.commit();
 
-      Model g;
-      g.addGeometry(spheres);
-      ghostModels.push_back(g);
-    }
-    m.set("id", bricks[i].region.id);
-    models.push_back(m);
-  }
-
-  /*
-  if (!rivl.file.empty()) {
-    std::cout << "loading rivl " << rivl.file << "\n";
-    FILE *fp = fopen(rivl.file.c_str(), "rb");
-    std::vector<vec3f> verts(rivl.numVerts, vec3f(0));
-    std::vector<vec4i> prims(rivl.numPrims, vec4i(0));
-    if (fread(verts.data(), sizeof(vec3f), verts.size(), fp) != rivl.numVerts) {
-      throw std::runtime_error("error reading rivl verts");
-    }
-    if (fread(prims.data(), sizeof(vec4i), prims.size(), fp) != rivl.numPrims) {
-      throw std::runtime_error("error reading rivl prims");
-      
-    }
-    Data vertData(verts.size(), OSP_FLOAT3, verts.data());
-    Data primData(prims.size(), OSP_INT4, prims.data());
-    vertData.commit();
-    primData.commit();
-    Geometry mesh("triangles");
-    mesh.set("vertex", vertData);
-    mesh.set("index", primData);
-    mesh.commit();
-    model.addGeometry(mesh);
-  }
-  */
-  for (auto &m : models) {
-    m.commit();
-  }
-  for (auto &m : ghostModels) {
-    m.commit();
-  }
-
-  Arcball arcballCamera(worldBounds, vec2i(IMG_SIZE, IMG_SIZE));
+  Arcball arcballCamera(worldBounds, imgSize);
 
   Camera camera("perspective");
   camera.set("pos", arcballCamera.eyePos());
@@ -419,48 +300,89 @@ void runApp()
   camera.commit();
 
   Renderer renderer("mpi_raycast");
-
-  std::vector<OSPModel> modelHandles;
-  std::transform(models.begin(), models.end(), std::back_inserter(modelHandles),
-                 [](const Model &m) { return m.handle(); });
-  Data modelsData(modelHandles.size(), OSP_OBJECT, modelHandles.data());
-
-  std::vector<OSPModel> ghostModelHandles;
-  std::transform(ghostModels.begin(), ghostModels.end(), std::back_inserter(ghostModelHandles),
-                 [](const Model &m) { return m.handle(); });
-  Data ghostModelsData(ghostModelHandles.size(), OSP_OBJECT, ghostModelHandles.data());
-
-  renderer.set("model", modelsData);
-  renderer.set("ghostModel", ghostModelsData);
+  renderer.set("model", model);
+  if (nSpheres != 0) {
+    renderer.set("ghostModel", ghostModel);
+  }
   renderer.set("camera", camera);
-  renderer.set("bgColor", vec4f(0.02, 0.02, 0.02, 0.0));
-  renderer.set("varianceThreshold", varianceThreshold);
   renderer.set("aoSamples", aoSamples);
+  renderer.set("shadowsEnabled", shadowsEnabled);
+  renderer.set("bgColor", vec3f(0.01f));
   renderer.commit();
   assert(renderer);
 
-  const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE;
+  const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM;
+
   OSPFrameBufferFormat fbColorFormat = OSP_FB_SRGBA;
-  if (fbnone) {
-    fbColorFormat = OSP_FB_NONE;
-  }
   FrameBuffer fb(app.fbSize, fbColorFormat, fbFlags);
-  if (fbnone) {
-    PixelOp pixelOp("debug");
-    pixelOp.set("prefix", "distrib-viewer");
-    pixelOp.commit();
-    fb.setPixelOp(pixelOp);
-  }
   fb.commit();
   fb.clear(fbFlags);
 
   mpicommon::world.barrier();
 
-  std::shared_ptr<ospray::sg::TransferFunction> transferFcn;
-  std::shared_ptr<ospray::imgui3D::TransferFunction> tfnWidget;
+  std::mt19937 rng;
+  std::uniform_real_distribution<float> randomCamDistrib;
+
+  containers::AlignedVector<vec3f> tfcnColors;
+  containers::AlignedVector<float> tfcnAlphas;
+
+  std::shared_ptr<ospray::sg::TransferFunction> transferFcn = nullptr;
+  std::shared_ptr<ospray::imgui3D::TransferFunction> tfnWidget = nullptr;
   std::shared_ptr<WindowState> windowState;
   GLFWwindow *window = nullptr;
   if (rank == 0) {
+    transferFcn = std::make_shared<ospray::sg::TransferFunction>();
+
+#if SHOW_WINDOW
+    tfnWidget = std::make_shared<ospray::imgui3D::TransferFunction>(transferFcn);
+    tfnWidget->loadColorMapPresets();
+#endif
+
+    if (!transferFcnFile.str().empty()) {
+#if SHOW_WINDOW
+      tfnWidget->load(transferFcnFile);
+#else
+      tfn::TransferFunction loaded(transferFcnFile);
+      transferFcn->child("valueRange").setValue(valueRange);
+
+      auto &colorCP = *transferFcn->child("colorControlPoints").nodeAs<ospray::sg::DataVector4f>();
+      auto &opacityCP = *transferFcn->child("opacityControlPoints").nodeAs<ospray::sg::DataVector2f>();
+      opacityCP.clear();
+      colorCP.clear();
+
+      for (size_t i = 0; i < loaded.rgbValues.size(); ++i) {
+        colorCP.push_back(vec4f(static_cast<float>(i) / loaded.rgbValues.size(),
+                                loaded.rgbValues[i].x,
+                                loaded.rgbValues[i].y,
+                                loaded.rgbValues[i].z));
+      }
+      for (size_t i = 0; i < loaded.opacityValues.size(); ++i) {
+        const float x = (loaded.opacityValues[i].x - loaded.dataValueMin)
+                      / (loaded.dataValueMax - loaded.dataValueMin);
+        opacityCP.push_back(vec2f(x, loaded.opacityValues[i].y));
+      }
+
+      opacityCP.markAsModified();
+      colorCP.markAsModified();
+
+      transferFcn->updateChildDataValues();
+      auto &colors    = *transferFcn->child("colors").nodeAs<ospray::sg::DataBuffer>();
+      auto &opacities = *transferFcn->child("opacities").nodeAs<ospray::sg::DataBuffer>();
+
+      colors.markAsModified();
+      opacities.markAsModified();
+
+      transferFcn->commit();
+
+      tfcnColors = transferFcn->child("colors").nodeAs<ospray::sg::DataVector3f>()->v;
+      const auto &ospAlpha = transferFcn->child("opacities").nodeAs<ospray::sg::DataVector1f>()->v;
+      tfcnAlphas.clear();
+      std::copy(ospAlpha.begin(), ospAlpha.end(), std::back_inserter(tfcnAlphas));
+      app.tfcnChanged = true;
+#endif
+    }
+
+#if SHOW_WINDOW
     if (!glfwInit()) {
       std::cerr << "Failed to init GLFW" << std::endl;
       std::exit(1);
@@ -475,12 +397,6 @@ void runApp()
     glfwMakeContextCurrent(window);
 
     windowState = std::make_shared<WindowState>(app, arcballCamera);
-    transferFcn = std::make_shared<ospray::sg::TransferFunction>();
-    tfnWidget = std::make_shared<ospray::imgui3D::TransferFunction>(transferFcn);
-    tfnWidget->loadColorMapPresets();
-    if (!transferFcnFile.str().empty()) {
-      tfnWidget->load(transferFcnFile);
-    }
 
     ImGui_ImplGlfwGL3_Init(window, false);
 
@@ -492,10 +408,9 @@ void runApp()
     glfwSetMouseButtonCallback(window, ImGui_ImplGlfwGL3_MouseButtonCallback);
     glfwSetScrollCallback(window, ImGui_ImplGlfwGL3_ScrollCallback);
     glfwSetCharCallback(window, charCallback);
+#endif
   }
 
-  containers::AlignedVector<vec3f> tfcnColors;
-  containers::AlignedVector<float> tfcnAlphas;
   while (!app.quit) {
     using namespace std::chrono;
 
@@ -516,18 +431,17 @@ void runApp()
 
     if (rank == 0) {
       glClear(GL_COLOR_BUFFER_BIT);
-      if (!fbnone) {
-        uint32_t *img = (uint32_t*)fb.map(OSP_FB_COLOR);
-        glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
-        fb.unmap(img);
-      }
+      uint32_t *img = (uint32_t*)fb.map(OSP_FB_COLOR);
+      glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
+      fb.unmap(img);
 
+#if SHOW_WINDOW
       const auto tfcnTimeStamp = transferFcn->childrenLastModified();
 
       ImGui_ImplGlfwGL3_NewFrame();
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                  1000.0f / ImGui::GetIO().Framerate,
-                  ImGui::GetIO().Framerate);
+          1000.0f / ImGui::GetIO().Framerate,
+          ImGui::GetIO().Framerate);
       ImGui::Text("OSPRay render time %d ms/frame", renderTime);
       tfnWidget->drawUi();
       ImGui::Render();
@@ -560,6 +474,7 @@ void runApp()
       app.cameraChanged = windowState->cameraChanged;
       windowState->cameraChanged = false;
       windowState->isImGuiHovered = ImGui::IsMouseHoveringAnyWindow();
+#endif
     }
     // Send out the shared app state that the workers need to know, e.g. camera
     // position, if we should be quitting.
@@ -599,20 +514,22 @@ void runApp()
       colorData.commit();
       alphaData.commit();
 
-      for (auto &v : volumes) {
-        v.tfcn.set("colors", colorData);
-        v.tfcn.set("opacities", alphaData);
-        v.tfcn.commit();
-      }
-      for (auto &b : bricks) {
-        b.vol.tfcn.set("colors", colorData);
-        b.vol.tfcn.set("opacities", alphaData);
-        b.vol.tfcn.commit();
-      }
+      volume.tfcn.set("colors", colorData);
+      volume.tfcn.set("opacities", alphaData);
+      volume.tfcn.commit();
 
       fb.clear(fbFlags);
       app.tfcnChanged = false;
     }
+
+#if !SHOW_WINDOW
+    const vec3f eye = arcballCamera.eyePos();
+    const vec3f look = arcballCamera.lookDir();
+    const vec3f up = arcballCamera.upDir();
+    app.v[0] = vec3f(eye.x, eye.y, eye.z);
+    app.v[1] = vec3f(look.x, look.y, look.z);
+    app.v[2] = vec3f(up.x, up.y, up.z);
+#endif
   }
   if (rank == 0) {
       ImGui_ImplGlfwGL3_Shutdown();
@@ -628,20 +545,18 @@ int main(int argc, char **argv) {
   // or can let OSPRay's mpi_distributed device handle it. In the case that
   // the distributed device is responsible MPI will be initialized when the
   // device is created and finalized when it's destroyed.
-  if (appInitMPI) {
-    int provided = 0;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-    assert(provided == MPI_THREAD_MULTIPLE);
-  }
+  int provided = 0;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+  assert(provided == MPI_THREAD_MULTIPLE);
 
   runApp();
 
   ospShutdown();
+
   // If the app is responsible for setting up MPI we've also got
   // to finalize it at the exit
-  if (appInitMPI) {
-    MPI_Finalize();
-  }
+  MPI_Finalize();
+
   return 0;
 }
 

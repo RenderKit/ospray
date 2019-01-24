@@ -73,6 +73,7 @@ namespace ospray {
       void exchangeModelBounds();
 
       int numAoSamples;
+      bool shadowsEnabled;
       PerspectiveCamera *camera;
       std::unique_ptr<std::ofstream> statsLog;
 

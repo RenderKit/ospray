@@ -116,11 +116,15 @@ namespace ospray {
     std::vector<RealMilliseconds> queueTimes;
     std::vector<RealMilliseconds> workTimes;
     RealMilliseconds finalGatherTime, masterTileWriteTime,
-                     waitFrameFinishTime, compressTime, decompressTime;
+                     waitFrameFinishTime, compressTime, decompressTime,
+                     preGatherDuration;
     double compressedPercent;
     std::mutex statsMutex;
 
+    std::vector<char> compressedBuf;
+    std::vector<char> tileGatherResult;
     std::vector<char> tileGatherBuffer;
+    std::vector<char> compressedResults;
     std::atomic<size_t> nextTileWrite;
 
     friend struct TileData;
@@ -244,6 +248,8 @@ namespace ospray {
     bool masterIsAWorker {false};
 
     int reportRenderingProgress;
+    int renderingProgressTiles;
+    std::chrono::high_resolution_clock::time_point lastProgressReport;
 
     //! condition that gets triggered when the frame is done
     std::condition_variable frameDoneCond;
