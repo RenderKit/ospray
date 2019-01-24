@@ -109,18 +109,20 @@ namespace gensv {
     const float r = (numRanks - myRank) / numRanks;
     const float b = myRank / numRanks;
     const float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
-    vec4f color(r, g, b, 1.0);
+    vec3f color(r, g, b);
+    ospray::cpp::Material material("scivis", "OBJMaterial");
+    material.set("Kd", color);
+    material.set("Ks", vec3f(1.f));
     if (transparent) {
-      color.w = 0.1;
+      material.set("d", 0.2);
     }
-    ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
+    material.commit();
 
     ospray::cpp::Geometry geom("spheres");
-    geom.set("offset_colorID", int(sizeof(vec3f)));
     geom.set("bytes_per_sphere", int(sizeof(Sphere)));
     geom.set("spheres", sphere_data);
     geom.set("radius", sphereRadius);
-    geom.set("color", color_data);
+    geom.setMaterial(material);
     geom.commit();
 
     return geom;

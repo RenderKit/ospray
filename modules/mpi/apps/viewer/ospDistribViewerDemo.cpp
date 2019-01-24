@@ -299,6 +299,17 @@ void runApp()
   camera.set("aspect", static_cast<float>(app.fbSize.x) / app.fbSize.y);
   camera.commit();
 
+  Light ambientLight("ambient");
+  ambientLight.set("intensity", 0.2);
+  ambientLight.commit();
+  Light distantLight("distant");
+  distantLight.set("direction", vec3f(-1, -1, 1));
+  distantLight.commit();
+
+  std::array<OSPObject, 2> lights = {distantLight.object(), ambientLight.object()};
+  Data lightData(2, OSP_OBJECT, lights.data());
+  lightData.commit();
+
   Renderer renderer("mpi_raycast");
   renderer.set("model", model);
   if (nSpheres != 0) {
@@ -308,6 +319,7 @@ void runApp()
   renderer.set("aoSamples", aoSamples);
   renderer.set("shadowsEnabled", shadowsEnabled);
   renderer.set("bgColor", vec3f(0.01f));
+  renderer.set("lights", lightData);
   renderer.commit();
   assert(renderer);
 

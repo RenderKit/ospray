@@ -30,6 +30,8 @@
 #include "../MPILoadBalancer.h"
 #include "../../fb/DistributedFrameBuffer.h"
 #include "../../common/Profiling.h"
+#include "lights/Light.h"
+#include "lights/AmbientLight.h"
 // ispc exports
 #include "DistributedRaycast_ispc.h"
 
@@ -130,7 +132,31 @@ namespace ospray {
       ghostRegionIEs.clear();
 
       numAoSamples = getParam1i("aoSamples", 0);
+      oneSidedLighting = getParam1i("oneSidedLighting", 1);
       shadowsEnabled = getParam1i("shadowsEnabled", 0);
+
+      lightData = (Data*)getParamData("lights");
+      lightIEs.clear();
+      ambientLight = vec3f(0.f);
+
+      if (lightData) {
+        for (size_t i = 0; i < lightData->size(); ++i) {
+          const Light* const light = ((Light**)lightData->data)[i];
+          // Extract color from ambient lights, and don't include them in the
+          // light list
+          const AmbientLight* const ambient =
+            dynamic_cast<const AmbientLight*>(light);
+          if (ambient) {
+            ambientLight += ambient->getRadiance();
+          } else {
+            lightIEs.push_back(light->getIE());
+          }
+        }
+      } else {
+        static WarnOnce warn("No lights provided to the renderer, "
+            "making a default ambient light");
+        ambientLight = vec3f(0.2);
+      }
 
       camera = reinterpret_cast<PerspectiveCamera*>(getParamObject("camera"));
       if (!camera) {
@@ -166,12 +192,17 @@ namespace ospray {
                      [](const DistributedModel *m) { return m->getIE(); });
 
       exchangeModelBounds();
-
+      
+      void **lightsPtr = lightIEs.empty() ? nullptr : lightIEs.data();
       ispc::DistributedRaycastRenderer_set(getIE(),
                                            allRegions.data(),
                                            static_cast<int>(allRegions.size()),
                                            numAoSamples,
+                                           oneSidedLighting,
                                            shadowsEnabled,
+                                           (ispc::vec3f*)&ambientLight,
+                                           lightIEs.size(),
+                                           lightsPtr,
                                            regionIEs.data(),
                                            ghostRegionIEs.data());
     }

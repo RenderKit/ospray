@@ -73,9 +73,14 @@ namespace ospray {
       void exchangeModelBounds();
 
       int numAoSamples;
+      bool oneSidedLighting;
       bool shadowsEnabled;
       PerspectiveCamera *camera;
       std::unique_ptr<std::ofstream> statsLog;
+
+      vec3f ambientLight;
+      Data *lightData;
+      std::vector<void*> lightIEs;
 
       std::vector<DistributedModel*> regions, ghostRegions;
       std::vector<void*> regionIEs, ghostRegionIEs;
