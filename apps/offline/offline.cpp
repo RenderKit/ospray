@@ -55,41 +55,39 @@ R"text(
 ./ospOffline [parameters] [scene_files]
 
 ospOffline specific parameters:
-   -i --image [baseFilename] (default 'offline')
-       base name of saved images
+   -i    --image [baseFilename] (default 'offline')
+           base name of saved images
    -oidn --denoiser [0,1,2] (default 0)
-       image denoiser (0 = off, 1 = on, 2 = both)
-   -wa --writeall (default)
-   -nwa --no-writeall
-       write all power of 2 sampled images
-   -wf --writefinal (default)
-   -nwf --no-writefinal
-       write final converged image
-   -mf --maxframes [int] (default 1024)
-       maximum number of frames
-   -mv --minvariance [float] (default 2%)
-       minimum variance to which image will converge
+           image denoiser (0 = off, 1 = on, 2 = generate both)
+   -wa   --writeall (default)
+   -nwa  --no-writeall
+           write (or not) all power of 2 sampled images
+   -wf   --writefinal (default)
+   -nwf  --no-writefinal
+           write (or not) final converged image
+   -mf   --maxframes [int] (default 1024)
+           maximum number of frames
+   -mv   --minvariance [float] (default 2%)
+           minimum variance to which image will converge
 )text"
       << std::endl;
     }
 
     void OSPOffline::writeImage(const std::shared_ptr<sg::FrameBuffer> &fb,
                                 const std::string &suffix = "") {
-
       auto imageOutputFile = imageBaseName + suffix;
       auto fbSize = fb->size();
       auto mappedFB = fb->map(OSP_FB_COLOR);
       if (fb->format() == OSP_FB_RGBA32F) {
-        imageOutputFile += "_D.pfm";
+        imageOutputFile += ".pfm";
         utility::writePFM(imageOutputFile, fbSize.x, fbSize.y, (vec4f*)mappedFB);
       } else {
         imageOutputFile += ".ppm";
         utility::writePPM(imageOutputFile, fbSize.x, fbSize.y, (uint32_t *)mappedFB);
       }
+      fb->unmap(mappedFB);
 
       std::cout << "saved current frame to '" << imageOutputFile << "'" << std::endl;
-
-      fb->unmap(mappedFB);
     }
 
     void OSPOffline::render(const std::shared_ptr<sg::Frame> &root)
@@ -129,6 +127,17 @@ ospOffline specific parameters:
           // use snprintf to format variance percentage
           snprintf(str, sizeof(str), "_v%2.2f%%", variance);
           suffix += str;
+
+#if 0 // XXX: def OSPRAY_APPS_ENABLE_DENOISER (From AsyncRenderEnginer)
+      if (sgFB->auxBuffers()) {
+          frameBuffers.back().resize(sgFB->size(), OSP_FB_RGBA32F);
+          denoisers.back().map(sgFB, (vec4f*)frameBuffers.back().data());
+          denoisers.back().execute();
+          denoisers.back().unmap(sgFB);
+
+          suffix += "_D";
+      }
+#endif
 
           // Output images for power of 2 samples
           if (optWriteAllImages && (numSamples & (numSamples-1)) == 0)
