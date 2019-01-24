@@ -52,10 +52,11 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
-DEP_EMBREE=embree-3.1.0.x86_64.linux
-DEP_ISPC=ispc-v1.9.2-linux
-DEP_TBB=tbb2018_20171205oss
-DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz"
+DEP_EMBREE=embree-3.4.0.x86_64.linux
+DEP_ISPC=ispc-v1.10.0-linux
+DEP_TBB=tbb2019_20181203oss
+DEP_OIDN=oidn-0.8.0.x86_64.linux
+DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz $DEP_OIDN.tar.gz"
 
 
 # set compiler if the user hasn't explicitly set CC and CXX
@@ -67,7 +68,7 @@ if [ -z $CC ]; then
   export CXX=icpc
 fi
 
-#### Fetch dependencies (TBB+Embree+ISPC) ####
+#### Fetch dependencies (TBB+Embree+ISPC+OIDN) ####
 
 mkdir -p $DEP_DIR
 cd $DEP_DIR
@@ -77,6 +78,7 @@ for dep in $DEP_TARBALLS ; do
   tar -xaf $dep
 done
 export embree_DIR=$DEP_DIR/$DEP_EMBREE
+export OpenImageDenoise_DIR=$DEP_DIR/$DEP_OIDN
 
 cd $ROOT_DIR
 
@@ -120,6 +122,7 @@ tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
+-D OSPRAY_APPS_ENABLE_DENOISER=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \
 -D CPACK_PACKAGING_INSTALL_PREFIX=/ \
 -D CMAKE_INSTALL_INCLUDEDIR=include \

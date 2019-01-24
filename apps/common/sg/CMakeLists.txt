@@ -67,7 +67,7 @@ endif()
 
 option(OSPRAY_APPS_ENABLE_DENOISER "Use image denoiser in example viewer")
 if (OSPRAY_APPS_ENABLE_DENOISER)
-  find_package(OpenImageDenoise REQUIRED)
+  find_package(OpenImageDenoise 0.8 REQUIRED)
   set(OPENIMAGEDENOISE OpenImageDenoise)
 endif()
 

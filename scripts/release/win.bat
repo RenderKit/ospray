@@ -47,7 +47,9 @@ cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
 rem create ZIP files
-cmake -D OSPRAY_ZIP_MODE=ON ..
+cmake -D OSPRAY_ZIP_MODE=ON ^
+-D OSPRAY_INSTALL_DEPENDENCIES=ON ^
+..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
