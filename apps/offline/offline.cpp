@@ -34,15 +34,13 @@ namespace ospray {
       int parseCommandLine(int &ac, const char **&av) override;
       void printHelp();
 
-      void writeImage(const std::shared_ptr<sg::Frame> &, const std::string &);
-      void clearAccum(const std::shared_ptr<sg::Frame> &root);
-      void toggleDenoiser(const std::shared_ptr<sg::Frame> &root);
+      void writeImage(const std::shared_ptr<sg::FrameBuffer> &, const std::string &);
 
       std::string imageBaseName = "offline";
       bool optWriteAllImages = true;
       bool optWriteFinalImage = true;
-      size_t optDenoiser = 0;
-      size_t optMaxFrames = 128;
+      int optDenoiser = 0;
+      size_t optMaxSamples = 1024;
       float optMinVariance = 2.f;
     };
 
@@ -67,7 +65,7 @@ ospOffline specific parameters:
    -wf --writefinal (default)
    -nwf --no-writefinal
        write final converged image
-   -mf --maxframes [int] (default 128)
+   -mf --maxframes [int] (default 1024)
        maximum number of frames
    -mv --minvariance [float] (default 2%)
        minimum variance to which image will converge
@@ -75,33 +73,10 @@ ospOffline specific parameters:
       << std::endl;
     }
 
-    // Reset accumulation
-    void OSPOffline::clearAccum(const std::shared_ptr<sg::Frame> &root)
-    {
-      auto &camera = root->child("camera");
-      camera.markAsModified();
-    }
-
-    // Toggle denoiser state
-    // Without knowing the initial state from command line parameters
-    // (ie, -sg:useDenoiser)
-    void OSPOffline::toggleDenoiser(const std::shared_ptr<sg::Frame> &root)
-    {
-      auto fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
-      if (!fb->hasChild("useDenoiser")) {
-        std::cout << "denoiser not available" << std::endl;
-        return;
-      }
-
-      fb->child("useDenoiser") = !(fb->child("useDenoiser").valueAs<bool>());
-    }
-
-    void OSPOffline::writeImage(const std::shared_ptr<sg::Frame> &root,
+    void OSPOffline::writeImage(const std::shared_ptr<sg::FrameBuffer> &fb,
                                 const std::string &suffix = "") {
 
       auto imageOutputFile = imageBaseName + suffix;
-
-      auto fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
       auto fbSize = fb->size();
       auto mappedFB = fb->map(OSP_FB_COLOR);
       if (fb->format() == OSP_FB_RGBA32F) {
@@ -119,41 +94,60 @@ ospOffline specific parameters:
 
     void OSPOffline::render(const std::shared_ptr<sg::Frame> &root)
     {
-      // XXX: Only loop over denoiser state *if* denoiser is available
-      toggleDenoiser(root); // XXX: testing
-
-      clearAccum(root); // XXX: testing
-
+      auto renderer = root->child("renderer").nodeAs<sg::Renderer>();
+      auto fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+      auto &camera = root->child("camera");
       std::string suffix;
-
-      size_t frameNum = 1;
       float variance;
+
+      // Make sure -sg:spp=1
+      renderer->child("spp") = 1;
+
+      // Only set denoiser state if denoiser is available
+      if (!fb->hasChild("useDenoiser"))
+        optDenoiser = 0;
+
+      if (optDenoiser)
+        fb->child("useDenoiser") = true;
+
+      // Render one warmup frame then clear accumulation.
+      // XXX: First image has been empty without doing this
+      root->renderFrame();
+      camera.markAsModified();
+
       do {
-        // use snprintf to pad number with leading 0s for sorting
-        char str[16];
-        snprintf(str, sizeof(str), "_%4.4lu", frameNum);
-        suffix = str;
+        // Clear accum and start fresh
+        camera.markAsModified();
+        size_t numSamples = 1;
 
-        root->renderFrame();
+        do {
+          // use snprintf to pad number with leading 0s for sorting
+          char str[16];
+          snprintf(str, sizeof(str), "_%4.4lu", numSamples);
+          suffix = str;
 
-        auto renderer = root->child("renderer").nodeAs<sg::Renderer>();
-        variance = renderer->getLastVariance();
+          root->renderFrame();
+          variance = renderer->getLastVariance();
 
-        // use snprintf to format variance percentage
-        snprintf(str, sizeof(str), "_v%2.2f%%", variance);
-        suffix += str;
+          // use snprintf to format variance percentage
+          snprintf(str, sizeof(str), "_v%2.2f%%", variance);
+          suffix += str;
 
-        // Output images for power of 2 samples
-        if (optWriteAllImages && (frameNum & (frameNum-1)) == 0)
-          writeImage(root, suffix);
+          // Output images for power of 2 samples
+          if (optWriteAllImages && (numSamples & (numSamples-1)) == 0)
+            writeImage(fb, suffix);
 
-      } while ((frameNum++ < optMaxFrames) && (variance > optMinVariance));
+        } while ((numSamples++ < optMaxSamples) && (variance > optMinVariance));
 
-      if (optWriteFinalImage) {
-        suffix += "_final";
-        writeImage(root, suffix);
-      }
+        if (optWriteFinalImage) {
+          suffix += "_final";
+          writeImage(fb, suffix);
+        }
 
+        // Disable denoiser and possibly rerun frame
+        if (optDenoiser)
+          fb->child("useDenoiser") = false;
+      } while (--optDenoiser > 0);
     }
 
     int OSPOffline::parseCommandLine(int &ac, const char **&av)
@@ -167,7 +161,7 @@ ospOffline specific parameters:
           removeArgs(ac, av, i, 2);
           --i;
         } else if (arg == "-oidn" || arg == "--denoiser") {
-          optDenoiser = atoi(av[i + 1]);
+          optDenoiser = min(2, max(0, atoi(av[i + 1])));
           removeArgs(ac, av, i, 2);
           --i;
         } else if (arg == "-wa" || arg == "--writeall") {
@@ -187,15 +181,11 @@ ospOffline specific parameters:
           removeArgs(ac, av, i, 2);
           --i;
         } else if (arg == "-mf" || arg == "--maxframes") {
-          optMaxFrames = atoi(av[i + 1]);
+          optMaxSamples = max(0, atoi(av[i + 1]));
           removeArgs(ac, av, i, 2);
           --i;
         } else if (arg == "-mv" || arg == "--minvariance") {
-          optMinVariance = atoi(av[i + 1]);
-          removeArgs(ac, av, i, 2);
-          --i;
-        } else if (arg == "-mv" || arg == "--minvariance") {
-          optMinVariance = atoi(av[i + 1]);
+          optMinVariance = min(100., max(0., atof(av[i + 1])));
           removeArgs(ac, av, i, 2);
           --i;
         }
