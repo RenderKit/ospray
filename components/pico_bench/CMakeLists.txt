@@ -20,7 +20,8 @@ ospray_install_library(ospray_pico_bench pico_bench)
 target_include_directories(ospray_pico_bench
   INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/pico_bench>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/pico_bench>
+)
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
@@ -28,4 +29,3 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   FILES_MATCHING
   PATTERN *.h
 )
-
