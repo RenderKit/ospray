@@ -25,11 +25,8 @@ if (NOT WIN32)# Internal Compiler Error on MSVC12...
   LINK
     ospray
     ospray_mpi_common
+    ospray_pico_bench
   )
-
-  if (OSPRAY_ENABLE_TESTING)
-    target_include_directories(ospRandSphereTest PRIVATE ${CMAKE_SOURCE_DIR})
-  endif()
 
   ospray_create_test(ospRandSciVisTest
     ospRandSciVisTest.cpp
@@ -37,11 +34,8 @@ if (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray
     ospray_mpi_common
     ospray_gensv
+    ospray_pico_bench
   )
-
-  if (OSPRAY_ENABLE_TESTING)
-    target_include_directories(ospRandSciVisTest PRIVATE ${CMAKE_SOURCE_DIR})
-  endif()
 
   if (OSPRAY_MODULE_MPI_APPS)
     add_subdirectory(viewer)

@@ -27,7 +27,7 @@
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 // pico_bench
-#include "apps/bench/pico_bench/pico_bench.h"
+#include "pico_bench.h"
 // stl
 #include <random>
 

@@ -28,7 +28,7 @@
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
 // pico_bench
-#include "apps/bench/pico_bench/pico_bench.h"
+#include "pico_bench.h"
 // stl
 #include <random>
 #include "gensv/generateSciVis.h"

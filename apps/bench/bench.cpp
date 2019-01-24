@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "pico_bench/pico_bench.h"
+#include "pico_bench.h"
 #include "ospapp/OSPApp.h"
 #include "common/sg/SceneGraph.h"
 #include "ospcommon/utility/SaveImage.h"

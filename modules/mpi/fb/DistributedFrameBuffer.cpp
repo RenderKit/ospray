@@ -23,7 +23,7 @@
 
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/tasking/schedule.h"
-#include "apps/bench/pico_bench/pico_bench.h"
+#include "pico_bench.h"
 
 #include "mpiCommon/MPICommon.h"
 #include "api/Device.h"

@@ -14,9 +14,18 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CREATE_APPLICATION(ospBenchmark
-  bench.cpp
-LINK
-  ospray_app
-  ospray_pico_bench
+add_library(ospray_pico_bench INTERFACE)
+ospray_install_library(ospray_pico_bench pico_bench)
+
+target_include_directories(ospray_pico_bench
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/pico_bench>)
+
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  COMPONENT devel
+  FILES_MATCHING
+  PATTERN *.h
 )
+

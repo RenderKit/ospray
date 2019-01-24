@@ -28,6 +28,7 @@ if (OSPRAY_MODULE_MPI)
 
   ospray_build_component(mpiCommon)
   ospray_build_component(mpiMessageLayer)
+  ospray_build_component(pico_bench)
   ospray_build_component(snappy EXCLUDE_FROM_ALL)
 
   include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
@@ -62,6 +63,7 @@ if (OSPRAY_MODULE_MPI)
       ospray_module_ispc
       ospray_mpi_common
       ospray_mpi_maml
+      ospray_pico_bench
   )
 
   target_include_directories(ospray_module_mpi
