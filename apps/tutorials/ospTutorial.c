@@ -141,7 +141,7 @@ int main(int argc, const char **argv) {
   ospCommit(renderer);
 
   // create and setup framebuffer
-  OSPFrameBuffer framebuffer = ospNewFrameBuffer(&imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+  OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   // render one frame

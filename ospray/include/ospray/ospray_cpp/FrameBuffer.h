@@ -60,7 +60,7 @@ namespace ospray {
                                     OSPFrameBufferFormat format,
                                     int channels)
     {
-      ospObject = ospNewFrameBuffer((const osp::vec2i&)size, format, channels);
+      ospObject = ospNewFrameBuffer((const osp_vec2i&)size, format, channels);
     }
 
     inline FrameBuffer::FrameBuffer(const FrameBuffer &copy) :

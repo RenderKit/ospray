@@ -61,7 +61,7 @@ extern "C" OSPTestingVolume ospTestingNewVolume(const char *volume_type)
     return {};
 }
 
-extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp::vec2f range,
+extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp_vec2f range,
                                                              const char *name)
 {
   auto tfnCreator =
@@ -76,7 +76,7 @@ extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp::vec2f range,
     return {};
 }
 
-extern "C" OSPCamera ospTestingNewDefaultCamera(osp::box3f _bounds)
+extern "C" OSPCamera ospTestingNewDefaultCamera(osp_box3f _bounds)
 {
   auto camera = ospNewCamera("perspective");
 

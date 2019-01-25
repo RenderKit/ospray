@@ -32,7 +32,7 @@ namespace ospray {
       TransferFunction();
       virtual ~TransferFunction() = default;
 
-      OSPTransferFunction createTransferFunction(osp::vec2f value_range) const;
+      OSPTransferFunction createTransferFunction(osp_vec2f value_range) const;
 
      protected:
       std::vector<ospcommon::vec3f> colors;

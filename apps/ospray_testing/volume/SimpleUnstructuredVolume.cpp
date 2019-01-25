@@ -125,8 +125,8 @@ namespace ospray {
       // create OSPRay objects and return results
       OSPTestingVolume retval;
       retval.volume     = volume;
-      retval.voxelRange = osp::vec2f{0.f, 10.f};
-      retval.bounds     = reinterpret_cast<const osp::box3f &>(bounds);
+      retval.voxelRange = osp_vec2f{0.f, 10.f};
+      retval.bounds     = reinterpret_cast<const osp_box3f &>(bounds);
 
       return retval;
     }

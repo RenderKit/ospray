@@ -77,8 +77,8 @@ inline void Volume::setRegion(void *source,
   // TODO return error code
   ospSetRegion(handle(),
                source,
-               (const osp::vec3i&)regionCoords,
-               (const osp::vec3i&)regionSize);
+               (const osp_vec3i&)regionCoords,
+               (const osp_vec3i&)regionSize);
 }
 
 inline void Volume::sampleVolume(float **results,
@@ -87,7 +87,7 @@ inline void Volume::sampleVolume(float **results,
 {
   ospSampleVolume(results,
                   handle(),
-                  (const osp::vec3f&)*worldCoordinates,
+                  (const osp_vec3f&)*worldCoordinates,
                   count);
 }
 

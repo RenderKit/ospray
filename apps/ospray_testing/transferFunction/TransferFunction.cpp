@@ -28,7 +28,7 @@ namespace ospray {
     }
 
     OSPTransferFunction TransferFunction::createTransferFunction(
-        osp::vec2f value_range) const
+        osp_vec2f value_range) const
     {
       // create a transfer function mapping volume values to color and opacity
       OSPTransferFunction transferFunction =

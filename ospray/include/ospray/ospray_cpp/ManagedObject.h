@@ -158,11 +158,9 @@ namespace ospray {
     {
       using OSPObject_T = typename std::remove_pointer<OSPObject>::type;
       using OtherOSP_T  = typename std::remove_pointer<OSP_TYPE>::type;
-      static_assert(std::is_same<osp::ManagedObject, OSPObject_T>::value ||
-                    std::is_base_of<osp::ManagedObject, OtherOSP_T>::value,
+      static_assert(std::is_same<_OSPManagedObject, OSPObject_T>::value,
                     "ManagedObject_T<OSP_TYPE> can only be instantiated with "
-                    "OSPObject (a.k.a. osp::ManagedObject*) or one of its"
-                    "decendants (a.k.a. the OSP* family of types).");
+                    "OSPRay object handles (e.g. OSPObject).");
     }
 
     template <typename OSP_TYPE>
@@ -257,35 +255,35 @@ namespace ospray {
     inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name,
                                                const ospcommon::vec2i &v) const
     {
-      ospSetVec2i(ospObject, name.c_str(), (const osp::vec2i&)v);
+      ospSet2iv(ospObject, name.c_str(), &v.x);
     }
 
     template <typename OSP_TYPE>
     inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name,
                                                const ospcommon::vec2f &v) const
     {
-      ospSetVec2f(ospObject, name.c_str(), (const osp::vec2f&)v);
+      ospSet2fv(ospObject, name.c_str(), &v.x);
     }
 
     template <typename OSP_TYPE>
     inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name,
                                                const ospcommon::vec3i &v) const
     {
-      ospSetVec3i(ospObject, name.c_str(), (const osp::vec3i&)v);
+      ospSet3iv(ospObject, name.c_str(), &v.x);
     }
 
     template <typename OSP_TYPE>
     inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name,
                                                const ospcommon::vec3f &v) const
     {
-      ospSetVec3f(ospObject, name.c_str(), (const osp::vec3f&)v);
+      ospSet3fv(ospObject, name.c_str(), &v.x);
     }
 
     template <typename OSP_TYPE>
     inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name,
                                                const ospcommon::vec4f &v) const
     {
-      ospSetVec4f(ospObject, name.c_str(), (const osp::vec4f&)v);
+      ospSet4fv(ospObject, name.c_str(), &v.x);
     }
 
     template <typename OSP_TYPE>

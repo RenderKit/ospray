@@ -108,7 +108,7 @@ namespace ospray {
 
       OSPTestingGeometry retval;
       retval.geometry = spheresGeometry;
-      retval.bounds   = reinterpret_cast<osp::box3f &>(bounds);
+      retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
 
       return retval;
     }

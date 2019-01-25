@@ -119,10 +119,10 @@ namespace ospray {
       // set the volume data
       ospSetRegion(volume,
                    voxels.data(),
-                   osp::vec3i{0, 0, 0},
-                   osp::vec3i{int(volumeDimension),
-                              int(volumeDimension),
-                              int(volumeDimension)});
+                   osp_vec3i{0, 0, 0},
+                   osp_vec3i{int(volumeDimension),
+                             int(volumeDimension),
+                             int(volumeDimension)});
 
       // create OSPRay objects and return results
 
@@ -132,8 +132,8 @@ namespace ospray {
 
       OSPTestingVolume retval;
       retval.volume     = volume;
-      retval.voxelRange = reinterpret_cast<const osp::vec2f &>(range);
-      retval.bounds     = reinterpret_cast<const osp::box3f &>(bounds);
+      retval.voxelRange = reinterpret_cast<const osp_vec2f &>(range);
+      retval.bounds     = reinterpret_cast<const osp_box3f &>(bounds);
 
       return retval;
     }

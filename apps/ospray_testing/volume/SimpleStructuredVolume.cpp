@@ -88,8 +88,8 @@ namespace ospray {
 
       OSPTestingVolume retval;
       retval.volume     = volume;
-      retval.voxelRange = reinterpret_cast<const osp::vec2f &>(range);
-      retval.bounds     = reinterpret_cast<const osp::box3f &>(bounds);
+      retval.voxelRange = reinterpret_cast<const osp_vec2f &>(range);
+      retval.bounds     = reinterpret_cast<const osp_box3f &>(bounds);
 
       return retval;
     }

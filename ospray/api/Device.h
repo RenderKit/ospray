@@ -195,7 +195,7 @@ namespace ospray {
         model.  the resulting geometry still has to be added to another
         model via ospAddGeometry */
       virtual OSPGeometry newInstance(OSPModel modelToInstantiate,
-                                      const osp::affine3f &xfm)
+                                      const osp_affine3f &xfm)
       {
         UNUSED(modelToInstantiate, xfm);
         NOT_IMPLEMENTED;

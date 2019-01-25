@@ -215,7 +215,7 @@ export void Renderer_set(void *uniform _self
 export void Renderer_pick(void *uniform _self,
                                const uniform vec2f &screenPos,
                                uniform vec3f &pos,
-                               uniform bool &hit)
+                               uniform int32 &hit)
 {
   uniform Renderer *uniform self   = (uniform Renderer *uniform)_self;
   uniform FrameBuffer *uniform fb  = self->fb;

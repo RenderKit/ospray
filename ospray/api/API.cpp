@@ -282,7 +282,7 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
+extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp_vec2i size,
                                             const OSPFrameBufferFormat mode,
                                             const uint32_t channels)
 OSPRAY_CATCH_BEGIN
@@ -556,12 +556,13 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPTexture ospNewTexture2D(const osp::vec2i &size,
+extern "C" OSPTexture ospNewTexture2D(const osp_vec2i *_size,
                                       const OSPTextureFormat type,
                                       void *data,
                                       const uint32_t _flags)
 OSPRAY_CATCH_BEGIN
 {
+  auto &size = *_size;
   ASSERT_DEVICE();
   Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
@@ -791,7 +792,7 @@ OSPRAY_CATCH_BEGIN
 OSPRAY_CATCH_END()
 
 extern "C" OSPError ospSetRegion(OSPVolume object, void *source,
-                            const osp::vec3i &index, const osp::vec3i &count)
+                            osp_vec3i index, osp_vec3i count)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -800,56 +801,6 @@ OSPRAY_CATCH_BEGIN
     ? OSP_NO_ERROR : OSP_UNKNOWN_ERROR;
 }
 OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
-
-extern "C" void ospSetVec2f(OSPObject _object,
-                            const char *id,
-                            const osp::vec2f &v)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().setVec2f(_object, id, (const vec2f &)v);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospSetVec2i(OSPObject _object,
-                            const char *id,
-                            const osp::vec2i &v)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().setVec2i(_object, id, (const vec2i &)v);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospSetVec3f(OSPObject _object,
-                            const char *id,
-                            const osp::vec3f &v)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().setVec3f(_object, id, (const vec3f &)v);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospSetVec4f(OSPObject _object,
-                            const char *id,
-                            const osp::vec4f &v)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().setVec4f(_object, id, (const vec4f &)v);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospSetVec3i(OSPObject _object,
-                            const char *id,
-                            const osp::vec3i &v)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().setVec3i(_object, id, (const vec3i &)v);
-}
-OSPRAY_CATCH_END()
 
 extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
 OSPRAY_CATCH_BEGIN
@@ -968,7 +919,7 @@ OSPRAY_CATCH_BEGIN
 OSPRAY_CATCH_END()
 
 extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
-                                      const osp::affine3f &xfm)
+                                      const osp_affine3f xfm)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -984,7 +935,7 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospPick(OSPPickResult *result,
                         OSPRenderer renderer,
-                        const osp::vec2f &screenPos)
+                        const osp_vec2f screenPos)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -996,7 +947,7 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospSampleVolume(float **results,
                                 OSPVolume volume,
-                                const osp::vec3f &worldCoordinates,
+                                const osp_vec3f worldCoordinates,
                                 const size_t count)
 OSPRAY_CATCH_BEGIN
 {

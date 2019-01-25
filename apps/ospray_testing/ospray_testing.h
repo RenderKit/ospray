@@ -37,23 +37,14 @@ extern "C" {
 typedef struct
 {
   OSPGeometry geometry;
-#ifdef __cplusplus
-  osp::box3f bounds;
-#else
   osp_box3f bounds;
-#endif
 } OSPTestingGeometry;
 
 typedef struct
 {
   OSPVolume volume;
-#ifdef __cplusplus
-  osp::box3f bounds;
-  osp::vec2f voxelRange;
-#else
   osp_box3f bounds;
   osp_vec2f voxelRange;
-#endif
 } OSPTestingVolume;
 
 /* Create an OSPRay renderer with sensible defaults for testing */
@@ -74,11 +65,7 @@ OSPTestingVolume ospTestingNewVolume(const char *volume_type);
 /* Create an OSPRay geometry (from a registered name) */
 OSPRAY_TESTING_INTERFACE
 OSPTransferFunction ospTestingNewTransferFunction(
-#ifdef __cplusplus
-    osp::vec2f voxelRange,
-#else
     osp_vec2f voxelRange,
-#endif
     const char *tf_name OSP_DEFAULT_VAL(= "grayscale"));
 
 /* Create an OSPRay perspective camera which looks at the center of the given
@@ -87,11 +74,7 @@ OSPTransferFunction ospTestingNewTransferFunction(
  * NOTE: this only sets 'dir', 'pos', and 'up'
  */
 OSPRAY_TESTING_INTERFACE
-#ifdef __cplusplus
-OSPCamera ospTestingNewDefaultCamera(osp::box3f bounds);
-#else
 OSPCamera ospTestingNewDefaultCamera(osp_box3f bounds);
-#endif
 
 /* Create a list of lights, using a given preset name */
 OSPRAY_TESTING_INTERFACE

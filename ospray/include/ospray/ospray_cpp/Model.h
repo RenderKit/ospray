@@ -111,7 +111,7 @@ namespace ospray {
     inline Geometry
     Model::createInstance(const ospcommon::affine3f &transform) const
     {
-      return ospNewInstance(handle(), (const osp::affine3f&)transform);
+      return ospNewInstance(handle(), (const osp_affine3f&)transform);
     }
 
   }// namespace cpp
