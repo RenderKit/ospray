@@ -174,6 +174,8 @@ aggregate their data to the OSPRay process for rendering.
 The model used by the distributed device takes three additional
 parameters, to allow users to express their data distribution to OSPRay.
 All models should be disjoint to ensure correct sort-last compositing.
+Geometries used in the distributed MPI renderer can make use of the scivis
+renderer's OBJMaterial.
 
   ------ ------------- ---------------------------------------------------------
   Type   Name          Description
@@ -202,6 +204,9 @@ currently only supports ambient occlusion (on the local data only, with
 optional ghost data). To compute correct ambient occlusion across the
 distributed data the application is responsible for replicating ghost
 data and specifying the ghost models and models as described above.
+Note that shadows and ambient occlusion are computed on the local geometries,
+in the `model` and the corresponding `ghostModel` in the ghost model array,
+if any where set.
 
   -------------------- ----------- --------  -----------------------------------
   Type                 Name         Default  Description
@@ -218,8 +223,19 @@ data and specifying the ghost models and models as described above.
                                              ghost model shadows only its
                                              corresponding model
 
+  OSPLight[]           lights                [data] array with handles of the
+                                             [lights]
+
   int                  aoSamples          0  number of rays per sample to
                                              compute ambient occlusion
+
+  bool                 aoTransparencyEnabled false  whether object transparency
+                                             is respected when computing
+                                             ambient occlusion (slower)
+
+  bool                 oneSidedLighting      true  if true, backfacing
+                                             surfaces (wrt. light source)
+                                             receive no illumination
   -------------------- ----------- --------  -----------------------------------
   : Parameters for the `mpi_raycast` renderer.
 
