@@ -192,7 +192,7 @@ namespace ospray {
                      [](const DistributedModel *m) { return m->getIE(); });
 
       exchangeModelBounds();
-      
+
       void **lightsPtr = lightIEs.empty() ? nullptr : lightIEs.data();
       ispc::DistributedRaycastRenderer_set(getIE(),
                                            allRegions.data(),
@@ -610,7 +610,7 @@ namespace ospray {
       auto end = std::unique(allRegions.begin(), allRegions.end());
       allRegions.erase(end, allRegions.end());
 
-#if 1
+#ifndef __APPLE__
       if (logLevel() >= 3) {
         for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
           if (i == mpicommon::globalRank()) {
