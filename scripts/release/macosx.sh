@@ -54,7 +54,7 @@ export LIBRARY_PATH=
 export DYLD_LIBRARY_PATH=
 TBB_PATH_LOCAL=$PWD/tbb
 
-#### Fetch dependencies (TBB+Embree+ISPC) ####
+#### Fetch dependencies (TBB+Embree+ISPC+OIDN) ####
 
 mkdir -p $DEP_DIR
 cd $DEP_DIR
