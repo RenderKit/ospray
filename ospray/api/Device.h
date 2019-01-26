@@ -174,7 +174,27 @@ namespace ospray {
                                 OSPRenderer _renderer,
                                 const uint32 fbChannelFlags) = 0;
 
+      virtual OSPFuture renderFrameAsync(OSPFrameBuffer _sc,
+                                         OSPRenderer _renderer,
+                                         const uint32 fbChannelFlags)
+      {
+        NOT_IMPLEMENTED;
+      }
 
+      virtual int ospIsComplete(OSPFuture)
+      {
+        NOT_IMPLEMENTED;
+      }
+
+      virtual void ospWait(OSPFuture)
+      {
+        NOT_IMPLEMENTED;
+      }
+
+      virtual float ospGetVariance(OSPFuture)
+      {
+        NOT_IMPLEMENTED;
+      }
 
       //! release (i.e., reduce refcount of) given object
       /*! note that all objects in ospray are refcounted, so one cannot

@@ -183,7 +183,8 @@ typedef struct _OSPManagedObject *OSPManagedObject,
   *OSPTransferFunction,
   *OSPTexture,
   *OSPObject,
-  *OSPPixelOp;
+  *OSPPixelOp,
+  *OSPFuture;
 
 /* old (and deprecated) name for OSPTexture */
 OSP_DEPRECATED typedef OSPTexture OSPTexture2D;
@@ -264,6 +265,16 @@ extern "C" {
   OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer,
                                         OSPRenderer,
                                         const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
+
+  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer,
+                                                 OSPRenderer,
+                                                 const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
+
+  OSPRAY_INTERFACE int   ospIsComplete(OSPFuture);
+  OSPRAY_INTERFACE void  ospWait(OSPFuture);
+  OSPRAY_INTERFACE float ospGetVariance(OSPFuture);
+
+  // TODO: implement ospCancel(OSPFuture) ???
 
   /*! progress and cancel callback function type
         progress is in (0..1]

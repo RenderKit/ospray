@@ -196,6 +196,14 @@ namespace ospray {
                                OSPRenderer _renderer,
                                const uint32 fbChannelFlags) override;
 
+      OSPFuture renderFrameAsync(OSPFrameBuffer _sc,
+                                 OSPRenderer _renderer,
+                                 const uint32 fbChannelFlags) override;
+
+      int ospIsComplete(OSPFuture);
+      void ospWait(OSPFuture);
+      float ospGetVariance(OSPFuture);
+
       //! release (i.e., reduce refcount of) given object
       /*! note that all objects in ospray are refcounted, so one cannot
         explicitly "delete" any object. instead, each object is created
