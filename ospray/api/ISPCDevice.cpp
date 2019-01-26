@@ -14,8 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
+#include "common/AsyncTask.h"
 #include "common/Data.h"
 #include "common/Library.h"
 #include "common/Material.h"
@@ -30,7 +32,6 @@
 #include "texture/Texture2D.h"
 #include "transferFunction/TransferFunction.h"
 #include "volume/Volume.h"
-
 // stl
 #include <algorithm>
 
@@ -395,17 +396,33 @@ namespace ospray {
       return renderer->renderFrame(fb, fbChannelFlags);
     }
 
-    OSPFuture ISPCDevice::renderFrameAsync(OSPFrameBuffer _sc,
+    OSPFuture ISPCDevice::renderFrameAsync(OSPFrameBuffer _fb,
                                            OSPRenderer _renderer,
                                            const uint32 fbChannelFlags)
     {
+      auto *f = new AsyncTask<float>([=](){
+        return renderFrame(_fb, _renderer, fbChannelFlags);
+      });
+      return (OSPFuture)f;
     }
 
-    int ISPCDevice::ospIsComplete(OSPFuture) {}
+    int ISPCDevice::isReady(OSPFuture _task)
+    {
+      auto *task = (BaseTask*)_task;
+      return task->isFinished();
+    }
 
-    void ISPCDevice::ospWait(OSPFuture) {}
+    void ISPCDevice::wait(OSPFuture _task)
+    {
+      auto *task = (BaseTask*)_task;
+      task->wait();
+    }
 
-    float ISPCDevice::ospGetVariance(OSPFuture) {}
+    float ISPCDevice::getVariance(OSPFuture _task)
+    {
+      auto *task = (AsyncTask<float>*)_task;
+      return task->get();
+    }
 
     //! release (i.e., reduce refcount of) given object
     /*! Note that all objects in ospray are refcounted, so one cannot

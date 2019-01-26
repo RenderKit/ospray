@@ -18,27 +18,87 @@
 
 #include "Managed.h"
 
+#include <atomic>
+#include <functional>
 #include <future>
+// ospcommon
+#include "ospcommon/tasking/async.h"
 
 namespace ospray {
 
-  template <typename T>
-  struct Future : public ManagedObject
+  struct BaseTask : public ManagedObject
   {
-    ~Future() override = default;
+    virtual ~BaseTask() override = default;
+
+    virtual bool isFinished() const = 0;
+    virtual bool isValid() const    = 0;
+    virtual void wait() const = 0;
+  };
+
+  template <typename T>
+  struct AsyncTask : public BaseTask
+  {
+    AsyncTask(std::function<T()> fcn);
+    ~AsyncTask() override;
+
+    bool isFinished() const override;
+    bool isValid() const override;
+    void wait() const override;
 
     T get();
 
    private:
-    std::future<T> result;
+    std::function<T()> stashedTask;
+    std::future<T> runningTask;
+    std::atomic<bool> jobFinished;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
 
   template <typename T>
-  T Future<T>::get()
+  AsyncTask<T>::AsyncTask(std::function<T()> fcn)
   {
-    return result.get();
+    stashedTask    = fcn;
+    jobFinished    = false;
+    auto *thisTask = this;
+
+    runningTask = ospcommon::tasking::async([=]() {
+      T retval = thisTask->stashedTask();
+
+      thisTask->jobFinished = true;
+      return retval;
+    });
+  }
+
+  template <typename T>
+  inline AsyncTask<T>::~AsyncTask()
+  {
+    if (isValid())
+      runningTask.wait();
+  }
+
+  template <typename T>
+  inline bool AsyncTask<T>::isFinished() const
+  {
+    return jobFinished;
+  }
+
+  template <typename T>
+  inline bool AsyncTask<T>::isValid() const
+  {
+    return runningTask.valid();
+  }
+
+  template <typename T>
+  inline void AsyncTask<T>::wait() const
+  {
+    return runningTask.wait();
+  }
+
+  template <typename T>
+  inline T AsyncTask<T>::get()
+  {
+    return runningTask.get();
   }
 
 }  // namespace ospray

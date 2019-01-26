@@ -641,7 +641,45 @@ extern "C" float ospRenderFrame(OSPFrameBuffer fb,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().renderFrame(fb, renderer, fbChannelFlags);
+  OSPFuture result = ospRenderFrameAsync(fb, renderer, fbChannelFlags);
+  int isFinished = ospIsReady(result);
+  auto variance = ospGetVariance(result);
+  ospRelease(result);
+  return variance;
+}
+OSPRAY_CATCH_END(inf)
+
+extern "C" OSPFuture ospRenderFrameAsync(OSPFrameBuffer fb,
+                                         OSPRenderer renderer,
+                                         const uint32_t fbChannelFlags)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  return currentDevice().renderFrameAsync(fb, renderer, fbChannelFlags);
+}
+OSPRAY_CATCH_END(nullptr)
+
+extern "C" int ospIsReady(OSPFuture f)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  return currentDevice().isReady(f);
+}
+OSPRAY_CATCH_END(1)
+
+extern "C" void ospWait(OSPFuture f)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().wait(f);
+}
+OSPRAY_CATCH_END()
+
+extern "C" float ospGetVariance(OSPFuture f)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  return currentDevice().getVariance(f);
 }
 OSPRAY_CATCH_END(inf)
 

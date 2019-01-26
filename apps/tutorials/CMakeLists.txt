@@ -33,6 +33,9 @@ target_link_libraries(ospTutorial PRIVATE ospray)
 # C++ version
 add_executable(ospTutorialCpp ospTutorial.cpp)
 target_link_libraries(ospTutorialCpp PRIVATE ospray)
+# async version
+add_executable(ospTutorialAsync ospTutorialAsync.c)
+target_link_libraries(ospTutorialAsync PRIVATE ospray)
 
 ospray_create_application(ospTutorialSpheres
   ArcballCamera.cpp

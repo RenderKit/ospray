@@ -174,24 +174,24 @@ namespace ospray {
                                 OSPRenderer _renderer,
                                 const uint32 fbChannelFlags) = 0;
 
-      virtual OSPFuture renderFrameAsync(OSPFrameBuffer _sc,
-                                         OSPRenderer _renderer,
-                                         const uint32 fbChannelFlags)
+      virtual OSPFuture renderFrameAsync(OSPFrameBuffer,
+                                         OSPRenderer,
+                                         const uint32)
       {
         NOT_IMPLEMENTED;
       }
 
-      virtual int ospIsComplete(OSPFuture)
+      virtual int isReady(OSPFuture)
       {
         NOT_IMPLEMENTED;
       }
 
-      virtual void ospWait(OSPFuture)
+      virtual void wait(OSPFuture)
       {
         NOT_IMPLEMENTED;
       }
 
-      virtual float ospGetVariance(OSPFuture)
+      virtual float getVariance(OSPFuture)
       {
         NOT_IMPLEMENTED;
       }
