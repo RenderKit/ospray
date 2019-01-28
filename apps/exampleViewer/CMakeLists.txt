@@ -28,12 +28,6 @@ ospray_disable_compiler_warnings()
 include(cmake/configure_glfw.cmake)
 
 add_subdirectory(common)
-
-include_directories(
-  ${CMAKE_CURRENT_LIST_DIR}/common/gl3w
-  ${CMAKE_CURRENT_LIST_DIR}/common/imgui
-  ${GLFW_INCLUDE_DIRS}
-)
 add_subdirectory(widgets)
 
 ##############################################################
