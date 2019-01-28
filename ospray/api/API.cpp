@@ -642,7 +642,6 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPFuture result = ospRenderFrameAsync(fb, renderer, fbChannelFlags);
-  int isFinished = ospIsReady(result);
   auto variance = ospGetVariance(result);
   ospRelease(result);
   return variance;

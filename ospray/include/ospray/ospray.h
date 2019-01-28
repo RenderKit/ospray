@@ -163,7 +163,11 @@ typedef struct
 } osp_amr_brick_info;
 
 /* Give OSPRay handle types a concrete defintion to enable C++ type checking */
+#ifdef __cplusplus
 struct _OSPManagedObject {};
+#else
+typedef void _OSPManagedObject;
+#endif
 
 /*! abstract object types. in C99, those are all the same because C99
   doesn't know inheritance, and we want to make sure that a

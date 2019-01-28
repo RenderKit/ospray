@@ -157,7 +157,6 @@ namespace ospray {
       ospObject(object)
     {
       using OSPObject_T = typename std::remove_pointer<OSPObject>::type;
-      using OtherOSP_T  = typename std::remove_pointer<OSP_TYPE>::type;
       static_assert(std::is_same<_OSPManagedObject, OSPObject_T>::value,
                     "ManagedObject_T<OSP_TYPE> can only be instantiated with "
                     "OSPRay object handles (e.g. OSPObject).");
