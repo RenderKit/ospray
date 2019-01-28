@@ -27,7 +27,7 @@
 #include "tfn_lib/tfn_lib.h"
 #include "transferFunction.h"
 
-#include "common/sg/common/Data.h"
+#include "sg/common/Data.h"
 
 using namespace ospcommon;
 

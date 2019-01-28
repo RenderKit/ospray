@@ -18,8 +18,8 @@
 #include "ospcommon/utility/StringManip.h"
 // ospray::sg
 #include "Generator.h"
-#include "common/sg/SceneGraph.h"
-#include "common/sg/geometry/TriangleMesh.h"
+#include "sg/SceneGraph.h"
+#include "sg/geometry/TriangleMesh.h"
 
 #include "../visitor/PrintNodes.h"
 

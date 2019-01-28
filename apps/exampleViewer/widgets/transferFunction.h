@@ -31,7 +31,7 @@
 #include <tfn_lib/tfn_lib.h>
 #include "Imgui3dExport.h"
 #include <ospray/ospray_cpp/TransferFunction.h>
-#include "common/sg/transferFunction/TransferFunction.h"
+#include "sg/transferFunction/TransferFunction.h"
 
 namespace ospray {
   namespace imgui3D {

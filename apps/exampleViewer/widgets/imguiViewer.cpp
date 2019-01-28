@@ -22,10 +22,10 @@
 
 #include "imguiViewer.h"
 
-#include "common/sg/common/FrameBuffer.h"
-#include "common/sg/visitor/GatherNodesByName.h"
-#include "common/sg/visitor/GatherNodesByPosition.h"
-#include "common/sg/common/FrameBuffer.h"
+#include "sg/common/FrameBuffer.h"
+#include "sg/visitor/GatherNodesByName.h"
+#include "sg/visitor/GatherNodesByPosition.h"
+#include "sg/common/FrameBuffer.h"
 
 #include "sg_imgui/ospray_sg_ui.h"
 

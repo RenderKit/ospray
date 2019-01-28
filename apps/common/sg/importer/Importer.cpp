@@ -18,8 +18,8 @@
 #include "ospcommon/utility/StringManip.h"
 // ospray::sg
 #include "Importer.h"
-#include "common/sg/SceneGraph.h"
-#include "common/sg/geometry/TriangleMesh.h"
+#include "sg/SceneGraph.h"
+#include "sg/geometry/TriangleMesh.h"
 
 /*! \file sg/module/Importer.cpp Defines the interface for writing
   file importers for the ospray::sg */

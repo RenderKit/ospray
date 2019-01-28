@@ -21,10 +21,9 @@
 #include <string>
 #include "json/json.h"
 #include "tfn_lib.h"
-#include <common/sg/transferFunction/TransferFunction.h>
-#include <common/sg/SceneGraph.h>
-#include <common/sg/transferFunction/TransferFunction.h>
-
+#include <sg/transferFunction/TransferFunction.h>
+#include <sg/SceneGraph.h>
+#include <sg/transferFunction/TransferFunction.h>
 
 const static std::string USAGE =
   "Usage: ./ospCvtParaViewTfcn <paraview_fcn.json> <out_fcn.tfn>\n"

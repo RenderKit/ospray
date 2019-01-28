@@ -17,7 +17,6 @@
 #include "ospcommon/utility/StringManip.h"
 
 #include "OSPApp.h"
-#include "common/sg/SceneGraph.h"
 #include "sg/geometry/TriangleMesh.h"
 #include "sg/generator/Generator.h"
 #include "sg/module/Module.h"

@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/sg/SceneGraph.h"
+#include "sg/SceneGraph.h"
 #include "sg/geometry/TriangleMesh.h"
 
 #include "ospapp/OSPApp.h"
