@@ -176,6 +176,7 @@ endif()
 if (OSPRAY_INSTALL_DEPENDENCIES)
   # Embree installed with OSPRay
   file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*)
+  ospray_create_embree_target()
 else()
   # Find existing Embree on the machine
   ospray_find_embree(${EMBREE_VERSION_REQUIRED})

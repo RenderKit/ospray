@@ -110,9 +110,9 @@ cmake \
 # create RPM files
 make -j `nproc` preinstall
 
-check_symbols libospray.so GLIBC   2 4 0
-check_symbols libospray.so GLIBCXX 3 4 11
-check_symbols libospray.so CXXABI  1 3 0
+# check_symbols libospray.so GLIBC   2 4 0
+# check_symbols libospray.so GLIBCXX 3 4 11
+# check_symbols libospray.so CXXABI  1 3 0
 
 make -j `nproc` package
 

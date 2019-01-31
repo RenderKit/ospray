@@ -66,6 +66,7 @@ endif()
 
 ospray_configure_compiler()
 ospray_configure_tasking_system()
+ospray_install_library(tasking lib)
 
 option(OSPRAY_USE_EMBREE_STREAMS "Enable use of Embree's stream intersection")
 mark_as_advanced(OSPRAY_USE_EMBREE_STREAMS) # feature not implemented yet
