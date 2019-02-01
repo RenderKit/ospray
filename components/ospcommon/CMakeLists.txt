@@ -21,7 +21,7 @@ if (TARGET ospray_common)
   # this target is already built!
 else()
   find_package(Threads REQUIRED)
-  set(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${TASKING_SYSTEM_LIBS})
+  set(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} tasking)
 
   if (WIN32)
     list(APPEND LINK_LIBS ws2_32)
@@ -95,14 +95,11 @@ else()
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/ospcommon>
-      ${TASKING_SYSTEM_INCLUDES}
     PRIVATE
       ${CMAKE_CURRENT_LIST_DIR}
   )
 
   target_compile_definitions(ospray_common
-    PUBLIC
-      ${TASKING_SYSTEM_DEFINITIONS}
     PRIVATE
       # NOTE(jda) - OSPRAY_SOVERSION fallbacks in library.cpp should be handled
       #             in the Library object's interface directly, where libospray

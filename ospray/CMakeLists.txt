@@ -315,12 +315,11 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
     ospray
-    ${EMBREE_LIBRARIES}
+    embree
   )
 
   target_include_directories(ospray_module_ispc
     PUBLIC
-      ${EMBREE_INCLUDE_DIRS}
       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>

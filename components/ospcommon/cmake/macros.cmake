@@ -442,6 +442,8 @@ macro(ospray_configure_tasking_system)
 
   unset(TASKING_SYSTEM_LIBS)
 
+  add_library(tasking INTERFACE)
+
   if(OSPRAY_TASKING_TBB)
     find_package(TBB REQUIRED)
     set(TASKING_SYSTEM_DEFINITIONS -DOSPRAY_TASKING_TBB)
@@ -482,6 +484,14 @@ macro(ospray_configure_tasking_system)
       # Do nothing, will fall back to scalar code (useful for debugging)
     endif()
   endif(OSPRAY_TASKING_TBB)
+
+  target_include_directories(tasking
+  INTERFACE
+    $<BUILD_INTERFACE:${TASKING_SYSTEM_INCLUDES}>
+  )
+
+  target_link_libraries(tasking INTERFACE ${TASKING_SYSTEM_LIBS})
+  target_compile_definitions(tasking INTERFACE ${TASKING_SYSTEM_DEFINITIONS})
 endmacro()
 
 ## MPI configuration macro ##

@@ -39,6 +39,22 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
 
+macro(ospray_create_embree_target)
+  if (NOT TARGET embree::embree)
+    add_library(embree INTERFACE)
+
+    target_include_directories(embree
+    INTERFACE
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+    )
+
+    target_link_libraries(embree
+    INTERFACE
+      $<BUILD_INTERFACE:${EMBREE_LIBRARIES}>
+    )
+  endif()
+endmacro()
+
 macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
   find_package(embree ${EMBREE_VERSION_REQUIRED} QUIET)
   if(NOT DEFINED EMBREE_INCLUDE_DIRS)

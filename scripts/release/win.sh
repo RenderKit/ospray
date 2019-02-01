@@ -49,6 +49,7 @@ cmake --build . --config Release --target PACKAGE -- -m -nologo
 
 # create ZIP files
 cmake -D OSPRAY_ZIP_MODE=ON \
+-D OSPRAY_APPS_ENABLE_DENOISER=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \
 ..
 cmake --build . --config Release --target PACKAGE -- -m -nologo

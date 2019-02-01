@@ -392,7 +392,6 @@ release-linux-icc:
     - module load cmake
     - module load gcc/4.8.2
     - module load intel
-    - module load embree
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh

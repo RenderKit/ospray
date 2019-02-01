@@ -407,11 +407,13 @@ namespace ospray {
     void MPIDistributedDevice::release(OSPObject _obj)
     {
       if (!_obj) return;
-      auto *obj = lookupObject<ManagedObject>(_obj);
-      obj->refDec();
+
       auto &handle = reinterpret_cast<ObjectHandle&>(_obj);
       if (handle.defined()) {
         handle.freeObject();
+      } else {
+        auto *obj = (ManagedObject*)_obj;
+        obj->refDec();
       }
     }
 

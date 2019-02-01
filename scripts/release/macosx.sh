@@ -30,10 +30,13 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/osx
-DEP_EMBREE=embree-3.1.0.x86_64.macosx
-DEP_ISPC=ispc-v1.9.2-osx
-DEP_TBB=tbb2018_20171205oss
-DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_mac.tgz"
+DEP_EMBREE=embree-3.4.0.x86_64.macosx
+DEP_ISPC_VER=1.10.0
+DEP_ISPC=ispc-v${DEP_ISPC_VER}-osx
+DEP_ISPC_DIR=ispc-${DEP_ISPC_VER}-Darwin
+DEP_TBB=tbb2019_20181203oss
+DEP_OIDN=oidn-0.8.0.x86_64.macos
+DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_mac.tgz $DEP_OIDN.tar.gz"
 
 
 # set compiler if the user hasn't explicitly set CC and CXX
@@ -51,7 +54,7 @@ export LIBRARY_PATH=
 export DYLD_LIBRARY_PATH=
 TBB_PATH_LOCAL=$PWD/tbb
 
-#### Fetch dependencies (TBB+Embree+ISPC) ####
+#### Fetch dependencies (TBB+Embree+ISPC+OIDN) ####
 
 mkdir -p $DEP_DIR
 cd $DEP_DIR
@@ -61,6 +64,7 @@ for dep in $DEP_TARBALLS ; do
   tar -xf $dep
 done
 export embree_DIR=$DEP_DIR/$DEP_EMBREE
+export OpenImageDenoise_DIR=$DEP_DIR/$DEP_OIDN
 
 cd $ROOT_DIR
 
@@ -78,7 +82,7 @@ cmake \
 -D OSPRAY_MODULE_MPI=ON \
 -D OSPRAY_MODULE_MPI_APPS=OFF \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
--D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
+-D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC_DIR/bin/ispc \
 -D OSPRAY_SG_CHOMBO=OFF \
 -D OSPRAY_SG_OPENIMAGEIO=OFF \
 -D OSPRAY_SG_VTK=OFF \
@@ -97,6 +101,7 @@ make -j 4 package
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
+-D OSPRAY_APPS_ENABLE_DENOISER=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
