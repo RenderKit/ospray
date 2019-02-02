@@ -121,6 +121,13 @@ viewer.
 * Supported file importers currently include: `obj`, `ply`, `x3d`,
   `vtu`, `osp`, `ospsg`, `xml` (rivl), `points`, `xyz`.
 
+### Denoiser
+
+When the example viewer is built with OpenImageDenoise, the denoiser is
+automatically enabled when running the application. It can be toggled
+on/off at runtime via the `useDenoiser` GUI parameter found under the
+framebuffer in the scene graph.
+
 
 Distributed Viewer
 ------------------
