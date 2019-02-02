@@ -35,7 +35,7 @@ DEP_ISPC_VER=1.10.0
 DEP_ISPC=ispc-v${DEP_ISPC_VER}-osx
 DEP_ISPC_DIR=ispc-${DEP_ISPC_VER}-Darwin
 DEP_TBB=tbb2019_20181203oss
-DEP_OIDN=oidn-0.8.0.x86_64.macos
+DEP_OIDN=oidn-0.8.1.x86_64.macos
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_mac.tgz $DEP_OIDN.tar.gz"
 
 
