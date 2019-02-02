@@ -205,10 +205,9 @@ if (OSPRAY_APPS_ENABLE_DENOISER)
     else()
       install(PROGRAMS ${OIDN_LIB}
               DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-      if (NOT APPLE)
-        get_filename_component(OIDN_LIBNAME ${OIDN_LIB} NAME)
-        ospray_install_namelink(OpenImageDenoise ${OIDN_LIBNAME})
-      endif()
+
+      get_filename_component(OIDN_LIBNAME ${OIDN_LIB} NAME)
+      ospray_install_namelink(OpenImageDenoise ${OIDN_LIBNAME})
     endif()
   endif()
 endif()
