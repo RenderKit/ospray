@@ -1,8 +1,8 @@
 Examples
 ========
 
-Tutorial
---------
+Simple Tutorial
+---------------
 
 A minimal working example demonstrating how to use OSPRay can be found
 at `apps/ospTutorial.c`^[A C++ version that uses the C++ convenience
@@ -28,6 +28,24 @@ frames in the second image `accumulatedFrames.ppm`.
 ![First frame.][imgTutorial1]
 
 ![After accumulating ten frames.][imgTutorial2]
+
+
+Mini-App Tutorials
+------------------
+
+OSPRay also ships various mini-apps to showcase OSPRay features. These
+apps are all prefixed with `ospTutorial` and can be found in the
+`tutorials/` directory of the OSPRay source tree. Current tutorials
+include:
+
+- structured volumes
+- unstructured volumes
+- spheres
+- animated spheres
+- subdivision surfaces
+
+More apps will be created in future releases to further demonstrate
+other interesting OSPRay features.
 
 
 Example Viewer
