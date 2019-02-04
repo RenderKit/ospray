@@ -116,6 +116,17 @@ typedef enum
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
 
+/*! OSPRay events which can be waited on via ospWait() */
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
+  OSP_WORLD_RENDERERED=(1<<0),
+  OSP_WORLD_COMMITTED=(2<<0),
+  OSP_FRAME_FINISHED=(3<<0)
+} OSPEventType;
+
 #ifdef __cplusplus
 /* C++ DOES support default initializers */
 #define OSP_DEFAULT_VAL(a) a
@@ -274,8 +285,13 @@ extern "C" {
                                                  OSPRenderer,
                                                  const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
+  /* Ask if all events tracked by an OSPFuture handle have been completed */
   OSPRAY_INTERFACE int   ospIsReady(OSPFuture);
-  OSPRAY_INTERFACE void  ospWait(OSPFuture);
+
+  /* Wait on a specific event*/
+  OSPRAY_INTERFACE void  ospWait(OSPFuture, OSPEventType);
+
+  /* TODO: this should be on the FrameBuffer */
   OSPRAY_INTERFACE float ospGetVariance(OSPFuture);
 
   // TODO: implement ospCancel(OSPFuture) ???

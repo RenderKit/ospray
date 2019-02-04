@@ -412,8 +412,10 @@ namespace ospray {
       return task->isFinished();
     }
 
-    void ISPCDevice::wait(OSPFuture _task)
+    void ISPCDevice::wait(OSPFuture _task, OSPEventType)
     {
+      // TODO: wait on only the specific event passed to this function
+
       auto *task = (BaseTask*)_task;
       task->wait();
     }

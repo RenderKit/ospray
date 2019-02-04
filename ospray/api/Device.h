@@ -186,7 +186,7 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      virtual void wait(OSPFuture)
+      virtual void wait(OSPFuture, OSPEventType)
       {
         NOT_IMPLEMENTED;
       }

@@ -149,7 +149,7 @@ int main(int argc, const char **argv) {
   int isFinished = ospIsReady(result);
   printf("status of 'result' is %i\n", isFinished);
   printf("waiting on frame to finish...\n");
-  ospWait(result);
+  ospWait(result, OSP_FRAME_FINISHED);
   printf("...done!\n");
   printf("variance was %f\n", ospGetVariance(result));
   ospRelease(result);
