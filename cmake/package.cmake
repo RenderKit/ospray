@@ -85,7 +85,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR ${OSPRAY_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${OSPRAY_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${OSPRAY_VERSION_PATCH})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "OSPRay: A Ray Tracing Based Rendering Engine for High-Fidelity Visualization")
-set(CPACK_PACKAGE_VendOR "Intel Corporation")
+set(CPACK_PACKAGE_VENDOR "Intel Corporation")
 set(CPACK_PACKAGE_CONTACT ospray@googlegroups.com)
 
 set(CPACK_COMPONENT_LIB_DISPLAY_NAME "Library")
@@ -107,11 +107,11 @@ set(CPACK_COMPONENT_TEST_DISPLAY_NAME "Test Suite")
 set(CPACK_COMPONENT_TEST_DESCRIPTION "Tools for testing the correctness of various aspects of OSPRay.")
 
 # dependencies between components
-set(CPACK_COMPONENT_DEVEL_DEPendS lib)
-set(CPACK_COMPONENT_APPS_DEPendS lib)
-set(CPACK_COMPONENT_MPI_DEPendS lib)
+set(CPACK_COMPONENT_DEVEL_DEPENDS lib)
+set(CPACK_COMPONENT_APPS_DEPENDS lib)
+set(CPACK_COMPONENT_MPI_DEPENDS lib)
 set(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
-set(CPACK_COMPONENT_TEST_DEPendS lib)
+set(CPACK_COMPONENT_TEST_DEPENDS lib)
 
 # point to readme and license files
 set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
@@ -155,13 +155,12 @@ elseif(APPLE) # MacOSX specific settings
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.macosx")
   else()
     set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-    set(CPACK_GENERATOR PackageMaker)
+    set(CPACK_GENERATOR DragNDrop)
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64")
     #set(CPACK_COMPONENTS_ALL lib devel apps)
     set(CPACK_MONOLITHIC_INSTALL ON)
     set(CPACK_PACKAGE_NAME ospray-${OSPRAY_VERSION})
-    set(CPACK_PACKAGE_VendOR "intel") # creates short name com.intel.ospray.xxx in pkgutil
-    set(CPACK_OSX_PACKAGE_VERSION 10.7)
+    set(CPACK_PACKAGE_VENDOR "intel") # creates short name com.intel.ospray.xxx in pkgutil
   endif()
 
 
