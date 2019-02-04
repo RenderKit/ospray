@@ -220,6 +220,8 @@ R"text(
         if (optDenoiser)
           fb->child("useDenoiser") = false;
       } while (--optDenoiser > 0);
+
+      fb.reset();
     }
 
     int OSPOffline::parseCommandLine(int &ac, const char **&av)
