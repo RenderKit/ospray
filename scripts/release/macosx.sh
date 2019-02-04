@@ -96,7 +96,7 @@ cmake \
 ..
 
 # create installers
-make -j 4 package
+make -j 4 package || exit 2
 
 # change settings for zip mode
 cmake \
@@ -110,5 +110,5 @@ cmake \
 ..
 
 # create ZIP files
-make -j 4 package
+make -j 4 package || exit 2
 
