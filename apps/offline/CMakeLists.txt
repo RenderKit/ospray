@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CREATE_APPLICATION(ospOffline
+ospray_create_application(ospOffline
   offline.cpp
 LINK
   ospray_app
