@@ -21,7 +21,7 @@
 #include "sg/Renderer.h"
 #include "sg/common/FrameBuffer.h"
 
-#if OSPRAY_APPS_ENABLE_DENOISER
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
 #include <OpenImageDenoise/oidn.hpp>
 #endif
 
