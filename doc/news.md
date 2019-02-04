@@ -1,7 +1,7 @@
 News, Updates, and Announcements
 ================================
 
-Feb 1, 2019: Version v1.8.0 now released on GitHub
+Feb 4, 2019: Version v1.8.0 now released on GitHub
 ---------------------------------------------------
 
 New release version 1.8.0 is now available on the [OSPRay GitHub

@@ -174,8 +174,8 @@ aggregate their data to the OSPRay process for rendering.
 The model used by the distributed device takes three additional
 parameters, to allow users to express their data distribution to OSPRay.
 All models should be disjoint to ensure correct sort-last compositing.
-Geometries used in the distributed MPI renderer can make use of the scivis
-renderer's OBJMaterial.
+Geometries used in the distributed MPI renderer can make use of the
+[SciVis renderer]'s [OBJ material].
 
   ------ ------------- ---------------------------------------------------------
   Type   Name          Description
@@ -208,35 +208,43 @@ Note that shadows and ambient occlusion are computed on the local geometries,
 in the `model` and the corresponding `ghostModel` in the ghost model array,
 if any where set.
 
-  -------------------- ----------- --------  -----------------------------------
-  Type                 Name         Default  Description
-  -------------------- ----------- --------  -----------------------------------
-  OSPModel/OSPModel[]  model           NULL  the [model] to render, can
-                                             optionally be a [data] array of
-                                             multiple models
+  -------------------- ---------------------- --------  ------------------------
+  Type                 Name                    Default  Description
+  -------------------- ---------------------- --------  ------------------------
+  OSPModel/OSPModel[]  model                      NULL  the [model] to render,
+                                                        can optionally be a
+                                                        [data] array of multiple
+                                                        models
 
-  OSPModel/OSPModel[]  ghostModel      NULL  the optional [model] containing the
-                                             ghost geometry for ambient
-                                             occlusion; when setting a [data]
-                                             array for both `model` and
-                                             `ghostModel`, each individual
-                                             ghost model shadows only its
-                                             corresponding model
+  OSPModel/OSPModel[]  ghostModel                 NULL  the optional [model]
+                                                        containing the ghost
+                                                        geometry for ambient
+                                                        occlusion; when setting
+                                                        a [data] array for both
+                                                        `model` and
+                                                        `ghostModel`, each
+                                                        individual ghost model
+                                                        shadows only its
+                                                        corresponding model
 
-  OSPLight[]           lights                [data] array with handles of the
-                                             [lights]
+  OSPLight[]           lights                           [data] array with
+                                                        handles of the [lights]
 
-  int                  aoSamples          0  number of rays per sample to
-                                             compute ambient occlusion
+  int                  aoSamples                     0  number of rays per
+                                                        sample to compute
+                                                        ambient occlusion
 
-  bool                 aoTransparencyEnabled false  whether object transparency
-                                             is respected when computing
-                                             ambient occlusion (slower)
+  bool                 aoTransparencyEnabled     false  whether object
+                                                        transparency is
+                                                        respected when computing
+                                                        ambient occlusion
+                                                        (slower)
 
-  bool                 oneSidedLighting      true  if true, backfacing
-                                             surfaces (wrt. light source)
-                                             receive no illumination
-  -------------------- ----------- --------  -----------------------------------
+  bool                 oneSidedLighting           true  if true, backfacing
+                                                        surfaces (wrt. light
+                                                        source) receive no
+                                                        illumination
+  -------------------- ---------------------- --------  ------------------------
   : Parameters for the `mpi_raycast` renderer.
 
 See the distributed device examples in the MPI module for examples.

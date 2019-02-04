@@ -59,8 +59,8 @@ showcasing most features of OSPRay which can be run as
 ImGui library for user interface controls and is based on a prototype
 OSPRay [scene graph] interface where nodes can be viewed and edited
 interactively. Updates to scene graph nodes update OSPRay state
-automatically through the scene graph viewer which is enabled by pressing
-'g'.
+automatically through the scene graph viewer which is enabled by
+pressing 'g'.
 
 ### Exploring the Scene
 
