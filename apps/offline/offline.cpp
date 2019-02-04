@@ -86,7 +86,7 @@ ospOffline specific parameters:
             write (or not) final converged image
    -ms    --maxsamples [int] (default 1024)
             maximum number of samples
-   -mv    --minvariance [float] (default 2q)
+   -mv    --minvariance [float] (default 2)
             minimum variance to which image will converge
 )text"
     <<
@@ -179,29 +179,32 @@ R"text(
       root->child("navFrameBuffer")["size"] = fb->size();
       renderer->child("spp") = 1;
 
-      // Only set denoiser state if denoiser is available
+      // Only enable denoiser if command line enables it and it's available
       if (!fb->hasChild("useDenoiser"))
         optDenoiser = 0;
-
-      if (optDenoiser)
-        fb->child("useDenoiser") = true;
+      else {
+        if (optDenoiser)
+          fb->child("useDenoiser") = true;
+        else
+          fb->child("useDenoiser") = false;
+      }
 
       do {
-        // Clear accum
+        // Clear accum (by marking camera as modified)
         root->child("camera").markAsModified();
         size_t numSamples = 1;
 
         do {
           // use snprintf to pad number with leading 0s for sorting
           char str[16];
-          snprintf(str, sizeof(str), "_%4.4lu", numSamples);
+          snprintf(str, sizeof(str), "_spp_%4.4lu", numSamples);
           suffix = str;
 
           root->renderFrame();
           variance = renderer->getLastVariance();
 
-          // use snprintf to format variance percentage
-          snprintf(str, sizeof(str), "_v%2.2fq", variance);
+          // use snprintf to format variance
+          snprintf(str, sizeof(str), "_v_%2.2f", variance);
           suffix += str;
 
           // Output images for power of 2 samples
