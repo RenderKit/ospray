@@ -42,7 +42,7 @@ namespace ospray {
 
       std::shared_ptr<sg::FrameBuffer> fb;
 
-#if OSPRAY_APPS_ENABLE_DENOISER
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
       std::vector<vec4f> denoisedBuffer;
       oidn::DeviceRef denoiserDevice;
       oidn::FilterRef filter;
@@ -60,7 +60,7 @@ namespace ospray {
 
     OSPOffline::OSPOffline()
     {
-#if OSPRAY_APPS_ENABLE_DENOISER
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
       denoiserDevice = oidn::newDevice();
       denoiserDevice.commit();
       filter = denoiserDevice.newFilter("RT");
@@ -123,6 +123,7 @@ R"text(
             std::cout << "saved current frame to '" << imageOutputFile << "' color|albeda|normal" << std::endl;
           }
 
+          denoisedBuffer.reserve(fbSize.x * fbSize.y);
           auto outputBuffer = denoisedBuffer.data();
           bool hdr = !fb->toneMapped();
           filter.set("hdr", hdr);
@@ -171,12 +172,6 @@ R"text(
       fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
       std::string suffix;
       float variance;
-
-      // Allocate denoise buffer the size of framebuffer
-      auto fbSize = fb->size();
-#if OSPRAY_APPS_ENABLE_DENOISER
-      denoisedBuffer.reserve(fbSize.x * fbSize.y);
-#endif
 
       // Setup initial conditions
       // disable use of "navFrameBuffer" for first frame
@@ -269,7 +264,7 @@ R"text(
           optMinVariance = min(100., max(0., atof(av[i + 1])));
           removeArgs(ac, av, i, 2);
           --i;
-#if OSPRAY_APPS_ENABLE_DENOISER
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
         } else if (arg == "-oidn" || arg == "--denoiser") {
           optDenoiser = min(2, max(0, atoi(av[i + 1])));
           removeArgs(ac, av, i, 2);
