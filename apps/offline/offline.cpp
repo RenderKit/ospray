@@ -174,7 +174,9 @@ R"text(
 
       // Allocate denoise buffer the size of framebuffer
       auto fbSize = fb->size();
+#if OSPRAY_APPS_ENABLE_DENOISER
       denoisedBuffer.reserve(fbSize.x * fbSize.y);
+#endif
 
       // Setup initial conditions
       // disable use of "navFrameBuffer" for first frame
