@@ -15,11 +15,9 @@
 // ======================================================================== //
 
 #include "ospapp/OSPApp.h"
-#include "common/sg/SceneGraph.h"
 #include "ospcommon/utility/SaveImage.h"
 
-#include "sg/Renderer.h"
-#include "sg/common/FrameBuffer.h"
+#include "sg/SceneGraph.h"
 
 #ifdef OSPRAY_APPS_ENABLE_DENOISER
 #include <OpenImageDenoise/oidn.hpp>
