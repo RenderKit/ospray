@@ -191,7 +191,7 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      virtual float getVariance(OSPFuture)
+      virtual float getVariance(OSPFrameBuffer)
       {
         NOT_IMPLEMENTED;
       }

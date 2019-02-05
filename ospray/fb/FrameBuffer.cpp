@@ -57,6 +57,11 @@ namespace ospray {
     return size;
   }
 
+  float FrameBuffer::getVariance() const
+  {
+    return frameVariance;
+  }
+
   void FrameBuffer::beginFrame()
   {
     frameID++;

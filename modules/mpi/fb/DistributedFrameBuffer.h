@@ -81,7 +81,7 @@ namespace ospray {
     int32 accumID(const vec2i &) override;
     float tileError(const vec2i &tile) override;
     void  beginFrame() override;
-    float endFrame(const float errorThreshold) override;
+    void endFrame(const float errorThreshold) override;
 
     enum FrameMode { WRITE_MULTIPLE, ALPHA_BLEND, Z_COMPOSITE };
 
@@ -105,7 +105,7 @@ namespace ospray {
 
     size_t ownerIDFromTileID(size_t tileID) const;
 
-    // signal the workers whether to cancel 
+    // signal the workers whether to cancel
     bool continueRendering() const { return !cancelRendering; }
 
     void reportTimings(std::ostream &os);

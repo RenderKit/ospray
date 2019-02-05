@@ -641,10 +641,7 @@ extern "C" float ospRenderFrame(OSPFrameBuffer fb,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  OSPFuture result = ospRenderFrameAsync(fb, renderer, fbChannelFlags);
-  auto variance = ospGetVariance(result);
-  ospRelease(result);
-  return variance;
+  return currentDevice().renderFrame(fb, renderer, fbChannelFlags);
 }
 OSPRAY_CATCH_END(inf)
 
@@ -674,7 +671,7 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" float ospGetVariance(OSPFuture f)
+extern "C" float ospGetVariance(OSPFrameBuffer f)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();

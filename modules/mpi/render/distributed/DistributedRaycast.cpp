@@ -223,6 +223,8 @@ namespace ospray {
       dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
       dfb->startNewFrame(errorThreshold);
 
+      const auto fbSize = dfb->getNumPixels();
+
       beginFrame(dfb);
 
       const size_t numRegions = allRegions.size();
@@ -236,8 +238,8 @@ namespace ospray {
           // Note that these bounds are very conservative, the bounds we compute
           // below are much tighter, and better. We just use the depth from the
           // projection to sort the tiles later
-          projectedRegions[i].bounds.lower *= dfb->size;
-          projectedRegions[i].bounds.upper *= dfb->size;
+          projectedRegions[i].bounds.lower *= fbSize;
+          projectedRegions[i].bounds.upper *= fbSize;
           regionOrdering.insert(std::make_pair(projectedRegions[i].depth, i));
 #if 0
           if (mpicommon::globalRank() == 0) {
@@ -355,13 +357,15 @@ namespace ospray {
         const bool tileOwner = (tileIndex % numGlobalRanks()) == globalRank();
         const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
 
+        const auto fbSize = dfb->getNumPixels();
+
 #if !PARTITION_OUT_FINISHED_TILES
         if (dfb->tileError(tileID) <= errorThreshold) {
           return;
         }
 #endif
 
-        Tile __aligned(64) bgtile(tileID, dfb->size, accumID);
+        Tile __aligned(64) bgtile(tileID, fbSize, accumID);
 
         RegionInfo regionInfo;
         // The visibility entries are sorted by the region id, matching
@@ -411,7 +415,7 @@ namespace ospray {
 #if PARALLEL_REGION_RENDERING
         tasking::parallel_for(myVisibleRegions.size(), [&](size_t vid) {
           const size_t i = myVisibleRegions[vid];
-          Tile __aligned(64) tile(tileID, dfb->size, accumID);
+          Tile __aligned(64) tile(tileID, fbSize, accumID);
 #else
         for (const size_t &i : myVisibleRegions) {
           Tile &tile = bgtile;
@@ -495,7 +499,8 @@ namespace ospray {
         *statsLog << "-----\n" << std::flush;
       }
       ++frameNumber;
-      return dfb->endFrame(errorThreshold);
+      dfb->endFrame(errorThreshold);
+      return dfb->getVariance();
     }
 
     // TODO WILL: This is only for benchmarking the compositing using
@@ -506,6 +511,8 @@ namespace ospray {
     {
       using namespace mpicommon;
       ProfilingPoint startRender;
+
+      const auto fbSize = fb->getNumPixels();
 
       beginFrame(fb);
 
@@ -520,7 +527,7 @@ namespace ospray {
           return;
         }
 
-        Tile __aligned(64) tile(tileID, fb->size, accumID);
+        Tile __aligned(64) tile(tileID, fbSize, accumID);
 
         // We use the task of rendering the first region to also fill out the block visiblility list
         const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
@@ -565,7 +572,8 @@ namespace ospray {
       }
 
       ++frameNumber;
-      return fb->endFrame(errorThreshold);
+      fb->endFrame(errorThreshold);
+      return fb->getVariance();
     }
 
     std::string DistributedRaycastRenderer::toString() const

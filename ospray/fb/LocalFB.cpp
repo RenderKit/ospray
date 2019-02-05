@@ -161,11 +161,11 @@ namespace ospray {
       pixelOp->beginFrame();
   }
 
-  float LocalFrameBuffer::endFrame(const float errorThreshold)
+  void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
     if (pixelOp)
       pixelOp->endFrame();
-    return tileErrorRegion.refine(errorThreshold);
+    frameVariance = tileErrorRegion.refine(errorThreshold);
   }
 
   const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)

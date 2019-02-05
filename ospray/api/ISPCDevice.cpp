@@ -390,25 +390,26 @@ namespace ospray {
                                   OSPRenderer _renderer,
                                   const uint32 fbChannelFlags)
     {
-      FrameBuffer *fb    = (FrameBuffer *)_fb;
-      Renderer *renderer = (Renderer *)_renderer;
-
-      return renderer->renderFrame(fb, fbChannelFlags);
+      auto f = renderFrameAsync(_fb, _renderer, fbChannelFlags);
+      wait(f, OSP_FRAME_FINISHED);
+      return getVariance(_fb);
     }
 
     OSPFuture ISPCDevice::renderFrameAsync(OSPFrameBuffer _fb,
                                            OSPRenderer _renderer,
                                            const uint32 fbChannelFlags)
     {
-      auto *f = new AsyncTask<float>([=](){
-        return renderFrame(_fb, _renderer, fbChannelFlags);
-      });
+      FrameBuffer *fb    = (FrameBuffer *)_fb;
+      Renderer *renderer = (Renderer *)_renderer;
+
+      auto *f = new AsyncTask<float>(
+          [=]() { return renderer->renderFrame(fb, fbChannelFlags); });
       return (OSPFuture)f;
     }
 
     int ISPCDevice::isReady(OSPFuture _task)
     {
-      auto *task = (BaseTask*)_task;
+      auto *task = (BaseTask *)_task;
       return task->isFinished();
     }
 
@@ -416,14 +417,14 @@ namespace ospray {
     {
       // TODO: wait on only the specific event passed to this function
 
-      auto *task = (BaseTask*)_task;
+      auto *task = (BaseTask *)_task;
       task->wait();
     }
 
-    float ISPCDevice::getVariance(OSPFuture _task)
+    float ISPCDevice::getVariance(OSPFrameBuffer _fb)
     {
-      auto *task = (AsyncTask<float>*)_task;
-      return task->get();
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      return fb->getVariance();
     }
 
     //! release (i.e., reduce refcount of) given object

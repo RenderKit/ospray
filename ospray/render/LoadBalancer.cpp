@@ -35,7 +35,8 @@ namespace ospray {
     void *perFrameData = renderer->beginFrame(fb);
     bool cancel = false;
     std::atomic<int> pixelsDone{0};
-    const float rcpPixels = 1.0f/(fb->size.x * fb->size.y);
+    const auto fbSize = fb->getNumPixels();
+    const float rcpPixels = 1.0f/(fbSize.x * fbSize.y);
 
     tasking::parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
       if (cancel)
@@ -48,17 +49,17 @@ namespace ospray {
 
       // increment also for finished tiles
       vec2i pixels = ospcommon::min(vec2i(TILE_SIZE),
-          fb->size - tileID * TILE_SIZE);
+          fbSize - tileID * TILE_SIZE);
       pixelsDone += pixels.x * pixels.y;
 
       if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
 #if TILE_SIZE > MAX_TILE_SIZE
-      auto tilePtr = make_unique<Tile>(tileID, fb->size, accumID);
+      auto tilePtr = make_unique<Tile>(tileID, fbSize, accumID);
       auto &tile   = *tilePtr;
 #else
-      Tile __aligned(64) tile(tileID, fb->size, accumID);
+      Tile __aligned(64) tile(tileID, fbSize, accumID);
 #endif
 
       tasking::parallel_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
@@ -73,7 +74,8 @@ namespace ospray {
 
     renderer->endFrame(perFrameData,channelFlags);
 
-    return fb->endFrame(renderer->errorThreshold);
+    fb->endFrame(renderer->errorThreshold);
+    return fb->getVariance();
   }
 
   std::string LocalTiledLoadBalancer::toString() const

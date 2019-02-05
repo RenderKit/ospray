@@ -100,7 +100,8 @@ namespace ospray {
         }
         ++frameNumber;
 
-        return dfb->endFrame(renderer->errorThreshold);
+        dfb->endFrame(renderer->errorThreshold);
+        return dfb->getVariance();
       }
 
       std::string Master::toString() const
@@ -124,6 +125,8 @@ namespace ospray {
         dfb->startNewFrame(renderer->errorThreshold);
         // dfb->beginFrame(); is called by renderer->beginFrame:
         void *perFrameData = renderer->beginFrame(fb);
+
+        const auto fbSize = dfb->getNumPixels();
 
         const int ALLTASKS = fb->getTotalTiles();
         int NTASKS = ALLTASKS / worker.size;
@@ -151,10 +154,10 @@ namespace ospray {
             return;
 
 #if TILE_SIZE > MAX_TILE_SIZE
-          auto tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
+          auto tilePtr = make_unique<Tile>(tileId, fbSize, accumID);
           auto &tile   = *tilePtr;
 #else
-          Tile __aligned(64) tile(tileId, fb->size, accumID);
+          Tile __aligned(64) tile(tileId, fbSize, accumID);
 #endif
 
           if (dfb->continueRendering()) {
@@ -193,8 +196,8 @@ namespace ospray {
         }
         ++frameNumber;
 
-        return dfb->endFrame(inf); // irrelevant return value on slave, still
-                                   // call to stop maml layer
+        dfb->endFrame(inf);
+        return dfb->getVariance();
       }
 
       std::string Slave::toString() const
@@ -286,8 +289,9 @@ namespace ospray {
         };
         std::vector<ActiveTile> activeTiles;
         TileTask task;
-        for (int y = 0, tileNr = 0; y < dfb->numTiles.y; y++) {
-          for (int x = 0; x < dfb->numTiles.x; x++, tileNr++) {
+        const auto numTiles = dfb->getNumTiles();
+        for (int y = 0, tileNr = 0; y < numTiles.y; y++) {
+          for (int x = 0; x < numTiles.x; x++, tileNr++) {
             const auto tileId = vec2i(x, y);
             const auto tileError = dfb->tileError(tileId);
             if (tileError <= errorThreshold)
@@ -323,7 +327,7 @@ namespace ospray {
           const auto tileId = it->id;
           task.tileId = tileId;
           task.accumId = dfb->accumID(tileId);
-          const auto tileNr = tileId.y*dfb->numTiles.x + tileId.x;
+          const auto tileNr = tileId.y*numTiles.x + tileId.x;
           auto nr = workerRankFromGlobalRank(dfb->ownerIDFromTileID(tileNr));
           preferredTiles[nr].push_back(task);
 
@@ -354,7 +358,8 @@ namespace ospray {
 
         dfb->waitUntilFinished();
 
-        return dfb->endFrame(renderer->errorThreshold);
+        dfb->endFrame(renderer->errorThreshold);
+        return dfb->getVariance();
       }
 
       std::string Master::toString() const
@@ -411,18 +416,18 @@ namespace ospray {
 
         renderer->endFrame(perFrameData,channelFlags);
 
-        return dfb->endFrame(inf); // irrelevant return value on slave, still
-                                   // call to stop maml layer
+        dfb->endFrame(inf);
+        return dfb->getVariance();
       }
-
 
       void Slave::tileTask(const TileTask &task)
       {
+        const auto fbSize = fb->getNumPixels();
 #if TILE_SIZE > MAX_TILE_SIZE
-        auto tilePtr = make_unique<Tile>(task.tileId, fb->size, task.accumId);
+        auto tilePtr = make_unique<Tile>(task.tileId, fbSize, task.accumId);
         auto &tile   = *tilePtr;
 #else
-        Tile __aligned(64) tile(task.tileId, fb->size, task.accumId);
+        Tile __aligned(64) tile(task.tileId, fbSize, task.accumId);
 #endif
 
         while (!frameActive);// PRINT(frameActive); // XXX busy wait for valid perFrameData

@@ -912,7 +912,7 @@ namespace ospray {
     FrameBuffer::beginFrame();
   }
 
-  float DFB::endFrame(const float errorThreshold)
+  void DFB::endFrame(const float errorThreshold)
   {
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */
@@ -925,9 +925,7 @@ namespace ospray {
     memset(tileInstances, 0, sizeof(int32)*getTotalTiles()); // XXX needed?
 
     if (mpicommon::IamTheMaster()) // only refine on master
-      return tileErrorRegion.refine(errorThreshold);
-    else // slaves will get updated error with next sync() anyway
-      return inf;
+      frameVariance = tileErrorRegion.refine(errorThreshold);
   }
 
   void DFB::reportTimings(std::ostream &os)
