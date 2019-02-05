@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -46,70 +46,22 @@ namespace ospray {
 
     void DistributedModel::commit()
     {
-      othersRegions.clear();
-
-      // TODO: We may need to override the ISPC calls made
-      // to the Model or customize the model struct on the ISPC
-      // side. In which case we need some ISPC side inheritence
-      // for the model type. Currently the code is actually identical.
       Model::commit();
-      // Send my bounding boxes to other nodes, recieve theirs for a
-      // "full picture" of what geometries live on what nodes
-      Data *regionData = getParamData("regions");
-      Data *ghostRegionData = getParamData("ghostRegions");
-
-      // The box3f data is sent as data of FLOAT3 items
-      // TODO: It's a little awkward to copy the boxes again like this, maybe
-      // can re-thinkg the send side of the bcast call? One that takes
-      // a ptr and a size since we know we won't be writing out to it?
-      // TODO: For now it doesn't matter that we don't know who owns the
-      // other boxes, just that we know they exist and their bounds, and that
-      // they aren't ours.
-      if (regionData) {
-        box3f *boxes = reinterpret_cast<box3f*>(regionData->data);
-        myRegions = std::vector<box3f>(boxes, boxes + regionData->numItems / 2);
+      id = getParam1i("id", -1);
+      if (id == -1) {
+        throw std::runtime_error("#osp:error An id must be set for the model");
       }
-
-      // If the user hasn't set any regions, there's an implicit infinitely
-      // large region box we can place around the entire world.
-      if (myRegions.empty()) {
-        postStatusMsg("No regions found, making implicit "
-                      "infinitely large region", 1);
-        myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
-      }
-
-      // Check if we've got ghost regions set, otherwise just use the regions
-      if (ghostRegionData) {
-        box3f *boxes = reinterpret_cast<box3f*>(ghostRegionData->data);
-        ghostRegions = std::vector<box3f>(boxes, boxes + ghostRegionData->numItems / 2);
-      } else {
-        ghostRegions = myRegions;
-      }
-
-      for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
-        if (i == mpicommon::globalRank()) {
-          messaging::bcast(i, myRegions);
-        } else {
-          std::vector<box3f> recv;
-          messaging::bcast(i, recv);
-          std::copy(recv.begin(), recv.end(),
-                    std::back_inserter(othersRegions));
-        }
-      }
-
-      if (logLevel() >= 1) {
-        for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
-          if (i == mpicommon::globalRank()) {
-            postStatusMsg(1) << "Rank " << mpicommon::globalRank()
-              << ": Got regions from others {";
-            for (const auto &b : othersRegions) {
-              postStatusMsg(1) << "\t" << b << ",";
-            }
-            postStatusMsg(1) << "}";
-          }
-        }
+      // TODO: We should take an optional clipping box to shrink the
+      // model's bounds, for example if we want to clip some sphere
+      // or other geometry to be smaller and contained within the actual
+      // box we own.
+      if (hasParam("region.lower") && hasParam("region.upper")) {
+        bounds = box3f(getParam<vec3f>("region.lower", bounds.lower),
+                       getParam<vec3f>("region.upper", bounds.upper));
+        ispc::DistributedModel_setBounds(getIE(), (ispc::box3f*)&bounds);
       }
     }
 
   } // ::ospray::mpi
 } // ::ospray
+

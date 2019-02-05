@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Importer.h"
-#include "common/sg/SceneGraph.h"
+#include "sg/SceneGraph.h"
 #include "ospcommon/utility/StringManip.h"
 #include <memory>
 
@@ -76,7 +76,7 @@ namespace ospray {
         reads until end of line (\n) or end of file, whichever comes
         first. If end of line the \n is included in the string. if the
         file is already eof a empty string is returned */
-    std::string readLine(FILE *file) 
+    std::string readLine(FILE *file)
     {
       std::stringstream ss;
       while (!feof(file)) {
@@ -103,14 +103,14 @@ namespace ospray {
 
         // ignore if there was nothing - or at least, nothing before the token
         if (tokens.empty()) continue;
-        
+
         // from now on, only tokens[0] matters - that is what was
         // before the comment sign. Now, split into real tokens by whitespace
         tokens = utility::split(tokens[0]," \n\t\r");
-        if (tokens.empty()) 
+        if (tokens.empty())
           // empty line
           continue;
-        
+
         // we have tokens - now they *must* match how many we're
         // reading.
         if (tokens.size() < (size_t)N)

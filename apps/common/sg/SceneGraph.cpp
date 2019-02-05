@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -72,6 +72,11 @@ namespace ospray {
       clearFB = newCamera || newRenderer || rChanged || cChanged;
 
       frameAccumulationLimit = child("frameAccumulationLimit").valueAs<int>();
+      // when frameAccumulationLimit is active, render at least 2 frames,
+      // otherwise the view is stuck showing the stale navigation framebuffer
+      // for no accumulation, disable the accumBuffer
+      if (frameAccumulationLimit >= 0)
+        frameAccumulationLimit = std::max(frameAccumulationLimit, 2);
     }
 
     void Frame::postCommit(RenderContext &)

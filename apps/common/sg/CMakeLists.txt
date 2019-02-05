@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 ## VTK support ##
 
 option(OSPRAY_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
@@ -24,7 +22,6 @@ if(OSPRAY_SG_VTK)
   option(OSPRAY_SG_VTK_XDMF "Enable VTK XDMF loader for ospray_sg" OFF)
   if (OSPRAY_SG_VTK_XDMF)
     set(XDMF_COMPONENT vtkIOXdmf2)
-    add_definitions(-DOSPRAY_APPS_SG_VTK_XDMF=1)
   endif()
 
   find_package(VTK COMPONENTS REQUIRED
@@ -44,8 +41,6 @@ if(OSPRAY_SG_VTK)
     importer/importVTI.cpp
     generator/generateVTKWaveletVolume.cpp
   )
-
-  add_definitions(-DOSPRAY_APPS_SG_VTK=1)
 endif()
 
 ## Chombo AMR loader support ##
@@ -54,11 +49,7 @@ option(OSPRAY_SG_CHOMBO "AMR Chombo Reader (requires HDF5)" OFF)
 
 if(OSPRAY_SG_CHOMBO)
   find_package(HDF5 REQUIRED)
-  if(HDF5_FOUND)
-    include_directories(${HDF5_INCLUDE_DIRS})
-  endif()
   set(CHOMBO_SRCS importer/importAMRChombo.cpp)
-  add_definitions(-DOSPRAY_APPS_SG_CHOMBO=1)
 endif()
 
 ## OpenImageIO support ##
@@ -67,13 +58,20 @@ option(OSPRAY_SG_OPENIMAGEIO "Enable OpenImageIO support" OFF)
 
 if(OSPRAY_SG_OPENIMAGEIO)
   find_package(OpenImageIO 1.6.5)
-  if (OPENIMAGEIO_FOUND)
-    add_definitions(-DUSE_OPENIMAGEIO)
-    include_directories(${OPENIMAGEIO_INCLUDE_DIRS})
-  else()
+  if (NOT OPENIMAGEIO_FOUND)
     message(STATUS "OpenImageIO not found. Using stb_image instead.")
   endif()
 endif()
+
+## OpenImageDenoise support ##
+
+option(OSPRAY_APPS_ENABLE_DENOISER "Use image denoiser in example viewer")
+if (OSPRAY_APPS_ENABLE_DENOISER)
+  find_package(OpenImageDenoise 0.8 REQUIRED)
+  set(OPENIMAGEDENOISE OpenImageDenoise)
+endif()
+
+## Build Library ##
 
 ospray_create_library(ospray_sg SHARED
   # scene graph nodes
@@ -155,8 +153,10 @@ ospray_create_library(ospray_sg SHARED
 
   ${SG_VTK_SRCS}
   ${CHOMBO_SRCS}
+)
 
-LINK
+target_link_libraries(ospray_sg
+PUBLIC
   ospray
   ospray_common
   ospray_tfn
@@ -164,113 +164,61 @@ LINK
   ${HDF5_LIBRARIES}
   ${VTK_LIBRARIES}
   ${OPENIMAGEIO_LIBRARIES}
+  ${OPENIMAGEDENOISE}
 )
+
+target_include_directories(ospray_sg
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/sg>
+)
+
+## Setup additional compile config for optional dependencies ##
+
+if(OSPRAY_SG_CHOMBO)
+  target_include_directories(ospray_sg PRIVATE ${HDF5_INCLUDE_DIRS})
+  target_compile_definitions(ospray_sg PUBLIC -DOSPRAY_APPS_SG_CHOMBO=1)
+endif()
+
+if(OSPRAY_SG_OPENIMAGEIO AND OPENIMAGEIO_FOUND)
+  target_include_directories(ospray_sg PRIVATE ${OPENIMAGEIO_INCLUDE_DIRS})
+  target_compile_definitions(ospray_sg PRIVATE -DUSE_OPENIMAGEIO)
+endif()
+
+if(OSPRAY_SG_VTK)
+  if (OSPRAY_SG_VTK_XDMF)
+    target_compile_definitions(ospray_sg PRIVATE -DOSPRAY_APPS_SG_VTK_XDMF=1)
+  endif()
+
+  target_compile_definitions(ospray_sg PUBLIC -DOSPRAY_APPS_SG_VTK=1)
+endif()
+
+if (OSPRAY_APPS_ENABLE_DENOISER)
+  target_compile_definitions(ospray_sg PUBLIC -DOSPRAY_APPS_ENABLE_DENOISER=1)
+
+  ## redistribute OpenImageDenoise
+  if (OSPRAY_INSTALL_DEPENDENCIES)
+    get_target_property(OIDN_LIB OpenImageDenoise IMPORTED_LOCATION_RELEASE)
+    if (WIN32)
+      install(PROGRAMS ${OIDN_LIB}
+              DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+    else()
+      install(PROGRAMS ${OIDN_LIB}
+              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+
+      get_filename_component(OIDN_LIBNAME ${OIDN_LIB} NAME)
+      ospray_install_namelink(OpenImageDenoise ${OIDN_LIBNAME})
+    endif()
+  endif()
+endif()
 
 ## Install headers in SDK ##
 
-set(OSPRAY_SG_SDK_INSTALL_LOC
-  ../sg #NOTE: this is "next" to the SDK/ directory
-)
-
-ospray_install_sdk_headers(
-  Renderer.h
-  SceneGraph.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}
-)
-
-ospray_install_sdk_headers(
-  camera/Camera.h
-  camera/OrthographicCamera.h
-  camera/PanoramicCamera.h
-  camera/PerspectiveCamera.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/camera
-)
-
-ospray_install_sdk_headers(
-  common/AnimationController.h
-  common/Animator.h
-  common/Common.h
-  common/Data.h
-  common/FrameBuffer.h
-  common/ToneMapper.h
-  common/Instance.h
-  common/Light.h
-  common/Material.h
-  common/Model.h
-  common/Node.h
-  common/NodeList.h
-  common/NodeParameter.h
-  common/Renderable.h
-  common/RenderContext.h
-  common/RuntimeError.h
-  common/Selector.h
-  common/Serialization.h
-  common/Transform.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/common
-)
-
-ospray_install_sdk_headers(
-  generator/Generator.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/generator
-)
-
-ospray_install_sdk_headers(
-  geometry/Curves.h
-  geometry/Cylinders.h
-  geometry/Geometry.h
-  geometry/QuadMesh.h
-  geometry/Spheres.h
-  geometry/StreamLines.h
-  geometry/TriangleMesh.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/geometry
-)
-
-ospray_install_sdk_headers(
-  importer/Importer.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/importer
-)
-
-ospray_install_sdk_headers(
-  module/Module.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/module
-)
-
-ospray_install_sdk_headers(
-  texture/Texture.h
-  texture/Texture2D.h
-  texture/TextureVolume.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/texture
-)
-
-ospray_install_sdk_headers(
-  transferFunction/TransferFunction.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/transferFunction
-)
-
-ospray_install_sdk_headers(
-  visitor/GatherNodesByName.h
-  visitor/GatherNodesByPosition.h
-  visitor/MarkAllAsModified.h
-  visitor/PrintNodes.h
-  visitor/VerifyNodes.h
-  visitor/Visitor.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/visitor
-)
-
-ospray_install_sdk_headers(
-  volume/AMRVolume.h
-  volume/UnstructuredVolume.h
-  volume/Volume.h
-
-  DESTINATION ${OSPRAY_SG_SDK_INSTALL_LOC}/volume
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  COMPONENT devel
+  FILES_MATCHING
+  PATTERN *.h
+  PATTERN *3rdParty* EXCLUDE
+  PATTERN importer/detail_xyz EXCLUDE
 )

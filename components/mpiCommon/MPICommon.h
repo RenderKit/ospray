@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,8 @@
 // std
 #include <memory>
 #include <vector>
+#include <chrono>
+#include <mutex>
 
 // mpi
 #define OMPI_SKIP_MPICXX 1
@@ -146,6 +148,9 @@ namespace mpicommon {
     ospcommon::byte_t *data {nullptr};
     size_t             size {0};
     /*! @} */
+    // TODO WILL: Profiling info, when this message started sending
+    // or receiving
+    std::chrono::high_resolution_clock::time_point started;
   };
 
   /*! a message whose payload is owned by the user, and which we do
@@ -179,6 +184,13 @@ namespace mpicommon {
   // should be set as the world group used for communication. If false,
   // it is up to the caller to configure the world group correctly.
   OSPRAY_MPI_INTERFACE bool init(int *ac, const char **av, bool useCommWorld);
+
+  // Acquire the MPI context lock to allow the calling thread to make MPI calls
+  // This will only actually acquire the lock if the MPI version does not
+  // support MPI_THREAD_MULTIPLE. To avoid deadlock, do not make any blocking
+  // MPI calls while holding the lock, instead use the various non-blocking
+  // messaging calls and MPI_Test(all|any|some) to test for completion
+  OSPRAY_MPI_INTERFACE std::unique_lock<std::mutex> acquireMPILock();
 
   inline int globalRank()
   {

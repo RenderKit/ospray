@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,7 +19,7 @@
 // amr base
 #include "ospcommon/array3D/Array3D.h"
 // ospray
-#include "ospray/common/Data.h"
+#include "common/Data.h"
 
 namespace ospray {
   namespace amr {

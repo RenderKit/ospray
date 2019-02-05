@@ -11,7 +11,7 @@ where the API is compatible with C99 and C++.
 Initialization and Shutdown
 ---------------------------
 
-In order to use the API, OSPRay must be initialized with a "device". A
+To use the API, OSPRay must be initialized with a "device". A
 device is the object which implements the API. Creating and initializing
 a device can be done in either of two ways: command line arguments or
 manually instantiating a device.
@@ -68,7 +68,7 @@ prefixed by convention with "`--osp:`") are understood:
                              valid values for `dst` are `cerr` and `cout`
 
   `--osp:device:<name>`      use `name` as the type of device for OSPRay to
-                             create; e.g. `--osp:device:default` gives you the
+                             create; e.g., `--osp:device:default` gives you the
                              default local device; Note if the device to be used
                              is defined in a module, remember to pass
                              `--osp:module:<name>` first
@@ -177,7 +177,7 @@ The following errors are currently used by OSPRay:
   OSP_OUT_OF_MEMORY      there is not enough memory to execute the command
   OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1)
   ---------------------- -------------------------------------------------------
-  : Possible error codes, i.e. valid named constants of type `OSPError`.
+  : Possible error codes, i.e., valid named constants of type `OSPError`.
 
 These error codes are either directly return by some API functions, or
 are recorded to be later queried by the application via
@@ -375,10 +375,10 @@ the table below.
   OSP_LONG[234]          ... and [234]-element vector
   OSP_ULONG              64\ bit unsigned integer scalar
   OSP_ULONG[234]         ... and [234]-element vector
-  OSP_FLOAT              32\ bit single precision floating point scalar
+  OSP_FLOAT              32\ bit single precision floating-point scalar
   OSP_FLOAT[234]         ... and [234]-element vector
-  OSP_FLOAT3A            ... and aligned 3-element vector
-  OSP_DOUBLE             64\ bit double precision floating point scalar
+  OSP_FLOAT3A            ... and 3-element vector with padding (same size as an OSP_FLOAT4)
+  OSP_DOUBLE             64\ bit double precision floating-point scalar
   ---------------------- -----------------------------------------------
   : Valid named constants for `OSPDataType`.
 
@@ -390,7 +390,7 @@ To add a data array as parameter named `id` to another object call
 Volumes
 -------
 
-Volumes are volumetric datasets with discretely sampled values in 3D
+Volumes are volumetric data sets with discretely sampled values in 3D
 space, typically a 3D scalar field. To create a new volume object of
 given type `type` use
 
@@ -456,8 +456,9 @@ specified.
 The first variant shares the voxel data with the application. Such a
 volume type is created by passing the type string
 "`shared_structured_volume`" to `ospNewVolume`. The voxel data is laid
-out in memory in XYZ order and provided to the volume via a [data]
-buffer parameter named "`voxelData`".
+out in memory in xyz-order^[For consecutive memory addresses the x-index
+of the corresponding voxel changes the quickest.] and provided to the
+volume via a [data] buffer parameter named "`voxelData`".
 
 The second regular grid variant is optimized for rendering performance:
 data locality in memory is increased by arranging the voxel data in
@@ -472,7 +473,7 @@ anymore, but has to be transferred to OSPRay via
 
 The voxel data pointed to by `source` is copied into the given volume
 starting at position `regionCoords`, must be of size `regionSize` and be
-placed in memory in XYZ order. Note that OSPRay distinguishes between
+placed in memory in xyz-order. Note that OSPRay distinguishes between
 volume data and volume parameters. This function must be called only
 after all volume parameters (in particular `dimensions` and `voxelType`,
 see below) have been set and _before_ `ospCommit(volume)` is called.
@@ -589,14 +590,13 @@ the index order for each tetrahedron does not matter, as OSPRay
 internally calculates vertex normals to ensure proper sampling and
 interpolation.
 
-For wedge cells, each wedge is formed by a group of six indices into
-the vertices and data value.  Vertex ordering is the same as
-`VTK_WEDGE` - three bottom vertices counterclockwise, then top three
-counterclockwise.
+For wedge cells, each wedge is formed by a group of six indices into the
+vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
+three bottom vertices counterclockwise, then top three counterclockwise.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
 indices into the vertices and data value. Vertex ordering is the same as
-`VTK_HEXAHEDRON` -- four bottom vertices counterclockwise, then top four
+`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
 counterclockwise.
 
   -------- ------------------  -------  ---------------------------------------
@@ -634,7 +634,7 @@ by OSPRay, or else an `OSPTransferFunction` handle to the created
 transfer function. That handle can be assigned to a volume as parameter
 "`transferFunction`" using `ospSetObject`.
 
-One type of transfer function that is built-in in OSPRay is the linear
+One type of transfer function that is supported by OSPRay is the linear
 transfer function, which interpolates between given equidistant colors
 and opacities. It is create by passing the string "`piecewise_linear`"
 to `ospNewTransferFunction` and it is controlled by these parameters:
@@ -699,6 +699,32 @@ mesh. A quad is internally handled as a pair of two triangles, thus
 mixing triangles and quad is supported by encoding a triangle as a quad
 with the last two vertex indices being identical (`w=z`).
 
+### Subdivision
+
+A mesh consisting of subdivision surfaces, created by specifying a
+geometry of type "`subdivision`". Once created, a subdivision recognizes
+the following parameters:
+
+  Type               Name             Description
+  ------------------ ---------------- -------------------------------------------------
+  vec3f[]            vertex                [data] array of vertex positions
+  vec4f[]            vertex.color          [data] array of vertex colors (RGBA)
+  vec2f[]            vertex.texcoord       [data] array of vertex texture coordinates
+  float              level                 global level of tessellation, default is 5
+  uint[]/vec4i[]     index                 [data] array of indices (into the vertex array(s))
+  float[]            index.level           [data] array of per-edge levels of tessellation, overrides global level
+  uint[]             face                  [data] array holding the number of indices/edges (3 to 15) per face
+  vec2i[]            edgeCrease.index      [data] array of edge crease indices
+  float[]            edgeCrease.weight     [data] array of edge crease weights
+  uint[]             vertexCrease.index    [data] array of vertex crease indices
+  float[]            vertexCrease.weight   [data] array of vertex crease weights
+  ------------------ ---------------- -------------------------------------------------
+  : Parameters defining a Subdivision geometry.
+
+The `vertex` and `index` arrays are mandatory to create a valid
+subdivision surface. If no `face` array is present then a pure quad
+mesh is assumed (and indices must be of type `vec4i`).
+Optionally supported are edge and vertex creases.
 
 ### Spheres
 
@@ -807,7 +833,7 @@ below.
   ---------- ------------------- --------  -------------------------------------
   : Parameters defining a cylinders geometry.
 
-For texturing each cylinder is seen as a 1D primitive, i.e. a line
+For texturing each cylinder is seen as a 1D primitive, i.e., a line
 segment: the 2D texture coordinates at its vertices v0 and v1 are
 linearly interpolated.
 
@@ -844,15 +870,15 @@ table below.
 
 Each streamline is specified by a set of (aligned) control points in
 `vertex`. If `smooth` is disabled and a constant `radius` is used for
-all streamlines then all vertices belonging to to the same logical
+all streamlines then all vertices belonging to the same logical
 streamline are connected via [cylinders], with additional [spheres] at
 each vertex to create a continuous, closed surface. Otherwise,
 streamlines are represented as Bézier curves, smoothly interpolating the
 vertices. This mode supports per-vertex varying radii (either given in
 `vertex.radius`, or in the 4th component of a *vec4f* `vertex`), but is
-slower and consumes more memory. Also, the radius needs to be smaller
-than the curvature radius of the Bézier curve at each location on the
-curve.
+slower and consumes more memory. Additionally, the radius needs to be
+smaller than the curvature radius of the Bézier curve at each location
+on the curve.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of segments (or links)
@@ -911,7 +937,7 @@ function].
 
 ### Slices
 
-One tool to highlight interesting features of volumetric data is to
+One tool to highlight notable features of volumetric data is to
 visualize 2D cuts (or slices) by placing planes into the volume. Such a
 slices geometry is created by calling `ospNewGeometry` with type string
 "`slices`". The planes are defined by the coefficients $(a,b,c,d)$ of
@@ -957,15 +983,12 @@ all renderers are
 
   OSPLight[]  lights                       [data] array with handles of the [lights]
 
-  float       epsilon              10^-6^  ray epsilon to avoid self-intersections,
-                                           relative to scene diameter
-
   int         spp                       1  samples per pixel
 
   int         maxDepth                 20  maximum ray recursion depth
 
   float       minContribution       0.001  sample contributions below this value
-                                           will be neglected to speed-up rendering
+                                           will be neglected to speedup rendering
 
   float       varianceThreshold         0  threshold for adaptive accumulation
   ----------- ------------------ --------  ----------------------------------------
@@ -1002,7 +1025,7 @@ special parameters:
                                                      is respected when computing
                                                      ambient occlusion (slower)
 
-  bool          oneSidedLighting               true  if true back-facing
+  bool          oneSidedLighting               true  if true, backfacing
                                                      surfaces (wrt. light source)
                                                      receive no illumination
 
@@ -1017,13 +1040,14 @@ special parameters:
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 
-Note that the intensity (and color) of AO is controlled via an [ambient
-light]. If `aoSamples` is zero (the default) then ambient lights cause
-ambient illumination (without occlusion).
+Note that the intensity (and color) of AO is deduced from an [ambient
+light] in the `lights` array.^[If there are multiple ambient lights then
+their contribution is added] If `aoSamples` is zero (the default) then
+ambient lights cause ambient illumination (without occlusion).
 
 Per default the background of the rendered image will be transparent
-black, i.e. the alpha channel holds the opacity of the rendered objects.
-This facilitates transparency-aware blending of the image with an
+black, i.e., the alpha channel holds the opacity of the rendered objects.
+This eases transparency-aware blending of the image with an
 arbitrary background image by the application. The parameter `bgColor`
 can be used to already blend with a constant background color (and
 alpha) during rendering.
@@ -1056,7 +1080,7 @@ supports the following special parameters:
 
   OSPTexture backplate            NULL  [texture] image used as background,
                                         replacing visible lights in infinity
-                                        (e.g. the [HDRI light])
+                                        (e.g., the [HDRI light])
   ---------- ---------------- --------  -------------------------------------
   : Special parameters understood by the path tracer.
 
@@ -1122,17 +1146,17 @@ All light sources[^1] accept the following parameters:
   float     intensity         1  intensity of the light (a factor)
   bool      isVisible      true  whether the light can be directly seen
   --------- ---------- --------  ---------------------------------------
-  : Parameters accepted by the all lights.
+  : Parameters accepted by all lights.
 
 The following light types are supported by most OSPRay renderers.
 
-[^1]: The [HDRI Light] is an exception, it knows about `intensity`, but
+[^1]: The [HDRI light] is an exception, it knows about `intensity`, but
 not about `color`.
 
 #### Directional Light / Distant Light
 
 The distant light (or traditionally the directional light) is thought to
-be very far away (outside of the scene), thus its light arrives (almost)
+be far away (outside of the scene), thus its light arrives (almost)
 as parallel rays. It is created by passing the type string "`distant`"
 to `ospNewLight3`. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following special
@@ -1168,17 +1192,17 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer]).
 
-#### Spot Light
+#### Spotlight
 
-The spot light is a light emitting into a cone of directions. It is
+The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string "`spot`" to `ospNewLight3`. In
 addition to the [general parameters](#lights) understood by all lights
-the spot light supports the special parameters listed in the table.
+the spotlight supports the special parameters listed in the table.
 
   -------- ------------- ----------------------------------------------
   Type     Name          Description
   -------- ------------- ----------------------------------------------
-  vec3f(a) position      the center of the spot light, in world-space
+  vec3f(a) position      the center of the spotlight, in world-space
 
   vec3f(a) direction     main emission direction of the spot
 
@@ -1190,12 +1214,12 @@ the spot light supports the special parameters listed in the table.
                          cone) and full intensity of the spot; should
                          be smaller than half of `openingAngle`
 
-  float    radius        the size of the spot light, the radius of a
+  float    radius        the size of the spotlight, the radius of a
                          disk with normal `direction`
   -------- ------------- ----------------------------------------------
-  : Special parameters accepted by the spot light.
+  : Special parameters accepted by the spotlight.
 
-![Angles used by SpotLight.][imgSpotLight]
+![Angles used by the spotlight.][imgSpotLight]
 
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
@@ -1204,9 +1228,9 @@ tracer]).
 #### Quad Light
 
 The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
-uniformly on one side into the half space. It is created by passing the
+uniformly on one side into the half-space. It is created by passing the
 type string "`quad`" to `ospNewLight3`. In addition to the [general
-parameters](#lights) understood by all lights the spot light supports
+parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
   Type      Name      Description
@@ -1217,7 +1241,7 @@ the following special parameters:
   --------- --------- -----------------------------------------------------
   : Special parameters accepted by the quad light.
 
-![Defining a Quad Light.][imgQuadLight]
+![Defining a quad light which emits toward the reader.][imgQuadLight]
 
 The emission side is determined by the cross product of `edge1`×`edge2`.
 Note that only renderers that use stochastic sampling (like the path
@@ -1300,7 +1324,7 @@ files. To create an OBJ material pass the type string "`OBJMaterial`" to
   : Main parameters of the OBJ material.
 
 In particular when using the path tracer it is important to adhere to
-the principle of energy conservation, i.e. that the amount of light
+the principle of energy conservation, i.e., that the amount of light
 reflected by a surface is not larger than the light arriving. Therefore
 the path tracer issues a warning and renormalizes the color parameters
 if the sum of `Kd`, `Ks`, and `Tf` is larger than one in any color
@@ -1313,7 +1337,7 @@ white room would hardly be discernible, as can be seen in the figure
 below).
 
 ![Comparison of diffuse rooms with 100% reflecting white paint (left)
-and realistic 80% reflecting white paint (right), which leads to in
+and realistic 80% reflecting white paint (right), which leads to
 higher overall contrast. Note that exposure has been adjusted to achieve
 similar brightness levels.][imgDiffuseRooms]
 
@@ -1333,7 +1357,7 @@ of this encoding an sRGB gamma [texture] format is ignored and normals
 are always fetched as linear from a normal map. Note that the
 orientation of normal maps is important for a visually consistent look:
 by convention OSPRay uses a coordinate system with the origin in the
-lower left corner; thus a convexity will look green towards the top of
+lower left corner; thus a convexity will look green toward the top of
 the texture image (see also the example image of a normal map). If this
 is not the case flip the normal map vertically or invert its green
 channel.
@@ -1344,7 +1368,7 @@ frustum.][imgNormalMap]
 All parameters (except `Tf`) can be textured by passing a [texture]
 handle, prefixed with "`map_`". The fetched texels are multiplied by the
 respective parameter value. Texturing requires [geometries] with texture
-coordinates, e.g. a [triangle mesh] with `vertex.texcoord` provided.
+coordinates, e.g., a [triangle mesh] with `vertex.texcoord` provided.
 The color textures `map_Kd` and `map_Ks` are typically in one of the
 sRGB gamma encoded formats, whereas textures `map_Ns` and `map_d` are
 usually in a linear format (and only the first component is used).
@@ -1424,7 +1448,7 @@ listed in the table below.
 
   vec3f  sheenColor             white  sheen color tint
 
-  float  sheenTint                  0  how much sheen is tinted from sheenColor towards baseColor
+  float  sheenTint                  0  how much sheen is tinted from sheenColor toward baseColor
 
   float  sheenRoughness           0.2  sheen roughness in [0–1], 0 is perfectly smooth
 
@@ -1540,7 +1564,7 @@ below table.
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
 [texture] `map_roughness` ([texture transformations] are supported as
-well) to create interesting edging effects.
+well) to create notable edging effects.
 
 ![Rendering of golden Metal material with textured
 roughness.][imgMaterialMetal]
@@ -1576,7 +1600,7 @@ color.][imgMaterialAlloy]
 #### Glass
 
 The [path tracer] offers a realistic a glass material, supporting
-refraction and volumetric attenuation (i.e. the transparency color
+refraction and volumetric attenuation (i.e., the transparency color
 varies with the geometric thickness). To create a Glass material pass
 the type string "`Glass`" to `ospNewMaterial2`. Its parameters are
 
@@ -1599,8 +1623,8 @@ attenuation.][imgMaterialGlass]
 #### ThinGlass
 
 The [path tracer] offers a thin glass material useful for objects with
-just a single surface, most prominently windows. It models a very thin,
-transparent slab, i.e. it behaves as if a second, virtual surface is
+just a single surface, most prominently windows. It models a thin,
+transparent slab, i.e., it behaves as if a second, virtual surface is
 parallel to the real geometric surface. The implementation accounts for
 multiple internal reflections between the interfaces (including
 attenuation), but neglects parallax effects due to its (virtual)
@@ -1653,7 +1677,7 @@ parameters are listed in the table below.
 The color of the base coat `baseColor` can be textured by a [texture]
 `map_baseColor`, which also supports [texture transformations]. If
 present, the color component of [geometries] is also used for the color
-of the base coat. parameter `flakeAmount` controls the proportion of
+of the base coat. Parameter `flakeAmount` controls the proportion of
 flakes in the base coat, so when setting it to 1 the `baseColor` will
 not be visible. The shininess of the metallic component is governed by
 `flakeSpread`, which controls the variation of the orientation of the
@@ -1695,7 +1719,7 @@ parameters are as follows
 
   Type    Name         Description
   ------- ------------ ----------------------------------
-  vec2f   size         size of the textures
+  vec2i   size         size of the textures
   int     type         `OSPTextureFormat` for the texture
   int     flags        special attribute flags for this
                        texture, currently only responds
@@ -1716,15 +1740,18 @@ The supported texture formats for `texture2d` are:
   OSP_TEXTURE_SRGB    8\ bit sRGB gamma encoded components red, green, blue
   OSP_TEXTURE_RGB32F  32\ bit float components red, green, blue
   OSP_TEXTURE_R8      8\ bit [0–255] linear single component
+  OSP_TEXTURE_RA8     8\ bit [0–255] linear two component
+  OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance
+  OSP_TEXTURE_LA8     8\ bit [0–255] gamma encoded luminance, and linear alpha
   OSP_TEXTURE_R32F    32\ bit float single component
   ------------------- ----------------------------------------------------------
-  : Supported texture formats by `texture2D`, i.e. valid constants
+  : Supported texture formats by `texture2D`, i.e., valid constants
   of type `OSPTextureFormat`.
 
 The texel data addressed by `source` starts with the texels in the lower
 left corner of the texture image, like in OpenGL. Per default a texture
 fetch is filtered by performing bi-linear interpolation of the nearest
-2×2 texels; if instead fetching only the nearest texel is desired (i.e.
+2×2 texels; if instead fetching only the nearest texel is desired (i.e.,
 no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
 #### TextureVolume
@@ -1760,7 +1787,7 @@ convention shall be used. The following parameters (prefixed with
   : Parameters to define texture coordinate transformations.
 
 The transformations are applied in the given order. Rotation, scale and
-translation are interpreted "texture centric", i.e. their effect seen by
+translation are interpreted "texture centric", i.e., their effect seen by
 an user are relative to the texture (although the transformations are
 applied to the texture coordinates).
 
@@ -1812,6 +1839,7 @@ supports the special parameters listed in the table below.
                                the frame's height
 
   float aspect                 ratio of width by height of the frame
+                               (and image region)
 
   float apertureRadius         size of the aperture, controls the depth
                                of field
@@ -1832,8 +1860,8 @@ supports the special parameters listed in the table below.
   ----- ---------------------- -----------------------------------------
   : Parameters accepted by the perspective camera.
 
-Note that when setting the `aspect` ratio a non-default image region
-(using `imageStart` & `imageEnd`) needs to be regarded.
+Note that when computing the `aspect` ratio a potentially set image region
+(using `imageStart` & `imageEnd`) needs to be regarded as well.
 
 In architectural photography it is often desired for aesthetic reasons
 to display the vertical edges of buildings or walls vertically in the
@@ -1934,7 +1962,7 @@ Valid values are:
   OSP_FB_RGBA32F  32\ bit float components red, green, blue, alpha
   --------------- -------------------------------------------------------------
   : Supported color formats of the framebuffer that can be passed to
-  `ospNewFrameBuffer`, i.e. valid constants of type
+  `ospNewFrameBuffer`, i.e., valid constants of type
   `OSPFrameBufferFormat`.
 
 The parameter `frameBufferChannels` specifies which channels the
@@ -1947,7 +1975,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float
   OSP_FB_ACCUM     accumulation buffer for progressive refinement
   OSP_FB_VARIANCE  for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
-  OSP_FB_NORMAL    accumulated screen-space normal of the first hit, as vec3f
+  OSP_FB_NORMAL    accumulated world-space normal of the first hit, as vec3f
   OSP_FB_ALBEDO    accumulated material albedo (color without illumination) at the first hit, as vec3f
   ---------------- -----------------------------------------------------------
   : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
@@ -1956,14 +1984,14 @@ values of `OSPFrameBufferChannel` listed in the table below.
   `ospFrameBufferClear`.
 
 If a certain channel value is _not_ specified, the given buffer channel
-will not be present. Note that ospray makes a very clear distinction
+will not be present. Note that OSPRay makes a clear distinction
 between the _external_ format of the framebuffer and the internal one:
 The external format is the format the user specifies in the `format`
 parameter; it specifies what color format OSPRay will eventually
 _return_ the framebuffer to the application (when calling
 `ospMapFrameBuffer`): no matter what OSPRay uses internally, it will
 simply return a 2D array of pixels of that format, with possibly all
-kinds of reformatting, compression/decompression, etc, going on
+kinds of reformatting, compression/decompression, etc., going on
 in-between the generation of the _internal_ framebuffer and the mapping
 of the externally visible one.
 
@@ -2068,10 +2096,10 @@ To render a frame into the given framebuffer with the given renderer use
                          const uint32_t frameBufferChannels = OSP_FB_COLOR);
 
 The third parameter specifies what channel(s) of the framebuffer is
-written to^[This is currently not implemented, i.e. all channels of
+written to^[This is currently not implemented, i.e., all channels of
 the framebuffer are always updated.]. What to render and how to
 render it depends on the renderer's parameters. If the framebuffer
-supports accumulation (i.e. it was created with `OSP_FB_ACCUM`) then
+supports accumulation (i.e., it was created with `OSP_FB_ACCUM`) then
 successive calls to `ospRenderFrame` will progressively refine the
 rendered image. If additionally the framebuffer has an `OSP_FB_VARIANCE`
 channel then `ospRenderFrame` returns an estimate of the current
@@ -2094,9 +2122,9 @@ The provided user pointer `userPtr` is passed as first argument to the
 callback function^[That way applications can also register a member
 function of a C++ class together with the `this` pointer as `userPtr`.]
 and the reported progress is in (0–1]. If the callback function returns
-zero than the application requests to cancel rendering, i.e. the current
+zero than the application requests to cancel rendering, i.e., the current
 `ospRenderFrame` will return at the first opportunity and the content of
-the frambuffer will be undefined. Therefore, better clear the
+the framebuffer will be undefined. Therefore, better clear the
 framebuffer with `ospFrameBufferClear` then before a subsequent call of
 `ospRenderFrame`.
 

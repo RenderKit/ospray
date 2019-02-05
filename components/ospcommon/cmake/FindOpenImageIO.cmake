@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -27,24 +27,6 @@ IF (NOT OPENIMAGEIO_ROOT STREQUAL OPENIMAGEIO_ROOT_LAST)
   UNSET(OPENIMAGEIO_LIBRARY CACHE)
 ENDIF()
 
-set(OPENIMAGEIO_LIB_SUFFIX "")
-IF (WIN32)
-  IF (MSVC14)
-    SET(OPENIMAGEIO_LIB_SUFFIX "vc2015")
-  ELSEIF (MSVC12)
-    SET(OPENIMAGEIO_LIB_SUFFIX "vc2013")
-  ELSEIF (MSVC11)
-    SET(OPENIMAGEIO_LIB_SUFFIX "vc2012")
-  ELSEIF (MINGW)
-    IF (X64)
-      SET(OPENIMAGEIO_LIB_SUFFIX "mingw-w64")
-    # Who's ever going to build for 32bit??
-    ELSE ()
-      SET(OPENIMAGEIO_LIB_SUFFIX "mingw-w64")
-    ENDIF()
-  ENDIF()
-ENDIF ()
-
 FIND_PATH(OPENIMAGEIO_ROOT include/OpenImageIO/imageio.h
   DOC "Root of OpenImageIO installation"
   HINTS ${OPENIMAGEIO_ROOT}
@@ -62,7 +44,7 @@ SET(OPENIMAGEIO_HINTS
   PATH_SUFFIXES
     /lib
     /lib64
-    /lib-${OPENIMAGEIO_LIB_SUFFIX}
+    /lib-vc2015
   )
 SET(OPENIMAGEIO_PATHS PATHS /usr/lib /usr/lib64 /lib /lib64)
 FIND_LIBRARY(OPENIMAGEIO_LIBRARY OpenImageIO ${OPENIMAGEIO_HINTS} ${OPENIMAGEIO_PATHS})

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -44,7 +44,7 @@ typedef enum
     information on the actual geometry that a ray has hit */
 struct DifferentialGeometry
 {
-  vec3f P;  //!< location of the hit-point
+  vec3f P;  //!< location of the hit-point, includes epsilon offset towards front side
   vec3f Ng; /*!< geometry normal if DG_NG was set, possibly not
                normalized/facefordwarded if DG_NORMALIZE and/or
                DG_FACEFORWARD weren't specified */
@@ -65,6 +65,21 @@ struct DifferentialGeometry
   uniform Geometry *geometry; /*! pointer to hit-point's geometry */
   uniform Material *material; /*! pointer to hit-point's material */
 
-  float epsilon; //!< adaptive epsilon */
+  float epsilon; //!< adaptive epsilon, isotropic in object-space */
 };
 
+// assumed precision of intersection routines
+#define ulpEpsilon 0x1.fp-21
+
+inline float calcEpsilon(const vec3f& P, const vec3f& dir, float t)
+{
+  // convert ray-space t to object-/world-space using max(dir) instead of
+  // costly length; the error is at most sqrt(3)~1.7, quite acceptable for eps
+  return reduce_max(make_vec4f(abs(P), reduce_max(abs(dir))*t)) * ulpEpsilon;
+}
+
+inline float calcEpsilon(const vec3f& P, float dist)
+{
+  const vec3f dummy_dir = make_vec3f(1.0f);
+  return calcEpsilon(P, dummy_dir, dist);
+}

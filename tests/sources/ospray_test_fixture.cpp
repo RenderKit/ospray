@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017-2018 Intel Corporation                                    //
+// Copyright 2017-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,46 @@
 extern OSPRayEnvironment * ospEnv;
 
 namespace OSPRayTestScenes {
+
+//helper functions
+
+//creates a torus
+// volumetric data: stores data of torus
+// returns created ospvolume of torus
+static OSPVolume CreateTorus(std::vector<float>& volumetricData, const int size)
+{
+  volumetricData.resize(size*size*size, 0);
+
+  const float r = 30;
+  const float R = 80;
+  const int size_2 = size/2;
+
+  for (int x = 0; x < size; ++x) {
+    for (int y = 0; y < size; ++y) {
+      for (int z = 0; z < size; ++z) {
+        const float X = x - size_2;
+        const float Y = y - size_2;
+        const float Z = z - size_2;
+
+        const float d = (R - std::sqrt(X*X + Y*Y));
+        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
+      }
+    }
+  }
+
+  OSPVolume torus = ospNewVolume("shared_structured_volume");
+  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
+                                  volumetricData.data(),
+                                  OSP_DATA_SHARED_BUFFER);
+  ospSetData(torus, "voxelData", voxelsData);
+  ospRelease(voxelsData);
+  ospSet3i(torus, "dimensions", size, size, size);
+  ospSetString(torus, "voxelType", "float");
+  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
+  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
+  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  return torus;
+}
 
 Base::Base()
 {
@@ -106,7 +146,7 @@ void Base::PerformRenderTest()
 
   ospFrameBufferClear(framebuffer, OSP_FB_ACCUM);
 
-  RenderFrame(OSP_FB_COLOR | OSP_FB_ACCUM);
+  RenderFrame(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
   uint32_t* framebuffer_data = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
   if(ospEnv->GetDumpImg()) {
@@ -167,14 +207,13 @@ void Base::SetRenderer()
 void Base::SetFramebuffer()
 {
   framebuffer = ospNewFrameBuffer(imgSize, frameBufferFormat,
-                                  OSP_FB_COLOR | OSP_FB_ACCUM);
+                                  OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
 }
 
 OSPMaterial Base::CreateMaterial(std::string type)
 {
   OSPMaterial material = ospNewMaterial2(rendererType.c_str(), type.data());
   EXPECT_TRUE(material);
-
   if (type == "Glass") {
     ospSetf(material, "eta", 1.5);
     ospSet3f(material, "attenuationColor", 0.f, 1.f, 1.f);
@@ -227,6 +266,99 @@ void SingleObject::SetMaterial()
 {
   material = CreateMaterial(materialType);
 }
+
+
+SpherePrecision::SpherePrecision()
+{
+  auto params = GetParam();
+  radius = std::get<0>(params);
+  dist = radius * std::get<1>(params);
+  move_cam = std::get<2>(params);
+  rendererType = std::get<3>(params);
+}
+
+void SpherePrecision::SetUp()
+{
+  Base::SetUp();
+
+  float fov = 160.0f * std::min(std::tan(radius/std::abs(dist)), 1.0f);
+  float cent = move_cam ? 0.0f : dist+radius;
+
+  ospSet3f(camera, "pos", 0.f, 0.f, move_cam ? -dist - radius : 0.0f);
+  ospSet3f(camera, "dir", 0.f, 0.f, 1.f);
+  ospSet3f(camera, "up", 0.f, 1.f, 0.f);
+  ospSet1f(camera, "fovy", fov);
+
+  ospSet1i(renderer, "aoSamples", 4);
+  ospSet1i(renderer, "shadowsEnabled", 1);
+
+  ospSet1i(renderer, "spp", 4);
+  ospSet4f(renderer, "bgColor", 0.2f, 0.2f, 0.4f, 1.0f);
+  ospSet1i(renderer, "maxDepth", 2);
+
+  OSPGeometry sphere = ospNewGeometry("spheres");
+  OSPGeometry inst_sphere = ospNewGeometry("spheres");
+
+  float sph_center_r[]{
+    -0.5f*radius, -0.3f*radius, cent,      radius,
+     0.8f*radius, -0.3f*radius, cent, 0.9f*radius,
+     0.8f*radius,  1.5f*radius, cent, 0.9f*radius,
+     0.0f,  -10001.3f*radius, cent, 10000.f*radius,
+     0.f, 0.f, 0.f, 90.f*radius
+  };
+  auto data = ospNewData(4, OSP_FLOAT4, sph_center_r);
+  ospCommit(data);
+  ospSetData(sphere, "spheres", data);
+  ospRelease(data);
+
+  data = ospNewData(1, OSP_FLOAT4, sph_center_r+4*4);
+  ospCommit(data);
+  ospSetData(inst_sphere, "spheres", data);
+  ospRelease(data);
+
+  OSPMaterial sphereMaterial = ospNewMaterial2(rendererType.c_str(), "default");
+  ospSet1f(sphereMaterial, "d", 1.0f);
+  ospCommit(sphereMaterial);
+  ospSetMaterial(sphere, sphereMaterial);
+  ospSetMaterial(inst_sphere, sphereMaterial);
+  ospRelease(sphereMaterial);
+
+  ospSet1i(sphere, "offset_radius", 12);
+  ospCommit(sphere);
+
+  ospSet1i(inst_sphere, "offset_radius", 12);
+  ospCommit(inst_sphere);
+
+  ospAddGeometry(world, sphere);
+
+  OSPModel inst = ospNewModel();
+  ospAddGeometry(inst, inst_sphere);
+  ospRelease(inst_sphere);
+  osp::affine3f xf{
+    0.01, 0, 0,
+    0, 0.01, 0,
+    0, 0, 0.01,
+   -0.5f*radius, 1.6f*radius, cent
+  };
+  ospAddGeometry(world, ospNewInstance(inst, xf));
+  ospRelease(inst);
+
+  OSPLight distant = ospNewLight(renderer, "distant");
+  ASSERT_TRUE(distant) << "Failed to create lights";
+  ospSetf(distant, "intensity", 3.0f);
+  ospSet3f(distant, "direction", 0.3f, -4.0f, 0.8f);
+  ospSet3f(distant, "color", 1.0f, 0.5f, 0.5f);
+  ospSet1f(distant, "angularDiameter", 1.0f);
+  ospCommit(distant);
+  AddLight(distant);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient) << "Failed to create lights";
+  ospSetf(ambient, "intensity", 0.1f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
 
 Box::Box()
 {
@@ -382,9 +514,8 @@ void Box::SetMaterials()
 OSPMaterial Box::GetMaterial(std::string type)
 {
   OSPMaterial newMaterial = ospNewMaterial2(rendererType.c_str(), type.data());
-  if (type == "OBJMaterial") {
-    ospSetf(newMaterial, "Ns", 100.f);
-  } else if (type == "Glass") {
+  // defaults for "OBJMaterial"
+  if (type == "Glass") {
     ospSetf(newMaterial, "eta", 1.4);
   } else if (type == "Luminous") {
     ospSetf(newMaterial, "intensity", 0.7f);
@@ -507,39 +638,7 @@ void Torus::SetUp()
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
 
-  ospSet1f(renderer, "epsilon", 0.01);
-
-  int size = 250;
-
-  volumetricData.resize(size*size*size, 0);
-
-  float r = 30;
-  float R = 80;
-
-  for (int x = 0; x < size; ++x) {
-    for (int y = 0; y < size; ++y) {
-      for (int z = 0; z < size; ++z) {
-        float X = x - size / 2;
-        float Y = y - size / 2;
-        float Z = z - size / 2;
-
-        float d = (R - std::sqrt(X*X + Y*Y));
-        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
-      }
-    }
-  }
-
-  OSPVolume torus = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
-                                  volumetricData.data(),
-                                  OSP_DATA_SHARED_BUFFER);
-  ospSetData(torus, "voxelData", voxelsData);
-  ospRelease(voxelsData);
-  ospSet3i(torus, "dimensions", size, size, size);
-  ospSetString(torus, "voxelType", "float");
-  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
-  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
-  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  OSPVolume torus = CreateTorus(volumetricData, 256);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
@@ -591,8 +690,6 @@ void SlicedCube::SetUp()
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
-
-  ospSet1f(renderer, "epsilon", 0.01);
 
   int size = 100;
 
@@ -744,8 +841,6 @@ void Pipes::SetUp()
 {
   Base::SetUp();
 
-  ospSet1f(renderer, "epsilon", 0.001f);
-
   float cam_pos[] = {-7.f, 2.f, 0.7f};
   float cam_view[] = {7.f, -2.f, -0.7f};
   float cam_up[] = {0.f, 0.f, 1.f};
@@ -810,39 +905,7 @@ void TextureVolume::SetUp()
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
 
-  ospSet1f(renderer, "epsilon", 0.01);
-
-  int size = 250;
-
-  volumetricData.resize(size*size*size, 0);
-
-  float r = 30;
-  float R = 80;
-
-  for (int x = 0; x < size; ++x) {
-    for (int y = 0; y < size; ++y) {
-      for (int z = 0; z < size; ++z) {
-        float X = x - size / 2;
-        float Y = y - size / 2;
-        float Z = z - size / 2;
-
-        float d = (R - std::sqrt(X*X + Y*Y));
-        volumetricData[size*size * x + size * y + z] = r*r - d*d - Z*Z;
-      }
-    }
-  }
-
-  OSPVolume torus = ospNewVolume("shared_structured_volume");
-  OSPData voxelsData = ospNewData(size * size * size, OSP_FLOAT,
-                                  volumetricData.data(),
-                                  OSP_DATA_SHARED_BUFFER);
-  ospSetData(torus, "voxelData", voxelsData);
-  ospRelease(voxelsData);
-  ospSet3i(torus, "dimensions", size, size, size);
-  ospSetString(torus, "voxelType", "float");
-  ospSet2f(torus, "voxelRange", -10000.f, 10000.f);
-  ospSet3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
-  ospSet3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+  OSPVolume torus = CreateTorus(volumetricData, 256);
 
   OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
   ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
@@ -889,6 +952,190 @@ void TextureVolume::SetUp()
   AddLight(ambient);
 }
 
+DepthCompositeVolume::DepthCompositeVolume()
+{
+  rendererType = GetParam();
+}
+
+
+void DepthCompositeVolume::SetUp()
+{
+  Base::SetUp();
+
+  const float cam_pos[] = {0.f, 0.f, 1.0f};
+  const float cam_up[] = {0.f, 1.f, 0.f};
+  const float cam_view[] = {0.0f, 0.f, -1.f};
+  ospSet3fv(camera, "pos", cam_pos);
+  ospSet3fv(camera, "dir", cam_view);
+  ospSet3fv(camera, "up",  cam_up);
+
+  OSPVolume torus = CreateTorus(volumetricData, 256);
+
+  OSPTransferFunction transferFun = ospNewTransferFunction("piecewise_linear");
+  ospSet2f(transferFun, "valueRange", -10000.f, 10000.f);
+  const float colors[] = {
+    1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f
+  };
+  const float opacites[] = { 0.05f, 0.1f };
+  OSPData tfColorData = ospNewData(2, OSP_FLOAT3, colors);
+  ospSetData(transferFun, "colors", tfColorData);
+  ospRelease(tfColorData);
+  OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
+  ospSetData(transferFun, "opacities", tfOpacityData);
+  ospRelease(tfOpacityData);
+  ospCommit(transferFun);
+  ospSetObject(torus, "transferFunction", transferFun);
+  ospRelease(transferFun);
+  ospCommit(torus);
+
+  AddVolume(torus);
+
+  OSPTexture2D depthTex = ospNewTexture("texture2D");
+  float* data = new float[imgSize.x*imgSize.y];
+  for (size_t y = 0; y < imgSize.y; y++) {
+    for (size_t x = 0; x < imgSize.x; x++) {
+      const size_t index = imgSize.x*y + x;
+      if (x < imgSize.x/3) {
+        data[index] = 999.f;
+      } else if (x < (imgSize.x*2)/3) {
+        data[index] = 0.75f;
+      } else {
+        data[index] = 0.00001f;
+      }
+    }
+  }
+  auto ospData = ospNewData(imgSize.x*imgSize.y, OSP_FLOAT, data);
+  ospCommit(ospData);
+  delete[] data;
+  ospSet1i(depthTex, "type", (int)OSP_TEXTURE_R32F);
+  ospSet1i(depthTex, "flags", OSP_TEXTURE_FILTER_NEAREST);
+  ospSet2i(depthTex, "size", imgSize.x, imgSize.y);
+  ospSetObject(depthTex, "data", ospData);
+  ospCommit(depthTex);
+  ospRelease(ospData);
+
+  ospSetObject(renderer, "maxDepthTexture", depthTex);
+  ospRelease(depthTex);
+
+  OSPLight ambient = ospNewLight(renderer, "ambient");
+  ASSERT_TRUE(ambient) << "Failed to create lights";
+  ospSetf(ambient, "intensity", 0.5f);
+  ospCommit(ambient);
+  AddLight(ambient);
+}
+
+Subdivision::Subdivision()
+{
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  materialType = std::get<1>(params);
+  frames = 10;
+}
+
+void Subdivision::SetUp()
+{
+  Base::SetUp();
+
+  float inf = FLT_MAX;
+
+  float cube_vertices[8][3] =
+  {
+          { -1.0f, -1.0f, -1.0f },
+          {  1.0f, -1.0f, -1.0f },
+          {  1.0f, -1.0f,  1.0f },
+          { -1.0f, -1.0f,  1.0f },
+          { -1.0f,  1.0f, -1.0f },
+          {  1.0f,  1.0f, -1.0f },
+          {  1.0f,  1.0f,  1.0f },
+          { -1.0f,  1.0f,  1.0f }
+  };
+
+  float cube_colors[8][4] =
+  {
+          {  0.0f,  0.0f,  0.0f, 1.f },
+          {  1.0f,  0.0f,  0.0f, 1.f },
+          {  1.0f,  0.0f,  1.0f, 1.f },
+          {  0.0f,  0.0f,  1.0f, 1.f },
+          {  0.0f,  1.0f,  0.0f, 1.f },
+          {  1.0f,  1.0f,  0.0f, 1.f },
+          {  1.0f,  1.0f,  1.0f, 1.f },
+          {  0.0f,  1.0f,  1.0f, 1.f }
+  };
+
+  unsigned int cube_indices[24] = {
+          0, 4, 5, 1,
+          1, 5, 6, 2,
+          2, 6, 7, 3,
+          0, 3, 7, 4,
+          4, 7, 6, 5,
+          0, 1, 2, 3,
+  };
+
+  unsigned int cube_faces[6] = {
+          4, 4, 4, 4, 4, 4
+  };
+
+  float cube_vertex_crease_weights[8] = {
+          2, 2, 2, 2, 2, 2, 2, 2
+  };
+
+  unsigned int cube_vertex_crease_indices[8] = {
+          0,1,2,3,4,5,6,7
+  };
+
+  float cube_edge_crease_weights[12] = {
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
+  };
+
+  unsigned int cube_edge_crease_indices[24] =
+  {
+          0,1, 1,2, 2,3, 3,0,
+          4,5, 5,6, 6,7, 7,4,
+          0,4, 1,5, 2,6, 3,7,
+  };
+
+  int numIndices = 24;
+  int  numFaces = 6;
+  int faceSize  = 4;
+
+  auto subd = ospNewGeometry("subdivision");
+  auto vertices = ospNewData(8, OSP_FLOAT3, cube_vertices);
+  ospSetData(subd, "vertex", vertices);
+  auto indices = ospNewData(numIndices, OSP_UINT, cube_indices);
+  ospSetData(subd, "index", indices);
+  auto faces = ospNewData(numFaces, OSP_UINT, cube_faces);
+  ospSetData(subd, "face", faces);
+  auto edge_crease_indices = ospNewData(12, OSP_UINT2, cube_edge_crease_indices);
+  ospSetData(subd, "edgeCrease.index", edge_crease_indices);
+  auto edge_crease_weights = ospNewData(12, OSP_FLOAT, cube_edge_crease_weights);
+  ospSetData(subd, "edgeCrease.weight", edge_crease_weights);
+  auto vertex_crease_indices = ospNewData(8, OSP_UINT, cube_vertex_crease_indices);
+  ospSetData(subd, "vertexCrease.index", vertex_crease_indices);
+  auto vertex_crease_weights = ospNewData(8, OSP_FLOAT, cube_vertex_crease_weights);
+  ospSetData(subd, "vertexCrease.weight", vertex_crease_weights);
+  auto colors = ospNewData(8, OSP_FLOAT4, cube_colors);
+  ospSetData(subd, "color", colors);
+  ospSet1f(subd, "level", 128.0f);
+  ospSetMaterial(subd, CreateMaterial(materialType));
+
+  ospCommit(subd);
+  AddGeometry(subd);
+
+  float cam_pos[] = {-1.5f, 2.f, 1.7f};
+  float cam_view[] = {1.5f, -2.f, -1.7f};
+  float cam_up[] = {0.f, 1.f, 0.f};
+  ospSet3fv(camera, "pos", cam_pos);
+  ospSet3fv(camera, "dir", cam_view);
+  ospSet3fv(camera, "up", cam_up);
+
+  OSPLight directional = ospNewLight(renderer, "directional");
+  ASSERT_TRUE(directional);
+  ospSetf(directional, "intensity", 0.5f);
+  ospSet3f(directional, "direction", -.2f, -.3f, -.4f);
+  ospCommit(directional);
+  AddLight(directional);
+}
 
 } // namespace OSPRayTestScenes
 

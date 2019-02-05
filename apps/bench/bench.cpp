@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016-2018 Intel Corporation                                    //
+// Copyright 2016-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,9 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "pico_bench/pico_bench.h"
+#include "pico_bench.h"
 #include "ospapp/OSPApp.h"
-#include "common/sg/SceneGraph.h"
+#include "sg/SceneGraph.h"
 #include "ospcommon/utility/SaveImage.h"
 
 #include "sg/Renderer.h"
@@ -69,7 +69,10 @@ namespace ospray {
       if (!imageOutputFile.empty()) {
         auto fb = root->child("frameBuffer").nodeAs<sg::FrameBuffer>();
         auto *srcPB = (const uint32_t *)fb->map();
-        utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
+        if (fb->format() == OSP_FB_RGBA32F)
+          utility::writePFM(imageOutputFile + ".pfm", width, height, (vec4f*)srcPB);
+        else
+          utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
         fb->unmap(srcPB);
       }
 

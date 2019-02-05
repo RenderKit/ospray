@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,6 +17,7 @@
 #include "MPICommon.h"
 
 namespace mpicommon {
+  static std::mutex mpiMutex;
 
   OSPRAY_MPI_INTERFACE bool mpiIsThreaded = false;
 
@@ -146,14 +147,28 @@ namespace mpicommon {
       /* MPI was already initialized by the app that called us! */
       MPI_Query_thread(&provided);
     }
+    if (provided != MPI_THREAD_MULTIPLE && provided != MPI_THREAD_SERIALIZED) {
+      throw std::runtime_error("MPI initialization error: The MPI runtime must"
+                               " support either MPI_THREAD_MULTIPLE or"
+                               " MPI_THREAD_SERIALIZED.");
+    }
     mpiIsThreaded = provided == MPI_THREAD_MULTIPLE;
 
     if (useCommWorld) {
-      MPI_CALL(Comm_dup(MPI_COMM_WORLD, &world.comm));
-      MPI_CALL(Comm_rank(world.comm, &world.rank));
-      MPI_CALL(Comm_size(world.comm, &world.size));
+      world.setTo(MPI_COMM_WORLD);
     }
     return !initialized;
+  }
+
+  std::unique_lock<std::mutex> acquireMPILock()
+  {
+    if (!mpiIsThreaded) {
+      return std::unique_lock<std::mutex>(mpiMutex);
+    } else {
+      // If we have a threaded MPI "defer" the lock, to just never lock it,
+      // since we don't need to.
+      return std::unique_lock<std::mutex>(mpiMutex, std::defer_lock);
+    }
   }
 
 } // ::mpicommon

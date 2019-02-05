@@ -1,6 +1,6 @@
 #!/bin/bash
 ## ======================================================================== ##
-## Copyright 2015-2018 Intel Corporation                                    ##
+## Copyright 2015-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -29,11 +29,13 @@ cmake -L \
 -T "Intel C++ Compiler 18.0" \
 -D OSPRAY_BUILD_ISA=ALL \
 -D OSPRAY_MODULE_MPI=ON \
+-D OSPRAY_MODULE_MPI_APPS=OFF \
 -D OSPRAY_SG_CHOMBO=OFF \
 -D OSPRAY_SG_OPENIMAGEIO=OFF \
 -D OSPRAY_SG_VTK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
--D OSPRAY_INSTALL_DEPENDENCIES=OFF \
+-D OSPRAY_INSTALL_DEPENDENCIES=ON \
+-D USE_STATIC_RUNTIME=OFF \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DATAROOTDIR= \
@@ -47,6 +49,7 @@ cmake --build . --config Release --target PACKAGE -- -m -nologo
 
 # create ZIP files
 cmake -D OSPRAY_ZIP_MODE=ON \
+-D OSPRAY_APPS_ENABLE_DENOISER=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \
 ..
 cmake --build . --config Release --target PACKAGE -- -m -nologo

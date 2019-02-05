@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,9 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <fstream>
+#include <chrono>
+
 // ours
 #include "MPILoadBalancer.h"
 #include "../fb/DistributedFrameBuffer.h"
+#include "../common/Profiling.h"
 // ospray
 #include "ospray/render/Renderer.h"
 // ospcommon
@@ -31,9 +35,33 @@ namespace ospray {
 
     using namespace mpicommon;
 
+    using namespace std::chrono;
+
+    static size_t frameNumber = 0;
+
+    static bool REPL_DETAILED_LOGGING = false;
+
     namespace staticLoadBalancer {
 
       // staticLoadBalancer::Master definitions ///////////////////////////////
+      static std::unique_ptr<std::ofstream> statsLog = nullptr;
+      void openStatsLog() {
+        auto logging = utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
+        REPL_DETAILED_LOGGING = std::stoi(logging) != 0;
+
+        if (REPL_DETAILED_LOGGING) {
+          int rank;
+          MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+          auto job_name = utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
+          std::string statsLogFile = job_name + std::string("-rank")
+            + std::to_string(rank) + ".txt";
+          statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
+        }
+      }
+
+      Master::Master() {
+        openStatsLog();
+      }
 
       float Master::renderFrame(Renderer *renderer,
                                 FrameBuffer *fb,
@@ -42,13 +70,35 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
+        ProfilingPoint startRender;
+
         dfb->startNewFrame(renderer->errorThreshold);
         dfb->beginFrame();
+        dfb->closeCurrentFrame();
 
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
+
+        ProfilingPoint endRender;
+
+        if (REPL_DETAILED_LOGGING) {
+          *statsLog << "-----\nFrame: " << frameNumber << "\n";
+          char hostname[1024] = {0};
+          gethostname(hostname, 1023);
+
+          *statsLog << "Master rank " << globalRank() << " on " << hostname << "\n"
+            << "Frame took: "
+            << duration_cast<milliseconds>(endRender.time - startRender.time).count()
+            << "ms\n";
+
+          dfb->reportTimings(*statsLog);
+          logProfilingData(*statsLog, startRender, endRender);
+          maml::logMessageTimings(*statsLog);
+          *statsLog << "-----\n" << std::flush;
+        }
+        ++frameNumber;
 
         return dfb->endFrame(renderer->errorThreshold);
       }
@@ -59,12 +109,17 @@ namespace ospray {
       }
 
       // staticLoadBalancer::Slave definitions ////////////////////////////////
+      Slave::Slave() {
+        openStatsLog();
+      }
 
       float Slave::renderFrame(Renderer *renderer,
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+
+        ProfilingPoint startRender;
 
         dfb->startNewFrame(renderer->errorThreshold);
         // dfb->beginFrame(); is called by renderer->beginFrame:
@@ -80,6 +135,10 @@ namespace ospray {
         if ((ALLTASKS % worker.size) > worker.rank)
           NTASKS++;
 
+        // TODO WILL: The work assignment here does not match the tile
+        // ownership in the DFB, we should tweak it so that in replicated
+        // rendering each worker renders the round-robin ownership tiles
+        // that it owns in the DFB. This will cut down a lot of communication
         tasking::parallel_for(NTASKS, [&](int taskIndex) {
           const size_t tileID = taskIndex * worker.size + worker.rank;
           const size_t numTiles_x = fb->getNumTiles().x;
@@ -107,9 +166,32 @@ namespace ospray {
 
           fb->setTile(tile);
         });
+        auto endRender = high_resolution_clock::now();
 
         dfb->waitUntilFinished();
         renderer->endFrame(perFrameData,channelFlags);
+
+        ProfilingPoint endComposite;
+
+        if (REPL_DETAILED_LOGGING) {
+          *statsLog << "-----\nFrame: " << frameNumber << "\n";
+          char hostname[1024] = {0};
+          gethostname(hostname, 1023);
+
+          *statsLog << "Worker rank " << globalRank() << " on " << hostname << "\n"
+            << "Frame took: "
+            << duration_cast<milliseconds>(endComposite.time - startRender.time).count()
+            << "ms\n"
+            << "Local rendering took: "
+            << duration_cast<milliseconds>(endRender - startRender.time).count()
+            << "ms\n";
+
+          dfb->reportTimings(*statsLog);
+          logProfilingData(*statsLog, startRender, endComposite);
+          maml::logMessageTimings(*statsLog);
+          *statsLog << "-----\n" << std::flush;
+        }
+        ++frameNumber;
 
         return dfb->endFrame(inf); // irrelevant return value on slave, still
                                    // call to stop maml layer
@@ -145,7 +227,8 @@ namespace ospray {
       // dynamicLoadBalancer::Master definitions ///////////////////////////////
 
       Master::Master(ObjectHandle handle, int _numPreAllocated)
-        : MessageHandler(handle), numPreAllocated(_numPreAllocated)
+        : MessageHandler(handle),
+        numPreAllocated(_numPreAllocated)
       {
         preferredTiles.resize(worker.size);
         workerNotified.resize(worker.size);
@@ -176,6 +259,13 @@ namespace ospray {
         if (queue->empty()) {
           workerNotified[worker] = true;
           task.tilesExhausted = true;
+          // If we told all the workers that we're out of tiles, then we're
+          // done with this frame.
+          const auto notNotified = std::find(workerNotified.begin(),
+                                             workerNotified.end(), false);
+          if (notNotified == workerNotified.end()) {
+            dfb->closeCurrentFrame();
+          }
         } else {
           task = queue->back();
           queue->pop_back();
@@ -247,7 +337,7 @@ namespace ospray {
           , const uint32 /*channelFlags*/
           )
       {
-        DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
         for (size_t i = 0; i < workerNotified.size(); ++i)

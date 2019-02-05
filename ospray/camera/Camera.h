@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,6 +40,8 @@ namespace ospray {
 
     virtual void commit() override;
 
+    // Project the world space point to the screen, and return the screen-space
+    // point (in normalized screen-space coordinates) along with the depth
     virtual ProjectedPoint projectPoint(const vec3f &p) const;
 
     static Camera *createInstance(const char *identifier);

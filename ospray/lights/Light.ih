@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -23,8 +23,8 @@ struct Light;
 struct Light_SampleRes
 {
   vec3f weight;  //!< radiance that arrives at the given point divided by pdf
-  vec3f dir;     //!< direction towards the light source
-  float dist;    //!< largest valid t_far value for a shadow ray
+  vec3f dir;     //!< direction towards the light source, normalized
+  float dist;    //!< largest valid t_far value for a shadow ray, including epsilon to avoid self-intersection
   float pdf;     //!< probability density that this sample was taken
 };
 

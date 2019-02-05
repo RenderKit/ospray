@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -41,6 +41,8 @@ struct Model
   //! volumes contained in the model
   uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
+
+  uniform box3f bounds;
 };
 
 struct UserIntersectionContext
@@ -104,16 +106,16 @@ inline void postIntersect(uniform Model *uniform model,
   dg.materialID = -1; // make sure this is properly initialized
   dg.material = NULL;
 
-  if (flags & DG_COLOR)
+  cif (flags & DG_COLOR)
     dg.color = make_vec4f(1.f);
 
-  if (flags & DG_TANGENTS) {
+  cif (flags & DG_TANGENTS) {
     dg.dPds = make_vec3f(1.f, 0.f, 0.f);
     dg.dPdt = make_vec3f(0.f, 1.f, 0.f);
   }
 
   dg.P = ray.org + ray.t * ray.dir;
-  dg.epsilon = getIntersectionError(dg.P, ray.t);
+  dg.epsilon = 0.f; // per default no geometry-type specific epsilon
 
   // a first hack for instancing: problem is that ospray assumes that
   // 'ray.geomid' specifies the respective sub-geometry of a model
@@ -150,22 +152,34 @@ inline void postIntersect(uniform Model *uniform model,
     }
   }
 
+  // merge geometry-type specific epsilon with general epsilon
+  dg.epsilon = max(dg.epsilon, calcEpsilon(dg.P, ray.dir, ray.t));
+
 // some useful combinations; enums unfortunately don't work :-(
 #define  DG_NG_FACEFORWARD (DG_NG | DG_FACEFORWARD)
 #define  DG_NS_FACEFORWARD (DG_NS | DG_FACEFORWARD)
 #define  DG_NG_NORMALIZE   (DG_NG | DG_NORMALIZE)
 #define  DG_NS_NORMALIZE   (DG_NS | DG_NORMALIZE)
 
-  if ((flags & DG_NG_NORMALIZE) == DG_NG_NORMALIZE)
-    dg.Ng = normalize(dg.Ng);
-  if ((flags & DG_NS_NORMALIZE) == DG_NS_NORMALIZE)
+
+  vec3f ffnng = normalize(dg.Ng);
+
+  cif ((flags & DG_NG_NORMALIZE) == DG_NG_NORMALIZE)
+    dg.Ng = ffnng;
+  cif ((flags & DG_NS_NORMALIZE) == DG_NS_NORMALIZE)
     dg.Ns = normalize(dg.Ns);
 
-  if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
-    if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);
-  if ((flags & DG_NS_FACEFORWARD) == DG_NS_FACEFORWARD)
+  const bool flip = dot(ray.dir, dg.Ng) >= 0.f;
+  if (flip)
+    ffnng = neg(ffnng);
+
+  cif ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
+    if (flip)
+      dg.Ng = neg(dg.Ng);
+  cif ((flags & DG_NS_FACEFORWARD) == DG_NS_FACEFORWARD)
     if (dot(dg.Ng,dg.Ns) < 0.f) dg.Ns = neg(dg.Ns);
 
+  dg.P = dg.P + dg.epsilon * ffnng;
 #undef  DG_NG_FACEFORWARD
 #undef  DG_NS_FACEFORWARD
 #undef  DG_NG_NORMALIZE

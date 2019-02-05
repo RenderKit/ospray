@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -20,6 +20,8 @@
 ospray_find_embree(${EMBREE_VERSION_REQUIRED})
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
+ospray_create_embree_target()
+ospray_install_library(embree lib)
 
 # Configure OSPRay ISA last after we've detected what we got w/ Embree
 ospray_configure_ispc_isa()

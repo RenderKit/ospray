@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -92,9 +92,13 @@ struct Volume {
                                       uniform float *uniform isovalues,
                                       uniform int numIsovalues,
                                       uniform size_t geomID,
+                // ray.u contains ray-space intersection error, i.e. the epsilon
                                       varying Ray &ray);
 
-  //! Bounding box for the volume in world coordinates.  This is an internal derived parameter and not meant to be redefined externally.
+  /*! Bounding box for the volume in world coordinates.
+      This is an internal derived parameter and not meant to be
+      redefined externally.
+  */
   uniform box3f boundingBox;
 };
 

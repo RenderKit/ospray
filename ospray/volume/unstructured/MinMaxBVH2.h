@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,9 +16,9 @@
 
 #pragma once
 
-// ospray d
-#include "ospray/common/Data.h"
-#include "ospray/common/Model.h"
+// ospray
+#include "common/Data.h"
+#include "common/Model.h"
 
 namespace ospray {
 

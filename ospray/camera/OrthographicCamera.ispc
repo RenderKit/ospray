@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,7 +31,7 @@ void OrthographicCamera_initRay(uniform Camera *uniform _self,
     + screen.y * self->pos_dv;
 
   const float time = Camera_shutterTime(_self, sample.time);
-  setRay(ray, org, dir, self->super.nearClip, infinity, time);
+  setRay(ray, org, dir, self->super.nearClip, inf, time);
 }
 
 /*! create a new ispc-side version of a orthographiccamera - with given

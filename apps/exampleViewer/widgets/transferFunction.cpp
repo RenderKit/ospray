@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,13 +21,13 @@
 #include <imgui.h>
 #include <imconfig.h>
 
-#include "ospcommon/math.h"
+#include "ospcommon/ospmath.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "tfn_lib/tfn_lib.h"
 #include "transferFunction.h"
 
-#include "common/sg/common/Data.h"
+#include "sg/common/Data.h"
 
 using namespace ospcommon;
 

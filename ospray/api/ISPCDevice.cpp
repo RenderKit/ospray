@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -212,6 +212,10 @@ namespace ospray {
     void ISPCDevice::removeParam(OSPObject _object, const char *name)
     {
       ManagedObject *object = (ManagedObject *)_object;
+      // ManagedObjects have to be decref before removing them
+      ManagedObject *existing = object->getParam<ManagedObject*>(name, nullptr);
+      if (existing)
+          existing->refDec();
       object->removeParam(name);
     }
 

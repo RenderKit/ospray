@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,7 +31,7 @@ namespace ospray {
     float     *depthBuffer; /*!< one float per pixel, may be NULL */
     vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
     vec4f     *varianceBuffer; /*!< one RGBA per pixel, may be NULL, accumulates every other sample, for variance estimation / stopping */
-    vec3f     *normalBuffer; /*!< accumulated screenspace normal per pixel, may be NULL */
+    vec3f     *normalBuffer; /*!< accumulated world-space normal per pixel, may be NULL */
     vec3f     *albedoBuffer; /*!< accumulated, one RGB per pixel, may be NULL */
     int32     *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     TileError  tileErrorRegion; /*!< holds error per tile and adaptive regions, for variance estimation / stopping */

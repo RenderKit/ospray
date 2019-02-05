@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -39,19 +39,3 @@ struct LinearTransferFunction {
   vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
 
 };
-
-inline uniform float getMaxOpacityForRange(LinearTransferFunction *uniform tf, 
-                                           uniform float range_lo, uniform float range_hi)
-{
-  uniform float rel_lo
-    = (range_lo - tf->super.valueRange.x) 
-    * rcp(tf->super.valueRange.y-tf->super.valueRange.x+1e-6f);
-  uniform float rel_hi
-    = (range_hi - tf->super.valueRange.x) 
-    * rcp(tf->super.valueRange.y-tf->super.valueRange.x+1e-6f);
-  uniform int bin_lo = (int)(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_lo);
-  uniform int bin_hi = (int)(ceil(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_hi));
-  bin_lo = min(bin_lo,PRECOMPUTED_OPACITY_SUBRANGE_COUNT-1);
-  bin_hi = min(bin_hi,PRECOMPUTED_OPACITY_SUBRANGE_COUNT-1);
-  return tf->minMaxOpacityInRange[bin_lo][bin_hi].y;
-}

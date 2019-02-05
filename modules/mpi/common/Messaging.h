@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -73,10 +73,6 @@ namespace ospray {
       inline void bcast(const int rootGlobalRank, T &data)
       {
         using namespace mpicommon;
-        const bool asyncWasRunning = asyncMessagingEnabled();
-        if (asyncWasRunning) {
-          disableAsyncMessaging();
-        }
 
         MPIBcastFabric fabric(world, rootGlobalRank, rootGlobalRank);
 
@@ -87,15 +83,6 @@ namespace ospray {
         } else {
           networking::BufferedReadStream stream(fabric);
           stream >> data;
-        }
-
-        // TODO: What if some other thread re-enables async messaging during the
-        // bcast? Can we like lock it out or something until we're done? Or
-        // send the bcasts through the same messaging layer so we know for
-        // sure no other MPI calls are being made?
-        if (asyncWasRunning) {
-          postStatusMsg("Async was running, re-enabling", 1);
-          enableAsyncMessaging();
         }
       }
 

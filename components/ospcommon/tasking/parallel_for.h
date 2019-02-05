@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,7 +33,7 @@ namespace ospcommon {
       static_assert(is_valid_index<INDEX_T>::value,
                     "ospcommon::tasking::parallel_for() requires the type"
                     " INDEX_T to be unsigned char, short, int, uint, long,"
-                    " or size_t.");
+                    " long long, or size_t.");
 
       static_assert(has_operator_method_matching_param<TASK_T, INDEX_T>::value,
                     "ospcommon::tasking::parallel_for() requires the "

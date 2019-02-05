@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016-2018 Intel Corporation                                    //
+// Copyright 2016-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,7 +31,7 @@ namespace maml {
   /*! the singleton object that handles all the communication */
   struct OSPRAY_MAML_INTERFACE Context
   {
-    Context() = default;
+    Context(bool enableCompression = false);
     ~Context();
 
     static std::unique_ptr<Context> singleton;
@@ -40,13 +40,21 @@ namespace maml {
       on the given communicator we'll call this handler */
     void registerHandlerFor(MPI_Comm comm, MessageHandler *handler);
 
+    bool isRunning() const;
+
+    /*! put the given message in the outbox. note that this can be
+        done even if the actual sending mechanism is currently
+        stopped */
+    void send(std::shared_ptr<Message> msg);
+
+    // WILL: Logging
+    void logMessageTimings(std::ostream &os);
+
     /*! start the service; from this point on maml is free to use MPI
       calls to send/receive messages; if your MPI library is not
       thread safe the app should _not_ do any MPI calls until 'stop()'
       has been called */
     void start();
-
-    bool isRunning() const;
 
     /*! stops the maml layer; maml will no longer perform any MPI calls;
       if the mpi layer is not thread safe the app is then free to use
@@ -55,23 +63,20 @@ namespace maml {
       if they are already in flight */
     void stop();
 
-    /*! put the given message in the outbox. note that this can be
-        done even if the actual sending mechanism is currently
-        stopped */
-    void send(std::shared_ptr<Message> msg);
-
   private:
 
     // Helper functions //
+
+    /*! the thread that executes messages that the receiver thread
+        put into the inbox */
+    void processInboxTask();
+
+    void processInboxMessages();
 
     /*! the thread (function) that executes all MPI commands to
         send/receive messages via MPI.
 
         Some notes:
-
-        - this thread does MPI calls (only!) between calls of start()
-        and stop(). unless you call start(), nothing will ever get sent
-        or received.
 
         - it only looks for incoming messages on communicators for
         which a handler has been specified. if you don't add a handler
@@ -83,25 +88,14 @@ namespace maml {
           triggered. it's another thread's job to execute those
           messages
     */
-    void mpiSendAndRecieveTask();
-
-    /*! the thread that executes messages that the receiver thread
-        put into the inbox */
-    void processInboxTask();
-
-    void processInboxMessages();
-
     void sendMessagesFromOutbox();
     void pollForAndRecieveMessages();
-
-    void waitOnSomeSendRequests();
-    void waitOnSomeRecvRequests();
+    void waitOnSomeRequests();
 
     void flushRemainingMessages();
 
     // Data members //
 
-    bool tasksAreRunning {false};
 
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
@@ -119,10 +113,25 @@ namespace maml {
     std::map<MPI_Comm, MessageHandler *> handlers;
 
     bool useTaskingSystem {true};
+    bool compressMessages {false};
 
     // NOTE(jda) - these are only used when _not_ using the tasking sytem...
+    std::mutex tasksMutex;
+    bool tasksAreRunning {false};
+    //std::thread sendReceiveThread, processInboxThread;
+    std::atomic<bool> quitThreads{false};
     std::unique_ptr<ospcommon::AsyncLoop> sendReceiveThread;
     std::unique_ptr<ospcommon::AsyncLoop> processInboxThread;
+
+    std::mutex statsMutex;
+    using CompressionPercent = std::chrono::duration<double>;
+
+    using RealMilliseconds = std::chrono::duration<double, std::milli>;
+    std::vector<CompressionPercent> compressedSizes;
+    std::vector<RealMilliseconds> sendTimes, recvTimes,
+      compressTimes, decompressTimes;
+
+    bool DETAILED_LOGGING{false};
   };
 
 } // ::maml

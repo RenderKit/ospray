@@ -1,6 +1,6 @@
 #!/bin/bash
 ## ======================================================================== ##
-## Copyright 2014-2018 Intel Corporation                                    ##
+## Copyright 2014-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -52,10 +52,13 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
-DEP_EMBREE=embree-3.1.0.x86_64.linux
-DEP_ISPC=ispc-v1.9.2-linux
-DEP_TBB=tbb2018_20171205oss
-DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz"
+DEP_EMBREE=embree-3.4.0.x86_64.linux
+DEP_ISPC_VER=1.9.2
+DEP_ISPC=ispc-v${DEP_ISPC_VER}-linux
+DEP_ISPC_DIR=ispc-v${DEP_ISPC_VER}-linux
+DEP_TBB=tbb2019_20181203oss
+DEP_OIDN=oidn-0.8.1.x86_64.linux
+DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz $DEP_OIDN.tar.gz"
 
 
 # set compiler if the user hasn't explicitly set CC and CXX
@@ -67,7 +70,7 @@ if [ -z $CC ]; then
   export CXX=icpc
 fi
 
-#### Fetch dependencies (TBB+Embree+ISPC) ####
+#### Fetch dependencies (TBB+Embree+ISPC+OIDN) ####
 
 mkdir -p $DEP_DIR
 cd $DEP_DIR
@@ -77,6 +80,7 @@ for dep in $DEP_TARBALLS ; do
   tar -xaf $dep
 done
 export embree_DIR=$DEP_DIR/$DEP_EMBREE
+export OpenImageDenoise_DIR=$DEP_DIR/$DEP_OIDN
 
 cd $ROOT_DIR
 
@@ -94,7 +98,7 @@ cmake \
 -D OSPRAY_MODULE_MPI=ON \
 -D OSPRAY_MODULE_MPI_APPS=OFF \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
--D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
+-D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC_DIR/ispc \
 -D OSPRAY_SG_CHOMBO=OFF \
 -D OSPRAY_SG_OPENIMAGEIO=OFF \
 -D OSPRAY_SG_VTK=OFF \
@@ -110,7 +114,7 @@ check_symbols libospray.so GLIBC   2 4 0
 check_symbols libospray.so GLIBCXX 3 4 11
 check_symbols libospray.so CXXABI  1 3 0
 
-make -j `nproc` package
+make -j `nproc` package || exit 2
 
 # read OSPRay version
 OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
@@ -120,6 +124,7 @@ tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
+-D OSPRAY_APPS_ENABLE_DENOISER=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \
 -D CPACK_PACKAGING_INSTALL_PREFIX=/ \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
@@ -129,5 +134,5 @@ cmake \
 ..
 
 # create tar.gz files
-make -j `nproc` package
+make -j `nproc` package || exit 2
 

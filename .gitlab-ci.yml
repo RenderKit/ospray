@@ -16,6 +16,15 @@ variables:
   script:
     - scripts/build_gitlab/linux.sh # default script
 
+.job_template: &build_job_docker_modules
+  stage: build
+  tags:
+    - docker
+    - modules
+  image: ospray/docker-images:centos6-mod
+  script:
+    - scripts/build_gitlab/linux.sh
+
 .job_template: &build_job_shell
   stage: build
   tags:
@@ -101,40 +110,45 @@ build-ubuntu1404-gcc:
     expire_in: 3 day
 
 build-centos6-gcc:
-  <<: *build_job_docker
-  image: ospray/docker-images:centos6
+  <<: *build_job_docker_modules
+  script:
+    - module load cmake
+    - module load gcc/4.8.2
+    - module load embree
+    - module load tbb
+    - module load ispc
+    - export CC=gcc
+    - export CXX=g++
+    - scripts/build_gitlab/linux.sh
   artifacts:
     paths:
       - $CI_PROJECT_DIR
-    expire_in: 3 day
 
 build-centos6-icc:
-  <<: *build_job_shell
+  <<: *build_job_docker_modules
   script:
+    - module load cmake
     - module load gcc/4.8.2
     - module load intel
     - module load embree
     - module load tbb
+    - module load ispc
     - export CC=icc
     - export CXX=icpc
     - scripts/build_gitlab/linux.sh
-  tags:
-    - centos6
-    - icc
 
 build-centos6-icc15:
-  <<: *build_job_shell
+  <<: *build_job_docker_modules
   script:
+    - module load cmake
     - module load gcc/4.8.2
     - module load intel/2015
     - module load embree
     - module load tbb
+    - module load ispc
     - export CC=icc
     - export CXX=icpc
     - scripts/build_gitlab/linux.sh
-  tags:
-    - centos6
-    - icc
 
 build-centos7-gcc:
   <<: *build_job_docker
@@ -206,6 +220,7 @@ build-scan-kw:
   image: ospray-kw-centos7
   script:
     - /tmp/build-scan-kw.sh
+    - test -s $CI_PROJECT_DIR/kw_build_number
   tags:
     - kw-scan-docker
   artifacts:
@@ -238,9 +253,14 @@ test-centos7-gcc:
 
 test-centos6-gcc:
   <<: *test_job
-  image: ospray/docker-images:centos6
+  image: ospray/docker-images:centos6-mod
   dependencies:
     - build-centos6-gcc
+  script:
+    - module load tbb
+    - scripts/tests/run_tests.sh
+  tags:
+    - modules
 
 test-ubuntu1404-gcc:
   <<: *test_job
@@ -372,7 +392,6 @@ release-linux-icc:
     - module load cmake
     - module load gcc/4.8.2
     - module load intel
-    - module load embree
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh

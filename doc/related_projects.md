@@ -20,7 +20,7 @@ head of the [Software Engineering and Bioinformatics
 group](http://bio.informatik.uni-mainz.de/) at the University of Mainz
 is currently creating an OSPRay rendering module for their
 [BALLView](http://www.ballview.org/) package, a standalone molecular
-modelling and visualization application for the "BALL" Biochemical
+modeling and visualization application for the "BALL" Biochemical
 Algorithm Library.
 
 
@@ -58,7 +58,7 @@ StingRay
 SURVICE Engineering's ["StingRay"
 toolkit](http://www.rtvtk.org/~cgribble/research/papers/gribble14high.pdf)
 makes use of Embree for simulating radio frequency, and uses OSPRay for
-visualizing the resuls.
+visualizing the results.
 
 
 Projects that are closely related to OSPRay

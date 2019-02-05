@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,9 +16,9 @@
 
 #include "AMRVolume.h"
 // ospray
-#include "ospray/common/Model.h"
-#include "ospray/common/Data.h"
-#include "ospray/transferFunction/TransferFunction.h"
+#include "common/Model.h"
+#include "common/Data.h"
+#include "transferFunction/TransferFunction.h"
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/utility/getEnvVar.h"

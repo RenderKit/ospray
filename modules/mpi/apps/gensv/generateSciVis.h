@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017-2018 Intel Corporation                                    //
+// Copyright 2017-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -61,21 +61,6 @@ namespace gensv {
    * box, due to the ghost voxels.
    */
   LoadedVolume makeVolume();
-
-  /* Generate bricks of volume data based on some gridding. The volumes are
-   * placed in cells of the grid computed in 'computeGrid' based on the number
-   * of ranks with each rank owning a specific cell in the gridding.
-   * The coloring is based on color-mapping the ranks id. Each region
-   * can have more than one brick in the total gridding.
-   * The region occupied by the volume is then used to be the rank's
-   * overall region bounds and will be the bounding box for the
-   * generated geometry as well.
-   * Returns the ghostGridOrigin of the volume which may be outside the bounding
-   * box, due to the ghost voxels.
-   */
-  containers::AlignedVector<LoadedVolume> makeVolumes(const size_t firstBrick,
-                                                      const size_t numMine,
-                                                      const size_t numBricks);
 
   /* Load this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number

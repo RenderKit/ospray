@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -64,9 +64,6 @@ struct Ray {
   int instID;  //!< instance ID
 };
 
-// XXX why not inf??
-#define infinity (1e20f)
-
 /*! returns whether a ray has hit anything or not */
 inline bool noHit(const Ray &ray)
 { return ray.geomID < 0; }
@@ -76,18 +73,13 @@ inline bool hadHit(const Ray &ray)
 { return !noHit(ray); }
 
 /*! initialize a new ray with given parameters */
-inline void setRay(Ray &ray,
-                   const vec3f &ray_org,
-                   const vec3f &ray_dir,
-                   const float time = 0.f)
+inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
+                   const float t0, const float t1, const float time = 0.f)
 {
   ray.org = ray_org;
   ray.dir = ray_dir;
-  if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
-  if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
-  if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
-  ray.t0  = 1e-6f;
-  ray.t   = infinity;
+  ray.t0  = t0;
+  ray.t   = t1;
   ray.time = time;
   ray.mask = -1;
   ray.geomID = -1;
@@ -96,21 +88,12 @@ inline void setRay(Ray &ray,
 }
 
 /*! initialize a new ray with given parameters */
-inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
-                   const float t0, const float t1, const float time = 0.f)
+inline void setRay(Ray &ray,
+                   const vec3f &ray_org,
+                   const vec3f &ray_dir,
+                   const float time = 0.f)
 {
-  ray.org = ray_org;
-  ray.dir = ray_dir;
-  if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
-  if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
-  if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
-  ray.t0  = t0;
-  ray.t   = t1;
-  ray.time = time;
-  ray.mask = -1;
-  ray.geomID = -1;
-  ray.primID = -1;
-  ray.instID = -1;
+  setRay(ray, ray_org, ray_dir, 0.f, inf, time);
 }
 
 /*! helper function that performs a ray-plane test */
@@ -157,9 +140,4 @@ inline void rayTransform(Ray &ray,
     ray.t  = reduce_min((xfmPoint(xfm,  t) - ray.org) * rcp_dir);
     // -- Ng
     ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
-}
-
-inline float getIntersectionError(const vec3f& P, float t)
-{
-  return max(t, reduce_max(abs(P))) * 0x1.fp-18;
 }

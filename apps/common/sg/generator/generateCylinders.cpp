@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -71,7 +71,7 @@ namespace ospray {
         auto v1 = dims_converter.reshape(i) * 10;
         auto v2 = v1;
 
-        v1.z = 0.f;
+        v2.z += 8;
 
         cylinder_vertices->v[(2 * i) + 0] = v1;
         cylinder_vertices->v[(2 * i) + 1] = v2;

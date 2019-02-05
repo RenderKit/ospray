@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,50 +31,10 @@ export void *uniform DistributedModel_create(void *uniform cppE)
   return (void *uniform)model;
 }
 
-export void DistributedModel_init(void *uniform _model,
-                                  void *uniform embreeDevice,
-                                  uniform int32 numGeometries,
-                                  uniform int32 numVolumes)
+export void DistributedModel_setBounds(void *uniform _model,
+                                       uniform box3f *uniform bounds)
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;
-  if (model->embreeSceneHandle) {
-    rtcReleaseScene(model->embreeSceneHandle);
-  }
-  model->embreeSceneHandle = rtcNewScene((RTCDevice)embreeDevice);
-
-  if (model->geometry) delete[] model->geometry;
-  model->geometryCount = numGeometries;
-  if (numGeometries > 0)
-    model->geometry = uniform new uniform uniGeomPtr[numGeometries];
-  else
-    model->geometry = NULL;
-  if (model->volumes) delete[] model->volumes;
-  model->volumeCount = numVolumes;
-  if (numVolumes > 0)
-    model->volumes = uniform new uniform uniVolumePtr[numVolumes];
-  else
-    model->volumes = NULL;
+  model->bounds = *bounds;
 }
 
-export void *uniform DistributedModel_getEmbreeSceneHandle(void *uniform _model)
-{
-  uniform Model *uniform model = (uniform Model *uniform)_model;
-  return (void *uniform)model->embreeSceneHandle;
-}
-
-export void DistributedModel_setGeometry(void *uniform _model,
-                                         uniform int32 geomID,
-                                         void *uniform _geom)
-{
-  uniform Model *uniform model = (uniform Model *uniform)_model;
-  uniform Geometry *uniform geom = (uniform Geometry *uniform)_geom;
-  model->geometry[geomID] = geom;
-}
-
-export void DistributedModel_setVolume(void *uniform pointer,
-                                       uniform int32 index,
-                                       void *uniform volume)
-{
-  uniform Model *uniform model = (uniform Model *uniform) pointer;
-  model->volumes[index] = (uniform Volume *uniform) volume;
-}

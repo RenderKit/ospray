@@ -25,4 +25,7 @@ readme.pdf
 !/modules/mpi
 !/modules/pluggableGeometryExample
 !/modules/simdGeometryExample
-Session.vim
+*.vim
+.idea/
+premake.local.*
+cmake-build*/

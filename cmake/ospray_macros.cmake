@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -39,6 +39,22 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
 
+macro(ospray_create_embree_target)
+  if (NOT TARGET embree::embree)
+    add_library(embree INTERFACE)
+
+    target_include_directories(embree
+    INTERFACE
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+    )
+
+    target_link_libraries(embree
+    INTERFACE
+      $<BUILD_INTERFACE:${EMBREE_LIBRARIES}>
+    )
+  endif()
+endmacro()
+
 macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
   find_package(embree ${EMBREE_VERSION_REQUIRED} QUIET)
   if(NOT DEFINED EMBREE_INCLUDE_DIRS)
@@ -56,7 +72,8 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
 endmacro()
 
 macro(ospray_determine_embree_isa_support)
-  if (EMBREE_MAX_ISA STREQUAL "NONE")
+  if (EMBREE_MAX_ISA STREQUAL "DEFAULT" OR
+      EMBREE_MAX_ISA STREQUAL "NONE")
     set(EMBREE_ISA_SUPPORTS_SSE2      ${EMBREE_ISA_SSE2})
     set(EMBREE_ISA_SUPPORTS_SSE4      ${EMBREE_ISA_SSE42})
     set(EMBREE_ISA_SUPPORTS_AVX       ${EMBREE_ISA_AVX})

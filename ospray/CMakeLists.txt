@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,34 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
-MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
-
-# NOTE(jda) - PThread hint used by both Embree and OSPRay
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-SET(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
-FIND_PACKAGE(Threads REQUIRED)
+option(EXP_NEW_BB_VOLUME_KERNELS
+       "Experimental new block/bricked volume layout" ON)
+mark_as_advanced(EXP_NEW_BB_VOLUME_KERNELS)
 
 # -------------------------------------------------------
 # Setup ospray include directories and source files
 # -------------------------------------------------------
 
-INCLUDE_DIRECTORIES(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${PROJECT_BINARY_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-)
-INCLUDE_DIRECTORIES_ISPC(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${PROJECT_BINARY_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-)
-
-SET(OSPRAY_SOURCES
+set(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
 
@@ -67,7 +48,7 @@ SET(OSPRAY_SOURCES
   include/ospray/ospray_cpp/Volume.h
 )
 
-SET(OSPRAY_ISPC_DEVICE_SOURCES
+set(OSPRAY_ISPC_DEVICE_SOURCES
   ispc_tasksys.cpp
 
   api/ISPCDevice.h
@@ -105,6 +86,8 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Geometry.cpp
   geometry/TriangleMesh.ispc
   geometry/TriangleMesh.cpp
+  geometry/Subdivision.ispc
+  geometry/Subdivision.cpp
   geometry/QuadMesh.ispc
   geometry/QuadMesh.cpp
   geometry/Curves.cpp
@@ -238,274 +221,114 @@ SET(OSPRAY_ISPC_DEVICE_SOURCES
   volume/amr/method_octant.ispc
 )
 
-
 # -------------------------------------------------------
-# Install API headers
+# Install SDK headers
 # -------------------------------------------------------
 
-OSPRAY_INSTALL_SDK_HEADERS(
-  api/Device.h
-  api/ISPCDevice.h
-  api/objectFactory.h
-  DESTINATION api
-)
+get_subdirectories(SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
 
-OSPRAY_INSTALL_SDK_HEADERS(
-  camera/Camera.h
-  camera/Camera.ih
-  camera/OrthographicCamera.h
-  camera/OrthographicCamera.ih
-  camera/PanoramicCamera.h
-  camera/PerspectiveCamera.h
-  camera/PerspectiveCamera.ih
-  DESTINATION camera
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  common/Data.h
-  common/DifferentialGeometry.ih
-  common/Library.h
-  common/Managed.h
-  common/Material.h
-  common/Material.ih
-  common/Model.h
-  common/Model.ih
-  common/ObjectHandle.h
-  common/OSPCommon.h
-  common/OSPCommon.ih
-  common/Ray.ih
-  common/Texture.h
-  common/Util.h
-  DESTINATION common
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  fb/FrameBuffer.h
-  fb/FrameBuffer.ih
-  fb/LocalFB.h
-  fb/LocalFB.ih
-  fb/PixelOp.h
-  fb/Tile.h
-  fb/Tile.ih
-  fb/TileError.h
-  DESTINATION fb
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  geometry/Curves.h
-  geometry/Cylinders.h
-  geometry/Geometry.h
-  geometry/Geometry.ih
-  geometry/Instance.h
-  geometry/Instance.ih
-  geometry/Isosurfaces.h
-  geometry/Slices.h
-  geometry/Spheres.h
-  geometry/StreamLines.h
-  geometry/TriangleMesh.h
-  geometry/TriangleMesh.ih
-  geometry/QuadMesh.h
-  geometry/QuadMesh.ih
-  DESTINATION geometry
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  lights/AmbientLight.h
-  lights/DirectionalLight.h
-  lights/HDRILight.h
-  lights/Light.h
-  lights/Light.ih
-  lights/PointLight.h
-  lights/QuadLight.h
-  lights/SpotLight.h
-  DESTINATION lights
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  #FIXME: check if all of these are used...
-  math/AffineSpace.ih
-  math/box.ih
-  math/Distribution1D.ih
-  math/Distribution2D.ih
-  math/LinearSpace.ih
-  math/math.ih
-  math/random.ih
-  math/sobol.ih
-  math/sampling.ih
-  math/vec.ih
-  math/spectrum.h
-  math/spectrum.ih
-  DESTINATION math
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  render/LoadBalancer.h
-  render/Renderer.h
-  render/Renderer.ih
-  render/util.h
-  render/util.ih
-  DESTINATION render
-)
-
-#TODO: all the specific renderer headers...
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  texture/Texture.h
-  texture/Texture2D.h
-  texture/Texture2D.ih
-  texture/TextureParam.ih
-  texture/TextureVolume.h
-  DESTINATION texture
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  transferFunction/LinearTransferFunction.h
-  transferFunction/LinearTransferFunction.ih
-  transferFunction/TransferFunction.h
-  transferFunction/TransferFunction.ih
-  DESTINATION transferFunction
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/Volume.h
-  volume/Volume.ih
-  DESTINATION volume
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/amr/AMR.ih
-  volume/amr/AMRAccel.h
-  volume/amr/AMRData.h
-  volume/amr/AMRVolume.h
-  volume/amr/AMRVolume.ih
-  volume/amr/CellRef.ih
-  volume/amr/DualCell.ih
-  volume/amr/FindStack.ih
-  volume/amr/KDTree.ih
-  volume/amr/range.ih
-  DESTINATION volume/amr
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/structured/GridAccelerator.ih
-  volume/structured/StructuredVolume.h
-  volume/structured/StructuredVolume.ih
-  DESTINATION volume/structured
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/structured/bricked/BlockBrickedVolume.h
-  volume/structured/bricked/BlockBrickedVolume.ih
-  volume/structured/bricked/GhostBlockBrickedVolume.h
-  volume/structured/bricked/GhostBlockBrickedVolume.ih
-  DESTINATION volume/structured/bricked
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/structured/shared/SharedStructuredVolume.h
-  volume/structured/shared/SharedStructuredVolume.ih
-  DESTINATION volume/structured/shared
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  volume/unstructured/MinMaxBVH2.h
-  volume/unstructured/MinMaxBVH2.ih
-  volume/unstructured/UnstructuredVolume.h
-  volume/unstructured/UnstructuredVolume.ih
-  DESTINATION volume/unstructured
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  include/ospray/ospray_cpp/Camera.h
-  include/ospray/ospray_cpp/Data.h
-  include/ospray/ospray_cpp/FrameBuffer.h
-  include/ospray/ospray_cpp/Geometry.h
-  include/ospray/ospray_cpp/Light.h
-  include/ospray/ospray_cpp/ManagedObject.h
-  include/ospray/ospray_cpp/Material.h
-  include/ospray/ospray_cpp/Model.h
-  include/ospray/ospray_cpp/PixelOp.h
-  include/ospray/ospray_cpp/Renderer.h
-  include/ospray/ospray_cpp/Texture2D.h
-  include/ospray/ospray_cpp/TransferFunction.h
-  include/ospray/ospray_cpp/Volume.h
-  DESTINATION ../ospray_cpp
-)
+foreach(dir ${SUBDIRS})
+  if (NOT "${dir}" STREQUAL include)
+    install(DIRECTORY ${dir}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
+      COMPONENT devel
+      FILES_MATCHING
+      PATTERN *.h
+      PATTERN *.ih
+    )
+  endif()
+endforeach()
 
 ##############################################################
-# build the ospray library (using flags and compilers as configured by
-# CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
+# Build the ospray library
 ##############################################################
 
-
-SET(OSPRAY_LIBS
-  ospray_common
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
-)
-
-IF (WIN32)
-  LIST(APPEND OSPRAY_LIBS ws2_32)
+if (WIN32)
+  list(APPEND OSPRAY_LIBS ws2_32)
 
   # -------------------------------------------------------
   # export ISPC SDK symbols on Windows ##
   # -------------------------------------------------------
 
-  FILE(READ def_header.txt OSPRAY_DEF)
-  FILE(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
+  file(READ def_header.txt OSPRAY_DEF)
+  file(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
 
-  FOREACH(isa ${OSPRAY_ISPC_TARGET_LIST})
-    STRING(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
+  foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
+    string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
     # add isa suffix
-    STRING(REPLACE "," ${isa} OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
-    STRING(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
-  ENDFOREACH()
+    string(REPLACE "," ${isa} OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
+    string(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
+  endforeach()
 
-  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in "${OSPRAY_DEF}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in "${OSPRAY_DEF}")
 
   # changes ospray.def only if content changed, avoids unnecessary re-linking
-  CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in ospray_module_ispc.def COPYONLY)
+  configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in ospray_module_ispc.def COPYONLY)
 
-  LIST(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
-ENDIF()
+  list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
+endif()
 
-OSPRAY_CREATE_LIBRARY(ospray
+ospray_create_library(ospray
   ${OSPRAY_SOURCES}
-LINK
-  ${OSPRAY_LIBS}
-COMPONENT
-  lib
+COMPONENT lib
 )
 
-OPTION(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
-MARK_AS_ADVANCED(OSPRAY_BUILD_ISPC_DEVICE)
+target_link_libraries(ospray PUBLIC ospray_common)
 
-IF(OSPRAY_BUILD_ISPC_DEVICE)
-  OSPRAY_CREATE_LIBRARY(ospray_module_ispc
-    ${OSPRAY_ISPC_DEVICE_SOURCES}
-  LINK
-    ${OSPRAY_LIBS}
-    ospray
-    ${EMBREE_LIBRARIES}
-  COMPONENT
-    lib
+target_include_directories(ospray
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+##############################################################
+# Build ISPC device
+##############################################################
+
+option(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
+mark_as_advanced(OSPRAY_BUILD_ISPC_DEVICE)
+
+if(OSPRAY_BUILD_ISPC_DEVICE)
+
+  # NOTE(jda) - PThread hint used by both Embree and OSPRay
+  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+  set(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
+  find_package(Threads REQUIRED)
+
+  include_directories_ispc(
+    ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_SOURCE_DIR}/ospray
+    ${CMAKE_SOURCE_DIR}
+    ${PROJECT_BINARY_DIR}
+    ${EMBREE_INCLUDE_DIRS}
   )
-ENDIF()
 
-OPTION(OSPRAY_ENABLE_TUTORIAL
-  "Build the tutorial executable" ON)
-MARK_AS_ADVANCED(OSPRAY_ENABLE_TUTORIAL)
-IF(OSPRAY_ENABLE_TUTORIAL)
-  # build ospTutorial, for demonstration and API testing
-  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.c)
-  TARGET_LINK_LIBRARIES(ospTutorial ospray)
-  # C++ version
-  ADD_EXECUTABLE(ospTutorialCpp ../apps/ospTutorial.cpp)
-  TARGET_LINK_LIBRARIES(ospTutorialCpp ospray)
-ENDIF()
+  ospray_create_library(ospray_module_ispc
+    ${OSPRAY_ISPC_DEVICE_SOURCES}
+  COMPONENT lib
+  )
+
+  target_link_libraries(ospray_module_ispc
+  PUBLIC
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${CMAKE_DL_LIBS}
+    ospray
+    embree
+  )
+
+  target_include_directories(ospray_module_ispc
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+endif()
 
 ##############################################################
 # Configure find_package files
 ##############################################################
 
-INCLUDE(${CMAKE_SOURCE_DIR}/cmake/ospray_cmake_config.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/ospray_cmake_config.cmake)

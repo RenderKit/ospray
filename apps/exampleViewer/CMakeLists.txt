@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -28,12 +28,6 @@ ospray_disable_compiler_warnings()
 include(cmake/configure_glfw.cmake)
 
 add_subdirectory(common)
-
-include_directories(
-  ${CMAKE_CURRENT_LIST_DIR}/common/gl3w
-  ${CMAKE_CURRENT_LIST_DIR}/common/imgui
-  ${GLFW_INCLUDE_DIRS}
-)
 add_subdirectory(widgets)
 
 ##############################################################

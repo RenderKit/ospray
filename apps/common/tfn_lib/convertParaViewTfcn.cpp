@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016-2018 Intel Corporation                                         //
+// Copyright 2016-2019 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,10 +21,9 @@
 #include <string>
 #include "json/json.h"
 #include "tfn_lib.h"
-#include <common/sg/transferFunction/TransferFunction.h>
-#include <common/sg/SceneGraph.h>
-#include <common/sg/transferFunction/TransferFunction.h>
-
+#include <sg/transferFunction/TransferFunction.h>
+#include <sg/SceneGraph.h>
+#include <sg/transferFunction/TransferFunction.h>
 
 const static std::string USAGE =
   "Usage: ./ospCvtParaViewTfcn <paraview_fcn.json> <out_fcn.tfn>\n"

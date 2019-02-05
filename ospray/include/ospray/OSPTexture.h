@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,8 +31,11 @@ typedef enum
   OSP_TEXTURE_RGB32F,
   OSP_TEXTURE_R8,
   OSP_TEXTURE_R32F,
+  OSP_TEXTURE_L8,
+  OSP_TEXTURE_RA8,
+  OSP_TEXTURE_LA8,
   /*! denotes an unknown texture format, so we can properly initialize parameters */
-  OSP_TEXTURE_FORMAT_INVALID,
+  OSP_TEXTURE_FORMAT_INVALID = 0xff,
 /* TODO
   OSP_LogLuv,
   OSP_RGBA16F

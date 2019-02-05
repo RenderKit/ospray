@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,10 +16,17 @@
 
 #pragma once
 
+#include <ostream>
+#include <unordered_map>
+#include <set>
+
 // ospray stuff
 #include "geometry/Geometry.h"
 #include "volume/Volume.h"
 #include "common/Model.h"
+
+// ospray common
+#include "ospcommon/box.h"
 
 // stl
 #include <vector>
@@ -42,7 +49,7 @@ namespace ospray {
       // compositing.
       virtual void commit() override;
 
-      std::vector<box3f> myRegions, othersRegions, ghostRegions;
+      int id;
     };
 
   } // ::ospray::mpi

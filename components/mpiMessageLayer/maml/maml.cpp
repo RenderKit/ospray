@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016-2018 Intel Corporation                                    //
+// Copyright 2016-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,16 +19,32 @@
 
 namespace maml {
 
+  using ospcommon::make_unique;
+
   // maml API definitions /////////////////////////////////////////////////////
 
-  void init()
+  void logMessageTimings(std::ostream &os)
   {
-    // NOTE(jda) - initialization still done statically, stubbed for future need
+    Context::singleton->logMessageTimings(os);
   }
 
+  /*! start the service; from this point on maml is free to use MPI
+      calls to send/receive messages; if your MPI library is not
+      thread safe the app should _not_ do any MPI calls until 'stop()'
+      has been called */
+  void init(bool enableCompression)
+  {
+    Context::singleton = make_unique<Context>(enableCompression);
+  }
+
+  /*! stops the maml layer; maml will no longer perform any MPI calls;
+      if the mpi layer is not thread safe the app is then free to use
+      MPI calls of its own, but it should not expect that this node
+      receives any more messages (until the next 'start()' call) even
+      if they are already in flight */
   void shutdown()
   {
-    Context::singleton.reset();
+    Context::singleton = nullptr;
   }
 
   /*! register a new incoing-message handler. if any message comes in
@@ -38,10 +54,6 @@ namespace maml {
     Context::singleton->registerHandlerFor(comm,handler);
   }
 
-  /*! start the service; from this point on maml is free to use MPI
-      calls to send/receive messages; if your MPI library is not
-      thread safe the app should _not_ do any MPI calls until 'stop()'
-      has been called */
   void start()
   {
     Context::singleton->start();
@@ -52,11 +64,6 @@ namespace maml {
     return Context::singleton->isRunning();
   }
 
-  /*! stops the maml layer; maml will no longer perform any MPI calls;
-      if the mpi layer is not thread safe the app is then free to use
-      MPI calls of its own, but it should not expect that this node
-      receives any more messages (until the next 'start()' call) even
-      if they are already in flight */
   void stop()
   {
     Context::singleton->stop();

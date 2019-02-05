@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017-2018 Intel Corporation                                    //
+// Copyright 2017-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -99,6 +99,19 @@ protected:
   void SetMaterial();
 };
 
+// Fixture class to test cornercases of intersection precision and epsilon handling;
+// parametrized with renderer, sphere radius, distance factor, and whether the sphere is in origin
+// TODO generalize for other geometries as well, reusing SingleObject
+class SpherePrecision : public Base, public ::testing::TestWithParam<std::tuple<float /*radius*/, float/*factor*/, bool/*move_cam*/, const char* /*renderer*/>> {
+public:
+  SpherePrecision();
+  virtual void SetUp();
+protected:
+  float dist;
+  float radius;
+  bool move_cam;
+};
+
 // Fixture class that renders a fixed scene depicting a Cornell Box with a cuboid and a sphere.
 // It is parametrized with two types of materials.
 class Box : public Base, public ::testing::TestWithParam<std::tuple<const char*, const char*>> {
@@ -184,6 +197,26 @@ public:
   virtual void SetUp();
 private:
   std::vector<float> volumetricData;
+};
+
+// Test a texture colored by a volume.  Creates a sphere colored by the torus volume
+// It's parametrized with type of the renderer.
+class DepthCompositeVolume : public Base, public ::testing::TestWithParam<const char*> {
+public:
+  DepthCompositeVolume();
+  virtual void SetUp();
+private:
+  std::vector<float> volumetricData;
+};
+
+// Fixture for tests rendering a Subdivision mesh. It's parametrized with type of
+// material used.
+class Subdivision : public Base, public ::testing::TestWithParam<std::tuple<const char*, const char*>> {
+public:
+  Subdivision();
+  virtual void SetUp();
+private:
+  std::string materialType;
 };
 
 } // namespace OSPRayTestScenes

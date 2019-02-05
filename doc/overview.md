@@ -1,10 +1,12 @@
 OSPRay Overview
 ===============
 
-OSPRay is an **o**pen source, **s**calable, and **p**ortable **ray**
+Intel® OSPRay is an **o**pen source, **s**calable, and **p**ortable **ray**
 tracing engine for high-performance, high-fidelity visualization on
-Intel® Architecture CPUs. OSPRay is released under the permissive
-[Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0).
+Intel Architecture CPUs. OSPRay is part of the [Intel Rendering
+Framework](https://software.intel.com/en-us/rendering-framework) and is
+released under the permissive [Apache 2.0
+license](http://www.apache.org/licenses/LICENSE-2.0).
 
 The purpose of OSPRay is to provide an open, powerful, and easy-to-use
 rendering library that allows one to easily build applications that use
@@ -13,9 +15,9 @@ surface- and volume-based visualizations). OSPRay is completely
 CPU-based, and runs on anything from laptops, to workstations, to
 compute nodes in HPC systems.
 
-OSPRay internally builds on top of [Embree] and [ISPC (Intel® SPMD
-Program Compiler)](https://ispc.github.io/), and fully utilizes modern
-instruction sets like Intel® SSE4, AVX, AVX2, and AVX-512 to achieve
+OSPRay internally builds on top of [Intel Embree] and [ISPC (Intel SPMD
+Program Compiler)](https://ispc.github.io/), and fully exploits modern
+instruction sets like Intel SSE4, AVX, AVX2, and AVX-512 to achieve
 high rendering performance, thus a CPU with support for at least SSE4.1
 is required to run OSPRay.
 

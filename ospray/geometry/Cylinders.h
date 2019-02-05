@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -76,7 +76,6 @@ namespace ospray {
     int64 offset_radius;
     int64 offset_materialID;
     int64 offset_colorID;
-    float epsilon;  //epsilon for intersections
 
     Ref<Data> cylinderData;
     Ref<Data> colorData; /*!< cylinder color array */

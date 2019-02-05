@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017-2018 Intel Corporation                                    //
+// Copyright 2017-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,9 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <set>
+#include <map>
+#include <unordered_map>
+#include <vector>
 #include <random>
 #include <array>
 #include "mpiCommon/MPICommon.h"
+#include "ospcommon/xml/XML.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
@@ -104,24 +109,28 @@ namespace gensv {
     const float r = (numRanks - myRank) / numRanks;
     const float b = myRank / numRanks;
     const float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
-    vec4f color(r, g, b, 1.0);
+    vec3f color(r, g, b);
+    ospray::cpp::Material material("scivis", "OBJMaterial");
+    material.set("Kd", color);
+    material.set("Ks", vec3f(1.f));
     if (transparent) {
-      color.w = 0.1;
+      material.set("d", 0.2);
     }
-    ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
+    material.commit();
 
     ospray::cpp::Geometry geom("spheres");
-    geom.set("offset_colorID", int(sizeof(vec3f)));
     geom.set("bytes_per_sphere", int(sizeof(Sphere)));
     geom.set("spheres", sphere_data);
     geom.set("radius", sphereRadius);
-    geom.set("color", color_data);
+    geom.setMaterial(material);
     geom.commit();
 
     return geom;
   }
 
-  LoadedVolume::LoadedVolume() : volume(nullptr), tfcn("piecewise_linear") {
+  LoadedVolume::LoadedVolume()
+    : volume(nullptr), tfcn("piecewise_linear")
+  {
     const containers::AlignedVector<vec3f> colors = {
       vec3f(0, 0, 0.56),
       vec3f(0, 0, 1),
@@ -171,7 +180,7 @@ namespace gensv {
 
     const vec3i volumeDims(128);
     const vec3i grid = computeGrid(numBricks);
-    const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
+    const vec3f gridSpacing = vec3f(1.f);
     const vec3i brickId(brickNum % grid.x, (brickNum / grid.x) % grid.y, brickNum / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
     const std::array<int, 3> ghosts = computeGhostFaces(brickId, grid);
@@ -207,7 +216,7 @@ namespace gensv {
     vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
     vol.volume.commit();
 
-    vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
+    vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(volumeDims));
     return vol;
   }
 
@@ -215,21 +224,13 @@ namespace gensv {
     return makeBrick(mpicommon::globalRank(), mpicommon::numGlobalRanks());
   }
 
-  containers::AlignedVector<LoadedVolume> makeVolumes(const size_t firstBrick,
-                                                      const size_t numMine,
-                                                      const size_t numBricks)
-  {
-    containers::AlignedVector<LoadedVolume> volumes;
-    for (size_t i = firstBrick; i < firstBrick + numMine; ++i) {
-      volumes.push_back(makeBrick(i, numBricks));
-    }
-    return volumes;
-  }
-
   size_t sizeForDtype(const std::string &dtype)
   {
     if (dtype == "uchar" || dtype == "char") {
       return 1;
+    }
+    if (dtype == "ushort" || dtype == "short") {
+      return 2;
     }
     if (dtype == "float") {
       return 4;
@@ -237,8 +238,7 @@ namespace gensv {
     if (dtype == "double") {
       return 8;
     }
-
-    return 0;
+    throw std::runtime_error("Unrecognized data type!");
   }
 
   LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
@@ -247,13 +247,14 @@ namespace gensv {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
 
+    const vec3sz grid = vec3sz(computeGrid(numRanks));
+    const vec3sz brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+
     LoadedVolume vol;
     vol.tfcn.set("valueRange", valueRange);
     vol.tfcn.commit();
 
-    const vec3sz grid = vec3sz(computeGrid(numRanks));
     const vec3sz brickDims = vec3sz(dimensions) / grid;
-    const vec3sz brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * vec3f(brickDims);
 
     const std::array<int, 3> ghosts = computeGhostFaces(vec3i(brickId), vec3i(grid));
@@ -279,11 +280,14 @@ namespace gensv {
     vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
-    containers::AlignedVector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
+    const size_t nbytes = fullDims.x * fullDims.y * fullDims.z * dtypeSize;
+    containers::AlignedVector<unsigned char> volumeData(nbytes, 0);
 
     RawReader reader(file, vec3sz(dimensions), dtypeSize);
     reader.readRegion(brickId * brickDims - vec3sz(ghostOffset),
-        vec3sz(fullDims), volumeData.data());
+                      vec3sz(fullDims),
+                      reinterpret_cast<uint8_t*>(volumeData.data()));
+
     vol.volume.setRegion(volumeData.data(), vec3i(0), vec3i(fullDims));
     vol.volume.commit();
 

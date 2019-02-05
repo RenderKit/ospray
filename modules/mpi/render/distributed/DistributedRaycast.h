@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,11 +16,29 @@
 
 #pragma once
 
+#include <memory>
+#include <fstream>
 // ospray
 #include "render/Renderer.h"
+#include "camera/PerspectiveCamera.h"
+#include "../../common/DistributedModel.h"
 
 namespace ospray {
   namespace mpi {
+
+    // A region is defined by its bounds and an ID, which allows us to group
+    // ranks with the same region and switch to do image-parallel rendering
+    struct DistributedRegion
+    {
+      box3f bounds;
+      int id;
+
+      DistributedRegion();
+      DistributedRegion(box3f bounds, int id);
+
+      bool operator==(const ospray::mpi::DistributedRegion &b) const;
+      bool operator<(const ospray::mpi::DistributedRegion &b) const;
+    };
 
     /* The distributed raycast renderer supports rendering distributed
      * geometry and volume data, assuming that the data distribution is suitable
@@ -36,16 +54,49 @@ namespace ospray {
     struct DistributedRaycastRenderer : public Renderer
     {
       DistributedRaycastRenderer();
-      virtual ~DistributedRaycastRenderer() override = default;//TODO!
+      virtual ~DistributedRaycastRenderer() override;
 
       void commit() override;
 
       float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
 
+      // TODO WILL: This is only for benchmarking the compositing using
+      // the same rendering code path. Remove it once we're done! Or push
+      // it behind some ifdefs!
+      float renderNonDistrib(FrameBuffer *fb, const uint32 fbChannelFlags);
+
       std::string toString() const override;
 
+    private:
+      // Send my bounding boxes to other nodes, recieve theirs for a
+      // "full picture" of what geometries live on what nodes
+      void exchangeModelBounds();
+
       int numAoSamples;
+      bool oneSidedLighting;
+      bool shadowsEnabled;
+      PerspectiveCamera *camera;
+      std::unique_ptr<std::ofstream> statsLog;
+
+      vec3f ambientLight;
+      Data *lightData;
+      std::vector<void*> lightIEs;
+
+      std::vector<DistributedModel*> regions, ghostRegions;
+      std::vector<void*> regionIEs, ghostRegionIEs;
+      // The global list of unique regions across all nodes, (including this one),
+      // sorted by region id.
+      std::vector<DistributedRegion> allRegions;
+      // The ranks which own each region
+      std::unordered_map<int, std::set<size_t>> regionOwners;
     };
 
   } // ::ospray::mpi
 } // ::ospray
+
+std::ostream& operator<<(std::ostream &os, const ospray::mpi::DistributedRegion &d);
+bool operator==(const ospray::mpi::DistributedRegion &a,
+                const ospray::mpi::DistributedRegion &b);
+bool operator<(const ospray::mpi::DistributedRegion &a,
+               const ospray::mpi::DistributedRegion &b);
+

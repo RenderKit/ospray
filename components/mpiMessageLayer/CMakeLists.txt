@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,47 +14,43 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(MAML_LIBRARY ospray_mpi_maml)
-
-OSPRAY_CONFIGURE_MPI()
-
-OSPRAY_BUILD_COMPONENT(mpiCommon)
+ospray_build_component(snappy EXCLUDE_FROM_ALL)
+ospray_build_component(mpiCommon)
 
 # ------------------------------------------------------------------
 # The MAML library itself
 # ------------------------------------------------------------------
-OSPRAY_CREATE_LIBRARY(${MAML_LIBRARY}
-  maml/maml.cpp
-  maml/Context.cpp
-LINK
-  ospray_mpi_common
-COMPONENT mpi
+ospray_create_library(ospray_mpi_maml
+    maml/maml.cpp
+    maml/Context.cpp
+  COMPONENT mpi
 )
 
-SET(MAML_SDK_INSTALL_LOC
-  ../maml #NOTE: this is "next" to the SDK/ directory
+target_link_libraries(ospray_mpi_maml PRIVATE snappy PUBLIC ospray_mpi_common)
+
+target_include_directories(ospray_mpi_maml
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/maml>
 )
 
-OSPRAY_INSTALL_SDK_HEADERS(
-  maml/maml.h
-  DESTINATION ${MAML_SDK_INSTALL_LOC}
+install(FILES maml/maml.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/maml
+  COMPONENT devel
 )
 
 # ------------------------------------------------------------------
 # tests and examples
 # ------------------------------------------------------------------
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
-
-OSPRAY_CREATE_TEST(mamlTest
+ospray_create_test(mamlTest
   apps/mamlTest.cpp
-  LINK
-  ${MAML_LIBRARY}
+LINK
+  ospray_mpi_maml
 )
 
-OSPRAY_CREATE_TEST(mamlTestMessageSwarm
+ospray_create_test(mamlTestMessageSwarm
   apps/testMessageSwarm.cpp
-  LINK
-  ${MAML_LIBRARY}
+LINK
+  ospray_mpi_maml
 )
-

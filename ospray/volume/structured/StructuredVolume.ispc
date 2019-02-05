@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -163,20 +163,22 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
     const float sample = volume->super.sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
 
     // Find t value and isovalue index for the first isosurface intersection.
-    float tHit = infinity;
+    float tHit = inf;
+    float epsilon = inf;
     int isovalueID;
 
     if (!isnan(sample0+sample) && (sample != sample0)) {
       for (uniform int i=0; i<numIsovalues; i++) {
         if ((isovalues[i] - sample0) * (isovalues[i] - sample) <= 0.f) {
           const float rcpSamp = rcpf(sample - sample0);
-          float tIso = infinity;
+          float tIso = inf;
           if (!isnan(rcpSamp)) {
             tIso = t0 + (isovalues[i] - sample0) * rcpSamp * (t - t0);
           }
 
           if (tIso < tHit && tIso > ray.t0) {
             tHit = tIso;
+            epsilon = (t - t0) * 0.125f;
             isovalueID = i;
           }
         }
@@ -187,6 +189,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
         ray.geomID = geomID;
         ray.primID = isovalueID;
         ray.t = tHit;
+        ray.u = epsilon;
         return;
       }
     }

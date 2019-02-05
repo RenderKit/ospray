@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -44,6 +44,10 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
   }
   dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
   dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
+  // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
+  // isotropic anyway and hence cannot better handle non-uniform scaling)
+  dg.epsilon *= max(abs(self->xfm.l.vx.x),
+      max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
   if (flags & DG_TANGENTS) {
     dg.dPds = xfmVector(self->xfm,dg.dPds);

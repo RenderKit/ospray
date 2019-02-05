@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,9 +25,9 @@
 #include "ospcommon/vec.h"
 #include "ospcommon/box.h"
 
-#include "common/sg/common/Data.h"
-#include "common/sg/geometry/Geometry.h"
-#include "common/sg/importer/Importer.h"
+#include "sg/common/Data.h"
+#include "sg/geometry/Geometry.h"
+#include "sg/importer/Importer.h"
 
 namespace ospray {
   namespace sg {

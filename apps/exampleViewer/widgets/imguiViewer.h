@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,8 +21,8 @@
 #include "imgui3D.h"
 #include "transferFunction.h"
 
-#include "common/sg/SceneGraph.h"
-#include "common/sg/Renderer.h"
+#include "sg/SceneGraph.h"
+#include "sg/Renderer.h"
 
 namespace ospray {
 
@@ -85,6 +85,9 @@ namespace ospray {
     double lastGUITime;
     double lastDisplayTime;
     double lastTotalTime;
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    double denoiseFPS;
+#endif
 
     imgui3D::ImGui3DWidget::ViewPort originalView;
     bool saveScreenshot {false}; // write next mapped framebuffer to disk
@@ -109,6 +112,9 @@ namespace ospray {
     AsyncRenderEngine renderEngine;
 
     bool useDynamicLoadBalancer{false};
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    bool asyncDenoising{false};
+#endif
     int  numPreAllocatedTiles{4};
 
     PickMode lastPickQueryType {PICK_CAMERA};

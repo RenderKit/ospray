@@ -10,7 +10,6 @@ performance of OSPRay also have a look at the IEEE Vis 2016 paper
 Visualization](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper.pdf)"
 (49MB, or get the [smaller
 version](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper_small.pdf)
-1.8MB). Also available are the [slides of the
+1.8MB). The [slides of the
 talk](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_talk.pdf)
-(5.2MB).
-
+(5.2MB) are also available.

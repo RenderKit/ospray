@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016-2018 Intel Corporation                                    //
+// Copyright 2016-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <ostream>
 #include "mpiCommon/MPICommon.h"
 
 #ifdef _WIN32
@@ -43,10 +44,22 @@ namespace maml {
     virtual ~MessageHandler() = default;
   };
 
-  /*! initialize the service for this process */
-  OSPRAY_MAML_INTERFACE void init();
+  // WILL: Statistics logging
+  OSPRAY_MAML_INTERFACE void logMessageTimings(std::ostream &os);
 
-  /*! shutdown the service for this process */
+  /*! initialize the service for this process and
+      start the service; from this point on maml is free to use MPI
+      calls to send/receive messages; if your MPI library is not
+      thread safe the app should _not_ do any MPI calls until 'shutdown()'
+      has been called */
+  OSPRAY_MAML_INTERFACE void init(bool enableCompression = false);
+
+  /*! shutdown the service for this process.
+      stops the maml layer; maml will no longer perform any MPI calls;
+      if the mpi layer is not thread safe the app is then free to use
+      MPI calls of its own, but it should not expect that this node
+      receives any more messages (until the next 'init()' call) even
+      if they are already in flight */
   OSPRAY_MAML_INTERFACE void shutdown();
 
   /*! register a new incoing-message handler. if any message comes in
@@ -69,6 +82,7 @@ namespace maml {
       if they are already in flight */
   OSPRAY_MAML_INTERFACE void stop();
 
+
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this
       function has been called maml has full ownership of this message,
@@ -76,6 +90,11 @@ namespace maml {
       any time). note this message will not be sent immediately if the
       mpi sending is stopped; it will, however, be placed in the
       outbox to be sent at the next possible opportunity.
+      If a rank sends a message to itself the MPI communication
+      layer will be skipped, however some cost may be incurred
+      when compressing/decompressing the message and accessing
+      the various inbox/outbox vectors.
+
 
       WARNING: calling flush does NOT guarantee that there's no more
       messages coming in to this node: it does mean that all the

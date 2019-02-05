@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -110,8 +110,8 @@ Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
 //! Set the parameters of an ispc-side QuadLight object
 export void QuadLight_set(void* uniform super,
                           const uniform vec3f& position,
-                          const uniform vec3f& edge2,
                           const uniform vec3f& edge1,
+                          const uniform vec3f& edge2,
                           const uniform vec3f& radiance)
 {
   uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;

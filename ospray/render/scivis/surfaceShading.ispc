@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -112,14 +112,9 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
     }
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
-           self->super.epsilon, self->aoDistance);
+    setRay(ao_ray, dg.P, ao_dir, 0.f, self->aoDistance);
 
-    if (self->aoTransparencyEnabled) {
-      const float rayOffset = self->super.epsilon*(1.f + r.x);
-      occlusion += (1.f - lightAlpha(self, ao_ray, self->super.model, 1.0f,
-                                     rayOffset, sampleID, 0.2f));
-    } else if (isOccluded(self->super.model, ao_ray))
+    if (isOccluded(self->super.model, ao_ray))
       occlusion += 1.f;
   }
 
@@ -151,9 +146,6 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
                          const varying vec3i &sampleID,
                          const uniform float quality)
 {
-  const vec3f R = ray.dir - ((2.f * dot(ray.dir, info.shadingNormal)) * info.shadingNormal);
-  const vec3f P = dg.P + self->super.epsilon * dg.Ng;
-
   //calculate shading for all lights
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
@@ -162,11 +154,12 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
       float cosNL = dot(light.dir, info.shadingNormal);
-      if (self->oneSidedLighting) {
-        if (cosNL < 0.0f)
+      if (cosNL < 0.0f) {
+        if (self->oneSidedLighting)
           continue;
-      } else
         cosNL = abs(cosNL);
+      }
+
       const vec3f H = normalize(light.dir - ray.dir);
       const float cosNH = dot(H, info.shadingNormal);
       const vec3f specular = info.Ks * powf(cosNH, info.Ns);
@@ -177,9 +170,11 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
       if (self->shadowsEnabled) {
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > self->super.minContribution) {
+          vec3f P = dg.P;
+          if (dot(dg.Ng, light.dir) < 0.0f)
+            P = P - (2.f * dg.epsilon) * dg.Ng;
           Ray shadowRay;
-          setRay(shadowRay, P, light.dir, self->super.epsilon,
-              light.dist - self->super.epsilon, ray.time);
+          setRay(shadowRay, P, light.dir, 0.0f, light.dist, ray.time);
           const float light_alpha = lightAlpha(self, shadowRay,
               self->super.model,
               max_contrib,

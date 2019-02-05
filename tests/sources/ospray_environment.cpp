@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017-2018 Intel Corporation                                    //
+// Copyright 2017-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,7 +21,7 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv) :
   rendererType("scivis"),
   imgSize({ 1920,1080 }),
   deviceType("default"),
-  baselineDir("baseline"),
+  baselineDir("regression_tests/baseline"),
   failedDir("failed")
 {
   ParsArgs(argc, argv);

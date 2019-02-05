@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -68,6 +68,23 @@ namespace ospcommon {
     if (b.lower.y > a.upper.y)
       return false;
     if (b.lower.z > a.upper.z)
+      return false;
+
+    return true;
+  }
+
+  template <typename scalar_t, bool A>
+  inline bool touchingOrOverlapping(const box_t<scalar_t, 2, A> &a,
+                                    const box_t<scalar_t, 2, A> &b)
+  {
+    if (a.lower.x > b.upper.x)
+      return false;
+    if (a.lower.y > b.upper.y)
+      return false;
+
+    if (b.lower.x > a.upper.x)
+      return false;
+    if (b.lower.y > a.upper.y)
       return false;
 
     return true;

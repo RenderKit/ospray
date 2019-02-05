@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,7 @@
 #include "Model.h"
 // ispc exports
 #include "Model_ispc.h"
+#include "Volume_ispc.h"
 
 namespace ospray {
 
@@ -88,8 +89,14 @@ namespace ospray {
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
 
-    for (size_t i=0; i<volume.size(); i++)
+    for (size_t i=0; i<volume.size(); i++) {
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
+      box3f volBounds = empty;
+      ispc::Volume_getBoundingBox((ispc::box3f*)&volBounds, volume[i]->getIE());
+      bounds.extend(volBounds);
+    }
+
+    ispc::Model_setBounds(getIE(), (ispc::box3f*)&bounds);
 
     rtcCommitScene(embreeSceneHandle);
   }

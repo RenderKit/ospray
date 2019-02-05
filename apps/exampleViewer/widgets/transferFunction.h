@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,7 +31,7 @@
 #include <tfn_lib/tfn_lib.h>
 #include "Imgui3dExport.h"
 #include <ospray/ospray_cpp/TransferFunction.h>
-#include "common/sg/transferFunction/TransferFunction.h"
+#include "sg/transferFunction/TransferFunction.h"
 
 namespace ospray {
   namespace imgui3D {
@@ -89,6 +89,9 @@ namespace ospray {
       void removePoint(const float &x);
     };
 
+    // Load up the preset color maps
+    void loadColorMapPresets();
+
   private:
 
     // The indices of the transfer function color presets available
@@ -126,8 +129,6 @@ namespace ospray {
     // overwriting the user's set opacity data. This is done when loading from a file
     // to show the loaded tfcn, but not when switching from the preset picker.
     void setColorMap(const bool useOpacity);
-    // Load up the preset color maps
-    void loadColorMapPresets();
   };
 
   }// ::imgui3D

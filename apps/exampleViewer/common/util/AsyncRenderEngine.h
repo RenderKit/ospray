@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,9 +28,14 @@
 #include "ospcommon/utility/TransactionalValue.h"
 
 #include "sg/Renderer.h"
+#include "sg/common/FrameBuffer.h"
 
 // ospImGui util
 #include "ImguiUtilExport.h"
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+#include <OpenImageDenoise/oidn.hpp>
+#endif
 
 namespace ospray {
 
@@ -52,6 +57,9 @@ namespace ospray {
     void start(int numThreads = -1);
     void stop();
     void setFrameCancelled();
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    void setAsyncDenoising(const bool);
+#endif
 
     ExecState runningState() const;
 
@@ -108,5 +116,47 @@ namespace ospray {
     bool commitDeviceOnAsyncLoopThread {true};
 
     utility::CodeTimer fps;
+
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    class Denoiser
+    {
+    public:
+      void init(oidn::DeviceRef &dev);
+      vec2i size() const noexcept { return size_; }
+      void copy(std::shared_ptr<sg::FrameBuffer>);
+      void map(std::shared_ptr<sg::FrameBuffer>, vec4f* res_buf);
+      void unmap(std::shared_ptr<sg::FrameBuffer>);
+      void execute();
+      const vec4f* result() const noexcept { return result_.data(); }
+    private:
+      vec2i size_;
+      bool needCommit;
+      std::vector<vec4f> color;
+      std::vector<vec3f> normal;
+      std::vector<vec3f> albedo;
+      std::vector<vec4f> result_;
+      const vec4f* committed_color;
+      const vec3f* committed_normal;
+      const vec3f* committed_albedo;
+      vec4f* committed_result;
+      bool committed_hdr;
+      bool committed_async;
+      oidn::FilterRef filter;
+    };
+
+    std::unique_ptr<AsyncLoop> denoiserThread;
+    oidn::DeviceRef denoiserDevice;
+    utility::DoubleBufferedValue<Denoiser> denoisers;
+  public:
+    double lastDenoiseFps() const;
+  private:
+    utility::CodeTimer denoiseFps;
+    bool newBuffers {false};
+    bool denoiserStop {true};
+    bool asynchronousDenoising {false};
+    std::condition_variable denoiserCond;
+    std::mutex denoiserMutex;
+#endif
+
   };
 }// namespace ospray

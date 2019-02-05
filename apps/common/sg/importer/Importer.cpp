@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,8 +18,8 @@
 #include "ospcommon/utility/StringManip.h"
 // ospray::sg
 #include "Importer.h"
-#include "common/sg/SceneGraph.h"
-#include "common/sg/geometry/TriangleMesh.h"
+#include "sg/SceneGraph.h"
+#include "sg/geometry/TriangleMesh.h"
 
 /*! \file sg/module/Importer.cpp Defines the interface for writing
   file importers for the ospray::sg */

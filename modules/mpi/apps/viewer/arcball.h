@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017-2018 Intel Corporation                                    //
+// Copyright 2017-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,14 +19,18 @@
 #include <ospcommon/AffineSpace.h>
 
 struct Arcball {
-  Arcball(const ospcommon::box3f &worldBounds);
+  Arcball(const ospcommon::box3f &worldBounds,
+          const ospcommon::vec2i &screenDims);
 
   // All mouse positions passed should be in [-1, 1] normalized screen coords
   void rotate(const ospcommon::vec2f &from, const ospcommon::vec2f &to);
   void zoom(float amount);
+  void pan(const ospcommon::vec2f &delta);
   ospcommon::vec3f eyePos() const;
+  ospcommon::vec3f center() const;
   ospcommon::vec3f lookDir() const;
   ospcommon::vec3f upDir() const;
+  void updateScreen(const ospcommon::vec2i &screenDims);
 
 private:
   void updateCamera();
@@ -34,7 +38,8 @@ private:
   ospcommon::Quaternion3f screenToArcball(const ospcommon::vec2f &p);
 
   float zoomSpeed;
-  ospcommon::AffineSpace3f lookAt, translation, inv_camera;
+  ospcommon::vec2f invScreen;
+  ospcommon::AffineSpace3f centerTranslation, translation, invCamera;
   ospcommon::Quaternion3f rotation;
 };
 

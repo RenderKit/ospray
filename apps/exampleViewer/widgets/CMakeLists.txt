@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -30,4 +30,12 @@ LINK
   ospray_imgui_util_sg
   ospray_tfn
   glfw
+)
+
+target_include_directories(
+  ospray_imgui3d_sg
+INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
 )

@@ -13,11 +13,6 @@ generate new images for a test that has changed.  To generate new images for a s
 test run ./regression_tests/ospray_test_suite --gtest_filter="*TESTNAME*" --dump-img
 which will create images in a folder called baseline.
 
-To add these to ospray, call md5sum on the resulting .png files.  Add a .png.md5 file to
-tests/baseling/TESTNAME.png.md5 with the value of the checksum.  rename
-the .png file to be the checksum value, and then send this to OSPRay Devs who
-will upload it to sdvis.org under /var/www/html/ospray/download/baseline/benchmark-data/MD5.
-
 In ${OSPRAY_BUILD_DIR}, run the "generate_baseline.sh" script:
 
 % ../scripts/tests/generate_baseline.sh
@@ -36,3 +31,12 @@ images generated in step 2.
 this will output a list of test names
 ./regression_tests/ospray_test_suite --gest_filter="*NAME*"
 will run a single test
+
+To add or update generated test images to ospray, use the included update_test_baseline.sh script and then send
+the resulting files to ospray developers
+or do the following steps:
+
+call md5sum on the resulting .png files.  Add a .png.md5 file to
+tests/baseling/TESTNAME.png.md5 with the value of the checksum.  rename
+the .png file to be the checksum value, and then send this to OSPRay Devs who
+will upload it to sdvis.org under /var/www/html/ospray/download/baseline/benchmark-data/MD5.

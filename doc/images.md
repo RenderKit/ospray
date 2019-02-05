@@ -4,7 +4,7 @@
 [imgQuadLight]: quad_light.fig
 [imgHDRILight]: hdri_light.fig
 [imgCameraPerspective]: camera_perspective.jpg { width=60% }
-[imgCameraArchitectural]: camera_architectual.jpg { width=60% }
+[imgCameraArchitectural]: camera_architectural.jpg { width=60% }
 [imgCameraStereo]: camera_stereo.jpg { width=90% }
 [imgCameraOrthographic]: camera_orthographic.jpg { width=60% }
 [imgCameraPanoramic]: camera_panoramic.jpg { width=90% }

@@ -35,10 +35,14 @@ before you can build OSPRay you need the following prerequisites:
     system, which we recommend for performance and flexibility reasons.
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
--   OSPRay also heavily uses [Embree], installing version 3.2 or newer
-    is required. If Embree is not found by CMake its location can be
-    hinted with the variable `embree_DIR`. NOTE: Windows users should
+-   OSPRay also heavily uses Intel [Embree], installing version 3.2 or
+    newer is required. If Embree is not found by CMake its location can
+    be hinted with the variable `embree_DIR`. NOTE: Windows users should
     use Embree v3.2.2 or later.
+-   If available OSPRay's [Example Viewer] can be compiled with support
+    for Intel [Open Image Denoise] by enabling
+    `OSPRAY_APPS_ENABLE_DENOISER`. You may need to hint the location of
+    the library with the CMake variable `OpenImageDenoise_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -78,7 +82,7 @@ CMake is easy:
         cd ospray/build
 
     (We do recommend having separate build directories for different
-    configurations such as release, debug, etc).
+    configurations such as release, debug, etc.).
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
@@ -98,7 +102,7 @@ CMake is easy:
         ccmake ..
 
 -   Make sure to properly set build mode and enable the components you
-    need, etc; then type 'c'onfigure and 'g'enerate. When back on the
+    need, etc.; then type 'c'onfigure and 'g'enerate. When back on the
     command prompt, build it using
 
         make
@@ -118,12 +122,13 @@ way to configure OSPRay and to create the Visual Studio solution files:
     does not exist yet CMake will create it).
 
 -   Click "Configure" and select as generator the Visual Studio version
-    you have, for Win64 (32\ bit builds are not supported by OSPRay),
-    e.g. "Visual Studio 15 2017 Win64".
+    you have (OSPRay needs Visual Studio 14 2015 or newer), for Win64
+    (32\ bit builds are not supported by OSPRay), e.g., "Visual Studio 15
+    2017 Win64".
 
 -   If the configuration fails because some dependencies could not be
-    found then follow the instructions given in the error message, e.g.
-    set the variable `embree_DIR` to the folder where Embree was
+    found then follow the instructions given in the error message,
+    e.g., set the variable `embree_DIR` to the folder where Embree was
     installed.
 
 -   Optionally change the default build options, and then click
@@ -143,7 +148,7 @@ console. In the Visual Studio command prompt type:
     cmake -G "Visual Studio 15 2017 Win64" [-D VARIABLE=value] ..
     cmake --build . --config Release
 
-Use `-D` to set variables for CMake, e.g. the path to Embree with "`-D
+Use `-D` to set variables for CMake, e.g., the path to Embree with "`-D
 embree_DIR=\path\to\embree`".
 
 You can also build only some projects with the `--target` switch.
@@ -153,3 +158,33 @@ example applications use
 
     cmake --build . --config Release --target ospray -- /m
 
+
+Finding an OSPRay install with CMake
+====================================
+
+Client applications using OSPRay can find it with CMake's
+`find_package()` command. For example,
+
+    find_package(ospray 1.8.0 REQUIRED)
+
+finds OSPRay via OSPRay's configuration file `osprayConfig.cmake`^[This
+file is usually in
+`${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake
+does not find it automatically, then specify its location in variable
+`ospray_DIR` (either an environment variable or CMake variable).]. Once
+found, the following is all that is required to use OSPRay:
+
+    target_link_libraries(${client_target} ospray::ospray)
+
+This will automatically propagate all required include paths, linked
+libraries, and compiler definitions to the client CMake target
+(either an executable or library).
+
+Advanced users may want to link to additional targets which are exported
+in OSPRay's CMake config, which includes all installed modules. All
+targets built with OSPRay are exported in the `ospray::` namespace,
+therefore all targets locally used in the OSPRay source tree can be
+accessed from an install. For example, `ospray_common` can be consumed
+directly via the `ospray::ospray_common` target. All targets have their
+libraries, includes, and definitions attached to them for public
+consumption (please [report bugs] if this is broken!).

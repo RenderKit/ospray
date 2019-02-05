@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,7 +33,7 @@ namespace ospray {
 
       // get generator parameters
 
-      vec3i dims(100, 100, 100);
+      vec3l dims(100, 100, 100);
 
       for (auto &p : params) {
         if (p.first == "dimensions" || p.first == "dims") {
@@ -45,7 +45,7 @@ namespace ospray {
             continue;
           }
 
-          dims = vec3i(std::atoi(string_dims[0].c_str()),
+          dims = vec3l(std::atoi(string_dims[0].c_str()),
                        std::atoi(string_dims[1].c_str()),
                        std::atoi(string_dims[2].c_str()));
         } else {
@@ -61,8 +61,21 @@ namespace ospray {
 
       float *voxels = new float[numVoxels];
 
-      for (int i = 0; i < numVoxels; ++i)
-        voxels[i] = float(i);
+      const float r = 0.03f * reduce_max(dims);
+      const float R = 0.08f * reduce_max(dims);
+
+      tasking::parallel_for(dims.z, [&](int64_t z) {
+        for (int y = 0; y < dims.y; ++y) {
+          for (int x = 0; x < dims.x; ++x) {
+            const float X = x - dims.x / 2;
+            const float Y = y - dims.y / 2;
+            const float Z = z - dims.z / 2;
+
+            float d = (R - std::sqrt(X*X + Y*Y));
+            voxels[dims.x * dims.y * z + dims.x * y + x] = r*r - d*d - Z*Z;
+          }
+        }
+      });
 
       // create data nodes
 
@@ -75,7 +88,7 @@ namespace ospray {
       // volume attributes
 
       volume_node->child("voxelType")  = std::string("float");
-      volume_node->child("dimensions") = dims;
+      volume_node->child("dimensions") = vec3i(dims);
 
       // add volume to world
 

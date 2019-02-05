@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,12 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CONFIGURE_MPI()
-OSPRAY_BUILD_COMPONENT(mpiCommon)
+ospray_build_component(mpiCommon)
 
-OSPRAY_CREATE_LIBRARY(ospray_mpi_service
-  MPIService.cpp
-LINK
-  ospray_mpi_common
-COMPONENT mpi
-)
+ospray_create_library(ospray_mpi_service MPIService.cpp COMPONENT mpi)
+target_link_libraries(ospray_mpi_service PUBLIC ospray_mpi_common)

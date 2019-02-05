@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -66,6 +66,13 @@ export void Model_init(void *uniform _model,
     model->volumes = uniform new uniform uniVolumePtr[numVolumes];
   else
     model->volumes = NULL;
+}
+
+export void Model_setBounds(void *uniform _model,
+                            uniform box3f *uniform bounds)
+{
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+  model->bounds = *bounds;
 }
 
 export void *uniform Model_getEmbreeSceneHandle(void *uniform _model)

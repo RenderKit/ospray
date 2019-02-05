@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -39,7 +39,6 @@ struct Spheres {
   int        offset_colorID;
 
   float      radius;
-  float      epsilon;
   int        materialID;
 
   uint8      *color;
@@ -91,6 +90,14 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
   dg.Ng = dg.Ns = ray.Ng;
 
+  uint8 * spherePtr = self->data + self->stride*((int64)ray.primID);
+  float radius = self->radius;
+  if (self->offset_radius >= 0)
+    radius = *((float *)(spherePtr + self->offset_radius));
+  // make epsilon large enough to not get lost when computing
+  // |CO| = |center-ray.org| ~ radius for 2ndary rays
+  dg.epsilon = radius * ulpEpsilon;
+
   if ((flags & DG_COLOR) && self->color) {
     uint32 colorID = 0;
     if (self->offset_colorID >= 0) {
@@ -134,16 +141,14 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
 unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  uniform Spheres *uniform self = (uniform Spheres *uniform)args->geometryUserPtr;
+  Spheres *uniform self = (Spheres *uniform)args->geometryUserPtr;
   uniform int primID = args->primID;
-  uniform uint8 *uniform spherePtr = self->data
-    + self->stride*((uniform int64)primID);
+  uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
   uniform bool offr = self->offset_radius >= 0;
   uniform float radius =
     offr ? *((uniform float *uniform)(spherePtr+self->offset_radius)) :
     self->radius;
-  uniform vec3f center =
-    *((uniform vec3f*uniform)(spherePtr+self->offset_center));
+  uniform vec3f center = *((vec3f*uniform)(spherePtr+self->offset_center));
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(center - radius, center + radius);
 }
@@ -154,49 +159,62 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
   // make sure to set the mask
   if (!args->valid[programIndex]) return;
 
-  uniform Spheres *uniform self
-    = (uniform Spheres *uniform)args->geometryUserPtr;
-  uniform unsigned int primID = args->primID;
+  Spheres *uniform self = (Spheres *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
 
-  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
-  // from here on it's the original intersection code from ospray/embree2
-  uniform uint8 *uniform spherePtr =
-    self->data + self->stride*((uniform int64)primID);
+  uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
   uniform float radius = self->radius;
   if (self->offset_radius >= 0) {
-    radius = *((uniform float *uniform)(spherePtr+self->offset_radius));
+    radius = *((float *uniform)(spherePtr + self->offset_radius));
   }
-  uniform vec3f center =
-    *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-  const float approxDist = dot(center - ray->org, ray->dir);
-  const vec3f closeOrg = ray->org + approxDist * ray->dir;
-  const vec3f A = center - closeOrg;
+  uniform vec3f center = *((vec3f*uniform)(spherePtr + self->offset_center));
 
-  const float a = dot(ray->dir,ray->dir);
-  const float b = 2.f*dot(ray->dir,A);
-  const float c = dot(A,A)-radius*radius;
+  const vec3f d = ray->dir;
+  const float rd2 = 1.0f / dot(d, d); // 1/a
+  const vec3f CO = center - ray->org;
+  // transformation to avoid missing a small sphere which is far away:
+  // the standard c=CO^2-r^2 would quickly loose term r due to float arithmetic
+  const float projCO = dot(CO, d) * rd2; // in ray-space
+  const vec3f perp = CO - projCO * d;
+  const float l2 = dot(perp, perp);
+  const uniform float r2 = sqr(radius);
+  if (l2 > r2)
+    return;
 
-  const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return;
-
-  const float srad = sqrt(radical);
-
-  const float t_in = (b - srad) *rcpf(2.f*a) + approxDist;
-  const float t_out= (b + srad) *rcpf(2.f*a) + approxDist;
+  float td = sqrt((r2 - l2) * rd2);
+  const float t_in = projCO - td;
+  const float t_out = projCO + td;
+  // above solutions are problematic if rays starts close to the sphere
+  // (due to catastrophic cancellation, because then |projCO| ~ td)
+  // the usual recommendation is to choose the one solution with same sign:
+  //   const float t1 = projCO + floatbits(signbits(projCO)|intbits(td));
+  // and compute the other solution via t1*t2=c/a:
+  //   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
+  // this is more precise, but still problematic in particular for large
+  // spheres, because |CO| ~ r; slightly better alternative, but costly sqrt:
+  //   const float f = sqrt(dot(CO, CO));
+  //   const float t2 = (f - radius) * (f + radius) / t1 * rd2;
+  // the only variant I found that has high enough precision to avoid
+  // self-intersections of 2ndary rays is to (re-)compute most terms (CO, dot,
+  // r2, t2) with doubles; large spheres are a rare usecase for OSPRay, thus we
+  // use instead as a workaround an additional, radius-dependent epsilon
 
   bool hit = false;
-  if (t_in > ray->t0 && t_in < ray->t) {
+  // avoid short-circuiting &&
+  if (and(ray->t0 < t_in, t_in <= ray->t)) {
     hit = true;
+    td *= -1.f;
     ray->t = t_in;
-  } else if (t_out > (ray->t0 + self->epsilon) && t_out < ray->t) {
+  } else if (and(ray->t0 < t_out, t_out <= ray->t)) {
     hit = true;
     ray->t = t_out;
   }
 
   if (hit) {
-    if (isOcclusionTest) {
+    cif (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
@@ -204,7 +222,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args
       ray->instID = args->context->instID[0];
       // cannot easily be moved to postIntersect
       // we need hit in object space, in postIntersect it is in world-space
-      ray->Ng = ray->org + ray->t*ray->dir - center;
+      ray->Ng = td * d - perp;
     }
   }
 }
@@ -368,17 +386,6 @@ export void SpheresGeometry_set(void  *uniform _self
   self->offset_colorID    = offset_colorID;
 
   self->huge_mesh = huge_mesh;
-
-  // Why a log function?
-  self->epsilon = log(self->radius);
-  if (self->epsilon < 0.f)
-    self->epsilon = -1.f/self->epsilon;
-
-  // This can occur if the radius is < 1 in some cases, so make sure
-  // epsilon is not too big
-  if (self->epsilon > self->radius / 100.0) {
-    self->epsilon = self->radius / 100.0;
-  }
 
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom,numSpheres);

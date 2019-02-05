@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -16,9 +16,10 @@
 
 ospray_disable_compiler_warnings()
 
-include_directories(${CMAKE_SOURCE_DIR}/apps/common
-                    ${CMAKE_SOURCE_DIR}/apps/exampleViewer
-                    ${GLFW_INCLUDE_DIRS})
+find_package(glfw3 QUIET)
+if (TARGET glfw)
+  get_property(glfw3_INCLUDE_DIRS TARGET glfw PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+endif()
 
 ospray_create_application(ospDistribViewerDemo
   ospDistribViewerDemo.cpp
@@ -31,7 +32,16 @@ LINK
   ospray_imgui3d_sg
   ospray_sg
   ospray_tfn
-  gensv
-  ${GLFW_LIBRARY}
+  ospray_gensv
 )
+
+target_include_directories(ospDistribViewerDemo
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/apps
+    ${CMAKE_SOURCE_DIR}/apps/exampleViewer
+    ${CMAKE_CURRENT_LIST_DIR}/..
+)
+
+target_compile_definitions(ospDistribViewerDemo PRIVATE
+  -DSHOW_WINDOW=1)
 

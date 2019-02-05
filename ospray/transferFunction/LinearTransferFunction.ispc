@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -295,18 +295,22 @@ void LinearTransferFunction_precomputeMinMaxOpacityRanges(void *uniform _self)
   uniform LinearTransferFunction *uniform self
     = (uniform LinearTransferFunction *uniform) _self;
 
-  // Compute the diagonal.
-  for (uniform int i=0; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; i++) {
+  const uniform int maxOpacityDim     = self->opacityValueCount - 1;
+  const uniform int maxPrecomputedDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
 
-    // Figure out the range of values in the array we are going to compare.
-    const uniform int checkRangeLow
-      = self->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
-    const uniform int checkRangeHigh
-      = self->opacityValueCount * (((float)i + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+  // Compute the diagonal.
+  for (uniform int i = 0; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; i++) {
+    // Figure out the range of array indices we are going to compare; this is a
+    // conservative range of feasible indices that may be used to lookup
+    // opacities for any data value within the value range corresponding to [i,
+    // i].
+    const uniform int checkRangeLow =
+        floor(maxOpacityDim * (float)i / maxPrecomputedDim);
+    const uniform int checkRangeHigh =
+        ceil(maxOpacityDim * (float)i / maxPrecomputedDim);
 
     uniform vec2f range = make_vec2f(self->opacityValues[checkRangeLow]);
-    for (uniform int opacityIDX = checkRangeLow + 1;
-         opacityIDX < checkRangeHigh;
+    for (uniform int opacityIDX = checkRangeLow; opacityIDX <= checkRangeHigh;
          opacityIDX++)
       range = make_vec2f(min(range.x, self->opacityValues[opacityIDX]),
                          max(range.y, self->opacityValues[opacityIDX]));
@@ -315,24 +319,26 @@ void LinearTransferFunction_precomputeMinMaxOpacityRanges(void *uniform _self)
   }
 
   // Fill out each column from the diagonal up.
-  for (uniform int i=0; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; i++) {
+  for (uniform int i = 0; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; i++) {
     for (uniform int j = i + 1; j < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; j++) {
-
-      // Figure out the range of values in the array we are going to compare.
-      const uniform int checkRangeLow = self->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
-      const uniform int checkRangeHigh = self->opacityValueCount * (((float) j + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+      // Figure out the range of array indices we are going to compare; this is
+      // a conservative range of feasible indices that may be used to lookup
+      // opacities for any data value within the value range corresponding to
+      // [i, j].
+      const uniform int checkRangeLow =
+          floor(maxOpacityDim * (float)i / maxPrecomputedDim);
+      const uniform int checkRangeHigh =
+          ceil(maxOpacityDim * (float)j / maxPrecomputedDim);
 
       uniform vec2f range = self->minMaxOpacityInRange[i][i];
-      for (uniform int opacityIDX = checkRangeLow + 1; opacityIDX < checkRangeHigh; opacityIDX++)
+      for (uniform int opacityIDX = checkRangeLow; opacityIDX <= checkRangeHigh;
+           opacityIDX++)
         range = make_vec2f(min(range.x, self->opacityValues[opacityIDX]),
                            max(range.y, self->opacityValues[opacityIDX]));
 
       self->minMaxOpacityInRange[i][j] = range;
-
     }
-
   }
-
 }
 
 export void *uniform LinearTransferFunction_createInstance()

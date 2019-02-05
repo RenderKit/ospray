@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -96,7 +96,7 @@ namespace ospray {
                   " to speed-up rendering.");
       child("minContribution").setMinMax(0.f, 0.1f);
 
-      createChild("maxContribution", "float", 5.f,
+      createChild("maxContribution", "float", 3.f,
                   NodeFlags::required |
                   NodeFlags::gui_slider,
                   "sample contributions above this value will be ignored."

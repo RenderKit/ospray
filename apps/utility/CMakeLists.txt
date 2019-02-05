@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,6 +15,9 @@
 ## ======================================================================== ##
 
 if (NOT WIN32)
-  ospray_create_application(ospRawToAmr raw2amr.cpp LINK ospray_common)
-  ospray_create_application(ospRawToVtu raw2vtu.cpp LINK ospray_common)
+  ospray_create_application(ospRawToAmr raw2amr.cpp)
+  target_link_libraries(ospRawToAmr PRIVATE ospray_common)
+
+  ospray_create_application(ospRawToVtu raw2vtu.cpp)
+  target_link_libraries(ospRawToVtu PRIVATE ospray_common)
 endif()

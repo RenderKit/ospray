@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,6 +37,7 @@ namespace ospray {
       */
       struct Master : public TiledLoadBalancer
       {
+        Master();
         float renderFrame(Renderer *tiledRenderer,
                           FrameBuffer *fb,
                           const uint32 channelFlags) override;
@@ -52,6 +53,7 @@ namespace ospray {
       */
       struct Slave : public TiledLoadBalancer
       {
+        Slave();
         float renderFrame(Renderer *tiledRenderer,
                           FrameBuffer *fb,
                           const uint32 channelFlags) override;
@@ -106,6 +108,7 @@ namespace ospray {
         std::vector<TileVector> preferredTiles; // per worker default queue
         std::vector<bool> workerNotified; // worker knows we're done?
         int numPreAllocated{4};
+        DistributedFrameBuffer *dfb{nullptr};
       };
 
       /*! \brief the 'slave' in a tile-based master-slave load balancer

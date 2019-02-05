@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2016-2018 Intel Corporation                                    //
+// Copyright 2016-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,9 +22,10 @@
 
 #include "imguiViewer.h"
 
-#include "common/sg/common/FrameBuffer.h"
-#include "common/sg/visitor/GatherNodesByName.h"
-#include "common/sg/visitor/GatherNodesByPosition.h"
+#include "sg/common/FrameBuffer.h"
+#include "sg/visitor/GatherNodesByName.h"
+#include "sg/visitor/GatherNodesByPosition.h"
+#include "sg/common/FrameBuffer.h"
 
 #include "sg_imgui/ospray_sg_ui.h"
 
@@ -351,6 +352,14 @@ namespace ospray {
     case '!':
       saveScreenshot = true;
       break;
+    case '@': {
+      auto fb = scenegraph->child("frameBuffer").nodeAs<sg::FrameBuffer>();
+      auto fbSize = fb->size();
+      utility::writePFM("denoiser_normal.pfm", fbSize.x, fbSize.y, (vec3f*)fb->map(OSP_FB_NORMAL));
+      utility::writePFM("denoiser_albedo.pfm", fbSize.x, fbSize.y, (vec3f*)fb->map(OSP_FB_ALBEDO));
+      utility::writePFM("denoiser_color.pfm", fbSize.x, fbSize.y, (vec4f*)fb->map(OSP_FB_COLOR));
+              }
+      break;
     case 'X':
       if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0)) {
         viewPort.up = - viewPort.up;
@@ -476,20 +485,25 @@ namespace ospray {
 
     renderFPS = renderEngine.lastFrameFps();
     renderFPSsmoothed = renderEngine.lastFrameFpsSmoothed();
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+    denoiseFPS = renderEngine.lastDenoiseFps();
+#endif
 
     if (renderEngine.hasNewFrame()) {
       auto &mappedFB = renderEngine.mapFramebuffer();
       auto fbSize = mappedFB.size();
       auto fbData = mappedFB.data();
       GLenum texelType;
+      GLenum texFormat = GL_RGBA; // default linear
       std::string filename("ospexampleviewer");
       switch (mappedFB.format()) {
         default: /* fallthrough */
         case OSP_FB_NONE:
           fbData = nullptr;
           break;
-        case OSP_FB_RGBA8: /* fallthrough */
-        case OSP_FB_SRGBA:
+        case OSP_FB_SRGBA: /* fallthrough */
+          texFormat = GL_SRGB_ALPHA;
+        case OSP_FB_RGBA8:
           texelType = GL_UNSIGNED_BYTE;
           if (saveScreenshot) {
             filename += ".ppm";
@@ -509,7 +523,7 @@ namespace ospray {
       if (fbData) {
         fbAspect = fbSize.x/float(fbSize.y);
         glBindTexture(GL_TEXTURE_2D, fbTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbSize.x, fbSize.y, 0, GL_RGBA,
+        glTexImage2D(GL_TEXTURE_2D, 0, texFormat, fbSize.x, fbSize.y, 0, GL_RGBA,
             texelType, fbData);
       } else
         fbAspect = 1.f;
@@ -520,15 +534,14 @@ namespace ospray {
       }
 
       renderEngine.unmapFramebuffer();
-    }
+    } else // limit GUI rendering to 60fps
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
     // set border color TODO maybe move to application
     vec4f texBorderCol(0.f); // default black
     // TODO be more sophisticated (depending on renderer type, fb mode (sRGB))
     if (renderer->child("useBackplate").valueAs<bool>()) {
-      auto col = renderer->child("bgColor").valueAs<vec3f>();
-      const float g = 1.f/2.2f;
-      texBorderCol = vec4f(powf(col.x, g), powf(col.y, g), powf(col.z, g), 0.f);
+      texBorderCol = vec4f(renderer->child("bgColor").valueAs<vec3f>(), 0.f);
     }
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &texBorderCol[0]);
 
@@ -728,6 +741,14 @@ namespace ospray {
         }
       }
 
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      if (ImGui::Checkbox("Denoise Asynchronously",
+            &asyncDenoising))
+      {
+        renderEngine.setAsyncDenoising(asyncDenoising);
+      }
+#endif
+
       ImGui::EndMenu();
     }
   }
@@ -744,6 +765,11 @@ namespace ospray {
         ImGui::SameLine();
         ImGui::ProgressBar(frameProgress);
       }
+#ifdef OSPRAY_APPS_ENABLE_DENOISER
+      ImGui::Text("Denoising rate: %.1f fps", denoiseFPS);
+      if (!asyncDenoising)
+        ImGui::Text("Total frame rate: %.1f fps", 1.f/(1.f/renderFPS + 1.f/denoiseFPS));
+#endif
       ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
       ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
       ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);

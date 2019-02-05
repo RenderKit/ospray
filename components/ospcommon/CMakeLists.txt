@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -21,7 +21,7 @@ if (TARGET ospray_common)
   # this target is already built!
 else()
   find_package(Threads REQUIRED)
-  set(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${TASKING_SYSTEM_LIBS})
+  set(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} tasking)
 
   if (WIN32)
     list(APPEND LINK_LIBS ws2_32)
@@ -81,122 +81,44 @@ else()
     constants.h
     intrinsics.h
     LinearSpace.h
-    math.h
+    ospmath.h
     platform.h
     Quaternion.h
     TypeTraits.h
     vec.h
-  LINK
-    ${LINK_LIBS}
   COMPONENT lib
+  )
+
+  target_link_libraries(ospray_common PUBLIC ${LINK_LIBS})
+
+  target_include_directories(ospray_common
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/ospcommon>
+    PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}
+  )
+
+  target_compile_definitions(ospray_common
+    PRIVATE
+      # NOTE(jda) - OSPRAY_SOVERSION fallbacks in library.cpp should be handled
+      #             in the Library object's interface directly, where libospray
+      #             would inject versioning information independant of ospcommon
+      #             version.
+      -DOSPRAY_SOVERSION=${OSPRAY_SOVERSION}
   )
 
   ## Install headers ##
 
-  set(OSPCOMMON_SDK_INSTALL_LOC
-    ../ospcommon #NOTE: this is "next" to the SDK/ directory
-  )
-
-  ospray_install_sdk_headers(
-    AffineSpace.h
-    AsyncLoop.h
-    box.h
-    common.h
-    constants.h
-    FileName.h
-    intrinsics.h
-    library.h
-    LinearSpace.h
-    math.h
-    multidim_index_sequence.h
-    platform.h
-    Quaternion.h
-    range.h
-    sysinfo.h
-    thread.h
-    TypeTraits.h
-    vec.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}
-  )
-
-  ospray_install_sdk_headers(
-    array3D/Array3D.h
-    array3D/for_each.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/array3D
-  )
-
-  ospray_install_sdk_headers(
-    containers/aligned_allocator.h
-    containers/AlignedVector.h
-    containers/TransactionalBuffer.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
-  )
-
-  ospray_install_sdk_headers(
-    memory/DeletedUniquePtr.h
-    memory/malloc.h
-    memory/RefCount.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/memory
-  )
-
-  ospray_install_sdk_headers(
-    networking/BufferedDataStreaming.h
-    networking/DataStreaming.h
-    networking/Fabric.h
-    networking/Socket.h
-    networking/SocketFabric.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/networking
-  )
-
-  ospray_install_sdk_headers(
-    tasking/async.h
-    tasking/parallel_for.h
-    tasking/parallel_foreach.h
-    tasking/schedule.h
-    tasking/tasking_system_handle.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking
-  )
-
-  ospray_install_sdk_headers(
-    tasking/detail/parallel_for.inl
-    tasking/detail/schedule.inl
-    tasking/detail/TaskSys.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking/detail
-  )
-
-  ospray_install_sdk_headers(
-    utility/Any.h
-    utility/ArgumentList.h
-    utility/ArrayView.h
-    utility/CodeTimer.h
-    utility/DataView.h
-    utility/demangle.h
-    utility/DoubleBufferedValue.h
-    utility/getEnvVar.h
-    utility/Observer.h
-    utility/OnScopeExit.h
-    utility/Optional.h
-    utility/ParameterizedObject.h
-    utility/PseudoURL.h
-    utility/SaveImage.h
-    utility/StringManip.h
-    utility/TimeStamp.h
-    utility/TransactionalValue.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
-  )
-
-  ospray_install_sdk_headers(
-    xml/XML.h
-
-    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/xml
+  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+    COMPONENT devel
+    FILES_MATCHING
+    PATTERN *.h
+    PATTERN *.inl
+    PATTERN */cmake* EXCLUDE
+    PATTERN */tests* EXCLUDE
+    PATTERN */testing* EXCLUDE
   )
 
   ## Build Test Apps ##

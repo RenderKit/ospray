@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,28 +14,30 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CONFIGURE_MPI()
+ospray_configure_mpi()
 
-OSPRAY_CREATE_LIBRARY(ospray_mpi_common
-
-  MPICommon.cpp
-  MPIBcastFabric.cpp
-
-LINK
-
-  ${MPI_C_LIBRARIES}
-  ospray_common
-  ospray
-
-COMPONENT mpi
+ospray_create_library(ospray_mpi_common
+    MPICommon.cpp
+    MPIBcastFabric.cpp
+  COMPONENT mpi
 )
 
-SET(MPICOMMON_SDK_INSTALL_LOC
-  ../mpiCommon #NOTE: this is "next" to the SDK/ directory
+target_link_libraries(ospray_mpi_common
+  PUBLIC
+    ${MPI_C_LIBRARIES}
+    ospray_common
 )
 
-OSPRAY_INSTALL_SDK_HEADERS(
-  MPICommon.h
-  MPIBcastFabric.h
-  DESTINATION ${MPICOMMON_SDK_INSTALL_LOC}
+target_include_directories(ospray_mpi_common
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
+    ${OSPRAY_MPI_INCLUDES}
+)
+
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  COMPONENT devel
+  FILES_MATCHING
+  PATTERN *.h
 )

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -16,40 +16,29 @@
 
 # Test app which generates data-parallel groups of spheres ####################
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
+if (NOT WIN32)# Internal Compiler Error on MSVC12...
 
-IF (NOT WIN32)# Internal Compiler Error on MSVC12...
-  ADD_SUBDIRECTORY(gensv)
+  add_subdirectory(gensv)
 
-  OSPRAY_CREATE_TEST(ospRandSphereTest
+  ospray_create_test(ospRandSphereTest
     ospRandSphereTest.cpp
   LINK
     ospray
     ospray_mpi_common
+    ospray_pico_bench
   )
 
-  OSPRAY_CREATE_TEST(ospRandSciVisTest
+  ospray_create_test(ospRandSciVisTest
     ospRandSciVisTest.cpp
   LINK
     ospray
     ospray_mpi_common
-    gensv
+    ospray_gensv
+    ospray_pico_bench
   )
 
-  OSPRAY_CREATE_TEST(ospDDLoader
-    ospDDLoader.cpp
-  LINK
-    ospray
-    ospray_mpi_common
-    ospray_tfn
-    gensv
-  )
+  if (OSPRAY_MODULE_MPI_APPS)
+    add_subdirectory(viewer)
+  endif()
+endif()
 
-  OPTION(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
-    ${OSPRAY_APPS_EXAMPLEVIEWER})
-
-  IF (OSPRAY_MODULE_MPI_APPS)
-    INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-    ADD_SUBDIRECTORY(viewer)
-  ENDIF()
-ENDIF()

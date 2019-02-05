@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2017-2018 Intel Corporation                                    //
+// Copyright 2017-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,9 +20,11 @@
 
 using OSPRayTestScenes::Base;
 using OSPRayTestScenes::SingleObject;
+using OSPRayTestScenes::SpherePrecision;
 using OSPRayTestScenes::Box;
 using OSPRayTestScenes::Sierpinski;
 using OSPRayTestScenes::Pipes;
+using OSPRayTestScenes::Subdivision;
 using namespace ospcommon;
 
 namespace {
@@ -187,30 +189,43 @@ OSPGeometry getSphereInterleavedLayout() {
   return sphere;
 }
 
-OSPGeometry getStreamline() {
-  float vertex[] = { 2.0f, -1.0f, 3.0f, 0.0f,
-                     0.4f, 0.5f, 8.0f, -2.0f,
-                     0.0f, 1.0f, 3.0f, 0.0f
+OSPGeometry getStreamline(bool constantRadius=true) {
+  float vertex[] = { 2.0f, -1.0f, 3.0f,
+                     0.0f, 0.4f, 0.5f,
+                     8.0f, -2.0f, 0.0f,
+                     1.0f, 3.0f, 0.0f
                    };
   float color[] =  { 0.0f, 1.0f, 0.0f, 1.0f,
                      0.0f, 0.0f, 1.0f, 1.0f,
                      1.0f, 0.0f, 0.0f, 1.0f
                    };
   int index[] =  { 0, 1};
+  float radii[] = {.1f,.3f,.5f};
+
   OSPGeometry streamlines = ospNewGeometry("streamlines");
   EXPECT_TRUE(streamlines);
   OSPData data = ospNewData(3, OSP_FLOAT3A, vertex);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "vertex", data);
+  ospRelease(data);
+  if (!constantRadius) {
+    data = ospNewData(3, OSP_FLOAT, radii);
+    EXPECT_TRUE(data);
+    ospCommit(data);
+    ospSetData(streamlines, "vertex.radius", data);
+    ospRelease(data);
+  }
   data = ospNewData(3, OSP_FLOAT4, color);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "vertex.color", data);
+  ospRelease(data);
   data = ospNewData(2, OSP_INT, index);
   EXPECT_TRUE(data);
   ospCommit(data);
   ospSetData(streamlines, "index", data);
+  ospRelease(data);
   ospSet1f(streamlines, "radius", 0.5f);
   ospCommit(streamlines);
 
@@ -287,24 +302,47 @@ TEST_P(SingleObject, simpleStreamlines) {
   PerformRenderTest();
 }
 
+TEST_P(SingleObject, simpleStreamlinesVariableRadii) {
+  OSPGeometry streamlines = ::getStreamline(false);
+  ospSetMaterial(streamlines, GetMaterial());
+  ospCommit(streamlines);
+  AddGeometry(streamlines);
+  PerformRenderTest();
+}
+
 INSTANTIATE_TEST_CASE_P(Scivis, SingleObject, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial")));
 INSTANTIATE_TEST_CASE_P(Pathtracer, SingleObject, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Glass", "Luminous")));
+
+
+TEST_P(SpherePrecision, sphere) {
+  PerformRenderTest();
+}
+INSTANTIATE_TEST_CASE_P(Intersection, SpherePrecision, ::testing::Combine(
+      ::testing::Values(0.001f, 3.e5f),
+      ::testing::Values(3.f, 8000.0f, 2.e5f),
+      ::testing::Values(true, false),
+      ::testing::Values("scivis", "pathtracer")
+      ));
+
 
 TEST_P(Box, basicScene) {
   PerformRenderTest();
 }
 
-#if 0 // Broken PT tests...image diffs changed too much...
 INSTANTIATE_TEST_CASE_P(MaterialPairs, Box, ::testing::Combine(::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values("OBJMaterial", "Glass", "Luminous")));
-#endif
+
 
 TEST_P(Pipes, simple) {
   PerformRenderTest();
 }
 
 INSTANTIATE_TEST_CASE_P(Scivis, Pipes, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial"), ::testing::Values(0.1f, 0.4f)));
+INSTANTIATE_TEST_CASE_P(Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Luminous"), ::testing::Values(0.1f, 0.4f)));
 
-// Tests disabled due to issues for pathtracer renderer with streamlines
-#if 0 // TODO: these tests will break future tests...
-INSTANTIATE_TEST_CASE_P(Pathtracer, Pipes, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial", "Glass", "Luminous"), ::testing::Values(0.1f, 0.4f)));
-#endif
+
+TEST_P(Subdivision, simple) {
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_CASE_P(Scivis, Subdivision, ::testing::Combine(::testing::Values("scivis"), ::testing::Values("OBJMaterial")));
+INSTANTIATE_TEST_CASE_P(Pathtracer, Subdivision, ::testing::Combine(::testing::Values("pathtracer"), ::testing::Values("OBJMaterial")));

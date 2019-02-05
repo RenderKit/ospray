@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2018 Intel Corporation                                    //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,86 +42,68 @@ unmasked void StreamLines_bounds(const RTCBoundsFunctionArguments *uniform args)
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(min(A,B) - self->radius,
                      max(A,B) + self->radius);
-  if (index == -1) print("bounds!\n");
 }
 
-/*! do a ray-sphere intersection, with the numerical fix of first
-    moving the ray origin to an approximate sphere distance, and then
-    re-adding this approximate distance to the computed hit
-    distance */
-inline void intersectSphere_numericalFix(varying Ray &ray,
-                                         /*! center/positoin of the sphere  */
-                                         const vec3f &center,
+// robust ray-sphere intersection
+inline void intersectSphere(varying Ray &ray,
+                                         const uniform vec3f &center,
                                          float &t_in, float &t_out,
                                          const uniform float r)
 {
-  const float approximateDistance = dot(center-ray.org,ray.dir);
-
-  const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
-  const vec3f A = center - closeOrg;
-  const float a = dot(ray.dir,ray.dir);
-  const float b = -2.f*dot(ray.dir,A);
-  const float c = dot(A,A)-r*r;
-
-  const float radical = b*b-4.f*a*c;
-  if (radical < 0.f)
+  const float rd2 = 1.0f / dot(ray.dir, ray.dir); // 1/a
+  const vec3f CO = center - ray.org;
+  const float projCO = dot(CO, ray.dir)*rd2; // in ray-space
+  const vec3f perp = CO - projCO * ray.dir;
+  const float l2 = dot(perp, perp);
+  const uniform float r2 = sqr(r);
+  if (l2 > r2)
     return;
 
-  const float srad = sqrt(radical);
+  const float td = sqrt((r2 - l2) * rd2);
+  const float sph_t_in = projCO - td;
+  const float sph_t_out = projCO + td;
 
-  const float sph_t_in  = approximateDistance + (- b - srad) * rcpf(2.f*a);
-  const float sph_t_out = approximateDistance + (- b + srad) * rcpf(2.f*a);
   t_in = min(t_in, sph_t_in);
-  t_out= max(t_out,sph_t_out);
+  t_out = max(t_out, sph_t_out);
 }
 
-/*! do a ray-cylinder intersection, with the numerical fix of first
-    moving the ray origin to an approximate distance, and then
-    re-adding this approximate distance to the computed hit
-    distance. for the approximate distance we use the distance from
-    ray origin to center of the cylinder (projected to the ray) */
-inline void intersectCylinder_numericalFix(varying Ray &ray,
-                                           const vec3f &_A, const vec3f &_B,
+// robust ray-cylinder intersection
+inline void intersectCylinder(varying Ray &ray,
+                                           const uniform vec3f &v0, const uniform vec3f &v1,
                                            float &t_in, float &t_out,
                                            const uniform float r)
 {
-  const vec3f center = 0.5f*(_A+_B);
-  const float approximateDistance = dot(center-ray.org,ray.dir);
-
-  const vec3f closeOrg = ray.org + approximateDistance * ray.dir;
-  const vec3f A = _A - closeOrg;
-  const vec3f B = _B - closeOrg;
-
-  const vec3f V = ray.dir;
-
-  const vec3f AB = B - A;
-
-  const vec3f AOxAB = cross(AB,A);
-  const vec3f VxAB  = cross(V,AB);
-  const float ab2   = dot(AB,AB);
-  const float a     = dot(VxAB,VxAB);
-  if (a == 0.f) return;
-  const float b     = 2 * dot(VxAB,AOxAB);
-  const float c     = dot(AOxAB,AOxAB) - (sqr(r) * ab2);
-
-  // ------------------------------------------------------------------
-  // abc formula: t0,1 = (-b +- sqrt(b^2-4*a*c)) / 2a
-  //
-  const float radical = b*b-4.f*a*c;
-  if (radical < 0.f)
+  const vec3f d = ray.dir;
+  const uniform vec3f s = v1 - v0; // axis
+  const vec3f sxd = cross(s, d);
+  const float a = dot(sxd, sxd); // (s x d)^2
+  if (a == 0.f)
     return;
 
-  const float srad = sqrt(radical);
+  const vec3f f = v0 - ray.org;
+  const vec3f sxf = cross(s, f);
+  const float ra = 1.0f/a;
+  const float ts = dot(sxd, sxf) * ra; // (s x d)(s x f) / (s x d)^2, in ray-space
+  const vec3f fp = f - ts * d; // f' = v0 - closest point to axis
 
-  // clip to near and far cap of cylinder
-  const float dVAB = dot(V,AB);
-  if (dVAB == 0.f) return;
-  const float rVAB = rcp(dVAB);
-  const float tA = dot(AB,A) * rVAB;
-  const float tB = dot(AB,B) * rVAB;
+  const uniform float s2 = dot(s, s); // s^2
+  const vec3f perp = cross(s, fp); // s x f'
+  const float c = sqr(r) * s2 - dot(perp, perp); //  r^2 s^2 - (s x f')^2
+  if (c < 0.f)
+    return;
 
-  const float cyl_t_in = approximateDistance + max((- b - srad)*rcpf(2.f*a), min(tA,tB));
-  const float cyl_t_out= approximateDistance + min((- b + srad)*rcpf(2.f*a), max(tA,tB));
+  float td = sqrt(c * ra);
+  const float tin = ts - td;
+  const float tout = ts + td;
+
+  // clip to cylinder caps
+  const float rsd = rcp(dot(s, d));
+  const float tA = dot(s, f) * rsd;
+  const float tB = tA + s2 * rsd;
+  // rsd (and thus tA and tB) can be NaN if the ray is perfectly perpendicular
+  // to the cylinder; filter NaNs by having tin/tout as 2nd argument to min/max
+  const float cyl_t_in = max(min(tA, tB), tin);
+  const float cyl_t_out = min(max(tA, tB), tout);
 
   if (cyl_t_in < cyl_t_out) {
     t_in = cyl_t_in;
@@ -145,13 +127,13 @@ unmasked void StreamLines_intersect_kernel(
   varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
 
   const uniform uint32 idx = self->index[primID];
-  const vec3f A = make_vec3f(self->vertex[idx]);
-  const vec3f B = make_vec3f(self->vertex[idx+1]);
+  const uniform vec3f A = make_vec3f(self->vertex[idx]);
+  const uniform vec3f B = make_vec3f(self->vertex[idx+1]);
 
   float t_in=inf, t_out=-inf;
-  intersectCylinder_numericalFix(*ray,A,B,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(*ray,A,t_in,t_out,self->radius);
-  intersectSphere_numericalFix(*ray,B,t_in,t_out,self->radius);
+  intersectCylinder(*ray,A,B,t_in,t_out,self->radius);
+  intersectSphere(*ray,A,t_in,t_out,self->radius);
+  intersectSphere(*ray,B,t_in,t_out,self->radius);
 
   bool hit = false;
   if (t_in < t_out) {
@@ -197,10 +179,12 @@ static void StreamLines_postIntersect(uniform Geometry *uniform self,
                                        const varying Ray &ray,
                                        uniform int64 flags)
 {
+  StreamLines *uniform self = (StreamLines *uniform)self;
+
   dg.Ng = dg.Ns = ray.Ng;
+  dg.epsilon = self->radius * ulpEpsilon;
 
   if ((flags & DG_COLOR)) {
-    uniform StreamLines *uniform self = (uniform StreamLines *uniform)self;
     const uniform vec4f *uniform color = self->color;
     if (color) {
       const varying uint32 index  = self->index[ray.primID];

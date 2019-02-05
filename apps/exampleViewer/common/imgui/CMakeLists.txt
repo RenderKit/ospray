@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2018 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,13 +14,22 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE_DIRECTORIES(. imguifilesystem)
-
-OSPRAY_CREATE_LIBRARY(ospray_imgui
+ospray_create_library(ospray_imgui
   imgui.cpp
   imgui_draw.cpp
   imgui_demo.cpp
   imguifilesystem/imguifilesystem.cpp
 LINK
   ${OPENGL_LIBRARIES}
+  ospray_common
+)
+
+target_include_directories(
+  ospray_imgui
+INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/imguifilesystem>
+PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
+  ${CMAKE_CURRENT_LIST_DIR}/imguifilesystem
 )
