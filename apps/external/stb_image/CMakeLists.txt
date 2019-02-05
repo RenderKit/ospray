@@ -14,9 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_DEFAULT_COMPONENT apps)
-
-add_subdirectory(external)
-add_subdirectory(ospray_testing)
-add_subdirectory(tutorials)
-add_subdirectory(utility)
+add_library(stb_image INTERFACE)
+target_include_directories(stb_image
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+)

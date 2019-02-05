@@ -17,9 +17,6 @@
 option(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
 
 if (OSPRAY_MODULE_MPI)
-  option(OSPRAY_MODULE_MPI_APPS "MPI module viewer application"
-    ${OSPRAY_APPS_EXAMPLEVIEWER})
-
   set(OSP_MPI_COMPRESSION_THRESHOLD 16 CACHE STRING
     "Min. number of ranks to enable message compression at (number)" )
   mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
@@ -86,16 +83,6 @@ if (OSPRAY_MODULE_MPI)
   ##############################################################
   # Test apps
   ##############################################################
-  if (OSPRAY_MODULE_MPI_APPS)
-    # Note: the MPI example viewer depends on tfn lib, so we must make sure that
-    # was built.
-    if (NOT TARGET ospray_tfn OR NOT TARGET ospray_imgui_util_sg
-        OR NOT TARGET ospray_imgui3d_sg)
-      message(FATAL_ERROR "ospray_tfn library is required for the MPI example app,"
-        " please set -DOSPRAY_APPS_EXAMPLEVIEWER=ON as well")
-    endif ()
-
-    add_subdirectory(apps)
-  endif (OSPRAY_MODULE_MPI_APPS)
+  add_subdirectory(apps)
 
 endif (OSPRAY_MODULE_MPI)

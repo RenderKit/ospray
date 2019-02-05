@@ -36,9 +36,5 @@ if (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray_gensv
     ospray_pico_bench
   )
-
-  if (OSPRAY_MODULE_MPI_APPS)
-    add_subdirectory(viewer)
-  endif()
 endif()
 

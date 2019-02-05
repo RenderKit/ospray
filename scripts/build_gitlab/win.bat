@@ -27,9 +27,6 @@ cmake -L ^
 -D OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES=OFF ^
 -D OSPRAY_MODULE_BILINEAR_PATCH=ON ^
 -D OSPRAY_MODULE_MPI="%~3" ^
--D OSPRAY_SG_CHOMBO=OFF ^
--D OSPRAY_SG_OPENIMAGEIO=OFF ^
--D OSPRAY_SG_VTK=OFF ^
 ..
 
 cmake --build . --config Release --target ALL_BUILD -- /m /nologo ^

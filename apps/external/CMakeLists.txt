@@ -14,9 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_DEFAULT_COMPONENT apps)
+if (NOT WIN32)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+endif()
 
-add_subdirectory(external)
-add_subdirectory(ospray_testing)
-add_subdirectory(tutorials)
-add_subdirectory(utility)
+include(cmake/configure_glfw.cmake)
+add_subdirectory(imgui)
+add_subdirectory(stb_image)

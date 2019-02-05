@@ -95,11 +95,6 @@ mark_as_advanced(OSPRAY_PIXELS_PER_JOB)
 # Must be before ISA config and package
 include(configure_embree)
 
-option(OSPRAY_ENABLE_TUTORIALS "Enable the 'tutorials' subtree in the build." ON)
-
-option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
-mark_as_advanced(OSPRAY_ENABLE_APPS)
-
 option(OSPRAY_ENABLE_TESTING "Enable building, installing, and packaging of test tools.")
 option(OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES "Automatically download test images during build." ON)
 

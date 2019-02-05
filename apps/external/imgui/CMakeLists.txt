@@ -14,9 +14,24 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_DEFAULT_COMPONENT apps)
+ospray_disable_compiler_warnings()
 
-add_subdirectory(external)
-add_subdirectory(ospray_testing)
-add_subdirectory(tutorials)
-add_subdirectory(utility)
+ospray_create_library(ospray_imgui
+  imgui.cpp
+  imgui_draw.cpp
+  imgui_demo.cpp
+  imguifilesystem/imguifilesystem.cpp
+LINK
+  ${OPENGL_LIBRARIES}
+  ospray_common
+)
+
+target_include_directories(
+  ospray_imgui
+INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/imguifilesystem>
+PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
+  ${CMAKE_CURRENT_LIST_DIR}/imguifilesystem
+)

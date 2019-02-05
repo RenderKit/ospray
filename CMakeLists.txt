@@ -51,60 +51,30 @@ include(ospray_macros)
 include(ospray_options)
 include(ispc)
 
-##############################################################
-# the OSPRay 'common' library
-##############################################################
+## ospcommon
 add_subdirectory(${OSPCOMMON_DIR})
 
-##############################################################
-# OSPRay components
-#
-# 'components' work similar to 'packages' in linux distributions: each
-# component is its own little piece that builds some applications,
-# libraries, etc, and may have dependencies to other components.
-##############################################################
+## Components
 include(components/configure.cmake)
 
-##############################################################
-# the OSPRay library
-##############################################################
-
+## Main OSPRay library
 add_subdirectory(ospray)
 
-##############################################################
-# OSPRay tutorials
-##############################################################
-if (OSPRAY_ENABLE_TUTORIALS)
-  add_subdirectory(tutorials)
-endif()
-
-##############################################################
-# OSPRay sample apps; at the end: they may need modules
-##############################################################
+## OSPRay sample apps
+option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 if (OSPRAY_ENABLE_APPS)
   add_subdirectory(apps)
 endif()
 
-##############################################################
-# OSPRay modules
-# modules are OPTTIONAL and EXTERNAL packages that
-# users can link into ospray. they can use any and all pieces of
-# ospray but obviously no ospray parts may ever depend on a
-# module (which by definition is OPTIONAL) - so those go
-# AT THE BACK, only AFTER ALL OTHER PARTS OF OSPRAY ARE BUILT
-##############################################################
+## Modules
 add_subdirectory(modules)
 
-##############################################################
-# Google Test
-##############################################################
+## Testing
 if (OSPRAY_ENABLE_TESTING)
   add_subdirectory(tests)
 endif()
 
-##############################################################
-# add target for running clang-format
-##############################################################
+## Clang-format target
 option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
        "Enable 'format' target, requires clang-format too" OFF)
 include(clang-format)

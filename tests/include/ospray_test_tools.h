@@ -29,8 +29,9 @@
 #include <limits>
 
 #include "ospray_environment.h"
-#include "../../apps/common/sg/3rdParty/stb_image.h"
-#include "../../apps/common/sg/3rdParty/stb_image_write.h"
+
+#include "stb_image.h"
+#include "stb_image_write.h"
 
 using pixelColorValue = unsigned char;
 

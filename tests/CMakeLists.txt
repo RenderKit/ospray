@@ -49,7 +49,8 @@ ospray_create_test(ospray_test_suite
 LINK
   gtest_main
   ospray
-  ospray_common
+	ospray_common
+	stb_image
 )
 
 target_include_directories(ospray_test_suite
