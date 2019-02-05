@@ -1,8 +1,8 @@
 Examples
 ========
 
-Tutorial
---------
+Simple Tutorial
+---------------
 
 A minimal working example demonstrating how to use OSPRay can be found
 at `apps/ospTutorial.c`^[A C++ version that uses the C++ convenience
@@ -30,6 +30,24 @@ frames in the second image `accumulatedFrames.ppm`.
 ![After accumulating ten frames.][imgTutorial2]
 
 
+Mini-App Tutorials
+------------------
+
+OSPRay also ships various mini-apps to showcase OSPRay features. These
+apps are all prefixed with `ospTutorial` and can be found in the
+`tutorials/` directory of the OSPRay source tree. Current tutorials
+include:
+
+- structured volumes
+- unstructured volumes
+- spheres
+- animated spheres
+- subdivision surfaces
+
+More apps will be created in future releases to further demonstrate
+other interesting OSPRay features.
+
+
 Example Viewer
 --------------
 
@@ -41,8 +59,8 @@ showcasing most features of OSPRay which can be run as
 ImGui library for user interface controls and is based on a prototype
 OSPRay [scene graph] interface where nodes can be viewed and edited
 interactively. Updates to scene graph nodes update OSPRay state
-automatically through the scene graph viewer which is enabled by pressing
-'g'.
+automatically through the scene graph viewer which is enabled by
+pressing 'g'.
 
 ### Exploring the Scene
 
@@ -102,6 +120,13 @@ viewer.
   the [demos] page for examples.
 * Supported file importers currently include: `obj`, `ply`, `x3d`,
   `vtu`, `osp`, `ospsg`, `xml` (rivl), `points`, `xyz`.
+
+### Denoiser
+
+When the example viewer is built with OpenImageDenoise, the denoiser is
+automatically enabled when running the application. It can be toggled
+on/off at runtime via the `useDenoiser` GUI parameter found under the
+framebuffer in the scene graph.
 
 
 Distributed Viewer

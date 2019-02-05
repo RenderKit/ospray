@@ -1,8 +1,8 @@
 OSPRay
 ======
 
-This is release v1.8.0 (devel) of OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+This is release v1.8.0 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
 OSPRay Overview
@@ -209,8 +209,8 @@ example applications use
 
     cmake --build . --config Release --target ospray -- /m
 
-Finding OSPRay with CMake
-=========================
+Finding an OSPRay install with CMake
+====================================
 
 Client applications using OSPRay can find it with CMake’s
 `find_package()` command. For example,
@@ -240,9 +240,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -3529,6 +3529,8 @@ aggregate their data to the OSPRay process for rendering.
 The model used by the distributed device takes three additional
 parameters, to allow users to express their data distribution to OSPRay.
 All models should be disjoint to ensure correct sort-last compositing.
+Geometries used in the distributed MPI renderer can make use of the
+[SciVis renderer](#scivis-renderer)’s [OBJ material](#obj-material).
 
 <table style="width:98%;">
 <caption>Parameters for the distributed <code>OSPModel</code>.</caption>
@@ -3570,15 +3572,18 @@ The renderer supported when using the distributed device is the
 currently only supports ambient occlusion (on the local data only, with
 optional ghost data). To compute correct ambient occlusion across the
 distributed data the application is responsible for replicating ghost
-data and specifying the ghost models and models as described above.
+data and specifying the ghost models and models as described above. Note
+that shadows and ambient occlusion are computed on the local geometries,
+in the `model` and the corresponding `ghostModel` in the ghost model
+array, if any where set.
 
 <table style="width:98%;">
 <caption>Parameters for the <code>mpi_raycast</code> renderer.</caption>
 <colgroup>
 <col style="width: 25%" />
-<col style="width: 14%" />
+<col style="width: 28%" />
 <col style="width: 12%" />
-<col style="width: 44%" />
+<col style="width: 30%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3602,10 +3607,28 @@ data and specifying the ghost models and models as described above.
 <td style="text-align: left;">the optional <a href="#model">model</a> containing the ghost geometry for ambient occlusion; when setting a <a href="#data">data</a> array for both <code>model</code> and <code>ghostModel</code>, each individual ghost model shadows only its corresponding model</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">OSPLight[]</td>
+<td style="text-align: left;">lights</td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"><a href="#data">data</a> array with handles of the <a href="#lights">lights</a></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">aoSamples</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">number of rays per sample to compute ambient occlusion</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">aoTransparencyEnabled</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: left;">whether object transparency is respected when computing ambient occlusion (slower)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">oneSidedLighting</td>
+<td style="text-align: right;">true</td>
+<td style="text-align: left;">if true, backfacing surfaces (wrt. light source) receive no illumination</td>
 </tr>
 </tbody>
 </table>
@@ -3774,8 +3797,8 @@ thread that is committing and rendering.
 Examples
 ========
 
-Tutorial
---------
+Simple Tutorial
+---------------
 
 A minimal working example demonstrating how to use OSPRay can be found
 at `apps/ospTutorial.c`[^10]. On Linux build it in the build directory
@@ -3800,6 +3823,23 @@ frames in the second image `accumulatedFrames.ppm`.
 
 ![After accumulating ten
 frames.](https://ospray.github.io/images/tutorial_accumulatedframe.png)
+
+Mini-App Tutorials
+------------------
+
+OSPRay also ships various mini-apps to showcase OSPRay features. These
+apps are all prefixed with `ospTutorial` and can be found in the
+`tutorials/` directory of the OSPRay source tree. Current tutorials
+include:
+
+-   structured volumes
+-   unstructured volumes
+-   spheres
+-   animated spheres
+-   subdivision surfaces
+
+More apps will be created in future releases to further demonstrate
+other interesting OSPRay features.
 
 Example Viewer
 --------------
@@ -3875,6 +3915,13 @@ viewer.
     [demos](#demos) page for examples.
 -   Supported file importers currently include: `obj`, `ply`, `x3d`,
     `vtu`, `osp`, `ospsg`, `xml` (rivl), `points`, `xyz`.
+
+### Denoiser
+
+When the example viewer is built with OpenImageDenoise, the denoiser is
+automatically enabled when running the application. It can be toggled
+on/off at runtime via the `useDenoiser` GUI parameter found under the
+framebuffer in the scene graph.
 
 Distributed Viewer
 ------------------

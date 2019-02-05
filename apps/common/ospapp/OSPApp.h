@@ -18,7 +18,7 @@
 
 #include "ospcommon/utility/getEnvVar.h"
 
-#include "common/sg/SceneGraph.h"
+#include "sg/SceneGraph.h"
 
 namespace ospray {
   namespace app {

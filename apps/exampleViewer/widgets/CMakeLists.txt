@@ -31,3 +31,11 @@ LINK
   ospray_tfn
   glfw
 )
+
+target_include_directories(
+  ospray_imgui3d_sg
+INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
+)

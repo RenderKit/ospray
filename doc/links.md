@@ -15,7 +15,9 @@
 [model]: #model
 [data]: #data
 [texture transformations]: #texture2d-transformations
+[SciVis renderer]: #scivis-renderer
 [path tracer]: #path-tracer
+[OBJ material]: #obj-material
 [point light]: #point-light-sphere-light
 [Compiling OSPRay]: #compiling-ospray
 [scene graph]: #scene-graph

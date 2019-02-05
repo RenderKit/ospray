@@ -16,7 +16,7 @@
 
 #include "Data.h"
 // core ospray
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
   namespace sg {

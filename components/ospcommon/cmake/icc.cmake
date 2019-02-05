@@ -16,7 +16,7 @@
 
 set(OSPRAY_CXX_FLAGS "-fPIC -fno-strict-aliasing -no-ansi-alias -DNOMINMAX -Wno-unknown-pragmas")
 
-if(OSPRAY_STRICT_BUILD)
+if (OSPRAY_STRICT_BUILD)
   set(OSPRAY_CXX_FLAGS "-Wall ${OSPRAY_CXX_FLAGS}")
 endif()
 

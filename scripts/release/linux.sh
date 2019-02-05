@@ -57,7 +57,7 @@ DEP_ISPC_VER=1.9.2
 DEP_ISPC=ispc-v${DEP_ISPC_VER}-linux
 DEP_ISPC_DIR=ispc-v${DEP_ISPC_VER}-linux
 DEP_TBB=tbb2019_20181203oss
-DEP_OIDN=oidn-0.8.0.x86_64.linux
+DEP_OIDN=oidn-0.8.1.x86_64.linux
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz $DEP_OIDN.tar.gz"
 
 
@@ -110,11 +110,11 @@ cmake \
 # create RPM files
 make -j `nproc` preinstall
 
-# check_symbols libospray.so GLIBC   2 4 0
-# check_symbols libospray.so GLIBCXX 3 4 11
-# check_symbols libospray.so CXXABI  1 3 0
+check_symbols libospray.so GLIBC   2 4 0
+check_symbols libospray.so GLIBCXX 3 4 11
+check_symbols libospray.so CXXABI  1 3 0
 
-make -j `nproc` package
+make -j `nproc` package || exit 2
 
 # read OSPRay version
 OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
@@ -134,5 +134,5 @@ cmake \
 ..
 
 # create tar.gz files
-make -j `nproc` package
+make -j `nproc` package || exit 2
 

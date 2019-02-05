@@ -21,8 +21,8 @@
 #include "imgui3D.h"
 #include "transferFunction.h"
 
-#include "common/sg/SceneGraph.h"
-#include "common/sg/Renderer.h"
+#include "sg/SceneGraph.h"
+#include "sg/Renderer.h"
 
 namespace ospray {
 

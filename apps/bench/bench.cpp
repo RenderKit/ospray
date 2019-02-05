@@ -16,7 +16,7 @@
 
 #include "pico_bench.h"
 #include "ospapp/OSPApp.h"
-#include "common/sg/SceneGraph.h"
+#include "sg/SceneGraph.h"
 #include "ospcommon/utility/SaveImage.h"
 
 #include "sg/Renderer.h"

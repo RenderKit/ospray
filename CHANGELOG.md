@@ -3,22 +3,35 @@ Version History
 
 ### Changes in v1.8.0:
 
+-   This will be the last minor revision of OSPRay. Future development
+    effort in the `devel` branch will be dedicated to v2.0 API changes
+    and may break existing v1.x applications.
+    -   This will also be the last version of OSPRay to include
+        `ospray_sg` and the Example Viewer. Users which depend on these
+        should instead use the separate OSPRay Studio project, where
+        `ospray_sg` will be migrated.
+    -   We will continue to support patch releases of v1.8.x in case of
+        any reported bugs
 -   Refactored CMake to use newer CMake concepts
     -   All targets are now exported in OSPRay installs and can be
         consumed by client projects with associated includes, libraries,
         and definitions
     -   OSPRay now requires CMake v3.1 to build
     -   See documentation for more details
+-   Added new minimal tutorial apps to replace the more complex Example
+    Viewer
 -   Added new "`subdivision`" geometry type to support subdivision
     surfaces
 -   Added support for texture formats `L8`, `LA8` (gamma-encoded
     luminance), and `RA8` (linear two component). Note that the enum
     `OSP_TEXTURE_FORMAT_INVALID` changed its value, thus recompilation
     may be necessary.
--   Automatic epsilon handling
+-   Automatic epsilon handling, which removes the "`epsilon`" parameter
+    on all renderers
 -   Normals in framebuffer channel `OSP_FB_NORMAL` are now in
     world-space
 -   Added support for Intel® Open Image Denoise to the Example Viewer
+    -   This same integration will soon be ported to OSPRay Studio
 -   Fixed artifacts for scaled instances of spheres, cylinders and
     streamlines
 -   Improvements to precision of intersections with cylinders and

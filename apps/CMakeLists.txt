@@ -16,14 +16,6 @@
 
 set(OSPRAY_DEFAULT_COMPONENT apps)
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}
-  common
-)
-
 # benchmark application which has no windowing framework dependencies
 option(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
 # offline application which generates images files for offline use
