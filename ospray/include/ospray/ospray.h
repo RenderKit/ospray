@@ -288,11 +288,11 @@ extern "C" {
   /* Ask if all events tracked by an OSPFuture handle have been completed */
   OSPRAY_INTERFACE int   ospIsReady(OSPFuture);
 
-  /* Wait on a specific event*/
+  /* Wait on a specific event */
   OSPRAY_INTERFACE void  ospWait(OSPFuture, OSPEventType);
 
-  /* TODO: this should be on the FrameBuffer */
-  OSPRAY_INTERFACE float ospGetVariance(OSPFuture);
+  /* Get variance from last rendered frame */
+  OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
 
   // TODO: implement ospCancel(OSPFuture) ???
 

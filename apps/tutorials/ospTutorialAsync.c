@@ -151,7 +151,7 @@ int main(int argc, const char **argv) {
   printf("waiting on frame to finish...\n");
   ospWait(result, OSP_FRAME_FINISHED);
   printf("...done!\n");
-  printf("variance was %f\n", ospGetVariance(result));
+  printf("variance was %f\n", ospGetVariance(framebuffer));
   ospRelease(result);
 
   // access framebuffer and write its content as PPM file
