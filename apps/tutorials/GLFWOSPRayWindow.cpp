@@ -23,6 +23,8 @@
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
+static bool g_quitNextFrame = false;
+
 GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                                    const ospcommon::box3f &worldBounds,
                                    OSPModel model,
@@ -84,6 +86,9 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                          switch (key) {
                          case GLFW_KEY_G:
                            activeWindow->showUi = !(activeWindow->showUi);
+                           break;
+                         case GLFW_KEY_Q:
+                           g_quitNextFrame = true;
                            break;
                          }
                        }
@@ -183,7 +188,7 @@ void GLFWOSPRayWindow::mainLoop()
   // continue until the user closes the window
   startNewOSPRayFrame();
 
-  while (!glfwWindowShouldClose(glfwWindow)) {
+  while (!glfwWindowShouldClose(glfwWindow) && !g_quitNextFrame) {
     ImGui_ImplGlfwGL3_NewFrame();
 
     display();
