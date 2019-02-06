@@ -14,8 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_VERSION_MAJOR 1)
-set(OSPRAY_VERSION_MINOR 8)
+set(OSPRAY_VERSION_MAJOR 2)
+set(OSPRAY_VERSION_MINOR 0)
 set(OSPRAY_VERSION_PATCH 0)
 set(OSPRAY_SOVERSION 0)
 set(OSPRAY_VERSION_GITHASH 0)
