@@ -16,25 +16,26 @@
 
 #undef NDEBUG // do all assertions in this file
 
-//ospray
-#include "ospray/camera/Camera.h"
-#include "ospray/common/Data.h"
-#include "ospray/lights/Light.h"
-#include "ospray/transferFunction/TransferFunction.h"
-#include "ospray/api/ISPCDevice.h"
+// ospray
+#include "camera/Camera.h"
+#include "common/AsyncTask.h"
+#include "common/Data.h"
+#include "lights/Light.h"
+#include "transferFunction/TransferFunction.h"
+#include "api/ISPCDevice.h"
+// ospcommon
+#include "ospcommon/tasking/tasking_system_handle.h"
 #include "ospcommon/utility/getEnvVar.h"
-//mpiCommon
+// mpiCommon
 #include "mpiCommon/MPICommon.h"
-//ospray_mpi
+// ospray_mpi
 #include "mpi/MPIDistributedDevice.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 
-//distributed objects
+// distributed objects
 #include "render/distributed/DistributedRaycast.h"
 #include "common/DistributedModel.h"
-
-#include "ospcommon/tasking/tasking_system_handle.h"
 
 #ifdef OPEN_MPI
 # include <thread>
@@ -402,6 +403,33 @@ namespace ospray {
       auto result    = renderer.renderFrame(&fb, fbChannelFlags);
       mpicommon::world.barrier();
       return result;
+    }
+
+    OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer,
+                                                     OSPRenderer,
+                                                     const uint32)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    int MPIDistributedDevice::isReady(OSPFuture _task)
+    {
+      auto *task = (BaseTask *)_task;
+      return task->isFinished();
+    }
+
+    void MPIDistributedDevice::wait(OSPFuture _task, OSPEventType)
+    {
+      // TODO: wait on only the specific event passed to this function
+
+      auto *task = (BaseTask *)_task;
+      task->wait();
+    }
+
+    float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
+    {
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      return fb->getVariance();
     }
 
     void MPIDistributedDevice::release(OSPObject _obj)

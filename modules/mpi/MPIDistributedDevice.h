@@ -207,6 +207,16 @@ namespace ospray {
                         OSPRenderer _renderer,
                         const uint32 fbChannelFlags) override;
 
+      OSPFuture renderFrameAsync(OSPFrameBuffer,
+                                 OSPRenderer,
+                                 const uint32) override;
+
+      int isReady(OSPFuture) override;
+
+      void wait(OSPFuture, OSPEventType) override;
+
+      float getVariance(OSPFrameBuffer) override;
+
       /*! load module */
       int loadModule(const char *name) override;
 

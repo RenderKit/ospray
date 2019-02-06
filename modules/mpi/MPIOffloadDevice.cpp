@@ -19,6 +19,7 @@
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/MPIBcastFabric.h"
 #include "mpi/MPIOffloadDevice.h"
+#include "common/AsyncTask.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -823,6 +824,33 @@ namespace ospray {
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
       processWork(work, true);
       return work.varianceResult;
+    }
+
+    OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer,
+                                                 OSPRenderer,
+                                                 const uint32)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    int MPIOffloadDevice::isReady(OSPFuture _task)
+    {
+      auto *task = (BaseTask *)_task;
+      return task->isFinished();
+    }
+
+    void MPIOffloadDevice::wait(OSPFuture _task, OSPEventType)
+    {
+      // TODO: wait on only the specific event passed to this function
+
+      auto *task = (BaseTask *)_task;
+      task->wait();
+    }
+
+    float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
+    {
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      return fb->getVariance();
     }
 
     //! release (i.e., reduce refcount of) given object

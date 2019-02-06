@@ -176,25 +176,13 @@ namespace ospray {
 
       virtual OSPFuture renderFrameAsync(OSPFrameBuffer,
                                          OSPRenderer,
-                                         const uint32)
-      {
-        NOT_IMPLEMENTED;
-      }
+                                         const uint32) = 0;
 
-      virtual int isReady(OSPFuture)
-      {
-        NOT_IMPLEMENTED;
-      }
+      virtual int isReady(OSPFuture) = 0;
 
-      virtual void wait(OSPFuture, OSPEventType)
-      {
-        NOT_IMPLEMENTED;
-      }
+      virtual void wait(OSPFuture, OSPEventType) = 0;
 
-      virtual float getVariance(OSPFrameBuffer)
-      {
-        NOT_IMPLEMENTED;
-      }
+      virtual float getVariance(OSPFrameBuffer) = 0;
 
       //! release (i.e., reduce refcount of) given object
       /*! note that all objects in ospray are refcounted, so one cannot
