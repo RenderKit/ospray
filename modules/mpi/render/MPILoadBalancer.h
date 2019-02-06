@@ -17,12 +17,12 @@
 #pragma once
 
 // ospray components
-#include "components/mpiCommon/MPICommon.h"
 #include "../common/Messaging.h"
+#include "components/mpiCommon/MPICommon.h"
 // ours
-#include "render/LoadBalancer.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
 #include <condition_variable>
+#include "mpi/fb/DistributedFrameBuffer.h"
+#include "render/LoadBalancer.h"
 
 namespace ospray {
   namespace mpi {
@@ -69,7 +69,7 @@ namespace ospray {
         std::string toString() const override;
       };
 
-    }// ::ospray::mpi::staticLoadBalancer
+    }  // namespace staticLoadBalancer
 
     namespace dynamicLoadBalancer {
       /*! \brief the 'master' in a tile-based master-slave load balancer
@@ -80,33 +80,31 @@ namespace ospray {
           transferring a computed tile for accumulation
       */
 
-      struct TileTask {
+      struct TileTask
+      {
         vec2i tileId;
         int32 accumId;
-        bool tilesExhausted; // no more tiles available
+        bool tilesExhausted;  // no more tiles available
       };
 
-      class Master : public messaging::MessageHandler,
-                     public TiledLoadBalancer
+      class Master : public messaging::MessageHandler, public TiledLoadBalancer
       {
-      public:
+       public:
         Master(ObjectHandle handle, int numPreAllocated = 4);
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer
-            , FrameBuffer *fb
-            , const uint32 channelFlags
-            ) override;
+        float renderFrame(Renderer *tiledRenderer,
+                          FrameBuffer *fb,
+                          const uint32 channelFlags) override;
         std::string toString() const override;
 
-      private:
+       private:
         void scheduleTile(const int worker);
-        void generateTileTasks(DistributedFrameBuffer * const dfb
-            , const float errorThreshold
-            );
+        void generateTileTasks(DistributedFrameBuffer *const dfb,
+                               const float errorThreshold);
 
         typedef std::vector<TileTask> TileVector;
-        std::vector<TileVector> preferredTiles; // per worker default queue
-        std::vector<bool> workerNotified; // worker knows we're done?
+        std::vector<TileVector> preferredTiles;  // per worker default queue
+        std::vector<bool> workerNotified;        // worker knows we're done?
         int numPreAllocated{4};
         DistributedFrameBuffer *dfb{nullptr};
       };
@@ -114,19 +112,17 @@ namespace ospray {
       /*! \brief the 'slave' in a tile-based master-slave load balancer
 
       */
-      class Slave : public messaging::MessageHandler,
-                    public TiledLoadBalancer
+      class Slave : public messaging::MessageHandler, public TiledLoadBalancer
       {
-      public:
+       public:
         Slave(ObjectHandle handle);
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer
-            , FrameBuffer *fb
-            , const uint32 channelFlags
-            ) override;
+        float renderFrame(Renderer *tiledRenderer,
+                          FrameBuffer *fb,
+                          const uint32 channelFlags) override;
         std::string toString() const override;
 
-      private:
+       private:
         void tileTask(const TileTask &task);
         void requestTile();
 
@@ -142,6 +138,6 @@ namespace ospray {
         bool frameActive;
       };
 
-    }// ::ospray::mpi::dynamicLoadBalancer
-  } // ::ospray::mpi
-} // ::ospray
+    }  // namespace dynamicLoadBalancer
+  }    // namespace mpi
+}  // namespace ospray
