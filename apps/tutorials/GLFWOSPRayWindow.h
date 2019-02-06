@@ -33,7 +33,7 @@ class GLFWOSPRayWindow
 
   ~GLFWOSPRayWindow();
 
-  static GLFWOSPRayWindow * getActiveWindow();
+  static GLFWOSPRayWindow *getActiveWindow();
 
   OSPModel getModel();
   void setModel(OSPModel newModel);
@@ -51,6 +51,8 @@ class GLFWOSPRayWindow
   void reshape(const ospcommon::vec2i &newWindowSize);
   void motion(const ospcommon::vec2f &position);
   void display();
+  void startNewOSPRayFrame();
+  void waitOnOSPRayFrame();
 
   static GLFWOSPRayWindow *activeWindow;
 
@@ -68,6 +70,7 @@ class GLFWOSPRayWindow
   // OSPRay objects managed by this class
   OSPCamera camera           = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
+  OSPFuture currentFrame     = nullptr;
 
   // OpenGL framebuffer texture
   GLuint framebufferTexture = 0;

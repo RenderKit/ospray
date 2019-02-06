@@ -181,6 +181,8 @@ void GLFWOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
 void GLFWOSPRayWindow::mainLoop()
 {
   // continue until the user closes the window
+  startNewOSPRayFrame();
+
   while (!glfwWindowShouldClose(glfwWindow)) {
     ImGui_ImplGlfwGL3_NewFrame();
 
@@ -189,6 +191,10 @@ void GLFWOSPRayWindow::mainLoop()
     // poll and process events
     glfwPollEvents();
   }
+
+  waitOnOSPRayFrame();
+  if (currentFrame != nullptr)
+    ospRelease(currentFrame);
 }
 
 void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
@@ -293,25 +299,45 @@ void GLFWOSPRayWindow::display()
     displayCallback(this);
   }
 
-  // render OSPRay frame
-  ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  static bool firstFrame = true;
 
-  // map OSPRay frame buffer, update OpenGL texture with its contents, then
-  // unmap
-  uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  if (firstFrame || ospIsReady(currentFrame)) {
+    waitOnOSPRayFrame();
 
-  glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-  glTexImage2D(GL_TEXTURE_2D,
-               0,
-               GL_RGBA,
-               windowSize.x,
-               windowSize.y,
-               0,
-               GL_RGBA,
-               GL_UNSIGNED_BYTE,
-               fb);
+    // map OSPRay frame buffer, update OpenGL texture with its contents, then
+    // unmap
+    uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
-  ospUnmapFrameBuffer(fb, framebuffer);
+    glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 windowSize.x,
+                 windowSize.y,
+                 0,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 fb);
+
+    ospUnmapFrameBuffer(fb, framebuffer);
+
+    startNewOSPRayFrame();
+
+    firstFrame = false;
+
+    // display frame rate in window title
+    auto displayEnd = std::chrono::high_resolution_clock::now();
+    auto durationMilliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
+                                                              displayStart);
+    displayStart = displayEnd;
+
+    const float frameRate = 1000.f / float(durationMilliseconds.count());
+
+    std::stringstream windowTitle;
+    windowTitle << "OSPRay: " << std::setprecision(3) << frameRate << " fps";
+    glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
+  }
 
   // clear current OpenGL color buffer
   glClear(GL_COLOR_BUFFER_BIT);
@@ -339,18 +365,20 @@ void GLFWOSPRayWindow::display()
 
   // swap buffers
   glfwSwapBuffers(glfwWindow);
+}
 
-  // display frame rate in window title
-  auto displayEnd = std::chrono::high_resolution_clock::now();
-  auto durationMilliseconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
-                                                            displayStart);
-  displayStart = displayEnd;
+void GLFWOSPRayWindow::startNewOSPRayFrame()
+{
+  if (currentFrame != nullptr)
+    ospRelease(currentFrame);
 
-  const float frameRate = 1000.f / float(durationMilliseconds.count());
+  currentFrame =
+      ospRenderFrameAsync(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+}
 
-  std::stringstream windowTitle;
-  windowTitle << "OSPRay: " << std::setprecision(3) << frameRate << " fps";
-
-  glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
+void GLFWOSPRayWindow::waitOnOSPRayFrame()
+{
+  if (currentFrame != nullptr) {
+    ospWait(currentFrame, OSP_FRAME_FINISHED);
+  }
 }
