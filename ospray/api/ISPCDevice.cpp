@@ -17,7 +17,6 @@
 // ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
-#include "common/AsyncTask.h"
 #include "common/Data.h"
 #include "common/Library.h"
 #include "common/Material.h"
@@ -27,6 +26,7 @@
 #include "geometry/TriangleMesh.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
+#include "render/RenderTask.h"
 #include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
@@ -402,14 +402,15 @@ namespace ospray {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
 
-      auto *f = new AsyncTask<float>(
-          [=]() { return renderer->renderFrame(fb, fbChannelFlags); });
+      auto *f = new RenderTask(
+          fb, [=]() { return renderer->renderFrame(fb, fbChannelFlags); });
+
       return (OSPFuture)f;
     }
 
     int ISPCDevice::isReady(OSPFuture _task)
     {
-      auto *task = (BaseTask *)_task;
+      auto *task = (RenderTask *)_task;
       return task->isFinished();
     }
 
@@ -417,7 +418,7 @@ namespace ospray {
     {
       // TODO: wait on only the specific event passed to this function
 
-      auto *task = (BaseTask *)_task;
+      auto *task = (RenderTask *)_task;
       task->wait();
     }
 

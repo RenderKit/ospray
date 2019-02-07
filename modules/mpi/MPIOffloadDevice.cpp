@@ -19,7 +19,6 @@
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/MPIBcastFabric.h"
 #include "mpi/MPIOffloadDevice.h"
-#include "common/AsyncTask.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -27,6 +26,7 @@
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/FileName.h"
 #include "geometry/TriangleMesh.h"
+#include "render/RenderTask.h"
 #include "render/Renderer.h"
 #include "camera/Camera.h"
 #include "volume/Volume.h"
@@ -835,7 +835,7 @@ namespace ospray {
 
     int MPIOffloadDevice::isReady(OSPFuture _task)
     {
-      auto *task = (BaseTask *)_task;
+      auto *task = (RenderTask *)_task;
       return task->isFinished();
     }
 
@@ -843,7 +843,7 @@ namespace ospray {
     {
       // TODO: wait on only the specific event passed to this function
 
-      auto *task = (BaseTask *)_task;
+      auto *task = (RenderTask *)_task;
       task->wait();
     }
 

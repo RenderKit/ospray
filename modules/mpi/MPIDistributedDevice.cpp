@@ -18,9 +18,9 @@
 
 // ospray
 #include "camera/Camera.h"
-#include "common/AsyncTask.h"
 #include "common/Data.h"
 #include "lights/Light.h"
+#include "render/RenderTask.h"
 #include "transferFunction/TransferFunction.h"
 #include "api/ISPCDevice.h"
 // ospcommon
@@ -414,7 +414,7 @@ namespace ospray {
 
     int MPIDistributedDevice::isReady(OSPFuture _task)
     {
-      auto *task = (BaseTask *)_task;
+      auto *task = (RenderTask *)_task;
       return task->isFinished();
     }
 
@@ -422,7 +422,7 @@ namespace ospray {
     {
       // TODO: wait on only the specific event passed to this function
 
-      auto *task = (BaseTask *)_task;
+      auto *task = (RenderTask *)_task;
       task->wait();
     }
 
