@@ -19,8 +19,11 @@
 #include <GLFW/glfw3.h>
 #include <functional>
 #include "ArcballCamera.h"
+// ospcommon
 #include "ospcommon/box.h"
 #include "ospcommon/vec.h"
+#include "ospcommon/containers/TransactionalBuffer.h"
+// ospray
 #include "ospray/ospray.h"
 
 class GLFWOSPRayWindow
@@ -47,6 +50,8 @@ class GLFWOSPRayWindow
 
   void mainLoop();
 
+  void addObjectToCommit(OSPObject obj);
+
  protected:
   void reshape(const ospcommon::vec2i &newWindowSize);
   void motion(const ospcommon::vec2f &position);
@@ -71,6 +76,9 @@ class GLFWOSPRayWindow
   OSPCamera camera           = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
   OSPFuture currentFrame     = nullptr;
+
+  // List of OSPRay handles to commit before the next frame
+  ospcommon::TransactionalBuffer<OSPObject> objectsToCommit;
 
   // OpenGL framebuffer texture
   GLuint framebufferTexture = 0;

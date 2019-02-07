@@ -161,10 +161,7 @@ void GLFWOSPRayWindow::setModel(OSPModel newModel)
   ospSetObject(renderer, "model", model);
 
   // commit the renderer
-  ospCommit(renderer);
-
-  // clear frame buffer
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  addObjectToCommit(renderer);
 }
 
 void GLFWOSPRayWindow::clearFrameBuffer()
@@ -260,8 +257,6 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
     }
 
     if (cameraChanged) {
-      ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
-
       ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
       ospSet3f(camera,
                "pos",
@@ -279,7 +274,7 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
                arcballCamera->upDir().y,
                arcballCamera->upDir().z);
 
-      ospCommit(camera);
+      addObjectToCommit(camera);
     }
   }
 
@@ -325,6 +320,13 @@ void GLFWOSPRayWindow::display()
                  fb);
 
     ospUnmapFrameBuffer(fb, framebuffer);
+
+    auto handles = objectsToCommit.consume();
+    if (!handles.empty()) {
+      for (auto &h : handles)
+        ospCommit(h);
+      ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+    }
 
     startNewOSPRayFrame();
 
@@ -386,4 +388,9 @@ void GLFWOSPRayWindow::waitOnOSPRayFrame()
   if (currentFrame != nullptr) {
     ospWait(currentFrame, OSP_FRAME_FINISHED);
   }
+}
+
+void GLFWOSPRayWindow::addObjectToCommit(OSPObject obj)
+{
+  objectsToCommit.push_back(obj);
 }

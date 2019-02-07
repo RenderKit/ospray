@@ -79,11 +79,11 @@ int main(int argc, const char **argv)
                            world,
                            renderer));
 
-  glfwOSPRayWindow->registerImGuiCallback([=]() {
+  glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 64)) {
       ospSet1i(renderer, "spp", spp);
-      ospCommit(renderer);
+      glfwOSPRayWindow->addObjectToCommit(renderer);
     }
   });
 

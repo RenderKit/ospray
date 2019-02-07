@@ -212,12 +212,12 @@ int main(int argc, const char **argv)
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
-  glfwOSPRayWindow->registerImGuiCallback([=]() {
+  glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int tessellationLevel = 5;
     if (ImGui::SliderInt("tessellation level", &tessellationLevel, 1, 10)) {
       ospSet1f(subdivisionGeometry.geometry, "level", tessellationLevel);
-      ospCommit(subdivisionGeometry.geometry);
-      ospCommit(world);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
+      glfwOSPRayWindow->addObjectToCommit(world);
 
       GLFWOSPRayWindow::getActiveWindow()->clearFrameBuffer();
     }
@@ -241,8 +241,8 @@ int main(int argc, const char **argv)
                  vertexCreaseWeightsData);
       ospRelease(vertexCreaseWeightsData);
 
-      ospCommit(subdivisionGeometry.geometry);
-      ospCommit(world);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
+      glfwOSPRayWindow->addObjectToCommit(world);
 
       GLFWOSPRayWindow::getActiveWindow()->clearFrameBuffer();
     }
@@ -265,8 +265,8 @@ int main(int argc, const char **argv)
                  edgeCreaseWeightsData);
       ospRelease(edgeCreaseWeightsData);
 
-      ospCommit(subdivisionGeometry.geometry);
-      ospCommit(world);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
+      glfwOSPRayWindow->addObjectToCommit(world);
 
       GLFWOSPRayWindow::getActiveWindow()->clearFrameBuffer();
     }
