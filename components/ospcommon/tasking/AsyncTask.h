@@ -29,9 +29,9 @@ namespace ospcommon {
     {
       virtual ~BaseTask() = default;
 
-      virtual bool isFinished() const = 0;
-      virtual bool isValid() const    = 0;
-      virtual void wait() const       = 0;
+      virtual bool finished() const = 0;
+      virtual bool valid() const    = 0;
+      virtual void wait() const     = 0;
     };
 
     template <typename T>
@@ -40,8 +40,8 @@ namespace ospcommon {
       AsyncTask(std::function<T()> fcn);
       virtual ~AsyncTask() override;
 
-      bool isFinished() const override;
-      bool isValid() const override;
+      bool finished() const override;
+      bool valid() const override;
       void wait() const override;
 
       T get();
@@ -72,18 +72,18 @@ namespace ospcommon {
     template <typename T>
     inline AsyncTask<T>::~AsyncTask()
     {
-      if (isValid())
+      if (valid())
         runningTask.wait();
     }
 
     template <typename T>
-    inline bool AsyncTask<T>::isFinished() const
+    inline bool AsyncTask<T>::finished() const
     {
       return jobFinished;
     }
 
     template <typename T>
-    inline bool AsyncTask<T>::isValid() const
+    inline bool AsyncTask<T>::valid() const
     {
       return runningTask.valid();
     }

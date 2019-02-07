@@ -412,20 +412,14 @@ namespace ospray {
 
     int ISPCDevice::isReady(OSPFuture _task)
     {
-      auto *task = (RenderTask *)_task;
+      auto *task = (QueryableTask *)_task;
       return task->isFinished();
     }
 
     void ISPCDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
-      auto *task = (RenderTask *)_task;
-
-      if (event == OSP_FRAME_FINISHED)
-        task->wait();
-      else {
-        const auto &fb = task->getFrameBuffer();
-        fb.waitForEvent(event);
-      }
+      auto *task = (QueryableTask *)_task;
+      task->wait(event);
     }
 
     void ISPCDevice::cancel(OSPFuture)

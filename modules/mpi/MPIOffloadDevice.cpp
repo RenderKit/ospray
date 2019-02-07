@@ -835,16 +835,14 @@ namespace ospray {
 
     int MPIOffloadDevice::isReady(OSPFuture _task)
     {
-      auto *task = (RenderTask *)_task;
+      auto *task = (QueryableTask *)_task;
       return task->isFinished();
     }
 
-    void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent)
+    void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
-      // TODO: wait on only the specific event passed to this function
-
-      auto *task = (RenderTask *)_task;
-      task->wait();
+      auto *task = (QueryableTask *)_task;
+      task->wait(event);
     }
 
     void MPIOffloadDevice::cancel(OSPFuture)

@@ -16,57 +16,20 @@
 
 #pragma once
 
-// ospcommon
-#include "ospcommon/tasking/AsyncTask.h"
 // ospray
-#include "common/QueryableTask.h"
-#include "fb/FrameBuffer.h"
+#include "common/Managed.h"
 
 namespace ospray {
 
-  struct RenderTask : public QueryableTask, public tasking::AsyncTask<float>
+  struct QueryableTask : public ManagedObject
   {
-    RenderTask(FrameBuffer *, std::function<float()> fcn);
-    ~RenderTask() override = default;
+    QueryableTask()           = default;
+    ~QueryableTask() override = default;
 
-    bool isFinished() override;
-    void wait(OSPSyncEvent event) override;
-    void cancel() override;
-    float getCompletion() override;
-
-   private:
-    Ref<FrameBuffer> fb;
+    virtual bool isFinished()       = 0;
+    virtual void wait(OSPSyncEvent) = 0;
+    virtual void cancel()           = 0;
+    virtual float getCompletion()   = 0;
   };
-
-  // Inlined definitions //////////////////////////////////////////////////////
-
-  inline RenderTask::RenderTask(FrameBuffer *_fb, std::function<float()> fcn)
-      : AsyncTask<float>(fcn), fb(_fb)
-  {
-  }
-
-  inline bool RenderTask::isFinished()
-  {
-    return finished();
-  }
-
-  inline void RenderTask::wait(OSPSyncEvent event)
-  {
-    if (event == OSP_FRAME_FINISHED)
-      AsyncTask<float>::wait();
-    else
-      fb->waitForEvent(event);
-  }
-
-  inline void RenderTask::cancel()
-  {
-    // TODO
-  }
-
-  inline float RenderTask::getCompletion()
-  {
-    // TODO: query actual completion
-    return finished() ? 1.f : 0.f;
-  }
 
 }  // namespace ospray
