@@ -73,13 +73,13 @@ namespace ospray {
     return "ospray::FrameBuffer";
   }
 
-  void FrameBuffer::waitForEvent(OSPRenderEvent event) const
+  void FrameBuffer::waitForEvent(OSPSyncEvent event) const
   {
     // TODO: condition variable to sleep calling thread instead of spinning?
     while (stagesCompleted < event);
   }
 
-  void FrameBuffer::setCompletedEvent(OSPRenderEvent event)
+  void FrameBuffer::setCompletedEvent(OSPSyncEvent event)
   {
     stagesCompleted = event;
   }

@@ -73,9 +73,9 @@ namespace ospray {
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const override;
 
-    void waitForEvent(OSPRenderEvent event) const;
+    void waitForEvent(OSPSyncEvent event) const;
 
-    void setCompletedEvent(OSPRenderEvent event);
+    void setCompletedEvent(OSPSyncEvent event);
 
    protected:
     const vec2i size;
@@ -101,7 +101,7 @@ namespace ospray {
 
     float frameVariance{0.f};
 
-    std::atomic<OSPRenderEvent> stagesCompleted {OSP_FRAME_FINISHED};
+    std::atomic<OSPSyncEvent> stagesCompleted {OSP_FRAME_FINISHED};
 
    public: // TODO: make this private!
     Ref<PixelOp::Instance> pixelOp;

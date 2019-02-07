@@ -416,7 +416,7 @@ namespace ospray {
       return task->isFinished();
     }
 
-    void ISPCDevice::wait(OSPFuture _task, OSPRenderEvent event)
+    void ISPCDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
       auto *task = (RenderTask *)_task;
 

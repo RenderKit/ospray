@@ -418,7 +418,7 @@ namespace ospray {
       return task->isFinished();
     }
 
-    void MPIDistributedDevice::wait(OSPFuture _task, OSPRenderEvent)
+    void MPIDistributedDevice::wait(OSPFuture _task, OSPSyncEvent)
     {
       // TODO: wait on only the specific event passed to this function
 

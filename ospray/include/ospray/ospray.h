@@ -122,11 +122,12 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_NONE_FINISHED=(1<<0),
-  OSP_WORLD_RENDERED=(1<<1),
-  OSP_WORLD_COMMITTED=(1<<2),
-  OSP_FRAME_FINISHED=(1<<3)
-} OSPRenderEvent;
+  OSP_NONE_FINISHED=(0),
+  OSP_WORLD_RENDERED=(10),
+  OSP_WORLD_COMMITTED=(20),
+  OSP_FRAME_FINISHED=(30),
+  OSP_TASK_FINISHED=(100000)
+} OSPSyncEvent;
 
 #ifdef __cplusplus
 /* C++ DOES support default initializers */

@@ -663,7 +663,7 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(1)
 
-extern "C" void ospWait(OSPFuture f, OSPRenderEvent et)
+extern "C" void ospWait(OSPFuture f, OSPSyncEvent et)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
