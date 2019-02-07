@@ -58,6 +58,7 @@ class GLFWOSPRayWindow
   void display();
   void startNewOSPRayFrame();
   void waitOnOSPRayFrame();
+  void updateTitleBar();
 
   static GLFWOSPRayWindow *activeWindow;
 
@@ -91,4 +92,7 @@ class GLFWOSPRayWindow
 
   // optional registered ImGui callback, called during every frame to build UI
   std::function<void()> uiCallback;
+
+  // FPS measurement of last frame
+  float latestFPS{0.f};
 };

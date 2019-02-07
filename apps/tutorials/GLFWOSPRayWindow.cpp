@@ -299,16 +299,7 @@ void GLFWOSPRayWindow::display()
     displayCallback(this);
   }
 
-  static float latestFPS = 0.f;
-
-  std::stringstream windowTitle;
-  windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
-  if (latestFPS < 1.f) {
-    float progress = ospGetProgress(currentFrame);
-    windowTitle << " | " << progress * 100;
-  }
-
-  glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
+  updateTitleBar();
 
   static bool firstFrame = true;
   if (firstFrame || ospIsReady(currentFrame)) {
@@ -400,4 +391,27 @@ void GLFWOSPRayWindow::waitOnOSPRayFrame()
 void GLFWOSPRayWindow::addObjectToCommit(OSPObject obj)
 {
   objectsToCommit.push_back(obj);
+}
+
+void GLFWOSPRayWindow::updateTitleBar()
+{
+  std::stringstream windowTitle;
+  windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
+  if (latestFPS < 2.f) {
+    float progress = ospGetProgress(currentFrame);
+    windowTitle << " | ";
+    int barWidth = 20;
+    std::string progBar;
+    progBar.resize(barWidth + 2);
+    auto start = progBar.begin() + 1;
+    auto end   = start + progress * barWidth;
+    std::fill(start, end, '=');
+    std::fill(end, progBar.end(), '_');
+    *end            = '>';
+    progBar.front() = '[';
+    progBar.back()  = ']';
+    windowTitle << progBar;
+  }
+
+  glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
 }
