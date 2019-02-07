@@ -288,15 +288,19 @@ extern "C" {
                                                  const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
   /* Ask if all events tracked by an OSPFuture handle have been completed */
-  OSPRAY_INTERFACE int   ospIsReady(OSPFuture);
+  OSPRAY_INTERFACE int ospIsReady(OSPFuture);
 
   /* Wait on a specific event */
-  OSPRAY_INTERFACE void  ospWait(OSPFuture, OSPRenderEvent);
+  OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent);
+
+  /* Cancel the given task (may block calling thread) */
+  OSPRAY_INTERFACE void ospCancel(OSPFuture);
+
+  /* Get the completion state of the given task [0.f-1.f] */
+  OSPRAY_INTERFACE float ospGetCompletion(OSPFuture);
 
   /* Get variance from last rendered frame */
   OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
-
-  // TODO: implement ospCancel(OSPFuture) ???
 
   /*! progress and cancel callback function type
         progress is in (0..1]
@@ -481,9 +485,9 @@ extern "C" {
     [regionCoords...regionCoord+regionSize].
   */
   OSPRAY_INTERFACE OSPError ospSetRegion(OSPVolume,
-                                    void *source,
-                                    const osp_vec3i regionCoords,
-                                    const osp_vec3i regionSize);
+                                         void *source,
+                                         const osp_vec3i regionCoords,
+                                         const osp_vec3i regionSize);
 
   /*! \brief (deprecated, use ospRelease instead) free a framebuffer */
   OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);

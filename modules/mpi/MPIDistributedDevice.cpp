@@ -426,6 +426,16 @@ namespace ospray {
       task->wait();
     }
 
+    void MPIDistributedDevice::cancel(OSPFuture)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    float MPIDistributedDevice::getCompletion(OSPFuture)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
     {
       FrameBuffer *fb = (FrameBuffer *)_fb;

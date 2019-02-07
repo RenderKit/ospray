@@ -198,6 +198,10 @@ namespace ospray {
 
       void wait(OSPFuture, OSPSyncEvent) override;
 
+      void cancel(OSPFuture) override;
+
+      float getCompletion(OSPFuture) override;
+
       float getVariance(OSPFrameBuffer) override;
 
       /*! load module */

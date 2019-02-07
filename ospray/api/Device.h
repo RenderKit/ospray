@@ -182,6 +182,10 @@ namespace ospray {
 
       virtual void wait(OSPFuture, OSPSyncEvent) = 0;
 
+      virtual void cancel(OSPFuture) = 0;
+
+      virtual float getCompletion(OSPFuture) = 0;
+
       virtual float getVariance(OSPFrameBuffer) = 0;
 
       //! release (i.e., reduce refcount of) given object

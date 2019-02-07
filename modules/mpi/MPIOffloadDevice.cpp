@@ -847,6 +847,16 @@ namespace ospray {
       task->wait();
     }
 
+    void MPIOffloadDevice::cancel(OSPFuture)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    float MPIOffloadDevice::getCompletion(OSPFuture)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
     {
       FrameBuffer *fb = (FrameBuffer *)_fb;

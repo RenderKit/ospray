@@ -673,6 +673,22 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospCancel(OSPFuture f)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  return currentDevice().cancel(f);
+}
+OSPRAY_CATCH_END()
+
+extern "C" float ospGetCompletion(OSPFuture f)
+OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  return currentDevice().getCompletion(f);
+}
+OSPRAY_CATCH_END(1.f)
+
 extern "C" float ospGetVariance(OSPFrameBuffer f)
 OSPRAY_CATCH_BEGIN
 {

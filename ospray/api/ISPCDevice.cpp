@@ -428,6 +428,16 @@ namespace ospray {
       }
     }
 
+    void ISPCDevice::cancel(OSPFuture)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    float ISPCDevice::getCompletion(OSPFuture)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     float ISPCDevice::getVariance(OSPFrameBuffer _fb)
     {
       FrameBuffer *fb = (FrameBuffer *)_fb;

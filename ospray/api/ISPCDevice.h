@@ -193,15 +193,21 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
       float renderFrame(OSPFrameBuffer _sc,
-                               OSPRenderer _renderer,
-                               const uint32 fbChannelFlags) override;
+                        OSPRenderer _renderer,
+                        const uint32 fbChannelFlags) override;
 
       OSPFuture renderFrameAsync(OSPFrameBuffer _sc,
                                  OSPRenderer _renderer,
                                  const uint32 fbChannelFlags) override;
 
       int isReady(OSPFuture) override;
+
       void wait(OSPFuture, OSPSyncEvent) override;
+
+      void cancel(OSPFuture) override;
+
+      float getCompletion(OSPFuture) override;
+
       float getVariance(OSPFuture) override;
 
       //! release (i.e., reduce refcount of) given object
