@@ -32,7 +32,7 @@ namespace ospray {
     bool isFinished() override;
     void wait(OSPSyncEvent event) override;
     void cancel() override;
-    float getCompletion() override;
+    float getProgress() override;
 
    private:
     Ref<FrameBuffer> fb;
@@ -60,13 +60,12 @@ namespace ospray {
 
   inline void RenderTask::cancel()
   {
-    // TODO
+    fb->cancelFrame();
   }
 
-  inline float RenderTask::getCompletion()
+  inline float RenderTask::getProgress()
   {
-    // TODO: query actual completion
-    return finished() ? 1.f : 0.f;
+    return fb->getCurrentProgress();
   }
 
 }  // namespace ospray

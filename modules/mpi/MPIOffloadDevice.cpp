@@ -845,14 +845,16 @@ namespace ospray {
       task->wait(event);
     }
 
-    void MPIOffloadDevice::cancel(OSPFuture)
+    void MPIOffloadDevice::cancel(OSPFuture _task)
     {
-      NOT_IMPLEMENTED;
+      auto *task = (QueryableTask *)_task;
+      return task->cancel();
     }
 
-    float MPIOffloadDevice::getCompletion(OSPFuture)
+    float MPIOffloadDevice::getProgress(OSPFuture _task)
     {
-      NOT_IMPLEMENTED;
+      auto *task = (QueryableTask *)_task;
+      return task->getProgress();
     }
 
     float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)

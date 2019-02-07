@@ -29,7 +29,7 @@ namespace ospray {
     virtual bool isFinished()       = 0;
     virtual void wait(OSPSyncEvent) = 0;
     virtual void cancel()           = 0;
-    virtual float getCompletion()   = 0;
+    virtual float getProgress()     = 0;
   };
 
 }  // namespace ospray

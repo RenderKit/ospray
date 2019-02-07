@@ -200,7 +200,7 @@ namespace ospray {
 
       void cancel(OSPFuture) override;
 
-      float getCompletion(OSPFuture) override;
+      float getProgress(OSPFuture) override;
 
       float getVariance(OSPFrameBuffer) override;
 

@@ -73,9 +73,14 @@ namespace ospray {
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const override;
 
+    void setCompletedEvent(OSPSyncEvent event);
     void waitForEvent(OSPSyncEvent event) const;
 
-    void setCompletedEvent(OSPSyncEvent event);
+    void reportProgress(float newValue);
+    float getCurrentProgress();
+
+    void cancelFrame();
+    bool frameCancelled() const;
 
    protected:
     const vec2i size;
@@ -100,6 +105,9 @@ namespace ospray {
     int32 frameID;
 
     float frameVariance{0.f};
+
+    std::atomic<float> frameProgress{1.f};
+    std::atomic<bool>  cancelRender{false};
 
     std::atomic<OSPSyncEvent> stagesCompleted {OSP_FRAME_FINISHED};
 

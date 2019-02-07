@@ -25,24 +25,15 @@
 namespace ospcommon {
   namespace tasking {
 
-    struct BaseTask
-    {
-      virtual ~BaseTask() = default;
-
-      virtual bool finished() const = 0;
-      virtual bool valid() const    = 0;
-      virtual void wait() const     = 0;
-    };
-
     template <typename T>
-    struct AsyncTask : public BaseTask
+    struct AsyncTask
     {
       AsyncTask(std::function<T()> fcn);
-      virtual ~AsyncTask() override;
+      virtual ~AsyncTask();
 
-      bool finished() const override;
-      bool valid() const override;
-      void wait() const override;
+      bool finished() const;
+      bool valid() const;
+      void wait() const;
 
       T get();
 

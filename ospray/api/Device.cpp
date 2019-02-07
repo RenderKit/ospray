@@ -163,23 +163,6 @@ namespace ospray {
       return *Device::current;
     }
 
-    bool Device::reportProgress(const float progress)
-    {
-      if (!progressCallback)
-        return true;
-
-      bool cont = true;
-
-      // user callback may not be thread safe
-      // if one update is currently in progress (no pun intended) we do not
-      // need to wait/block, but just skip it.
-      if (progressMutex.try_lock()) {
-        cont = progressCallback(progressUserPtr, progress);
-        progressMutex.unlock();
-      }
-      return cont;
-    }
-
     std::string generateEmbreeDeviceCfg(const Device &device)
     {
       std::stringstream embreeConfig;

@@ -231,27 +231,24 @@ namespace ospray {
     SCOPED_LOCK(numTilesMutex);
     numTilesCompletedThisFrame += numTiles;
 
-    if (reportRenderingProgress) {
-      renderingProgressTiles += numTiles;
+    renderingProgressTiles += numTiles;
 
-      auto now = std::chrono::high_resolution_clock::now();
-      auto timeSinceUpdate = duration_cast<milliseconds>(now - lastProgressReport);
-      if (timeSinceUpdate.count() >= 1000) {
-        auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
-        ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
-        msgData->command = PROGRESS_MESSAGE;
-        msgData->numCompleted = renderingProgressTiles;
-        msgData->frameID = frameID;
-        mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
+    auto now = std::chrono::high_resolution_clock::now();
+    auto timeSinceUpdate = duration_cast<milliseconds>(now - lastProgressReport);
+    if (timeSinceUpdate.count() >= 1000) {
+      auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
+      ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
+      msgData->command = PROGRESS_MESSAGE;
+      msgData->numCompleted = renderingProgressTiles;
+      msgData->frameID = frameID;
+      mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
 
-        renderingProgressTiles = 0;
-        lastProgressReport = now;
-      }
+      renderingProgressTiles = 0;
+      lastProgressReport = now;
     }
 
     if (mpicommon::IamAWorker()
-        || (mpicommon::IamTheMaster() && masterIsAWorker))
-    {
+        || (mpicommon::IamTheMaster() && masterIsAWorker)) {
       return numTilesCompletedThisFrame == myTiles.size();
     }
     // Note: This test is not actually going to ever be true on the master,
@@ -371,16 +368,12 @@ namespace ospray {
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
 
     // Report that we're 100% done and do a final check for cancellation
-    if (reportRenderingProgress && !api::currentDevice().reportProgress(1.0)) {
-      cancelRendering = true;
-    }
+    reportProgress(1.0f);
 
-    if (reportRenderingProgress) {
-      int renderingCancelled = cancelRendering.load();
-      MPI_CALL(Bcast(&renderingCancelled, 1, MPI_INT, masterRank(), world.comm));
-      if (renderingCancelled) {
-        return;
-      }
+    int renderingCancelled = frameCancelled();
+    MPI_CALL(Bcast(&renderingCancelled, 1, MPI_INT, masterRank(), world.comm));
+    if (renderingCancelled) {
+      return;
     }
 
     if (colorBufferFormat != OSP_FB_NONE) {
@@ -531,7 +524,8 @@ namespace ospray {
   {
     globalTilesCompletedThisFrame += msg->numCompleted;
     const float progress = globalTilesCompletedThisFrame / (float)getTotalTiles();
-    if (reportRenderingProgress && !api::currentDevice().reportProgress(progress)) {
+    reportProgress(progress);
+    if (frameCancelled()) {
       sendCancelRenderingMessage();
     }
   }
@@ -791,7 +785,7 @@ namespace ospray {
     // frame. It would actually be delayed and sent the following frame.
     // Instead, the best we can do without a threaded MPI at this point
     // is to just cancel the final gathering stage.
-    cancelRendering = true;
+    cancelFrame();
     /*
     std::cout << "SENDING CANCEL RENDERING MSG\n";
     PING;
@@ -901,15 +895,6 @@ namespace ospray {
   float DFB::tileError(const vec2i &tile)
   {
     return tileErrorRegion[tile];
-  }
-
-  void DFB::beginFrame()
-  {
-    cancelRendering = false;
-    reportRenderingProgress = api::currentDevice().hasProgressCallback();
-    MPI_CALL(Bcast(&reportRenderingProgress, 1, MPI_INT,
-                   mpicommon::masterRank(), mpicommon::world.comm));
-    FrameBuffer::beginFrame();
   }
 
   void DFB::endFrame(const float errorThreshold)

@@ -68,8 +68,7 @@ namespace ospray {
 
       fb->setTile(tile);
 
-      if (!api::currentDevice().reportProgress(pixelsDone*rcpPixels))
-        cancel = true;
+      fb->reportProgress(pixelsDone*rcpPixels);
     });
 
     fb->setCompletedEvent(OSP_WORLD_RENDERED);
@@ -77,8 +76,10 @@ namespace ospray {
     renderer->endFrame(perFrameData,channelFlags);
 
     fb->endFrame(renderer->errorThreshold);
-
     fb->setCompletedEvent(OSP_FRAME_FINISHED);
+
+    if (fb->frameCancelled())
+      cancel = true;
 
     return fb->getVariance();
   }

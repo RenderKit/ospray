@@ -64,6 +64,7 @@ namespace ospray {
 
   void FrameBuffer::beginFrame()
   {
+    cancelRender = false;
     frameID++;
     ispc::FrameBuffer_set_frameID(getIE(), frameID);
   }
@@ -73,15 +74,35 @@ namespace ospray {
     return "ospray::FrameBuffer";
   }
 
+  void FrameBuffer::setCompletedEvent(OSPSyncEvent event)
+  {
+    stagesCompleted = event;
+  }
+
   void FrameBuffer::waitForEvent(OSPSyncEvent event) const
   {
     // TODO: condition variable to sleep calling thread instead of spinning?
     while (stagesCompleted < event);
   }
 
-  void FrameBuffer::setCompletedEvent(OSPSyncEvent event)
+  void FrameBuffer::reportProgress(float newValue)
   {
-    stagesCompleted = event;
+    frameProgress = ospcommon::clamp(newValue, 0.f, 1.f);
+  }
+
+  float FrameBuffer::getCurrentProgress()
+  {
+    return frameProgress;
+  }
+
+  void FrameBuffer::cancelFrame()
+  {
+    cancelRender = true;
+  }
+
+  bool FrameBuffer::frameCancelled() const
+  {
+    return cancelRender;
   }
 
 } // ::ospray

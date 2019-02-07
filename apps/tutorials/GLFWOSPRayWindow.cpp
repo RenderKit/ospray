@@ -299,8 +299,18 @@ void GLFWOSPRayWindow::display()
     displayCallback(this);
   }
 
-  static bool firstFrame = true;
+  static float latestFPS = 0.f;
 
+  std::stringstream windowTitle;
+  windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
+  if (latestFPS < 1.f) {
+    float progress = ospGetProgress(currentFrame);
+    windowTitle << " | " << progress * 100;
+  }
+
+  glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
+
+  static bool firstFrame = true;
   if (firstFrame || ospIsReady(currentFrame)) {
     // display frame rate in window title
     auto displayEnd = std::chrono::high_resolution_clock::now();
@@ -308,11 +318,7 @@ void GLFWOSPRayWindow::display()
         std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
                                                               displayStart);
 
-    const float frameRate = 1000.f / float(durationMilliseconds.count());
-
-    std::stringstream windowTitle;
-    windowTitle << "OSPRay: " << std::setprecision(3) << frameRate << " fps";
-    glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
+    latestFPS = 1000.f / float(durationMilliseconds.count());
 
     // map OSPRay frame buffer, update OpenGL texture with its contents, then
     // unmap

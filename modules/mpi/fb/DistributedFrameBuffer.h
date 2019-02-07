@@ -80,7 +80,6 @@ namespace ospray {
 
     int32 accumID(const vec2i &) override;
     float tileError(const vec2i &tile) override;
-    void  beginFrame() override;
     void endFrame(const float errorThreshold) override;
 
     enum FrameMode { WRITE_MULTIPLE, ALPHA_BLEND, Z_COMPOSITE };
@@ -104,9 +103,6 @@ namespace ospray {
     void processMessage(WriteTileMessage *msg);
 
     size_t ownerIDFromTileID(size_t tileID) const;
-
-    // signal the workers whether to cancel
-    bool continueRendering() const { return !cancelRendering; }
 
     void reportTimings(std::ostream &os);
 
@@ -242,12 +238,8 @@ namespace ospray {
         frame */
     bool frameIsDone;
 
-    //! whether or not the frame has been cancelled
-    std::atomic<bool> cancelRendering;
-
     bool masterIsAWorker {false};
 
-    int reportRenderingProgress;
     int renderingProgressTiles;
     std::chrono::high_resolution_clock::time_point lastProgressReport;
 

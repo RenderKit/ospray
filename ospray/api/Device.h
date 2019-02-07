@@ -184,7 +184,7 @@ namespace ospray {
 
       virtual void cancel(OSPFuture) = 0;
 
-      virtual float getCompletion(OSPFuture) = 0;
+      virtual float getProgress(OSPFuture) = 0;
 
       virtual float getVariance(OSPFrameBuffer) = 0;
 
@@ -232,8 +232,6 @@ namespace ospray {
       virtual void commit();
       bool isCommitted();
 
-      bool hasProgressCallback() { return progressCallback != nullptr; }
-
       // Public Data //
 
       int numThreads {-1};
@@ -262,15 +260,6 @@ namespace ospray {
 
       OSPError    lastErrorCode = OSP_NO_ERROR;
       std::string lastErrorMsg  = "no error";// no braced initializer for MSVC12
-
-      /* TODO
-      std::function<int(void*, const float)>
-      progress_fcn { [](void*, const float){ return 1; } };*/
-      OSPProgressFunc progressCallback {nullptr};
-      void *progressUserPtr;
-      std::mutex progressMutex; // protect user callback function
-
-      bool reportProgress(const float);
 
     private:
 

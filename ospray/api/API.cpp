@@ -681,11 +681,11 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" float ospGetCompletion(OSPFuture f)
+extern "C" float ospGetProgress(OSPFuture f)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().getCompletion(f);
+  return currentDevice().getProgress(f);
 }
 OSPRAY_CATCH_END(1.f)
 
@@ -785,15 +785,6 @@ OSPRAY_CATCH_BEGIN
   return device->lastErrorMsg.c_str();
 }
 OSPRAY_CATCH_END(nullptr)
-
-extern "C" void ospSetProgressFunc(OSPProgressFunc callback, void* userPtr)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().progressCallback = callback;
-  currentDevice().progressUserPtr = userPtr;
-}
-OSPRAY_CATCH_END()
 
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
 OSPRAY_CATCH_BEGIN

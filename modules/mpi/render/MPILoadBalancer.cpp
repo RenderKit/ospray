@@ -173,7 +173,7 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fbSize, accumID);
 #endif
 
-          if (dfb->continueRendering()) {
+          if (!dfb->frameCancelled()) {
             tasking::parallel_for(
                 numJobs(renderer->spp, accumID), [&](size_t tid) {
                   renderer->renderTile(perFrameData, tile, tid);
@@ -452,7 +452,7 @@ namespace ospray {
           ;  // PRINT(frameActive); // XXX busy wait for valid perFrameData
 
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
-        if (dfb->continueRendering()) {
+        if (!dfb->frameCancelled()) {
           tasking::parallel_for(numJobs(renderer->spp, task.accumId),
                                 [&](size_t tid) {
                                   renderer->renderTile(perFrameData, tile, tid);

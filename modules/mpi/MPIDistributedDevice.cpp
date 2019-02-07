@@ -424,14 +424,16 @@ namespace ospray {
       task->wait(event);
     }
 
-    void MPIDistributedDevice::cancel(OSPFuture)
+    void MPIDistributedDevice::cancel(OSPFuture _task)
     {
-      NOT_IMPLEMENTED;
+      auto *task = (QueryableTask *)_task;
+      return task->cancel();
     }
 
-    float MPIDistributedDevice::getCompletion(OSPFuture)
+    float MPIDistributedDevice::getProgress(OSPFuture _task)
     {
-      NOT_IMPLEMENTED;
+      auto *task = (QueryableTask *)_task;
+      return task->getProgress();
     }
 
     float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)

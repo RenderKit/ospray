@@ -297,19 +297,10 @@ extern "C" {
   OSPRAY_INTERFACE void ospCancel(OSPFuture);
 
   /* Get the completion state of the given task [0.f-1.f] */
-  OSPRAY_INTERFACE float ospGetCompletion(OSPFuture);
+  OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
 
   /* Get variance from last rendered frame */
   OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
-
-  /*! progress and cancel callback function type
-        progress is in (0..1]
-        returned "bool" value != 0 indicates ospRenderFrame should continue rendering
-  */
-  typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
-
-  /*! set callback for given Device to call when an error occurs*/
-  OSPRAY_INTERFACE void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
 
   //! create a new renderer of given type
   /*! return 'NULL' if that type is not known */
