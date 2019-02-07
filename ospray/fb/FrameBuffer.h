@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <atomic>
 // ospray
 #include "common/Managed.h"
 #include "fb/PixelOp.h"
@@ -72,6 +73,10 @@ namespace ospray {
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const override;
 
+    void waitForEvent(OSPRenderEvent event) const;
+
+    void setCompletedEvent(OSPRenderEvent event);
+
    protected:
     const vec2i size;
     vec2i numTiles;
@@ -95,6 +100,8 @@ namespace ospray {
     int32 frameID;
 
     float frameVariance{0.f};
+
+    std::atomic<OSPRenderEvent> stagesCompleted {OSP_FRAME_FINISHED};
 
    public: // TODO: make this private!
     Ref<PixelOp::Instance> pixelOp;

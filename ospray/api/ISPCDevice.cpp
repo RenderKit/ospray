@@ -402,6 +402,8 @@ namespace ospray {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
 
+      fb->setCompletedEvent(OSP_NONE_FINISHED);
+
       auto *f = new RenderTask(
           fb, [=]() { return renderer->renderFrame(fb, fbChannelFlags); });
 
@@ -414,12 +416,16 @@ namespace ospray {
       return task->isFinished();
     }
 
-    void ISPCDevice::wait(OSPFuture _task, OSPEventType)
+    void ISPCDevice::wait(OSPFuture _task, OSPRenderEvent event)
     {
-      // TODO: wait on only the specific event passed to this function
-
       auto *task = (RenderTask *)_task;
-      task->wait();
+
+      if (event == OSP_FRAME_FINISHED)
+        task->wait();
+      else {
+        const auto &fb = task->getFrameBuffer();
+        fb.waitForEvent(event);
+      }
     }
 
     float ISPCDevice::getVariance(OSPFrameBuffer _fb)

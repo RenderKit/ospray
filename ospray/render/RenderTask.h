@@ -28,10 +28,10 @@ namespace ospray {
     RenderTask(FrameBuffer *, std::function<float()> fcn);
     ~RenderTask() override = default;
 
-    FrameBuffer &getFrameBuffer() const;
+    FrameBuffer &getFrameBuffer();
 
    private:
-    FrameBuffer *fb{nullptr};
+    Ref<FrameBuffer> fb;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
@@ -41,7 +41,7 @@ namespace ospray {
   {
   }
 
-  inline FrameBuffer &RenderTask::getFrameBuffer() const
+  inline FrameBuffer &RenderTask::getFrameBuffer()
   {
     return *fb;
   }

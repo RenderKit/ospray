@@ -839,7 +839,7 @@ namespace ospray {
       return task->isFinished();
     }
 
-    void MPIOffloadDevice::wait(OSPFuture _task, OSPEventType)
+    void MPIOffloadDevice::wait(OSPFuture _task, OSPRenderEvent)
     {
       // TODO: wait on only the specific event passed to this function
 

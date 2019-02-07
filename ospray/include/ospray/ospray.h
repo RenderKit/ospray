@@ -122,10 +122,11 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_WORLD_RENDERERED=(1<<0),
-  OSP_WORLD_COMMITTED=(2<<0),
-  OSP_FRAME_FINISHED=(3<<0)
-} OSPEventType;
+  OSP_NONE_FINISHED=(1<<0),
+  OSP_WORLD_RENDERED=(1<<1),
+  OSP_WORLD_COMMITTED=(1<<2),
+  OSP_FRAME_FINISHED=(1<<3)
+} OSPRenderEvent;
 
 #ifdef __cplusplus
 /* C++ DOES support default initializers */
@@ -289,7 +290,7 @@ extern "C" {
   OSPRAY_INTERFACE int   ospIsReady(OSPFuture);
 
   /* Wait on a specific event */
-  OSPRAY_INTERFACE void  ospWait(OSPFuture, OSPEventType);
+  OSPRAY_INTERFACE void  ospWait(OSPFuture, OSPRenderEvent);
 
   /* Get variance from last rendered frame */
   OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);

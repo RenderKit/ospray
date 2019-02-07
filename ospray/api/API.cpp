@@ -663,10 +663,12 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(1)
 
-extern "C" void ospWait(OSPFuture f, OSPEventType et)
+extern "C" void ospWait(OSPFuture f, OSPRenderEvent et)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
+  if (et == OSP_NONE_FINISHED)
+    return;
   currentDevice().wait(f, et);
 }
 OSPRAY_CATCH_END()

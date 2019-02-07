@@ -72,9 +72,14 @@ namespace ospray {
         cancel = true;
     });
 
+    fb->setCompletedEvent(OSP_WORLD_RENDERED);
+
     renderer->endFrame(perFrameData,channelFlags);
 
     fb->endFrame(renderer->errorThreshold);
+
+    fb->setCompletedEvent(OSP_FRAME_FINISHED);
+
     return fb->getVariance();
   }
 

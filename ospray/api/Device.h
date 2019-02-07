@@ -180,7 +180,7 @@ namespace ospray {
 
       virtual int isReady(OSPFuture) = 0;
 
-      virtual void wait(OSPFuture, OSPEventType) = 0;
+      virtual void wait(OSPFuture, OSPRenderEvent) = 0;
 
       virtual float getVariance(OSPFrameBuffer) = 0;
 

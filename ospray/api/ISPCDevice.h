@@ -201,7 +201,7 @@ namespace ospray {
                                  const uint32 fbChannelFlags) override;
 
       int isReady(OSPFuture) override;
-      void wait(OSPFuture, OSPEventType) override;
+      void wait(OSPFuture, OSPRenderEvent) override;
       float getVariance(OSPFuture) override;
 
       //! release (i.e., reduce refcount of) given object

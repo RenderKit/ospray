@@ -196,7 +196,7 @@ namespace ospray {
 
       int isReady(OSPFuture) override;
 
-      void wait(OSPFuture, OSPEventType) override;
+      void wait(OSPFuture, OSPRenderEvent) override;
 
       float getVariance(OSPFrameBuffer) override;
 
