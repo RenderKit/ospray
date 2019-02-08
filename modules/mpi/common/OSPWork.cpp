@@ -28,6 +28,8 @@
 #include "geometry/TriangleMesh.h"
 #include "texture/Texture.h"
 
+#include "SynchronousRenderTask.h"
+
 namespace ospray {
   namespace mpi {
     namespace work {
@@ -50,6 +52,7 @@ namespace ospray {
 
         registerWorkUnit<NewData>(registry);
         registerWorkUnit<NewTexture>(registry);
+        registerWorkUnit<NewFuture>(registry);
 
         registerWorkUnit<CommitObject>(registry);
         registerWorkUnit<CommandRelease>(registry);
@@ -400,6 +403,25 @@ namespace ospray {
         format = (OSPDataType)fmt;
       }
 
+      // newFuture ////////////////////////////////////////////////////////////
+
+      NewFuture::NewFuture(OSPFrameBuffer fbHandle, ObjectHandle handle)
+        : fbHandle((ObjectHandle&)fbHandle), handle(handle) {}
+
+      void NewFuture::run()
+      {
+        auto *f = new SynchronousRenderTask((FrameBuffer*)fbHandle.lookup());
+        handle.assign(f);
+      }
+
+      void NewFuture::runOnMaster() { run(); }
+
+      void NewFuture::serialize(WriteStream &b) const
+      { b << (int64)fbHandle << (int64)handle; }
+
+      void NewFuture::deserialize(ReadStream &b)
+      { b >> fbHandle.i64 >> handle.i64; }
+
       // ospSetRegion /////////////////////////////////////////////////////////
 
       SetRegion::SetRegion(OSPVolume volume, vec3i start, vec3i size,
@@ -642,7 +664,7 @@ namespace ospray {
       void CommandRelease::runOnMaster()
       {
         // master only create some type of objects
-        if( handle.defined())
+        if (handle.defined())
           handle.freeObject();
       }
 

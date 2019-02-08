@@ -273,6 +273,22 @@ namespace ospray {
         int32 flags;
       };
 
+      struct NewFuture : public Work
+      {
+        NewFuture() = default;
+        NewFuture(OSPFrameBuffer fbHandle, ObjectHandle handle);
+
+        void run() override;
+
+        void runOnMaster() override;
+
+        void serialize(WriteStream &b) const override;
+
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle fbHandle, handle;
+      };
+
       struct SetRegion : public Work
       {
         SetRegion() = default;

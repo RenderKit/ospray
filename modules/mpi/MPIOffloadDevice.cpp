@@ -833,32 +833,38 @@ namespace ospray {
     {
       work::RenderFrame work(_fb, _renderer, fbFlags);
       processWork(work, true);
-      auto fbHandle = (ObjectHandle&)_fb;
-      auto *f       = new SynchronousRenderTask((FrameBuffer*)fbHandle.lookup());
-      return (OSPFuture)f;
+
+      ObjectHandle futureHandle = allocateHandle();
+      work::NewFuture future(_fb, futureHandle);
+      processWork(future, true);
+      return (OSPFuture)(int64)futureHandle;
     }
 
     int MPIOffloadDevice::isReady(OSPFuture _task)
     {
-      auto *task = (QueryableTask *)_task;
+      auto handle = (ObjectHandle&)_task;
+      auto *task = (QueryableTask *)handle.lookup();
       return task->isFinished();
     }
 
     void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
-      auto *task = (QueryableTask *)_task;
+      auto handle = (ObjectHandle&)_task;
+      auto *task = (QueryableTask *)handle.lookup();
       task->wait(event);
     }
 
     void MPIOffloadDevice::cancel(OSPFuture _task)
     {
-      auto *task = (QueryableTask *)_task;
+      auto handle = (ObjectHandle&)_task;
+      auto *task = (QueryableTask *)handle.lookup();
       return task->cancel();
     }
 
     float MPIOffloadDevice::getProgress(OSPFuture _task)
     {
-      auto *task = (QueryableTask *)_task;
+      auto handle = (ObjectHandle&)_task;
+      auto *task = (QueryableTask *)handle.lookup();
       return task->getProgress();
     }
 
