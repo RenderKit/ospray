@@ -395,12 +395,12 @@ namespace ospray {
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
                                             OSPRenderer _renderer,
-                                            const uint32 fbChannelFlags)
+                                            const uint32 fbFlags)
     {
       mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
       auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-      auto result    = renderer.renderFrame(&fb, fbChannelFlags);
+      auto result    = renderer.renderFrame(&fb, fbFlags);
       mpicommon::world.barrier();
       return result;
     }
@@ -409,10 +409,13 @@ namespace ospray {
                                                      OSPRenderer _renderer,
                                                      const uint32 fbFlags)
     {
-      renderFrame(_fb, _renderer, fbFlags);
+      mpicommon::world.barrier();
+      auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
+      auto &renderer = lookupDistributedObject<Renderer>(_renderer);
+      renderer.renderFrame(&fb, fbFlags);
+      mpicommon::world.barrier();
 
-      auto *fb = reinterpret_cast<FrameBuffer*>(_fb);
-      auto *f  = new SynchronousRenderTask(fb);
+      auto *f  = new SynchronousRenderTask(&fb);
       return (OSPFuture)f;
     }
 
@@ -442,8 +445,8 @@ namespace ospray {
 
     float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
     {
-      FrameBuffer *fb = (FrameBuffer *)_fb;
-      return fb->getVariance();
+      auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
+      return fb.getVariance();
     }
 
     void MPIDistributedDevice::release(OSPObject _obj)

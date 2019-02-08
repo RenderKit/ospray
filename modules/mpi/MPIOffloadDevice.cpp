@@ -820,9 +820,9 @@ namespace ospray {
     /*! call a renderer to render a frame buffer */
     float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
                                         OSPRenderer _renderer,
-                                        const uint32 fbChannelFlags)
+                                        const uint32 fbFlags)
     {
-      work::RenderFrame work(_fb, _renderer, fbChannelFlags);
+      work::RenderFrame work(_fb, _renderer, fbFlags);
       processWork(work, true);
       return work.varianceResult;
     }
@@ -831,10 +831,10 @@ namespace ospray {
                                                  OSPRenderer _renderer,
                                                  const uint32 fbFlags)
     {
-      renderFrame(_fb, _renderer, fbFlags);
-
-      auto *fb = reinterpret_cast<FrameBuffer*>(_fb);
-      auto *f  = new SynchronousRenderTask(fb);
+      work::RenderFrame work(_fb, _renderer, fbFlags);
+      processWork(work, true);
+      auto fbHandle = (ObjectHandle&)_fb;
+      auto *f       = new SynchronousRenderTask((FrameBuffer*)fbHandle.lookup());
       return (OSPFuture)f;
     }
 
@@ -864,7 +864,8 @@ namespace ospray {
 
     float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
     {
-      FrameBuffer *fb = (FrameBuffer *)_fb;
+      auto fbHandle = (ObjectHandle&)_fb;
+      auto *fb      = (FrameBuffer*)fbHandle.lookup();
       return fb->getVariance();
     }
 
