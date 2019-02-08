@@ -26,7 +26,6 @@
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/FileName.h"
 #include "geometry/TriangleMesh.h"
-#include "render/RenderTask.h"
 #include "render/Renderer.h"
 #include "camera/Camera.h"
 #include "volume/Volume.h"
@@ -36,6 +35,8 @@
 #include "ospcommon/networking/BufferedDataStreaming.h"
 #include "ospcommon/networking/Socket.h"
 #include "ospcommon/utility/getEnvVar.h"
+
+#include "common/SynchronousRenderTask.h"
 
 // std
 #ifndef _WIN32
@@ -826,11 +827,15 @@ namespace ospray {
       return work.varianceResult;
     }
 
-    OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer,
-                                                 OSPRenderer,
-                                                 const uint32)
+    OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer _fb,
+                                                 OSPRenderer _renderer,
+                                                 const uint32 fbFlags)
     {
-      NOT_IMPLEMENTED;
+      renderFrame(_fb, _renderer, fbFlags);
+
+      auto *fb = reinterpret_cast<FrameBuffer*>(_fb);
+      auto *f  = new SynchronousRenderTask(fb);
+      return (OSPFuture)f;
     }
 
     int MPIOffloadDevice::isReady(OSPFuture _task)

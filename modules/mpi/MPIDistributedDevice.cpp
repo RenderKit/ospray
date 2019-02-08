@@ -20,7 +20,6 @@
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "lights/Light.h"
-#include "render/RenderTask.h"
 #include "transferFunction/TransferFunction.h"
 #include "api/ISPCDevice.h"
 // ospcommon
@@ -30,6 +29,7 @@
 #include "mpiCommon/MPICommon.h"
 // ospray_mpi
 #include "mpi/MPIDistributedDevice.h"
+#include "mpi/common/SynchronousRenderTask.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 
@@ -405,11 +405,15 @@ namespace ospray {
       return result;
     }
 
-    OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer,
-                                                     OSPRenderer,
-                                                     const uint32)
+    OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer _fb,
+                                                     OSPRenderer _renderer,
+                                                     const uint32 fbFlags)
     {
-      NOT_IMPLEMENTED;
+      renderFrame(_fb, _renderer, fbFlags);
+
+      auto *fb = reinterpret_cast<FrameBuffer*>(_fb);
+      auto *f  = new SynchronousRenderTask(fb);
+      return (OSPFuture)f;
     }
 
     int MPIDistributedDevice::isReady(OSPFuture _task)
