@@ -35,11 +35,9 @@
 // stl
 #include <algorithm>
 
-extern "C" {
-RTCDevice ispc_embreeDevice()
+extern "C" RTCDevice ispc_embreeDevice()
 {
   return ospray::api::ISPCDevice::embreeDevice;
-}
 }
 
 namespace ospray {
@@ -107,7 +105,6 @@ namespace ospray {
       fb->clear(fbChannelFlags);
     }
 
-    /*! map frame buffer */
     const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,
                                            OSPFrameBufferChannel channel)
     {
@@ -115,27 +112,23 @@ namespace ospray {
       return fb->mapBuffer(channel);
     }
 
-    /*! unmap previously mapped frame buffer */
     void ISPCDevice::frameBufferUnmap(const void *mapped, OSPFrameBuffer _fb)
     {
       FrameBuffer *fb = (FrameBuffer *)_fb;
       fb->unmap(mapped);
     }
 
-    /*! create a new model */
     OSPModel ISPCDevice::newModel()
     {
       return (OSPModel) new Model;
     }
 
-    /*! finalize a newly specified model */
     void ISPCDevice::commit(OSPObject _object)
     {
       ManagedObject *object = (ManagedObject *)_object;
       object->commit();
     }
 
-    /*! add a new geometry to a model */
     void ISPCDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model       = (Model *)_model;
@@ -158,7 +151,6 @@ namespace ospray {
       }
     }
 
-    /*! add a new volume to a model */
     void ISPCDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
       Model *model   = (Model *)_model;
@@ -181,7 +173,6 @@ namespace ospray {
       }
     }
 
-    /*! create a new data buffer */
     OSPData ISPCDevice::newData(size_t nitems,
                                 OSPDataType format,
                                 const void *init,
@@ -191,7 +182,6 @@ namespace ospray {
       return (OSPData)data;
     }
 
-    /*! assign (named) string parameter to an object */
     void ISPCDevice::setString(OSPObject _object,
                                const char *bufName,
                                const char *s)
@@ -200,7 +190,6 @@ namespace ospray {
       object->setParam<std::string>(bufName, s);
     }
 
-    /*! assign (named) string parameter to an object */
     void ISPCDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
     {
       ManagedObject *object = (ManagedObject *)_object;
@@ -210,7 +199,6 @@ namespace ospray {
     void ISPCDevice::removeParam(OSPObject _object, const char *name)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      // ManagedObjects have to be decref before removing them
       ManagedObject *existing =
           object->getParam<ManagedObject *>(name, nullptr);
       if (existing)
@@ -218,14 +206,12 @@ namespace ospray {
       object->removeParam(name);
     }
 
-    /*! assign (named) int parameter to an object */
     void ISPCDevice::setInt(OSPObject _object, const char *bufName, const int f)
     {
       ManagedObject *object = (ManagedObject *)_object;
       object->setParam(bufName, f);
     }
 
-    /*! assign (named) float parameter to an object */
     void ISPCDevice::setBool(OSPObject _object,
                              const char *bufName,
                              const bool b)
@@ -234,7 +220,6 @@ namespace ospray {
       object->setParam(bufName, b);
     }
 
-    /*! assign (named) float parameter to an object */
     void ISPCDevice::setFloat(OSPObject _object,
                               const char *bufName,
                               const float f)
@@ -243,7 +228,6 @@ namespace ospray {
       object->setParam(bufName, f);
     }
 
-    /*! Copy data into the given volume. */
     int ISPCDevice::setRegion(OSPVolume handle,
                               const void *source,
                               const vec3i &index,
@@ -253,7 +237,6 @@ namespace ospray {
       return volume->setRegion(source, index, count);
     }
 
-    /*! assign (named) vec2f parameter to an object */
     void ISPCDevice::setVec2f(OSPObject _object,
                               const char *bufName,
                               const vec2f &v)
@@ -262,7 +245,6 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
-    /*! assign (named) vec3f parameter to an object */
     void ISPCDevice::setVec3f(OSPObject _object,
                               const char *bufName,
                               const vec3f &v)
@@ -271,7 +253,6 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
-    /*! assign (named) vec3f parameter to an object */
     void ISPCDevice::setVec4f(OSPObject _object,
                               const char *bufName,
                               const vec4f &v)
@@ -280,7 +261,6 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
-    /*! assign (named) vec2f parameter to an object */
     void ISPCDevice::setVec2i(OSPObject _object,
                               const char *bufName,
                               const vec2i &v)
@@ -289,7 +269,6 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
-    /*! assign (named) vec3i parameter to an object */
     void ISPCDevice::setVec3i(OSPObject _object,
                               const char *bufName,
                               const vec3i &v)
@@ -298,7 +277,6 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
-    /*! assign (named) data item as a parameter to an object */
     void ISPCDevice::setObject(OSPObject _target,
                                const char *bufName,
                                OSPObject _value)
@@ -308,13 +286,11 @@ namespace ospray {
       target->setParam(bufName, value);
     }
 
-    /*! create a new pixelOp object (out of list of registered pixelOps) */
     OSPPixelOp ISPCDevice::newPixelOp(const char *type)
     {
       return (OSPPixelOp)PixelOp::createInstance(type);
     }
 
-    /*! set a frame buffer's pixel op object */
     void ISPCDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
       FrameBuffer *fb = (FrameBuffer *)_fb;
@@ -322,13 +298,11 @@ namespace ospray {
       fb->pixelOp     = po->createInstance(fb, fb->pixelOp.ptr);
     }
 
-    /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer ISPCDevice::newRenderer(const char *type)
     {
       return (OSPRenderer)Renderer::createInstance(type);
     }
 
-    /*! create a new geometry object (out of list of registered geometrys) */
     OSPGeometry ISPCDevice::newGeometry(const char *type)
     {
       return (OSPGeometry)Geometry::createInstance(type);
@@ -342,7 +316,6 @@ namespace ospray {
       return newMaterial(name.c_str(), material_type);
     }
 
-    /*! have given renderer create a new material */
     OSPMaterial ISPCDevice::newMaterial(const char *renderer_type,
                                         const char *material_type)
     {
@@ -350,19 +323,16 @@ namespace ospray {
                                                    material_type);
     }
 
-    /*! create a new camera object (out of list of registered cameras) */
     OSPCamera ISPCDevice::newCamera(const char *type)
     {
       return (OSPCamera)Camera::createInstance(type);
     }
 
-    /*! create a new volume object (out of list of registered volumes) */
     OSPVolume ISPCDevice::newVolume(const char *type)
     {
       return (OSPVolume)Volume::createInstance(type);
     }
 
-    /*! create a new volume object (out of list of registered volumes) */
     OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
     {
       return (OSPTransferFunction)TransferFunction::createInstance(type);
@@ -373,19 +343,16 @@ namespace ospray {
       return (OSPLight)Light::createInstance(type);
     }
 
-    /*! create a new Texture object */
     OSPTexture ISPCDevice::newTexture(const char *type)
     {
       return (OSPTexture)Texture::createInstance(type);
     }
 
-    /*! load module */
     int ISPCDevice::loadModule(const char *name)
     {
       return loadLocalModule(name);
     }
 
-    /*! call a renderer to render a frame buffer */
     float ISPCDevice::renderFrame(OSPFrameBuffer _fb,
                                   OSPRenderer _renderer,
                                   const uint32 fbChannelFlags)
@@ -440,16 +407,6 @@ namespace ospray {
       return fb->getVariance();
     }
 
-    //! release (i.e., reduce refcount of) given object
-    /*! Note that all objects in ospray are refcounted, so one cannot
-      explicitly "delete" any object. Instead, each object is created
-      with a refcount of 1, and this refcount will be
-      increased/decreased every time another object refers to this
-      object resp. releases its hold on it; if the refcount is 0 the
-      object will automatically get deleted. For example, you can
-      create a new material, assign it to a geometry, and immediately
-      after this assignation release it; the material will
-      stay 'alive' as long as the given geometry requires it. */
     void ISPCDevice::release(OSPObject _obj)
     {
       if (!_obj)
@@ -458,7 +415,6 @@ namespace ospray {
       obj->refDec();
     }
 
-    //! assign given material to given geometry
     void ISPCDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {
       Geometry *geometry = (Geometry *)_geometry;
