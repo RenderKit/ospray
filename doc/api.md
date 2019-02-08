@@ -2027,6 +2027,14 @@ When selected, `OSP_FB_COLOR` will clear the color buffer to black `(0,
 `OSP_FB_NORMAL`, and `OSP_FB_ALBEDO`, if present) and resets the
 accumulation counter `accumID`.
 
+If `OSP_FB_VARIANCE` is specified, an estimate of the variance of the last
+accumulated frame can be queried with
+
+    float ospGetVariance(OSPFrameBuffer);
+
+Note this value is only updated after synchronizing with `OSP_FRAME_FINISHED`,
+as further described in [asynchronous rendering].
+
 ### Pixel Operation {-}
 
 Pixel operations are functions that are applied to every pixel that
@@ -2051,7 +2059,7 @@ Color Encoding System (ACES). The tone mapper is created by passing the type
 string "`tonemapper`" to `ospNewPixelOp`. The tone mapping curve can be
 customized using the parameters listed in the table below.
 
-  ----- ---------- --------    -----------------------------------------
+  ----- ---------  --------    -----------------------------------------
   Type  Name       Default     Description
   ----- ---------  --------    -----------------------------------------
   float contrast   1.6773      contrast (toe of the curve); typically is
@@ -2090,6 +2098,8 @@ parameters to the values listed in the table below.
 Rendering
 ---------
 
+### Synchronous Rendering
+
 To render a frame into the given framebuffer with the given renderer use
 
     float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
@@ -2107,26 +2117,53 @@ variance of the rendered image, otherwise `inf` is returned. The
 estimated variance can be used by the application as a quality indicator
 and thus to decide whether to stop or to continue progressive rendering.
 
-### Progress and Cancel {-}
+### Asynchronous Rendering
 
-To be informed about the progress of rendering the current frame the
-application can register a callback function of type
+Rendering can also be done asynchronously, with a similar interface to the
+above synchronous version. To start an asynchronous render, use
 
-    typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
+    OSPFuture ospRenderFrameAsync(OSPFrameBuffer,
+                                  OSPRenderer,
+                                  const uint32_t);
 
-via
+This version returns an `OSPFuture` handle, which can be used to
+synchronize with, cancel, or query for progress of the running task.
+When `ospRenderFrameAsync` is called, there is no guarantee when the
+associated task will begin execution.
 
-    void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
+Progress of a running frame can be queried with the following API function
 
-The provided user pointer `userPtr` is passed as first argument to the
-callback function^[That way applications can also register a member
-function of a C++ class together with the `this` pointer as `userPtr`.]
-and the reported progress is in (0–1]. If the callback function returns
-zero than the application requests to cancel rendering, i.e., the current
-`ospRenderFrame` will return at the first opportunity and the content of
-the framebuffer will be undefined. Therefore, better clear the
-framebuffer with `ospFrameBufferClear` then before a subsequent call of
-`ospRenderFrame`.
+    float ospGetProgress(OSPFuture);
 
-Passing `NULL` as `OSPProgressFunc` function pointer disables the
-progress callback.
+This returns the progress of the task in [0-1].
+
+Applications can wait on the result of an asynchronous operation, or choose to
+only synchronize with a specific event. To synchronize with an `OSPFuture` use
+
+    void ospWait(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
+
+The following are values which can be synchronized with the application
+
+  Name                 Description
+  -------------------- --------------------------------------------------------
+  OSP_NONE_FINISHED    Don't wait for anything to be finished (immediately
+                       return from `ospWait`)
+  OSP_WORLD_COMMITTED  Wait for the world to be committed (not yet implemented)
+  OSP_WORLD_RENDERED   Wait for the world to be rendered, but not
+                       post-processing operations (Pixel/Tile/Frame Op)
+  OSP_FRAME_FINISHED   Wait for all rendering operations to complete
+  OSP_TASK_FINISHED    Sentinal value to wait on full completion of any type of
+                       task, regardless of operation
+  -------------------- --------------------------------------------------------
+  : Supported events that can be passed to `ospWait`
+
+Currently only rendering can be invoked asynchronously. However, future
+releases of OSPRay may add more asynchronous versions of API calls (and
+thus return `OSPFuture`).
+
+### Asynchronous Rendering and ospCommit()
+
+The use of either `ospRenderFrame` or `ospRenderFrameAsync` requires
+that all objects in the scene being rendererd have been committed before
+rendering occurs. If a call to `ospCommit()` happens while a frame is
+rendered, the result is undefined behavior and should be avoided.

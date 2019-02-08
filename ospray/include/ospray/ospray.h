@@ -291,7 +291,7 @@ extern "C" {
   OSPRAY_INTERFACE int ospIsReady(OSPFuture);
 
   /* Wait on a specific event */
-  OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent);
+  OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
 
   /* Cancel the given task (may block calling thread) */
   OSPRAY_INTERFACE void ospCancel(OSPFuture);
