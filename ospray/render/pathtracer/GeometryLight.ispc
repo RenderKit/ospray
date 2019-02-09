@@ -111,7 +111,7 @@ export void* uniform GeometryLight_create(void* uniform _geo
 
   Light_Constructor(&self->super);
   self->super.sample = GeometryLight_sample;
-  self->super.eval = NULL; // geometry lights are hit and explicitely handled
+  self->super.eval = NULL; // geometry lights are hit and explicitly handled
   self->geo = geo;
   self->xfm = xfm;
   self->rcp_xfm = rcp_xfm;

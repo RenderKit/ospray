@@ -23,7 +23,7 @@
 
 /*! \brief ospray ray class
 
-  This impelment the base ospray ray class; it is 'derived'
+  This implement the base ospray ray class; it is 'derived'
   from Embree's ray class, but can have additional members that embree
   does not care about. For convenience we do not actually use the
   embree's RTCRay class itself, and instead use our own ray class that

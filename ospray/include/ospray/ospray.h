@@ -69,7 +69,7 @@ typedef enum
 #endif
 {
   OSP_NO_ERROR = 0,          //!< No error has been recorded
-  OSP_UNKNOWN_ERROR = 1,     //!< An unknown error has occured
+  OSP_UNKNOWN_ERROR = 1,     //!< An unknown error has occurred
   OSP_INVALID_ARGUMENT = 2,  //!< An invalid argument is specified
   OSP_INVALID_OPERATION = 3, //!< The operation is not allowed for the specified object
   OSP_OUT_OF_MEMORY = 4,     //!< There is not enough memory left to execute the command
@@ -305,10 +305,10 @@ extern "C" {
   /*! set callback for given Device to call when an error occurs*/
   OSPRAY_INTERFACE void ospDeviceSetErrorFunc(OSPDevice, OSPErrorFunc);
 
-  /*! get the OSPError code for the last error that has occured on the device */
+  /*! get the OSPError code for the last error that has occurred on the device */
   OSPRAY_INTERFACE OSPError ospDeviceGetLastErrorCode(OSPDevice);
 
-  /*! get the message for the last error that has occured on the device */
+  /*! get the message for the last error that has occurred on the device */
   OSPRAY_INTERFACE const char* ospDeviceGetLastErrorMsg(OSPDevice);
 
   /*! commit parameters on a given device */
@@ -695,7 +695,7 @@ extern "C" {
   /*! \brief represents the result returned by an ospPick operation */
   typedef struct {
     osp::vec3f position; //< the position of the hit point (in world-space)
-    bool hit;            //< whether or not a hit actually occured
+    bool hit;            //< whether or not a hit actually occurred
   } OSPPickResult;
 
   /*! \brief returns the world-space position of the geometry seen at [0-1] normalized screen-space pixel coordinates (if any) */
@@ -703,7 +703,7 @@ extern "C" {
 #else
   typedef struct {
     osp_vec3f position; //< the position of the hit point (in world-space)
-    int hit;            //< whether or not a hit actually occured
+    int hit;            //< whether or not a hit actually occurred
   } OSPPickResult;
 
   OSPRAY_INTERFACE void ospPick(OSPPickResult*, OSPRenderer, const osp_vec2f *screenPos);

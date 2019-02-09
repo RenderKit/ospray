@@ -28,7 +28,7 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv) :
   ospLoadModule("ispc");
   device = ospNewDevice(GetDeviceType().c_str());
   if(device == NULL) {
-    std::cout << "Faild to init the ospray device"
+    std::cout << "Failed to init the ospray device"
               << std::endl << std::flush;
     std::exit(EXIT_FAILURE);
   }

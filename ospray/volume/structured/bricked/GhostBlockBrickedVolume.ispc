@@ -37,7 +37,7 @@
 /*! @{ start bit for given section of address in bricked offset field
 
   lo is the address part for inside a brick, hi is the remaining part
-  inside the blcok ex the brick part
+  inside the block ex the brick part
 */
 #define BRICK_BIT_X_LO (0)
 #define BRICK_BIT_Y_LO (BRICK_BIT_X_LO+BRICK_BITS)
@@ -47,7 +47,7 @@
 #define BRICK_BIT_Z_HI (BRICK_BIT_Y_HI+(BLOCK_BITS-BRICK_BITS))
 /* @} */
 
-/*! @{ how much we have to sacle a given linear coordinate inside a
+/*! @{ how much we have to scale a given linear coordinate inside a
   brick to end up at the proper bit fields required by the brick
   translation */
 #define BRICK_BIT_SCALE_X_LO ((1<<BRICK_BIT_X_LO))
@@ -165,8 +165,8 @@ template_brickTranslation(float);
 template_brickTranslation(double);
 
 #define template_getAddress(type)                                       \
-  /* IMPORTANT: this function computes RAW adresses that are to be */   \
-  /* directy added to "unsigned char *" pointers */                     \
+  /* IMPORTANT: this function computes RAW addresses that are to be */  \
+  /* directly added to "unsigned char *" pointers */                    \
   inline void GBBV_getAddress_##type(GBBV *uniform volume,              \
                                      const vec3f &voxelIdxInVolume_f,   \
                                      const vec3i &voxelIdxInVolume,     \
@@ -456,7 +456,7 @@ template_setRegion(double)
     GBBV_getAddress_##type(volume, clampedLocalCoordinates,             \
                            voxelIndex_0, address8);                     \
       /* split block into 24+8 bits; we'll have to do a foreach_unique */ \
-      /* over the upper 24 bits to satify 64-bit addressing, but at */  \
+      /* over the upper 24 bits to satisfy 64-bit addressing, but at */ \
       /* least the lower bits we can merge into a single loop */        \
       const uint32 block_lo = address8.block & 255;                     \
       const uint32 block_hi = address8.block ^ block_lo;                \

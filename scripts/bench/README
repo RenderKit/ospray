@@ -6,7 +6,7 @@ Running Benchmarks
 Compile OSPRay in a build directory of your choosing. We will refer
 to this directory as ${OSPRAY_BUILD_DIR}.
 
-2. Fetch bechmark data using provided script
+2. Fetch benchmark data using provided script
 
 In ${OSPRAY_BUILD_DIR}, run the "get_benchmark_data.sh" script. Thus
 from a "build" directory inside your cloned OSPRay source, you would

@@ -162,7 +162,7 @@ namespace ospray {
                     std::is_base_of<osp::ManagedObject, OtherOSP_T>::value,
                     "ManagedObject_T<OSP_TYPE> can only be instantiated with "
                     "OSPObject (a.k.a. osp::ManagedObject*) or one of its"
-                    "decendants (a.k.a. the OSP* family of types).");
+                    "descendants (a.k.a. the OSP* family of types).");
     }
 
     template <typename OSP_TYPE>

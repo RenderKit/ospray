@@ -148,7 +148,7 @@ namespace ospray {
       /*! create a new renderer object (out of list of registered renderers) */
       OSPRenderer newRenderer(const char *type) override;
 
-      /*! create a new geometry object (out of list of registered geometrys) */
+      /*! create a new geometry object (out of list of registered geometries) */
       OSPGeometry newGeometry(const char *type) override;
 
       /*! have given renderer create a new material */

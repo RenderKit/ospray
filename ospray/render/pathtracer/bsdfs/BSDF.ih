@@ -17,7 +17,7 @@
 #pragma once
 
 #include "math/vec.ih"
-// utilites used by (almost all) implementations
+// utilities used by (almost all) implementations
 #include "math/sampling.ih"
 #include "math/random.ih"
 #include "Optics.ih"
