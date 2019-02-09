@@ -115,7 +115,7 @@ namespace maml {
     bool useTaskingSystem {true};
     bool compressMessages {false};
 
-    // NOTE(jda) - these are only used when _not_ using the tasking sytem...
+    // NOTE(jda) - these are only used when _not_ using the tasking system...
     std::mutex tasksMutex;
     bool tasksAreRunning {false};
     //std::thread sendReceiveThread, processInboxThread;

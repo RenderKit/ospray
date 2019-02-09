@@ -17,7 +17,7 @@
 /*! \file testMessageSwarm This implements a test scenario where each
     ray generates a set of messages (of given number and size) and
     sends them to random other ranks; every time a message is received
-    it's simply bounced to anohter random node */
+    it's simply bounced to another random node */
 
 #include "ospcommon/tasking/tasking_system_handle.h"
 #include "maml/maml.h"

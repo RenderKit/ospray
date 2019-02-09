@@ -138,7 +138,7 @@ namespace ospcommon {
       static_assert(std::is_convertible<U, T>::value,
                     "ospcommon::utility::Optional<T> requires the type"
                     " parameter of an instance being copied-from be"
-                    " convertable to the type parameter of the destination"
+                    " convertible to the type parameter of the destination"
                     " Optional<>.");
       if (other.has_value())
         *this = other.value();
@@ -161,7 +161,7 @@ namespace ospcommon {
       static_assert(std::is_convertible<U, T>::value,
                     "ospcommon::utility::Optional<T> requires the type"
                     " parameter of an instance being copied-from be"
-                    " convertable to the type parameter of the destination"
+                    " convertible to the type parameter of the destination"
                     " Optional<>.");
 
       if (other.has_value()) {
@@ -216,7 +216,7 @@ namespace ospcommon {
     {
       static_assert(std::is_convertible<U, T>::value,
                     "ospcommon::utility::Optional<T> requires the type"
-                    " being assigned from be convertable to the type parameter"
+                    " being assigned from be convertible to the type parameter"
                     " of the destination Optional<>.");
       default_construct_storage_if_needed();
       this->value() = rhs;
@@ -231,7 +231,7 @@ namespace ospcommon {
       static_assert(std::is_convertible<U, T>::value,
                     "ospcommon::utility::Optional<T> requires the type"
                     " parameter of an instance being copied-from be"
-                    " convertable to the type parameter of the destination"
+                    " convertible to the type parameter of the destination"
                     " Optional<>.");
       default_construct_storage_if_needed();
       value() = other.value();
@@ -246,7 +246,7 @@ namespace ospcommon {
       static_assert(std::is_convertible<U, T>::value,
                     "ospcommon::utility::Optional<T> requires the type"
                     " parameter of an instance being moved-from be"
-                    " convertable to the type parameter of the destination"
+                    " convertible to the type parameter of the destination"
                     " Optional<>.");
       default_construct_storage_if_needed();
       value() = other.value();

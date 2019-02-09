@@ -27,7 +27,7 @@ namespace ospcommon {
   namespace utility {
 
     /* 'Any' implements a single item container which erases its type (can hold
-     *  any value which is copyable). The value can be extracted successfuly
+     *  any value which is copyable). The value can be extracted successfully
      *  only if the correct type is queried for the held value, where an
      *  exception is thrown otherwise. Similar (but perhaps not identical to)
      *  'boost::any' or C++17's 'std::any'.

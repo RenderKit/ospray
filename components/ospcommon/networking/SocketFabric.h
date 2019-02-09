@@ -26,7 +26,7 @@
 namespace ospcommon {
   namespace networking {
 
-    /*! A fabrich which sends and recieves over a TCP socket connection */
+    /*! A fabrich which sends and receives over a TCP socket connection */
     struct OSPCOMMON_INTERFACE SocketFabric : public Fabric
     {
       /*! Connecting to another socket on the host on the desired port */
