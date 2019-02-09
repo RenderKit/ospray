@@ -125,7 +125,7 @@ namespace ospray {
     virtual void commit();
 
     //! \brief common function to help printf-debugging
-    /*! \detailed Every derived class should overrride this! */
+    /*! \detailed Every derived class should override this! */
     virtual std::string toString() const;
 
     /*! return the ISPC equivalent of this class */
@@ -161,7 +161,7 @@ namespace ospray {
     // changes in one or more other objects (called a
     // 'dependencies'). Listeners can register themselves as listneres
     // with all their dependencies, and get 'notify'd whenever their
-    // depdencies got changed/committed.
+    // dependencies got changed/committed.
     // ------------------------------------------------------------------
 
     /*! \brief gets called whenever any of this node's dependencies got
@@ -198,7 +198,7 @@ namespace ospray {
     /*! \brief a global ID that can be used for referencing an object remotely*/
     id_t ID {(id_t)-1};
 
-    /*! \brief ISPC-side eqivalent of this C++-side class, if available
+    /*! \brief ISPC-side equivalent of this C++-side class, if available
      *         (nullptr if not) */
     void *ispcEquivalent {nullptr};
 

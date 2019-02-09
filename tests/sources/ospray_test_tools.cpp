@@ -125,7 +125,7 @@ OsprayStatus OSPImageTools::saveTestImage(const void *pixel)
   return writeImg(ospEnv->GetBaselineDir() + "/" + imgName, pixel);
 }
 
-// comparare the baseline image wiht the values form the framebuffer
+// compare the baseline image with the values form the framebuffer
 OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg) {
   pixelColorValue* testImage = (pixelColorValue*)testImg;
   std::string baselineName = ospEnv->GetBaselineDir() + "/" + imgName +  GetFileFormat();

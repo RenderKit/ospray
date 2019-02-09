@@ -182,7 +182,7 @@ namespace ospray {
 
   // use postStatusMsg to output any information, which will use OSPRay's
   // internal infrastructure, optionally at a given loglevel
-  // a newline is added implicitely
+  // a newline is added implicitly
   //////////////////////////////////////////////////////////////////////////////
 
   struct StatusMsgStream : public std::stringstream

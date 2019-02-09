@@ -33,7 +33,7 @@ namespace ospray {
       virtual ~SciVisMaterial() override = default;
 
       //! \brief common function to help printf-debugging
-      /*! Every derived class should overrride this! */
+      /*! Every derived class should override this! */
       virtual std::string toString() const override;
 
       //! \brief commit the material's parameters

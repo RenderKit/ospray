@@ -26,7 +26,7 @@ namespace ospray {
     struct Alloy : public ospray::Material
     {
       //! \brief common function to help printf-debugging
-      /*! Every derived class should overrride this! */
+      /*! Every derived class should override this! */
       virtual std::string toString() const override
       { return "ospray::pathtracer::Alloy"; }
 

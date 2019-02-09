@@ -73,7 +73,7 @@ def print_headline(line):
     print "=== {} ===".format(line.strip())
 
 # Unless an optimization to the algorithm is made, the score achieved in benchmark should be
-# consistent across builds. This funciton compares results of current test with recorded ones.
+# consistent across builds. This function compares results of current test with recorded ones.
 def check_score_correctness(stats, baseline_score, test_name):
     if test_name not in baseline_score:
         return True, None

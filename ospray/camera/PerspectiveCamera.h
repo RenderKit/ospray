@@ -51,7 +51,7 @@ namespace ospray {
     virtual ~PerspectiveCamera() override = default;
 
     //! \brief common function to help printf-debugging
-    /*! Every derived class should overrride this! */
+    /*! Every derived class should override this! */
     virtual std::string toString() const override;
     virtual void commit() override;
     virtual ProjectedPoint projectPoint(const vec3f &p) const override;

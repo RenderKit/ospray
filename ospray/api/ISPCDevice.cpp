@@ -329,7 +329,7 @@ namespace ospray {
       return (OSPRenderer)Renderer::createInstance(type);
     }
 
-    /*! create a new geometry object (out of list of registered geometrys) */
+    /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry ISPCDevice::newGeometry(const char *type)
     {
       return (OSPGeometry)Geometry::createInstance(type);

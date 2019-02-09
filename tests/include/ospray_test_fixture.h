@@ -131,7 +131,7 @@ protected:
 };
 
 // Fixture class that renders a Sierpinski tetrahedron using volumes or isosurfaces. It is
-// parametrized with renderer type, boolean value that controls wheter volumes of isosurfaces
+// parametrized with renderer type, boolean value that controls whether volumes of isosurfaces
 // should be used (false and true respectively) and number of steps taken to generate the fractal.
 class Sierpinski : public Base, public ::testing::TestWithParam<std::tuple<const char*, bool, int>> {
 protected:

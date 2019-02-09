@@ -32,7 +32,7 @@ namespace ospray {
   }
 
   //! \brief common function to help printf-debugging
-  /*! \detailed Every derived class should overrride this! */
+  /*! \detailed Every derived class should override this! */
   template<void *(*ISPC_CREATE)(void*)>
   std::string RaycastRenderer<ISPC_CREATE>::toString() const
   {

@@ -22,11 +22,11 @@
 
   \ingroup ospray_supported_renderers
 
-  This renderer implementes a shading model roughly based on the
+  This renderer implements a shading model roughly based on the
   Wavefront OBJ material format. In particular, this renderer
   implements the Material model as implemented in \ref
   ospray::OBJMaterial, and implements a recursive ray tracer on top of
-  this mateiral model.
+  this material model.
 
   Note that this renderer is NOT fully compatible with the Wavefront
   OBJ specifications - in particular, we do not support the different

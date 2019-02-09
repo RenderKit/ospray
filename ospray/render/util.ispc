@@ -24,7 +24,7 @@ uniform z_order_t z_order;
 static void precomputedHalton_create() {
   if (precomputedHalton_initialized) 
     return;
-  // make race conditions less likely by setting flag immediatley here at beginning
+  // make race conditions less likely by setting flag immediately here at beginning
   precomputedHalton_initialized = true;
 
   foreach (i=0 ... NUM_PRECOMPUTED_HALTON_VALUES) {
