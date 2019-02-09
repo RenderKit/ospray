@@ -156,7 +156,7 @@ namespace ospray {
     size_t numMyTiles() const;
 
     //! \brief common function to help printf-debugging
-    /*! \detailed Every derived class should overrride this! */
+    /*! \detailed Every derived class should override this! */
     std::string toString() const override;
 
     /*! return tile descriptor for given pixel coordinates. this tile

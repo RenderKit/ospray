@@ -114,7 +114,7 @@ namespace ospray {
 
       maml::init(enableCompression);
 
-      // NOTE(jda) - This guard guarentees that the embree device gets cleaned
+      // NOTE(jda) - This guard guarantees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left
       struct EmbreeDeviceScopeGuard
       {

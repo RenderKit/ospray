@@ -99,7 +99,7 @@ else()
     PRIVATE
       # NOTE(jda) - OSPRAY_SOVERSION fallbacks in library.cpp should be handled
       #             in the Library object's interface directly, where libospray
-      #             would inject versioning information independant of ospcommon
+      #             would inject versioning information independent of ospcommon
       #             version.
       -DOSPRAY_SOVERSION=${OSPRAY_SOVERSION}
   )

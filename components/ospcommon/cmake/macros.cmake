@@ -267,7 +267,7 @@ function(ospray_split_create_args PREFIX)
   set(${PREFIX}_COMPONENT ${MY_COMPONENT} PARENT_SCOPE)
 endfunction()
 
-## Conveniance macro for creating OSPRay libraries ##
+## Convenience macro for creating OSPRay libraries ##
 # Usage
 #
 #   ospray_create_library(<name> source1 [source2 ...]
@@ -296,7 +296,7 @@ macro(ospray_create_library LIBRARY_NAME)
   endif()
 endmacro()
 
-## Conveniance macro for creating OSPRay applications ##
+## Convenience macro for creating OSPRay applications ##
 # Usage
 #
 #   ospray_create_application(<name> source1 [source2 ...]
@@ -330,7 +330,7 @@ macro(ospray_create_application APP_NAME)
   endif()
 endmacro()
 
-## Conveniance macro for creating OSPRay test applications ##
+## Convenience macro for creating OSPRay test applications ##
 # Usage - same as ospray_create_application
 #
 # Will build the app if 'OSPRAY_ENABLE_TESTING=ON' in CMake

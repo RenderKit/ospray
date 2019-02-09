@@ -28,7 +28,7 @@
 namespace ospcommon {
   namespace utility {
 
-    //! \brief Tokenize the string passed on the desired delimeter
+    //! \brief Tokenize the string passed on the desired delimiter
     void tokenize(const std::string &str, const char delim,
                   std::vector<std::string> &tokens);
 

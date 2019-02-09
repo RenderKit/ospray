@@ -68,7 +68,7 @@ namespace ospcommon {
 
       //! pointer to parent doc
       /*! \detailed this points back to the parent xml doc that
-          conatined this node. note this is intentionally NOT a ref to
+          contained this node. note this is intentionally NOT a ref to
           avoid cyclical dependencies. Ie, do NOT use this unless
           you're sure that the XMLDoc node that contained the given
           node is still around! */

@@ -71,7 +71,7 @@ namespace mpicommon {
   OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
 
   //! abstraction for an MPI group.
-  /*! it's the responsiblity of the respective mpi setup routines to
+  /*! it's the responsibility of the respective mpi setup routines to
     fill in the proper values */
   struct OSPRAY_MPI_INTERFACE Group
   {

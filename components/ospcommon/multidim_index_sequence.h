@@ -58,7 +58,7 @@ namespace ospcommon {
     multidim_index_iterator(const vec_t<int, NDIMS> &_dims, size_t start)
       : multidim_index_iterator(_dims) { current_index = start; }
 
-    // Traditional interator interface methods //
+    // Traditional iterator interface methods //
 
     vec_t<int, NDIMS> operator*() const;
 

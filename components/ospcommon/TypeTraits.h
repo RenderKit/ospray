@@ -136,7 +136,7 @@ namespace ospcommon {
     template <typename T1, typename T2>
     using is_not_same_t = enable_if_t<!std::is_same<T1, T2>::value>;
 
-    // If a single type is convertable to another /////////////////////////////
+    // If a single type is convertible to another /////////////////////////////
 
     template <typename FROM, typename TO>
     using can_convert = std::is_convertible<TO, FROM>;

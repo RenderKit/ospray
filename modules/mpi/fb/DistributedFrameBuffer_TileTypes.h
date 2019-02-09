@@ -27,7 +27,7 @@ namespace ospray {
   // -------------------------------------------------------
   /*! keeps the book-keeping of one tile of the frame buffer. note
     that 'size' is the tile size used by the frame buffer, _NOT_
-    necessariy 'end-begin'. 'color' and 'depth' arrays are always
+    necessarily 'end-begin'. 'color' and 'depth' arrays are always
     alloc'ed in TILE_SIZE pixels */
   struct TileDesc
   {
