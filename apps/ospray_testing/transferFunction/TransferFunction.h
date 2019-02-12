@@ -43,8 +43,8 @@ namespace ospray {
 }  // namespace ospray
 
 #define OSP_REGISTER_TESTING_TRANSFER_FUNCTION(InternalClassName, Name) \
-  OSPRAY_TESTING_DLLEXPORT                                              \
-  extern "C" ospray::testing::TransferFunction                          \
+  extern "C" OSPRAY_TESTING_DLLEXPORT                                   \
+  ospray::testing::TransferFunction                                     \
       *ospray_create_testing_transfer_function__##Name()                \
   {                                                                     \
     return new InternalClassName;                                       \

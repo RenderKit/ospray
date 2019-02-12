@@ -46,7 +46,9 @@ ospray_create_application(ospTutorialSpheres
 
 target_link_libraries(ospTutorialSpheres
 PRIVATE
+  ospray
   ospray_testing
+  ospray_common
   ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}
@@ -62,6 +64,7 @@ ospray_create_application(ospTutorialBouncingSpheres
 target_link_libraries(ospTutorialBouncingSpheres
 PRIVATE
   ospray
+  ospray_testing
   ospray_common
   ospray_imgui
   glfw
@@ -77,7 +80,9 @@ ospray_create_application(ospTutorialSubdivision
 
 target_link_libraries(ospTutorialSubdivision
 PRIVATE
+  ospray
   ospray_testing
+  ospray_common
   ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}
@@ -92,7 +97,9 @@ ospray_create_application(ospTutorialStructuredVolume
 
 target_link_libraries(ospTutorialStructuredVolume
 PRIVATE
+  ospray
   ospray_testing
+  ospray_common
   ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}
@@ -107,7 +114,9 @@ ospray_create_application(ospTutorialUnstructuredVolume
 
 target_link_libraries(ospTutorialUnstructuredVolume
 PRIVATE
+  ospray
   ospray_testing
+  ospray_common
   ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}

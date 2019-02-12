@@ -17,6 +17,7 @@
 #include <vector>
 #include "GLFWOSPRayWindow.h"
 
+#include "ospcommon/library.h"
 #include "ospray_testing.h"
 
 #include <imgui.h>
@@ -31,6 +32,10 @@ int main(int argc, const char **argv)
 
   if (initError != OSP_NO_ERROR)
     return initError;
+
+  // we must load the testing library explicitly on Windows to look up
+  // object creation functions
+  loadLibrary("ospray_testing");
 
   // get OSPRay device
   OSPDevice ospDevice = ospGetCurrentDevice();

@@ -19,6 +19,8 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
+#include "ospcommon/library.h"
+
 #include <imgui.h>
 
 using namespace ospcommon;
@@ -353,6 +355,10 @@ int main(int argc, const char **argv)
 
   if (initError != OSP_NO_ERROR)
     return initError;
+
+  // we must load the testing library explicitly on Windows to look up
+  // object creation functions
+  loadLibrary("ospray_testing");
 
   // set an error callback to catch any OSPRay errors and exit the application
   ospDeviceSetErrorFunc(
