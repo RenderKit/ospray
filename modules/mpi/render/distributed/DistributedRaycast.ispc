@@ -333,6 +333,9 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   // shade the geometry and so on.
   vec4f color = make_vec4f(0.f);
   float firstHit;
+  // TODO: Possible issue: if the user renders a completely flat object, where
+  // the region bounds are just a plane, regionEnter == regionExit, and will
+  // not enter this loop and thus not see the object
   while ((firstHit = min(geomRay.t, volRay.t0)) < regionExit && color.w < 0.99) {
     vec4f currentContribution = make_vec4f(0);
     // Shade the current volume interval if it's before the next geometry

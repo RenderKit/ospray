@@ -81,8 +81,8 @@ if (OSPRAY_MODULE_MPI)
   target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
 
   ##############################################################
-  # Test apps
+  # Tutorials
   ##############################################################
-  add_subdirectory(apps)
+  add_subdirectory(tutorials)
 
 endif (OSPRAY_MODULE_MPI)
