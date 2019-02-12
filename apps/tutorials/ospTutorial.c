@@ -18,9 +18,10 @@
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
- *   gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
+ *   gcc -std=c99 ../apps/tutorials/ospTutorial.c \
+ *       -I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+ *   cl ..\..\apps\tutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
  */
 
 #include <stdint.h>
