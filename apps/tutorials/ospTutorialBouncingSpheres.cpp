@@ -337,8 +337,9 @@ void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
   updateSpheresCoordinates();
   updateSpheresGeometry();
 
-  // commit the model since the spheres geometry changed
-  ospCommit(g_model);
+  // queue the model to be committed since it changed, however don't commit
+  // it immediately because it's being rendered asynchronously
+  glfwOSPRayWindow->addObjectToCommit(g_model);
 
   // update the model on the GLFW window
   glfwOSPRayWindow->setModel(g_model);
