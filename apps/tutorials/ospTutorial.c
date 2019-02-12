@@ -21,7 +21,7 @@
  *   gcc -std=c99 ../apps/tutorials/ospTutorial.c \
  *       -I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\tutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+ *   cl ..\..\apps\tutorials\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
  */
 
 #include <stdint.h>
