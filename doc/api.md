@@ -2152,8 +2152,9 @@ The following are values which can be synchronized with the application
   OSP_WORLD_RENDERED   Wait for the world to be rendered, but not
                        post-processing operations (Pixel/Tile/Frame Op)
   OSP_FRAME_FINISHED   Wait for all rendering operations to complete
-  OSP_TASK_FINISHED    Sentinal value to wait on full completion of any type of
-                       task, regardless of operation
+  OSP_TASK_FINISHED    Wait on full completion of the task associated with
+                       the future. The underlying task may involve one or
+                       more of the above synchronization events
   -------------------- --------------------------------------------------------
   : Supported events that can be passed to `ospWait`
 
