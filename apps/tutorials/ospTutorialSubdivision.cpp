@@ -189,7 +189,6 @@ int main(int argc, const char **argv)
   OSPTestingGeometry subdivisionGeometry =
       ospTestingNewGeometry("subdivision_cube", "scivis");
   ospAddGeometry(world, subdivisionGeometry.geometry);
-  ospRelease(subdivisionGeometry.geometry);
 
   // add in a ground plane geometry
   ospAddGeometry(world, createGroundPlaneGeometry());
@@ -276,6 +275,7 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   // cleanup remaining objects
+  ospRelease(subdivisionGeometry.geometry);
   ospRelease(world);
   ospRelease(renderer);
 
