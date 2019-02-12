@@ -44,8 +44,11 @@ target_include_directories(ospMPIDistributedTutorialCpp PRIVATE
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
 
 # async version
-#add_executable(ospMPIDistributedTutorialAsync ospMPIDistributedTutorialAsync.c)
-#target_link_libraries(ospMPIDistributedTutorialAsync PRIVATE ospray)
+add_executable(ospMPIDistributedTutorialAsync ospMPIDistributedTutorialAsync.c)
+target_link_libraries(ospMPIDistributedTutorialAsync PRIVATE
+  ospray ${MPI_C_LIBRARIES})
+target_include_directories(ospMPIDistributedTutorialAsync PRIVATE
+  $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
 
 set(OSPRAY_TUTORIALS_DIR "${OSPRay_SOURCE_DIR}/apps/tutorials")
 
