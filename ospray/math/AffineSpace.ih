@@ -141,7 +141,7 @@ inline varying vec2f operator*(const uniform AffineSpace2f a, const varying vec2
 inline varying vec2f operator*(const varying AffineSpace2f a, const varying vec2f v)
 { return a.l * v + a.p; }
 
-/*! short-hand name for AffineSpace3f */
+/*! short-hand name for AffineSpace2f */
 typedef AffineSpace2f affine2f;
 
 inline void out(uniform affine3f a)
