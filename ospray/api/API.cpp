@@ -752,21 +752,21 @@ extern "C" void ospDeviceSetStatusFunc(OSPDevice object, OSPStatusFunc callback)
 OSPRAY_CATCH_BEGIN
 {
   auto *device = (Device *)object;
-  device->msg_fcn = callback;
+  if (callback == nullptr)
+    device->msg_fcn = [](const char *){};
+  else
+    device->msg_fcn = callback;
 }
 OSPRAY_CATCH_END()
-
-// for backward compatibility, will be removed in futur
-extern "C" void ospDeviceSetErrorMsgFunc(OSPDevice dev, OSPErrorMsgFunc cb)
-{
-  ospDeviceSetStatusFunc(dev, cb);
-}
 
 extern "C" void ospDeviceSetErrorFunc(OSPDevice object, OSPErrorFunc callback)
 OSPRAY_CATCH_BEGIN
 {
   auto *device = (Device *)object;
-  device->error_fcn = callback;
+  if (callback == nullptr)
+    device->error_fcn = [](OSPError, const char *){};
+  else
+    device->error_fcn = callback;
 }
 OSPRAY_CATCH_END()
 

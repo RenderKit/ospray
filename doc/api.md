@@ -214,6 +214,9 @@ will require that a callback is provided. Note that callbacks for C++
 `std::cout` and `std::cerr` can be alternatively set through `ospInit()`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
+Applications can clear either callback by passing `nullptr` instead of an
+actual function pointer.
+
 ### Loading OSPRay Extensions at Runtime
 
 OSPRay's functionality can be extended via plugins, which are

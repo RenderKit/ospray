@@ -251,11 +251,6 @@ extern "C" {
   /*! set callback for given Device to call when a status message occurs*/
   OSPRAY_INTERFACE void ospDeviceSetStatusFunc(OSPDevice, OSPStatusFunc);
 
-  // old names
-  typedef void (*OSPErrorMsgFunc)(const char* str);
-  OSP_DEPRECATED OSPRAY_INTERFACE void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc);
-
-
   /*! error message callback function type */
   typedef void (*OSPErrorFunc)(OSPError, const char* errorDetails);
 
