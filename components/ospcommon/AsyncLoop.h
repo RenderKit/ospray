@@ -52,36 +52,50 @@ namespace ospcommon {
 
   private:
 
-    std::atomic<bool> threadShouldBeAlive {true};
-    std::atomic<bool> loopShouldBeRunning {false};
-    std::atomic<bool> insideLoopBody      {false};
+    // Struct shared with the background thread to avoid dangling ptrs or
+    // tricky synchronization when destroying the AsyncLoop and scheduling
+    // threads with TBB, since we don't have a join point to sync with
+    // the running thread 
+    struct AsyncLoopData {
+      std::atomic<bool> threadShouldBeAlive {true};
+      std::atomic<bool> shouldBeRunning     {false};
+      std::atomic<bool> insideLoopBody      {false};
 
-    std::thread             backgroundThread;
-    std::condition_variable loopRunningCond;
-    std::mutex              loopRunningMutex;
+      std::condition_variable runningCond;
+      std::mutex              runningMutex;
+    };
+
+    std::shared_ptr<AsyncLoopData> loop;
+    std::thread                    backgroundThread;
   };
 
   // Inlined members //////////////////////////////////////////////////////////
 
   template <typename LOOP_BODY_FCN>
   inline AsyncLoop::AsyncLoop(LOOP_BODY_FCN &&fcn, AsyncLoop::LaunchMethod m)
+    : loop(nullptr)
   {
     static_assert(traits::has_operator_method<LOOP_BODY_FCN>::value,
                   "ospcommon::AsyncLoop() requires the implementation of "
                   "method 'void LOOP_BODY_FCN::operator()' in order to "
                   "construct the loop instance.");
 
-    auto mainLoop = [&,fcn]() {
-      while (threadShouldBeAlive) {
-        std::unique_lock<std::mutex> lock(loopRunningMutex);
-        loopRunningCond.wait(lock, [&] { return loopShouldBeRunning.load(); });
+    std::shared_ptr<AsyncLoopData> l = std::make_shared<AsyncLoopData>();
+    loop = l;
 
-        if (!threadShouldBeAlive)
+    auto mainLoop = [l,fcn]() {
+      while (l->threadShouldBeAlive) {
+        std::unique_lock<std::mutex> lock(l->runningMutex);
+        l->runningCond.wait(lock, [&] {
+          return l->shouldBeRunning.load() || !l->threadShouldBeAlive.load();
+        });
+
+        if (!l->threadShouldBeAlive)
           return;
 
-        insideLoopBody = true;
-        if(loopShouldBeRunning) fcn();
-        insideLoopBody = false;
+        l->insideLoopBody = true;
+        if (l->shouldBeRunning) fcn();
+        l->insideLoopBody = false;
       }
     };
 
@@ -96,8 +110,10 @@ namespace ospcommon {
 
   inline AsyncLoop::~AsyncLoop()
   {
-    threadShouldBeAlive = false;
-    start();
+    loop->threadShouldBeAlive = false;
+    loop->shouldBeRunning = false;
+    loop->runningCond.notify_one();
+
     if (backgroundThread.joinable()) {
       backgroundThread.join();
     }
@@ -105,18 +121,18 @@ namespace ospcommon {
 
   inline void AsyncLoop::start()
   {
-    if (!loopShouldBeRunning) {
-      loopShouldBeRunning = true;
-      loopRunningCond.notify_one();
+    if (!loop->shouldBeRunning) {
+      loop->shouldBeRunning = true;
+      loop->runningCond.notify_one();
     }
   }
 
   inline void AsyncLoop::stop()
   {
-    if (loopShouldBeRunning) {
-      loopShouldBeRunning = false;
-      std::unique_lock<std::mutex> lock(loopRunningMutex);
-      loopRunningCond.wait(lock, [&] { return !insideLoopBody.load(); });
+    if (loop->shouldBeRunning) {
+      loop->shouldBeRunning = false;
+      std::unique_lock<std::mutex> lock(loop->runningMutex);
+      loop->runningCond.wait(lock, [&] { return !loop->insideLoopBody.load(); });
     }
   }
 
