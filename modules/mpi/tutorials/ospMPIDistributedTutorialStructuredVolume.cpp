@@ -27,8 +27,19 @@
 
 using namespace ospcommon;
 
-// Generate the rank's local spheres within its assigned grid cell
-OSPGeometry makeLocalSpheres(const int mpiRank, const int mpiWorldSize);
+struct VolumeBrick {
+  // the volume data itself
+  OSPVolume brick;
+  // the bounds of the owned portion of data
+  box3f     bounds;
+  // the full bounds of the owned portion + ghost voxels
+  box3f     ghostBounds;
+};
+
+box3f worldBounds;
+
+// Generate the rank's local volume brick
+VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize);
 
 int main(int argc, char **argv)
 {
@@ -72,11 +83,24 @@ int main(int argc, char **argv)
 
   // all ranks specify the same rendering parameters, with the exception of
   // the data to be rendered, which is distributed among the ranks
-  OSPGeometry spheres = makeLocalSpheres(mpiRank, mpiWorldSize);
-  ospAddGeometry(world, spheres);
-  ospRelease(spheres);
+  VolumeBrick brick = makeLocalVolume(mpiRank, mpiWorldSize);
+
+  // color the bricks by their rank, we pad the range out a bit to keep
+  // any brick from being completely transparent
+  OSPTransferFunction tfn =
+      ospTestingNewTransferFunction(osp_vec2f{-0.5f, mpiWorldSize},
+                                    "jet");
+  ospSetObject(brick.brick, "transferFunction", tfn);
+  ospCommit(brick.brick);
+
+  ospAddVolume(world, brick.brick);
+  ospRelease(brick.brick);
 
   ospSet1i(world, "id", mpiRank);
+  // override the overall volume bounds to clip off the ghost voxels, so
+  // they are just used for interpolation
+  ospSet3fv(world, "region.lower", &brick.bounds.lower.x);
+  ospSet3fv(world, "region.upper", &brick.bounds.upper.x);
   // commit the world model
   ospCommit(world);
 
@@ -84,16 +108,9 @@ int main(int argc, char **argv)
   OSPRenderer renderer = ospNewRenderer("mpi_raycast");
 
   // create and setup an ambient light
-  std::array<OSPLight, 2> lights = {
-    ospNewLight3("ambient"),
-    ospNewLight3("distant")
-  };
-  ospCommit(lights[0]);
-
-  ospSet3f(lights[1], "direction", -1.f, -1.f, 0.5f);
-  ospCommit(lights[1]);
-
-  OSPData lightData = ospNewData(lights.size(), OSP_LIGHT, lights.data(), 0);
+  OSPLight ambientLight = ospNewLight3("ambient");
+  ospCommit(ambientLight);
+  OSPData lightData = ospNewData(1, OSP_LIGHT, &ambientLight, 0);
   ospCommit(lightData);
   ospSetObject(renderer, "lights", lightData);
   ospRelease(lightData);
@@ -102,7 +119,7 @@ int main(int argc, char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
+          vec2i{1024, 768}, worldBounds, world, renderer));
 
   int spp = 1;
   int currentSpp = 1;
@@ -169,65 +186,44 @@ vec3i computeGrid(int num)
   return grid;
 }
 
-OSPGeometry makeLocalSpheres(const int mpiRank, const int mpiWorldSize)
+VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 {
-  struct Sphere
-  {
-    vec3f org;
-  };
-
-  const float sphereRadius = 0.1;
-  std::vector<Sphere> spheres(10);
-
-  // To simulate loading a shared dataset all ranks generate the same
-  // sphere data.
-  std::random_device rd;
-  std::mt19937 rng(rd());
-
   const vec3i grid = computeGrid(mpiWorldSize);
   const vec3i brickId(mpiRank % grid.x,
                       (mpiRank / grid.x) % grid.y,
                       mpiRank / (grid.x * grid.y));
+  // The bricks are 64^3 + 1 layer of ghost voxels on each axis
+  const vec3i brickVolumeDims = vec3i(64);
+  const vec3i brickGhostDims = vec3i(brickVolumeDims + 2);
 
-  // The grid is over the [-1, 1] box
-  const vec3f brickSize = vec3f(2.0) / vec3f(grid);
-  const vec3f brickLower = brickSize * brickId - vec3f(1.f);
-  const vec3f brickUpper = brickSize * brickId - vec3f(1.f) + brickSize;
+  // The grid is over the [0, grid * brickVolumeDims] box
+  worldBounds = box3f(vec3f(0.f), vec3f(grid * brickVolumeDims ));
+  const vec3f brickLower = brickId * brickVolumeDims;
+  const vec3f brickUpper = brickId * brickVolumeDims + brickVolumeDims;
 
-  // Generate spheres within the box padded by the radius, so we don't need
-  // to worry about ghost bounds
-  std::uniform_real_distribution<float> distX(brickLower.x + sphereRadius,
-      brickUpper.x - sphereRadius);
-  std::uniform_real_distribution<float> distY(brickLower.y + sphereRadius,
-      brickUpper.y - sphereRadius);
-  std::uniform_real_distribution<float> distZ(brickLower.z + sphereRadius,
-      brickUpper.z - sphereRadius);
+  VolumeBrick brick;
+  brick.bounds = box3f(brickLower, brickUpper);
+  // we just put ghost voxels on all sides here, but a real application
+  // would change which faces of each brick have ghost voxels dependent
+  // on the actual data
+  brick.ghostBounds = box3f(brickLower - vec3f(1.f),
+                            brickUpper + vec3f(1.f));
 
-  for (auto &s : spheres) {
-    s.org.x = distX(rng);
-    s.org.y = distY(rng);
-    s.org.z = distZ(rng);
-  }
+  brick.brick = ospNewVolume("block_bricked_volume");
 
-  OSPData sphereData = ospNewData(spheres.size() * sizeof(Sphere), OSP_UCHAR,
-                                  spheres.data());
+  //ospSet1f(brick.brick, "samplingRate", 0.25f);
+  ospSetString(brick.brick, "voxelType", "uchar");
+  ospSet3iv(brick.brick, "dimensions", &brickGhostDims.x);
+  // we use the grid origin to place this brick in the right position inside
+  // the global volume
+  ospSet3fv(brick.brick, "gridOrigin", &brick.ghostBounds.lower.x);
 
+  // generate the volume data to just be filled with this rank's id
+  const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
+  std::vector<char> volumeData(nVoxels, static_cast<char>(mpiRank));
+  ospSetRegion(brick.brick, volumeData.data(),
+               osp_vec3i{0, 0, 0}, (osp_vec3i&)brickGhostDims);
 
-  vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
-  OSPMaterial material = ospNewMaterial2("scivis", "OBJMaterial");
-  ospSet3fv(material, "Kd", &color.x);
-  ospSet3f(material, "Ks", 1.f, 1.f, 1.f);
-  ospCommit(material);
-
-  OSPGeometry sphereGeom = ospNewGeometry("spheres");
-  ospSet1i(sphereGeom, "bytes_per_sphere", int(sizeof(Sphere)));
-  ospSet1f(sphereGeom, "radius", sphereRadius);
-  ospSetData(sphereGeom, "spheres", sphereData);
-  ospSetMaterial(sphereGeom, material);
-  ospRelease(material);
-  ospRelease(sphereData);
-  ospCommit(sphereGeom);
-
-  return sphereGeom;
+  return brick;
 }
 

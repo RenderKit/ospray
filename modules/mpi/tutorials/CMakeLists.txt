@@ -74,37 +74,25 @@ target_include_directories(ospMPIDistributedTutorialSpheres PRIVATE
   $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
 
-#ospray_create_application(ospTutorialBouncingSpheres
-#  ArcballCamera.cpp
-#  GLFWOSPRayWindow.cpp
-#  ospTutorialBouncingSpheres.cpp
-#  imgui/imgui_impl_glfw_gl3.cpp
-#)
+ospray_create_application(ospMPIDistributedTutorialStructuredVolume
+  ospMPIDistributedTutorialStructuredVolume.cpp
+  GLFWDistribOSPRayWindow.cpp
+  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
+  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
+)
 
-#target_link_libraries(ospTutorialBouncingSpheres
-#PRIVATE
-#  ospray
-#  ospray_testing
-#  ospray_common
-#  ospray_imgui
-#  glfw
-#  ${OPENGL_LIBRARIES}
-#)
+target_link_libraries(ospMPIDistributedTutorialStructuredVolume
+PRIVATE
+  ospray
+  ospray_testing
+  ospray_common
+  ospray_imgui
+  glfw
+  ${OPENGL_LIBRARIES}
+  ${MPI_CXX_LIBRARIES}
+)
 
-#ospray_create_application(ospTutorialStructuredVolume
-#  ArcballCamera.cpp
-#  GLFWOSPRayWindow.cpp
-#  ospTutorialStructuredVolume.cpp
-#  imgui/imgui_impl_glfw_gl3.cpp
-#)
-
-#target_link_libraries(ospTutorialStructuredVolume
-#PRIVATE
-#  ospray
-#  ospray_testing
-#  ospray_common
-#  ospray_imgui
-#  glfw
-#  ${OPENGL_LIBRARIES}
-#)
+target_include_directories(ospMPIDistributedTutorialStructuredVolume PRIVATE
+  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
+  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
 
