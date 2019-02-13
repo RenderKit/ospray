@@ -14,6 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+/* This larger example shows how to use the MPIDistributedDevice to write an
+ * interactive rendering application, which shows a UI on rank 0 and uses
+ * all ranks in the MPI world for data loading and rendering. Each rank
+ * generates a local sub-piece of spheres data, e.g., as if rendering some
+ * large distributed dataset.
+ *
+ * Each local brick of data is put into a model, which is given a unique
+ * id, to identify it as a piece of data owned uniquely by the process
+ */
+
 #include <iterator>
 #include <memory>
 #include <random>

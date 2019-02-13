@@ -96,3 +96,26 @@ target_include_directories(ospMPIDistributedTutorialStructuredVolume PRIVATE
   $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
 
+ospray_create_application(ospMPIDistributedTutorialPartiallyReplicatedData
+  ospMPIDistributedTutorialPartiallyReplicatedData.cpp
+  GLFWDistribOSPRayWindow.cpp
+  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
+  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
+)
+
+target_link_libraries(ospMPIDistributedTutorialPartiallyReplicatedData
+PRIVATE
+  ospray
+  ospray_testing
+  ospray_common
+  ospray_imgui
+  glfw
+  ${OPENGL_LIBRARIES}
+  ${MPI_CXX_LIBRARIES}
+)
+
+target_include_directories(ospMPIDistributedTutorialPartiallyReplicatedData
+  PRIVATE
+  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
+  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
+

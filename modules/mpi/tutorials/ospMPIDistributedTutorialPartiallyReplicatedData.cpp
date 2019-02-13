@@ -16,12 +16,15 @@
 
 /* This larger example shows how to use the MPIDistributedDevice to write an
  * interactive rendering application, which shows a UI on rank 0 and uses
- * all ranks in the MPI world for data loading and rendering. Each rank
- * generates a local sub-brick of volume data, as if rendering some
- * large distributed dataset.
+ * all ranks in the MPI world for data loading and rendering. This example
+ * also shows how to leverage the support for partially replicated data
+ * distributions in the MPIDistributedDevice, by sharing bricks of data,
+ * and thus rendering work, between processes.
  *
- * Each local brick of data is put into a model, which is given a unique
- * id, to identify it as a piece of data owned uniquely by the process
+ * Each shared brick of data is put into a model, and is given a unique
+ * the same id on the processes which share it, to identify the model as
+ * being shared across the set of processes. In this example every two proceses
+ * will share data, so 0 & 1 will share data, 2 & 3, and so on.
  */
 
 #include <iterator>
@@ -91,22 +94,28 @@ int main(int argc, char **argv)
   // create the "world" model which will contain all of our geometries
   OSPModel world = ospNewModel();
 
+  // every two ranks will share a volume brick to render, if we have an
+  // odd number of ranks the last one will have its own brick
+  const int sharedWorldSize = mpiWorldSize / 2 + mpiWorldSize % 2;
+
   // all ranks specify the same rendering parameters, with the exception of
   // the data to be rendered, which is distributed among the ranks
-  VolumeBrick brick = makeLocalVolume(mpiRank, mpiWorldSize);
+  VolumeBrick brick = makeLocalVolume(mpiRank / 2, sharedWorldSize);
 
   // color the bricks by their rank, we pad the range out a bit to keep
   // any brick from being completely transparent
   OSPTransferFunction tfn =
-      ospTestingNewTransferFunction(osp_vec2f{-0.5f, mpiWorldSize},
-                                    "jet");
+      ospTestingNewTransferFunction(osp_vec2f{-0.5f, sharedWorldSize}, "jet");
   ospSetObject(brick.brick, "transferFunction", tfn);
   ospCommit(brick.brick);
 
   ospAddVolume(world, brick.brick);
   ospRelease(brick.brick);
 
-  ospSet1i(world, "id", mpiRank);
+  // Important! Every model shared between the ranks must have a unique global
+  // ID, which will be used to identify which ranks are sharing data
+  // for rendering
+  ospSet1i(world, "id", mpiRank / 2);
   // override the overall volume bounds to clip off the ghost voxels, so
   // they are just used for interpolation
   ospSet3fv(world, "region.lower", &brick.bounds.lower.x);
@@ -236,4 +245,5 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 
   return brick;
 }
+
 
