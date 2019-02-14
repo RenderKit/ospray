@@ -24,9 +24,11 @@
  * id, to identify it as a piece of data owned uniquely by the process
  */
 
+#include <array>
 #include <iterator>
 #include <memory>
 #include <random>
+
 #include <mpi.h>
 #include "GLFWDistribOSPRayWindow.h"
 
@@ -44,15 +46,15 @@ int main(int argc, char **argv)
 {
   int mpiThreadCapability = 0;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpiThreadCapability);
-  if (mpiThreadCapability != MPI_THREAD_MULTIPLE
-      && mpiThreadCapability != MPI_THREAD_SERIALIZED)
-  {
-    fprintf(stderr, "OSPRay requires the MPI runtime to support thread "
+  if (mpiThreadCapability != MPI_THREAD_MULTIPLE &&
+      mpiThreadCapability != MPI_THREAD_SERIALIZED) {
+    fprintf(stderr,
+            "OSPRay requires the MPI runtime to support thread "
             "multiple or thread serialized.\n");
     return 1;
   }
 
-  int mpiRank = 0;
+  int mpiRank      = 0;
   int mpiWorldSize = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpiWorldSize);
@@ -94,10 +96,8 @@ int main(int argc, char **argv)
   OSPRenderer renderer = ospNewRenderer("mpi_raycast");
 
   // create and setup an ambient light
-  std::array<OSPLight, 2> lights = {
-    ospNewLight3("ambient"),
-    ospNewLight3("distant")
-  };
+  std::array<OSPLight, 2> lights = {ospNewLight3("ambient"),
+                                    ospNewLight3("distant")};
   ospCommit(lights[0]);
 
   ospSet3f(lights[1], "direction", -1.f, -1.f, 0.5f);
@@ -114,12 +114,11 @@ int main(int argc, char **argv)
       std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
-  int spp = 1;
+  int spp        = 1;
   int currentSpp = 1;
   if (mpiRank == 0) {
-    glfwOSPRayWindow->registerImGuiCallback([&]() {
-      ImGui::SliderInt("spp", &spp, 1, 64);
-    });
+    glfwOSPRayWindow->registerImGuiCallback(
+        [&]() { ImGui::SliderInt("spp", &spp, 1, 64); });
   }
 
   glfwOSPRayWindow->registerDisplayCallback([&](GLFWDistribOSPRayWindow *win) {
@@ -166,7 +165,7 @@ bool computeDivisor(int x, int &divisor)
 vec3i computeGrid(int num)
 {
   vec3i grid(1);
-  int axis = 0;
+  int axis    = 0;
   int divisor = 0;
   while (computeDivisor(num, divisor)) {
     grid[axis] *= divisor;
@@ -200,18 +199,18 @@ OSPGeometry makeLocalSpheres(const int mpiRank, const int mpiWorldSize)
                       mpiRank / (grid.x * grid.y));
 
   // The grid is over the [-1, 1] box
-  const vec3f brickSize = vec3f(2.0) / vec3f(grid);
+  const vec3f brickSize  = vec3f(2.0) / vec3f(grid);
   const vec3f brickLower = brickSize * brickId - vec3f(1.f);
   const vec3f brickUpper = brickSize * brickId - vec3f(1.f) + brickSize;
 
   // Generate spheres within the box padded by the radius, so we don't need
   // to worry about ghost bounds
   std::uniform_real_distribution<float> distX(brickLower.x + sphereRadius,
-      brickUpper.x - sphereRadius);
+                                              brickUpper.x - sphereRadius);
   std::uniform_real_distribution<float> distY(brickLower.y + sphereRadius,
-      brickUpper.y - sphereRadius);
+                                              brickUpper.y - sphereRadius);
   std::uniform_real_distribution<float> distZ(brickLower.z + sphereRadius,
-      brickUpper.z - sphereRadius);
+                                              brickUpper.z - sphereRadius);
 
   for (auto &s : spheres) {
     s.org.x = distX(rng);
@@ -219,9 +218,8 @@ OSPGeometry makeLocalSpheres(const int mpiRank, const int mpiWorldSize)
     s.org.z = distZ(rng);
   }
 
-  OSPData sphereData = ospNewData(spheres.size() * sizeof(Sphere), OSP_UCHAR,
-                                  spheres.data());
-
+  OSPData sphereData =
+      ospNewData(spheres.size() * sizeof(Sphere), OSP_UCHAR, spheres.data());
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
   OSPMaterial material = ospNewMaterial2("scivis", "OBJMaterial");
@@ -240,4 +238,3 @@ OSPGeometry makeLocalSpheres(const int mpiRank, const int mpiWorldSize)
 
   return sphereGeom;
 }
-

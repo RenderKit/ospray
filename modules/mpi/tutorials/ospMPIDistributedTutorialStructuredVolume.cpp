@@ -27,6 +27,7 @@
 #include <iterator>
 #include <memory>
 #include <random>
+
 #include <mpi.h>
 #include "GLFWDistribOSPRayWindow.h"
 
@@ -37,16 +38,17 @@
 
 using namespace ospcommon;
 
-struct VolumeBrick {
+struct VolumeBrick
+{
   // the volume data itself
   OSPVolume brick;
   // the bounds of the owned portion of data
-  box3f     bounds;
+  box3f bounds;
   // the full bounds of the owned portion + ghost voxels
-  box3f     ghostBounds;
+  box3f ghostBounds;
 };
 
-box3f worldBounds;
+static box3f worldBounds;
 
 // Generate the rank's local volume brick
 VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize);
@@ -55,15 +57,15 @@ int main(int argc, char **argv)
 {
   int mpiThreadCapability = 0;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpiThreadCapability);
-  if (mpiThreadCapability != MPI_THREAD_MULTIPLE
-      && mpiThreadCapability != MPI_THREAD_SERIALIZED)
-  {
-    fprintf(stderr, "OSPRay requires the MPI runtime to support thread "
+  if (mpiThreadCapability != MPI_THREAD_MULTIPLE &&
+      mpiThreadCapability != MPI_THREAD_SERIALIZED) {
+    fprintf(stderr,
+            "OSPRay requires the MPI runtime to support thread "
             "multiple or thread serialized.\n");
     return 1;
   }
 
-  int mpiRank = 0;
+  int mpiRank      = 0;
   int mpiWorldSize = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpiWorldSize);
@@ -97,9 +99,8 @@ int main(int argc, char **argv)
 
   // color the bricks by their rank, we pad the range out a bit to keep
   // any brick from being completely transparent
-  OSPTransferFunction tfn =
-      ospTestingNewTransferFunction(osp_vec2f{-0.5f, mpiWorldSize},
-                                    "jet");
+  OSPTransferFunction tfn = ospTestingNewTransferFunction(
+      osp_vec2f{-0.5f, static_cast<float>(mpiWorldSize)}, "jet");
   ospSetObject(brick.brick, "transferFunction", tfn);
   ospCommit(brick.brick);
 
@@ -131,12 +132,11 @@ int main(int argc, char **argv)
       std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
           vec2i{1024, 768}, worldBounds, world, renderer));
 
-  int spp = 1;
+  int spp        = 1;
   int currentSpp = 1;
   if (mpiRank == 0) {
-    glfwOSPRayWindow->registerImGuiCallback([&]() {
-      ImGui::SliderInt("spp", &spp, 1, 64);
-    });
+    glfwOSPRayWindow->registerImGuiCallback(
+        [&]() { ImGui::SliderInt("spp", &spp, 1, 64); });
   }
 
   glfwOSPRayWindow->registerDisplayCallback([&](GLFWDistribOSPRayWindow *win) {
@@ -183,7 +183,7 @@ bool computeDivisor(int x, int &divisor)
 vec3i computeGrid(int num)
 {
   vec3i grid(1);
-  int axis = 0;
+  int axis    = 0;
   int divisor = 0;
   while (computeDivisor(num, divisor)) {
     grid[axis] *= divisor;
@@ -204,10 +204,10 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
                       mpiRank / (grid.x * grid.y));
   // The bricks are 64^3 + 1 layer of ghost voxels on each axis
   const vec3i brickVolumeDims = vec3i(64);
-  const vec3i brickGhostDims = vec3i(brickVolumeDims + 2);
+  const vec3i brickGhostDims  = vec3i(brickVolumeDims + 2);
 
   // The grid is over the [0, grid * brickVolumeDims] box
-  worldBounds = box3f(vec3f(0.f), vec3f(grid * brickVolumeDims ));
+  worldBounds            = box3f(vec3f(0.f), vec3f(grid * brickVolumeDims));
   const vec3f brickLower = brickId * brickVolumeDims;
   const vec3f brickUpper = brickId * brickVolumeDims + brickVolumeDims;
 
@@ -216,12 +216,11 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   // we just put ghost voxels on all sides here, but a real application
   // would change which faces of each brick have ghost voxels dependent
   // on the actual data
-  brick.ghostBounds = box3f(brickLower - vec3f(1.f),
-                            brickUpper + vec3f(1.f));
+  brick.ghostBounds = box3f(brickLower - vec3f(1.f), brickUpper + vec3f(1.f));
 
   brick.brick = ospNewVolume("block_bricked_volume");
 
-  //ospSet1f(brick.brick, "samplingRate", 0.25f);
+  // ospSet1f(brick.brick, "samplingRate", 0.25f);
   ospSetString(brick.brick, "voxelType", "uchar");
   ospSet3iv(brick.brick, "dimensions", &brickGhostDims.x);
   // we use the grid origin to place this brick in the right position inside
@@ -231,9 +230,10 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   // generate the volume data to just be filled with this rank's id
   const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
   std::vector<char> volumeData(nVoxels, static_cast<char>(mpiRank));
-  ospSetRegion(brick.brick, volumeData.data(),
-               osp_vec3i{0, 0, 0}, (osp_vec3i&)brickGhostDims);
+  ospSetRegion(brick.brick,
+               volumeData.data(),
+               osp_vec3i{0, 0, 0},
+               (osp_vec3i &)brickGhostDims);
 
   return brick;
 }
-
