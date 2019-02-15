@@ -40,6 +40,24 @@ macro(get_subdirectories result curdir)
   set(${result} ${dirlist})
 endmacro()
 
+## Setup CMAKE_BUILD_TYPE to have a default + cycle between options in UI
+macro(ospray_configure_build_type)
+  set(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
+  if (WIN32)
+    if (NOT OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)
+      set(CMAKE_CONFIGURATION_TYPES "${CONFIGURATION_TYPES}"
+          CACHE STRING "List of generated configurations." FORCE)
+      set(OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET ON
+          CACHE INTERNAL "Default CMake configuration types set.")
+    endif()
+  else()
+    if(NOT CMAKE_BUILD_TYPE)
+      set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
+    endif()
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
+  endif()
+endmacro()
+
 # workaround link issues to Embree ISPC exports
 # ISPC only adds the ISA suffix during name mangling (and dynamic dispatch
 # code) when compiling for multiple targets. Thus, when only one OSPRay ISA is

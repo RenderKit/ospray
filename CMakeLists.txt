@@ -39,9 +39,6 @@ set(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 
-## Target install macros for OSPRay libraries ##
-include(GNUInstallDirs)
-
 ##############################################################
 # CMake modules and macro files
 ##############################################################
@@ -50,42 +47,34 @@ include(macros)
 include(ospray_macros)
 include(ospray_options)
 include(ispc)
-
-## ospcommon
-add_subdirectory(${OSPCOMMON_DIR})
-
-## Components
 include(components/configure.cmake)
 
-## Main OSPRay library
+if (OSPRAY_INSTALL_DEPENDENCIES)
+  include(ospray_redistribute_deps)
+endif()
+
+## Main OSPRay library ##
 add_subdirectory(ospray)
 
-## OSPRay sample apps
-option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
+## OSPRay sample apps ##
 if (OSPRAY_ENABLE_APPS)
   add_subdirectory(apps)
 endif()
 
-## Modules
-add_subdirectory(modules)
+## Modules ##
+if (OSPRAY_ENABLE_MODULES)
+  add_subdirectory(modules)
+endif()
 
-## Testing
+## Testing ##
 if (OSPRAY_ENABLE_TESTING)
   add_subdirectory(tests)
 endif()
 
-## Clang-format target
-option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
-       "Enable 'format' target, requires clang-format too" OFF)
-include(clang-format)
+## Clang-format target ##
+if (OSPRAY_ENABLE_TARGET_CLANGFORMAT)
+  include(clang-format)
+endif()
 
-# create a configure file that both ospray and ispc can read the cmake config
-# from needs to be at the end, after all cache variables have been set
-configure_file(ospray/common/OSPConfig.h.in OSPConfig.h)
-install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
-  COMPONENT devel
-)
-
-# has to be last
+# Must be last
 include(CPack)

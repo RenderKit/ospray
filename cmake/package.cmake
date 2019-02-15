@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include(GNUInstallDirs)
-
 set(CMAKE_INSTALL_SCRIPTDIR scripts)
 if (OSPRAY_ZIP_MODE)
   # in tgz / zip let's have relative RPath

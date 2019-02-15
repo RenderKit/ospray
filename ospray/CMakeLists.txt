@@ -18,6 +18,8 @@ option(EXP_NEW_BB_VOLUME_KERNELS
        "Experimental new block/bricked volume layout" ON)
 mark_as_advanced(EXP_NEW_BB_VOLUME_KERNELS)
 
+ospray_build_component(ospcommon)
+
 # -------------------------------------------------------
 # Setup ospray include directories and source files
 # -------------------------------------------------------
@@ -33,6 +35,7 @@ set(OSPRAY_SOURCES
   include/ospray/OSPDataType.h
   include/ospray/OSPTexture.h
 
+  include/ospray/ospray_cpp.h
   include/ospray/ospray_cpp/Camera.h
   include/ospray/ospray_cpp/Data.h
   include/ospray/ospray_cpp/FrameBuffer.h
@@ -292,10 +295,36 @@ mark_as_advanced(OSPRAY_BUILD_ISPC_DEVICE)
 
 if(OSPRAY_BUILD_ISPC_DEVICE)
 
-  # NOTE(jda) - PThread hint used by both Embree and OSPRay
-  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-  set(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
-  find_package(Threads REQUIRED)
+  ## ISPC Device-specific options ##
+
+  set(OSPRAY_TILE_SIZE 64 CACHE STRING "Tile size (x,y dimensions)")
+  set_property(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
+  mark_as_advanced(OSPRAY_TILE_SIZE)
+
+  if (WIN32)
+    set(TILE_STACK_DEFAULT_SIZE 64)
+  elseif (APPLE)
+    set(TILE_STACK_DEFAULT_SIZE 32)
+  else ()
+    set(TILE_STACK_DEFAULT_SIZE 128)
+  endif()
+
+  set(OSPRAY_MAX_STACK_TILE_SIZE ${TILE_STACK_DEFAULT_SIZE} CACHE STRING
+      "Max size for tile to remain allocated on the stack")
+  set_property(CACHE OSPRAY_MAX_STACK_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
+  mark_as_advanced(OSPRAY_MAX_STACK_TILE_SIZE)
+
+  set(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
+      "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
+  mark_as_advanced(OSPRAY_PIXELS_PER_JOB)
+
+  configure_file(common/OSPConfig.h.in ../OSPConfig.h)
+  install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+    COMPONENT devel
+  )
+
+  ## Build the module ##
 
   include_directories_ispc(
     ${CMAKE_SOURCE_DIR}/ospray/include
