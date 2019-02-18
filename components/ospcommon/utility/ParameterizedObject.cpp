@@ -56,18 +56,5 @@ namespace ospcommon {
       else
         return nullptr;
     }
-
-    std::shared_ptr<ParameterizedObject::Param> *
-    ParameterizedObject::params_begin()
-    {
-      return &paramList[0];
-    }
-
-    std::shared_ptr<ParameterizedObject::Param> *
-    ParameterizedObject::params_end()
-    {
-      return params_begin() + paramList.size();
-    }
-
   } // ::ospcommon::utility
 } // ::ospcommon
