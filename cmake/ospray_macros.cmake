@@ -17,19 +17,19 @@
 ## Tasking system target macro ##
 
 macro(ospray_create_tasking_target)
-  add_library(ospray::tasking INTERFACE IMPORTED)
+  add_library(ospray_tasking INTERFACE)
 
-  target_include_directories(ospray::tasking
+  target_include_directories(ospray_tasking
   INTERFACE
     ${TASKING_SYSTEM_INCLUDES}
   )
 
-  target_link_libraries(ospray::tasking
+  target_link_libraries(ospray_tasking
   INTERFACE
     ${TASKING_SYSTEM_LIBS}
   )
 
-  target_compile_definitions(ospray::tasking
+  target_compile_definitions(ospray_tasking
   INTERFACE
     ${TASKING_SYSTEM_DEFINITIONS}
   )

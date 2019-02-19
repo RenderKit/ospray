@@ -209,6 +209,8 @@ set(OSPRAY_TESTING_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_testing${LIBRARY_SUFFIX}
 # Include target exports
 include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 
+target_link_libraries(ospray::ospray_common INTERFACE ospray_tasking)
+
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
 set(OSPRAY_LIBRARIES ospray::ospray)
 

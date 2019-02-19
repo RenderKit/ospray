@@ -87,7 +87,7 @@ else()
 
   target_link_libraries(ospray_common
     PUBLIC
-      ospray::tasking
+      $<BUILD_INTERFACE:ospray_tasking>
       $<${OSPRAY_PLATFORM_WIN}:ws2_32>
   )
 
