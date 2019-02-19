@@ -23,10 +23,6 @@ else()
   find_package(Threads REQUIRED)
   set(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} tasking)
 
-  if (WIN32)
-    list(APPEND LINK_LIBS ws2_32)
-  endif()
-
   ## Create ospcommon library ##
 
   ospray_create_library(ospray_common
@@ -89,7 +85,11 @@ else()
   COMPONENT lib
   )
 
-  target_link_libraries(ospray_common PUBLIC ${LINK_LIBS})
+  target_link_libraries(ospray_common
+    PUBLIC
+      ospray::tasking
+      $<${OSPRAY_PLATFORM_WIN}:ws2_32>
+  )
 
   target_include_directories(ospray_common
     PUBLIC

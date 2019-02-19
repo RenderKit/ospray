@@ -120,6 +120,8 @@ set(OSPRAY_TASKING_INTERNAL    @OSPRAY_TASKING_INTERNAL@)
 set(OSPRAY_TASKING_LIBDISPATCH @OSPRAY_TASKING_LIBDISPATCH@)
 set(OSPRAY_TASKING_DEBUG       @OSPRAY_TASKING_DEBUG@)
 
+set(OSPRAY_TASKING_DEFINITIONS @TASKING_SYSTEM_DEFINITIONS@)
+
 set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
 set(OSPRAY_ISPC_ADDRESSING     @OSPRAY_ISPC_ADDRESSING@)
 set(OSPRAY_MPI_ENABLED         @OSPRAY_MODULE_MPI@)
@@ -153,6 +155,8 @@ include(ospray_macros)
 #             any OSPRay dependencies. A list of libs should be constructed
 #             and added to the OSPRAY_LIBRARIES variable below.
 
+# Re-create tasking library target
+
 if (OSPRAY_TASKING_TBB)
   if (OSPRAY_INSTALL_DEPENDENCIES)
     # TBB installed with OSPRay
@@ -168,9 +172,9 @@ if (OSPRAY_TASKING_TBB)
               "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
     endif()
   endif()
-
-  list(APPEND OSPRAY_DEPENDENCIES ${TBB_LIBRARIES})
 endif()
+
+ospray_create_tasking_target()
 
 # Embree
 if (OSPRAY_INSTALL_DEPENDENCIES)
@@ -209,10 +213,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 set(OSPRAY_LIBRARIES ospray::ospray)
 
 if(OSPRAY_MPI_ENABLED)
-  set(OSPRAY_MPI_LIBRARIES
-    ${LIBRARY_PATH_PREFIX}ospray_mpi_common${LIBRARY_SUFFIX}
-    ${LIBRARY_PATH_PREFIX}ospray_mpi_maml${LIBRARY_SUFFIX}
-  )
+  set(OSPRAY_MPI_LIBRARIES ospray::ospray_mpi_common ospray::ospray_mpi_maml)
 endif()
 
 set(OSPRAY_SG_LIBRARIES ospray::ospray_sg)

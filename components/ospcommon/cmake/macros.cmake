@@ -347,6 +347,14 @@ endmacro()
 ## Compiler configuration macros ##
 
 macro(ospray_configure_compiler)
+  if (WIN32)
+    set(OSPRAY_PLATFORM_WIN  1)
+    set(OSPRAY_PLATFORM_UNIX 0)
+  else()
+    set(OSPRAY_PLATFORM_WIN  0)
+    set(OSPRAY_PLATFORM_UNIX 1)
+  endif()
+
   # unhide compiler to make it easier for users to see what they are using
   mark_as_advanced(CLEAR CMAKE_CXX_COMPILER)
 
@@ -442,8 +450,6 @@ macro(ospray_configure_tasking_system)
 
   unset(TASKING_SYSTEM_LIBS)
 
-  add_library(tasking INTERFACE)
-
   if(OSPRAY_TASKING_TBB)
     find_package(TBB REQUIRED)
     set(TASKING_SYSTEM_DEFINITIONS -DOSPRAY_TASKING_TBB)
@@ -484,14 +490,6 @@ macro(ospray_configure_tasking_system)
       # Do nothing, will fall back to scalar code (useful for debugging)
     endif()
   endif(OSPRAY_TASKING_TBB)
-
-  target_include_directories(tasking
-  INTERFACE
-    $<BUILD_INTERFACE:${TASKING_SYSTEM_INCLUDES}>
-  )
-
-  target_link_libraries(tasking INTERFACE ${TASKING_SYSTEM_LIBS})
-  target_compile_definitions(tasking INTERFACE ${TASKING_SYSTEM_DEFINITIONS})
 endmacro()
 
 ## MPI configuration macro ##
