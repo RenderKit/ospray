@@ -411,6 +411,10 @@ macro(ospray_configure_tasking_system)
   # Setup tasking system build configuration
   # -------------------------------------------------------
 
+  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+  set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+  find_package(Threads REQUIRED)
+
   # NOTE(jda) - Notice that this implies that OSPRAY_CONFIGURE_COMPILER() has
   #             been called before this macro!
   if(OSPRAY_COMPILER_ICC)
@@ -448,7 +452,7 @@ macro(ospray_configure_tasking_system)
     set(OSPRAY_TASKING_DEBUG TRUE)
   endif()
 
-  unset(TASKING_SYSTEM_LIBS)
+  set(TASKING_SYSTEM_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
   if(OSPRAY_TASKING_TBB)
     find_package(TBB REQUIRED)

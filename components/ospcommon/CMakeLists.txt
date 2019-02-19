@@ -14,14 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-
 if (TARGET ospray_common)
   # this target is already built!
 else()
-  find_package(Threads REQUIRED)
-  set(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} tasking)
 
   ## Create ospcommon library ##
 
@@ -88,6 +83,7 @@ else()
   target_link_libraries(ospray_common
     PUBLIC
       $<BUILD_INTERFACE:ospray_tasking>
+      ${CMAKE_DL_LIBS}
       $<${OSPRAY_PLATFORM_WIN}:ws2_32>
   )
 
