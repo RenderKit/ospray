@@ -783,22 +783,9 @@ namespace ospray {
       return (OSPLight)(int64)handle;
     }
 
-    /*! clear the specified channel(s) of the frame buffer specified in
-        'whichChannels'
-
-      if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-      '0,0,0,0'.
-
-      if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-      +inf.
-
-      if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
-      and reset accumID.
-    */
-    void MPIOffloadDevice::frameBufferClear(OSPFrameBuffer _fb,
-                                     const uint32 fbChannelFlags)
+    void MPIOffloadDevice::resetAccumulation(OSPFrameBuffer _fb)
     {
-      work::ClearFrameBuffer work(_fb, fbChannelFlags);
+      work::ResetAccumulation work(_fb);
       processWork(work);
     }
 

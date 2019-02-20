@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 
   // create and setup framebuffer
   ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
-  framebuffer.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
+  framebuffer.clear();
 
   // render one frame
   renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);

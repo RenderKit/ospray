@@ -166,8 +166,7 @@ namespace ospray {
         if fbChannelFlags&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
       */
-      virtual void frameBufferClear(OSPFrameBuffer _fb,
-                                    const uint32 fbChannelFlags) = 0;
+      virtual void resetAccumulation(OSPFrameBuffer _fb) = 0;
 
       /*! call a renderer to render a frame buffer */
       virtual float renderFrame(OSPFrameBuffer _sc,

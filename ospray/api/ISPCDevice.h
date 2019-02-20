@@ -174,22 +174,7 @@ namespace ospray {
       /*! create a new Texture object */
       OSPTexture newTexture(const char *type) override;
 
-      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
-
-        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.
-
-        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.
-
-        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
-        and reset accumID.
-
-        if whichChannel&OSP_FB_NORMAL!=0, clear the normal buffer to 0,0,1.
-        if whichChannel&OSP_FB_ALBEDO!=0, clear the albedo buffer to 0,0,0.
-      */
-      void frameBufferClear(OSPFrameBuffer _fb,
-                                    const uint32 fbChannelFlags) override;
+      void resetAccumulation(OSPFrameBuffer _fb) override;
 
       /*! call a renderer to render a frame buffer */
       float renderFrame(OSPFrameBuffer _sc,

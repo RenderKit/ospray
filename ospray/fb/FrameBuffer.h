@@ -42,7 +42,7 @@ namespace ospray {
     virtual void setTile(Tile &tile)          = 0;
 
     /*! \brief clear (the specified channels of) this frame buffer */
-    virtual void clear(const uint32 fbChannelFlags) = 0;
+    virtual void clear() = 0;
 
     //! get number of pixels per tile, in x and y direction
     vec2i getTileSize() const;

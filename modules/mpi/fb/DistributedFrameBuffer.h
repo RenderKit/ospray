@@ -62,7 +62,7 @@ namespace ospray {
       can clear only its own tiles without having to tell any other
       node about it
      */
-    void clear(const uint32 fbChannelFlags) override;
+    void clear() override;
 
     // ==================================================================
     // framebuffer-renderer/loadbalancer interface

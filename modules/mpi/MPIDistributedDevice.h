@@ -87,20 +87,7 @@ namespace ospray {
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
 
-      /*! clear the specified channel(s) of the frame buffer specified in
-          'whichChannels'
-
-        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.
-
-        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.
-
-        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
-        and reset accumID.
-      */
-      void frameBufferClear(OSPFrameBuffer _fb,
-                            const uint32 fbChannelFlags) override;
+      void resetAccumulation(OSPFrameBuffer _fb) override;
 
       /*! create a new model */
       OSPModel newModel() override;

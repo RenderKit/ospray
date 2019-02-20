@@ -840,7 +840,7 @@ namespace ospray {
     can clear only its own tiles without having to tell any other
     node about it
   */
-  void DFB::clear(const uint32 fbChannelFlags)
+  void DFB::clear()
   {
     frameID = -1; // we increment at the start of the frame
     if (!myTiles.empty()) {
@@ -849,7 +849,7 @@ namespace ospray {
         assert(td);
         const auto bytes = TILE_SIZE * TILE_SIZE * sizeof(float);
         // XXX needed? DFB_accumulateTile writes when accumId==0
-        if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
+        if (hasAccumBuffer) {
           memset(td->accum.r, 0, bytes);
           memset(td->accum.g, 0, bytes);
           memset(td->accum.b, 0, bytes);
@@ -862,18 +862,10 @@ namespace ospray {
             memset(td->variance.a, 0, bytes);
           }
         }
-        if (hasDepthBuffer && (fbChannelFlags & OSP_FB_DEPTH))
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.z[i] = inf;
-        if (fbChannelFlags & OSP_FB_COLOR) {
-          memset(td->final.r, 0, bytes);
-          memset(td->final.g, 0, bytes);
-          memset(td->final.b, 0, bytes);
-          memset(td->final.a, 0, bytes);
-        }
       });
     }
 
-    if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
+    if (hasAccumBuffer) {
       memset(tileAccumID, 0, getTotalTiles()*sizeof(int32));
       tileErrorRegion.clear();
     }

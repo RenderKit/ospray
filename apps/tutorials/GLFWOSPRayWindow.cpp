@@ -164,9 +164,9 @@ void GLFWOSPRayWindow::setModel(OSPModel newModel)
   addObjectToCommit(renderer);
 }
 
-void GLFWOSPRayWindow::clearFrameBuffer()
+void GLFWOSPRayWindow::resetAccumulation()
 {
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  ospResetAccumulation(framebuffer);
 }
 
 void GLFWOSPRayWindow::registerDisplayCallback(
@@ -335,7 +335,7 @@ void GLFWOSPRayWindow::display()
     if (!handles.empty()) {
       for (auto &h : handles)
         ospCommit(h);
-      ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+      ospResetAccumulation(framebuffer);
     }
 
     // Start new frame and reset frame timing interval start

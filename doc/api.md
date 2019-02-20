@@ -1983,8 +1983,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   ---------------- -----------------------------------------------------------
   : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
   naming optional information the framebuffer can store. These values
-  can be combined by bitwise OR when passed to `ospNewFrameBuffer` or
-  `ospFrameBufferClear`.
+  can be combined by bitwise OR when passed to `ospNewFrameBuffer`.
 
 If a certain channel value is _not_ specified, the given buffer channel
 will not be present. Note that OSPRay makes a clear distinction
@@ -2022,13 +2021,12 @@ the received pointer `mapped` to
 
 The individual channels of a framebuffer can be cleared with
 
-    void ospFrameBufferClear(OSPFrameBuffer, const uint32_t frameBufferChannels);
+    void ospResetAccumulation(OSPFrameBuffer);
 
-When selected, `OSP_FB_COLOR` will clear the color buffer to black `(0,
-0, 0, 0)`, `OSP_FB_DEPTH` will clear the depth buffer to `inf`.
-`OSP_FB_ACCUM` will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
+This function will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
 `OSP_FB_NORMAL`, and `OSP_FB_ALBEDO`, if present) and resets the
-accumulation counter `accumID`.
+accumulation counter `accumID`. It is unspecified if the existing color and
+depth buffers are physically cleared when `ospResetAccumulation` is called.
 
 If `OSP_FB_VARIANCE` is specified, an estimate of the variance of the last
 accumulated frame can be queried with

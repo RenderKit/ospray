@@ -166,11 +166,10 @@ namespace ospray {
       fb.unmap(mapped);
     }
 
-    void MPIDistributedDevice::frameBufferClear(OSPFrameBuffer _fb,
-                                                const uint32 fbChannelFlags)
+    void MPIDistributedDevice::resetAccumulation(OSPFrameBuffer _fb)
     {
       auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
-      fb.clear(fbChannelFlags);
+      fb.clear();
     }
 
     OSPModel MPIDistributedDevice::newModel()

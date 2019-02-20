@@ -98,11 +98,10 @@ namespace ospray {
       return (OSPFrameBuffer)fb;
     }
 
-    void ISPCDevice::frameBufferClear(OSPFrameBuffer _fb,
-                                      const uint32 fbChannelFlags)
+    void ISPCDevice::resetAccumulation(OSPFrameBuffer _fb)
     {
       LocalFrameBuffer *fb = (LocalFrameBuffer *)_fb;
-      fb->clear(fbChannelFlags);
+      fb->clear();
     }
 
     const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,

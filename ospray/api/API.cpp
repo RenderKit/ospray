@@ -626,12 +626,11 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" void ospFrameBufferClear(OSPFrameBuffer fb,
-                                    const uint32_t fbChannelFlags)
+extern "C" void ospResetAccumulation(OSPFrameBuffer fb)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  currentDevice().frameBufferClear(fb, fbChannelFlags);
+  currentDevice().resetAccumulation(fb);
 }
 OSPRAY_CATCH_END()
 

@@ -380,15 +380,6 @@ extern "C" {
     const uint32_t textureCreationFlags OSP_DEFAULT_VAL(= 0)
   );
 
-  //! \brief clears the specified channel(s) of the frame buffer
-  /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
-
-    if whichChannels & OSP_FB_COLOR != 0, clear the color buffer to '0,0,0,0'
-    if whichChannels & OSP_FB_DEPTH != 0, clear the depth buffer to +inf
-    if whichChannels & OSP_FB_ACCUM != 0, clear the accum buffer to 0,0,0,0, and reset accumID
-  */
-  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer, const uint32_t frameBufferChannels);
-
   // -------------------------------------------------------
   /*! \defgroup ospray_data Data Buffer Handling
 
@@ -484,6 +475,9 @@ extern "C" {
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
+
+  //! \brief reset frame buffer accumulation for next render frame call
+  OSPRAY_INTERFACE void ospResetAccumulation(OSPFrameBuffer);
 
   /*! \} */
 

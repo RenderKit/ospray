@@ -334,10 +334,10 @@ namespace ospray {
         ObjectHandle handle;
       };
 
-      struct ClearFrameBuffer : public Work
+      struct ResetAccumulation : public Work
       {
-        ClearFrameBuffer() = default;
-        ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels);
+        ResetAccumulation() = default;
+        ResetAccumulation(OSPFrameBuffer fb);
 
         void run() override;
         void runOnMaster() override;
@@ -352,7 +352,6 @@ namespace ospray {
         void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
-        uint32 channels;
       };
 
       struct RenderFrame : public Work

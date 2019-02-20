@@ -186,9 +186,9 @@ void GLFWDistribOSPRayWindow::setModel(OSPModel newModel)
   addObjectToCommit(renderer);
 }
 
-void GLFWDistribOSPRayWindow::clearFrameBuffer()
+void GLFWDistribOSPRayWindow::resetAccumulation()
 {
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  ospResetAccumulation(framebuffer);
 }
 
 void GLFWDistribOSPRayWindow::registerDisplayCallback(
@@ -379,7 +379,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   if (!handles.empty()) {
     for (auto &h : handles)
       ospCommit(h);
-    
+
     fbNeedsClear = true;
   }
 
@@ -420,7 +420,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   }
 
   if (fbNeedsClear) {
-    ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+    ospResetAccumulation(framebuffer);
   }
 
   currentFrame =

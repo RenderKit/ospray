@@ -45,7 +45,7 @@ namespace ospray {
 
       void *map(OSPFrameBufferChannel channel) const;
       void unmap(void *ptr) const;
-      void clear(uint32_t channel) const;
+      void clear() const;
 
     private:
 
@@ -120,9 +120,9 @@ namespace ospray {
       ospUnmapFrameBuffer(ptr, handle());
     }
 
-    inline void FrameBuffer::clear(uint32_t channel) const
+    inline void FrameBuffer::clear() const
     {
-      ospFrameBufferClear(handle(), channel);
+      ospResetAccumulation(handle());
     }
 
     inline void FrameBuffer::free() const

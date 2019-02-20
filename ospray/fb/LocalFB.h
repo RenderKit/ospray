@@ -54,7 +54,7 @@ namespace ospray {
 
     const void *mapBuffer(OSPFrameBufferChannel channel) override;
     void unmap(const void *mappedMem) override;
-    void clear(const uint32 fbChannelFlags) override;
+    void clear() override;
   };
 
 } // ::ospray

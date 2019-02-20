@@ -144,7 +144,7 @@ void Base::PerformRenderTest()
   ospCommit(world);
   ospCommit(renderer);
 
-  ospFrameBufferClear(framebuffer, OSP_FB_ACCUM);
+  ospResetAccumulation(framebuffer);
 
   RenderFrame(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
   uint32_t* framebuffer_data = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);

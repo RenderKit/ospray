@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
   // create and setup framebuffer
   OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA,
                                                  OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  ospResetAccumulation(framebuffer);
 
   // render one frame
   OSPFuture result = ospRenderFrameAsync(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
