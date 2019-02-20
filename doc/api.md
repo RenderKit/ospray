@@ -42,9 +42,11 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:loglevel <n>`       set logging level, default `0`; increasing `n` means
                              increasingly verbose log messages
 
-  `--osp:verbose`            shortcut for `--osp:loglevel 1`
+  `--osp:verbose`            shortcut for `--osp:loglevel 1` and enable debug
+                             output on console
 
-  `--osp:vv`                 shortcut for `--osp:loglevel 2`
+  `--osp:vv`                 shortcut for `--osp:loglevel 2` and enable debug
+                             output on console
 
   `--osp:module:<name>`      load a module during initialization; equivalent to
                              calling `ospLoadModule(name)`

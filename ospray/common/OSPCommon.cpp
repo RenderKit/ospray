@@ -51,14 +51,18 @@ namespace ospray {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
           device->setParam("debug", true);
-          // per default enable logging to cout; may be overridden later
-          device->msg_fcn = [](const char *msg){ std::cout << msg; };
+          device->setParam("logOutput", std::string("cout"));
+          device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
           device->setParam("logLevel", 1);
+          device->setParam("logOutput", std::string("cout"));
+          device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:vv") {
           device->setParam("logLevel", 2);
+          device->setParam("logOutput", std::string("cout"));
+          device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
           if (i+1<ac) {
