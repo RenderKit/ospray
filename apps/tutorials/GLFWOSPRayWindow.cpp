@@ -377,8 +377,7 @@ void GLFWOSPRayWindow::startNewOSPRayFrame()
   if (currentFrame != nullptr)
     ospRelease(currentFrame);
 
-  currentFrame =
-      ospRenderFrameAsync(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  currentFrame = ospRenderFrameAsync(framebuffer, renderer);
 }
 
 void GLFWOSPRayWindow::waitOnOSPRayFrame()

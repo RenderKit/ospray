@@ -26,8 +26,7 @@ namespace ospray {
 
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                            FrameBuffer *fb,
-                                            const uint32 channelFlags)
+                                            FrameBuffer *fb)
   {
     Assert(renderer);
     Assert(fb);
@@ -73,7 +72,7 @@ namespace ospray {
 
     fb->setCompletedEvent(OSP_WORLD_RENDERED);
 
-    renderer->endFrame(perFrameData,channelFlags);
+    renderer->endFrame(perFrameData);
 
     fb->endFrame(renderer->errorThreshold);
     fb->setCompletedEvent(OSP_FRAME_FINISHED);

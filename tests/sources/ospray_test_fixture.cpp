@@ -146,7 +146,7 @@ void Base::PerformRenderTest()
 
   ospResetAccumulation(framebuffer);
 
-  RenderFrame(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
+  RenderFrame();
   uint32_t* framebuffer_data = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
   if(ospEnv->GetDumpImg()) {
@@ -227,10 +227,10 @@ OSPMaterial Base::CreateMaterial(std::string type)
   return material;
 }
 
-void Base::RenderFrame(const uint32_t frameBufferChannels)
+void Base::RenderFrame()
 {
   for (int frame = 0; frame < frames; ++frame)
-    ospRenderFrame(framebuffer, renderer, frameBufferChannels);
+    ospRenderFrame(framebuffer, renderer);
 }
 
 

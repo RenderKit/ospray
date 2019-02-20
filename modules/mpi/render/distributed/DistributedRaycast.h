@@ -58,12 +58,12 @@ namespace ospray {
 
       void commit() override;
 
-      float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
+      float renderFrame(FrameBuffer *fb) override;
 
       // TODO WILL: This is only for benchmarking the compositing using
       // the same rendering code path. Remove it once we're done! Or push
       // it behind some ifdefs!
-      float renderNonDistrib(FrameBuffer *fb, const uint32 fbChannelFlags);
+      float renderNonDistrib(FrameBuffer *fb);
 
       std::string toString() const override;
 

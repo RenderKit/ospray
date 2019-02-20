@@ -806,19 +806,17 @@ namespace ospray {
 
     /*! call a renderer to render a frame buffer */
     float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
-                                        OSPRenderer _renderer,
-                                        const uint32 fbFlags)
+                                        OSPRenderer _renderer)
     {
-      work::RenderFrame work(_fb, _renderer, fbFlags);
+      work::RenderFrame work(_fb, _renderer);
       processWork(work, true);
       return work.varianceResult;
     }
 
     OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer _fb,
-                                                 OSPRenderer _renderer,
-                                                 const uint32 fbFlags)
+                                                 OSPRenderer _renderer)
     {
-      work::RenderFrame work(_fb, _renderer, fbFlags);
+      work::RenderFrame work(_fb, _renderer);
       processWork(work, true);
 
       ObjectHandle futureHandle = allocateHandle();

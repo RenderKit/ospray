@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
   framebuffer.clear();
 
   // render one frame
-  renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  renderer.renderFrame(framebuffer);
 
   // on rank 0, access framebuffer and write its content as PPM file
   if (mpiRank == 0) {
@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
-    renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+    renderer.renderFrame(framebuffer);
 
   if (mpiRank == 0) {
     uint32_t *fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);

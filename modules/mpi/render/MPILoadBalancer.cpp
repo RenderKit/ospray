@@ -70,9 +70,7 @@ namespace ospray {
         openStatsLog();
       }
 
-      float Master::renderFrame(Renderer *renderer,
-                                FrameBuffer *fb,
-                                const uint32 /*channelFlags*/)
+      float Master::renderFrame(Renderer *renderer, FrameBuffer *fb)
       {
         DistributedFrameBuffer *dfb =
             dynamic_cast<DistributedFrameBuffer *>(fb);
@@ -127,9 +125,7 @@ namespace ospray {
         openStatsLog();
       }
 
-      float Slave::renderFrame(Renderer *renderer,
-                               FrameBuffer *fb,
-                               const uint32 channelFlags)
+      float Slave::renderFrame(Renderer *renderer, FrameBuffer *fb)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
@@ -185,7 +181,7 @@ namespace ospray {
         auto endRender = high_resolution_clock::now();
 
         dfb->waitUntilFinished();
-        renderer->endFrame(perFrameData, channelFlags);
+        renderer->endFrame(perFrameData);
 
         ProfilingPoint endComposite;
 
@@ -224,7 +220,7 @@ namespace ospray {
 
       // staticLoadBalancer::Distributed definitions //////////////////////////
 
-      float Distributed::renderFrame(Renderer *, FrameBuffer *, const uint32)
+      float Distributed::renderFrame(Renderer *, FrameBuffer *)
       {
         throw std::runtime_error(
             "Distributed renderers must implement their"
@@ -357,10 +353,7 @@ namespace ospray {
         }
       }
 
-      float Master::renderFrame(Renderer *renderer,
-                                FrameBuffer *fb,
-                                const uint32 /*channelFlags*/
-      )
+      float Master::renderFrame(Renderer *renderer, FrameBuffer *fb)
       {
         dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         assert(dfb);
@@ -409,9 +402,7 @@ namespace ospray {
           cv.notify_one();
       }
 
-      float Slave::renderFrame(Renderer *_renderer,
-                               FrameBuffer *_fb,
-                               const uint32 channelFlags)
+      float Slave::renderFrame(Renderer *_renderer, FrameBuffer *_fb)
       {
         renderer  = _renderer;
         fb        = _fb;
@@ -432,7 +423,7 @@ namespace ospray {
         }
         frameActive = false;
 
-        renderer->endFrame(perFrameData, channelFlags);
+        renderer->endFrame(perFrameData);
 
         dfb->endFrame(inf);
         return dfb->getVariance();

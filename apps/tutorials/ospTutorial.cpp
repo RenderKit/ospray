@@ -147,7 +147,7 @@ int main(int argc, const char **argv) {
   framebuffer.clear();
 
   // render one frame
-  renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  renderer.renderFrame(framebuffer);
 
   // access framebuffer and write its content as PPM file
   uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
@@ -157,7 +157,7 @@ int main(int argc, const char **argv) {
 
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
-    renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+    renderer.renderFrame(framebuffer);
 
   fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
   writePPM("accumulatedFrameCpp.ppm", imgSize, fb);

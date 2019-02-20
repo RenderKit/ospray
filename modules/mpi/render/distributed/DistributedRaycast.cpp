@@ -207,14 +207,13 @@ namespace ospray {
                                            ghostRegionIEs.data());
     }
 
-    float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
-                                                  const uint32 channelFlags)
+    float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb)
     {
       using namespace std::chrono;
       using namespace mpicommon;
 
       if (regions.empty()) {
-        return renderNonDistrib(fb, channelFlags);
+        return renderNonDistrib(fb);
       }
 
       ProfilingPoint startRender;
@@ -454,7 +453,7 @@ namespace ospray {
       auto endRender = high_resolution_clock::now();
 
       dfb->waitUntilFinished();
-      endFrame(nullptr, channelFlags);
+      endFrame(nullptr);
 
       ProfilingPoint endComposite;
 
@@ -506,8 +505,7 @@ namespace ospray {
     // TODO WILL: This is only for benchmarking the compositing using
     // the same rendering code path. Remove it once we're done! Or push
     // it behind some ifdefs!
-    float DistributedRaycastRenderer::renderNonDistrib(FrameBuffer *fb,
-                                                       const uint32 channelFlags)
+    float DistributedRaycastRenderer::renderNonDistrib(FrameBuffer *fb)
     {
       using namespace mpicommon;
       ProfilingPoint startRender;
@@ -538,7 +536,7 @@ namespace ospray {
         fb->setTile(tile);
       });
 
-      endFrame(nullptr, channelFlags);
+      endFrame(nullptr);
 
       ProfilingPoint endRender;
 

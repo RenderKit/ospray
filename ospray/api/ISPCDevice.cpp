@@ -352,18 +352,15 @@ namespace ospray {
       return loadLocalModule(name);
     }
 
-    float ISPCDevice::renderFrame(OSPFrameBuffer _fb,
-                                  OSPRenderer _renderer,
-                                  const uint32 fbChannelFlags)
+    float ISPCDevice::renderFrame(OSPFrameBuffer _fb, OSPRenderer _renderer)
     {
-      auto f = renderFrameAsync(_fb, _renderer, fbChannelFlags);
+      auto f = renderFrameAsync(_fb, _renderer);
       wait(f, OSP_FRAME_FINISHED);
       return getVariance(_fb);
     }
 
     OSPFuture ISPCDevice::renderFrameAsync(OSPFrameBuffer _fb,
-                                           OSPRenderer _renderer,
-                                           const uint32 fbChannelFlags)
+                                           OSPRenderer _renderer)
     {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
@@ -371,7 +368,7 @@ namespace ospray {
       fb->setCompletedEvent(OSP_NONE_FINISHED);
 
       auto *f = new RenderTask(
-          fb, [=]() { return renderer->renderFrame(fb, fbChannelFlags); });
+          fb, [=]() { return renderer->renderFrame(fb); });
 
       return (OSPFuture)f;
     }

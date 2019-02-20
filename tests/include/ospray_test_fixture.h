@@ -80,7 +80,7 @@ protected:
 
   OSPMaterial CreateMaterial(std::string type);
 
-  void RenderFrame(const uint32_t frameBufferChannels = OSP_FB_COLOR | OSP_FB_ACCUM);
+  void RenderFrame();
 };
 
 // Fixture class for tests parametrized with renderer type and material type, intended for

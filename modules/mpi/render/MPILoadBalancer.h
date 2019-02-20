@@ -38,9 +38,7 @@ namespace ospray {
       struct Master : public TiledLoadBalancer
       {
         Master();
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer, FrameBuffer *fb) override;
         std::string toString() const override;
       };
 
@@ -54,17 +52,13 @@ namespace ospray {
       struct Slave : public TiledLoadBalancer
       {
         Slave();
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer, FrameBuffer *fb) override;
         std::string toString() const override;
       };
 
       struct Distributed : public TiledLoadBalancer
       {
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer, FrameBuffer *fb) override;
 
         std::string toString() const override;
       };
@@ -92,9 +86,7 @@ namespace ospray {
        public:
         Master(ObjectHandle handle, int numPreAllocated = 4);
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer, FrameBuffer *fb) override;
         std::string toString() const override;
 
        private:
@@ -117,9 +109,7 @@ namespace ospray {
        public:
         Slave(ObjectHandle handle);
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer, FrameBuffer *fb) override;
         std::string toString() const override;
 
        private:

@@ -30,9 +30,7 @@ namespace ospray {
     virtual ~TiledLoadBalancer() {}
     static std::unique_ptr<TiledLoadBalancer> instance;
     virtual std::string toString() const = 0;
-    virtual float renderFrame(Renderer *tiledRenderer,
-                              FrameBuffer *fb,
-                              const uint32 channelFlags) = 0;
+    virtual float renderFrame(Renderer *tiledRenderer, FrameBuffer *fb) = 0;
 
     static size_t numJobs(const int spp, int accumID)
     {
@@ -49,9 +47,7 @@ namespace ospray {
     application ranks each doing local rendering on their own)  */
   struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
   {
-    float renderFrame(Renderer *renderer,
-                      FrameBuffer *fb,
-                      const uint32 channelFlags) override;
+    float renderFrame(Renderer *renderer, FrameBuffer *fb) override;
 
     std::string toString() const override;
   };

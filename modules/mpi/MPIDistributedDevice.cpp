@@ -393,25 +393,23 @@ namespace ospray {
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
-                                            OSPRenderer _renderer,
-                                            const uint32 fbFlags)
+                                            OSPRenderer _renderer)
     {
       mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
       auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-      auto result    = renderer.renderFrame(&fb, fbFlags);
+      auto result    = renderer.renderFrame(&fb);
       mpicommon::world.barrier();
       return result;
     }
 
     OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer _fb,
-                                                     OSPRenderer _renderer,
-                                                     const uint32 fbFlags)
+                                                     OSPRenderer _renderer)
     {
       mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
       auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-      renderer.renderFrame(&fb, fbFlags);
+      renderer.renderFrame(&fb);
       mpicommon::world.barrier();
 
       auto *f  = new SynchronousRenderTask(&fb);

@@ -495,12 +495,9 @@ namespace ospray {
 
       // ospRenderFrame ///////////////////////////////////////////////////////
 
-      RenderFrame::RenderFrame(OSPFrameBuffer fb,
-                               OSPRenderer renderer,
-                               uint32 channels)
+      RenderFrame::RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
         : fbHandle((ObjectHandle&)fb),
           rendererHandle((ObjectHandle&)renderer),
-          channels(channels),
           varianceResult(0.f)
       {}
 
@@ -511,7 +508,7 @@ namespace ospray {
         FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
-        varianceResult = renderer->renderFrame(fb, channels);
+        varianceResult = renderer->renderFrame(fb);
       }
 
       void RenderFrame::runOnMaster()
@@ -521,12 +518,12 @@ namespace ospray {
 
       void RenderFrame::serialize(WriteStream &b) const
       {
-        b << (int64)fbHandle << (int64)rendererHandle << channels;
+        b << (int64)fbHandle << (int64)rendererHandle;
       }
 
       void RenderFrame::deserialize(ReadStream &b)
       {
-        b >> fbHandle.i64 >> rendererHandle.i64 >> channels;
+        b >> fbHandle.i64 >> rendererHandle.i64;
       }
 
       // ospAddGeometry ///////////////////////////////////////////////////////

@@ -271,16 +271,8 @@ extern "C" {
   OSPRAY_INTERFACE OSPError ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame.
-  /*! What input to use for rendering the frame is encoded in the
-    renderer's parameters, typically in "world".
-    return estimate of variance if framebuffer has VARIANCE buffer */
-  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer,
-                                        OSPRenderer,
-                                        const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
-
-  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer,
-                                                 OSPRenderer,
-                                                 const uint32_t frameBufferChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
+  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer);
+  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer);
 
   /* Ask if all events tracked by an OSPFuture handle have been completed */
   OSPRAY_INTERFACE int ospIsReady(OSPFuture);

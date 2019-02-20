@@ -634,23 +634,20 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" float ospRenderFrame(OSPFrameBuffer fb,
-                                OSPRenderer renderer,
-                                const uint32_t fbChannelFlags)
+extern "C" float ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().renderFrame(fb, renderer, fbChannelFlags);
+  return currentDevice().renderFrame(fb, renderer);
 }
 OSPRAY_CATCH_END(inf)
 
 extern "C" OSPFuture ospRenderFrameAsync(OSPFrameBuffer fb,
-                                         OSPRenderer renderer,
-                                         const uint32_t fbChannelFlags)
+                                         OSPRenderer renderer)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().renderFrameAsync(fb, renderer, fbChannelFlags);
+  return currentDevice().renderFrameAsync(fb, renderer);
 }
 OSPRAY_CATCH_END(nullptr)
 

@@ -176,14 +176,9 @@ namespace ospray {
 
       void resetAccumulation(OSPFrameBuffer _fb) override;
 
-      /*! call a renderer to render a frame buffer */
-      float renderFrame(OSPFrameBuffer _sc,
-                        OSPRenderer _renderer,
-                        const uint32 fbChannelFlags) override;
+      float renderFrame(OSPFrameBuffer, OSPRenderer) override;
 
-      OSPFuture renderFrameAsync(OSPFrameBuffer _sc,
-                                 OSPRenderer _renderer,
-                                 const uint32 fbChannelFlags) override;
+      OSPFuture renderFrameAsync(OSPFrameBuffer, OSPRenderer) override;
 
       int isReady(OSPFuture) override;
 

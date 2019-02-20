@@ -24,7 +24,7 @@
 
 namespace ospray {
 
-  std::string Renderer::toString() const 
+  std::string Renderer::toString() const
   {
     return "ospray::Renderer";
   }
@@ -82,14 +82,14 @@ namespace ospray {
     return ispc::Renderer_beginFrame(getIE(),fb->getIE());
   }
 
-  void Renderer::endFrame(void *perFrameData, const int32 /*fbChannelFlags*/)
+  void Renderer::endFrame(void *perFrameData)
   {
-    ispc::Renderer_endFrame(getIE(),perFrameData);
+    ispc::Renderer_endFrame(getIE(), perFrameData);
   }
 
-  float Renderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
+  float Renderer::renderFrame(FrameBuffer *fb)
   {
-    return TiledLoadBalancer::instance->renderFrame(this,fb,channelFlags);
+    return TiledLoadBalancer::instance->renderFrame(this, fb);
   }
 
   OSPPickResult Renderer::pick(const vec2f &screenPos)

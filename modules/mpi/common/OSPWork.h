@@ -357,7 +357,7 @@ namespace ospray {
       struct RenderFrame : public Work
       {
         RenderFrame() = default;
-        RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
+        RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer);
 
         void run() override;
         void runOnMaster() override;
@@ -373,7 +373,6 @@ namespace ospray {
 
         ObjectHandle fbHandle;
         ObjectHandle rendererHandle;
-        uint32 channels;
         // Variance result for adaptive accumulation
         float varianceResult {0.f};
       };

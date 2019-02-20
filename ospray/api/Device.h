@@ -169,13 +169,9 @@ namespace ospray {
       virtual void resetAccumulation(OSPFrameBuffer _fb) = 0;
 
       /*! call a renderer to render a frame buffer */
-      virtual float renderFrame(OSPFrameBuffer _sc,
-                                OSPRenderer _renderer,
-                                const uint32 fbChannelFlags) = 0;
+      virtual float renderFrame(OSPFrameBuffer _sc, OSPRenderer _renderer) = 0;
 
-      virtual OSPFuture renderFrameAsync(OSPFrameBuffer,
-                                         OSPRenderer,
-                                         const uint32) = 0;
+      virtual OSPFuture renderFrameAsync(OSPFrameBuffer, OSPRenderer) = 0;
 
       virtual int isReady(OSPFuture) = 0;
 

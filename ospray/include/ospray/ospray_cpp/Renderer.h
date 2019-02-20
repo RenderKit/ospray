@@ -32,7 +32,7 @@ namespace ospray {
       Renderer(const Renderer &copy);
       Renderer(OSPRenderer existing = nullptr);
 
-      float renderFrame(const FrameBuffer &fb, uint32_t channels) const;
+      float renderFrame(const FrameBuffer &fb) const;
 
       OSPPickResult pick(const ospcommon::vec2f &screenPos) const;
     };
@@ -59,10 +59,9 @@ namespace ospray {
     {
     }
 
-    inline float Renderer::renderFrame(const FrameBuffer &fb,
-                                       uint32_t channels) const
+    inline float Renderer::renderFrame(const FrameBuffer &fb) const
     {
-      return ospRenderFrame(fb.handle(), handle(), channels);
+      return ospRenderFrame(fb.handle(), handle());
     }
 
     inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos) const

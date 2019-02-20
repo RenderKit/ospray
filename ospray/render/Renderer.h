@@ -51,7 +51,7 @@ namespace ospray {
     virtual std::string toString() const override;
 
     /*! \brief render one frame, and put it into given frame buffer */
-    virtual float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags);
+    virtual float renderFrame(FrameBuffer *fb);
 
     //! \brief called to initialize a new frame
     /*! this function gets called exactly once (on each node) at the
@@ -66,7 +66,7 @@ namespace ospray {
     virtual void *beginFrame(FrameBuffer *fb);
 
     /*! \brief called exactly once (on each node) at the end of each frame */
-    virtual void endFrame(void *perFrameData, const int32 fbChannelFlags);
+    virtual void endFrame(void *perFrameData);
 
     /*! \brief called by the load balancer to render one tile of "samples" */
     virtual void renderTile(void *perFrameData, Tile &tile, size_t jobID) const;
