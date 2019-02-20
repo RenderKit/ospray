@@ -155,23 +155,18 @@ namespace ospray {
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(const char *light_type) = 0;
 
-      /*! clear the specified channel(s) in 'fbChannelFlags'
-
-        if fbChannelFlags&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.
-
-        if fbChannelFlags&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.
-
-        if fbChannelFlags&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
-        and reset accumID.
-      */
       virtual void resetAccumulation(OSPFrameBuffer _fb) = 0;
 
       /*! call a renderer to render a frame buffer */
-      virtual float renderFrame(OSPFrameBuffer _sc, OSPRenderer _renderer) = 0;
+      virtual float renderFrame(OSPFrameBuffer,
+                                OSPRenderer,
+                                OSPCamera,
+                                OSPModel) = 0;
 
-      virtual OSPFuture renderFrameAsync(OSPFrameBuffer, OSPRenderer) = 0;
+      virtual OSPFuture renderFrameAsync(OSPFrameBuffer,
+                                         OSPRenderer,
+                                         OSPCamera,
+                                         OSPModel) = 0;
 
       virtual int isReady(OSPFuture) = 0;
 

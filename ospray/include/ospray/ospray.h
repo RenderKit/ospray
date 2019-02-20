@@ -186,7 +186,7 @@ typedef void _OSPManagedObject;
   doesn't know inheritance, and we want to make sure that a
   OSPGeometry can still be passed to a function that expects a
   OSPObject, etc */
-typedef struct _OSPManagedObject *OSPManagedObject,
+typedef _OSPManagedObject *OSPManagedObject,
   *OSPDevice,
   *OSPRenderer,
   *OSPCamera,
@@ -271,8 +271,8 @@ extern "C" {
   OSPRAY_INTERFACE OSPError ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame.
-  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer);
-  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer);
+  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
+  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
 
   /* Ask if all events tracked by an OSPFuture handle have been completed */
   OSPRAY_INTERFACE int ospIsReady(OSPFuture);

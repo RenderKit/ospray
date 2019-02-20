@@ -352,15 +352,20 @@ namespace ospray {
       return loadLocalModule(name);
     }
 
-    float ISPCDevice::renderFrame(OSPFrameBuffer _fb, OSPRenderer _renderer)
+    float ISPCDevice::renderFrame(OSPFrameBuffer _fb,
+                                  OSPRenderer _renderer,
+                                  OSPCamera _camera,
+                                  OSPModel _world)
     {
-      auto f = renderFrameAsync(_fb, _renderer);
+      auto f = renderFrameAsync(_fb, _renderer, _camera, _world);
       wait(f, OSP_FRAME_FINISHED);
       return getVariance(_fb);
     }
 
     OSPFuture ISPCDevice::renderFrameAsync(OSPFrameBuffer _fb,
-                                           OSPRenderer _renderer)
+                                           OSPRenderer _renderer,
+                                           OSPCamera /*_camera*/,
+                                           OSPModel /*_world*/)
     {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;

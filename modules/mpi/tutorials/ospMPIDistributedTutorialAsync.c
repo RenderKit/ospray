@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
   ospResetAccumulation(framebuffer);
 
   // render one frame
-  OSPFuture result = ospRenderFrameAsync(framebuffer, renderer);
+  OSPFuture result = ospRenderFrameAsync(framebuffer, renderer, camera, world);
   int isFinished = ospIsReady(result);
   printf("status of 'result' is %i\n", isFinished);
   printf("waiting on frame to finish...\n");
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
 
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
-    ospRenderFrame(framebuffer, renderer);
+    ospRenderFrame(framebuffer, renderer, camera, world);
 
   if (mpiRank == 0) {
     const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);

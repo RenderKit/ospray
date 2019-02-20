@@ -806,7 +806,9 @@ namespace ospray {
 
     /*! call a renderer to render a frame buffer */
     float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
-                                        OSPRenderer _renderer)
+                                        OSPRenderer _renderer,
+                                        OSPCamera /*_camera*/,
+                                        OSPModel /*_world*/)
     {
       work::RenderFrame work(_fb, _renderer);
       processWork(work, true);
@@ -814,7 +816,9 @@ namespace ospray {
     }
 
     OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer _fb,
-                                                 OSPRenderer _renderer)
+                                                 OSPRenderer _renderer,
+                                                 OSPCamera /*_camera*/,
+                                                 OSPModel /*_world*/)
     {
       work::RenderFrame work(_fb, _renderer);
       processWork(work, true);

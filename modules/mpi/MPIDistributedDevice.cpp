@@ -393,7 +393,9 @@ namespace ospray {
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
-                                            OSPRenderer _renderer)
+                                            OSPRenderer _renderer,
+                                            OSPCamera /*_camera*/,
+                                            OSPModel /*_world*/)
     {
       mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
@@ -404,7 +406,9 @@ namespace ospray {
     }
 
     OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer _fb,
-                                                     OSPRenderer _renderer)
+                                                     OSPRenderer _renderer,
+                                                     OSPCamera /*_camera*/,
+                                                     OSPModel /*_world*/)
     {
       mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);

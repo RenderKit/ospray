@@ -176,9 +176,15 @@ namespace ospray {
 
       void resetAccumulation(OSPFrameBuffer _fb) override;
 
-      float renderFrame(OSPFrameBuffer, OSPRenderer) override;
+      float renderFrame(OSPFrameBuffer,
+                        OSPRenderer,
+                        OSPCamera,
+                        OSPModel) override;
 
-      OSPFuture renderFrameAsync(OSPFrameBuffer, OSPRenderer) override;
+      OSPFuture renderFrameAsync(OSPFrameBuffer,
+                                 OSPRenderer,
+                                 OSPCamera,
+                                 OSPModel) override;
 
       int isReady(OSPFuture) override;
 

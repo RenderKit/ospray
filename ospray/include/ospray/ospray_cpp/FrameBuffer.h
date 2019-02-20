@@ -16,29 +16,36 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/Model.h>
 #include <ospray/ospray_cpp/PixelOp.h>
+#include <ospray/ospray_cpp/Renderer.h>
 
 namespace ospray {
-  namespace cpp    {
+  namespace cpp {
 
     class FrameBuffer : public ManagedObject_T<OSPFrameBuffer>
     {
-    public:
-
-      FrameBuffer() = default;//NOTE(jda) - this does *not* create the underlying
+     public:
+      FrameBuffer() =
+          default;  // NOTE(jda) - this does *not* create the underlying
       //            OSP object
       FrameBuffer(const ospcommon::vec2i &size,
                   OSPFrameBufferFormat format = OSP_FB_SRGBA,
-                  int channels = OSP_FB_COLOR);
+                  int channels                = OSP_FB_COLOR);
       FrameBuffer(const FrameBuffer &copy);
       FrameBuffer(FrameBuffer &&move);
       FrameBuffer(OSPFrameBuffer existing);
 
-      FrameBuffer& operator=(const FrameBuffer &copy);
-      FrameBuffer& operator=(      FrameBuffer &&move);
+      FrameBuffer &operator=(const FrameBuffer &copy);
+      FrameBuffer &operator=(FrameBuffer &&move);
 
       ~FrameBuffer();
+
+      void renderFrame();
+
+      float renderFrame(const Renderer &renderer,
+                        const Camera &camera,
+                        const Model &world) const;
 
       void setPixelOp(PixelOp &p) const;
       void setPixelOp(OSPPixelOp p) const;
@@ -47,50 +54,48 @@ namespace ospray {
       void unmap(void *ptr) const;
       void clear() const;
 
-    private:
-
+     private:
       void free() const;
 
       bool owner = true;
     };
 
-    // Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
     inline FrameBuffer::FrameBuffer(const ospcommon::vec2i &size,
                                     OSPFrameBufferFormat format,
                                     int channels)
     {
-      ospObject = ospNewFrameBuffer((const osp_vec2i&)size, format, channels);
+      ospObject = ospNewFrameBuffer((const osp_vec2i &)size, format, channels);
     }
 
-    inline FrameBuffer::FrameBuffer(const FrameBuffer &copy) :
-      ManagedObject_T<OSPFrameBuffer>(copy.handle()),
-      owner(false)
+    inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
+        : ManagedObject_T<OSPFrameBuffer>(copy.handle()), owner(false)
     {
     }
 
-    inline FrameBuffer::FrameBuffer(FrameBuffer &&move) :
-      ManagedObject_T<OSPFrameBuffer>(move.handle())
+    inline FrameBuffer::FrameBuffer(FrameBuffer &&move)
+        : ManagedObject_T<OSPFrameBuffer>(move.handle())
     {
       move.ospObject = nullptr;
     }
 
-    inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing) :
-      ManagedObject_T<OSPFrameBuffer>(existing)
+    inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
+        : ManagedObject_T<OSPFrameBuffer>(existing)
     {
     }
 
-    inline FrameBuffer& FrameBuffer::operator=(const FrameBuffer &copy)
+    inline FrameBuffer &FrameBuffer::operator=(const FrameBuffer &copy)
     {
       free();
       ospObject = copy.ospObject;
       return *this;
     }
 
-    inline FrameBuffer& FrameBuffer::operator=(FrameBuffer &&move)
+    inline FrameBuffer &FrameBuffer::operator=(FrameBuffer &&move)
     {
       free();
-      ospObject = move.ospObject;
+      ospObject      = move.ospObject;
       move.ospObject = nullptr;
       return *this;
     }
@@ -98,6 +103,14 @@ namespace ospray {
     inline FrameBuffer::~FrameBuffer()
     {
       free();
+    }
+
+    inline float FrameBuffer::renderFrame(const Renderer &renderer,
+                                          const Camera &camera,
+                                          const Model &world) const
+    {
+      return ospRenderFrame(
+          handle(), renderer.handle(), camera.handle(), world.handle());
     }
 
     inline void FrameBuffer::setPixelOp(PixelOp &p) const
@@ -112,7 +125,7 @@ namespace ospray {
 
     inline void *FrameBuffer::map(OSPFrameBufferChannel channel) const
     {
-      return const_cast<void*>(ospMapFrameBuffer(handle(), channel));
+      return const_cast<void *>(ospMapFrameBuffer(handle(), channel));
     }
 
     inline void FrameBuffer::unmap(void *ptr) const
@@ -132,5 +145,5 @@ namespace ospray {
       }
     }
 
-  }// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+}  // namespace ospray

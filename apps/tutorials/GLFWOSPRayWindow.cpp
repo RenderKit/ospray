@@ -377,7 +377,7 @@ void GLFWOSPRayWindow::startNewOSPRayFrame()
   if (currentFrame != nullptr)
     ospRelease(currentFrame);
 
-  currentFrame = ospRenderFrameAsync(framebuffer, renderer);
+  currentFrame = ospRenderFrameAsync(framebuffer, renderer, camera, model);
 }
 
 void GLFWOSPRayWindow::waitOnOSPRayFrame()

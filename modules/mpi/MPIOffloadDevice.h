@@ -173,9 +173,15 @@ namespace ospray {
       OSPVolume newVolume(const char *type) override;
 
       /*! call a renderer to render a frame buffer */
-      float renderFrame(OSPFrameBuffer _sc, OSPRenderer _renderer) override;
+      float renderFrame(OSPFrameBuffer,
+                        OSPRenderer,
+                        OSPCamera,
+                        OSPModel) override;
 
-      OSPFuture renderFrameAsync(OSPFrameBuffer, OSPRenderer) override;
+      OSPFuture renderFrameAsync(OSPFrameBuffer,
+                                 OSPRenderer,
+                                 OSPCamera,
+                                 OSPModel) override;
 
       int isReady(OSPFuture) override;
 

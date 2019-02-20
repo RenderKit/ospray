@@ -230,7 +230,7 @@ OSPMaterial Base::CreateMaterial(std::string type)
 void Base::RenderFrame()
 {
   for (int frame = 0; frame < frames; ++frame)
-    ospRenderFrame(framebuffer, renderer);
+    ospRenderFrame(framebuffer, renderer, camera, world);
 }
 
 

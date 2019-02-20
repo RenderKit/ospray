@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
   ospResetAccumulation(framebuffer);
 
   // render one frame
-  ospRenderFrame(framebuffer, renderer);
+  ospRenderFrame(framebuffer, renderer, camera, world);
 
   // on rank 0, access framebuffer and write its content as PPM file
   if (mpiRank == 0) {
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
-    ospRenderFrame(framebuffer, renderer);
+    ospRenderFrame(framebuffer, renderer, camera, world);
 
   if (mpiRank == 0) {
     const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);

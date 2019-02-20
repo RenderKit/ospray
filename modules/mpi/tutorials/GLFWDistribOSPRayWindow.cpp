@@ -423,7 +423,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
     ospResetAccumulation(framebuffer);
   }
 
-  currentFrame = ospRenderFrameAsync(framebuffer, renderer);
+  currentFrame = ospRenderFrameAsync(framebuffer, renderer, camera, model);
 }
 
 void GLFWDistribOSPRayWindow::waitOnOSPRayFrame()

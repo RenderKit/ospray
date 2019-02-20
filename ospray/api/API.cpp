@@ -634,20 +634,25 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" float ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
+extern "C" float ospRenderFrame(OSPFrameBuffer fb,
+                                OSPRenderer renderer,
+                                OSPCamera camera,
+                                OSPModel world)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().renderFrame(fb, renderer);
+  return currentDevice().renderFrame(fb, renderer, camera, world);
 }
 OSPRAY_CATCH_END(inf)
 
 extern "C" OSPFuture ospRenderFrameAsync(OSPFrameBuffer fb,
-                                         OSPRenderer renderer)
+                                         OSPRenderer renderer,
+                                         OSPCamera camera,
+                                         OSPModel world)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().renderFrameAsync(fb, renderer);
+  return currentDevice().renderFrameAsync(fb, renderer, camera, world);
 }
 OSPRAY_CATCH_END(nullptr)
 
