@@ -364,16 +364,18 @@ namespace ospray {
 
     OSPFuture ISPCDevice::renderFrameAsync(OSPFrameBuffer _fb,
                                            OSPRenderer _renderer,
-                                           OSPCamera /*_camera*/,
-                                           OSPModel /*_world*/)
+                                           OSPCamera _camera,
+                                           OSPModel _world)
     {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
+      Camera *camera     = (Camera *)_camera;
+      Model *world       = (Model *)_world;
 
       fb->setCompletedEvent(OSP_NONE_FINISHED);
 
       auto *f = new RenderTask(
-          fb, [=]() { return renderer->renderFrame(fb); });
+          fb, [=]() { return renderer->renderFrame(fb, camera, world); });
 
       return (OSPFuture)f;
     }

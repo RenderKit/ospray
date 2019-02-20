@@ -31,37 +31,37 @@ namespace ospray {
 
   void Renderer::commit()
   {
-    spp = std::max(1, getParam1i("spp", 1));
-    const int32 maxDepth = std::max(0, getParam1i("maxDepth", 20));
+    spp                         = std::max(1, getParam1i("spp", 1));
+    const int32 maxDepth        = std::max(0, getParam1i("maxDepth", 20));
     const float minContribution = getParam1f("minContribution", 0.001f);
-    errorThreshold = getParam1f("varianceThreshold", 0.f);
-    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", nullptr);
-    model = (Model*)getParamObject("model", getParamObject("world"));
+    errorThreshold              = getParam1f("varianceThreshold", 0.f);
+    maxDepthTexture = (Texture2D *)getParamObject("maxDepthTexture", nullptr);
+    model           = (Model *)getParamObject("model", getParamObject("world"));
 
     if (maxDepthTexture) {
-      if (maxDepthTexture->type != OSP_TEXTURE_R32F
-          || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
-        static WarnOnce warning("maxDepthTexture provided to the renderer "
-                                "needs to be of type OSP_TEXTURE_R32F and have "
-                                "the OSP_TEXTURE_FILTER_NEAREST flag");
+      if (maxDepthTexture->type != OSP_TEXTURE_R32F ||
+          !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
+        static WarnOnce warning(
+            "maxDepthTexture provided to the renderer "
+            "needs to be of type OSP_TEXTURE_R32F and have "
+            "the OSP_TEXTURE_FILTER_NEAREST flag");
       }
     }
 
     vec3f bgColor3 = getParam3f("bgColor", vec3f(getParam1f("bgColor", 0.f)));
-    bgColor = getParam4f("bgColor", vec4f(bgColor3, 0.f));
+    bgColor        = getParam4f("bgColor", vec4f(bgColor3, 0.f));
 
     if (getIE()) {
-      ManagedObject* camera = getParamObject("camera");
+      ManagedObject *camera = getParamObject("camera");
 
-      ispc::Renderer_set(getIE()
-          , model ? model->getIE() : nullptr
-          , camera ? camera->getIE() : nullptr
-          , spp
-          , maxDepth
-          , minContribution
-          , (ispc::vec4f&)bgColor
-          , maxDepthTexture ? maxDepthTexture->getIE() : nullptr
-          );
+      ispc::Renderer_set(getIE(),
+                         model ? model->getIE() : nullptr,
+                         camera ? camera->getIE() : nullptr,
+                         spp,
+                         maxDepth,
+                         minContribution,
+                         (ispc::vec4f &)bgColor,
+                         maxDepthTexture ? maxDepthTexture->getIE() : nullptr);
     }
   }
 
@@ -72,14 +72,14 @@ namespace ospray {
 
   void Renderer::renderTile(void *perFrameData, Tile &tile, size_t jobID) const
   {
-    ispc::Renderer_renderTile(getIE(),perFrameData,(ispc::Tile&)tile, jobID);
+    ispc::Renderer_renderTile(getIE(), perFrameData, (ispc::Tile &)tile, jobID);
   }
 
   void *Renderer::beginFrame(FrameBuffer *fb)
   {
     this->currentFB = fb;
     fb->beginFrame();
-    return ispc::Renderer_beginFrame(getIE(),fb->getIE());
+    return ispc::Renderer_beginFrame(getIE(), fb->getIE());
   }
 
   void Renderer::endFrame(void *perFrameData)
@@ -87,7 +87,9 @@ namespace ospray {
     ispc::Renderer_endFrame(getIE(), perFrameData);
   }
 
-  float Renderer::renderFrame(FrameBuffer *fb)
+  float Renderer::renderFrame(FrameBuffer *fb,
+                              Camera * /*camera*/,
+                              Model * /*world*/)
   {
     return TiledLoadBalancer::instance->renderFrame(this, fb);
   }
@@ -98,11 +100,11 @@ namespace ospray {
 
     OSPPickResult res;
     ispc::Renderer_pick(getIE(),
-                        (const ispc::vec2f&)screenPos,
-                        (ispc::vec3f&)res.position,
+                        (const ispc::vec2f &)screenPos,
+                        (ispc::vec3f &)res.position,
                         res.hit);
 
     return res;
   }
 
-} // ::ospray
+}  // namespace ospray

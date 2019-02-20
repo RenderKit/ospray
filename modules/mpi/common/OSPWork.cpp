@@ -16,11 +16,11 @@
 
 #include <vector>
 
-#include "mpiCommon/MPICommon.h"
 #include "OSPWork.h"
-#include "ospray/common/ObjectHandle.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
+#include "mpiCommon/MPICommon.h"
+#include "ospray/common/ObjectHandle.h"
 
 #include "common/Data.h"
 #include "common/Library.h"
@@ -91,13 +91,12 @@ namespace ospray {
 
       // SetLoadBalancer //////////////////////////////////////////////////////
 
-
       SetLoadBalancer::SetLoadBalancer(ObjectHandle _handle,
                                        bool _useDynamicLoadBalancer,
                                        int _numTilesPreAllocated)
-        : useDynamicLoadBalancer(_useDynamicLoadBalancer),
-          numTilesPreAllocated(_numTilesPreAllocated),
-          handleID(_handle.i64)
+          : useDynamicLoadBalancer(_useDynamicLoadBalancer),
+            numTilesPreAllocated(_numTilesPreAllocated),
+            handleID(_handle.i64)
       {
       }
 
@@ -136,9 +135,7 @@ namespace ospray {
 
       // ospCommit ////////////////////////////////////////////////////////////
 
-      CommitObject::CommitObject(ObjectHandle handle)
-        : handle(handle)
-      {}
+      CommitObject::CommitObject(ObjectHandle handle) : handle(handle) {}
 
       void CommitObject::run()
       {
@@ -146,9 +143,9 @@ namespace ospray {
         if (obj) {
           obj->commit();
         } else {
-          throw std::runtime_error("Error: rank "
-                                   + std::to_string(mpicommon::world.rank)
-                                   + " did not have object to commit!");
+          throw std::runtime_error("Error: rank " +
+                                   std::to_string(mpicommon::world.rank) +
+                                   " did not have object to commit!");
         }
       }
 
@@ -156,7 +153,7 @@ namespace ospray {
       {
         if (handle.defined()) {
           ManagedObject *obj = handle.lookup();
-          if (dynamic_cast<Renderer*>(obj)) {
+          if (dynamic_cast<Renderer *>(obj)) {
             obj->commit();
           }
         }
@@ -178,10 +175,10 @@ namespace ospray {
                                            vec2i dimensions,
                                            OSPFrameBufferFormat format,
                                            uint32 channels)
-        : handle(handle),
-          dimensions(dimensions),
-          format(format),
-          channels(channels)
+          : handle(handle),
+            dimensions(dimensions),
+            format(format),
+            channels(channels)
       {
       }
 
@@ -190,9 +187,8 @@ namespace ospray {
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
 
-        FrameBuffer *fb
-          = new DistributedFrameBuffer(dimensions, handle,
-                                       format, channels);
+        FrameBuffer *fb =
+            new DistributedFrameBuffer(dimensions, handle, format, channels);
         handle.assign(fb);
       }
 
@@ -215,9 +211,7 @@ namespace ospray {
 
       // ospLoadModule ////////////////////////////////////////////////////////
 
-      LoadModule::LoadModule(const std::string &name)
-        : name(name)
-      {}
+      LoadModule::LoadModule(const std::string &name) : name(name) {}
 
       void LoadModule::run()
       {
@@ -241,7 +235,7 @@ namespace ospray {
 
       // ospSetParam //////////////////////////////////////////////////////////
 
-      template<>
+      template <>
       void SetParam<std::string>::run()
       {
         ManagedObject *obj = handle.lookup();
@@ -249,14 +243,14 @@ namespace ospray {
         obj->setParam(name, val);
       }
 
-      template<>
+      template <>
       void SetParam<std::string>::runOnMaster()
       {
         if (!handle.defined())
           return;
 
         ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+        if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)) {
           obj->setParam(name, val);
         }
       }
@@ -265,8 +259,8 @@ namespace ospray {
 
       void SetMaterial::run()
       {
-        Geometry *geom = (Geometry*)handle.lookup();
-        Material *mat = (Material*)material.lookup();
+        Geometry *geom = (Geometry *)handle.lookup();
+        Material *mat  = (Material *)material.lookup();
         Assert(geom);
         Assert(mat);
         /* might we worthwhile doing a dyncast here to check if that
@@ -276,7 +270,7 @@ namespace ospray {
 
       // ospNewRenderer ///////////////////////////////////////////////////////
 
-      template<>
+      template <>
       void NewRenderer::runOnMaster()
       {
         run();
@@ -284,7 +278,7 @@ namespace ospray {
 
       // ospNewVolume /////////////////////////////////////////////////////////
 
-      template<>
+      template <>
       void NewVolume::runOnMaster()
       {
         run();
@@ -292,7 +286,7 @@ namespace ospray {
 
       // ospNewModel //////////////////////////////////////////////////////////
 
-      template<>
+      template <>
       void NewModel::run()
       {
         auto *model = new Model;
@@ -303,9 +297,9 @@ namespace ospray {
 
       void NewMaterial::run()
       {
-        auto *renderer = (Renderer*)rendererHandle.lookup();
+        auto *renderer    = (Renderer *)rendererHandle.lookup();
         auto rendererType = renderer->getParamString("externalNameFromAPI");
-        auto *material = Material::createInstance(rendererType.c_str(),
+        auto *material    = Material::createInstance(rendererType.c_str(),
                                                   materialType.c_str());
         handle.assign(material);
       }
@@ -332,18 +326,15 @@ namespace ospray {
                        OSPDataType format,
                        const void *_initMem,
                        int flags)
-        : handle(handle),
-          nItems(nItems),
-          format(format),
-          flags(flags)
+          : handle(handle), nItems(nItems), format(format), flags(flags)
       {
         if (_initMem && nItems) {
           auto numBytes = sizeOf(format) * nItems;
 
-          auto *initMem = static_cast<const byte_t*>(_initMem);
+          auto *initMem = static_cast<const byte_t *>(_initMem);
 
           if (flags & OSP_DATA_SHARED_BUFFER) {
-            dataView.reset(const_cast<byte_t*>(initMem), numBytes);
+            dataView.reset(const_cast<byte_t *>(initMem), numBytes);
           } else {
             copiedData.resize(numBytes);
             std::memcpy(copiedData.data(), initMem, numBytes);
@@ -358,28 +349,21 @@ namespace ospray {
         // it), so let's assert that nobody accidentally uses it.
         assert(format != OSP_STRING);
 
-        if (format == OSP_OBJECT ||
-            format == OSP_CAMERA  ||
-            format == OSP_DATA ||
-            format == OSP_FRAMEBUFFER ||
-            format == OSP_GEOMETRY ||
-            format == OSP_LIGHT ||
-            format == OSP_MATERIAL ||
-            format == OSP_MODEL ||
-            format == OSP_RENDERER ||
-            format == OSP_TEXTURE ||
-            format == OSP_TRANSFER_FUNCTION ||
-            format == OSP_VOLUME ||
-            format == OSP_PIXEL_OP
-            ) {
+        if (format == OSP_OBJECT || format == OSP_CAMERA ||
+            format == OSP_DATA || format == OSP_FRAMEBUFFER ||
+            format == OSP_GEOMETRY || format == OSP_LIGHT ||
+            format == OSP_MATERIAL || format == OSP_MODEL ||
+            format == OSP_RENDERER || format == OSP_TEXTURE ||
+            format == OSP_TRANSFER_FUNCTION || format == OSP_VOLUME ||
+            format == OSP_PIXEL_OP) {
           /* translating handles to managedobject pointers: if a
              data array has 'object' or 'data' entry types, then
              what the host sends are _handles_, not pointers, but
              what the core expects are pointers; to make the core
              happy we translate all data items back to pointers at
              this stage */
-          ObjectHandle   *asHandle = (ObjectHandle*)dataView.data();
-          ManagedObject **asObjPtr = (ManagedObject**)dataView.data();
+          ObjectHandle *asHandle   = (ObjectHandle *)dataView.data();
+          ManagedObject **asObjPtr = (ManagedObject **)dataView.data();
           for (size_t i = 0; i < nItems; ++i) {
             if (asHandle[i] != NULL_HANDLE)
               asObjPtr[i] = asHandle[i].lookup();
@@ -400,50 +384,65 @@ namespace ospray {
         int32 fmt;
         b >> handle.i64 >> nItems >> fmt >> flags >> copiedData;
         dataView = copiedData;
-        format = (OSPDataType)fmt;
+        format   = (OSPDataType)fmt;
       }
 
       // newFuture ////////////////////////////////////////////////////////////
 
       NewFuture::NewFuture(OSPFrameBuffer fbHandle, ObjectHandle handle)
-        : fbHandle((ObjectHandle&)fbHandle), handle(handle) {}
+          : fbHandle((ObjectHandle &)fbHandle), handle(handle)
+      {
+      }
 
       void NewFuture::run()
       {
-        auto *f = new SynchronousRenderTask((FrameBuffer*)fbHandle.lookup());
+        auto *f = new SynchronousRenderTask((FrameBuffer *)fbHandle.lookup());
         handle.assign(f);
       }
 
-      void NewFuture::runOnMaster() { run(); }
+      void NewFuture::runOnMaster()
+      {
+        run();
+      }
 
       void NewFuture::serialize(WriteStream &b) const
-      { b << (int64)fbHandle << (int64)handle; }
+      {
+        b << (int64)fbHandle << (int64)handle;
+      }
 
       void NewFuture::deserialize(ReadStream &b)
-      { b >> fbHandle.i64 >> handle.i64; }
+      {
+        b >> fbHandle.i64 >> handle.i64;
+      }
 
       // ospSetRegion /////////////////////////////////////////////////////////
 
-      SetRegion::SetRegion(OSPVolume volume, vec3i start, vec3i size,
-                           const void *src, OSPDataType type)
-        : handle((ObjectHandle&)volume), regionStart(start),
-          regionSize(size), type(type)
+      SetRegion::SetRegion(OSPVolume volume,
+                           vec3i start,
+                           vec3i size,
+                           const void *src,
+                           OSPDataType type)
+          : handle((ObjectHandle &)volume),
+            regionStart(start),
+            regionSize(size),
+            type(type)
       {
         size_t bytes = ospray::sizeOf(type) * size.x * size.y * size.z;
         // TODO: With the MPI batching this limitation should be lifted
         if (bytes > 2000000000LL) {
-          throw std::runtime_error("MPI ospSetRegion does not support "
-                                   "region sizes > 2GB");
+          throw std::runtime_error(
+              "MPI ospSetRegion does not support "
+              "region sizes > 2GB");
         }
         data.resize(bytes);
 
-        //TODO: should support sending data without copy
+        // TODO: should support sending data without copy
         std::memcpy(data.data(), src, bytes);
       }
 
       void SetRegion::run()
       {
-        Volume *volume = (Volume*)handle.lookup();
+        Volume *volume = (Volume *)handle.lookup();
         Assert(volume);
         // TODO: Does it make sense to do the allreduce & report back fails?
         // TODO: Should we be allocating the data with alignedMalloc instead?
@@ -468,12 +467,13 @@ namespace ospray {
       // ospResetAccumulation /////////////////////////////////////////////////
 
       ResetAccumulation::ResetAccumulation(OSPFrameBuffer fb)
-        : handle((ObjectHandle&)fb)
-      {}
+          : handle((ObjectHandle &)fb)
+      {
+      }
 
       void ResetAccumulation::run()
       {
-        FrameBuffer *fb = (FrameBuffer*)handle.lookup();
+        FrameBuffer *fb = (FrameBuffer *)handle.lookup();
         Assert(fb);
         fb->clear();
       }
@@ -495,20 +495,26 @@ namespace ospray {
 
       // ospRenderFrame ///////////////////////////////////////////////////////
 
-      RenderFrame::RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
-        : fbHandle((ObjectHandle&)fb),
-          rendererHandle((ObjectHandle&)renderer),
-          varianceResult(0.f)
-      {}
+      RenderFrame::RenderFrame(OSPFrameBuffer fb,
+                               OSPRenderer renderer,
+                               OSPCamera camera,
+                               OSPModel world)
+          : fbHandle((ObjectHandle &)fb),
+            rendererHandle((ObjectHandle &)renderer),
+            cameraHandle((ObjectHandle &)camera),
+            worldHandle((ObjectHandle &)world),
+            varianceResult(0.f)
+      {
+      }
 
       void RenderFrame::run()
       {
         mpicommon::world.barrier();
-        Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
-        Assert(renderer);
-        Assert(fb);
-        varianceResult = renderer->renderFrame(fb);
+        Renderer *renderer = (Renderer *)rendererHandle.lookup();
+        FrameBuffer *fb    = (FrameBuffer *)fbHandle.lookup();
+        Camera *camera     = (Camera *)cameraHandle.lookup();
+        Model *world       = (Model *)worldHandle.lookup();
+        varianceResult     = renderer->renderFrame(fb, camera, world);
       }
 
       void RenderFrame::runOnMaster()
@@ -518,20 +524,22 @@ namespace ospray {
 
       void RenderFrame::serialize(WriteStream &b) const
       {
-        b << (int64)fbHandle << (int64)rendererHandle;
+        b << (int64)fbHandle << (int64)rendererHandle << (int64)cameraHandle
+          << (int64)worldHandle;
       }
 
       void RenderFrame::deserialize(ReadStream &b)
       {
-        b >> fbHandle.i64 >> rendererHandle.i64;
+        b >> fbHandle.i64 >> rendererHandle.i64 >> cameraHandle.i64 >>
+            worldHandle.i64;
       }
 
       // ospAddGeometry ///////////////////////////////////////////////////////
 
       void AddGeometry::run()
       {
-        Model *model = (Model*)modelHandle.lookup();
-        Geometry *geometry = (Geometry*)objectHandle.lookup();
+        Model *model       = (Model *)modelHandle.lookup();
+        Geometry *geometry = (Geometry *)objectHandle.lookup();
         Assert(model);
         Assert(geometry);
         model->geometry.push_back(geometry);
@@ -541,8 +549,8 @@ namespace ospray {
 
       void AddVolume::run()
       {
-        Model *model = (Model*)modelHandle.lookup();
-        Volume *volume = (Volume*)objectHandle.lookup();
+        Model *model   = (Model *)modelHandle.lookup();
+        Volume *volume = (Volume *)objectHandle.lookup();
         Assert(model);
         Assert(volume);
         model->volume.push_back(volume);
@@ -552,14 +560,14 @@ namespace ospray {
 
       void RemoveGeometry::run()
       {
-        Model *model = (Model*)modelHandle.lookup();
-        Geometry *geometry = (Geometry*)objectHandle.lookup();
+        Model *model       = (Model *)modelHandle.lookup();
+        Geometry *geometry = (Geometry *)objectHandle.lookup();
         Assert(model);
         Assert(geometry);
-        auto it = std::find_if(model->geometry.begin(), model->geometry.end(),
-                               [&](const Ref<Geometry> &g) {
-                                 return geometry == &*g;
-                               });
+        auto it = std::find_if(
+            model->geometry.begin(),
+            model->geometry.end(),
+            [&](const Ref<Geometry> &g) { return geometry == &*g; });
         if (it != model->geometry.end()) {
           model->geometry.erase(it);
         }
@@ -569,15 +577,15 @@ namespace ospray {
 
       void RemoveVolume::run()
       {
-        Model *model = (Model*)modelHandle.lookup();
-        Volume *volume = (Volume*)objectHandle.lookup();
+        Model *model   = (Model *)modelHandle.lookup();
+        Volume *volume = (Volume *)objectHandle.lookup();
         Assert(model);
         Assert(volume);
         model->volume.push_back(volume);
-        auto it = std::find_if(model->volume.begin(), model->volume.end(),
-                               [&](const Ref<Volume> &v) {
-                                 return volume == &*v;
-                               });
+        auto it =
+            std::find_if(model->volume.begin(),
+                         model->volume.end(),
+                         [&](const Ref<Volume> &v) { return volume == &*v; });
         if (it != model->volume.end()) {
           model->volume.erase(it);
         }
@@ -586,7 +594,7 @@ namespace ospray {
       // ospRemoveParam ///////////////////////////////////////////////////////
 
       RemoveParam::RemoveParam(ObjectHandle handle, const char *name)
-        : handle(handle), name(name)
+          : handle(handle), name(name)
       {
         Assert(handle != nullHandle);
       }
@@ -601,7 +609,7 @@ namespace ospray {
       void RemoveParam::runOnMaster()
       {
         ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+        if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)) {
           obj->removeParam(name.c_str());
         }
       }
@@ -619,21 +627,23 @@ namespace ospray {
       // ospSetPixelOp ////////////////////////////////////////////////////////
 
       SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
-        : fbHandle((ObjectHandle&)fb),
-          poHandle((ObjectHandle&)op)
-      {}
+          : fbHandle((ObjectHandle &)fb), poHandle((ObjectHandle &)op)
+      {
+      }
 
       void SetPixelOp::run()
       {
-        FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
-        PixelOp     *po = (PixelOp*)poHandle.lookup();
+        FrameBuffer *fb = (FrameBuffer *)fbHandle.lookup();
+        PixelOp *po     = (PixelOp *)poHandle.lookup();
         Assert(fb);
         Assert(po);
         fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
 
         if (!fb->pixelOp) {
-          postStatusMsg("#osp:mpi: WARNING: PixelOp did not create "
-                        "an instance!", 1);
+          postStatusMsg(
+              "#osp:mpi: WARNING: PixelOp did not create "
+              "an instance!",
+              1);
         }
       }
 
@@ -649,9 +659,7 @@ namespace ospray {
 
       // ospRelease ///////////////////////////////////////////////////////////
 
-      CommandRelease::CommandRelease(ObjectHandle handle)
-        : handle(handle)
-      {}
+      CommandRelease::CommandRelease(ObjectHandle handle) : handle(handle) {}
 
       void CommandRelease::run()
       {
@@ -698,15 +706,14 @@ namespace ospray {
         MPI_CALL(Finalize());
       }
 
-      void CommandFinalize::serialize(WriteStream &) const
-      {}
+      void CommandFinalize::serialize(WriteStream &) const {}
 
-      void CommandFinalize::deserialize(ReadStream &)
-      {}
+      void CommandFinalize::deserialize(ReadStream &) {}
 
       Pick::Pick(OSPRenderer renderer, const vec2f &screenPos)
-        : rendererHandle((ObjectHandle&)renderer), screenPos(screenPos)
-      {}
+          : rendererHandle((ObjectHandle &)renderer), screenPos(screenPos)
+      {
+      }
 
       void Pick::run()
       {
@@ -714,10 +721,14 @@ namespace ospray {
         // just have the first worker run the pick and send the result
         // back to the master
         if (mpicommon::world.rank == 1) {
-          Renderer *renderer = (Renderer*)rendererHandle.lookup();
+          Renderer *renderer = (Renderer *)rendererHandle.lookup();
           Assert(renderer);
           pickResult = renderer->pick(screenPos);
-          MPI_CALL(Send(&pickResult, sizeof(pickResult), MPI_BYTE, 0, 0,
+          MPI_CALL(Send(&pickResult,
+                        sizeof(pickResult),
+                        MPI_BYTE,
+                        0,
+                        0,
                         mpicommon::world.comm));
         }
         mpicommon::worker.barrier();
@@ -725,8 +736,13 @@ namespace ospray {
       void Pick::runOnMaster()
       {
         // Master just needs to recv the result from the first worker
-        MPI_CALL(Recv(&pickResult, sizeof(pickResult), MPI_BYTE, 1, 0,
-                      mpicommon::world.comm, MPI_STATUS_IGNORE));
+        MPI_CALL(Recv(&pickResult,
+                      sizeof(pickResult),
+                      MPI_BYTE,
+                      1,
+                      0,
+                      mpicommon::world.comm,
+                      MPI_STATUS_IGNORE));
       }
 
       void Pick::serialize(WriteStream &b) const
@@ -739,7 +755,6 @@ namespace ospray {
         b >> rendererHandle.i64 >> screenPos;
       }
 
-    } // ::ospray::mpi::work
-  } // ::ospray::mpi
-} // ::ospray
-
+    }  // namespace work
+  }    // namespace mpi
+}  // namespace ospray

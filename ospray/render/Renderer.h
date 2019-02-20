@@ -16,8 +16,7 @@
 
 #pragma once
 
-/*! \file Renderer.h Defines the base renderer class */
-
+#include "camera/Camera.h"
 #include "common/Model.h"
 #include "fb/FrameBuffer.h"
 #include "texture/Texture2D.h"
@@ -51,7 +50,7 @@ namespace ospray {
     virtual std::string toString() const override;
 
     /*! \brief render one frame, and put it into given frame buffer */
-    virtual float renderFrame(FrameBuffer *fb);
+    virtual float renderFrame(FrameBuffer *fb, Camera *camera, Model *world);
 
     //! \brief called to initialize a new frame
     /*! this function gets called exactly once (on each node) at the

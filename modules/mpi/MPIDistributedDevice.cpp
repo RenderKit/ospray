@@ -14,14 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG // do all assertions in this file
+#undef NDEBUG  // do all assertions in this file
 
 // ospray
+#include "api/ISPCDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "lights/Light.h"
 #include "transferFunction/TransferFunction.h"
-#include "api/ISPCDevice.h"
 // ospcommon
 #include "ospcommon/tasking/tasking_system_handle.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -34,13 +34,13 @@
 #include "mpi/render/MPILoadBalancer.h"
 
 // distributed objects
-#include "render/distributed/DistributedRaycast.h"
 #include "common/DistributedModel.h"
+#include "render/distributed/DistributedRaycast.h"
 
 #ifdef OPEN_MPI
-# include <thread>
+#include <thread>
 //# define _GNU_SOURCE
-# include <sched.h>
+#include <sched.h>
 #endif
 
 namespace ospray {
@@ -66,10 +66,11 @@ namespace ospray {
       return (API_TYPE)(int64)handle;
     }
 
-    static void embreeErrorFunc(void *, const RTCError code, const char* str)
+    static void embreeErrorFunc(void *, const RTCError code, const char *str)
     {
       postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
-      throw std::runtime_error("embree internal error '" +std::string(str)+"'");
+      throw std::runtime_error("embree internal error '" + std::string(str) +
+                               "'");
     }
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
@@ -84,7 +85,7 @@ namespace ospray {
         try {
           MPI_CALL(Finalize());
         } catch (...) {
-          //TODO: anything to do here? try-catch added to silence a warning...
+          // TODO: anything to do here? try-catch added to silence a warning...
         }
       }
     }
@@ -94,11 +95,11 @@ namespace ospray {
       Device::commit();
 
       if (!initialized) {
-        int _ac = 1;
+        int _ac           = 1;
         const char *_av[] = {"ospray_mpi_distributed_device"};
 
-        auto *setComm =
-          static_cast<MPI_Comm*>(getParam<void*>("worldCommunicator", nullptr));
+        auto *setComm = static_cast<MPI_Comm *>(
+            getParam<void *>("worldCommunicator", nullptr));
         shouldFinalizeMPI = mpicommon::init(&_ac, _av, setComm == nullptr);
 
         if (setComm) {
@@ -118,12 +119,11 @@ namespace ospray {
         initialized = true;
 
         auto OSPRAY_FORCE_COMPRESSION =
-          utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
+            utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
         // Turning on the compression past 64 ranks seems to be a good
         // balancing point for cost of compressing vs. performance gain
-        auto enableCompression =
-          OSPRAY_FORCE_COMPRESSION.value_or(
-              mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
+        auto enableCompression = OSPRAY_FORCE_COMPRESSION.value_or(
+            mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
         maml::init(enableCompression);
       }
@@ -131,25 +131,23 @@ namespace ospray {
       masterRank = getParam<int>("masterRank", 0);
 
       TiledLoadBalancer::instance =
-                      make_unique<staticLoadBalancer::Distributed>();
+          make_unique<staticLoadBalancer::Distributed>();
     }
 
-    OSPFrameBuffer
-    MPIDistributedDevice::frameBufferCreate(const vec2i &size,
-                                            const OSPFrameBufferFormat mode,
-                                            const uint32 channels)
+    OSPFrameBuffer MPIDistributedDevice::frameBufferCreate(
+        const vec2i &size,
+        const OSPFrameBufferFormat mode,
+        const uint32 channels)
     {
       ObjectHandle handle;
-      auto *instance = new DistributedFrameBuffer(size, handle, mode, channels,
-                                                  true);
+      auto *instance =
+          new DistributedFrameBuffer(size, handle, mode, channels, true);
       handle.assign(instance);
       return (OSPFrameBuffer)(int64)handle;
     }
 
-
-    const void*
-    MPIDistributedDevice::frameBufferMap(OSPFrameBuffer _fb,
-                                         OSPFrameBufferChannel channel)
+    const void *MPIDistributedDevice::frameBufferMap(
+        OSPFrameBuffer _fb, OSPFrameBufferChannel channel)
     {
       if (!mpicommon::IamTheMaster())
         throw std::runtime_error("Can only map framebuffer on the master!");
@@ -201,8 +199,10 @@ namespace ospray {
       model->volume.push_back(volume);
     }
 
-    OSPData MPIDistributedDevice::newData(size_t nitems, OSPDataType format,
-                                          const void *init, int flags)
+    OSPData MPIDistributedDevice::newData(size_t nitems,
+                                          OSPDataType format,
+                                          const void *init,
+                                          int flags)
     {
       auto *instance = new Data(nitems, format, init, flags);
       return (OSPData)instance;
@@ -222,10 +222,12 @@ namespace ospray {
       object->removeParam(name);
     }
 
-    int MPIDistributedDevice::setRegion(OSPVolume _volume, const void *source,
-                                        const vec3i &index, const vec3i &count)
+    int MPIDistributedDevice::setRegion(OSPVolume _volume,
+                                        const void *source,
+                                        const vec3i &index,
+                                        const vec3i &count)
     {
-      auto *volume = (Volume*)_volume;
+      auto *volume = (Volume *)_volume;
       return volume->setRegion(source, index, count);
     }
 
@@ -322,8 +324,8 @@ namespace ospray {
 
     void MPIDistributedDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
-      auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
-      auto &op = lookupDistributedObject<PixelOp>(_op);
+      auto &fb   = lookupDistributedObject<FrameBuffer>(_fb);
+      auto &op   = lookupDistributedObject<PixelOp>(_op);
       fb.pixelOp = op.createInstance(&fb, fb.pixelOp.ptr);
     }
 
@@ -359,11 +361,10 @@ namespace ospray {
       return (OSPMaterial)instance;
     }
 
-    OSPTransferFunction
-    MPIDistributedDevice::newTransferFunction(const char *type)
+    OSPTransferFunction MPIDistributedDevice::newTransferFunction(
+        const char *type)
     {
-      return createLocalObject<TransferFunction,
-                               OSPTransferFunction>(type);
+      return createLocalObject<TransferFunction, OSPTransferFunction>(type);
     }
 
     OSPLight MPIDistributedDevice::newLight(const char *type)
@@ -377,9 +378,8 @@ namespace ospray {
       auto *model = lookupObject<Model>(_model);
       auto *geom  = lookupObject<Geometry>(_geometry);
 
-      model->geometry.erase(std::remove(model->geometry.begin(),
-                                        model->geometry.end(),
-                                        Ref<Geometry>(geom)));
+      model->geometry.erase(std::remove(
+          model->geometry.begin(), model->geometry.end(), Ref<Geometry>(geom)));
     }
 
     void MPIDistributedDevice::removeVolume(OSPModel _model, OSPVolume _volume)
@@ -387,36 +387,39 @@ namespace ospray {
       auto *model  = lookupObject<Model>(_model);
       auto *volume = lookupObject<Volume>(_volume);
 
-      model->volume.erase(std::remove(model->volume.begin(),
-                                      model->volume.end(),
-                                      Ref<Volume>(volume)));
+      model->volume.erase(std::remove(
+          model->volume.begin(), model->volume.end(), Ref<Volume>(volume)));
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
                                             OSPRenderer _renderer,
-                                            OSPCamera /*_camera*/,
-                                            OSPModel /*_world*/)
+                                            OSPCamera _camera,
+                                            OSPModel _world)
     {
       mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
       auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-      auto result    = renderer.renderFrame(&fb);
+      auto &camera   = *lookupObject<Camera>(_camera);
+      auto &world    = *lookupObject<Model>(_world);
+      auto result    = renderer.renderFrame(&fb, &camera, &world);
       mpicommon::world.barrier();
       return result;
     }
 
     OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer _fb,
                                                      OSPRenderer _renderer,
-                                                     OSPCamera /*_camera*/,
-                                                     OSPModel /*_world*/)
+                                                     OSPCamera _camera,
+                                                     OSPModel _world)
     {
       mpicommon::world.barrier();
       auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
       auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-      renderer.renderFrame(&fb);
+      auto &camera   = *lookupObject<Camera>(_camera);
+      auto &world    = *lookupObject<Model>(_world);
+      renderer.renderFrame(&fb, &camera, &world);
       mpicommon::world.barrier();
 
-      auto *f  = new SynchronousRenderTask(&fb);
+      auto *f = new SynchronousRenderTask(&fb);
       return (OSPFuture)f;
     }
 
@@ -452,13 +455,14 @@ namespace ospray {
 
     void MPIDistributedDevice::release(OSPObject _obj)
     {
-      if (!_obj) return;
+      if (!_obj)
+        return;
 
-      auto &handle = reinterpret_cast<ObjectHandle&>(_obj);
+      auto &handle = reinterpret_cast<ObjectHandle &>(_obj);
       if (handle.defined()) {
         handle.freeObject();
       } else {
-        auto *obj = (ManagedObject*)_obj;
+        auto *obj = (ManagedObject *)_obj;
         obj->refDec();
       }
     }
@@ -486,5 +490,5 @@ namespace ospray {
     OSP_REGISTER_DEVICE(MPIDistributedDevice, mpi_distributed_device);
     OSP_REGISTER_DEVICE(MPIDistributedDevice, mpi_distributed);
 
-  } // ::ospray::mpi
-} // ::ospray
+  }  // namespace mpi
+}  // namespace ospray

@@ -207,7 +207,9 @@ namespace ospray {
                                            ghostRegionIEs.data());
     }
 
-    float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb)
+    float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
+                                                  Camera * /*camera*/,
+                                                  Model * /*world*/)
     {
       using namespace std::chrono;
       using namespace mpicommon;

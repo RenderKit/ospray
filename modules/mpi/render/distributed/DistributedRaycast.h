@@ -58,7 +58,7 @@ namespace ospray {
 
       void commit() override;
 
-      float renderFrame(FrameBuffer *fb) override;
+      float renderFrame(FrameBuffer *fb, Camera *camera, Model *world) override;
 
       // TODO WILL: This is only for benchmarking the compositing using
       // the same rendering code path. Remove it once we're done! Or push
