@@ -68,7 +68,7 @@ namespace ospray {
       std::string toString() const override;
 
     private:
-      // Send my bounding boxes to other nodes, recieve theirs for a
+      // Send my bounding boxes to other nodes, receive theirs for a
       // "full picture" of what geometries live on what nodes
       void exchangeModelBounds();
 

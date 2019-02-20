@@ -115,7 +115,7 @@ TEST_CASE("ArrayView::reset", "[methods]")
     verify_empty(view);
   }
 
-  SECTION("ArrayView::reset with arguements")
+  SECTION("ArrayView::reset with arguments")
   {
     auto array = make_test_array<int, 10>();
     view.reset(array.data(), array.size());

@@ -70,7 +70,7 @@ namespace ospray {
     virtual void endFrame(const float errorThreshold) = 0;
 
     //! \brief common function to help printf-debugging
-    /*! \detailed Every derived class should overrride this! */
+    /*! \detailed Every derived class should override this! */
     virtual std::string toString() const override;
 
     void setCompletedEvent(OSPSyncEvent event);

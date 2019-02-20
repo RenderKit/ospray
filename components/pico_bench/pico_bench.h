@@ -111,7 +111,7 @@ private:
 	}
 };
 
-/* Benchmarking measurment using some desired unit of time measurement,
+/* Benchmarking measurement using some desired unit of time measurement,
  * e.g. T = std::chrono::milliseconds. T must be some std::chrono::duration
  */
 template<typename T>

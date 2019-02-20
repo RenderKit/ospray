@@ -18,7 +18,7 @@
   command line parameters
 
   The way this is supposed to work is that the app creates an
-  arglist from the ac/av paramters passed to it, then individual
+  arglist from the ac/av parameters passed to it, then individual
   modules can scan through this class, check if they recognize any,
   parse those, and 'consume' them (it, take them off this list),
   thus indicating that those have been properly processed. This in
@@ -39,7 +39,7 @@ namespace ospcommon {
     /*! class that abstracts command line arguments */
     struct ArgumentList
     {
-      /*! intialize a new argument list. note that we will _drop_
+      /*! initialize a new argument list. note that we will _drop_
         av[0], as this isn't actually an argument */
       ArgumentList(int ac, const char **av);
 
@@ -80,7 +80,7 @@ namespace ospcommon {
       /*! This function goes over an argument list, and calls
         'tryConsume()' for every argument, then takes those that
         _have_ been indicated as 'yes, we rcongized those' from the
-        argument list. (usually does not have to be overrriden) */
+        argument list. (usually does not have to be overridden) */
       void parseAndRemove(ArgumentList &args);
     };
 

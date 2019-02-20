@@ -149,7 +149,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         // TODO WILL: Because the compute geom sample is now going
         // to set t to infinity, this ray is going to be sent off the back!
 
-        // geometryRay.t0 is alreay updated in computeGeometrySample
+        // geometryRay.t0 is already updated in computeGeometrySample
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;

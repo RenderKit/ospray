@@ -68,7 +68,7 @@ namespace ospray {
         range1f valueRange;
       };
 
-      /*! each node in the tree refers to either a pair ofo child
+      /*! each node in the tree refers to either a pair of child
         nodes (using split plane pos, split plane dim, and offset in
         node[] array), or to a list of 'numItems' bricks (using
         dim=3, and offset pointing to the start of the list of

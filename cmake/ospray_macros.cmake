@@ -14,6 +14,29 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+## Tasking system target macro ##
+
+macro(ospray_create_tasking_target)
+  add_library(ospray_tasking INTERFACE)
+
+  target_include_directories(ospray_tasking
+  INTERFACE
+    ${TASKING_SYSTEM_INCLUDES}
+  )
+
+  target_link_libraries(ospray_tasking
+  INTERFACE
+    ${TASKING_SYSTEM_LIBS}
+  )
+
+  target_compile_definitions(ospray_tasking
+  INTERFACE
+    ${TASKING_SYSTEM_DEFINITIONS}
+  )
+endmacro()
+
+## Embree functions/macros ##
+
 function(ospray_check_embree_feature FEATURE DESCRIPTION)
   set(FEATURE EMBREE_${FEATURE})
   if(NOT ${ARGN})

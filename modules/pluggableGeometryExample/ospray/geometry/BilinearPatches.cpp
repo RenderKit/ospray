@@ -80,8 +80,8 @@ namespace ospray {
       // look at the data we were provided with ....
       size_t numPatchesInInput = patchesData->numBytes / sizeof(Patch);
 
-      /* get the acual 'raw' pointer to the data (ispc doesn't konw
-         what to do with the 'Data' abstraction calss */
+      /* get the acutal 'raw' pointer to the data (ispc doesn't know
+         what to do with the 'Data' abstraction class */
       void *patchesDataPointer = patchesData->data;
       ispc::BilinearPatches_finalize(getIE(),model->getIE(),
                                      (float*)patchesDataPointer,

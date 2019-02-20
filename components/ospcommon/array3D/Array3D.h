@@ -167,7 +167,7 @@ namespace ospcommon {
       const std::shared_ptr<Array3D<in_t>> actual;
     };
 
-    /*! wrapper class that generates an artifically larger data set by
+    /*! wrapper class that generates an artificially larger data set by
       simply repeating the given input */
     template <typename T>
     struct Array3DRepeater : public Array3D<T>

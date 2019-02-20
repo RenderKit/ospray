@@ -570,7 +570,7 @@ namespace ospcommon {
 #undef binary_operator
 
   // -------------------------------------------------------
-  // ternary operators (just for compatibilty with old embree
+  // ternary operators (just for compatibility with old embree
   // -------------------------------------------------------
   template <typename T, bool A>
   inline vec_t<T, 3, A> madd(const vec_t<T, 3, A> &a,

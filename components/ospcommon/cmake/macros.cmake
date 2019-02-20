@@ -267,7 +267,7 @@ function(ospray_split_create_args PREFIX)
   set(${PREFIX}_COMPONENT ${MY_COMPONENT} PARENT_SCOPE)
 endfunction()
 
-## Conveniance macro for creating OSPRay libraries ##
+## Convenience macro for creating OSPRay libraries ##
 # Usage
 #
 #   ospray_create_library(<name> source1 [source2 ...]
@@ -296,7 +296,7 @@ macro(ospray_create_library LIBRARY_NAME)
   endif()
 endmacro()
 
-## Conveniance macro for creating OSPRay applications ##
+## Convenience macro for creating OSPRay applications ##
 # Usage
 #
 #   ospray_create_application(<name> source1 [source2 ...]
@@ -330,7 +330,7 @@ macro(ospray_create_application APP_NAME)
   endif()
 endmacro()
 
-## Conveniance macro for creating OSPRay test applications ##
+## Convenience macro for creating OSPRay test applications ##
 # Usage - same as ospray_create_application
 #
 # Will build the app if 'OSPRAY_ENABLE_TESTING=ON' in CMake
@@ -347,6 +347,14 @@ endmacro()
 ## Compiler configuration macros ##
 
 macro(ospray_configure_compiler)
+  if (WIN32)
+    set(OSPRAY_PLATFORM_WIN  1)
+    set(OSPRAY_PLATFORM_UNIX 0)
+  else()
+    set(OSPRAY_PLATFORM_WIN  0)
+    set(OSPRAY_PLATFORM_UNIX 1)
+  endif()
+
   # unhide compiler to make it easier for users to see what they are using
   mark_as_advanced(CLEAR CMAKE_CXX_COMPILER)
 
@@ -403,6 +411,10 @@ macro(ospray_configure_tasking_system)
   # Setup tasking system build configuration
   # -------------------------------------------------------
 
+  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+  set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+  find_package(Threads REQUIRED)
+
   # NOTE(jda) - Notice that this implies that OSPRAY_CONFIGURE_COMPILER() has
   #             been called before this macro!
   if(OSPRAY_COMPILER_ICC)
@@ -440,15 +452,13 @@ macro(ospray_configure_tasking_system)
     set(OSPRAY_TASKING_DEBUG TRUE)
   endif()
 
-  unset(TASKING_SYSTEM_LIBS)
-
-  add_library(tasking INTERFACE)
+  set(TASKING_SYSTEM_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
   if(OSPRAY_TASKING_TBB)
     find_package(TBB REQUIRED)
     set(TASKING_SYSTEM_DEFINITIONS -DOSPRAY_TASKING_TBB)
     set(TASKING_SYSTEM_INCLUDES ${TBB_INCLUDE_DIRS})
-    set(TASKING_SYSTEM_LIBS ${TBB_LIBRARIES})
+    set(TASKING_SYSTEM_LIBS ${TASKING_SYSTEM_LIBS} ${TBB_LIBRARIES})
   else(OSPRAY_TASKING_TBB)
     unset(TBB_INCLUDE_DIR          CACHE)
     unset(TBB_LIBRARY              CACHE)
@@ -478,20 +488,12 @@ macro(ospray_configure_tasking_system)
     elseif(OSPRAY_TASKING_LIBDISPATCH)
       find_package(libdispatch REQUIRED)
       set(TASKING_SYSTEM_INCLUDES ${LIBDISPATCH_INCLUDE_DIRS})
-      set(TASKING_SYSTEM_LIBS ${LIBDISPATCH_LIBRARIES})
+      set(TASKING_SYSTEM_LIBS ${TASKING_SYSTEM_LIBS} ${LIBDISPATCH_LIBRARIES})
       set(TASKING_SYSTEM_DEFINITIONS -DOSPRAY_TASKING_LIBDISPATCH)
     else()#Debug
       # Do nothing, will fall back to scalar code (useful for debugging)
     endif()
   endif(OSPRAY_TASKING_TBB)
-
-  target_include_directories(tasking
-  INTERFACE
-    $<BUILD_INTERFACE:${TASKING_SYSTEM_INCLUDES}>
-  )
-
-  target_link_libraries(tasking INTERFACE ${TASKING_SYSTEM_LIBS})
-  target_compile_definitions(tasking INTERFACE ${TASKING_SYSTEM_DEFINITIONS})
 endmacro()
 
 ## MPI configuration macro ##

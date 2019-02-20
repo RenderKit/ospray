@@ -40,7 +40,7 @@ namespace ospcommon {
     virtual ~RefCount() {}
 
     /*! dummy copy-constructor and assignment operator because if they
-        do not exist icc throws some error about "delted function"
+        do not exist icc throws some error about "deleted function"
         when auto-constructing those. they should NEVER get called,
         though */
     inline RefCount(const RefCount &)
@@ -50,7 +50,7 @@ namespace ospcommon {
     }
 
     /*! dummy copy-constructor and assignment operator because if they
-        do not exist icc throws some error about "delted function"
+        do not exist icc throws some error about "deleted function"
         when auto-constructing those. they should NEVER get called,
         though */
     inline RefCount &operator=(const RefCount &)

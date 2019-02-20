@@ -23,7 +23,7 @@
 
 int main(int ac, const char *av[])
 {
-  // always append "--osp:mpi" to args; multiple occurences are not harmful,
+  // always append "--osp:mpi" to args; multiple occurrences are not harmful,
   // and we want to retain the original args (which could have been e.g.
   // "--osp:logoutput")
   int argc = ac+1;

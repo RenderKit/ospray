@@ -180,10 +180,10 @@ extern void findDualCell(const AMR *uniform self,
                          DualCell &o);
 
 /*! find specified dual cell, but mirror the x, y, and z dimensions
-  for lower and upper coordinates.  e.g., with loID=0,0,0 we perfom a
+  for lower and upper coordinates.  e.g., with loID=0,0,0 we perform a
   regular dual cell query, and corner C000 will be the lower front
   left corner.  with loID=1,0,0 we will mirror corners in the x axis,
-  so value[C000] would be the value fro the lower front RIGHT
+  so value[C000] would be the value for the lower front RIGHT
   corner */
 extern void findMirroredDualCell(const AMR *uniform self,
                                  const vec3i &loID,
