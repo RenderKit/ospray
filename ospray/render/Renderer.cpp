@@ -87,11 +87,9 @@ namespace ospray {
     ispc::Renderer_endFrame(getIE(), perFrameData);
   }
 
-  float Renderer::renderFrame(FrameBuffer *fb,
-                              Camera * /*camera*/,
-                              Model * /*world*/)
+  float Renderer::renderFrame(FrameBuffer *fb, Camera *camera, Model *world)
   {
-    return TiledLoadBalancer::instance->renderFrame(this, fb);
+    return TiledLoadBalancer::instance->renderFrame(fb, this, camera, world);
   }
 
   OSPPickResult Renderer::pick(const vec2f &screenPos)

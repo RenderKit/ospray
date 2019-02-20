@@ -22,34 +22,33 @@
 
 namespace ospray {
 
-  std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance {};
+  std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance;
 
   /*! render a frame via the tiled load balancer */
-  float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                            FrameBuffer *fb)
+  float LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
+                                            Renderer *renderer,
+                                            Camera * /*camera*/,
+                                            Model * /*world*/)
   {
-    Assert(renderer);
-    Assert(fb);
-
     void *perFrameData = renderer->beginFrame(fb);
-    bool cancel = false;
+    bool cancel        = false;
     std::atomic<int> pixelsDone{0};
-    const auto fbSize = fb->getNumPixels();
-    const float rcpPixels = 1.0f/(fbSize.x * fbSize.y);
+    const auto fbSize     = fb->getNumPixels();
+    const float rcpPixels = 1.0f / (fbSize.x * fbSize.y);
 
     tasking::parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
       if (cancel)
         return;
       const size_t numTiles_x = fb->getNumTiles().x;
-      const size_t tile_y = taskIndex / numTiles_x;
-      const size_t tile_x = taskIndex - tile_y*numTiles_x;
+      const size_t tile_y     = taskIndex / numTiles_x;
+      const size_t tile_x     = taskIndex - tile_y * numTiles_x;
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
       // increment also for finished tiles
-      vec2i pixels = ospcommon::min(vec2i(TILE_SIZE),
-          fbSize - tileID * TILE_SIZE);
-      pixelsDone += pixels.x * pixels.y;
+      vec2i numPixels =
+          ospcommon::min(vec2i(TILE_SIZE), fbSize - tileID * TILE_SIZE);
+      pixelsDone += numPixels.product();
 
       if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
@@ -66,8 +65,10 @@ namespace ospray {
       });
 
       fb->setTile(tile);
+      fb->reportProgress(pixelsDone * rcpPixels);
 
-      fb->reportProgress(pixelsDone*rcpPixels);
+      if (fb->frameCancelled())
+        cancel = true;
     });
 
     fb->setCompletedEvent(OSP_WORLD_RENDERED);
@@ -77,9 +78,6 @@ namespace ospray {
     fb->endFrame(renderer->errorThreshold);
     fb->setCompletedEvent(OSP_FRAME_FINISHED);
 
-    if (fb->frameCancelled())
-      cancel = true;
-
     return fb->getVariance();
   }
 
@@ -88,4 +86,4 @@ namespace ospray {
     return "ospray::LocalTiledLoadBalancer";
   }
 
-} // ::ospray
+}  // namespace ospray

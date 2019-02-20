@@ -70,7 +70,10 @@ namespace ospray {
         openStatsLog();
       }
 
-      float Master::renderFrame(Renderer *renderer, FrameBuffer *fb)
+      float Master::renderFrame(FrameBuffer *fb,
+                                Renderer *renderer,
+                                Camera * /*camera*/,
+                                Model * /*world*/)
       {
         DistributedFrameBuffer *dfb =
             dynamic_cast<DistributedFrameBuffer *>(fb);
@@ -125,7 +128,10 @@ namespace ospray {
         openStatsLog();
       }
 
-      float Slave::renderFrame(Renderer *renderer, FrameBuffer *fb)
+      float Slave::renderFrame(FrameBuffer *fb,
+                               Renderer *renderer,
+                               Camera * /*camera*/,
+                               Model * /*world*/)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
@@ -220,7 +226,10 @@ namespace ospray {
 
       // staticLoadBalancer::Distributed definitions //////////////////////////
 
-      float Distributed::renderFrame(Renderer *, FrameBuffer *)
+      float Distributed::renderFrame(FrameBuffer *,
+                                     Renderer *,
+                                     Camera *,
+                                     Model *)
       {
         throw std::runtime_error(
             "Distributed renderers must implement their"
@@ -353,7 +362,10 @@ namespace ospray {
         }
       }
 
-      float Master::renderFrame(Renderer *renderer, FrameBuffer *fb)
+      float Master::renderFrame(FrameBuffer *fb,
+                                Renderer *renderer,
+                                Camera * /*camera*/,
+                                Model * /*world*/)
       {
         dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         assert(dfb);
@@ -402,7 +414,10 @@ namespace ospray {
           cv.notify_one();
       }
 
-      float Slave::renderFrame(Renderer *_renderer, FrameBuffer *_fb)
+      float Slave::renderFrame(FrameBuffer *_fb,
+                               Renderer *_renderer,
+                               Camera * /*camera*/,
+                               Model * /*world*/)
       {
         renderer  = _renderer;
         fb        = _fb;
