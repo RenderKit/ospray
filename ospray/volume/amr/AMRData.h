@@ -81,7 +81,7 @@ namespace ospray {
         vec3f f_dims;
       };
 
-      //! our own, internal represenation of a brick
+      //! our own, internal representation of a brick
       std::vector<Brick> brick;
 
       /*! compute world-space bounding box (lot in _logical_ space,

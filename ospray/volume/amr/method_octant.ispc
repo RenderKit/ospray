@@ -352,7 +352,7 @@ varying float doOctant(const AMR *uniform self,
   /* the vertex touches all seven neighbors. if all are on the same
      level, then we aren't on a bounary and can average; if not, but
      at least one is coarser, we have find the coarSEST neighbor and
-     defer to him; if neither of those two cases apllies we're on a
+     defer to him; if neither of those two cases applies we're on a
      boundary but are the coarsest, so can backfill */
 
   /* ----------- vertex ----------- */ {
@@ -399,7 +399,7 @@ varying float doOctant(const AMR *uniform self,
     const vec3f vtxPos = make_vec3f((ii & 1) ? O.vertex.x : O.center.x,
                                     (ii & 2) ? O.vertex.y : O.center.y,
                                     (ii & 4) ? O.vertex.z : O.center.z);
-    // this isn't actually necessary: in theory we alreay KNOW this
+    // this isn't actually necessary: in theory we already KNOW this
     // cell from the dual cell. for now, do the actual findcell again,
     // just to make sure we have all the right values initialized
     const CellRef fillFrom = findCell(self,needToFillFrom[ii].pos,

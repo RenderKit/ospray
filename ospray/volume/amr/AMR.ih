@@ -128,7 +128,7 @@ struct AMRLevel
 struct AMR
 {
   /*! "item list" array - each leaf node in the tree points into this
-    array, and the 'num' elements follwing the pointed-to-location
+    array, and the 'num' elements following the pointed-to-location
     are the bricks stored at this leaf */
   AMRLeaf           *leaf;
   // AMRBrick *uniform *uniform item;

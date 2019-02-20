@@ -629,7 +629,7 @@ class SnappyDecompressor {
   }
 
   // Read the uncompressed length stored at the start of the compressed data.
-  // On succcess, stores the length in *result and returns true.
+  // On success, stores the length in *result and returns true.
   // On failure, returns false.
   bool ReadUncompressedLength(uint32* result) {
     assert(ip_ == NULL);       // Must not have read anything yet

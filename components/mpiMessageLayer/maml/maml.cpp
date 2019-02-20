@@ -69,9 +69,9 @@ namespace maml {
     Context::singleton->stop();
   }
 
-  /*! send given messsage to given comm:rank. Once this function has
+  /*! send given message to given comm:rank. Once this function has
     called maml has full ownership of this message, and the user may
-    no longer access it (becuase maml may delete it at any time) */
+    no longer access it (because maml may delete it at any time) */
   void sendTo(MPI_Comm comm, int rank, std::shared_ptr<Message> msg)
   {
     if (!(rank >= 0 && msg.get()))

@@ -23,7 +23,7 @@
 # ospLoadModule("<moduleName>"), actually load and use this library on
 # every worker node (which will typically not run the application). As
 # such, the library should _not_ "commuincate" with the application
-# through global variables or globally defind functions, and instead
+# through global variables or globally defined functions, and instead
 # communicate solely through the ospNewGeometry(...), ospSet...(),
 # ospCommit(...) etc functionality provided by ospray.
 
@@ -41,7 +41,7 @@
 ospray_create_library(ospray_module_bilinear_patches
   # the cpp file that contains all the plugin code - parsing
   # parameters in ospCommit(), creating and registering the object,
-  # building accel strcutures, etc
+  # building accel structures, etc
   geometry/BilinearPatches.cpp
 
   # the ispc file that contains the plugins for all vector code - ie,

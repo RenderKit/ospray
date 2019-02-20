@@ -36,7 +36,7 @@ namespace ospcommon {
           tokens.push_back(str.substr(prev, fnd - prev));
         }
       }
-      // Grab the last token in the string, if the string didn't terminate with a delimeter
+      // Grab the last token in the string, if the string didn't terminate with a delimiter
       if (str.size() - prev > 1) {
         tokens.push_back(str.substr(prev));
       }

@@ -43,7 +43,7 @@ namespace ospray {
   }
 
   //! \brief common function to help printf-debugging
-  /*! \detailed Every derived class should overrride this! */
+  /*! \detailed Every derived class should override this! */
   std::string ManagedObject::toString() const
   {
     return "ospray::ManagedObject";

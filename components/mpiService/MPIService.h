@@ -87,7 +87,7 @@ namespace ospray {
       std::shared_ptr<Connection> accept();
 
       /*! return a 'address' string that the clients can connect
-          to. typically, this is of hte form "<hostname>:<portNo>",
+          to. typically, this is of the form "<hostname>:<portNo>",
           where hostname is the name of the machine that runs rank 0,
           and portNo is the TCP/IP socket that this service is
           published on */

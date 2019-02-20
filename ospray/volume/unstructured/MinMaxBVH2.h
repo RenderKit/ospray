@@ -27,7 +27,7 @@ namespace ospray {
       used with, or what those min/max values represent. */
   struct MinMaxBVH2
   {
-    /*! a node in a MinMaxBVH: a (4D-)bounding box, plus a child/leaf refence */
+    /*! a node in a MinMaxBVH: a (4D-)bounding box, plus a child/leaf reference */
     struct Node : public box4f
     {
       uint64 childRef;

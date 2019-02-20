@@ -198,8 +198,8 @@ bool recursiveBisection(varying Ray &ray,
 /*! this is the function callback the embree calls to compute a single
   ray-primitive intersection. For sake of simplicity we'll use a very,
   very simple recursive test here - this is neither fast nor elegant,
-  but does show that you can do mere arbitray stuff in a ISPC kernel,
-  including 'true' recusion. */
+  but does show that you can do mere arbitrary stuff in a ISPC kernel,
+  including 'true' recursion. */
 void BilinearPatches_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
                               const uniform bool isOcclusionTest)
 {

@@ -27,7 +27,7 @@ namespace ospcommon {
         back values, where front() and back() references will be exchanged.
 
         Example: A rendering thread wants to work on a framebuffer while a GUI
-                 thread wants to continously draw the latest complete
+                 thread wants to continuously draw the latest complete
                  framebuffer. Once the new frame is ready, they are swapped.
 
         NOTE: This isn't thread safe! Any references to front() and back() must
