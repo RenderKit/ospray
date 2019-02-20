@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v1.8.1:
+
+-   CMake bugfix to remove full paths to dependencies in packages
+
 ### Changes in v1.8.0:
 
 -   This will be the last minor revision of OSPRay. Future development

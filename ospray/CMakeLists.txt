@@ -315,7 +315,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
     ospray
-    embree
+    $<BUILD_INTERFACE:embree>
   )
 
   target_include_directories(ospray_module_ispc
