@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.8.0 of OSPRay. For changes and new features see the
+This is release v1.8.1 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -40,7 +40,7 @@ via [OSPRay’s GitHub Issue
 Tracker](https://github.com/ospray/OSPRay/issues) (or, if you should
 happen to have a fix for it,you can also send us a pull request); for
 missing features please contact us via email at
-<ospray@googlegroups.com>.
+<a href="mailto:ospray@googlegroups.com" class="email">ospray@googlegroups.com</a>.
 
 For recent news, updates, and announcements, please see our complete
 [news/updates](https://www.ospray.org/news.html) page.
@@ -240,9 +240,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
