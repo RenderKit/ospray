@@ -89,6 +89,10 @@ namespace ospray {
       std::vector<DistributedRegion> allRegions;
       // The ranks which own each region
       std::unordered_map<int, std::set<size_t>> regionOwners;
+
+      //TODO: Dummy model pointer as this is no longer a member of the base
+      //      Renderer
+      Model *model{nullptr};
     };
 
   } // ::ospray::mpi

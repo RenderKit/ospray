@@ -33,6 +33,7 @@ struct SimpleAO
 };
 
 inline void shade_ao(SimpleAO *uniform self,
+                     FrameBuffer *uniform fb,
                      Model *uniform world,
                      varying vec3f &color,
                      varying float &alpha,
@@ -49,7 +50,7 @@ inline void shade_ao(SimpleAO *uniform self,
   }
 
   DifferentialGeometry dg;
-  postIntersect(self->super.model,dg,ray,
+  postIntersect(world, dg, ray,
                 DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
                 |DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
@@ -68,7 +69,6 @@ inline void shade_ao(SimpleAO *uniform self,
   superColor = superColor * make_vec3f(dg.color);
 
   // init TEA RNG //
-  uniform FrameBuffer *uniform fb = self->super.fb;
   RandomTEA rng_state;
   varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, 0x290374,(fb->size.x * pixel_y) + pixel_x);
@@ -97,6 +97,7 @@ inline void shade_ao(SimpleAO *uniform self,
 }
 
 void SimpleAO_renderSample(Renderer *uniform _self,
+                           FrameBuffer *uniform fb,
                            Model *uniform world,
                            void *uniform perFrameData,
                            varying ScreenSample &sample)
@@ -110,6 +111,7 @@ void SimpleAO_renderSample(Renderer *uniform _self,
       reduce_max(sample.sampleID.z) * self->samplesPerFrame;
 
   shade_ao(self,
+           fb,
            world,
            sample.rgb,
            sample.alpha,
@@ -124,7 +126,7 @@ void SimpleAO_renderSample(Renderer *uniform _self,
 export void *uniform SimpleAO_create(void *uniform cppE)
 {
   uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
-  Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
+  Renderer_Constructor(&self->super, cppE, 1);
   self->super.renderSample = SimpleAO_renderSample;
   return self;
 }

@@ -16,13 +16,13 @@
 
 #include "OrthographicCamera.ih"
 
-void OrthographicCamera_initRay(uniform Camera *uniform _self,
+void OrthographicCamera_initRay(const Camera *uniform _self,
                                 varying Ray &ray,
                                 const varying CameraSample &sample)
 {
-  uniform OrthographicCamera *uniform self = 
-    (uniform OrthographicCamera *uniform)_self;
-  
+  const OrthographicCamera *uniform self =
+    (const OrthographicCamera *uniform)_self;
+
   const vec2f screen = Camera_subRegion(_self, sample.screen);
 
   const vec3f dir = self->dir;
@@ -40,7 +40,7 @@ void OrthographicCamera_initRay(uniform Camera *uniform _self,
     parameters */
 export void *uniform OrthographicCamera_create(void *uniform cppE)
 {
-  uniform OrthographicCamera *uniform cam 
+  uniform OrthographicCamera *uniform cam
     = uniform new uniform OrthographicCamera;
   cam->super.cppEquivalent = cppE;
   cam->super.initRay = OrthographicCamera_initRay;
@@ -48,7 +48,7 @@ export void *uniform OrthographicCamera_create(void *uniform cppE)
   return cam;
 }
 
-export void OrthographicCamera_set(void *uniform _self, 
+export void OrthographicCamera_set(void *uniform _self,
                                    const uniform vec3f &dir,
                                    const uniform vec3f &pos_00,
                                    const uniform vec3f &pos_du,

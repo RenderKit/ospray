@@ -75,10 +75,10 @@ namespace ospray {
                             Tile &tile,
                             size_t jobID) const;
 
-    virtual OSPPickResult pick(const vec2f &screenPos);
-
-    Model *model{nullptr};
-    FrameBuffer *currentFB{nullptr};
+    virtual OSPPickResult pick(FrameBuffer *fb,
+                               Camera *camera,
+                               Model *world,
+                               const vec2f &screenPos);
 
     /*! \brief number of samples to be used per pixel in a tile */
     int32 spp{1};

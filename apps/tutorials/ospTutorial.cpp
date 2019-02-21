@@ -136,8 +136,6 @@ int main(int argc, const char **argv) {
   // complete setup of renderer
   renderer.set("aoSamples", 1);
   renderer.set("bgColor", 1.0f); // white, transparent
-  renderer.set("model",  world);
-  renderer.set("camera", camera);
   renderer.set("lights", lights);
   renderer.commit();
 

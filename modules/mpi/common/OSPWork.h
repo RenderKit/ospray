@@ -793,7 +793,11 @@ namespace ospray {
       struct Pick : public Work
       {
         Pick() = default;
-        Pick(OSPRenderer renderer, const vec2f &screenPos);
+        Pick(OSPFrameBuffer fb,
+             OSPRenderer renderer,
+             OSPCamera camera,
+             OSPModel world,
+             const vec2f &screenPos);
 
         void run() override;
         void runOnMaster() override;
@@ -807,7 +811,10 @@ namespace ospray {
           serialized itself in */
         void deserialize(ReadStream &b) override;
 
+        ObjectHandle fbHandle;
         ObjectHandle rendererHandle;
+        ObjectHandle cameraHandle;
+        ObjectHandle worldHandle;
         vec2f screenPos;
         OSPPickResult pickResult;
       };

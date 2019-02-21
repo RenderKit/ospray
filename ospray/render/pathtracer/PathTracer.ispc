@@ -524,7 +524,7 @@ export void PathTracer_set(void *uniform _self
 export void* uniform PathTracer_create(void *uniform cppE)
 {
   uniform PathTracer *uniform self = uniform new uniform PathTracer;
-  Renderer_Constructor(&self->super,cppE);
+  Renderer_Constructor(&self->super, cppE);
   self->super.renderTile = PathTracer_renderTile;
 
   PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);

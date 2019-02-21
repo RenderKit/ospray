@@ -30,8 +30,6 @@ namespace ospray {
       Renderer(const std::string &type);
       Renderer(const Renderer &copy);
       Renderer(OSPRenderer existing = nullptr);
-
-      OSPPickResult pick(const ospcommon::vec2f &screenPos) const;
     };
 
     // Inlined function definitions ///////////////////////////////////////////
@@ -54,13 +52,6 @@ namespace ospray {
     inline Renderer::Renderer(OSPRenderer existing)
         : ManagedObject_T<OSPRenderer>(existing)
     {
-    }
-
-    inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos) const
-    {
-      OSPPickResult result;
-      ospPick(&result, handle(), (const osp::vec2f &)screenPos);
-      return result;
     }
 
   }  // namespace cpp

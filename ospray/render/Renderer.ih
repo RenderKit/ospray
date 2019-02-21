@@ -62,6 +62,7 @@ inline void setTile(uniform Tile &tile,
   the same pixel coordinates in the same call.
  */
 typedef void (*Renderer_RenderSampleFct)(Renderer *uniform self,
+                                         FrameBuffer *uniform fb,
                                          Model *uniform model,
                                          void *uniform perFrameData,
                                          varying ScreenSample &retValue);
@@ -75,7 +76,7 @@ typedef unmasked void (*Renderer_RenderTileFct)(Renderer *uniform self,
                                                 uniform int taskIndex);
 
 typedef unmasked void *uniform (*Renderer_BeginFrameFct)(
-    uniform Renderer *uniform self, uniform FrameBuffer *uniform fb);
+    Renderer *uniform self, const Model *uniform world);
 
 typedef unmasked void (*Renderer_EndFrameFct)(uniform Renderer *uniform self,
                                               void *uniform perFrameData);
@@ -89,10 +90,6 @@ struct Renderer
 
   void *cppEquivalent;
 
-  FrameBuffer *uniform fb;
-  Model *uniform model;
-  Camera *uniform camera;
-
   int32 spp;
   vec4f bgColor;               // background color and alpha
   Texture2D *maxDepthTexture;  // optional maximum depth texture used for early
@@ -104,6 +101,4 @@ struct Renderer
 void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE);
 void Renderer_Constructor(uniform Renderer *uniform self,
                           void *uniform cppE,
-                          void *uniform _model,
-                          void *uniform _camera,
                           const uniform int32 spp);

@@ -17,12 +17,12 @@
 #include "PerspectiveCamera.ih"
 #include "math/sampling.ih"
 
-void PerspectiveCamera_initRay(uniform Camera *uniform _self,
+void PerspectiveCamera_initRay(const Camera *uniform _self,
                                varying Ray &ray,
                                const varying CameraSample &sample)
 {
-  uniform PerspectiveCamera *uniform self =
-    (uniform PerspectiveCamera *uniform)_self;
+  const PerspectiveCamera *uniform self =
+    (const PerspectiveCamera *uniform)_self;
 
   vec2f screen = sample.screen;
   vec3f org = self->org;

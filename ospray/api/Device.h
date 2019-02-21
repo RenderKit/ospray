@@ -35,25 +35,23 @@ namespace ospray {
       /*! singleton that points to currently active device */
       static std::shared_ptr<Device> current;
 
-      Device() = default;
+      Device()                   = default;
       virtual ~Device() override = default;
 
       /*! \brief creates an abstract device class of given type */
       static Device *createDevice(const char *type);
 
       /*! create a new frame buffer/swap chain of given type */
-      virtual OSPFrameBuffer
-      frameBufferCreate(const vec2i &size,
-                        const OSPFrameBufferFormat mode,
-                        const uint32 channels) = 0;
+      virtual OSPFrameBuffer frameBufferCreate(const vec2i &size,
+                                               const OSPFrameBufferFormat mode,
+                                               const uint32 channels) = 0;
 
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb,
                                          const OSPFrameBufferChannel) = 0;
 
       /*! unmap previously mapped frame buffer */
-      virtual void frameBufferUnmap(const void *mapped,
-                                    OSPFrameBuffer fb) = 0;
+      virtual void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) = 0;
 
       /*! create a new model */
       virtual OSPModel newModel() = 0;
@@ -77,45 +75,72 @@ namespace ospray {
       virtual void removeVolume(OSPModel _model, OSPVolume _volume) = 0;
 
       /*! create a new data buffer */
-      virtual OSPData newData(size_t nitems, OSPDataType format,
-                              const void *init, int flags) = 0;
+      virtual OSPData newData(size_t nitems,
+                              OSPDataType format,
+                              const void *init,
+                              int flags) = 0;
 
       /*! Copy data into the given volume. */
-      virtual int setRegion(OSPVolume object, const void *source,
-                            const vec3i &index, const vec3i &count) = 0;
+      virtual int setRegion(OSPVolume object,
+                            const void *source,
+                            const vec3i &index,
+                            const vec3i &count) = 0;
 
       /*! assign (named) string parameter to an object */
-      virtual void setString(OSPObject object, const char *bufName, const char *s) = 0;
+      virtual void setString(OSPObject object,
+                             const char *bufName,
+                             const char *s) = 0;
 
       /*! assign (named) data item as a parameter to an object */
-      virtual void setObject(OSPObject object, const char *bufName, OSPObject obj) = 0;
+      virtual void setObject(OSPObject object,
+                             const char *bufName,
+                             OSPObject obj) = 0;
 
       /*! assign (named) float parameter to an object */
-      virtual void setBool(OSPObject object, const char *bufName, const bool f) = 0;
+      virtual void setBool(OSPObject object,
+                           const char *bufName,
+                           const bool f) = 0;
 
       /*! assign (named) float parameter to an object */
-      virtual void setFloat(OSPObject object, const char *bufName, const float f) = 0;
+      virtual void setFloat(OSPObject object,
+                            const char *bufName,
+                            const float f) = 0;
 
       /*! assign (named) vec2f parameter to an object */
-      virtual void setVec2f(OSPObject object, const char *bufName, const vec2f &v) = 0;
+      virtual void setVec2f(OSPObject object,
+                            const char *bufName,
+                            const vec2f &v) = 0;
 
       /*! assign (named) vec3f parameter to an object */
-      virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v) = 0;
+      virtual void setVec3f(OSPObject object,
+                            const char *bufName,
+                            const vec3f &v) = 0;
 
       /*! assign (named) vec4f parameter to an object */
-      virtual void setVec4f(OSPObject object, const char *bufName, const vec4f &v) = 0;
+      virtual void setVec4f(OSPObject object,
+                            const char *bufName,
+                            const vec4f &v) = 0;
 
       /*! assign (named) int parameter to an object */
-      virtual void setInt(OSPObject object, const char *bufName, const int f) = 0;
+      virtual void setInt(OSPObject object,
+                          const char *bufName,
+                          const int f) = 0;
 
       /*! assign (named) vec2i parameter to an object */
-      virtual void setVec2i(OSPObject object, const char *bufName, const vec2i &v) = 0;
+      virtual void setVec2i(OSPObject object,
+                            const char *bufName,
+                            const vec2i &v) = 0;
 
       /*! assign (named) vec3i parameter to an object */
-      virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v) = 0;
+      virtual void setVec3i(OSPObject object,
+                            const char *bufName,
+                            const vec3i &v) = 0;
 
-      /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
-      virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) = 0;
+      /*! add untyped void pointer to object - this will *ONLY* work in local
+       * rendering!  */
+      virtual void setVoidPtr(OSPObject object,
+                              const char *bufName,
+                              void *v) = 0;
 
       virtual void removeParam(OSPObject object, const char *name) = 0;
 
@@ -204,9 +229,9 @@ namespace ospray {
       }
 
       /*! perform a pick operation */
-      virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos)
+      virtual OSPPickResult pick(
+          OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel, const vec2f &)
       {
-        UNUSED(renderer, screenPos);
         NOT_IMPLEMENTED;
       }
 
@@ -224,58 +249,60 @@ namespace ospray {
 
       // Public Data //
 
-      int numThreads {-1};
+      int numThreads{-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
-      bool debugMode {false};
-      bool apiTraceEnabled {false};
+      bool debugMode{false};
+      bool apiTraceEnabled{false};
 
       enum OSP_THREAD_AFFINITY
-      {DEAFFINITIZE = 0, AFFINITIZE = 1, AUTO_DETECT = 2};
+      {
+        DEAFFINITIZE = 0,
+        AFFINITIZE   = 1,
+        AUTO_DETECT  = 2
+      };
 
-      int threadAffinity {AUTO_DETECT};
+      int threadAffinity{AUTO_DETECT};
 
       /*! logging level (cmdline: --osp:loglevel \<n\>) */
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
 
-      std::function<void(const char *)>
-      msg_fcn { [](const char*){} };
+      std::function<void(const char *)> msg_fcn{[](const char *) {}};
 
-      std::function<void(OSPError, const char*)>
-      error_fcn { [](OSPError, const char*){} };
+      std::function<void(OSPError, const char *)> error_fcn{
+          [](OSPError, const char *) {}};
 
-      std::function<void(const char *)>
-      trace_fcn { [](const char*){} };
+      std::function<void(const char *)> trace_fcn{[](const char *) {}};
 
-      OSPError    lastErrorCode = OSP_NO_ERROR;
-      std::string lastErrorMsg  = "no error";// no braced initializer for MSVC12
+      OSPError lastErrorCode = OSP_NO_ERROR;
+      std::string lastErrorMsg =
+          "no error";  // no braced initializer for MSVC12
 
-    private:
-
-      bool committed {false};
+     private:
+      bool committed{false};
     };
 
     // Shorthand functions to query current API device //
 
-    OSPRAY_CORE_INTERFACE bool    deviceIsSet();
-    OSPRAY_CORE_INTERFACE Device& currentDevice();
+    OSPRAY_CORE_INTERFACE bool deviceIsSet();
+    OSPRAY_CORE_INTERFACE Device &currentDevice();
 
     OSPRAY_CORE_INTERFACE
     std::string generateEmbreeDeviceCfg(const Device &device);
 
-    /*! \brief registers a internal ospray::<ClassName> renderer under
-        the externally accessible name "external_name"
+/*! \brief registers a internal ospray::<ClassName> renderer under
+    the externally accessible name "external_name"
 
-        \internal This currently works by defining a extern "C" function
-        with a given predefined name that creates a new instance of this
-        renderer. By having this symbol in the shared lib ospray can
-        lateron always get a handle to this fct and create an instance
-        of this renderer.
-    */
-    #define OSP_REGISTER_DEVICE(InternalClass, external_name) \
-      OSP_REGISTER_OBJECT(::ospray::api::Device, device, InternalClass, external_name)
+    \internal This currently works by defining a extern "C" function
+    with a given predefined name that creates a new instance of this
+    renderer. By having this symbol in the shared lib ospray can
+    lateron always get a handle to this fct and create an instance
+    of this renderer.
+*/
+#define OSP_REGISTER_DEVICE(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(                                    \
+      ::ospray::api::Device, device, InternalClass, external_name)
 
-  } // ::ospray::api
-} // ::ospray
-
+  }  // namespace api
+}  // namespace ospray

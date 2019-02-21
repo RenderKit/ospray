@@ -425,11 +425,17 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
-    OSPPickResult ISPCDevice::pick(OSPRenderer _renderer,
+    OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
+                                   OSPRenderer _renderer,
+                                   OSPCamera _camera,
+                                   OSPModel _world,
                                    const vec2f &screenPos)
     {
+      FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
-      return renderer->pick(screenPos);
+      Camera *camera     = (Camera *)_camera;
+      Model *world       = (Model *)_world;
+      return renderer->pick(fb, camera, world, screenPos);
     }
 
     void ISPCDevice::sampleVolume(float **results,

@@ -96,9 +96,6 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   // OSPRay setup
 
-  // set the model on the renderer
-  ospSetObject(renderer, "model", model);
-
   // create the arcball camera model
   arcballCamera = std::unique_ptr<ArcballCamera>(
       new ArcballCamera(worldBounds, windowSize));
@@ -124,9 +121,6 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
            arcballCamera->upDir().z);
 
   ospCommit(camera);
-
-  // set camera on the renderer
-  ospSetObject(renderer, "camera", camera);
 
   // finally, commit the renderer
   ospCommit(renderer);
@@ -156,12 +150,6 @@ OSPModel GLFWOSPRayWindow::getModel()
 void GLFWOSPRayWindow::setModel(OSPModel newModel)
 {
   model = newModel;
-
-  // set the model on the renderer
-  ospSetObject(renderer, "model", model);
-
-  // commit the renderer
-  addObjectToCommit(renderer);
 }
 
 void GLFWOSPRayWindow::resetAccumulation()

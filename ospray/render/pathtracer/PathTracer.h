@@ -36,6 +36,8 @@ namespace ospray {
     size_t geometryLights {0}; // number of GeometryLights at beginning of lightArray
     std::vector<float> areaPDF; // pdfs wrt. area of regular (not instanced) geometry lights
     Data *lightData;
+
+    Model *model{nullptr};
   };
 
 }// ::ospray

@@ -35,8 +35,8 @@ namespace ospray {
     const int32 maxDepth        = std::max(0, getParam1i("maxDepth", 20));
     const float minContribution = getParam1f("minContribution", 0.001f);
     errorThreshold              = getParam1f("varianceThreshold", 0.f);
+
     maxDepthTexture = (Texture2D *)getParamObject("maxDepthTexture", nullptr);
-    model           = (Model *)getParamObject("model", getParamObject("world"));
 
     if (maxDepthTexture) {
       if (maxDepthTexture->type != OSP_TEXTURE_R32F ||
@@ -52,11 +52,7 @@ namespace ospray {
     bgColor        = getParam4f("bgColor", vec4f(bgColor3, 0.f));
 
     if (getIE()) {
-      ManagedObject *camera = getParamObject("camera");
-
       ispc::Renderer_set(getIE(),
-                         model ? model->getIE() : nullptr,
-                         camera ? camera->getIE() : nullptr,
                          spp,
                          maxDepth,
                          minContribution,
@@ -88,7 +84,6 @@ namespace ospray {
 
   void *Renderer::beginFrame(FrameBuffer *fb)
   {
-    this->currentFB = fb;
     fb->beginFrame();
     return ispc::Renderer_beginFrame(getIE(), fb->getIE());
   }
@@ -103,12 +98,16 @@ namespace ospray {
     return TiledLoadBalancer::instance->renderFrame(fb, this, camera, world);
   }
 
-  OSPPickResult Renderer::pick(const vec2f &screenPos)
+  OSPPickResult Renderer::pick(FrameBuffer *fb,
+                               Camera *camera,
+                               Model *world,
+                               const vec2f &screenPos)
   {
-    assert(getIE());
-
     OSPPickResult res;
     ispc::Renderer_pick(getIE(),
+                        fb->getIE(),
+                        camera->getIE(),
+                        world->getIE(),
                         (const ispc::vec2f &)screenPos,
                         (ispc::vec3f &)res.position,
                         res.hit);

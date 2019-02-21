@@ -143,6 +143,8 @@ namespace ospray {
       oneSidedLighting = getParam1i("oneSidedLighting", 1);
       shadowsEnabled   = getParam1i("shadowsEnabled", 0);
 
+      model = (Model *)getParamObject("model", getParamObject("world"));
+
       lightData = (Data *)getParamData("lights");
       lightIEs.clear();
       ambientLight = vec3f(0.f);

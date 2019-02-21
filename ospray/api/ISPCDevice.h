@@ -16,9 +16,9 @@
 
 #pragma once
 
-//ospray
+// ospray
 #include "Device.h"
-//embree
+// embree
 #include "embree3/rtcore.h"
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
@@ -28,11 +28,9 @@ extern "C" OSPRAY_SDK_INTERFACE RTCDevice ispc_embreeDevice();
 namespace ospray {
   namespace api {
 
-
     struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     {
-
-      ISPCDevice()  = default;
+      ISPCDevice() = default;
       ~ISPCDevice() override;
 
       // ManagedObject Implementation /////////////////////////////////////////
@@ -48,11 +46,10 @@ namespace ospray {
 
       /*! map frame buffer */
       const void *frameBufferMap(OSPFrameBuffer fb,
-                                         OSPFrameBufferChannel) override;
+                                 OSPFrameBufferChannel) override;
 
       /*! unmap previously mapped frame buffer */
-      void frameBufferUnmap(const void *mapped,
-                                    OSPFrameBuffer fb) override;
+      void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) override;
 
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
@@ -82,8 +79,10 @@ namespace ospray {
       void removeVolume(OSPModel _model, OSPVolume _volume) override;
 
       /*! create a new data buffer */
-      OSPData newData(size_t nitems, OSPDataType format,
-                      const void *init, int flags) override;
+      OSPData newData(size_t nitems,
+                      OSPDataType format,
+                      const void *init,
+                      int flags) override;
 
       /*! load module */
       int loadModule(const char *name) override;
@@ -109,8 +108,10 @@ namespace ospray {
                     const float f) override;
 
       /*! Copy data into the given volume. */
-      int setRegion(OSPVolume object, const void *source,
-                            const vec3i &index, const vec3i &count) override;
+      int setRegion(OSPVolume object,
+                    const void *source,
+                    const vec3i &index,
+                    const vec3i &count) override;
 
       /*! assign (named) vec2f parameter to an object */
       void setVec2f(OSPObject object,
@@ -140,7 +141,8 @@ namespace ospray {
                     const char *bufName,
                     const vec3i &v) override;
 
-      /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+      /*! add untyped void pointer to object - this will *ONLY* work in local
+       * rendering!  */
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
       void removeParam(OSPObject object, const char *name) override;
@@ -165,7 +167,8 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volumes) */
       OSPVolume newVolume(const char *type) override;
 
-      /*! create a new transfer function object (out of list of registered transfer function types) */
+      /*! create a new transfer function object (out of list of registered
+       * transfer function types) */
       OSPTransferFunction newTransferFunction(const char *type) override;
 
       /*! have given renderer create a new Light */
@@ -211,7 +214,11 @@ namespace ospray {
       //! assign given material to given geometry
       void setMaterial(OSPGeometry _geom, OSPMaterial _mat) override;
 
-      OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) override;
+      OSPPickResult pick(OSPFrameBuffer fb,
+                         OSPRenderer renderer,
+                         OSPCamera camera,
+                         OSPModel world,
+                         const vec2f &screenPos) override;
 
       void sampleVolume(float **results,
                         OSPVolume volume,
@@ -225,5 +232,5 @@ namespace ospray {
       static RTCDevice embreeDevice;
     };
 
-  } // ::ospray::api
-} // ::ospray
+  }  // namespace api
+}  // namespace ospray

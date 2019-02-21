@@ -83,6 +83,7 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
 // AO functions //
 
 float calculateAO(const uniform SciVisRenderer *uniform self,
+                  const FrameBuffer *uniform fb,
                   const Model *uniform world,
                   const varying vec3i &sampleID,
                   const varying DifferentialGeometry &dg,
@@ -95,7 +96,7 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
   // init TEA RNG //
   RandomTEA rng_state;
   varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, 0x290374, (self->super.fb->size.x * iy) + ix);
+  RandomTEA__Constructor(rng, 0x290374, (fb->size.x * iy) + ix);
   const vec2f rot = RandomTEA__getFloats(rng);
 
   float occlusion = 0.f;
@@ -125,6 +126,7 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
 
 
 void shadeAO(const SciVisRenderer *uniform self,
+             const FrameBuffer *uniform fb,
              const Model *uniform world,
              const varying vec3i &sampleID,
              const varying DifferentialGeometry &dg,
@@ -134,12 +136,13 @@ void shadeAO(const SciVisRenderer *uniform self,
   // Calculate AO contribution as ambient term
   float ao = 1.0f;
   if (self->needToDoAO)
-    ao = calculateAO(self, world, sampleID, dg, info.shadingNormal);
+    ao = calculateAO(self, fb, world, sampleID, dg, info.shadingNormal);
 
   color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
 }
 
 void integrateOverLights(const SciVisRenderer *uniform self,
+                         const FrameBuffer *uniform fb,
                          const Model *uniform world,
                          const varying Ray &ray,
                          const varying DifferentialGeometry &dg,
@@ -178,7 +181,7 @@ void integrateOverLights(const SciVisRenderer *uniform self,
             P = P - (2.f * dg.epsilon) * dg.Ng;
           Ray shadowRay;
           setRay(shadowRay, P, light.dir, 0.0f, light.dist, ray.time);
-          const float light_alpha = lightAlpha(self, world, shadowRay,
+          const float light_alpha = lightAlpha(self, fb, world, shadowRay,
               max_contrib,
               rayOffset, sampleID, quality);
           color = color + light_alpha * light_contrib;

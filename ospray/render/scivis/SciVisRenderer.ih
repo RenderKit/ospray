@@ -49,6 +49,7 @@ struct SciVisRenderer
 };
 
 float lightAlpha(const const SciVisRenderer *uniform self,
+                 const FrameBuffer *uniform fb,
                  const Model *uniform model,
                  Ray &ray,
                  const float weight,
@@ -63,6 +64,7 @@ SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform renderer,
                                 const varying float &rayOffset);
 
 vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform renderer,
+                                           const FrameBuffer *uniform fb,
                                            const Model *uniform world,
                                            const Volume *uniform volume,
                                            varying Ray &ray, float tBegin,

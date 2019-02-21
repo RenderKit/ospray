@@ -214,7 +214,11 @@ namespace ospray {
       /*! create a new Texture object */
       OSPTexture newTexture(const char *type) override;
 
-      OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) override;
+      OSPPickResult pick(OSPFrameBuffer fb,
+                         OSPRenderer renderer,
+                         OSPCamera camera,
+                         OSPModel world,
+                         const vec2f &screenPos) override;
 
      private:
       void initializeDevice();

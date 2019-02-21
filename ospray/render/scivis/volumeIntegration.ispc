@@ -21,6 +21,7 @@
 // quality is from 0 - 1.  1 being best.
 vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
                                                renderer,
+                                           const FrameBuffer *uniform fb,
                                            const Model *uniform world,
                                            const Volume *uniform volume,
                                            varying Ray &ray,
@@ -139,8 +140,9 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
           shadeMaterials(dg, info);
 
           vec3f litColor = make_vec3f(0.0f);
-          shadeAO(renderer, world, sampleID, dg, info, litColor);
+          shadeAO(renderer, fb, world, sampleID, dg, info, litColor);
           integrateOverLights(renderer,
+                              fb,
                               world,
                               ray,
                               dg,
@@ -204,8 +206,9 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
     shadeMaterials(dg, info);
 
     vec3f litColor = make_vec3f(0.0f);
-    shadeAO(renderer, world, sampleID, dg, info, litColor);
+    shadeAO(renderer, fb, world, sampleID, dg, info, litColor);
     integrateOverLights(renderer,
+                        fb,
                         world,
                         ray,
                         dg,

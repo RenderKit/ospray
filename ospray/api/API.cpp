@@ -978,14 +978,17 @@ OSPRAY_CATCH_BEGIN
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospPick(OSPPickResult *result,
+                        OSPFrameBuffer fb,
                         OSPRenderer renderer,
+                        OSPCamera camera,
+                        OSPModel world,
                         const osp_vec2f screenPos)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(renderer, "nullptr renderer passed to ospPick");
   if (!result) return;
-  *result = currentDevice().pick(renderer, (const vec2f&)screenPos);
+  *result = currentDevice().pick(fb, renderer, camera, world, (const vec2f&)screenPos);
 }
 OSPRAY_CATCH_END()
 

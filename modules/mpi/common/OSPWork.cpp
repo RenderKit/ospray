@@ -710,8 +710,18 @@ namespace ospray {
 
       void CommandFinalize::deserialize(ReadStream &) {}
 
-      Pick::Pick(OSPRenderer renderer, const vec2f &screenPos)
-          : rendererHandle((ObjectHandle &)renderer), screenPos(screenPos)
+      // ospPick //////////////////////////////////////////////////////////////
+
+      Pick::Pick(OSPFrameBuffer fb,
+                 OSPRenderer renderer,
+                 OSPCamera camera,
+                 OSPModel world,
+                 const vec2f &screenPos)
+          : fbHandle((ObjectHandle &)fb),
+            rendererHandle((ObjectHandle &)renderer),
+            cameraHandle((ObjectHandle &)camera),
+            worldHandle((ObjectHandle &)world),
+            screenPos(screenPos)
       {
       }
 
@@ -721,9 +731,13 @@ namespace ospray {
         // just have the first worker run the pick and send the result
         // back to the master
         if (mpicommon::world.rank == 1) {
+          FrameBuffer *fb    = (FrameBuffer *)fbHandle.lookup();
           Renderer *renderer = (Renderer *)rendererHandle.lookup();
-          Assert(renderer);
-          pickResult = renderer->pick(screenPos);
+          Camera *camera     = (Camera *)cameraHandle.lookup();
+          Model *world       = (Model *)worldHandle.lookup();
+
+          pickResult = renderer->pick(fb, camera, world, screenPos);
+
           MPI_CALL(Send(&pickResult,
                         sizeof(pickResult),
                         MPI_BYTE,
@@ -747,12 +761,14 @@ namespace ospray {
 
       void Pick::serialize(WriteStream &b) const
       {
-        b << (int64)rendererHandle << screenPos;
+        b << (int64)fbHandle << (int64)rendererHandle << (int64)cameraHandle
+          << (int64)worldHandle << screenPos;
       }
 
       void Pick::deserialize(ReadStream &b)
       {
-        b >> rendererHandle.i64 >> screenPos;
+        b >> fbHandle.i64 >> rendererHandle.i64 >> cameraHandle.i64 >>
+            worldHandle.i64 >> screenPos;
       }
 
     }  // namespace work

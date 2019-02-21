@@ -21,6 +21,7 @@
 
 // The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(Renderer *uniform self,
+                                   FrameBuffer *uniform fb,
                                    Model *uniform model,
                                    void *uniform perFrameData,
                                    varying ScreenSample &sample)
@@ -33,21 +34,14 @@ void Renderer_default_renderSample(Renderer *uniform self,
 }
 
 static unmasked void *uniform Renderer_default_beginFrame(
-    uniform Renderer *uniform self, uniform FrameBuffer *uniform fb)
+    Renderer *uniform self, const Model *uniform world)
 {
-  self->fb = fb;
-  if (self->camera == NULL)
-    print("warning: ispc-side renderer % does not have a camera\n", self);
-  if (self->fb == NULL)
-    print("warning: ispc-side renderer % does not have a frame buffer\n", self);
   return NULL;
 }
 
 static unmasked void Renderer_default_endFrame(Renderer *uniform self,
                                                void *uniform perFrameData)
 {
-  if (self->fb)
-    self->fb = NULL;
 }
 
 unmasked void Renderer_default_renderTile(Renderer *uniform self,
@@ -116,7 +110,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-      self->renderSample(self, world, perFrameData, screenSample);
+      self->renderSample(self, fb, world, perFrameData, screenSample);
       col = col + screenSample.rgb;
       alpha += screenSample.alpha;
       normal = normal + screenSample.normal;
@@ -132,8 +126,6 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
 }
 
 export void Renderer_set(void *uniform _self,
-                         void *uniform _model,
-                         void *uniform _camera,
                          const uniform int32 spp,
                          const uniform int32 maxDepth,
                          const uniform float minContribution,
@@ -147,21 +139,16 @@ void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE)
   self->renderTile    = Renderer_default_renderTile;
   self->beginFrame    = Renderer_default_beginFrame;
   self->endFrame      = Renderer_default_endFrame;
-  self->fb            = NULL;
-  Renderer_set(self, NULL, NULL, 1, 20, 0.001f, make_vec4f(0.f), NULL);
+  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL);
   precomputedHalton_create();
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
                           void *uniform cppE,
-                          void *uniform _model,
-                          void *uniform _camera,
                           const uniform int32 spp)
 {
   Renderer_Constructor(self, cppE);
-  self->model  = (uniform Model * uniform) _model;
-  self->camera = (uniform Camera * uniform) _camera;
-  self->spp    = spp;
+  self->spp = spp;
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
@@ -181,11 +168,12 @@ export void Renderer_renderTile(void *uniform _self,
   self->renderTile(self, fb, camera, world, perFrameData, tile, jobID);
 }
 
-export void *uniform Renderer_beginFrame(void *uniform _self, void *uniform _fb)
+export void *uniform Renderer_beginFrame(void *uniform _self,
+                                         void *uniform _world)
 {
-  uniform Renderer *uniform self  = (uniform Renderer * uniform) _self;
-  uniform FrameBuffer *uniform fb = (uniform FrameBuffer * uniform) _fb;
-  return self->beginFrame(self, fb);
+  Renderer *uniform self = (Renderer * uniform) _self;
+  Model *uniform world   = (Model * uniform) _world;
+  return self->beginFrame(self, world);
 }
 
 export void Renderer_endFrame(void *uniform _self, void *uniform perFrameData)
@@ -195,8 +183,6 @@ export void Renderer_endFrame(void *uniform _self, void *uniform perFrameData)
 }
 
 export void Renderer_set(void *uniform _self,
-                         void *uniform _model,
-                         void *uniform _camera,
                          const uniform int32 spp,
                          const uniform int32 maxDepth,
                          const uniform float minContribution,
@@ -204,26 +190,28 @@ export void Renderer_set(void *uniform _self,
                          void *uniform _maxDepthTexture)
 {
   uniform Renderer *uniform self = (uniform Renderer * uniform) _self;
-  self->model                    = (uniform Model * uniform) _model;
-  self->camera                   = (uniform Camera * uniform) _camera;
-  self->spp                      = spp;
-  self->maxDepth                 = maxDepth;
-  self->minContribution          = minContribution;
-  self->bgColor                  = bgColor;
+
+  self->spp             = spp;
+  self->maxDepth        = maxDepth;
+  self->minContribution = minContribution;
+  self->bgColor         = bgColor;
   self->maxDepthTexture = (uniform Texture2D * uniform) _maxDepthTexture;
 
   precomputeZOrder();
 }
 
-export void Renderer_pick(void *uniform _self,
+export void Renderer_pick(const void *uniform _self,
+                          const void *uniform _fb,
+                          const void *uniform _camera,
+                          const void *uniform _world,
                           const uniform vec2f &screenPos,
                           uniform vec3f &pos,
                           uniform int32 &hit)
 {
-  uniform Renderer *uniform self  = (uniform Renderer * uniform) _self;
-  uniform FrameBuffer *uniform fb = self->fb;
-  uniform Camera *uniform camera  = self->camera;
-  uniform Model *uniform model    = self->model;
+  const Renderer *uniform self  = (const Renderer * uniform)_self;
+  const FrameBuffer *uniform fb = (const FrameBuffer *uniform)_fb;
+  const Camera *uniform camera  = (const Camera *uniform)_camera;
+  const Model *uniform world    = (const Model *uniform)_world;
 
   CameraSample cameraSample;
   cameraSample.screen.x = screenPos.x;
@@ -246,7 +234,7 @@ export void Renderer_pick(void *uniform _self,
     ray.t            = min(ray.t, tMax);
   }
 
-  traceRay(model, ray);
+  traceRay(world, ray);
 
   vec3f p = ray.org + ray.dir * ray.t;
 

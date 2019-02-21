@@ -910,10 +910,13 @@ namespace ospray {
       return false;
     }
 
-    OSPPickResult MPIOffloadDevice::pick(OSPRenderer renderer,
+    OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
+                                         OSPRenderer renderer,
+                                         OSPCamera camera,
+                                         OSPModel world,
                                          const vec2f &screenPos)
     {
-      work::Pick work(renderer, screenPos);
+      work::Pick work(fb, renderer, camera, world, screenPos);
       processWork(work, true);
       return work.pickResult;
     }

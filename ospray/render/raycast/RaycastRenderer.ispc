@@ -36,6 +36,7 @@ struct RaycastRenderer
   returns a well-defined test frame (mostly useful for debugging
   whether frame buffers are properly set up etcpp */
 void RaycastRenderer_renderSample_testFrame(Renderer *uniform _self,
+                                            FrameBuffer *uniform fb,
                                             Model *uniform world,
                                             void *uniform perFrameData,
                                             varying ScreenSample &sample)
@@ -50,6 +51,7 @@ void RaycastRenderer_renderSample_testFrame(Renderer *uniform _self,
 /*! a simple test-frame renderer that doesn't even trace a ray, just
   returns the absolute of the ray direction */
 void RaycastRenderer_renderSample_rayDir(Renderer *uniform _self,
+                                         FrameBuffer *uniform fb,
                                          Model *uniform world,
                                          void *uniform perFrameData,
                                          varying ScreenSample &sample)
@@ -60,13 +62,14 @@ void RaycastRenderer_renderSample_rayDir(Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_eyeLight(Renderer *uniform _self,
+                                           FrameBuffer *uniform fb,
                                            Model *uniform world,
                                            void *uniform perFrameData,
                                            varying ScreenSample &sample)
 {
   RaycastRenderer *uniform self = (RaycastRenderer *uniform)_self;
 
-  traceRay(self->super.model,sample.ray);
+  traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -79,6 +82,7 @@ void RaycastRenderer_renderSample_eyeLight(Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_Ng(Renderer *uniform _self,
+                                     FrameBuffer *uniform fb,
                                      Model *uniform world,
                                      void *uniform perFrameData,
                                      varying ScreenSample &sample)
@@ -93,12 +97,13 @@ void RaycastRenderer_renderSample_Ng(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NG);
+    postIntersect(world, dg, sample.ray, DG_NORMALIZE | DG_NG);
     sample.rgb = absf(dg.Ng);
   }
 }
 
 void RaycastRenderer_renderSample_Ns(Renderer *uniform _self,
+                                     FrameBuffer *uniform fb,
                                      Model *uniform world,
                                      void *uniform perFrameData,
                                      varying ScreenSample &sample)
@@ -113,12 +118,13 @@ void RaycastRenderer_renderSample_Ns(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
+    postIntersect(world, dg, sample.ray, DG_NORMALIZE | DG_NS);
     sample.rgb = absf(dg.Ns);
   }
 }
 
 void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
+                                       FrameBuffer *uniform fb,
                                        Model *uniform world,
                                        void *uniform perFrameData,
                                        varying ScreenSample &sample)
@@ -133,7 +139,7 @@ void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
+    postIntersect(world, dg, sample.ray, DG_TANGENTS);
     sample.rgb = normalize(dg.dPds);
     if (sample.rgb.x < 0.f)
       sample.rgb.x = sample.rgb.x * -0.3f;
@@ -145,6 +151,7 @@ void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
+                                       FrameBuffer *uniform fb,
                                        Model *uniform world,
                                        void *uniform perFrameData,
                                        varying ScreenSample &sample)
@@ -159,7 +166,7 @@ void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
+    postIntersect(world, dg, sample.ray, DG_TANGENTS);
     sample.rgb = normalize(dg.dPdt);
     if (sample.rgb.x < 0.f)
       sample.rgb.x = sample.rgb.x * -0.3f;
@@ -171,6 +178,7 @@ void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_eyeLight_vertexColor(Renderer *uniform _self,
+                                                       FrameBuffer *uniform fb,
                                                        Model *uniform world,
                                                        void *uniform perFrameData,
                                                        varying ScreenSample &sample)
@@ -186,7 +194,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(Renderer *uniform _self,
   else {
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
-    postIntersect(self->super.model, dg, sample.ray, DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
+    postIntersect(world, dg, sample.ray, DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
     sample.rgb = make_vec3f(dg.color) * abs(dot(normalize(sample.ray.dir),normalize(dg.Ns)));
   }
 }
@@ -194,6 +202,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(Renderer *uniform _self,
 
 
 void RaycastRenderer_renderSample_eyeLight_primID(Renderer *uniform _self,
+                                                  FrameBuffer *uniform fb,
                                                   Model *uniform world,
                                                   void *uniform perFrameData,
                                                   varying ScreenSample &sample)
@@ -213,6 +222,7 @@ void RaycastRenderer_renderSample_eyeLight_primID(Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_eyeLight_instID(Renderer *uniform _self,
+                                                  FrameBuffer *uniform fb,
                                                   Model *uniform world,
                                                   void *uniform perFrameData,
                                                   varying ScreenSample &sample)
@@ -232,6 +242,7 @@ void RaycastRenderer_renderSample_eyeLight_instID(Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_eyeLight_geomID(Renderer *uniform _self,
+                                                  FrameBuffer *uniform fb,
                                                   Model *uniform world,
                                                   void *uniform perFrameData,
                                                   varying ScreenSample &sample)
@@ -252,6 +263,7 @@ void RaycastRenderer_renderSample_eyeLight_geomID(Renderer *uniform _self,
 
 
 void RaycastRenderer_renderSample_backfacing_Ng(Renderer *uniform _self,
+                                                FrameBuffer *uniform fb,
                                                 Model *uniform world,
                                                 void *uniform perFrameData,
                                                 varying ScreenSample &sample)
@@ -273,6 +285,7 @@ void RaycastRenderer_renderSample_backfacing_Ng(Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_backfacing_Ns(Renderer *uniform _self,
+                                                FrameBuffer *uniform fb,
                                                 Model *uniform world,
                                                 void *uniform perFrameData,
                                                 varying ScreenSample &sample)
@@ -287,7 +300,7 @@ void RaycastRenderer_renderSample_backfacing_Ns(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
+    postIntersect(world, dg, sample.ray, DG_NORMALIZE | DG_NS);
     const float c = dot(dg.Ns,sample.ray.dir);
     sample.rgb = make_vec3f(.2f+.8f*abs(c));
     if (c > 0.f)

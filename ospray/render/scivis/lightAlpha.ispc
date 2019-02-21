@@ -26,6 +26,7 @@
 
 // Lighting functions //
 float lightAlpha(const SciVisRenderer *uniform self,
+                 const FrameBuffer *uniform fb,
                  const Model *uniform world,
                  Ray &ray,
                  const float weight,
@@ -87,6 +88,7 @@ float lightAlpha(const SciVisRenderer *uniform self,
       foreach_unique(v in volume)
       {
         vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self,
+                                                                 fb,
                                                                  world,
                                                                  v,
                                                                  ray,

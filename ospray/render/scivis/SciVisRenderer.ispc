@@ -29,6 +29,7 @@
 // Function definitions ///////////////////////////////////////////////////////
 
 vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
+                                           FrameBuffer *uniform fb,
                                            Model *uniform world,
                                            const varying vec3i &sampleID,
                                            varying Ray &ray,
@@ -62,9 +63,9 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
   info.local_opacity = info.d;
 
   if (info.local_opacity > self->super.minContribution) {  // worth shading?
-    shadeAO(self, world, sampleID, dg, info, color);
+    shadeAO(self, fb, world, sampleID, dg, info, color);
     integrateOverLights(
-        self, world, ray, dg, info, color, rayOffset, sampleID, 0.5f);
+        self, fb, world, ray, dg, info, color, rayOffset, sampleID, 0.5f);
     // assume this is the first/dominant hit
     normal = info.shadingNormal;
     albedo = info.albedo;
@@ -78,6 +79,7 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
 /*! This function intersects the volume and geometries. */
 void SciVisRenderer_intersect(SciVisRenderer *uniform renderer,
+                              FrameBuffer *uniform fb,
                               Model *uniform world,
                               varying Ray &ray,
                               const varying float &rayOffset,
@@ -107,7 +109,7 @@ void SciVisRenderer_intersect(SciVisRenderer *uniform renderer,
 
   // Initial trace through geometries.
   vec4f geometryColor = SciVisRenderer_computeGeometrySample(
-      renderer, world, sampleID, geometryRay, rayOffset, normal, albedo);
+      renderer, fb, world, sampleID, geometryRay, rayOffset, normal, albedo);
   // Depth is the first volume bounding box or geometry hit
   depth = min(ray.t0, geometryRay.t);
 
@@ -133,6 +135,7 @@ void SciVisRenderer_intersect(SciVisRenderer *uniform renderer,
         {
           // interval sampling
           volumeColor = SciVisRenderer_computeVolumeInterval(renderer,
+                                                             fb,
                                                              world,
                                                              v,
                                                              ray,
@@ -173,7 +176,7 @@ void SciVisRenderer_intersect(SciVisRenderer *uniform renderer,
 
         // Trace next geometry ray.
         geometryColor = SciVisRenderer_computeGeometrySample(
-            renderer, world, sampleID, geometryRay, rayOffset, normal, albedo);
+            renderer, fb, world, sampleID, geometryRay, rayOffset, normal, albedo);
       }
     }
 
@@ -182,6 +185,7 @@ void SciVisRenderer_intersect(SciVisRenderer *uniform renderer,
 }
 
 void SciVisRenderer_renderSample(Renderer *uniform _self,
+                                 FrameBuffer *uniform fb,
                                  Model *uniform world,
                                  void *uniform perFrameData,
                                  varying ScreenSample &sample)
@@ -207,6 +211,7 @@ void SciVisRenderer_renderSample(Renderer *uniform _self,
   sample.albedo = make_vec3f(0.0f);
 
   SciVisRenderer_intersect(renderer,
+                           fb,
                            world,
                            sample.ray,
                            rayOffset,
@@ -225,19 +230,17 @@ void SciVisRenderer_renderSample(Renderer *uniform _self,
 }
 
 static unmasked void *uniform SciVisRenderer_beginFrame(
-    uniform Renderer *uniform _self, uniform FrameBuffer *uniform fb)
+    Renderer *uniform _self, const Model *uniform world)
 {
   uniform SciVisRenderer *uniform self =
       (uniform SciVisRenderer * uniform) _self;
-  self->super.fb       = fb;
-  Model *uniform model = self->super.model;
   self->volumeEpsilon  = ulpEpsilon;
 
-  if (model->volumeCount) {
+  if (world->volumeCount) {
     // Ray epsilon based on bounding box of all volumes.
     uniform box3f boundingBox = make_box3f_empty();
-    for (uniform int32 i = 0; i < model->volumeCount; i++)
-      boundingBox = box_extend(boundingBox, model->volumes[i]->boundingBox);
+    for (uniform int32 i = 0; i < world->volumeCount; i++)
+      boundingBox = box_extend(boundingBox, world->volumes[i]->boundingBox);
 
     self->volumeEpsilon = 1e-3f * length(box_size(boundingBox));
   }

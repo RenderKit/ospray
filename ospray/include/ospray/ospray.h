@@ -588,7 +588,12 @@ extern "C" {
     int hit;            //< whether or not a hit actually occurred
   } OSPPickResult;
 
-  OSPRAY_INTERFACE void ospPick(OSPPickResult*, OSPRenderer, const osp_vec2f screenPos);
+  OSPRAY_INTERFACE void ospPick(OSPPickResult *result,
+                                OSPFrameBuffer fb,
+                                OSPRenderer renderer,
+                                OSPCamera camera,
+                                OSPModel world,
+                                const osp_vec2f screenPos);
 
   /*! \brief Samples the given volume at the provided world-space coordinates.
 

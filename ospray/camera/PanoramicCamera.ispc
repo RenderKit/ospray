@@ -17,7 +17,7 @@
 #include "Camera.ih"
 #include "math/sampling.ih"
 
-void PanoramicCamera_initRay(Camera *uniform self,
+void PanoramicCamera_initRay(const Camera *uniform self,
                              varying Ray &ray,
                              const varying CameraSample &sample)
 {
