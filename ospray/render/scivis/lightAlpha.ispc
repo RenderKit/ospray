@@ -16,48 +16,49 @@
 
 #include "SciVisRenderer.ih"
 #include "fb/FrameBuffer.ih"
-#include "render/util.ih"
-#include "texture/Texture2D.ih"
+#include "math/LinearSpace.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
-#include "math/LinearSpace.ih"
+#include "render/util.ih"
+#include "texture/Texture2D.ih"
 
 #include "SciVisMaterial.ih"
 
-
 // Lighting functions //
-float lightAlpha(const uniform SciVisRenderer *uniform self,
-                 Ray &ray, uniform Model *uniform model,
+float lightAlpha(const SciVisRenderer *uniform self,
+                 const Model *uniform world,
+                 Ray &ray,
                  const float weight,
                  const varying float &rayOffset,
                  const varying vec3i &sampleID,
                  const uniform float quality)
 {
-  float alpha = 1.f;
-  const float org_t_max = ray.t;
+  float alpha                 = 1.f;
+  const float org_t_max       = ray.t;
   uniform int remaining_depth = self->super.maxDepth;
 
   while (1) {
-    traceRay(model,ray);
+    traceRay(world, ray);
 
     float eps = 0.f;
-    if (ray.geomID >= 0) { // surfaces
+    if (ray.geomID >= 0) {  // surfaces
       DifferentialGeometry dg;
-      postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
+      postIntersect(world, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
       eps = dg.epsilon;
 
       uniform SciVisMaterial *scivisMaterial =
-        (uniform SciVisMaterial *)dg.material;
+          (uniform SciVisMaterial *)dg.material;
 
       float material_opacity = 1.f;
 
-      if(scivisMaterial == NULL) {
+      if (scivisMaterial == NULL) {
         material_opacity = dg.color.w;
       } else {
-        foreach_unique( mat in scivisMaterial ) {
+        foreach_unique(mat in scivisMaterial)
+        {
           material_opacity = mat->d * get1f(mat->map_d, dg, 1.f);
           if (hasAlpha(mat->map_Kd)) {
-            vec4f Kd_from_map = get4f(mat->map_Kd,dg);
+            vec4f Kd_from_map = get4f(mat->map_Kd, dg);
             material_opacity *= Kd_from_map.w;
           }
         }
@@ -70,21 +71,33 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
 
     // volumes
     // Get first intersected volume for each ray and set the ray bounds.
-    float org_t = ray.t;
+    float org_t  = ray.t;
     float org_t0 = ray.t0;
-    Volume *volume = SciVisRenderer_intersectVolumes(self, ray, rayOffset);
+    const Volume *volume =
+        SciVisRenderer_intersectVolumes(self, world, ray, rayOffset);
     float tBegin = max(org_t0, ray.t0);
-    float tEnd = min(org_t, ray.t + self->volumeEpsilon);
+    float tEnd   = min(org_t, ray.t + self->volumeEpsilon);
 
     if (volume && tBegin < tEnd) {
       // print("found volume intersection!\n");
       // Provide ray offset for use with isosurface geometries (this value
       // ignored elsewhere).
-      ray.time = -rayOffset * volume->samplingStep;
+      ray.time               = -rayOffset * volume->samplingStep;
       float material_opacity = 1.f;
-      foreach_unique (v in volume) {
-        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.98f, true, rayOffset, sampleID, quality);
-        material_opacity = volumeColor.w;
+      foreach_unique(v in volume)
+      {
+        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self,
+                                                                 world,
+                                                                 v,
+                                                                 ray,
+                                                                 tBegin,
+                                                                 tEnd,
+                                                                 0.98f,
+                                                                 true,
+                                                                 rayOffset,
+                                                                 sampleID,
+                                                                 quality);
+        material_opacity  = volumeColor.w;
       }
 
       alpha = alpha * (1.f - material_opacity);
@@ -93,17 +106,15 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
         return 0.f;
     }
 
-
     if (!volume && ray.geomID < 0)
       return alpha;
     if (--remaining_depth <= 0)
       return alpha;
 
-    ray.t0 = org_t + eps;
-    ray.t = org_t_max;
+    ray.t0     = org_t + eps;
+    ray.t      = org_t_max;
     ray.primID = -1;
     ray.geomID = -1;
     ray.instID = -1;
   }
 }
-

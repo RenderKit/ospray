@@ -173,11 +173,11 @@ unmasked void StreamLines_occluded(const struct RTCIntersectFunctionNArguments *
   StreamLines_intersect_kernel(args,true);
 }
 
-static void StreamLines_postIntersect(uniform Geometry *uniform self,
-                                       uniform Model *uniform model,
-                                       varying DifferentialGeometry &dg,
-                                       const varying Ray &ray,
-                                       uniform int64 flags)
+static void StreamLines_postIntersect(const Geometry *uniform self,
+                                      const Model *uniform model,
+                                      varying DifferentialGeometry &dg,
+                                      const varying Ray &ray,
+                                      uniform int64 flags)
 {
   StreamLines *uniform self = (StreamLines *uniform)self;
 

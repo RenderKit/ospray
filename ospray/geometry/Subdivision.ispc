@@ -29,11 +29,11 @@ int32 Subdivision_getMaterialID(
   return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
 }
 
-static void Subdivision_postIntersect(uniform Geometry *uniform _self,
-                                       uniform Model    *uniform model,
-                                       varying DifferentialGeometry &dg,
-                                       const varying Ray &ray,
-                                       uniform int64 flags)
+static void Subdivision_postIntersect(const Geometry *uniform _self,
+                                      const Model    *uniform model,
+                                      varying DifferentialGeometry &dg,
+                                      const varying Ray &ray,
+                                      uniform int64 flags)
 {
   Subdivision *uniform self = (Subdivision *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
@@ -104,14 +104,13 @@ export void *uniform Subdivision_create(void *uniform cppEquivalent)
 }
 
 export void *uniform Subdivision_set(void *uniform _mesh,
-                                      void *uniform _model,
-                                      RTCGeometry geom,
-                                      uniform int32 geomID,
-                                      uniform int32 geom_materialID,
-                                      uniform uint32 *uniform prim_materialID,
-                                      void *uniform _materialList,
-                                      uniform vec2f *uniform texcoord
-                                      )
+                                     void *uniform _model,
+                                     RTCGeometry geom,
+                                     uniform int32 geomID,
+                                     uniform int32 geom_materialID,
+                                     uniform uint32 *uniform prim_materialID,
+                                     void *uniform _materialList,
+                                     uniform vec2f *uniform texcoord)
 {
   uniform Subdivision *uniform mesh = (uniform Subdivision *uniform)_mesh;
   uniform Model *uniform model = (uniform Model *uniform)_model;

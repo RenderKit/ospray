@@ -72,28 +72,28 @@ inline bool anyPointInAABBTest(const uniform MinMaxBVH2Node &box,
   return pointsInRangeAABBTest(box, points, 0, numPoints);
 }
 
-typedef bool (*intersectAndSamplePrim)(void *uniform userData,
+typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
                                        uniform uint64 id,
                                        float &result,
                                        vec3f samplePos,
                                        float range_lo,
                                        float range_hi);
 
-void traverse(uniform MinMaxBVH2 &bvh,
-              void *uniform userPtr,
+void traverse(const uniform MinMaxBVH2 &bvh,
+              const void *uniform userPtr,
               uniform intersectAndSamplePrim sampleFunc,
               float &result,
               const vec3f &samplePos);
 
-typedef void (*intersectIsoRay)(void *uniform userData,
+typedef void (*intersectIsoRay)(const void *uniform userData,
                                 uniform float *uniform isovalues,
                                 uniform int numIsovalues,
                                 uniform size_t geomID,
                                 uniform uint64 id,
                                 varying Ray &ray);
 
-void traverseRay(uniform MinMaxBVH2 &bvh,
-                 void *uniform userPtr,
+void traverseRay(const uniform MinMaxBVH2 &bvh,
+                 const void *uniform userPtr,
                  uniform vec2f isoRange,
                  uniform intersectIsoRay isoRayFunc,
                  uniform float *uniform isovalues,

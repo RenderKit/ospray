@@ -27,8 +27,8 @@ struct Curves
   uniform Geometry super; //!< inherited geometry fields
 };
 
-static void Curves_postIntersect(uniform Geometry *uniform self,
-                                 uniform Model *uniform model,
+static void Curves_postIntersect(const Geometry *uniform self,
+                                 const Model *uniform model,
                                  varying DifferentialGeometry &dg,
                                  const varying Ray &ray,
                                  uniform int64 flags)

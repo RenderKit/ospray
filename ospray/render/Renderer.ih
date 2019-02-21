@@ -62,6 +62,7 @@ inline void setTile(uniform Tile &tile,
   the same pixel coordinates in the same call.
  */
 typedef void (*Renderer_RenderSampleFct)(Renderer *uniform self,
+                                         Model *uniform model,
                                          void *uniform perFrameData,
                                          varying ScreenSample &retValue);
 
@@ -92,9 +93,7 @@ struct Renderer
   Model *uniform model;
   Camera *uniform camera;
 
-  int32 spp;  // number of samples per pixel; negative values mean subsampling,
-              // i.e. render only every 2^-spp pixel in x and y for the first
-              // frame
+  int32 spp;
   vec4f bgColor;               // background color and alpha
   Texture2D *maxDepthTexture;  // optional maximum depth texture used for early
                                // ray termination

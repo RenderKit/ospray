@@ -188,7 +188,7 @@ float DRR_computeAmbientOcclusion(uniform DistributedRaycastRenderer *uniform se
     const vec3f aoDir = normalize(localToWorld * localAoDir);
 
     // Check if the ray goes below the surface
-    if (dot(aoDir, info.shadingNormal) < 0.05f) { 
+    if (dot(aoDir, info.shadingNormal) < 0.05f) {
       occlusion += 1.f;
       continue;
     }
@@ -264,6 +264,7 @@ vec3f DRR_integrateOverLights(const uniform DistributedRaycastRenderer *uniform 
 
 
 void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
+                                             Model *uniform local_world,
                                              void *uniform perFrameData,
                                              varying ScreenSample &sample)
 {
@@ -308,7 +309,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       ghostModel = self->ghostRegions[regionInfo->currentRegion];
     }
   } else {
-    model = self->super.model;
+    model = local_world;
   }
 
   // Intersect with current region for this node's local data

@@ -34,12 +34,14 @@ struct SciVisShadingInfo
 
   float local_opacity;
 };
+
 void initShadingInfo(varying SciVisShadingInfo &info);
 void shadeMaterials(const varying DifferentialGeometry &dg,
                     varying SciVisShadingInfo &info);
 
 
-void shadeAO(const uniform SciVisRenderer *uniform self,
+void shadeAO(const SciVisRenderer *uniform self,
+             const Model *uniform world,
              const varying vec3i &sampleID,
              const varying DifferentialGeometry &dg,
              const varying SciVisShadingInfo &info,
@@ -48,7 +50,8 @@ void shadeAO(const uniform SciVisRenderer *uniform self,
 /*! iterate over all light sources, and, for each, compute incident
     irradiance (including shadowing, if required), shade with BRDF,
     and accumulate in 'color' (?) */
-void integrateOverLights(const uniform SciVisRenderer *uniform self,
+void integrateOverLights(const SciVisRenderer *uniform self,
+                         const Model *uniform world,
                          const varying Ray &ray,
                          const varying DifferentialGeometry &dg,
                          const varying SciVisShadingInfo &info,
@@ -60,7 +63,8 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
 /*! compute ambient-occlusoin term, using the materials' ao color
     field. will internally check if ao is actually enabled or not,
     and, if not, just skip these computatoins */
-float calculateAO(const uniform SciVisRenderer *uniform self,
+float calculateAO(const SciVisRenderer *uniform self,
+                  const Model *uniform world,
                   const varying vec3i &sampleID,
                   const varying DifferentialGeometry &dg,
                   const varying vec3f &shadingNormal);

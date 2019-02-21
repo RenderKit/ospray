@@ -75,20 +75,20 @@ struct Volume {
   AffineSpace3f rcp_xfm; //!< rcp(instantiation matrix)
 
   //! The value at the given sample location in world coordinates.
-  varying float (*uniform sample)(void *uniform _self,
+  varying float (*uniform sample)(const void *uniform _self,
                                   const varying vec3f &worldCoordinates);
 
   //! The gradient at the given sample location in world coordinates.
-  varying vec3f (*uniform computeGradient)(void *uniform _self,
+  varying vec3f (*uniform computeGradient)(const void *uniform _self,
                                            const varying vec3f &worldCoordinates);
 
   //! Find the next hit point in the volume for ray casting based renderers.
-  void (*uniform stepRay)(void *uniform _self,
+  void (*uniform stepRay)(const void *uniform _self,
                           varying Ray &ray,
                           const varying float samplingRate);
 
   //! Find the next isosurface hit point in the volume for ray casting based renderers.
-  void (*uniform intersectIsosurface)(void *uniform _self,
+  void (*uniform intersectIsosurface)(const void *uniform _self,
                                       uniform float *uniform isovalues,
                                       uniform int numIsovalues,
                                       uniform size_t geomID,
@@ -109,23 +109,23 @@ void Volume_Constructor(Volume *uniform volume,
 
 // Helper functions ///////////////////////////////////////////////////////////
 
-inline float Volume_getSample(uniform Volume *uniform volume, const vec3f &P)
+inline float Volume_getSample(const Volume *uniform volume, const vec3f &P)
 {
   return volume->sample(volume, P);
 }
 
-inline vec3f Volume_getGradient(uniform Volume *uniform volume, const vec3f &P)
+inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
 {
   return volume->computeGradient(volume, P);
 }
 
-inline vec3f Volume_getColor(uniform Volume *uniform volume, const float sample)
+inline vec3f Volume_getColor(const Volume *uniform volume, const float sample)
 {
   return volume->transferFunction->getColorForValue(volume->transferFunction,
                                                     sample);
 }
 
-inline float Volume_getOpacity(uniform Volume *uniform volume, const float sample)
+inline float Volume_getOpacity(const Volume *uniform volume, const float sample)
 {
   return volume->transferFunction->getOpacityForValue(volume->transferFunction,
                                                       sample);

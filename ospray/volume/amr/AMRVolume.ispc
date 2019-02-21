@@ -30,18 +30,18 @@
 
 // ------------------------------------------------------------------
 //! The current level at the given sample location in world coordinates.
-static varying float AMR_level(void *uniform _self, const varying vec3f &pos)
+static varying float AMR_level(const void *uniform _self, const varying vec3f &pos)
 {
-  AMRVolume *uniform self = (AMRVolume *uniform) _self;
+  const AMRVolume *uniform self = (const AMRVolume *uniform) _self;
   return self->computeSampleLevel(self, pos);
 }
 
 // ------------------------------------------------------------------
 //! The gradient at the given sample location in world coordinates.
-static varying vec3f AMR_gradient(void *uniform _self, const varying vec3f &pos)
+static varying vec3f AMR_gradient(const void *uniform _self, const varying vec3f &pos)
 {
   // Cast to the actual Volume subtype.
-  AMRVolume *uniform volume = (AMRVolume *uniform) _self;
+  const AMRVolume *uniform volume = (const AMRVolume *uniform) _self;
 
   // Gradient step in each dimension (world coordinates).
   const uniform vec3f gradientStep = make_vec3f(volume->super.samplingStep*.1f);  //Carson TODO: determine correct offset
@@ -70,12 +70,12 @@ static varying vec3f AMR_gradient(void *uniform _self, const varying vec3f &pos)
 // adaptively step the ray based on the log of the
 // current AMR level cell size.
 // ray.time is set to interval length of intersected sample
-inline void AMR_stepRay(void *uniform _volume,
+inline void AMR_stepRay(const void *uniform _volume,
                         varying Ray &ray,
                         const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
-  AMRVolume *uniform volume = (AMRVolume *uniform) _volume;
+  const AMRVolume *uniform volume = (const AMRVolume *uniform) _volume;
 
   //sample AMR structure to find size of current and next leaf sizes,
   // take the smallest reasonable step based on leaf size
@@ -109,12 +109,12 @@ export void *uniform AMRVolume_create(void *uniform cppE)
   return self;
 }
 
-export void AMRVolume_computeValueRangeOfLeaf(void *uniform _self,
+export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
                                               uniform int leafID)
 {
-  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
 
-  AMR *uniform amr            = &self->amr;
+  const AMR *uniform amr      = &self->amr;
   AMRLeaf *uniform leaf       = amr->leaf + leafID;
   AMRBrick *uniform brick     = leaf->brickList[0];
   uniform float leafCellWidth = brick->cellWidth;

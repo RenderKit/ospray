@@ -105,8 +105,8 @@ unmasked void Isosurfaces_occluded(const struct RTCIntersectFunctionNArguments *
   Isosurfaces_intersect_kernel(args,true);
 }
 
-static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
-                                      uniform Model *uniform model,
+static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
+                                      const Model *uniform model,
                                       varying DifferentialGeometry &dg,
                                       const varying Ray &ray,
                                       uniform int64 flags)

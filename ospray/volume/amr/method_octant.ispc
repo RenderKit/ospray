@@ -411,9 +411,9 @@ varying float doOctant(const AMR *uniform self,
   return lerp(O);
 }
 
-varying float AMR_octant(void *uniform _self, const varying vec3f &P)
+varying float AMR_octant(const void *uniform _self, const varying vec3f &P)
 {
-  const AMRVolume *uniform self = (AMRVolume *)_self;
+  const AMRVolume *uniform self = (const AMRVolume *)_self;
   const AMR *uniform amr = &self->amr;
 
   vec3f lP;  //local amr space
@@ -423,10 +423,10 @@ varying float AMR_octant(void *uniform _self, const varying vec3f &P)
   return doOctant(amr,C,lP);
 }
 
-varying float AMR_octantLevel(void *uniform _self, const varying vec3f &P)
+varying float AMR_octantLevel(const void *uniform _self, const varying vec3f &P)
 {
-  AMRVolume *uniform self = (AMRVolume *uniform)_self;
-  AMR *uniform amr = &self->amr;
+  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
+  const AMR *uniform amr = &self->amr;
 
   vec3f lP;  //local amr space
   self->transformWorldToLocal(self, P, lP);

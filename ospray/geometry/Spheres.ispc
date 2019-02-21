@@ -80,8 +80,8 @@ inline int32 Spheres_getMaterialID(const uniform Spheres *uniform self,
   return materialID;
 }
 
-static void Spheres_postIntersect(uniform Geometry *uniform geometry,
-                                  uniform Model *uniform model,
+static void Spheres_postIntersect(const Geometry *uniform geometry,
+                                  const Model *uniform model,
                                   varying DifferentialGeometry &dg,
                                   const varying Ray &ray,
                                   uniform int64 flags)

@@ -27,19 +27,22 @@ inline uniform uint64 readInteger(const uint32* uniform array,
 }
 
 // Get cell offset (location) in index array
-inline uniform uint64 getCellOffset(UnstructuredVolume* uniform self, uniform uint64 id)
+inline uniform uint64 getCellOffset(const UnstructuredVolume* uniform self,
+                                    uniform uint64 id)
 {
   return readInteger(self->cell, self->cell32Bit, id) + self->cellSkipIds;
 }
 
 // Get vertex index from index array
-inline uniform uint64 getVertexId(UnstructuredVolume* uniform self, uniform uint64 id)
+inline uniform uint64 getVertexId(const UnstructuredVolume* uniform self,
+                                  uniform uint64 id)
 {
   return readInteger(self->index, self->index32Bit, id);
 }
 
-inline uniform vec3f tetNormal(UnstructuredVolume* uniform self,
-  uniform uint64 id, uniform int planeID)
+static inline uniform vec3f tetNormal(const UnstructuredVolume *uniform self,
+                                      uniform uint64 id,
+                                      uniform int planeID)
 {
   // get precomputed normal if available
   if (self->faceNormals)
@@ -62,8 +65,9 @@ inline uniform vec3f tetNormal(UnstructuredVolume* uniform self,
   return normalize(cross(v1 - v0, v2 - v0));
 }
 
-inline uniform vec3f hexNormal(UnstructuredVolume *uniform self,
-  uniform uint64 id, uniform int planeID)
+static inline uniform vec3f hexNormal(const UnstructuredVolume *uniform self,
+                                      uniform uint64 id,
+                                      uniform int planeID)
 {
   // get precomputed normal if available
   if (self->faceNormals)
@@ -87,7 +91,7 @@ inline uniform vec3f hexNormal(UnstructuredVolume *uniform self,
   return normalize(cross(v1 - v0, v2 - v0));
 }
 
-bool intersectAndSampleTet(void *uniform userData,
+bool intersectAndSampleTet(const void *uniform userData,
                            uniform uint64 id,
                            uniform bool assumeInside,
                            float &result,
@@ -95,7 +99,7 @@ bool intersectAndSampleTet(void *uniform userData,
                            float range_lo,
                            float range_hi)
 {
-  UnstructuredVolume* const uniform self = (UnstructuredVolume * uniform) userData;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) userData;
 
   // get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
@@ -196,7 +200,7 @@ static const uniform int WEDGE_MAX_ITERATION = 10;
 static const uniform float WEDGE_CONVERGED = 1.e-05;
 static const uniform float WEDGE_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
-bool intersectAndSampleWedge(void* uniform userData,
+bool intersectAndSampleWedge(const void *uniform userData,
                              uniform uint64 id,
                              uniform bool assumeInside,
                              float &result,
@@ -204,7 +208,7 @@ bool intersectAndSampleWedge(void* uniform userData,
                              float range_lo,
                              float range_hi)
 {
-  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) userData;
 
   float params[3] = { 0.5, 0.5, 0.5 };
   float pcoords[3] = { 0.5, 0.5, 0.5 };
@@ -376,14 +380,14 @@ static const uniform int HEX_MAX_ITERATION = 10;
 static const uniform float HEX_CONVERGED = 1.e-05;
 static const uniform float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
-bool intersectAndSampleHexNonplanar(void *uniform userData,
+bool intersectAndSampleHexNonplanar(const void *uniform userData,
                                     uniform uint64 id,
                                     float &result,
                                     vec3f samplePos,
                                     float range_lo,
                                     float range_hi)
 {
-  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) userData;
 
   float params[3] = { 0.5, 0.5, 0.5 };
   float pcoords[3];
@@ -486,7 +490,7 @@ bool intersectAndSampleHexNonplanar(void *uniform userData,
   return false;
 }
 
-bool intersectAndSampleHexPlanar(void *uniform userData,
+bool intersectAndSampleHexPlanar(const void *uniform userData,
                                  uniform uint64 id,
                                  uniform bool assumeInside,
                                  float &result,
@@ -494,7 +498,7 @@ bool intersectAndSampleHexPlanar(void *uniform userData,
                                  float range_lo,
                                  float range_hi)
 {
-  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) userData;
 
   // get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
@@ -535,14 +539,14 @@ bool intersectAndSampleHexPlanar(void *uniform userData,
   return true;
 }
 
-bool intersectAndSampleCell(void *uniform userData,
+bool intersectAndSampleCell(const void *uniform userData,
                            uniform uint64 id,
                            float &result,
                            vec3f samplePos,
                            float range_lo,
                            float range_hi)
 {
-  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) userData;
 
   switch (self->cellType[id]) {
   case OSP_TETRAHEDRON:
@@ -561,10 +565,10 @@ bool intersectAndSampleCell(void *uniform userData,
 }
 
 inline varying float UnstructuredVolume_sample(
-    void *uniform _self, const varying vec3f &worldCoordinates)
+    const void *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) _self;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) _self;
 
   float results = floatbits(0xffffffff);  /* NaN */
 
@@ -574,10 +578,10 @@ inline varying float UnstructuredVolume_sample(
 }
 
 inline varying vec3f UnstructuredVolume_computeGradient(
-    void *uniform _self, const varying vec3f &worldCoordinates)
+    const void *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) _self;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) _self;
 
   // Gradient step in each dimension (world coordinates).
   const uniform vec3f gradientStep = make_vec3f(self->super.samplingStep);
@@ -614,10 +618,10 @@ inline varying vec3f UnstructuredVolume_computeGradient(
 
 // ray.time is set to interval length of intersected sample
 inline void UnstructuredVolume_stepRay(
-    void *uniform _self, varying Ray &ray, const varying float samplingRate)
+    const void *uniform _self, varying Ray &ray, const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) _self;
 
   // The recommended step size for ray casting based volume renderers.
   const varying float step = self->super.samplingStep / samplingRate;
@@ -635,14 +639,14 @@ inline bool sameSign(float a, float b)
   return a * b >= 0.f;
 }
 
-void UnstructuredVolume_intersectIsoRay(void *uniform userData,
+void UnstructuredVolume_intersectIsoRay(const void *uniform userData,
                                         uniform float *uniform isovalues,
                                         uniform int numIsovalues,
                                         uniform size_t geomID,
                                         uniform uint64 id,
                                         varying Ray &ray)
 {
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) userData;
 
   // get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
@@ -832,14 +836,14 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
   }
 }
 
-inline void UnstructuredVolume_intersectIsosurface(void *uniform _self,
+inline void UnstructuredVolume_intersectIsosurface(const void *uniform _self,
                                                    uniform float *uniform isovalues,
                                                    uniform int numIsovalues,
                                                    uniform size_t geomID,
                                                    varying Ray &ray)
 {
   // Cast to the actual Volume subtype.
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
+  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) _self;
 
   uniform vec2f isoRange = make_vec2f(isovalues[0], isovalues[0]);
 

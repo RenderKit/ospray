@@ -31,13 +31,13 @@ int32 TriangleMesh_getMaterialID(
   return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
 }
 
-static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
-                                       uniform Model    *uniform model,
+static void TriangleMesh_postIntersect(const Geometry *uniform _self,
+                                       const Model    *uniform model,
                                        varying DifferentialGeometry &dg,
                                        const varying Ray &ray,
                                        uniform int64 flags)
 {
-  TriangleMesh *uniform self = (TriangleMesh *uniform)_self;
+  const TriangleMesh *uniform self = (const TriangleMesh *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
   const uniform bool huge_mesh = self->huge_mesh;
   const vec3i index = gather_vec3i(huge_mesh, self->index, self->idxSize, ray.primID);

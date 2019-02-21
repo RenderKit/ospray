@@ -17,10 +17,11 @@
 #include "StructuredVolume.ih"
 #include "GridAccelerator.ih"
 
-inline varying float StructuredVolume_sample(void *uniform _volume, const varying vec3f &worldCoordinates)
+inline varying float StructuredVolume_sample(const void *uniform _volume,
+                                             const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+  const StructuredVolume *uniform volume = (const StructuredVolume *uniform) _volume;
 
   // Transform the sample location into the local coordinate system.
   vec3f localCoordinates;
@@ -67,10 +68,10 @@ inline varying float StructuredVolume_sample(void *uniform _volume, const varyin
   return volumeSample;
 }
 
-inline varying vec3f StructuredVolume_computeGradient(void *uniform _volume, const varying vec3f &worldCoordinates)
+inline varying vec3f StructuredVolume_computeGradient(const void *uniform _volume, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+  const StructuredVolume *uniform volume = (const StructuredVolume *uniform) _volume;
 
   // Gradient step in each dimension (world coordinates).
   const uniform vec3f gradientStep = volume->gridSpacing;
@@ -113,10 +114,10 @@ inline varying vec3f StructuredVolume_computeGradient(void *uniform _volume, con
 }
 
 // ray.time is set to interval length of intersected sample
-inline void StructuredVolume_stepRay(void *uniform _volume, varying Ray &ray, const varying float samplingRate)
+inline void StructuredVolume_stepRay(const void *uniform _volume, varying Ray &ray, const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
-  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+  const StructuredVolume *uniform volume = (const StructuredVolume *uniform) _volume;
 
   // The recommended step size for ray casting based volume renderers.
   const varying float step = volume->super.samplingStep / samplingRate;
@@ -125,14 +126,14 @@ inline void StructuredVolume_stepRay(void *uniform _volume, varying Ray &ray, co
   GridAccelerator_stepRay(volume->accelerator, step, ray);
 }
 
-inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
+inline void StructuredVolume_intersectIsosurface(const void *uniform _volume,
                                                  uniform float *uniform isovalues,
                                                  uniform int numIsovalues,
                                                  uniform size_t geomID,
                                                  varying Ray &ray)
 {
   // Cast to the actual Volume subtype.
-  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+  const StructuredVolume *uniform volume = (const StructuredVolume *uniform) _volume;
 
   // The nominal step size for ray casting based volume renderers, not considering the sampling rate.
   const uniform float step = volume->super.samplingStep;
@@ -200,12 +201,12 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume,
 
 }
 
-inline void StructuredVolume_transformLocalToWorld(StructuredVolume *uniform volume, const varying vec3f &localCoordinates, varying vec3f &worldCoordinates)
+inline void StructuredVolume_transformLocalToWorld(const StructuredVolume *uniform volume, const varying vec3f &localCoordinates, varying vec3f &worldCoordinates)
 {
   worldCoordinates = volume->gridOrigin + localCoordinates * volume->gridSpacing;
 }
 
-inline void StructuredVolume_transformWorldToLocal(StructuredVolume *uniform volume, const varying vec3f &worldCoordinates, varying vec3f &localCoordinates)
+inline void StructuredVolume_transformWorldToLocal(const StructuredVolume *uniform volume, const varying vec3f &worldCoordinates, varying vec3f &localCoordinates)
 {
   localCoordinates = rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
 }

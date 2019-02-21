@@ -86,8 +86,8 @@ unmasked void Slices_occluded(const struct RTCIntersectFunctionNArguments *unifo
   Slices_intersect_kernel(args,true);
 }
 
-static void Slices_postIntersect(uniform Geometry *uniform geometry,
-                                 uniform Model *uniform model,
+static void Slices_postIntersect(const Geometry *uniform geometry,
+                                 const Model *uniform model,
                                  varying DifferentialGeometry &dg,
                                  const varying Ray &ray,
                                  uniform int64 flags)

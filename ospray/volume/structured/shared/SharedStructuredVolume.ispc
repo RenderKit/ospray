@@ -22,13 +22,13 @@
 /* --------------------------------------------------------------------------\
 // versions for pure 32-bit addressing. volume *MUST* be smaller than 2G     \
 // ------------------------------------------------------------------------*/\
-inline void SSV_getVoxel_##type##_32(void *uniform _self,                    \
+inline void SSV_getVoxel_##type##_32(const void *uniform _self,              \
                                      const varying vec3i &index,             \
                                      varying float &value)                   \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
-  SharedStructuredVolume *uniform self                                       \
-      = (SharedStructuredVolume *uniform)_self;                              \
+  const SharedStructuredVolume *uniform self                                 \
+      = (const SharedStructuredVolume *uniform)_self;                        \
                                                                              \
   /* Cast to the actual voxel type. */                                       \
   const type *uniform voxelData = (const type *uniform)self->voxelData;      \
@@ -42,13 +42,13 @@ inline void SSV_getVoxel_##type##_32(void *uniform _self,                    \
 // versions for 64/32-bit addressing. volume itself can be larger than       \
 // 2G, but each slice must be within the 2G limit.                           \
 // ------------------------------------------------------------------------*/\
-inline void SSV_getVoxel_##type##_64_32(void *uniform _self,                 \
+inline void SSV_getVoxel_##type##_64_32(const void *uniform _self,           \
                                         const varying vec3i &index,          \
                                         varying float &value)                \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
-  SharedStructuredVolume *uniform self                                       \
-      = (SharedStructuredVolume *uniform)_self;                              \
+  const SharedStructuredVolume *uniform self                                 \
+      = (const SharedStructuredVolume *uniform)_self;                        \
                                                                              \
   const uniform uint8 *uniform basePtr =                                     \
       (const uniform uint8 *uniform)self->voxelData;                         \
@@ -65,13 +65,13 @@ inline void SSV_getVoxel_##type##_64_32(void *uniform _self,                 \
 /* --------------------------------------------------------------------------\
 // versions for full 64-bit addressing, for all dimensions or slice size     \
 // ------------------------------------------------------------------------*/\
-inline void SSV_getVoxel_##type##_64(void *uniform _self,                    \
+inline void SSV_getVoxel_##type##_64(const void *uniform _self,              \
                                      const varying vec3i &index,             \
                                      varying float &value)                   \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
-  SharedStructuredVolume *uniform self                                       \
-      = (SharedStructuredVolume *uniform)_self;                              \
+  const SharedStructuredVolume *uniform self                                 \
+      = (const SharedStructuredVolume *uniform)_self;                        \
                                                                              \
   const uint64 index64 = (uint64)index.x + self->super.dimensions.x *        \
       ((int64)index.y + self->super.dimensions.y * ((uint64)index.z));       \
@@ -128,13 +128,13 @@ template_accessArray(double);
   function will directly do all the addressing for the getSample
   (inlined), and thus be about 50% faster (wall-time, meaning even
   much faster in pure sample speed) */
-#define template_sample(type)                                         \
-inline float SSV_sample_##type##_32(void *uniform _self,              \
-                                           const vec3f &worldCoordinates)    \
+#define template_sample(type)                                                \
+inline float SSV_sample_##type##_32(const void *uniform _self,               \
+                                    const vec3f &worldCoordinates)           \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
-  SharedStructuredVolume *uniform self                                       \
-      = (SharedStructuredVolume *uniform)_self;                              \
+  const SharedStructuredVolume *uniform self                                 \
+      = (const SharedStructuredVolume *uniform)_self;                        \
                                                                              \
   /* Transform the sample location into the local coordinate system. */      \
   vec3f localCoordinates;                                                    \
@@ -190,12 +190,12 @@ inline float SSV_sample_##type##_32(void *uniform _self,              \
   return val;                                                                \
 }                                                                            \
                                                                              \
-inline float SSV_sample_##type##_64_32(void *uniform _self,           \
-                                              const vec3f &worldCoordinates) \
+inline float SSV_sample_##type##_64_32(const void *uniform _self,            \
+                                       const vec3f &worldCoordinates)        \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
-  SharedStructuredVolume *uniform self                                       \
-      = (SharedStructuredVolume *uniform)_self;                              \
+  const SharedStructuredVolume *uniform self                                 \
+      = (const SharedStructuredVolume *uniform)_self;                        \
                                                                              \
   /* Transform the sample location into the local coordinate system. */      \
   vec3f localCoordinates;                                                    \

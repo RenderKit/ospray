@@ -83,6 +83,7 @@ void shadeMaterials(const varying DifferentialGeometry &dg,
 // AO functions //
 
 float calculateAO(const uniform SciVisRenderer *uniform self,
+                  const Model *uniform world,
                   const varying vec3i &sampleID,
                   const varying DifferentialGeometry &dg,
                   const varying vec3f &shadingNormal)
@@ -114,7 +115,7 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
     Ray ao_ray;
     setRay(ao_ray, dg.P, ao_dir, 0.f, self->aoDistance);
 
-    if (isOccluded(self->super.model, ao_ray))
+    if (isOccluded(world, ao_ray))
       occlusion += 1.f;
   }
 
@@ -123,7 +124,8 @@ float calculateAO(const uniform SciVisRenderer *uniform self,
 }
 
 
-void shadeAO(const uniform SciVisRenderer *uniform self,
+void shadeAO(const SciVisRenderer *uniform self,
+             const Model *uniform world,
              const varying vec3i &sampleID,
              const varying DifferentialGeometry &dg,
              const varying SciVisShadingInfo &info,
@@ -132,12 +134,13 @@ void shadeAO(const uniform SciVisRenderer *uniform self,
   // Calculate AO contribution as ambient term
   float ao = 1.0f;
   if (self->needToDoAO)
-    ao = calculateAO(self, sampleID, dg, info.shadingNormal);
+    ao = calculateAO(self, world, sampleID, dg, info.shadingNormal);
 
   color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
 }
 
-void integrateOverLights(const uniform SciVisRenderer *uniform self,
+void integrateOverLights(const SciVisRenderer *uniform self,
+                         const Model *uniform world,
                          const varying Ray &ray,
                          const varying DifferentialGeometry &dg,
                          const varying SciVisShadingInfo &info,
@@ -175,8 +178,7 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
             P = P - (2.f * dg.epsilon) * dg.Ng;
           Ray shadowRay;
           setRay(shadowRay, P, light.dir, 0.0f, light.dist, ray.time);
-          const float light_alpha = lightAlpha(self, shadowRay,
-              self->super.model,
+          const float light_alpha = lightAlpha(self, world, shadowRay,
               max_contrib,
               rayOffset, sampleID, quality);
           color = color + light_alpha * light_contrib;

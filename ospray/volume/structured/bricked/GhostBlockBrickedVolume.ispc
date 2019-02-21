@@ -167,7 +167,7 @@ template_brickTranslation(double);
 #define template_getAddress(type)                                       \
   /* IMPORTANT: this function computes RAW addresses that are to be */  \
   /* directly added to "unsigned char *" pointers */                    \
-  inline void GBBV_getAddress_##type(GBBV *uniform volume,              \
+  inline void GBBV_getAddress_##type(const GBBV *uniform volume,        \
                                      const vec3f &voxelIdxInVolume_f,   \
                                      const vec3i &voxelIdxInVolume,     \
                                      varying Address8 &address)         \
@@ -192,7 +192,7 @@ template_brickTranslation(double);
   /* IMPORTANT: this function computes type-relative offsets, so  */    \
   /* values returned from this function should only be added to */      \
   /* "type *" pointers */                                               \
-  inline void GBBV_getIndices_##type(GBBV *uniform volume,              \
+  inline void GBBV_getIndices_##type(const GBBV *uniform volume,        \
                                      const varying vec3i &voxelIdxInVolume, \
                                      varying Address &address)          \
   {                                                                     \
@@ -250,7 +250,7 @@ template_getAddress(double);
     because certain values will get recomputed for each of the 7
     direction (plus the original cell itself) but this is the easiest
     (I could find). */
-inline bool GBBV_getGhostIndices(GBBV *uniform volume,
+inline bool GBBV_getGhostIndices(const GBBV *uniform volume,
                                  const varying vec3i &voxelIdxInVolume,
                                  const uniform vec3i delta,
                                  varying Address &address)
@@ -330,12 +330,12 @@ template_accessArray(double);
 #define template_getVoxel(type)                                         \
   /*! get a single voxel. careful - THIS function operates on */        \
   /* typed offsets, not byte-offsets */                                 \
-  inline void GBBV_getVoxel_##type(void *uniform _volume,               \
+  inline void GBBV_getVoxel_##type(const void *uniform _volume,         \
                                    const varying vec3i &index,          \
                                    varying float &value)                \
   {                                                                     \
     /* Cast to the actual Volume subtype. */                            \
-    GBBV *uniform volume = (GBBV *uniform) _volume;                     \
+    const GBBV *uniform volume = (const GBBV *uniform) _volume;         \
                                                                         \
     /* Cast to the actual voxel type.*/                                 \
     const type *uniform blockMem                                        \
@@ -427,12 +427,12 @@ template_setRegion(double)
   function will directly do all the addressing for the getSample
   (inlined), and thus be about 50% faster (wall-time, meaning even
   much faster in pure sample speed) */
-#define template_sample(type)                                    \
-  inline float GBBV_sample_##type(void *uniform _volume,         \
-                                         const vec3f &worldCoordinates) \
+#define template_sample(type)                                           \
+  inline float GBBV_sample_##type(const void *uniform _volume,          \
+                                  const vec3f &worldCoordinates)        \
   {                                                                     \
     /* Cast to the actual Volume subtype. */                            \
-    GBBV *uniform volume = (GBBV *uniform) _volume;                     \
+    const GBBV *uniform volume = (const GBBV *uniform) _volume;         \
                                                                         \
     /* Transform the sample location into the local coordinate system. */ \
     vec3f localCoordinates;                                             \

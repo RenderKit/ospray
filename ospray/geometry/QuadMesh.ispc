@@ -47,8 +47,8 @@ int32 QuadMesh_getMaterialID(
   return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
 }
 
-static void QuadMesh_postIntersect(uniform Geometry *uniform _self,
-                                   uniform Model    *uniform model,
+static void QuadMesh_postIntersect(const Geometry *uniform _self,
+                                   const Model    *uniform model,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)

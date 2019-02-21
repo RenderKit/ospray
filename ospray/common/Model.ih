@@ -51,7 +51,7 @@ struct UserIntersectionContext
   void *uniform userPtr;
 };
 
-inline void traceRay(uniform Model *uniform model,
+inline void traceRay(const Model *uniform model,
                      varying Ray &ray,
                      void *uniform userPtr)
 {
@@ -63,13 +63,13 @@ inline void traceRay(uniform Model *uniform model,
                 (varying RTCRayHit* uniform)&ray);
 }
 
-inline void traceRay(uniform Model *uniform model,
+inline void traceRay(const Model *uniform model,
                      varying Ray &ray)
 {
   traceRay(model, ray, NULL);
 }
 
-inline bool isOccluded(uniform Model *uniform model,
+inline bool isOccluded(const Model *uniform model,
                        varying Ray &ray,
                        void *uniform userPtr)
 {
@@ -82,7 +82,7 @@ inline bool isOccluded(uniform Model *uniform model,
   return ray.t < ray.t0;
 }
 
-inline bool isOccluded(uniform Model *uniform model, varying Ray &ray)
+inline bool isOccluded(const Model *uniform model, varying Ray &ray)
 {
   return isOccluded(model, ray, NULL);
 }
@@ -94,7 +94,7 @@ inline bool isOccluded(uniform Model *uniform model, varying Ray &ray)
     The ray, dg.P, dg.Ng, and dg.Ns are in world-coordinates.
     Color defaults to vec4f(1.f) if queried but not present in geometry.
    */
-inline void postIntersect(uniform Model *uniform model,
+inline void postIntersect(const Model *uniform model,
                           varying DifferentialGeometry &dg,
                           const varying Ray &ray,
                           uniform int64 flags)

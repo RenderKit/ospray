@@ -18,9 +18,9 @@
 #include "AMRVolume.ih"
 #include "DualCell.ih"
 
-varying float AMR_current(void *uniform _self, const varying vec3f &P)
+varying float AMR_current(const void *uniform _self, const varying vec3f &P)
 {
-  const AMRVolume *uniform self = (AMRVolume *)_self;
+  const AMRVolume *uniform self = (const AMRVolume *)_self;
   const AMR *uniform amr = &self->amr;
 
   vec3f lP;  //local amr space
@@ -36,10 +36,10 @@ varying float AMR_current(void *uniform _self, const varying vec3f &P)
 }
 
 
-varying float AMR_currentLevel(void *uniform _self, const varying vec3f &P)
+varying float AMR_currentLevel(const void *uniform _self, const varying vec3f &P)
 {
-  AMRVolume *uniform self = (AMRVolume *uniform)_self;
-  AMR *uniform amr = &self->amr;
+  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
+  const AMR *uniform amr = &self->amr;
 
   const CellRef C = findLeafCell(amr,P);
   float width = C.width;

@@ -48,8 +48,9 @@ struct SciVisRenderer
   bool needToDoAO;
 };
 
-float lightAlpha(const uniform SciVisRenderer *uniform self,
-                 Ray &ray, uniform Model *uniform model,
+float lightAlpha(const const SciVisRenderer *uniform self,
+                 const Model *uniform model,
+                 Ray &ray,
                  const float weight,
                  const varying float &rayOffset,
                  const varying vec3i &sampleID,
@@ -57,11 +58,13 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
 
 Volume *
 SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform renderer,
+                                const Model *uniform world,
                                 varying Ray &ray,
                                 const varying float &rayOffset);
 
 vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform renderer,
-                                           Volume *uniform volume,
+                                           const Model *uniform world,
+                                           const Volume *uniform volume,
                                            varying Ray &ray, float tBegin,
                                            float tEnd, float maxOpacity, bool isShadowRay, const varying float &rayOffset, const varying vec3i &sampleID, uniform float quality);
 

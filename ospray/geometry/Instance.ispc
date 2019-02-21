@@ -20,8 +20,8 @@
 #include "common/Ray.ih"
 #include "Instance.ih"
 
-static void Instance_postIntersect(uniform Geometry *uniform _self,
-                                   uniform Model *uniform parentModel,
+static void Instance_postIntersect(const Geometry *uniform _self,
+                                   const Model *uniform parentModel,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)

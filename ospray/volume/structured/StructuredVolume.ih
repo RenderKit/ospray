@@ -46,15 +46,15 @@ struct StructuredVolume {
   uniform vec3f localCoordinatesUpperBound;
 
   //! Voxel data accessor.
-  void (*uniform getVoxel)(void *uniform volume, const varying vec3i &index, varying float &value);
+  void (*uniform getVoxel)(const void *uniform volume, const varying vec3i &index, varying float &value);
 
   //! Transform from local coordinates to world coordinates using the volume's grid definition.
-  void (*uniform transformLocalToWorld)(StructuredVolume *uniform volume,
+  void (*uniform transformLocalToWorld)(const StructuredVolume *uniform volume,
                                         const varying vec3f &localCoordinates,
                                         varying vec3f &worldCoordinates);
 
   //! Transform from world coordinates to local coordinates using the volume's grid definition.
-  void (*uniform transformWorldToLocal)(StructuredVolume *uniform volume,
+  void (*uniform transformWorldToLocal)(const StructuredVolume *uniform volume,
                                         const varying vec3f &worldCoordinates,
                                         varying vec3f &localCoordinates);
 

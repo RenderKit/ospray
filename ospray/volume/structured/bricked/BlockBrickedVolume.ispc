@@ -52,7 +52,7 @@ struct Address {
   varying uint32 voxel;
 };
 
-inline void BlockBrickedVolume_getVoxelAddress(BlockBrickedVolume *uniform volume,
+inline void BlockBrickedVolume_getVoxelAddress(const BlockBrickedVolume *uniform volume,
                                                const varying vec3i &index,
                                                varying Address &address)
 {
@@ -85,12 +85,12 @@ inline void BlockBrickedVolume_getVoxelAddress(BlockBrickedVolume *uniform volum
 
 
 #define template_getVoxel(type)                                               \
-inline void BlockBrickedVolume_getVoxel_##type(void *uniform _self,           \
+inline void BlockBrickedVolume_getVoxel_##type(const void *uniform _self,     \
                                                const varying vec3i &index,    \
                                                varying float &value)          \
 {                                                                             \
   /* Cast to the actual volume subtype. */                                    \
-  BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;      \
+  const BlockBrickedVolume *uniform self = (const BlockBrickedVolume *uniform)_self; \
                                                                               \
   /* Compute the 1D address of the block in the volume                        \
    and the voxel in the block. */                                             \

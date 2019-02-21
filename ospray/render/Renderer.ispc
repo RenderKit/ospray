@@ -20,7 +20,8 @@
 #include "render/util.ih"
 
 // The layout of this struct must match that of OSPPickData in ospray.h
-void Renderer_default_renderSample(uniform Renderer *uniform self,
+void Renderer_default_renderSample(Renderer *uniform self,
+                                   Model *uniform model,
                                    void *uniform perFrameData,
                                    varying ScreenSample &sample)
 {
@@ -52,7 +53,7 @@ static unmasked void Renderer_default_endFrame(Renderer *uniform self,
 unmasked void Renderer_default_renderTile(Renderer *uniform self,
                                           FrameBuffer *uniform fb,
                                           Camera *uniform camera,
-                                          Model *uniform model,
+                                          Model *uniform world,
                                           void *uniform perFrameData,
                                           uniform Tile &tile,
                                           uniform int taskIndex)
@@ -115,7 +116,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-      self->renderSample(self, perFrameData, screenSample);
+      self->renderSample(self, world, perFrameData, screenSample);
       col = col + screenSample.rgb;
       alpha += screenSample.alpha;
       normal = normal + screenSample.normal;

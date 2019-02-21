@@ -39,6 +39,7 @@ inline float misHeuristic(float pdf1, float pdf2)
 
 // TODO use intersection filters
 vec3f transparentShadow(const uniform PathTracer* uniform self,
+                        const Model *uniform world,
                         vec3f lightContrib,
                         Ray &shadowRay,
                         Medium medium)
@@ -47,13 +48,13 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
   const float tOriginal = shadowRay.t;
 
   while (1) {
-    traceRay(self->super.model, shadowRay);
+    traceRay(world, shadowRay);
 
     if (noHit(shadowRay))
       return lightContrib;
 
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, shadowRay,
+    postIntersect(world, dg, shadowRay,
       DG_MATERIALID |
       DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR);
 
@@ -89,7 +90,8 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
   }
 }
 
-ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
+ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
+                                    const Model *uniform world,
                                     const vec2f &pixel, // normalized, i.e. in [0..1]
                                     Ray &ray,
                                     varying LDSampler* uniform sampler)
@@ -125,7 +127,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     if (shadowCatcherDist > ray.t0) // valid hit can hide other geometry
       ray.t = min(shadowCatcherDist, ray.t);
 
-    traceRay(self->super.model, ray);
+    traceRay(world, ray);
 
     DifferentialGeometry dg;
 
@@ -174,7 +176,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
-          shaded = shaded + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
+          shaded = shaded + transparentShadow(self, world, unshadedLightContrib, shadowRay, currentMedium);
         }
         // order of args important to filter NaNs (in case unshaded.X is zero)
         const vec3f ratio = min(Lw * shaded * rcp(unshaded), Lw);
@@ -241,7 +243,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     ////////////////////////////////////
     // handle next surface interaction
 
-    postIntersect(self->super.model, dg, ray,
+    postIntersect(world, dg, ray,
                   DG_MATERIALID |
                   DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR | DG_TANGENTS);
     uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)dg.material;
@@ -255,7 +257,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           areaPdf = self->areaPDF[ray.geomID];
         } else { // an instance
           foreach_unique(instID in ray.instID) {
-            Instance *uniform inst = (Instance *uniform)self->super.model->geometry[instID];
+            Instance *uniform inst = (Instance *uniform)world->geometry[instID];
             areaPdf = inst->areaPDF[ray.geomID];
           }
         }
@@ -322,7 +324,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         }
 
         const vec3f unshadedLightContrib = nextLw * ls.weight * misHeuristic(ls.pdf, fe.pdf);
-        L = L + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
+        L = L + transparentShadow(self, world, unshadedLightContrib, shadowRay, currentMedium);
       }
     }
 
@@ -396,14 +398,14 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 }
 
 
-inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
+inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
+                                           FrameBuffer *uniform fb,
+                                           Camera *uniform camera,
+                                           Model *uniform world,
                                            const uint32 ix,
                                            const uint32 iy,
                                            const uint32 accumID)
 {
-  uniform FrameBuffer *uniform fb = self->super.fb;
-
-  uniform Camera *uniform camera = self->super.camera;
   ScreenSample screenSample;
   screenSample.rgb = make_vec3f(0.f);
   screenSample.alpha = 0.f;
@@ -433,7 +435,8 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
     camera->initRay(camera, screenSample.ray, cameraSample);
 
-    ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
+    ScreenSample sample = PathTraceIntegrator_Li(self, world,
+                                                 cameraSample.screen,
                                                  screenSample.ray, sampler);
     screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
@@ -451,12 +454,13 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   return screenSample;
 }
 
-void PathTracer_renderTileJob(uniform PathTracer *uniform self,
+void PathTracer_renderTileJob(PathTracer *uniform self,
+                              FrameBuffer *uniform fb,
+                              Camera *uniform camera,
+                              Model *uniform world,
                               uniform Tile &tile,
                               uniform int taskIndex)
 {
-  FrameBuffer *uniform fb = self->super.fb;
-
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE);
 
@@ -466,7 +470,8 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
     if (ix >= fb->size.x || iy >= fb->size.y)
       continue;
 
-    ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy, tile.accumID);
+    ScreenSample screenSample =
+      PathTracer_renderPixel(self, fb, camera, world, ix, iy, tile.accumID);
 
     const uint32 pixel = z_order.xs[i] + (z_order.ys[i] * TILE_SIZE);
     setTile(tile, pixel, screenSample);
@@ -476,13 +481,13 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
 unmasked void PathTracer_renderTile(Renderer *uniform _self,
                                     FrameBuffer *uniform fb,
                                     Camera *uniform camera,
-                                    Model *uniform model,
+                                    Model *uniform world,
                                     void *uniform perFrameData,
                                     uniform Tile &tile,
                                     uniform int jobID)
 {
   PathTracer *uniform self = (PathTracer *uniform)_self;
-  PathTracer_renderTileJob(self, tile, jobID);
+  PathTracer_renderTileJob(self, fb, camera, world, tile, jobID);
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////

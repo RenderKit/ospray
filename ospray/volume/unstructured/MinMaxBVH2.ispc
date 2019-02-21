@@ -16,8 +16,8 @@
 
 #include "MinMaxBVH2.ih"
 
-void traverse(uniform MinMaxBVH2 &bvh,
-              void *uniform userPtr,
+void traverse(const uniform MinMaxBVH2 &bvh,
+              const void *uniform userPtr,
               uniform intersectAndSamplePrim sampleFunc,
               float &result,
               const vec3f &samplePos)
@@ -116,8 +116,8 @@ inline bool intersects(const Ray &ray,
   return t_nr <= t_fr;
 }
 
-void traverseRay(uniform MinMaxBVH2 &bvh,
-                 void *uniform userPtr,
+void traverseRay(const uniform MinMaxBVH2 &bvh,
+                 const void *uniform userPtr,
                  uniform vec2f isoRange,
                  uniform intersectIsoRay isoRayFunc,
                  uniform float *uniform isovalues,

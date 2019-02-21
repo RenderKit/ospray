@@ -158,8 +158,8 @@ unmasked void Cylinders_occluded(const struct RTCIntersectFunctionNArguments *un
   Cylinders_intersect_kernel(args,true);
 }
 
-static void Cylinders_postIntersect(Geometry *uniform _self,
-                                    Model *uniform model,
+static void Cylinders_postIntersect(const Geometry *uniform _self,
+                                    const Model *uniform model,
                                     varying DifferentialGeometry &dg,
                                     const varying Ray &ray,
                                     uniform int64 flags)

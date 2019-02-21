@@ -40,13 +40,13 @@ struct BilinearPatches {
 
 
 
-static void BilinearPatches_postIntersect(uniform Geometry *uniform geometry,
-                                  uniform Model *uniform model,
+static void BilinearPatches_postIntersect(const Geometry *uniform geometry,
+                                  const Model *uniform model,
                                   varying DifferentialGeometry &dg,
                                   const varying Ray &ray,
                                   uniform int64 flags)
 {
-  BilinearPatches *uniform self = (BilinearPatches *uniform)geometry;
+  const BilinearPatches *uniform self = (const BilinearPatches *uniform)geometry;
   dg.Ng = dg.Ns = normalize(ray.Ng);
 
   if (flags & DG_MATERIALID) {
@@ -163,13 +163,13 @@ bool recursiveBisection(varying Ray &ray,
       ray.t = t;
       ray.u = uc;
       ray.v = vc;
-      
+
       const vec3f pu0 = p00+ray.u*(p01-p00);
       const vec3f pu1 = p10+ray.u*(p11-p10);
-      
+
       const vec3f pv0 = p00+ray.v*(p10-p00);
       const vec3f pv1 = p01+ray.v*(p11-p01);
-      
+
       ray.Ng = cross(pu1-pu0,pv1-pv0);
     }
     return true;
@@ -181,14 +181,14 @@ bool recursiveBisection(varying Ray &ray,
     const uniform vec3f pcc = 0.25f*(p00+p01+p10+p11);
 
     bool hit = false;
-    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+    hit |= recursiveBisection(ray,isOcclusionTest,frame,
                               p00,p0c,pc0,pcc, u0,uc, v0,vc, recursionsLeft-1);
-    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+    hit |= recursiveBisection(ray,isOcclusionTest,frame,
                               pc0,pcc,p10,p1c, u0,uc, vc,v1, recursionsLeft-1);
 
-    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+    hit |= recursiveBisection(ray,isOcclusionTest,frame,
                               p0c,p01,pcc,pc1, uc,u1, v0,vc, recursionsLeft-1);
-    hit |= recursiveBisection(ray,isOcclusionTest,frame, 
+    hit |= recursiveBisection(ray,isOcclusionTest,frame,
                               pcc,pc1,p1c,p11, uc,u1, vc,v1, recursionsLeft-1);
     return hit;
   }
