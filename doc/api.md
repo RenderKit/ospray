@@ -999,10 +999,6 @@ all renderers are
   ----------- ------------------ --------  ----------------------------------------
   Type        Name                Default  Description
   ----------- ------------------ --------  ----------------------------------------
-  OSPModel    model                        the [model] to render
-
-  OSPCamera   camera                       the [camera] to be used for rendering
-
   OSPLight[]  lights                       [data] array with handles of the [lights]
 
   int         spp                       1  samples per pixel
@@ -1946,7 +1942,12 @@ by using the [general parameters](#cameras) understood by all cameras.
 To get the world-space position of the geometry (if any) seen at [0–1]
 normalized screen-space pixel coordinates `screenPos` use
 
-    void ospPick(OSPPickResult*, OSPRenderer, const vec2f &screenPos);
+    void ospPick(OSPPickResult *,
+                 OSPFrameBuffer,
+                 OSPRenderer,
+                 OSPCamera,
+                 OSPModel,
+                 const osp_vec2f screenPos);
 
 The result is returned in the provided `OSPPickResult` struct:
 
@@ -2122,20 +2123,16 @@ Rendering
 
 To render a frame into the given framebuffer with the given renderer use
 
-    float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
-                         const uint32_t frameBufferChannels = OSP_FB_COLOR);
+    float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
 
-The third parameter specifies what channel(s) of the framebuffer is
-written to^[This is currently not implemented, i.e., all channels of
-the framebuffer are always updated.]. What to render and how to
-render it depends on the renderer's parameters. If the framebuffer
-supports accumulation (i.e., it was created with `OSP_FB_ACCUM`) then
-successive calls to `ospRenderFrame` will progressively refine the
-rendered image. If additionally the framebuffer has an `OSP_FB_VARIANCE`
-channel then `ospRenderFrame` returns an estimate of the current
-variance of the rendered image, otherwise `inf` is returned. The
-estimated variance can be used by the application as a quality indicator
-and thus to decide whether to stop or to continue progressive rendering.
+What to render and how to render it depends on the renderer's parameters. If
+the framebuffer supports accumulation (i.e., it was created with
+`OSP_FB_ACCUM`) then successive calls to `ospRenderFrame` will progressively
+refine the rendered image. If additionally the framebuffer has an
+`OSP_FB_VARIANCE` channel then `ospRenderFrame` returns an estimate of the
+current variance of the rendered image, otherwise `inf` is returned. The
+estimated variance can be used by the application as a quality indicator and
+thus to decide whether to stop or to continue progressive rendering.
 
 ### Asynchronous Rendering
 
@@ -2144,7 +2141,8 @@ above synchronous version. To start an asynchronous render, use
 
     OSPFuture ospRenderFrameAsync(OSPFrameBuffer,
                                   OSPRenderer,
-                                  const uint32_t);
+                                  OSPCamera,
+                                  OSPModel);
 
 This version returns an `OSPFuture` handle, which can be used to
 synchronize with, cancel, or query for progress of the running task.
