@@ -16,13 +16,16 @@
 
 #pragma once
 
+// stl
+#include <condition_variable>
 // ospray components
 #include "../common/Messaging.h"
 #include "components/mpiCommon/MPICommon.h"
-// ours
-#include <condition_variable>
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "render/LoadBalancer.h"
+
+#include "camera/Camera.h"
+#include "common/Model.h"
 
 namespace ospray {
   namespace mpi {
@@ -77,10 +80,11 @@ namespace ospray {
     namespace dynamicLoadBalancer {
       /*! \brief the 'master' in a tile-based master-slave load balancer
 
-          The dynamic load balancer assigns tiles asynchronously, favouring the
-          same tiles as the DistributedFramebuffer (i.e. round-robin pattern,
-          each client 'i' renderss tiles with 'tileID%numWorkers==i') to avoid
-          transferring a computed tile for accumulation
+          The dynamic load balancer assigns tiles asynvirtual chronously,
+         favouring the same tiles as the DistributedFramebuffer (i.e.
+         round-robin pattern, each client 'i' renderss tiles with
+         'tileID%numWorkers==i') to avoid transferring a computed tile for
+         accumulation
       */
 
       struct TileTask
@@ -134,6 +138,8 @@ namespace ospray {
         // "local" state
         Renderer *renderer;
         FrameBuffer *fb;
+        Camera *camera;
+        Model *world;
         void *perFrameData;
 
         std::mutex mutex;

@@ -130,8 +130,8 @@ namespace ospray {
 
       float Slave::renderFrame(FrameBuffer *fb,
                                Renderer *renderer,
-                               Camera * /*camera*/,
-                               Model * /*world*/)
+                               Camera *camera,
+                               Model *world)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
@@ -178,7 +178,8 @@ namespace ospray {
           if (!dfb->frameCancelled()) {
             tasking::parallel_for(
                 numJobs(renderer->spp, accumID), [&](size_t tid) {
-                  renderer->renderTile(perFrameData, tile, tid);
+                  renderer->renderTile(
+                      fb, camera, world, perFrameData, tile, tid);
                 });
           }
 
@@ -416,11 +417,14 @@ namespace ospray {
 
       float Slave::renderFrame(FrameBuffer *_fb,
                                Renderer *_renderer,
-                               Camera * /*camera*/,
-                               Model * /*world*/)
+                               Camera *_camera,
+                               Model *_world)
       {
-        renderer  = _renderer;
-        fb        = _fb;
+        renderer = _renderer;
+        fb       = _fb;
+        camera   = _camera;
+        world    = _world;
+
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
         tilesAvailable = true;
@@ -459,10 +463,11 @@ namespace ospray {
 
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         if (!dfb->frameCancelled()) {
-          tasking::parallel_for(numJobs(renderer->spp, task.accumId),
-                                [&](size_t tid) {
-                                  renderer->renderTile(perFrameData, tile, tid);
-                                });
+          tasking::parallel_for(
+              numJobs(renderer->spp, task.accumId), [&](size_t tid) {
+                renderer->renderTile(
+                    fb, camera, world, perFrameData, tile, tid);
+              });
         }
 
         if (tilesAvailable)

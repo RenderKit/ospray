@@ -27,8 +27,8 @@ namespace ospray {
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
                                             Renderer *renderer,
-                                            Camera * /*camera*/,
-                                            Model * /*world*/)
+                                            Camera * camera,
+                                            Model * world)
   {
     void *perFrameData = renderer->beginFrame(fb);
     bool cancel        = false;
@@ -61,7 +61,7 @@ namespace ospray {
 #endif
 
       tasking::parallel_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
-        renderer->renderTile(perFrameData, tile, tIdx);
+        renderer->renderTile(fb, camera, world, perFrameData, tile, tIdx);
       });
 
       fb->setTile(tile);

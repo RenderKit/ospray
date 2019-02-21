@@ -35,7 +35,7 @@ namespace ospray {
    */
   struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   {
-    Renderer() = default;
+    Renderer()                   = default;
     virtual ~Renderer() override = default;
 
     /*! \brief creates an abstract renderer class of given type
@@ -68,23 +68,29 @@ namespace ospray {
     virtual void endFrame(void *perFrameData);
 
     /*! \brief called by the load balancer to render one tile of "samples" */
-    virtual void renderTile(void *perFrameData, Tile &tile, size_t jobID) const;
+    virtual void renderTile(FrameBuffer *fb,
+                            Camera *camera,
+                            Model *world,
+                            void *perFrameData,
+                            Tile &tile,
+                            size_t jobID) const;
 
     virtual OSPPickResult pick(const vec2f &screenPos);
 
-    Model *model {nullptr};
-    FrameBuffer *currentFB {nullptr};
+    Model *model{nullptr};
+    FrameBuffer *currentFB{nullptr};
 
     /*! \brief number of samples to be used per pixel in a tile */
-    int32 spp {1};
+    int32 spp{1};
 
     /*! adaptive accumulation: variance-based error to reach */
-    float errorThreshold {0.f};
+    float errorThreshold{0.f};
 
     /*! \brief the background color */
-    vec4f bgColor {0.f};
+    vec4f bgColor{0.f};
 
-    /*! \brief maximum depth texture provided as an optional parameter to the renderer, used for early ray termination
+    /*! \brief maximum depth texture provided as an optional parameter to the
+      renderer, used for early ray termination
 
       The texture format should be OSP_TEXTURE_R32F and texture filtering
       should be set to nearest-neighbor interpolation:
@@ -102,8 +108,7 @@ namespace ospray {
       of this renderer.
   */
 #define OSP_REGISTER_RENDERER(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(::ospray::Renderer, renderer, \
-                      InternalClass, external_name)
+  OSP_REGISTER_OBJECT(                                      \
+      ::ospray::Renderer, renderer, InternalClass, external_name)
 
-} // ::ospray
-
+}  // namespace ospray
