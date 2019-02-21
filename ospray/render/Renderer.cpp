@@ -70,14 +70,20 @@ namespace ospray {
     return createInstanceHelper<Renderer, OSP_RENDERER>(type);
   }
 
-  void Renderer::renderTile(FrameBuffer * /*fb*/,
-                            Camera * /*camera*/,
-                            Model * /*world*/,
+  void Renderer::renderTile(FrameBuffer *fb,
+                            Camera *camera,
+                            Model *world,
                             void *perFrameData,
                             Tile &tile,
                             size_t jobID) const
   {
-    ispc::Renderer_renderTile(getIE(), perFrameData, (ispc::Tile &)tile, jobID);
+    ispc::Renderer_renderTile(getIE(),
+                              fb->getIE(),
+                              camera->getIE(),
+                              world->getIE(),
+                              perFrameData,
+                              (ispc::Tile &)tile,
+                              jobID);
   }
 
   void *Renderer::beginFrame(FrameBuffer *fb)

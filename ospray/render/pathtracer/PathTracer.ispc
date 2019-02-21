@@ -451,14 +451,11 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   return screenSample;
 }
 
-
-
-
 void PathTracer_renderTileJob(uniform PathTracer *uniform self,
                               uniform Tile &tile,
                               uniform int taskIndex)
 {
-  uniform FrameBuffer *uniform fb = self->super.fb;
+  FrameBuffer *uniform fb = self->super.fb;
 
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE);
@@ -476,19 +473,19 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
   }
 }
 
-unmasked void PathTracer_renderTile(uniform Renderer *uniform _self,
-                           void *uniform perFrameData,
-                           uniform Tile &tile,
-                           uniform int jobID)
+unmasked void PathTracer_renderTile(Renderer *uniform _self,
+                                    FrameBuffer *uniform fb,
+                                    Camera *uniform camera,
+                                    Model *uniform model,
+                                    void *uniform perFrameData,
+                                    uniform Tile &tile,
+                                    uniform int jobID)
 {
-  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
-
+  PathTracer *uniform self = (PathTracer *uniform)_self;
   PathTracer_renderTileJob(self, tile, jobID);
 }
 
-
-// Exports (called from C++)
-//////////////////////////////////////////////////////////////////////////////
+// Exports (called from C++) //////////////////////////////////////////////////
 
 export void PathTracer_set(void *uniform _self
     , const uniform int32 rouletteDepth
