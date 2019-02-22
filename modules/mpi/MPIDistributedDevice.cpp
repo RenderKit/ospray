@@ -349,11 +349,6 @@ namespace ospray {
       return createLocalObject<Geometry, OSPGeometry>(type);
     }
 
-    OSPMaterial MPIDistributedDevice::newMaterial(OSPRenderer, const char *)
-    {
-      NOT_IMPLEMENTED;
-    }
-
     OSPMaterial MPIDistributedDevice::newMaterial(const char *renderer_type,
                                                   const char *material_type)
     {

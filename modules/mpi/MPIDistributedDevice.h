@@ -176,10 +176,6 @@ namespace ospray {
       OSPGeometry newGeometry(const char *type) override;
 
       /*! have given renderer create a new material */
-      OSPMaterial newMaterial(OSPRenderer renderer,
-                              const char *material_type) override;
-
-      /*! have given renderer create a new material */
       OSPMaterial newMaterial(const char *renderer_type,
                               const char *material_type) override;
 

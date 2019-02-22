@@ -167,10 +167,6 @@ namespace ospray {
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
       /*! have given renderer create a new material */
-      virtual OSPMaterial newMaterial(OSPRenderer renderer,
-                                      const char *material_type) = 0;
-
-      /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(const char *renderer_type,
                                       const char *material_type) = 0;
 
