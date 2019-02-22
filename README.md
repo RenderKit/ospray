@@ -546,6 +546,9 @@ will require that a callback is provided. Note that callbacks for C++
 `std::cout` and `std::cerr` can be alternatively set through `ospInit()`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
+Applications can clear either callback by passing `nullptr` instead of
+an actual function pointer.
+
 ### Loading OSPRay Extensions at Runtime
 
 OSPRay’s functionality can be extended via plugins, which are
@@ -1082,22 +1085,22 @@ like the structured volume equivalent, but they only modify the root
 
 ### Unstructured Volumes
 
-Unstructured volumes can contain tetrahedral, wedge, or hexahedral cell
-types, and are defined by three arrays: vertices, corresponding field
-values, and eight indices per cell (first four are -1 for tetrahedral
-cells, first two are -2 for wedge cells). An unstructured volume type is
-created by passing the type string “`unstructured_volume`” to
-`ospNewVolume`.
+Unstructured volumes can have its topology and geometry freely defined.
+Geometry can be composed of tetrahedral, wedge, or hexahedral cell
+types. Data format optinally matches VTK and consists from multiple
+arrays: vertex positions and values, vertex indices, cell start indices,
+cell types, and cell values. An unstructured volume type is created by
+passing the type string “`unstructured_volume`” to `ospNewVolume`.
 
-Field values can be specified per-vertex (`field`) or per-cell
-(`cellField`). If both values are set, `cellField` takes precedence.
+Sampled cell values can be specified either per-vertex (`vertex.value`)
+or per-cell (`cell.value`). If both arrays are set, `cell.value` takes
+precedence.
 
-Similar to [triangle mesh](#triangle-mesh), each tetrahedron is formed
-by a group of indices into the vertices. For each vertex, the
-corresponding (by array index) data value will be used for sampling when
-rendering. Note that the index order for each tetrahedron does not
-matter, as OSPRay internally calculates vertex normals to ensure proper
-sampling and interpolation.
+Similar to a mesh, each cell is formed by a group of indices into the
+vertices. For each vertex, the corresponding (by array index) data value
+will be used for sampling when rendering, if specified. The index order
+for a tetrahedron is the same as `VTK_TETRA`: bottom triangle
+counterclockwise, then the top vertex.
 
 For wedge cells, each wedge is formed by a group of six indices into the
 vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
@@ -1108,13 +1111,18 @@ indices into the vertices and data value. Vertex ordering is the same as
 `VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
 counterclockwise.
 
+To maintain VTK data compatibility an index array may be specified via
+`indexPrefixed` array that allow vertex indices to be interleaved with
+cell sizes in the following format:
+$n, id_1, ..., id_n, m, id_1, ..., id_m$.
+
 <table style="width:98%;">
 <caption>Additional configuration parameters for unstructured volumes.</caption>
 <colgroup>
-<col style="width: 14%" />
+<col style="width: 20%" />
 <col style="width: 25%" />
 <col style="width: 12%" />
-<col style="width: 44%" />
+<col style="width: 38%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1127,39 +1135,57 @@ counterclockwise.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">vec3f[]</td>
-<td style="text-align: left;">vertices</td>
+<td style="text-align: left;">vertex</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"><a href="#data">data</a> array of vertex positions</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">float[]</td>
-<td style="text-align: left;">field</td>
+<td style="text-align: left;">vertex.value</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"><a href="#data">data</a> array of vertex data values to be sampled</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">uint32[] / uint64[]</td>
+<td style="text-align: left;">index</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><a href="#data">data</a> array of indices (into the vertex array(s)) that form cells</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">uint32[] / uint64[]</td>
+<td style="text-align: left;">indexPrefixed</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">alternative <a href="#data">data</a> array of indices compatible to VTK, where the indices of each cell are prefixed with the number of vertices</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">uint32[] / uint64[]</td>
+<td style="text-align: left;">cell</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><a href="#data">data</a> array of locations (into the index array), specifying the first index of each cell</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">float[]</td>
-<td style="text-align: left;">cellField</td>
+<td style="text-align: left;">cell.value</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"><a href="#data">data</a> array of cell data values to be sampled</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;">vec4i[]</td>
-<td style="text-align: left;">indices</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"><a href="#data">data</a> array of tetrahedra indices (into vertices and field)</td>
-</tr>
 <tr class="odd">
+<td style="text-align: left;">uint8[]</td>
+<td style="text-align: left;">cell.type</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><a href="#data">data</a> array of cell types (VTK compatible)</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">hexMethod</td>
 <td style="text-align: left;">planar</td>
 <td style="text-align: left;">“planar” (faster, assumes planar sides) or “nonplanar”</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">precomputedNormals</td>
 <td style="text-align: left;">true</td>
-<td style="text-align: left;">whether to accelerate by precomputing, at a cost of 72 bytes/cell</td>
+<td style="text-align: left;">whether to accelerate by precomputing, at a cost of 12 bytes/face</td>
 </tr>
 </tbody>
 </table>
@@ -3138,8 +3164,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 
 : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
 naming optional information the framebuffer can store. These values can
-be combined by bitwise OR when passed to `ospNewFrameBuffer` or
-`ospFrameBufferClear`.
+be combined by bitwise OR when passed to `ospNewFrameBuffer`.
 
 If a certain channel value is *not* specified, the given buffer channel
 will not be present. Note that OSPRay makes a clear distinction between
@@ -3182,14 +3207,25 @@ void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
 The individual channels of a framebuffer can be cleared with
 
 ``` {.cpp}
-void ospFrameBufferClear(OSPFrameBuffer, const uint32_t frameBufferChannels);
+void ospResetAccumulation(OSPFrameBuffer);
 ```
 
-When selected, `OSP_FB_COLOR` will clear the color buffer to black
-`(0, 0, 0, 0)`, `OSP_FB_DEPTH` will clear the depth buffer to `inf`.
-`OSP_FB_ACCUM` will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
+This function will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
 `OSP_FB_NORMAL`, and `OSP_FB_ALBEDO`, if present) and resets the
-accumulation counter `accumID`.
+accumulation counter `accumID`. It is unspecified if the existing color
+and depth buffers are physically cleared when `ospResetAccumulation` is
+called.
+
+If `OSP_FB_VARIANCE` is specified, an estimate of the variance of the
+last accumulated frame can be queried with
+
+``` {.cpp}
+float ospGetVariance(OSPFrameBuffer);
+```
+
+Note this value is only updated after synchronizing with
+`OSP_FRAME_FINISHED`, as further described in [asynchronous
+rendering](#asynchronous-rendering).
 
 ### Pixel Operation {#pixel-operation .unnumbered}
 
@@ -3296,6 +3332,8 @@ exposure bias to match 18% middle gray.
 Rendering
 ---------
 
+### Synchronous Rendering
+
 To render a frame into the given framebuffer with the given renderer use
 
 ``` {.cpp}
@@ -3314,31 +3352,65 @@ rendered image, otherwise `inf` is returned. The estimated variance can
 be used by the application as a quality indicator and thus to decide
 whether to stop or to continue progressive rendering.
 
-### Progress and Cancel {#progress-and-cancel .unnumbered}
+### Asynchronous Rendering
 
-To be informed about the progress of rendering the current frame the
-application can register a callback function of type
-
-``` {.cpp}
-typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
-```
-
-via
+Rendering can also be done asynchronously, with a similar interface to
+the above synchronous version. To start an asynchronous render, use
 
 ``` {.cpp}
-void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
+OSPFuture ospRenderFrameAsync(OSPFrameBuffer,
+                              OSPRenderer,
+                              const uint32_t);
 ```
 
-The provided user pointer `userPtr` is passed as first argument to the
-callback function[^9] and the reported progress is in (0–1\]. If the
-callback function returns zero than the application requests to cancel
-rendering, i.e., the current `ospRenderFrame` will return at the first
-opportunity and the content of the framebuffer will be undefined.
-Therefore, better clear the framebuffer with `ospFrameBufferClear` then
-before a subsequent call of `ospRenderFrame`.
+This version returns an `OSPFuture` handle, which can be used to
+synchronize with, cancel, or query for progress of the running task.
+When `ospRenderFrameAsync` is called, there is no guarantee when the
+associated task will begin execution.
 
-Passing `NULL` as `OSPProgressFunc` function pointer disables the
-progress callback.
+Progress of a running frame can be queried with the following API
+function
+
+``` {.cpp}
+float ospGetProgress(OSPFuture);
+```
+
+This returns the progress of the task in \[0-1\].
+
+Applications can wait on the result of an asynchronous operation, or
+choose to only synchronize with a specific event. To synchronize with an
+`OSPFuture` use
+
+``` {.cpp}
+void ospWait(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
+```
+
+The following are values which can be synchronized with the application
+
+| Name                  | Description                                              |
+|:----------------------|:---------------------------------------------------------|
+| OSP\_NONE\_FINISHED   | Don’t wait for anything to be finished (immediately      |
+|                       | return from `ospWait`)                                   |
+| OSP\_WORLD\_COMMITTED | Wait for the world to be committed (not yet implemented) |
+| OSP\_WORLD\_RENDERED  | Wait for the world to be rendered, but not               |
+|                       | post-processing operations (Pixel/Tile/Frame Op)         |
+| OSP\_FRAME\_FINISHED  | Wait for all rendering operations to complete            |
+| OSP\_TASK\_FINISHED   | Wait on full completion of the task associated with      |
+|                       | the future. The underlying task may involve one or       |
+|                       | more of the above synchronization events                 |
+
+: Supported events that can be passed to `ospWait`
+
+Currently only rendering can be invoked asynchronously. However, future
+releases of OSPRay may add more asynchronous versions of API calls (and
+thus return `OSPFuture`).
+
+### Asynchronous Rendering and ospCommit()
+
+The use of either `ospRenderFrame` or `ospRenderFrameAsync` requires
+that all objects in the scene being rendererd have been committed before
+rendering occurs. If a call to `ospCommit()` happens while a frame is
+rendered, the result is undefined behavior and should be avoided.
 
 Parallel Rendering with MPI
 ===========================
@@ -3801,7 +3873,7 @@ Simple Tutorial
 ---------------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.c`[^10]. On Linux build it in the build directory
+at `apps/ospTutorial.c`[^9]. On Linux build it in the build directory
 with
 
     gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
@@ -4025,9 +4097,6 @@ page.
 [^8]: This is currently not implemented, i.e., all channels of the
     framebuffer are always updated.
 
-[^9]: That way applications can also register a member function of a C++
-    class together with the `this` pointer as `userPtr`.
-
-[^10]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^9]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
     `apps/ospTutorial.cpp`.
