@@ -216,16 +216,9 @@ extern "C" {
   //! get the currently set device
   OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
 
-  /*! add a c-string (zero-terminated char *) parameter to a Device */
   OSPRAY_INTERFACE void ospDeviceSetString(OSPDevice, const char *id, const char *s);
-
-  /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
-
-  /*! add 1-bool parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1b(OSPDevice, const char *id, int32_t x);
-
-  /*! add an untyped void pointer to given Device */
   OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
 
   /*! status message callback function type */
@@ -271,9 +264,9 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
 
-  OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
-
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
+
+  OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 
@@ -295,64 +288,33 @@ extern "C" {
 
   // Object Parameters ////////////////////////////////////////////////////////
 
-  /*! add a c-string (zero-terminated char *) parameter to another object */
   OSPRAY_INTERFACE void ospSetString(OSPObject, const char *id, const char *s);
 
-  /*! add a object-typed parameter to another object */
   OSPRAY_INTERFACE void ospSetObject(OSPObject, const char *id, OSPObject other);
-
-  /*! add a data array to another object */
   OSPRAY_INTERFACE void ospSetData(OSPObject, const char *id, OSPData);
 
-  /*! add 1-bool parameter to given object, value is of type 'int' for C99 compatibility */
   OSPRAY_INTERFACE void ospSet1b(OSPObject, const char *id, int x);
-
-  /*! add 1-float parameter to given object */
   OSPRAY_INTERFACE void ospSetf(OSPObject, const char *id, float x);
-
-  /*! add 1-float parameter to given object */
   OSPRAY_INTERFACE void ospSet1f(OSPObject, const char *id, float x);
-
-  /*! add 1-int parameter to given object */
   OSPRAY_INTERFACE void ospSet1i(OSPObject, const char *id, int32_t x);
 
-  /*! add a 2-float parameter to a given object */
   OSPRAY_INTERFACE void ospSet2f(OSPObject, const char *id, float x, float y);
-
-  /*! add 2-float parameter to given object */
   OSPRAY_INTERFACE void ospSet2fv(OSPObject, const char *id, const float *xy);
-
-  /*! add a 2-int parameter to a given object */
   OSPRAY_INTERFACE void ospSet2i(OSPObject, const char *id, int x, int y);
-
-  /*! add 2-int parameter to given object */
   OSPRAY_INTERFACE void ospSet2iv(OSPObject, const char *id, const int *xy);
 
-  /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSet3f(OSPObject, const char *id, float x, float y, float z);
-
-  /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSet3fv(OSPObject, const char *id, const float *xyz);
-
-  /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSet3i(OSPObject, const char *id, int x, int y, int z);
-
-  /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSet3iv(OSPObject, const char *id, const int *xyz);
 
-  /*! add 4-float parameter to given object */
   OSPRAY_INTERFACE void ospSet4f(OSPObject, const char *id, float x, float y, float z, float w);
-
-  /*! add 4-float parameter to given object */
   OSPRAY_INTERFACE void ospSet4fv(OSPObject, const char *id, const float *xyzw);
 
-  /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
   OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
-  /*! set the given material on the given geometry */
   OSPRAY_INTERFACE void ospSetMaterial(OSPGeometry, OSPMaterial);
 
-  /*! remove a named parameter on the given object */
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
 
   // Object + Parameter Lifetime Management ///////////////////////////////////
@@ -373,15 +335,15 @@ extern "C" {
   //! set a frame buffer's pixel op */
   OSPRAY_INTERFACE void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
 
-  /*! \brief (deprecated, use ospRelease instead) free a framebuffer */
-  OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
-
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
                                                  const OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
+
+  /* Get variance from last rendered frame */
+  OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
 
   //! \brief reset frame buffer accumulation for next render frame call
   OSPRAY_INTERFACE void ospResetAccumulation(OSPFrameBuffer);
@@ -405,9 +367,6 @@ extern "C" {
 
   /* Get the completion state of the given task [0.f-1.f] */
   OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
-
-  /* Get variance from last rendered frame */
-  OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
 
   typedef struct {
     osp_vec3f position; //< the position of the hit point (in world-space)
