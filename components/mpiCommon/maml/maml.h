@@ -34,7 +34,7 @@ namespace maml {
 
   using Message = mpicommon::Message;
   // Only bcast for now, to test
-  using Collective = mpicommon::Bcast;
+  using Collective = mpicommon::Collective;
 
   /*! abstraction for an object that can receive messages. handlers
       get associated with MPI_Comm's, and get called automatically

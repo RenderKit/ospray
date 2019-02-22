@@ -18,10 +18,60 @@
 #include "Collectives.h"
 
 namespace mpicommon {
+  std::future<void*> bcast(void *buffer, int count, MPI_Datatype datatype,
+                           int root, MPI_Comm comm)
+  {
+    auto col = std::make_shared<Bcast>(buffer, count, datatype, root, comm);
+    maml::queueCollective(col);
+    return col->future();
+  }
+
+  std::future<void> barrier(MPI_Comm comm)
+  {
+    auto col = std::make_shared<Barrier>(comm);
+    maml::queueCollective(col);
+    return col->future();
+  }
+
+  Collective::Collective(MPI_Comm comm)
+    : comm(comm),
+    request(MPI_REQUEST_NULL)
+  {}
+  bool Collective::finished()
+  {
+    int done = 0;
+    MPI_CALL(Test(&request, &done, MPI_STATUS_IGNORE));
+    if (done) {
+      onFinish();
+    }
+    return done;
+  }
+
+  Barrier::Barrier(MPI_Comm comm) : Collective(comm)
+  {}
+
+  std::future<void> Barrier::future()
+  {
+    return result.get_future();
+  }
+
+  void Barrier::start()
+  {
+    MPI_CALL(Ibarrier(comm, &request));
+  }
+
+  void Barrier::onFinish()
+  {
+    result.set_value();
+  }
 
   Bcast::Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
                MPI_Comm comm)
-    : buffer(buffer), count(count), datatype(datatype), root(root), comm(comm)
+    : Collective(comm),
+    buffer(buffer),
+    count(count),
+    datatype(datatype),
+    root(root)
   {}
 
   std::future<void*> Bcast::future()
@@ -34,22 +84,9 @@ namespace mpicommon {
     MPI_CALL(Ibcast(buffer, count, datatype, root, comm, &request));
   }
 
-  bool Bcast::finished()
+  void Bcast::onFinish()
   {
-    int done = 0;
-    MPI_CALL(Test(&request, &done, MPI_STATUS_IGNORE));
-    if (done) {
-      result.set_value(buffer);
-    }
-    return done;
-  }
-
-  std::future<void*> bcast(void *buffer, int count, MPI_Datatype datatype,
-                           int root, MPI_Comm comm)
-  {
-    auto col = std::make_shared<Bcast>(buffer, count, datatype, root, comm);
-    maml::queueCollective(col);
-    return col->future();
+    result.set_value(buffer);
   }
 }
 

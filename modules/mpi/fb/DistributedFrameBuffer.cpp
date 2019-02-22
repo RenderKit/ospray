@@ -212,7 +212,8 @@ namespace ospray {
       scheduleProcessing(msg);
     }
 
-    mpi::messaging::enableAsyncMessaging();
+    // TODO WILL: This is now always running b/c maml handles all MPI
+    //mpi::messaging::enableAsyncMessaging();
 
     if (isFrameComplete(0))
       closeCurrentFrame();
@@ -349,21 +350,13 @@ namespace ospray {
     // First we barrier to sync that this Bcast is actually picked up by the
     // right code path. Otherwise it may match with the command receiving
     // bcasts in the worker loop.
-    MPI_Request allFrameFinished;
-    {
-      auto mpilock = mpicommon::acquireMPILock();
-      MPI_CALL(Ibarrier(world.comm, &allFrameFinished));
-    }
-
-    int barrierFinished = 0;
-    while (!barrierFinished) {
-      std::this_thread::sleep_for(std::chrono::microseconds(100));
-      auto mpilock = mpicommon::acquireMPILock();
-      MPI_CALL(Test(&allFrameFinished, &barrierFinished, MPI_STATUS_IGNORE));
-    }
+    // TODO WILL: With the per-dfb collective group we may not need this first
+    // barrier anymore
+    mpicommon::barrier(mpiGroup.comm).wait();
 
     frameIsActive = false;
-    mpi::messaging::disableAsyncMessaging();
+    // TODO WILL: This is now always running b/c maml handles all MPI
+    //mpi::messaging::disableAsyncMessaging();
 
     auto endWaitFrame = high_resolution_clock::now();
     waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);

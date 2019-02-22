@@ -21,29 +21,7 @@
 #include "MPICommon.h"
 
 namespace mpicommon {
-  // An asynchronously executed collective operation
-  struct OSPRAY_MPI_INTERFACE Bcast {
-    void *buffer;
-    int count;
-    MPI_Datatype datatype;
-    int root;
-    MPI_Comm comm;
-    MPI_Request request;
-    std::promise<void*> result;
-
-    /* Construct an asynchronously run broadcast. The buffer is owned by
-     * the caller and must be kept valid until the future is set, indicating
-     * completion of the broadcast.
-     */ 
-    Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
-          MPI_Comm comm);
-    // Get the future which will receive the result of this bcast
-    std::future<void*> future();
-    // Start the broadcast
-    void start();
-    // Test if the broadcast is done
-    bool finished();
-  };
+  // Convenient wrappers over the collectives //
 
   /* Start an asynchronous bcast and return the future to wait on
    * for completion. The caller owns the passed buffer, and must keep it
@@ -51,5 +29,64 @@ namespace mpicommon {
    */
   std::future<void*> bcast(void *buffer, int count, MPI_Datatype datatype,
                            int root, MPI_Comm comm);
+  /* Start an asynchronous barrier and return the future to wait on for
+   * completion of the barrier
+   */
+  std::future<void> barrier(MPI_Comm comm);
+
+  // An asynchronously executed collective operation which can be run
+  // on the MPI messaging layer
+  class OSPRAY_MPI_INTERFACE Collective {
+  protected:
+    MPI_Comm comm;
+    MPI_Request request;
+
+  public:
+    Collective(MPI_Comm comm);
+
+    // Start the collective
+    virtual void start() = 0;
+    // Check if the collective is done and notify the child classes onFinish
+    virtual bool finished();
+
+  protected:
+    virtual void onFinish() = 0;
+  };
+
+  class OSPRAY_MPI_INTERFACE Barrier : public Collective {
+    std::promise<void> result;
+
+  public:
+    Barrier(MPI_Comm comm);
+    // Get the future to wait on completion of this barrier
+    std::future<void> future();
+    void start() override;
+
+  protected:
+    void onFinish() override;
+  };
+
+  class OSPRAY_MPI_INTERFACE Bcast : public Collective {
+    void *buffer;
+    int count;
+    MPI_Datatype datatype;
+    int root;
+    std::promise<void*> result;
+
+  public:
+    /* Construct an asynchronously run broadcast. The buffer is owned by
+     * the caller and must be kept valid until the future is set, indicating
+     * completion of the broadcast.
+     */ 
+    Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
+          MPI_Comm comm);
+
+    // Get the future which will receive the result of this bcast
+    std::future<void*> future();
+    void start();
+
+  protected:
+    void onFinish() override;
+  };
 }
 
