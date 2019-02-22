@@ -152,7 +152,7 @@ namespace ospcommon {
   )
   {
     range_t<float> ret = ospcommon::empty;
-    int rc             = sscanf(s.c_str(), "%f %f", &ret.lower, &ret.upper);
+    int rc             = osp_sscanf(s.c_str(), "%f %f", &ret.lower, &ret.upper);
     return (rc == 2) ? ret : defaultValue;
   }
 

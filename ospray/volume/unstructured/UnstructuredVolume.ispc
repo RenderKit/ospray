@@ -15,40 +15,76 @@
 // ======================================================================== //
 
 #include "UnstructuredVolume.ih"
+#include "ospray/OSPUnstructured.h"
 
-static inline uniform vec3f tetNormal(UnstructuredVolume *uniform self,
-                                      uniform uint64 id,
-                                      uniform int planeID)
+// Read 32/64-bit integer value from given array
+inline uniform uint64 readInteger(const uint32* uniform array,
+  uniform bool is32Bit, uniform uint64 id)
 {
-  if (self->faceNormals)
-    return self->faceNormals[(id * 6) + planeID];
-
-  const int *uniform idx = (const int *uniform)&self->indices[2 * id + 1];
-  const vec3f *uniform vtx = self->vertices;
-
-  const uniform int planes[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
-  const int *uniform plane = planes[planeID];
-
-  return normalize(cross(vtx[idx[plane[1]]] - vtx[idx[plane[0]]],
-                         vtx[idx[plane[2]]] - vtx[idx[plane[0]]]));
+  const uniform uint64 value =
+    *((const uint64* uniform)(array + (is32Bit ? id : id << 1)));
+  return value & (is32Bit ? 0x00000000ffffffffull : 0xffffffffffffffffull);
 }
 
-static inline uniform vec3f hexNormal(UnstructuredVolume *uniform self,
-                                      uniform uint64 id,
-                                      uniform int planeID)
+// Get cell offset (location) in index array
+inline uniform uint64 getCellOffset(UnstructuredVolume* uniform self, uniform uint64 id)
 {
+  return readInteger(self->cell, self->cell32Bit, id) + self->cellSkipIds;
+}
+
+// Get vertex index from index array
+inline uniform uint64 getVertexId(UnstructuredVolume* uniform self, uniform uint64 id)
+{
+  return readInteger(self->index, self->index32Bit, id);
+}
+
+inline uniform vec3f tetNormal(UnstructuredVolume* uniform self,
+  uniform uint64 id, uniform int planeID)
+{
+  // get precomputed normal if available
   if (self->faceNormals)
     return self->faceNormals[(id * 6) + planeID];
 
-  const int *uniform idx = (const int *uniform)&self->indices[2 * id];
-  const vec3f *uniform vtx = self->vertices;
+  // prepare vertex offset by plane
+  const uniform int planes[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
+  const int* const uniform plane = planes[planeID];
 
+  // retrieve cell offset first
+  const uniform uint64 cOffset = getCellOffset(self, id);
+  const vec3f* const uniform vtx = self->vertex;
+
+  // get 3 vertices for normal calculation
+  const uniform vec3f& v0 = vtx[getVertexId(self, cOffset + plane[0])];
+  const uniform vec3f& v1 = vtx[getVertexId(self, cOffset + plane[1])];
+  const uniform vec3f& v2 = vtx[getVertexId(self, cOffset + plane[2])];
+
+  // calculate normal
+  return normalize(cross(v1 - v0, v2 - v0));
+}
+
+inline uniform vec3f hexNormal(UnstructuredVolume *uniform self,
+  uniform uint64 id, uniform int planeID)
+{
+  // get precomputed normal if available
+  if (self->faceNormals)
+    return self->faceNormals[(id * 6) + planeID];
+
+  // prepare vertex offset by plane
   const uniform int planes[6][3] = {{0, 2, 1}, {0, 5, 4}, {0, 7, 3},
-                                    {6, 5, 1}, {6, 7, 4}, {6, 2, 3}};
-  const int *uniform plane = planes[planeID];
+    {6, 5, 1}, {6, 7, 4}, {6, 2, 3}};
+  const int* const uniform plane = planes[planeID];
 
-  return normalize(cross(vtx[idx[plane[1]]] - vtx[idx[plane[0]]],
-                         vtx[idx[plane[2]]] - vtx[idx[plane[0]]]));
+  // retrieve cell offset first
+  const uniform uint64 cOffset = getCellOffset(self, id);
+  const vec3f* const uniform vtx = self->vertex;
+
+  // get 3 vertices for normal calculation
+  const uniform vec3f& v0 = vtx[getVertexId(self, cOffset + plane[0])];
+  const uniform vec3f& v1 = vtx[getVertexId(self, cOffset + plane[1])];
+  const uniform vec3f& v2 = vtx[getVertexId(self, cOffset + plane[2])];
+
+  // calculate normal
+  return normalize(cross(v1 - v0, v2 - v0));
 }
 
 bool intersectAndSampleTet(void *uniform userData,
@@ -59,51 +95,54 @@ bool intersectAndSampleTet(void *uniform userData,
                            float range_lo,
                            float range_hi)
 {
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
+  UnstructuredVolume* const uniform self = (UnstructuredVolume * uniform) userData;
 
-  uniform vec4i t = self->indices[2 * id + 1];  // The 4 corner indices of the tetrahedron.
+  // get cell offset in index buffer
+  const uniform uint64 cOffset = getCellOffset(self, id);
 
-  uniform vec3f p0 = self->vertices[t.x];
-  uniform vec3f p1 = self->vertices[t.y];
-  uniform vec3f p2 = self->vertices[t.z];
-  uniform vec3f p3 = self->vertices[t.w];
+  const vec3f* uniform vtx = self->vertex;
+  const uniform vec3f p0 = vtx[getVertexId(self, cOffset + 0)];
+  const uniform vec3f p1 = vtx[getVertexId(self, cOffset + 1)];
+  const uniform vec3f p2 = vtx[getVertexId(self, cOffset + 2)];
+  const uniform vec3f p3 = vtx[getVertexId(self, cOffset + 3)];
 
-  uniform vec3f norm0 = tetNormal(self, id, 0);
-  uniform vec3f norm1 = tetNormal(self, id, 1);
-  uniform vec3f norm2 = tetNormal(self, id, 2);
-  uniform vec3f norm3 = tetNormal(self, id, 3);
+  const uniform vec3f norm0 = tetNormal(self, id, 0);
+  const uniform vec3f norm1 = tetNormal(self, id, 1);
+  const uniform vec3f norm2 = tetNormal(self, id, 2);
+  const uniform vec3f norm3 = tetNormal(self, id, 3);
 
   // Distance from the world point to the faces.
-  float d0 = dot(norm0, p1 - samplePos);
-  float d1 = dot(norm1, p2 - samplePos);
-  float d2 = dot(norm2, p3 - samplePos);
-  float d3 = dot(norm3, p0 - samplePos);
+  const float d0 = dot(norm0, p1 - samplePos);
+  const float d1 = dot(norm1, p2 - samplePos);
+  const float d2 = dot(norm2, p3 - samplePos);
+  const float d3 = dot(norm3, p0 - samplePos);
 
   if (!assumeInside && !(d0 > 0 && d1 > 0 && d2 > 0 && d3 > 0))
     return false;
 
-  if (self->cellField) {
-    result = self->cellField[id];
+  if (self->cellValue) {
+    result = self->cellValue[id];
     return true;
   }
 
   // Distance of tetrahedron corners to their opposite faces.
-  uniform float h0 = dot(norm0, p1 - p0);
-  uniform float h1 = dot(norm1, p2 - p1);
-  uniform float h2 = dot(norm2, p3 - p2);
-  uniform float h3 = dot(norm3, p0 - p3);
+  const uniform float h0 = dot(norm0, p1 - p0);
+  const uniform float h1 = dot(norm1, p2 - p1);
+  const uniform float h2 = dot(norm2, p3 - p2);
+  const uniform float h3 = dot(norm3, p0 - p3);
 
   // Local coordinates = ratio of distances.
-  float z0 = d0 / h0;
-  float z1 = d1 / h1;
-  float z2 = d2 / h2;
-  float z3 = d3 / h3;
+  const float z0 = d0 / h0;
+  const float z1 = d1 / h1;
+  const float z2 = d2 / h2;
+  const float z3 = d3 / h3;
 
   // Field/attribute values at the tetrahedron corners.
-  uniform float v0 = self->field[t.x];
-  uniform float v1 = self->field[t.y];
-  uniform float v2 = self->field[t.z];
-  uniform float v3 = self->field[t.w];
+  const float* const uniform vv = self->vertexValue;
+  const uniform float v0 = vv[getVertexId(self, cOffset + 0)];
+  const uniform float v1 = vv[getVertexId(self, cOffset + 1)];
+  const uniform float v2 = vv[getVertexId(self, cOffset + 2)];
+  const uniform float v3 = vv[getVertexId(self, cOffset + 3)];
 
   // Interpolated field/attribute value at the world position.
   result = z0 * v0 + z1 * v1 + z2 * v2 + z3 * v3;
@@ -152,12 +191,12 @@ void WedgeInterpolationDerivs(float pcoords[3], float derivs[18])
   derivs[17] =  pcoords[1];
 }
 
-static const float WEDGE_DIVERGED = 1.e6;
-static const int WEDGE_MAX_ITERATION = 10;
-static const float WEDGE_CONVERGED = 1.e-05;
-static const float WEDGE_OUTSIDE_CELL_TOLERANCE = 1.e-06;
+static const uniform float WEDGE_DIVERGED = 1.e6;
+static const uniform int WEDGE_MAX_ITERATION = 10;
+static const uniform float WEDGE_CONVERGED = 1.e-05;
+static const uniform float WEDGE_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
-bool intersectAndSampleWedge(void *uniform userData,
+bool intersectAndSampleWedge(void* uniform userData,
                              uniform uint64 id,
                              uniform bool assumeInside,
                              float &result,
@@ -165,7 +204,7 @@ bool intersectAndSampleWedge(void *uniform userData,
                              float range_lo,
                              float range_hi)
 {
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
+  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
 
   float params[3] = { 0.5, 0.5, 0.5 };
   float pcoords[3] = { 0.5, 0.5, 0.5 };
@@ -175,26 +214,27 @@ bool intersectAndSampleWedge(void *uniform userData,
   memset(derivs, 0, sizeof(derivs));
   memset(weights, 0, sizeof(weights));
 
-  const int *uniform idx = (const int *uniform)&self->indices[2 * id] + 2;
+  // get cell offset in index buffer
+  const uniform uint64 cOffset = getCellOffset(self, id);
 
-  uniform const int edges[9][2] = { {0,1}, {1,2}, {2,0},
+  const uniform int edges[9][2] = { {0,1}, {1,2}, {2,0},
                                     {3,4}, {4,5}, {5,3},
                                     {0,3}, {1,4}, {2,5} };
   uniform float longestEdge = 0;
   for (uniform int i = 0; i < 9; i++) {
-      uniform vec3f p0 = self->vertices[idx[edges[i][0]]];
-      uniform vec3f p1 = self->vertices[idx[edges[i][1]]];
-      uniform float dist = distance(p0, p1);
+      const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + edges[i][0])];
+      const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + edges[i][1])];
+      const uniform float dist = distance(p0, p1);
       if (longestEdge < dist)
          longestEdge = dist;
   }
 
-  uniform float volumeBound = pow(longestEdge, 3);
-  uniform float determinantTolerance =
+  const uniform float volumeBound = pow(longestEdge, 3);
+  const uniform float determinantTolerance =
       1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 
   //  enter iteration loop
-  bool converged = false;
+  uniform bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < WEDGE_MAX_ITERATION); iteration++) {
     //  calculate element interpolation functions and derivatives
     WedgeInterpolationFunctions(pcoords, weights);
@@ -206,7 +246,7 @@ bool intersectAndSampleWedge(void *uniform userData,
     vec3f scol = make_vec3f(0.f, 0.f, 0.f);
     vec3f tcol = make_vec3f(0.f, 0.f, 0.f);
     for (uniform int i = 0; i < 6; i++) {
-      vec3f pt = self->vertices[idx[i]];
+      const uniform vec3f pt = self->vertex[getVertexId(self, cOffset + i)];
       fcol = fcol + pt * weights[i];
       rcol = rcol + pt * derivs[i];
       scol = scol + pt * derivs[i + 6];
@@ -216,7 +256,7 @@ bool intersectAndSampleWedge(void *uniform userData,
     fcol = fcol - samplePos;
 
     // compute determinants and generate improvements
-    float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    const float d = det(make_LinearSpace3f(rcol, scol, tcol));
     if (absf(d) < determinantTolerance) {
       return false;
     }
@@ -245,20 +285,21 @@ bool intersectAndSampleWedge(void *uniform userData,
     return false;
   }
 
-  float lowerlimit = 0.0 - WEDGE_OUTSIDE_CELL_TOLERANCE;
-  float upperlimit = 1.0 + WEDGE_OUTSIDE_CELL_TOLERANCE;
+  const uniform float lowerlimit = 0.0 - WEDGE_OUTSIDE_CELL_TOLERANCE;
+  const uniform float upperlimit = 1.0 + WEDGE_OUTSIDE_CELL_TOLERANCE;
   if (assumeInside || (pcoords[0] >= lowerlimit && pcoords[0] <= upperlimit &&
                        pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
                        pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit &&
                        pcoords[0] + pcoords[1] <= upperlimit)) {
     // evaluation
-    if (self->cellField) {
-      result = self->cellField[id];
+    if (self->cellValue) {
+      result = self->cellValue[id];
     } else {
       result = 0.f;
       WedgeInterpolationFunctions(pcoords, weights);
-      for (int i = 0; i < 6; i++) {
-        result += weights[i] * self->field[idx[i]];
+      for (uniform int i = 0; i < 6; i++) {
+        result += weights[i] *
+          self->vertexValue[getVertexId(self, cOffset + i)];
       }
     }
 
@@ -330,10 +371,10 @@ void HexInterpolationDerivs(float pcoords[3], float derivs[24])
   derivs[23] = rm * pcoords[1];
 }
 
-static const float HEX_DIVERGED = 1.e6;
-static const int HEX_MAX_ITERATION = 10;
-static const float HEX_CONVERGED = 1.e-05;
-static const float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
+static const uniform float HEX_DIVERGED = 1.e6;
+static const uniform int HEX_MAX_ITERATION = 10;
+static const uniform float HEX_CONVERGED = 1.e-05;
+static const uniform float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
 bool intersectAndSampleHexNonplanar(void *uniform userData,
                                     uniform uint64 id,
@@ -342,36 +383,36 @@ bool intersectAndSampleHexNonplanar(void *uniform userData,
                                     float range_lo,
                                     float range_hi)
 {
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
+  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
 
   float params[3] = { 0.5, 0.5, 0.5 };
   float pcoords[3];
   float derivs[24];
   float weights[8];
 
-  uniform vec4i lower = self->indices[2 * id];
-  uniform vec4i upper = self->indices[2 * id + 1];
+  // get cell offset in index buffer
+  const uniform uint64 cOffset = getCellOffset(self, id);
 
   // should precompute these
-  uniform const int diagonals[4][2] = { { 0, 2}, { 1, 3}, {2, 0}, {3, 1} };
+  const uniform int diagonals[4][2] = { {0, 6}, {1, 7}, {2, 4}, {3, 5} };
   uniform float longestDiagonal = 0;
   for (uniform int i = 0; i < 4; i++) {
-      uniform vec3f p0 = self->vertices[(&lower.x)[diagonals[i][0]]];
-      uniform vec3f p1 = self->vertices[(&upper.x)[diagonals[i][1]]];
-      uniform float dist = distance(p0, p1);
+      const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + diagonals[i][0])];
+      const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + diagonals[i][1])];
+      const uniform float dist = distance(p0, p1);
       if (longestDiagonal < dist)
          longestDiagonal = dist;
   }
 
-  uniform float volumeBound = pow(longestDiagonal, 3);
-  uniform float determinantTolerance =
+  const uniform float volumeBound = pow(longestDiagonal, 3);
+  const uniform float determinantTolerance =
       1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 
   //  set initial position for Newton's method
   pcoords[0] = pcoords[1] = pcoords[2] = 0.5;
 
   //  enter iteration loop
-  bool converged = false;
+  bool uniform converged = false;
   for (uniform int iteration = 0; !converged && (iteration < HEX_MAX_ITERATION); iteration++) {
     //  calculate element interpolation functions and derivatives
     HexInterpolationFunctions(pcoords, weights);
@@ -383,9 +424,7 @@ bool intersectAndSampleHexNonplanar(void *uniform userData,
     vec3f scol = make_vec3f(0.f, 0.f, 0.f);
     vec3f tcol = make_vec3f(0.f, 0.f, 0.f);
     for (uniform int i = 0; i < 8; i++) {
-      vec3f pt =
-        i < 4 ? self->vertices[(&lower.x)[i]] : self->vertices[(&upper.x)[i - 4]];
-
+      const uniform vec3f pt = self->vertex[getVertexId(self, cOffset + i)];
       fcol = fcol + pt * weights[i];
       rcol = rcol + pt * derivs[i];
       scol = scol + pt * derivs[i + 8];
@@ -395,7 +434,7 @@ bool intersectAndSampleHexNonplanar(void *uniform userData,
     fcol = fcol - samplePos;
 
     // compute determinants and generate improvements
-    float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    const float d = det(make_LinearSpace3f(rcol, scol, tcol));
     if (absf(d) < determinantTolerance) {
       return false;
     }
@@ -424,20 +463,20 @@ bool intersectAndSampleHexNonplanar(void *uniform userData,
     return false;
   }
 
-  float lowerlimit = 0.0 - HEX_OUTSIDE_CELL_TOLERANCE;
-  float upperlimit = 1.0 + HEX_OUTSIDE_CELL_TOLERANCE;
+  const uniform float lowerlimit = 0.0 - HEX_OUTSIDE_CELL_TOLERANCE;
+  const uniform float upperlimit = 1.0 + HEX_OUTSIDE_CELL_TOLERANCE;
   if (pcoords[0] >= lowerlimit && pcoords[0] <= upperlimit &&
       pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
       pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit) {
     // evaluation
-    if (self->cellField) {
-      result = self->cellField[id];
+    if (self->cellValue) {
+      result = self->cellValue[id];
     } else {
       result = 0.f;
       HexInterpolationFunctions(pcoords, weights);
-      for (int i = 0; i < 8; i++) {
-        int idx = i < 4 ? (&lower.x)[i] : (&upper.x)[i - 4];
-        result += weights[i] * self->field[idx];
+      for (uniform int i = 0; i < 8; i++) {
+        result += weights[i] *
+          self->vertexValue[getVertexId(self, cOffset + i)];
       }
     }
 
@@ -455,40 +494,43 @@ bool intersectAndSampleHexPlanar(void *uniform userData,
                                  float range_lo,
                                  float range_hi)
 {
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
+  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
 
-  uniform vec4i lower = self->indices[2 * id];
-  uniform vec4i upper = self->indices[2 * id + 1];
+  // get cell offset in index buffer
+  const uniform uint64 cOffset = getCellOffset(self, id);
 
+  // calculate distances from each hexahedron face
   float dist[6];
   for (uniform int planeID = 0; planeID < 6; planeID++) {
-    dist[planeID] =
-      dot(samplePos - self->vertices[planeID < 3 ? lower.x : upper.z],
-          hexNormal(self, id, planeID));
+    const uniform uint64 vId = (planeID < 3) ?
+      getVertexId(self, cOffset + 0) : getVertexId(self, cOffset + 6);
+    const uniform vec3f v = self->vertex[vId];
+    dist[planeID] = dot(samplePos - v, hexNormal(self, id, planeID));
     if (!assumeInside && dist[planeID] >= 0.f)
       return false;
   }
 
-  if (self->cellField) {
-    result = self->cellField[id];
+  if (self->cellValue) {
+    result = self->cellValue[id];
     return true;
   }
 
-  float u0 = dist[4] / (dist[0] + dist[4]);
-  float v0 = dist[5] / (dist[1] + dist[5]);
-  float w0 = dist[3] / (dist[2] + dist[3]);
-  float u1 = 1.f - u0;
-  float v1 = 1.f - v0;
-  float w1 = 1.f - w0;
+  const float u0 = dist[4] / (dist[0] + dist[4]);
+  const float v0 = dist[5] / (dist[1] + dist[5]);
+  const float w0 = dist[3] / (dist[2] + dist[3]);
+  const float u1 = 1.f - u0;
+  const float v1 = 1.f - v0;
+  const float w1 = 1.f - w0;
+  const float* const uniform vv = self->vertexValue;
   result =
-    u0 * v0 * w0 * self->field[lower.x] +
-    u0 * v0 * w1 * self->field[lower.y] +
-    u0 * v1 * w1 * self->field[lower.z] +
-    u0 * v1 * w0 * self->field[lower.w] +
-    u1 * v0 * w0 * self->field[upper.x] +
-    u1 * v0 * w1 * self->field[upper.y] +
-    u1 * v1 * w1 * self->field[upper.z] +
-    u1 * v1 * w0 * self->field[upper.w];
+    u0 * v0 * w0 * vv[getVertexId(self, cOffset + 0)] +
+    u0 * v0 * w1 * vv[getVertexId(self, cOffset + 1)] +
+    u0 * v1 * w1 * vv[getVertexId(self, cOffset + 2)] +
+    u0 * v1 * w0 * vv[getVertexId(self, cOffset + 3)] +
+    u1 * v0 * w0 * vv[getVertexId(self, cOffset + 4)] +
+    u1 * v0 * w1 * vv[getVertexId(self, cOffset + 5)] +
+    u1 * v1 * w1 * vv[getVertexId(self, cOffset + 6)] +
+    u1 * v1 * w0 * vv[getVertexId(self, cOffset + 7)];
 
   return true;
 }
@@ -500,17 +542,21 @@ bool intersectAndSampleCell(void *uniform userData,
                            float range_lo,
                            float range_hi)
 {
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
+  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) userData;
 
-  if (self->indices[2 * id].x == -1) {
+  switch (self->cellType[id]) {
+  case OSP_TETRAHEDRON:
     intersectAndSampleTet(userData, id, false, result, samplePos, range_lo, range_hi);
-  } else if (self->indices[2 * id].x == -2) {
+    break;
+  case OSP_WEDGE:
     intersectAndSampleWedge(userData, id, false, result, samplePos, range_lo, range_hi);
-  } else {
+    break;
+  case OSP_HEXAHEDRON:
     if (self->hexMethod == PLANAR)
       intersectAndSampleHexPlanar(userData, id, false, result, samplePos, range_lo, range_hi);
     else if (self->hexMethod == NONPLANAR)
       intersectAndSampleHexNonplanar(userData, id, result, samplePos, range_lo, range_hi);
+    break;
   }
 }
 
@@ -518,7 +564,7 @@ inline varying float UnstructuredVolume_sample(
     void *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
+  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) _self;
 
   float results = floatbits(0xffffffff);  /* NaN */
 
@@ -531,7 +577,7 @@ inline varying vec3f UnstructuredVolume_computeGradient(
     void *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
+  UnstructuredVolume* const uniform self = (UnstructuredVolume* uniform) _self;
 
   // Gradient step in each dimension (world coordinates).
   const uniform vec3f gradientStep = make_vec3f(self->super.samplingStep);
@@ -596,18 +642,18 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
                                         uniform uint64 id,
                                         varying Ray &ray)
 {
-  //  print("intersectIsoRay\n");
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) userData;
 
-  if (self->indices[2 * id].x == -1) {
-    // tetrahedron
+  // get cell offset in index buffer
+  const uniform uint64 cOffset = getCellOffset(self, id);
 
-    uniform vec4i t = self->indices[2 * id + 1];  // The 4 corner indices of the tetrahedron.
+  if (self->cellType[id] == OSP_TETRAHEDRON) {
 
     float t_nr = ray.t0;
     float t_fr = ray.t;
     for (uniform int plane = 0; plane < 4; plane ++) {
-      const uniform vec3f p0 = self->vertices[(&t.x)[(plane + 1) & 0x3]];
+      const uniform vec3f p0 =
+        self->vertex[getVertexId(self, cOffset + ((plane + 1) & 0x3))];
       const uniform vec3f norm = tetNormal(self, id, plane);
 
       const float side_dot = dot(ray.dir, norm);
@@ -644,26 +690,27 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
     }
 
     return;
-  } else if (self->indices[2 * id].x == -2) {
-    // wedge
+  } else if (self->cellType[id] == OSP_WEDGE) {
 
     const uniform int faces[8][3] = {{0, 2, 1}, {3, 4, 5},
                                      {0, 3, 2}, {1, 4, 0}, {2, 5, 1},
                                      {0, 4, 3}, {1, 5, 4}, {2, 3, 5}};
 
-    const int *uniform idx = (const int *uniform)&self->indices[2 * id] + 2;
     float t_nr = pos_inf;
     float t_fr = neg_inf;
 
     // Moller-Trumobore ray-triangle intersection
     const uniform float EPSILON = 0.0000001;
     for (uniform int face = 0; face < 8; face++) {
-      uniform vec3f v0 = self->vertices[idx[faces[face][0]]];
-      uniform vec3f v1 = self->vertices[idx[faces[face][1]]];
-      uniform vec3f v2 = self->vertices[idx[faces[face][2]]];
+      const uniform vec3f v0 =
+        self->vertex[getVertexId(self, cOffset + faces[face][0])];
+      const uniform vec3f v1 =
+        self->vertex[getVertexId(self, cOffset + faces[face][1])];
+      const uniform vec3f v2 =
+        self->vertex[getVertexId(self, cOffset + faces[face][2])];
 
-      uniform vec3f edge1 = v1 - v0;
-      uniform vec3f edge2 = v2 - v0;
+      const uniform vec3f edge1 = v1 - v0;
+      const uniform vec3f edge2 = v2 - v0;
       vec3f h = cross(ray.dir, edge2);
       float a = dot(edge1, h);
       if (a > -EPSILON && a < EPSILON)
@@ -724,16 +771,14 @@ void UnstructuredVolume_intersectIsoRay(void *uniform userData,
         return;
       }
     }
-  } else {
-    // hexahedron
-
-    uniform vec4i lower = self->indices[2 * id];
-    uniform vec4i upper = self->indices[2 * id + 1];
+  } else if (self->cellType[id] == OSP_HEXAHEDRON) {
 
     float t_nr = ray.t0;
     float t_fr = ray.t;
     for (uniform int plane = 0; plane < 6; plane ++) {
-      const uniform vec3f p0 = self->vertices[plane < 3 ? lower.x : upper.z];
+      const uniform uint64 vId = (plane < 3) ?
+        getVertexId(self, cOffset + 0) : getVertexId(self, cOffset + 6);
+      const uniform vec3f p0 = self->vertex[vId];
       const uniform vec3f norm = hexNormal(self, id, plane);
 
       const float side_dot = dot(ray.dir, norm);
@@ -850,7 +895,7 @@ UnstructuredVolume_disableCellGradient(void *uniform _self)
 {
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
 
-  if (self->cellField)
+  if (self->cellValue)
     self->super.gradientShadingEnabled = false;
 }
 
@@ -864,28 +909,34 @@ UnstructuredVolume_setFaceNormals(void *uniform _self,
 }
 
 export void UnstructuredVolume_set(void *uniform _self,
-                                  const uniform int &_nVertices,
-                                  const uniform int &_nCells,
-                                  const uniform box3f &_bbox,
-                                  const vec3f *uniform _vertices,
-                                  const vec4i *uniform _indices,
-                                  const float *uniform _field,
-                                  const float *uniform _cellField,
-                                  uniform int64 rootRef,
-                                  const void *uniform _bvhNode,
-                                  const int64 *uniform _bvhPrimID,
-                                  const uniform float samplingRate,
-                                  const uniform float samplingStep)
+                                   const uniform box3f& _bbox,
+                                   const vec3f* uniform _vertex,
+                                   const uint32* uniform _index,
+                                   const uniform bool _index32Bit,
+                                   const float* uniform _vertexValue,
+                                   const float* uniform _cellValue,
+                                   const uint32* uniform _cell,
+                                   const uniform bool _cell32Bit,
+                                   const uniform uint32 _cellSkipIds,
+                                   const uint8* uniform _cellType,
+                                   uniform int64 rootRef,
+                                   const void* uniform _bvhNode,
+                                   const int64* uniform _bvhPrimID,
+                                   const uniform float samplingRate,
+                                   const uniform float samplingStep)
 {
   uniform UnstructuredVolume *uniform self =
       (uniform UnstructuredVolume * uniform) _self;
 
-  self->nVertices   = _nVertices;
-  self->nCells      = _nCells;
-  self->vertices    = _vertices;
-  self->indices     = _indices;
-  self->field       = _field;
-  self->cellField   = _cellField;
+  self->vertex       = _vertex;
+  self->index        = _index;
+  self->index32Bit   = _index32Bit;
+  self->vertexValue  = _vertexValue;
+  self->cellValue    = _cellValue;
+  self->cell         = _cell;
+  self->cell32Bit    = _cell32Bit;
+  self->cellSkipIds  = _cellSkipIds;
+  self->cellType     = _cellType;
 
   // Set inherited member variables.
   self->super.boundingBox  = _bbox;

@@ -17,6 +17,7 @@
 // ospray
 #include "UnstructuredVolume.h"
 #include "../../common/Data.h"
+#include "ospray/OSPUnstructured.h"
 
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
@@ -25,12 +26,36 @@
 // auto-generated .h file.
 #include "UnstructuredVolume_ispc.h"
 
+namespace {
+  // Map cell type to its vertices count
+  inline uint32_t getCellIdCount(uint8_t cellType)
+  {
+    switch (cellType) {
+      case OSP_TETRAHEDRON: return 4;
+      case OSP_WEDGE: return 6;
+      case OSP_HEXAHEDRON: return 8;
+    }
+
+    // Unknown cell type
+    return 1;
+  }
+}
+
 namespace ospray {
 
   UnstructuredVolume::UnstructuredVolume()
   {
     ispcEquivalent = ispc::UnstructuredVolume_createInstance(this);
   }
+
+  UnstructuredVolume::~UnstructuredVolume()
+  {
+    // free cells array memory if allocated
+    if (cellArrayToDelete)
+      delete [] cell;
+    if (cellTypeArrayToDelete)
+      delete [] cellType;
+  };
 
   std::string UnstructuredVolume::toString() const
   {
@@ -41,10 +66,11 @@ namespace ospray {
   {
     updateEditableParameters();
 
-    if (getParamData("field", nullptr) != oldField ||
-        getParamData("cellField", nullptr) != oldCellField) {
-      oldField = getParamData("field", nullptr);
-      oldCellField = getParamData("cellField", nullptr);
+    // check if value buffer has changed
+    if (getVertexValueData() != vertexValuePrev ||
+      getCellValueData() != cellValuePrev) {
+      vertexValuePrev = getVertexValueData();
+      cellValuePrev = getCellValueData();
 
       // rebuild BVH, resync ISPC, etc...
       finished = false;
@@ -65,7 +91,7 @@ namespace ospray {
 
     ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
 
-    if (getParam<int>("precomputedNormals", 1)) {
+    if (getParam<bool>("precomputedNormals", true)) {
       if (faceNormals.empty()) {
         calculateFaceNormals();
         ispc::UnstructuredVolume_setFaceNormals(ispcEquivalent,
@@ -95,112 +121,154 @@ namespace ospray {
     NOT_IMPLEMENTED;
   }
 
-  box4f UnstructuredVolume::getTetBBox(size_t id)
+  box4f UnstructuredVolume::getCellBBox(size_t id)
   {
-    box4f tetBox;
+    // get cell offset in the vertex indices array
+    uint64_t cOffset = getCellOffset(id);
 
-    int maxIdx;
+    // iterate through cell vertices
+    box4f bBox;
+    uint32_t maxIdx = getCellIdCount(cellType[id]);
+    for (uint32_t i = 0; i < maxIdx; i++)
+    {
+      // get vertex index
+      uint64_t vId = getVertexId(cOffset + i);
 
-    switch (indices[2 * id][0]) {
-    case -1:
-      maxIdx = 4;
-      break;
-    case -2:
-      maxIdx = 6;
-      break;
-    default:
-      maxIdx = 8;
-      break;
-    }
+      // build 4 dimensional vertex with its position and value
+      vec3f& v = vertex[vId];
+      float val = cellValue ? cellValue[id] : vertexValue[vId];
+      vec4f p = vec4f(v.x, v.y, v.z, val);
 
-    for (int i = 0; i < maxIdx; i++) {
-      size_t idx = 0;
-      switch (maxIdx) {
-      case 4:
-        idx = indices[2 * id + 1][i];
-        break;
-      case 6:
-        if (i < 2)
-          idx = indices[2 * id][1 + 2];
-        else
-          idx = indices[2 * id + 1][i - 2];
-        break;
-      case 8:
-        if (i < 4)
-          idx = indices[2 * id][i];
-        else
-          idx = indices[2 * id + 1][i - 4];
-        break;
-      }
-      const auto &v = vertices[idx];
-      const float f = cellField ? cellField[id] : field[idx];
-      const auto p  = vec4f(v.x, v.y, v.z, f);
-
+      // extend bounding box
       if (i == 0)
-        tetBox.upper = tetBox.lower = p;
+        bBox.upper = bBox.lower = p;
       else
-        tetBox.extend(p);
+        bBox.extend(p);
     }
 
-    return tetBox;
-  }
-
-  void UnstructuredVolume::fixupTetWinding()
-  {
-    tasking::parallel_for(nCells, [&](int i) {
-      if (indices[2 * i].x != -1)
-        return;
-
-      auto &idx = indices[2 * i + 1];
-      const auto &p0 = vertices[idx.x];
-      const auto &p1 = vertices[idx.y];
-      const auto &p2 = vertices[idx.z];
-      const auto &p3 = vertices[idx.w];
-
-      auto center = (p0 + p1 + p2 + p3) / 4;
-      auto norm = cross(p1 - p0, p2 - p0);
-      auto dist = dot(norm, p0 - center);
-
-      if (dist > 0.f)
-        std::swap(idx.x, idx.y);
-    });
+    return bBox;
   }
 
   void UnstructuredVolume::finish()
   {
-    Data *verticesData   = getParamData("vertices", nullptr);
-    Data *indicesData    = getParamData("indices", nullptr);
-    Data *fieldData      = getParamData("field", nullptr);
-    Data *cellFieldData  = getParamData("cellField", nullptr);
+    // read arrays given through API
+    Data* vertexData = getParamData("vertex", getParamData("vertices"));
+    Data* vertexValueData = getVertexValueData();
+    Data* indexData = getParamData("index", getParamData("indices"));
+    Data* indexPrefixedData = getParamData("indexPrefixed");
+    Data* cellData = getParamData("cell");
+    Data* cellValueData = getCellValueData();
+    Data* cellTypeData = getParamData("cell.type");
 
-    if (!verticesData || !indicesData || (!fieldData && !cellFieldData)) {
+    // make sure that all necessary arrays are provided
+    if (!vertexData)
+      throw std::runtime_error("unstructured volume must have 'vertex' array");
+    if (!indexData && !indexPrefixedData)
       throw std::runtime_error(
-          "#osp: missing correct data arrays in UnstructuredVolume!");
+        "unstructured volume must have 'index' or 'indexPrefixed' array");
+    if (!vertexValueData && !cellValueData)
+      throw std::runtime_error(
+        "unstructured volume must have 'vertex.value' or 'cell.value' array");
+
+    // if index array is prefixed with cell size
+    if (indexPrefixedData) {
+      indexData = indexPrefixedData;
+      cellSkipIds = 1; // skip one index per cell, it will contain cell size
+    } else {
+      cellSkipIds = 0;
     }
 
-    nVertices   = verticesData->size();
+    // retrieve array pointers
+    vertex = (vec3f*)vertexData->data;
+    index = (uint32_t*)indexData->data;
+    vertexValue = vertexValueData ? (float*)vertexValueData->data : nullptr;
+    cellValue = cellValueData ? (float*)cellValueData->data : nullptr;
 
-    nCells = indicesData->size() / 2;
-    indices = (vec4i *)indicesData->data;
+    // set index integer size based on index data type
+    switch (indexData->type) {
+    case OSP_INT: case OSP_UINT: case OSP_UINT4: case OSP_INT4:
+      index32Bit = true; break;
+    case OSP_LONG: case OSP_ULONG:
+      index32Bit = false; break;
+    default:
+      throw std::runtime_error("unsupported unstructured volume index data type");
+    }
 
-    vertices   = (vec3f *)verticesData->data;
-    field      = fieldData ? (float *)fieldData->data : nullptr;
-    cellField  = cellFieldData ? (float *)cellFieldData->data : nullptr;
+    // 'cell' parameter is optional
+    if (cellData) {
+      // intialize cells with data given through API
+      nCells = cellData->size();
+      cell = (uint32_t*)cellData->data;
+
+      // set cell integer size based on cell data type
+      switch (cellData->type) {
+      case OSP_INT: case OSP_UINT: case OSP_UINT4: case OSP_INT4:
+        cell32Bit = true; break;
+      case OSP_LONG: case OSP_ULONG:
+        cell32Bit = false; break;
+      default:
+        throw std::runtime_error("unsupported unstructured volume cell array data type");
+      }
+    } else {
+      // if cells array was not provided through API allocate it
+      // and fill with default cell offsets
+      nCells =
+        (indexData->type == OSP_UINT4) || (indexData->type == OSP_INT4) ?
+        indexData->size() / 2 : indexData->size() / 8;
+      cell = new uint32_t[nCells];
+      cell32Bit = true;
+      cellArrayToDelete = true;
+
+      // calculate cell offsets assuming legacy layout:
+      // tetrahedron: -1, -1, -1, -1, i1, i2, i3, i4
+      // wedge: -2, -2, i1, i2, i3, i4, i5, i6
+      // hexahedron: i1, i2, i3, i4, i5, i6, i7, i8
+      for (uint64_t i = 0; i < nCells; i++)
+        switch (index[8 * i]) {
+        case -1: cell[i] = 8 * i + 4; break;
+        case -2: cell[i] = 8 * i + 2; break;
+        default: cell[i] = 8 * i; break;
+        }
+    }
+
+    // 'cell.type' parameter is optional
+    if (cellTypeData) {
+      cellType = (uint8_t*)cellTypeData->data;
+
+      // check if number of cell types matches number of cells
+      if (cellTypeData->size() != nCells)
+        throw std::runtime_error(
+          "cell type array for unstructured volume has wrong size");
+    } else {
+      // create cell type array
+      cellType = new uint8_t[nCells];
+      cellTypeArrayToDelete = true;
+
+      // map type values from indices array
+      for (uint64_t i = 0; i < nCells; i++)
+        switch (index[8 * i]) {
+        case -1: cellType[i] = OSP_TETRAHEDRON; break;
+        case -2: cellType[i] = OSP_WEDGE; break;
+        default: cellType[i] = OSP_HEXAHEDRON; break;
+        }
+    }
 
     buildBvhAndCalculateBounds();
-    fixupTetWinding();
 
     float samplingRate = getParam1f("samplingRate", 1.f);
     float samplingStep = calculateSamplingStep();
 
     UnstructuredVolume_set(ispcEquivalent,
-                          nVertices,
-                          nCells,
                           (const ispc::box3f &)bbox,
-                          (const ispc::vec3f *)vertices,
-                          (const ispc::vec4i *)indices,
-                          (const float *)field,
-                          (const float *)cellField,
+                          (const ispc::vec3f *)vertex,
+                          index,
+                          index32Bit,
+                          vertexValue,
+                          cellValue,
+                          cell,
+                          cell32Bit,
+                          cellSkipIds,
+                          cellType,
                           bvh.rootRef(),
                           bvh.nodePtr(),
                           bvh.itemListPtr(),
@@ -216,9 +284,9 @@ namespace ospray {
     std::vector<int64> primID(nCells);
     std::vector<box4f> primBounds(nCells);
 
-    for (int i = 0; i < nCells; i++) {
+    for (uint64_t i = 0; i < nCells; i++) {
       primID[i]   = i;
-      auto bounds = getTetBBox(i);
+      auto bounds = getCellBBox(i);
       if (i == 0) {
         bbox.lower = vec3f(bounds.lower.x, bounds.lower.y, bounds.lower.z);
         bbox.upper = vec3f(bounds.upper.x, bounds.upper.y, bounds.upper.z);
@@ -234,65 +302,61 @@ namespace ospray {
 
   void UnstructuredVolume::calculateFaceNormals()
   {
-    const auto numNormals = nCells * 6;
+    uint64_t numNormals = nCells * 6;
     faceNormals.resize(numNormals);
 
-    tasking::parallel_for(numNormals / 6, [&](int taskIndex) {
-      const int i   = taskIndex * 6;
+    tasking::parallel_for(numNormals / 6, [&](uint64_t taskIndex) {
 
-      if (indices[2 * taskIndex].x == -1) {
-        // tetrahedron cell
-        const vec4i &t = indices[2 * taskIndex + 1];
+      // get cell offset in the vertex indices array
+      uint64_t cOffset = getCellOffset(taskIndex);
+
+      uint64_t i = taskIndex * 6;
+      if (cellType[taskIndex] == OSP_TETRAHEDRON) {
 
         // The corners of each triangle in the tetrahedron.
         const int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
 
         for (int j = 0; j < 4; j++) {
-          const int t0 = t[faces[j][0]];
-          const int t1 = t[faces[j][1]];
-          const int t2 = t[faces[j][2]];
+          uint64_t vId0 = getVertexId(cOffset + faces[j][0]);
+          uint64_t vId1 = getVertexId(cOffset + faces[j][1]);
+          uint64_t vId2 = getVertexId(cOffset + faces[j][2]);
 
-          const auto &p0 = vertices[t0];
-          const auto &p1 = vertices[t1];
-          const auto &p2 = vertices[t2];
+          const vec3f& p0 = vertex[vId0];
+          const vec3f& p1 = vertex[vId1];
+          const vec3f& p2 = vertex[vId2];
 
-          const auto q0 = p1 - p0;
-          const auto q1 = p2 - p0;
+          vec3f q0 = p1 - p0;
+          vec3f q1 = p2 - p0;
 
-          const auto norm = normalize(cross(q0, q1));
+          vec3f norm = normalize(cross(q0, q1));
 
           faceNormals[i + j] = norm;
         }
-      } else if (indices[2 * taskIndex].x == -2) {
-        // wedge cell
-        const vec4i &lower = indices[2 * taskIndex];
-        const vec4i &upper = indices[2 * taskIndex + 1];
+      } else if (cellType[taskIndex] == OSP_WEDGE) {
 
-        const auto v0 = vertices[lower.z];
-        const auto v1 = vertices[lower.w];
-        const auto v2 = vertices[upper.x];
-        const auto v3 = vertices[upper.y];
-        const auto v4 = vertices[upper.z];
-        const auto v5 = vertices[upper.w];
+        vec3f& v0 = vertex[getVertexId(cOffset + 0)];
+        vec3f& v1 = vertex[getVertexId(cOffset + 1)];
+        vec3f& v2 = vertex[getVertexId(cOffset + 2)];
+        vec3f& v3 = vertex[getVertexId(cOffset + 3)];
+        vec3f& v4 = vertex[getVertexId(cOffset + 4)];
+        vec3f& v5 = vertex[getVertexId(cOffset + 5)];
 
         faceNormals[i + 0] = normalize(cross(v2 - v0, v1 - v0)); // bottom
         faceNormals[i + 1] = normalize(cross(v4 - v3, v5 - v3)); // top
         faceNormals[i + 2] = normalize(cross(v3 - v0, v2 - v0));
         faceNormals[i + 3] = normalize(cross(v4 - v1, v0 - v1));
         faceNormals[i + 4] = normalize(cross(v5 - v2, v1 - v2));
-      } else {
-        // hexahedron cell
-        const vec4i &lower = indices[2 * taskIndex];
-        const vec4i &upper = indices[2 * taskIndex + 1];
 
-        const auto v0 = vertices[lower.x];
-        const auto v1 = vertices[lower.y];
-        const auto v2 = vertices[lower.z];
-        const auto v3 = vertices[lower.w];
-        const auto v4 = vertices[upper.x];
-        const auto v5 = vertices[upper.y];
-        const auto v6 = vertices[upper.z];
-        const auto v7 = vertices[upper.w];
+      } else if (cellType[taskIndex] == OSP_HEXAHEDRON) {
+
+        vec3f& v0 = vertex[getVertexId(cOffset + 0)];
+        vec3f& v1 = vertex[getVertexId(cOffset + 1)];
+        vec3f& v2 = vertex[getVertexId(cOffset + 2)];
+        vec3f& v3 = vertex[getVertexId(cOffset + 3)];
+        vec3f& v4 = vertex[getVertexId(cOffset + 4)];
+        vec3f& v5 = vertex[getVertexId(cOffset + 5)];
+        vec3f& v6 = vertex[getVertexId(cOffset + 6)];
+        vec3f& v7 = vertex[getVertexId(cOffset + 7)];
 
         faceNormals[i + 0] = normalize(cross(v2 - v0, v1 - v0));
         faceNormals[i + 1] = normalize(cross(v5 - v0, v4 - v0));

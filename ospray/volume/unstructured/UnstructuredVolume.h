@@ -27,7 +27,7 @@ namespace ospray {
   {
    public:
     UnstructuredVolume();
-    ~UnstructuredVolume() override = default;
+    virtual ~UnstructuredVolume() override;
 
     //! A string description of this class.
     std::string toString() const override;
@@ -47,28 +47,63 @@ namespace ospray {
                         const size_t &count) override;
 
    private:
-    box4f getTetBBox(size_t id);
+
+    // Helper functions for getting data array parameter
+    inline Data* getCellValueData()
+      { return getParamData("cell.value", getParamData("cellField")); }
+    inline Data* getVertexValueData()
+      { return getParamData("vertex.value", getParamData("field")); }
+
+    // Read 32/64-bit integer value from given array
+    inline uint64_t readInteger(const uint32_t* array,
+      bool is32Bit, uint64_t id) const
+    {
+      if (!is32Bit) id <<= 1;
+      uint64_t value = *((const uint64_t*)(array + id));
+      if (is32Bit) value &= 0x00000000ffffffffull;
+      return value;
+    }
+
+    // Read from index arrays that could have 32/64-bit element size
+    inline uint64_t getCellOffset(uint64_t id) const
+      { return readInteger(cell, cell32Bit, id) + cellSkipIds; }
+    inline uint64_t getVertexId(uint64_t id) const
+      { return readInteger(index, index32Bit, id); }
+
+    box4f getCellBBox(size_t id);
 
     //! Complete volume initialization (only on first commit).
     void finish() override;
 
     void buildBvhAndCalculateBounds();
-    void fixupTetWinding();
     void calculateFaceNormals();
     float calculateSamplingStep();
 
-    // Data members //
+    // Vertex position array
+    vec3f* vertex{nullptr};
 
-    int nVertices;
-    vec3f *vertices{nullptr};
-    float *field{nullptr};  // Attribute value at each vertex.
-    float *cellField{nullptr};  // Attribute value at each cell.
+    // Array of values defined per-vertex
+    float* vertexValue{nullptr};
+    Data* vertexValuePrev{nullptr}; // previous pointer to detect change
 
-    Data *oldField{nullptr};
-    Data *oldCellField{nullptr};
+    // Array of cell offsets in the index array
+    uint64_t nCells;
+    uint32_t* cell{nullptr};
+    bool cell32Bit{false};
+    uint32_t cellSkipIds{0};       // skip indices when index array contain other data e.g. size
+    bool cellArrayToDelete{false}; // to detect that deallocation is needed
 
-    int nCells;
-    vec4i *indices{nullptr};
+    // Array of vertex indices
+    uint32_t* index{nullptr};
+    bool index32Bit{false};
+
+    // Array of cell types
+    uint8_t* cellType{nullptr};
+    bool cellTypeArrayToDelete{false}; // to detect that deallocation is needed
+
+    // Array of values defined per-cell
+    float* cellValue{nullptr};
+    Data* cellValuePrev{nullptr};
 
     std::vector<vec3f> faceNormals;
 

@@ -14,36 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+/*! This header is shared with ISPC. */
 #pragma once
 
-#include "../../common/OSPCommon.ih"
-#include "../Volume.ih"
-#include "MinMaxBVH2.ih"
-
-struct UnstructuredVolume
+/*! OSPRay cell types definition for unstructured volumes, values are set to match VTK */
+typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
 {
-  //! Fields common to all Volume subtypes (must be the first entry of this
-  //! struct).
-  Volume super;
-
-  // vertex data
-  const vec3f* uniform vertex;
-  const float* uniform vertexValue; // attribute value at each vertex
-
-  // index data
-  const uint32* uniform index;      // indices into vertices array
-  uniform bool index32Bit;          // true if index is 32-bit integer, false if 64-bit
-
-  // cell data
-  const uint32* uniform cell;       // cell offsets in indices array
-  uniform bool cell32Bit;           // true if cell offset is 32-bit integer, false if 64-bit
-  uniform uint32 cellSkipIds;       // skip indices when index array contain other data e.g. size
-  const uint8* uniform cellType;    // cell type array
-  const float* uniform cellValue;   // attribute value at each cell
-
-  const vec3f* uniform faceNormals;
-
-  uniform MinMaxBVH2 bvh;
-
-  uniform enum {PLANAR, NONPLANAR} hexMethod;
-};
+  OSP_TETRAHEDRON = 10,
+  OSP_HEXAHEDRON = 12,
+  OSP_WEDGE = 13,
+  OSP_PYRAMID = 14
+} OSPUnstructuredCellType;

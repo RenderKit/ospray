@@ -576,22 +576,21 @@ like the structured volume equivalent, but they only modify the root
 
 ### Unstructured Volumes
 
-Unstructured volumes can contain tetrahedral, wedge, or hexahedral
-cell types, and are defined by three arrays: vertices, corresponding
-field values, and eight indices per cell (first four are -1 for
-tetrahedral cells, first two are -2 for wedge cells). An unstructured
-volume type is created by passing the type string
-"`unstructured_volume`" to `ospNewVolume`.
+Unstructured volumes can have its topology and geometry freely defined. Geometry
+can be composed of tetrahedral, wedge, or hexahedral cell types. Data format
+matches VTK and consists from five arrays: vertex 3D positions, cell indices
+(locations), cell types, vertex indices and array of cell values. An unstructured
+volume type is created by passing the type string "`unstructured_volume`"
+to `ospNewVolume`.
 
-Field values can be specified per-vertex (`field`) or per-cell
-(`cellField`). If both values are set, `cellField` takes precedence.
+Sampled cell values can be specified either per-vertex (`vertex.value`) or per-cell
+(`cell.value`). If both arrays are set, `cell.value` takes precedence.
 
 Similar to [triangle mesh], each tetrahedron is formed by a group of
 indices into the vertices. For each vertex, the corresponding (by array
-index) data value will be used for sampling when rendering. Note that
-the index order for each tetrahedron does not matter, as OSPRay
-internally calculates vertex normals to ensure proper sampling and
-interpolation.
+index) data value will be used for sampling when rendering. The index order
+for each tetrahedron is the same as `VTK_TETRA`: bottom triangle
+counterclockwise, then the top vertex.
 
 For wedge cells, each wedge is formed by a group of six indices into the
 vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
@@ -602,26 +601,37 @@ indices into the vertices and data value. Vertex ordering is the same as
 `VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
 counterclockwise.
 
-  -------- ------------------  -------  ---------------------------------------
-  Type     Name                Default  Description
-  -------- ------------------  -------  ---------------------------------------
-  vec3f[]  vertices                     [data] array of vertex positions
+To maintain VTK data compatibility an index array may be specified via
+indexPrefixed array that allow vertex indices to be interleaved with
+cell sizes in the following format: n, id1, ..., idn, m, id1, ..., idm.
 
-  float[]  field                        [data] array of vertex data values to
-                                        be sampled
+  Type                 Name                Default  Description
+  -------------------  ------------------  -------  ---------------------------------------
+  vec3f[]              vertex                       [data] array of vertex positions
 
-  float[]  cellField                    [data] array of cell data values to be
-                                        sampled
+  float[]              vertex.value                 [data] array of vertex data values to
+                                                    be sampled
 
-  vec4i[]  indices                      [data] array of tetrahedra indices
-                                        (into vertices and field)
+  uint32[] / uint64[]  cell                         [data] array of cell indices/locations
+                                                    (into index array)
 
-  string   hexMethod           planar   "planar" (faster, assumes planar sides)
-                                        or "nonplanar"
+  float[]              cell.value                   [data] array of cell data values to be
+                                                    sampled
 
-  bool     precomputedNormals  true     whether to accelerate by precomputing,
-                                        at a cost of 72 bytes/cell
-  -------- ------------------  -------  ---------------------------------------
+  uint8[]              cell.type                    [data] array of cell types
+                                                    (VTK compatible)
+
+  uint32[] / uint64[]  index                        [data] array of vertex indices
+
+  uint32[] / uint64[]  indexPrefixed                [data] array of vertex indices in VTK format,
+                                                    each cell prefixed with its size
+
+  string               hexMethod           planar   "planar" (faster, assumes planar sides)
+                                                    or "nonplanar"
+
+  bool                 precomputedNormals  true     whether to accelerate by precomputing,
+                                                    at a cost of 72 bytes/cell
+  -------------------  ------------------  -------  ---------------------------------------
   : Additional configuration parameters for unstructured volumes.
 
 ### Transfer Function

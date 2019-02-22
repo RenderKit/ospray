@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <GLFW/glfw3.h>
 #include <functional>
 #include "ArcballCamera.h"
 // ospcommon
@@ -25,6 +24,7 @@
 #include "ospcommon/containers/TransactionalBuffer.h"
 // ospray
 #include "ospray/ospray.h"
+#include "GLFW/glfw3.h"
 
 class GLFWOSPRayWindow
 {
@@ -51,6 +51,8 @@ class GLFWOSPRayWindow
   void mainLoop();
 
   void addObjectToCommit(OSPObject obj);
+
+  std::unique_ptr<ArcballCamera>& getArcballCamera() { return arcballCamera; }
 
  protected:
   void reshape(const ospcommon::vec2i &newWindowSize);

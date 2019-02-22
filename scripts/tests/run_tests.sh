@@ -26,4 +26,3 @@ regression_tests/ospray_test_suite --gtest_output=xml:tests.xml --baseline-dir=r
 FAILED=$(echo $?)
 
 exit $FAILED
-
