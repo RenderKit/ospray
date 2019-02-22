@@ -32,9 +32,12 @@ namespace ospray {
 
   class DistributedTileError : public TileError
   {
+    mpicommon::Group group;
+
     public:
-      DistributedTileError(const vec2i &numTiles);
-      void sync(); // broadcast tileErrorBuffer to all workers
+      DistributedTileError(const vec2i &numTiles, mpicommon::Group group);
+      // broadcast tileErrorBuffer to all workers in this group
+      void sync();
   };
 
   struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
@@ -184,6 +187,10 @@ namespace ospray {
     void sendCancelRenderingMessage();
 
     // Data members ///////////////////////////////////////////////////////////
+
+    // The communicator used by this DFB instance for collectives, to avoid
+    // conflicts with other framebuffers
+    mpicommon::Group mpiGroup;
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     int32 *tileInstances; //< how many copies of this tile are active, usually 1

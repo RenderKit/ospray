@@ -496,7 +496,7 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
       work::CreateFrameBuffer work(handle, size, mode, channels);
-      processWork(work);
+      processWork(work, true);
       return (OSPFrameBuffer)(int64)handle;
     }
 

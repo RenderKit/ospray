@@ -26,6 +26,7 @@
 #include "pico_bench.h"
 
 #include "mpiCommon/MPICommon.h"
+#include "mpiCommon/Collectives.h"
 #include "api/Device.h"
 
 #ifdef _WIN32
@@ -50,17 +51,17 @@ namespace ospray {
 
   // DistributedTileError definitions /////////////////////////////////////////
 
-  DistributedTileError::DistributedTileError(const vec2i &numTiles)
-    : TileError(numTiles)
-  {
-  }
+  DistributedTileError::DistributedTileError(const vec2i &numTiles,
+                                             mpicommon::Group group)
+    : TileError(numTiles), group(group)
+  {}
 
   void DistributedTileError::sync()
   {
     if (tiles <= 0)
       return;
 
-    MPI_CALL(Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, mpicommon::world.comm));
+    mpicommon::bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, group.comm).wait();
   }
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////
@@ -72,7 +73,8 @@ namespace ospray {
                               bool masterIsAWorker)
     : MessageHandler(myId),
       FrameBuffer(numPixels, colorBufferFormat, channels),
-      tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
+      mpiGroup(mpicommon::world.dup()),
+      tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0), mpicommon::world),
       localFBonMaster(nullptr),
       frameMode(WRITE_MULTIPLE),
       frameIsActive(false),
@@ -154,10 +156,9 @@ namespace ospray {
       // NOTE: Doing error sync may do a broadcast, needs to be done before
       //       async messaging enabled in beginFrame()
       tileErrorRegion.sync();
-      // TODO WILL: Why is this needed? All ranks will know which ranks own
-      // which tiles, since it's assigned round-robin.
-      MPI_CALL(Bcast(tileInstances, getTotalTiles(), MPI_INT, 0,
-                     mpicommon::world.comm));
+
+      mpicommon::bcast(tileInstances, getTotalTiles(), MPI_INT, 0,
+                       mpiGroup.comm).wait();
 
       if (colorBufferFormat == OSP_FB_NONE) {
         SCOPED_LOCK(tileErrorsMutex);
@@ -371,7 +372,8 @@ namespace ospray {
     reportProgress(1.0f);
 
     int renderingCancelled = frameCancelled();
-    MPI_CALL(Bcast(&renderingCancelled, 1, MPI_INT, masterRank(), world.comm));
+    mpicommon::bcast(&renderingCancelled, 1, MPI_INT, masterRank(),
+                     mpiGroup.comm).wait();
     if (renderingCancelled) {
       return;
     }
