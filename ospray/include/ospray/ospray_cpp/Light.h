@@ -34,7 +34,7 @@ namespace ospray {
 
     inline Light::Light(const std::string &light_type)
     {
-      auto c = ospNewLight3(light_type.c_str());
+      auto c = ospNewLight(light_type.c_str());
       if (c) {
         ospObject = c;
       } else {

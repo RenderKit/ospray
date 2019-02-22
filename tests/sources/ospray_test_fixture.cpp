@@ -212,7 +212,7 @@ void Base::SetFramebuffer()
 
 OSPMaterial Base::CreateMaterial(std::string type)
 {
-  OSPMaterial material = ospNewMaterial2(rendererType.c_str(), type.data());
+  OSPMaterial material = ospNewMaterial(rendererType.c_str(), type.data());
   EXPECT_TRUE(material);
   if (type == "Glass") {
     ospSetf(material, "eta", 1.5);
@@ -247,7 +247,7 @@ void SingleObject::SetUp()
 
   SetMaterial();
 
-  OSPLight distant = ospNewLight(renderer, "distant");
+  OSPLight distant = ospNewLight("distant");
   ASSERT_TRUE(distant) << "Failed to create lights";
   ospSetf(distant, "intensity", 1.0f);
   ospSet3f(distant, "direction", 1.0f, 1.0f, 1.0f);
@@ -255,7 +255,7 @@ void SingleObject::SetUp()
   ospCommit(distant);
   AddLight(distant);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient) << "Failed to create lights";
   ospSetf(ambient, "intensity", 0.2f);
   ospCommit(ambient);
@@ -316,7 +316,7 @@ void SpherePrecision::SetUp()
   ospSetData(inst_sphere, "spheres", data);
   ospRelease(data);
 
-  OSPMaterial sphereMaterial = ospNewMaterial2(rendererType.c_str(), "default");
+  OSPMaterial sphereMaterial = ospNewMaterial(rendererType.c_str(), "default");
   ospSet1f(sphereMaterial, "d", 1.0f);
   ospCommit(sphereMaterial);
   ospSetMaterial(sphere, sphereMaterial);
@@ -343,7 +343,7 @@ void SpherePrecision::SetUp()
   ospAddGeometry(world, ospNewInstance(inst, xf));
   ospRelease(inst);
 
-  OSPLight distant = ospNewLight(renderer, "distant");
+  OSPLight distant = ospNewLight("distant");
   ASSERT_TRUE(distant) << "Failed to create lights";
   ospSetf(distant, "intensity", 3.0f);
   ospSet3f(distant, "direction", 0.3f, -4.0f, 0.8f);
@@ -352,7 +352,7 @@ void SpherePrecision::SetUp()
   ospCommit(distant);
   AddLight(distant);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient) << "Failed to create lights";
   ospSetf(ambient, "intensity", 0.1f);
   ospCommit(ambient);
@@ -454,7 +454,7 @@ void Box::SetUp()
   data = ospNewData(2, OSP_INT3, lightIndices);
   ospSetData(lightSquare, "index", data);
   ospRelease(data);
-  OSPMaterial lightMaterial = ospNewMaterial2(rendererType.c_str(), "Luminous");
+  OSPMaterial lightMaterial = ospNewMaterial(rendererType.c_str(), "Luminous");
   ospSetf(lightMaterial, "intensity", 20.f);
   ospSet3f(lightMaterial, "color", 1.f, 0.7f, 0.3f);
   ospCommit(lightMaterial);
@@ -513,7 +513,7 @@ void Box::SetMaterials()
 
 OSPMaterial Box::GetMaterial(std::string type)
 {
-  OSPMaterial newMaterial = ospNewMaterial2(rendererType.c_str(), type.data());
+  OSPMaterial newMaterial = ospNewMaterial(rendererType.c_str(), type.data());
   // defaults for "OBJMaterial"
   if (type == "Glass") {
     ospSetf(newMaterial, "eta", 1.4);
@@ -614,7 +614,7 @@ void Sierpinski::SetUp()
     AddVolume(pyramid);
   }
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient) << "Failed to create lights";
   ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
@@ -669,7 +669,7 @@ void Torus::SetUp()
   ospCommit(isosurface);
   AddGeometry(isosurface);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient) << "Failed to create lights";
   ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
@@ -752,7 +752,7 @@ void SlicedCube::SetUp()
   ospCommit(slice);
   AddGeometry(slice);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient);
   ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
@@ -797,7 +797,7 @@ void MTLMirrors::SetUp() {
   data = ospNewData(4, OSP_INT3, mirrorsIndices);
   ASSERT_TRUE(data);
   ospSetData(mirrors, "index", data);
-  OSPMaterial mirrorsMaterial = ospNewMaterial2(rendererType.c_str(), "OBJMaterial");
+  OSPMaterial mirrorsMaterial = ospNewMaterial(rendererType.c_str(), "OBJMaterial");
   ASSERT_TRUE(mirrorsMaterial);
   ospSet3f(mirrorsMaterial, "Kd", Kd.x, Kd.y, Kd.z);
   ospSet3f(mirrorsMaterial, "Ks", Ks.x, Ks.y, Ks.z);
@@ -816,11 +816,11 @@ void MTLMirrors::SetUp() {
   data = ospNewData(1, OSP_FLOAT4, sphereCenters);
   ASSERT_TRUE(data);
   ospSetData(light, "spheres", data);
-  ospSetMaterial(light, ospNewMaterial2(rendererType.c_str(), "Luminous"));
+  ospSetMaterial(light, ospNewMaterial(rendererType.c_str(), "Luminous"));
   ospCommit(light);
   AddGeometry(light);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient);
   ospSetf(ambient, "intensity", 0.01f);
   ospCommit(ambient);
@@ -882,7 +882,7 @@ void Pipes::SetUp()
 
   AddGeometry(streamlines);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient);
   ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
@@ -925,7 +925,7 @@ void TextureVolume::SetUp()
   ospRelease(transferFun);
   ospCommit(torus);
 
-  OSPMaterial sphereMaterial = ospNewMaterial2(rendererType.c_str(), "default");
+  OSPMaterial sphereMaterial = ospNewMaterial(rendererType.c_str(), "default");
   OSPTexture tex = ospNewTexture("volume");
   ospSetObject(tex, "volume", torus);
   ospCommit(tex);
@@ -945,7 +945,7 @@ void TextureVolume::SetUp()
   ospRelease(sphereMaterial);
   ospRelease(torus);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient) << "Failed to create lights";
   ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
@@ -991,7 +991,7 @@ void DepthCompositeVolume::SetUp()
 
   AddVolume(torus);
 
-  OSPTexture2D depthTex = ospNewTexture("texture2D");
+  OSPTexture depthTex = ospNewTexture("texture2D");
   float* data = new float[imgSize.x*imgSize.y];
   for (size_t y = 0; y < imgSize.y; y++) {
     for (size_t x = 0; x < imgSize.x; x++) {
@@ -1018,7 +1018,7 @@ void DepthCompositeVolume::SetUp()
   ospSetObject(renderer, "maxDepthTexture", depthTex);
   ospRelease(depthTex);
 
-  OSPLight ambient = ospNewLight(renderer, "ambient");
+  OSPLight ambient = ospNewLight("ambient");
   ASSERT_TRUE(ambient) << "Failed to create lights";
   ospSetf(ambient, "intensity", 0.5f);
   ospCommit(ambient);
@@ -1129,7 +1129,7 @@ void Subdivision::SetUp()
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up", cam_up);
 
-  OSPLight directional = ospNewLight(renderer, "directional");
+  OSPLight directional = ospNewLight("directional");
   ASSERT_TRUE(directional);
   ospSetf(directional, "intensity", 0.5f);
   ospSet3f(directional, "direction", -.2f, -.3f, -.4f);

@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
   OSPRenderer renderer = ospNewRenderer("mpi_raycast");
 
   // create and setup light for Ambient Occlusion
-  OSPLight light = ospNewLight3("ambient");
+  OSPLight light = ospNewLight("ambient");
   ospCommit(light);
   OSPData lights = ospNewData(1, OSP_LIGHT, &light, 0);
   ospCommit(lights);

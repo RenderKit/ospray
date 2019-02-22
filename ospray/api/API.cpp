@@ -270,12 +270,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-// for backward compatibility, will be removed in future
-extern "C" OSPDevice ospCreateDevice(const char *deviceType)
-{
-  return ospNewDevice(deviceType);
-}
-
 extern "C" void ospSetCurrentDevice(OSPDevice _device)
 OSPRAY_CATCH_BEGIN
 {
@@ -486,22 +480,8 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer,
+extern "C" OSPMaterial ospNewMaterial(const char *renderer_type,
                                       const char *material_type)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  auto material = currentDevice().newMaterial(renderer, material_type);
-  if (material == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create material '"
-                     << material_type << "'";
-  }
-  return material;
-}
-OSPRAY_CATCH_END(nullptr)
-
-extern "C" OSPMaterial ospNewMaterial2(const char *renderer_type,
-                                       const char *material_type)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -514,34 +494,7 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPLight ospNewLight(OSPRenderer, const char *type)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert2(type != nullptr, "invalid light type identifier in ospNewLight");
-  OSPLight light = currentDevice().newLight(type);
-  if (light == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create light '" << type << "'";
-  }
-  return light;
-}
-OSPRAY_CATCH_END(nullptr)
-
-extern "C" OSPLight ospNewLight2(const char */*renderer_type*/,
-                                 const char *light_type)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  OSPLight light = currentDevice().newLight(light_type);
-  if (light == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create light '"
-                     << light_type << "'";
-  }
-  return light;
-}
-OSPRAY_CATCH_END(nullptr)
-
-extern "C" OSPLight ospNewLight3(const char *light_type)
+extern "C" OSPLight ospNewLight(const char *light_type)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -575,50 +528,6 @@ OSPRAY_CATCH_BEGIN
   if (texture == nullptr) {
     postStatusMsg(1) << "#ospray: could not create texture '" << type << "'";
   }
-  return texture;
-}
-OSPRAY_CATCH_END(nullptr)
-
-extern "C" OSPTexture ospNewTexture2D(const osp_vec2i *_size,
-                                      const OSPTextureFormat type,
-                                      void *data,
-                                      const uint32_t _flags)
-OSPRAY_CATCH_BEGIN
-{
-  auto &size = *_size;
-  ASSERT_DEVICE();
-  Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
-  Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
-
-  auto texture = ospNewTexture("texture2d");
-
-  if (texture == nullptr)
-    return nullptr;
-
-  auto flags = _flags; // because the input value is declared const, use a copy
-
-  bool sharedBuffer = flags & OSP_TEXTURE_SHARED_BUFFER;
-
-  flags &= ~OSP_TEXTURE_SHARED_BUFFER;
-
-  const auto texelBytes  = sizeOf(type);
-  const auto totalTexels = size.x * size.y;
-  const auto totalBytes  = totalTexels * texelBytes;
-
-  auto data_handle = ospNewData(totalBytes,
-                                OSP_RAW,
-                                data,
-                                sharedBuffer ? OSP_DATA_SHARED_BUFFER : 0);
-
-  ospCommit(data_handle);
-  ospSetObject(texture, "data", data_handle);
-  ospRelease(data_handle);
-
-  ospSet1i(texture, "type", static_cast<int>(type));
-  ospSet1i(texture, "flags", static_cast<int>(flags));
-  ospSet2i(texture, "size", size.x, size.y);
-  ospCommit(texture);
-
   return texture;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -1012,24 +921,5 @@ OSPRAY_CATCH_BEGIN
   Assert2(renderer, "nullptr renderer passed to ospPick");
   if (!result) return;
   *result = currentDevice().pick(fb, renderer, camera, world, (const vec2f&)screenPos);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospSampleVolume(float **results,
-                                OSPVolume volume,
-                                const osp_vec3f worldCoordinates,
-                                const size_t count)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert2(volume, "nullptr volume passed to ospSampleVolume");
-
-  if (count == 0) {
-    *results = nullptr;
-    return;
-  }
-
-  currentDevice().sampleVolume(results, volume,
-                               (const vec3f*)&worldCoordinates, count);
 }
 OSPRAY_CATCH_END()

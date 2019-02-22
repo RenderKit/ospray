@@ -137,7 +137,7 @@ namespace ospray {
       ospSet1f(geometry, "level", level);
 
       // create OBJ material and assign to geometry
-      OSPMaterial objMaterial = ospNewMaterial2("scivis", "OBJMaterial");
+      OSPMaterial objMaterial = ospNewMaterial("scivis", "OBJMaterial");
       ospSet3f(objMaterial, "Ks", 0.5f, 0.5f, 0.5f);
       ospCommit(objMaterial);
 

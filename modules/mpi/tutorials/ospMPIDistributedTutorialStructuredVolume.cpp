@@ -119,7 +119,7 @@ int main(int argc, char **argv)
   OSPRenderer renderer = ospNewRenderer("mpi_raycast");
 
   // create and setup an ambient light
-  OSPLight ambientLight = ospNewLight3("ambient");
+  OSPLight ambientLight = ospNewLight("ambient");
   ospCommit(ambientLight);
   OSPData lightData = ospNewData(1, OSP_LIGHT, &ambientLight, 0);
   ospCommit(lightData);

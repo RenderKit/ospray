@@ -149,7 +149,7 @@ OSPGeometry createGroundPlaneGeometry()
   ospSetData(planeGeometry, "index", indexData);
 
   // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial2("scivis", "OBJMaterial");
+  OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
   ospCommit(material);
 
   ospSetMaterial(planeGeometry, material);

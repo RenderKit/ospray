@@ -96,8 +96,8 @@ int main(int argc, char **argv)
   OSPRenderer renderer = ospNewRenderer("mpi_raycast");
 
   // create and setup an ambient light
-  std::array<OSPLight, 2> lights = {ospNewLight3("ambient"),
-                                    ospNewLight3("distant")};
+  std::array<OSPLight, 2> lights = {ospNewLight("ambient"),
+                                    ospNewLight("distant")};
   ospCommit(lights[0]);
 
   ospSet3f(lights[1], "direction", -1.f, -1.f, 0.5f);
@@ -222,7 +222,7 @@ OSPGeometry makeLocalSpheres(const int mpiRank, const int mpiWorldSize)
       ospNewData(spheres.size() * sizeof(Sphere), OSP_UCHAR, spheres.data());
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
-  OSPMaterial material = ospNewMaterial2("scivis", "OBJMaterial");
+  OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
   ospSet3fv(material, "Kd", &color.x);
   ospSet3f(material, "Ks", 1.f, 1.f, 1.f);
   ospCommit(material);

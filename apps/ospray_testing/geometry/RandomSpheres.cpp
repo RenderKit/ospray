@@ -93,7 +93,7 @@ namespace ospray {
       ospSet1i(spheresGeometry, "color_stride", int(sizeof(Sphere)));
 
       // create glass material and assign to geometry
-      OSPMaterial glassMaterial = ospNewMaterial2("pathtracer", "ThinGlass");
+      OSPMaterial glassMaterial = ospNewMaterial("pathtracer", "ThinGlass");
       ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
       ospCommit(glassMaterial);
 

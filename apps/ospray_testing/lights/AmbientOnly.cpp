@@ -28,7 +28,7 @@ namespace ospray {
 
     OSPData AmbientOnly::createLights() const
     {
-      auto ambientLight = ospNewLight3("ambient");
+      auto ambientLight = ospNewLight("ambient");
 
       ospSet1f(ambientLight, "intensity", 1.25f);
       ospSet3f(ambientLight, "color", 1.f, 1.f, 1.f);
@@ -36,7 +36,7 @@ namespace ospray {
 
       auto lightsData = ospNewData(1, OSP_OBJECT, &ambientLight);
       ospRelease(ambientLight);
-      
+
       return lightsData;
     }
 

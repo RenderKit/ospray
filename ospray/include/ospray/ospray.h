@@ -14,17 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// \file ospray/ospray.h Defines the external OSPRay API */
-
-/*! \defgroup ospray_api OSPRay Core API
-
-  \ingroup ospray
-
-  \brief Defines the public API for the OSPRay core
-
-  \{
-*/
-
 #pragma once
 
 #ifndef NULL
@@ -35,9 +24,6 @@
 # endif
 #endif
 
-// -------------------------------------------------------
-// include common components
-// -------------------------------------------------------
 #include <sys/types.h>
 #include <stdint.h>
 
@@ -203,12 +189,11 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPPixelOp,
   *OSPFuture;
 
-/* old (and deprecated) name for OSPTexture */
-OSP_DEPRECATED typedef OSPTexture OSPTexture2D;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+  // OSPRay Initialization ////////////////////////////////////////////////////
 
   //! initialize the OSPRay engine (for single-node user application) using
   //! commandline arguments...equivalent to doing ospNewDevice() followed by
@@ -224,8 +209,6 @@ extern "C" {
   //! initialize the OSPRay engine (for single-node user application) using
   //! explicit device string.
   OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
-  // old name, will be removed in future
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPDevice ospCreateDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
 
   //! set current device the API responds to
   OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);
@@ -270,217 +253,48 @@ extern "C" {
   //! returns OSPError value to report any errors during initialization
   OSPRAY_INTERFACE OSPError ospLoadModule(const char *pluginName);
 
-  //! use renderer to render a frame.
-  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
-  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
+  // OSPRay Data Arrays ///////////////////////////////////////////////////////
 
-  /* Ask if all events tracked by an OSPFuture handle have been completed */
-  OSPRAY_INTERFACE int ospIsReady(OSPFuture);
-
-  /* Wait on a specific event */
-  OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
-
-  /* Cancel the given task (may block calling thread) */
-  OSPRAY_INTERFACE void ospCancel(OSPFuture);
-
-  /* Get the completion state of the given task [0.f-1.f] */
-  OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
-
-  /* Get variance from last rendered frame */
-  OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
-
-  //! create a new renderer of given type
-  /*! return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
-
-  //! create a new pixel op of given type
-  /*! return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPPixelOp ospNewPixelOp(const char *type);
-
-  //! set a frame buffer's pixel op */
-  OSPRAY_INTERFACE void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
-
-  //! create a new geometry of given type
-  /*! return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
-
-  //! (deprecated, use ospNewMaterial2) let given renderer create a new material of given type
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer, const char *material_type);
-
-  //! create a new material of given type for a renderer of given type
-  OSPRAY_INTERFACE OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
-
-  //! (deprecated, use ospNewLight3) let given renderer create a new light of given type
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer, const char *type);
-
-  //! (deprecated, use ospNewLight3) create a new light of given type for a renderer of given type
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPLight ospNewLight2(const char *renderer_type, const char *light_type);
-
-  //! create a new light of given type
-  OSPRAY_INTERFACE OSPLight ospNewLight3(const char *light_type);
-
-  //! release (i.e., reduce refcount of) given object
-  /*! note that all objects in ospray are refcounted, so one cannot
-    explicitly "delete" any object. instead, each object is created
-    with a refcount of 1, and this refcount will be
-    increased/decreased every time another object refers to this
-    object resp releases its hold on it; if the refcount is 0 the
-    object will automatically get deleted. For example, you can
-    create a new material, assign it to a geometry, and immediately
-    after this assignation release its refcount; the material will
-    stay 'alive' as long as the given geometry requires it. */
-  OSPRAY_INTERFACE void ospRelease(OSPObject);
-
-  //! assign given material to given geometry
-  OSPRAY_INTERFACE void ospSetMaterial(OSPGeometry, OSPMaterial);
-
-  //! \brief create a new camera of given type
-  /*! \detailed The default camera type supported in all ospray
-    versions is "perspective" (\ref perspective_camera).  For a list
-    of supported camera type in this version of ospray, see \ref
-    ospray_supported_cameras
-
-    \returns 'NULL' if that type is not known, else a handle to the created camera
-  */
-  OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
-
-  //! \brief create a new volume of given type
-  /*! \detailed return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
-
-  //! add a volume to an existing model
-  OSPRAY_INTERFACE void ospAddVolume(OSPModel, OSPVolume);
-
-  /*! \brief remove an existing volume from a model */
-  OSPRAY_INTERFACE void ospRemoveVolume(OSPModel, OSPVolume);
-
-  //! \brief create a new transfer function of given type
-  /*! \detailed return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
-
-  //! \brief create a new Texture
-  OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
-
-  //! \brief (deprecated, use ospNewTexture("texture2d") instead)
-  //         create a new Texture2D with the given parameters
-  /*! \detailed return 'NULL' if the texture could not be created with the given
-                parameters */
-  OSPRAY_INTERFACE OSP_DEPRECATED OSPTexture ospNewTexture2D(
-    const osp_vec2i *size,
-    const OSPTextureFormat,
-    void *source OSP_DEFAULT_VAL(= NULL),
-    const uint32_t textureCreationFlags OSP_DEFAULT_VAL(= 0)
-  );
-
-  // -------------------------------------------------------
-  /*! \defgroup ospray_data Data Buffer Handling
-
-    \ingroup ospray_api
-
-    \{
-  */
-  /*! create a new data buffer, with optional init data and control flags
-
-    Valid flags that can be OR'ed together into the flags value:
-    - OSP_DATA_SHARED_BUFFER: indicates that the buffer can be shared with the app.
-    In this case the calling program guarantees that the 'source' pointer will remain
-    valid for the duration that this data array is being used.
-  */
   OSPRAY_INTERFACE OSPData ospNewData(size_t numItems,
                                       OSPDataType,
                                       const void *source,
                                       const uint32_t dataCreationFlags OSP_DEFAULT_VAL(=0));
 
-  /*! \} */
-
-
-  // -------------------------------------------------------
-  /*! \defgroup ospray_framebuffer Frame Buffer Manipulation
-
-    \ingroup ospray_api
-
-    \{
-  */
-
-  /*! \brief create a new framebuffer (actual format is internal to ospray)
-
-    Creates a new frame buffer of given size, externalFormat, and channel type(s).
-
-    \param externalFormat describes the format the color buffer has
-    *on the host*, and the format that 'ospMapFrameBuffer' will
-    eventually return. Valid values are OSP_FB_SRGBA, OSP_FB_RGBA8,
-    OSP_FB_RGBA32F, and OSP_FB_NONE (note that
-    OSP_FB_NONE is a perfectly reasonably choice for a framebuffer
-    that will be used only internally, see notes below).
-    The origin of the screen coordinate system is the lower left
-    corner (as in OpenGL).
-
-    \param channelFlags specifies which channels the frame buffer has,
-    and is OR'ed together from the values OSP_FB_COLOR,
-    OSP_FB_DEPTH, and/or OSP_FB_ACCUM. If a certain buffer
-    value is _not_ specified, the given buffer will not be present
-    (see notes below).
-
-    \param size size (in pixels) of frame buffer.
-
-    Note that ospray makes a very clear distinction between the
-    _external_ format of the frame buffer, and the internal one(s):
-    The external format is the format the user specifies in the
-    'externalFormat' parameter; it specifies what format ospray will
-    _return_ the frame buffer to the application (up a
-    ospMapFrameBuffer() call): no matter what ospray uses internally,
-    it will simply return a 2D array of pixels of that format, with
-    possibly all kinds of reformatting, compression/decompression,
-    etc, going on in-between the generation of the _internal_ frame
-    buffer and the mapping of the externally visible one.
-
-    In particular, OSP_FB_NONE is a perfectly valid pixel format for a
-    frame buffer that an application will never map. For example, a
-    application using multiple render passes (e.g., 'pathtrace' and
-    'tone map') may well generate a intermediate frame buffer to store
-    the result of the 'pathtrace' stage, but will only ever display
-    the output of the tone mapper. In this case, when using a pixel
-    format of OSP_FB_NONE the pixels from the path tracing stage will
-    never ever be transferred to the application.
-  */
-  OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp_vec2i size,
-                                                    const OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
-                                                    const uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
-
-  // \brief Set a given region of the volume to a given set of voxels
-  /*! \detailed Given a block of voxels (of dimensions 'blockDim',
-    located at the memory region pointed to by 'source', copy the
-    given voxels into volume, at the region of addresses
-    [regionCoords...regionCoord+regionSize].
-  */
   OSPRAY_INTERFACE OSPError ospSetRegion(OSPVolume,
                                          void *source,
                                          const osp_vec3i regionCoords,
                                          const osp_vec3i regionSize);
 
-  /*! \brief (deprecated, use ospRelease instead) free a framebuffer */
-  OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
+  // Renderable Objects ///////////////////////////////////////////////////////
 
-  /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
-  OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
-                                                 const OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
+  OSPRAY_INTERFACE OSPLight ospNewLight(const char *light_type);
 
-  /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
-  OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
+  OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
 
-  //! \brief reset frame buffer accumulation for next render frame call
-  OSPRAY_INTERFACE void ospResetAccumulation(OSPFrameBuffer);
+  OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
-  /*! \} */
+  OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
+  OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 
-  // -------------------------------------------------------
-  /*! \defgroup ospray_params Object parameters.
+  OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 
-    \ingroup ospray_api
+  OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
 
-    @{
-  */
+  // Model Manipulation ///////////////////////////////////////////////////////
+
+  OSPRAY_INTERFACE OSPModel ospNewModel();
+
+  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
+                                              const osp_affine3f transform);
+
+  OSPRAY_INTERFACE void ospAddGeometry(OSPModel, OSPGeometry);
+  OSPRAY_INTERFACE void ospRemoveGeometry(OSPModel, OSPGeometry);
+  OSPRAY_INTERFACE void ospAddVolume(OSPModel, OSPVolume);
+  OSPRAY_INTERFACE void ospRemoveVolume(OSPModel, OSPVolume);
+
+  // Object Parameters ////////////////////////////////////////////////////////
+
   /*! add a c-string (zero-terminated char *) parameter to another object */
   OSPRAY_INTERFACE void ospSetString(OSPObject, const char *id, const char *s);
 
@@ -535,53 +349,65 @@ extern "C" {
   /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
   OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
+  /*! set the given material on the given geometry */
+  OSPRAY_INTERFACE void ospSetMaterial(OSPGeometry, OSPMaterial);
+
   /*! remove a named parameter on the given object */
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
 
-  /*! @} end of ospray_params */
+  // Object + Parameter Lifetime Management ///////////////////////////////////
 
-  // -------------------------------------------------------
-  /*! \defgroup ospray_geometry Geometry Handling
-    \ingroup ospray_api
-
-    \{
-  */
-
-  /*! add an already created geometry to a model */
-  OSPRAY_INTERFACE void ospAddGeometry(OSPModel, OSPGeometry);
-  /*! \} end of ospray_trianglemesh */
-
-  /*! \brief remove an existing geometry from a model */
-  OSPRAY_INTERFACE void ospRemoveGeometry(OSPModel, OSPGeometry);
-
-
-  /*! \brief create a new instance geometry that instantiates another
-    model.  the resulting geometry still has to be added to another
-    model via ospAddGeometry */
-  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
-                                              const osp_affine3f transform);
-
-  // -------------------------------------------------------
-  /*! \defgroup ospray_model OSPRay Model Handling
-    \ingroup ospray_api
-
-    models are the equivalent of 'scenes' in embree (ie,
-    they consist of one or more pieces of content that share a
-    single logical acceleration structure); however, models can
-    contain more than just embree triangle meshes - they can also
-    contain cameras, materials, volume data, etc, as well as
-    references to (and instances of) other models.
-
-    \{
-  */
-
-  /*! \brief create a new ospray model.  */
-  OSPRAY_INTERFACE OSPModel ospNewModel();
-
-  /*! \} */
-
-  /*! \brief commit changes to an object */
   OSPRAY_INTERFACE void ospCommit(OSPObject);
+  OSPRAY_INTERFACE void ospRelease(OSPObject);
+
+  // FrameBuffer Manipulation /////////////////////////////////////////////////
+
+  OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp_vec2i size,
+                                                    const OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
+                                                    const uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
+
+  //! create a new pixel op of given type
+  /*! return 'NULL' if that type is not known */
+  OSPRAY_INTERFACE OSPPixelOp ospNewPixelOp(const char *type);
+
+  //! set a frame buffer's pixel op */
+  OSPRAY_INTERFACE void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
+
+  /*! \brief (deprecated, use ospRelease instead) free a framebuffer */
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer);
+
+  /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
+  OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
+                                                 const OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
+
+  /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
+  OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
+
+  //! \brief reset frame buffer accumulation for next render frame call
+  OSPRAY_INTERFACE void ospResetAccumulation(OSPFrameBuffer);
+
+  // Frame Rendering //////////////////////////////////////////////////////////
+
+  OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
+
+  //! use renderer to render a frame.
+  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
+  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
+
+  /* Ask if all events tracked by an OSPFuture handle have been completed */
+  OSPRAY_INTERFACE int ospIsReady(OSPFuture);
+
+  /* Wait on a specific event */
+  OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
+
+  /* Cancel the given task (may block calling thread) */
+  OSPRAY_INTERFACE void ospCancel(OSPFuture);
+
+  /* Get the completion state of the given task [0.f-1.f] */
+  OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
+
+  /* Get variance from last rendered frame */
+  OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
 
   typedef struct {
     osp_vec3f position; //< the position of the hit point (in world-space)
@@ -595,24 +421,6 @@ extern "C" {
                                 OSPModel world,
                                 const osp_vec2f screenPos);
 
-  /*! \brief Samples the given volume at the provided world-space coordinates.
-
-    \param results will be allocated by OSPRay and contain the
-    resulting sampled values as floats. The application is
-    responsible for freeing this memory. In case of error results
-    will be NULL.
-
-    This function is meant to provide a _small_ number of samples
-    as needed for data probes, etc. in applications. It is not
-    intended for large-scale sampling of volumes.
-  */
-  OSPRAY_INTERFACE void ospSampleVolume(float **results,
-                                        OSPVolume,
-                                        const osp_vec3f worldCoordinates,
-                                        const size_t count);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-/*! \} */

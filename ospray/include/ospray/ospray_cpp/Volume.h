@@ -41,11 +41,6 @@ public:
   void setRegion(void *source,
                  const ospcommon::vec3i &regionCoords,
                  const ospcommon::vec3i &regionSize) const;
-
-  void sampleVolume(float **results,
-                    const ospcommon::vec3f *worldCoordinates,
-                    size_t count) const;
-  std::vector<float> sampleVolume(const std::vector<ospcommon::vec3f> &points) const;
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -79,31 +74,6 @@ inline void Volume::setRegion(void *source,
                source,
                (const osp_vec3i&)regionCoords,
                (const osp_vec3i&)regionSize);
-}
-
-inline void Volume::sampleVolume(float **results,
-                                 const ospcommon::vec3f *worldCoordinates,
-                                 size_t count) const
-{
-  ospSampleVolume(results,
-                  handle(),
-                  (const osp_vec3f&)*worldCoordinates,
-                  count);
-}
-
-inline std::vector<float>
-Volume::sampleVolume(const std::vector<ospcommon::vec3f> &points) const
-{
-  float *results = nullptr;
-  auto numPoints = points.size();
-  sampleVolume(&results, points.data(), numPoints);
-
-  if (!results)
-    throw std::runtime_error("Failed to sample volume!");
-
-  std::vector<float> retval(points.size());
-  memcpy(retval.data(), results, numPoints*sizeof(float));
-  return retval;
 }
 
 }// namespace cpp

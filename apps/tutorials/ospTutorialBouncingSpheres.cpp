@@ -196,7 +196,7 @@ OSPGeometry createGroundPlaneGeometry()
   ospSetData(planeGeometry, "index", indexData);
 
   // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial2("pathtracer", "OBJMaterial");
+  OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
   ospCommit(material);
 
   ospSetMaterial(planeGeometry, material);
@@ -236,7 +236,7 @@ OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
   ospSet1i(g_spheresGeometry, "color_stride", int(sizeof(Sphere)));
 
   // create glass material and assign to geometry
-  OSPMaterial glassMaterial = ospNewMaterial2("pathtracer", "ThinGlass");
+  OSPMaterial glassMaterial = ospNewMaterial("pathtracer", "ThinGlass");
   ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
@@ -275,7 +275,7 @@ OSPRenderer createRenderer()
   OSPRenderer renderer = ospNewRenderer("pathtracer");
 
   // create an ambient light
-  OSPLight ambientLight = ospNewLight3("ambient");
+  OSPLight ambientLight = ospNewLight("ambient");
   ospCommit(ambientLight);
 
   // create lights data containing all lights
