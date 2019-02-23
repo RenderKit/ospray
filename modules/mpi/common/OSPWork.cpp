@@ -691,6 +691,7 @@ namespace ospray {
 
       void CommandFinalize::runOnMaster()
       {
+        maml::stop();
         maml::shutdown();
         world.barrier();
         MPI_CALL(Finalize());
@@ -728,25 +729,24 @@ namespace ospray {
 
           pickResult = renderer->pick(fb, camera, world, screenPos);
 
-          MPI_CALL(Send(&pickResult,
-                        sizeof(pickResult),
-                        MPI_BYTE,
-                        0,
-                        0,
-                        mpicommon::world.comm));
+          mpicommon::send(&pickResult,
+                          sizeof(pickResult),
+                          MPI_BYTE,
+                          0,
+                          typeIdOf<Pick>(),
+                          mpicommon::world.comm).wait();
         }
-        mpicommon::worker.barrier();
+        mpicommon::barrier(mpicommon::worker.comm).wait();
       }
       void Pick::runOnMaster()
       {
         // Master just needs to recv the result from the first worker
-        MPI_CALL(Recv(&pickResult,
-                      sizeof(pickResult),
-                      MPI_BYTE,
-                      1,
-                      0,
-                      mpicommon::world.comm,
-                      MPI_STATUS_IGNORE));
+        mpicommon::recv(&pickResult,
+                        sizeof(pickResult),
+                        MPI_BYTE,
+                        1,
+                        typeIdOf<Pick>(),
+                        mpicommon::world.comm).wait();
       }
 
       void Pick::serialize(WriteStream &b) const

@@ -71,6 +71,7 @@ namespace ospray {
                               ColorBufferFormat colorBufferFormat,
                               const uint32 channels,
                               bool masterIsAWorker)
+    // TODO: We can't run this message handler on comm world
     : MessageHandler(myId),
       FrameBuffer(numPixels, colorBufferFormat, channels),
       mpiGroup(mpicommon::world.dup()),

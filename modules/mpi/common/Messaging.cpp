@@ -91,6 +91,7 @@ namespace ospray {
               }
             );
 
+        // TODO: This needs to get off world.comm
         maml::registerHandlerFor(world.comm, instance.get());
         handlerValid = true;
         return instance;

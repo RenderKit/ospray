@@ -72,6 +72,7 @@ namespace ospray {
       template<typename T>
       inline void bcast(const int rootGlobalRank, T &data)
       {
+        std::cout << "TODO: This function must be removed\n";
         using namespace mpicommon;
 
         MPIBcastFabric fabric(world, rootGlobalRank, rootGlobalRank);

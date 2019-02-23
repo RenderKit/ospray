@@ -659,6 +659,8 @@ namespace ospray {
 
       for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
+          // TODO: Must switch to mpicommon::bcast and use our own
+          // comm for collectives
           messaging::bcast(i, myRegions);
           std::copy(myRegions.begin(),
                     myRegions.end(),

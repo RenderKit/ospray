@@ -150,7 +150,7 @@ namespace maml {
         inbox.push_back(std::move(msg));
       } else {
         MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
-              msg->tag, msg->comm, &request));
+                       msg->tag, msg->comm, &request));
         msg->started = high_resolution_clock::now();
 
         pendingSends.push_back(request);
@@ -174,7 +174,7 @@ namespace maml {
       int hasIncoming = 0;
       MPI_Status status;
       MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
-            comm, &hasIncoming, &status));
+                      comm, &hasIncoming, &status));
 
       if (hasIncoming) {
         int size;
@@ -216,7 +216,7 @@ namespace maml {
       {
         auto mpilock = mpicommon::acquireMPILock();
         MPI_CALL(Testsome(totalMessages, mergedRequests, &numDone,
-              done, MPI_STATUSES_IGNORE));
+                          done, MPI_STATUSES_IGNORE));
       }
       auto completed = high_resolution_clock::now();
 

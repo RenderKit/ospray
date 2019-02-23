@@ -173,6 +173,8 @@ namespace ospray {
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
           << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
 
+      // Note: here we don't run this collective through MAML, since we
+      // haven't started it yet.
       MPI_CALL(Barrier(world.comm));
 
       throwIfNotMpiParallel();
@@ -366,7 +368,8 @@ namespace ospray {
               << "calls right now)\n"
               << "=======================================================";
         }
-
+        // Note: MAML has not started yet, so we don't run the collective
+        // through the messaging layer
         MPI_CALL(Barrier(app.comm));
       }
 

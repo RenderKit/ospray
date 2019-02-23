@@ -54,6 +54,21 @@ namespace mpicommon {
                              const std::vector<int> &recvOffsets,
                              MPI_Datatype recvType, int root, MPI_Comm comm);
 
+  /* Start an asynchronously run send. The buffer is owned by
+   * the caller and must be kept valid until the future is set, indicating
+   * completion of the send.
+   */ 
+  std::future<const void*> send(const void *buffer, int count,
+                                MPI_Datatype datatype, int source, int tag,
+                                MPI_Comm comm);
+
+  /* Start an asynchronously run recv. The buffer is owned by
+   * the caller and must be kept valid until the future is set, indicating
+   * completion of the recv.
+   */ 
+  std::future<void*> recv(void *buffer, int count, MPI_Datatype datatype,
+                          int source, int tag, MPI_Comm comm);
+
   // An asynchronously executed collective operation which can be run
   // on the MPI messaging layer
   class OSPRAY_MPI_INTERFACE Collective {
@@ -176,5 +191,64 @@ namespace mpicommon {
     void onFinish() override;
   };
 
+
+  /* Send/recv are not really collectives, but are separate from the typical
+   * fire and forget style of messaging that the mpicommon::Message uses.
+   * With these we actually want the ability to wait for a specific send to
+   * finish, and a specific recv from a process to be completed. With the
+   * fire and forget messaging layer we don't care about this and just queue
+   * stuff up and recieve whatever is coming to us.
+   */
+  class OSPRAY_MPI_INTERFACE Send : public Collective {
+    const void *buffer;
+    int count;
+    MPI_Datatype datatype;
+    int dest;
+    int tag;
+    std::promise<const void*> result;
+
+  public:
+    /* Construct an asynchronously run send. The buffer is owned by
+     * the caller and must be kept valid until the future is set, indicating
+     * completion of the send.
+     */ 
+    Send(const void *buffer, int count, MPI_Datatype datatype, int dest,
+         int tag, MPI_Comm comm);
+
+    /* Get the future which will return when this send is done, returns the
+     * pointer to the sent buffer
+     */
+    std::future<const void*> future();
+    void start();
+
+  protected:
+    void onFinish() override;
+  };
+
+  class OSPRAY_MPI_INTERFACE Recv : public Collective {
+    void *buffer;
+    int count;
+    MPI_Datatype datatype;
+    int source;
+    int tag;
+    std::promise<void*> result;
+
+  public:
+    /* Construct an asynchronously run recv. The buffer is owned by
+     * the caller and must be kept valid until the future is set, indicating
+     * completion of the recv.
+     */ 
+    Recv(void *buffer, int count, MPI_Datatype datatype, int source, int tag,
+         MPI_Comm comm);
+
+    /* Get the future which will return when this recv is done, returns the
+     * pointer to the buffer containing the recv'd data
+     */
+    std::future<void*> future();
+    void start();
+
+  protected:
+    void onFinish() override;
+  };
 }
 
