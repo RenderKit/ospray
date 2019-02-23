@@ -41,8 +41,11 @@ namespace ospray {
 
         // Data members //
 
-       private:
+        // The communicator used for object messages, to avoid conflicting
+        // with other communication
+        mpicommon::Group group;
 
+       private:
         std::unordered_map<int, MessageHandler*> objectListeners;
       };
 
@@ -79,23 +82,8 @@ namespace ospray {
 
       // Singleton instance (hidden) and helper creation function /////////////
 
-      static DeletedUniquePtr<ObjectMessageHandler> handler;
+      static DeletedUniquePtr<ObjectMessageHandler> handler = nullptr;
       static bool handlerValid = false;
-
-      DeletedUniquePtr<ObjectMessageHandler> createHandler()
-      {
-        auto instance =
-            make_deleted_unique<ObjectMessageHandler>(
-              [](ObjectMessageHandler *_handler){
-                handlerValid = false; delete _handler;
-              }
-            );
-
-        // TODO: This needs to get off world.comm
-        maml::registerHandlerFor(world.comm, instance.get());
-        handlerValid = true;
-        return instance;
-      }
 
       // MessageHandler definitions ///////////////////////////////////////////
 
@@ -111,11 +99,29 @@ namespace ospray {
 
       // ospray::mpi::messaging definitions ///////////////////////////////////
 
+      void init(mpicommon::Group parentGroup)
+      {
+        if (handlerValid)
+          throw std::runtime_error("Error: Object Messaging was already init");
+
+        Group group = parentGroup.dup();
+        handler =
+            make_deleted_unique<ObjectMessageHandler>(
+              [](ObjectMessageHandler *_handler){
+                handlerValid = false; delete _handler;
+              }
+            );
+        handler->group = group;
+
+        maml::registerHandlerFor(group.comm, handler.get());
+        handlerValid = true;
+      }
+
       void registerMessageListener(int handleObjID,
                                    MessageHandler *listener)
       {
         if (!handlerValid)
-          handler = createHandler();
+          throw std::runtime_error("ObjectMessageHandler was not created!");
 
         handler->registerMessageListener(handleObjID, listener);
       }
@@ -136,8 +142,13 @@ namespace ospray {
       void sendTo(int globalRank, ObjectHandle object,
                   std::shared_ptr<Message> msg)
       {
+#ifdef DEBUG
+        if (!handlerValid)
+          throw std::runtime_error("ObjMessageHandler must be created before"
+                                   " sending object messages");
+#endif
         msg->tag = object.objID();
-        maml::sendTo(world.comm, globalRank, msg);
+        maml::sendTo(handler->group.comm, globalRank, msg);
       }
 
       bool asyncMessagingEnabled()

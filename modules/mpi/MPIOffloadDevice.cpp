@@ -439,6 +439,8 @@ namespace ospray {
         }
       }
 
+      // Only the master running at this point, workers go on to
+      // MPIOffloadWorker::runWorker
       auto OSPRAY_FORCE_COMPRESSION =
         utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
       // Turning on the compression past 64 ranks seems to be a good
@@ -448,6 +450,7 @@ namespace ospray {
             mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
       maml::init(enableCompression);
+      messaging::init(world);
       maml::start();
 
       /* set up fabric and stuff - by now all the communicators should

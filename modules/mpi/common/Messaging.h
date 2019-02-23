@@ -45,6 +45,13 @@ namespace ospray {
 
       // async point messaging interface //////////////////////////////////////
 
+      /* Register the object message handler and dispatcher to run all object
+       * fire & forget messaging on the specified group. The internal
+       * communicator used will be a dup'd from this group, to avoid
+       * conflicting with other messaging.
+       */
+      void init(mpicommon::Group parentGroup);
+
       void registerMessageListener(int handleObjID, MessageHandler *listener);
 
       void removeMessageListener(int handleObjID);

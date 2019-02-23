@@ -19,6 +19,7 @@
 #include <memory>
 #include <fstream>
 // ospray
+#include "mpiCommon/MPICommon.h"
 #include "render/Renderer.h"
 #include "camera/PerspectiveCamera.h"
 #include "../../common/DistributedModel.h"
@@ -71,6 +72,9 @@ namespace ospray {
       // Send my bounding boxes to other nodes, receive theirs for a
       // "full picture" of what geometries live on what nodes
       void exchangeModelBounds();
+
+      // The communicator to use for collectives in the renderer
+      mpicommon::Group mpiGroup;
 
       int numAoSamples;
       bool oneSidedLighting;

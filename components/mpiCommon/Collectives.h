@@ -40,24 +40,32 @@ namespace mpicommon {
    * in the future is to the receive buffer.
    */
   std::future<void*> gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-                            void *recvBuffer, int recvCount, MPI_Datatype recvType,  
+                            void *recvBuffer, int recvCount, MPI_Datatype recvType,
                             int root, MPI_Comm comm);
 
   /* Start an asynchronous gatherv and return the future to wait on for
    * completion of the gather. The called owns both the send and recv buffers,
    * and must keep them valid until the future completes. The pointer returned
    * in the future is to the receive buffer. The recvCounts and offsets
-   * vectors are copied into the struct. 
+   * vectors are copied into the struct.
    */
   std::future<void*> gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
                              void *recvBuffer, const std::vector<int> &recvCounts,
                              const std::vector<int> &recvOffsets,
                              MPI_Datatype recvType, int root, MPI_Comm comm);
 
+  /* Start an asynchronously run reduce. The send/recv buffers are owned
+   * by the caller and must be kept valid until the future is set, indicating
+   * completion of the reduction.
+   */
+  std::future<void*> reduce(const void *sendBuffer, void *recvBuffer, int count,
+                            MPI_Datatype datatype, MPI_Op operation, int root,
+                            MPI_Comm comm);
+
   /* Start an asynchronously run send. The buffer is owned by
    * the caller and must be kept valid until the future is set, indicating
    * completion of the send.
-   */ 
+   */
   std::future<const void*> send(const void *buffer, int count,
                                 MPI_Datatype datatype, int source, int tag,
                                 MPI_Comm comm);
@@ -65,7 +73,7 @@ namespace mpicommon {
   /* Start an asynchronously run recv. The buffer is owned by
    * the caller and must be kept valid until the future is set, indicating
    * completion of the recv.
-   */ 
+   */
   std::future<void*> recv(void *buffer, int count, MPI_Datatype datatype,
                           int source, int tag, MPI_Comm comm);
 
@@ -112,7 +120,7 @@ namespace mpicommon {
     /* Construct an asynchronously run broadcast. The buffer is owned by
      * the caller and must be kept valid until the future is set, indicating
      * completion of the broadcast.
-     */ 
+     */
     Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
           MPI_Comm comm);
 
@@ -140,9 +148,9 @@ namespace mpicommon {
     /* Construct an asynchronously run gather. The send/recv buffers are owned
      * by the caller and must be kept valid until the future is set, indicating
      * completion of the gather.
-     */ 
+     */
     Gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-           void *recvBuffer, int recvCount, MPI_Datatype recvType,  
+           void *recvBuffer, int recvCount, MPI_Datatype recvType,
            int root, MPI_Comm comm);
 
     /* Get the future which will receive the result of this gather.
@@ -174,10 +182,10 @@ namespace mpicommon {
      * by the caller and must be kept valid until the future is set, indicating
      * completion of the gatherv. The recvOffsets and counts vectors are copied
      * into the struct.
-     */ 
+     */
     Gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
            void *recvBuffer, const std::vector<int> &recvCounts,
-           const std::vector<int> &recvOffsets, MPI_Datatype recvType,  
+           const std::vector<int> &recvOffsets, MPI_Datatype recvType,
            int root, MPI_Comm comm);
 
     /* Get the future which will receive the result of this gatherv.
@@ -191,6 +199,34 @@ namespace mpicommon {
     void onFinish() override;
   };
 
+  class OSPRAY_MPI_INTERFACE Reduce : public Collective {
+    const void *sendBuffer;
+    void *recvBuffer;
+    int count;
+    MPI_Datatype datatype;
+    MPI_Op operation;
+    int root;
+
+    std::promise<void*> result;
+
+  public:
+    /* Construct an asynchronously run reduce. The send/recv buffers are owned
+     * by the caller and must be kept valid until the future is set, indicating
+     * completion of the reduction.
+     */
+    Reduce(const void *sendBuffer, void *recvBuffer, int count,
+           MPI_Datatype datatype, MPI_Op operation, int root, MPI_Comm comm);
+
+    /* Get the future which will receive the result of this reduction.
+     * The returned pointer will point to the recvBuffer containing the
+     * result of the reduction.
+     */
+    std::future<void*> future();
+    void start();
+
+  protected:
+    void onFinish() override;
+  };
 
   /* Send/recv are not really collectives, but are separate from the typical
    * fire and forget style of messaging that the mpicommon::Message uses.
@@ -211,7 +247,7 @@ namespace mpicommon {
     /* Construct an asynchronously run send. The buffer is owned by
      * the caller and must be kept valid until the future is set, indicating
      * completion of the send.
-     */ 
+     */
     Send(const void *buffer, int count, MPI_Datatype datatype, int dest,
          int tag, MPI_Comm comm);
 
@@ -237,7 +273,7 @@ namespace mpicommon {
     /* Construct an asynchronously run recv. The buffer is owned by
      * the caller and must be kept valid until the future is set, indicating
      * completion of the recv.
-     */ 
+     */
     Recv(void *buffer, int count, MPI_Datatype datatype, int source, int tag,
          MPI_Comm comm);
 

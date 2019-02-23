@@ -918,10 +918,12 @@ namespace ospray {
       << "Pre-gather compute time: " << preGatherDuration.count() << "ms\n";
 
     double maxWaitTime, minWaitTime;
-    MPI_Reduce(&localWaitTime, &maxWaitTime, 1, MPI_DOUBLE,
-        MPI_MAX, 0, mpiGroup.comm);
-    MPI_Reduce(&localWaitTime, &minWaitTime, 1, MPI_DOUBLE,
-        MPI_MIN, 0, mpiGroup.comm);
+    auto maxReduce = mpicommon::reduce(&localWaitTime, &maxWaitTime, 1,
+                                       MPI_DOUBLE, MPI_MAX, 0, mpiGroup.comm);
+    auto minReduce = mpicommon::reduce(&localWaitTime, &minWaitTime, 1,
+                                       MPI_DOUBLE, MPI_MIN, 0, mpiGroup.comm);
+    maxReduce.wait();
+    minReduce.wait();
 
     if (mpicommon::world.rank == 0) {
       os << "Max gather time: " << maxWaitTime << "ms\n"

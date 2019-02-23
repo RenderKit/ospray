@@ -128,6 +128,7 @@ namespace ospray {
             mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
         maml::init(enableCompression);
+        messaging::init(mpicommon::world);
         maml::start();
       }
 

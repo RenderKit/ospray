@@ -105,7 +105,10 @@ namespace ospray {
     // DistributedRaycastRenderer definitions /////////////////////////////////
 
     DistributedRaycastRenderer::DistributedRaycastRenderer()
-        : numAoSamples(0), shadowsEnabled(false), camera(nullptr)
+      : mpiGroup(mpicommon::world.dup()),
+      numAoSamples(0),
+      shadowsEnabled(false),
+      camera(nullptr)
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
@@ -114,12 +117,9 @@ namespace ospray {
       DETAILED_LOGGING = std::stoi(logging) != 0;
 
       if (DETAILED_LOGGING) {
-        int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        auto job_name =
-            utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
-        std::string statsLogFile =
-            job_name + std::string("-rank") + std::to_string(rank) + ".txt";
+        auto job_name = utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
+        std::string statsLogFile = job_name + std::string("-rank")
+          + std::to_string(mpiGroup.rank) + ".txt";
         statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
       }
     }
@@ -502,20 +502,15 @@ namespace ospray {
                 .count()};
         std::array<int, 3> maxTimes = {0};
         std::array<int, 3> minTimes = {0};
-        MPI_Reduce(localTimes.data(),
-                   maxTimes.data(),
-                   maxTimes.size(),
-                   MPI_INT,
-                   MPI_MAX,
-                   0,
-                   world.comm);
-        MPI_Reduce(localTimes.data(),
-                   minTimes.data(),
-                   minTimes.size(),
-                   MPI_INT,
-                   MPI_MIN,
-                   0,
-                   world.comm);
+        // TODO: We need our own comm for these collectives
+        auto maxReduce = mpicommon::reduce(localTimes.data(), maxTimes.data(),
+                                           maxTimes.size(), MPI_INT, MPI_MAX,
+                                           0, mpiGroup.comm);
+        auto minReduce = mpicommon::reduce(localTimes.data(), minTimes.data(),
+                                           minTimes.size(), MPI_INT, MPI_MIN,
+                                           0, mpiGroup.comm);
+        maxReduce.wait();
+        minReduce.wait();
 
         if (globalRank() == 0) {
           std::cout << "Frame: " << frameNumber << "\n"
@@ -600,25 +595,17 @@ namespace ospray {
         };
         std::array<int, 1> maxTimes = {0};
         std::array<int, 1> minTimes = {0};
-        MPI_Reduce(localTimes.data(),
-                   maxTimes.data(),
-                   maxTimes.size(),
-                   MPI_INT,
-                   MPI_MAX,
-                   0,
-                   MPI_COMM_WORLD);
-        MPI_Reduce(localTimes.data(),
-                   minTimes.data(),
-                   minTimes.size(),
-                   MPI_INT,
-                   MPI_MIN,
-                   0,
-                   MPI_COMM_WORLD);
-        int rank, worldSize;
-        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        // TODO: We need our own comm for these reductions
+        auto maxReduce = mpicommon::reduce(localTimes.data(), maxTimes.data(),
+                                           maxTimes.size(), MPI_INT, MPI_MAX,
+                                           0, mpiGroup.comm);
+        auto minReduce = mpicommon::reduce(localTimes.data(), minTimes.data(),
+                                           minTimes.size(), MPI_INT, MPI_MIN,
+                                           0, mpiGroup.comm);
+        maxReduce.wait();
+        minReduce.wait();
 
-        if (rank == 0) {
+        if (mpiGroup.rank == 0) {
           std::cout << "Frame: " << frameNumber << "\n"
                     << "Max render time: " << maxTimes[0] << "ms\n"
                     << "Min render time: " << minTimes[0] << "ms\n"
@@ -629,8 +616,8 @@ namespace ospray {
         *statsLog << "-----\nFrame: " << frameNumber << "\n";
         char hostname[1024] = {0};
         gethostname(hostname, 1023);
-        *statsLog << "Rank " << rank << " on " << hostname << " times:\n"
-                  << "\tRendering: " << localTimes[0] << "ms\n";
+        *statsLog << "Rank " << mpiGroup.rank << " on " << hostname << " times:\n"
+          << "\tRendering: " << localTimes[0] << "ms\n";
         logProfilingData(*statsLog, startRender, endRender);
       }
 
@@ -706,7 +693,7 @@ namespace ospray {
             }
             postStatusMsg(1) << "\n" << std::flush;
           }
-          mpicommon::world.barrier();
+          mpicommon::barrier(mpiGroup.comm).wait();
         }
       }
 #endif
