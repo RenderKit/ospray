@@ -642,7 +642,6 @@ namespace ospray {
       }
     }
 
-#if 1
     const size_t renderedTileBytes = nextTileWrite.load();
     size_t compressedSize = 0;
     if (renderedTileBytes > 0) {
@@ -678,10 +677,10 @@ namespace ospray {
     }
 
     compressedResults.resize(offset, 0);
-    MPI_CALL(Gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
-                     compressedResults.data(), gatherSizes.data(),
-                     compressedOffsets.data(), MPI_BYTE,
-                     masterRank(), mpiGroup.comm));
+    gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
+            compressedResults.data(), gatherSizes, compressedOffsets,
+            MPI_BYTE, masterRank(), mpiGroup.comm).wait();
+
     auto endGather = high_resolution_clock::now();
 
     if (IamTheMaster()) {
@@ -696,14 +695,6 @@ namespace ospray {
       auto endCompr = high_resolution_clock::now();
       decompressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
     }
-#else
-    auto startGather = high_resolution_clock::now();
-    MPI_CALL(Gatherv(tileGatherBuffer.data(), renderedTileBytes, MPI_BYTE,
-                     tileGatherResult.data(), tileBytesExpected.data(),
-                     processOffsets.data(), MPI_BYTE,
-                     masterRank(), mpiGroup.comm));
-    auto endGather = high_resolution_clock::now();
-#endif
     finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
 
     if (IamTheMaster()) {
@@ -753,10 +744,9 @@ namespace ospray {
     std::memcpy(sendBuffer.data() + tileIDs.size() * sizeof(vec2i),
                 tileErrors.data(), tileErrors.size() * sizeof(float));
 
-    MPI_CALL(Gatherv(sendBuffer.data(), sendBuffer.size(), MPI_BYTE,
-                     tileGatherResult.data(), tileBytesExpected.data(),
-                     processOffsets.data(), MPI_BYTE,
-                     masterRank(), mpiGroup.comm));
+    gatherv(sendBuffer.data(), sendBuffer.size(), MPI_BYTE,
+            tileGatherResult.data(), tileBytesExpected, processOffsets,
+            MPI_BYTE, masterRank(), mpiGroup.comm).wait();
 
     if (IamTheMaster()) {
       tasking::parallel_for(numGlobalRanks(), [&](int rank) {

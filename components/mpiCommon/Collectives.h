@@ -43,6 +43,17 @@ namespace mpicommon {
                             void *recvBuffer, int recvCount, MPI_Datatype recvType,  
                             int root, MPI_Comm comm);
 
+  /* Start an asynchronous gatherv and return the future to wait on for
+   * completion of the gather. The called owns both the send and recv buffers,
+   * and must keep them valid until the future completes. The pointer returned
+   * in the future is to the receive buffer. The recvCounts and offsets
+   * vectors are copied into the struct. 
+   */
+  std::future<void*> gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
+                             void *recvBuffer, const std::vector<int> &recvCounts,
+                             const std::vector<int> &recvOffsets,
+                             MPI_Datatype recvType, int root, MPI_Comm comm);
+
   // An asynchronously executed collective operation which can be run
   // on the MPI messaging layer
   class OSPRAY_MPI_INTERFACE Collective {
@@ -111,15 +122,50 @@ namespace mpicommon {
     std::promise<void*> result;
 
   public:
-    /* Construct an asynchronously run broadcast. The buffer is owned by
-     * the caller and must be kept valid until the future is set, indicating
-     * completion of the broadcast.
+    /* Construct an asynchronously run gather. The send/recv buffers are owned
+     * by the caller and must be kept valid until the future is set, indicating
+     * completion of the gather.
      */ 
     Gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
            void *recvBuffer, int recvCount, MPI_Datatype recvType,  
            int root, MPI_Comm comm);
 
     /* Get the future which will receive the result of this gather.
+     * The returned pointer will point to the recvBuffer containing the
+     * received data.
+     */
+    std::future<void*> future();
+    void start();
+
+  protected:
+    void onFinish() override;
+  };
+
+  class OSPRAY_MPI_INTERFACE Gatherv : public Collective {
+    const void *sendBuffer;
+    int sendCount;
+    MPI_Datatype sendType;
+
+    void *recvBuffer;
+    std::vector<int> recvCounts;
+    std::vector<int> recvOffsets;
+    MPI_Datatype recvType;
+
+    int root;
+    std::promise<void*> result;
+
+  public:
+    /* Construct an asynchronously run gatherv. The send/recv buffers are owned
+     * by the caller and must be kept valid until the future is set, indicating
+     * completion of the gatherv. The recvOffsets and counts vectors are copied
+     * into the struct.
+     */ 
+    Gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
+           void *recvBuffer, const std::vector<int> &recvCounts,
+           const std::vector<int> &recvOffsets, MPI_Datatype recvType,  
+           int root, MPI_Comm comm);
+
+    /* Get the future which will receive the result of this gatherv.
      * The returned pointer will point to the recvBuffer containing the
      * received data.
      */
