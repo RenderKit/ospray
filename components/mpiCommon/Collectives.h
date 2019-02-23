@@ -86,6 +86,7 @@ namespace mpicommon {
 
   public:
     Collective(MPI_Comm comm);
+    virtual ~Collective(){}
 
     // Start the collective
     virtual void start() = 0;
@@ -126,7 +127,7 @@ namespace mpicommon {
 
     // Get the future which will receive the result of this bcast
     std::future<void*> future();
-    void start();
+    void start() override;
 
   protected:
     void onFinish() override;
@@ -158,7 +159,7 @@ namespace mpicommon {
      * received data.
      */
     std::future<void*> future();
-    void start();
+    void start() override;
 
   protected:
     void onFinish() override;
@@ -193,7 +194,7 @@ namespace mpicommon {
      * received data.
      */
     std::future<void*> future();
-    void start();
+    void start() override;
 
   protected:
     void onFinish() override;
@@ -222,7 +223,7 @@ namespace mpicommon {
      * result of the reduction.
      */
     std::future<void*> future();
-    void start();
+    void start() override;
 
   protected:
     void onFinish() override;
@@ -255,7 +256,7 @@ namespace mpicommon {
      * pointer to the sent buffer
      */
     std::future<const void*> future();
-    void start();
+    void start() override;
 
   protected:
     void onFinish() override;
@@ -281,7 +282,7 @@ namespace mpicommon {
      * pointer to the buffer containing the recv'd data
      */
     std::future<void*> future();
-    void start();
+    void start() override;
 
   protected:
     void onFinish() override;

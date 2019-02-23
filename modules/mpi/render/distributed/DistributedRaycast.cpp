@@ -646,19 +646,33 @@ namespace ospray {
 
       for (int i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
-          // TODO: Must switch to mpicommon::bcast and use our own
-          // comm for collectives
-          messaging::bcast(i, myRegions);
-          std::copy(myRegions.begin(),
-                    myRegions.end(),
-                    std::back_inserter(allRegions));
+          int nRegions = myRegions.size();
+          auto sizeBcast = mpicommon::bcast(&nRegions, 1, MPI_INT, i,
+                                            mpiGroup.comm);
+
+          int nBytes = nRegions * sizeof(DistributedRegion);
+          auto regionBcast = mpicommon::bcast(myRegions.data(), nBytes,
+                                              MPI_BYTE, i, mpiGroup.comm);
+
+          std::copy(myRegions.begin(), myRegions.end(),
+              std::back_inserter(allRegions));
+
+          sizeBcast.wait();
+          regionBcast.wait();
 
           for (const auto &r : myRegions) {
             regionOwners[r.id].insert(i);
           }
         } else {
           std::vector<DistributedRegion> recv;
-          messaging::bcast(i, recv);
+          int nRegions = 0;
+          mpicommon::bcast(&nRegions, 1, MPI_INT, i, mpiGroup.comm).wait();
+          recv.resize(nRegions);
+
+          int nBytes = nRegions * sizeof(DistributedRegion);
+          mpicommon::bcast(recv.data(), nBytes, MPI_BYTE, i,
+                           mpiGroup.comm).wait();
+
           std::copy(recv.begin(), recv.end(), std::back_inserter(allRegions));
 
           for (const auto &r : recv) {
