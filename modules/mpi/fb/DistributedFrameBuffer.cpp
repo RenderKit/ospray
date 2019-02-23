@@ -666,9 +666,9 @@ namespace ospray {
     const int sendCompressedSize = static_cast<int>(compressedSize);
     // Get info about how many bytes each proc is sending us
     std::vector<int> gatherSizes(numGlobalRanks(), 0);
-    MPI_CALL(Gather(&sendCompressedSize, 1, MPI_INT,
-                    gatherSizes.data(), 1, MPI_INT,
-                    masterRank(), world.comm));
+    gather(&sendCompressedSize, 1, MPI_INT,
+           gatherSizes.data(), 1, MPI_INT,
+           masterRank(), mpiGroup.comm).wait();
 
     std::vector<int> compressedOffsets(numGlobalRanks(), 0);
     int offset = 0;
@@ -681,7 +681,7 @@ namespace ospray {
     MPI_CALL(Gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
                      compressedResults.data(), gatherSizes.data(),
                      compressedOffsets.data(), MPI_BYTE,
-                     masterRank(), world.comm));
+                     masterRank(), mpiGroup.comm));
     auto endGather = high_resolution_clock::now();
 
     if (IamTheMaster()) {
@@ -701,7 +701,7 @@ namespace ospray {
     MPI_CALL(Gatherv(tileGatherBuffer.data(), renderedTileBytes, MPI_BYTE,
                      tileGatherResult.data(), tileBytesExpected.data(),
                      processOffsets.data(), MPI_BYTE,
-                     masterRank(), world.comm));
+                     masterRank(), mpiGroup.comm));
     auto endGather = high_resolution_clock::now();
 #endif
     finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
@@ -730,9 +730,9 @@ namespace ospray {
 
     std::vector<int> tilesFromRank(numGlobalRanks(), 0);
     const int myTileCount = tileIDs.size();
-    MPI_CALL(Gather(&myTileCount, 1, MPI_INT,
-                    tilesFromRank.data(), 1, MPI_INT,
-                    masterRank(), world.comm));
+    gather(&myTileCount, 1, MPI_INT,
+           tilesFromRank.data(), 1, MPI_INT,
+           masterRank(), mpiGroup.comm).wait();
 
     std::vector<char> tileGatherResult;
     std::vector<int> tileBytesExpected(numGlobalRanks(), 0);
@@ -756,7 +756,7 @@ namespace ospray {
     MPI_CALL(Gatherv(sendBuffer.data(), sendBuffer.size(), MPI_BYTE,
                      tileGatherResult.data(), tileBytesExpected.data(),
                      processOffsets.data(), MPI_BYTE,
-                     masterRank(), world.comm));
+                     masterRank(), mpiGroup.comm));
 
     if (IamTheMaster()) {
       tasking::parallel_for(numGlobalRanks(), [&](int rank) {
@@ -928,9 +928,9 @@ namespace ospray {
 
     double maxWaitTime, minWaitTime;
     MPI_Reduce(&localWaitTime, &maxWaitTime, 1, MPI_DOUBLE,
-        MPI_MAX, 0, mpicommon::world.comm);
+        MPI_MAX, 0, mpiGroup.comm);
     MPI_Reduce(&localWaitTime, &minWaitTime, 1, MPI_DOUBLE,
-        MPI_MIN, 0, mpicommon::world.comm);
+        MPI_MIN, 0, mpiGroup.comm);
 
     if (mpicommon::world.rank == 0) {
       os << "Max gather time: " << maxWaitTime << "ms\n"

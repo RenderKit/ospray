@@ -34,6 +34,15 @@ namespace mpicommon {
    */
   std::future<void> barrier(MPI_Comm comm);
 
+  /* Start an asynchronous gather and return the future to wait on for
+   * completion of the gather. The called owns both the send and recv buffers,
+   * and must keep them valid until the future completes. The pointer returned
+   * in the future is to the receive buffer.
+   */
+  std::future<void*> gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
+                            void *recvBuffer, int recvCount, MPI_Datatype recvType,  
+                            int root, MPI_Comm comm);
+
   // An asynchronously executed collective operation which can be run
   // on the MPI messaging layer
   class OSPRAY_MPI_INTERFACE Collective {
@@ -88,5 +97,38 @@ namespace mpicommon {
   protected:
     void onFinish() override;
   };
+
+  class OSPRAY_MPI_INTERFACE Gather : public Collective {
+    const void *sendBuffer;
+    int sendCount;
+    MPI_Datatype sendType;
+
+    void *recvBuffer;
+    int recvCount;
+    MPI_Datatype recvType;
+
+    int root;
+    std::promise<void*> result;
+
+  public:
+    /* Construct an asynchronously run broadcast. The buffer is owned by
+     * the caller and must be kept valid until the future is set, indicating
+     * completion of the broadcast.
+     */ 
+    Gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
+           void *recvBuffer, int recvCount, MPI_Datatype recvType,  
+           int root, MPI_Comm comm);
+
+    /* Get the future which will receive the result of this gather.
+     * The returned pointer will point to the recvBuffer containing the
+     * received data.
+     */
+    std::future<void*> future();
+    void start();
+
+  protected:
+    void onFinish() override;
+  };
+
 }
 
