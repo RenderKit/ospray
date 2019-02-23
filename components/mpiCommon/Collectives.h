@@ -27,21 +27,23 @@ namespace mpicommon {
    * for completion. The caller owns the passed buffer, and must keep it
    * valid until the future completes.
    */
-  std::future<void*> bcast(void *buffer, int count, MPI_Datatype datatype,
-                           int root, MPI_Comm comm);
+  std::future<void*> OSPRAY_MPI_INTERFACE
+  bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+
   /* Start an asynchronous barrier and return the future to wait on for
    * completion of the barrier
    */
-  std::future<void> barrier(MPI_Comm comm);
+  std::future<void> OSPRAY_MPI_INTERFACE barrier(MPI_Comm comm);
 
   /* Start an asynchronous gather and return the future to wait on for
    * completion of the gather. The called owns both the send and recv buffers,
    * and must keep them valid until the future completes. The pointer returned
    * in the future is to the receive buffer.
    */
-  std::future<void*> gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-                            void *recvBuffer, int recvCount, MPI_Datatype recvType,
-                            int root, MPI_Comm comm);
+  std::future<void*> OSPRAY_MPI_INTERFACE
+  gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
+         void *recvBuffer, int recvCount, MPI_Datatype recvType,
+         int root, MPI_Comm comm);
 
   /* Start an asynchronous gatherv and return the future to wait on for
    * completion of the gather. The called owns both the send and recv buffers,
@@ -49,33 +51,36 @@ namespace mpicommon {
    * in the future is to the receive buffer. The recvCounts and offsets
    * vectors are copied into the struct.
    */
-  std::future<void*> gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-                             void *recvBuffer, const std::vector<int> &recvCounts,
-                             const std::vector<int> &recvOffsets,
-                             MPI_Datatype recvType, int root, MPI_Comm comm);
+  std::future<void*> OSPRAY_MPI_INTERFACE
+  gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
+          void *recvBuffer, const std::vector<int> &recvCounts,
+          const std::vector<int> &recvOffsets,
+          MPI_Datatype recvType, int root, MPI_Comm comm);
 
   /* Start an asynchronously run reduce. The send/recv buffers are owned
    * by the caller and must be kept valid until the future is set, indicating
    * completion of the reduction.
    */
-  std::future<void*> reduce(const void *sendBuffer, void *recvBuffer, int count,
-                            MPI_Datatype datatype, MPI_Op operation, int root,
-                            MPI_Comm comm);
+  std::future<void*> OSPRAY_MPI_INTERFACE
+  reduce(const void *sendBuffer, void *recvBuffer, int count,
+         MPI_Datatype datatype, MPI_Op operation, int root,
+         MPI_Comm comm);
 
   /* Start an asynchronously run send. The buffer is owned by
    * the caller and must be kept valid until the future is set, indicating
    * completion of the send.
    */
-  std::future<const void*> send(const void *buffer, int count,
-                                MPI_Datatype datatype, int source, int tag,
-                                MPI_Comm comm);
+  std::future<const void*> OSPRAY_MPI_INTERFACE
+  send(const void *buffer, int count, MPI_Datatype datatype,
+       int source, int tag, MPI_Comm comm);
 
   /* Start an asynchronously run recv. The buffer is owned by
    * the caller and must be kept valid until the future is set, indicating
    * completion of the recv.
    */
-  std::future<void*> recv(void *buffer, int count, MPI_Datatype datatype,
-                          int source, int tag, MPI_Comm comm);
+  std::future<void*> OSPRAY_MPI_INTERFACE
+  recv(void *buffer, int count, MPI_Datatype datatype,
+       int source, int tag, MPI_Comm comm);
 
   // An asynchronously executed collective operation which can be run
   // on the MPI messaging layer

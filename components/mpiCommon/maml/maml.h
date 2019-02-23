@@ -21,7 +21,7 @@
 #include "mpiCommon/Collectives.h"
 
 #ifdef _WIN32
-#  ifdef ospray_mpi_maml_EXPORTS
+#  ifdef ospray_mpi_common_EXPORTS
 #    define OSPRAY_MAML_INTERFACE __declspec(dllexport)
 #  else
 #    define OSPRAY_MAML_INTERFACE __declspec(dllimport)

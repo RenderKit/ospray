@@ -75,18 +75,4 @@ namespace mpicommon {
     bufBcast.wait();
   }
 
-  void MPIBcastFabric::waitForBcast(MPI_Request &request)
-  {
-    /*
-    for(;;) {
-      int size_bcast_done;
-      MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
-      if (size_bcast_done)
-        break;
-      std::this_thread::sleep_for(std::chrono::nanoseconds(250));
-    }
-    group.barrier();
-    */
-  }
-
 } // ::mpicommon

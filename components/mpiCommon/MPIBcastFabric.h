@@ -46,9 +46,6 @@ namespace mpicommon {
     virtual size_t read(void *&mem) override;
 
   private:
-    // wait for Bcast with non-blocking test, and barrier
-    void waitForBcast(MPI_Request &);
-
     std::vector<byte_t> buffer;
     Group   group;
     int     sendRank, recvRank;

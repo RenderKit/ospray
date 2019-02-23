@@ -31,7 +31,7 @@ target_link_libraries(ospray_mpi_common
   PRIVATE
     snappy
   PUBLIC
-    ${MPI_C_LIBRARIES}
+    ${MPI_CXX_LIBRARIES}
     ospray_common
 )
 
