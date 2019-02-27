@@ -244,7 +244,7 @@ namespace ospray {
 
       const auto fbSize = dfb->getNumPixels();
 
-      beginFrame(dfb);
+      beginFrame(dfb, scene);
 
       const size_t numRegions = allRegions.size();
       // Do a prepass and project each region's box to the screen to see
@@ -490,7 +490,7 @@ namespace ospray {
       auto endRender = high_resolution_clock::now();
 
       dfb->waitUntilFinished();
-      endFrame(nullptr);
+      endFrame(fb, nullptr);
 
       ProfilingPoint endComposite;
 
@@ -563,7 +563,7 @@ namespace ospray {
 
       const auto fbSize = fb->getNumPixels();
 
-      beginFrame(fb);
+      beginFrame(fb, scene);
 
       tasking::parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;
@@ -589,7 +589,7 @@ namespace ospray {
         fb->setTile(tile);
       });
 
-      endFrame(nullptr);
+      endFrame(fb, nullptr);
 
       ProfilingPoint endRender;
 

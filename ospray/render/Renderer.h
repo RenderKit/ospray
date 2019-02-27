@@ -62,10 +62,10 @@ namespace ospray {
 
       \returns pointer to per-frame data, or NULL if this does not apply
      */
-    virtual void *beginFrame(FrameBuffer *fb);
+    virtual void *beginFrame(FrameBuffer *fb, Model *world);
 
     /*! \brief called exactly once (on each node) at the end of each frame */
-    virtual void endFrame(void *perFrameData);
+    virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
     /*! \brief called by the load balancer to render one tile of "samples" */
     virtual void renderTile(FrameBuffer *fb,

@@ -103,6 +103,8 @@ namespace ospray {
   {
     Renderer::commit();
 
+    model = (Model*)getParamObject("model", getParamObject("world"));
+
     destroyGeometryLights();
     lightArray.clear();
     geometryLights = 0;

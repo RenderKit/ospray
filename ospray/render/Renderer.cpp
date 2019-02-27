@@ -82,14 +82,15 @@ namespace ospray {
                               jobID);
   }
 
-  void *Renderer::beginFrame(FrameBuffer *fb)
+  void *Renderer::beginFrame(FrameBuffer *fb, Model *world)
   {
     fb->beginFrame();
-    return ispc::Renderer_beginFrame(getIE(), fb->getIE());
+    return ispc::Renderer_beginFrame(getIE(), world->getIE());
   }
 
-  void Renderer::endFrame(void *perFrameData)
+  void Renderer::endFrame(FrameBuffer *fb, void *perFrameData)
   {
+    fb->setCompletedEvent(OSP_FRAME_FINISHED);
     ispc::Renderer_endFrame(getIE(), perFrameData);
   }
 

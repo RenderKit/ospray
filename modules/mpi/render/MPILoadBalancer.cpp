@@ -139,7 +139,7 @@ namespace ospray {
 
         dfb->startNewFrame(renderer->errorThreshold);
         // dfb->beginFrame(); is called by renderer->beginFrame:
-        void *perFrameData = renderer->beginFrame(fb);
+        void *perFrameData = renderer->beginFrame(fb, world);
 
         const auto fbSize = dfb->getNumPixels();
 
@@ -188,7 +188,7 @@ namespace ospray {
         auto endRender = high_resolution_clock::now();
 
         dfb->waitUntilFinished();
-        renderer->endFrame(perFrameData);
+        renderer->endFrame(dfb, perFrameData);
 
         ProfilingPoint endComposite;
 
@@ -432,7 +432,7 @@ namespace ospray {
 
         dfb->startNewFrame(renderer->errorThreshold);
         // dfb->beginFrame(); is called by renderer->beginFrame:
-        perFrameData = renderer->beginFrame(fb);
+        perFrameData = renderer->beginFrame(fb, world);
         frameActive  = true;
 
         dfb->waitUntilFinished();  // swap with below?
@@ -442,7 +442,7 @@ namespace ospray {
         }
         frameActive = false;
 
-        renderer->endFrame(perFrameData);
+        renderer->endFrame(dfb, perFrameData);
 
         dfb->endFrame(inf);
         return dfb->getVariance();

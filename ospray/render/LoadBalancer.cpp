@@ -30,7 +30,7 @@ namespace ospray {
                                             Camera * camera,
                                             Model * world)
   {
-    void *perFrameData = renderer->beginFrame(fb);
+    void *perFrameData = renderer->beginFrame(fb, world);
     bool cancel        = false;
     std::atomic<int> pixelsDone{0};
     const auto fbSize     = fb->getNumPixels();
@@ -73,10 +73,9 @@ namespace ospray {
 
     fb->setCompletedEvent(OSP_WORLD_RENDERED);
 
-    renderer->endFrame(perFrameData);
+    renderer->endFrame(fb, perFrameData);
 
     fb->endFrame(renderer->errorThreshold);
-    fb->setCompletedEvent(OSP_FRAME_FINISHED);
 
     return fb->getVariance();
   }
