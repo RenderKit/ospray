@@ -90,7 +90,7 @@ else()
   target_include_directories(ospray_common
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/ospcommon>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray>
     PRIVATE
       ${CMAKE_CURRENT_LIST_DIR}
   )
