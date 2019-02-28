@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.8.1 of OSPRay. For changes and new features see the
+This is release v1.8.2 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -317,11 +317,11 @@ prefixed by convention with “`--osp:`”) are understood:
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>--osp:verbose</code></td>
-<td style="text-align: left;">shortcut for <code>--osp:loglevel 1</code></td>
+<td style="text-align: left;">shortcut for <code>--osp:loglevel 1</code> and enable debug output on console</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>--osp:vv</code></td>
-<td style="text-align: left;">shortcut for <code>--osp:loglevel 2</code></td>
+<td style="text-align: left;">shortcut for <code>--osp:loglevel 2</code> and enable debug output on console</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>--osp:module:&lt;name&gt;</code></td>
@@ -473,14 +473,19 @@ environment variables for easy changes to OSPRay’s behavior without
 needing to change the application (variables are prefixed by convention
 with “`OSPRAY_`”):
 
-| Variable              | Description                       |
-|:----------------------|:----------------------------------|
-| OSPRAY\_THREADS       | equivalent to `--osp:numthreads`  |
-| OSPRAY\_LOG\_LEVEL    | equivalent to `--osp:loglevel`    |
-| OSPRAY\_LOG\_OUTPUT   | equivalent to `--osp:logoutput`   |
-| OSPRAY\_ERROR\_OUTPUT | equivalent to `--osp:erroroutput` |
-| OSPRAY\_DEBUG         | equivalent to `--osp:debug`       |
-| OSPRAY\_SET\_AFFINITY | equivalent to `--osp:setaffinity` |
+| Variable                | Description                       |
+|:------------------------|:----------------------------------|
+| OSPRAY\_THREADS         | equivalent to `--osp:numthreads`  |
+| OSPRAY\_LOG\_LEVEL      | equivalent to `--osp:loglevel`    |
+| OSPRAY\_LOG\_OUTPUT     | equivalent to `--osp:logoutput`   |
+| OSPRAY\_ERROR\_OUTPUT   | equivalent to `--osp:erroroutput` |
+| OSPRAY\_DEBUG           | equivalent to `--osp:debug`       |
+| OSPRAY\_SET\_AFFINITY   | equivalent to `--osp:setaffinity` |
+| OSPRAY\_LOAD\_MODULES   | equivalent to `--osp:module:`,    |
+|                         | can be a comma separated list     |
+|                         | of modules which will be loaded   |
+|                         | in order                          |
+| OSPRAY\_DEFAULT\_DEVICE | equivalent to `--osp:device:`     |
 
 : Environment variables interpreted by OSPRay.
 
@@ -2208,9 +2213,11 @@ below).
 <img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
 </figure>
 
-If present, the color component of [geometries](#geometries) is
-also used for the diffuse color `Kd` and the alpha component is also
-used for the opacity `d`.
+
+
+If present, the color component of [geometries](#geometries) is also
+used for the diffuse color `Kd` and the alpha component is also used for
+the opacity `d`.
 
 Note that currently only the path tracer implements colored transparency
 with `Tf`.
@@ -2232,6 +2239,8 @@ invert its green channel.
 <img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." width="60.0%" /><figcaption>Normal map representing an exalted square pyramidal frustum.</figcaption>
 </figure>
 
+
+
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with “`map_`”. The fetched texels
 are multiplied by the respective parameter value. Texturing requires
@@ -2245,6 +2254,8 @@ textures support [texture transformations](#texture2d-transformations).
 <figure>
 <img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
 </figure>
+
+
 
 #### Principled
 
@@ -2456,6 +2467,8 @@ transformations](#texture2d-transformations) are supported as well.
 <img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
 </figure>
 
+
+
 #### CarPaint
 
 The CarPaint material is a specialized version of the Principled
@@ -2589,6 +2602,8 @@ transformations](#texture2d-transformations) are supported as well.
 <img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
 </figure>
 
+
+
 #### Metal
 
 The [path tracer](#path-tracer) offers a physical metal, supporting
@@ -2675,6 +2690,8 @@ create notable edging effects.
 <img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" /><figcaption>Rendering of golden Metal material with textured roughness.</figcaption>
 </figure>
 
+
+
 #### Alloy
 
 The [path tracer](#path-tracer) offers an alloy material, which behaves
@@ -2704,6 +2721,8 @@ transformations](#texture2d-transformations) are supported as well.
 <img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
 </figure>
 
+
+
 #### Glass
 
 The [path tracer](#path-tracer) offers a realistic a glass material,
@@ -2727,6 +2746,8 @@ trough a glass of thickness `attenuationDistance`.
 <figure>
 <img src="https://ospray.github.io/images/material_Glass.jpg" alt="Rendering of a Glass material with orange attenuation." width="60.0%" /><figcaption>Rendering of a Glass material with orange attenuation.</figcaption>
 </figure>
+
+
 
 #### ThinGlass
 
@@ -2763,9 +2784,13 @@ attenuation and thus the material appearance.
 <img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" /><figcaption>Rendering of a ThinGlass material with red attenuation.</figcaption>
 </figure>
 
+
+
 <figure>
 <img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" /><figcaption>Example image of a colored window made with textured attenuation of the ThinGlass material.</figcaption>
 </figure>
+
+
 
 #### MetallicPaint
 
@@ -2800,6 +2825,8 @@ average, thus individual flakes are not visible.
 <img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" /><figcaption>Rendering of a MetallicPaint material.</figcaption>
 </figure>
 
+
+
 #### Luminous
 
 The [path tracer](#path-tracer) supports the Luminous material which
@@ -2812,6 +2839,8 @@ parameters of lights: [`color` and `intensity`](#lights).
 <figure>
 <img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" /><figcaption>Rendering of a yellow Luminous material.</figcaption>
 </figure>
+
+
 
 ### Texture
 
@@ -3025,13 +3054,19 @@ images below.
 <img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." width="60.0%" /><figcaption>Example image created with the perspective camera, featuring depth of field.</figcaption>
 </figure>
 
+
+
 <figure>
 <img src="https://ospray.github.io/images/camera_architectural.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
 </figure>
 
+
+
 <figure>
 <img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." width="90.0%" /><figcaption>Example 3D stereo image using <code>stereoMode</code> side-by-side.</figcaption>
 </figure>
+
+
 
 #### Orthographic Camera
 
@@ -3059,6 +3094,8 @@ and `imageEnd`, and both methods can be combined. In any case, the
 <img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." width="60.0%" /><figcaption>Example image created with the orthographic camera.</figcaption>
 </figure>
 
+
+
 #### Panoramic Camera
 
 The panoramic camera implements a simple camera without support for
@@ -3071,6 +3108,8 @@ by using the [general parameters](#cameras) understood by all cameras.
 <figure>
 <img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." width="90.0%" /><figcaption>Latitude / longitude map created with the panoramic camera.</figcaption>
 </figure>
+
+
 
 ### Picking
 
