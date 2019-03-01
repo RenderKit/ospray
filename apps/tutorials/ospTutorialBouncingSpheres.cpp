@@ -302,7 +302,7 @@ void updateSpheresCoordinates()
   static float t = 0.f;
 
   for (auto &s : g_spheres) {
-    const float g    = 9.81f;
+    const float g    = 1.62f;  // moon surface gravity
     const float T    = sqrtf(8.f * s.maxHeight / g);
     const float Vmax = sqrtf(2.f * s.maxHeight * g);
 
@@ -312,8 +312,19 @@ void updateSpheresCoordinates()
                  Vmax * tRemainder;
   }
 
-  // increment by fixed time interval, rather than actual elapsed time
-  t += 0.01f;
+  // increment based on actual elapsed time
+  static auto lastTime = std::chrono::high_resolution_clock::now();
+  auto nowTime         = std::chrono::high_resolution_clock::now();
+
+  float elaspedTimeSeconds =
+      float(std::chrono::duration_cast<std::chrono::microseconds>(nowTime -
+                                                                  lastTime)
+                .count()) /
+      1e6f;
+
+  t += elaspedTimeSeconds;
+
+  lastTime = nowTime;
 }
 
 void updateSpheresGeometry()
