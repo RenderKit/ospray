@@ -17,6 +17,7 @@
 //ospcommon
 #include "ospcommon/utility/OnScopeExit.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "ospcommon/utility/StringManip.h"
 #include "ospcommon/library.h"
 
 //ospray
@@ -68,7 +69,7 @@ inline std::string getPidString()
 
 using namespace ospray;
 
-inline Device *createMpiDevice(const std::string &type)
+static inline Device *createMpiDevice(const std::string &type)
 {
   Device *device = nullptr;
 
@@ -91,6 +92,18 @@ inline Device *createMpiDevice(const std::string &type)
   return device;
 }
 
+static inline void loadModulesFromEnvironmentVar()
+{
+  auto OSPRAY_LOAD_MODULES =
+    utility::getEnvVar<std::string>("OSPRAY_LOAD_MODULES");
+
+  if (OSPRAY_LOAD_MODULES) {
+    auto module_names = utility::split(OSPRAY_LOAD_MODULES.value(), ',');
+    for (auto &name : module_names)
+      loadLocalModule(name);
+  }
+}
+
 extern "C" OSPError ospInit(int *_ac, const char **_av)
 OSPRAY_CATCH_BEGIN
 {
@@ -99,6 +112,8 @@ OSPRAY_CATCH_BEGIN
   if (currentDevice) {
     throw std::runtime_error("device already exists [ospInit() called twice?]");
   }
+
+  loadModulesFromEnvironmentVar();
 
   auto OSP_MPI_LAUNCH = utility::getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
@@ -220,8 +235,16 @@ OSPRAY_CATCH_BEGIN
 
   // no device created on cmd line, yet, so default to ISPCDevice
   if (!deviceIsSet()) {
-    ospLoadModule("ispc");
-    currentDevice.reset(Device::createDevice("default"));
+    auto OSPRAY_DEFAULT_DEVICE =
+      utility::getEnvVar<std::string>("OSPRAY_DEFAULT_DEVICE");
+
+    if (OSPRAY_DEFAULT_DEVICE) {
+      auto device_name = OSPRAY_DEFAULT_DEVICE.value();
+      currentDevice.reset(Device::createDevice(device_name.c_str()));
+    } else {
+      ospLoadModule("ispc");
+      currentDevice.reset(Device::createDevice("default"));
+    }
   }
 
   ospray::initFromCommandLine(_ac,&_av);

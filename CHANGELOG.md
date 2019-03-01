@@ -1,9 +1,20 @@
 Version History
 ---------------
 
+### Changes in v1.8.2:
+
+-   CMake bug fix where external users of OSPRay needed CMake newer than
+    version 3.1
+-   Fix incorrect propagation of tasking system flags from an OSPRay
+    install
+-   Fix inconsistency between supported environment variables and
+    command line parameters passed to `ospInit()`
+    -   Missing variables were `OSPRAY_LOAD_MODULES` and
+        `OSPRAY_DEFAULT_DEVICE`
+
 ### Changes in v1.8.1:
 
--   CMake bugfix to remove full paths to dependencies in packages
+-   CMake bug fix to remove full paths to dependencies in packages
 
 ### Changes in v1.8.0:
 
