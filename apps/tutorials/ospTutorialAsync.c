@@ -144,7 +144,7 @@ int main(int argc, const char **argv) {
 
   // render one frame
   OSPFuture result = ospRenderFrameAsync(framebuffer, renderer, camera, world);
-  int isFinished = ospIsReady(result);
+  int isFinished = ospIsReady(result, OSP_TASK_FINISHED);
   printf("status of 'result' is %i\n", isFinished);
   printf("waiting on frame to finish...\n");
   ospWait(result, OSP_FRAME_FINISHED);

@@ -2185,6 +2185,14 @@ Currently only rendering can be invoked asynchronously. However, future
 releases of OSPRay may add more asynchronous versions of API calls (and
 thus return `OSPFuture`).
 
+Applications can query whether particular events are complete with
+
+    int ospIsReady(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
+
+As the given running task runs (as tracked by the `OSPFuture`),
+applications can query a boolean [0,1] result if the passed event has
+been completed.
+
 ### Asynchronous Rendering and ospCommit()
 
 The use of either `ospRenderFrame` or `ospRenderFrameAsync` requires

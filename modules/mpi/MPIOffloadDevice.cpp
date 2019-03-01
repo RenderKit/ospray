@@ -819,11 +819,11 @@ namespace ospray {
       return (OSPFuture)(int64)futureHandle;
     }
 
-    int MPIOffloadDevice::isReady(OSPFuture _task)
+    int MPIOffloadDevice::isReady(OSPFuture _task, OSPSyncEvent event)
     {
       auto handle = (ObjectHandle&)_task;
       auto *task = (QueryableTask *)handle.lookup();
-      return task->isFinished();
+      return task->isFinished(event);
     }
 
     void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)

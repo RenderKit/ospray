@@ -32,7 +32,7 @@ namespace ospray {
       SynchronousRenderTask(FrameBuffer *);
       ~SynchronousRenderTask() override = default;
 
-      bool isFinished() override;
+      bool isFinished(OSPSyncEvent event) override;
       void wait(OSPSyncEvent event) override;
       void cancel() override;
       float getProgress() override;
@@ -48,7 +48,7 @@ namespace ospray {
     {
     }
 
-    inline bool SynchronousRenderTask::isFinished()
+    inline bool SynchronousRenderTask::isFinished(OSPSyncEvent /*event*/)
     {
       return true;
     }

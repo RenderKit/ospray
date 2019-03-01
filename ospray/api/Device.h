@@ -189,7 +189,7 @@ namespace ospray {
                                          OSPCamera,
                                          OSPModel) = 0;
 
-      virtual int isReady(OSPFuture) = 0;
+      virtual int isReady(OSPFuture, OSPSyncEvent) = 0;
 
       virtual void wait(OSPFuture, OSPSyncEvent) = 0;
 

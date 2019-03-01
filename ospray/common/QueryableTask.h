@@ -26,7 +26,8 @@ namespace ospray {
     QueryableTask()           = default;
     ~QueryableTask() override = default;
 
-    virtual bool isFinished()       = 0;
+    virtual bool isFinished(OSPSyncEvent = OSP_TASK_FINISHED) = 0;
+
     virtual void wait(OSPSyncEvent) = 0;
     virtual void cancel()           = 0;
     virtual float getProgress()     = 0;

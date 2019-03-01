@@ -79,6 +79,11 @@ namespace ospray {
     stagesCompleted = event;
   }
 
+  OSPSyncEvent FrameBuffer::getLatestCompleteEvent() const
+  {
+    return stagesCompleted;
+  }
+
   void FrameBuffer::waitForEvent(OSPSyncEvent event) const
   {
     // TODO: condition variable to sleep calling thread instead of spinning?

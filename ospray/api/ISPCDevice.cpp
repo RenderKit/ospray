@@ -372,10 +372,10 @@ namespace ospray {
       return (OSPFuture)f;
     }
 
-    int ISPCDevice::isReady(OSPFuture _task)
+    int ISPCDevice::isReady(OSPFuture _task, OSPSyncEvent event)
     {
       auto *task = (QueryableTask *)_task;
-      return task->isFinished();
+      return task->isFinished(event);
     }
 
     void ISPCDevice::wait(OSPFuture _task, OSPSyncEvent event)

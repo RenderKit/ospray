@@ -29,7 +29,8 @@ namespace ospray {
     RenderTask(FrameBuffer *, std::function<float()> fcn);
     ~RenderTask() override = default;
 
-    bool isFinished() override;
+    bool isFinished(OSPSyncEvent event = OSP_TASK_FINISHED) override;
+
     void wait(OSPSyncEvent event) override;
     void cancel() override;
     float getProgress() override;
@@ -45,9 +46,9 @@ namespace ospray {
   {
   }
 
-  inline bool RenderTask::isFinished()
+  inline bool RenderTask::isFinished(OSPSyncEvent event)
   {
-    return finished();
+    return finished() || fb->getLatestCompleteEvent() >= event;
   }
 
   inline void RenderTask::wait(OSPSyncEvent event)

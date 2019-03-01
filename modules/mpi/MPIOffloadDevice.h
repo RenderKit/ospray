@@ -179,7 +179,7 @@ namespace ospray {
                                  OSPCamera,
                                  OSPModel) override;
 
-      int isReady(OSPFuture) override;
+      int isReady(OSPFuture, OSPSyncEvent) override;
 
       void wait(OSPFuture, OSPSyncEvent) override;
 

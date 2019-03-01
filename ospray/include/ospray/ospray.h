@@ -357,7 +357,7 @@ extern "C" {
   OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
 
   /* Ask if all events tracked by an OSPFuture handle have been completed */
-  OSPRAY_INTERFACE int ospIsReady(OSPFuture);
+  OSPRAY_INTERFACE int ospIsReady(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
 
   /* Wait on a specific event */
   OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));

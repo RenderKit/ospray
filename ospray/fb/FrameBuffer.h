@@ -74,6 +74,7 @@ namespace ospray {
     virtual std::string toString() const override;
 
     void setCompletedEvent(OSPSyncEvent event);
+    OSPSyncEvent getLatestCompleteEvent() const;
     void waitForEvent(OSPSyncEvent event) const;
 
     void reportProgress(float newValue);
@@ -107,11 +108,11 @@ namespace ospray {
     float frameVariance{0.f};
 
     std::atomic<float> frameProgress{1.f};
-    std::atomic<bool>  cancelRender{false};
+    std::atomic<bool> cancelRender{false};
 
-    std::atomic<OSPSyncEvent> stagesCompleted {OSP_FRAME_FINISHED};
+    std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
-   public: // TODO: make this private!
+   public:  // TODO: make this private!
     Ref<PixelOp::Instance> pixelOp;
   };
 }  // namespace ospray

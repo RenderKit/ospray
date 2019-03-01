@@ -911,10 +911,10 @@ extern "C" OSPFuture ospRenderFrameAsync(OSPFrameBuffer fb,
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" int ospIsReady(OSPFuture f) OSPRAY_CATCH_BEGIN
+extern "C" int ospIsReady(OSPFuture f, OSPSyncEvent event) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().isReady(f);
+  return currentDevice().isReady(f, event);
 }
 OSPRAY_CATCH_END(1)
 
