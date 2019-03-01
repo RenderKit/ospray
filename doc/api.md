@@ -42,9 +42,11 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:loglevel <n>`       set logging level, default `0`; increasing `n` means
                              increasingly verbose log messages
 
-  `--osp:verbose`            shortcut for `--osp:loglevel 1`
+  `--osp:verbose`            shortcut for `--osp:loglevel 1` and enable debug
+                             output on console
 
-  `--osp:vv`                 shortcut for `--osp:loglevel 2`
+  `--osp:vv`                 shortcut for `--osp:loglevel 2` and enable debug
+                             output on console
 
   `--osp:module:<name>`      load a module during initialization; equivalent to
                              calling `ospLoadModule(name)`
@@ -153,15 +155,20 @@ environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-  Variable            Description
-  ------------------- ---------------------------------
-  OSPRAY_THREADS      equivalent to `--osp:numthreads`
-  OSPRAY_LOG_LEVEL    equivalent to `--osp:loglevel`
-  OSPRAY_LOG_OUTPUT   equivalent to `--osp:logoutput`
-  OSPRAY_ERROR_OUTPUT equivalent to `--osp:erroroutput`
-  OSPRAY_DEBUG        equivalent to `--osp:debug`
-  OSPRAY_SET_AFFINITY equivalent to `--osp:setaffinity`
-  ------------------- ---------------------------------
+  Variable              Description
+  --------------------- ---------------------------------
+  OSPRAY_THREADS        equivalent to `--osp:numthreads`
+  OSPRAY_LOG_LEVEL      equivalent to `--osp:loglevel`
+  OSPRAY_LOG_OUTPUT     equivalent to `--osp:logoutput`
+  OSPRAY_ERROR_OUTPUT   equivalent to `--osp:erroroutput`
+  OSPRAY_DEBUG          equivalent to `--osp:debug`
+  OSPRAY_SET_AFFINITY   equivalent to `--osp:setaffinity`
+  OSPRAY_LOAD_MODULES   equivalent to `--osp:module:`,
+                        can be a comma separated list
+                        of modules which will be loaded
+                        in order
+  OSPRAY_DEFAULT_DEVICE equivalent to `--osp:device:`
+  --------------------- ---------------------------------
   : Environment variables interpreted by OSPRay.
 
 ### Error Handling and Status Messages

@@ -113,6 +113,8 @@ set(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@)
 set(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
 set(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@)
 
+set(OSPRAY_TASKING_SYSTEM      @OSPRAY_TASKING_SYSTEM@)
+
 set(OSPRAY_TASKING_TBB         @OSPRAY_TASKING_TBB@)
 set(OSPRAY_TASKING_CILK        @OSPRAY_TASKING_CILK@)
 set(OSPRAY_TASKING_OPENMP      @OSPRAY_TASKING_OPENMP@)
@@ -120,7 +122,8 @@ set(OSPRAY_TASKING_INTERNAL    @OSPRAY_TASKING_INTERNAL@)
 set(OSPRAY_TASKING_LIBDISPATCH @OSPRAY_TASKING_LIBDISPATCH@)
 set(OSPRAY_TASKING_DEBUG       @OSPRAY_TASKING_DEBUG@)
 
-set(OSPRAY_TASKING_DEFINITIONS @TASKING_SYSTEM_DEFINITIONS@)
+set(OSPRAY_TASKING_DEFINITIONS @OSPRAY_TASKING_DEFINITIONS@)
+set(OSPRAY_TASKING_OPTIONS     @OSPRAY_TASKING_OPTIONS@)
 
 set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
 set(OSPRAY_ISPC_ADDRESSING     @OSPRAY_ISPC_ADDRESSING@)
@@ -172,6 +175,7 @@ if (OSPRAY_TASKING_TBB)
               "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
     endif()
   endif()
+  set (OSPRAY_TASKING_LIBS ${TBB_LIBRARIES})
 endif()
 
 ospray_create_tasking_target()
@@ -180,12 +184,13 @@ ospray_create_tasking_target()
 if (OSPRAY_INSTALL_DEPENDENCIES)
   # Embree installed with OSPRay
   file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*)
-  ospray_create_embree_target()
 else()
   # Find existing Embree on the machine
   ospray_find_embree(${EMBREE_VERSION_REQUIRED})
   ospray_verify_embree_features()
 endif()
+
+ospray_create_embree_target()
 
 list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
 
@@ -210,8 +215,10 @@ set(OSPRAY_TESTING_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_testing${LIBRARY_SUFFIX}
 include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 
 # Add missing targets to libraries
-target_link_libraries(ospray::ospray_common INTERFACE ospray_tasking)
-target_link_libraries(ospray::ospray_module_ispc INTERFACE embree)
+set_target_properties(ospray::ospray_common PROPERTIES
+  INTERFACE_LINK_LIBRARIES ospray_tasking)
+set_target_properties(ospray::ospray_module_ispc PROPERTIES
+  INTERFACE_LINK_LIBRARIES embree)
 
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
 set(OSPRAY_LIBRARIES ospray::ospray)

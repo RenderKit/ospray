@@ -312,8 +312,6 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   target_link_libraries(ospray_module_ispc
   PUBLIC
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${CMAKE_DL_LIBS}
     ospray
     $<BUILD_INTERFACE:embree>
   )

@@ -117,8 +117,8 @@ general app-parameters:
         camera up xyz
     -vi [float] [float] [float]
         camera direction xyz
-    -vf [float]
-        camera field of view
+    -fv [float]
+        camera field of view (of height, in degrees)
     -ar [float]
         camera aperture radius
     --aces
