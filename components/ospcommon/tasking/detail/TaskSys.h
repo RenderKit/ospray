@@ -17,89 +17,24 @@
 #pragma once
 
 #include "../../common.h"
-// stl
-#include <atomic>
-#include <condition_variable>
-#include <mutex>
+// enkiTS
+#include "enkiTS/TaskScheduler.h"
 
 namespace ospcommon {
   namespace tasking {
     namespace detail {
 
-      enum ScheduleOrder
-      {
-        /*! schedule job to the END of the job queue, meaning it'll get
-            pulled only after all the ones already in the queue */
-        BACK_OF_QUEUE,
-        /*! schedule job to the FRONT of the queue, meaning it'll likely
-            get processed even before other jobs that are already in the
-            queue */
-        FRONT_OF_QUEUE
-      };
-
-      struct OSPCOMMON_INTERFACE __aligned(64) Task
-      {
-        Task(bool needsToBeDeleted);
-        virtual ~Task() = default;
-
-        // ------------------------------------------------------------------
-        // interface for scheduling a new task into the task system
-        // ------------------------------------------------------------------
-
-        //! wait for the task to complete, optionally (by default) helping
-        //! to actually work on completing this task.
-        void wait();
-
-        // ------------------------------------------------------------------
-        // callback used to define what the task is doing
-        // ------------------------------------------------------------------
-
-        virtual void run(int jobID) = 0;
-
-        // ------------------------------------------------------------------
-        // internal data for the tasking systme to manage the task
-        // ------------------------------------------------------------------
-
-        //! work on task until no more useful job available on this task
-        void workOnIt();
-
-        // Data members //
-
-        __aligned(64) std::atomic_int numJobsCompleted;
-        __aligned(64) std::atomic_int numJobsStarted;
-        int numJobsInTask{0};
-
-        enum Status
-        {
-          INITIALIZING,
-          SCHEDULED,
-          ACTIVE,
-          COMPLETED
-        };
-        std::mutex __aligned(64) mutex;
-        Status volatile __aligned(64) status{INITIALIZING};
-        std::condition_variable __aligned(64) allDependenciesFulfilledCond;
-        std::condition_variable __aligned(64) allJobsCompletedCond;
-
-        __aligned(64) Task *volatile next;
-        bool willNeedToBeDeleted{true};
-      };
-
       // Public interface to the tasking system ///////////////////////////////
 
-      /*! \brief initialize the task system with given number of worker
-          tasks.
+      using Task = enki::ITaskSet;
 
-          numThreads==-1 means 'use all that are available; numThreads=0
-          means 'no worker thread, assume that whoever calls wait() will
-          do the work */
       void OSPCOMMON_INTERFACE initTaskSystemInternal(int numThreads = -1);
 
       int OSPCOMMON_INTERFACE numThreadsTaskSystemInternal();
 
-      //! schedule the given task with the given number of sub-jobs.
-      void OSPCOMMON_INTERFACE scheduleTaskInternal(
-          Task *task, int numJobs, ScheduleOrder order = BACK_OF_QUEUE);
+      void OSPCOMMON_INTERFACE scheduleTaskInternal(Task *task);
+
+      void OSPCOMMON_INTERFACE waitInternal(Task *task);
 
       template <typename TASK_T>
       inline void parallel_for_internal(int nTasks, TASK_T &&fcn)
@@ -107,16 +42,24 @@ namespace ospcommon {
         struct LocalTask : public Task
         {
           const TASK_T &t;
-          LocalTask(TASK_T &&fcn) : Task(false), t(std::forward<TASK_T>(fcn)) {}
-          void run(int taskIndex) override
+          LocalTask(int nunTasks, TASK_T &&fcn)
+
+              : Task(nunTasks), t(std::forward<TASK_T>(fcn))
           {
-            t(taskIndex);
+          }
+
+          ~LocalTask() override = default;
+
+          void ExecuteRange(enki::TaskSetPartition tp, uint32_t) override
+          {
+            for (auto i = tp.start; i < tp.end; ++i)
+              t(i);
           }
         };
 
-        LocalTask task(std::forward<TASK_T>(fcn));
-        scheduleTaskInternal(&task, nTasks);
-        task.wait();
+        LocalTask task(nTasks, std::forward<TASK_T>(fcn));
+        scheduleTaskInternal(&task);
+        waitInternal(&task);
       }
 
       template <typename TASK_T>
@@ -125,15 +68,20 @@ namespace ospcommon {
         struct LocalTask : public Task
         {
           TASK_T t;
-          LocalTask(TASK_T &&fcn) : Task(true), t(std::forward<TASK_T>(fcn)) {}
-          void run(int) override
+
+          LocalTask(TASK_T &&fcn) : Task(1), t(std::forward<TASK_T>(fcn)) {}
+
+          ~LocalTask() override = default;
+
+          void ExecuteRange(enki::TaskSetPartition, uint32_t) override
           {
             t();
+            delete this;
           }
         };
 
         auto *task = new LocalTask(std::forward<TASK_T>(fcn));
-        scheduleTaskInternal(task, 1, FRONT_OF_QUEUE);
+        scheduleTaskInternal(task);
       }
 
     }  // namespace detail

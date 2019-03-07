@@ -42,6 +42,7 @@ else()
     networking/Socket.cpp
     networking/SocketFabric.cpp
 
+    tasking/detail/enkiTS/TaskScheduler.cpp
     tasking/detail/parallel_for.inl
     tasking/detail/schedule.inl
     tasking/detail/tasking_system_handle.cpp
