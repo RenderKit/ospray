@@ -17,17 +17,17 @@
 #pragma once
 
 #include <ostream>
-#include "mpiCommon/MPICommon.h"
 #include "mpiCommon/Collectives.h"
+#include "mpiCommon/MPICommon.h"
 
 #ifdef _WIN32
-#  ifdef ospray_mpi_common_EXPORTS
-#    define OSPRAY_MAML_INTERFACE __declspec(dllexport)
-#  else
-#    define OSPRAY_MAML_INTERFACE __declspec(dllimport)
-#  endif
+#ifdef ospray_mpi_common_EXPORTS
+#define OSPRAY_MAML_INTERFACE __declspec(dllexport)
 #else
-#  define OSPRAY_MAML_INTERFACE
+#define OSPRAY_MAML_INTERFACE __declspec(dllimport)
+#endif
+#else
+#define OSPRAY_MAML_INTERFACE
 #endif
 
 namespace maml {
@@ -44,6 +44,7 @@ namespace maml {
   struct MessageHandler
   {
     virtual void incoming(const std::shared_ptr<Message> &message) = 0;
+
     virtual ~MessageHandler() = default;
   };
 
@@ -85,7 +86,6 @@ namespace maml {
       if they are already in flight */
   OSPRAY_MAML_INTERFACE void stop();
 
-
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this
       function has been called maml has full ownership of this message,
@@ -113,4 +113,4 @@ namespace maml {
   /*! Schedule a collective to be run on the messaging layer */
   OSPRAY_MAML_INTERFACE void queueCollective(std::shared_ptr<Collective> col);
 
-} // ::maml
+}  // namespace maml

@@ -35,33 +35,37 @@ namespace mpicommon {
 
   /*! constructor. sets the 'comm', 'rank', and 'size' fields */
   Group::Group(const Group &other)
-    : containsMe(other.containsMe), comm(other.comm),
-      rank(other.rank), size(other.size)
+      : containsMe(other.containsMe),
+        comm(other.comm),
+        rank(other.rank),
+        size(other.size)
   {
   }
 
   void Group::makeIntraComm()
   {
-    MPI_CALL(Comm_rank(comm,&rank));
-    MPI_CALL(Comm_size(comm,&size));
+    MPI_CALL(Comm_rank(comm, &rank));
+    MPI_CALL(Comm_size(comm, &size));
     containsMe = true;
   }
 
   void Group::makeIntraComm(MPI_Comm _comm)
   {
-    this->comm = _comm; makeIntraComm();
+    this->comm = _comm;
+    makeIntraComm();
   }
 
   void Group::makeInterComm()
   {
     containsMe = false;
-    rank = MPI_ROOT;
+    rank       = MPI_ROOT;
     MPI_CALL(Comm_remote_size(comm, &size));
   }
 
   void Group::makeInterComm(MPI_Comm _comm)
   {
-    this->comm = _comm; makeInterComm();
+    this->comm = _comm;
+    makeInterComm();
   }
 
   void Group::barrier() const
@@ -77,7 +81,7 @@ namespace mpicommon {
       rank = size = -1;
     } else {
       int isInter;
-      MPI_CALL(Comm_test_inter(comm,&isInter));
+      MPI_CALL(Comm_test_inter(comm, &isInter));
       if (isInter)
         makeInterComm(comm);
       else
@@ -89,7 +93,7 @@ namespace mpicommon {
   Group Group::dup() const
   {
     MPI_Comm duped;
-    MPI_CALL(Comm_dup(comm,&duped));
+    MPI_CALL(Comm_dup(comm, &duped));
     return Group(duped);
   }
 
@@ -98,7 +102,7 @@ namespace mpicommon {
   /*! create a new message with given amount of bytes in storage */
   Message::Message(size_t size) : size(size)
   {
-    data = (ospcommon::byte_t*)malloc(size);
+    data = (ospcommon::byte_t *)malloc(size);
   }
 
   /*! create a new message with given amount of storage, and copy
@@ -111,12 +115,11 @@ namespace mpicommon {
     memcpy(data, copyMem, size);
   }
 
-    /*! create a new message (addressed to given comm:rank) with given
-        amount of storage, and copy memory from the given address to
-        it */
-  Message::Message(MPI_Comm comm, int rank,
-                   const void *copyMem, size_t size)
-    : Message(copyMem, size)
+  /*! create a new message (addressed to given comm:rank) with given
+      amount of storage, and copy memory from the given address to
+      it */
+  Message::Message(MPI_Comm comm, int rank, const void *copyMem, size_t size)
+      : Message(copyMem, size)
   {
     this->comm = comm;
     this->rank = rank;
@@ -141,16 +144,17 @@ namespace mpicommon {
     int provided = 0;
     if (!initialized) {
       /* MPI not initialized by the app - it's up to us */
-      MPI_CALL(Init_thread(ac, const_cast<char ***>(&av),
-                           MPI_THREAD_MULTIPLE, &provided));
+      MPI_CALL(Init_thread(
+          ac, const_cast<char ***>(&av), MPI_THREAD_MULTIPLE, &provided));
     } else {
       /* MPI was already initialized by the app that called us! */
       MPI_Query_thread(&provided);
     }
     if (provided != MPI_THREAD_MULTIPLE && provided != MPI_THREAD_SERIALIZED) {
-      throw std::runtime_error("MPI initialization error: The MPI runtime must"
-                               " support either MPI_THREAD_MULTIPLE or"
-                               " MPI_THREAD_SERIALIZED.");
+      throw std::runtime_error(
+          "MPI initialization error: The MPI runtime must"
+          " support either MPI_THREAD_MULTIPLE or"
+          " MPI_THREAD_SERIALIZED.");
     }
     mpiIsThreaded = provided == MPI_THREAD_MULTIPLE;
 
@@ -171,4 +175,4 @@ namespace mpicommon {
     }
   }
 
-} // ::mpicommon
+}  // namespace mpicommon

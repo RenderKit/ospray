@@ -14,12 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "maml/maml.h"
 #include "Collectives.h"
+#include "maml/maml.h"
 
 namespace mpicommon {
-  std::future<void*> bcast(void *buffer, int count, MPI_Datatype datatype,
-                           int root, MPI_Comm comm)
+
+  std::future<void *> bcast(
+      void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
   {
     auto col = std::make_shared<Bcast>(buffer, count, datatype, root, comm);
     maml::queueCollective(col);
@@ -33,62 +34,93 @@ namespace mpicommon {
     return col->future();
   }
 
-  std::future<void*> gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-                            void *recvBuffer, int recvCount, MPI_Datatype recvType,
-                            int root, MPI_Comm comm)
+  std::future<void *> gather(const void *sendBuffer,
+                             int sendCount,
+                             MPI_Datatype sendType,
+                             void *recvBuffer,
+                             int recvCount,
+                             MPI_Datatype recvType,
+                             int root,
+                             MPI_Comm comm)
   {
-    auto col = std::make_shared<Gather>(sendBuffer, sendCount, sendType,
-                                        recvBuffer, recvCount, recvType,
-                                        root, comm);
+    auto col = std::make_shared<Gather>(sendBuffer,
+                                        sendCount,
+                                        sendType,
+                                        recvBuffer,
+                                        recvCount,
+                                        recvType,
+                                        root,
+                                        comm);
     maml::queueCollective(col);
     return col->future();
   }
 
-  std::future<void*> gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-                             void *recvBuffer, const std::vector<int> &recvCounts,
-                             const std::vector<int> &recvOffsets,
-                             MPI_Datatype recvType, int root, MPI_Comm comm)
+  std::future<void *> gatherv(const void *sendBuffer,
+                              int sendCount,
+                              MPI_Datatype sendType,
+                              void *recvBuffer,
+                              const std::vector<int> &recvCounts,
+                              const std::vector<int> &recvOffsets,
+                              MPI_Datatype recvType,
+                              int root,
+                              MPI_Comm comm)
   {
-    auto col = std::make_shared<Gatherv>(sendBuffer, sendCount, sendType,
-                                         recvBuffer, recvCounts, recvOffsets,
-                                         recvType, root, comm);
+    auto col = std::make_shared<Gatherv>(sendBuffer,
+                                         sendCount,
+                                         sendType,
+                                         recvBuffer,
+                                         recvCounts,
+                                         recvOffsets,
+                                         recvType,
+                                         root,
+                                         comm);
     maml::queueCollective(col);
     return col->future();
   }
 
-  std::future<const void*> send(const void *buffer, int count,
-                                MPI_Datatype datatype, int dest, int tag,
-                                MPI_Comm comm)
+  std::future<const void *> send(const void *buffer,
+                                 int count,
+                                 MPI_Datatype datatype,
+                                 int dest,
+                                 int tag,
+                                 MPI_Comm comm)
   {
-    auto col = std::make_shared<Send>(buffer, count, datatype, dest,
-                                      tag, comm);
+    auto col = std::make_shared<Send>(buffer, count, datatype, dest, tag, comm);
     maml::queueCollective(col);
     return col->future();
   }
 
-  std::future<void*> recv(void *buffer, int count, MPI_Datatype datatype,
-                          int source, int tag, MPI_Comm comm)
+  std::future<void *> recv(void *buffer,
+                           int count,
+                           MPI_Datatype datatype,
+                           int source,
+                           int tag,
+                           MPI_Comm comm)
   {
-    auto col = std::make_shared<Recv>(buffer, count, datatype, source,
-                                      tag, comm);
+    auto col =
+        std::make_shared<Recv>(buffer, count, datatype, source, tag, comm);
     maml::queueCollective(col);
     return col->future();
   }
 
-  std::future<void*> reduce(const void *sendBuffer, void *recvBuffer, int count,
-                            MPI_Datatype datatype, MPI_Op operation, int root,
-                            MPI_Comm comm)
+  std::future<void *> reduce(const void *sendBuffer,
+                             void *recvBuffer,
+                             int count,
+                             MPI_Datatype datatype,
+                             MPI_Op operation,
+                             int root,
+                             MPI_Comm comm)
   {
-    auto col = std::make_shared<Reduce>(sendBuffer, recvBuffer, count,
-                                        datatype, operation, root, comm);
+    auto col = std::make_shared<Reduce>(
+        sendBuffer, recvBuffer, count, datatype, operation, root, comm);
     maml::queueCollective(col);
     return col->future();
   }
 
-  Collective::Collective(MPI_Comm comm)
-    : comm(comm),
-    request(MPI_REQUEST_NULL)
-  {}
+  Collective::Collective(MPI_Comm comm) : comm(comm), request(MPI_REQUEST_NULL)
+  {
+  }
+
   bool Collective::finished()
   {
     int done = 0;
@@ -99,8 +131,7 @@ namespace mpicommon {
     return done;
   }
 
-  Barrier::Barrier(MPI_Comm comm) : Collective(comm)
-  {}
+  Barrier::Barrier(MPI_Comm comm) : Collective(comm) {}
 
   std::future<void> Barrier::future()
   {
@@ -117,16 +148,17 @@ namespace mpicommon {
     result.set_value();
   }
 
-  Bcast::Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
-               MPI_Comm comm)
-    : Collective(comm),
-    buffer(buffer),
-    count(count),
-    datatype(datatype),
-    root(root)
-  {}
+  Bcast::Bcast(
+      void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
+      : Collective(comm),
+        buffer(buffer),
+        count(count),
+        datatype(datatype),
+        root(root)
+  {
+  }
 
-  std::future<void*> Bcast::future()
+  std::future<void *> Bcast::future()
   {
     return result.get_future();
   }
@@ -141,29 +173,41 @@ namespace mpicommon {
     result.set_value(buffer);
   }
 
-  Gather::Gather(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-                 void *recvBuffer, int recvCount, MPI_Datatype recvType,
-                 int root, MPI_Comm comm)
-    : Collective(comm),
-    sendBuffer(sendBuffer),
-    sendCount(sendCount),
-    sendType(sendType),
-    recvBuffer(recvBuffer),
-    recvCount(recvCount),
-    recvType(recvType),
-    root(root)
-  {}
+  Gather::Gather(const void *sendBuffer,
+                 int sendCount,
+                 MPI_Datatype sendType,
+                 void *recvBuffer,
+                 int recvCount,
+                 MPI_Datatype recvType,
+                 int root,
+                 MPI_Comm comm)
+      : Collective(comm),
+        sendBuffer(sendBuffer),
+        sendCount(sendCount),
+        sendType(sendType),
+        recvBuffer(recvBuffer),
+        recvCount(recvCount),
+        recvType(recvType),
+        root(root)
+  {
+  }
 
-  std::future<void*> Gather::future()
+  std::future<void *> Gather::future()
   {
     return result.get_future();
   }
 
   void Gather::start()
   {
-    MPI_CALL(Igather(sendBuffer, sendCount, sendType,
-                     recvBuffer, recvCount, recvType,
-                     root, comm, &request));
+    MPI_CALL(Igather(sendBuffer,
+                     sendCount,
+                     sendType,
+                     recvBuffer,
+                     recvCount,
+                     recvType,
+                     root,
+                     comm,
+                     &request));
   }
 
   void Gather::onFinish()
@@ -171,31 +215,44 @@ namespace mpicommon {
     result.set_value(recvBuffer);
   }
 
-  Gatherv::Gatherv(const void *sendBuffer, int sendCount, MPI_Datatype sendType,
-                   void *recvBuffer, const std::vector<int> &recvCounts,
-                   const std::vector<int> &recvOffsets, MPI_Datatype recvType,
-                   int root, MPI_Comm comm)
-    : Collective(comm),
-    sendBuffer(sendBuffer),
-    sendCount(sendCount),
-    sendType(sendType),
-    recvBuffer(recvBuffer),
-    recvCounts(recvCounts),
-    recvOffsets(recvOffsets),
-    recvType(recvType),
-    root(root)
-  {}
+  Gatherv::Gatherv(const void *sendBuffer,
+                   int sendCount,
+                   MPI_Datatype sendType,
+                   void *recvBuffer,
+                   const std::vector<int> &recvCounts,
+                   const std::vector<int> &recvOffsets,
+                   MPI_Datatype recvType,
+                   int root,
+                   MPI_Comm comm)
+      : Collective(comm),
+        sendBuffer(sendBuffer),
+        sendCount(sendCount),
+        sendType(sendType),
+        recvBuffer(recvBuffer),
+        recvCounts(recvCounts),
+        recvOffsets(recvOffsets),
+        recvType(recvType),
+        root(root)
+  {
+  }
 
-  std::future<void*> Gatherv::future()
+  std::future<void *> Gatherv::future()
   {
     return result.get_future();
   }
 
   void Gatherv::start()
   {
-    MPI_CALL(Igatherv(sendBuffer, sendCount, sendType,
-                      recvBuffer, recvCounts.data(), recvOffsets.data(),
-                      recvType, root, comm, &request));
+    MPI_CALL(Igatherv(sendBuffer,
+                      sendCount,
+                      sendType,
+                      recvBuffer,
+                      recvCounts.data(),
+                      recvOffsets.data(),
+                      recvType,
+                      root,
+                      comm,
+                      &request));
   }
 
   void Gatherv::onFinish()
@@ -203,26 +260,38 @@ namespace mpicommon {
     result.set_value(recvBuffer);
   }
 
-  Reduce::Reduce(const void *sendBuffer, void *recvBuffer, int count,
-      MPI_Datatype datatype, MPI_Op operation, int root, MPI_Comm comm)
-    : Collective(comm),
-    sendBuffer(sendBuffer),
-    recvBuffer(recvBuffer),
-    count(count),
-    datatype(datatype),
-    operation(operation),
-    root(root)
-  {}
+  Reduce::Reduce(const void *sendBuffer,
+                 void *recvBuffer,
+                 int count,
+                 MPI_Datatype datatype,
+                 MPI_Op operation,
+                 int root,
+                 MPI_Comm comm)
+      : Collective(comm),
+        sendBuffer(sendBuffer),
+        recvBuffer(recvBuffer),
+        count(count),
+        datatype(datatype),
+        operation(operation),
+        root(root)
+  {
+  }
 
-  std::future<void*> Reduce::future()
+  std::future<void *> Reduce::future()
   {
     return result.get_future();
   }
 
   void Reduce::start()
   {
-    MPI_CALL(Ireduce(sendBuffer, recvBuffer, count, datatype, operation, root,
-                     comm, &request));
+    MPI_CALL(Ireduce(sendBuffer,
+                     recvBuffer,
+                     count,
+                     datatype,
+                     operation,
+                     root,
+                     comm,
+                     &request));
   }
 
   void Reduce::onFinish()
@@ -230,17 +299,22 @@ namespace mpicommon {
     result.set_value(recvBuffer);
   }
 
-  Send::Send(const void *buffer, int count, MPI_Datatype datatype, int dest,
-             int tag, MPI_Comm comm)
-    : Collective(comm),
-    buffer(buffer),
-    count(count),
-    datatype(datatype),
-    dest(dest),
-    tag(tag)
-  {}
+  Send::Send(const void *buffer,
+             int count,
+             MPI_Datatype datatype,
+             int dest,
+             int tag,
+             MPI_Comm comm)
+      : Collective(comm),
+        buffer(buffer),
+        count(count),
+        datatype(datatype),
+        dest(dest),
+        tag(tag)
+  {
+  }
 
-  std::future<const void*> Send::future()
+  std::future<const void *> Send::future()
   {
     return result.get_future();
   }
@@ -254,18 +328,22 @@ namespace mpicommon {
     result.set_value(buffer);
   }
 
+  Recv::Recv(void *buffer,
+             int count,
+             MPI_Datatype datatype,
+             int source,
+             int tag,
+             MPI_Comm comm)
+      : Collective(comm),
+        buffer(buffer),
+        count(count),
+        datatype(datatype),
+        source(source),
+        tag(tag)
+  {
+  }
 
-  Recv::Recv(void *buffer, int count, MPI_Datatype datatype, int source, int tag,
-      MPI_Comm comm)
-    : Collective(comm),
-    buffer(buffer),
-    count(count),
-    datatype(datatype),
-    source(source),
-    tag(tag)
-  {}
-
-  std::future<void*> Recv::future()
+  std::future<void *> Recv::future()
   {
     return result.get_future();
   }
@@ -279,5 +357,4 @@ namespace mpicommon {
   {
     result.set_value(buffer);
   }
-}
-
+}  // namespace mpicommon

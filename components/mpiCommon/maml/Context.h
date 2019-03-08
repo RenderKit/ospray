@@ -18,10 +18,10 @@
 
 #include "maml.h"
 #include "mpiCommon/Collectives.h"
-//ospcommon
+// ospcommon
 #include "ospcommon/AsyncLoop.h"
 #include "ospcommon/containers/TransactionalBuffer.h"
-//stl
+// stl
 #include <future>
 #include <map>
 #include <mutex>
@@ -67,8 +67,7 @@ namespace maml {
       if they are already in flight */
     void stop();
 
-  private:
-
+   private:
     // Helper functions //
 
     /*! the thread that executes messages that the receiver thread
@@ -102,29 +101,30 @@ namespace maml {
 
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
-    ospcommon::TransactionalBuffer<std::shared_ptr<Collective>> collectiveOutbox;
+    ospcommon::TransactionalBuffer<std::shared_ptr<Collective>>
+        collectiveOutbox;
 
     // NOTE(jda) - sendCache/pendingSends MUST correspond with each other by
     //             their index in their respective vectors...
     std::vector<std::shared_ptr<Message>> sendCache;
-    std::vector<MPI_Request>              pendingSends;
+    std::vector<MPI_Request> pendingSends;
 
     // NOTE(jda) - recvCache/pendingRecvs MUST correspond with each other by
     //             their index in their respective vectors...
     std::vector<std::shared_ptr<Message>> recvCache;
-    std::vector<MPI_Request>              pendingRecvs;
+    std::vector<MPI_Request> pendingRecvs;
 
     std::vector<std::shared_ptr<Collective>> pendingCollectives;
 
     std::map<MPI_Comm, MessageHandler *> handlers;
 
-    bool useTaskingSystem {true};
-    bool compressMessages {false};
+    bool useTaskingSystem{true};
+    bool compressMessages{false};
 
     // NOTE(jda) - these are only used when _not_ using the tasking system...
     std::mutex tasksMutex;
-    bool tasksAreRunning {false};
-    //std::thread sendReceiveThread, processInboxThread;
+    bool tasksAreRunning{false};
+    // std::thread sendReceiveThread, processInboxThread;
     std::atomic<bool> quitThreads{false};
     std::unique_ptr<ospcommon::AsyncLoop> sendReceiveThread;
     std::unique_ptr<ospcommon::AsyncLoop> processInboxThread;
@@ -134,10 +134,10 @@ namespace maml {
 
     using RealMilliseconds = std::chrono::duration<double, std::milli>;
     std::vector<CompressionPercent> compressedSizes;
-    std::vector<RealMilliseconds> sendTimes, recvTimes,
-      compressTimes, decompressTimes;
+    std::vector<RealMilliseconds> sendTimes, recvTimes, compressTimes,
+        decompressTimes;
 
     bool DETAILED_LOGGING{false};
   };
 
-} // ::maml
+}  // namespace maml

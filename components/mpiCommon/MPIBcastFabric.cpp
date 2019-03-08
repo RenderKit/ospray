@@ -23,12 +23,15 @@
 
 namespace mpicommon {
 
-  MPIBcastFabric::MPIBcastFabric(const Group &parentGroup, int sendRank, int recvRank)
-    : group(parentGroup.dup()), sendRank(sendRank), recvRank(recvRank)
+  MPIBcastFabric::MPIBcastFabric(const Group &parentGroup,
+                                 int sendRank,
+                                 int recvRank)
+      : group(parentGroup.dup()), sendRank(sendRank), recvRank(recvRank)
   {
     if (!group.valid())
-      throw std::runtime_error("#osp:mpi: trying to set up an MPI fabric "
-                               "with an invalid MPI communicator");
+      throw std::runtime_error(
+          "#osp:mpi: trying to set up an MPI fabric "
+          "with an invalid MPI communicator");
 
 #ifndef NDEBUG
     int isInter = 0;
@@ -44,12 +47,13 @@ namespace mpicommon {
   size_t MPIBcastFabric::read(void *&mem)
   {
     uint32_t sz32 = 0;
-    // Get the size of the bcast being sent to us. Only this part must be non-blocking,
-    // after getting the size we know everyone will enter the blocking barrier and the
-    // blocking bcast where the buffer is sent out.
+    // Get the size of the bcast being sent to us. Only this part must be
+    // non-blocking, after getting the size we know everyone will enter the
+    // blocking barrier and the blocking bcast where the buffer is sent out.
     mpicommon::bcast(&sz32, 1, MPI_INT, recvRank, group.comm).wait();
 
-    // TODO: Maybe at some point we should dump the buffer if it gets really large
+    // TODO: Maybe at some point we should dump the buffer if it gets really
+    // large
     buffer.resize(sz32);
     mem = buffer.data();
     mpicommon::bcast(mem, sz32, MPI_BYTE, recvRank, group.comm).wait();
@@ -61,18 +65,18 @@ namespace mpicommon {
     delivered */
   void MPIBcastFabric::send(const void *_mem, size_t size)
   {
-    assert(size < (1LL<<30));
+    assert(size < (1LL << 30));
     uint32_t sz32 = size;
 
-    // Send the size of the bcast we're sending. Only this part must be non-blocking,
-    // after getting the size we know everyone will enter the blocking barrier and the
-    // blocking bcast where the buffer is sent out.
+    // Send the size of the bcast we're sending. Only this part must be
+    // non-blocking, after getting the size we know everyone will enter the
+    // blocking barrier and the blocking bcast where the buffer is sent out.
     auto sizeBcast = mpicommon::bcast(&sz32, 1, MPI_INT, sendRank, group.comm);
 
-    void *mem = const_cast<void*>(_mem);
+    void *mem     = const_cast<void *>(_mem);
     auto bufBcast = mpicommon::bcast(mem, sz32, MPI_BYTE, sendRank, group.comm);
     sizeBcast.wait();
     bufBcast.wait();
   }
 
-} // ::mpicommon
+}  // namespace mpicommon

@@ -31,7 +31,7 @@ namespace mpicommon {
    */
   class OSPRAY_MPI_INTERFACE MPIBcastFabric : public networking::Fabric
   {
-  public:
+   public:
     MPIBcastFabric(const Group &parentGroup, int sendRank, int recvRank);
 
     virtual ~MPIBcastFabric() override = default;
@@ -45,10 +45,10 @@ namespace mpicommon {
       and give us size and pointer to this data */
     virtual size_t read(void *&mem) override;
 
-  private:
+   private:
     std::vector<byte_t> buffer;
-    Group   group;
-    int     sendRank, recvRank;
+    Group group;
+    int sendRank, recvRank;
   };
 
-} // ::mpicommon
+}  // namespace mpicommon

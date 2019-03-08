@@ -51,7 +51,7 @@ namespace maml {
     on the given communicator we'll call this handler */
   void registerHandlerFor(MPI_Comm comm, MessageHandler *handler)
   {
-    Context::singleton->registerHandlerFor(comm,handler);
+    Context::singleton->registerHandlerFor(comm, handler);
   }
 
   void start()
@@ -87,4 +87,4 @@ namespace maml {
     Context::singleton->queueCollective(col);
   }
 
-} // ::maml
+}  // namespace maml

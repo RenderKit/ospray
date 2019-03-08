@@ -17,10 +17,10 @@
 #pragma once
 
 // std
-#include <memory>
-#include <vector>
 #include <chrono>
+#include <memory>
 #include <mutex>
+#include <vector>
 
 // mpi
 #define OMPI_SKIP_MPICXX 1
@@ -30,30 +30,31 @@
 #include "ospcommon/common.h"
 
 #ifdef _WIN32
-#  ifdef ospray_mpi_common_EXPORTS
-#    define OSPRAY_MPI_INTERFACE __declspec(dllexport)
-#  else
-#    define OSPRAY_MPI_INTERFACE __declspec(dllimport)
-#  endif
+#ifdef ospray_mpi_common_EXPORTS
+#define OSPRAY_MPI_INTERFACE __declspec(dllexport)
 #else
-#  define OSPRAY_MPI_INTERFACE
+#define OSPRAY_MPI_INTERFACE __declspec(dllimport)
+#endif
+#else
+#define OSPRAY_MPI_INTERFACE
 #endif
 
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL
-# undef MPI_CALL
+#undef MPI_CALL
 #endif
 /*! helper macro that checks the return value of all MPI_xxx(...)
     calls via MPI_CALL(xxx(...)).  */
-#define MPI_CALL(a) { \
-  int rc = MPI_##a; \
-  if (rc != MPI_SUCCESS) \
-    throw std::runtime_error("MPI call returned error"); \
-}
+#define MPI_CALL(a)                                        \
+  {                                                        \
+    int rc = MPI_##a;                                      \
+    if (rc != MPI_SUCCESS)                                 \
+      throw std::runtime_error("MPI call returned error"); \
+  }
 
-#define OSPRAY_THROW(a) \
-  throw std::runtime_error("in " + std::string(__PRETTY_FUNCTION__) + \
-                           " : " + std::string(a))
+#define OSPRAY_THROW(a)                                                       \
+  throw std::runtime_error("in " + std::string(__PRETTY_FUNCTION__) + " : " + \
+                           std::string(a))
 
 // Log level at which extremely verbose MPI logging output will
 // be written
@@ -101,16 +102,16 @@ namespace mpicommon {
 
     /*! whether the current process/thread is a member of this
       gorup */
-    bool containsMe {false};
+    bool containsMe{false};
     /*! communictor for this group. intercommunicator if i'm a
       member of this gorup; else it's an intracommunicator */
-    MPI_Comm comm {MPI_COMM_NULL};
+    MPI_Comm comm{MPI_COMM_NULL};
     /*! my rank in this group if i'm a member; else set to
       MPI_ROOT */
-    int rank {-1};
+    int rank{-1};
     /*! size of this group if i'm a member, else size of remote
       group this intracommunicaotr refers to */
-    int size {-1};
+    int size{-1};
   };
 
   /*! object that handles a message. a message primarily consists of a
@@ -139,14 +140,14 @@ namespace mpicommon {
     bool isValid() const;
 
     /*! @{ sender/receiver of this message */
-    MPI_Comm  comm {MPI_COMM_NULL};
-    int       rank {-1};
-    int       tag  { 0};
+    MPI_Comm comm{MPI_COMM_NULL};
+    int rank{-1};
+    int tag{0};
     /*! @} */
 
     /*! @{ actual payload of this message */
-    ospcommon::byte_t *data {nullptr};
-    size_t             size {0};
+    ospcommon::byte_t *data{nullptr};
+    size_t size{0};
     /*! @} */
     // TODO WILL: Profiling info, when this message started sending
     // or receiving
@@ -157,15 +158,18 @@ namespace mpicommon {
     NOT delete upon termination */
   struct UserMemMessage : public Message
   {
-    UserMemMessage(void *nonCopyMem, size_t size)
-      : Message()
-    { data = (ospcommon::byte_t*)nonCopyMem; this->size = size; }
+    UserMemMessage(void *nonCopyMem, size_t size) : Message()
+    {
+      data       = (ospcommon::byte_t *)nonCopyMem;
+      this->size = size;
+    }
 
     /* set data to null to keep the parent from deleting it */
     virtual ~UserMemMessage()
-    { data = nullptr; }
+    {
+      data = nullptr;
+    }
   };
-
 
   //! MPI_COMM_WORLD
   OSPRAY_MPI_INTERFACE extern Group world;
@@ -242,4 +246,4 @@ namespace mpicommon {
     return 1 + workerRank;
   }
 
-} // ::mpicommon
+}  // namespace mpicommon

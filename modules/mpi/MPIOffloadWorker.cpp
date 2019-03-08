@@ -14,43 +14,42 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpiCommon/MPICommon.h"
-#include "mpiCommon/MPIBcastFabric.h"
-#include "mpi/MPIOffloadDevice.h"
 #include "api/ISPCDevice.h"
-#include "common/Model.h"
+#include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/Library.h"
 #include "common/Model.h"
-#include "geometry/TriangleMesh.h"
-#include "render/Renderer.h"
-#include "camera/Camera.h"
-#include "volume/Volume.h"
-#include "lights/Light.h"
-#include "texture/Texture2D.h"
-#include "fb/LocalFB.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
-#include "transferFunction/TransferFunction.h"
 #include "common/OSPWork.h"
+#include "fb/LocalFB.h"
+#include "geometry/TriangleMesh.h"
+#include "lights/Light.h"
+#include "mpi/MPIOffloadDevice.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
+#include "mpiCommon/MPIBcastFabric.h"
+#include "mpiCommon/MPICommon.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "render/Renderer.h"
+#include "texture/Texture2D.h"
+#include "transferFunction/TransferFunction.h"
+#include "volume/Volume.h"
 // std
 #include <algorithm>
 
 #ifdef OPEN_MPI
-# include <thread>
+#include <thread>
 //# define _GNU_SOURCE
-# include <sched.h>
+#include <sched.h>
 #endif
 
 #ifdef _WIN32
-#  include <windows.h> // for Sleep and gethostname
-#  include <process.h> // for getpid
+#include <process.h>  // for getpid
+#include <windows.h>  // for Sleep and gethostname
 #else
-#  include <unistd.h> // for gethostname
+#include <unistd.h>  // for gethostname
 #endif
 
 #ifndef HOST_NAME_MAX
-#  define HOST_NAME_MAX 10000
+#define HOST_NAME_MAX 10000
 #endif
 
 namespace ospray {
@@ -59,7 +58,7 @@ namespace ospray {
     using namespace mpicommon;
     using ospcommon::utility::getEnvVar;
 
-    static void embreeErrorFunc(void *, const RTCError code, const char* str)
+    static void embreeErrorFunc(void *, const RTCError code, const char *str)
     {
       std::stringstream msg;
       msg << "#osp: Embree internal error " << code << " : " << str;
@@ -75,8 +74,8 @@ namespace ospray {
 
       static size_t numWorkReceived = 0;
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#osp.mpi.worker: got work #" << numWorkReceived++
-          << ", tag " << tag;
+          << "#osp.mpi.worker: got work #" << numWorkReceived++ << ", tag "
+          << tag;
 
       auto make_work = registry.find(tag);
       if (make_work == registry.end()) {
@@ -105,12 +104,11 @@ namespace ospray {
       auto &device = ospray::api::Device::current;
 
       auto OSPRAY_FORCE_COMPRESSION =
-        utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
+          utility::getEnvVar<int>("OSPRAY_FORCE_COMPRESSION");
       // Turning on the compression past 64 ranks seems to be a good
       // balancing point for cost of compressing vs. performance gain
-      auto enableCompression =
-        OSPRAY_FORCE_COMPRESSION.value_or(
-            mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
+      auto enableCompression = OSPRAY_FORCE_COMPRESSION.value_or(
+          mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
       maml::init(enableCompression);
       messaging::init(world);
@@ -121,7 +119,8 @@ namespace ospray {
       struct EmbreeDeviceScopeGuard
       {
         RTCDevice embreeDevice;
-        ~EmbreeDeviceScopeGuard() {
+        ~EmbreeDeviceScopeGuard()
+        {
           rtcReleaseDevice(embreeDevice);
         }
       };
@@ -141,10 +140,10 @@ namespace ospray {
       }
 
       char hostname[HOST_NAME_MAX];
-      gethostname(hostname,HOST_NAME_MAX);
+      gethostname(hostname, HOST_NAME_MAX);
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#w: running MPI worker process " << worker.rank
-          << "/" << worker.size << " on pid " << getpid() << "@" << hostname;
+          << "#w: running MPI worker process " << worker.rank << "/"
+          << worker.size << " on pid " << getpid() << "@" << hostname;
 
       // -------------------------------------------------------
       // setting up read/write streams
@@ -153,22 +152,22 @@ namespace ospray {
       auto readStream = make_unique<networking::BufferedReadStream>(*mpiFabric);
 
       // create registry of work item types
-      std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
+      std::map<work::Work::tag_t, work::CreateWorkFct> workTypeRegistry;
       work::registerOSPWorkItems(workTypeRegistry);
 
       while (1) {
         auto work = readWork(workTypeRegistry, *readStream);
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#osp.mpi.worker: processing work " << typeIdOf(work)
-            << ": " << typeString(work);
+            << "#osp.mpi.worker: processing work " << typeIdOf(work) << ": "
+            << typeString(work);
 
         work->run();
 
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
-            << ": " << typeString(work);
+            << "#osp.mpi.worker: done w/ work " << typeIdOf(work) << ": "
+            << typeString(work);
       }
     }
 
-  } // ::ospray::mpi
-} // ::ospray
+  }  // namespace mpi
+}  // namespace ospray

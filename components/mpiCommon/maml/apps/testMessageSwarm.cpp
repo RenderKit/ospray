@@ -19,12 +19,12 @@
     sends them to random other ranks; every time a message is received
     it's simply bounced to another random node */
 
-#include "ospcommon/tasking/tasking_system_handle.h"
-#include "maml/maml.h"
 #include <atomic>
 #include <chrono>
-#include <thread>
 #include <random>
+#include <thread>
+#include "maml/maml.h"
+#include "ospcommon/tasking/tasking_system_handle.h"
 
 static int numRanks = 0;
 static std::atomic<size_t> numReceived;
@@ -35,7 +35,8 @@ struct BounceHandler : public maml::MessageHandler
   std::uniform_int_distribution<> rank_distrib;
 
   BounceHandler() : rng(std::random_device{}()), rank_distrib(0, numRanks - 1)
-  {}
+  {
+  }
 
   void incoming(const std::shared_ptr<maml::Message> &message) override
   {
@@ -66,7 +67,7 @@ extern "C" int main(int ac, char **av)
   BounceHandler handler;
   maml::registerHandlerFor(MPI_COMM_WORLD, &handler);
 
-  char *payload = (char*)malloc(payloadSize);
+  char *payload = (char *)malloc(payloadSize);
   for (int i = 0; i < payloadSize; i++)
     payload[i] = distrib(rng);
 
@@ -75,7 +76,8 @@ extern "C" int main(int ac, char **av)
   double t0 = ospcommon::getSysTime();
   for (int mID = 0; mID < numMessages; mID++) {
     int r = rank_distrib(rng);
-    maml::sendTo(MPI_COMM_WORLD, r,
+    maml::sendTo(MPI_COMM_WORLD,
+                 r,
                  std::make_shared<maml::Message>(payload, payloadSize));
   }
 
@@ -83,13 +85,17 @@ extern "C" int main(int ac, char **av)
     std::this_thread::sleep_for(std::chrono::seconds(1));
     double t1 = ospcommon::getSysTime();
     std::string numBytes =
-      ospcommon::prettyNumber((size_t)numReceived*payloadSize);
-    double rate = (size_t)numReceived * payloadSize / (t1-t0);
+        ospcommon::prettyNumber((size_t)numReceived * payloadSize);
+    double rate            = (size_t)numReceived * payloadSize / (t1 - t0);
     std::string rateString = ospcommon::prettyNumber(rate);
 
-    printf("rank %i: received %li messages (%sbytes) in %lf secs; that is %sB/s\n",
-           rank, (size_t)numReceived, numBytes.c_str(),
-           t1-t0, rateString.c_str());
+    printf(
+        "rank %i: received %li messages (%sbytes) in %lf secs; that is %sB/s\n",
+        rank,
+        (size_t)numReceived,
+        numBytes.c_str(),
+        t1 - t0,
+        rateString.c_str());
   }
 
   /* this will never terminate ... */

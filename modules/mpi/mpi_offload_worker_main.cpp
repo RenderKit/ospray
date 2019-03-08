@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 #ifdef _WIN32
-#  include <malloc.h>
+#include <malloc.h>
 #else
-#  include <alloca.h>
+#include <alloca.h>
 #endif
 #include "ospray/ospray.h"
 
@@ -26,10 +26,12 @@ int main(int ac, const char *av[])
   // always append "--osp:mpi" to args; multiple occurrences are not harmful,
   // and we want to retain the original args (which could have been e.g.
   // "--osp:logoutput")
-  int argc = ac+1;
+  int argc          = ac + 1;
   const char **argv = (const char **)alloca(argc * sizeof(void *));
-  for(int i = 0; i < ac; i++)
+
+  for (int i = 0; i < ac; i++)
     argv[i] = av[i];
+
   argv[ac] = "--osp:mpi";
 
   ospInit(&argc, argv);
