@@ -104,13 +104,9 @@ namespace mpicommon {
   // on the MPI messaging layer
   class OSPRAY_MPI_INTERFACE Collective
   {
-   protected:
-    MPI_Comm comm;
-    MPI_Request request;
-
    public:
     Collective(MPI_Comm comm);
-    virtual ~Collective() {}
+    virtual ~Collective() = default;
 
     // Start the collective
     virtual void start() = 0;
@@ -119,12 +115,13 @@ namespace mpicommon {
 
    protected:
     virtual void onFinish() = 0;
+
+    MPI_Comm comm;
+    MPI_Request request;
   };
 
   class OSPRAY_MPI_INTERFACE Barrier : public Collective
   {
-    std::promise<void> result;
-
    public:
     Barrier(MPI_Comm comm);
     // Get the future to wait on completion of this barrier
@@ -133,16 +130,13 @@ namespace mpicommon {
 
    protected:
     void onFinish() override;
+
+   private:
+    std::promise<void> result;
   };
 
   class OSPRAY_MPI_INTERFACE Bcast : public Collective
   {
-    void *buffer;
-    int count;
-    MPI_Datatype datatype;
-    int root;
-    std::promise<void *> result;
-
    public:
     /* Construct an asynchronously run broadcast. The buffer is owned by
      * the caller and must be kept valid until the future is set, indicating
@@ -160,21 +154,17 @@ namespace mpicommon {
 
    protected:
     void onFinish() override;
+
+   private:
+    void *buffer;
+    int count;
+    MPI_Datatype datatype;
+    int root;
+    std::promise<void *> result;
   };
 
   class OSPRAY_MPI_INTERFACE Gather : public Collective
   {
-    const void *sendBuffer;
-    int sendCount;
-    MPI_Datatype sendType;
-
-    void *recvBuffer;
-    int recvCount;
-    MPI_Datatype recvType;
-
-    int root;
-    std::promise<void *> result;
-
    public:
     /* Construct an asynchronously run gather. The send/recv buffers are owned
      * by the caller and must be kept valid until the future is set, indicating
@@ -198,22 +188,22 @@ namespace mpicommon {
 
    protected:
     void onFinish() override;
-  };
 
-  class OSPRAY_MPI_INTERFACE Gatherv : public Collective
-  {
+   private:
     const void *sendBuffer;
     int sendCount;
     MPI_Datatype sendType;
 
     void *recvBuffer;
-    std::vector<int> recvCounts;
-    std::vector<int> recvOffsets;
+    int recvCount;
     MPI_Datatype recvType;
 
     int root;
     std::promise<void *> result;
+  };
 
+  class OSPRAY_MPI_INTERFACE Gatherv : public Collective
+  {
    public:
     /* Construct an asynchronously run gatherv. The send/recv buffers are owned
      * by the caller and must be kept valid until the future is set, indicating
@@ -239,19 +229,23 @@ namespace mpicommon {
 
    protected:
     void onFinish() override;
+
+   private:
+    const void *sendBuffer;
+    int sendCount;
+    MPI_Datatype sendType;
+
+    void *recvBuffer;
+    std::vector<int> recvCounts;
+    std::vector<int> recvOffsets;
+    MPI_Datatype recvType;
+
+    int root;
+    std::promise<void *> result;
   };
 
   class OSPRAY_MPI_INTERFACE Reduce : public Collective
   {
-    const void *sendBuffer;
-    void *recvBuffer;
-    int count;
-    MPI_Datatype datatype;
-    MPI_Op operation;
-    int root;
-
-    std::promise<void *> result;
-
    public:
     /* Construct an asynchronously run reduce. The send/recv buffers are owned
      * by the caller and must be kept valid until the future is set, indicating
@@ -274,6 +268,16 @@ namespace mpicommon {
 
    protected:
     void onFinish() override;
+
+   private:
+    const void *sendBuffer;
+    void *recvBuffer;
+    int count;
+    MPI_Datatype datatype;
+    MPI_Op operation;
+    int root;
+
+    std::promise<void *> result;
   };
 
   /* Send/recv are not really collectives, but are separate from the typical
@@ -285,13 +289,6 @@ namespace mpicommon {
    */
   class OSPRAY_MPI_INTERFACE Send : public Collective
   {
-    const void *buffer;
-    int count;
-    MPI_Datatype datatype;
-    int dest;
-    int tag;
-    std::promise<const void *> result;
-
    public:
     /* Construct an asynchronously run send. The buffer is owned by
      * the caller and must be kept valid until the future is set, indicating
@@ -312,17 +309,18 @@ namespace mpicommon {
 
    protected:
     void onFinish() override;
+
+   private:
+    const void *buffer;
+    int count;
+    MPI_Datatype datatype;
+    int dest;
+    int tag;
+    std::promise<const void *> result;
   };
 
   class OSPRAY_MPI_INTERFACE Recv : public Collective
   {
-    void *buffer;
-    int count;
-    MPI_Datatype datatype;
-    int source;
-    int tag;
-    std::promise<void *> result;
-
    public:
     /* Construct an asynchronously run recv. The buffer is owned by
      * the caller and must be kept valid until the future is set, indicating
@@ -343,5 +341,14 @@ namespace mpicommon {
 
    protected:
     void onFinish() override;
+
+   private:
+    void *buffer;
+    int count;
+    MPI_Datatype datatype;
+    int source;
+    int tag;
+    std::promise<void *> result;
   };
+
 }  // namespace mpicommon
