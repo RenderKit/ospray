@@ -1157,7 +1157,7 @@ feature/performance trade-offs:
 
 To create a new light source of given type `type` use
 
-    OSPLight ospNewLight3(const char *type);
+    OSPLight ospNewLight(const char *type);
 
 The call returns `NULL` if that type of light is not known by the
 renderer, or else an `OSPLight` handle to the created light source.
@@ -1181,7 +1181,7 @@ not about `color`.
 The distant light (or traditionally the directional light) is thought to
 be far away (outside of the scene), thus its light arrives (almost)
 as parallel rays. It is created by passing the type string "`distant`"
-to `ospNewLight3`. In addition to the [general parameters](#lights)
+to `ospNewLight`. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following special
 parameters:
 
@@ -1200,7 +1200,7 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 
 The sphere light (or the special case point light) is a light emitting
 uniformly in all directions. It is created by passing the type string
-"`sphere`" to `ospNewLight3`. In addition to the [general
+"`sphere`" to `ospNewLight`. In addition to the [general
 parameters](#lights) understood by all lights the sphere light supports
 the following special parameters:
 
@@ -1218,7 +1218,7 @@ tracer]).
 #### Spotlight
 
 The spotlight is a light emitting into a cone of directions. It is
-created by passing the type string "`spot`" to `ospNewLight3`. In
+created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spotlight supports the special parameters listed in the table.
 
@@ -1252,7 +1252,7 @@ tracer]).
 
 The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
 uniformly on one side into the half-space. It is created by passing the
-type string "`quad`" to `ospNewLight3`. In addition to the [general
+type string "`quad`" to `ospNewLight`. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
@@ -1276,7 +1276,7 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight3`. In addition to the [parameter
+"`hdri`" to `ospNewLight`. In addition to the [parameter
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
@@ -1301,7 +1301,7 @@ Note that the currently only the [path tracer] supports the HDRI light.
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-"`ambient`" to `ospNewLight3`.
+"`ambient`" to `ospNewLight`.
 
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
@@ -1318,7 +1318,7 @@ Materials describe how light interacts with surfaces, they give objects
 their distinctive look. To let the given renderer create a new material
 of given type `type` call
 
-    OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
+    OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 
 The call returns `NULL` if the material type is not known by the
 renderer type, or else an `OSPMaterial` handle to the created material. The
@@ -1333,7 +1333,7 @@ renderer] and the [path tracer]. It offers widely used common properties
 like diffuse and specular reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
 files. To create an OBJ material pass the type string "`OBJMaterial`" to
-`ospNewMaterial2`. Its main parameters are
+`ospNewMaterial`. Its main parameters are
 
   Type          Name         Default  Description
   ------------- --------- ----------  -----------------------------------------
@@ -1407,7 +1407,7 @@ The Principled material is the most complex material offered by the
 and lobes. It uses the GGX microfacet distribution with approximate multiple
 scattering for dielectrics and metals, uses the Oren-Nayar model for diffuse
 reflection, and is energy conserving. To create a Principled material, pass
-the type string "`Principled`" to `ospNewMaterial2`. Its parameters are
+the type string "`Principled`" to `ospNewMaterial`. Its parameters are
 listed in the table below.
 
   -------------------------------------------------------------------------------------------
@@ -1489,7 +1489,7 @@ anisotropic rotation and a dust layer (sheen) on top.][imgMaterialPrincipled]
 
 The CarPaint material is a specialized version of the Principled material for
 rendering different types of car paints. To create a CarPaint material, pass
-the type string "`CarPaint`" to `ospNewMaterial2`. Its parameters are listed
+the type string "`CarPaint`" to `ospNewMaterial`. Its parameters are listed
 in the table below.
 
   -------------------------------------------------------------------------------------------
@@ -1543,7 +1543,7 @@ All parameters can be textured by passing a [texture] handle, suffixed with "`Ma
 
 The [path tracer] offers a physical metal, supporting changing roughness
 and realistic color shifts at edges. To create a Metal material pass the
-type string "`Metal`" to `ospNewMaterial2`. Its parameters are
+type string "`Metal`" to `ospNewMaterial`. Its parameters are
 
   -------- ---------- ----------  --------------------------------------------
   Type     Name          Default  Description
@@ -1597,7 +1597,7 @@ roughness.][imgMaterialMetal]
 The [path tracer] offers an alloy material, which behaves similar to
 [Metal], but allows for more intuitive and flexible control of the
 color. To create an Alloy material pass the type string "`Alloy`" to
-`ospNewMaterial2`. Its parameters are
+`ospNewMaterial`. Its parameters are
 
   Type   Name          Default  Description
   ------ ---------- ----------  --------------------------------------------
@@ -1625,7 +1625,7 @@ color.][imgMaterialAlloy]
 The [path tracer] offers a realistic a glass material, supporting
 refraction and volumetric attenuation (i.e., the transparency color
 varies with the geometric thickness). To create a Glass material pass
-the type string "`Glass`" to `ospNewMaterial2`. Its parameters are
+the type string "`Glass`" to `ospNewMaterial`. Its parameters are
 
   Type   Name                  Default  Description
   ------ -------------------- --------  -----------------------------------
@@ -1652,7 +1652,7 @@ parallel to the real geometric surface. The implementation accounts for
 multiple internal reflections between the interfaces (including
 attenuation), but neglects parallax effects due to its (virtual)
 thickness. To create a such a thin glass material pass the type string
-"`ThinGlass`" to `ospNewMaterial2`. Its parameters are
+"`ThinGlass`" to `ospNewMaterial`. Its parameters are
 
   Type   Name                  Default  Description
   ------ -------------------- --------  -----------------------------------
@@ -1684,7 +1684,7 @@ the ThinGlass material.][imgColoredWindow]
 
 The [path tracer] offers a metallic paint material, consisting of a base
 coat with optional flakes and a clear coat. To create a MetallicPaint
-material pass the type string "`MetallicPaint`" to `ospNewMaterial2`. Its
+material pass the type string "`MetallicPaint`" to `ospNewMaterial`. Its
 parameters are listed in the table below.
 
   Type   Name            Default  Description
@@ -1715,7 +1715,7 @@ thus individual flakes are not visible.
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
 geometric object into a light source. It is created by passing the type
-string "`Luminous`" to `ospNewMaterial2`. The amount of constant
+string "`Luminous`" to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
 
