@@ -127,7 +127,9 @@ namespace ospray {
 
       void enableAsyncMessaging()
       {
-        maml::start();
+        // TODO WILL: Supporting thread serialized is a pain and I don't
+        // think it's necessary
+        //maml::start();
       }
 
       void sendTo(int globalRank, ObjectHandle object,
@@ -144,7 +146,7 @@ namespace ospray {
 
       void disableAsyncMessaging()
       {
-        maml::stop();
+        //maml::stop();
       }
 
     } // ::ospray::mpi::messaging

@@ -1,0 +1,55 @@
+// ======================================================================== //
+// Copyright 2016-2019 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include <future>
+#include <mpi.h>
+#include "MPICommon.h"
+
+namespace mpicommon {
+  // An asynchronously executed collective operation
+  struct OSPRAY_MPI_INTERFACE Bcast {
+    void *buffer;
+    int count;
+    MPI_Datatype datatype;
+    int root;
+    MPI_Comm comm;
+    MPI_Request request;
+    std::promise<void*> result;
+
+    /* Construct an asynchronously run broadcast. The buffer is owned by
+     * the caller and must be kept valid until the future is set, indicating
+     * completion of the broadcast.
+     */ 
+    Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
+          MPI_Comm comm);
+    // Get the future which will receive the result of this bcast
+    std::future<void*> future();
+    // Start the broadcast
+    void start();
+    // Test if the broadcast is done
+    bool finished();
+  };
+
+  /* Start an asynchronous bcast and return the future to wait on
+   * for completion. The caller owns the passed buffer, and must keep it
+   * valid until the future completes.
+   */
+  std::future<void*> bcast(void *buffer, int count, MPI_Datatype datatype,
+                           int root, MPI_Comm comm);
+}
+

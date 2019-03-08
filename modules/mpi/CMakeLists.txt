@@ -24,7 +24,6 @@ if (OSPRAY_MODULE_MPI)
   set(OSPRAY_DEFAULT_COMPONENT mpi)
 
   ospray_build_component(mpiCommon)
-  ospray_build_component(mpiMessageLayer)
   ospray_build_component(pico_bench)
   ospray_build_component(snappy EXCLUDE_FROM_ALL)
 
@@ -59,7 +58,6 @@ if (OSPRAY_MODULE_MPI)
     PUBLIC
       ospray_module_ispc
       ospray_mpi_common
-      ospray_mpi_maml
       ospray_pico_bench
   )
 

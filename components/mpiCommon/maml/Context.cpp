@@ -94,6 +94,12 @@ namespace maml {
     outbox.push_back(std::move(msg));
   }
 
+  void Context::queueCollective(std::shared_ptr<Collective> col)
+  {
+    // TODO WILL: auto-compress collectives?
+    collectiveOutbox.push_back(std::move(col));
+  }
+
   void Context::processInboxMessages()
   {
     auto incomingMessages = inbox.consume();
@@ -131,6 +137,7 @@ namespace maml {
   void Context::sendMessagesFromOutbox()
   {
     auto outgoingMessages = outbox.consume();
+    auto outgoingCollectives = collectiveOutbox.consume();
 
     auto mpilock = mpicommon::acquireMPILock();
     for (auto &msg : outgoingMessages) {
@@ -149,6 +156,11 @@ namespace maml {
         pendingSends.push_back(request);
         sendCache.push_back(std::move(msg));
       }
+    }
+
+    for (auto &col : outgoingCollectives) {
+      col->start();
+      pendingCollectives.push_back(col);
     }
   }
 
@@ -188,7 +200,6 @@ namespace maml {
   void Context::waitOnSomeRequests()
   {
     if (!pendingSends.empty() || !pendingRecvs.empty()) {
-
       const size_t totalMessages = pendingSends.size() + pendingRecvs.size();
       int *done = STACK_BUFFER(int, totalMessages);
       MPI_Request *mergedRequests = STACK_BUFFER(MPI_Request, totalMessages);
@@ -254,11 +265,21 @@ namespace maml {
                                      pendingRecvs.end(),
                                      MPI_REQUEST_NULL), pendingRecvs.end());
     }
+    if (!pendingCollectives.empty()) {
+      auto mpilock = mpicommon::acquireMPILock();
+      pendingCollectives.erase(std::remove_if(pendingCollectives.begin(),
+                                              pendingCollectives.end(),
+                                              [](const std::shared_ptr<Collective> &col) {
+                                                return col->finished();
+                                              }), pendingCollectives.end());
+    }
   }
 
   void Context::flushRemainingMessages()
   {
-    while (!pendingRecvs.empty() || !pendingSends.empty() || !inbox.empty() || !outbox.empty()) {
+    while (!pendingRecvs.empty() || !pendingSends.empty()
+        || !pendingCollectives.empty() || !inbox.empty() || !outbox.empty())
+    {
       sendMessagesFromOutbox();
       pollForAndRecieveMessages();
       waitOnSomeRequests();

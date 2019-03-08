@@ -82,4 +82,9 @@ namespace maml {
     Context::singleton->send(msg);
   }
 
+  void queueCollective(std::shared_ptr<Collective> col)
+  {
+    Context::singleton->queueCollective(col);
+  }
+
 } // ::maml

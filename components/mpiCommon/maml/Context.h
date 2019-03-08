@@ -17,6 +17,7 @@
 #pragma once
 
 #include "maml.h"
+#include "mpiCommon/Collectives.h"
 //ospcommon
 #include "ospcommon/AsyncLoop.h"
 #include "ospcommon/containers/TransactionalBuffer.h"
@@ -46,6 +47,9 @@ namespace maml {
         done even if the actual sending mechanism is currently
         stopped */
     void send(std::shared_ptr<Message> msg);
+
+    /*! queue the given collective to be executed */
+    void queueCollective(std::shared_ptr<Collective> col);
 
     // WILL: Logging
     void logMessageTimings(std::ostream &os);
@@ -96,9 +100,9 @@ namespace maml {
 
     // Data members //
 
-
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
+    ospcommon::TransactionalBuffer<std::shared_ptr<Collective>> collectiveOutbox;
 
     // NOTE(jda) - sendCache/pendingSends MUST correspond with each other by
     //             their index in their respective vectors...
@@ -109,6 +113,8 @@ namespace maml {
     //             their index in their respective vectors...
     std::vector<std::shared_ptr<Message>> recvCache;
     std::vector<MPI_Request>              pendingRecvs;
+
+    std::vector<std::shared_ptr<Collective>> pendingCollectives;
 
     std::map<MPI_Comm, MessageHandler *> handlers;
 

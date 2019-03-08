@@ -16,13 +16,20 @@
 
 ospray_configure_mpi()
 
+ospray_build_component(snappy EXCLUDE_FROM_ALL)
+
 ospray_create_library(ospray_mpi_common
     MPICommon.cpp
     MPIBcastFabric.cpp
+    Collectives.cpp
+    maml/maml.cpp
+    maml/Context.cpp
   COMPONENT mpi
 )
 
 target_link_libraries(ospray_mpi_common
+  PRIVATE
+    snappy
   PUBLIC
     ${MPI_C_LIBRARIES}
     ospray_common
@@ -32,6 +39,7 @@ target_include_directories(ospray_mpi_common
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
     ${OSPRAY_MPI_INCLUDES}
 )
 
@@ -40,4 +48,20 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   COMPONENT devel
   FILES_MATCHING
   PATTERN *.h
+)
+
+# ------------------------------------------------------------------
+# tests and examples
+# ------------------------------------------------------------------
+
+ospray_create_test(mamlTest
+  maml/apps/mamlTest.cpp
+LINK
+  ospray_mpi_common
+)
+
+ospray_create_test(mamlTestMessageSwarm
+  maml/apps/testMessageSwarm.cpp
+LINK
+  ospray_mpi_common
 )

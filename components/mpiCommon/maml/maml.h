@@ -18,6 +18,7 @@
 
 #include <ostream>
 #include "mpiCommon/MPICommon.h"
+#include "mpiCommon/Collectives.h"
 
 #ifdef _WIN32
 #  ifdef ospray_mpi_maml_EXPORTS
@@ -32,6 +33,8 @@
 namespace maml {
 
   using Message = mpicommon::Message;
+  // Only bcast for now, to test
+  using Collective = mpicommon::Bcast;
 
   /*! abstraction for an object that can receive messages. handlers
       get associated with MPI_Comm's, and get called automatically
@@ -106,5 +109,8 @@ namespace maml {
   OSPRAY_MAML_INTERFACE void sendTo(MPI_Comm comm,
                                     int rank,
                                     std::shared_ptr<Message> msg);
+
+  /*! Schedule a collective to be run on the messaging layer */
+  OSPRAY_MAML_INTERFACE void queueCollective(std::shared_ptr<Collective> col);
 
 } // ::maml

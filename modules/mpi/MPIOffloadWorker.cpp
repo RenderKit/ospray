@@ -113,6 +113,7 @@ namespace ospray {
             mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
       maml::init(enableCompression);
+      maml::start();
 
       // NOTE(jda) - This guard guarantees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left

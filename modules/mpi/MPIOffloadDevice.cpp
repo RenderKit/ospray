@@ -445,6 +445,7 @@ namespace ospray {
             mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
       maml::init(enableCompression);
+      maml::start();
 
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */
@@ -810,6 +811,10 @@ namespace ospray {
                                                  OSPCamera _camera,
                                                  OSPModel _world)
     {
+      // TODO: If the user only has thread serialized, we may not be able to
+      // do much here. Each time we exit an OSPRay call we'd have to make some
+      // assumption that they might make MPI calls, and have to lock the MPI
+      // lock out to avoid conflicts with them.
       work::RenderFrame work(_fb, _renderer, _camera, _world);
       processWork(work, true);
 

@@ -79,6 +79,8 @@ namespace ospray {
 
     MPIDistributedDevice::~MPIDistributedDevice()
     {
+      // TODO WILL: Shouldn't shutdown implicitly call stop?
+      maml::stop();
       maml::shutdown();
 
       if (shouldFinalizeMPI) {
@@ -126,6 +128,7 @@ namespace ospray {
             mpicommon::numGlobalRanks() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
         maml::init(enableCompression);
+        maml::start();
       }
 
       masterRank = getParam<int>("masterRank", 0);
