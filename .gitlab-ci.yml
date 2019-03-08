@@ -286,13 +286,13 @@ test-windows-icc:
   dependencies:
     - build-windows-icc
 
-test-windows-msvc15:
-  <<: *test_job_windows
-  tags:
-    - win7
-    - msvc14
-  dependencies:
-    - build-windows-msvc15
+#test-windows-msvc15:
+#  <<: *test_job_windows
+#  tags:
+#    - win7
+#    - msvc14
+#  dependencies:
+#    - build-windows-msvc15
 
 test-windows-msvc14:
   <<: *test_job_windows
