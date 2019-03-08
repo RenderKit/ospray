@@ -30,14 +30,11 @@ if (OSPRAY_MODULE_MPI)
   include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
 
   ospray_create_library(ospray_module_mpi
-    MPIDistributedDevice.cpp
     MPIOffloadDevice.cpp
     MPIOffloadWorker.cpp
 
     common/OSPWork.cpp
     common/Messaging.cpp
-    common/DistributedModel.cpp
-    common/DistributedModel.ispc
     common/Profiling.cpp
 
     fb/DistributedFrameBuffer.cpp
@@ -48,8 +45,6 @@ if (OSPRAY_MODULE_MPI)
     fb/DebugPixelOp.cpp
 
     render/MPILoadBalancer.cpp
-    render/distributed/DistributedRaycast.cpp
-    render/distributed/DistributedRaycast.ispc
   )
 
   target_link_libraries(ospray_module_mpi
@@ -77,10 +72,5 @@ if (OSPRAY_MODULE_MPI)
 
   ospray_create_application(ospray_mpi_worker mpi_offload_worker_main.cpp)
   target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
-
-  ##############################################################
-  # Tutorials
-  ##############################################################
-  add_subdirectory(tutorials)
 
 endif (OSPRAY_MODULE_MPI)
