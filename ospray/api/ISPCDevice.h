@@ -173,6 +173,10 @@ namespace ospray {
       /*! create a new Texture object */
       OSPTexture newTexture(const char *type) override;
 
+      OSPGeometryInstance newGeometryInstance(OSPGeometry geom) override;
+
+      OSPVolumeInstance newVolumeInstance(OSPVolume volume) override;
+
       void resetAccumulation(OSPFrameBuffer _fb) override;
 
       float renderFrame(OSPFrameBuffer,

@@ -168,6 +168,10 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volumes) */
       OSPVolume newVolume(const char *type) override;
 
+      OSPGeometryInstance newGeometryInstance(OSPGeometry geom) override;
+
+      OSPVolumeInstance newVolumeInstance(OSPVolume volume) override;
+
       /*! call a renderer to render a frame buffer */
       float renderFrame(OSPFrameBuffer,
                         OSPRenderer,

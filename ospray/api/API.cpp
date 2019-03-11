@@ -490,6 +490,24 @@ extern "C" OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
 }
 OSPRAY_CATCH_END(nullptr)
 
+extern "C" OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geom)
+    OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  OSPGeometryInstance instance = currentDevice().newGeometryInstance(geom);
+  return instance;
+}
+OSPRAY_CATCH_END(nullptr)
+
+extern "C" OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume)
+    OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  OSPVolumeInstance instance = currentDevice().newVolumeInstance(volume);
+  return instance;
+}
+OSPRAY_CATCH_END(nullptr)
+
 ///////////////////////////////////////////////////////////////////////////////
 // Instance Meta-Data /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

@@ -906,6 +906,16 @@ namespace ospray {
       return (OSPTexture)(int64)handle;
     }
 
+    OSPGeometryInstance MPIOffloadDevice::newGeometryInstance(OSPGeometry geom)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume volume)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     int MPIOffloadDevice::getString(OSPObject _object,
                                     const char *name,
                                     char **value)

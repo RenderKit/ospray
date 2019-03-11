@@ -339,6 +339,16 @@ namespace ospray {
       return (OSPTexture)Texture::createInstance(type);
     }
 
+    OSPGeometryInstance ISPCDevice::newGeometryInstance(OSPGeometry geom)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume volume)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     int ISPCDevice::loadModule(const char *name)
     {
       return loadLocalModule(name);

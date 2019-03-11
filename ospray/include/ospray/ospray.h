@@ -172,8 +172,10 @@ namespace osp {
   struct Data             : public ManagedObject {};
   struct Future           : public ManagedObject {};
   struct Geometry         : public ManagedObject {};
+  struct GeometryInstance : public ManagedObject {};
   struct Material         : public ManagedObject {};
   struct Volume           : public ManagedObject {};
+  struct VolumeInstance   : public ManagedObject {};
   struct TransferFunction : public ManagedObject {};
   struct Texture          : public ManagedObject {};
   struct Light            : public ManagedObject {};
@@ -188,9 +190,11 @@ typedef osp::Camera            *OSPCamera;
 typedef osp::Data              *OSPData;
 typedef osp::Future            *OSPFuture;
 typedef osp::Geometry          *OSPGeometry;
+typedef osp::GeometryInstance  *OSPGeometryInstance;
 typedef osp::Material          *OSPMaterial;
 typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
+typedef osp::VolumeInstance    *OSPVolumeInstance;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture           *OSPTexture;
 typedef osp::ManagedObject     *OSPObject;
@@ -211,9 +215,11 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPWorld,
   *OSPData,
   *OSPGeometry,
+  *OSPGeometryInstance,
   *OSPMaterial,
   *OSPLight,
   *OSPVolume,
+  *OSPVolumeInstance,
   *OSPTransferFunction,
   *OSPTexture,
   *OSPObject,
@@ -302,8 +308,13 @@ extern "C" {
 
   // Instancing ///////////////////////////////////////////////////////////////
 
+  OSP_DEPRECATED
   OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
                                               const osp_affine3f transform);
+
+  OSPRAY_INTERFACE OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geom);
+
+  OSPRAY_INTERFACE OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume);
 
   // Instance Meta-Data ///////////////////////////////////////////////////////
 

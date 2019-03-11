@@ -176,6 +176,10 @@ namespace ospray {
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(const char *light_type) = 0;
 
+      virtual OSPGeometryInstance newGeometryInstance(OSPGeometry geom) = 0;
+
+      virtual OSPVolumeInstance newVolumeInstance(OSPVolume volume) = 0;
+
       virtual void resetAccumulation(OSPFrameBuffer _fb) = 0;
 
       /*! call a renderer to render a frame buffer */
