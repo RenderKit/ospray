@@ -117,9 +117,9 @@ namespace ospray {
       fb->unmap(mapped);
     }
 
-    OSPModel ISPCDevice::newModel()
+    OSPWorld ISPCDevice::newModel()
     {
-      return (OSPModel) new Model;
+      return (OSPWorld) new Model;
     }
 
     void ISPCDevice::commit(OSPObject _object)
@@ -128,14 +128,14 @@ namespace ospray {
       object->commit();
     }
 
-    void ISPCDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
+    void ISPCDevice::addGeometry(OSPWorld _model, OSPGeometry _geometry)
     {
       Model *model       = (Model *)_model;
       Geometry *geometry = (Geometry *)_geometry;
       model->geometry.push_back(geometry);
     }
 
-    void ISPCDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
+    void ISPCDevice::removeGeometry(OSPWorld _model, OSPGeometry _geometry)
     {
       Model *model       = (Model *)_model;
       Geometry *geometry = (Geometry *)_geometry;
@@ -150,14 +150,14 @@ namespace ospray {
       }
     }
 
-    void ISPCDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    void ISPCDevice::addVolume(OSPWorld _model, OSPVolume _volume)
     {
       Model *model   = (Model *)_model;
       Volume *volume = (Volume *)_volume;
       model->volume.push_back(volume);
     }
 
-    void ISPCDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    void ISPCDevice::removeVolume(OSPWorld _model, OSPVolume _volume)
     {
       Model *model   = (Model *)_model;
       Volume *volume = (Volume *)_volume;
@@ -347,7 +347,7 @@ namespace ospray {
     float ISPCDevice::renderFrame(OSPFrameBuffer _fb,
                                   OSPRenderer _renderer,
                                   OSPCamera _camera,
-                                  OSPModel _world)
+                                  OSPWorld _world)
     {
       auto f = renderFrameAsync(_fb, _renderer, _camera, _world);
       wait(f, OSP_FRAME_FINISHED);
@@ -357,7 +357,7 @@ namespace ospray {
     OSPFuture ISPCDevice::renderFrameAsync(OSPFrameBuffer _fb,
                                            OSPRenderer _renderer,
                                            OSPCamera _camera,
-                                           OSPModel _world)
+                                           OSPWorld _world)
     {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
@@ -420,7 +420,7 @@ namespace ospray {
     OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
                                    OSPRenderer _renderer,
                                    OSPCamera _camera,
-                                   OSPModel _world,
+                                   OSPWorld _world,
                                    const vec2f &screenPos)
     {
       FrameBuffer *fb    = (FrameBuffer *)_fb;

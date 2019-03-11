@@ -27,7 +27,7 @@ static bool g_quitNextFrame = false;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                                    const ospcommon::box3f &worldBounds,
-                                   OSPModel model,
+                                   OSPWorld model,
                                    OSPRenderer renderer)
     : windowSize(windowSize),
       worldBounds(worldBounds),
@@ -142,12 +142,12 @@ GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
   return activeWindow;
 }
 
-OSPModel GLFWOSPRayWindow::getModel()
+OSPWorld GLFWOSPRayWindow::getModel()
 {
   return model;
 }
 
-void GLFWOSPRayWindow::setModel(OSPModel newModel)
+void GLFWOSPRayWindow::setModel(OSPWorld newModel)
 {
   model = newModel;
 }

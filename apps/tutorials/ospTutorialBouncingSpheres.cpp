@@ -39,7 +39,7 @@ struct Sphere
 // every frame
 static std::vector<Sphere> g_spheres;
 static OSPGeometry g_spheresGeometry;
-static OSPModel g_model;
+static OSPWorld g_model;
 
 std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
 {
@@ -252,10 +252,10 @@ OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
   return g_spheresGeometry;
 }
 
-OSPModel createModel()
+OSPWorld createModel()
 {
   // create the "world" model which will contain all of our geometries
-  OSPModel world = ospNewModel();
+  OSPWorld world = ospNewWorld();
 
   // add in spheres geometry (100 of them)
   ospAddGeometry(world, createRandomSpheresGeometry(100));

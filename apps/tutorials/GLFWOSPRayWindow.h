@@ -31,15 +31,15 @@ class GLFWOSPRayWindow
  public:
   GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                    const ospcommon::box3f &worldBounds,
-                   OSPModel model,
+                   OSPWorld model,
                    OSPRenderer renderer);
 
   ~GLFWOSPRayWindow();
 
   static GLFWOSPRayWindow *getActiveWindow();
 
-  OSPModel getModel();
-  void setModel(OSPModel newModel);
+  OSPWorld getModel();
+  void setModel(OSPWorld newModel);
 
   void resetAccumulation();
 
@@ -66,7 +66,7 @@ class GLFWOSPRayWindow
 
   ospcommon::vec2i windowSize;
   ospcommon::box3f worldBounds;
-  OSPModel model       = nullptr;
+  OSPWorld model       = nullptr;
   OSPRenderer renderer = nullptr;
 
   // GLFW window instance

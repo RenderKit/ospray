@@ -183,7 +183,7 @@ void Base::SetCamera()
 
 void Base::SetWorld()
 {
-  world = ospNewModel();
+  world = ospNewWorld();
 }
 
 void Base::SetLights()
@@ -331,7 +331,7 @@ void SpherePrecision::SetUp()
 
   ospAddGeometry(world, sphere);
 
-  OSPModel inst = ospNewModel();
+  OSPWorld inst = ospNewWorld();
   ospAddGeometry(inst, inst_sphere);
   ospRelease(inst_sphere);
   osp::affine3f xf{

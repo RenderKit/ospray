@@ -34,7 +34,7 @@ namespace ospray {
     float3 "xfm.l.vy" // 1st column of the affine transformation matrix
     float3 "xfm.l.vz" // 1st column of the affine transformation matrix
     float3 "xfm.p"    // 4th column (translation) of the affine transformation matrix
-    OSPModel "model"  // model we're instancing
+    OSPWorld "model"  // model we're instancing
     </pre>
 
     The functionality for this geometry is implemented via the

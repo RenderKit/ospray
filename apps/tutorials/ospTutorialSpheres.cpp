@@ -188,7 +188,7 @@ int main(int argc, const char **argv)
       });
 
   // create the "world" model which will contain all of our geometries
-  OSPModel world = ospNewModel();
+  OSPWorld world = ospNewWorld();
 
   // add in spheres geometry
   OSPTestingGeometry spheres = ospTestingNewGeometry("spheres", "pathtracer");

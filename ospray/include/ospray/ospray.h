@@ -177,7 +177,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPRenderer,
   *OSPCamera,
   *OSPFrameBuffer,
-  *OSPModel,
+  *OSPWorld,
   *OSPData,
   *OSPGeometry,
   *OSPMaterial,
@@ -276,15 +276,15 @@ extern "C" {
 
   // Model Manipulation ///////////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE OSPModel ospNewModel();
+  OSPRAY_INTERFACE OSPWorld ospNewWorld();
 
-  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
+  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
                                               const osp_affine3f transform);
 
-  OSPRAY_INTERFACE void ospAddGeometry(OSPModel, OSPGeometry);
-  OSPRAY_INTERFACE void ospRemoveGeometry(OSPModel, OSPGeometry);
-  OSPRAY_INTERFACE void ospAddVolume(OSPModel, OSPVolume);
-  OSPRAY_INTERFACE void ospRemoveVolume(OSPModel, OSPVolume);
+  OSPRAY_INTERFACE void ospAddGeometry(OSPWorld, OSPGeometry);
+  OSPRAY_INTERFACE void ospRemoveGeometry(OSPWorld, OSPGeometry);
+  OSPRAY_INTERFACE void ospAddVolume(OSPWorld, OSPVolume);
+  OSPRAY_INTERFACE void ospRemoveVolume(OSPWorld, OSPVolume);
 
   // Object Parameters ////////////////////////////////////////////////////////
 
@@ -353,8 +353,8 @@ extern "C" {
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
 
   //! use renderer to render a frame.
-  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
-  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
+  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
+  OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
   /* Ask if all events tracked by an OSPFuture handle have been completed */
   OSPRAY_INTERFACE int ospIsReady(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
@@ -377,7 +377,7 @@ extern "C" {
                                 OSPFrameBuffer fb,
                                 OSPRenderer renderer,
                                 OSPCamera camera,
-                                OSPModel world,
+                                OSPWorld world,
                                 const osp_vec2f screenPos);
 
 #ifdef __cplusplus

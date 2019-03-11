@@ -118,7 +118,7 @@ int main(int argc, const char **argv) {
   ospCommit(mesh);
 
 
-  OSPModel world = ospNewModel();
+  OSPWorld world = ospNewWorld();
   ospAddGeometry(world, mesh);
   ospRelease(mesh); // we are done using this handle
   ospCommit(world);

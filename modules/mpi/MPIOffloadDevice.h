@@ -69,22 +69,22 @@ namespace ospray {
       void resetAccumulation(OSPFrameBuffer _fb) override;
 
       /*! create a new model */
-      OSPModel newModel() override;
+      OSPWorld newModel() override;
 
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;
 
       /*! add a new geometry to a model */
-      void addGeometry(OSPModel _model, OSPGeometry _geometry) override;
+      void addGeometry(OSPWorld _model, OSPGeometry _geometry) override;
 
       /*! remove an existing geometry from a model */
-      void removeGeometry(OSPModel _model, OSPGeometry _geometry) override;
+      void removeGeometry(OSPWorld _model, OSPGeometry _geometry) override;
 
       /*! add a new volume to a model */
-      void addVolume(OSPModel _model, OSPVolume _volume) override;
+      void addVolume(OSPWorld _model, OSPVolume _volume) override;
 
       /*! remove an existing volume from a model */
-      void removeVolume(OSPModel _model, OSPVolume _volume) override;
+      void removeVolume(OSPWorld _model, OSPVolume _volume) override;
 
       /*! create a new data buffer */
       OSPData newData(size_t nitems,
@@ -172,12 +172,12 @@ namespace ospray {
       float renderFrame(OSPFrameBuffer,
                         OSPRenderer,
                         OSPCamera,
-                        OSPModel) override;
+                        OSPWorld) override;
 
       OSPFuture renderFrameAsync(OSPFrameBuffer,
                                  OSPRenderer,
                                  OSPCamera,
-                                 OSPModel) override;
+                                 OSPWorld) override;
 
       int isReady(OSPFuture, OSPSyncEvent) override;
 
@@ -213,7 +213,7 @@ namespace ospray {
       OSPPickResult pick(OSPFrameBuffer fb,
                          OSPRenderer renderer,
                          OSPCamera camera,
-                         OSPModel world,
+                         OSPWorld world,
                          const vec2f &screenPos) override;
 
      private:

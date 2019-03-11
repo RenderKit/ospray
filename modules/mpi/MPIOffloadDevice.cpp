@@ -535,12 +535,12 @@ namespace ospray {
     }
 
     /*! create a new model */
-    OSPModel MPIOffloadDevice::newModel()
+    OSPWorld MPIOffloadDevice::newModel()
     {
       ObjectHandle handle = allocateHandle();
       work::NewModel work("", handle);
       processWork(work);
-      return (OSPModel)(int64)handle;
+      return (OSPWorld)(int64)handle;
     }
 
     /*! finalize a newly specified model */
@@ -552,14 +552,14 @@ namespace ospray {
     }
 
     /*! add a new geometry to a model */
-    void MPIOffloadDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
+    void MPIOffloadDevice::addGeometry(OSPWorld _model, OSPGeometry _geometry)
     {
       work::AddGeometry work(_model, _geometry);
       processWork(work);
     }
 
     /*! add a new volume to a model */
-    void MPIOffloadDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    void MPIOffloadDevice::addVolume(OSPWorld _model, OSPVolume _volume)
     {
       work::AddVolume work(_model, _volume);
       processWork(work);
@@ -799,7 +799,7 @@ namespace ospray {
     }
 
     /*! remove an existing geometry from a model */
-    void MPIOffloadDevice::removeGeometry(OSPModel _model,
+    void MPIOffloadDevice::removeGeometry(OSPWorld _model,
                                           OSPGeometry _geometry)
     {
       work::RemoveGeometry work(_model, _geometry);
@@ -807,7 +807,7 @@ namespace ospray {
     }
 
     /*! remove an existing volume from a model */
-    void MPIOffloadDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    void MPIOffloadDevice::removeVolume(OSPWorld _model, OSPVolume _volume)
     {
       work::RemoveVolume work(_model, _volume);
       processWork(work);
@@ -817,7 +817,7 @@ namespace ospray {
     float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
                                         OSPRenderer _renderer,
                                         OSPCamera _camera,
-                                        OSPModel _world)
+                                        OSPWorld _world)
     {
       OSPFuture _future = renderFrameAsync(_fb, _renderer, _camera, _world);
       wait(_future, OSP_FRAME_FINISHED);
@@ -827,7 +827,7 @@ namespace ospray {
     OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer _fb,
                                                  OSPRenderer _renderer,
                                                  OSPCamera _camera,
-                                                 OSPModel _world)
+                                                 OSPWorld _world)
     {
       // When using the offload device the user's application won't be
       // calling MPI at all, so in this case we don't need to worry about
@@ -922,7 +922,7 @@ namespace ospray {
     OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
                                          OSPRenderer renderer,
                                          OSPCamera camera,
-                                         OSPModel world,
+                                         OSPWorld world,
                                          const vec2f &screenPos)
     {
       work::Pick work(fb, renderer, camera, world, screenPos);

@@ -515,14 +515,14 @@ OSPRAY_CATCH_END(nullptr)
 // Model Manipulation /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" OSPModel ospNewModel() OSPRAY_CATCH_BEGIN
+extern "C" OSPWorld ospNewWorld() OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   return currentDevice().newModel();
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
+extern "C" OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
                                       const osp_affine3f xfm) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -536,7 +536,7 @@ extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" void ospAddGeometry(OSPModel model,
+extern "C" void ospAddGeometry(OSPWorld model,
                                OSPGeometry geometry) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -546,7 +546,7 @@ extern "C" void ospAddGeometry(OSPModel model,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospRemoveGeometry(OSPModel model,
+extern "C" void ospRemoveGeometry(OSPWorld model,
                                   OSPGeometry geometry) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -556,7 +556,7 @@ extern "C" void ospRemoveGeometry(OSPModel model,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospAddVolume(OSPModel model,
+extern "C" void ospAddVolume(OSPWorld model,
                              OSPVolume volume) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -566,7 +566,7 @@ extern "C" void ospAddVolume(OSPModel model,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospRemoveVolume(OSPModel model,
+extern "C" void ospRemoveVolume(OSPWorld model,
                                 OSPVolume volume) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -894,7 +894,7 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" float ospRenderFrame(OSPFrameBuffer fb,
                                 OSPRenderer renderer,
                                 OSPCamera camera,
-                                OSPModel world) OSPRAY_CATCH_BEGIN
+                                OSPWorld world) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   return currentDevice().renderFrame(fb, renderer, camera, world);
@@ -904,7 +904,7 @@ OSPRAY_CATCH_END(inf)
 extern "C" OSPFuture ospRenderFrameAsync(OSPFrameBuffer fb,
                                          OSPRenderer renderer,
                                          OSPCamera camera,
-                                         OSPModel world) OSPRAY_CATCH_BEGIN
+                                         OSPWorld world) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   return currentDevice().renderFrameAsync(fb, renderer, camera, world);
@@ -945,7 +945,7 @@ extern "C" void ospPick(OSPPickResult *result,
                         OSPFrameBuffer fb,
                         OSPRenderer renderer,
                         OSPCamera camera,
-                        OSPModel world,
+                        OSPWorld world,
                         const osp_vec2f screenPos) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();

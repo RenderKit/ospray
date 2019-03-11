@@ -281,7 +281,7 @@ namespace ospray {
         run();
       }
 
-      // ospNewModel //////////////////////////////////////////////////////////
+      // ospNewWorld //////////////////////////////////////////////////////////
 
       template <>
       void NewModel::run()
@@ -458,7 +458,7 @@ namespace ospray {
       RenderFrameAsync::RenderFrameAsync(OSPFrameBuffer fb,
                                          OSPRenderer renderer,
                                          OSPCamera camera,
-                                         OSPModel world,
+                                         OSPWorld world,
                                          ObjectHandle futureHandle)
           : fbHandle((ObjectHandle &)fb),
             rendererHandle((ObjectHandle &)renderer),
@@ -680,7 +680,7 @@ namespace ospray {
       Pick::Pick(OSPFrameBuffer fb,
                  OSPRenderer renderer,
                  OSPCamera camera,
-                 OSPModel world,
+                 OSPWorld world,
                  const vec2f &screenPos)
           : fbHandle((ObjectHandle &)fb),
             rendererHandle((ObjectHandle &)renderer),

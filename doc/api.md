@@ -985,7 +985,7 @@ OSPRay supports instancing via a special type of geometry. Instances are
 created by transforming another given [model] `modelToInstantiate` with
 the given affine transformation `transform` by calling
 
-    OSPGeometry ospNewInstance(OSPModel modelToInstantiate, const affine3f &transform);
+    OSPGeometry ospNewInstance(OSPWorld modelToInstantiate, const affine3f &transform);
 
 
 Renderer
@@ -1117,18 +1117,18 @@ Models are a container of scene data. They can hold the different
 other models. A model is associated with a single logical acceleration
 structure. To create an (empty) model call
 
-    OSPModel ospNewModel();
+    OSPWorld ospNewWorld();
 
-The call returns an `OSPModel` handle to the created model. To add an
+The call returns an `OSPWorld` handle to the created model. To add an
 already created geometry or volume to a model use
 
-    void ospAddGeometry(OSPModel, OSPGeometry);
-    void ospAddVolume(OSPModel, OSPVolume);
+    void ospAddGeometry(OSPWorld, OSPGeometry);
+    void ospAddVolume(OSPWorld, OSPVolume);
 
 An existing geometry or volume can be removed from a model with
 
-    void ospRemoveGeometry(OSPModel, OSPGeometry);
-    void ospRemoveVolume(OSPModel, OSPVolume);
+    void ospRemoveGeometry(OSPWorld, OSPGeometry);
+    void ospRemoveVolume(OSPWorld, OSPVolume);
 
 Finally, Models can be configured with parameters for making various
 feature/performance trade-offs:
@@ -1951,7 +1951,7 @@ normalized screen-space pixel coordinates `screenPos` use
                  OSPFrameBuffer,
                  OSPRenderer,
                  OSPCamera,
-                 OSPModel,
+                 OSPWorld,
                  const osp_vec2f screenPos);
 
 The result is returned in the provided `OSPPickResult` struct:
@@ -2128,7 +2128,7 @@ Rendering
 
 To render a frame into the given framebuffer with the given renderer use
 
-    float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel);
+    float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
 What to render and how to render it depends on the renderer's parameters. If
 the framebuffer supports accumulation (i.e., it was created with
@@ -2147,7 +2147,7 @@ above synchronous version. To start an asynchronous render, use
     OSPFuture ospRenderFrameAsync(OSPFrameBuffer,
                                   OSPRenderer,
                                   OSPCamera,
-                                  OSPModel);
+                                  OSPWorld);
 
 This version returns an `OSPFuture` handle, which can be used to
 synchronize with, cancel, or query for progress of the running task.

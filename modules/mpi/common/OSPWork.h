@@ -342,7 +342,7 @@ namespace ospray {
         RenderFrameAsync(OSPFrameBuffer fb,
                          OSPRenderer renderer,
                          OSPCamera camera,
-                         OSPModel world,
+                         OSPWorld world,
                          ObjectHandle futureHandle);
 
         void run() override;
@@ -367,7 +367,7 @@ namespace ospray {
       struct AddVolume : public Work
       {
         AddVolume() = default;
-        AddVolume(OSPModel model, const OSPVolume &t)
+        AddVolume(OSPWorld model, const OSPVolume &t)
             : modelHandle((const ObjectHandle &)model),
               objectHandle((const ObjectHandle &)t)
         {
@@ -397,7 +397,7 @@ namespace ospray {
       struct AddGeometry : public Work
       {
         AddGeometry() = default;
-        AddGeometry(OSPModel model, const OSPGeometry &t)
+        AddGeometry(OSPWorld model, const OSPGeometry &t)
             : modelHandle((const ObjectHandle &)model),
               objectHandle((const ObjectHandle &)t)
         {
@@ -427,7 +427,7 @@ namespace ospray {
       struct RemoveGeometry : public Work
       {
         RemoveGeometry() = default;
-        RemoveGeometry(OSPModel model, const OSPGeometry &t)
+        RemoveGeometry(OSPWorld model, const OSPGeometry &t)
             : modelHandle((const ObjectHandle &)model),
               objectHandle((const ObjectHandle &)t)
         {
@@ -457,7 +457,7 @@ namespace ospray {
       struct RemoveVolume : public Work
       {
         RemoveVolume() = default;
-        RemoveVolume(OSPModel model, const OSPVolume &t)
+        RemoveVolume(OSPWorld model, const OSPVolume &t)
             : modelHandle((const ObjectHandle &)model),
               objectHandle((const ObjectHandle &)t)
         {
@@ -751,7 +751,7 @@ namespace ospray {
         Pick(OSPFrameBuffer fb,
              OSPRenderer renderer,
              OSPCamera camera,
-             OSPModel world,
+             OSPWorld world,
              const vec2f &screenPos);
 
         void run() override;

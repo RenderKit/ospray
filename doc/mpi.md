@@ -196,7 +196,7 @@ Geometries used in the distributed MPI renderer can make use of the
   vec3f  region.upper  Override the original model geometry + volume bounds with
                        a custom upper bound position.
   ------ ------------- ---------------------------------------------------------
-  : Parameters for the distributed `OSPModel`.
+  : Parameters for the distributed `OSPWorld`.
 
 The renderer supported when using the distributed device is the
 `mpi_raycast` renderer. This renderer is an experimental renderer and
@@ -211,12 +211,12 @@ if any where set.
   -------------------- ---------------------- --------  ------------------------
   Type                 Name                    Default  Description
   -------------------- ---------------------- --------  ------------------------
-  OSPModel/OSPModel[]  model                      NULL  the [model] to render,
+  OSPWorld/OSPWorld[]  model                      NULL  the [model] to render,
                                                         can optionally be a
                                                         [data] array of multiple
                                                         models
 
-  OSPModel/OSPModel[]  ghostModel                 NULL  the optional [model]
+  OSPWorld/OSPWorld[]  ghostModel                 NULL  the optional [model]
                                                         containing the ghost
                                                         geometry for ambient
                                                         occlusion; when setting

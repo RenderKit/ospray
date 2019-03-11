@@ -46,7 +46,7 @@ int main(int argc, const char **argv)
       });
 
   // create the "world" model which will contain all of our geometries / volumes
-  OSPModel world = ospNewModel();
+  OSPWorld world = ospNewWorld();
 
   // add in generated volume and transfer function
 #if 0

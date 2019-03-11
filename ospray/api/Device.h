@@ -54,7 +54,7 @@ namespace ospray {
       virtual void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) = 0;
 
       /*! create a new model */
-      virtual OSPModel newModel() = 0;
+      virtual OSPWorld newModel() = 0;
 
       /*! load module */
       virtual int loadModule(const char *name) = 0;
@@ -63,16 +63,16 @@ namespace ospray {
       virtual void commit(OSPObject object) = 0;
 
       /*! add a new geometry to a model */
-      virtual void addGeometry(OSPModel _model, OSPGeometry _geometry) = 0;
+      virtual void addGeometry(OSPWorld _model, OSPGeometry _geometry) = 0;
 
       /*! remove an existing geometry from a model */
-      virtual void removeGeometry(OSPModel _model, OSPGeometry _geometry) = 0;
+      virtual void removeGeometry(OSPWorld _model, OSPGeometry _geometry) = 0;
 
       /*! add a new volume to a model */
-      virtual void addVolume(OSPModel _model, OSPVolume _volume) = 0;
+      virtual void addVolume(OSPWorld _model, OSPVolume _volume) = 0;
 
       /*! remove an existing volume from a model */
-      virtual void removeVolume(OSPModel _model, OSPVolume _volume) = 0;
+      virtual void removeVolume(OSPWorld _model, OSPVolume _volume) = 0;
 
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems,
@@ -182,12 +182,12 @@ namespace ospray {
       virtual float renderFrame(OSPFrameBuffer,
                                 OSPRenderer,
                                 OSPCamera,
-                                OSPModel) = 0;
+                                OSPWorld) = 0;
 
       virtual OSPFuture renderFrameAsync(OSPFrameBuffer,
                                          OSPRenderer,
                                          OSPCamera,
-                                         OSPModel) = 0;
+                                         OSPWorld) = 0;
 
       virtual int isReady(OSPFuture, OSPSyncEvent) = 0;
 
@@ -217,7 +217,7 @@ namespace ospray {
       /*! \brief create a new instance geometry that instantiates another
         model.  the resulting geometry still has to be added to another
         model via ospAddGeometry */
-      virtual OSPGeometry newInstance(OSPModel modelToInstantiate,
+      virtual OSPGeometry newInstance(OSPWorld modelToInstantiate,
                                       const osp_affine3f &xfm)
       {
         UNUSED(modelToInstantiate, xfm);
@@ -226,7 +226,7 @@ namespace ospray {
 
       /*! perform a pick operation */
       virtual OSPPickResult pick(
-          OSPFrameBuffer, OSPRenderer, OSPCamera, OSPModel, const vec2f &)
+          OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &)
       {
         NOT_IMPLEMENTED;
       }

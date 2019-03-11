@@ -23,13 +23,13 @@
 namespace ospray {
   namespace cpp    {
 
-    class Model : public ManagedObject_T<OSPModel>
+    class Model : public ManagedObject_T<OSPWorld>
     {
     public:
 
       Model();
       Model(const Model &copy);
-      Model(OSPModel existing);
+      Model(OSPWorld existing);
 
       void addGeometry(Geometry &v) const;
       void addGeometry(OSPGeometry v) const;
@@ -50,21 +50,21 @@ namespace ospray {
 
     inline Model::Model()
     {
-      OSPModel c = ospNewModel();
+      OSPWorld c = ospNewWorld();
       if (c) {
         ospObject = c;
       } else {
-        throw std::runtime_error("Failed to create OSPModel!");
+        throw std::runtime_error("Failed to create OSPWorld!");
       }
     }
 
     inline Model::Model(const Model &copy) :
-      ManagedObject_T<OSPModel>(copy.handle())
+      ManagedObject_T<OSPWorld>(copy.handle())
     {
     }
 
-    inline Model::Model(OSPModel existing) :
-      ManagedObject_T<OSPModel>(existing)
+    inline Model::Model(OSPWorld existing) :
+      ManagedObject_T<OSPWorld>(existing)
     {
     }
 

@@ -45,7 +45,7 @@ class Base {
   OSPFrameBuffer framebuffer;
   OSPRenderer renderer;
   OSPCamera camera;
-  OSPModel world;
+  OSPWorld world;
   OSPData lights;
   OSPFrameBufferFormat frameBufferFormat = OSP_FB_SRGBA;
 

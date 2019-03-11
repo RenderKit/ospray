@@ -29,7 +29,7 @@ namespace ospray {
   /*! global frame buffer, handle is valid across all ranks */
   OSPFrameBuffer fb     = NULL;
   /*! global model, handle is valid across all ranks */
-  OSPModel       model  = NULL;
+  OSPWorld       model  = NULL;
 
   void testDistributedApp_main(int &ac, char **&av)
   {
@@ -40,17 +40,17 @@ namespace ospray {
     MPI_Comm_size(MPI_COMM_WORLD,&size);
     printf("#ospdapp: starting test app for osp distributed mode, rank %i/%i\n",rank,size);
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
     ospdApiMode(OSPD_ALL);
-    model = ospNewModel();
+    model = ospNewWorld();
     Assert(model,"error creating model");
 
     camera = ospNewCamera("perspective");
     Assert(camera,"error creating camera");
-    
+
     renderer = ospNewRenderer("obj");
     Assert(renderer,"error creating renderer");
-    
+
     ospdApiMode(OSPD_RANK);
 
     MPI_Barrier(MPI_COMM_WORLD);

@@ -60,10 +60,10 @@ void writePPM(const char *fileName,
   fclose(file);
 }
 
-void buildScene1(OSPCamera *camera, OSPModel *world, OSPRenderer *renderer,
+void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
                  OSPFrameBuffer *framebuffer, osp_vec2i imgSize);
 
-void buildScene2(OSPCamera *camera, OSPModel *world, OSPRenderer *renderer,
+void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
                  OSPFrameBuffer *framebuffer, osp_vec2i imgSize);
 
 int main(int argc, const char **argv) {
@@ -80,7 +80,7 @@ int main(int argc, const char **argv) {
   imgSizes[1].y = 600;
 
   OSPCamera cameras[2] = {0};
-  OSPModel worlds[2] = {0};
+  OSPWorld worlds[2] = {0};
   OSPRenderer renderers[2] = {0};
   OSPFrameBuffer framebuffers[2] = {0};
   buildScene1(&cameras[0], &worlds[0], &renderers[0],
@@ -153,7 +153,7 @@ int main(int argc, const char **argv) {
   return 0;
 }
 
-void buildScene1(OSPCamera *camera, OSPModel *world, OSPRenderer *renderer,
+void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
                  OSPFrameBuffer *framebuffer, osp_vec2i imgSize)
 {
   // camera
@@ -203,7 +203,7 @@ void buildScene1(OSPCamera *camera, OSPModel *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  *world = ospNewModel();
+  *world = ospNewWorld();
   ospAddGeometry(*world, mesh);
   ospRelease(mesh); // we are done using this handle
   ospCommit(*world);
@@ -230,7 +230,7 @@ void buildScene1(OSPCamera *camera, OSPModel *world, OSPRenderer *renderer,
   *framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
 }
 
-void buildScene2(OSPCamera *camera, OSPModel *world, OSPRenderer *renderer,
+void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
                  OSPFrameBuffer *framebuffer, osp_vec2i imgSize)
 {
   // camera
@@ -280,7 +280,7 @@ void buildScene2(OSPCamera *camera, OSPModel *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  *world = ospNewModel();
+  *world = ospNewWorld();
   ospAddGeometry(*world, mesh);
   ospRelease(mesh); // we are done using this handle
   ospCommit(*world);
