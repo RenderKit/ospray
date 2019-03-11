@@ -193,7 +193,7 @@ namespace ospray {
 
       float getProgress(OSPFuture) override;
 
-      float getVariance(OSPFuture) override;
+      float getVariance(OSPFrameBuffer) override;
 
       //! release (i.e., reduce refcount of) given object
       /*! note that all objects in ospray are refcounted, so one cannot

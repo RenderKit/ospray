@@ -163,10 +163,41 @@ typedef struct
 
 /* Give OSPRay handle types a concrete defintion to enable C++ type checking */
 #ifdef __cplusplus
-struct _OSPManagedObject {};
+namespace osp {
+  struct Device;
+  struct ManagedObject    {};
+  struct FrameBuffer      : public ManagedObject {};
+  struct Renderer         : public ManagedObject {};
+  struct Camera           : public ManagedObject {};
+  struct Data             : public ManagedObject {};
+  struct Future           : public ManagedObject {};
+  struct Geometry         : public ManagedObject {};
+  struct Material         : public ManagedObject {};
+  struct Volume           : public ManagedObject {};
+  struct TransferFunction : public ManagedObject {};
+  struct Texture          : public ManagedObject {};
+  struct Light            : public ManagedObject {};
+  struct PixelOp          : public ManagedObject {};
+  struct World            : public ManagedObject {};
+}
+
+typedef osp::Device            *OSPDevice;
+typedef osp::FrameBuffer       *OSPFrameBuffer;
+typedef osp::Renderer          *OSPRenderer;
+typedef osp::Camera            *OSPCamera;
+typedef osp::Data              *OSPData;
+typedef osp::Future            *OSPFuture;
+typedef osp::Geometry          *OSPGeometry;
+typedef osp::Material          *OSPMaterial;
+typedef osp::Light             *OSPLight;
+typedef osp::Volume            *OSPVolume;
+typedef osp::TransferFunction  *OSPTransferFunction;
+typedef osp::Texture           *OSPTexture;
+typedef osp::ManagedObject     *OSPObject;
+typedef osp::PixelOp           *OSPPixelOp;
+typedef osp::World             *OSPWorld;
 #else
 typedef void _OSPManagedObject;
-#endif
 
 /*! abstract object types. in C99, those are all the same because C99
   doesn't know inheritance, and we want to make sure that a
@@ -188,6 +219,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPObject,
   *OSPPixelOp,
   *OSPFuture;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
