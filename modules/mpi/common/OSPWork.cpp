@@ -29,8 +29,6 @@
 #include "geometry/TriangleMesh.h"
 #include "texture/Texture.h"
 
-#include "SynchronousRenderTask.h"
-
 namespace ospray {
   namespace mpi {
     namespace work {

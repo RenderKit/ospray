@@ -34,9 +34,8 @@
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/Renderer.h"
+#include "render/RenderTask.h"
 #include "volume/Volume.h"
-
-#include "common/SynchronousRenderTask.h"
 
 // std
 #ifndef _WIN32
