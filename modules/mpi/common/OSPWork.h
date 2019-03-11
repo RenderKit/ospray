@@ -268,22 +268,6 @@ namespace ospray {
         int32 flags;
       };
 
-      struct NewFuture : public Work
-      {
-        NewFuture() = default;
-        NewFuture(OSPFrameBuffer fbHandle, ObjectHandle handle);
-
-        void run() override;
-
-        void runOnMaster() override;
-
-        void serialize(WriteStream &b) const override;
-
-        void deserialize(ReadStream &b) override;
-
-        ObjectHandle fbHandle, handle;
-      };
-
       struct SetRegion : public Work
       {
         SetRegion() = default;
@@ -352,13 +336,14 @@ namespace ospray {
         ObjectHandle handle;
       };
 
-      struct RenderFrame : public Work
+      struct RenderFrameAsync : public Work
       {
-        RenderFrame() = default;
-        RenderFrame(OSPFrameBuffer fb,
-                    OSPRenderer renderer,
-                    OSPCamera camera,
-                    OSPModel world);
+        RenderFrameAsync() = default;
+        RenderFrameAsync(OSPFrameBuffer fb,
+                         OSPRenderer renderer,
+                         OSPCamera camera,
+                         OSPModel world,
+                         ObjectHandle futureHandle);
 
         void run() override;
         void runOnMaster() override;
@@ -376,8 +361,7 @@ namespace ospray {
         ObjectHandle rendererHandle;
         ObjectHandle cameraHandle;
         ObjectHandle worldHandle;
-        // Variance result for adaptive accumulation
-        float varianceResult{0.f};
+        ObjectHandle futureHandle;
       };
 
       struct AddVolume : public Work

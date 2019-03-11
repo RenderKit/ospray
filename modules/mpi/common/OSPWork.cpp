@@ -21,6 +21,7 @@
 #include "mpi/render/MPILoadBalancer.h"
 #include "mpiCommon/MPICommon.h"
 #include "ospray/common/ObjectHandle.h"
+#include "render/RenderTask.h"
 
 #include "common/Data.h"
 #include "common/Library.h"
@@ -51,7 +52,6 @@ namespace ospray {
 
         registerWorkUnit<NewData>(registry);
         registerWorkUnit<NewTexture>(registry);
-        registerWorkUnit<NewFuture>(registry);
 
         registerWorkUnit<CommitObject>(registry);
         registerWorkUnit<CommandRelease>(registry);
@@ -65,7 +65,7 @@ namespace ospray {
 
         registerWorkUnit<CreateFrameBuffer>(registry);
         registerWorkUnit<ResetAccumulation>(registry);
-        registerWorkUnit<RenderFrame>(registry);
+        registerWorkUnit<RenderFrameAsync>(registry);
 
         registerWorkUnit<SetRegion>(registry);
         registerWorkUnit<SetPixelOp>(registry);
@@ -377,34 +377,6 @@ namespace ospray {
         format   = (OSPDataType)fmt;
       }
 
-      // newFuture ////////////////////////////////////////////////////////////
-
-      NewFuture::NewFuture(OSPFrameBuffer fbHandle, ObjectHandle handle)
-          : fbHandle((ObjectHandle &)fbHandle), handle(handle)
-      {
-      }
-
-      void NewFuture::run()
-      {
-        auto *f = new SynchronousRenderTask((FrameBuffer *)fbHandle.lookup());
-        handle.assign(f);
-      }
-
-      void NewFuture::runOnMaster()
-      {
-        run();
-      }
-
-      void NewFuture::serialize(WriteStream &b) const
-      {
-        b << (int64)fbHandle << (int64)handle;
-      }
-
-      void NewFuture::deserialize(ReadStream &b)
-      {
-        b >> fbHandle.i64 >> handle.i64;
-      }
-
       // ospSetRegion /////////////////////////////////////////////////////////
 
       SetRegion::SetRegion(OSPVolume volume,
@@ -483,45 +455,51 @@ namespace ospray {
         b >> handle.i64;
       }
 
-      // ospRenderFrame ///////////////////////////////////////////////////////
+      // ospRenderFrameAsync ///////////////////////////////////////////////////////
 
-      RenderFrame::RenderFrame(OSPFrameBuffer fb,
-                               OSPRenderer renderer,
-                               OSPCamera camera,
-                               OSPModel world)
+      RenderFrameAsync::RenderFrameAsync(OSPFrameBuffer fb,
+                                         OSPRenderer renderer,
+                                         OSPCamera camera,
+                                         OSPModel world,
+                                         ObjectHandle futureHandle)
           : fbHandle((ObjectHandle &)fb),
             rendererHandle((ObjectHandle &)renderer),
             cameraHandle((ObjectHandle &)camera),
             worldHandle((ObjectHandle &)world),
-            varianceResult(0.f)
+            futureHandle(futureHandle)
       {
       }
 
-      void RenderFrame::run()
+      void RenderFrameAsync::run()
       {
         mpicommon::world.barrier();
         Renderer *renderer = (Renderer *)rendererHandle.lookup();
         FrameBuffer *fb    = (FrameBuffer *)fbHandle.lookup();
         Camera *camera     = (Camera *)cameraHandle.lookup();
         Model *world       = (Model *)worldHandle.lookup();
-        varianceResult     = renderer->renderFrame(fb, camera, world);
+
+        fb->setCompletedEvent(OSP_NONE_FINISHED);
+
+        auto *f = new RenderTask(fb,
+            [=]() { return renderer->renderFrame(fb, camera, world); });
+        futureHandle.assign(f);
       }
 
-      void RenderFrame::runOnMaster()
+      void RenderFrameAsync::runOnMaster()
       {
         run();
       }
 
-      void RenderFrame::serialize(WriteStream &b) const
+      void RenderFrameAsync::serialize(WriteStream &b) const
       {
         b << (int64)fbHandle << (int64)rendererHandle << (int64)cameraHandle
-          << (int64)worldHandle;
+          << (int64)worldHandle << (int64)futureHandle;
       }
 
-      void RenderFrame::deserialize(ReadStream &b)
+      void RenderFrameAsync::deserialize(ReadStream &b)
       {
         b >> fbHandle.i64 >> rendererHandle.i64 >> cameraHandle.i64 >>
-            worldHandle.i64;
+            worldHandle.i64 >> futureHandle.i64;
       }
 
       // ospAddGeometry ///////////////////////////////////////////////////////
@@ -691,9 +669,7 @@ namespace ospray {
 
       void CommandFinalize::runOnMaster()
       {
-        maml::stop();
         maml::shutdown();
-        world.barrier();
         MPI_CALL(Finalize());
       }
 

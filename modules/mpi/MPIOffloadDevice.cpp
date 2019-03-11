@@ -820,9 +820,9 @@ namespace ospray {
                                         OSPCamera _camera,
                                         OSPModel _world)
     {
-      work::RenderFrame work(_fb, _renderer, _camera, _world);
-      processWork(work, true);
-      return work.varianceResult;
+      OSPFuture _future = renderFrameAsync(_fb, _renderer, _camera, _world);
+      wait(_future, OSP_FRAME_FINISHED);
+      return getVariance(_fb);
     }
 
     OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer _fb,
@@ -830,16 +830,12 @@ namespace ospray {
                                                  OSPCamera _camera,
                                                  OSPModel _world)
     {
-      // TODO: If the user only has thread serialized, we may not be able to
-      // do much here. Each time we exit an OSPRay call we'd have to make some
-      // assumption that they might make MPI calls, and have to lock the MPI
-      // lock out to avoid conflicts with them.
-      work::RenderFrame work(_fb, _renderer, _camera, _world);
-      processWork(work, true);
-
+      // When using the offload device the user's application won't be
+      // calling MPI at all, so in this case we don't need to worry about
+      // hitting issues with thread multiple vs. thread serialized
       ObjectHandle futureHandle = allocateHandle();
-      work::NewFuture future(_fb, futureHandle);
-      processWork(future, true);
+      work::RenderFrameAsync work(_fb, _renderer, _camera, _world, futureHandle);
+      processWork(work, true);
       return (OSPFuture)(int64)futureHandle;
     }
 

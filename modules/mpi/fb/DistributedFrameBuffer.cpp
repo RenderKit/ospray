@@ -364,6 +364,7 @@ namespace ospray {
 
     // Report that we're 100% done and do a final check for cancellation
     reportProgress(1.0f);
+    setCompletedEvent(OSP_WORLD_RENDERED);
 
     int renderingCancelled = frameCancelled();
     mpicommon::bcast(&renderingCancelled, 1, MPI_INT, masterRank(),
