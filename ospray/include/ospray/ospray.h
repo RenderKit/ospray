@@ -300,18 +300,22 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
+  // Instancing ///////////////////////////////////////////////////////////////
+
+  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
+                                              const osp_affine3f transform);
+
+  // Instance Meta-Data ///////////////////////////////////////////////////////
+
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 
   OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 
   OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
 
-  // Model Manipulation ///////////////////////////////////////////////////////
+  // World Manipulation ///////////////////////////////////////////////////////
 
   OSPRAY_INTERFACE OSPWorld ospNewWorld();
-
-  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
-                                              const osp_affine3f transform);
 
   OSPRAY_INTERFACE void ospAddGeometry(OSPWorld, OSPGeometry);
   OSPRAY_INTERFACE void ospRemoveGeometry(OSPWorld, OSPGeometry);
