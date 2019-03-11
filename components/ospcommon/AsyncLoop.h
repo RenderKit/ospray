@@ -19,6 +19,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
+#include <chrono>
 #include <thread>
 
 #include "TypeTraits.h"
@@ -85,17 +86,19 @@ namespace ospcommon {
 
     auto mainLoop = [l,fcn]() {
       while (l->threadShouldBeAlive) {
-        std::unique_lock<std::mutex> lock(l->runningMutex);
-        l->runningCond.wait(lock, [&] {
-          return l->shouldBeRunning.load() || !l->threadShouldBeAlive.load();
-        });
-
         if (!l->threadShouldBeAlive)
           return;
 
-        l->insideLoopBody = true;
-        if (l->shouldBeRunning) fcn();
-        l->insideLoopBody = false;
+        if (l->shouldBeRunning) {
+          l->insideLoopBody = true;
+          fcn();
+          l->insideLoopBody = false;
+        } else {
+          std::unique_lock<std::mutex> lock(l->runningMutex);
+          l->runningCond.wait(lock, [&] {
+            return l->shouldBeRunning.load() || !l->threadShouldBeAlive.load();
+          });
+        }
       }
     };
 
@@ -110,8 +113,15 @@ namespace ospcommon {
 
   inline AsyncLoop::~AsyncLoop()
   {
-    loop->threadShouldBeAlive = false;
-    loop->shouldBeRunning = false;
+    // Note that the mutex here is still required even though these vars
+    // are atomic, because we need to sync with the condition variable waiting
+    // state on the async thread. Otherwise we might signal and the thread
+    // will miss it, since it wasn't watching.
+    {
+      std::unique_lock<std::mutex> lock(loop->runningMutex);
+      loop->threadShouldBeAlive = false;
+      loop->shouldBeRunning = false;
+    }
     loop->runningCond.notify_one();
 
     if (backgroundThread.joinable()) {
@@ -122,7 +132,14 @@ namespace ospcommon {
   inline void AsyncLoop::start()
   {
     if (!loop->shouldBeRunning) {
-      loop->shouldBeRunning = true;
+      // Note that the mutex here is still required even though these vars
+      // are atomic, because we need to sync with the condition variable waiting
+      // state on the async thread. Otherwise we might signal and the thread
+      // will miss it, since it wasn't watching.
+      {
+        std::unique_lock<std::mutex> lock(loop->runningMutex);
+        loop->shouldBeRunning = true;
+      }
       loop->runningCond.notify_one();
     }
   }
@@ -131,8 +148,9 @@ namespace ospcommon {
   {
     if (loop->shouldBeRunning) {
       loop->shouldBeRunning = false;
-      std::unique_lock<std::mutex> lock(loop->runningMutex);
-      loop->runningCond.wait(lock, [&] { return !loop->insideLoopBody.load(); });
+      while (loop->insideLoopBody.load()) {
+        std::this_thread::yield();
+      }
     }
   }
 
