@@ -87,6 +87,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
+  geometry/GeometryInstance.ispc
+  geometry/GeometryInstance.cpp
   geometry/TriangleMesh.ispc
   geometry/TriangleMesh.cpp
   geometry/Subdivision.ispc

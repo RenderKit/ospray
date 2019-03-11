@@ -23,7 +23,7 @@
 #include "common/Util.h"
 #include "common/World.h"
 #include "fb/LocalFB.h"
-#include "geometry/TriangleMesh.h"
+#include "geometry/GeometryInstance.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/RenderTask.h"
@@ -339,9 +339,11 @@ namespace ospray {
       return (OSPTexture)Texture::createInstance(type);
     }
 
-    OSPGeometryInstance ISPCDevice::newGeometryInstance(OSPGeometry geom)
+    OSPGeometryInstance ISPCDevice::newGeometryInstance(OSPGeometry _geom)
     {
-      NOT_IMPLEMENTED;
+      auto *geom     = (Geometry *)_geom;
+      auto *instance = new GeometryInstance(geom);
+      return (OSPGeometryInstance)instance;
     }
 
     OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume volume)
