@@ -222,8 +222,6 @@ int main(int argc, const char **argv)
       ospSet1f(subdivisionGeometry.geometry, "level", tessellationLevel);
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
       glfwOSPRayWindow->addObjectToCommit(world);
-
-      GLFWOSPRayWindow::getActiveWindow()->resetAccumulation();
     }
 
     static float vertexCreaseWeight = 2.f;
@@ -247,8 +245,6 @@ int main(int argc, const char **argv)
 
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
       glfwOSPRayWindow->addObjectToCommit(world);
-
-      GLFWOSPRayWindow::getActiveWindow()->resetAccumulation();
     }
 
     static float edgeCreaseWeight = 2.f;
@@ -271,8 +267,6 @@ int main(int argc, const char **argv)
 
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
       glfwOSPRayWindow->addObjectToCommit(world);
-
-      GLFWOSPRayWindow::getActiveWindow()->resetAccumulation();
     }
   });
 
