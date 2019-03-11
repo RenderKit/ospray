@@ -16,13 +16,13 @@
 
 #include "Renderer.ih"
 #include "camera/Camera.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "render/util.ih"
 
 // The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(Renderer *uniform self,
                                    FrameBuffer *uniform fb,
-                                   Model *uniform model,
+                                   World *uniform model,
                                    void *uniform perFrameData,
                                    varying ScreenSample &sample)
 {
@@ -34,7 +34,7 @@ void Renderer_default_renderSample(Renderer *uniform self,
 }
 
 static unmasked void *uniform Renderer_default_beginFrame(
-    Renderer *uniform self, const Model *uniform world)
+    Renderer *uniform self, const World *uniform world)
 {
   return NULL;
 }
@@ -47,7 +47,7 @@ static unmasked void Renderer_default_endFrame(Renderer *uniform self,
 unmasked void Renderer_default_renderTile(Renderer *uniform self,
                                           FrameBuffer *uniform fb,
                                           Camera *uniform camera,
-                                          Model *uniform world,
+                                          World *uniform world,
                                           void *uniform perFrameData,
                                           uniform Tile &tile,
                                           uniform int taskIndex)
@@ -164,7 +164,7 @@ export void Renderer_renderTile(void *uniform _self,
   Renderer *uniform self  = (Renderer * uniform) _self;
   FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
   Camera *uniform camera  = (Camera * uniform) _camera;
-  Model *uniform world    = (Model * uniform) _world;
+  World *uniform world    = (World * uniform) _world;
   self->renderTile(self, fb, camera, world, perFrameData, tile, jobID);
 }
 
@@ -172,7 +172,7 @@ export void *uniform Renderer_beginFrame(void *uniform _self,
                                          void *uniform _world)
 {
   Renderer *uniform self = (Renderer * uniform) _self;
-  Model *uniform world   = (Model * uniform) _world;
+  World *uniform world   = (World * uniform) _world;
   return self->beginFrame(self, world);
 }
 
@@ -211,7 +211,7 @@ export void Renderer_pick(const void *uniform _self,
   const Renderer *uniform self  = (const Renderer * uniform)_self;
   const FrameBuffer *uniform fb = (const FrameBuffer *uniform)_fb;
   const Camera *uniform camera  = (const Camera *uniform)_camera;
-  const Model *uniform world    = (const Model *uniform)_world;
+  const World *uniform world    = (const World *uniform)_world;
 
   CameraSample cameraSample;
   cameraSample.screen.x = screenPos.x;

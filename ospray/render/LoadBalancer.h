@@ -33,7 +33,7 @@ namespace ospray {
     virtual float renderFrame(FrameBuffer *fb,
                               Renderer *renderer,
                               Camera *camera,
-                              Model *world) = 0;
+                              World *world) = 0;
 
     static size_t numJobs(const int spp, int accumID);
   };
@@ -59,7 +59,7 @@ namespace ospray {
     float renderFrame(FrameBuffer *fb,
                       Renderer *renderer,
                       Camera *camera,
-                      Model *world) override;
+                      World *world) override;
 
     std::string toString() const override;
   };

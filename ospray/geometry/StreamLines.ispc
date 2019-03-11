@@ -18,7 +18,7 @@
 #include "math/vec.ih"
 #include "math/box.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
 
@@ -174,7 +174,7 @@ unmasked void StreamLines_occluded(const struct RTCIntersectFunctionNArguments *
 }
 
 static void StreamLines_postIntersect(const Geometry *uniform self,
-                                      const Model *uniform model,
+                                      const World *uniform model,
                                       varying DifferentialGeometry &dg,
                                       const varying Ray &ray,
                                       uniform int64 flags)
@@ -301,7 +301,7 @@ StreamLines_set(       void *uniform _self,
                 const  uniform vec4f  *uniform color)
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
-  Model *uniform model = (Model *uniform)_model;
+  World *uniform model = (World *uniform)_model;
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
@@ -341,7 +341,7 @@ StreamLines_setCurve(      void           *uniform _self,
                      const uniform vec4f  *uniform color)
 {
   StreamLines *uniform self = (StreamLines *uniform)_self;
-  Model *uniform model = (Model *uniform)_model;
+  World *uniform model = (World *uniform)_model;
 
   uniform RTCGeometry geom
     = rtcNewGeometry(ispc_embreeDevice(),

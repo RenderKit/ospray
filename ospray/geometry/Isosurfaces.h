@@ -53,7 +53,7 @@ namespace ospray {
     virtual ~Isosurfaces() override = default;
 
     virtual std::string toString() const override;
-    virtual void finalize(Model *model) override;
+    virtual void finalize(World *model) override;
 
     // Data members //
 

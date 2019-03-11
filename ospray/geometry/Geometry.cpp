@@ -77,7 +77,7 @@ namespace ospray {
     return "ospray::Geometry";
   }
 
-  void Geometry::finalize(Model *)
+  void Geometry::finalize(World *)
   {
     Data *materialListDataPtr = getParamData("materialList");
     if (materialListDataPtr)

@@ -17,7 +17,6 @@
 // ospray
 #include "fb/FrameBuffer.ih"
 #include "camera/PerspectiveCamera.ih"
-#include "common/Model.ih"
 #include "render/util.ih"
 #include "render/Renderer.ih"
 
@@ -37,7 +36,7 @@ struct RaycastRenderer
   whether frame buffers are properly set up etcpp */
 void RaycastRenderer_renderSample_testFrame(Renderer *uniform _self,
                                             FrameBuffer *uniform fb,
-                                            Model *uniform world,
+                                            World *uniform world,
                                             void *uniform perFrameData,
                                             varying ScreenSample &sample)
 {
@@ -52,7 +51,7 @@ void RaycastRenderer_renderSample_testFrame(Renderer *uniform _self,
   returns the absolute of the ray direction */
 void RaycastRenderer_renderSample_rayDir(Renderer *uniform _self,
                                          FrameBuffer *uniform fb,
-                                         Model *uniform world,
+                                         World *uniform world,
                                          void *uniform perFrameData,
                                          varying ScreenSample &sample)
 {
@@ -63,7 +62,7 @@ void RaycastRenderer_renderSample_rayDir(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_eyeLight(Renderer *uniform _self,
                                            FrameBuffer *uniform fb,
-                                           Model *uniform world,
+                                           World *uniform world,
                                            void *uniform perFrameData,
                                            varying ScreenSample &sample)
 {
@@ -83,7 +82,7 @@ void RaycastRenderer_renderSample_eyeLight(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_Ng(Renderer *uniform _self,
                                      FrameBuffer *uniform fb,
-                                     Model *uniform world,
+                                     World *uniform world,
                                      void *uniform perFrameData,
                                      varying ScreenSample &sample)
 {
@@ -104,7 +103,7 @@ void RaycastRenderer_renderSample_Ng(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_Ns(Renderer *uniform _self,
                                      FrameBuffer *uniform fb,
-                                     Model *uniform world,
+                                     World *uniform world,
                                      void *uniform perFrameData,
                                      varying ScreenSample &sample)
 {
@@ -125,7 +124,7 @@ void RaycastRenderer_renderSample_Ns(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
                                        FrameBuffer *uniform fb,
-                                       Model *uniform world,
+                                       World *uniform world,
                                        void *uniform perFrameData,
                                        varying ScreenSample &sample)
 {
@@ -152,7 +151,7 @@ void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
                                        FrameBuffer *uniform fb,
-                                       Model *uniform world,
+                                       World *uniform world,
                                        void *uniform perFrameData,
                                        varying ScreenSample &sample)
 {
@@ -179,7 +178,7 @@ void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_eyeLight_vertexColor(Renderer *uniform _self,
                                                        FrameBuffer *uniform fb,
-                                                       Model *uniform world,
+                                                       World *uniform world,
                                                        void *uniform perFrameData,
                                                        varying ScreenSample &sample)
 {
@@ -203,7 +202,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_eyeLight_primID(Renderer *uniform _self,
                                                   FrameBuffer *uniform fb,
-                                                  Model *uniform world,
+                                                  World *uniform world,
                                                   void *uniform perFrameData,
                                                   varying ScreenSample &sample)
 {
@@ -223,7 +222,7 @@ void RaycastRenderer_renderSample_eyeLight_primID(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_eyeLight_instID(Renderer *uniform _self,
                                                   FrameBuffer *uniform fb,
-                                                  Model *uniform world,
+                                                  World *uniform world,
                                                   void *uniform perFrameData,
                                                   varying ScreenSample &sample)
 {
@@ -243,7 +242,7 @@ void RaycastRenderer_renderSample_eyeLight_instID(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_eyeLight_geomID(Renderer *uniform _self,
                                                   FrameBuffer *uniform fb,
-                                                  Model *uniform world,
+                                                  World *uniform world,
                                                   void *uniform perFrameData,
                                                   varying ScreenSample &sample)
 {
@@ -264,7 +263,7 @@ void RaycastRenderer_renderSample_eyeLight_geomID(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_backfacing_Ng(Renderer *uniform _self,
                                                 FrameBuffer *uniform fb,
-                                                Model *uniform world,
+                                                World *uniform world,
                                                 void *uniform perFrameData,
                                                 varying ScreenSample &sample)
 {
@@ -286,7 +285,7 @@ void RaycastRenderer_renderSample_backfacing_Ng(Renderer *uniform _self,
 
 void RaycastRenderer_renderSample_backfacing_Ns(Renderer *uniform _self,
                                                 FrameBuffer *uniform fb,
-                                                Model *uniform world,
+                                                World *uniform world,
                                                 void *uniform perFrameData,
                                                 varying ScreenSample &sample)
 {

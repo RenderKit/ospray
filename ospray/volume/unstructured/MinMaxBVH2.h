@@ -18,7 +18,6 @@
 
 // ospray
 #include "common/Data.h"
-#include "common/Model.h"
 
 namespace ospray {
 

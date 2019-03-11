@@ -26,7 +26,7 @@
 #include "ospcommon/box.h"
 // ospray: everything that's related to the ospray ray tracing core
 #include "ospray/geometry/Geometry.h"
-#include "ospray/common/Model.h"
+#include "ospray/common/World.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
@@ -79,7 +79,7 @@ namespace ospray {
 
       /*! 'finalize' is what ospray calls when everything is set and
         done, and a actual user geometry has to be built */
-      virtual void finalize(Model *model) override;
+      virtual void finalize(World *model) override;
 
       /*! the input data array. the data array contains a list of
           patches, each of which consists of four vec3fs. Note in this

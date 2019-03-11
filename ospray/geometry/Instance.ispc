@@ -21,21 +21,21 @@
 #include "Instance.ih"
 
 static void Instance_postIntersect(const Geometry *uniform _self,
-                                   const Model *uniform parentModel,
+                                   const World *uniform parentWorld,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)
 {
   uniform Instance *uniform self = (uniform Instance *uniform)_self;
-  uniform Model *uniform instancedModel =
-    (uniform Model *uniform)self->model;
+  uniform World *uniform instancedWorld =
+    (uniform World *uniform)self->model;
   foreach_unique(geomID in ray.geomID) {
     uniform Geometry *uniform instancedGeometry =
-      (uniform Geometry *uniform)instancedModel->geometry[geomID];
+      (uniform Geometry *uniform)instancedWorld->geometry[geomID];
 
     dg.geometry = instancedGeometry;
 
-    instancedGeometry->postIntersect(instancedGeometry,instancedModel,
+    instancedGeometry->postIntersect(instancedGeometry,instancedWorld,
                                      dg,ray,flags);
 
     if (instancedGeometry->materialList) {
@@ -76,7 +76,7 @@ export void InstanceGeometry_set(void *uniform _self,
                                  float *uniform areaPDF)
 {
   Instance *uniform self = (Instance *uniform)_self;
-  self->model   = (uniform Model *uniform)_model;
+  self->model   = (uniform World *uniform)_model;
   self->xfm     = xfm;
   self->rcp_xfm = rcp_xfm;
   self->areaPDF = areaPDF;

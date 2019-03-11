@@ -17,7 +17,7 @@
 #pragma once
 
 #include "camera/Camera.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "fb/FrameBuffer.h"
 #include "texture/Texture2D.h"
 
@@ -50,7 +50,7 @@ namespace ospray {
     virtual std::string toString() const override;
 
     /*! \brief render one frame, and put it into given frame buffer */
-    virtual float renderFrame(FrameBuffer *fb, Camera *camera, Model *world);
+    virtual float renderFrame(FrameBuffer *fb, Camera *camera, World *world);
 
     //! \brief called to initialize a new frame
     /*! this function gets called exactly once (on each node) at the
@@ -62,7 +62,7 @@ namespace ospray {
 
       \returns pointer to per-frame data, or NULL if this does not apply
      */
-    virtual void *beginFrame(FrameBuffer *fb, Model *world);
+    virtual void *beginFrame(FrameBuffer *fb, World *world);
 
     /*! \brief called exactly once (on each node) at the end of each frame */
     virtual void endFrame(FrameBuffer *fb, void *perFrameData);
@@ -70,14 +70,14 @@ namespace ospray {
     /*! \brief called by the load balancer to render one tile of "samples" */
     virtual void renderTile(FrameBuffer *fb,
                             Camera *camera,
-                            Model *world,
+                            World *world,
                             void *perFrameData,
                             Tile &tile,
                             size_t jobID) const;
 
     virtual OSPPickResult pick(FrameBuffer *fb,
                                Camera *camera,
-                               Model *world,
+                               World *world,
                                const vec2f &screenPos);
 
     /*! \brief number of samples to be used per pixel in a tile */

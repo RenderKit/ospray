@@ -68,7 +68,7 @@ namespace ospray {
 
   void Renderer::renderTile(FrameBuffer *fb,
                             Camera *camera,
-                            Model *world,
+                            World *world,
                             void *perFrameData,
                             Tile &tile,
                             size_t jobID) const
@@ -82,7 +82,7 @@ namespace ospray {
                               jobID);
   }
 
-  void *Renderer::beginFrame(FrameBuffer *fb, Model *world)
+  void *Renderer::beginFrame(FrameBuffer *fb, World *world)
   {
     fb->beginFrame();
     return ispc::Renderer_beginFrame(getIE(), world->getIE());
@@ -94,14 +94,14 @@ namespace ospray {
     ispc::Renderer_endFrame(getIE(), perFrameData);
   }
 
-  float Renderer::renderFrame(FrameBuffer *fb, Camera *camera, Model *world)
+  float Renderer::renderFrame(FrameBuffer *fb, Camera *camera, World *world)
   {
     return TiledLoadBalancer::instance->renderFrame(fb, this, camera, world);
   }
 
   OSPPickResult Renderer::pick(FrameBuffer *fb,
                                Camera *camera,
-                               Model *world,
+                               World *world,
                                const vec2f &screenPos)
   {
     OSPPickResult res;

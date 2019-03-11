@@ -58,10 +58,10 @@ namespace ospray {
       void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) override;
 
       /*! create a new model */
-      OSPWorld newModel() override;
+      OSPWorld newWorld() override;
 
       // /*! finalize a newly specified model */
-      // void finalizeModel(OSPWorld _model) override;
+      // void finalizeWorld(OSPWorld _model) override;
 
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;

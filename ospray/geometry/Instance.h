@@ -49,14 +49,14 @@ namespace ospray {
     Instance();
     virtual ~Instance() override = default;
     virtual std::string toString() const override;
-    virtual void finalize(Model *model) override;
+    virtual void finalize(World *model) override;
 
     // Data members //
 
     /*! transformation matrix associated with that instance's geometry. may be embree::one */
     AffineSpace3f xfm;
     /*! reference to instanced model. Must be a *model* that we're instancing, not a geometry */
-    Ref<Model>    instancedScene;
+    Ref<World>    instancedScene;
     // XXX hack: there is no concept of instance data, but PT needs pdfs (wrt.
     // area) of geometry light instances
     std::vector<float> areaPDF;

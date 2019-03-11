@@ -19,7 +19,7 @@
 // ospray
 #include "Curves.h"
 #include "common/Data.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "ospcommon/utility/DataView.h"
 // ispc-generated files
 #include "Curves_ispc.h"
@@ -90,7 +90,7 @@ namespace ospray {
     return "ospray::Curves";
   }
 
-  void Curves::finalize(Model *model)
+  void Curves::finalize(World *model)
   {
     Geometry::finalize(model);
 

@@ -16,7 +16,6 @@
 
 #include "AMRVolume.h"
 // ospray
-#include "common/Model.h"
 #include "common/Data.h"
 #include "transferFunction/TransferFunction.h"
 // ospcommon

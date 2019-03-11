@@ -23,7 +23,6 @@
 #include "ospray/math/AffineSpace.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/geometry/Geometry.ih"
-#include "ospray/common/Model.ih"
 #include "ospray/transferFunction/LinearTransferFunction.ih"
 // embree
 #include "embree3/rtcore.isph"

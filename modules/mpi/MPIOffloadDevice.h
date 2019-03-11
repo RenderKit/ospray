@@ -69,7 +69,7 @@ namespace ospray {
       void resetAccumulation(OSPFrameBuffer _fb) override;
 
       /*! create a new model */
-      OSPWorld newModel() override;
+      OSPWorld newWorld() override;
 
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;

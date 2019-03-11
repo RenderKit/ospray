@@ -47,7 +47,7 @@ namespace ospray {
     return "ospray::PathTracer";
   }
 
-  void PathTracer::generateGeometryLights(const Model *const model
+  void PathTracer::generateGeometryLights(const World *const model
       , const affine3f& xfm
       , float *const _areaPDF
       )
@@ -103,7 +103,7 @@ namespace ospray {
   {
     Renderer::commit();
 
-    model = (Model*)getParamObject("model", getParamObject("world"));
+    model = (World*)getParamObject("model", getParamObject("world"));
 
     destroyGeometryLights();
     lightArray.clear();

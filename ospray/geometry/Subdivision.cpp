@@ -16,7 +16,7 @@
 
 // ospray
 #include "Subdivision.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "../include/ospray/ospray.h"
 // ispc exports
 #include "Subdivision_ispc.h"
@@ -34,7 +34,7 @@ namespace ospray {
     return "ospray::Subdivision";
   }
 
-  void Subdivision::finalize(Model *model)
+  void Subdivision::finalize(World *model)
   {
     Assert(model && "invalid model pointer");
     Geometry::finalize(model);

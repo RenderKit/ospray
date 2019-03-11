@@ -73,7 +73,7 @@ namespace ospray {
     QuadMesh();
     virtual ~QuadMesh() override = default;
     virtual std::string toString() const override;
-    virtual void finalize(Model *model) override;
+    virtual void finalize(World *model) override;
 
     int    *index;  //!< mesh's quad index array
     float  *vertex; //!< mesh's vertex array

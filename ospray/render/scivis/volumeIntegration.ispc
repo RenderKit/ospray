@@ -22,7 +22,7 @@
 vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
                                                renderer,
                                            const FrameBuffer *uniform fb,
-                                           const Model *uniform world,
+                                           const World *uniform world,
                                            const Volume *uniform volume,
                                            varying Ray &ray,
                                            float tBegin,
@@ -231,7 +231,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
  */
 Volume *SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform
                                             renderer,
-                                        const Model *uniform world,
+                                        const World *uniform world,
                                         varying Ray &ray,
                                         const varying float &rayOffset)
 {

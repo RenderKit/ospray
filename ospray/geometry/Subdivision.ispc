@@ -16,7 +16,7 @@
 
 // ospray
 #include "Subdivision.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
@@ -30,7 +30,7 @@ int32 Subdivision_getMaterialID(
 }
 
 static void Subdivision_postIntersect(const Geometry *uniform _self,
-                                      const Model    *uniform model,
+                                      const World    *uniform model,
                                       varying DifferentialGeometry &dg,
                                       const varying Ray &ray,
                                       uniform int64 flags)
@@ -67,7 +67,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 
 void Subdivision_Constructor(uniform Subdivision *uniform mesh,
                              void *uniform cppEquivalent,
-                             uniform Model *uniform model,
+                             uniform World *uniform model,
                              RTCGeometry geom,
                              uniform int32 geomID,
                              uniform int32   geom_materialID,
@@ -113,7 +113,7 @@ export void *uniform Subdivision_set(void *uniform _mesh,
                                      uniform vec2f *uniform texcoord)
 {
   uniform Subdivision *uniform mesh = (uniform Subdivision *uniform)_mesh;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   Subdivision_Constructor(mesh,
                           mesh->super.cppEquivalent,
                           model,

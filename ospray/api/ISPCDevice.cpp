@@ -20,8 +20,8 @@
 #include "common/Data.h"
 #include "common/Library.h"
 #include "common/Material.h"
-#include "common/Model.h"
 #include "common/Util.h"
+#include "common/World.h"
 #include "fb/LocalFB.h"
 #include "geometry/TriangleMesh.h"
 #include "lights/Light.h"
@@ -117,9 +117,9 @@ namespace ospray {
       fb->unmap(mapped);
     }
 
-    OSPWorld ISPCDevice::newModel()
+    OSPWorld ISPCDevice::newWorld()
     {
-      return (OSPWorld) new Model;
+      return (OSPWorld) new World;
     }
 
     void ISPCDevice::commit(OSPObject _object)
@@ -130,14 +130,14 @@ namespace ospray {
 
     void ISPCDevice::addGeometry(OSPWorld _model, OSPGeometry _geometry)
     {
-      Model *model       = (Model *)_model;
+      World *model       = (World *)_model;
       Geometry *geometry = (Geometry *)_geometry;
       model->geometry.push_back(geometry);
     }
 
     void ISPCDevice::removeGeometry(OSPWorld _model, OSPGeometry _geometry)
     {
-      Model *model       = (Model *)_model;
+      World *model       = (World *)_model;
       Geometry *geometry = (Geometry *)_geometry;
 
       auto it = std::find_if(
@@ -152,14 +152,14 @@ namespace ospray {
 
     void ISPCDevice::addVolume(OSPWorld _model, OSPVolume _volume)
     {
-      Model *model   = (Model *)_model;
+      World *model   = (World *)_model;
       Volume *volume = (Volume *)_volume;
       model->volume.push_back(volume);
     }
 
     void ISPCDevice::removeVolume(OSPWorld _model, OSPVolume _volume)
     {
-      Model *model   = (Model *)_model;
+      World *model   = (World *)_model;
       Volume *volume = (Volume *)_volume;
 
       auto it = std::find_if(
@@ -362,7 +362,7 @@ namespace ospray {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
       Camera *camera     = (Camera *)_camera;
-      Model *world       = (Model *)_world;
+      World *world       = (World *)_world;
 
       fb->setCompletedEvent(OSP_NONE_FINISHED);
 
@@ -426,7 +426,7 @@ namespace ospray {
       FrameBuffer *fb    = (FrameBuffer *)_fb;
       Renderer *renderer = (Renderer *)_renderer;
       Camera *camera     = (Camera *)_camera;
-      Model *world       = (Model *)_world;
+      World *world       = (World *)_world;
       return renderer->pick(fb, camera, world, screenPos);
     }
 

@@ -17,12 +17,12 @@
 #pragma once
 
 #include "geometry/Geometry.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "math/AffineSpace.ih"
 
 struct Instance {
   uniform Geometry super; //!< inherited geometry fields
-  uniform Model *uniform model; //!< instanced model
+  uniform World *uniform model; //!< instanced model
   AffineSpace3f xfm; //!< instantiation matrix
   AffineSpace3f rcp_xfm; //!< rcp(instantiation matrix)
 

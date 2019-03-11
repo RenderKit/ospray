@@ -20,8 +20,8 @@
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/Library.h"
-#include "common/Model.h"
 #include "common/Util.h"
+#include "common/World.h"
 #include "fb/LocalFB.h"
 #include "geometry/TriangleMesh.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
@@ -535,10 +535,10 @@ namespace ospray {
     }
 
     /*! create a new model */
-    OSPWorld MPIOffloadDevice::newModel()
+    OSPWorld MPIOffloadDevice::newWorld()
     {
       ObjectHandle handle = allocateHandle();
-      work::NewModel work("", handle);
+      work::NewWorld work("", handle);
       processWork(work);
       return (OSPWorld)(int64)handle;
     }

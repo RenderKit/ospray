@@ -27,7 +27,7 @@
 // Lighting functions //
 float lightAlpha(const SciVisRenderer *uniform self,
                  const FrameBuffer *uniform fb,
-                 const Model *uniform world,
+                 const World *uniform world,
                  Ray &ray,
                  const float weight,
                  const varying float &rayOffset,

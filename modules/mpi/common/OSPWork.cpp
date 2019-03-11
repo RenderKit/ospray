@@ -25,7 +25,7 @@
 
 #include "common/Data.h"
 #include "common/Library.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "geometry/TriangleMesh.h"
 #include "texture/Texture.h"
 
@@ -38,7 +38,7 @@ namespace ospray {
         registerWorkUnit<SetLoadBalancer>(registry);
 
         registerWorkUnit<NewRenderer>(registry);
-        registerWorkUnit<NewModel>(registry);
+        registerWorkUnit<NewWorld>(registry);
         registerWorkUnit<NewGeometry>(registry);
         registerWorkUnit<NewCamera>(registry);
         registerWorkUnit<NewVolume>(registry);
@@ -284,9 +284,9 @@ namespace ospray {
       // ospNewWorld //////////////////////////////////////////////////////////
 
       template <>
-      void NewModel::run()
+      void NewWorld::run()
       {
-        auto *model = new Model;
+        auto *model = new World;
         handle.assign(model);
       }
 
@@ -340,7 +340,7 @@ namespace ospray {
         if (format == OSP_OBJECT || format == OSP_CAMERA ||
             format == OSP_DATA || format == OSP_FRAMEBUFFER ||
             format == OSP_GEOMETRY || format == OSP_LIGHT ||
-            format == OSP_MATERIAL || format == OSP_MODEL ||
+            format == OSP_MATERIAL || format == OSP_WORLD ||
             format == OSP_RENDERER || format == OSP_TEXTURE ||
             format == OSP_TRANSFER_FUNCTION || format == OSP_VOLUME ||
             format == OSP_PIXEL_OP) {
@@ -474,7 +474,7 @@ namespace ospray {
         Renderer *renderer = (Renderer *)rendererHandle.lookup();
         FrameBuffer *fb    = (FrameBuffer *)fbHandle.lookup();
         Camera *camera     = (Camera *)cameraHandle.lookup();
-        Model *world       = (Model *)worldHandle.lookup();
+        World *world       = (World *)worldHandle.lookup();
 
         fb->setCompletedEvent(OSP_NONE_FINISHED);
 
@@ -504,7 +504,7 @@ namespace ospray {
 
       void AddGeometry::run()
       {
-        Model *model       = (Model *)modelHandle.lookup();
+        World *model       = (World *)modelHandle.lookup();
         Geometry *geometry = (Geometry *)objectHandle.lookup();
         Assert(model);
         Assert(geometry);
@@ -515,7 +515,7 @@ namespace ospray {
 
       void AddVolume::run()
       {
-        Model *model   = (Model *)modelHandle.lookup();
+        World *model   = (World *)modelHandle.lookup();
         Volume *volume = (Volume *)objectHandle.lookup();
         Assert(model);
         Assert(volume);
@@ -526,7 +526,7 @@ namespace ospray {
 
       void RemoveGeometry::run()
       {
-        Model *model       = (Model *)modelHandle.lookup();
+        World *model       = (World *)modelHandle.lookup();
         Geometry *geometry = (Geometry *)objectHandle.lookup();
         Assert(model);
         Assert(geometry);
@@ -543,7 +543,7 @@ namespace ospray {
 
       void RemoveVolume::run()
       {
-        Model *model   = (Model *)modelHandle.lookup();
+        World *model   = (World *)modelHandle.lookup();
         Volume *volume = (Volume *)objectHandle.lookup();
         Assert(model);
         Assert(volume);
@@ -699,7 +699,7 @@ namespace ospray {
           FrameBuffer *fb    = (FrameBuffer *)fbHandle.lookup();
           Renderer *renderer = (Renderer *)rendererHandle.lookup();
           Camera *camera     = (Camera *)cameraHandle.lookup();
-          Model *world       = (Model *)worldHandle.lookup();
+          World *world       = (World *)worldHandle.lookup();
 
           pickResult = renderer->pick(fb, camera, world, screenPos);
 
@@ -708,7 +708,8 @@ namespace ospray {
                           MPI_BYTE,
                           0,
                           typeIdOf<Pick>(),
-                          mpicommon::world.comm).wait();
+                          mpicommon::world.comm)
+              .wait();
         }
         mpicommon::barrier(mpicommon::worker.comm).wait();
       }
@@ -720,7 +721,8 @@ namespace ospray {
                         MPI_BYTE,
                         1,
                         typeIdOf<Pick>(),
-                        mpicommon::world.comm).wait();
+                        mpicommon::world.comm)
+            .wait();
       }
 
       void Pick::serialize(WriteStream &b) const

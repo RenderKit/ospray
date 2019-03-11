@@ -71,7 +71,7 @@ namespace ospray {
       float Master::renderFrame(FrameBuffer *fb,
                                 Renderer *renderer,
                                 Camera * /*camera*/,
-                                Model * /*world*/)
+                                World * /*world*/)
       {
         DistributedFrameBuffer *dfb =
             dynamic_cast<DistributedFrameBuffer *>(fb);
@@ -129,7 +129,7 @@ namespace ospray {
       float Slave::renderFrame(FrameBuffer *fb,
                                Renderer *renderer,
                                Camera *camera,
-                               Model *world)
+                               World *world)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
@@ -228,7 +228,7 @@ namespace ospray {
       float Distributed::renderFrame(FrameBuffer *,
                                      Renderer *,
                                      Camera *,
-                                     Model *)
+                                     World *)
       {
         throw std::runtime_error(
             "Distributed renderers must implement their"
@@ -364,7 +364,7 @@ namespace ospray {
       float Master::renderFrame(FrameBuffer *fb,
                                 Renderer *renderer,
                                 Camera * /*camera*/,
-                                Model * /*world*/)
+                                World * /*world*/)
       {
         dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         assert(dfb);
@@ -416,7 +416,7 @@ namespace ospray {
       float Slave::renderFrame(FrameBuffer *_fb,
                                Renderer *_renderer,
                                Camera *_camera,
-                               Model *_world)
+                               World *_world)
       {
         renderer = _renderer;
         fb       = _fb;

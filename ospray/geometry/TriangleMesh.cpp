@@ -16,7 +16,7 @@
 
 // ospray
 #include "TriangleMesh.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "../include/ospray/ospray.h"
 // ispc exports
 #include "TriangleMesh_ispc.h"
@@ -39,7 +39,7 @@ namespace ospray {
     return "ospray::TriangleMesh";
   }
 
-  void TriangleMesh::finalize(Model *model)
+  void TriangleMesh::finalize(World *model)
   {
     static int numPrints = 0;
     numPrints++;

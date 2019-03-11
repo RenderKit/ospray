@@ -39,7 +39,7 @@ inline float misHeuristic(float pdf1, float pdf2)
 
 // TODO use intersection filters
 vec3f transparentShadow(const uniform PathTracer* uniform self,
-                        const Model *uniform world,
+                        const World *uniform world,
                         vec3f lightContrib,
                         Ray &shadowRay,
                         Medium medium)
@@ -91,7 +91,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 }
 
 ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
-                                    const Model *uniform world,
+                                    const World *uniform world,
                                     const vec2f &pixel, // normalized, i.e. in [0..1]
                                     Ray &ray,
                                     varying LDSampler* uniform sampler)
@@ -252,7 +252,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
     foreach_unique(m in material)
       if (m != NULL && reduce_max(m->emission) > 0.f) {
         float areaPdf;
-        // XXX same hack as in Model.ih; to get areaPDF of hit geometry instance
+        // XXX same hack as in World.ih; to get areaPDF of hit geometry instance
         if (ray.instID < 0) { // a regular geometry
           areaPdf = self->areaPDF[ray.geomID];
         } else { // an instance
@@ -401,7 +401,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
 inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
                                            FrameBuffer *uniform fb,
                                            Camera *uniform camera,
-                                           Model *uniform world,
+                                           World *uniform world,
                                            const uint32 ix,
                                            const uint32 iy,
                                            const uint32 accumID)
@@ -457,7 +457,7 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
 void PathTracer_renderTileJob(PathTracer *uniform self,
                               FrameBuffer *uniform fb,
                               Camera *uniform camera,
-                              Model *uniform world,
+                              World *uniform world,
                               uniform Tile &tile,
                               uniform int taskIndex)
 {
@@ -481,7 +481,7 @@ void PathTracer_renderTileJob(PathTracer *uniform self,
 unmasked void PathTracer_renderTile(Renderer *uniform _self,
                                     FrameBuffer *uniform fb,
                                     Camera *uniform camera,
-                                    Model *uniform world,
+                                    World *uniform world,
                                     void *uniform perFrameData,
                                     uniform Tile &tile,
                                     uniform int jobID)

@@ -19,7 +19,7 @@
 // ospray
 #include "Isosurfaces.h"
 #include "common/Data.h"
-#include "common/Model.h"
+#include "common/World.h"
 // ispc-generated files
 #include "Isosurfaces_ispc.h"
 
@@ -35,7 +35,7 @@ namespace ospray {
     return "ospray::Isosurfaces";
   }
 
-  void Isosurfaces::finalize(Model *model)
+  void Isosurfaces::finalize(World *model)
   {
     isovaluesData = getParamData("isovalues", nullptr);
     volume        = (Volume *)getParamObject("volume", nullptr);

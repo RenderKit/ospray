@@ -19,7 +19,7 @@
 // ospray
 #include "Spheres.h"
 #include "common/Data.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "common/OSPCommon.h"
 // ispc-generated files
 #include "Spheres_ispc.h"
@@ -36,7 +36,7 @@ namespace ospray {
     return "ospray::Spheres";
   }
 
-  void Spheres::finalize(Model *model)
+  void Spheres::finalize(World *model)
   {
     Geometry::finalize(model);
 

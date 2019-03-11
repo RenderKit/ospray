@@ -28,7 +28,7 @@ namespace ospray {
   float LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
                                             Renderer *renderer,
                                             Camera * camera,
-                                            Model * world)
+                                            World * world)
   {
     void *perFrameData = renderer->beginFrame(fb, world);
     bool cancel        = false;

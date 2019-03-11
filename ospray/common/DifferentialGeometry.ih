@@ -19,7 +19,7 @@
 #include "../math/vec.ih"
 
 struct Geometry;
-struct Model;
+struct World;
 struct Material;
 
 typedef enum

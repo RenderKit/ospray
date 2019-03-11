@@ -136,12 +136,12 @@ namespace ospray {
     case OSP_GEOMETRY:
     case OSP_LIGHT:
     case OSP_MATERIAL:
-    case OSP_MODEL:
     case OSP_RENDERER:
     case OSP_TEXTURE:
     case OSP_TRANSFER_FUNCTION:
     case OSP_VOLUME:
     case OSP_PIXEL_OP:
+    case OSP_WORLD:
     case OSP_STRING:    return sizeof(void *);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
@@ -219,7 +219,7 @@ namespace ospray {
     case OSP_GEOMETRY:          return "geometry";
     case OSP_LIGHT:             return "light";
     case OSP_MATERIAL:          return "material";
-    case OSP_MODEL:             return "model";
+    case OSP_WORLD:             return "world";
     case OSP_RENDERER:          return "renderer";
     case OSP_TEXTURE:           return "texture";
     case OSP_TRANSFER_FUNCTION: return "transfer_function";

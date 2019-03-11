@@ -28,17 +28,17 @@
 
 namespace ospray {
 
-  /*! \brief Base Abstraction for an OSPRay 'Model' entity
+  /*! \brief Base Abstraction for an OSPRay 'World' entity
 
     A 'model' is the generalization of a 'scene' in embree: it is a
     collection of geometries and volumes that one can trace rays
     against, and that one can afterwards 'query' for certain
     properties (like the shading normal or material for a given
     ray/model intersection) */
-  struct OSPRAY_SDK_INTERFACE Model : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE World : public ManagedObject
   {
-    Model();
-    virtual ~Model() override;
+    World();
+    virtual ~World() override;
 
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;

@@ -19,7 +19,7 @@
 // ospray
 #include "Cylinders.h"
 #include "common/Data.h"
-#include "common/Model.h"
+#include "common/World.h"
 // ispc-generated files
 #include "Cylinders_ispc.h"
 
@@ -35,7 +35,7 @@ namespace ospray {
     return "ospray::Cylinders";
   }
 
-  void Cylinders::finalize(Model *model)
+  void Cylinders::finalize(World *model)
   {
     Geometry::finalize(model);
 

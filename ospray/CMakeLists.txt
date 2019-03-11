@@ -43,12 +43,12 @@ set(OSPRAY_SOURCES
   include/ospray/ospray_cpp/Light.h
   include/ospray/ospray_cpp/ManagedObject.h
   include/ospray/ospray_cpp/Material.h
-  include/ospray/ospray_cpp/Model.h
   include/ospray/ospray_cpp/PixelOp.h
   include/ospray/ospray_cpp/Renderer.h
   include/ospray/ospray_cpp/Texture2D.h
   include/ospray/ospray_cpp/TransferFunction.h
   include/ospray/ospray_cpp/Volume.h
+  include/ospray/ospray_cpp/World.h
 )
 
 set(OSPRAY_ISPC_DEVICE_SOURCES
@@ -60,11 +60,11 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/ObjectHandle.cpp
   common/Data.cpp
   common/Managed.cpp
-  common/Model.ispc
-  common/Model.cpp
   common/OSPCommon.ispc
   common/Material.cpp
   common/Util.h
+  common/World.ispc
+  common/World.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp

@@ -16,9 +16,9 @@
 
 // ospray
 #include "api/ISPCDevice.h"
-#include "Model.h"
+#include "World.h"
 // ispc exports
-#include "Model_ispc.h"
+#include "World_ispc.h"
 #include "Volume_ispc.h"
 
 namespace ospray {
@@ -28,26 +28,26 @@ namespace ospray {
     return api::ISPCDevice::embreeDevice;
   }
 
-  Model::Model()
+  World::World()
   {
-    managedObjectType = OSP_MODEL;
-    this->ispcEquivalent = ispc::Model_create(this);
+    managedObjectType = OSP_WORLD;
+    this->ispcEquivalent = ispc::World_create(this);
   }
 
-  Model::~Model()
+  World::~World()
   {
     if (embreeSceneHandle)
       rtcReleaseScene(embreeSceneHandle);
 
-    ispc::Model_cleanup(getIE());
+    ispc::World_cleanup(getIE());
   }
 
-  std::string Model::toString() const
+  std::string World::toString() const
   {
-    return "ospray::Model";
+    return "ospray::World";
   }
 
-  void Model::commit()
+  void World::commit()
   {
     useEmbreeDynamicSceneFlag = getParam<int>("dynamicScene", 0);
     useEmbreeCompactSceneFlag = getParam<int>("compactMode", 0);
@@ -68,13 +68,13 @@ namespace ospray {
     sceneFlags =
         sceneFlags | (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
 
-    ispc::Model_init(getIE(),
+    ispc::World_init(getIE(),
                      embreeDevice,
                      sceneFlags,
                      geometry.size(),
                      volume.size());
 
-    embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
+    embreeSceneHandle = (RTCScene)ispc::World_getEmbreeSceneHandle(getIE());
 
     bounds = empty;
 
@@ -86,17 +86,17 @@ namespace ospray {
       geometry[i]->finalize(this);
 
       bounds.extend(geometry[i]->bounds);
-      ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
+      ispc::World_setGeometry(getIE(), i, geometry[i]->getIE());
     }
 
     for (size_t i=0; i<volume.size(); i++) {
-      ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
+      ispc::World_setVolume(getIE(), i, volume[i]->getIE());
       box3f volBounds = empty;
       ispc::Volume_getBoundingBox((ispc::box3f*)&volBounds, volume[i]->getIE());
       bounds.extend(volBounds);
     }
 
-    ispc::Model_setBounds(getIE(), (ispc::box3f*)&bounds);
+    ispc::World_setBounds(getIE(), (ispc::box3f*)&bounds);
 
     rtcCommitScene(embreeSceneHandle);
   }

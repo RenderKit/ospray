@@ -16,7 +16,7 @@
 
 // ospray
 #include "QuadMesh.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "../include/ospray/ospray.h"
 // ispc exports
 #include "QuadMesh_ispc.h"
@@ -39,7 +39,7 @@ namespace ospray {
     return "ospray::QuadMesh";
   }
 
-  void QuadMesh::finalize(Model *model)
+  void QuadMesh::finalize(World *model)
   {
     static int numPrints = 0;
     numPrints++;

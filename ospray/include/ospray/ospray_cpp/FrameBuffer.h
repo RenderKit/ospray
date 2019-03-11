@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/World.h>
 #include <ospray/ospray_cpp/PixelOp.h>
 #include <ospray/ospray_cpp/Renderer.h>
 
@@ -45,7 +45,7 @@ namespace ospray {
 
       float renderFrame(const Renderer &renderer,
                         const Camera &camera,
-                        const Model &world) const;
+                        const World &world) const;
 
       void setPixelOp(PixelOp &p) const;
       void setPixelOp(OSPPixelOp p) const;
@@ -107,7 +107,7 @@ namespace ospray {
 
     inline float FrameBuffer::renderFrame(const Renderer &renderer,
                                           const Camera &camera,
-                                          const Model &world) const
+                                          const World &world) const
     {
       return ospRenderFrame(
           handle(), renderer.handle(), camera.handle(), world.handle());

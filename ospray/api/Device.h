@@ -54,7 +54,7 @@ namespace ospray {
       virtual void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) = 0;
 
       /*! create a new model */
-      virtual OSPWorld newModel() = 0;
+      virtual OSPWorld newWorld() = 0;
 
       /*! load module */
       virtual int loadModule(const char *name) = 0;

@@ -30,7 +30,7 @@
 
 vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                            FrameBuffer *uniform fb,
-                                           Model *uniform world,
+                                           World *uniform world,
                                            const varying vec3i &sampleID,
                                            varying Ray &ray,
                                            const varying float &rayOffset,
@@ -80,7 +80,7 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 /*! This function intersects the volume and geometries. */
 void SciVisRenderer_intersect(SciVisRenderer *uniform renderer,
                               FrameBuffer *uniform fb,
-                              Model *uniform world,
+                              World *uniform world,
                               varying Ray &ray,
                               const varying float &rayOffset,
                               const varying vec3i &sampleID,
@@ -186,7 +186,7 @@ void SciVisRenderer_intersect(SciVisRenderer *uniform renderer,
 
 void SciVisRenderer_renderSample(Renderer *uniform _self,
                                  FrameBuffer *uniform fb,
-                                 Model *uniform world,
+                                 World *uniform world,
                                  void *uniform perFrameData,
                                  varying ScreenSample &sample)
 {
@@ -230,7 +230,7 @@ void SciVisRenderer_renderSample(Renderer *uniform _self,
 }
 
 static unmasked void *uniform SciVisRenderer_beginFrame(
-    Renderer *uniform _self, const Model *uniform world)
+    Renderer *uniform _self, const World *uniform world)
 {
   uniform SciVisRenderer *uniform self =
       (uniform SciVisRenderer * uniform) _self;

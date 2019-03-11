@@ -18,7 +18,7 @@
 #include "math/vec.ih"
 #include "math/box.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "common/safe_gather.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
@@ -81,7 +81,7 @@ inline int32 Spheres_getMaterialID(const uniform Spheres *uniform self,
 }
 
 static void Spheres_postIntersect(const Geometry *uniform geometry,
-                                  const Model *uniform model,
+                                  const World *uniform model,
                                   varying DifferentialGeometry &dg,
                                   const varying Ray &ray,
                                   uniform int64 flags)
@@ -359,7 +359,7 @@ export void SpheresGeometry_set(void  *uniform _self
                                 )
 {
   uniform Spheres *uniform self = (uniform Spheres *uniform)_self;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);

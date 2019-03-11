@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Model.ih"
+#include "World.ih"
 
 typedef uniform Geometry *uniform uniGeomPtr;
 typedef uniform Material *uniform uniMaterialPtr;
 typedef uniform Volume   *uniform uniVolumePtr;
 
-export void *uniform Model_create(void *uniform cppE)
+export void *uniform World_create(void *uniform cppE)
 {
-  uniform Model *uniform model = uniform new uniform Model;
+  uniform World *uniform model = uniform new uniform World;
   model->cppEquivalent     = cppE;
   model->embreeSceneHandle = NULL;
   model->geometry          = NULL;
@@ -30,20 +30,20 @@ export void *uniform Model_create(void *uniform cppE)
   return (void *uniform)model;
 }
 
-export void Model_cleanup(void *uniform _model)
+export void World_cleanup(void *uniform _model)
 {
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   if (model->geometry) delete[] model->geometry;
   if (model->volumes)  delete[] model->volumes;
 }
 
-export void Model_init(void *uniform _model,
+export void World_init(void *uniform _model,
                        void *uniform embreeDevice,
                        uniform int32 embreeSceneFlags,
                        uniform int32 numGeometries,
                        uniform int32 numVolumes)
 {
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   if (model->embreeSceneHandle) {
     rtcReleaseScene(model->embreeSceneHandle);
   }
@@ -68,33 +68,33 @@ export void Model_init(void *uniform _model,
     model->volumes = NULL;
 }
 
-export void Model_setBounds(void *uniform _model,
+export void World_setBounds(void *uniform _model,
                             uniform box3f *uniform bounds)
 {
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   model->bounds = *bounds;
 }
 
-export void *uniform Model_getEmbreeSceneHandle(void *uniform _model)
+export void *uniform World_getEmbreeSceneHandle(void *uniform _model)
 {
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   return (void *uniform)model->embreeSceneHandle;
 }
 
-export void Model_setGeometry(void *uniform _model,
+export void World_setGeometry(void *uniform _model,
                               uniform int32 geomID,
                               void *uniform _geom)
 {
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   uniform Geometry *uniform geom = (uniform Geometry *uniform)_geom;
   model->geometry[geomID] = geom;
 }
 
-export void Model_setVolume(void *uniform pointer,
+export void World_setVolume(void *uniform pointer,
                             uniform int32 index,
                             void *uniform volume)
 {
-  uniform Model *uniform model = (uniform Model *uniform) pointer;
+  uniform World *uniform model = (uniform World *uniform) pointer;
   model->volumes[index] = (uniform Volume *uniform) volume;
 }
 

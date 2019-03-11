@@ -18,7 +18,7 @@
 #include "math/vec.ih"
 #include "math/box.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "geometry/Geometry.ih"
 
 struct CylinderTexCoord {
@@ -159,7 +159,7 @@ unmasked void Cylinders_occluded(const struct RTCIntersectFunctionNArguments *un
 }
 
 static void Cylinders_postIntersect(const Geometry *uniform _self,
-                                    const Model *uniform model,
+                                    const World *uniform model,
                                     varying DifferentialGeometry &dg,
                                     const varying Ray &ray,
                                     uniform int64 flags)
@@ -302,7 +302,7 @@ export void CylindersGeometry_set(void *uniform _self
                                   )
 {
   Cylinders *uniform self = (Cylinders *uniform)_self;
-  Model *uniform model = (Model *uniform)_model;
+  World *uniform model = (World *uniform)_model;
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);

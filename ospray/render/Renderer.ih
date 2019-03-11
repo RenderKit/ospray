@@ -17,13 +17,13 @@
 #pragma once
 
 #include "camera/Camera.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/Tile.ih"
 #include "texture/Texture2D.ih"
 
 struct Renderer;
-struct Model;
+struct World;
 struct Camera;
 
 struct ScreenSample
@@ -63,20 +63,20 @@ inline void setTile(uniform Tile &tile,
  */
 typedef void (*Renderer_RenderSampleFct)(Renderer *uniform self,
                                          FrameBuffer *uniform fb,
-                                         Model *uniform model,
+                                         World *uniform model,
                                          void *uniform perFrameData,
                                          varying ScreenSample &retValue);
 
 typedef unmasked void (*Renderer_RenderTileFct)(Renderer *uniform self,
                                                 FrameBuffer *uniform fb,
                                                 Camera *uniform camera,
-                                                Model *uniform model,
+                                                World *uniform model,
                                                 void *uniform perFrameData,
                                                 uniform Tile &tile,
                                                 uniform int taskIndex);
 
 typedef unmasked void *uniform (*Renderer_BeginFrameFct)(
-    Renderer *uniform self, const Model *uniform world);
+    Renderer *uniform self, const World *uniform world);
 
 typedef unmasked void (*Renderer_EndFrameFct)(uniform Renderer *uniform self,
                                               void *uniform perFrameData);

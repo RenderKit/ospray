@@ -69,7 +69,7 @@ namespace ospray {
 
     /*! 'finalize' is what ospray calls when everything is set and
         done, and a actual user geometry has to be built */
-    void BilinearPatches::finalize(Model *model)
+    void BilinearPatches::finalize(World *model)
     {
       // sanity check if a patches data was actually set!
       if (!patchesData)

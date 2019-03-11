@@ -64,7 +64,7 @@ namespace ospray {
     virtual std::string toString() const override;
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
-    virtual void finalize(Model *model) override;
+    virtual void finalize(World *model) override;
 
     float radius;   //!< default radius, if no per-cylinder radius was specified.
     int32 materialID;

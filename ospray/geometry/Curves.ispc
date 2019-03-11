@@ -18,7 +18,7 @@
 #include "math/vec.ih"
 #include "math/box.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
 
@@ -28,7 +28,7 @@ struct Curves
 };
 
 static void Curves_postIntersect(const Geometry *uniform self,
-                                 const Model *uniform model,
+                                 const World *uniform model,
                                  varying DifferentialGeometry &dg,
                                  const varying Ray &ray,
                                  uniform int64 flags)
@@ -63,7 +63,7 @@ Curves_set(void           *uniform _self,
            int32           uniform numTangents)
 {
   Curves *uniform self = (Curves *uniform)_self;
-  Model *uniform model = (Model *uniform)_model;
+  World *uniform model = (World *uniform)_model;
 
   uniform RTCGeometry geom
     = rtcNewGeometry(ispc_embreeDevice(), curveType);

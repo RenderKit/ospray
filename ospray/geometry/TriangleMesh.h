@@ -73,7 +73,7 @@ namespace ospray {
     TriangleMesh();
     virtual ~TriangleMesh() override = default;
     virtual std::string toString() const override;
-    virtual void finalize(Model *model) override;
+    virtual void finalize(World *model) override;
 
     int    *index;  //!< mesh's triangle index array
     float  *vertex; //!< mesh's vertex array

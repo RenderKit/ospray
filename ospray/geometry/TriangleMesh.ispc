@@ -16,7 +16,7 @@
 
 // ospray
 #include "TriangleMesh.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
@@ -32,7 +32,7 @@ int32 TriangleMesh_getMaterialID(
 }
 
 static void TriangleMesh_postIntersect(const Geometry *uniform _self,
-                                       const Model    *uniform model,
+                                       const World    *uniform model,
                                        varying DifferentialGeometry &dg,
                                        const varying Ray &ray,
                                        uniform int64 flags)
@@ -165,7 +165,7 @@ void TriangleMesh_getAreas(
 //! constructor for ispc-side TriangleMesh object
 void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               void *uniform cppEquivalent,
-                              uniform Model *uniform model,
+                              uniform World *uniform model,
                               RTCGeometry geom,
                               uniform int32 geomID,
                               uniform int32  numTriangles,
@@ -235,7 +235,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform bool huge_mesh)
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   uniform Material *uniform *uniform materialList = (uniform Material *uniform *uniform)_materialList;
   TriangleMesh_Constructor(mesh,
                            mesh->super.cppEquivalent,

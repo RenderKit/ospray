@@ -17,7 +17,6 @@
 #pragma once
 
 #include "math/vec.ih"
-#include "common/Model.ih"
 #include "fb/FrameBuffer.ih"
 #include "render/util.ih"
 #include "lights/Light.ih"

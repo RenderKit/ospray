@@ -35,7 +35,7 @@ int32 Geometry_getMaterialID(
 static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
                                  uniform Geometry_postIntersectFct postIntersect,
-                                 uniform Model *uniform model,
+                                 uniform World *uniform model,
                                  RTCGeometry geom,
                                  uniform int32 geomID,
                                  uniform Material *uniform *uniform materialList

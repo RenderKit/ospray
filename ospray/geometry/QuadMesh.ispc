@@ -16,7 +16,7 @@
 
 // ospray
 #include "QuadMesh.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
@@ -48,7 +48,7 @@ int32 QuadMesh_getMaterialID(
 }
 
 static void QuadMesh_postIntersect(const Geometry *uniform _self,
-                                   const Model    *uniform model,
+                                   const World    *uniform model,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)
@@ -226,7 +226,7 @@ void QuadMesh_getAreas(
 //! constructor for ispc-side QuadMesh object
 void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
                           void *uniform cppEquivalent,
-                          uniform Model *uniform model,
+                          uniform World *uniform model,
                           RTCGeometry geom,
                           uniform int32 geomID,
                           uniform int32  numQuads,
@@ -292,7 +292,7 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
                                   uniform bool huge_mesh)
 {
   uniform QuadMesh *uniform mesh = (uniform QuadMesh *uniform)_mesh;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   uniform Material *uniform *uniform materialList = (uniform Material *uniform *uniform)_materialList;
   QuadMesh_Constructor(mesh,
                        mesh->super.cppEquivalent,

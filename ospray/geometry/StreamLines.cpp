@@ -19,7 +19,7 @@
 // ospray
 #include "StreamLines.h"
 #include "common/Data.h"
-#include "common/Model.h"
+#include "common/World.h"
 #include "ospcommon/utility/DataView.h"
 // ispc-generated files
 #include "StreamLines_ispc.h"
@@ -36,7 +36,7 @@ namespace ospray {
     return "ospray::StreamLines";
   }
 
-  void StreamLines::finalize(Model *model)
+  void StreamLines::finalize(World *model)
   {
     Geometry::finalize(model);
 

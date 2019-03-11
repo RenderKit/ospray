@@ -21,7 +21,6 @@
 #include "math/math.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
-#include "common/Model.ih"
 #include "render/Renderer.ih"
 #include "render/simpleAO/SimpleAOMaterial.ih"
 
@@ -34,7 +33,7 @@ struct SimpleAO
 
 inline void shade_ao(SimpleAO *uniform self,
                      FrameBuffer *uniform fb,
-                     Model *uniform world,
+                     World *uniform world,
                      varying vec3f &color,
                      varying float &alpha,
                      const uniform int sampleCnt,
@@ -98,7 +97,7 @@ inline void shade_ao(SimpleAO *uniform self,
 
 void SimpleAO_renderSample(Renderer *uniform _self,
                            FrameBuffer *uniform fb,
-                           Model *uniform world,
+                           World *uniform world,
                            void *uniform perFrameData,
                            varying ScreenSample &sample)
 {

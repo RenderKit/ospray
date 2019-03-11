@@ -18,7 +18,7 @@
 
 // ospray
 #include "Instance.h"
-#include "common/Model.h"
+#include "common/World.h"
 // ispc exports
 #include "Instance_ispc.h"
 
@@ -34,14 +34,14 @@ namespace ospray {
     return "ospray::Instance";
   }
 
-  void Instance::finalize(Model *model)
+  void Instance::finalize(World *model)
   {
     xfm.l.vx = getParam3f("xfm.l.vx",vec3f(1.f,0.f,0.f));
     xfm.l.vy = getParam3f("xfm.l.vy",vec3f(0.f,1.f,0.f));
     xfm.l.vz = getParam3f("xfm.l.vz",vec3f(0.f,0.f,1.f));
     xfm.p   = getParam3f("xfm.p",vec3f(0.f,0.f,0.f));
 
-    instancedScene = (Model *)getParamObject("model", nullptr);
+    instancedScene = (World *)getParamObject("model", nullptr);
     assert(instancedScene);
 
     if (!instancedScene->embreeSceneHandle) {

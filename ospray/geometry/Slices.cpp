@@ -19,7 +19,7 @@
 // ospray
 #include "Slices.h"
 #include "common/Data.h"
-#include "common/Model.h"
+#include "common/World.h"
 // ispc-generated files
 #include "Slices_ispc.h"
 
@@ -35,7 +35,7 @@ namespace ospray {
     return "ospray::Slices";
   }
 
-  void Slices::finalize(Model *model)
+  void Slices::finalize(World *model)
   {
     planesData = getParamData("planes", nullptr);
     volume     = (Volume *)getParamObject("volume", nullptr);

@@ -18,7 +18,7 @@
 #include "math/vec.ih"
 #include "math/box.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "volume/Volume.ih"
 
@@ -106,7 +106,7 @@ unmasked void Isosurfaces_occluded(const struct RTCIntersectFunctionNArguments *
 }
 
 static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
-                                      const Model *uniform model,
+                                      const World *uniform model,
                                       varying DifferentialGeometry &dg,
                                       const varying Ray &ray,
                                       uniform int64 flags)
@@ -149,7 +149,7 @@ export void *uniform Isosurfaces_set(void          *uniform _self,
                                      void          *uniform _volume)
 {
   uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)_self;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform World *uniform model = (uniform World *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);

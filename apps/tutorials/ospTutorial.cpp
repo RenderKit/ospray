@@ -118,7 +118,7 @@ int main(int argc, const char **argv) {
 
   mesh.commit();
 
-  ospray::cpp::Model world;
+  ospray::cpp::World world;
   world.addGeometry(mesh);
   mesh.release(); // we are done using this handle
   world.commit();

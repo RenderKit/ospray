@@ -18,7 +18,7 @@
 #include "math/vec.ih"
 #include "math/box.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "volume/Volume.ih"
 
@@ -87,7 +87,7 @@ unmasked void Slices_occluded(const struct RTCIntersectFunctionNArguments *unifo
 }
 
 static void Slices_postIntersect(const Geometry *uniform geometry,
-                                 const Model *uniform model,
+                                 const World *uniform model,
                                  varying DifferentialGeometry &dg,
                                  const varying Ray &ray,
                                  uniform int64 flags)
@@ -121,7 +121,7 @@ export void *uniform Slices_set(void          *uniform _self,
                                 void          *uniform _volume)
 {
   uniform Slices *uniform self   = (uniform Slices *uniform)_self;
-  uniform Model  *uniform model  = (uniform Model  *uniform)_model;
+  uniform World  *uniform model  = (uniform World  *uniform)_model;
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);

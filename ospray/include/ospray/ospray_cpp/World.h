@@ -23,13 +23,13 @@
 namespace ospray {
   namespace cpp    {
 
-    class Model : public ManagedObject_T<OSPWorld>
+    class World : public ManagedObject_T<OSPWorld>
     {
     public:
 
-      Model();
-      Model(const Model &copy);
-      Model(OSPWorld existing);
+      World();
+      World(const World &copy);
+      World(OSPWorld existing);
 
       void addGeometry(Geometry &v) const;
       void addGeometry(OSPGeometry v) const;
@@ -48,7 +48,7 @@ namespace ospray {
 
     // Inlined function definitions ///////////////////////////////////////////////
 
-    inline Model::Model()
+    inline World::World()
     {
       OSPWorld c = ospNewWorld();
       if (c) {
@@ -58,58 +58,58 @@ namespace ospray {
       }
     }
 
-    inline Model::Model(const Model &copy) :
+    inline World::World(const World &copy) :
       ManagedObject_T<OSPWorld>(copy.handle())
     {
     }
 
-    inline Model::Model(OSPWorld existing) :
+    inline World::World(OSPWorld existing) :
       ManagedObject_T<OSPWorld>(existing)
     {
     }
 
-    inline void Model::addGeometry(Geometry &v) const
+    inline void World::addGeometry(Geometry &v) const
     {
       addGeometry(v.handle());
     }
 
-    inline void Model::addGeometry(OSPGeometry v) const
+    inline void World::addGeometry(OSPGeometry v) const
     {
       ospAddGeometry(handle(), v);
     }
 
-    inline void Model::removeGeometry(Geometry &v) const
+    inline void World::removeGeometry(Geometry &v) const
     {
       removeGeometry(v.handle());
     }
 
-    inline void Model::removeGeometry(OSPGeometry v) const
+    inline void World::removeGeometry(OSPGeometry v) const
     {
       ospRemoveGeometry(handle(), v);
     }
 
-    inline void Model::addVolume(Volume &v) const
+    inline void World::addVolume(Volume &v) const
     {
       addVolume(v.handle());
     }
 
-    inline void Model::addVolume(OSPVolume v) const
+    inline void World::addVolume(OSPVolume v) const
     {
       ospAddVolume(handle(), v);
     }
 
-    inline void Model::removeVolume(Volume &v) const
+    inline void World::removeVolume(Volume &v) const
     {
       removeVolume(v.handle());
     }
 
-    inline void Model::removeVolume(OSPVolume v) const
+    inline void World::removeVolume(OSPVolume v) const
     {
       ospRemoveVolume(handle(), v);
     }
 
     inline Geometry
-    Model::createInstance(const ospcommon::affine3f &transform) const
+    World::createInstance(const ospcommon::affine3f &transform) const
     {
       return ospNewInstance(handle(), (const osp_affine3f&)transform);
     }

@@ -25,7 +25,7 @@
 #include "render/LoadBalancer.h"
 
 #include "camera/Camera.h"
-#include "common/Model.h"
+#include "common/World.h"
 
 namespace ospray {
   namespace mpi {
@@ -44,7 +44,7 @@ namespace ospray {
         float renderFrame(FrameBuffer *fb,
                           Renderer *renderer,
                           Camera *camera,
-                          Model *world) override;
+                          World *world) override;
         std::string toString() const override;
       };
 
@@ -61,7 +61,7 @@ namespace ospray {
         float renderFrame(FrameBuffer *fb,
                           Renderer *renderer,
                           Camera *camera,
-                          Model *world) override;
+                          World *world) override;
         std::string toString() const override;
       };
 
@@ -70,7 +70,7 @@ namespace ospray {
         float renderFrame(FrameBuffer *fb,
                           Renderer *renderer,
                           Camera *camera,
-                          Model *world) override;
+                          World *world) override;
 
         std::string toString() const override;
       };
@@ -102,7 +102,7 @@ namespace ospray {
         float renderFrame(FrameBuffer *fb,
                           Renderer *renderer,
                           Camera *camera,
-                          Model *world) override;
+                          World *world) override;
         std::string toString() const override;
 
        private:
@@ -128,7 +128,7 @@ namespace ospray {
         float renderFrame(FrameBuffer *fb,
                           Renderer *renderer,
                           Camera *camera,
-                          Model *world) override;
+                          World *world) override;
         std::string toString() const override;
 
        private:
@@ -139,7 +139,7 @@ namespace ospray {
         Renderer *renderer;
         FrameBuffer *fb;
         Camera *camera;
-        Model *world;
+        World *world;
         void *perFrameData;
 
         std::mutex mutex;
