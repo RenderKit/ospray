@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v1.8.3:
+
+-   Fix bug where parameters set by `ospSet1b()` were being ignored
+-   Fix bug in box intersection tests possibly creating NaNs
+
 ### Changes in v1.8.2:
 
 -   CMake bug fix where external users of OSPRay needed CMake newer than
