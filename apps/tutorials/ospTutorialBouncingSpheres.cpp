@@ -35,7 +35,7 @@ struct Sphere
   vec4f color;
 };
 
-// track the spheres data, geometry, and model globally so we can update them
+// track the spheres data, geometry, and world globally so we can update them
 // every frame
 static std::vector<Sphere> g_spheres;
 static OSPGeometry g_spheresGeometry;
@@ -252,9 +252,9 @@ OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
   return g_spheresGeometry;
 }
 
-OSPWorld createModel()
+OSPWorld createWorld()
 {
-  // create the "world" model which will contain all of our geometries
+  // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
   // add in spheres geometry (100 of them)
@@ -263,7 +263,7 @@ OSPWorld createModel()
   // add in a ground plane geometry
   ospAddGeometry(world, createGroundPlaneGeometry());
 
-  // commit the world model
+  // commit the world
   ospCommit(world);
 
   return world;
@@ -343,19 +343,19 @@ void updateSpheresGeometry()
   ospRelease(spheresData);
 }
 
-// updates the bouncing spheres' coordinates, geometry, and model
+// updates the bouncing spheres' coordinates, geometry, and world
 void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
 {
   // update the spheres coordinates and geometry
   updateSpheresCoordinates();
   updateSpheresGeometry();
 
-  // queue the model to be committed since it changed, however don't commit
+  // queue the world to be committed since it changed, however don't commit
   // it immediately because it's being rendered asynchronously
   glfwOSPRayWindow->addObjectToCommit(g_world);
 
-  // update the model on the GLFW window
-  glfwOSPRayWindow->setModel(g_world);
+  // update the world on the GLFW window
+  glfwOSPRayWindow->setWorld(g_world);
 }
 
 int main(int argc, const char **argv)
@@ -378,8 +378,8 @@ int main(int argc, const char **argv)
         exit(error);
       });
 
-  // create OSPRay model
-  g_world = createModel();
+  // create OSPRay world
+  g_world = createWorld();
 
   // create OSPRay renderer
   OSPRenderer renderer = createRenderer();
@@ -390,7 +390,7 @@ int main(int argc, const char **argv)
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), g_world, renderer));
 
-  // register a callback with the GLFW OSPRay window to update the model every
+  // register a callback with the GLFW OSPRay window to update the world every
   // frame
   glfwOSPRayWindow->registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)>(displayCallback));

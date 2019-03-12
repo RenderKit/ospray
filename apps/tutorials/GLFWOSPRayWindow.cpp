@@ -27,11 +27,11 @@ static bool g_quitNextFrame = false;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                                    const ospcommon::box3f &worldBounds,
-                                   OSPWorld model,
+                                   OSPWorld world,
                                    OSPRenderer renderer)
     : windowSize(windowSize),
       worldBounds(worldBounds),
-      model(model),
+      world(world),
       renderer(renderer)
 {
   if (activeWindow != nullptr)
@@ -142,14 +142,14 @@ GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
   return activeWindow;
 }
 
-OSPWorld GLFWOSPRayWindow::getModel()
+OSPWorld GLFWOSPRayWindow::getWorld()
 {
-  return model;
+  return world;
 }
 
-void GLFWOSPRayWindow::setModel(OSPWorld newModel)
+void GLFWOSPRayWindow::setWorld(OSPWorld newWorld)
 {
-  model = newModel;
+  world = newWorld;
 }
 
 void GLFWOSPRayWindow::resetAccumulation()
@@ -365,7 +365,7 @@ void GLFWOSPRayWindow::startNewOSPRayFrame()
   if (currentFrame != nullptr)
     ospRelease(currentFrame);
 
-  currentFrame = ospRenderFrameAsync(framebuffer, renderer, camera, model);
+  currentFrame = ospRenderFrameAsync(framebuffer, renderer, camera, world);
 }
 
 void GLFWOSPRayWindow::waitOnOSPRayFrame()

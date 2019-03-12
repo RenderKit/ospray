@@ -20,26 +20,26 @@
 #include "ArcballCamera.h"
 // ospcommon
 #include "ospcommon/box.h"
-#include "ospcommon/vec.h"
 #include "ospcommon/containers/TransactionalBuffer.h"
+#include "ospcommon/vec.h"
 // ospray
-#include "ospray/ospray.h"
 #include "GLFW/glfw3.h"
+#include "ospray/ospray.h"
 
 class GLFWOSPRayWindow
 {
  public:
   GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                    const ospcommon::box3f &worldBounds,
-                   OSPWorld model,
+                   OSPWorld world,
                    OSPRenderer renderer);
 
   ~GLFWOSPRayWindow();
 
   static GLFWOSPRayWindow *getActiveWindow();
 
-  OSPWorld getModel();
-  void setModel(OSPWorld newModel);
+  OSPWorld getWorld();
+  void setWorld(OSPWorld newWorld);
 
   void resetAccumulation();
 
@@ -52,7 +52,10 @@ class GLFWOSPRayWindow
 
   void addObjectToCommit(OSPObject obj);
 
-  std::unique_ptr<ArcballCamera>& getArcballCamera() { return arcballCamera; }
+  std::unique_ptr<ArcballCamera> &getArcballCamera()
+  {
+    return arcballCamera;
+  }
 
  protected:
   void reshape(const ospcommon::vec2i &newWindowSize);
@@ -66,7 +69,7 @@ class GLFWOSPRayWindow
 
   ospcommon::vec2i windowSize;
   ospcommon::box3f worldBounds;
-  OSPWorld model       = nullptr;
+  OSPWorld world       = nullptr;
   OSPRenderer renderer = nullptr;
 
   // GLFW window instance

@@ -187,7 +187,7 @@ int main(int argc, const char **argv)
         exit(error);
       });
 
-  // create the "world" model which will contain all of our geometries
+  // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
   // add in subdivision geometry
@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
   // add in a ground plane geometry
   ospAddGeometry(world, createGroundPlaneGeometry());
 
-  // commit the world model
+  // commit the world
   ospCommit(world);
 
   // create OSPRay renderer
