@@ -39,7 +39,7 @@ struct Sphere
 // every frame
 static std::vector<Sphere> g_spheres;
 static OSPGeometry g_spheresGeometry;
-static OSPWorld g_model;
+static OSPWorld g_world;
 
 std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
 {
@@ -352,10 +352,10 @@ void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
 
   // queue the model to be committed since it changed, however don't commit
   // it immediately because it's being rendered asynchronously
-  glfwOSPRayWindow->addObjectToCommit(g_model);
+  glfwOSPRayWindow->addObjectToCommit(g_world);
 
   // update the model on the GLFW window
-  glfwOSPRayWindow->setModel(g_model);
+  glfwOSPRayWindow->setModel(g_world);
 }
 
 int main(int argc, const char **argv)
@@ -379,7 +379,7 @@ int main(int argc, const char **argv)
       });
 
   // create OSPRay model
-  g_model = createModel();
+  g_world = createModel();
 
   // create OSPRay renderer
   OSPRenderer renderer = createRenderer();
@@ -388,7 +388,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), g_model, renderer));
+          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), g_world, renderer));
 
   // register a callback with the GLFW OSPRay window to update the model every
   // frame

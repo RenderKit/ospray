@@ -367,7 +367,7 @@ the table below.
   OSP_MATERIAL           material object reference
   OSP_TEXTURE            texture object reference
   OSP_RENDERER           renderer object reference
-  OSP_MODEL              model object reference
+  OSP_WORLD              world object reference
   OSP_GEOMETRY           geometry object reference
   OSP_VOLUME             volume object reference
   OSP_TRANSFER_FUNCTION  transfer function object reference
@@ -982,10 +982,10 @@ according to the provided volume's [transfer function].
 ### Instances
 
 OSPRay supports instancing via a special type of geometry. Instances are
-created by transforming another given [model] `modelToInstantiate` with
+created by transforming another given [world] `worldToInstantiate` with
 the given affine transformation `transform` by calling
 
-    OSPGeometry ospNewInstance(OSPWorld modelToInstantiate, const affine3f &transform);
+    OSPGeometry ospNewInstance(OSPWorld worldToInstantiate, const affine3f &transform);
 
 
 Renderer
@@ -1110,27 +1110,27 @@ supports the following special parameters:
 The path tracer requires that [materials] are assigned to [geometries],
 otherwise surfaces are treated as completely black.
 
-### Model
+### World
 
-Models are a container of scene data. They can hold the different
+Worlds are a container of scene data. They can hold the different
 [geometries] and [volumes] as well as references to (and [instances] of)
-other models. A model is associated with a single logical acceleration
-structure. To create an (empty) model call
+other worlds. A world is associated with a single logical acceleration
+structure. To create an (empty) world call
 
     OSPWorld ospNewWorld();
 
-The call returns an `OSPWorld` handle to the created model. To add an
-already created geometry or volume to a model use
+The call returns an `OSPWorld` handle to the created world. To add an
+already created geometry or volume to a world use
 
     void ospAddGeometry(OSPWorld, OSPGeometry);
     void ospAddVolume(OSPWorld, OSPVolume);
 
-An existing geometry or volume can be removed from a model with
+An existing geometry or volume can be removed from a world with
 
     void ospRemoveGeometry(OSPWorld, OSPGeometry);
     void ospRemoveVolume(OSPWorld, OSPVolume);
 
-Finally, Models can be configured with parameters for making various
+Finally, Worlds can be configured with parameters for making various
 feature/performance trade-offs:
 
   ------------- ---------------- --------  -------------------------------------
@@ -1150,7 +1150,7 @@ feature/performance trade-offs:
                                            intersection code paths (slightly
                                            slower)
   ------------- ---------------- --------  -------------------------------------
-  : Parameters understood by Models
+  : Parameters understood by Worlds
 
 
 ### Lights

@@ -82,7 +82,7 @@ have its own limitations on the topology of the data (i.e., overlapping
 data regions, concave data, etc.), but the API calls will only differ
 for scene objects. Thus all other calls (i.e., setting camera, creating
 framebuffer, rendering frame, etc.) will all be assumed to be identical,
-but only rendering a frame and committing the model must be in
+but only rendering a frame and committing the world must be in
 lock-step. This mode targets using all available aggregate memory for
 huge scenes and for "in-situ" visualization where the data is
 already distributed by a simulation app.
@@ -171,9 +171,9 @@ can create a communicator with one rank per-node to then run OSPRay on
 one process per-node. The remaining ranks on each node can then
 aggregate their data to the OSPRay process for rendering.
 
-The model used by the distributed device takes three additional
+The world used by the distributed device takes three additional
 parameters, to allow users to express their data distribution to OSPRay.
-All models should be disjoint to ensure correct sort-last compositing.
+All worlds should be disjoint to ensure correct sort-last compositing.
 Geometries used in the distributed MPI renderer can make use of the
 [SciVis renderer]'s [OBJ material].
 
@@ -183,17 +183,17 @@ Geometries used in the distributed MPI renderer can make use of the
   int    id            An integer that uniquely identifies this piece of
                        distributed data. For example, in a common case of one
                        sub-brick per-rank, this would just be the region's MPI
-                       rank. Multiple ranks can specify models with the same ID,
-                       in which case the rendering work for the model will be
+                       rank. Multiple ranks can specify worlds with the same ID,
+                       in which case the rendering work for the world will be
                        shared among them.
 
-  vec3f  region.lower  Override the original model geometry + volume bounds with
+  vec3f  region.lower  Override the original world geometry + volume bounds with
                        a custom lower bound position. This can be used to clip
                        geometry in the case the objects cross over to another
                        region owned by a different node. For example, rendering
                        a set of spheres with radius.
 
-  vec3f  region.upper  Override the original model geometry + volume bounds with
+  vec3f  region.upper  Override the original world geometry + volume bounds with
                        a custom upper bound position.
   ------ ------------- ---------------------------------------------------------
   : Parameters for the distributed `OSPWorld`.
@@ -203,29 +203,29 @@ The renderer supported when using the distributed device is the
 currently only supports ambient occlusion (on the local data only, with
 optional ghost data). To compute correct ambient occlusion across the
 distributed data the application is responsible for replicating ghost
-data and specifying the ghost models and models as described above.
+data and specifying the ghost worlds and worlds as described above.
 Note that shadows and ambient occlusion are computed on the local geometries,
-in the `model` and the corresponding `ghostModel` in the ghost model array,
+in the `world` and the corresponding `ghostModel` in the ghost model array,
 if any where set.
 
   -------------------- ---------------------- --------  ------------------------
   Type                 Name                    Default  Description
   -------------------- ---------------------- --------  ------------------------
-  OSPWorld/OSPWorld[]  model                      NULL  the [model] to render,
+  OSPWorld/OSPWorld[]  model                      NULL  the [world] to render,
                                                         can optionally be a
                                                         [data] array of multiple
-                                                        models
+                                                        worlds
 
-  OSPWorld/OSPWorld[]  ghostModel                 NULL  the optional [model]
+  OSPWorld/OSPWorld[]  ghostModel                 NULL  the optional [world]
                                                         containing the ghost
                                                         geometry for ambient
                                                         occlusion; when setting
                                                         a [data] array for both
                                                         `model` and
                                                         `ghostModel`, each
-                                                        individual ghost model
+                                                        individual ghost world
                                                         shadows only its
-                                                        corresponding model
+                                                        corresponding world
 
   OSPLight[]           lights                           [data] array with
                                                         handles of the [lights]
