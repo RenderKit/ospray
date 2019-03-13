@@ -21,46 +21,74 @@
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
-int32 Subdivision_getMaterialID(
-    const Geometry *uniform const _self, const int32 primID)
+int32 Subdivision_getMaterialID(const Geometry *uniform const _self,
+                                const int32 primID)
 {
   // TODO: gather material ID from index array if indexSize==4
   const Subdivision *const uniform self = (const Subdivision *uniform)_self;
-  return self->prim_materialID ? self->prim_materialID[primID] : self->geom_materialID;
+  return self->prim_materialID ? self->prim_materialID[primID]
+                               : self->geom_materialID;
 }
 
 static void Subdivision_postIntersect(const Geometry *uniform _self,
-                                      const World    *uniform model,
+                                      const World *uniform model,
                                       varying DifferentialGeometry &dg,
                                       const varying Ray &ray,
                                       uniform int64 flags)
 {
-  Subdivision *uniform self = (Subdivision *uniform)_self;
+  Subdivision *uniform self = (Subdivision * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   if (flags & DG_MATERIALID) {
     dg.materialID = Subdivision_getMaterialID(_self, ray.primID);
   }
-  //get normals
+  // get normals
   if (flags & DG_NS) {
-    vec3f dPdu,dPdv;
-    foreach_unique (geomID in ray.geomID) {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,
-                       ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX,0,NULL,&dPdu.x,&dPdv.x,3);
+    vec3f dPdu, dPdv;
+    foreach_unique(geomID in ray.geomID)
+    {
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle, geomID),
+                       ray.primID,
+                       ray.u,
+                       ray.v,
+                       RTC_BUFFER_TYPE_VERTEX,
+                       0,
+                       NULL,
+                       &dPdu.x,
+                       &dPdv.x,
+                       3);
     }
-    dg.Ns = cross(dPdu,dPdv);
+    dg.Ns = cross(dPdu, dPdv);
   }
-  //get colors
+  // get colors
   if (flags & DG_COLOR) {
-    foreach_unique (geomID in ray.geomID) {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,
-                       ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,0,&dg.color.x,NULL,NULL,4);
+    foreach_unique(geomID in ray.geomID)
+    {
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle, geomID),
+                       ray.primID,
+                       ray.u,
+                       ray.v,
+                       RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
+                       0,
+                       &dg.color.x,
+                       NULL,
+                       NULL,
+                       4);
     }
   }
-  //get texcoords
+  // get texcoords
   if (flags & DG_TEXCOORD && self->texcoord) {
-    foreach_unique (geomID in ray.geomID) {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle,geomID),ray.primID,
-                       ray.u,ray.v,RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,1,&dg.st.x,NULL,NULL,2);
+    foreach_unique(geomID in ray.geomID)
+    {
+      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle, geomID),
+                       ray.primID,
+                       ray.u,
+                       ray.v,
+                       RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
+                       1,
+                       &dg.st.x,
+                       NULL,
+                       NULL,
+                       2);
     }
   }
 }
@@ -70,36 +98,28 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
                              uniform World *uniform model,
                              RTCGeometry geom,
                              uniform int32 geomID,
-                             uniform int32   geom_materialID,
+                             uniform int32 geom_materialID,
                              uniform uint32 *uniform prim_materialID,
                              uniform Material *uniform *uniform materialList,
                              uniform vec2f *uniform texcoord)
 {
-  Geometry_Constructor(&mesh->super,cppEquivalent,
+  Geometry_Constructor(&mesh->super,
+                       cppEquivalent,
                        Subdivision_postIntersect,
                        model,
                        geom,
                        geomID,
                        materialList);
   mesh->super.getMaterialID = Subdivision_getMaterialID;
-  mesh->prim_materialID = prim_materialID;
-  mesh->geom_materialID = geom_materialID;
-  mesh->texcoord = texcoord;
+  mesh->prim_materialID     = prim_materialID;
+  mesh->geom_materialID     = geom_materialID;
+  mesh->texcoord            = texcoord;
 }
-
 
 export void *uniform Subdivision_create(void *uniform cppEquivalent)
 {
   Subdivision *uniform mesh = uniform new Subdivision;
-  Subdivision_Constructor(mesh,
-                          cppEquivalent,
-                          NULL,
-                          NULL,
-                          0,
-                          0,
-                          0,
-                          NULL,
-                          NULL);
+  Subdivision_Constructor(mesh, cppEquivalent, NULL, NULL, 0, 0, 0, NULL, NULL);
   return mesh;
 }
 
@@ -112,8 +132,8 @@ export void *uniform Subdivision_set(void *uniform _mesh,
                                      void *uniform _materialList,
                                      uniform vec2f *uniform texcoord)
 {
-  uniform Subdivision *uniform mesh = (uniform Subdivision *uniform)_mesh;
-  uniform World *uniform model = (uniform World *uniform)_model;
+  uniform Subdivision *uniform mesh = (uniform Subdivision * uniform) _mesh;
+  uniform World *uniform model      = (uniform World * uniform) _model;
   Subdivision_Constructor(mesh,
                           mesh->super.cppEquivalent,
                           model,
@@ -121,7 +141,6 @@ export void *uniform Subdivision_set(void *uniform _mesh,
                           geomID,
                           geom_materialID,
                           prim_materialID,
-                          (Material*uniform*uniform)_materialList,
-                          texcoord
-                          );
+                          (Material * uniform * uniform) _materialList,
+                          texcoord);
 }

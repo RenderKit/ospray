@@ -26,35 +26,42 @@
 
 namespace ospray {
 
-  enum curveType { ROUND, FLAT, RIBBON };
-  enum curveBasis { LINEAR, BEZIER, BSPLINE, HERMITE };
+  enum curveType
+  {
+    ROUND,
+    FLAT,
+    RIBBON
+  };
+  enum curveBasis
+  {
+    LINEAR,
+    BEZIER,
+    BSPLINE,
+    HERMITE
+  };
 
-  static RTCGeometryType curveMap[4][3] =
-    {
+  static RTCGeometryType curveMap[4][3] = {
       {
-        (RTCGeometryType)-1,
-        RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE,
-        (RTCGeometryType)-1,
+          (RTCGeometryType)-1,
+          RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE,
+          (RTCGeometryType)-1,
       },
 
       {
-        RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
-        RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,
-        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
+          RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
+          RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,
+          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
       },
 
       {
-        RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
-        RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE,
-        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
+          RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
+          RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE,
+          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
       },
 
-      {
-        RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
-        RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
-        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE
-      }
-    };
+      {RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
+       RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
+       RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE}};
 
   static curveType curveTypeForString(const std::string &s)
   {
@@ -94,26 +101,27 @@ namespace ospray {
   {
     Geometry::finalize(model);
 
-    vertexData = getParamData("vertex",nullptr);
+    vertexData = getParamData("vertex", nullptr);
     if (!vertexData)
       throw std::runtime_error("curves must have 'vertex' array");
     if (vertexData->type != OSP_FLOAT4)
       throw std::runtime_error("curves 'vertex' must be type OSP_FLOAT4");
-    auto vertex = (vec4f*)vertexData->data;
+    auto vertex      = (vec4f *)vertexData->data;
     auto numVertices = vertexData->numItems;
 
-    indexData  = getParamData("index",nullptr);
+    indexData = getParamData("index", nullptr);
     if (!indexData)
       throw std::runtime_error("curves must have 'index' array");
     if (indexData->type != OSP_INT)
       throw std::runtime_error("curves 'index' array must be type OSP_INT");
-    auto index = (uint32*)indexData->data;
+    auto index       = (uint32 *)indexData->data;
     auto numSegments = indexData->numItems;
 
-    normalData = getParamData("vertex.normal", nullptr);
+    normalData  = getParamData("vertex.normal", nullptr);
     tangentData = getParamData("vertex.tangent", nullptr);
 
-    auto basis = curveBasisForString(getParamString("curveBasis", "unspecified"));
+    auto basis =
+        curveBasisForString(getParamString("curveBasis", "unspecified"));
     auto type = curveTypeForString(getParamString("curveType", "unspecified"));
 
     if (type == RIBBON && !normalData)
@@ -126,7 +134,8 @@ namespace ospray {
     if (normalData && normalData->type != OSP_FLOAT3)
       throw std::runtime_error("curves 'normal' array must be type OSP_FLOAT3");
     if (tangentData && tangentData->type != OSP_FLOAT3)
-      throw std::runtime_error("curves 'tangent' array must be type OSP_FLOAT3");
+      throw std::runtime_error(
+          "curves 'tangent' array must be type OSP_FLOAT3");
 
     postStatusMsg(2) << "#osp: creating curves geometry, "
                      << "#verts=" << numVertices << ", "
@@ -147,19 +156,20 @@ namespace ospray {
       }
     }
 
-    ispc::Curves_set(getIE(),
-                     model->getIE(),
-                     (ispc::RTCGeometryType)curveMap[basis][type],
-                     (const ispc::vec4f*)vertexData->data,
-                     vertexData->numItems,
-                     (const uint32_t*)indexData->data,
-                     indexData->numItems,
-                     normalData ? (const ispc::vec3f*)normalData->data : nullptr,
-                     normalData ? normalData->numItems : 0,
-                     tangentData ? (const ispc::vec3f*)tangentData->data : nullptr,
-                     tangentData ? tangentData->numItems : 0);
+    ispc::Curves_set(
+        getIE(),
+        model->getIE(),
+        (ispc::RTCGeometryType)curveMap[basis][type],
+        (const ispc::vec4f *)vertexData->data,
+        vertexData->numItems,
+        (const uint32_t *)indexData->data,
+        indexData->numItems,
+        normalData ? (const ispc::vec3f *)normalData->data : nullptr,
+        normalData ? normalData->numItems : 0,
+        tangentData ? (const ispc::vec3f *)tangentData->data : nullptr,
+        tangentData ? tangentData->numItems : 0);
   }
 
-  OSP_REGISTER_GEOMETRY(Curves,curves);
+  OSP_REGISTER_GEOMETRY(Curves, curves);
 
-} // ::ospray
+}  // namespace ospray

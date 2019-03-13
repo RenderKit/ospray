@@ -20,39 +20,7 @@
 #include "ospray/OSPDataType.h"
 
 namespace ospray {
-  /*! @{ \defgroup geometry_spheres Spheres ("spheres")
 
-    \ingroup ospray_supported_geometries
-
-    \brief Geometry representing spheres with a per-sphere radius
-
-    Implements a geometry consisting of individual spheres, each of
-    which can have a radius.  To allow a variety of sphere
-    representations this geometry allows a flexible way of specifying
-    the offsets of origin, radius, and material ID within a data array
-    of 32-bit floats.
-
-    Parameters:
-    <dl>
-    <dt><code>float        radius = 0.01f</code></dt><dd>Base radius common to all spheres if 'offset_radius' is not used</dd>
-    <dt><code>int32        materialID = 0</code></dt><dd>Material ID common to all spheres if 'offset_materialID' is not used</dd>
-    <dt><code>int32        bytes_per_sphere = 4*sizeof(float)</code></dt><dd>Size (in bytes) of each sphere in the data array.</dd>
-    <dt><code>int32        offset_center = 0</code></dt><dd>Offset (in bytes) of each sphere's 'vec3f center' value within the sphere</dd>
-    <dt><code>int32        offset_radius = -1</code></dt><dd>Offset (in bytes) of each sphere's 'float radius' value within each sphere. Setting this value to -1 means that there is no per-sphere radius value, and that all spheres should use the (shared) 'radius' value instead</dd>
-    <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset (in bytes) of each sphere's 'int materialID' value within each sphere. Setting this value to -1 means that there is no per-sphere material ID, and that all spheres share the same per-geometry 'materialID'</dd>
-    <dt><code>Data<float>  spheres</code></dt><dd> Array of data elements.</dd>
-    </dl>
-
-    The functionality for this geometry is implemented via the
-    \ref ospray::Spheres class.
-
-  */
-
-  /*! \brief A geometry for a set of spheres
-
-    Implements the \ref geometry_spheres geometry
-
-  */
   struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
   {
     Spheres();
@@ -67,7 +35,7 @@ namespace ospray {
     int32 materialID;
 
     size_t numSpheres;
-    size_t bytesPerSphere; //!< num bytes per sphere
+    size_t bytesPerSphere;  //!< num bytes per sphere
     int64 offset_center;
     int64 offset_radius;
     int64 offset_materialID;
@@ -97,5 +65,4 @@ namespace ospray {
   };
   /*! @} */
 
-} // ::ospray
-
+}  // namespace ospray

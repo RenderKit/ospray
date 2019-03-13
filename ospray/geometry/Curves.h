@@ -57,12 +57,11 @@ namespace ospray {
 
     // Data members //
 
-    Ref<Data> vertexData; //!< refcounted data array for vertex data
-    Ref<Data> indexData; //!< refcounted data array for segment data
-    Ref<Data> normalData; //!< refcounted data array for normal data
-    Ref<Data> tangentData; //!< refcounted data array for tangent data
+    Ref<Data> vertexData;   //!< refcounted data array for vertex data
+    Ref<Data> indexData;    //!< refcounted data array for segment data
+    Ref<Data> normalData;   //!< refcounted data array for normal data
+    Ref<Data> tangentData;  //!< refcounted data array for tangent data
   };
   /*! @} */
 
-} // ::ospray
-
+}  // namespace ospray

@@ -44,12 +44,15 @@ namespace ospray {
     Assert(volume);
 
     numPlanes = planesData->numItems;
-    planes    = (vec4f*)planesData->data;
+    planes    = (vec4f *)planesData->data;
 
-    ispc::Slices_set(getIE(), model->getIE(), numPlanes,
-                     (ispc::vec4f*)planes, volume->getIE());
+    ispc::Slices_set(getIE(),
+                     model->getIE(),
+                     numPlanes,
+                     (ispc::vec4f *)planes,
+                     volume->getIE());
   }
 
   OSP_REGISTER_GEOMETRY(Slices, slices);
 
-} // ::ospray
+}  // namespace ospray

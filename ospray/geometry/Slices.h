@@ -21,32 +21,6 @@
 
 namespace ospray {
 
-  /*! \defgroup geometry_slices Slices ("slices")
-
-    \ingroup ospray_supported_geometries
-
-    \brief Geometry representing slices of a volume
-
-    Implements a geometry consisting of slices of a volume. Each
-    slice is a plane that is colored according to a provided volume's
-    transfer function.
-
-    Parameters:
-    <dl>
-    <dt><li><code>Data<vec4f> planes</code></dt><dd> Array of planes for all slices in this geometry. The vec4f for each plane consists of the (a,b,c,d) coefficients of the plane equation a*x + b*y + c*z + d = 0.</dd>
-    <dt><li><code>Volume  volume </code></dt><dd> volume specifies the volume to be slices. The color of the slice will be mapped through the volume's transfer function.</dd>
-    </dl>
-
-    The functionality for this geometry is implemented via the
-    \ref ospray::Slices class.
-
-  */
-
-  /*! \brief A geometry for slices of volumes
-
-    Implements the \ref geometry_slices geometry
-
-  */
   struct OSPRAY_SDK_INTERFACE Slices : public Geometry
   {
     Slices();
@@ -56,7 +30,7 @@ namespace ospray {
 
     // Data members //
 
-    Ref<Data> planesData; //!< refcounted data array for planes data
+    Ref<Data> planesData;  //!< refcounted data array for planes data
     Ref<Volume> volume;
 
     size_t numPlanes;
@@ -64,4 +38,4 @@ namespace ospray {
   };
   /*! @} */
 
-} // ::ospray
+}  // namespace ospray

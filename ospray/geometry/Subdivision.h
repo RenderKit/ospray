@@ -27,8 +27,9 @@ namespace ospray {
     virtual ~Subdivision() override = default;
     virtual std::string toString() const override;
     virtual void finalize(World *model) override;
-  protected:
+
+   protected:
     std::vector<uint32_t> generatedFacesData;
   };
 
-} // ::ospray
+}  // namespace ospray

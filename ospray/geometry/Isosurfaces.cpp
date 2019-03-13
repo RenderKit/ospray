@@ -45,12 +45,12 @@ namespace ospray {
     Assert(volume);
 
     numIsovalues = isovaluesData->numItems;
-    isovalues    = (float*)isovaluesData->data;
+    isovalues    = (float *)isovaluesData->data;
 
-    ispc::Isosurfaces_set(getIE(), model->getIE(), numIsovalues,
-                          isovalues, volume->getIE());
+    ispc::Isosurfaces_set(
+        getIE(), model->getIE(), numIsovalues, isovalues, volume->getIE());
   }
 
   OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);
 
-} // ::ospray
+}  // namespace ospray

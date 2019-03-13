@@ -21,29 +21,6 @@
 
 namespace ospray {
 
-  /*! \defgroup geometry_instance Instancing ("instance")
-
-    \brief Implements instancing via a single instance of another
-    model.
-
-    \ingroup ospray_supported_geometries
-
-    Once created, a trianglemesh recognizes the following parameters
-    <pre>
-    float3 "xfm.l.vx" // 1st column of the affine transformation matrix
-    float3 "xfm.l.vy" // 1st column of the affine transformation matrix
-    float3 "xfm.l.vz" // 1st column of the affine transformation matrix
-    float3 "xfm.p"    // 4th column (translation) of the affine transformation matrix
-    OSPWorld "model"  // model we're instancing
-    </pre>
-
-    The functionality for this geometry is implemented via the
-    \ref ospray::Instance class.
-  */
-
-  /*! \brief A Single Instance
-
-   */
   struct OSPRAY_SDK_INTERFACE Instance : public Geometry
   {
     Instance();
@@ -53,15 +30,17 @@ namespace ospray {
 
     // Data members //
 
-    /*! transformation matrix associated with that instance's geometry. may be embree::one */
+    /*! transformation matrix associated with that instance's geometry. may be
+     * embree::one */
     AffineSpace3f xfm;
-    /*! reference to instanced model. Must be a *model* that we're instancing, not a geometry */
-    Ref<World>    instancedScene;
+    /*! reference to instanced model. Must be a *model* that we're instancing,
+     * not a geometry */
+    Ref<World> instancedScene;
     // XXX hack: there is no concept of instance data, but PT needs pdfs (wrt.
     // area) of geometry light instances
     std::vector<float> areaPDF;
     /*! geometry ID of this geometry in the parent model */
-    uint32        embreeGeomID;
+    uint32 embreeGeomID;
   };
 
-} // ::ospray
+}  // namespace ospray

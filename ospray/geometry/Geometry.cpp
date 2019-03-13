@@ -31,13 +31,14 @@ namespace ospray {
   void Geometry::setMaterial(Material *mat)
   {
     if (!mat) {
-      postStatusMsg("#osp: warning - tried to set NULL material; ignoring. "
+      postStatusMsg(
+          "#osp: warning - tried to set NULL material; ignoring. "
           "(Note this means that object may not get any material at all!)");
       return;
     }
 
     OSPMaterial ospMat = (OSPMaterial)mat;
-    auto *data = new Data(1, OSP_OBJECT, &ospMat);
+    auto *data         = new Data(1, OSP_OBJECT, &ospMat);
     setMaterialList(data);
     data->refDec();
   }
@@ -45,19 +46,20 @@ namespace ospray {
   void Geometry::setMaterialList(Data *matListData)
   {
     if (!matListData || matListData->numItems == 0) {
-      postStatusMsg("#osp: warning - tried to set NULL material list, ignoring."
+      postStatusMsg(
+          "#osp: warning - tried to set NULL material list, ignoring."
           " (Note this means that object may not get any material at all!)");
       return;
     }
 
     materialListData = matListData;
-    materialList = (Material**)materialListData->data;
+    materialList     = (Material **)materialListData->data;
 
     if (!getIE()) {
-      postStatusMsg("#osp: warning: geometry does not have an "
-                    "ispc equivalent!");
-    }
-    else {
+      postStatusMsg(
+          "#osp: warning: geometry does not have an "
+          "ispc equivalent!");
+    } else {
       const int numMaterials = materialListData->numItems;
       ispcMaterialPtrs.resize(numMaterials);
       for (int i = 0; i < numMaterials; i++)
@@ -89,4 +91,4 @@ namespace ospray {
     return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);
   }
 
-} // ::ospray
+}  // namespace ospray

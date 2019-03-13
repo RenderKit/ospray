@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "common/Managed.h"
-#include "common/OSPCommon.h"
-#include "common/Data.h"
-#include "common/Material.h"
 #include "api/ISPCDevice.h"
-//embree
+#include "common/Data.h"
+#include "common/Managed.h"
+#include "common/Material.h"
+#include "common/OSPCommon.h"
+// embree
 #include "embree3/rtcore.h"
 
 namespace ospray {
@@ -69,14 +69,15 @@ namespace ospray {
       ospLoadModule first. */
     static Geometry *createInstance(const char *type);
 
-    box3f bounds {empty};
+    box3f bounds{empty};
 
     //! materials associated to this geometry
     /*! these fields should be set only through
         'setMaterial' and 'setMaterialList' (see comments there) */
-    Material **materialList {nullptr};   //!< per-primitive material list
-    Ref<Data> materialListData;          //!< data array for per-prim materials
-    std::vector<void*> ispcMaterialPtrs; //!< pointers to ISPC equivalent materials
+    Material **materialList{nullptr};  //!< per-primitive material list
+    Ref<Data> materialListData;        //!< data array for per-prim materials
+    std::vector<void *>
+        ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
   };
 
   /*! \brief registers a internal ospray::<ClassName> geometry under
@@ -89,7 +90,7 @@ namespace ospray {
       of this geometry.
   */
 #define OSP_REGISTER_GEOMETRY(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(::ospray::Geometry, geometry, \
-                      InternalClass, external_name)
+  OSP_REGISTER_OBJECT(                                      \
+      ::ospray::Geometry, geometry, InternalClass, external_name)
 
-} // ::ospray
+}  // namespace ospray

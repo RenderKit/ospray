@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 // ospray
-#include "math/vec.ih"
-#include "math/box.ih"
-#include "common/Ray.ih"
 #include "Instance.ih"
+#include "common/Ray.ih"
+#include "math/box.ih"
+#include "math/vec.ih"
 
 static void Instance_postIntersect(const Geometry *uniform _self,
                                    const World *uniform parentWorld,
@@ -26,20 +26,21 @@ static void Instance_postIntersect(const Geometry *uniform _self,
                                    const varying Ray &ray,
                                    uniform int64 flags)
 {
-  uniform Instance *uniform self = (uniform Instance *uniform)_self;
-  uniform World *uniform instancedWorld =
-    (uniform World *uniform)self->model;
-  foreach_unique(geomID in ray.geomID) {
+  uniform Instance *uniform self        = (uniform Instance * uniform) _self;
+  uniform World *uniform instancedWorld = (uniform World * uniform) self->model;
+  foreach_unique(geomID in ray.geomID)
+  {
     uniform Geometry *uniform instancedGeometry =
-      (uniform Geometry *uniform)instancedWorld->geometry[geomID];
+        (uniform Geometry * uniform) instancedWorld->geometry[geomID];
 
     dg.geometry = instancedGeometry;
 
-    instancedGeometry->postIntersect(instancedGeometry,instancedWorld,
-                                     dg,ray,flags);
+    instancedGeometry->postIntersect(
+        instancedGeometry, instancedWorld, dg, ray, flags);
 
     if (instancedGeometry->materialList) {
-      dg.material = instancedGeometry->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+      dg.material = instancedGeometry
+                        ->materialList[dg.materialID < 0 ? 0 : dg.materialID];
     }
   }
   dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
@@ -47,23 +48,19 @@ static void Instance_postIntersect(const Geometry *uniform _self,
   // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
   // isotropic anyway and hence cannot better handle non-uniform scaling)
   dg.epsilon *= max(abs(self->xfm.l.vx.x),
-      max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
+                    max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
   if (flags & DG_TANGENTS) {
-    dg.dPds = xfmVector(self->xfm,dg.dPds);
-    dg.dPdt = xfmVector(self->xfm,dg.dPdt);
+    dg.dPds = xfmVector(self->xfm, dg.dPds);
+    dg.dPdt = xfmVector(self->xfm, dg.dPdt);
   }
 }
 
 export void *uniform InstanceGeometry_create(void *uniform cppE)
 {
   Instance *uniform self = uniform new Instance;
-  Geometry_Constructor(&self->super, cppE,
-                       Instance_postIntersect,
-                       NULL,
-                       NULL,
-                       -1,
-                       NULL);
+  Geometry_Constructor(
+      &self->super, cppE, Instance_postIntersect, NULL, NULL, -1, NULL);
   self->areaPDF = NULL;
 
   return self;
@@ -75,9 +72,9 @@ export void InstanceGeometry_set(void *uniform _self,
                                  void *uniform _model,
                                  float *uniform areaPDF)
 {
-  Instance *uniform self = (Instance *uniform)_self;
-  self->model   = (uniform World *uniform)_model;
-  self->xfm     = xfm;
-  self->rcp_xfm = rcp_xfm;
-  self->areaPDF = areaPDF;
+  Instance *uniform self = (Instance * uniform) _self;
+  self->model            = (uniform World * uniform) _model;
+  self->xfm              = xfm;
+  self->rcp_xfm          = rcp_xfm;
+  self->areaPDF          = areaPDF;
 }

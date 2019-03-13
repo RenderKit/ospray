@@ -21,32 +21,6 @@
 
 namespace ospray {
 
-  /*! \defgroup geometry_isosurfaces Isosurfaces ("isosurfaces")
-
-    \ingroup ospray_supported_geometries
-
-    \brief Geometry representing isosurfaces of a volume
-
-    Implements a geometry consisting of isosurfaces of a volume. Each
-    isosurface is colored according to a provided volume's transfer
-    function.
-
-    Parameters:
-    <dl>
-    <dt><li><code>Data<float> isovalues</code></dt><dd> Array of floats for all isovalues in this geometry.</dd>
-    <dt><li><code>Volume  volume </code></dt><dd> volume specifies the volume to be isosurfaced. The color of the isosurface(s) will be mapped through the volume's transfer function.</dd>
-    </dl>
-
-    The functionality for this geometry is implemented via the
-    \ref ospray::Isosurfaces class.
-
-  */
-
-  /*! \brief A geometry for isosurfaces of volumes
-
-    Implements the \ref geometry_isosurfaces geometry
-
-  */
   struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
   {
     Isosurfaces();
@@ -57,7 +31,7 @@ namespace ospray {
 
     // Data members //
 
-    Ref<Data> isovaluesData; //!< refcounted data array for isovalues data
+    Ref<Data> isovaluesData;  //!< refcounted data array for isovalues data
     Ref<Volume> volume;
 
     size_t numIsovalues;
@@ -65,4 +39,4 @@ namespace ospray {
   };
   /*! @} */
 
-} // ::ospray
+}  // namespace ospray

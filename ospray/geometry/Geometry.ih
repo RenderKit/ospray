@@ -16,10 +16,9 @@
 
 #pragma once
 
-
+#include "../common/DifferentialGeometry.ih"
 #include "../common/Material.ih"
 #include "../common/Ray.ih"
-#include "../common/DifferentialGeometry.ih"
 #include "math/AffineSpace.ih"
 
 // embree
@@ -47,35 +46,41 @@ typedef void (*Geometry_postIntersectFct)(const Geometry *uniform self,
 
 struct SampleAreaRes
 {
-  vec3f pos;    //!< sampled point, in world-space
-  vec3f normal; //!< geometry normal Ng at the sampled point
+  vec3f pos;     //!< sampled point, in world-space
+  vec3f normal;  //!< geometry normal Ng at the sampled point
 };
 
 typedef int32 (*Geometry_GetMaterialIDFct)(
-    const Geometry *const uniform
-    , const int32 primID //!< primitive to query
-    );
+    const Geometry *const uniform, const int32 primID  //!< primitive to query
+);
 
 typedef void (*Geometry_GetAreasFct)(
-    const Geometry *const uniform
-    , const int32 *const uniform primIDs //!< primitive IDs
-    , const uniform int32 numPrims //!< number of primitives
-    , const uniform affine3f &xfm //!< instance transformation (obj2world)
-    , float *const uniform areas //!< array to return area per primitive
+    const Geometry *const uniform,
+    const int32 *const uniform primIDs  //!< primitive IDs
+    ,
+    const uniform int32 numPrims  //!< number of primitives
+    ,
+    const uniform affine3f &xfm  //!< instance transformation (obj2world)
+    ,
+    float *const uniform areas  //!< array to return area per primitive
     // in world-space
-    );
+);
 
 // sample the given primitive uniformly wrt. area
 typedef SampleAreaRes (*Geometry_SampleAreaFct)(
-    const Geometry *const uniform
-    , const int32 primID //!< primitive to sample
-    , const uniform affine3f &xfm //!< instance transformation (obj2world)
-    , const uniform affine3f &rcp_xfm //!< inverse transformation (world2obj)
-    , const vec2f& s //!< random numbers to generate the sample
-    );
+    const Geometry *const uniform,
+    const int32 primID  //!< primitive to sample
+    ,
+    const uniform affine3f &xfm  //!< instance transformation (obj2world)
+    ,
+    const uniform affine3f &rcp_xfm  //!< inverse transformation (world2obj)
+    ,
+    const vec2f &s  //!< random numbers to generate the sample
+);
 
 /*! ispc-side equivalent of a geometry */
-struct Geometry {
+struct Geometry
+{
   /*! 'virtual' post-intersect function that fills in a
     DifferentialGeometry struct, see above prototype for details */
   Geometry_postIntersectFct postIntersect;
@@ -102,20 +107,28 @@ struct Geometry {
 };
 
 //! constructor for ispc-side Geometry object
-extern void Geometry_Constructor(Geometry *uniform geometry,
-                                 void *uniform cppEquivalent,
-                                 uniform Geometry_postIntersectFct postIntersect,
-                                 World *uniform model,
-                                 RTCGeometry geom,
-                                 uniform int32 geomID,
-                                 uniform Material *uniform *uniform materialList);
+extern void Geometry_Constructor(
+    Geometry *uniform geometry,
+    void *uniform cppEquivalent,
+    uniform Geometry_postIntersectFct postIntersect,
+    World *uniform model,
+    RTCGeometry geom,
+    uniform int32 geomID,
+    uniform Material *uniform *uniform materialList);
 
-inline void Geometry_Constructor(Geometry *uniform geometry,
-                                 void *uniform cppEquivalent,
-                                 uniform Geometry_postIntersectFct postIntersect,
-                                 World *uniform model,
-                                 uniform int32 geomID,
-                                 uniform Material *uniform *uniform materialList)
+inline void Geometry_Constructor(
+    Geometry *uniform geometry,
+    void *uniform cppEquivalent,
+    uniform Geometry_postIntersectFct postIntersect,
+    World *uniform model,
+    uniform int32 geomID,
+    uniform Material *uniform *uniform materialList)
 {
-  Geometry_Constructor(geometry,cppEquivalent,postIntersect,model,NULL,geomID,materialList);
+  Geometry_Constructor(geometry,
+                       cppEquivalent,
+                       postIntersect,
+                       model,
+                       NULL,
+                       geomID,
+                       materialList);
 }
