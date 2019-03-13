@@ -36,52 +36,49 @@ namespace ospray {
     return "ospray::StreamLines";
   }
 
-  void StreamLines::finalize(World *model)
+  void StreamLines::commit()
   {
-    Geometry::finalize(model);
-
-    const float globalRadius = getParam1f("radius", 0.01f);
+    useCurve     = getParam1i("smooth", 0);
+    globalRadius = getParam1f("radius", 0.01f);
     utility::DataView<const float> radius(&globalRadius, 0);
-    bool useCurve = getParam1i("smooth", 0);
 
     vertexData = getParamData("vertex", nullptr);
+
     if (!vertexData)
       throw std::runtime_error("streamlines must have 'vertex' array");
     if (vertexData->type != OSP_FLOAT4 && vertexData->type != OSP_FLOAT3A)
       throw std::runtime_error(
           "streamlines 'vertex' must be type OSP_FLOAT4 or OSP_FLOAT3A");
+
     vertex      = (vec3fa *)vertexData->data;
-    numVertices = vertexData->numItems;
+
     if (vertexData->type == OSP_FLOAT4) {
       radius.reset((const float *)vertex + 3, sizeof(vec4f));
       useCurve = true;
     }
 
     indexData = getParamData("index", nullptr);
+
     if (!indexData)
       throw std::runtime_error("streamlines must have 'index' array");
     if (indexData->type != OSP_INT)
       throw std::runtime_error(
           "streamlines 'index' array must be type OSP_INT");
+
     index       = (uint32 *)indexData->data;
     numSegments = indexData->numItems;
 
     colorData = getParamData("vertex.color", getParamData("color"));
+
     if (colorData && colorData->type != OSP_FLOAT4)
       throw std::runtime_error("'vertex.color' must have data type OSP_FLOAT4");
-    const ispc::vec4f *color =
-        colorData ? (ispc::vec4f *)colorData->data : nullptr;
 
     radiusData = getParamData("vertex.radius");
+
     if (radiusData && radiusData->type == OSP_FLOAT) {
       radius.reset((const float *)radiusData->data);
       useCurve = true;
     }
-
-    postStatusMsg(2) << "#osp: creating streamlines geometry, "
-                     << "#verts=" << numVertices << ", "
-                     << "#segments=" << numSegments << ", "
-                     << "as curve: " << useCurve;
 
     bounds = empty;
     // XXX curves may actually have a larger bounding box due to swinging
@@ -132,23 +129,77 @@ namespace ospray {
           vertexCurve.push_back(vec4f(cap, 0.f));
         }
       }
-      ispc::StreamLines_setCurve(getIE(),
-                                 model->getIE(),
-                                 (const ispc::vec3fa *)vertexCurve.data(),
-                                 vertexCurve.size(),
+    }
+
+    numVertices = useCurve ? vertexCurve.size() : vertexData->numItems;
+
+    postStatusMsg(2) << "#osp: creating streamlines geometry, "
+                     << "#verts=" << numVertices << ", "
+                     << "#segments=" << numSegments << ", "
+                     << "as curve: " << useCurve;
+  }
+
+  void StreamLines::finalize(World *world)
+  {
+    Geometry::finalize(world);
+
+    createEmbreeGeometry();
+
+    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+
+    if (useCurve) {
+      rtcSetSharedGeometryBuffer(embreeGeometry,
+                                 RTC_BUFFER_TYPE_VERTEX,
+                                 0,
+                                 RTC_FORMAT_FLOAT4,
+                                 vertexCurve.data(),
+                                 0,
+                                 sizeof(vec4f),
+                                 numVertices);
+
+      rtcSetSharedGeometryBuffer(embreeGeometry,
+                                 RTC_BUFFER_TYPE_INDEX,
+                                 0,
+                                 RTC_FORMAT_UINT,
                                  indexCurve.data(),
-                                 numSegments,
-                                 index,
-                                 color);
-    } else
-      ispc::StreamLines_set(getIE(),
-                            model->getIE(),
-                            globalRadius,
-                            (const ispc::vec3fa *)vertex,
-                            numVertices,
-                            index,
-                            numSegments,
-                            color);
+                                 0,
+                                 sizeof(int),
+                                 numSegments);
+
+      ispc::StreamLines_setCurve(
+          getIE(),
+          world->getIE(),
+          geomID,
+          vertexCurve.size(),
+          numSegments,
+          index,
+          colorData ? (ispc::vec4f *)colorData->data : nullptr);
+    } else {
+      ispc::StreamLines_set(
+          getIE(),
+          world->getIE(),
+          embreeGeometry,
+          geomID,
+          globalRadius,
+          (const ispc::vec3fa *)vertex,
+          numVertices,
+          index,
+          numSegments,
+          colorData ? (ispc::vec4f *)colorData->data : nullptr);
+    }
+
+    rtcCommitGeometry(embreeGeometry);
+  }
+
+  void StreamLines::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(),
+                       useCurve ? RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE
+                                : RTC_GEOMETRY_TYPE_USER);
   }
 
   OSP_REGISTER_GEOMETRY(StreamLines, streamlines);

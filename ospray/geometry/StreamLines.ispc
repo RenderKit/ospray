@@ -295,8 +295,33 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
   return geom;
 }
 
+export void *uniform StreamLines_setCurve(void *uniform _self,
+                                          void *uniform _world,
+                                          uniform uint32 geomID,
+                                          int32 uniform numVertices,
+                                          int32 uniform numSegments,
+                                          const uniform uint32 *uniform index,
+                                          const uniform vec4f *uniform color)
+{
+  StreamLines *uniform self = (StreamLines * uniform) _self;
+
+  self->super.geomID        = geomID;
+  self->super.model         = (World * uniform) _world;
+  self->super.numPrimitives = numSegments;
+
+  // TODO implement area sampling of curves for geometry lights
+  self->super.getAreas   = NULL;
+  self->super.sampleArea = NULL;
+  self->numVertices      = 0;     // not used by curve
+  self->vertex           = NULL;  // not used by curve
+  self->index            = index;
+  self->color            = color;
+}
+
 export void *uniform StreamLines_set(void *uniform _self,
-                                     void *uniform _model,
+                                     void *uniform _world,
+                                     void *uniform _embreeGeometry,
+                                     uniform uint32 geomID,
                                      float uniform radius,
                                      const uniform vec3fa *uniform vertex,
                                      int32 uniform numVertices,
@@ -305,16 +330,12 @@ export void *uniform StreamLines_set(void *uniform _self,
                                      const uniform vec4f *uniform color)
 {
   StreamLines *uniform self = (StreamLines * uniform) _self;
-  World *uniform model      = (World * uniform) _model;
-
-  RTCGeometry geom =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
 
   self->super.geomID = geomID;
-  self->super.model  = model;
+  self->super.model  = (World * uniform) _world;
   self->vertex       = vertex;
   self->index        = index;
+
   // XXX different representation for area sampling, see above
   self->super.numPrimitives = numVertices + numSegments;
   self->super.getAreas      = StreamLines_getAreas;
@@ -322,6 +343,8 @@ export void *uniform StreamLines_set(void *uniform _self,
   self->numVertices         = numVertices;
   self->color               = color;
   self->radius              = radius;
+
+  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom, numSegments);
@@ -331,56 +354,4 @@ export void *uniform StreamLines_set(void *uniform _self,
       geom, (uniform RTCIntersectFunctionN)&StreamLines_intersect);
   rtcSetGeometryOccludedFunction(
       geom, (uniform RTCOccludedFunctionN)&StreamLines_occluded);
-  rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
-}
-
-export void *uniform
-StreamLines_setCurve(void *uniform _self,
-                     void *uniform _model,
-                     const uniform vec3fa *uniform vertexCurve,
-                     int32 uniform numVertices,
-                     const uniform uint32 *uniform indexCurve,
-                     int32 uniform numSegments,
-                     const uniform uint32 *uniform index,
-                     const uniform vec4f *uniform color)
-{
-  StreamLines *uniform self = (StreamLines * uniform) _self;
-  World *uniform model      = (World * uniform) _model;
-
-  uniform RTCGeometry geom =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
-  rtcSetSharedGeometryBuffer(geom,
-                             RTC_BUFFER_TYPE_VERTEX,
-                             0,
-                             RTC_FORMAT_FLOAT4,
-                             vertexCurve,
-                             0,
-                             sizeof(uniform vec3fa),
-                             numVertices);
-  rtcSetSharedGeometryBuffer(geom,
-                             RTC_BUFFER_TYPE_INDEX,
-                             0,
-                             RTC_FORMAT_UINT,
-                             indexCurve,
-                             0,
-                             sizeof(uniform int),
-                             numSegments);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
-  rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
-
-  self->super.geom = geom;
-
-  self->super.model         = model;
-  self->super.geomID        = geomID;
-  self->super.numPrimitives = numSegments;
-  self->super.postIntersect = StreamLines_postIntersect;
-  // TODO implement area sampling of curves for geometry lights
-  self->super.getAreas   = NULL;
-  self->super.sampleArea = NULL;
-  self->numVertices      = 0;     // not used by curve
-  self->vertex           = NULL;  // not used by curve
-  self->index            = index;
-  self->color            = color;
 }
