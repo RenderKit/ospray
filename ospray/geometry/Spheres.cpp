@@ -36,10 +36,8 @@ namespace ospray {
     return "ospray::Spheres";
   }
 
-  void Spheres::finalize(World *model)
+  void Spheres::commit()
   {
-    Geometry::finalize(model);
-
     radius            = getParam1f("radius", 0.01f);
     materialID        = getParam1i("materialID", 0);
     bytesPerSphere    = getParam1i("bytes_per_sphere", 4 * sizeof(float));
@@ -95,7 +93,8 @@ namespace ospray {
     }
 
     const char *spherePtr = (const char *)sphereData->data;
-    bounds                = empty;
+
+    bounds = empty;
     for (uint32_t i = 0; i < numSpheres; i++, spherePtr += bytesPerSphere) {
       const float r = offset_radius < 0
                           ? radius
@@ -105,15 +104,26 @@ namespace ospray {
     }
 
     // check whether we need 64-bit addressing
-    bool huge_mesh = false;
+    huge_mesh = false;
     if (colorData && colorData->numBytes > INT32_MAX)
       huge_mesh = true;
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
+  }
+
+  void Spheres::finalize(World *world)
+  {
+    Geometry::finalize(world);
+
+    createEmbreeGeometry();
+
+    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
 
     ispc::SpheresGeometry_set(
         getIE(),
-        model->getIE(),
+        world->getIE(),
+        embreeGeometry,
+        geomID,
         sphereData->data,
         materialList ? ispcMaterialPtrs.data() : nullptr,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
@@ -130,6 +140,15 @@ namespace ospray {
         offset_materialID,
         offset_colorID,
         huge_mesh);
+  }
+
+  void Spheres::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   }
 
   OSP_REGISTER_GEOMETRY(Spheres, spheres);

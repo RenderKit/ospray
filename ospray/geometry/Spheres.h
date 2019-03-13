@@ -24,12 +24,15 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
   {
     Spheres();
+    virtual ~Spheres() override = default;
 
     virtual std::string toString() const override;
+
+    virtual void commit() override;
+
     virtual void finalize(World *model) override;
 
-    // Data members //
-
+   protected:
     /*! default radius, if no per-sphere radius was specified. */
     float radius;
     int32 materialID;
@@ -62,6 +65,11 @@ namespace ospray {
       color. color of sphere i will be read as colorFormat color from
       'colorOffset+i*colorStride */
     size_t colorOffset;
+
+    bool huge_mesh{false};
+
+   private:
+    void createEmbreeGeometry() override;
   };
   /*! @} */
 

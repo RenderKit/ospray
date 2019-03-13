@@ -337,7 +337,9 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
 }
 
 export void SpheresGeometry_set(void *uniform _self,
-                                void *uniform _model,
+                                void *uniform _world,
+                                void *uniform _embreeGeometry,
+                                uniform uint32 geomID,
                                 void *uniform data,
                                 void *uniform materialList,
                                 vec2f *uniform texcoord,
@@ -355,14 +357,9 @@ export void SpheresGeometry_set(void *uniform _self,
                                 uniform int offset_colorID,
                                 uniform bool huge_mesh)
 {
-  uniform Spheres *uniform self = (uniform Spheres * uniform) _self;
-  uniform World *uniform model  = (uniform World * uniform) _model;
+  Spheres *uniform self = (Spheres * uniform) _self;
 
-  RTCGeometry geom =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
-
-  self->super.model         = model;
+  self->super.model         = (World * uniform)_world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numSpheres;
   self->super.getAreas      = Spheres_getAreas;
@@ -385,6 +382,8 @@ export void SpheresGeometry_set(void *uniform _self,
 
   self->huge_mesh = huge_mesh;
 
+  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
+
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom, numSpheres);
   rtcSetGeometryBoundsFunction(
@@ -394,5 +393,4 @@ export void SpheresGeometry_set(void *uniform _self,
   rtcSetGeometryOccludedFunction(
       geom, (uniform RTCOccludedFunctionN)&Spheres_occluded);
   rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
 }
