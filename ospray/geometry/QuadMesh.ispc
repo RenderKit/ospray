@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospray
-#include "QuadMesh.ih"
+#include "Geometry.ih"
 #include "common/World.ih"
 #include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
@@ -23,6 +23,22 @@
 
 // embree
 #include "embree3/rtcore.isph"
+
+struct QuadMesh
+{
+  Geometry super;           //!< inherited geometry fields
+  int32 vtxSize;            //!< stride of vertex positions, in float32 elements
+  int32 norSize;            //!< stride of normals, in float32 elements
+  vec4i *index;             //!< mesh's quad index array
+  float *vertex;            //!< mesh's vertex position array
+  float *normal;            //!< mesh's vertex normal array
+  vec4f *color;             //!< mesh's vertex color array
+  vec2f *texcoord;          //!< mesh's texture coordinate array
+  uint32 *prim_materialID;  // per-primitive material ID
+  int32 geom_materialID;    // per-object material ID
+  bool has_alpha;           // 4th color component is valid
+  bool huge_mesh;           // need 64-bit addressing
+};
 
 // Create quad_interpolate for vec2f, vec3f, and vec4f types
 #define __define_quad_interpolate(T)                                       \

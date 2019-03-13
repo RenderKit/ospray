@@ -25,11 +25,37 @@ namespace ospray {
   {
     Subdivision();
     virtual ~Subdivision() override = default;
+
     virtual std::string toString() const override;
+
+    virtual void commit() override;
+
     virtual void finalize(World *model) override;
 
    protected:
+    float level{0.f};
+
+    Ref<Data> vertexData;
+    Ref<Data> indexData;
+    Ref<Data> facesData;
+    Ref<Data> edge_crease_indicesData;
+    Ref<Data> edge_crease_weightsData;
+    Ref<Data> vertex_crease_indicesData;
+    Ref<Data> vertex_crease_weightsData;
+    Ref<Data> colorsData;
+    Ref<Data> texcoordData;
+    Ref<Data> indexLevelData;
+    Ref<Data> prim_materialIDData;
+
+    int geom_materialID{-1};
+
+    size_t numFaces{0};
+    uint32_t *faces{nullptr};
+
     std::vector<uint32_t> generatedFacesData;
+
+   private:
+    void createEmbreeGeometry() override;
   };
 
 }  // namespace ospray

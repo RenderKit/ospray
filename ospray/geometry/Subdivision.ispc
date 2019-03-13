@@ -15,11 +15,19 @@
 // ======================================================================== //
 
 // ospray
-#include "Subdivision.ih"
+#include "Geometry.ih"
 #include "common/World.ih"
 #include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
+
+struct Subdivision
+{
+  Geometry super;           //!< inherited geometry fields
+  uint32 *prim_materialID;  // per-primitive material ID
+  int32 geom_materialID;    // per-object material ID
+  vec2f *texcoord;
+};
 
 int32 Subdivision_getMaterialID(const Geometry *uniform const _self,
                                 const int32 primID)
