@@ -98,9 +98,6 @@ struct Geometry
   //! material list attached to this geometry
   Material *uniform *uniform materialList;
 
-  //! model that this geometry is part of
-  World *uniform model;
-
   //! ID that 'model' knows this geometry under
   RTCGeometry geom;
   uniform uint32 geomID;
@@ -111,24 +108,6 @@ extern void Geometry_Constructor(
     Geometry *uniform geometry,
     void *uniform cppEquivalent,
     uniform Geometry_postIntersectFct postIntersect,
-    World *uniform model,
     RTCGeometry geom,
     uniform int32 geomID,
     uniform Material *uniform *uniform materialList);
-
-inline void Geometry_Constructor(
-    Geometry *uniform geometry,
-    void *uniform cppEquivalent,
-    uniform Geometry_postIntersectFct postIntersect,
-    World *uniform model,
-    uniform int32 geomID,
-    uniform Material *uniform *uniform materialList)
-{
-  Geometry_Constructor(geometry,
-                       cppEquivalent,
-                       postIntersect,
-                       model,
-                       NULL,
-                       geomID,
-                       materialList);
-}

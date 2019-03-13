@@ -178,7 +178,6 @@ void TriangleMesh_getAreas(const Geometry *const uniform _self,
 //! constructor for ispc-side TriangleMesh object
 void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               void *uniform cppEquivalent,
-                              uniform World *uniform model,
                               RTCGeometry geom,
                               uniform int32 geomID,
                               uniform int32 numTriangles,
@@ -199,7 +198,6 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   Geometry_Constructor(&mesh->super,
                        cppEquivalent,
                        TriangleMesh_postIntersect,
-                       model,
                        geom,
                        geomID,
                        materialList);
@@ -227,7 +225,6 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
   TriangleMesh_Constructor(mesh,
                            cppEquivalent,
                            NULL,
-                           NULL,
                            0,
                            0,
                            0,
@@ -247,7 +244,6 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 }
 
 export void *uniform TriangleMesh_set(void *uniform _mesh,
-                                      void *uniform _model,
                                       RTCGeometry geom,
                                       uniform int32 geomID,
                                       uniform int32 numTriangles,
@@ -266,12 +262,10 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform bool huge_mesh)
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh * uniform) _mesh;
-  uniform World *uniform model       = (uniform World * uniform) _model;
   uniform Material *uniform *uniform materialList =
       (uniform Material * uniform * uniform) _materialList;
   TriangleMesh_Constructor(mesh,
                            mesh->super.cppEquivalent,
-                           model,
                            geom,
                            geomID,
                            numTriangles,

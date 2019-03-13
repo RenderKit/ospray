@@ -289,18 +289,12 @@ void Cylinders_getAreas(const Geometry *const uniform _self,
 export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
-  Geometry_Constructor(&geom->super,
-                       cppEquivalent,
-                       Cylinders_postIntersect,
-                       NULL,
-                       NULL,
-                       0,
-                       NULL);
+  Geometry_Constructor(
+      &geom->super, cppEquivalent, Cylinders_postIntersect, NULL, 0, NULL);
   return geom;
 }
 
 export void CylindersGeometry_set(void *uniform _self,
-                                  void *uniform _world,
                                   void *uniform _embreeGeometry,
                                   uniform uint32 geomID,
                                   void *uniform data,
@@ -321,7 +315,6 @@ export void CylindersGeometry_set(void *uniform _self,
 {
   Cylinders *uniform self = (Cylinders * uniform) _self;
 
-  self->super.model         = (World * uniform) _world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numCylinders;
   self->super.getMaterialID = Cylinders_getMaterialID;
@@ -349,8 +342,8 @@ export void CylindersGeometry_set(void *uniform _self,
   rtcSetGeometryUserPrimitiveCount(geom, numCylinders);
   rtcSetGeometryBoundsFunction(
       geom, (RTCBoundsFunction)&Cylinders_bounds, self);
-  rtcSetGeometryIntersectFunction(
-      geom, (RTCIntersectFunctionN)&Cylinders_intersect);
+  rtcSetGeometryIntersectFunction(geom,
+                                  (RTCIntersectFunctionN)&Cylinders_intersect);
   rtcSetGeometryOccludedFunction(geom,
                                  (RTCOccludedFunctionN)&Cylinders_occluded);
   rtcCommitGeometry(geom);

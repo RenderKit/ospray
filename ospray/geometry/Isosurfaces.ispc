@@ -157,7 +157,6 @@ export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
 }
 
 export void *uniform Isosurfaces_set(void *uniform _self,
-                                     void *uniform _world,
                                      void *uniform _embreeGeometry,
                                      uniform uint32 geomID,
                                      int32 uniform numIsovalues,
@@ -167,7 +166,6 @@ export void *uniform Isosurfaces_set(void *uniform _self,
   Isosurfaces *uniform self = (Isosurfaces * uniform) _self;
   Volume *uniform volume    = (Volume * uniform) _volume;
 
-  self->super.model         = (World * uniform)_world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numIsovalues;
   self->isovalues           = isovalues;

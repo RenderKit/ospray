@@ -60,7 +60,7 @@ export void *uniform InstanceGeometry_create(void *uniform cppE)
 {
   Instance *uniform self = uniform new Instance;
   Geometry_Constructor(
-      &self->super, cppE, Instance_postIntersect, NULL, NULL, -1, NULL);
+      &self->super, cppE, Instance_postIntersect, NULL, -1, NULL);
   self->areaPDF = NULL;
 
   return self;
@@ -73,8 +73,9 @@ export void InstanceGeometry_set(void *uniform _self,
                                  float *uniform areaPDF)
 {
   Instance *uniform self = (Instance * uniform) _self;
-  self->model            = (uniform World * uniform) _model;
-  self->xfm              = xfm;
-  self->rcp_xfm          = rcp_xfm;
-  self->areaPDF          = areaPDF;
+
+  self->model   = (uniform World * uniform) _model;
+  self->xfm     = xfm;
+  self->rcp_xfm = rcp_xfm;
+  self->areaPDF = areaPDF;
 }

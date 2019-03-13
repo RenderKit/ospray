@@ -141,7 +141,6 @@ namespace ospray {
                      << "  mesh bounds " << bounds;
 
     ispc::QuadMesh_set(getIE(),
-                       world->getIE(),
                        embreeGeometry,
                        geomID,
                        numQuads,

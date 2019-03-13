@@ -33,14 +33,12 @@ static void Geometry_Constructor(
     uniform Geometry *uniform geometry,
     void *uniform cppEquivalent,
     uniform Geometry_postIntersectFct postIntersect,
-    uniform World *uniform model,
     RTCGeometry geom,
     uniform int32 geomID,
     uniform Material *uniform *uniform materialList)
 {
   geometry->cppEquivalent = cppEquivalent;
   geometry->numPrimitives = 0;
-  geometry->model         = model;
   geometry->materialList  = materialList;
   geometry->geom          = geom;
   geometry->geomID        = geomID;

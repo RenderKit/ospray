@@ -115,7 +115,6 @@ namespace ospray {
     vec2f *texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
 
     ispc::Subdivision_set(getIE(),
-                          world->getIE(),
                           embreeGeometry,
                           geomID,
                           geom_materialID,

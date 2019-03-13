@@ -155,7 +155,6 @@ namespace ospray {
                      << numVerts << " vertices)\n  mesh bounds " << bounds;
 
     ispc::TriangleMesh_set(getIE(),
-                           world->getIE(),
                            embreeGeometry,
                            geomID,
                            numTris,

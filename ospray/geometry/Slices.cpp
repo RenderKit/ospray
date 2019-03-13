@@ -53,7 +53,6 @@ namespace ospray {
     this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
 
     ispc::Slices_set(getIE(),
-                     world->getIE(),
                      embreeGeometry,
                      geomID,
                      numPlanes,

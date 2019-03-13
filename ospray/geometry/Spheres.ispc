@@ -332,12 +332,11 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
 {
   uniform Spheres *uniform self = uniform new uniform Spheres;
   Geometry_Constructor(
-      &self->super, cppEquivalent, Spheres_postIntersect, NULL, NULL, 0, NULL);
+      &self->super, cppEquivalent, Spheres_postIntersect, NULL, 0, NULL);
   return self;
 }
 
 export void SpheresGeometry_set(void *uniform _self,
-                                void *uniform _world,
                                 void *uniform _embreeGeometry,
                                 uniform uint32 geomID,
                                 void *uniform data,
@@ -359,7 +358,6 @@ export void SpheresGeometry_set(void *uniform _self,
 {
   Spheres *uniform self = (Spheres * uniform) _self;
 
-  self->super.model         = (World * uniform)_world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numSpheres;
   self->super.getAreas      = Spheres_getAreas;

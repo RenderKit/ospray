@@ -289,14 +289,12 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
                        cppEquivalent,
                        StreamLines_postIntersect,
                        NULL,
-                       NULL,
                        0,
                        NULL);
   return geom;
 }
 
 export void *uniform StreamLines_setCurve(void *uniform _self,
-                                          void *uniform _world,
                                           uniform uint32 geomID,
                                           int32 uniform numVertices,
                                           int32 uniform numSegments,
@@ -306,7 +304,6 @@ export void *uniform StreamLines_setCurve(void *uniform _self,
   StreamLines *uniform self = (StreamLines * uniform) _self;
 
   self->super.geomID        = geomID;
-  self->super.model         = (World * uniform) _world;
   self->super.numPrimitives = numSegments;
 
   // TODO implement area sampling of curves for geometry lights
@@ -319,7 +316,6 @@ export void *uniform StreamLines_setCurve(void *uniform _self,
 }
 
 export void *uniform StreamLines_set(void *uniform _self,
-                                     void *uniform _world,
                                      void *uniform _embreeGeometry,
                                      uniform uint32 geomID,
                                      float uniform radius,
@@ -332,7 +328,6 @@ export void *uniform StreamLines_set(void *uniform _self,
   StreamLines *uniform self = (StreamLines * uniform) _self;
 
   self->super.geomID = geomID;
-  self->super.model  = (World * uniform) _world;
   self->vertex       = vertex;
   self->index        = index;
 

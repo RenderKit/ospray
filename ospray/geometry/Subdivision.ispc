@@ -103,7 +103,6 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 
 void Subdivision_Constructor(uniform Subdivision *uniform mesh,
                              void *uniform cppEquivalent,
-                             uniform World *uniform model,
                              RTCGeometry geom,
                              uniform int32 geomID,
                              uniform int32 geom_materialID,
@@ -114,7 +113,6 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
   Geometry_Constructor(&mesh->super,
                        cppEquivalent,
                        Subdivision_postIntersect,
-                       model,
                        geom,
                        geomID,
                        materialList);
@@ -127,12 +125,11 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
 export void *uniform Subdivision_create(void *uniform cppEquivalent)
 {
   Subdivision *uniform mesh = uniform new Subdivision;
-  Subdivision_Constructor(mesh, cppEquivalent, NULL, NULL, 0, 0, 0, NULL, NULL);
+  Subdivision_Constructor(mesh, cppEquivalent, NULL, 0, 0, 0, NULL, NULL);
   return mesh;
 }
 
 export void *uniform Subdivision_set(void *uniform _mesh,
-                                     void *uniform _model,
                                      RTCGeometry geom,
                                      uniform int32 geomID,
                                      uniform int32 geom_materialID,
@@ -141,10 +138,8 @@ export void *uniform Subdivision_set(void *uniform _mesh,
                                      uniform vec2f *uniform texcoord)
 {
   uniform Subdivision *uniform mesh = (uniform Subdivision * uniform) _mesh;
-  uniform World *uniform model      = (uniform World * uniform) _model;
   Subdivision_Constructor(mesh,
                           mesh->super.cppEquivalent,
-                          model,
                           geom,
                           geomID,
                           geom_materialID,

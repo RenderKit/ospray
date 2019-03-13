@@ -52,7 +52,6 @@ namespace ospray {
     this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
 
     ispc::Isosurfaces_set(getIE(),
-                          world->getIE(),
                           embreeGeometry,
                           geomID,
                           numIsovalues,

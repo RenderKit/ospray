@@ -40,19 +40,17 @@ export void *uniform Curves_create(void *uniform cppEquivalent)
 {
   Curves *uniform geom = uniform new Curves;
   Geometry_Constructor(
-      &geom->super, cppEquivalent, Curves_postIntersect, NULL, NULL, 0, NULL);
+      &geom->super, cppEquivalent, Curves_postIntersect, NULL, 0, NULL);
   return geom;
 }
 
 export void *uniform Curves_set(void *uniform _self,
-                                void *uniform _world,
                                 RTCGeometryType uniform curveType,
                                 int32 uniform geomID,
                                 int32 uniform numSegments)
 {
   Curves *uniform self = (Curves * uniform) _self;
 
-  self->super.model         = (World * uniform) _world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numSegments;
   self->super.postIntersect = Curves_postIntersect;

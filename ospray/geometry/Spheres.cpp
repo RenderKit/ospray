@@ -121,7 +121,6 @@ namespace ospray {
 
     ispc::SpheresGeometry_set(
         getIE(),
-        world->getIE(),
         embreeGeometry,
         geomID,
         sphereData->data,

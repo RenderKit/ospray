@@ -115,13 +115,12 @@ export void *uniform Slices_create(void *uniform cppEquivalent)
   uniform Slices *uniform self = uniform new uniform Slices;
 
   Geometry_Constructor(
-      &self->super, cppEquivalent, Slices_postIntersect, NULL, NULL, 0, NULL);
+      &self->super, cppEquivalent, Slices_postIntersect, NULL, 0, NULL);
 
   return self;
 }
 
 export void *uniform Slices_set(void *uniform _self,
-                                void *uniform _world,
                                 void *uniform _embreeGeometry,
                                 uniform uint32 geomID,
                                 int32 uniform numPlanes,
@@ -131,7 +130,6 @@ export void *uniform Slices_set(void *uniform _self,
   Slices *uniform self   = (Slices * uniform) _self;
   Volume *uniform volume = (Volume * uniform) _volume;
 
-  self->super.model         = (World * uniform) _world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numPlanes;
   self->planes              = planes;

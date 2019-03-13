@@ -167,7 +167,6 @@ namespace ospray {
     this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
 
     ispc::Curves_set(getIE(),
-                     world->getIE(),
                      (ispc::RTCGeometryType)curveType,
                      geomID,
                      indexData->numItems);

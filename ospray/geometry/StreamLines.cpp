@@ -168,7 +168,6 @@ namespace ospray {
 
       ispc::StreamLines_setCurve(
           getIE(),
-          world->getIE(),
           geomID,
           vertexCurve.size(),
           numSegments,
@@ -177,7 +176,6 @@ namespace ospray {
     } else {
       ispc::StreamLines_set(
           getIE(),
-          world->getIE(),
           embreeGeometry,
           geomID,
           globalRadius,

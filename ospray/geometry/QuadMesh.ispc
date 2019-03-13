@@ -234,7 +234,6 @@ void QuadMesh_getAreas(const Geometry *const uniform _self,
 //! constructor for ispc-side QuadMesh object
 void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
                           void *uniform cppEquivalent,
-                          uniform World *uniform model,
                           RTCGeometry geom,
                           uniform int32 geomID,
                           uniform int32 numQuads,
@@ -254,7 +253,6 @@ void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
   Geometry_Constructor(&mesh->super,
                        cppEquivalent,
                        QuadMesh_postIntersect,
-                       model,
                        geom,
                        geomID,
                        materialList);
@@ -281,7 +279,6 @@ export void *uniform QuadMesh_create(void *uniform cppEquivalent)
   QuadMesh_Constructor(mesh,
                        cppEquivalent,
                        NULL,
-                       NULL,
                        0,
                        0,
                        0,
@@ -300,7 +297,6 @@ export void *uniform QuadMesh_create(void *uniform cppEquivalent)
 }
 
 export void *uniform QuadMesh_set(void *uniform _mesh,
-                                  void *uniform _model,
                                   RTCGeometry geom,
                                   uniform int32 geomID,
                                   uniform int32 numQuads,
@@ -318,12 +314,10 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
                                   uniform bool huge_mesh)
 {
   uniform QuadMesh *uniform mesh = (uniform QuadMesh * uniform) _mesh;
-  uniform World *uniform model   = (uniform World * uniform) _model;
   uniform Material *uniform *uniform materialList =
       (uniform Material * uniform * uniform) _materialList;
   QuadMesh_Constructor(mesh,
                        mesh->super.cppEquivalent,
-                       model,
                        geom,
                        geomID,
                        numQuads,
