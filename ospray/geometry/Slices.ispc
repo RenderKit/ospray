@@ -24,7 +24,7 @@
 
 struct Slices
 {
-  uniform Geometry super;  //!< inherited geometry fields
+  uniform Geometry super;
   uniform vec4f *uniform planes;
   uniform Volume *uniform volume;
 };
@@ -121,24 +121,23 @@ export void *uniform Slices_create(void *uniform cppEquivalent)
 }
 
 export void *uniform Slices_set(void *uniform _self,
-                                void *uniform _model,
+                                void *uniform _world,
+                                void *uniform _embreeGeometry,
+                                uniform uint32 geomID,
                                 int32 uniform numPlanes,
                                 uniform vec4f *uniform planes,
                                 void *uniform _volume)
 {
-  uniform Slices *uniform self   = (uniform Slices * uniform) _self;
-  uniform World *uniform model   = (uniform World * uniform) _model;
-  uniform Volume *uniform volume = (uniform Volume * uniform) _volume;
+  Slices *uniform self   = (Slices * uniform) _self;
+  Volume *uniform volume = (Volume * uniform) _volume;
 
-  RTCGeometry geom =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
-
-  self->super.model         = model;
+  self->super.model         = (World * uniform) _world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numPlanes;
   self->planes              = planes;
   self->volume              = volume;
+
+  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom, numPlanes);
@@ -149,5 +148,4 @@ export void *uniform Slices_set(void *uniform _self,
   rtcSetGeometryOccludedFunction(
       geom, (uniform RTCOccludedFunctionN)&Slices_occluded);
   rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
 }

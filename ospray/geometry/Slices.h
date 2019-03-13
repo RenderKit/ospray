@@ -25,16 +25,22 @@ namespace ospray {
   {
     Slices();
     virtual ~Slices() override = default;
+
     virtual std::string toString() const override;
+
+    virtual void commit() override;
+
     virtual void finalize(World *model) override;
 
-    // Data members //
-
-    Ref<Data> planesData;  //!< refcounted data array for planes data
+   protected:
+    Ref<Data> planesData;
     Ref<Volume> volume;
 
     size_t numPlanes;
     vec4f *planes;
+
+   private:
+    void createEmbreeGeometry() override;
   };
   /*! @} */
 
