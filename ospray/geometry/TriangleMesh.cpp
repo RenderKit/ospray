@@ -24,11 +24,6 @@
 
 namespace ospray {
 
-  inline bool inRange(int64 i, int64 i0, int64 i1)
-  {
-    return i >= i0 && i < i1;
-  }
-
   TriangleMesh::TriangleMesh()
   {
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
@@ -39,24 +34,8 @@ namespace ospray {
     return "ospray::TriangleMesh";
   }
 
-  void TriangleMesh::finalize(World *model)
+  void TriangleMesh::commit()
   {
-    static int numPrints = 0;
-    numPrints++;
-    if (numPrints == 5) {
-      postStatusMsg(2) << "(all future printouts for triangle mesh creation "
-                       << "will be omitted)";
-    }
-
-    if (numPrints < 5)
-      postStatusMsg(2) << "ospray: finalizing trianglemesh ...";
-
-    Assert(model && "invalid model pointer");
-
-    Geometry::finalize(model);
-
-    RTCScene embreeSceneHandle = model->embreeSceneHandle;
-
     vertexData   = getParamData("vertex", getParamData("position"));
     normalData   = getParamData("vertex.normal", getParamData("normal"));
     colorData    = getParamData("vertex.color", getParamData("color"));
@@ -76,7 +55,7 @@ namespace ospray {
           "vertex.color must have data type OSP_FLOAT4 or OSP_FLOAT3A");
 
     // check whether we need 64-bit addressing
-    bool huge_mesh = false;
+    huge_mesh = false;
     if (indexData->numBytes > INT32_MAX)
       huge_mesh = true;
     if (vertexData->numBytes > INT32_MAX)
@@ -96,12 +75,13 @@ namespace ospray {
     this->prim_materialID =
         prim_materialIDData ? (uint32_t *)prim_materialIDData->data : nullptr;
 
-    size_t numTris  = -1;
-    size_t numVerts = -1;
+    numTris  = -1;
+    numVerts = -1;
 
-    size_t numCompsInTri = 0;
-    size_t numCompsInVtx = 0;
-    size_t numCompsInNor = 0;
+    numCompsInTri = 0;
+    numCompsInVtx = 0;
+    numCompsInNor = 0;
+
     switch (indexData->type) {
     case OSP_INT:
     case OSP_UINT:
@@ -143,7 +123,7 @@ namespace ospray {
       throw std::runtime_error("unsupported trianglemesh.vertex data type");
     }
 
-    if (normalData)
+    if (normalData) {
       switch (normalData->type) {
       case OSP_FLOAT3:
         numCompsInNor = 3;
@@ -156,43 +136,28 @@ namespace ospray {
         throw std::runtime_error(
             "unsupported trianglemesh.vertex.normal data type");
       }
-
-    auto eMeshGeom =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
-    rtcSetSharedGeometryBuffer(eMeshGeom,
-                               RTC_BUFFER_TYPE_INDEX,
-                               0,
-                               RTC_FORMAT_UINT3,
-                               indexData->data,
-                               0,
-                               numCompsInTri * sizeof(int),
-                               numTris);
-    rtcSetSharedGeometryBuffer(eMeshGeom,
-                               RTC_BUFFER_TYPE_VERTEX,
-                               0,
-                               RTC_FORMAT_FLOAT3,
-                               vertexData->data,
-                               0,
-                               numCompsInVtx * sizeof(int),
-                               numVerts);
-    rtcCommitGeometry(eMeshGeom);
-    eMeshID = rtcAttachGeometry(embreeSceneHandle, eMeshGeom);
-    rtcReleaseGeometry(eMeshGeom);
-
-    bounds = empty;
-
-    for (uint32_t i = 0; i < numVerts * numCompsInVtx; i += numCompsInVtx)
-      bounds.extend(*(vec3f *)((float *)vertexData->data + i));
-
-    if (numPrints < 5) {
-      postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
-                       << numVerts << " vertices)\n  mesh bounds " << bounds;
     }
 
+    bounds = empty;
+    for (uint32_t i = 0; i < numVerts * numCompsInVtx; i += numCompsInVtx)
+      bounds.extend(*(vec3f *)((float *)vertexData->data + i));
+  }
+
+  void TriangleMesh::finalize(World *world)
+  {
+    Geometry::finalize(world);
+
+    createEmbreeGeometry();
+
+    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+
+    postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
+                     << numVerts << " vertices)\n  mesh bounds " << bounds;
+
     ispc::TriangleMesh_set(getIE(),
-                           model->getIE(),
-                           eMeshGeom,
-                           eMeshID,
+                           world->getIE(),
+                           embreeGeometry,
+                           geomID,
                            numTris,
                            numCompsInTri,
                            numCompsInVtx,
@@ -207,6 +172,35 @@ namespace ospray {
                            (uint32_t *)prim_materialID,
                            colorData && colorData->type == OSP_FLOAT4,
                            huge_mesh);
+  }
+
+  void TriangleMesh::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
+
+    rtcSetSharedGeometryBuffer(embreeGeometry,
+                               RTC_BUFFER_TYPE_INDEX,
+                               0,
+                               RTC_FORMAT_UINT3,
+                               indexData->data,
+                               0,
+                               numCompsInTri * sizeof(int),
+                               numTris);
+
+    rtcSetSharedGeometryBuffer(embreeGeometry,
+                               RTC_BUFFER_TYPE_VERTEX,
+                               0,
+                               RTC_FORMAT_FLOAT3,
+                               vertexData->data,
+                               0,
+                               numCompsInVtx * sizeof(int),
+                               numVerts);
+
+    rtcCommitGeometry(embreeGeometry);
   }
 
   OSP_REGISTER_GEOMETRY(TriangleMesh, triangles);

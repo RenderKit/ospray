@@ -25,8 +25,15 @@ namespace ospray {
   {
     TriangleMesh();
     virtual ~TriangleMesh() override = default;
+
     virtual std::string toString() const override;
+
+    virtual void commit() override;
+
     virtual void finalize(World *model) override;
+
+   protected:
+    bool huge_mesh{false};
 
     int *index;               //!< mesh's triangle index array
     float *vertex;            //!< mesh's vertex array
@@ -44,8 +51,15 @@ namespace ospray {
     Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
                                       (uint32) */
 
-#define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
-    uint32 eMeshID{RTC_INVALID_ID}; /*!< embree triangle mesh handle */
+    size_t numTris{0};
+    size_t numVerts{0};
+
+    size_t numCompsInTri{0};
+    size_t numCompsInVtx{0};
+    size_t numCompsInNor{0};
+
+   private:
+    void createEmbreeGeometry() override;
   };
 
 }  // namespace ospray
