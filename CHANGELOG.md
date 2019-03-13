@@ -5,6 +5,8 @@ Version History
 
 -   Fix bug where parameters set by `ospSet1b()` were being ignored
 -   Fix bug in box intersection tests possibly creating NaNs
+-   Fix issue with client applications calling `find_package(ospray)` more than
+    once
 
 ### Changes in v1.8.2:
 
