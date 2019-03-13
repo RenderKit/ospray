@@ -41,7 +41,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
   {
     Geometry();
-    virtual ~Geometry() override = default;
+    virtual ~Geometry() override;
 
     //! set given geometry's materials.
     /*! all material assignations should go through these functions;
@@ -78,6 +78,12 @@ namespace ospray {
     Ref<Data> materialListData;        //!< data array for per-prim materials
     std::vector<void *>
         ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
+
+    RTCGeometry embreeGeometry{nullptr};
+    int32_t geomID{-1};
+
+  protected:
+    virtual void createEmbreeGeometry() {}
   };
 
   /*! \brief registers a internal ospray::<ClassName> geometry under

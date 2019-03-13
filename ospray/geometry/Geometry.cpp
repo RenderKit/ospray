@@ -28,6 +28,12 @@ namespace ospray {
     managedObjectType = OSP_GEOMETRY;
   }
 
+  Geometry::~Geometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+  }
+
   void Geometry::setMaterial(Material *mat)
   {
     if (!mat) {
