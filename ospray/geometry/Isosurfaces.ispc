@@ -157,24 +157,23 @@ export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
 }
 
 export void *uniform Isosurfaces_set(void *uniform _self,
-                                     void *uniform _model,
+                                     void *uniform _world,
+                                     void *uniform _embreeGeometry,
+                                     uniform uint32 geomID,
                                      int32 uniform numIsovalues,
                                      uniform float *uniform isovalues,
                                      void *uniform _volume)
 {
-  uniform Isosurfaces *uniform self = (uniform Isosurfaces * uniform) _self;
-  uniform World *uniform model      = (uniform World * uniform) _model;
-  uniform Volume *uniform volume    = (uniform Volume * uniform) _volume;
+  Isosurfaces *uniform self = (Isosurfaces * uniform) _self;
+  Volume *uniform volume    = (Volume * uniform) _volume;
 
-  RTCGeometry geom =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
-
-  self->super.model         = model;
+  self->super.model         = (World * uniform)_world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numIsovalues;
   self->isovalues           = isovalues;
   self->volume              = volume;
+
+  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom, 1);
@@ -185,5 +184,4 @@ export void *uniform Isosurfaces_set(void *uniform _self,
   rtcSetGeometryOccludedFunction(
       geom, (uniform RTCOccludedFunctionN)&Isosurfaces_occluded);
   rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
 }

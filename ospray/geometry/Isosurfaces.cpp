@@ -35,20 +35,38 @@ namespace ospray {
     return "ospray::Isosurfaces";
   }
 
-  void Isosurfaces::finalize(World *model)
+  void Isosurfaces::commit()
   {
     isovaluesData = getParamData("isovalues", nullptr);
     volume        = (Volume *)getParamObject("volume", nullptr);
+    numIsovalues  = isovaluesData->numItems;
+    isovalues     = (float *)isovaluesData->data;
+  }
 
-    Assert(isovaluesData);
-    Assert(isovaluesData->numItems > 0);
-    Assert(volume);
+  void Isosurfaces::finalize(World *world)
+  {
+    Geometry::finalize(world);
 
-    numIsovalues = isovaluesData->numItems;
-    isovalues    = (float *)isovaluesData->data;
+    createEmbreeGeometry();
 
-    ispc::Isosurfaces_set(
-        getIE(), model->getIE(), numIsovalues, isovalues, volume->getIE());
+    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+
+    ispc::Isosurfaces_set(getIE(),
+                          world->getIE(),
+                          embreeGeometry,
+                          geomID,
+                          numIsovalues,
+                          isovalues,
+                          volume->getIE());
+  }
+
+  void Isosurfaces::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   }
 
   OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);

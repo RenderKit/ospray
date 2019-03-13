@@ -27,16 +27,22 @@ namespace ospray {
     virtual ~Isosurfaces() override = default;
 
     virtual std::string toString() const override;
+
+    virtual void commit() override;
+
     virtual void finalize(World *model) override;
 
+   protected:
     // Data members //
 
     Ref<Data> isovaluesData;  //!< refcounted data array for isovalues data
     Ref<Volume> volume;
 
-    size_t numIsovalues;
-    float *isovalues;
+    int numIsovalues{0};
+    float *isovalues{nullptr};
+
+   private:
+    void createEmbreeGeometry() override;
   };
-  /*! @} */
 
 }  // namespace ospray
