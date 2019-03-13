@@ -35,10 +35,8 @@ namespace ospray {
     return "ospray::Cylinders";
   }
 
-  void Cylinders::finalize(World *model)
+  void Cylinders::commit()
   {
-    Geometry::finalize(model);
-
     radius            = getParam1f("radius", 0.01f);
     materialID        = getParam1i("materialID", 0);
     bytesPerCylinder  = getParam1i("bytes_per_cylinder", 6 * sizeof(float));
@@ -72,11 +70,23 @@ namespace ospray {
       bounds.extend(box3f(v0 - r, v0 + r));
       bounds.extend(box3f(v1 - r, v1 + r));
     }
+  }
+
+  void Cylinders::finalize(World *world)
+  {
+    Geometry::finalize(world);
+
+    createEmbreeGeometry();
+
+    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
 
     auto colComps = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
+
     ispc::CylindersGeometry_set(
         getIE(),
-        model->getIE(),
+        world->getIE(),
+        embreeGeometry,
+        geomID,
         cylinderData->data,
         materialList ? ispcMaterialPtrs.data() : nullptr,
         texcoordData ? texcoordData->data : nullptr,
@@ -92,6 +102,15 @@ namespace ospray {
         offset_radius,
         offset_materialID,
         offset_colorID);
+  }
+
+  void Cylinders::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   }
 
   OSP_REGISTER_GEOMETRY(Cylinders, cylinders);

@@ -80,7 +80,7 @@ namespace ospray {
         ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
 
     RTCGeometry embreeGeometry{nullptr};
-    int32_t geomID{-1};
+    uint32_t geomID{0};
 
   protected:
     virtual void createEmbreeGeometry() {}

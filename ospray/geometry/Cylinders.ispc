@@ -300,7 +300,9 @@ export void *uniform Cylinders_create(void *uniform cppEquivalent)
 }
 
 export void CylindersGeometry_set(void *uniform _self,
-                                  void *uniform _model,
+                                  void *uniform _world,
+                                  void *uniform _embreeGeometry,
+                                  uniform uint32 geomID,
                                   void *uniform data,
                                   void *uniform materialList,
                                   void *uniform texcoord,
@@ -318,13 +320,8 @@ export void CylindersGeometry_set(void *uniform _self,
                                   uniform int offset_colorID)
 {
   Cylinders *uniform self = (Cylinders * uniform) _self;
-  World *uniform model    = (World * uniform) _model;
 
-  RTCGeometry geom =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
-
-  self->super.model         = model;
+  self->super.model         = (World * uniform) _world;
   self->super.geomID        = geomID;
   self->super.numPrimitives = numCylinders;
   self->super.getMaterialID = Cylinders_getMaterialID;
@@ -346,14 +343,15 @@ export void CylindersGeometry_set(void *uniform _self,
   self->offset_materialID = offset_materialID;
   self->offset_colorID    = offset_colorID;
 
+  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
+
   rtcSetGeometryUserData(geom, self);
   rtcSetGeometryUserPrimitiveCount(geom, numCylinders);
   rtcSetGeometryBoundsFunction(
-      geom, (uniform RTCBoundsFunction)&Cylinders_bounds, self);
+      geom, (RTCBoundsFunction)&Cylinders_bounds, self);
   rtcSetGeometryIntersectFunction(
-      geom, (uniform RTCIntersectFunctionN)&Cylinders_intersect);
-  rtcSetGeometryOccludedFunction(
-      geom, (uniform RTCOccludedFunctionN)&Cylinders_occluded);
+      geom, (RTCIntersectFunctionN)&Cylinders_intersect);
+  rtcSetGeometryOccludedFunction(geom,
+                                 (RTCOccludedFunctionN)&Cylinders_occluded);
   rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
 }

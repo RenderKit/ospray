@@ -23,12 +23,14 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Cylinders : public Geometry
   {
     Cylinders();
-    //! \brief common function to help printf-debugging
+
     virtual std::string toString() const override;
-    /*! \brief integrates this geometry's primitives into the respective
-        model's acceleration structure */
+
+    virtual void commit() override;
+
     virtual void finalize(World *model) override;
 
+   protected:
     float radius;  //!< default radius, if no per-cylinder radius was specified.
     int32 materialID;
 
@@ -43,7 +45,9 @@ namespace ospray {
     Ref<Data> cylinderData;
     Ref<Data> colorData; /*!< cylinder color array */
     Ref<Data> texcoordData;
+
+   private:
+    void createEmbreeGeometry() override;
   };
-  /*! @} */
 
 }  // namespace ospray
