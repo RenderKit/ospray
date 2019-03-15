@@ -56,26 +56,22 @@ namespace ospray {
       control points */
     void BilinearPatches::commit()
     {
+      Geometry::commit();
+
       this->patchesData = getParamData("vertices");
 
-      /* assert that some valid input data is available */
-      if (!this->patchesData) {
-
-        std::cout << "#osp.blp: Warning: no input patches provided "
-                  << "for bilinear_patches geometry" << std::endl;
-        return;
-      }
+      // sanity check if a patches data was actually set!
+      if (!patchesData)
+        throw std::runtime_error("no data provided to BilinearPatches!");
     }
 
     /*! 'finalize' is what ospray calls when everything is set and
         done, and a actual user geometry has to be built */
-    void BilinearPatches::finalize(World *model)
+    void BilinearPatches::finalize(RTCScene embreeScene)
     {
-      // sanity check if a patches data was actually set!
-      if (!patchesData)
-        return;
+      createEmbreeGeometry();
 
-      Geometry::finalize(model);
+      this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
       // look at the data we were provided with ....
       size_t numPatchesInInput = patchesData->numBytes / sizeof(Patch);
@@ -83,15 +79,18 @@ namespace ospray {
       /* get the acutal 'raw' pointer to the data (ispc doesn't know
          what to do with the 'Data' abstraction class */
       void *patchesDataPointer = patchesData->data;
-      ispc::BilinearPatches_finalize(getIE(),model->getIE(),
-                                     (float*)patchesDataPointer,
+      ispc::BilinearPatches_finalize(getIE(),
+                                     embreeGeometry,
+                                     geomID,
+                                     (float *)patchesDataPointer,
                                      numPatchesInInput);
+
+      const Patch *patch = (const Patch *)patchesDataPointer;
 
       /* important: set our bounding box, else renderer can't compute
          global bounding box, and may get confused with epsilon
          compuatations */
       bounds = empty;
-      const Patch *patch = (const Patch *)patchesDataPointer;
       for (uint32_t i = 0; i < numPatchesInInput; i++) {
         bounds.extend(patch[i].controlPoint[0][0]);
         bounds.extend(patch[i].controlPoint[0][1]);
@@ -100,6 +99,14 @@ namespace ospray {
       }
     }
 
+    void BilinearPatches::createEmbreeGeometry()
+    {
+      if (embreeGeometry)
+        rtcReleaseGeometry(embreeGeometry);
+
+      embreeGeometry =
+          rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+    }
 
     /*! maybe one of the most important parts of this example: this
         macro 'registers' the BilinearPatches class under the ospray
@@ -113,5 +120,5 @@ namespace ospray {
     */
     OSP_REGISTER_GEOMETRY(BilinearPatches, bilinear_patches);
 
-  } // ::ospray::bilinearPatch
-} // ::ospray
+  }  // namespace blp
+}  // namespace ospray

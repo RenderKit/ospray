@@ -307,7 +307,8 @@ unmasked void BilinearPatches_occluded(
   existing class'es data members, but handling this would make this
   code significantly larger */
 export void BilinearPatches_finalize(void *uniform _self,
-                                     void *uniform _model,
+                                     void *uniform _embreeGeometry,
+                                     uniform uint32 geomID,
                                      float *uniform patchesDataMemory,
                                      uniform size_t numPatches)
 {
@@ -317,19 +318,12 @@ export void BilinearPatches_finalize(void *uniform _self,
   BilinearPatches *uniform self = (BilinearPatches * uniform) _self;
 
   // set our internal data.
-  self->numPatches = numPatches;
-  self->patchArray = (Patch * uniform) patchesDataMemory;
+  self->super.geomID = geomID;
+  self->numPatches   = numPatches;
+  self->patchArray   = (Patch * uniform) patchesDataMemory;
 
-  // ... and let embree build a bvh, with 'numPatches' primitmives and
-  // our function pointers for ray-prim interseciton and
-  // prim-boundingbox computation callsbacks
-  World *uniform model = (World * uniform) _model;
+  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 
-  // create a new embree geometry with numpathces prims, in the model
-  // that this goemetry is in.
-  RTCGeometry geom =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
   rtcSetGeometryUserPrimitiveCount(geom, numPatches);
 
   // set 'us' as user data (this will be the first arg in intersect()
@@ -344,5 +338,4 @@ export void BilinearPatches_finalize(void *uniform _self,
   rtcSetGeometryOccludedFunction(
       geom, (uniform RTCOccludedFunctionN)&BilinearPatches_occluded);
   rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
 }
