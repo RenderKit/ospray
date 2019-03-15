@@ -26,9 +26,6 @@
 
 namespace ospray {
 
-  struct World;
-  struct GeometryInstance;
-
   /*! \brief abstract base class for geometries.
 
     Geometries are container objects that store primitives (like

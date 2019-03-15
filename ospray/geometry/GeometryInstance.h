@@ -29,7 +29,7 @@ namespace ospray {
 
     virtual void commit() override;
 
-    virtual void finalize(World *model);
+    virtual void finalize(RTCScene worldScene);
 
     // Data members //
 
@@ -37,8 +37,9 @@ namespace ospray {
 
     AffineSpace3f xfm;
     Ref<Geometry> instancedGeometry;
-    RTCScene embreeSceneHandle {nullptr};
-    uint32 embreeGeomID;
+    RTCScene embreeSceneHandle{nullptr};
+    RTCGeometry embreeInstanceGeometry{nullptr};
+    uint32 embreeGeometryID;
   };
 
 }  // namespace ospray

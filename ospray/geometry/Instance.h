@@ -21,6 +21,8 @@
 
 namespace ospray {
 
+  struct World;
+
   struct OSPRAY_SDK_INTERFACE Instance : public Geometry
   {
     Instance();

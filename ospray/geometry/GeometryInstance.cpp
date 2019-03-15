@@ -34,6 +34,9 @@ namespace ospray {
 
   GeometryInstance::~GeometryInstance()
   {
+    if (embreeInstanceGeometry)
+      rtcReleaseGeometry(embreeInstanceGeometry);
+
     if (embreeSceneHandle)
       rtcReleaseScene(embreeSceneHandle);
   }
@@ -69,18 +72,20 @@ namespace ospray {
     instancedGeometry->finalize(embreeSceneHandle);
   }
 
-  void GeometryInstance::finalize(World *world)
+  void GeometryInstance::finalize(RTCScene worldScene)
   {
-#if 0
-    RTCGeometry embreeGeometry =
+    if (embreeInstanceGeometry)
+      rtcReleaseGeometry(embreeInstanceGeometry);
+
+    embreeInstanceGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
 
-    embreeGeometryID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    embreeGeometryID =
+        rtcAttachGeometry(worldScene, embreeInstanceGeometry);
 
-    rtcSetGeometryInstancedScene(embreeGeometry,
-                                 instancedGeometry->embreeSceneHandle);
+    rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
 
-    const box3f b = instancedGeom->bounds;
+    const box3f b = instancedGeometry->bounds;
     const vec3f v000(b.lower.x, b.lower.y, b.lower.z);
     const vec3f v001(b.upper.x, b.lower.y, b.lower.z);
     const vec3f v010(b.lower.x, b.upper.y, b.lower.z);
@@ -101,13 +106,12 @@ namespace ospray {
     bounds.extend(xfmPoint(xfm, v111));
 
     rtcSetGeometryTransform(
-        embreeGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-    rtcCommitGeometry(embreeGeometry);
+        embreeInstanceGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+    rtcCommitGeometry(embreeInstanceGeometry);
 
     AffineSpace3f rcp_xfm = rcp(xfm);
     ispc::GeometryInstance_set(
         getIE(), (ispc::AffineSpace3f &)xfm, (ispc::AffineSpace3f &)rcp_xfm);
-#endif
   }
 
 }  // namespace ospray
