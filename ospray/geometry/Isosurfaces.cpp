@@ -43,13 +43,13 @@ namespace ospray {
     isovalues     = (float *)isovaluesData->data;
   }
 
-  void Isosurfaces::finalize(World *world)
+  void Isosurfaces::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     ispc::Isosurfaces_set(getIE(),
                           embreeGeometry,

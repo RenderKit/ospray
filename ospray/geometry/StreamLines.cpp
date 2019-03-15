@@ -139,13 +139,13 @@ namespace ospray {
                      << "as curve: " << useCurve;
   }
 
-  void StreamLines::finalize(World *world)
+  void StreamLines::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     if (useCurve) {
       rtcSetSharedGeometryBuffer(embreeGeometry,

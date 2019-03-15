@@ -28,7 +28,7 @@ namespace ospray {
 
     virtual void commit() override;
 
-    virtual void finalize(World *model) override;
+    virtual void finalize(RTCScene embreeScene) override;
 
    protected:
     float radius;  //!< default radius, if no per-cylinder radius was specified.

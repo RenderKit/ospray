@@ -85,7 +85,7 @@ namespace ospray {
     return "ospray::Geometry";
   }
 
-  void Geometry::finalize(World *)
+  void Geometry::finalize(RTCScene)
   {
     Data *materialListDataPtr = getParamData("materialList");
     if (materialListDataPtr)

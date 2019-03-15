@@ -143,13 +143,13 @@ namespace ospray {
       bounds.extend(*(vec3f *)((float *)vertexData->data + i));
   }
 
-  void TriangleMesh::finalize(World *world)
+  void TriangleMesh::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
                      << numVerts << " vertices)\n  mesh bounds " << bounds;

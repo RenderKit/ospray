@@ -72,13 +72,13 @@ namespace ospray {
     }
   }
 
-  void Cylinders::finalize(World *world)
+  void Cylinders::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     auto colComps = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
 

@@ -111,13 +111,13 @@ namespace ospray {
       huge_mesh = true;
   }
 
-  void Spheres::finalize(World *world)
+  void Spheres::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     ispc::SpheresGeometry_set(
         getIE(),

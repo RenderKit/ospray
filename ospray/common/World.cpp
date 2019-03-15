@@ -83,7 +83,7 @@ namespace ospray {
            << "=======================================================\n"
            << "Finalizing geometry " << i;
 
-      geometry[i]->finalize(this);
+      geometry[i]->finalize(embreeSceneHandle);
 
       bounds.extend(geometry[i]->bounds);
       ispc::World_setGeometry(getIE(), i, geometry[i]->getIE());

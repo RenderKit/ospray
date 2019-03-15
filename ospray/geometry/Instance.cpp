@@ -34,7 +34,7 @@ namespace ospray {
     return "ospray::Instance";
   }
 
-  void Instance::finalize(World *model)
+  void Instance::finalize(RTCScene embreeScene)
   {
     xfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
     xfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
@@ -48,10 +48,11 @@ namespace ospray {
       instancedScene->commit();
     }
 
-    RTCGeometry embreeGeom =
+    embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
-    embreeGeomID = rtcAttachGeometry(model->embreeSceneHandle, embreeGeom);
-    rtcSetGeometryInstancedScene(embreeGeom, instancedScene->embreeSceneHandle);
+    embreeGeomID = rtcAttachGeometry(embreeScene, embreeGeometry);
+    rtcSetGeometryInstancedScene(embreeGeometry,
+                                 instancedScene->embreeSceneHandle);
 
     const box3f b = instancedScene->bounds;
     if (b.empty()) {
@@ -84,9 +85,8 @@ namespace ospray {
     }
 
     rtcSetGeometryTransform(
-        embreeGeom, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-    rtcCommitGeometry(embreeGeom);
-    rtcReleaseGeometry(embreeGeom);
+        embreeGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+    rtcCommitGeometry(embreeGeometry);
 
     AffineSpace3f rcp_xfm = rcp(xfm);
     areaPDF.resize(instancedScene->geometry.size());

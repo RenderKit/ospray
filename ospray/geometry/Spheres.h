@@ -30,7 +30,7 @@ namespace ospray {
 
     virtual void commit() override;
 
-    virtual void finalize(World *model) override;
+    virtual void finalize(RTCScene embreeScene) override;
 
    protected:
     /*! default radius, if no per-sphere radius was specified. */

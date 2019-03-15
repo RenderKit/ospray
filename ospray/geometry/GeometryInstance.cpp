@@ -65,17 +65,19 @@ namespace ospray {
     sceneFlags |= (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
 
     rtcSetSceneFlags(embreeSceneHandle, static_cast<RTCSceneFlags>(sceneFlags));
+
+    instancedGeometry->finalize(embreeSceneHandle);
   }
 
   void GeometryInstance::finalize(World *world)
   {
 #if 0
-    RTCGeometry embreeGeom =
+    RTCGeometry embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
 
-    embreeGeomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeom);
+    embreeGeometryID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
 
-    rtcSetGeometryInstancedScene(embreeGeom,
+    rtcSetGeometryInstancedScene(embreeGeometry,
                                  instancedGeometry->embreeSceneHandle);
 
     const box3f b = instancedGeom->bounds;
@@ -99,9 +101,8 @@ namespace ospray {
     bounds.extend(xfmPoint(xfm, v111));
 
     rtcSetGeometryTransform(
-        embreeGeom, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-    rtcCommitGeometry(embreeGeom);
-    rtcReleaseGeometry(embreeGeom);
+        embreeGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+    rtcCommitGeometry(embreeGeometry);
 
     AffineSpace3f rcp_xfm = rcp(xfm);
     ispc::GeometryInstance_set(

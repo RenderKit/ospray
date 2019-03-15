@@ -128,13 +128,13 @@ namespace ospray {
       bounds.extend(*(vec3f *)(vertex + i));
   }
 
-  void QuadMesh::finalize(World *world)
+  void QuadMesh::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     postStatusMsg(2) << "  created quad mesh (" << numQuads << " quads "
                      << ", " << numVerts << " vertices)\n"

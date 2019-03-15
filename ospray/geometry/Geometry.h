@@ -27,6 +27,7 @@
 namespace ospray {
 
   struct World;
+  struct GeometryInstance;
 
   /*! \brief abstract base class for geometries.
 
@@ -59,7 +60,7 @@ namespace ospray {
 
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
-    virtual void finalize(World *);
+    virtual void finalize(RTCScene embreeScene) = 0;
 
     /*! \brief creates an abstract geometry class of given type
 

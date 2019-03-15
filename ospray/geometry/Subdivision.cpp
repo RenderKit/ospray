@@ -98,13 +98,13 @@ namespace ospray {
     // TODO: must factor in displacement into bounds....
   }
 
-  void Subdivision::finalize(World *world)
+  void Subdivision::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     postStatusMsg(2) << "  created subdivision (" << numFaces << " faces "
                      << ", " << vertexData->size() << " vertices)\n"

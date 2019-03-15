@@ -44,13 +44,13 @@ namespace ospray {
     planes    = (vec4f *)planesData->data;
   }
 
-  void Slices::finalize(World *world)
+  void Slices::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     ispc::Slices_set(getIE(),
                      embreeGeometry,

@@ -25,8 +25,10 @@ namespace ospray {
   {
     Instance();
     virtual ~Instance() override = default;
+
     virtual std::string toString() const override;
-    virtual void finalize(World *model) override;
+
+    virtual void finalize(RTCScene embreeScene) override;
 
     // Data members //
 

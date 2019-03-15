@@ -158,13 +158,13 @@ namespace ospray {
     curveType = curveMap[basis][type];
   }
 
-  void Curves::finalize(World *world)
+  void Curves::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(world);
+    Geometry::finalize(embreeScene);
 
     createEmbreeGeometry();
 
-    this->geomID = rtcAttachGeometry(world->embreeSceneHandle, embreeGeometry);
+    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     ispc::Curves_set(getIE(),
                      (ispc::RTCGeometryType)curveType,
