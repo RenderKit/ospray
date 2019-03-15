@@ -36,6 +36,8 @@ namespace ospray {
 
   void Subdivision::commit()
   {
+    Geometry::commit();
+
     level = getParam1f("level", 5.f);
 
     vertexData = getParamData("vertex", getParamData("position"));
@@ -100,8 +102,6 @@ namespace ospray {
 
   void Subdivision::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

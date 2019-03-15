@@ -38,6 +38,8 @@ namespace ospray {
 
   void Spheres::commit()
   {
+    Geometry::commit();
+
     radius            = getParam1f("radius", 0.01f);
     materialID        = getParam1i("materialID", 0);
     bytesPerSphere    = getParam1i("bytes_per_sphere", 4 * sizeof(float));
@@ -113,8 +115,6 @@ namespace ospray {
 
   void Spheres::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

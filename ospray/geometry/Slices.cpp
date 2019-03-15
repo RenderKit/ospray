@@ -37,6 +37,8 @@ namespace ospray {
 
   void Slices::commit()
   {
+    Geometry::commit();
+
     planesData = getParamData("planes", nullptr);
     volume     = (Volume *)getParamObject("volume", nullptr);
 
@@ -46,8 +48,6 @@ namespace ospray {
 
   void Slices::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

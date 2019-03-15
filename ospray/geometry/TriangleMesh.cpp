@@ -36,6 +36,8 @@ namespace ospray {
 
   void TriangleMesh::commit()
   {
+    Geometry::commit();
+
     vertexData   = getParamData("vertex", getParamData("position"));
     normalData   = getParamData("vertex.normal", getParamData("normal"));
     colorData    = getParamData("vertex.color", getParamData("color"));
@@ -145,8 +147,6 @@ namespace ospray {
 
   void TriangleMesh::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

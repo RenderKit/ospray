@@ -99,6 +99,8 @@ namespace ospray {
 
   void Curves::commit()
   {
+    Geometry::commit();
+
     vertexData = getParamData("vertex", nullptr);
     if (!vertexData)
       throw std::runtime_error("curves must have 'vertex' array");
@@ -160,8 +162,6 @@ namespace ospray {
 
   void Curves::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

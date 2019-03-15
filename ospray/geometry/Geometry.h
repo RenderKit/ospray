@@ -58,6 +58,8 @@ namespace ospray {
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
 
+    virtual void commit() override;
+
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
     virtual void finalize(RTCScene embreeScene) = 0;

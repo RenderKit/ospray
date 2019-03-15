@@ -37,6 +37,8 @@ namespace ospray {
 
   void Isosurfaces::commit()
   {
+    Geometry::commit();
+
     isovaluesData = getParamData("isovalues", nullptr);
     volume        = (Volume *)getParamObject("volume", nullptr);
     numIsovalues  = isovaluesData->numItems;
@@ -45,8 +47,6 @@ namespace ospray {
 
   void Isosurfaces::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

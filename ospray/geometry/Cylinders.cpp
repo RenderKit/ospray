@@ -37,6 +37,8 @@ namespace ospray {
 
   void Cylinders::commit()
   {
+    Geometry::commit();
+
     radius            = getParam1f("radius", 0.01f);
     materialID        = getParam1i("materialID", 0);
     bytesPerCylinder  = getParam1i("bytes_per_cylinder", 6 * sizeof(float));
@@ -74,8 +76,6 @@ namespace ospray {
 
   void Cylinders::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

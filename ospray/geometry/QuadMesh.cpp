@@ -36,6 +36,8 @@ namespace ospray {
 
   void QuadMesh::commit()
   {
+    Geometry::commit();
+
     vertexData          = getParamData("vertex");
     normalData          = getParamData("vertex.normal", getParamData("normal"));
     colorData           = getParamData("vertex.color");
@@ -130,8 +132,6 @@ namespace ospray {
 
   void QuadMesh::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);

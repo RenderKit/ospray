@@ -38,6 +38,8 @@ namespace ospray {
 
   void StreamLines::commit()
   {
+    Geometry::commit();
+
     useCurve     = getParam1i("smooth", 0);
     globalRadius = getParam1f("radius", 0.01f);
     utility::DataView<const float> radius(&globalRadius, 0);
@@ -141,8 +143,6 @@ namespace ospray {
 
   void StreamLines::finalize(RTCScene embreeScene)
   {
-    Geometry::finalize(embreeScene);
-
     createEmbreeGeometry();
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
