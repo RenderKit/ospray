@@ -602,6 +602,22 @@ extern "C" void ospRemoveVolume(OSPWorld model,
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospAddGeometryInstance(
+    OSPWorld world, OSPGeometryInstance instance) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().addInstance(world, instance);
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospRemoveGeometryInstance(
+    OSPWorld world, OSPGeometryInstance instance) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().removeInstance(world, instance);
+}
+OSPRAY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Object Parameters //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

@@ -21,7 +21,13 @@
 
 struct GeometryInstance
 {
-  uniform Geometry *uniform geom;  //!< instanced Geometry
+  Geometry *uniform geom;  //!< instanced Geometry
   AffineSpace3f xfm;               //!< instantiation matrix
   AffineSpace3f rcp_xfm;           //!< rcp(instantiation matrix)
 };
+
+void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
+                                    const World *uniform model,
+                                    varying DifferentialGeometry &dg,
+                                    const varying Ray &ray,
+                                    uniform int64 flags);

@@ -70,6 +70,7 @@ namespace ospray {
     rtcSetSceneFlags(embreeSceneHandle, static_cast<RTCSceneFlags>(sceneFlags));
 
     instancedGeometry->finalize(embreeSceneHandle);
+    rtcCommitScene(embreeSceneHandle);
   }
 
   void GeometryInstance::finalize(RTCScene worldScene)

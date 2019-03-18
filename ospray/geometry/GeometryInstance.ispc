@@ -20,42 +20,38 @@
 #include "math/box.ih"
 #include "math/vec.ih"
 
-#if 0
-static void Instance_postIntersect(const Geometry *uniform _self,
-                                   const World *uniform parentWorld,
-                                   varying DifferentialGeometry &dg,
-                                   const varying Ray &ray,
-                                   uniform int64 flags)
+static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
+                                           const World *uniform parentWorld,
+                                           varying DifferentialGeometry &dg,
+                                           const varying Ray &ray,
+                                           uniform int64 flags)
 {
-  uniform Instance *uniform self = (uniform Instance *uniform)_self;
-  uniform World *uniform instancedWorld =
-    (uniform World *uniform)self->model;
-  foreach_unique(geomID in ray.geomID) {
-    uniform Geometry *uniform instancedGeometry =
-      (uniform Geometry *uniform)instancedWorld->geometry[geomID];
+  Geometry *uniform instancedGeometry = self->geom;
 
-    dg.geometry = instancedGeometry;
+  dg.geometry = instancedGeometry;
 
-    instancedGeometry->postIntersect(instancedGeometry,instancedWorld,
-                                     dg,ray,flags);
+  instancedGeometry->postIntersect(
+      instancedGeometry, parentWorld, dg, ray, flags);
 
-    if (instancedGeometry->materialList) {
-      dg.material = instancedGeometry->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-    }
+#if 0
+  if (instancedGeometry->materialList) {
+    dg.material = instancedGeometry
+                      ->materialList[dg.materialID < 0 ? 0 : dg.materialID];
   }
+#endif
+
   dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
   dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
   // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
   // isotropic anyway and hence cannot better handle non-uniform scaling)
   dg.epsilon *= max(abs(self->xfm.l.vx.x),
-      max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
+                    max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
   if (flags & DG_TANGENTS) {
-    dg.dPds = xfmVector(self->xfm,dg.dPds);
-    dg.dPdt = xfmVector(self->xfm,dg.dPdt);
+    dg.dPds = xfmVector(self->xfm, dg.dPds);
+    dg.dPdt = xfmVector(self->xfm, dg.dPdt);
   }
 }
-#endif
 
 export void *uniform GeometryInstance_create(void *uniform cppE,
                                              void *uniform geom)

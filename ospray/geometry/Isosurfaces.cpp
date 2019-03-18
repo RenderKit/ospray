@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
 // ospray
 #include "Isosurfaces.h"
 #include "common/Data.h"

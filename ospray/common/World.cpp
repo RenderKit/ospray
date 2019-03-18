@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "api/ISPCDevice.h"
 #include "World.h"
+#include "api/ISPCDevice.h"
 // ispc exports
-#include "World_ispc.h"
 #include "Volume_ispc.h"
+#include "World_ispc.h"
 
 namespace ospray {
 
@@ -30,7 +30,7 @@ namespace ospray {
 
   World::World()
   {
-    managedObjectType = OSP_WORLD;
+    managedObjectType    = OSP_WORLD;
     this->ispcEquivalent = ispc::World_create(this);
   }
 
@@ -51,12 +51,12 @@ namespace ospray {
   {
     useEmbreeDynamicSceneFlag = getParam<int>("dynamicScene", 0);
     useEmbreeCompactSceneFlag = getParam<int>("compactMode", 0);
-    useEmbreeRobustSceneFlag = getParam<int>("robustMode", 0);
+    useEmbreeRobustSceneFlag  = getParam<int>("robustMode", 0);
 
     postStatusMsg(2)
         << "=======================================================\n"
-        << "Finalizing model, has " << geometry.size()
-        << " geometries and " << volume.size() << " volumes";
+        << "Finalizing model, has " << geometry.size() << " geometries and "
+        << volume.size() << " volumes";
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -72,6 +72,7 @@ namespace ospray {
                      embreeDevice,
                      sceneFlags,
                      geometry.size(),
+                     geometryInstances.size(),
                      volume.size());
 
     embreeSceneHandle = (RTCScene)ispc::World_getEmbreeSceneHandle(getIE());
@@ -79,9 +80,9 @@ namespace ospray {
     bounds = empty;
 
     for (size_t i = 0; i < geometry.size(); i++) {
-       postStatusMsg(2)
-           << "=======================================================\n"
-           << "Finalizing geometry " << i;
+      postStatusMsg(2)
+          << "=======================================================\n"
+          << "Finalizing geometry " << i;
 
       geometry[i]->finalize(embreeSceneHandle);
 
@@ -89,16 +90,28 @@ namespace ospray {
       ispc::World_setGeometry(getIE(), i, geometry[i]->getIE());
     }
 
-    for (size_t i=0; i<volume.size(); i++) {
+    for (size_t i = 0; i < geometryInstances.size(); i++) {
+      postStatusMsg(2)
+          << "=======================================================\n"
+          << "Finalizing geometry instance " << i;
+
+      auto &instance = *geometryInstances[i];
+      instance.finalize(embreeSceneHandle);
+      bounds.extend(instance.bounds);
+      ispc::World_setGeometryInstance(getIE(), i, instance.getIE());
+    }
+
+    for (size_t i = 0; i < volume.size(); i++) {
       ispc::World_setVolume(getIE(), i, volume[i]->getIE());
       box3f volBounds = empty;
-      ispc::Volume_getBoundingBox((ispc::box3f*)&volBounds, volume[i]->getIE());
+      ispc::Volume_getBoundingBox((ispc::box3f *)&volBounds,
+                                  volume[i]->getIE());
       bounds.extend(volBounds);
     }
 
-    ispc::World_setBounds(getIE(), (ispc::box3f*)&bounds);
+    ispc::World_setBounds(getIE(), (ispc::box3f *)&bounds);
 
     rtcCommitScene(embreeSceneHandle);
   }
 
-} // ::ospray
+}  // namespace ospray

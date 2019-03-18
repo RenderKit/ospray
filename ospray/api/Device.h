@@ -74,6 +74,12 @@ namespace ospray {
       /*! remove an existing volume from a model */
       virtual void removeVolume(OSPWorld _model, OSPVolume _volume) = 0;
 
+      virtual void addInstance(OSPWorld _world,
+                               OSPGeometryInstance _instance) = 0;
+
+      virtual void removeInstance(OSPWorld _world,
+                                  OSPGeometryInstance _instance) = 0;
+
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems,
                               OSPDataType format,

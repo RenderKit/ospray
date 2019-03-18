@@ -18,7 +18,7 @@
 
 // ospray stuff
 #include "../common/Ray.ih"
-#include "../geometry/Geometry.ih"
+#include "../geometry/GeometryInstance.ih"
 #include "../volume/Volume.ih"
 
 // embree stuff
@@ -37,6 +37,9 @@ struct World
   //! array of (pointers to) geometries contained in this model
   uniform Geometry *uniform *uniform geometry;
   uniform int32 geometryCount;
+
+  uniform GeometryInstance *uniform *uniform geometryInstances;
+  uniform int32 geometryInstanceCount;
 
   //! volumes contained in the model
   uniform Volume *uniform *uniform volumes;
@@ -125,7 +128,7 @@ inline void postIntersect(const World *uniform model,
   // ... will eventually have to fix this properly by implementing
   // instances directly in ospray, but for now let's try this hack
   // here:
-  if (ray.instID < 0) {
+  if (ray.instID == RTC_INVALID_GEOMETRY_ID) {
     // a regular geometry
     foreach_unique(geomID in ray.geomID) {
       uniform Geometry *uniform geom = model->geometry[geomID];
@@ -136,19 +139,9 @@ inline void postIntersect(const World *uniform model,
       }
     }
   } else {
-    // instanced geometry: create copy of ray, iterate over
-    // ray.instIDs, and remove that instancing info from the ray (so
-    // the next level of model doesn't get confused by it)
-    Ray newRay = ray;
     foreach_unique(instID in ray.instID) {
-      uniform Geometry *uniform instGeom = model->geometry[instID];
-      dg.geometry = instGeom;
-      newRay.instID = -1;
-      instGeom->postIntersect(instGeom,model,dg,newRay,flags);
-      // override the geometry's material if the instance has its own material list
-      if (instGeom->materialList) {
-        dg.material = instGeom->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-      }
+      GeometryInstance *uniform instGeom = model->geometryInstances[instID];
+      GeometryInstance_postIntersect(instGeom, model, dg, ray, flags);
     }
   }
 

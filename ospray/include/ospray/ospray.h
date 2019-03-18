@@ -333,6 +333,9 @@ extern "C" {
   OSPRAY_INTERFACE void ospAddVolume(OSPWorld, OSPVolume);
   OSPRAY_INTERFACE void ospRemoveVolume(OSPWorld, OSPVolume);
 
+  OSPRAY_INTERFACE void ospAddGeometryInstance(OSPWorld, OSPGeometryInstance);
+  OSPRAY_INTERFACE void ospRemoveGeometryInstance(OSPWorld, OSPGeometryInstance);
+
   // Object Parameters ////////////////////////////////////////////////////////
 
   OSPRAY_INTERFACE void ospSetString(OSPObject, const char *id, const char *s);

@@ -172,6 +172,29 @@ namespace ospray {
       }
     }
 
+    void ISPCDevice::addInstance(OSPWorld _world, OSPGeometryInstance _instance)
+    {
+      auto *world    = (World *)_world;
+      auto *instance = (GeometryInstance *)_instance;
+      world->geometryInstances.push_back(instance);
+    }
+
+    void ISPCDevice::removeInstance(OSPWorld _world,
+                                    OSPGeometryInstance _instance)
+    {
+      auto *world    = (World *)_world;
+      auto *instance = (GeometryInstance *)_instance;
+
+      auto it = std::find_if(world->geometryInstances.begin(),
+                             world->geometryInstances.end(),
+                             [&](const Ref<ospray::GeometryInstance> &g) {
+                               return instance == &*g;
+                             });
+
+      if (it != world->geometryInstances.end())
+        world->geometryInstances.erase(it);
+    }
+
     OSPData ISPCDevice::newData(size_t nitems,
                                 OSPDataType format,
                                 const void *init,

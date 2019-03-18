@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray stuff
-#include "geometry/Geometry.h"
+#include "geometry/GeometryInstance.h"
 #include "volume/Volume.h"
 
 // stl
@@ -49,10 +49,12 @@ namespace ospray {
     using GeometryVector = std::vector<Ref<Geometry>>;
     using VolumeVector   = std::vector<Ref<Volume>>;
 
-    //! \brief vector of all geometries used in this model
+    using GeometryInstanceVector = std::vector<Ref<GeometryInstance>>;
+
     GeometryVector geometry;
-    //! \brief vector of all volumes used in this model
     VolumeVector volume;
+
+    GeometryInstanceVector geometryInstances;
 
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle {nullptr};
