@@ -106,7 +106,8 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     float x = ss * self->importanceSum;
     int choice = 0;
     float prefixSum = self->importances[0];
-    while ((choice < self->numBsdfs-1) & (x > prefixSum))
+    // to handle ss==0.0 and invalid BSDF (importance==0.0), use "x >="
+    while ((choice < self->numBsdfs-1) & (x >= prefixSum))
       prefixSum += self->importances[++choice];
 
     // remap sample
