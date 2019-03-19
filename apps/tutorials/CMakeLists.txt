@@ -37,6 +37,23 @@ target_link_libraries(ospTutorialCpp PRIVATE ospray)
 add_executable(ospTutorialAsync ospTutorialAsync.c)
 target_link_libraries(ospTutorialAsync PRIVATE ospray)
 
+ospray_create_application(ospTutorialBoxes
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  ospTutorialBoxes.cpp
+  imgui/imgui_impl_glfw_gl3.cpp
+)
+
+target_link_libraries(ospTutorialBoxes
+PRIVATE
+  ospray
+  ospray_testing
+  ospray_common
+  ospray_imgui
+  glfw
+  ${OPENGL_LIBRARIES}
+)
+
 ospray_create_application(ospTutorialSpheres
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp

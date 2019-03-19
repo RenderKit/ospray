@@ -134,6 +134,12 @@ namespace ospcommon {
       return x * y;
     }
 
+    template <typename OT>
+    inline vec_t<OT, 2> elementsAs() const
+    {
+      return vec_t<OT, 2>(*this);
+    }
+
     T x, y;
   };
 
@@ -186,6 +192,12 @@ namespace ospcommon {
     inline scalar_t product() const
     {
       return x * y * z;
+    }
+
+    template <typename OT>
+    inline vec_t<OT, 3> elementsAs() const
+    {
+      return vec_t<OT, 3>(*this);
     }
 
     T x, y, z;
@@ -243,6 +255,12 @@ namespace ospcommon {
     inline operator vec_t<T, 3>() const
     {
       return vec_t<T, 3>(x, y, z);
+    }
+
+    template <typename OT>
+    inline vec_t<OT, 3, true> elementsAs() const
+    {
+      return vec_t<OT, 3, true>(*this);
     }
 
     T x, y, z;
@@ -306,6 +324,12 @@ namespace ospcommon {
     inline scalar_t product() const
     {
       return x * y * z * w;
+    }
+
+    template <typename OT>
+    inline vec_t<OT, 4> elementsAs() const
+    {
+      return vec_t<OT, 4>(*this);
     }
 
     T x, y, z, w;
