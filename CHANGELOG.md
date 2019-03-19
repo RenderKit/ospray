@@ -9,6 +9,7 @@ Version History
     more than once
 -   Fix bug in cylinder intersection when ray and cylinder are
     perpendicular
+-   Fix rare crash in path tracer / MultiBSDF
 
 ### Changes in v1.8.2:
 
