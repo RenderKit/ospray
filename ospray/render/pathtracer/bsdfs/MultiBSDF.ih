@@ -90,13 +90,15 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
 
+  BSDF_SampleRes res = make_BSDF_SampleRes_zero(); // default
+
   if (self->importanceSum == 0.0f) // also handles case self->numBsdfs == 0
-    return make_BSDF_SampleRes_zero();
+    return res;
 
   if (self->numBsdfs == 1)
   {
     const varying BSDF* uniform bsdf = self->bsdfs[0];
-    BSDF_SampleRes res = bsdf->sample(bsdf, wo, s, ss);
+    res = bsdf->sample(bsdf, wo, s, ss);
     res.weight = res.weight * self->weights[0];
     return res;
   }
@@ -106,14 +108,17 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     float x = ss * self->importanceSum;
     int choice = 0;
     float prefixSum = self->importances[0];
-    while ((choice < self->numBsdfs-1) & (x > prefixSum))
+    // to handle ss==0.0 and invalid BSDF (importance==0.0), use "x >="
+    while ((choice < self->numBsdfs-1) & (x >= prefixSum))
       prefixSum += self->importances[++choice];
+
+    if (self->importances[choice] == 0.0f)
+      return res;
 
     // remap sample
     ss = (x + self->importances[choice] - prefixSum) * rcp(self->importances[choice]);
 
     // sample chosen BSDF
-    BSDF_SampleRes res;
     foreach_unique (i in choice)
     {
       const varying BSDF* uniform bsdf = self->bsdfs[i];

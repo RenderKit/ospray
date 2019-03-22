@@ -1,6 +1,16 @@
 Version History
 ---------------
 
+### Changes in v1.8.3:
+
+-   Fix bug where parameters set by `ospSet1b()` were being ignored
+-   Fix bug in box intersection tests possibly creating `NaN`s
+-   Fix issue with client applications calling `find_package(ospray)`
+    more than once
+-   Fix bug in cylinder intersection when ray and cylinder are
+    perpendicular
+-   Fix rare crash in path tracer / MultiBSDF
+
 ### Changes in v1.8.2:
 
 -   CMake bug fix where external users of OSPRay needed CMake newer than

@@ -74,6 +74,7 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools. To build the example viewers, you should
     also have some version of OpenGL.
+
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
     (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
     obtain a release of ISPC from the [ISPC downloads
@@ -81,15 +82,18 @@ before you can build OSPRay you need the following prerequisites:
     for ISPC in the `PATH` and in the directory right “next to” the
     checked-out OSPRay sources.[^1] Alternatively set the CMake variable
     `ISPC_EXECUTABLE` to the location of the ISPC compiler.
+
 -   Per default OSPRay uses the Intel® [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system, which we recommend for performance and flexibility reasons.
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
+
 -   OSPRay also heavily uses Intel [Embree](https://embree.github.io/),
     installing version 3.2 or newer is required. If Embree is not found
     by CMake its location can be hinted with the variable `embree_DIR`.
     NOTE: Windows users should use Embree v3.2.2 or later.
+
 -   If available OSPRay’s [Example Viewer](#example-viewer) can be
     compiled with support for Intel [Open Image
     Denoise](http://www.openimagedenoise.org/) by enabling
