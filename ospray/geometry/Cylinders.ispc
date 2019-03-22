@@ -113,10 +113,11 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
   const float t_out = ts + td;
 
   // clip to cylinder caps
-  const float rsd = rcp(dot(s, d));
-  const float tA = dot(s, f) * rsd;
-  const float tS = s2 * rsd;
-  const float tB = tA + tS;
+  const float sf = dot(s, f);
+  const float sd = dot(s, d);
+  const float rsd = rcp(sd);
+  const float tA = sf * rsd;
+  const float tB = tA + s2 * rsd;
   // rsd (and thus tA and tB) can be NaN if the ray is perfectly perpendicular
   // to the cylinder; filter NaNs by having ray t as 2nd argument to min/max
   const float tmin = max(min(tA, tB), ray->t0);
@@ -142,7 +143,7 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform ar
       ray->geomID = self->super.geomID;
       // cannot easily be moved to postIntersect
       // we need hit in object-space, in postIntersect it is in world-space
-      ray->u = (ray->t - tA) * rcp(tS);
+      ray->u = (ray->t * sd - sf) * rcp(s2);
       ray->Ng = td * d - fp - ray->u * s;
     }
   }

@@ -106,27 +106,29 @@ macro(ospray_configure_tasking_system)
 endmacro()
 
 macro(ospray_create_tasking_target)
-  add_library(ospray_tasking INTERFACE)
+  if (NOT TARGET ospray_tasking)
+    add_library(ospray_tasking INTERFACE)
 
-  target_include_directories(ospray_tasking
-  INTERFACE
-    ${OSPRAY_TASKING_INCLUDES}
-  )
+    target_include_directories(ospray_tasking
+    INTERFACE
+      ${OSPRAY_TASKING_INCLUDES}
+    )
 
-  target_link_libraries(ospray_tasking
-  INTERFACE
-    ${OSPRAY_TASKING_LIBS}
-  )
+    target_link_libraries(ospray_tasking
+    INTERFACE
+      ${OSPRAY_TASKING_LIBS}
+    )
 
-  target_compile_definitions(ospray_tasking
-  INTERFACE
-    ${OSPRAY_TASKING_DEFINITIONS}
-  )
+    target_compile_definitions(ospray_tasking
+    INTERFACE
+      ${OSPRAY_TASKING_DEFINITIONS}
+    )
 
-  target_compile_options(ospray_tasking
-  INTERFACE
-    ${OSPRAY_TASKING_OPTIONS}
-  )
+    target_compile_options(ospray_tasking
+    INTERFACE
+      ${OSPRAY_TASKING_OPTIONS}
+    )
+  endif()
 endmacro()
 
 ## Embree functions/macros ##
@@ -157,7 +159,7 @@ function(ospray_verify_embree_features)
 endfunction()
 
 macro(ospray_create_embree_target)
-  if (NOT TARGET embree::embree)
+  if (NOT TARGET embree)
     add_library(embree INTERFACE)
 
     target_include_directories(embree
