@@ -26,22 +26,23 @@
 // auto-generated .h file.
 #include "UnstructuredVolume_ispc.h"
 
-namespace {
-  // Map cell type to its vertices count
-  inline uint32_t getCellIdCount(uint8_t cellType)
-  {
-    switch (cellType) {
-      case OSP_TETRAHEDRON: return 4;
-      case OSP_WEDGE: return 6;
-      case OSP_HEXAHEDRON: return 8;
-    }
-
-    // Unknown cell type
-    return 1;
-  }
-}
-
 namespace ospray {
+
+  namespace {
+    // Map cell type to its vertices count
+    inline uint32_t getVerticesCount(uint8_t cellType)
+    {
+      switch (cellType) {
+        case OSP_TETRAHEDRON: return 4;
+        case OSP_HEXAHEDRON: return 8;
+        case OSP_WEDGE: return 6;
+        case OSP_PYRAMID: return 5;
+      }
+
+      // Unknown cell type
+      return 1;
+    }
+  }
 
   UnstructuredVolume::UnstructuredVolume()
   {
@@ -128,7 +129,7 @@ namespace ospray {
 
     // iterate through cell vertices
     box4f bBox;
-    uint32_t maxIdx = getCellIdCount(cellType[id]);
+    uint32_t maxIdx = getVerticesCount(cellType[id]);
     for (uint32_t i = 0; i < maxIdx; i++)
     {
       // get vertex index
@@ -302,68 +303,31 @@ namespace ospray {
 
   void UnstructuredVolume::calculateFaceNormals()
   {
+    // Allocate memory for normal vectors
     uint64_t numNormals = nCells * 6;
     faceNormals.resize(numNormals);
 
-    tasking::parallel_for(numNormals / 6, [&](uint64_t taskIndex) {
+    // Define vertices order for normal calculation
+    const uint32_t tetrahedronFaces[4][3] =
+      {{1, 0, 2}, {0, 1, 3}, {1, 2, 3}, {0, 3, 2}};
+    const uint32_t hexahedronFaces[6][3] =
+      {{1, 0, 3}, {0, 1, 5}, {1, 2, 6}, {2, 3, 7}, {0, 4, 7}, {4, 5, 6}};
+    const uint32_t wedgeFaces[5][3] =
+      {{1, 0, 2}, {0, 1, 4}, {1, 2, 5}, {0, 3, 5}, {3, 4, 5}};
+    const uint32_t pyramidFaces[5][3] =
+      {{1, 0, 3}, {0, 1, 4}, {1, 2, 4}, {2, 3, 4}, {0, 4, 3}};
 
-      // get cell offset in the vertex indices array
-      uint64_t cOffset = getCellOffset(taskIndex);
-
-      uint64_t i = taskIndex * 6;
-      if (cellType[taskIndex] == OSP_TETRAHEDRON) {
-
-        // The corners of each triangle in the tetrahedron.
-        const int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
-
-        for (int j = 0; j < 4; j++) {
-          uint64_t vId0 = getVertexId(cOffset + faces[j][0]);
-          uint64_t vId1 = getVertexId(cOffset + faces[j][1]);
-          uint64_t vId2 = getVertexId(cOffset + faces[j][2]);
-
-          const vec3f& p0 = vertex[vId0];
-          const vec3f& p1 = vertex[vId1];
-          const vec3f& p2 = vertex[vId2];
-
-          vec3f q0 = p1 - p0;
-          vec3f q1 = p2 - p0;
-
-          vec3f norm = normalize(cross(q0, q1));
-
-          faceNormals[i + j] = norm;
-        }
-      } else if (cellType[taskIndex] == OSP_WEDGE) {
-
-        vec3f& v0 = vertex[getVertexId(cOffset + 0)];
-        vec3f& v1 = vertex[getVertexId(cOffset + 1)];
-        vec3f& v2 = vertex[getVertexId(cOffset + 2)];
-        vec3f& v3 = vertex[getVertexId(cOffset + 3)];
-        vec3f& v4 = vertex[getVertexId(cOffset + 4)];
-        vec3f& v5 = vertex[getVertexId(cOffset + 5)];
-
-        faceNormals[i + 0] = normalize(cross(v2 - v0, v1 - v0)); // bottom
-        faceNormals[i + 1] = normalize(cross(v4 - v3, v5 - v3)); // top
-        faceNormals[i + 2] = normalize(cross(v3 - v0, v2 - v0));
-        faceNormals[i + 3] = normalize(cross(v4 - v1, v0 - v1));
-        faceNormals[i + 4] = normalize(cross(v5 - v2, v1 - v2));
-
-      } else if (cellType[taskIndex] == OSP_HEXAHEDRON) {
-
-        vec3f& v0 = vertex[getVertexId(cOffset + 0)];
-        vec3f& v1 = vertex[getVertexId(cOffset + 1)];
-        vec3f& v2 = vertex[getVertexId(cOffset + 2)];
-        vec3f& v3 = vertex[getVertexId(cOffset + 3)];
-        vec3f& v4 = vertex[getVertexId(cOffset + 4)];
-        vec3f& v5 = vertex[getVertexId(cOffset + 5)];
-        vec3f& v6 = vertex[getVertexId(cOffset + 6)];
-        vec3f& v7 = vertex[getVertexId(cOffset + 7)];
-
-        faceNormals[i + 0] = normalize(cross(v2 - v0, v1 - v0));
-        faceNormals[i + 1] = normalize(cross(v5 - v0, v4 - v0));
-        faceNormals[i + 2] = normalize(cross(v7 - v0, v3 - v0));
-        faceNormals[i + 3] = normalize(cross(v5 - v6, v1 - v6));
-        faceNormals[i + 4] = normalize(cross(v7 - v6, v4 - v6));
-        faceNormals[i + 5] = normalize(cross(v2 - v6, v3 - v6));
+    // Build all normals
+    tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
+      switch(cellType[taskIndex]) {
+        case OSP_TETRAHEDRON:
+          calculateCellNormals(taskIndex, tetrahedronFaces, 4); break;
+        case OSP_HEXAHEDRON:
+          calculateCellNormals(taskIndex, hexahedronFaces, 6); break;
+        case OSP_WEDGE:
+          calculateCellNormals(taskIndex, wedgeFaces, 5); break;
+        case OSP_PYRAMID:
+          calculateCellNormals(taskIndex, pyramidFaces, 5); break;
       }
     });
   }

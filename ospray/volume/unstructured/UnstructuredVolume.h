@@ -56,7 +56,8 @@ namespace ospray {
 
     // Read 32/64-bit integer value from given array
     inline uint64_t readInteger(const uint32_t* array,
-      bool is32Bit, uint64_t id) const
+                                bool is32Bit,
+                                uint64_t id) const
     {
       if (!is32Bit) id <<= 1;
       uint64_t value = *((const uint64_t*)(array + id));
@@ -69,6 +70,32 @@ namespace ospray {
       { return readInteger(cell, cell32Bit, id) + cellSkipIds; }
     inline uint64_t getVertexId(uint64_t id) const
       { return readInteger(index, index32Bit, id); }
+
+    // Calculate all normals for arbitrary polyhedron
+    // based on given vertices order
+    inline void calculateCellNormals(
+      const uint64_t cellId,
+      const uint32_t faces[6][3],
+      const uint32_t facesCount)
+    {
+      // Get cell offset in the vertex indices array
+      uint64_t cOffset = getCellOffset(cellId);
+
+      // Iterate through all faces
+      for (int i = 0; i < facesCount; i++) {
+
+        // Retrieve vertex positions
+        uint64_t vId0 = getVertexId(cOffset + faces[i][0]);
+        uint64_t vId1 = getVertexId(cOffset + faces[i][1]);
+        uint64_t vId2 = getVertexId(cOffset + faces[i][2]);
+        const vec3f& v0 = vertex[vId0];
+        const vec3f& v1 = vertex[vId1];
+        const vec3f& v2 = vertex[vId2];
+
+        // Calculate normal
+        faceNormals[cellId * 6 + i] = normalize(cross(v0 - v1, v2 - v1));
+      }
+    }
 
     box4f getCellBBox(size_t id);
 
