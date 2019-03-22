@@ -29,7 +29,7 @@ using namespace ospcommon;
 static OSPGeometryInstance g_instance;
 static OSPWorld g_world;
 
-static const std::string renderer_type = "raycast_Ng";
+static const std::string renderer_type = "scivis";
 
 #if 0
 OSPGeometry createGroundPlaneGeometry(const box3f &bounds)

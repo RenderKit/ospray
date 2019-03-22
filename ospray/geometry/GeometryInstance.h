@@ -31,9 +31,12 @@ namespace ospray {
 
     virtual void finalize(RTCScene worldScene);
 
+    box3f bounds() const;
+
+  private:
     // Data members //
 
-    box3f bounds;
+    box3f instanceBounds;
 
     AffineSpace3f xfm;
     Ref<Geometry> instancedGeometry;

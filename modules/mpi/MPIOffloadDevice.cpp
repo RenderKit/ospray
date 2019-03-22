@@ -534,7 +534,7 @@ namespace ospray {
       fb->unmap(mapped);
     }
 
-    /*! create a new model */
+    /*! create a new world */
     OSPWorld MPIOffloadDevice::newWorld()
     {
       ObjectHandle handle = allocateHandle();
@@ -543,7 +543,7 @@ namespace ospray {
       return (OSPWorld)(int64)handle;
     }
 
-    /*! finalize a newly specified model */
+    /*! finalize a newly specified world */
     void MPIOffloadDevice::commit(OSPObject _object)
     {
       const ObjectHandle handle = (const ObjectHandle &)_object;
@@ -551,30 +551,32 @@ namespace ospray {
       processWork(work);
     }
 
-    /*! add a new geometry to a model */
-    void MPIOffloadDevice::addGeometry(OSPWorld _model, OSPGeometry _geometry)
+    /*! add a new geometry to a world */
+    void MPIOffloadDevice::addGeometry(OSPWorld _world, OSPGeometry _geometry)
     {
-      work::AddGeometry work(_model, _geometry);
+      work::AddGeometry work(_world, _geometry);
       processWork(work);
     }
 
-    /*! add a new volume to a model */
-    void MPIOffloadDevice::addVolume(OSPWorld _model, OSPVolume _volume)
+    /*! add a new volume to a world */
+    void MPIOffloadDevice::addVolume(OSPWorld _world, OSPVolume _volume)
     {
-      work::AddVolume work(_model, _volume);
+      work::AddVolume work(_world, _volume);
       processWork(work);
     }
 
     void MPIOffloadDevice::addInstance(OSPWorld _world,
                                        OSPGeometryInstance _instance)
     {
-      NOT_IMPLEMENTED;
+      work::AddGeometryInstance work(_world, _instance);
+      processWork(work);
     }
 
     void MPIOffloadDevice::removeInstance(OSPWorld _world,
                                           OSPGeometryInstance _instance)
     {
-      NOT_IMPLEMENTED;
+      work::RemoveGeometryInstance work(_world, _instance);
+      processWork(work);
     }
 
     /*! create a new data buffer */
@@ -810,18 +812,18 @@ namespace ospray {
       processWork(work);
     }
 
-    /*! remove an existing geometry from a model */
-    void MPIOffloadDevice::removeGeometry(OSPWorld _model,
+    /*! remove an existing geometry from a world */
+    void MPIOffloadDevice::removeGeometry(OSPWorld _world,
                                           OSPGeometry _geometry)
     {
-      work::RemoveGeometry work(_model, _geometry);
+      work::RemoveGeometry work(_world, _geometry);
       processWork(work);
     }
 
-    /*! remove an existing volume from a model */
-    void MPIOffloadDevice::removeVolume(OSPWorld _model, OSPVolume _volume)
+    /*! remove an existing volume from a world */
+    void MPIOffloadDevice::removeVolume(OSPWorld _world, OSPVolume _volume)
     {
-      work::RemoveVolume work(_model, _volume);
+      work::RemoveVolume work(_world, _volume);
       processWork(work);
     }
 
@@ -921,7 +923,10 @@ namespace ospray {
 
     OSPGeometryInstance MPIOffloadDevice::newGeometryInstance(OSPGeometry geom)
     {
-      NOT_IMPLEMENTED;
+      ObjectHandle handle = allocateHandle();
+      work::NewGeometryInstance work(handle, (ObjectHandle &)geom);
+      processWork(work);
+      return (OSPGeometryInstance)(int64)handle;
     }
 
     OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume volume)

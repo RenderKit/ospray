@@ -120,11 +120,6 @@ namespace ospray {
         int64 handleID{-1};
       };
 
-      /*! All of the simple CMD_NEW_* can be implemented with the same
-       template. The more unique ones like NEW_DATA, NEW_TEXTURE2D or
-       render specific objects like lights and materials require some
-       more special treatment to handle sending the data or other
-       params around as well. */
       template <typename T>
       struct NewObjectT : public Work
       {
@@ -186,8 +181,8 @@ namespace ospray {
       {
         NewMaterial() = default;
         NewMaterial(const char *renderer_type,
-                     const char *material_type,
-                     ObjectHandle handle)
+                    const char *material_type,
+                    ObjectHandle handle)
             : rendererType(renderer_type),
               materialType(material_type),
               handle(handle)
@@ -209,6 +204,30 @@ namespace ospray {
         std::string rendererType;
         std::string materialType;
         ObjectHandle handle;
+      };
+
+      struct NewGeometryInstance : public Work
+      {
+        NewGeometryInstance() = default;
+        NewGeometryInstance(ObjectHandle handle, ObjectHandle geometry_handle)
+            : handle(handle), geometryHandle(geometry_handle)
+        {
+        }
+
+        void run() override;
+
+        void serialize(WriteStream &b) const override
+        {
+          b << (int64)handle << (int64)geometryHandle;
+        }
+
+        void deserialize(ReadStream &b) override
+        {
+          b >> handle.i64 >> geometryHandle.i64;
+        }
+
+        ObjectHandle handle;
+        ObjectHandle geometryHandle;
       };
 
       struct NewLight : public Work
@@ -367,8 +386,8 @@ namespace ospray {
       struct AddVolume : public Work
       {
         AddVolume() = default;
-        AddVolume(OSPWorld model, const OSPVolume &t)
-            : modelHandle((const ObjectHandle &)model),
+        AddVolume(OSPWorld world, const OSPVolume &t)
+            : worldHandle((const ObjectHandle &)world),
               objectHandle((const ObjectHandle &)t)
         {
         }
@@ -380,25 +399,25 @@ namespace ospray {
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         {
-          b << (int64)modelHandle << (int64)objectHandle;
+          b << (int64)worldHandle << (int64)objectHandle;
         }
 
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
         void deserialize(ReadStream &b) override
         {
-          b >> modelHandle.i64 >> objectHandle.i64;
+          b >> worldHandle.i64 >> objectHandle.i64;
         }
 
-        ObjectHandle modelHandle;
+        ObjectHandle worldHandle;
         ObjectHandle objectHandle;
       };
 
       struct AddGeometry : public Work
       {
         AddGeometry() = default;
-        AddGeometry(OSPWorld model, const OSPGeometry &t)
-            : modelHandle((const ObjectHandle &)model),
+        AddGeometry(OSPWorld world, const OSPGeometry &t)
+            : worldHandle((const ObjectHandle &)world),
               objectHandle((const ObjectHandle &)t)
         {
         }
@@ -410,25 +429,25 @@ namespace ospray {
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         {
-          b << (int64)modelHandle << (int64)objectHandle;
+          b << (int64)worldHandle << (int64)objectHandle;
         }
 
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
         void deserialize(ReadStream &b) override
         {
-          b >> modelHandle.i64 >> objectHandle.i64;
+          b >> worldHandle.i64 >> objectHandle.i64;
         }
 
-        ObjectHandle modelHandle;
+        ObjectHandle worldHandle;
         ObjectHandle objectHandle;
       };
 
       struct RemoveGeometry : public Work
       {
         RemoveGeometry() = default;
-        RemoveGeometry(OSPWorld model, const OSPGeometry &t)
-            : modelHandle((const ObjectHandle &)model),
+        RemoveGeometry(OSPWorld world, const OSPGeometry &t)
+            : worldHandle((const ObjectHandle &)world),
               objectHandle((const ObjectHandle &)t)
         {
         }
@@ -440,25 +459,85 @@ namespace ospray {
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         {
-          b << (int64)modelHandle << (int64)objectHandle;
+          b << (int64)worldHandle << (int64)objectHandle;
         }
 
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
         void deserialize(ReadStream &b) override
         {
-          b >> modelHandle.i64 >> objectHandle.i64;
+          b >> worldHandle.i64 >> objectHandle.i64;
         }
 
-        ObjectHandle modelHandle;
+        ObjectHandle worldHandle;
+        ObjectHandle objectHandle;
+      };
+
+      struct AddGeometryInstance : public Work
+      {
+        AddGeometryInstance() = default;
+        AddGeometryInstance(OSPWorld world, const OSPGeometryInstance &t)
+            : worldHandle((const ObjectHandle &)world),
+              objectHandle((const ObjectHandle &)t)
+        {
+        }
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        {
+          b << (int64)worldHandle << (int64)objectHandle;
+        }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        {
+          b >> worldHandle.i64 >> objectHandle.i64;
+        }
+
+        ObjectHandle worldHandle;
+        ObjectHandle objectHandle;
+      };
+
+      struct RemoveGeometryInstance : public Work
+      {
+        RemoveGeometryInstance() = default;
+        RemoveGeometryInstance(OSPWorld world, const OSPGeometryInstance &t)
+            : worldHandle((const ObjectHandle &)world),
+              objectHandle((const ObjectHandle &)t)
+        {
+        }
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        {
+          b << (int64)worldHandle << (int64)objectHandle;
+        }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        {
+          b >> worldHandle.i64 >> objectHandle.i64;
+        }
+
+        ObjectHandle worldHandle;
         ObjectHandle objectHandle;
       };
 
       struct RemoveVolume : public Work
       {
         RemoveVolume() = default;
-        RemoveVolume(OSPWorld model, const OSPVolume &t)
-            : modelHandle((const ObjectHandle &)model),
+        RemoveVolume(OSPWorld world, const OSPVolume &t)
+            : worldHandle((const ObjectHandle &)world),
               objectHandle((const ObjectHandle &)t)
         {
         }
@@ -470,17 +549,17 @@ namespace ospray {
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         {
-          b << (int64)modelHandle << (int64)objectHandle;
+          b << (int64)worldHandle << (int64)objectHandle;
         }
 
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
         void deserialize(ReadStream &b) override
         {
-          b >> modelHandle.i64 >> objectHandle.i64;
+          b >> worldHandle.i64 >> objectHandle.i64;
         }
 
-        ObjectHandle modelHandle;
+        ObjectHandle worldHandle;
         ObjectHandle objectHandle;
       };
 

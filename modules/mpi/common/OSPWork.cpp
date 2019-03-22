@@ -40,6 +40,7 @@ namespace ospray {
         registerWorkUnit<NewRenderer>(registry);
         registerWorkUnit<NewWorld>(registry);
         registerWorkUnit<NewGeometry>(registry);
+        registerWorkUnit<NewGeometryInstance>(registry);
         registerWorkUnit<NewCamera>(registry);
         registerWorkUnit<NewVolume>(registry);
         registerWorkUnit<NewTransferFunction>(registry);
@@ -57,8 +58,10 @@ namespace ospray {
         registerWorkUnit<LoadModule>(registry);
 
         registerWorkUnit<AddGeometry>(registry);
+        registerWorkUnit<AddGeometryInstance>(registry);
         registerWorkUnit<AddVolume>(registry);
         registerWorkUnit<RemoveGeometry>(registry);
+        registerWorkUnit<RemoveGeometryInstance>(registry);
         registerWorkUnit<RemoveVolume>(registry);
 
         registerWorkUnit<CreateFrameBuffer>(registry);
@@ -286,8 +289,8 @@ namespace ospray {
       template <>
       void NewWorld::run()
       {
-        auto *model = new World;
-        handle.assign(model);
+        auto *world = new World;
+        handle.assign(world);
       }
 
       // ospNewMaterial ///////////////////////////////////////////////////////
@@ -297,6 +300,15 @@ namespace ospray {
         auto *material = Material::createInstance(rendererType.c_str(),
                                                   materialType.c_str());
         handle.assign(material);
+      }
+
+      // ospNewGeometryInstance ///////////////////////////////////////////////
+
+      void NewGeometryInstance::run()
+      {
+        auto *geom     = (Geometry *)geometryHandle.lookup();
+        auto *instance = new GeometryInstance(geom);
+        handle.assign(instance);
       }
 
       // ospNewLight //////////////////////////////////////////////////////////
@@ -453,7 +465,7 @@ namespace ospray {
         b >> handle.i64;
       }
 
-      // ospRenderFrameAsync ///////////////////////////////////////////////////////
+      // ospRenderFrameAsync //////////////////////////////////////////////////
 
       RenderFrameAsync::RenderFrameAsync(OSPFrameBuffer fb,
                                          OSPRenderer renderer,
@@ -478,8 +490,8 @@ namespace ospray {
 
         fb->setCompletedEvent(OSP_NONE_FINISHED);
 
-        auto *f = new RenderTask(fb,
-            [=]() { return renderer->renderFrame(fb, camera, world); });
+        auto *f = new RenderTask(
+            fb, [=]() { return renderer->renderFrame(fb, camera, world); });
         futureHandle.assign(f);
       }
 
@@ -504,56 +516,78 @@ namespace ospray {
 
       void AddGeometry::run()
       {
-        World *model       = (World *)modelHandle.lookup();
+        World *world       = (World *)worldHandle.lookup();
         Geometry *geometry = (Geometry *)objectHandle.lookup();
-        Assert(model);
+        Assert(world);
         Assert(geometry);
-        model->geometry.push_back(geometry);
+        world->geometry.push_back(geometry);
+      }
+
+      void AddGeometryInstance::run()
+      {
+        auto *world    = (World *)worldHandle.lookup();
+        auto *instance = (GeometryInstance *)objectHandle.lookup();
+        world->geometryInstances.push_back(instance);
       }
 
       // ospAddVolume /////////////////////////////////////////////////////////
 
       void AddVolume::run()
       {
-        World *model   = (World *)modelHandle.lookup();
+        World *world   = (World *)worldHandle.lookup();
         Volume *volume = (Volume *)objectHandle.lookup();
-        Assert(model);
+        Assert(world);
         Assert(volume);
-        model->volume.push_back(volume);
+        world->volume.push_back(volume);
       }
 
       // ospRemoveGeometry ////////////////////////////////////////////////////
 
       void RemoveGeometry::run()
       {
-        World *model       = (World *)modelHandle.lookup();
+        World *world       = (World *)worldHandle.lookup();
         Geometry *geometry = (Geometry *)objectHandle.lookup();
-        Assert(model);
+        Assert(world);
         Assert(geometry);
         auto it = std::find_if(
-            model->geometry.begin(),
-            model->geometry.end(),
+            world->geometry.begin(),
+            world->geometry.end(),
             [&](const Ref<Geometry> &g) { return geometry == &*g; });
-        if (it != model->geometry.end()) {
-          model->geometry.erase(it);
+        if (it != world->geometry.end()) {
+          world->geometry.erase(it);
         }
+      }
+
+      void RemoveGeometryInstance::run()
+      {
+        auto *world    = (World *)worldHandle.lookup();
+        auto *instance = (GeometryInstance *)objectHandle.lookup();
+
+        auto it = std::find_if(world->geometryInstances.begin(),
+                               world->geometryInstances.end(),
+                               [&](const Ref<ospray::GeometryInstance> &g) {
+                                 return instance == &*g;
+                               });
+
+        if (it != world->geometryInstances.end())
+          world->geometryInstances.erase(it);
       }
 
       // ospRemoveVolume //////////////////////////////////////////////////////
 
       void RemoveVolume::run()
       {
-        World *model   = (World *)modelHandle.lookup();
+        World *world   = (World *)worldHandle.lookup();
         Volume *volume = (Volume *)objectHandle.lookup();
-        Assert(model);
+        Assert(world);
         Assert(volume);
-        model->volume.push_back(volume);
+        world->volume.push_back(volume);
         auto it =
-            std::find_if(model->volume.begin(),
-                         model->volume.end(),
+            std::find_if(world->volume.begin(),
+                         world->volume.end(),
                          [&](const Ref<Volume> &v) { return volume == &*v; });
-        if (it != model->volume.end()) {
-          model->volume.erase(it);
+        if (it != world->volume.end()) {
+          world->volume.erase(it);
         }
       }
 

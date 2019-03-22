@@ -96,15 +96,15 @@ namespace ospray {
     const vec3f v110(b.lower.x, b.upper.y, b.upper.z);
     const vec3f v111(b.upper.x, b.upper.y, b.upper.z);
 
-    bounds = empty;
-    bounds.extend(xfmPoint(xfm, v000));
-    bounds.extend(xfmPoint(xfm, v001));
-    bounds.extend(xfmPoint(xfm, v010));
-    bounds.extend(xfmPoint(xfm, v011));
-    bounds.extend(xfmPoint(xfm, v100));
-    bounds.extend(xfmPoint(xfm, v101));
-    bounds.extend(xfmPoint(xfm, v110));
-    bounds.extend(xfmPoint(xfm, v111));
+    instanceBounds = empty;
+    instanceBounds.extend(xfmPoint(xfm, v000));
+    instanceBounds.extend(xfmPoint(xfm, v001));
+    instanceBounds.extend(xfmPoint(xfm, v010));
+    instanceBounds.extend(xfmPoint(xfm, v011));
+    instanceBounds.extend(xfmPoint(xfm, v100));
+    instanceBounds.extend(xfmPoint(xfm, v101));
+    instanceBounds.extend(xfmPoint(xfm, v110));
+    instanceBounds.extend(xfmPoint(xfm, v111));
 
     rtcSetGeometryTransform(
         embreeInstanceGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
@@ -113,6 +113,11 @@ namespace ospray {
     AffineSpace3f rcp_xfm = rcp(xfm);
     ispc::GeometryInstance_set(
         getIE(), (ispc::AffineSpace3f &)xfm, (ispc::AffineSpace3f &)rcp_xfm);
+  }
+
+  box3f GeometryInstance::bounds() const
+  {
+    return instanceBounds;
   }
 
 }  // namespace ospray
