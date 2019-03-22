@@ -33,8 +33,8 @@
 #include "ospcommon/networking/Socket.h"
 #include "ospcommon/sysinfo.h"
 #include "ospcommon/utility/getEnvVar.h"
-#include "render/Renderer.h"
 #include "render/RenderTask.h"
+#include "render/Renderer.h"
 #include "volume/Volume.h"
 
 // std
@@ -565,6 +565,18 @@ namespace ospray {
       processWork(work);
     }
 
+    void MPIOffloadDevice::addInstance(OSPWorld _world,
+                                       OSPGeometryInstance _instance)
+    {
+      NOT_IMPLEMENTED;
+    }
+
+    void MPIOffloadDevice::removeInstance(OSPWorld _world,
+                                          OSPGeometryInstance _instance)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     /*! create a new data buffer */
     OSPData MPIOffloadDevice::newData(size_t nitems,
                                       OSPDataType format,
@@ -635,7 +647,7 @@ namespace ospray {
                                    const char *bufName,
                                    const bool b)
     {
-      work::SetParam<int> work((ObjectHandle&)_object, bufName, b);
+      work::SetParam<int> work((ObjectHandle &)_object, bufName, b);
       processWork(work);
     }
 
@@ -833,7 +845,8 @@ namespace ospray {
       // calling MPI at all, so in this case we don't need to worry about
       // hitting issues with thread multiple vs. thread serialized
       ObjectHandle futureHandle = allocateHandle();
-      work::RenderFrameAsync work(_fb, _renderer, _camera, _world, futureHandle);
+      work::RenderFrameAsync work(
+          _fb, _renderer, _camera, _world, futureHandle);
       processWork(work, true);
       return (OSPFuture)(int64)futureHandle;
     }

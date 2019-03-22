@@ -86,6 +86,11 @@ namespace ospray {
       /*! remove an existing volume from a model */
       void removeVolume(OSPWorld _model, OSPVolume _volume) override;
 
+      void addInstance(OSPWorld _world, OSPGeometryInstance _instance) override;
+
+      void removeInstance(OSPWorld _world,
+                          OSPGeometryInstance _instance) override;
+
       /*! create a new data buffer */
       OSPData newData(size_t nitems,
                       OSPDataType format,
