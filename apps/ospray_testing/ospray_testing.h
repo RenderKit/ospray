@@ -37,6 +37,7 @@ extern "C" {
 typedef struct
 {
   OSPGeometry geometry;
+  OSPGeometryInstance instance;
   osp_box3f bounds;
 } OSPTestingGeometry;
 

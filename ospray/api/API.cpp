@@ -813,6 +813,14 @@ extern "C" void ospSetMaterial(OSPGeometry geometry,
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospSetMaterial2(OSPGeometryInstance instance,
+                                OSPMaterial material) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setMaterial(instance, material);
+}
+OSPRAY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Object + Parameter Lifetime Management /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

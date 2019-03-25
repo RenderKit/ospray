@@ -69,6 +69,8 @@ namespace ospray {
       ospLoadModule first. */
     static Geometry *createInstance(const char *type);
 
+    virtual size_t numPrimitives() const { NOT_IMPLEMENTED; }
+
     box3f bounds{empty};
 
     //! materials associated to this geometry
@@ -83,7 +85,7 @@ namespace ospray {
     uint32_t geomID{0};
 
   protected:
-    virtual void createEmbreeGeometry() {}
+    virtual void createEmbreeGeometry() = 0;
   };
 
   /*! \brief registers a internal ospray::<ClassName> geometry under

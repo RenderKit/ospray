@@ -45,6 +45,9 @@ namespace ospray {
     std::vector<float> areaPDF;
     /*! geometry ID of this geometry in the parent model */
     uint32 embreeGeomID;
+
+  private:
+    void createEmbreeGeometry() override {}
   };
 
 }  // namespace ospray

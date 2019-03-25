@@ -33,12 +33,14 @@ static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
   instancedGeometry->postIntersect(
       instancedGeometry, parentWorld, dg, ray, flags);
 
-#if 0
-  if (instancedGeometry->materialList) {
-    dg.material = instancedGeometry
-                      ->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+  cif (flags & DG_COLOR && self->primitiveColors) {
+    dg.color = self->primitiveColors[ray.primID];
   }
-#endif
+
+  cif (instancedGeometry->materialList) {
+    dg.material =
+        instancedGeometry->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+  }
 
   dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
   dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
@@ -47,7 +49,7 @@ static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
   dg.epsilon *= max(abs(self->xfm.l.vx.x),
                     max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
-  if (flags & DG_TANGENTS) {
+  cif (flags & DG_TANGENTS) {
     dg.dPds = xfmVector(self->xfm, dg.dPds);
     dg.dPdt = xfmVector(self->xfm, dg.dPdt);
   }
@@ -65,10 +67,20 @@ export void *uniform GeometryInstance_create(void *uniform cppE,
 
 export void GeometryInstance_set(void *uniform _self,
                                  const uniform AffineSpace3f &xfm,
-                                 const uniform AffineSpace3f &rcp_xfm)
+                                 const uniform AffineSpace3f &rcp_xfm,
+                                 void *uniform primitiveColors)
 {
   GeometryInstance *uniform self = (GeometryInstance * uniform) _self;
 
   self->xfm     = xfm;
   self->rcp_xfm = rcp_xfm;
+
+  self->primitiveColors = (vec4f * uniform) primitiveColors;
+}
+
+export void GeometryInstance_setMaterialList(void *uniform _inst,
+                                             void *uniform _matList)
+{
+  GeometryInstance *uniform inst = (GeometryInstance * uniform) _inst;
+  inst->materialList             = (Material * uniform * uniform)_matList;
 }

@@ -23,9 +23,8 @@
 
 struct Boxes
 {
-  Geometry super;  //!< inherited geometry fields
+  Geometry super;
   box3f *boxes;
-  vec4f *color;
 };
 
 unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
@@ -96,7 +95,7 @@ unmasked void Boxes_occluded(
 }
 
 static void Boxes_postIntersect(const Geometry *uniform geometry,
-                                const World *uniform model,
+                                const World *uniform world,
                                 varying DifferentialGeometry &dg,
                                 const varying Ray &ray,
                                 uniform int64 flags)
@@ -106,12 +105,6 @@ static void Boxes_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 
   dg.epsilon = 1e-3f;  // TODO: make this smarter...
-
-  if (flags & DG_COLOR && self->color) {
-    const uniform vec4f *uniform color = self->color;
-
-    dg.color = color[ray.primID];
-  }
 }
 
 export void *uniform Boxes_create(void *uniform cppEquivalent)
@@ -128,15 +121,13 @@ export void *uniform Boxes_set(void *uniform _self,
                                void *uniform _embreeGeometry,
                                uniform uint32 geomID,
                                int32 uniform numBoxes,
-                               void *uniform boxes,
-                               void *uniform color)
+                               void *uniform boxes)
 {
   Boxes *uniform self = (Boxes * uniform) _self;
 
   self->super.geomID        = geomID;
   self->super.numPrimitives = numBoxes;
   self->boxes               = (box3f * uniform) boxes;
-  self->color               = (vec4f * uniform) color;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

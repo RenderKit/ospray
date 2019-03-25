@@ -363,7 +363,8 @@ extern "C" {
 
   OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
-  OSPRAY_INTERFACE void ospSetMaterial(OSPGeometry, OSPMaterial);
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospSetMaterial(OSPGeometry, OSPMaterial);
+  OSPRAY_INTERFACE void ospSetMaterial2(OSPGeometryInstance, OSPMaterial);
 
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
 

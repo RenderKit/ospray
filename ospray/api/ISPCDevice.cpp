@@ -452,6 +452,14 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
+    void ISPCDevice::setMaterial(OSPGeometryInstance _instance,
+                                 OSPMaterial _material)
+    {
+      auto *instance = (GeometryInstance *)_instance;
+      auto *material = (Material *)_material;
+      instance->setMaterial(material);
+    }
+
     OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
                                    OSPRenderer _renderer,
                                    OSPCamera _camera,

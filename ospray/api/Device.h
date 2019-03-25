@@ -224,6 +224,9 @@ namespace ospray {
       //! assign given material to given geometry
       virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat) = 0;
 
+      //! assign given material to given geometry
+      virtual void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) = 0;
+
       /*! \brief create a new instance geometry that instantiates another
         model.  the resulting geometry still has to be added to another
         model via ospAddGeometry */

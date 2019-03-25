@@ -32,11 +32,12 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const override;
+
    protected:
     // Data members //
 
     Ref<Data> boxData;
-    Ref<Data> colorData;
 
     size_t numBoxes{0};
 

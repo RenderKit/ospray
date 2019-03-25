@@ -219,6 +219,8 @@ namespace ospray {
       //! assign given material to given geometry
       void setMaterial(OSPGeometry _geom, OSPMaterial _mat) override;
 
+      void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) override;
+
       OSPPickResult pick(OSPFrameBuffer fb,
                          OSPRenderer renderer,
                          OSPCamera camera,

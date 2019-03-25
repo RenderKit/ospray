@@ -27,6 +27,9 @@ namespace ospray {
     virtual ~GeometryInstance() override;
     virtual std::string toString() const override;
 
+    virtual void setMaterial(Material *mat);
+    virtual void setMaterialList(Data *matListData);
+
     virtual void commit() override;
 
     virtual void finalize(RTCScene worldScene);
@@ -36,13 +39,21 @@ namespace ospray {
   private:
     // Data members //
 
+    // Geometry information
     box3f instanceBounds;
-
     AffineSpace3f xfm;
     Ref<Geometry> instancedGeometry;
+
+    // Embree information
     RTCScene embreeSceneHandle{nullptr};
     RTCGeometry embreeInstanceGeometry{nullptr};
-    uint32 embreeGeometryID;
+
+    // Appearance information
+    Ref<Data> colorData;
+    Material **materialList{nullptr};  //!< per-primitive material list
+    Ref<Data> materialListData;        //!< data array for per-prim materials
+    std::vector<void *>
+        ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
   };
 
 }  // namespace ospray

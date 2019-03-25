@@ -236,9 +236,7 @@ int main(int argc, const char **argv)
   OSPTestingGeometry boxes =
       ospTestingNewGeometry("boxes", renderer_type.c_str());
 
-  g_instance = ospNewGeometryInstance(boxes.geometry);
-  ospRelease(boxes.geometry);
-  ospCommit(g_instance);
+  g_instance = boxes.instance;
 
   ospAddGeometryInstance(g_world, g_instance);
 

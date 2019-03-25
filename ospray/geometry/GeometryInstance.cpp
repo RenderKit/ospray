@@ -46,12 +46,53 @@ namespace ospray {
     return "ospray::GeometryInstance";
   }
 
+  void GeometryInstance::setMaterial(Material *mat)
+  {
+    OSPMaterial ospMat = (OSPMaterial)mat;
+    auto *data         = new Data(1, OSP_OBJECT, &ospMat);
+    setMaterialList(data);
+    data->refDec();
+  }
+
+  void GeometryInstance::setMaterialList(Data *matListData)
+  {
+    if (!matListData || matListData->numItems == 0) {
+      postStatusMsg(
+          "#osp: warning - tried to set NULL material list, ignoring."
+          " (Note this means that object may not get any material at all!)");
+      return;
+    }
+
+    materialListData = matListData;
+    materialList     = (Material **)materialListData->data;
+
+    if (!getIE()) {
+      postStatusMsg(
+          "#osp: warning: geometry does not have an "
+          "ispc equivalent!");
+    } else {
+      const int numMaterials = materialListData->numItems;
+      ispcMaterialPtrs.resize(numMaterials);
+      for (int i = 0; i < numMaterials; i++)
+        ispcMaterialPtrs[i] = materialList[i]->getIE();
+
+      ispc::GeometryInstance_setMaterialList(this->getIE(),
+                                             ispcMaterialPtrs.data());
+    }
+  }
+
   void GeometryInstance::commit()
   {
     if (embreeSceneHandle)
       rtcReleaseScene(embreeSceneHandle);
 
     embreeSceneHandle = rtcNewScene(ispc_embreeDevice());
+
+    if (embreeInstanceGeometry)
+      rtcReleaseGeometry(embreeInstanceGeometry);
+
+    embreeInstanceGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
 
     xfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
     xfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
@@ -71,20 +112,14 @@ namespace ospray {
 
     instancedGeometry->finalize(embreeSceneHandle);
     rtcCommitScene(embreeSceneHandle);
-  }
 
-  void GeometryInstance::finalize(RTCScene worldScene)
-  {
-    if (embreeInstanceGeometry)
-      rtcReleaseGeometry(embreeInstanceGeometry);
+    colorData = getParamData("color", getParamData("prim.color"));
 
-    embreeInstanceGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
-
-    embreeGeometryID =
-        rtcAttachGeometry(worldScene, embreeInstanceGeometry);
-
-    rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
+    if (colorData &&
+        colorData->numItems != instancedGeometry->numPrimitives()) {
+      throw std::runtime_error(
+          "number of colors does not match number of primitives!");
+    }
 
     const box3f b = instancedGeometry->bounds;
     const vec3f v000(b.lower.x, b.lower.y, b.lower.z);
@@ -106,13 +141,22 @@ namespace ospray {
     instanceBounds.extend(xfmPoint(xfm, v110));
     instanceBounds.extend(xfmPoint(xfm, v111));
 
+    AffineSpace3f rcp_xfm = rcp(xfm);
+    ispc::GeometryInstance_set(getIE(),
+                               (ispc::AffineSpace3f &)xfm,
+                               (ispc::AffineSpace3f &)rcp_xfm,
+                               colorData ? colorData->data : nullptr);
+
+    rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
+
     rtcSetGeometryTransform(
         embreeInstanceGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
     rtcCommitGeometry(embreeInstanceGeometry);
+  }
 
-    AffineSpace3f rcp_xfm = rcp(xfm);
-    ispc::GeometryInstance_set(
-        getIE(), (ispc::AffineSpace3f &)xfm, (ispc::AffineSpace3f &)rcp_xfm);
+  void GeometryInstance::finalize(RTCScene worldScene)
+  {
+    rtcAttachGeometry(worldScene, embreeInstanceGeometry);
   }
 
   box3f GeometryInstance::bounds() const

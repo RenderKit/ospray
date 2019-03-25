@@ -37,18 +37,12 @@ namespace ospray {
   {
     Geometry::commit();
 
-    boxData   = getParamData("boxes");
-    colorData = getParamData("color", getParamData("boxes.color"));
+    boxData = getParamData("boxes");
 
     if (!boxData)
       throw std::runtime_error("no box data provided to Boxes geometry!");
 
     numBoxes = boxData->numItems / 2;
-
-    if (colorData && colorData->numItems != numBoxes) {
-      throw std::runtime_error(
-          "number of colors does not match number of boxes!");
-    }
 
     auto *data = (vec3f *)boxData->data;
     box3f bounds;
@@ -64,12 +58,12 @@ namespace ospray {
 
     this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
-    ispc::Boxes_set(getIE(),
-                    embreeGeometry,
-                    geomID,
-                    numBoxes,
-                    boxData->data,
-                    colorData->data);
+    ispc::Boxes_set(getIE(), embreeGeometry, geomID, numBoxes, boxData->data);
+  }
+
+  size_t Boxes::numPrimitives() const
+  {
+    return numBoxes;
   }
 
   void Boxes::createEmbreeGeometry()

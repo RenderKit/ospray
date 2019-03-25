@@ -912,6 +912,12 @@ namespace ospray {
       processWork(work);
     }
 
+    void MPIOffloadDevice::setMaterial(OSPGeometryInstance _instance,
+                                       OSPMaterial _material)
+    {
+      NOT_IMPLEMENTED;
+    }
+
     /*! create a new Texture2D object */
     OSPTexture MPIOffloadDevice::newTexture(const char *type)
     {
