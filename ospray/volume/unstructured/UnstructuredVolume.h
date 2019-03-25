@@ -82,7 +82,7 @@ namespace ospray {
       uint64_t cOffset = getCellOffset(cellId);
 
       // Iterate through all faces
-      for (int i = 0; i < facesCount; i++) {
+      for (uint32_t i = 0; i < facesCount; i++) {
 
         // Retrieve vertex positions
         uint64_t vId0 = getVertexId(cOffset + faces[i][0]);
