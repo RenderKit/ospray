@@ -105,7 +105,6 @@ inline void postIntersect(const World *uniform model,
   dg.primID = ray.primID;
   dg.st     = make_vec2f(ray.u, ray.v);
 
-  // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
   dg.material = NULL;
 
@@ -120,29 +119,13 @@ inline void postIntersect(const World *uniform model,
   dg.P = ray.org + ray.t * ray.dir;
   dg.epsilon = 0.f; // per default no geometry-type specific epsilon
 
-  // a first hack for instancing: problem is that ospray assumes that
-  // 'ray.geomid' specifies the respective sub-geometry of a model
-  // that was hit, but for instances embree actually stores this value
-  // in ray.instID, so the model would have to know if it's a model
-  // over instances or a model over geometries, which is kind of ugly
-  // ... will eventually have to fix this properly by implementing
-  // instances directly in ospray, but for now let's try this hack
-  // here:
-  if (ray.instID == RTC_INVALID_GEOMETRY_ID) {
-    // a regular geometry
-    foreach_unique(geomID in ray.geomID) {
-      uniform Geometry *uniform geom = model->geometry[geomID];
-      dg.geometry = geom;
-      geom->postIntersect(geom,model,dg,ray,flags);
-      if (geom->materialList) {
-        dg.material = geom->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-      }
-    }
-  } else {
+  if (ray.instID != RTC_INVALID_GEOMETRY_ID) {
     foreach_unique(instID in ray.instID) {
       GeometryInstance *uniform instGeom = model->geometryInstances[instID];
       GeometryInstance_postIntersect(instGeom, model, dg, ray, flags);
     }
+  } else {
+    dg.Ns = dg.Ng = ray.Ng;
   }
 
   // merge geometry-type specific epsilon with general epsilon
@@ -153,7 +136,6 @@ inline void postIntersect(const World *uniform model,
 #define  DG_NS_FACEFORWARD (DG_NS | DG_FACEFORWARD)
 #define  DG_NG_NORMALIZE   (DG_NG | DG_NORMALIZE)
 #define  DG_NS_NORMALIZE   (DG_NS | DG_NORMALIZE)
-
 
   vec3f ffnng = normalize(dg.Ng);
 
