@@ -52,11 +52,6 @@ namespace ospray {
                           volume->getIE());
   }
 
-  void Isosurfaces::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t Isosurfaces::numPrimitives() const
   {
     return numIsovalues;

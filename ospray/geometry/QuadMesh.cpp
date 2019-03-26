@@ -153,11 +153,6 @@ namespace ospray {
                        huge_mesh);
   }
 
-  void QuadMesh::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t QuadMesh::numPrimitives() const
   {
     return indexData ? indexData->numItems / 4 : 0;

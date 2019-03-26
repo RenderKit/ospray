@@ -168,11 +168,6 @@ namespace ospray {
                      indexData->numItems);
   }
 
-  void Curves::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t Curves::numPrimitives() const
   {
     const bool haveIndices = indexData;

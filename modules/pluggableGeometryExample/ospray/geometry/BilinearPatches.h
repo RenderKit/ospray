@@ -76,10 +76,6 @@ namespace ospray {
           "ospCommit(<thisGeometry>)" */
       virtual void commit() override;
 
-      /*! 'finalize' is what ospray calls when everything is set and
-        done, and a actual user geometry has to be built */
-      virtual void finalize(RTCScene embreeScene) override;
-
       virtual size_t numPrimitives() const override;
 
      protected:

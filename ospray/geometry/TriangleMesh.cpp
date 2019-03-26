@@ -168,11 +168,6 @@ namespace ospray {
                            huge_mesh);
   }
 
-  void TriangleMesh::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t TriangleMesh::numPrimitives() const
   {
     return indexData ? indexData->numItems / 3 : 0;

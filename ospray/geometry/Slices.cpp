@@ -55,11 +55,6 @@ namespace ospray {
                      volume->getIE());
   }
 
-  void Slices::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t Slices::numPrimitives() const
   {
     return numPlanes;

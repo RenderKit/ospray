@@ -57,10 +57,6 @@ namespace ospray {
 
     virtual void commit() override;
 
-    /*! \brief integrates this geometry's primitives into the respective
-        model's acceleration structure */
-    virtual void finalize(RTCScene embreeScene) = 0;
-
     /*! \brief creates an abstract geometry class of given type
 
       The respective geometry type must be a registered geometry type

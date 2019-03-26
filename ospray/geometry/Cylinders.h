@@ -28,8 +28,6 @@ namespace ospray {
 
     virtual void commit() override;
 
-    virtual void finalize(RTCScene embreeScene) override;
-
     virtual size_t numPrimitives() const override;
 
    protected:

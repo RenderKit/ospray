@@ -136,11 +136,6 @@ namespace ospray {
         huge_mesh);
   }
 
-  void Spheres::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t Spheres::numPrimitives() const
   {
     return numSpheres;

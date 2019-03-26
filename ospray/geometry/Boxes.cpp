@@ -56,11 +56,6 @@ namespace ospray {
     ispc::Boxes_set(getIE(), embreeGeometry, geomID, numBoxes, boxData->data);
   }
 
-  void Boxes::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t Boxes::numPrimitives() const
   {
     return numBoxes;

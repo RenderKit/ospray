@@ -34,7 +34,7 @@ namespace ospray {
     return "ospray::Instance";
   }
 
-  void Instance::finalize(RTCScene embreeScene)
+  void Instance::commit()
   {
     xfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
     xfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
@@ -50,7 +50,7 @@ namespace ospray {
 
     embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
-    embreeGeomID = rtcAttachGeometry(embreeScene, embreeGeometry);
+
     rtcSetGeometryInstancedScene(embreeGeometry,
                                  instancedScene->embreeSceneHandle);
 

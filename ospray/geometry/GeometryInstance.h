@@ -32,7 +32,7 @@ namespace ospray {
 
     virtual void commit() override;
 
-    virtual void finalize(RTCScene worldScene);
+    RTCGeometry embreeGeometryHandle() const;
 
     box3f bounds() const;
 

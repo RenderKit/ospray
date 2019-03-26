@@ -30,9 +30,9 @@ namespace ospray {
 
     virtual std::string toString() const override;
 
-    virtual void finalize(RTCScene embreeScene) override;
-
     virtual size_t numPrimitives() const { NOT_IMPLEMENTED; }
+
+    virtual void commit() override;
 
     // Data members //
 

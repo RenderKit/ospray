@@ -110,7 +110,7 @@ namespace ospray {
 
     rtcSetSceneFlags(embreeSceneHandle, static_cast<RTCSceneFlags>(sceneFlags));
 
-    instancedGeometry->finalize(embreeSceneHandle);
+    rtcAttachGeometry(embreeSceneHandle, instancedGeometry->embreeGeometry);
     rtcCommitScene(embreeSceneHandle);
 
     colorData = getParamData("color", getParamData("prim.color"));
@@ -154,9 +154,9 @@ namespace ospray {
     rtcCommitGeometry(embreeInstanceGeometry);
   }
 
-  void GeometryInstance::finalize(RTCScene worldScene)
+  RTCGeometry GeometryInstance::embreeGeometryHandle() const
   {
-    rtcAttachGeometry(worldScene, embreeInstanceGeometry);
+    return embreeInstanceGeometry;
   }
 
   box3f GeometryInstance::bounds() const

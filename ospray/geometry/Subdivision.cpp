@@ -118,11 +118,6 @@ namespace ospray {
                           (ispc::vec2f *)texcoord);
   }
 
-  void Subdivision::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t Subdivision::numPrimitives() const
   {
     return indexData ? indexData->numItems / 4 : 0;

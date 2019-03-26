@@ -92,13 +92,6 @@ namespace ospray {
       }
     }
 
-    /*! 'finalize' is what ospray calls when everything is set and
-        done, and a actual user geometry has to be built */
-    void BilinearPatches::finalize(RTCScene embreeScene)
-    {
-      rtcAttachGeometry(embreeScene, embreeGeometry);
-    }
-
     size_t BilinearPatches::numPrimitives() const
     {
       return patchesData->numBytes / sizeof(Patch);

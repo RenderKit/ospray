@@ -98,11 +98,6 @@ namespace ospray {
         offset_colorID);
   }
 
-  void Cylinders::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
-  }
-
   size_t Cylinders::numPrimitives() const
   {
     return numCylinders;

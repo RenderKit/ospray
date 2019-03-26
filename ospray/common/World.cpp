@@ -85,7 +85,7 @@ namespace ospray {
           << "=======================================================\n"
           << "Finalizing geometry " << i;
 
-      geometry[i]->finalize(embreeSceneHandle);
+      rtcAttachGeometry(embreeSceneHandle, geometry[i]->embreeGeometry);
 
       bounds.extend(geometry[i]->bounds);
       ispc::World_setGeometry(getIE(), i, geometry[i]->getIE());
@@ -97,7 +97,7 @@ namespace ospray {
           << "Finalizing geometry instance " << i;
 
       auto &instance = *geometryInstances[i];
-      instance.finalize(embreeSceneHandle);
+      rtcAttachGeometry(embreeSceneHandle, instance.embreeGeometryHandle());
       bounds.extend(instance.bounds());
       ispc::World_setGeometryInstance(getIE(), i, instance.getIE());
     }

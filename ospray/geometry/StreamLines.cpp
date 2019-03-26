@@ -52,7 +52,7 @@ namespace ospray {
       throw std::runtime_error(
           "streamlines 'vertex' must be type OSP_FLOAT4 or OSP_FLOAT3A");
 
-    vertex      = (vec3fa *)vertexData->data;
+    vertex = (vec3fa *)vertexData->data;
 
     if (vertexData->type == OSP_FLOAT4) {
       radius.reset((const float *)vertex + 3, sizeof(vec4f));
@@ -182,11 +182,6 @@ namespace ospray {
     }
 
     rtcCommitGeometry(embreeGeometry);
-  }
-
-  void StreamLines::finalize(RTCScene embreeScene)
-  {
-    rtcAttachGeometry(embreeScene, embreeGeometry);
   }
 
   size_t StreamLines::numPrimitives() const
