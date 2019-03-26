@@ -143,13 +143,8 @@ namespace ospray {
     bounds = empty;
     for (uint32_t i = 0; i < numVerts * numCompsInVtx; i += numCompsInVtx)
       bounds.extend(*(vec3f *)((float *)vertexData->data + i));
-  }
 
-  void TriangleMesh::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
                      << numVerts << " vertices)\n  mesh bounds " << bounds;
@@ -171,6 +166,16 @@ namespace ospray {
                            (uint32_t *)prim_materialID,
                            colorData && colorData->type == OSP_FLOAT4,
                            huge_mesh);
+  }
+
+  void TriangleMesh::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t TriangleMesh::numPrimitives() const
+  {
+    return indexData ? indexData->numItems / 3 : 0;
   }
 
   void TriangleMesh::createEmbreeGeometry()

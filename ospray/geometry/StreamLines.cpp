@@ -139,13 +139,8 @@ namespace ospray {
                      << "#verts=" << numVertices << ", "
                      << "#segments=" << numSegments << ", "
                      << "as curve: " << useCurve;
-  }
 
-  void StreamLines::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     if (useCurve) {
       rtcSetSharedGeometryBuffer(embreeGeometry,
@@ -187,6 +182,16 @@ namespace ospray {
     }
 
     rtcCommitGeometry(embreeGeometry);
+  }
+
+  void StreamLines::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t StreamLines::numPrimitives() const
+  {
+    return numSegments;
   }
 
   void StreamLines::createEmbreeGeometry()

@@ -32,6 +32,8 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const override;
+
    protected:
     /*! default radius, if no per-sphere radius was specified. */
     float radius;

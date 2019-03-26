@@ -111,13 +111,8 @@ namespace ospray {
       huge_mesh = true;
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
-  }
 
-  void Spheres::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     ispc::SpheresGeometry_set(
         getIE(),
@@ -139,6 +134,16 @@ namespace ospray {
         offset_materialID,
         offset_colorID,
         huge_mesh);
+  }
+
+  void Spheres::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t Spheres::numPrimitives() const
+  {
+    return numSpheres;
   }
 
   void Spheres::createEmbreeGeometry()

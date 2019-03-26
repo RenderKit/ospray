@@ -69,7 +69,7 @@ namespace ospray {
       ospLoadModule first. */
     static Geometry *createInstance(const char *type);
 
-    virtual size_t numPrimitives() const { NOT_IMPLEMENTED; }
+    virtual size_t numPrimitives() const = 0;
 
     box3f bounds{empty};
 

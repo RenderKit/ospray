@@ -63,18 +63,11 @@ namespace ospray {
       // sanity check if a patches data was actually set!
       if (!patchesData)
         throw std::runtime_error("no data provided to BilinearPatches!");
-    }
 
-    /*! 'finalize' is what ospray calls when everything is set and
-        done, and a actual user geometry has to be built */
-    void BilinearPatches::finalize(RTCScene embreeScene)
-    {
       createEmbreeGeometry();
 
-      this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
-
       // look at the data we were provided with ....
-      size_t numPatchesInInput = patchesData->numBytes / sizeof(Patch);
+      size_t numPatchesInInput = numPrimitives();
 
       /* get the acutal 'raw' pointer to the data (ispc doesn't know
          what to do with the 'Data' abstraction class */
@@ -97,6 +90,18 @@ namespace ospray {
         bounds.extend(patch[i].controlPoint[1][0]);
         bounds.extend(patch[i].controlPoint[1][1]);
       }
+    }
+
+    /*! 'finalize' is what ospray calls when everything is set and
+        done, and a actual user geometry has to be built */
+    void BilinearPatches::finalize(RTCScene embreeScene)
+    {
+      rtcAttachGeometry(embreeScene, embreeGeometry);
+    }
+
+    size_t BilinearPatches::numPrimitives() const
+    {
+      return patchesData->numBytes / sizeof(Patch);
     }
 
     void BilinearPatches::createEmbreeGeometry()

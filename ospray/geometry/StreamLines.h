@@ -31,6 +31,8 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const override;
+
    protected:
     Ref<Data> vertexData;  //!< refcounted data array for vertex data
     Ref<Data> indexData;   //!< refcounted data array for segment data

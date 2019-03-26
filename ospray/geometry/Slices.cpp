@@ -44,13 +44,8 @@ namespace ospray {
 
     numPlanes = planesData->numItems;
     planes    = (vec4f *)planesData->data;
-  }
 
-  void Slices::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     ispc::Slices_set(getIE(),
                      embreeGeometry,
@@ -58,6 +53,16 @@ namespace ospray {
                      numPlanes,
                      (ispc::vec4f *)planes,
                      volume->getIE());
+  }
+
+  void Slices::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t Slices::numPrimitives() const
+  {
+    return numPlanes;
   }
 
   void Slices::createEmbreeGeometry()

@@ -32,6 +32,8 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const override;
+
    protected:
     float level{0.f};
 

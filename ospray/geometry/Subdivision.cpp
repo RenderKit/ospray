@@ -98,13 +98,8 @@ namespace ospray {
     for (size_t i = 0; i < vertexData->size(); i++)
       bounds.extend(vertex[i]);
     // TODO: must factor in displacement into bounds....
-  }
 
-  void Subdivision::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     postStatusMsg(2) << "  created subdivision (" << numFaces << " faces "
                      << ", " << vertexData->size() << " vertices)\n"
@@ -121,6 +116,16 @@ namespace ospray {
                           prim_materialID,
                           materialList ? ispcMaterialPtrs.data() : nullptr,
                           (ispc::vec2f *)texcoord);
+  }
+
+  void Subdivision::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t Subdivision::numPrimitives() const
+  {
+    return indexData ? indexData->numItems / 4 : 0;
   }
 
   void Subdivision::createEmbreeGeometry()

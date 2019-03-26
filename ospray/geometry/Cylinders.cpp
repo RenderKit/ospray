@@ -72,13 +72,8 @@ namespace ospray {
       bounds.extend(box3f(v0 - r, v0 + r));
       bounds.extend(box3f(v1 - r, v1 + r));
     }
-  }
 
-  void Cylinders::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     auto colComps = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
 
@@ -101,6 +96,16 @@ namespace ospray {
         offset_radius,
         offset_materialID,
         offset_colorID);
+  }
+
+  void Cylinders::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t Cylinders::numPrimitives() const
+  {
+    return numCylinders;
   }
 
   void Cylinders::createEmbreeGeometry()

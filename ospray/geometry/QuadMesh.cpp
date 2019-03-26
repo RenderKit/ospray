@@ -128,13 +128,8 @@ namespace ospray {
     bounds = empty;
     for (uint32_t i = 0; i < numVerts * numCompsInVtx; i += numCompsInVtx)
       bounds.extend(*(vec3f *)(vertex + i));
-  }
 
-  void QuadMesh::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     postStatusMsg(2) << "  created quad mesh (" << numQuads << " quads "
                      << ", " << numVerts << " vertices)\n"
@@ -156,6 +151,16 @@ namespace ospray {
                        (uint32_t *)prim_materialID,
                        colorData && colorData->type == OSP_FLOAT4,
                        huge_mesh);
+  }
+
+  void QuadMesh::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t QuadMesh::numPrimitives() const
+  {
+    return indexData ? indexData->numItems / 4 : 0;
   }
 
   void QuadMesh::createEmbreeGeometry()

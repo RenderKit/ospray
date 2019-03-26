@@ -32,6 +32,8 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const { NOT_IMPLEMENTED; }
+
     // Data members //
 
     /*! transformation matrix associated with that instance's geometry. may be

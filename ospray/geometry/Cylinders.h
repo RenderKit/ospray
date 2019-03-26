@@ -30,6 +30,8 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const override;
+
    protected:
     float radius;  //!< default radius, if no per-cylinder radius was specified.
     int32 materialID;

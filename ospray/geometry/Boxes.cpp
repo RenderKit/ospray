@@ -50,15 +50,15 @@ namespace ospray {
       bounds.extend(v);
     });
     this->bounds = bounds;
+
+    createEmbreeGeometry();
+
+    ispc::Boxes_set(getIE(), embreeGeometry, geomID, numBoxes, boxData->data);
   }
 
   void Boxes::finalize(RTCScene embreeScene)
   {
-    createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
-
-    ispc::Boxes_set(getIE(), embreeGeometry, geomID, numBoxes, boxData->data);
+    rtcAttachGeometry(embreeScene, embreeGeometry);
   }
 
   size_t Boxes::numPrimitives() const

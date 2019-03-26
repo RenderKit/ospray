@@ -32,6 +32,8 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const override;
+
    protected:
     Ref<Data> planesData;
     Ref<Volume> volume;

@@ -41,13 +41,8 @@ namespace ospray {
     volume        = (Volume *)getParamObject("volume", nullptr);
     numIsovalues  = isovaluesData->numItems;
     isovalues     = (float *)isovaluesData->data;
-  }
 
-  void Isosurfaces::finalize(RTCScene embreeScene)
-  {
     createEmbreeGeometry();
-
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
 
     ispc::Isosurfaces_set(getIE(),
                           embreeGeometry,
@@ -55,6 +50,16 @@ namespace ospray {
                           numIsovalues,
                           isovalues,
                           volume->getIE());
+  }
+
+  void Isosurfaces::finalize(RTCScene embreeScene)
+  {
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
+
+  size_t Isosurfaces::numPrimitives() const
+  {
+    return numIsovalues;
   }
 
   void Isosurfaces::createEmbreeGeometry()

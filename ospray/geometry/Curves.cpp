@@ -120,10 +120,11 @@ namespace ospray {
     normalData  = getParamData("vertex.normal", nullptr);
     tangentData = getParamData("vertex.tangent", nullptr);
 
-    const auto basis =
-        curveBasisForString(getParamString("curveBasis", "unspecified"));
-    const auto type =
-        curveTypeForString(getParamString("curveType", "unspecified"));
+    curveBasis = getParamString("curveBasis", "unspecified");
+    curveType  = getParamString("curveType", "unspecified");
+
+    const auto type  = curveTypeForString(curveType);
+    const auto basis = curveBasisForString(curveBasis);
 
     if (type == RIBBON && !normalData)
       throw std::runtime_error("ribbon curve must have 'normal' array");
@@ -157,19 +158,35 @@ namespace ospray {
       }
     }
 
-    curveType = curveMap[basis][type];
+    embreeCurveType = curveMap[basis][type];
+
+    createEmbreeGeometry();
+
+    ispc::Curves_set(getIE(),
+                     (ispc::RTCGeometryType)embreeCurveType,
+                     geomID,
+                     indexData->numItems);
   }
 
   void Curves::finalize(RTCScene embreeScene)
   {
-    createEmbreeGeometry();
+    rtcAttachGeometry(embreeScene, embreeGeometry);
+  }
 
-    this->geomID = rtcAttachGeometry(embreeScene, embreeGeometry);
+  size_t Curves::numPrimitives() const
+  {
+    const bool haveIndices = indexData;
 
-    ispc::Curves_set(getIE(),
-                     (ispc::RTCGeometryType)curveType,
-                     geomID,
-                     indexData->numItems);
+    if (!haveIndices)
+      return 0;
+
+    const auto basis = curveBasisForString(curveBasis);
+
+    uint32_t numVerts = 4;
+    if (basis == LINEAR || basis == HERMITE)
+      numVerts = 2;
+
+    return indexData->numItems / numVerts;
   }
 
   void Curves::createEmbreeGeometry()
@@ -177,7 +194,7 @@ namespace ospray {
     if (embreeGeometry)
       rtcReleaseGeometry(embreeGeometry);
 
-    RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(), curveType);
+    RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
 
     rtcSetSharedGeometryBuffer(geom,
                                RTC_BUFFER_TYPE_VERTEX,

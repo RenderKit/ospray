@@ -30,6 +30,8 @@ namespace ospray {
 
     virtual void finalize(RTCScene embreeScene) override;
 
+    virtual size_t numPrimitives() const override;
+
    protected:
     // Data members //
 
@@ -38,7 +40,10 @@ namespace ospray {
     Ref<Data> normalData;   //!< refcounted data array for normal data
     Ref<Data> tangentData;  //!< refcounted data array for tangent data
 
-    RTCGeometryType curveType;
+    RTCGeometryType embreeCurveType;
+
+    std::string curveBasis;
+    std::string curveType;
 
    private:
     void createEmbreeGeometry() override;

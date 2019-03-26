@@ -80,6 +80,8 @@ namespace ospray {
         done, and a actual user geometry has to be built */
       virtual void finalize(RTCScene embreeScene) override;
 
+      virtual size_t numPrimitives() const override;
+
      protected:
       /*! the input data array. the data array contains a list of
           patches, each of which consists of four vec3fs. Note in this
