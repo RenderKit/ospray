@@ -33,13 +33,14 @@ static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
   instancedGeometry->postIntersect(
       instancedGeometry, parentWorld, dg, ray, flags);
 
-  cif (flags & DG_COLOR && self->primitiveColors) {
+  cif(flags & DG_COLOR && self->primitiveColors)
+  {
     dg.color = self->primitiveColors[ray.primID];
   }
 
-  cif (instancedGeometry->materialList) {
-    dg.material =
-        instancedGeometry->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+  cif(self->materialList)
+  {
+    dg.material = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
   }
 
   dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
@@ -49,7 +50,8 @@ static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
   dg.epsilon *= max(abs(self->xfm.l.vx.x),
                     max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
-  cif (flags & DG_TANGENTS) {
+  cif(flags & DG_TANGENTS)
+  {
     dg.dPds = xfmVector(self->xfm, dg.dPds);
     dg.dPdt = xfmVector(self->xfm, dg.dPdt);
   }
@@ -82,5 +84,5 @@ export void GeometryInstance_setMaterialList(void *uniform _inst,
                                              void *uniform _matList)
 {
   GeometryInstance *uniform inst = (GeometryInstance * uniform) _inst;
-  inst->materialList             = (Material * uniform * uniform)_matList;
+  inst->materialList             = (Material * uniform * uniform) _matList;
 }
