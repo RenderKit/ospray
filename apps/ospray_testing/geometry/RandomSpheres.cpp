@@ -39,7 +39,8 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingGeometry RandomSpheres::createGeometry(const std::string &) const
+    OSPTestingGeometry RandomSpheres::createGeometry(
+        const std::string &renderer_type) const
     {
       struct Sphere
       {
@@ -92,22 +93,28 @@ namespace ospray {
       ospSet1i(spheresGeometry, "color_format", int(OSP_FLOAT4));
       ospSet1i(spheresGeometry, "color_stride", int(sizeof(Sphere)));
 
+      // commit the spheres geometry
+      ospCommit(spheresGeometry);
+
+      OSPGeometryInstance instance = ospNewGeometryInstance(spheresGeometry);
+
       // create glass material and assign to geometry
-      OSPMaterial glassMaterial = ospNewMaterial("pathtracer", "ThinGlass");
+      OSPMaterial glassMaterial =
+          ospNewMaterial(renderer_type.c_str(), "ThinGlass");
       ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
       ospCommit(glassMaterial);
 
-      ospSetMaterial(spheresGeometry, glassMaterial);
-
-      // commit the spheres geometry
-      ospCommit(spheresGeometry);
+      ospSetMaterial2(instance, glassMaterial);
 
       // release handles we no longer need
       ospRelease(spheresData);
       ospRelease(glassMaterial);
 
+      ospCommit(instance);
+
       OSPTestingGeometry retval;
       retval.geometry = spheresGeometry;
+      retval.instance = instance;
       retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
 
       return retval;

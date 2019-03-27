@@ -23,6 +23,8 @@
 
 #include <imgui.h>
 
+static const std::string renderer_type = "pathtracer";
+
 using namespace ospcommon;
 
 struct Sphere
@@ -39,6 +41,7 @@ struct Sphere
 // every frame
 static std::vector<Sphere> g_spheres;
 static OSPGeometry g_spheresGeometry;
+static OSPGeometryInstance g_spheresInstance;
 static OSPWorld g_world;
 
 std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
@@ -73,7 +76,7 @@ std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
   return spheres;
 }
 
-OSPGeometry createGroundPlaneGeometry()
+OSPGeometryInstance createGroundPlane()
 {
   OSPGeometry planeGeometry = ospNewGeometry("quads");
 
@@ -195,14 +198,18 @@ OSPGeometry createGroundPlaneGeometry()
   ospSetData(planeGeometry, "vertex.color", colorData);
   ospSetData(planeGeometry, "index", indexData);
 
-  // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
-  ospCommit(material);
-
-  ospSetMaterial(planeGeometry, material);
-
   // finally, commit the geometry
   ospCommit(planeGeometry);
+
+  OSPGeometryInstance planeInstance = ospNewGeometryInstance(planeGeometry);
+
+  ospRelease(planeGeometry);
+
+  // create and assign a material to the geometry
+  OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
+  ospCommit(material);
+
+  ospSetMaterial2(planeInstance, material);
 
   // release handles we no longer need
   ospRelease(positionData);
@@ -211,10 +218,12 @@ OSPGeometry createGroundPlaneGeometry()
   ospRelease(indexData);
   ospRelease(material);
 
-  return planeGeometry;
+  ospCommit(planeInstance);
+
+  return planeInstance;
 }
 
-OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
+OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
 {
   g_spheres = generateRandomSpheres(numSpheres);
 
@@ -224,6 +233,7 @@ OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
 
   // create the sphere geometry, and assign attributes
   g_spheresGeometry = ospNewGeometry("spheres");
+  g_spheresInstance = ospNewGeometryInstance(g_spheresGeometry);
 
   ospSetData(g_spheresGeometry, "spheres", spheresData);
   ospSet1i(g_spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
@@ -236,20 +246,22 @@ OSPGeometry createRandomSpheresGeometry(size_t numSpheres)
   ospSet1i(g_spheresGeometry, "color_stride", int(sizeof(Sphere)));
 
   // create glass material and assign to geometry
-  OSPMaterial glassMaterial = ospNewMaterial("pathtracer", "ThinGlass");
+  OSPMaterial glassMaterial =
+      ospNewMaterial(renderer_type.c_str(), "ThinGlass");
   ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
-  ospSetMaterial(g_spheresGeometry, glassMaterial);
+  ospSetMaterial2(g_spheresInstance, glassMaterial);
 
   // commit the spheres geometry
   ospCommit(g_spheresGeometry);
+  ospCommit(g_spheresInstance);
 
   // release handles we no longer need
   ospRelease(spheresData);
   ospRelease(glassMaterial);
 
-  return g_spheresGeometry;
+  return g_spheresInstance;
 }
 
 OSPWorld createWorld()
@@ -258,10 +270,10 @@ OSPWorld createWorld()
   OSPWorld world = ospNewWorld();
 
   // add in spheres geometry (100 of them)
-  ospAddGeometry(world, createRandomSpheresGeometry(100));
+  ospAddGeometryInstance(world, createRandomSpheresGeometry(100));
 
   // add in a ground plane geometry
-  ospAddGeometry(world, createGroundPlaneGeometry());
+  ospAddGeometryInstance(world, createGroundPlane());
 
   // commit the world
   ospCommit(world);
@@ -272,7 +284,7 @@ OSPWorld createWorld()
 OSPRenderer createRenderer()
 {
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("pathtracer");
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   // create an ambient light
   OSPLight ambientLight = ospNewLight("ambient");
@@ -338,6 +350,7 @@ void updateSpheresGeometry()
 
   // commit the updated spheres geometry
   ospCommit(g_spheresGeometry);
+  ospCommit(g_spheresInstance);
 
   // release handles we no longer need
   ospRelease(spheresData);
@@ -405,6 +418,11 @@ int main(int argc, const char **argv)
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
+
+  ospRelease(g_spheresGeometry);
+  ospRelease(g_spheresInstance);
+  ospRelease(g_world);
+  ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();

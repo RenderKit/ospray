@@ -26,6 +26,8 @@
 
 using namespace ospcommon;
 
+static const std::string renderer_type = "pathtracer";
+
 int main(int argc, const char **argv)
 {
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
@@ -50,15 +52,17 @@ int main(int argc, const char **argv)
   OSPWorld world = ospNewWorld();
 
   // add in spheres geometry
-  OSPTestingGeometry spheres = ospTestingNewGeometry("boxes", "scivis");
-  ospAddGeometry(world, spheres.geometry);
+  OSPTestingGeometry spheres =
+      ospTestingNewGeometry("boxes", renderer_type.c_str());
+  ospAddGeometryInstance(world, spheres.instance);
   ospRelease(spheres.geometry);
+  ospRelease(spheres.instance);
 
   // commit the world
   ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("scivis");
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);
@@ -72,7 +76,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, (box3f&)spheres.bounds, world, renderer));
+          vec2i{1024, 768}, (box3f &)spheres.bounds, world, renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int spp = 1;

@@ -26,7 +26,9 @@
 
 using namespace ospcommon;
 
-OSPGeometry createGroundPlaneGeometry()
+static const std::string renderer_type = "raycast_Ng";
+
+OSPGeometryInstance createGroundPlane()
 {
   OSPGeometry planeGeometry = ospNewGeometry("quads");
 
@@ -148,14 +150,18 @@ OSPGeometry createGroundPlaneGeometry()
   ospSetData(planeGeometry, "vertex.color", colorData);
   ospSetData(planeGeometry, "index", indexData);
 
-  // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
-  ospCommit(material);
-
-  ospSetMaterial(planeGeometry, material);
-
   // finally, commit the geometry
   ospCommit(planeGeometry);
+
+  OSPGeometryInstance planeInstance = ospNewGeometryInstance(planeGeometry);
+
+  ospRelease(planeGeometry);
+
+  // create and assign a material to the geometry
+  OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
+  ospCommit(material);
+
+  ospSetMaterial2(planeInstance, material);
 
   // release handles we no longer need
   ospRelease(positionData);
@@ -164,7 +170,9 @@ OSPGeometry createGroundPlaneGeometry()
   ospRelease(indexData);
   ospRelease(material);
 
-  return planeGeometry;
+  ospCommit(planeInstance);
+
+  return planeInstance;
 }
 
 int main(int argc, const char **argv)
@@ -192,17 +200,19 @@ int main(int argc, const char **argv)
 
   // add in subdivision geometry
   OSPTestingGeometry subdivisionGeometry =
-      ospTestingNewGeometry("subdivision_cube", "scivis");
-  ospAddGeometry(world, subdivisionGeometry.geometry);
+      ospTestingNewGeometry("subdivision_cube", renderer_type.c_str());
+  ospAddGeometryInstance(world, subdivisionGeometry.instance);
 
   // add in a ground plane geometry
-  ospAddGeometry(world, createGroundPlaneGeometry());
+  OSPGeometryInstance planeInstance = createGroundPlane();
+  ospCommit(planeInstance);
+  ospAddGeometryInstance(world, planeInstance);
 
   // commit the world
   ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("scivis");
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
   ospSetData(renderer, "lights", lightsData);
@@ -221,6 +231,7 @@ int main(int argc, const char **argv)
     if (ImGui::SliderInt("tessellation level", &tessellationLevel, 1, 10)) {
       ospSet1f(subdivisionGeometry.geometry, "level", tessellationLevel);
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.instance);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
 
@@ -244,6 +255,7 @@ int main(int argc, const char **argv)
       ospRelease(vertexCreaseWeightsData);
 
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.instance);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
 
@@ -266,6 +278,7 @@ int main(int argc, const char **argv)
       ospRelease(edgeCreaseWeightsData);
 
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.instance);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
   });
@@ -275,6 +288,8 @@ int main(int argc, const char **argv)
 
   // cleanup remaining objects
   ospRelease(subdivisionGeometry.geometry);
+  ospRelease(subdivisionGeometry.instance);
+  ospRelease(planeInstance);
   ospRelease(world);
   ospRelease(renderer);
 

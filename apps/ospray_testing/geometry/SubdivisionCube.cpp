@@ -36,7 +36,7 @@ namespace ospray {
     // Inlined definitions ////////////////////////////////////////////////////
 
     OSPTestingGeometry SubdivisionCube::createGeometry(
-        const std::string &) const
+        const std::string &renderer_type) const
     {
       box3f bounds(-1.f, 1.f);
 
@@ -136,18 +136,24 @@ namespace ospray {
 
       ospSet1f(geometry, "level", level);
 
+      OSPGeometryInstance instance = ospNewGeometryInstance(geometry);
+
       // create OBJ material and assign to geometry
-      OSPMaterial objMaterial = ospNewMaterial("scivis", "OBJMaterial");
+      OSPMaterial objMaterial =
+          ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
       ospSet3f(objMaterial, "Ks", 0.5f, 0.5f, 0.5f);
       ospCommit(objMaterial);
 
+      ospSetMaterial2(instance, objMaterial);
       ospSetMaterial(geometry, objMaterial);
       ospRelease(objMaterial);
 
       ospCommit(geometry);
+      ospCommit(instance);
 
       OSPTestingGeometry retval;
       retval.geometry = geometry;
+      retval.instance = instance;
       retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
 
       return retval;

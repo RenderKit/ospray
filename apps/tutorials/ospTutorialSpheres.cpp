@@ -26,7 +26,7 @@
 
 using namespace ospcommon;
 
-OSPGeometry createGroundPlaneGeometry()
+OSPGeometryInstance createGroundPlane()
 {
   OSPGeometry planeGeometry = ospNewGeometry("quads");
 
@@ -148,14 +148,18 @@ OSPGeometry createGroundPlaneGeometry()
   ospSetData(planeGeometry, "vertex.color", colorData);
   ospSetData(planeGeometry, "index", indexData);
 
+  // finally, commit the geometry
+  ospCommit(planeGeometry);
+
+  OSPGeometryInstance planeInstance = ospNewGeometryInstance(planeGeometry);
+
+  ospRelease(planeGeometry);
+
   // create and assign a material to the geometry
   OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
   ospCommit(material);
 
-  ospSetMaterial(planeGeometry, material);
-
-  // finally, commit the geometry
-  ospCommit(planeGeometry);
+  ospSetMaterial2(planeInstance, material);
 
   // release handles we no longer need
   ospRelease(positionData);
@@ -164,7 +168,9 @@ OSPGeometry createGroundPlaneGeometry()
   ospRelease(indexData);
   ospRelease(material);
 
-  return planeGeometry;
+  ospCommit(planeInstance);
+
+  return planeInstance;
 }
 
 int main(int argc, const char **argv)
@@ -192,11 +198,15 @@ int main(int argc, const char **argv)
 
   // add in spheres geometry
   OSPTestingGeometry spheres = ospTestingNewGeometry("spheres", "pathtracer");
-  ospAddGeometry(world, spheres.geometry);
+  ospAddGeometryInstance(world, spheres.instance);
   ospRelease(spheres.geometry);
+  ospRelease(spheres.instance);
 
   // add in a ground plane geometry
-  ospAddGeometry(world, createGroundPlaneGeometry());
+  OSPGeometryInstance planeInstance = createGroundPlane();
+  ospCommit(planeInstance);
+  ospAddGeometryInstance(world, planeInstance);
+  ospRelease(planeInstance);
 
   // commit the world
   ospCommit(world);
