@@ -49,9 +49,6 @@ namespace ospray {
     virtual void setMaterial(Material *mat);
     virtual void setMaterialList(Data *matListData);
 
-    //! get material assigned to this geometry
-    virtual Material *getMaterial() const;
-
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
 

@@ -49,6 +49,8 @@ namespace ospray {
     RTCGeometry embreeInstanceGeometry{nullptr};
 
     // Appearance information
+    Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
+                                      (uint32) */
     Ref<Data> colorData;
     Material **materialList{nullptr};  //!< per-primitive material list
     Ref<Data> materialListData;        //!< data array for per-prim materials

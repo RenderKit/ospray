@@ -75,11 +75,6 @@ namespace ospray {
     }
   }
 
-  Material *Geometry::getMaterial() const
-  {
-    return materialList ? materialList[0] : nullptr;
-  }
-
   std::string Geometry::toString() const
   {
     return "ospray::Geometry";

@@ -77,12 +77,29 @@ namespace ospray {
         ispcMaterialPtrs[i] = materialList[i]->getIE();
 
       ispc::GeometryInstance_setMaterialList(this->getIE(),
+                                             numMaterials,
                                              ispcMaterialPtrs.data());
     }
   }
 
   void GeometryInstance::commit()
   {
+    // Get any appearance information //
+
+    prim_materialIDData       = getParamData("prim.materialID");
+    Data *materialListDataPtr = getParamData("materialList");
+    if (materialListDataPtr)
+      setMaterialList(materialListDataPtr);
+
+    // Get transform information //
+
+    xfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
+    xfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
+    xfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
+    xfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
+
+    // Create Embree instanced scene //
+
     if (embreeSceneHandle)
       rtcReleaseScene(embreeSceneHandle);
 
@@ -93,11 +110,6 @@ namespace ospray {
 
     embreeInstanceGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
-
-    xfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
-    xfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
-    xfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
-    xfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
 
     bool useEmbreeDynamicSceneFlag = getParam<int>("dynamicScene", 0);
     bool useEmbreeCompactSceneFlag = getParam<int>("compactMode", 0);
@@ -142,10 +154,12 @@ namespace ospray {
     instanceBounds.extend(xfmPoint(xfm, v111));
 
     AffineSpace3f rcp_xfm = rcp(xfm);
-    ispc::GeometryInstance_set(getIE(),
-                               (ispc::AffineSpace3f &)xfm,
-                               (ispc::AffineSpace3f &)rcp_xfm,
-                               colorData ? colorData->data : nullptr);
+    ispc::GeometryInstance_set(
+        getIE(),
+        (ispc::AffineSpace3f &)xfm,
+        (ispc::AffineSpace3f &)rcp_xfm,
+        colorData ? colorData->data : nullptr,
+        prim_materialIDData ? prim_materialIDData->data : nullptr);
 
     rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
 

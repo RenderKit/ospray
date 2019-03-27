@@ -38,6 +38,16 @@ static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
     dg.color = self->primitiveColors[ray.primID];
   }
 
+  dg.materialID = -1;
+  cif(self->prim_materialID)
+  {
+    dg.materialID = self->prim_materialID[ray.primID];
+  }
+  else if (self->numMaterials > 1)
+  {
+    dg.materialID = ray.primID;
+  }
+
   cif(self->materialList)
   {
     dg.material = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
@@ -70,7 +80,8 @@ export void *uniform GeometryInstance_create(void *uniform cppE,
 export void GeometryInstance_set(void *uniform _self,
                                  const uniform AffineSpace3f &xfm,
                                  const uniform AffineSpace3f &rcp_xfm,
-                                 void *uniform primitiveColors)
+                                 void *uniform primitiveColors,
+                                 void *uniform prim_materialID)
 {
   GeometryInstance *uniform self = (GeometryInstance * uniform) _self;
 
@@ -78,11 +89,14 @@ export void GeometryInstance_set(void *uniform _self,
   self->rcp_xfm = rcp_xfm;
 
   self->primitiveColors = (vec4f * uniform) primitiveColors;
+  self->prim_materialID = (uint32 * uniform) prim_materialID;
 }
 
 export void GeometryInstance_setMaterialList(void *uniform _inst,
+                                             uniform int numMaterials,
                                              void *uniform _matList)
 {
   GeometryInstance *uniform inst = (GeometryInstance * uniform) _inst;
+  inst->numMaterials             = numMaterials;
   inst->materialList             = (Material * uniform * uniform) _matList;
 }
