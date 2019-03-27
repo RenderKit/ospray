@@ -21,6 +21,14 @@
 #include "ospcommon/box.h"
 #include "ospcommon/tasking/parallel_for.h"
 using namespace ospcommon;
+// unstructured cell types
+#include "ospray/OSPUnstructured.h"
+
+// values defined per-cell or per-vertex
+//#define VALUES_PER_CELL
+
+// separate cells or cells sharing vertices
+//#define SHARED_VERTICES
 
 namespace ospray {
   namespace testing {
@@ -41,70 +49,121 @@ namespace ospray {
       OSPVolume volume = ospNewVolume("unstructured_volume");
 
       // define hexahedron parameters
-      const float hSize = .5f;
+      const float hSize = .4f;
       const float hX = -.5f, hY = -.5f, hZ = 0.f;
 
       // define wedge parameters
-      const float wSize = .5f;
+      const float wSize = .4f;
       const float wX = .5f, wY = -.5f, wZ = 0.f;
 
       // define tetrahedron parameters
-      const float tSize = .5f;
+      const float tSize = .4f;
       const float tX = .5f, tY = .5f, tZ = 0.f;
 
-      // define vertex positions, duplicated vertices
-      // that can be shared between cells are commented out
-      std::vector<vec3f> vertices = {
-          // hexahedron bottom quad
-          {-hSize + hX, -hSize + hY, hSize + hZ},   // 0
-          {hSize + hX, -hSize + hY, hSize + hZ},    // 1
-          {hSize + hX, -hSize + hY, -hSize + hZ},   // 2
-          {-hSize + hX, -hSize + hY, -hSize + hZ},  // 3
-                                                    // hexahedron top quad
-          {-hSize + hX, hSize + hY, hSize + hZ},    // 4
-          {hSize + hX, hSize + hY, hSize + hZ},     // 5
-          {hSize + hX, hSize + hY, -hSize + hZ},    // 6
-          {-hSize + hX, hSize + hY, -hSize + hZ},   // 7
+      // define pyramid parameters
+      const float pSize = .4f;
+      const float pX = -.5f, pY = .5f, pZ = 0.f;
 
-          // wedge bottom triangle, sharing 2 hexahedron vertices
-          // { -wSize + wX, -wSize + wY, -wSize + wZ }, // 1
-          {wSize + wX, -wSize + wY, 0.f + wZ},  // 8
-          // { -wSize + wX, -wSize + wY,  wSize + wZ }, // 2
-          // wedge top triangle, sharing 2 hexahedron vertices
-          // { -wSize + wX,  wSize + wY, -wSize + wZ }, // 5
-          {wSize + wX, wSize + wY, 0.f + wZ},  // 9
-          // { -wSize + wX,  wSize + wY,  wSize + wZ }, // 6
+      // define vertex positions
+      std::vector<vec3f> vertices =
+      {
+        // hexahedron
+        { -hSize + hX, -hSize + hY,  hSize + hZ }, // bottom quad
+        {  hSize + hX, -hSize + hY,  hSize + hZ },
+        {  hSize + hX, -hSize + hY, -hSize + hZ },
+        { -hSize + hX, -hSize + hY, -hSize + hZ },
+        { -hSize + hX,  hSize + hY,  hSize + hZ }, // top quad
+        {  hSize + hX,  hSize + hY,  hSize + hZ },
+        {  hSize + hX,  hSize + hY, -hSize + hZ },
+        { -hSize + hX,  hSize + hY, -hSize + hZ },
 
-          // tetrahedron, sharing 3 vertices
-          // { -tSize + tX, -tSize + tY, -tSize + tZ }, // 5
-          // {  tSize + tX, -tSize + tY,    0.f + tZ }, // 9
-          // { -tSize + tX, -tSize + tY,  tSize + tZ }, // 6
-          {0.f + tX, tSize + tY, 0.f + tZ}  // 10
+        // wedge
+        { -wSize + wX, -wSize + wY,  wSize + wZ }, // botom triangle
+        {  wSize + wX, -wSize + wY,    0.f + wZ },
+        { -wSize + wX, -wSize + wY, -wSize + wZ },
+        { -wSize + wX,  wSize + wY,  wSize + wZ }, // top triangle
+        {  wSize + wX,  wSize + wY,    0.f + wZ },
+        { -wSize + wX,  wSize + wY, -wSize + wZ },
+
+        // tetrahedron
+        { -tSize + tX, -tSize + tY,  tSize + tZ },
+        {  tSize + tX, -tSize + tY,    0.f + tZ },
+        { -tSize + tX, -tSize + tY, -tSize + tZ },
+        { -tSize + tX,  tSize + tY,    0.f + tZ },
+
+        // pyramid
+        { -pSize + pX, -pSize + pY,  pSize + pZ },
+        {  pSize + pX, -pSize + pY,  pSize + pZ },
+        {  pSize + pX, -pSize + pY, -pSize + pZ },
+        { -pSize + pX, -pSize + pY, -pSize + pZ },
+        {  pSize + pX,  pSize + pY,  0.f + pZ }
       };
 
-      // define cell field value
-      std::vector<float> cellFields = {0.2f, 5.f, 9.8f};
+      // define per-vertex values
+      std::vector<float> vertexValues =
+      {
+        // hexahedron
+        0.f, 0.f, 0.f, 0.f, 0.f, 1.f, 1.f, 0.f,
 
-      // shape cells by defining indices
-      std::vector<vec4i> indices = {// hexahedron
-                                    {0, 1, 2, 3},
-                                    {4, 5, 6, 7},
+        // wedge
+        0.f, 0.f, 0.f, 1.f, 0.f, 1.f,
 
-                                    // wedge
-                                    {-2, -2, 1, 8},
-                                    {2, 5, 9, 6},
+        // tetrahedron
+        1.f, 0.f, 1.f, 0.f,
 
-                                    // tetrahedron
-                                    {-1, -1, -1, -1},
-                                    {5, 9, 6, 10}};
+        // pyramid
+        0.f, 1.f, 1.f, 0.f, 0.f
+      };
+
+      std::vector<uint32_t> indices =
+      {
+        // hexahedron
+        0, 1, 2, 3, 4, 5, 6, 7,
+
+#ifdef SHARED_VERTICES
+        // wedge
+        1, 9, 2, 5, 12, 6,
+
+        // tetrahedron
+        5, 12, 6, 17,
+
+        // pyramid
+        4, 5, 6, 7, 17
+#else
+        // wedge
+        8, 9, 10, 11, 12, 13,
+
+        // tetrahedron
+        14, 15, 16, 17,
+
+        // pyramid
+        18, 19, 20, 21, 22
+#endif
+      };
+
+      // define cell offsets in indices array
+      std::vector<uint32_t> cells = { 0, 8, 14, 18 };
+
+      // define cell types
+      std::vector<uint8_t> cellTypes =
+        { OSP_HEXAHEDRON, OSP_WEDGE, OSP_TETRAHEDRON, OSP_PYRAMID };
+
+      // define per-cell values
+      std::vector<float> cellValues = { 0.1f, .3f, .7f, 1.f };
 
       // create data objects
-      OSPData verticesData =
-          ospNewData(vertices.size(), OSP_FLOAT3, vertices.data());
-      OSPData cellFieldsData =
-          ospNewData(cellFields.size(), OSP_FLOAT, cellFields.data());
-      OSPData indicesData =
-          ospNewData(indices.size(), OSP_INT4, indices.data());
+      OSPData verticesData = ospNewData(
+        vertices.size(), OSP_FLOAT3, vertices.data());
+      OSPData vertexValuesData = ospNewData(
+        vertexValues.size(), OSP_FLOAT, vertexValues.data());
+      OSPData indicesData = ospNewData(
+        indices.size(), OSP_UINT, indices.data());
+      OSPData cellsData = ospNewData(
+        cells.size(), OSP_UINT, cells.data());
+      OSPData cellTypesData = ospNewData(
+        cellTypes.size(), OSP_UCHAR, cellTypes.data());
+      OSPData cellValuesData = ospNewData(
+        cellValues.size(), OSP_FLOAT, cellValues.data());
 
       // calculate bounds
       box3f bounds;
@@ -113,19 +172,29 @@ namespace ospray {
       });
 
       // set data objects for volume object
-      ospSetData(volume, "vertices", verticesData);
-      ospSetData(volume, "cellField", cellFieldsData);
-      ospSetData(volume, "indices", indicesData);
+      ospSetData(volume, "vertex", verticesData);
+#if !defined(VALUES_PER_CELL)
+      ospSetData(volume, "vertex.value", vertexValuesData);
+#endif
+      ospSetData(volume, "index", indicesData);
+      ospSetData(volume, "cell", cellsData);
+      ospSetData(volume, "cell.type", cellTypesData);
+#ifdef VALUES_PER_CELL
+      ospSetData(volume, "cell.value", cellValuesData);
+#endif
 
       // release handlers that go out of scope here
       ospRelease(verticesData);
-      ospRelease(cellFieldsData);
+      ospRelease(vertexValuesData);
       ospRelease(indicesData);
+      ospRelease(cellsData);
+      ospRelease(cellTypesData);
+      ospRelease(cellValuesData);
 
       // create OSPRay objects and return results
       OSPTestingVolume retval;
       retval.volume     = volume;
-      retval.voxelRange = osp_vec2f{0.f, 10.f};
+      retval.voxelRange = osp_vec2f{0.f, 1.f};
       retval.bounds     = reinterpret_cast<const osp_box3f &>(bounds);
 
       return retval;

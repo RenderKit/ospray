@@ -68,7 +68,7 @@ static inline uniform vec3f tetrahedronNormal(const UnstructuredVolume* uniform 
 
   // Prepare vertex offset bys plane
   const uniform uint32 planes[4][3] =
-    {{1, 0, 2}, {0, 1, 3}, {1, 2, 3}, {0, 3, 2}};
+    {{2, 0, 1}, {3, 1, 0}, {3, 2, 1}, {2, 3, 0}};
   return calcPlaneNormal(self, id, planes[planeID]);
 }
 
@@ -82,7 +82,7 @@ static inline uniform vec3f hexahedronNormal(const UnstructuredVolume *uniform s
 
   // Prepare vertex offsets by plane
   const uniform uint32 planes[6][3] =
-    {{1, 0, 3}, {0, 1, 5}, {1, 2, 6}, {2, 3, 7}, {0, 4, 7}, {4, 5, 6}};
+    {{3, 0, 1}, {5, 1, 0}, {6, 2, 1}, {7, 3, 2}, {7, 4, 0}, {6, 5, 4}};
   return calcPlaneNormal(self, id, planes[planeID]);
 }
 
@@ -96,7 +96,7 @@ static inline uniform vec3f wedgeNormal(const UnstructuredVolume *uniform self,
 
   // Prepare vertex offsets by plane
   const uniform uint32 planes[5][3] =
-    {{1, 0, 2}, {0, 1, 4}, {1, 2, 5}, {0, 3, 5}, {3, 4, 5}};
+    {{2, 0, 1}, {4, 1, 0}, {5, 2, 1}, {5, 3, 0}, {5, 4, 3}};
   return calcPlaneNormal(self, id, planes[planeID]);
 }
 
@@ -110,7 +110,7 @@ static inline uniform vec3f pyramidNormal(const UnstructuredVolume *uniform self
 
   // Prepare vertex offsets by plane
   const uniform uint32 planes[5][3] =
-    {{1, 0, 3}, {0, 1, 4}, {1, 2, 4}, {2, 3, 4}, {0, 4, 3}};
+    {{3, 0, 1}, {4, 1, 0}, {4, 2, 1}, {4, 3, 2}, {3, 4, 0}};
   return calcPlaneNormal(self, id, planes[planeID]);
 }
 
@@ -122,7 +122,7 @@ static bool intersectAndSampleTet(const void *uniform userData,
                                   float range_lo,
                                   float range_hi)
 {
-  const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) userData;
+  const UnstructuredVolume* uniform self = (const UnstructuredVolume* uniform) userData;
 
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);

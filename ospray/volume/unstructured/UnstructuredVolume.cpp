@@ -309,13 +309,13 @@ namespace ospray {
 
     // Define vertices order for normal calculation
     const uint32_t tetrahedronFaces[4][3] =
-      {{1, 0, 2}, {0, 1, 3}, {1, 2, 3}, {0, 3, 2}};
+      {{2, 0, 1}, {3, 1, 0}, {3, 2, 1}, {2, 3, 0}};
     const uint32_t hexahedronFaces[6][3] =
-      {{1, 0, 3}, {0, 1, 5}, {1, 2, 6}, {2, 3, 7}, {0, 4, 7}, {4, 5, 6}};
+      {{3, 0, 1}, {5, 1, 0}, {6, 2, 1}, {7, 3, 2}, {7, 4, 0}, {6, 5, 4}};
     const uint32_t wedgeFaces[5][3] =
-      {{1, 0, 2}, {0, 1, 4}, {1, 2, 5}, {0, 3, 5}, {3, 4, 5}};
+      {{2, 0, 1}, {4, 1, 0}, {5, 2, 1}, {5, 3, 0}, {5, 4, 3}};
     const uint32_t pyramidFaces[5][3] =
-      {{1, 0, 3}, {0, 1, 4}, {1, 2, 4}, {2, 3, 4}, {0, 4, 3}};
+      {{3, 0, 1}, {4, 1, 0}, {4, 2, 1}, {4, 3, 2}, {3, 4, 0}};
 
     // Build all normals
     tasking::parallel_for(nCells, [&](uint64_t taskIndex) {

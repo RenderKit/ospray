@@ -53,18 +53,46 @@ int main(int argc, const char **argv)
   OSPWorld world = ospNewWorld();
 
   // add in generated volume and transfer function
-  OSPTestingVolume test_volume =
+  OSPTestingVolume testVolume =
       ospTestingNewVolume("simple_unstructured_volume");
 
   OSPTransferFunction tfn =
-      ospTestingNewTransferFunction(test_volume.voxelRange, "jet");
+      ospTestingNewTransferFunction(testVolume.voxelRange, "jet");
 
-  ospSetObject(test_volume.volume, "transferFunction", tfn);
-  ospCommit(test_volume.volume);
-
-  ospAddVolume(world, test_volume.volume);
-  ospRelease(test_volume.volume);
+  ospSetObject(testVolume.volume, "transferFunction", tfn);
+  ospCommit(testVolume.volume);
   ospRelease(tfn);
+
+  // add volume to the world
+  ospAddVolume(world, testVolume.volume);
+
+  // create iso geometry object and add it to the world
+  OSPGeometry isoGeometry = ospNewGeometry("isosurfaces");
+
+  // create and set iso values
+  {
+    std::vector<float> isoValues = { .2f };
+    OSPData isoValuesData =
+      ospNewData(isoValues.size(), OSP_FLOAT, isoValues.data());
+    ospSetData(isoGeometry, "isovalues", isoValuesData);
+    ospRelease(isoValuesData);
+  }
+
+  // set volume object to create iso geometry
+  ospSetObject(isoGeometry, "volume", testVolume.volume);
+
+  // prepare material for iso geometry
+  OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
+  ospSet3f(material, "Ks", 0.5f, 0.5f, 0.5f);
+  ospSet1f(material, "Ns", 100.0f);
+  ospCommit(material);
+
+  // assign material to geometry
+  ospSetMaterial(isoGeometry, material);
+  ospRelease(material);
+
+  // apply changes to iso geometry object
+  ospCommit(isoGeometry);
 
   // commit the world
   ospCommit(world);
@@ -72,7 +100,7 @@ int main(int argc, const char **argv)
   // Create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer("scivis");
 
-  OSPData lightsData = ospTestingNewLights("ambient_only");
+  OSPData lightsData = ospTestingNewLights("ambient_and_directional");
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
 
@@ -84,11 +112,53 @@ int main(int argc, const char **argv)
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
-  glfwOSPRayWindow->registerImGuiCallback([=]() {
+  glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 64)) {
       ospSet1i(renderer, "spp", spp);
       ospCommit(renderer);
+    }
+    static bool sharedVertices = true;
+    static bool valuesPerCell = true;
+    static bool isoSurface = false;
+    if ((ImGui::Checkbox("shared vertices", &sharedVertices)) ||
+        (ImGui::Checkbox("values per-cell", &valuesPerCell))) {
+      // define names for all available volumes
+      static const char* names[2][2] = {
+        {"simple_unstructured_volume", "simple_unstructured_volume"},
+        {"simple_unstructured_volume", "simple_unstructured_volume"}
+      };
+
+      // remove current volume
+      ospSetObject(isoGeometry, "volume", nullptr);
+      if (!isoSurface)
+        ospRemoveVolume(world, testVolume.volume);
+      ospRelease(testVolume.volume);
+
+      // create a new one
+      testVolume = ospTestingNewVolume(
+        names[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0]);
+
+      // attach the new volume
+      ospSetObject(isoGeometry, "volume", testVolume.volume);
+      ospCommit(isoGeometry);
+      if (!isoSurface) {
+        ospAddVolume(world, testVolume.volume);
+        ospCommit(world);
+      }
+    }
+    if (ImGui::Checkbox("isosurface", &isoSurface)) {
+      if (isoSurface) {
+        // replace volume with iso geometry
+        ospRemoveVolume(world, testVolume.volume);
+        ospAddGeometry(world, isoGeometry);
+        ospCommit(world);
+      } else {
+        // replace iso geometry with volume
+        ospAddVolume(world, testVolume.volume);
+        ospRemoveGeometry(world, isoGeometry);
+        ospCommit(world);
+      }
     }
   });
 
@@ -96,6 +166,8 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   // cleanup remaining objects
+  ospRelease(testVolume.volume);
+  ospRelease(isoGeometry);
   ospRelease(world);
   ospRelease(renderer);
 
