@@ -41,26 +41,20 @@ namespace ospray {
     size_t numCompsInVtx{0};
     size_t numCompsInNor{0};
 
-    int *index;               //!< mesh's quad index array
-    float *vertex;            //!< mesh's vertex array
-    float *normal;            //!< mesh's vertex normal array
-    vec4f *color;             //!< mesh's vertex color array
-    vec2f *texcoord;          //!< mesh's vertex texcoord array
-    uint32 *prim_materialID;  //!< per-primitive material ID
-    int geom_materialID;
+    int *index;       //!< mesh's quad index array
+    float *vertex;    //!< mesh's vertex array
+    float *normal;    //!< mesh's vertex normal array
+    vec4f *color;     //!< mesh's vertex color array
+    vec2f *texcoord;  //!< mesh's vertex texcoord array
 
-    Ref<Data> indexData;           /*!< quad indices (A,B,C,materialID) */
-    Ref<Data> vertexData;          /*!< vertex position (vec3fa) */
-    Ref<Data> normalData;          /*!< vertex normal array (vec3fa) */
-    Ref<Data> colorData;           /*!< vertex color array (vec3fa) */
-    Ref<Data> texcoordData;        /*!< vertex texcoord array (vec2f) */
-    Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
-                                      (uint32) */
-
-    uint32 eMeshID{RTC_INVALID_GEOMETRY_ID}; /*!< embree quad  mesh handle */
+    Ref<Data> indexData;    /*!< quad indices (A,B,C,materialID) */
+    Ref<Data> vertexData;   /*!< vertex position (vec3fa) */
+    Ref<Data> normalData;   /*!< vertex normal array (vec3fa) */
+    Ref<Data> colorData;    /*!< vertex color array (vec3fa) */
+    Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
 
    private:
-     void createEmbreeGeometry() override;
+    void createEmbreeGeometry() override;
   };
 
 }  // namespace ospray

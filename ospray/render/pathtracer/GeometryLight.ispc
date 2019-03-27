@@ -16,7 +16,7 @@
 
 #include "lights/Light.ih"
 #include "math/AffineSpace.ih"
-#include "geometry/Geometry.ih"
+#include "geometry/GeometryInstance.ih"
 #include "math/Distribution1D.ih"
 #include "render/pathtracer/materials/Material.ih"
 
@@ -29,12 +29,12 @@ struct GeometryLight
 {
   Light super; // inherited light fields
 
-  Geometry *geo; // underlying (instanced) geometry
+  GeometryInstance *geo; // underlying (instanced) geometry
   affine3f xfm; // instance transform (obj2world)
   affine3f rcp_xfm; // inverse instance transform (world2obj)
   int32 numPrimitives; // number of emissive primitives
   int32 *primIDs; // IDs of emissive primitives to sample
-  float *distribution; // pdf over primitives proportional to (world-space) area 
+  float *distribution; // pdf over primitives proportional to (world-space) area
   float pdf; // probability density to sample point on surface := 1/area
 };
 
@@ -47,7 +47,7 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
                                      const vec2f& s)
 {
   const GeometryLight* uniform self = (GeometryLight* uniform)super;
-  const Geometry* uniform geo = self->geo;
+  const GeometryInstance* uniform geo = self->geo;
   Light_SampleRes res;
 
   // choose primitive
@@ -58,7 +58,11 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
   const vec2f ns = make_vec2f(sample.frac, s.y);
   // sample position on primitive
   // TODO maybe should already be done wrt. solid angle
+#if 0
   const SampleAreaRes as = geo->sampleArea(geo, primID, self->xfm, self->rcp_xfm, ns);
+#else
+  SampleAreaRes as;
+#endif
   // note that sample.pdf/primitives * sampleArea(worldspace).pdf == self->pdf
 
   // extant light vector from the hit point
@@ -72,9 +76,9 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
   // convert to pdf wrt. solid angle
   const float cosd = dot(as.normal, res.dir);
   res.pdf = self->pdf * sqr(dist) / abs(cosd);
-  
+
   // get radiance
-  const int32 matID = geo->getMaterialID(geo, primID);
+  const int32 matID = dg.materialID;
   PathTraceMaterial *mat = (PathTraceMaterial*)geo->materialList[matID < 0 ? 0 : matID];
   const vec3f radiance = mat->emission;
 
@@ -88,8 +92,12 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
 
 export bool uniform GeometryLight_isSupported(void* uniform _geo)
 {
-  Geometry *uniform geo = (Geometry *uniform)_geo;
+  GeometryInstance *uniform geo = (GeometryInstance *uniform)_geo;
+#if 0
   return geo->sampleArea && geo->getAreas;
+#else
+  return false;
+#endif
 }
 
 export void* uniform GeometryLight_create(void* uniform _geo
@@ -98,7 +106,7 @@ export void* uniform GeometryLight_create(void* uniform _geo
     , float *uniform areaPDF
     )
 {
-  Geometry *uniform geo = (Geometry *uniform)_geo;
+  GeometryInstance *uniform geo = (GeometryInstance *uniform)_geo;
 
   if (!GeometryLight_isSupported(geo)) {
     // set pdf to zero, indicating that this emissive geometry cannot be
@@ -107,6 +115,10 @@ export void* uniform GeometryLight_create(void* uniform _geo
     return NULL;
   }
 
+#if 1
+  *areaPDF = 0.f;
+  return NULL;
+#else
   GeometryLight* uniform self = uniform new GeometryLight;
 
   Light_Constructor(&self->super);
@@ -129,7 +141,7 @@ export void* uniform GeometryLight_create(void* uniform _geo
        numEmissivePrims += reduce_add(1);
     }
   }
-  
+
   if (numEmissivePrims == 0) {
     // no emissive primitives, return NULL
     delete[] self->primIDs;
@@ -142,7 +154,7 @@ export void* uniform GeometryLight_create(void* uniform _geo
     delete[] self->primIDs;
     self->primIDs = newPrimIDs;
   }
-  
+
   self->numPrimitives = numEmissivePrims;
 
   // create the sampling distribution
@@ -153,6 +165,7 @@ export void* uniform GeometryLight_create(void* uniform _geo
   *areaPDF = self->pdf;
 
   return self;
+#endif
 }
 
 export void GeometryLight_destroy(void* uniform _self)

@@ -28,8 +28,7 @@ namespace ospray {
     virtual std::string toString() const override;
     virtual void commit() override;
 
-    void generateGeometryLights(const World *const, const affine3f& xfm,
-                                float *const areaPDF);
+    void generateGeometryLights(const World *const, float *const areaPDF);
     void destroyGeometryLights();
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights
@@ -37,7 +36,7 @@ namespace ospray {
     std::vector<float> areaPDF; // pdfs wrt. area of regular (not instanced) geometry lights
     Data *lightData;
 
-    World *model{nullptr};
+    World *world{nullptr};
   };
 
 }// ::ospray

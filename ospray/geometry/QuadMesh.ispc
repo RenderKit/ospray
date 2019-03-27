@@ -52,14 +52,6 @@ __define_quad_interpolate(vec2f);
 __define_quad_interpolate(vec3f);
 __define_quad_interpolate(vec4f);
 
-int32 QuadMesh_getMaterialID(const Geometry *uniform const _self,
-                             const int32 primID)
-{
-  const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
-  return self->prim_materialID ? self->prim_materialID[primID]
-                               : self->geom_materialID;
-}
-
 static void QuadMesh_postIntersect(const Geometry *uniform _self,
                                    const World *uniform model,
                                    varying DifferentialGeometry &dg,
@@ -146,9 +138,6 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
       dg.dPdt    = f.vy;
     }
   }
-
-  if (flags & DG_MATERIALID)
-    dg.materialID = QuadMesh_getMaterialID(_self, ray.primID);
 }
 
 SampleAreaRes QuadMesh_sampleArea(const Geometry *uniform const _self,
@@ -244,19 +233,11 @@ void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
                           uniform float *uniform normal,
                           uniform vec4f *uniform color,
                           uniform vec2f *uniform texcoord,
-                          uniform int32 geom_materialID,
-                          uniform Material *uniform *uniform materialList,
-                          uniform uint32 *uniform prim_materialID,
                           uniform bool has_alpha,
                           uniform bool huge_mesh)
 {
-  Geometry_Constructor(&mesh->super,
-                       cppEquivalent,
-                       QuadMesh_postIntersect,
-                       geom,
-                       geomID,
-                       materialList);
-  mesh->super.getMaterialID = QuadMesh_getMaterialID;
+  Geometry_Constructor(
+      &mesh->super, cppEquivalent, QuadMesh_postIntersect, geom, geomID);
   mesh->super.getAreas      = QuadMesh_getAreas;
   mesh->super.sampleArea    = QuadMesh_sampleArea;
   mesh->super.numPrimitives = numQuads;
@@ -267,8 +248,6 @@ void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
   mesh->texcoord            = texcoord;
   mesh->vtxSize             = vtxSize;
   mesh->norSize             = norSize;
-  mesh->prim_materialID     = prim_materialID;
-  mesh->geom_materialID     = geom_materialID;
   mesh->has_alpha           = has_alpha;
   mesh->huge_mesh           = huge_mesh;
 }
@@ -288,9 +267,6 @@ export void *uniform QuadMesh_create(void *uniform cppEquivalent)
                        NULL,
                        NULL,
                        NULL,
-                       -1,
-                       NULL,
-                       NULL,
                        true,
                        false);
   return mesh;
@@ -307,15 +283,10 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
                                   uniform float *uniform normal,
                                   uniform vec4f *uniform color,
                                   uniform vec2f *uniform texcoord,
-                                  uniform int32 geom_materialID,
-                                  void *uniform _materialList,
-                                  uniform uint32 *uniform prim_materialID,
                                   uniform bool has_alpha,
                                   uniform bool huge_mesh)
 {
   uniform QuadMesh *uniform mesh = (uniform QuadMesh * uniform) _mesh;
-  uniform Material *uniform *uniform materialList =
-      (uniform Material * uniform * uniform) _materialList;
   QuadMesh_Constructor(mesh,
                        mesh->super.cppEquivalent,
                        geom,
@@ -328,9 +299,6 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
                        normal,
                        color,
                        texcoord,
-                       geom_materialID,
-                       (Material * uniform * uniform) materialList,
-                       prim_materialID,
                        has_alpha,
                        huge_mesh);
 }

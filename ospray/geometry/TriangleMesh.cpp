@@ -44,9 +44,6 @@ namespace ospray {
     texcoordData = getParamData("vertex.texcoord", getParamData("texcoord"));
     indexData    = getParamData("index", getParamData("triangle"));
 
-    prim_materialIDData = getParamData("prim.materialID");
-    geom_materialID     = getParam1i("geom.materialID", -1);
-
     if (!vertexData)
       throw std::runtime_error("triangle mesh must have 'vertex' array");
     if (!indexData)
@@ -74,8 +71,6 @@ namespace ospray {
     this->normal   = normalData ? (float *)normalData->data : nullptr;
     this->color    = colorData ? (vec4f *)colorData->data : nullptr;
     this->texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
-    this->prim_materialID =
-        prim_materialIDData ? (uint32_t *)prim_materialIDData->data : nullptr;
 
     numTris  = -1;
     numVerts = -1;
@@ -161,9 +156,6 @@ namespace ospray {
                            (float *)normal,
                            (ispc::vec4f *)color,
                            (ispc::vec2f *)texcoord,
-                           geom_materialID,
-                           materialList ? ispcMaterialPtrs.data() : nullptr,
-                           (uint32_t *)prim_materialID,
                            colorData && colorData->type == OSP_FLOAT4,
                            huge_mesh);
   }

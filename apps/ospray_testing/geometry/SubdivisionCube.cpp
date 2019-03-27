@@ -145,7 +145,6 @@ namespace ospray {
       ospCommit(objMaterial);
 
       ospSetMaterial2(instance, objMaterial);
-      ospSetMaterial(geometry, objMaterial);
       ospRelease(objMaterial);
 
       ospCommit(geometry);

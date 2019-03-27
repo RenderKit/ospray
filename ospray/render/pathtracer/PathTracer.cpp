@@ -47,49 +47,42 @@ namespace ospray {
     return "ospray::PathTracer";
   }
 
-  void PathTracer::generateGeometryLights(const World *const model
-      , const affine3f& xfm
+  void PathTracer::generateGeometryLights(const World *const world
       , float *const _areaPDF
       )
   {
-    for(size_t i = 0; i < model->geometry.size(); i++) {
-      auto &geo = model->geometry[i];
-      // recurse instances
-      Ref<Instance> inst = geo.dynamicCast<Instance>();
-      if (inst) {
-        const affine3f instXfm = xfm * inst->xfm;
-        generateGeometryLights(inst->instancedScene.ptr, instXfm,
-            &(inst->areaPDF[0]));
-      } else
-        if (geo->materialList) {
-          // check whether the geometry has any emissive materials
-          bool hasEmissive = false;
-          for (auto mat : geo->ispcMaterialPtrs) {
-            if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
-              hasEmissive = true;
-              break;
-            }
-          }
-
-          if (hasEmissive) {
-            if (ispc::GeometryLight_isSupported(geo->getIE())) {
-              const affine3f rcpXfm = rcp(xfm);
-              void* light = ispc::GeometryLight_create(geo->getIE()
-                  , (const ispc::AffineSpace3f&)xfm
-                  , (const ispc::AffineSpace3f&)rcpXfm
-                  , _areaPDF+i);
-
-              // check whether the geometry has any emissive primitives
-              if (light)
-                lightArray.push_back(light);
-            } else {
-              postStatusMsg(1) << "#osp:pt Geometry " << geo->toString()
-                               << " does not implement area sampling! "
-                               << "Cannot use importance sampling for that "
-                               << "geometry with emissive material!";
-            }
+    for(size_t i = 0; i < world->geometryInstances.size(); i++) {
+      auto &geo = world->geometryInstances[i];
+      if (geo->materialList) {
+        // check whether the geometry has any emissive materials
+        bool hasEmissive = false;
+        for (auto mat : geo->ispcMaterialPtrs) {
+          if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
+            hasEmissive = true;
+            break;
           }
         }
+
+        if (hasEmissive) {
+          if (ispc::GeometryLight_isSupported(geo->getIE())) {
+            auto xfm = geo->xfm();
+            const affine3f rcpXfm = rcp(xfm);
+            void* light = ispc::GeometryLight_create(geo->getIE()
+                , (const ispc::AffineSpace3f&)xfm
+                , (const ispc::AffineSpace3f&)rcpXfm
+                , _areaPDF+i);
+
+            // check whether the geometry has any emissive primitives
+            if (light)
+              lightArray.push_back(light);
+          } else {
+            postStatusMsg(1) << "#osp:pt Geometry " << geo->toString()
+                             << " does not implement area sampling! "
+                             << "Cannot use importance sampling for that "
+                             << "geometry with emissive material!";
+          }
+        }
+      }
     }
   }
 
@@ -103,7 +96,7 @@ namespace ospray {
   {
     Renderer::commit();
 
-    model = (World*)getParamObject("model", getParamObject("world"));
+    world = (World*)getParamObject("world", getParamObject("world"));
 
     destroyGeometryLights();
     lightArray.clear();
@@ -111,9 +104,9 @@ namespace ospray {
 
     const bool useGeometryLights = getParam1i("useGeometryLights", true);
 
-    if (model && useGeometryLights) {
-      areaPDF.resize(model->geometry.size());
-      generateGeometryLights(model, affine3f(one), &areaPDF[0]);
+    if (world && useGeometryLights) {
+      areaPDF.resize(world->geometry.size());
+      generateGeometryLights(world, &areaPDF[0]);
       geometryLights = lightArray.size();
     }
 

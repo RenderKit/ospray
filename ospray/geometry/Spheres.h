@@ -41,30 +41,13 @@ namespace ospray {
     size_t bytesPerSphere;  //!< num bytes per sphere
     int64 offset_center;
     int64 offset_radius;
-    int64 offset_materialID;
-    int64 offset_colorID;
 
     Ref<Data> sphereData;
-
-    /*! data array from which we read the per-sphere color data; if
-      NULL we do not have per-sphere data */
-    Ref<Data> colorData;
-
     Ref<Data> texcoordData;
 
     /*! The color format of the colorData array, one of:
         OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
     OSPDataType colorFormat;
-
-    /*! stride in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorFormat color from
-      'colorOffset+i*colorStride */
-    size_t colorStride;
-
-    /*! offset in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorFormat color from
-      'colorOffset+i*colorStride */
-    size_t colorOffset;
 
     bool huge_mesh{false};
 

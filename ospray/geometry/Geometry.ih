@@ -63,7 +63,7 @@ typedef void (*Geometry_GetAreasFct)(
     const uniform affine3f &xfm  //!< instance transformation (obj2world)
     ,
     float *const uniform areas  //!< array to return area per primitive
-    // in world-space
+                                // in world-space
 );
 
 // sample the given primitive uniformly wrt. area
@@ -85,7 +85,6 @@ struct Geometry
     DifferentialGeometry struct, see above prototype for details */
   Geometry_postIntersectFct postIntersect;
 
-  Geometry_GetMaterialIDFct getMaterialID;
   Geometry_GetAreasFct getAreas;
   Geometry_SampleAreaFct sampleArea;
 
@@ -95,19 +94,15 @@ struct Geometry
   //! number of primitives this geometry has
   uniform int32 numPrimitives;
 
-  //! material list attached to this geometry
-  Material *uniform *uniform materialList;
-
   //! ID that 'model' knows this geometry under
   RTCGeometry geom;
   uniform uint32 geomID;
 };
 
 //! constructor for ispc-side Geometry object
-extern void Geometry_Constructor(
-    Geometry *uniform geometry,
-    void *uniform cppEquivalent,
-    uniform Geometry_postIntersectFct postIntersect,
-    RTCGeometry geom,
-    uniform int32 geomID,
-    uniform Material *uniform *uniform materialList);
+extern void Geometry_Constructor(Geometry *uniform geometry,
+                                 void *uniform cppEquivalent,
+                                 uniform Geometry_postIntersectFct
+                                     postIntersect,
+                                 RTCGeometry geom,
+                                 uniform int32 geomID);

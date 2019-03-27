@@ -117,10 +117,13 @@ int main(int argc, const char **argv) {
 
   ospCommit(mesh);
 
+  OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
+  ospCommit(instance);
+  ospRelease(mesh); // we are done using this handle
 
   OSPWorld world = ospNewWorld();
-  ospAddGeometry(world, mesh);
-  ospRelease(mesh); // we are done using this handle
+  ospAddGeometryInstance(world, instance);
+  ospRelease(instance);
   ospCommit(world);
 
 

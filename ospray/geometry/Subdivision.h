@@ -45,9 +45,6 @@ namespace ospray {
     Ref<Data> colorsData;
     Ref<Data> texcoordData;
     Ref<Data> indexLevelData;
-    Ref<Data> prim_materialIDData;
-
-    int geom_materialID{-1};
 
     size_t numFaces{0};
     uint32_t *faces{nullptr};

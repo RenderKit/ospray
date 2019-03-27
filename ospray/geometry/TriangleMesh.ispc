@@ -23,29 +23,19 @@
 
 struct TriangleMesh
 {
-  Geometry super;           //!< inherited geometry fields
-  int32 idxSize;            //!< stride of triangle indices, in int32 elements
-  int32 vtxSize;            //!< stride of vertex positions, in float32 elements
-  int32 norSize;            //!< stride of normals, in float32 elements
-  int *index;               //!< mesh's triangle index array
-  float *vertex;            //!< mesh's vertex position array
-  float *normal;            //!< mesh's vertex normal array
-  vec4f *color;             //!< mesh's vertex color array
-  vec2f *texcoord;          //!< mesh's texture coordinate array
-  uint32 *prim_materialID;  // per-primitive material ID
-  int32 geom_materialID;    // per-object material ID
-  bool has_alpha;           // 4th color component is valid
-  bool huge_mesh;           // need 64-bit addressing
+  Geometry super;         //!< inherited geometry fields
+  int32 idxSize;          //!< stride of triangle indices, in int32 elements
+  int32 vtxSize;          //!< stride of vertex positions, in float32 elements
+  int32 norSize;          //!< stride of normals, in float32 elements
+  int *index;             //!< mesh's triangle index array
+  float *vertex;          //!< mesh's vertex position array
+  float *normal;          //!< mesh's vertex normal array
+  vec4f *color;           //!< mesh's vertex color array
+  vec2f *texcoord;        //!< mesh's texture coordinate array
+  int32 geom_materialID;  // per-object material ID
+  bool has_alpha;         // 4th color component is valid
+  bool huge_mesh;         // need 64-bit addressing
 };
-
-int32 TriangleMesh_getMaterialID(const Geometry *uniform const _self,
-                                 const int32 primID)
-{
-  // TODO: gather material ID from index array if indexSize==4
-  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
-  return self->prim_materialID ? self->prim_materialID[primID]
-                               : self->geom_materialID;
-}
 
 static void TriangleMesh_postIntersect(const Geometry *uniform _self,
                                        const World *uniform model,
@@ -118,9 +108,6 @@ static void TriangleMesh_postIntersect(const Geometry *uniform _self,
       dg.dPdt    = f.vy;
     }
   }
-
-  if (flags & DG_MATERIALID)
-    dg.materialID = TriangleMesh_getMaterialID(_self, ray.primID);
 }
 
 SampleAreaRes TriangleMesh_sampleArea(const Geometry *uniform const _self,
@@ -189,34 +176,25 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform float *uniform normal,
                               uniform vec4f *uniform color,
                               uniform vec2f *uniform texcoord,
-                              uniform int32 geom_materialID,
-                              uniform Material *uniform *uniform materialList,
-                              uniform uint32 *uniform prim_materialID,
                               uniform bool has_alpha,
                               uniform bool huge_mesh)
 {
-  Geometry_Constructor(&mesh->super,
-                       cppEquivalent,
-                       TriangleMesh_postIntersect,
-                       geom,
-                       geomID,
-                       materialList);
-  mesh->super.getMaterialID = TriangleMesh_getMaterialID;
+  Geometry_Constructor(
+      &mesh->super, cppEquivalent, TriangleMesh_postIntersect, geom, geomID);
   mesh->super.getAreas      = TriangleMesh_getAreas;
   mesh->super.sampleArea    = TriangleMesh_sampleArea;
   mesh->super.numPrimitives = numTriangles;
-  mesh->index               = index;
-  mesh->vertex              = vertex;
-  mesh->normal              = normal;
-  mesh->color               = color;
-  mesh->texcoord            = texcoord;
-  mesh->idxSize             = idxSize;
-  mesh->vtxSize             = vtxSize;
-  mesh->norSize             = norSize;
-  mesh->prim_materialID     = prim_materialID;
-  mesh->geom_materialID     = geom_materialID;
-  mesh->has_alpha           = has_alpha;
-  mesh->huge_mesh           = huge_mesh;
+
+  mesh->index     = index;
+  mesh->vertex    = vertex;
+  mesh->normal    = normal;
+  mesh->color     = color;
+  mesh->texcoord  = texcoord;
+  mesh->idxSize   = idxSize;
+  mesh->vtxSize   = vtxSize;
+  mesh->norSize   = norSize;
+  mesh->has_alpha = has_alpha;
+  mesh->huge_mesh = huge_mesh;
 }
 
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
@@ -233,9 +211,6 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
                            NULL,
                            NULL,
                            NULL,
-                           NULL,
-                           NULL,
-                           -1,
                            NULL,
                            NULL,
                            true,
@@ -255,15 +230,10 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform float *uniform normal,
                                       uniform vec4f *uniform color,
                                       uniform vec2f *uniform texcoord,
-                                      uniform int32 geom_materialID,
-                                      void *uniform _materialList,
-                                      uniform uint32 *uniform prim_materialID,
                                       uniform bool has_alpha,
                                       uniform bool huge_mesh)
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh * uniform) _mesh;
-  uniform Material *uniform *uniform materialList =
-      (uniform Material * uniform * uniform) _materialList;
   TriangleMesh_Constructor(mesh,
                            mesh->super.cppEquivalent,
                            geom,
@@ -277,9 +247,6 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                            normal,
                            color,
                            texcoord,
-                           geom_materialID,
-                           (Material * uniform * uniform) materialList,
-                           prim_materialID,
                            has_alpha,
                            huge_mesh);
 }

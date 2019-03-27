@@ -41,18 +41,8 @@ namespace ospray {
     Geometry();
     virtual ~Geometry() override;
 
-    //! set given geometry's materials.
-    /*! all material assignations should go through these functions;
-        This allows the respective geometry's derived instance to
-        always properly set the material field of the ISCP-equivalent
-        whenever the C++-side's material gets changed */
-    virtual void setMaterial(Material *mat);
-    virtual void setMaterialList(Data *matListData);
-
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
-
-    virtual void commit() override;
 
     /*! \brief creates an abstract geometry class of given type
 
@@ -65,14 +55,6 @@ namespace ospray {
     virtual size_t numPrimitives() const = 0;
 
     box3f bounds{empty};
-
-    //! materials associated to this geometry
-    /*! these fields should be set only through
-        'setMaterial' and 'setMaterialList' (see comments there) */
-    Material **materialList{nullptr};  //!< per-primitive material list
-    Ref<Data> materialListData;        //!< data array for per-prim materials
-    std::vector<void *>
-        ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
 
     RTCGeometry embreeGeometry{nullptr};
     uint32_t geomID{0};

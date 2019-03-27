@@ -447,9 +447,7 @@ namespace ospray {
 
     void ISPCDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {
-      Geometry *geometry = (Geometry *)_geometry;
-      Material *material = (Material *)_material;
-      geometry->setMaterial(material);
+      NOT_IMPLEMENTED;
     }
 
     void ISPCDevice::setMaterial(OSPGeometryInstance _instance,

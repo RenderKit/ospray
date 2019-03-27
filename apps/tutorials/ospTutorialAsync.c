@@ -203,9 +203,13 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  *world = ospNewWorld();
-  ospAddGeometry(*world, mesh);
+  OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
+  ospCommit(instance);
   ospRelease(mesh); // we are done using this handle
+
+  *world = ospNewWorld();
+  ospAddGeometryInstance(*world, instance);
+  ospRelease(instance); // we are done using this handle
   ospCommit(*world);
 
   // create renderer
@@ -280,9 +284,13 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  *world = ospNewWorld();
-  ospAddGeometry(*world, mesh);
+  OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
+  ospCommit(instance);
   ospRelease(mesh); // we are done using this handle
+
+  *world = ospNewWorld();
+  ospAddGeometryInstance(*world, instance);
+  ospRelease(instance); // we are done using this handle
   ospCommit(*world);
 
   // create renderer

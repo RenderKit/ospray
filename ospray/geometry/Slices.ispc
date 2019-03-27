@@ -115,7 +115,7 @@ export void *uniform Slices_create(void *uniform cppEquivalent)
   uniform Slices *uniform self = uniform new uniform Slices;
 
   Geometry_Constructor(
-      &self->super, cppEquivalent, Slices_postIntersect, NULL, 0, NULL);
+      &self->super, cppEquivalent, Slices_postIntersect, NULL, 0);
 
   return self;
 }

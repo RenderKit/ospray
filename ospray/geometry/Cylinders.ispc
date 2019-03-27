@@ -38,13 +38,7 @@ struct Cylinders
   int offset_v0;
   int offset_v1;
   int offset_radius;
-  int offset_materialID;
-  int offset_colorID;
   int32 bytesPerCylinder;
-
-  uint8 *color;
-  int color_stride;
-  bool has_alpha;  // 4th color component is valid
 
   CylinderTexCoord *texcoord;
 };
@@ -182,42 +176,9 @@ static void Cylinders_postIntersect(const Geometry *uniform _self,
   dg.Ng = dg.Ns = ray.Ng;
   dg.epsilon    = self->radius * ulpEpsilon;
 
-  if ((flags & DG_COLOR) && self->color) {
-    uint32 colorID = 0;
-    if (self->offset_colorID >= 0) {
-      uniform uint8 *cylinderPtr =
-          self->data + self->bytesPerCylinder * ray.primID;
-      colorID =
-          *((uniform uint32 * varying)(cylinderPtr + self->offset_colorID));
-    } else
-      colorID = ray.primID;
-    dg.color = *((vec4f *)(self->color + colorID * self->color_stride));
-    if (!self->has_alpha)
-      dg.color.w = 1.f;
-  }
-
   if (flags & DG_TEXCOORD && self->texcoord) {
     CylinderTexCoord tc = self->texcoord[ray.primID];
     dg.st               = lerp(ray.u, tc.v0, tc.v1);
-  }
-
-  if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
-    uniform uint8 *cylinderPtr =
-        self->data + self->bytesPerCylinder * ray.primID;
-    dg.materialID =
-        *((uniform uint32 * varying)(cylinderPtr + self->offset_materialID));
-  }
-}
-
-int32 Cylinders_getMaterialID(const Geometry *uniform const _self,
-                              const int32 primID)
-{
-  const Cylinders *const uniform self = (const Cylinders *uniform)_self;
-  if (self->offset_materialID >= 0) {
-    uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder * primID;
-    return *((uniform uint32 * varying)(cylinderPtr + self->offset_materialID));
-  } else {
-    return -1;
   }
 }
 
@@ -290,7 +251,7 @@ export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
   Geometry_Constructor(
-      &geom->super, cppEquivalent, Cylinders_postIntersect, NULL, 0, NULL);
+      &geom->super, cppEquivalent, Cylinders_postIntersect, NULL, 0);
   return geom;
 }
 
@@ -298,43 +259,28 @@ export void CylindersGeometry_set(void *uniform _self,
                                   void *uniform _embreeGeometry,
                                   uniform uint32 geomID,
                                   void *uniform data,
-                                  void *uniform materialList,
                                   void *uniform texcoord,
-                                  void *uniform color,
-                                  uniform int color_stride,
-                                  uniform bool has_alpha,
                                   uniform int numCylinders,
                                   uniform int bytesPerCylinder,
                                   uniform float radius,
-                                  uniform int materialID,
                                   uniform int offset_v0,
                                   uniform int offset_v1,
-                                  uniform int offset_radius,
-                                  uniform int offset_materialID,
-                                  uniform int offset_colorID)
+                                  uniform int offset_radius)
 {
   Cylinders *uniform self = (Cylinders * uniform) _self;
 
   self->super.geomID        = geomID;
   self->super.numPrimitives = numCylinders;
-  self->super.getMaterialID = Cylinders_getMaterialID;
   self->super.getAreas      = Cylinders_getAreas;
   self->super.sampleArea    = Cylinders_sampleArea;
-  self->super.materialList  = (Material **)materialList;
-  self->texcoord            = (CylinderTexCoord * uniform) texcoord;
-  self->color               = (uint8 * uniform) color;
-  self->color_stride        = color_stride;
-  self->has_alpha           = has_alpha;
-  self->radius              = radius;
-  self->data                = (uint8 * uniform) data;
-  self->materialID          = materialID;
-  self->bytesPerCylinder    = bytesPerCylinder;
 
-  self->offset_v0         = offset_v0;
-  self->offset_v1         = offset_v1;
-  self->offset_radius     = offset_radius;
-  self->offset_materialID = offset_materialID;
-  self->offset_colorID    = offset_colorID;
+  self->texcoord         = (CylinderTexCoord * uniform) texcoord;
+  self->radius           = radius;
+  self->data             = (uint8 * uniform) data;
+  self->bytesPerCylinder = bytesPerCylinder;
+  self->offset_v0        = offset_v0;
+  self->offset_v1        = offset_v1;
+  self->offset_radius    = offset_radius;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

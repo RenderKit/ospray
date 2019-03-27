@@ -38,13 +38,11 @@ namespace ospray {
   {
     Geometry::commit();
 
-    vertexData          = getParamData("vertex");
-    normalData          = getParamData("vertex.normal", getParamData("normal"));
-    colorData           = getParamData("vertex.color");
-    texcoordData        = getParamData("vertex.texcoord");
-    indexData           = getParamData("index");
-    prim_materialIDData = getParamData("prim.materialID");
-    geom_materialID     = getParam1i("geom.materialID", -1);
+    vertexData   = getParamData("vertex");
+    normalData   = getParamData("vertex.normal", getParamData("normal"));
+    colorData    = getParamData("vertex.color");
+    texcoordData = getParamData("vertex.texcoord");
+    indexData    = getParamData("index");
 
     if (!vertexData)
       throw std::runtime_error("quad mesh must have 'vertex' array");
@@ -73,8 +71,6 @@ namespace ospray {
     this->normal   = normalData ? (float *)normalData->data : nullptr;
     this->color    = colorData ? (vec4f *)colorData->data : nullptr;
     this->texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
-    this->prim_materialID =
-        prim_materialIDData ? (uint32_t *)prim_materialIDData->data : nullptr;
 
     switch (indexData->type) {
     case OSP_INT:
@@ -146,9 +142,6 @@ namespace ospray {
                        (float *)normal,
                        (ispc::vec4f *)color,
                        (ispc::vec2f *)texcoord,
-                       geom_materialID,
-                       materialList ? ispcMaterialPtrs.data() : nullptr,
-                       (uint32_t *)prim_materialID,
                        colorData && colorData->type == OSP_FLOAT4,
                        huge_mesh);
   }

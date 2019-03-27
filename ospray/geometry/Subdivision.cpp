@@ -54,10 +54,6 @@ namespace ospray {
     texcoordData   = getParamData("vertex.texcoord", getParamData("texcoord"));
     indexLevelData = getParamData("index.level");
 
-    prim_materialIDData = getParamData("prim.materialID");
-
-    geom_materialID = getParam1i("geom.materialID", -1);
-
     // check for valid params
     if (!vertexData || vertexData->type != OSP_FLOAT3)
       throw std::runtime_error(
@@ -105,16 +101,11 @@ namespace ospray {
                      << ", " << vertexData->size() << " vertices)\n"
                      << "  mesh bounds " << bounds;
 
-    uint32_t *prim_materialID =
-        prim_materialIDData ? (uint32_t *)prim_materialIDData->data : nullptr;
     vec2f *texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
 
     ispc::Subdivision_set(getIE(),
                           embreeGeometry,
                           geomID,
-                          geom_materialID,
-                          prim_materialID,
-                          materialList ? ispcMaterialPtrs.data() : nullptr,
                           (ispc::vec2f *)texcoord);
   }
 

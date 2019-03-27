@@ -39,29 +39,28 @@ namespace ospray {
   {
     Geometry::commit();
 
-    radius            = getParam1f("radius", 0.01f);
-    materialID        = getParam1i("materialID", 0);
-    bytesPerCylinder  = getParam1i("bytes_per_cylinder", 6 * sizeof(float));
-    offset_v0         = getParam1i("offset_v0", 0);
-    offset_v1         = getParam1i("offset_v1", 3 * sizeof(float));
-    offset_radius     = getParam1i("offset_radius", -1);
-    offset_materialID = getParam1i("offset_materialID", -1);
-    offset_colorID    = getParam1i("offset_colorID", -1);
-    cylinderData      = getParamData("cylinders");
-    colorData         = getParamData("color");
-    texcoordData      = getParamData("texcoord");
+    radius           = getParam1f("radius", 0.01f);
+    bytesPerCylinder = getParam1i("bytes_per_cylinder", 6 * sizeof(float));
+    offset_v0        = getParam1i("offset_v0", 0);
+    offset_v1        = getParam1i("offset_v1", 3 * sizeof(float));
+    offset_radius    = getParam1i("offset_radius", -1);
+    cylinderData     = getParamData("cylinders");
+    texcoordData     = getParamData("texcoord");
 
     if (cylinderData.ptr == nullptr || bytesPerCylinder == 0) {
       throw std::runtime_error(
           "#ospray:geometry/cylinders: no 'cylinders'"
           " data specified");
     }
+
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
+
     postStatusMsg(2) << "#osp: creating 'cylinders' geometry, #cylinders = "
                      << numCylinders;
 
     const char *cylinderPtr = (const char *)cylinderData->data;
-    bounds                  = empty;
+
+    bounds = empty;
     for (uint32_t i = 0; i < numCylinders;
          i++, cylinderPtr += bytesPerCylinder) {
       const float r = offset_radius < 0
@@ -75,27 +74,17 @@ namespace ospray {
 
     createEmbreeGeometry();
 
-    auto colComps = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
-
-    ispc::CylindersGeometry_set(
-        getIE(),
-        embreeGeometry,
-        geomID,
-        cylinderData->data,
-        materialList ? ispcMaterialPtrs.data() : nullptr,
-        texcoordData ? texcoordData->data : nullptr,
-        colorData ? colorData->data : nullptr,
-        colComps * sizeof(float),
-        colorData && colorData->type == OSP_FLOAT4,
-        numCylinders,
-        bytesPerCylinder,
-        radius,
-        materialID,
-        offset_v0,
-        offset_v1,
-        offset_radius,
-        offset_materialID,
-        offset_colorID);
+    ispc::CylindersGeometry_set(getIE(),
+                                embreeGeometry,
+                                geomID,
+                                cylinderData->data,
+                                texcoordData ? texcoordData->data : nullptr,
+                                numCylinders,
+                                bytesPerCylinder,
+                                radius,
+                                offset_v0,
+                                offset_v1,
+                                offset_radius);
   }
 
   size_t Cylinders::numPrimitives() const

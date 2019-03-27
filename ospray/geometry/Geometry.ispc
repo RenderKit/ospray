@@ -16,34 +16,19 @@
 
 #include "Geometry.ih"
 
-export void Geometry_setMaterialList(void *uniform _geo, void *uniform _matList)
-{
-  uniform Geometry *uniform geo = (uniform Geometry * uniform) _geo;
-  geo->materialList             = (uniform Material * uniform *)_matList;
-}
-
-int32 Geometry_getMaterialID(const Geometry *uniform const _self,
-                             const int32 primID)
-{
-  return -1;
-}
-
 //! constructor for ispc-side Geometry object
-static void Geometry_Constructor(
-    uniform Geometry *uniform geometry,
-    void *uniform cppEquivalent,
-    uniform Geometry_postIntersectFct postIntersect,
-    RTCGeometry geom,
-    uniform int32 geomID,
-    uniform Material *uniform *uniform materialList)
+static void Geometry_Constructor(uniform Geometry *uniform geometry,
+                                 void *uniform cppEquivalent,
+                                 uniform Geometry_postIntersectFct
+                                     postIntersect,
+                                 RTCGeometry geom,
+                                 uniform int32 geomID)
 {
   geometry->cppEquivalent = cppEquivalent;
   geometry->numPrimitives = 0;
-  geometry->materialList  = materialList;
   geometry->geom          = geom;
   geometry->geomID        = geomID;
   geometry->postIntersect = postIntersect;
-  geometry->getMaterialID = Geometry_getMaterialID;
   geometry->sampleArea    = NULL;
   geometry->getAreas      = NULL;
 }

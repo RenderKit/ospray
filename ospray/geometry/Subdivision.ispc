@@ -23,20 +23,9 @@
 
 struct Subdivision
 {
-  Geometry super;           //!< inherited geometry fields
-  uint32 *prim_materialID;  // per-primitive material ID
-  int32 geom_materialID;    // per-object material ID
+  Geometry super;
   vec2f *texcoord;
 };
-
-int32 Subdivision_getMaterialID(const Geometry *uniform const _self,
-                                const int32 primID)
-{
-  // TODO: gather material ID from index array if indexSize==4
-  const Subdivision *const uniform self = (const Subdivision *uniform)_self;
-  return self->prim_materialID ? self->prim_materialID[primID]
-                               : self->geom_materialID;
-}
 
 static void Subdivision_postIntersect(const Geometry *uniform _self,
                                       const World *uniform model,
@@ -46,9 +35,6 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 {
   Subdivision *uniform self = (Subdivision * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
-  if (flags & DG_MATERIALID) {
-    dg.materialID = Subdivision_getMaterialID(_self, ray.primID);
-  }
   // get normals
   if (flags & DG_NS) {
     vec3f dPdu, dPdv;
@@ -105,45 +91,27 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
                              void *uniform cppEquivalent,
                              RTCGeometry geom,
                              uniform int32 geomID,
-                             uniform int32 geom_materialID,
-                             uniform uint32 *uniform prim_materialID,
-                             uniform Material *uniform *uniform materialList,
                              uniform vec2f *uniform texcoord)
 {
-  Geometry_Constructor(&mesh->super,
-                       cppEquivalent,
-                       Subdivision_postIntersect,
-                       geom,
-                       geomID,
-                       materialList);
-  mesh->super.getMaterialID = Subdivision_getMaterialID;
-  mesh->prim_materialID     = prim_materialID;
-  mesh->geom_materialID     = geom_materialID;
-  mesh->texcoord            = texcoord;
+  Geometry_Constructor(
+      &mesh->super, cppEquivalent, Subdivision_postIntersect, geom, geomID);
+
+  mesh->texcoord = texcoord;
 }
 
 export void *uniform Subdivision_create(void *uniform cppEquivalent)
 {
   Subdivision *uniform mesh = uniform new Subdivision;
-  Subdivision_Constructor(mesh, cppEquivalent, NULL, 0, 0, 0, NULL, NULL);
+  Subdivision_Constructor(mesh, cppEquivalent, NULL, 0, NULL);
   return mesh;
 }
 
 export void *uniform Subdivision_set(void *uniform _mesh,
                                      RTCGeometry geom,
                                      uniform int32 geomID,
-                                     uniform int32 geom_materialID,
-                                     uniform uint32 *uniform prim_materialID,
-                                     void *uniform _materialList,
                                      uniform vec2f *uniform texcoord)
 {
   uniform Subdivision *uniform mesh = (uniform Subdivision * uniform) _mesh;
-  Subdivision_Constructor(mesh,
-                          mesh->super.cppEquivalent,
-                          geom,
-                          geomID,
-                          geom_materialID,
-                          prim_materialID,
-                          (Material * uniform * uniform) _materialList,
-                          texcoord);
+  Subdivision_Constructor(
+      mesh, mesh->super.cppEquivalent, geom, geomID, texcoord);
 }

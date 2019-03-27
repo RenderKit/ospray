@@ -35,21 +35,17 @@ namespace ospray {
    protected:
     bool huge_mesh{false};
 
-    int *index;               //!< mesh's triangle index array
-    float *vertex;            //!< mesh's vertex array
-    float *normal;            //!< mesh's vertex normal array
-    vec4f *color;             //!< mesh's vertex color array
-    vec2f *texcoord;          //!< mesh's vertex texcoord array
-    uint32 *prim_materialID;  //!< per-primitive material ID
-    int geom_materialID;
+    int *index;       //!< mesh's triangle index array
+    float *vertex;    //!< mesh's vertex array
+    float *normal;    //!< mesh's vertex normal array
+    vec4f *color;     //!< mesh's vertex color array
+    vec2f *texcoord;  //!< mesh's vertex texcoord array
 
-    Ref<Data> indexData;           /*!< triangle indices (A,B,C,materialID) */
-    Ref<Data> vertexData;          /*!< vertex position (vec3fa) */
-    Ref<Data> normalData;          /*!< vertex normal array (vec3fa) */
-    Ref<Data> colorData;           /*!< vertex color array (vec3fa) */
-    Ref<Data> texcoordData;        /*!< vertex texcoord array (vec2f) */
-    Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
-                                      (uint32) */
+    Ref<Data> indexData;    /*!< triangle indices (A,B,C,materialID) */
+    Ref<Data> vertexData;   /*!< vertex position (vec3fa) */
+    Ref<Data> normalData;   /*!< vertex normal array (vec3fa) */
+    Ref<Data> colorData;    /*!< vertex color array (vec3fa) */
+    Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
 
     size_t numTris{0};
     size_t numVerts{0};

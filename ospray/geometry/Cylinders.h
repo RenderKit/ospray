@@ -32,18 +32,14 @@ namespace ospray {
 
    protected:
     float radius;  //!< default radius, if no per-cylinder radius was specified.
-    int32 materialID;
 
     size_t numCylinders;
     size_t bytesPerCylinder;  //!< num bytes per cylinder
     int64 offset_v0;
     int64 offset_v1;
     int64 offset_radius;
-    int64 offset_materialID;
-    int64 offset_colorID;
 
     Ref<Data> cylinderData;
-    Ref<Data> colorData; /*!< cylinder color array */
     Ref<Data> texcoordData;
 
    private:

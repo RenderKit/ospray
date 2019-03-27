@@ -146,12 +146,8 @@ export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
 {
   uniform Isosurfaces *uniform isosurfaces = uniform new uniform Isosurfaces;
 
-  Geometry_Constructor(&isosurfaces->super,
-                       cppEquivalent,
-                       Isosurfaces_postIntersect,
-                       NULL,
-                       0,
-                       NULL);
+  Geometry_Constructor(
+      &isosurfaces->super, cppEquivalent, Isosurfaces_postIntersect, NULL, 0);
 
   return isosurfaces;
 }

@@ -18,8 +18,6 @@
 #include "Geometry.h"
 #include "common/Data.h"
 #include "common/Util.h"
-// ISPC exports
-#include "Geometry_ispc.h"
 
 namespace ospray {
 
@@ -34,57 +32,9 @@ namespace ospray {
       rtcReleaseGeometry(embreeGeometry);
   }
 
-  void Geometry::setMaterial(Material *mat)
-  {
-    if (!mat) {
-      postStatusMsg(
-          "#osp: warning - tried to set NULL material; ignoring. "
-          "(Note this means that object may not get any material at all!)");
-      return;
-    }
-
-    OSPMaterial ospMat = (OSPMaterial)mat;
-    auto *data         = new Data(1, OSP_OBJECT, &ospMat);
-    setMaterialList(data);
-    data->refDec();
-  }
-
-  void Geometry::setMaterialList(Data *matListData)
-  {
-    if (!matListData || matListData->numItems == 0) {
-      postStatusMsg(
-          "#osp: warning - tried to set NULL material list, ignoring."
-          " (Note this means that object may not get any material at all!)");
-      return;
-    }
-
-    materialListData = matListData;
-    materialList     = (Material **)materialListData->data;
-
-    if (!getIE()) {
-      postStatusMsg(
-          "#osp: warning: geometry does not have an "
-          "ispc equivalent!");
-    } else {
-      const int numMaterials = materialListData->numItems;
-      ispcMaterialPtrs.resize(numMaterials);
-      for (int i = 0; i < numMaterials; i++)
-        ispcMaterialPtrs[i] = materialList[i]->getIE();
-
-      ispc::Geometry_setMaterialList(this->getIE(), ispcMaterialPtrs.data());
-    }
-  }
-
   std::string Geometry::toString() const
   {
     return "ospray::Geometry";
-  }
-
-  void Geometry::commit()
-  {
-    Data *materialListDataPtr = getParamData("materialList");
-    if (materialListDataPtr)
-      setMaterialList(materialListDataPtr);
   }
 
   Geometry *Geometry::createInstance(const char *type)

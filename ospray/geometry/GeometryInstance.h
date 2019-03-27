@@ -36,12 +36,14 @@ namespace ospray {
 
     box3f bounds() const;
 
-  private:
+    AffineSpace3f xfm() const;
+
+   private:
     // Data members //
 
     // Geometry information
     box3f instanceBounds;
-    AffineSpace3f xfm;
+    AffineSpace3f instanceXfm;
     Ref<Geometry> instancedGeometry;
 
     // Embree information
@@ -53,9 +55,11 @@ namespace ospray {
                                       (uint32) */
     Ref<Data> colorData;
     Material **materialList{nullptr};  //!< per-primitive material list
-    Ref<Data> materialListData;        //!< data array for per-prim materials
+    Ref<Data> materialListData;  //!< data array for per-prim materials
     std::vector<void *>
         ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
+
+    friend struct PathTracer; // TODO: fix this!
   };
 
 }  // namespace ospray

@@ -34,12 +34,12 @@ struct Sphere
 
   vec3f center;
   float radius;
-  vec4f color;
 };
 
 // track the spheres data, geometry, and world globally so we can update them
 // every frame
 static std::vector<Sphere> g_spheres;
+static std::vector<vec4f> g_colors;
 static OSPGeometry g_spheresGeometry;
 static OSPGeometryInstance g_spheresInstance;
 static OSPWorld g_world;
@@ -57,6 +57,8 @@ std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
   // populate the spheres
   std::vector<Sphere> spheres(numSpheres);
 
+  g_colors.resize(numSpheres);
+
   for (auto &s : spheres) {
     // maximum height above y=-1 ground plane
     s.maxHeight = 1.f + centerDistribution(gen);
@@ -66,11 +68,13 @@ std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
     s.center.z = centerDistribution(gen);
 
     s.radius = radiusDistribution(gen);
+  }
 
-    s.color.x = colorDistribution(gen);
-    s.color.y = colorDistribution(gen);
-    s.color.z = colorDistribution(gen);
-    s.color.w = colorDistribution(gen);
+  for (auto &c : g_colors) {
+    c.x = colorDistribution(gen);
+    c.y = colorDistribution(gen);
+    c.z = colorDistribution(gen);
+    c.w = colorDistribution(gen);
   }
 
   return spheres;
@@ -240,10 +244,9 @@ OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
   ospSet1i(g_spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
   ospSet1i(g_spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
 
-  ospSetData(g_spheresGeometry, "color", spheresData);
-  ospSet1i(g_spheresGeometry, "color_offset", int(offsetof(Sphere, color)));
-  ospSet1i(g_spheresGeometry, "color_format", int(OSP_FLOAT4));
-  ospSet1i(g_spheresGeometry, "color_stride", int(sizeof(Sphere)));
+  OSPData colorData = ospNewData(numSpheres, OSP_FLOAT4, g_colors.data());
+
+  ospSetData(g_spheresInstance, "color", colorData);
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
@@ -259,6 +262,7 @@ OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
 
   // release handles we no longer need
   ospRelease(spheresData);
+  ospRelease(colorData);
   ospRelease(glassMaterial);
 
   return g_spheresInstance;

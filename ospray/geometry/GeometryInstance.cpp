@@ -30,6 +30,8 @@ namespace ospray {
 
     this->ispcEquivalent =
         ispc::GeometryInstance_create(this, geometry->getIE());
+
+    setMaterialList(nullptr);
   }
 
   GeometryInstance::~GeometryInstance()
@@ -57,9 +59,7 @@ namespace ospray {
   void GeometryInstance::setMaterialList(Data *matListData)
   {
     if (!matListData || matListData->numItems == 0) {
-      postStatusMsg(
-          "#osp: warning - tried to set NULL material list, ignoring."
-          " (Note this means that object may not get any material at all!)");
+      ispc::GeometryInstance_setMaterialList(this->getIE(), 0, nullptr);
       return;
     }
 
@@ -76,9 +76,8 @@ namespace ospray {
       for (int i = 0; i < numMaterials; i++)
         ispcMaterialPtrs[i] = materialList[i]->getIE();
 
-      ispc::GeometryInstance_setMaterialList(this->getIE(),
-                                             numMaterials,
-                                             ispcMaterialPtrs.data());
+      ispc::GeometryInstance_setMaterialList(
+          this->getIE(), numMaterials, ispcMaterialPtrs.data());
     }
   }
 
@@ -93,10 +92,10 @@ namespace ospray {
 
     // Get transform information //
 
-    xfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
-    xfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
-    xfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
-    xfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
+    instanceXfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
+    instanceXfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
+    instanceXfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
+    instanceXfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
 
     // Create Embree instanced scene //
 
@@ -144,27 +143,29 @@ namespace ospray {
     const vec3f v111(b.upper.x, b.upper.y, b.upper.z);
 
     instanceBounds = empty;
-    instanceBounds.extend(xfmPoint(xfm, v000));
-    instanceBounds.extend(xfmPoint(xfm, v001));
-    instanceBounds.extend(xfmPoint(xfm, v010));
-    instanceBounds.extend(xfmPoint(xfm, v011));
-    instanceBounds.extend(xfmPoint(xfm, v100));
-    instanceBounds.extend(xfmPoint(xfm, v101));
-    instanceBounds.extend(xfmPoint(xfm, v110));
-    instanceBounds.extend(xfmPoint(xfm, v111));
+    instanceBounds.extend(xfmPoint(instanceXfm, v000));
+    instanceBounds.extend(xfmPoint(instanceXfm, v001));
+    instanceBounds.extend(xfmPoint(instanceXfm, v010));
+    instanceBounds.extend(xfmPoint(instanceXfm, v011));
+    instanceBounds.extend(xfmPoint(instanceXfm, v100));
+    instanceBounds.extend(xfmPoint(instanceXfm, v101));
+    instanceBounds.extend(xfmPoint(instanceXfm, v110));
+    instanceBounds.extend(xfmPoint(instanceXfm, v111));
 
-    AffineSpace3f rcp_xfm = rcp(xfm);
+    AffineSpace3f rcp_xfm = rcp(instanceXfm);
     ispc::GeometryInstance_set(
         getIE(),
-        (ispc::AffineSpace3f &)xfm,
+        (ispc::AffineSpace3f &)instanceXfm,
         (ispc::AffineSpace3f &)rcp_xfm,
         colorData ? colorData->data : nullptr,
         prim_materialIDData ? prim_materialIDData->data : nullptr);
 
     rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
 
-    rtcSetGeometryTransform(
-        embreeInstanceGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+    rtcSetGeometryTransform(embreeInstanceGeometry,
+                            0,
+                            RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+                            &instanceXfm);
     rtcCommitGeometry(embreeInstanceGeometry);
   }
 
@@ -176,6 +177,11 @@ namespace ospray {
   box3f GeometryInstance::bounds() const
   {
     return instanceBounds;
+  }
+
+  AffineSpace3f GeometryInstance::xfm() const
+  {
+    return instanceXfm;
   }
 
 }  // namespace ospray

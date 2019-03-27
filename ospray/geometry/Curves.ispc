@@ -40,7 +40,7 @@ export void *uniform Curves_create(void *uniform cppEquivalent)
 {
   Curves *uniform geom = uniform new Curves;
   Geometry_Constructor(
-      &geom->super, cppEquivalent, Curves_postIntersect, NULL, 0, NULL);
+      &geom->super, cppEquivalent, Curves_postIntersect, NULL, 0);
   return geom;
 }
 

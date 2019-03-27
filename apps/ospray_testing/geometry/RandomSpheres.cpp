@@ -46,7 +46,6 @@ namespace ospray {
       {
         vec3f center;
         float radius;
-        vec4f color;
       };
 
       // create random number distributions for sphere center, radius, and color
@@ -60,6 +59,7 @@ namespace ospray {
       // populate the spheres
       box3f bounds;
       std::vector<Sphere> spheres(numSpheres);
+      std::vector<vec4f> colors(numSpheres);
 
       for (auto &s : spheres) {
         s.center.x = centerDistribution(gen);
@@ -68,12 +68,14 @@ namespace ospray {
 
         s.radius = radiusDistribution(gen);
 
-        s.color.x = colorDistribution(gen);
-        s.color.y = colorDistribution(gen);
-        s.color.z = colorDistribution(gen);
-        s.color.w = colorDistribution(gen);
-
         bounds.extend(box3f(s.center - s.radius, s.center + s.radius));
+      }
+
+      for (auto &c : colors) {
+        c.x = colorDistribution(gen);
+        c.y = colorDistribution(gen);
+        c.z = colorDistribution(gen);
+        c.w = colorDistribution(gen);
       }
 
       // create a data object with all the sphere information
@@ -88,15 +90,14 @@ namespace ospray {
       ospSet1i(spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
       ospSet1i(spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
 
-      ospSetData(spheresGeometry, "color", spheresData);
-      ospSet1i(spheresGeometry, "color_offset", int(offsetof(Sphere, color)));
-      ospSet1i(spheresGeometry, "color_format", int(OSP_FLOAT4));
-      ospSet1i(spheresGeometry, "color_stride", int(sizeof(Sphere)));
-
       // commit the spheres geometry
       ospCommit(spheresGeometry);
 
       OSPGeometryInstance instance = ospNewGeometryInstance(spheresGeometry);
+
+      OSPData colorData = ospNewData(numSpheres, OSP_FLOAT4, colors.data());
+
+      ospSetData(instance, "color", colorData);
 
       // create glass material and assign to geometry
       OSPMaterial glassMaterial =
@@ -108,6 +109,7 @@ namespace ospray {
 
       // release handles we no longer need
       ospRelease(spheresData);
+      ospRelease(colorData);
       ospRelease(glassMaterial);
 
       ospCommit(instance);

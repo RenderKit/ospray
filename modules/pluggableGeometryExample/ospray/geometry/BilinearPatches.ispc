@@ -70,12 +70,8 @@ export void *uniform BilinearPatches_create(void *uniform cppEquivalent)
      do not have to set the 'intersect' and 'occluded' functions
      because we use embree to do the traversal for us (see
      BilinearPatches_set()) below */
-  Geometry_Constructor(&self->super,
-                       cppEquivalent,
-                       BilinearPatches_postIntersect,
-                       NULL,
-                       0,
-                       NULL);
+  Geometry_Constructor(
+      &self->super, cppEquivalent, BilinearPatches_postIntersect, NULL, 0);
   return self;
 }
 
