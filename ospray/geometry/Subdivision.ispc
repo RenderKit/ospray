@@ -36,54 +36,45 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
   Subdivision *uniform self = (Subdivision * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   // get normals
-  if (flags & DG_NS) {
+  cif (flags & DG_NS) {
     vec3f dPdu, dPdv;
-    foreach_unique(geomID in ray.geomID)
-    {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle, geomID),
-                       ray.primID,
-                       ray.u,
-                       ray.v,
-                       RTC_BUFFER_TYPE_VERTEX,
-                       0,
-                       NULL,
-                       &dPdu.x,
-                       &dPdv.x,
-                       3);
-    }
+    rtcInterpolateV1(self->super.geom,
+                     ray.primID,
+                     ray.u,
+                     ray.v,
+                     RTC_BUFFER_TYPE_VERTEX,
+                     0,
+                     NULL,
+                     &dPdu.x,
+                     &dPdv.x,
+                     3);
     dg.Ns = cross(dPdu, dPdv);
   }
   // get colors
-  if (flags & DG_COLOR) {
-    foreach_unique(geomID in ray.geomID)
-    {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle, geomID),
-                       ray.primID,
-                       ray.u,
-                       ray.v,
-                       RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
-                       0,
-                       &dg.color.x,
-                       NULL,
-                       NULL,
-                       4);
-    }
+  cif (flags & DG_COLOR) {
+    rtcInterpolateV1(self->super.geom,
+                     ray.primID,
+                     ray.u,
+                     ray.v,
+                     RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
+                     0,
+                     &dg.color.x,
+                     NULL,
+                     NULL,
+                     4);
   }
   // get texcoords
-  if (flags & DG_TEXCOORD && self->texcoord) {
-    foreach_unique(geomID in ray.geomID)
-    {
-      rtcInterpolateV1(rtcGetGeometry(model->embreeSceneHandle, geomID),
-                       ray.primID,
-                       ray.u,
-                       ray.v,
-                       RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
-                       1,
-                       &dg.st.x,
-                       NULL,
-                       NULL,
-                       2);
-    }
+  cif (flags & DG_TEXCOORD && self->texcoord) {
+    rtcInterpolateV1(self->super.geom,
+                     ray.primID,
+                     ray.u,
+                     ray.v,
+                     RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
+                     1,
+                     &dg.st.x,
+                     NULL,
+                     NULL,
+                     2);
   }
 }
 

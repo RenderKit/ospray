@@ -26,7 +26,7 @@
 
 using namespace ospcommon;
 
-static const std::string renderer_type = "raycast_Ng";
+static const std::string renderer_type = "scivis";
 
 OSPGeometryInstance createGroundPlane()
 {
