@@ -24,6 +24,33 @@
 
 using namespace ospcommon;
 
+namespace {
+  OSPVolume createVolumeWithTF(const char* volumeName, const char* tfName)
+  {
+    // create volume
+    OSPTestingVolume tv = ospTestingNewVolume(volumeName);
+
+    // create and set transfer function
+    OSPTransferFunction tfn =
+      ospTestingNewTransferFunction(tv.voxelRange, tfName);
+    ospSetObject(tv.volume, "transferFunction", tfn);
+    ospCommit(tv.volume);
+    ospRelease(tfn);
+
+    // done
+    return tv.volume;
+  }
+
+  void setIsoValue(OSPGeometry geometry, float value)
+  {
+    std::vector<float> isoValues = { value };
+    OSPData isoValuesData =
+      ospNewData(isoValues.size(), OSP_FLOAT, isoValues.data());
+    ospSetData(geometry, "isovalues", isoValuesData);
+    ospRelease(isoValuesData);
+  }
+}
+
 int main(int argc, const char **argv)
 {
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
@@ -53,33 +80,25 @@ int main(int argc, const char **argv)
   OSPWorld world = ospNewWorld();
 
   // add in generated volume and transfer function
-  OSPTestingVolume testVolume =
-      ospTestingNewVolume("simple_unstructured_volume");
-
-  OSPTransferFunction tfn =
-      ospTestingNewTransferFunction(testVolume.voxelRange, "jet");
-
-  ospSetObject(testVolume.volume, "transferFunction", tfn);
-  ospCommit(testVolume.volume);
-  ospRelease(tfn);
+  OSPVolume allVolumes[2][2];
+  allVolumes[0][0] = createVolumeWithTF("simple_unstructured_volume_00", "jet");
+  allVolumes[0][1] = createVolumeWithTF("simple_unstructured_volume_01", "jet");
+  allVolumes[1][0] = createVolumeWithTF("simple_unstructured_volume_10", "jet");
+  allVolumes[1][1] = createVolumeWithTF("simple_unstructured_volume_11", "jet");
+  OSPVolume testVolume = allVolumes[0][0];
 
   // add volume to the world
-  ospAddVolume(world, testVolume.volume);
+  ospAddVolume(world, testVolume);
 
   // create iso geometry object and add it to the world
   OSPGeometry isoGeometry = ospNewGeometry("isosurfaces");
 
-  // create and set iso values
-  {
-    std::vector<float> isoValues = { .2f };
-    OSPData isoValuesData =
-      ospNewData(isoValues.size(), OSP_FLOAT, isoValues.data());
-    ospSetData(isoGeometry, "isovalues", isoValuesData);
-    ospRelease(isoValuesData);
-  }
+  // set initial iso values
+  float isoValue = .2f;
+  setIsoValue(isoGeometry, isoValue);
 
   // set volume object to create iso geometry
-  ospSetObject(isoGeometry, "volume", testVolume.volume);
+  ospSetObject(isoGeometry, "volume", testVolume);
 
   // prepare material for iso geometry
   OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
@@ -118,47 +137,47 @@ int main(int argc, const char **argv)
       ospSet1i(renderer, "spp", spp);
       ospCommit(renderer);
     }
-    static bool sharedVertices = true;
-    static bool valuesPerCell = true;
+    static bool sharedVertices = false;
+    static bool valuesPerCell = false;
     static bool isoSurface = false;
     if ((ImGui::Checkbox("shared vertices", &sharedVertices)) ||
-        (ImGui::Checkbox("values per-cell", &valuesPerCell))) {
-      // define names for all available volumes
-      static const char* names[2][2] = {
-        {"simple_unstructured_volume", "simple_unstructured_volume"},
-        {"simple_unstructured_volume", "simple_unstructured_volume"}
-      };
+        (ImGui::Checkbox("per-cell values", &valuesPerCell))) {
 
       // remove current volume
-      ospSetObject(isoGeometry, "volume", nullptr);
+      ospRemoveParam(isoGeometry, "volume");
       if (!isoSurface)
-        ospRemoveVolume(world, testVolume.volume);
-      ospRelease(testVolume.volume);
+        ospRemoveVolume(world, testVolume);
 
-      // create a new one
-      testVolume = ospTestingNewVolume(
-        names[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0]);
+      // set a new one
+      testVolume =
+        allVolumes[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0];
 
       // attach the new volume
-      ospSetObject(isoGeometry, "volume", testVolume.volume);
-      ospCommit(isoGeometry);
-      if (!isoSurface) {
-        ospAddVolume(world, testVolume.volume);
-        ospCommit(world);
-      }
+      ospSetObject(isoGeometry, "volume", testVolume);
+      if (!isoSurface)
+        ospAddVolume(world, testVolume);
+      glfwOSPRayWindow->addObjectToCommit(isoGeometry);
+      glfwOSPRayWindow->addObjectToCommit(world);
     }
     if (ImGui::Checkbox("isosurface", &isoSurface)) {
       if (isoSurface) {
         // replace volume with iso geometry
-        ospRemoveVolume(world, testVolume.volume);
+        ospRemoveVolume(world, testVolume);
         ospAddGeometry(world, isoGeometry);
-        ospCommit(world);
+        glfwOSPRayWindow->addObjectToCommit(world);
       } else {
         // replace iso geometry with volume
-        ospAddVolume(world, testVolume.volume);
+        ospAddVolume(world, testVolume);
         ospRemoveGeometry(world, isoGeometry);
-        ospCommit(world);
+        glfwOSPRayWindow->addObjectToCommit(world);
       }
+    }
+    if ((isoSurface) &&
+        (ImGui::SliderFloat("iso value", &isoValue, 0.f, 1.f))) {
+      // update iso value
+      setIsoValue(isoGeometry, isoValue);
+      glfwOSPRayWindow->addObjectToCommit(isoGeometry);
+      glfwOSPRayWindow->addObjectToCommit(world);
     }
   });
 
@@ -166,7 +185,10 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   // cleanup remaining objects
-  ospRelease(testVolume.volume);
+  ospRelease(allVolumes[0][0]);
+  ospRelease(allVolumes[0][1]);
+  ospRelease(allVolumes[1][0]);
+  ospRelease(allVolumes[1][1]);
   ospRelease(isoGeometry);
   ospRelease(world);
   ospRelease(renderer);

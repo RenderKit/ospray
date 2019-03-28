@@ -24,12 +24,6 @@ using namespace ospcommon;
 // unstructured cell types
 #include "ospray/OSPUnstructured.h"
 
-// values defined per-cell or per-vertex
-//#define VALUES_PER_CELL
-
-// separate cells or cells sharing vertices
-//#define SHARED_VERTICES
-
 namespace ospray {
   namespace testing {
 
@@ -38,12 +32,50 @@ namespace ospray {
       SimpleUnStructuredVolume()           = default;
       ~SimpleUnStructuredVolume() override = default;
 
-      OSPTestingVolume createVolume() const override;
+      OSPTestingVolume createVolumeCommon(
+        bool sharedVertices, bool valuesPerCell) const;
+    };
+
+    struct SimpleUnStructuredVolume00 : public SimpleUnStructuredVolume
+    {
+      SimpleUnStructuredVolume00()           = default;
+      ~SimpleUnStructuredVolume00() override = default;
+
+      OSPTestingVolume createVolume() const override
+        { return createVolumeCommon(false, false); }
+    };
+
+    struct SimpleUnStructuredVolume01 : public SimpleUnStructuredVolume
+    {
+      SimpleUnStructuredVolume01()           = default;
+      ~SimpleUnStructuredVolume01() override = default;
+
+      OSPTestingVolume createVolume() const override
+        { return createVolumeCommon(false, true); }
+    };
+
+    struct SimpleUnStructuredVolume10 : public SimpleUnStructuredVolume
+    {
+      SimpleUnStructuredVolume10()           = default;
+      ~SimpleUnStructuredVolume10() override = default;
+
+      OSPTestingVolume createVolume() const override
+        { return createVolumeCommon(true, false); }
+    };
+
+    struct SimpleUnStructuredVolume11 : public SimpleUnStructuredVolume
+    {
+      SimpleUnStructuredVolume11()           = default;
+      ~SimpleUnStructuredVolume11() override = default;
+
+      OSPTestingVolume createVolume() const override
+        { return createVolumeCommon(true, true); }
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingVolume SimpleUnStructuredVolume::createVolume() const
+    OSPTestingVolume SimpleUnStructuredVolume::createVolumeCommon(
+      bool sharedVertices, bool valuesPerCell) const
     {
       // create an unstructured volume object
       OSPVolume volume = ospNewVolume("unstructured_volume");
@@ -115,12 +147,12 @@ namespace ospray {
         0.f, 1.f, 1.f, 0.f, 0.f
       };
 
-      std::vector<uint32_t> indices =
+      // define vertex indices for both shared and separate case
+      std::vector<uint32_t> indicesSharedVert =
       {
         // hexahedron
         0, 1, 2, 3, 4, 5, 6, 7,
 
-#ifdef SHARED_VERTICES
         // wedge
         1, 9, 2, 5, 12, 6,
 
@@ -129,7 +161,12 @@ namespace ospray {
 
         // pyramid
         4, 5, 6, 7, 17
-#else
+      };
+      std::vector<uint32_t> indicesSeparateVert =
+      {
+        // hexahedron
+        0, 1, 2, 3, 4, 5, 6, 7,
+
         // wedge
         8, 9, 10, 11, 12, 13,
 
@@ -138,8 +175,9 @@ namespace ospray {
 
         // pyramid
         18, 19, 20, 21, 22
-#endif
       };
+      std::vector<uint32_t>& indices =
+        sharedVertices ? indicesSharedVert : indicesSeparateVert;
 
       // define cell offsets in indices array
       std::vector<uint32_t> cells = { 0, 8, 14, 18 };
@@ -173,15 +211,13 @@ namespace ospray {
 
       // set data objects for volume object
       ospSetData(volume, "vertex", verticesData);
-#if !defined(VALUES_PER_CELL)
-      ospSetData(volume, "vertex.value", vertexValuesData);
-#endif
+      if (!valuesPerCell)
+        ospSetData(volume, "vertex.value", vertexValuesData);
       ospSetData(volume, "index", indicesData);
       ospSetData(volume, "cell", cellsData);
       ospSetData(volume, "cell.type", cellTypesData);
-#ifdef VALUES_PER_CELL
-      ospSetData(volume, "cell.value", cellValuesData);
-#endif
+      if (valuesPerCell)
+        ospSetData(volume, "cell.value", cellValuesData);
 
       // release handlers that go out of scope here
       ospRelease(verticesData);
@@ -200,9 +236,14 @@ namespace ospray {
       return retval;
     }
 
-    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume, unstructured_volume);
-    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume,
-                                simple_unstructured_volume);
-
+    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume00, unstructured_volume);
+    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume00,
+                                simple_unstructured_volume_00);
+    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume01,
+      simple_unstructured_volume_01);
+    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume10,
+      simple_unstructured_volume_10);
+    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume11,
+      simple_unstructured_volume_11);
   }  // namespace testing
 }  // namespace ospray
