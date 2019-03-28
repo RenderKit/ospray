@@ -68,8 +68,6 @@ namespace {
     // cylinder vertex data
     std::array<vec3f, 2> vertex = {vec3f(0.0f, -1.0f, 3.0f),
                                    vec3f(0.0f, 1.0f, 3.0f)};
-    // cylinder color
-    vec4f color(1.0f, 0.0f, 0.0f, 1.0f);
     // create and setup model and cylinder
     OSPGeometry cylinder = ospNewGeometry("cylinders");
     EXPECT_TRUE(cylinder);
@@ -77,10 +75,6 @@ namespace {
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(cylinder, "cylinders", data);
-    data = ospNewData(1, OSP_FLOAT4, &color);
-    EXPECT_TRUE(data);
-    ospCommit(data);
-    ospSetData(cylinder, "color", data);
     ospSet1f(cylinder, "radius", 1.0f);
     ospCommit(cylinder);
 
@@ -103,83 +97,6 @@ namespace {
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(sphere, "color", data);
-    ospSet1f(sphere, "radius", 1.0f);
-    ospCommit(sphere);
-
-    return sphere;
-  }
-
-  OSPGeometry getSphereColorFloat3()
-  {
-    // sphere vertex data
-    vec4f vertex(0.0f, 0.0f, 3.0f, 0.0f);
-    vec3f color(1.0f, 0.0f, 0.0f);
-    // create and setup model and sphere
-    OSPGeometry sphere = ospNewGeometry("spheres");
-    EXPECT_TRUE(sphere);
-    OSPData data = ospNewData(1, OSP_FLOAT4, &vertex);
-    EXPECT_TRUE(data);
-    ospCommit(data);
-    ospSetData(sphere, "spheres", data);
-    data = ospNewData(1, OSP_FLOAT3, &color);
-    EXPECT_TRUE(data);
-    ospCommit(data);
-    ospSetData(sphere, "color", data);
-    ospSet1f(sphere, "radius", 1.0f);
-    ospCommit(sphere);
-
-    return sphere;
-  }
-
-  OSPGeometry getSphereColorUchar4()
-  {
-    // sphere vertex data
-    vec4f vertex(0.0f, 0.0f, 3.0f, 0.0f);
-    vec4uc color(255, 0, 0, 255);
-    // create and setup model and sphere
-    OSPGeometry sphere = ospNewGeometry("spheres");
-    EXPECT_TRUE(sphere);
-    OSPData data = ospNewData(1, OSP_FLOAT4, &vertex);
-    EXPECT_TRUE(data);
-    ospCommit(data);
-    ospSetData(sphere, "spheres", data);
-    data = ospNewData(1, OSP_UCHAR4, &color);
-    EXPECT_TRUE(data);
-    ospCommit(data);
-    ospSetData(sphere, "color", data);
-    ospSet1f(sphere, "radius", 1.0f);
-    ospCommit(sphere);
-
-    return sphere;
-  }
-
-  OSPGeometry getSphereInterleavedLayout()
-  {
-    struct Sphere
-    {
-      vec3f vertex;
-      vec4f color;
-
-      Sphere() : vertex(0), color(0) {}
-    };
-
-    Sphere s;
-    s.vertex.z = 3;
-    s.color.x  = 1;
-    s.color.w  = 1;
-
-    // create and setup model and sphere
-    OSPGeometry sphere = ospNewGeometry("spheres");
-    EXPECT_TRUE(sphere);
-    OSPData data = ospNewData(sizeof(Sphere), OSP_CHAR, &s);
-    EXPECT_TRUE(data);
-    ospCommit(data);
-    ospSetData(sphere, "spheres", data);
-    ospSetData(sphere, "color", data);
-    ospSet1i(sphere, "color_offset", sizeof(vec3f));
-    ospSet1i(sphere, "bytes_per_sphere", sizeof(Sphere));
-    ospSet1i(sphere, "color_stride", sizeof(Sphere));
-    ospSet1i(sphere, "color_format", OSP_FLOAT4);
     ospSet1f(sphere, "radius", 1.0f);
     ospCommit(sphere);
 
@@ -247,9 +164,11 @@ TEST_P(SingleObject, emptyScene)
 TEST_P(SingleObject, simpleMesh)
 {
   OSPGeometry mesh = ::getMesh();
-  ospSetMaterial(mesh, GetMaterial());
-  ospCommit(mesh);
-  AddGeometry(mesh);
+
+  OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
+  ospSetMaterial2(instance, GetMaterial());
+  AddInstance(instance);
+
   PerformRenderTest();
 }
 
@@ -257,39 +176,18 @@ TEST_P(SingleObject, simpleMesh)
 TEST_P(SingleObject, simpleSphere)
 {
   OSPGeometry sphere = ::getSphere();
-  ospSetMaterial(sphere, GetMaterial());
-  ospCommit(sphere);
-  AddGeometry(sphere);
-  PerformRenderTest();
-}
 
-// single red sphere with OSP_FLOAT3 color layout
-TEST_P(SingleObject, simpleSphereColorFloat3)
-{
-  OSPGeometry sphere = ::getSphereColorFloat3();
-  ospSetMaterial(sphere, GetMaterial());
-  ospCommit(sphere);
-  AddGeometry(sphere);
-  PerformRenderTest();
-}
+  vec4f color(1.0f, 0.0f, 0.0f, 1.0f);
+  OSPData data = ospNewData(1, OSP_FLOAT4, &color);
+  EXPECT_TRUE(data);
+  ospCommit(data);
 
-// single red sphere with OSP_UCHAR4 color layout
-TEST_P(SingleObject, simpleSphereColorUchar4)
-{
-  OSPGeometry sphere = ::getSphereColorUchar4();
-  ospSetMaterial(sphere, GetMaterial());
-  ospCommit(sphere);
-  AddGeometry(sphere);
-  PerformRenderTest();
-}
+  OSPGeometryInstance instance = ospNewGeometryInstance(sphere);
+  ospSetMaterial2(instance, GetMaterial());
+  ospSetData(instance, "color", data);
+  ospRelease(data);
+  AddInstance(instance);
 
-// single red sphere with interleaved layout
-TEST_P(SingleObject, simpleSphereInterleavedLayout)
-{
-  OSPGeometry sphere = ::getSphereInterleavedLayout();
-  ospSetMaterial(sphere, GetMaterial());
-  ospCommit(sphere);
-  AddGeometry(sphere);
   PerformRenderTest();
 }
 
@@ -297,9 +195,18 @@ TEST_P(SingleObject, simpleSphereInterleavedLayout)
 TEST_P(SingleObject, simpleCylinder)
 {
   OSPGeometry cylinder = ::getCylinder();
-  ospSetMaterial(cylinder, GetMaterial());
-  ospCommit(cylinder);
-  AddGeometry(cylinder);
+
+  vec4f color(1.0f, 0.0f, 0.0f, 1.0f);
+  OSPData data = ospNewData(1, OSP_FLOAT4, &color);
+  EXPECT_TRUE(data);
+  ospCommit(data);
+
+  OSPGeometryInstance instance = ospNewGeometryInstance(cylinder);
+  ospSetMaterial2(instance, GetMaterial());
+  ospSetData(instance, "color", data);
+  ospRelease(data);
+  AddInstance(instance);
+
   PerformRenderTest();
 }
 
@@ -307,18 +214,22 @@ TEST_P(SingleObject, simpleCylinder)
 TEST_P(SingleObject, simpleStreamlines)
 {
   OSPGeometry streamlines = ::getStreamline();
-  ospSetMaterial(streamlines, GetMaterial());
-  ospCommit(streamlines);
-  AddGeometry(streamlines);
+
+  OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
+  ospSetMaterial2(instance, GetMaterial());
+  AddInstance(instance);
+
   PerformRenderTest();
 }
 
 TEST_P(SingleObject, simpleStreamlinesVariableRadii)
 {
   OSPGeometry streamlines = ::getStreamline(false);
-  ospSetMaterial(streamlines, GetMaterial());
-  ospCommit(streamlines);
-  AddGeometry(streamlines);
+
+  OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
+  ospSetMaterial2(instance, GetMaterial());
+  AddInstance(instance);
+
   PerformRenderTest();
 }
 

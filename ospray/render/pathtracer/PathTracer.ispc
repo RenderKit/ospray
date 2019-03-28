@@ -252,14 +252,11 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
     foreach_unique(m in material)
       if (m != NULL && reduce_max(m->emission) > 0.f) {
         float areaPdf;
-        // XXX same hack as in World.ih; to get areaPDF of hit geometry instance
-        if (ray.instID < 0) { // a regular geometry
-          areaPdf = self->areaPDF[ray.geomID];
-        } else { // an instance
-          foreach_unique(instID in ray.instID) {
-            Instance *uniform inst = (Instance *uniform)world->geometry[instID];
-            areaPdf = inst->areaPDF[ray.geomID];
-          }
+        foreach_unique(instID in ray.instID) {
+          GeometryInstance *uniform inst = (GeometryInstance *uniform)world->geometryInstances[instID];
+  #if 0
+          areaPdf = inst->areaPDF[ray.geomID];
+  #endif
         }
 
         // convert pdf wrt. area to pdf wrt. solid angle
