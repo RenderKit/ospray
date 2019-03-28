@@ -656,8 +656,6 @@ namespace ospray {
         SetMaterial(ObjectHandle handle, OSPMaterial val)
             : handle(handle), material((ObjectHandle &)val)
         {
-          Assert(handle != nullHandle);
-          Assert(material != nullHandle);
         }
 
         void run() override;

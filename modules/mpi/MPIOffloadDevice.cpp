@@ -908,14 +908,14 @@ namespace ospray {
     void MPIOffloadDevice::setMaterial(OSPGeometry _geometry,
                                        OSPMaterial _material)
     {
-      work::SetMaterial work((ObjectHandle &)_geometry, _material);
-      processWork(work);
+      NOT_IMPLEMENTED;
     }
 
     void MPIOffloadDevice::setMaterial(OSPGeometryInstance _instance,
                                        OSPMaterial _material)
     {
-      NOT_IMPLEMENTED;
+      work::SetMaterial work((ObjectHandle &)_instance, _material);
+      processWork(work);
     }
 
     /*! create a new Texture2D object */

@@ -259,13 +259,9 @@ namespace ospray {
 
       void SetMaterial::run()
       {
-        Geometry *geom = (Geometry *)handle.lookup();
-        Material *mat  = (Material *)material.lookup();
-        Assert(geom);
-        Assert(mat);
-        /* might we worthwhile doing a dyncast here to check if that
-           is actually a proper geometry .. */
-        geom->setMaterial(mat);
+        auto *inst = (GeometryInstance *)handle.lookup();
+        auto *mat  = (Material *)material.lookup();
+        inst->setMaterial(mat);
       }
 
       // ospNewRenderer ///////////////////////////////////////////////////////
