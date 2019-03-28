@@ -32,13 +32,13 @@ namespace ospray {
       std::vector<OSPLight> lights;
 
       auto ambientLight = ospNewLight("ambient");
-      ospSet1f(ambientLight, "intensity", 0.2f);
+      ospSet1f(ambientLight, "intensity", 0.1f);
       ospSet3f(ambientLight, "color", 1.f, 1.f, 1.f);
       ospCommit(ambientLight);
       lights.push_back(ambientLight);
 
       auto directionalLight = ospNewLight("distant");
-      ospSet1f(directionalLight, "intensity", 0.9f);
+      ospSet1f(directionalLight, "intensity", 1.0f);
       ospSet3f(directionalLight, "color", 1.f, 1.f, 1.f);
       ospSet3f(directionalLight, "direction", 0.f, -1.f, 0.f);
       ospCommit(directionalLight);

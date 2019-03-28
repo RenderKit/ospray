@@ -43,6 +43,7 @@ namespace {
 
   void setIsoValue(OSPGeometry geometry, float value)
   {
+    // create and set a single iso value
     std::vector<float> isoValues = { value };
     OSPData isoValuesData =
       ospNewData(isoValues.size(), OSP_FLOAT, isoValues.data());
@@ -79,7 +80,7 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries / volumes
   OSPWorld world = ospNewWorld();
 
-  // add in generated volume and transfer function
+  // create all volume variances [sharedVertices][valuesPerCell]
   OSPVolume allVolumes[2][2];
   allVolumes[0][0] = createVolumeWithTF("simple_unstructured_volume_00", "jet");
   allVolumes[0][1] = createVolumeWithTF("simple_unstructured_volume_01", "jet");
@@ -93,7 +94,7 @@ int main(int argc, const char **argv)
   // create iso geometry object and add it to the world
   OSPGeometry isoGeometry = ospNewGeometry("isosurfaces");
 
-  // set initial iso values
+  // set initial iso value
   float isoValue = .2f;
   setIsoValue(isoGeometry, isoValue);
 
@@ -102,27 +103,26 @@ int main(int argc, const char **argv)
 
   // prepare material for iso geometry
   OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
-  ospSet3f(material, "Ks", 0.5f, 0.5f, 0.5f);
-  ospSet1f(material, "Ns", 100.0f);
+  ospSet3f(material, "Ks", .2f, .2f, .2f);
   ospCommit(material);
 
-  // assign material to geometry
+  // assign material to the geometry
   ospSetMaterial(isoGeometry, material);
   ospRelease(material);
 
-  // apply changes to iso geometry object
+  // apply changes made
   ospCommit(isoGeometry);
-
-  // commit the world
   ospCommit(world);
 
-  // Create OSPRay renderer
+  // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer("scivis");
 
+  // create and set lights
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
 
+  // apply changes to the renderer
   ospCommit(renderer);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
@@ -195,6 +195,5 @@ int main(int argc, const char **argv)
 
   // cleanly shut OSPRay down
   ospShutdown();
-
   return 0;
 }
