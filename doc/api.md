@@ -584,8 +584,8 @@ like the structured volume equivalent, but they only modify the root
 ### Unstructured Volumes
 
 Unstructured volumes can have its topology and geometry freely defined.
-Geometry can be composed of tetrahedral, wedge, or hexahedral cell
-types. Data format optinally matches VTK and consists from multiple
+Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid cell
+types. Used data format is compatible with VTK and consists from multiple
 arrays: vertex positions and values, vertex indices, cell start indices,
 cell types, and cell values. An unstructured volume type is created by
 passing the type string "`unstructured_volume`" to `ospNewVolume`.
@@ -600,14 +600,18 @@ will be used for sampling when rendering, if specified. The index order
 for a tetrahedron is the same as `VTK_TETRA`: bottom triangle
 counterclockwise, then the top vertex.
 
-For wedge cells, each wedge is formed by a group of six indices into the
-vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
-three bottom vertices counterclockwise, then top three counterclockwise.
-
 For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertices and data value. Vertex ordering is the same as
+indices into the vertices and data values. Vertex ordering is the same as
 `VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
 counterclockwise.
+
+For wedge cells, each wedge is formed by a group of six indices into the
+vertices and data values. Vertex ordering is the same as `VTK_WEDGE`:
+three bottom vertices counterclockwise, then top three counterclockwise.
+
+For pyramid cells, each cell is formed by a group of five indices into the
+vertices and data values. Vertex ordering is the same as `VTK_PYRAMID`:
+four bottom vertices counterclockwise, then the top vertex.
 
 To maintain VTK data compatibility an index array may be specified via
 `indexPrefixed` array that allow vertex indices to be interleaved with
@@ -640,8 +644,9 @@ id_m$.
   uint8[]              cell.type                    [data] array of cell types
                                                     (VTK compatible)
 
-  string               hexMethod           planar   "planar" (faster, assumes planar sides)
-                                                    or "nonplanar"
+  string               hexMethod           fast     hexahedron interpolation method,
+                                                    "fast" (rendering inaccuracies may appear
+                                                    if hex is not parallelepiped) or "iterative"
 
   bool                 precomputedNormals  true     whether to accelerate by precomputing,
                                                     at a cost of 12 bytes/face

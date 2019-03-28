@@ -83,11 +83,11 @@ namespace ospray {
     auto methodStringFromEnv =
       utility::getEnvVar<std::string>("OSPRAY_HEX_METHOD");
     std::string methodString =
-      methodStringFromEnv.value_or(getParamString("hexMethod","planar"));
-    if (methodString == "planar") {
-      ispc::UnstructuredVolume_method_planar(ispcEquivalent);
-    } else if (methodString == "nonplanar") {
-      ispc::UnstructuredVolume_method_nonplanar(ispcEquivalent);
+      methodStringFromEnv.value_or(getParamString("hexMethod", "fast"));
+    if ((methodString == "fast") || (methodString == "planar")) {
+      ispc::UnstructuredVolume_method_fast(ispcEquivalent);
+    } else if ((methodString == "iterative") || (methodString == "nonplanar")) {
+      ispc::UnstructuredVolume_method_iterative(ispcEquivalent);
     }
 
     ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);

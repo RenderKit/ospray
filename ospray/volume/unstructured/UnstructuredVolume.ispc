@@ -334,12 +334,12 @@ static bool intersectAndSampleWedge(const void *uniform userData,
   return false;
 }
 
-static bool intersectAndSampleHexPlanar(const void *uniform userData,
-                                        uniform uint64 id,
-                                        float &result,
-                                        vec3f samplePos,
-                                        float range_lo,
-                                        float range_hi)
+static bool intersectAndSampleHexFast(const void *uniform userData,
+                                      uniform uint64 id,
+                                      float &result,
+                                      vec3f samplePos,
+                                      float range_lo,
+                                      float range_hi)
 {
   const UnstructuredVolume* uniform self = (const UnstructuredVolume* uniform)userData;
 
@@ -449,7 +449,7 @@ static const uniform int HEX_MAX_ITERATION = 10;
 static const uniform float HEX_CONVERGED = 1.e-05;
 static const uniform float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
-static bool intersectAndSampleHexNonplanar(const void *uniform userData,
+static bool intersectAndSampleHexIterative(const void *uniform userData,
                                            uniform uint64 id,
                                            uniform bool assumeInside,
                                            float &result,
@@ -733,10 +733,10 @@ static bool intersectAndSampleCell(const void *uniform userData,
     hit = intersectAndSampleTet(userData, id, false, result, samplePos, range_lo, range_hi);
     break;
   case OSP_HEXAHEDRON:
-    if (self->hexMethod == PLANAR)
-      hit = intersectAndSampleHexPlanar(userData, id, result, samplePos, range_lo, range_hi);
-    else if (self->hexMethod == NONPLANAR)
-      hit = intersectAndSampleHexNonplanar(userData, id, false, result, samplePos, range_lo, range_hi);
+    if (self->hexMethod == FAST)
+      hit = intersectAndSampleHexFast(userData, id, result, samplePos, range_lo, range_hi);
+    else if (self->hexMethod == ITERATIVE)
+      hit = intersectAndSampleHexIterative(userData, id, false, result, samplePos, range_lo, range_hi);
     break;
   case OSP_WEDGE:
     hit = intersectAndSampleWedge(userData, id, false, result, samplePos, range_lo, range_hi);
@@ -968,8 +968,8 @@ void UnstructuredVolume_intersectIsoRay(const void *uniform userData,
     // Sample values at near and far intersection point
     float t0 = t_nr; float t1 = t_fr;
     float p0, p1;
-    intersectAndSampleHexNonplanar(userData, id, true, p0, ray.org + ray.dir * t0, 0.f, 0.f);
-    intersectAndSampleHexNonplanar(userData, id, true, p1, ray.org + ray.dir * t1, 0.f, 0.f);
+    intersectAndSampleHexIterative(userData, id, true, p0, ray.org + ray.dir * t0, 0.f, 0.f);
+    intersectAndSampleHexIterative(userData, id, true, p1, ray.org + ray.dir * t1, 0.f, 0.f);
 
     for (uniform int iso = 0; iso < numIsovalues; iso++) {
 
@@ -981,7 +981,7 @@ void UnstructuredVolume_intersectIsoRay(const void *uniform userData,
       for(uniform int i = 0; i < 4; i++) {
         const float t = t0 + (t1 - t0) * ((piso - p0) / (p1 - p0));
         float pt;
-        intersectAndSampleHexNonplanar(userData, id, true, pt, ray.org + ray.dir * t, 0.f, 0.f);
+        intersectAndSampleHexIterative(userData, id, true, pt, ray.org + ray.dir * t, 0.f, 0.f);
 
         if (sameSign(pt - piso, p0 - piso)) {
           t0 = t;
@@ -1093,17 +1093,17 @@ UnstructuredVolume_createInstance(void *uniform cppEquivalent)
 }
 
 export void
-UnstructuredVolume_method_planar(void *uniform _self)
+UnstructuredVolume_method_fast(void *uniform _self)
 {
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
-  self->hexMethod = PLANAR;
+  self->hexMethod = FAST;
 }
 
 export void
-UnstructuredVolume_method_nonplanar(void *uniform _self)
+UnstructuredVolume_method_iterative(void *uniform _self)
 {
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
-  self->hexMethod = NONPLANAR;
+  self->hexMethod = ITERATIVE;
 }
 
 export void

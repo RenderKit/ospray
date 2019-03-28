@@ -45,5 +45,5 @@ struct UnstructuredVolume
 
   uniform MinMaxBVH2 bvh;
 
-  uniform enum {PLANAR, NONPLANAR} hexMethod;
+  uniform enum {FAST, ITERATIVE} hexMethod;
 };
