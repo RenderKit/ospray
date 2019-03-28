@@ -18,14 +18,14 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <cstring>
-#include <string>
-#include <fstream>
-#include <vector>
 #include <cmath>
+#include <cstring>
+#include <fstream>
+#include <string>
+#include <vector>
 
-#include <ospray/ospray.h>
 #include <gtest/gtest.h>
+#include <ospray/ospray.h>
 #include <limits>
 
 #include "ospray_environment.h"
@@ -36,43 +36,51 @@
 using pixelColorValue = unsigned char;
 
 const pixelColorValue pixelThreshold = 10;
-const float errorRate = 0.03;
+const float errorRate                = 0.03;
 
-enum class OsprayStatus {
+enum class OsprayStatus
+{
   Ok,
   Fail,
   Error,
 };
 
-enum ImgType {
-    Y=1,
-    YA,
-    RGB,
-    RGBA,
+enum ImgType
+{
+  Y = 1,
+  YA,
+  RGB,
+  RGBA,
 };
 
-class OSPImageTools {
-  protected:
-    osp::vec2i size;
-    std::string fileFormat;
-    std::string imgName;
+class OSPImageTools
+{
+ protected:
+  osp::vec2i size;
+  std::string fileFormat;
+  std::string imgName;
 
-    // helper method to write the rendered image as PPM file
-    OsprayStatus writePPM(std::string fileName, const uint32_t *pixel);
-    // helper method to write the rendered image as PNG file
-    OsprayStatus writePNG(std::string fileName, const uint32_t *pixel);
-    // helper method to write the rendered image as HDR file
-    OsprayStatus writeHDR(std::string fileName, const float *pixel);
-    // helper method to write the image with given format
-    OsprayStatus writeImg(std::string fileName, const void *pixel);
-    std::string GetFileFormat() const { return fileFormat; };
+  // helper method to write the rendered image as PPM file
+  OsprayStatus writePPM(std::string fileName, const uint32_t *pixel);
+  // helper method to write the rendered image as PNG file
+  OsprayStatus writePNG(std::string fileName, const uint32_t *pixel);
+  // helper method to write the rendered image as HDR file
+  OsprayStatus writeHDR(std::string fileName, const float *pixel);
+  // helper method to write the image with given format
+  OsprayStatus writeImg(std::string fileName, const void *pixel);
+  std::string GetFileFormat() const
+  {
+    return fileFormat;
+  };
 
-  public:
-    OSPImageTools(osp::vec2i imgSize, std::string testName, OSPFrameBufferFormat frameBufferFormat);
-    ~OSPImageTools();
+ public:
+  OSPImageTools(osp::vec2i imgSize,
+                std::string testName,
+                OSPFrameBufferFormat frameBufferFormat);
+  ~OSPImageTools();
 
-    // helper method to saved rendered file
-    OsprayStatus saveTestImage(const void *pixel);
-    // helper method to compare gold image with current framebuffer render
-    OsprayStatus compareImgWithBaseline(const uint32_t *testImg);
+  // helper method to saved rendered file
+  OsprayStatus saveTestImage(const void *pixel);
+  // helper method to compare gold image with current framebuffer render
+  OsprayStatus compareImgWithBaseline(const uint32_t *testImg);
 };

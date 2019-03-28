@@ -18,7 +18,8 @@
 
 using OSPRayTestScenes::MTLMirrors;
 
-TEST_P(MTLMirrors, Properties) {
+TEST_P(MTLMirrors, Properties)
+{
   PerformRenderTest();
 }
 
@@ -48,4 +49,3 @@ INSTANTIATE_TEST_CASE_P(Diffuse, MTLMirrors, ::testing::Combine(
   ::testing::Values(1.f),
   ::testing::Values(osp::vec3f({0.f, 0.f, 0.f}))
 ));
-

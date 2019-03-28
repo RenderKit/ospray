@@ -18,7 +18,7 @@
 
 using OSPRayTestScenes::SlicedCube;
 
-TEST_F(SlicedCube, simple) {
+TEST_F(SlicedCube, simple)
+{
   PerformRenderTest();
 }
-

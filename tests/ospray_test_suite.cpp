@@ -16,9 +16,10 @@
 
 #include "ospray_test_fixture.h"
 
-OSPRayEnvironment * ospEnv;
+OSPRayEnvironment *ospEnv;
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   ::testing::InitGoogleTest(&argc, argv);
   ospEnv = new OSPRayEnvironment(argc, argv);
   AddGlobalTestEnvironment(ospEnv);
