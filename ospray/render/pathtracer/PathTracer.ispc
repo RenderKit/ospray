@@ -254,9 +254,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
         float areaPdf;
         foreach_unique(instID in ray.instID) {
           GeometryInstance *uniform inst = (GeometryInstance *uniform)world->geometryInstances[instID];
-  #if 0
-          areaPdf = inst->areaPDF[ray.geomID];
-  #endif
+          areaPdf = inst->areaPDF;
         }
 
         // convert pdf wrt. area to pdf wrt. solid angle
@@ -497,7 +495,6 @@ export void PathTracer_set(void *uniform _self
     , void **uniform lights
     , const uniform uint32 numLights
     , const uniform uint32 numGeoLights
-    , void *uniform areaPDF
     )
 {
   PathTracer *uniform self = (PathTracer *uniform)_self;
@@ -515,7 +512,6 @@ export void PathTracer_set(void *uniform _self
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
   self->numGeoLights = numGeoLights;
-  self->areaPDF = (float *uniform)areaPDF;
 }
 
 export void* uniform PathTracer_create(void *uniform cppE)
@@ -524,7 +520,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super, cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
+  PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f), NULL, 0, 0);
 
   precomputeMicrofacetAlbedoTables();
   precomputeZOrder();

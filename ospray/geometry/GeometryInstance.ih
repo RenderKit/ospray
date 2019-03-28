@@ -31,6 +31,8 @@ struct GeometryInstance
 
   int32 numMaterials;
   Material *uniform *uniform materialList;
+
+  float areaPDF;
 };
 
 void GeometryInstance_postIntersect(const GeometryInstance *uniform self,

@@ -72,7 +72,8 @@ export void *uniform GeometryInstance_create(void *uniform cppE,
 {
   GeometryInstance *uniform self = uniform new GeometryInstance;
 
-  self->geom = (Geometry * uniform) geom;
+  self->geom    = (Geometry * uniform) geom;
+  self->areaPDF = 0.f;
 
   return self;
 }

@@ -541,6 +541,10 @@ namespace OSPRayTestScenes {
     instance = ospNewGeometryInstance(sphere);
     ospSetMaterial2(instance, sphereMaterial);
     AddInstance(instance);
+
+    // NOTE(jda) - still need to set the world on the renderer for geom lights
+    ospSetObject(renderer, "world", world);
+    ospCommit(renderer);
   }
 
   void Box::SetMaterials()

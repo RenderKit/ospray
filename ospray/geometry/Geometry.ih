@@ -50,10 +50,6 @@ struct SampleAreaRes
   vec3f normal;  //!< geometry normal Ng at the sampled point
 };
 
-typedef int32 (*Geometry_GetMaterialIDFct)(
-    const Geometry *const uniform, const int32 primID  //!< primitive to query
-);
-
 typedef void (*Geometry_GetAreasFct)(
     const Geometry *const uniform,
     const int32 *const uniform primIDs  //!< primitive IDs
