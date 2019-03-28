@@ -648,8 +648,8 @@ namespace OSPRayTestScenes {
       OSPGeometry isosurface = ospNewGeometry("isosurfaces");
       ospSetObject(isosurface, "volume", pyramid);
       ospRelease(pyramid);
-      float isovalues[1]    = {0.f};
-      OSPData isovaluesData = ospNewData(1, OSP_FLOAT, isovalues);
+      float isovalue = 0.f;
+      OSPData isovaluesData = ospNewData(1, OSP_FLOAT, &isovalue);
       ospSetData(isosurface, "isovalues", isovaluesData);
       ospRelease(isovaluesData);
 
