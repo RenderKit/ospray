@@ -34,10 +34,6 @@ struct World
   /*! pointer to the c++-equivalent class of this entity */
   void *cppEquivalent;
 
-  //! array of (pointers to) geometries contained in this model
-  uniform Geometry *uniform *uniform geometry;
-  uniform int32 geometryCount;
-
   uniform GeometryInstance *uniform *uniform geometryInstances;
   uniform int32 geometryInstanceCount;
 

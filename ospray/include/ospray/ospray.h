@@ -308,10 +308,6 @@ extern "C" {
 
   // Instancing ///////////////////////////////////////////////////////////////
 
-  OSP_DEPRECATED
-  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
-                                              const osp_affine3f transform);
-
   OSPRAY_INTERFACE OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geom);
 
   OSPRAY_INTERFACE OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume);
@@ -363,8 +359,7 @@ extern "C" {
 
   OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
-  OSP_DEPRECATED OSPRAY_INTERFACE void ospSetMaterial(OSPGeometry, OSPMaterial);
-  OSPRAY_INTERFACE void ospSetMaterial2(OSPGeometryInstance, OSPMaterial);
+  OSPRAY_INTERFACE void ospSetMaterial(OSPGeometryInstance, OSPMaterial);
 
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
 

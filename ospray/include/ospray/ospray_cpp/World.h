@@ -16,37 +16,34 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/Geometry.h>
+#include <ospray/ospray_cpp/GeometryInstance.h>
 #include <ospray/ospray_cpp/ManagedObject.h>
 #include <ospray/ospray_cpp/Volume.h>
 
 namespace ospray {
-  namespace cpp    {
+  namespace cpp {
 
     class World : public ManagedObject_T<OSPWorld>
     {
-    public:
-
+     public:
       World();
       World(const World &copy);
       World(OSPWorld existing);
 
-      void addGeometry(Geometry &v) const;
-      void addGeometry(OSPGeometry v) const;
+      void addGeometryInstance(GeometryInstance &v) const;
+      void addGeometryInstance(OSPGeometryInstance v) const;
 
-      void removeGeometry(Geometry &v) const;
-      void removeGeometry(OSPGeometry v) const;
+      void removeGeometryInstance(GeometryInstance &v) const;
+      void removeGeometryInstance(OSPGeometryInstance v) const;
 
       void addVolume(Volume &v) const;
       void addVolume(OSPVolume v) const;
 
       void removeVolume(Volume &v) const;
       void removeVolume(OSPVolume v) const;
-
-      Geometry createInstance(const ospcommon::affine3f &transform) const;
     };
 
-    // Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
     inline World::World()
     {
@@ -58,34 +55,33 @@ namespace ospray {
       }
     }
 
-    inline World::World(const World &copy) :
-      ManagedObject_T<OSPWorld>(copy.handle())
+    inline World::World(const World &copy)
+        : ManagedObject_T<OSPWorld>(copy.handle())
     {
     }
 
-    inline World::World(OSPWorld existing) :
-      ManagedObject_T<OSPWorld>(existing)
+    inline World::World(OSPWorld existing) : ManagedObject_T<OSPWorld>(existing)
     {
     }
 
-    inline void World::addGeometry(Geometry &v) const
+    inline void World::addGeometryInstance(GeometryInstance &v) const
     {
-      addGeometry(v.handle());
+      addGeometryInstance(v.handle());
     }
 
-    inline void World::addGeometry(OSPGeometry v) const
+    inline void World::addGeometryInstance(OSPGeometryInstance v) const
     {
-      ospAddGeometry(handle(), v);
+      ospAddGeometryInstance(handle(), v);
     }
 
-    inline void World::removeGeometry(Geometry &v) const
+    inline void World::removeGeometryInstance(GeometryInstance &v) const
     {
-      removeGeometry(v.handle());
+      removeGeometryInstance(v.handle());
     }
 
-    inline void World::removeGeometry(OSPGeometry v) const
+    inline void World::removeGeometryInstance(OSPGeometryInstance v) const
     {
-      ospRemoveGeometry(handle(), v);
+      ospRemoveGeometryInstance(handle(), v);
     }
 
     inline void World::addVolume(Volume &v) const
@@ -108,11 +104,5 @@ namespace ospray {
       ospRemoveVolume(handle(), v);
     }
 
-    inline Geometry
-    World::createInstance(const ospcommon::affine3f &transform) const
-    {
-      return ospNewInstance(handle(), (const osp_affine3f&)transform);
-    }
-
-  }// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+}  // namespace ospray

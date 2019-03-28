@@ -159,7 +159,7 @@ OSPGeometryInstance createGroundPlane()
   OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
   ospCommit(material);
 
-  ospSetMaterial2(planeInstance, material);
+  ospSetMaterial(planeInstance, material);
 
   // release handles we no longer need
   ospRelease(positionData);

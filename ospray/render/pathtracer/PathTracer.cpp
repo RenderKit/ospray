@@ -19,7 +19,6 @@
 #include "PathTracer.h"
 // ospray
 #include "common/Data.h"
-#include "geometry/Instance.h"
 #include "lights/Light.h"
 // ispc exports
 #include "GeometryLight_ispc.h"

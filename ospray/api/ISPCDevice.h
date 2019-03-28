@@ -66,12 +66,6 @@ namespace ospray {
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;
 
-      /*! add a new geometry to a model */
-      void addGeometry(OSPWorld _model, OSPGeometry _geometry) override;
-
-      /*! remove an existing geometry from a model */
-      void removeGeometry(OSPWorld _model, OSPGeometry _geometry) override;
-
       /*! add a new volume to a model */
       void addVolume(OSPWorld _model, OSPVolume _volume) override;
 
@@ -215,9 +209,6 @@ namespace ospray {
         after this assignation release its refcount override; the material will
         stay 'alive' as long as the given geometry requires it. */
       void release(OSPObject _obj) override;
-
-      //! assign given material to given geometry
-      void setMaterial(OSPGeometry _geom, OSPMaterial _mat) override;
 
       void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) override;
 

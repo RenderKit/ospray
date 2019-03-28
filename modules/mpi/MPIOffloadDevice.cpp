@@ -551,17 +551,16 @@ namespace ospray {
       processWork(work);
     }
 
-    /*! add a new geometry to a world */
-    void MPIOffloadDevice::addGeometry(OSPWorld _world, OSPGeometry _geometry)
-    {
-      work::AddGeometry work(_world, _geometry);
-      processWork(work);
-    }
-
     /*! add a new volume to a world */
     void MPIOffloadDevice::addVolume(OSPWorld _world, OSPVolume _volume)
     {
       work::AddVolume work(_world, _volume);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::removeVolume(OSPWorld _world, OSPVolume _volume)
+    {
+      work::RemoveVolume work(_world, _volume);
       processWork(work);
     }
 
@@ -812,21 +811,6 @@ namespace ospray {
       processWork(work);
     }
 
-    /*! remove an existing geometry from a world */
-    void MPIOffloadDevice::removeGeometry(OSPWorld _world,
-                                          OSPGeometry _geometry)
-    {
-      work::RemoveGeometry work(_world, _geometry);
-      processWork(work);
-    }
-
-    /*! remove an existing volume from a world */
-    void MPIOffloadDevice::removeVolume(OSPWorld _world, OSPVolume _volume)
-    {
-      work::RemoveVolume work(_world, _volume);
-      processWork(work);
-    }
-
     /*! call a renderer to render a frame buffer */
     float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
                                         OSPRenderer _renderer,
@@ -904,13 +888,6 @@ namespace ospray {
       processWork(work);
     }
 
-    //! assign given material to given geometry
-    void MPIOffloadDevice::setMaterial(OSPGeometry _geometry,
-                                       OSPMaterial _material)
-    {
-      NOT_IMPLEMENTED;
-    }
-
     void MPIOffloadDevice::setMaterial(OSPGeometryInstance _instance,
                                        OSPMaterial _material)
     {
@@ -935,7 +912,7 @@ namespace ospray {
       return (OSPGeometryInstance)(int64)handle;
     }
 
-    OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume volume)
+    OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume /*volume*/)
     {
       NOT_IMPLEMENTED;
     }

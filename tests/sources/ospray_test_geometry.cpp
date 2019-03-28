@@ -166,7 +166,7 @@ TEST_P(SingleObject, simpleMesh)
   OSPGeometry mesh = ::getMesh();
 
   OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
-  ospSetMaterial2(instance, GetMaterial());
+  ospSetMaterial(instance, GetMaterial());
   AddInstance(instance);
 
   PerformRenderTest();
@@ -183,7 +183,7 @@ TEST_P(SingleObject, simpleSphere)
   ospCommit(data);
 
   OSPGeometryInstance instance = ospNewGeometryInstance(sphere);
-  ospSetMaterial2(instance, GetMaterial());
+  ospSetMaterial(instance, GetMaterial());
   ospSetData(instance, "color", data);
   ospRelease(data);
   AddInstance(instance);
@@ -202,7 +202,7 @@ TEST_P(SingleObject, simpleCylinder)
   ospCommit(data);
 
   OSPGeometryInstance instance = ospNewGeometryInstance(cylinder);
-  ospSetMaterial2(instance, GetMaterial());
+  ospSetMaterial(instance, GetMaterial());
   ospSetData(instance, "color", data);
   ospRelease(data);
   AddInstance(instance);
@@ -216,7 +216,7 @@ TEST_P(SingleObject, simpleStreamlines)
   OSPGeometry streamlines = ::getStreamline();
 
   OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
-  ospSetMaterial2(instance, GetMaterial());
+  ospSetMaterial(instance, GetMaterial());
   AddInstance(instance);
 
   PerformRenderTest();
@@ -227,7 +227,7 @@ TEST_P(SingleObject, simpleStreamlinesVariableRadii)
   OSPGeometry streamlines = ::getStreamline(false);
 
   OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
-  ospSetMaterial2(instance, GetMaterial());
+  ospSetMaterial(instance, GetMaterial());
   AddInstance(instance);
 
   PerformRenderTest();

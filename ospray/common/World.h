@@ -46,18 +46,15 @@ namespace ospray {
 
     // Data members //
 
-    using GeometryVector = std::vector<Ref<Geometry>>;
-    using VolumeVector   = std::vector<Ref<Volume>>;
-
     using GeometryInstanceVector = std::vector<Ref<GeometryInstance>>;
+    using VolumeVector           = std::vector<Ref<Volume>>;
 
-    GeometryVector geometry;
     VolumeVector volume;
 
     GeometryInstanceVector geometryInstances;
 
     //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandle {nullptr};
+    RTCScene embreeSceneHandle{nullptr};
     box3f bounds;
 
     bool useEmbreeDynamicSceneFlag{true};
@@ -65,4 +62,4 @@ namespace ospray {
     bool useEmbreeRobustSceneFlag{false};
   };
 
-} // ::ospray
+}  // namespace ospray

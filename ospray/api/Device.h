@@ -62,12 +62,6 @@ namespace ospray {
       /*! commit the given object's outstanding changes */
       virtual void commit(OSPObject object) = 0;
 
-      /*! add a new geometry to a model */
-      virtual void addGeometry(OSPWorld _model, OSPGeometry _geometry) = 0;
-
-      /*! remove an existing geometry from a model */
-      virtual void removeGeometry(OSPWorld _model, OSPGeometry _geometry) = 0;
-
       /*! add a new volume to a model */
       virtual void addVolume(OSPWorld _model, OSPVolume _volume) = 0;
 
@@ -222,20 +216,7 @@ namespace ospray {
       virtual void release(OSPObject _obj) = 0;
 
       //! assign given material to given geometry
-      virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat) = 0;
-
-      //! assign given material to given geometry
       virtual void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) = 0;
-
-      /*! \brief create a new instance geometry that instantiates another
-        model.  the resulting geometry still has to be added to another
-        model via ospAddGeometry */
-      virtual OSPGeometry newInstance(OSPWorld modelToInstantiate,
-                                      const osp_affine3f &xfm)
-      {
-        UNUSED(modelToInstantiate, xfm);
-        NOT_IMPLEMENTED;
-      }
 
       /*! perform a pick operation */
       virtual OSPPickResult pick(

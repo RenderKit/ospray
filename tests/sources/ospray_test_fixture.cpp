@@ -348,8 +348,8 @@ namespace OSPRayTestScenes {
         ospNewMaterial(rendererType.c_str(), "default");
     ospSet1f(sphereMaterial, "d", 1.0f);
     ospCommit(sphereMaterial);
-    ospSetMaterial2(inst1, sphereMaterial);
-    ospSetMaterial2(inst2, sphereMaterial);
+    ospSetMaterial(inst1, sphereMaterial);
+    ospSetMaterial(inst2, sphereMaterial);
     ospRelease(sphereMaterial);
 
     ospSet3f(inst2, "xfm.l.vx", 0.01, 0, 0);
@@ -469,7 +469,7 @@ namespace OSPRayTestScenes {
     ospCommit(wallsMesh);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(wallsMesh);
-    ospSetMaterial2(instance, wallsMaterial);
+    ospSetMaterial(instance, wallsMaterial);
     AddInstance(instance);
 
     float lightVertices[]   = {-0.3f,
@@ -501,7 +501,7 @@ namespace OSPRayTestScenes {
     ospCommit(lightSquare);
 
     instance = ospNewGeometryInstance(lightSquare);
-    ospSetMaterial2(instance, lightMaterial);
+    ospSetMaterial(instance, lightMaterial);
     AddInstance(instance);
 
     float cuboidVertices[] = {
@@ -526,7 +526,7 @@ namespace OSPRayTestScenes {
     ospCommit(cuboid);
 
     instance = ospNewGeometryInstance(cuboid);
-    ospSetMaterial2(instance, cuboidMaterial);
+    ospSetMaterial(instance, cuboidMaterial);
     AddInstance(instance);
 
     float sphereVertex[] = {-0.3f, -0.55f, 2.5f, 0.0f};
@@ -539,7 +539,7 @@ namespace OSPRayTestScenes {
     ospCommit(sphere);
 
     instance = ospNewGeometryInstance(sphere);
-    ospSetMaterial2(instance, sphereMaterial);
+    ospSetMaterial(instance, sphereMaterial);
     AddInstance(instance);
 
     // NOTE(jda) - still need to set the world on the renderer for geom lights
@@ -848,7 +848,7 @@ namespace OSPRayTestScenes {
     ospCommit(mirrors);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(mirrors);
-    ospSetMaterial2(instance, mirrorsMaterial);
+    ospSetMaterial(instance, mirrorsMaterial);
     AddInstance(instance);
 
     float sphereCenters[] = {1.f, 0.f, 7.f, 0.f};
@@ -861,7 +861,7 @@ namespace OSPRayTestScenes {
     ospCommit(light);
 
     instance = ospNewGeometryInstance(light);
-    ospSetMaterial2(instance, ospNewMaterial(rendererType.c_str(), "Luminous"));
+    ospSetMaterial(instance, ospNewMaterial(rendererType.c_str(), "Luminous"));
     AddInstance(instance);
 
     OSPLight ambient = ospNewLight("ambient");
@@ -914,7 +914,7 @@ namespace OSPRayTestScenes {
     ospCommit(streamlines);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
-    ospSetMaterial2(instance, CreateMaterial(materialType));
+    ospSetMaterial(instance, CreateMaterial(materialType));
     AddInstance(instance);
 
     OSPLight ambient = ospNewLight("ambient");
@@ -976,7 +976,7 @@ namespace OSPRayTestScenes {
     ospCommit(sphere);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(sphere);
-    ospSetMaterial2(instance, sphereMaterial);
+    ospSetMaterial(instance, sphereMaterial);
     AddInstance(instance);
 
     ospRelease(sphereMaterial);
@@ -1137,7 +1137,7 @@ namespace OSPRayTestScenes {
     ospCommit(subd);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(subd);
-    ospSetMaterial2(instance, CreateMaterial(materialType));
+    ospSetMaterial(instance, CreateMaterial(materialType));
     AddInstance(instance);
 
     float cam_pos[]  = {-1.5f, 2.f, 1.7f};

@@ -84,7 +84,7 @@ namespace ospray {
           ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
       ospCommit(objMaterial);
 
-      ospSetMaterial2(instance, objMaterial);
+      ospSetMaterial(instance, objMaterial);
       ospRelease(objMaterial);
 
       ospCommit(instance);

@@ -101,17 +101,21 @@ int main(int argc, const char **argv)
   // set volume object to create iso geometry
   ospSetObject(isoGeometry, "volume", testVolume);
 
+  // create instance of the geometry
+  OSPGeometryInstance instance = ospNewGeometryInstance(isoGeometry);
+
   // prepare material for iso geometry
   OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
   ospSet3f(material, "Ks", .2f, .2f, .2f);
   ospCommit(material);
 
   // assign material to the geometry
-  ospSetMaterial(isoGeometry, material);
+  ospSetMaterial(instance, material);
   ospRelease(material);
 
   // apply changes made
   ospCommit(isoGeometry);
+  ospCommit(instance);
   ospCommit(world);
 
   // create OSPRay renderer
@@ -163,12 +167,12 @@ int main(int argc, const char **argv)
       if (isoSurface) {
         // replace volume with iso geometry
         ospRemoveVolume(world, testVolume);
-        ospAddGeometry(world, isoGeometry);
+        ospAddGeometryInstance(world, instance);
         glfwOSPRayWindow->addObjectToCommit(world);
       } else {
         // replace iso geometry with volume
         ospAddVolume(world, testVolume);
-        ospRemoveGeometry(world, isoGeometry);
+        ospRemoveGeometryInstance(world, instance);
         glfwOSPRayWindow->addObjectToCommit(world);
       }
     }
@@ -177,6 +181,7 @@ int main(int argc, const char **argv)
       // update iso value
       setIsoValue(isoGeometry, isoValue);
       glfwOSPRayWindow->addObjectToCommit(isoGeometry);
+      glfwOSPRayWindow->addObjectToCommit(instance);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
   });
@@ -190,10 +195,12 @@ int main(int argc, const char **argv)
   ospRelease(allVolumes[1][0]);
   ospRelease(allVolumes[1][1]);
   ospRelease(isoGeometry);
+  ospRelease(instance);
   ospRelease(world);
   ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();
+
   return 0;
 }

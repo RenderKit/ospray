@@ -128,28 +128,6 @@ namespace ospray {
       object->commit();
     }
 
-    void ISPCDevice::addGeometry(OSPWorld _model, OSPGeometry _geometry)
-    {
-      World *model       = (World *)_model;
-      Geometry *geometry = (Geometry *)_geometry;
-      model->geometry.push_back(geometry);
-    }
-
-    void ISPCDevice::removeGeometry(OSPWorld _model, OSPGeometry _geometry)
-    {
-      World *model       = (World *)_model;
-      Geometry *geometry = (Geometry *)_geometry;
-
-      auto it = std::find_if(
-          model->geometry.begin(),
-          model->geometry.end(),
-          [&](const Ref<ospray::Geometry> &g) { return geometry == &*g; });
-
-      if (it != model->geometry.end()) {
-        model->geometry.erase(it);
-      }
-    }
-
     void ISPCDevice::addVolume(OSPWorld _model, OSPVolume _volume)
     {
       World *model   = (World *)_model;
@@ -369,7 +347,7 @@ namespace ospray {
       return (OSPGeometryInstance)instance;
     }
 
-    OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume volume)
+    OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume /*volume*/)
     {
       NOT_IMPLEMENTED;
     }
@@ -443,11 +421,6 @@ namespace ospray {
         return;
       ManagedObject *obj = (ManagedObject *)_obj;
       obj->refDec();
-    }
-
-    void ISPCDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
-    {
-      NOT_IMPLEMENTED;
     }
 
     void ISPCDevice::setMaterial(OSPGeometryInstance _instance,

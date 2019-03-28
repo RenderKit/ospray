@@ -562,26 +562,6 @@ extern "C" OSPWorld ospNewWorld() OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" void ospAddGeometry(OSPWorld model,
-                               OSPGeometry geometry) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert(model != nullptr && "invalid model in ospAddGeometry");
-  Assert(geometry != nullptr && "invalid geometry in ospAddGeometry");
-  return currentDevice().addGeometry(model, geometry);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospRemoveGeometry(OSPWorld model,
-                                  OSPGeometry geometry) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert(model != nullptr && "invalid model in ospRemoveGeometry");
-  Assert(geometry != nullptr && "invalid geometry in ospRemoveGeometry");
-  return currentDevice().removeGeometry(model, geometry);
-}
-OSPRAY_CATCH_END()
-
 extern "C" void ospAddVolume(OSPWorld model,
                              OSPVolume volume) OSPRAY_CATCH_BEGIN
 {
@@ -804,17 +784,8 @@ extern "C" void ospRemoveParam(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSetMaterial(OSPGeometry geometry,
+extern "C" void ospSetMaterial(OSPGeometryInstance instance,
                                OSPMaterial material) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert2(geometry, "nullptr geometry passed to ospSetMaterial");
-  currentDevice().setMaterial(geometry, material);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospSetMaterial2(OSPGeometryInstance instance,
-                                OSPMaterial material) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().setMaterial(instance, material);

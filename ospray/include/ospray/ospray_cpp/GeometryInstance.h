@@ -16,41 +16,56 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/Geometry.h>
+#include <ospray/ospray_cpp/Material.h>
 
 namespace ospray {
-  namespace cpp    {
+  namespace cpp {
 
-    class Geometry : public ManagedObject_T<OSPGeometry>
+    class GeometryInstance : public ManagedObject_T<OSPGeometryInstance>
     {
-    public:
+     public:
+      GeometryInstance(const Geometry &geom);
+      GeometryInstance(OSPGeometry geom);
 
-      Geometry(const std::string &type);
-      Geometry(const Geometry &copy);
-      Geometry(OSPGeometry existing);
+      GeometryInstance(const GeometryInstance &copy);
+      GeometryInstance(OSPGeometryInstance existing);
+
+      void setMaterial(Material &m) const;
+      void setMaterial(OSPMaterial m) const;
     };
 
     // Inlined function definitions ///////////////////////////////////////////
 
-    inline Geometry::Geometry(const std::string &type)
-    {
-      OSPGeometry c = ospNewGeometry(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("Failed to create OSPGeometry!");
-      }
-    }
-
-    inline Geometry::Geometry(const Geometry &copy) :
-      ManagedObject_T<OSPGeometry>(copy.handle())
+    inline GeometryInstance::GeometryInstance(const Geometry &geom)
+        : GeometryInstance(geom.handle())
     {
     }
 
-    inline Geometry::Geometry(OSPGeometry existing) :
-      ManagedObject_T<OSPGeometry>(existing)
+    inline GeometryInstance::GeometryInstance(OSPGeometry existing)
+    {
+      ospObject = ospNewGeometryInstance(existing);
+    }
+
+    inline GeometryInstance::GeometryInstance(const GeometryInstance &copy)
+        : ManagedObject_T<OSPGeometryInstance>(copy.handle())
     {
     }
 
-  }// namespace cpp
-}// namespace ospray
+    inline GeometryInstance::GeometryInstance(OSPGeometryInstance existing)
+        : ManagedObject_T<OSPGeometryInstance>(existing)
+    {
+    }
+
+    inline void GeometryInstance::setMaterial(Material &m) const
+    {
+      setMaterial(m.handle());
+    }
+
+    inline void GeometryInstance::setMaterial(OSPMaterial m) const
+    {
+      ospSetMaterial(handle(), m);
+    }
+
+  }  // namespace cpp
+}  // namespace ospray

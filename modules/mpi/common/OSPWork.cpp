@@ -57,10 +57,8 @@ namespace ospray {
 
         registerWorkUnit<LoadModule>(registry);
 
-        registerWorkUnit<AddGeometry>(registry);
         registerWorkUnit<AddGeometryInstance>(registry);
         registerWorkUnit<AddVolume>(registry);
-        registerWorkUnit<RemoveGeometry>(registry);
         registerWorkUnit<RemoveGeometryInstance>(registry);
         registerWorkUnit<RemoveVolume>(registry);
 
@@ -508,16 +506,7 @@ namespace ospray {
             worldHandle.i64 >> futureHandle.i64;
       }
 
-      // ospAddGeometry ///////////////////////////////////////////////////////
-
-      void AddGeometry::run()
-      {
-        World *world       = (World *)worldHandle.lookup();
-        Geometry *geometry = (Geometry *)objectHandle.lookup();
-        Assert(world);
-        Assert(geometry);
-        world->geometry.push_back(geometry);
-      }
+      // ospAddGeometryInstance ///////////////////////////////////////////////
 
       void AddGeometryInstance::run()
       {
@@ -537,22 +526,7 @@ namespace ospray {
         world->volume.push_back(volume);
       }
 
-      // ospRemoveGeometry ////////////////////////////////////////////////////
-
-      void RemoveGeometry::run()
-      {
-        World *world       = (World *)worldHandle.lookup();
-        Geometry *geometry = (Geometry *)objectHandle.lookup();
-        Assert(world);
-        Assert(geometry);
-        auto it = std::find_if(
-            world->geometry.begin(),
-            world->geometry.end(),
-            [&](const Ref<Geometry> &g) { return geometry == &*g; });
-        if (it != world->geometry.end()) {
-          world->geometry.erase(it);
-        }
-      }
+      // ospRemoveGeometryInstance ////////////////////////////////////////////
 
       void RemoveGeometryInstance::run()
       {

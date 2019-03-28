@@ -101,8 +101,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Curves.ispc
   geometry/StreamLines.cpp
   geometry/StreamLines.ispc
-  geometry/Instance.ispc
-  geometry/Instance.cpp
   geometry/Spheres.cpp
   geometry/Spheres.ispc
   geometry/Cylinders.cpp

@@ -55,9 +55,8 @@ namespace ospray {
 
     postStatusMsg(2)
         << "=======================================================\n"
-        << "Finalizing model, has " << geometry.size() << " geometries, "
-        << volume.size() << " volumes, and " << geometryInstances.size()
-        << " geometry instances";
+        << "Finalizing model, has " << geometryInstances.size()
+        << " geometries, " << volume.size() << " volumes";
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -72,24 +71,12 @@ namespace ospray {
     ispc::World_init(getIE(),
                      embreeDevice,
                      sceneFlags,
-                     geometry.size(),
                      geometryInstances.size(),
                      volume.size());
 
     embreeSceneHandle = (RTCScene)ispc::World_getEmbreeSceneHandle(getIE());
 
     bounds = empty;
-
-    for (size_t i = 0; i < geometry.size(); i++) {
-      postStatusMsg(2)
-          << "=======================================================\n"
-          << "Finalizing geometry " << i;
-
-      rtcAttachGeometry(embreeSceneHandle, geometry[i]->embreeGeometry);
-
-      bounds.extend(geometry[i]->bounds);
-      ispc::World_setGeometry(getIE(), i, geometry[i]->getIE());
-    }
 
     for (size_t i = 0; i < geometryInstances.size(); i++) {
       postStatusMsg(2)

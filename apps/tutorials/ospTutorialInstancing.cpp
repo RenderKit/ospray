@@ -200,7 +200,7 @@ void updateInstancedGeometry()
   // TODO
 }
 
-void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
+void displayCallback(GLFWOSPRayWindow * /*glfwOSPRayWindow*/)
 {
   updateInstancedGeometry();
 
