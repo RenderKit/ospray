@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v1.8.4:
+
+-   Add location of `libospray` to paths searched to find modules
+
 ### Changes in v1.8.3:
 
 -   Fix bug where parameters set by `ospSet1b()` were being ignored
