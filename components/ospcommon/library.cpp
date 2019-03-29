@@ -32,7 +32,7 @@
 extern "C" {
 /* Export a symbol to ask the dynamic loader about in order to locate this
  * library at runtime. */
-OSPCOMMON_INTERFACE const int _ospray_anchor()
+OSPCOMMON_INTERFACE int _ospray_anchor()
 {
   return 0;
 }
