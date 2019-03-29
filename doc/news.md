@@ -1,6 +1,12 @@
 News, Updates, and Announcements
 ================================
 
+Mar 29, 2019: Version v1.8.4 now released on GitHub
+---------------------------------------------------
+
+New release version 1.8.4 is now available on the [OSPRay GitHub
+page](https://github.com/ospray/OSPRay/releases/v1.8.4).
+
 Mar 22, 2019: Version v1.8.3 now released on GitHub
 ---------------------------------------------------
 

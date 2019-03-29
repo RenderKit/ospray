@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.8.3 of OSPRay. For changes and new features see the
+This is release v1.8.4 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
