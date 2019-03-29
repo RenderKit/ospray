@@ -29,6 +29,50 @@
 #include <sys/times.h>
 #endif
 
+extern "C" {
+
+  /* Export a symbol to ask the dynamic loader about in order to locate this
+   * library at runtime. */
+  OSPCOMMON_INTERFACE const int _ospray_anchor()
+  {
+    return 0;
+  }
+
+}
+
+namespace {
+
+  std::string library_location()
+  {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    MEMORY_BASIC_INFORMATION mbi;
+    VirtualQuery(&_ospray_anchor, &mbi, sizeof(mbi));
+    char pathBuf[16384];
+    if (!GetModuleFileNameA(static_cast<HMODULE>(mbi.AllocationBase), pathBuf, sizeof(pathBuf)))
+      return std::string();
+
+    std::string path = std::string(pathBuf);
+    path.resize(path.rfind('\\') + 1);
+#else
+    const char* anchor = "_ospray_anchor";
+    void* handle = dlsym(RTLD_DEFAULT, anchor);
+    if (!handle)
+      return std::string();
+
+    Dl_info di;
+    int ret = dladdr(handle, &di);
+    if (!ret || !di.dli_saddr || !di.dli_fname)
+      return std::string();
+
+    std::string path = std::string(di.dli_fname);
+    path.resize(path.rfind('/') + 1);
+#endif
+
+    return path;
+  }
+
+}
+
 namespace ospcommon {
 
   /*! helper class that executes a asm 'cpuid' instruction to query
@@ -98,11 +142,11 @@ namespace ospcommon {
     std::string file = name;
     void *lib        = nullptr;
 #ifdef _WIN32
-    std::string fullName = file + ".dll";
+    std::string fullName = library_location() + file + ".dll";
     lib                  = LoadLibrary(fullName.c_str());
 #else
     std::string fullName =
-        "lib" + file + "_" + desiredISAname + "_" + precision;
+        library_location() + "lib" + file + "_" + desiredISAname + "_" + precision;
 
 #if defined(__MACOSX__) || defined(__APPLE__)
     fullName += ".dylib";
@@ -172,7 +216,7 @@ namespace ospcommon {
     std::string file = name;
     std::string errorMsg;
 #ifdef _WIN32
-    std::string fullName = file + ".dll";
+    std::string fullName = library_location() + file + ".dll";
     lib                  = LoadLibrary(fullName.c_str());
     if (lib == nullptr) {
       DWORD err = GetLastError();
@@ -193,9 +237,9 @@ namespace ospcommon {
     }
 #else
 #if defined(__MACOSX__) || defined(__APPLE__)
-    std::string fullName = "lib" + file + ".dylib";
+    std::string fullName = library_location() + "lib" + file + ".dylib";
 #else
-    std::string fullName = "lib" + file + ".so";
+    std::string fullName = library_location() + "lib" + file + ".so";
 #endif
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (lib == nullptr) {
