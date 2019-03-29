@@ -984,13 +984,43 @@ according to the provided volume's [transfer function].
   ---------- ---------- ----------------------------------------------------
   : Parameters defining a slices geometry.
 
-### Instances
+GeometryInstances
+-----------------
 
-OSPRay supports instancing via a special type of geometry. Instances are
-created by transforming another given [world] `worldToInstantiate` with
-the given affine transformation `transform` by calling
+Geometries in OSPRay are instantiated in a World to give them a world-space
+transform and addition appearance information. To create a geometry instance,
+call
 
-    OSPGeometry ospNewInstance(OSPWorld worldToInstantiate, const affine3f &transform);
+    OSPGeometryInstances ospNewGeometryInstance(OSPGeometry geometry);
+
+  ------------------ --------------- --------- --------------------------------------
+  Type               Name            Default   Description
+  ------------------ --------------- --------- --------------------------------------
+  vec3f              xfm.l.vx          (1,0,0) First row of the world-space
+                                               transformation matrix
+
+  vec3f              xfm.l.vy          (0,1,0) Second row of the world-space
+                                               transformation matrix
+
+  vec3f              xfm.l.vz          (0,0,1) Third row of the world-space
+                                               transformation matrix
+
+  vec3f              xfm.p             (0,0,0) Fourth row of the world-space
+                                               transformation matrix
+
+  vec4f[]            color                NULL [data] array of per-primitive colors
+
+  uint32[]           prim.materialID      NULL [data] array of per-primitive colors
+
+  OSPMaterial[]      materialList         NULL [data] array of per-primitive
+                                               materials, which overrides any
+                                               single material set by
+                                               'ospSetMaterial`. This is also the
+                                               list optionally indexed by
+                                               "prim.materialID" (otherwise it is
+                                               per-primitive)
+  ------------------ --------------- --------- ---------------------------------------
+  : Parameters understood by GeometryInstance.
 
 
 Renderer
@@ -1125,14 +1155,14 @@ structure. To create an (empty) world call
     OSPWorld ospNewWorld();
 
 The call returns an `OSPWorld` handle to the created world. To add an
-already created geometry or volume to a world use
+already created geometry instance or volume to a world use
 
-    void ospAddGeometry(OSPWorld, OSPGeometry);
+    void ospAddGeometryInstance(OSPWorld, OSPGeometryInstance);
     void ospAddVolume(OSPWorld, OSPVolume);
 
 An existing geometry or volume can be removed from a world with
 
-    void ospRemoveGeometry(OSPWorld, OSPGeometry);
+    void ospRemoveGeometryInstance(OSPWorld, OSPGeometryInstance);
     void ospRemoveVolume(OSPWorld, OSPVolume);
 
 Finally, Worlds can be configured with parameters for making various
@@ -1329,7 +1359,7 @@ The call returns `NULL` if the material type is not known by the
 renderer type, or else an `OSPMaterial` handle to the created material. The
 handle can then be used to assign the material to a given geometry with
 
-    void ospSetMaterial(OSPGeometry, OSPMaterial);
+    void ospSetMaterial(OSPGeometryInstance, OSPMaterial);
 
 #### OBJ Material
 
