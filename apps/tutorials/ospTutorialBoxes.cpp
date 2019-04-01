@@ -51,12 +51,12 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
-  // add in spheres geometry
-  OSPTestingGeometry spheres =
+  // add in boxes geometry
+  OSPTestingGeometry boxes =
       ospTestingNewGeometry("boxes", renderer_type.c_str());
-  ospAddGeometryInstance(world, spheres.instance);
-  ospRelease(spheres.geometry);
-  ospRelease(spheres.instance);
+  ospAddGeometryInstance(world, boxes.instance);
+  ospRelease(boxes.geometry);
+  ospRelease(boxes.instance);
 
   // commit the world
   ospCommit(world);
@@ -76,7 +76,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, (box3f &)spheres.bounds, world, renderer));
+          vec2i{1024, 768}, (box3f &)boxes.bounds, world, renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int spp = 1;
