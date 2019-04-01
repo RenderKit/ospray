@@ -984,6 +984,7 @@ according to the provided volume's [transfer function].
   ---------- ---------- ----------------------------------------------------
   : Parameters defining a slices geometry.
 
+
 GeometryInstances
 -----------------
 
@@ -991,7 +992,7 @@ Geometries in OSPRay are instantiated in a World to give them a world-space
 transform and addition appearance information. To create a geometry instance,
 call
 
-    OSPGeometryInstances ospNewGeometryInstance(OSPGeometry geometry);
+    OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geometry);
 
   ------------------ --------------- --------- --------------------------------------
   Type               Name            Default   Description
