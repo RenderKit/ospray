@@ -84,12 +84,6 @@ int main(int argc, const char **argv)
       ospSet1i(renderer, "spp", spp);
       glfwOSPRayWindow->addObjectToCommit(renderer);
     }
-
-    static int ao = 1;
-    if (ImGui::SliderInt("aoSamples", &ao, 0, 64)) {
-      ospSet1i(renderer, "aoSamples", ao);
-      glfwOSPRayWindow->addObjectToCommit(renderer);
-    }
   });
 
   // start the GLFW main loop, which will continuously render
