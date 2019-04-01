@@ -130,8 +130,9 @@ namespace ospcommon {
       return x * y;
     }
 
+    // conversion constructor to other types to enable static_cast
     template <typename OT>
-    inline vec_t<OT, 2> elementsAs() const
+    explicit inline vec_t<OT, 2>()
     {
       return vec_t<OT, 2>(*this);
     }
@@ -186,8 +187,9 @@ namespace ospcommon {
       return x * y * z;
     }
 
+    // conversion constructor to other types to enable static_cast
     template <typename OT>
-    inline vec_t<OT, 3> elementsAs() const
+    explicit inline vec_t<OT, 3>()
     {
       return vec_t<OT, 3>(*this);
     }
@@ -245,8 +247,9 @@ namespace ospcommon {
       return vec_t<T, 3>(x, y, z);
     }
 
+    // conversion constructor to other types to enable static_cast
     template <typename OT>
-    inline vec_t<OT, 3, true> elementsAs() const
+    explicit inline vec_t<OT, 3, true>()
     {
       return vec_t<OT, 3, true>(*this);
     }
@@ -311,8 +314,9 @@ namespace ospcommon {
       return x * y * z * w;
     }
 
+    // conversion constructor to other types to enable static_cast
     template <typename OT>
-    inline vec_t<OT, 4> elementsAs() const
+    explicit inline vec_t<OT, 4>()
     {
       return vec_t<OT, 4>(*this);
     }

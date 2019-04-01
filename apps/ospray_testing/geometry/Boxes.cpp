@@ -52,7 +52,7 @@ namespace ospray {
       box3f bounds;
 
       for (auto i : numBoxes) {
-        auto i_f = i.elementsAs<float>();
+        auto i_f = static_cast<vec3f>(i);
 
         auto lower = i_f * 5.f;
         auto upper = lower + (0.75f * 5.f);
