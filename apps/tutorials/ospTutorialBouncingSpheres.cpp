@@ -352,10 +352,6 @@ void updateSpheresGeometry()
 
   ospSetData(g_spheresGeometry, "spheres", spheresData);
 
-  // commit the updated spheres geometry
-  ospCommit(g_spheresGeometry);
-  ospCommit(g_spheresInstance);
-
   // release handles we no longer need
   ospRelease(spheresData);
 }
@@ -369,6 +365,8 @@ void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
 
   // queue the world to be committed since it changed, however don't commit
   // it immediately because it's being rendered asynchronously
+  glfwOSPRayWindow->addObjectToCommit(g_spheresGeometry);
+  glfwOSPRayWindow->addObjectToCommit(g_spheresInstance);
   glfwOSPRayWindow->addObjectToCommit(g_world);
 
   // update the world on the GLFW window
