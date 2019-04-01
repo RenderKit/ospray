@@ -68,8 +68,6 @@ int main(int argc, const char **argv)
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
 
-  ospSet1i(renderer, "aoSamples", 1);
-
   ospCommit(renderer);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
