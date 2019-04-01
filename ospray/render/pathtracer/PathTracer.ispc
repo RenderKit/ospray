@@ -19,7 +19,6 @@
 
 #include "render/pathtracer/materials/Medium.ih"
 #include "render/pathtracer/materials/Material.ih"
-#include "geometry/Instance.ih"
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
 #include "bsdfs/MicrofacetAlbedoTables.ih"
