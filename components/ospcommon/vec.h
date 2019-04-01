@@ -132,7 +132,7 @@ namespace ospcommon {
 
     // conversion constructor to other types to enable static_cast
     template <typename OT>
-    explicit inline vec_t<OT, 2>()
+    explicit inline operator vec_t<OT, 2>()
     {
       return vec_t<OT, 2>(*this);
     }
@@ -189,7 +189,7 @@ namespace ospcommon {
 
     // conversion constructor to other types to enable static_cast
     template <typename OT>
-    explicit inline vec_t<OT, 3>()
+    explicit inline operator vec_t<OT, 3>()
     {
       return vec_t<OT, 3>(*this);
     }
@@ -249,7 +249,7 @@ namespace ospcommon {
 
     // conversion constructor to other types to enable static_cast
     template <typename OT>
-    explicit inline vec_t<OT, 3, true>()
+    explicit inline operator vec_t<OT, 3, true>()
     {
       return vec_t<OT, 3, true>(*this);
     }
@@ -316,7 +316,7 @@ namespace ospcommon {
 
     // conversion constructor to other types to enable static_cast
     template <typename OT>
-    explicit inline vec_t<OT, 4>()
+    explicit inline operator vec_t<OT, 4>()
     {
       return vec_t<OT, 4>(*this);
     }
