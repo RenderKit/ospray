@@ -72,7 +72,7 @@ namespace ospray {
         const vec3f& k = getParam3f("k", vec3f(RGB_AL_K));
 
 
-        const float roughness = getParamf("roughness", 0.1f);
+        const float roughness = getParam1f("roughness", 0.1f);
         Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness");
 

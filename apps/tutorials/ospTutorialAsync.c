@@ -178,7 +178,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup camera
   *camera = ospNewCamera("perspective");
-  ospSetf(*camera, "aspect", imgSize.x/(float)imgSize.y);
+  ospSet1f(*camera, "aspect", imgSize.x/(float)imgSize.y);
   ospSet3fv(*camera, "pos", cam_pos);
   ospSet3fv(*camera, "dir", cam_view);
   ospSet3fv(*camera, "up",  cam_up);
@@ -259,7 +259,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup camera
   *camera = ospNewCamera("perspective");
-  ospSetf(*camera, "aspect", imgSize.x/(float)imgSize.y);
+  ospSet1f(*camera, "aspect", imgSize.x/(float)imgSize.y);
   ospSet3fv(*camera, "pos", cam_pos);
   ospSet3fv(*camera, "dir", cam_view);
   ospSet3fv(*camera, "up",  cam_up);

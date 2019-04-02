@@ -23,7 +23,7 @@ namespace ospray {
 
   void Light::commit()
   {
-    isVisible = getParam1i("isVisible", true);
+    isVisible = getParam1b("isVisible", true);
 
     ispc::Light_set(getIE(), isVisible);
   }

@@ -217,7 +217,7 @@ namespace ospray {
                              const bool b)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, static_cast<int>(b));
+      object->setParam(bufName, b);
     }
 
     void ISPCDevice::setFloat(OSPObject _object,

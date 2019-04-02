@@ -648,7 +648,7 @@ namespace ospray {
                                    const char *bufName,
                                    const bool b)
     {
-      work::SetParam<int> work((ObjectHandle &)_object, bufName, b);
+      work::SetParam<bool> work((ObjectHandle &)_object, bufName, b);
       processWork(work);
     }
 

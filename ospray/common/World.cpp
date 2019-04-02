@@ -49,9 +49,9 @@ namespace ospray {
 
   void World::commit()
   {
-    useEmbreeDynamicSceneFlag = getParam<int>("dynamicScene", 0);
-    useEmbreeCompactSceneFlag = getParam<int>("compactMode", 0);
-    useEmbreeRobustSceneFlag  = getParam<int>("robustMode", 0);
+    useEmbreeDynamicSceneFlag = getParam<bool>("dynamicScene", 0);
+    useEmbreeCompactSceneFlag = getParam<bool>("compactMode", 0);
+    useEmbreeRobustSceneFlag  = getParam<bool>("robustMode", 0);
 
     postStatusMsg(2)
         << "=======================================================\n"

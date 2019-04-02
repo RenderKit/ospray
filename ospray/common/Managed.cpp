@@ -86,7 +86,7 @@ namespace ospray {
   define_getparam(vec4f,  4f)
   define_getparam(vec2f,  2f)
   define_getparam(float,  1f)
-  define_getparam(float,  f)
+  define_getparam(bool,   1b)
 
 #undef define_getparam
 

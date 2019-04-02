@@ -183,7 +183,7 @@ namespace OSPRayTestScenes {
 
     camera = ospNewCamera("perspective");
 
-    ospSetf(camera, "aspect", imgSize.x / (float)imgSize.y);
+    ospSet1f(camera, "aspect", imgSize.x / (float)imgSize.y);
     ospSet3fv(camera, "pos", cam_pos);
     ospSet3fv(camera, "dir", cam_view);
     ospSet3fv(camera, "up", cam_up);
@@ -223,11 +223,11 @@ namespace OSPRayTestScenes {
     OSPMaterial material = ospNewMaterial(rendererType.c_str(), type.data());
     EXPECT_TRUE(material);
     if (type == "Glass") {
-      ospSetf(material, "eta", 1.5);
+      ospSet1f(material, "eta", 1.5);
       ospSet3f(material, "attenuationColor", 0.f, 1.f, 1.f);
-      ospSetf(material, "attenuationDistance", 5.0);
+      ospSet1f(material, "attenuationDistance", 5.0);
     } else if (type == "Luminous") {
-      ospSetf(material, "intensity", 3.0);
+      ospSet1f(material, "intensity", 3.0);
     }
 
     ospCommit(material);
@@ -256,7 +256,7 @@ namespace OSPRayTestScenes {
 
     OSPLight distant = ospNewLight("distant");
     ASSERT_TRUE(distant) << "Failed to create lights";
-    ospSetf(distant, "intensity", 1.0f);
+    ospSet1f(distant, "intensity", 1.0f);
     ospSet3f(distant, "direction", 1.0f, 1.0f, 1.0f);
     ospSet1f(distant, "angularDiameter", 1.0f);
     ospCommit(distant);
@@ -264,7 +264,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
-    ospSetf(ambient, "intensity", 0.2f);
+    ospSet1f(ambient, "intensity", 0.2f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -296,7 +296,7 @@ namespace OSPRayTestScenes {
     ospSet1f(camera, "fovy", fov);
 
     ospSet1i(renderer, "aoSamples", 4);
-    ospSet1i(renderer, "shadowsEnabled", 1);
+    ospSet1b(renderer, "shadowsEnabled", 1);
 
     ospSet1i(renderer, "spp", 4);
     ospSet4f(renderer, "bgColor", 0.2f, 0.2f, 0.4f, 1.0f);
@@ -362,7 +362,7 @@ namespace OSPRayTestScenes {
 
     OSPLight distant = ospNewLight("distant");
     ASSERT_TRUE(distant) << "Failed to create lights";
-    ospSetf(distant, "intensity", 3.0f);
+    ospSet1f(distant, "intensity", 3.0f);
     ospSet3f(distant, "direction", 0.3f, -4.0f, 0.8f);
     ospSet3f(distant, "color", 1.0f, 0.5f, 0.5f);
     ospSet1f(distant, "angularDiameter", 1.0f);
@@ -371,7 +371,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
-    ospSetf(ambient, "intensity", 0.1f);
+    ospSet1f(ambient, "intensity", 0.1f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -495,7 +495,7 @@ namespace OSPRayTestScenes {
     ospRelease(data);
     OSPMaterial lightMaterial =
         ospNewMaterial(rendererType.c_str(), "Luminous");
-    ospSetf(lightMaterial, "intensity", 20.f);
+    ospSet1f(lightMaterial, "intensity", 20.f);
     ospSet3f(lightMaterial, "color", 1.f, 0.7f, 0.3f);
     ospCommit(lightMaterial);
     ospCommit(lightSquare);
@@ -558,9 +558,9 @@ namespace OSPRayTestScenes {
     OSPMaterial newMaterial = ospNewMaterial(rendererType.c_str(), type.data());
     // defaults for "OBJMaterial"
     if (type == "Glass") {
-      ospSetf(newMaterial, "eta", 1.4);
+      ospSet1f(newMaterial, "eta", 1.4);
     } else if (type == "Luminous") {
-      ospSetf(newMaterial, "intensity", 0.7f);
+      ospSet1f(newMaterial, "intensity", 0.7f);
     }
     ospCommit(newMaterial);
 
@@ -625,7 +625,7 @@ namespace OSPRayTestScenes {
     ospSet2f(pyramid, "voxelRange", 0, 255);
     ospSet3f(pyramid, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSet3f(pyramid, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
-    ospSetf(pyramid, "samplingRate", 1.f);
+    ospSet1f(pyramid, "samplingRate", 1.f);
 
     OSPTransferFunction transferFun =
         ospNewTransferFunction("piecewise_linear");
@@ -663,7 +663,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
-    ospSetf(ambient, "intensity", 0.5f);
+    ospSet1f(ambient, "intensity", 0.5f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -717,7 +717,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
-    ospSetf(ambient, "intensity", 0.5f);
+    ospSet1f(ambient, "intensity", 0.5f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -797,7 +797,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient);
-    ospSetf(ambient, "intensity", 0.5f);
+    ospSet1f(ambient, "intensity", 0.5f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -841,8 +841,8 @@ namespace OSPRayTestScenes {
     ASSERT_TRUE(mirrorsMaterial);
     ospSet3f(mirrorsMaterial, "Kd", Kd.x, Kd.y, Kd.z);
     ospSet3f(mirrorsMaterial, "Ks", Ks.x, Ks.y, Ks.z);
-    ospSetf(mirrorsMaterial, "Ns", Ns);
-    ospSetf(mirrorsMaterial, "d", d);
+    ospSet1f(mirrorsMaterial, "Ns", Ns);
+    ospSet1f(mirrorsMaterial, "d", d);
     ospSet3f(mirrorsMaterial, "Tf", Tf.x, Tf.y, Tf.z);
     ospCommit(mirrorsMaterial);
     ospCommit(mirrors);
@@ -854,7 +854,7 @@ namespace OSPRayTestScenes {
     float sphereCenters[] = {1.f, 0.f, 7.f, 0.f};
     OSPGeometry light     = ospNewGeometry("spheres");
     ASSERT_TRUE(light);
-    ospSetf(light, "radius", 1.f);
+    ospSet1f(light, "radius", 1.f);
     data = ospNewData(1, OSP_FLOAT4, sphereCenters);
     ASSERT_TRUE(data);
     ospSetData(light, "spheres", data);
@@ -866,7 +866,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient);
-    ospSetf(ambient, "intensity", 0.01f);
+    ospSet1f(ambient, "intensity", 0.01f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -919,7 +919,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient);
-    ospSetf(ambient, "intensity", 0.5f);
+    ospSet1f(ambient, "intensity", 0.5f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -984,7 +984,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
-    ospSetf(ambient, "intensity", 0.5f);
+    ospSet1f(ambient, "intensity", 0.5f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -1054,7 +1054,7 @@ namespace OSPRayTestScenes {
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
-    ospSetf(ambient, "intensity", 0.5f);
+    ospSet1f(ambient, "intensity", 0.5f);
     ospCommit(ambient);
     AddLight(ambient);
   }
@@ -1149,7 +1149,7 @@ namespace OSPRayTestScenes {
 
     OSPLight directional = ospNewLight("directional");
     ASSERT_TRUE(directional);
-    ospSetf(directional, "intensity", 0.5f);
+    ospSet1f(directional, "intensity", 0.5f);
     ospSet3f(directional, "direction", -.2f, -.3f, -.4f);
     ospCommit(directional);
     AddLight(directional);

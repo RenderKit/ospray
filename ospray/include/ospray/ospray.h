@@ -338,7 +338,6 @@ extern "C" {
   OSPRAY_INTERFACE void ospSetData(OSPObject, const char *id, OSPData);
 
   OSPRAY_INTERFACE void ospSet1b(OSPObject, const char *id, int x);
-  OSPRAY_INTERFACE void ospSetf(OSPObject, const char *id, float x);
   OSPRAY_INTERFACE void ospSet1f(OSPObject, const char *id, float x);
   OSPRAY_INTERFACE void ospSet1i(OSPObject, const char *id, int32_t x);
 

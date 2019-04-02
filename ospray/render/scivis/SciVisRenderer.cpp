@@ -58,15 +58,15 @@ namespace ospray {
 
       void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
-      const bool shadowsEnabled = getParam1i("shadowsEnabled", 0);
+      const bool shadowsEnabled = getParam1b("shadowsEnabled", false);
       int aoSamples = getParam1i("aoSamples", 0);
       float aoDistance = getParam1f("aoDistance",
                           getParam1f("aoOcclusionDistance"/*old name*/, 1e20f));
       // "aoWeight" is deprecated, use an ambient light instead
       if (!ambientLights)
         aoColor = vec3f(getParam1f("aoWeight", 0.f));
-      const bool aoTransparencyEnabled = getParam1i("aoTransparencyEnabled", 0);
-      const bool oneSidedLighting = getParam1i("oneSidedLighting", 1);
+      const bool aoTransparencyEnabled = getParam1b("aoTransparencyEnabled", false);
+      const bool oneSidedLighting = getParam1b("oneSidedLighting", true);
 
       ispc::SciVisRenderer_set(getIE(),
                                shadowsEnabled,

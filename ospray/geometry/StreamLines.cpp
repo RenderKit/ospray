@@ -40,7 +40,7 @@ namespace ospray {
   {
     Geometry::commit();
 
-    useCurve     = getParam1i("smooth", 0);
+    useCurve     = getParam1b("smooth", false);
     globalRadius = getParam1f("radius", 0.01f);
     utility::DataView<const float> radius(&globalRadius, 0);
 

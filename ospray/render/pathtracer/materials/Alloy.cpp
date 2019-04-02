@@ -46,7 +46,7 @@ namespace ospray {
         Texture2D *map_edgeColor = (Texture2D*)getParamObject("map_edgeColor");
         affine2f xform_edgeColor = getTextureTransform("map_edgeColor");
 
-        const float roughness = getParamf("roughness", 0.1f);
+        const float roughness = getParam1f("roughness", 0.1f);
         Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness");
 

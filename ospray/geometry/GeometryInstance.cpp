@@ -110,9 +110,9 @@ namespace ospray {
     embreeInstanceGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
 
-    bool useEmbreeDynamicSceneFlag = getParam<int>("dynamicScene", 0);
-    bool useEmbreeCompactSceneFlag = getParam<int>("compactMode", 0);
-    bool useEmbreeRobustSceneFlag  = getParam<int>("robustMode", 0);
+    bool useEmbreeDynamicSceneFlag = getParam1b("dynamicScene", 0);
+    bool useEmbreeCompactSceneFlag = getParam1b("compactMode", 0);
+    bool useEmbreeRobustSceneFlag  = getParam1b("robustMode", 0);
 
     int sceneFlags = 0;
     sceneFlags |= (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);

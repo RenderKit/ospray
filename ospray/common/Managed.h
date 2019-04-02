@@ -20,12 +20,12 @@
 #include "ospcommon/utility/Any.h"
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
-#include "ospray/OSPDataType.h"
 #include "common/OSPCommon.h"
 #include "common/ObjectHandle.h"
+#include "ospray/OSPDataType.h"
 // stl
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace ospray {
 
@@ -107,10 +107,10 @@ namespace ospray {
 
    */
   struct OSPRAY_SDK_INTERFACE ManagedObject
-    : public memory::RefCount,
-      public utility::ParameterizedObject
+      : public memory::RefCount,
+        public utility::ParameterizedObject
   {
-    using OSP_PTR = ManagedObject*;
+    using OSP_PTR = ManagedObject *;
 
     ManagedObject() = default;
 
@@ -143,16 +143,16 @@ namespace ospray {
 
     Data *getParamData(const char *name, Data *valIfNotFound = nullptr);
 
-    vec4f  getParam4f(const char *name, vec4f  valIfNotFound);
+    vec4f getParam4f(const char *name, vec4f valIfNotFound);
     vec3fa getParam3f(const char *name, vec3fa valIfNotFound);
-    vec3f  getParam3f(const char *name, vec3f  valIfNotFound);
-    vec3i  getParam3i(const char *name, vec3i  valIfNotFound);
-    vec2f  getParam2f(const char *name, vec2f  valIfNotFound);
-    int32  getParam1i(const char *name, int32  valIfNotFound);
-    float  getParam1f(const char *name, float  valIfNotFound);
-    float  getParamf (const char *name, float  valIfNotFound);
+    vec3f getParam3f(const char *name, vec3f valIfNotFound);
+    vec3i getParam3i(const char *name, vec3i valIfNotFound);
+    vec2f getParam2f(const char *name, vec2f valIfNotFound);
+    int32 getParam1i(const char *name, int32 valIfNotFound);
+    float getParam1f(const char *name, float valIfNotFound);
+    bool getParam1b(const char *name, bool valIfNotFound);
 
-    void *getParamVoidPtr(const char *name, void * valIfNotFound);
+    void *getParamVoidPtr(const char *name, void *valIfNotFound);
     std::string getParamString(const char *name,
                                std::string valIfNotFound = "");
 
@@ -196,30 +196,30 @@ namespace ospray {
     std::set<ManagedObject *> objectsListeningForChanges;
 
     /*! \brief a global ID that can be used for referencing an object remotely*/
-    id_t ID {(id_t)-1};
+    id_t ID{(id_t)-1};
 
     /*! \brief ISPC-side equivalent of this C++-side class, if available
      *         (nullptr if not) */
-    void *ispcEquivalent {nullptr};
+    void *ispcEquivalent{nullptr};
 
     /*! \brief subtype of this ManagedObject */
-    OSPDataType managedObjectType {OSP_UNKNOWN};
+    OSPDataType managedObjectType{OSP_UNKNOWN};
   };
 
   // Inlined ManagedObject definitions ////////////////////////////////////////
 
-  inline void* ManagedObject::getIE() const
+  inline void *ManagedObject::getIE() const
   {
     return ispcEquivalent;
   }
 
-  inline Data*
-  ManagedObject::getParamData(const char *name, Data *valIfNotFound)
+  inline Data *ManagedObject::getParamData(const char *name,
+                                           Data *valIfNotFound)
   {
-    return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound);
+    return (Data *)getParamObject(name, (ManagedObject *)valIfNotFound);
   }
 
-} // ::ospray
+}  // namespace ospray
 
 // Specializations for ISPCDevice /////////////////////////////////////////////
 
@@ -227,12 +227,13 @@ namespace ospcommon {
   namespace utility {
 
     template <>
-    inline void
-    ParameterizedObject::Param::set(const ospray::ManagedObject::OSP_PTR &object)
+    inline void ParameterizedObject::Param::set(
+        const ospray::ManagedObject::OSP_PTR &object)
     {
       using OSP_PTR = ospray::ManagedObject::OSP_PTR;
 
-      if (object) object->refInc();
+      if (object)
+        object->refInc();
 
       if (data.is<OSP_PTR>()) {
         auto *existingObj = data.get<OSP_PTR>();
@@ -243,5 +244,5 @@ namespace ospcommon {
       data = object;
     }
 
-  } // ::ospcommon::utility
-} // ::ospcommon
+  }  // namespace utility
+}  // namespace ospcommon

@@ -29,9 +29,9 @@ namespace ospray {
   void ToneMapperPixelOp::commit()
   {
     PixelOp::commit();
-      
+
     float exposure = getParam1f("exposure", 1.f);
-    
+
     // Default parameters fitted to the ACES 1.0 grayscale curve (RRT.a1.0.3 + ODT.Academy.Rec709_100nits_dim.a1.0.3)
     // We included exposure adjustment to match 18% middle gray (ODT(RRT(0.18)) = 0.18)
     const float aces_contrast = 1.6773f;
@@ -39,18 +39,18 @@ namespace ospray {
     const float aces_midIn    = 0.18f;
     const float aces_midOut   = 0.18f;
     const float aces_hdrMax   = 11.0785f;
-    
+
     float a = max(getParam1f("contrast", aces_contrast), 0.0001f);
     float d = clamp(getParam1f("shoulder", aces_shoulder), 0.0001f, 1.f);
     float m = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
     float n = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
     float w = max(getParam1f("hdrMax", aces_hdrMax), 1.f);
-    bool acesColor = getParam1i("acesColor", 1);
-    
+    bool acesColor = getParam1b("acesColor", true);
+
     // Solve b and c
     float b = -((powf(m, -a*d)*(-powf(m, a) + (n*(powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d))) / (powf(m, a*d)*n - n*powf(w, a*d)))) / n);
     float c = max((powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d)) / (powf(m, a*d)*n - n*powf(w, a*d)), 0.f); // avoid discontinuous curve by clamping to 0
-    
+
     ispc::ToneMapperPixelOp_set(ispcEquivalent, exposure, a, b, c, d, acesColor);
   }
 

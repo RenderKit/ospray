@@ -40,10 +40,10 @@ namespace ospray {
             getParamObject("map_color"));
         affine2f xform_color = getTextureTransform("map_baseColor")
           * getTextureTransform("map_color");
-        const float flakeAmount = getParamf("flakeAmount", 0.3f);
+        const float flakeAmount = getParam1f("flakeAmount", 0.3f);
         const vec3f& flakeColor = getParam3f("flakeColor", vec3f(RGB_AL_COLOR));
-        const float flakeSpread = getParamf("flakeSpread", 0.5f);
-        const float eta = getParamf("eta",  1.5f);
+        const float flakeSpread = getParam1f("flakeSpread", 0.5f);
+        const float eta = getParam1f("eta",  1.5f);
 
         ispc::PathTracer_MetallicPaint_set(getIE()
             , (const ispc::vec3f&)color

@@ -102,7 +102,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   // create camera
   camera = ospNewCamera("perspective");
-  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
+  ospSet1f(camera, "aspect", windowSize.x / float(windowSize.y));
 
   ospSet3f(camera,
            "pos",
@@ -210,7 +210,7 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   // update camera
   arcballCamera->updateWindowSize(windowSize);
 
-  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
+  ospSet1f(camera, "aspect", windowSize.x / float(windowSize.y));
   ospCommit(camera);
 }
 
@@ -245,7 +245,7 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
     }
 
     if (cameraChanged) {
-      ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
+      ospSet1f(camera, "aspect", windowSize.x / float(windowSize.y));
       ospSet3f(camera,
                "pos",
                arcballCamera->eyePos().x,

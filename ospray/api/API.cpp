@@ -638,15 +638,6 @@ extern "C" void ospSet1b(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSetf(OSPObject _object,
-                        const char *id,
-                        float x) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().setFloat(_object, id, x);
-}
-OSPRAY_CATCH_END()
-
 extern "C" void ospSet1f(OSPObject _object,
                          const char *id,
                          float x) OSPRAY_CATCH_BEGIN

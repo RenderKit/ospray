@@ -33,9 +33,9 @@ namespace ospray {
           ispcEquivalent = ispc::PathTracer_Glass_create();
         }
 
-        const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
+        const float etaInside = getParam1f("etaInside", getParam1f("eta", 1.5f));
 
-        const float etaOutside = getParamf("etaOutside", 1.f);
+        const float etaOutside = getParam1f("etaOutside", 1.f);
 
         const vec3f& attenuationColorInside =
           getParam3f("attenuationColorInside",
@@ -46,7 +46,7 @@ namespace ospray {
           getParam3f("attenuationColorOutside", vec3f(1.f));
 
         const float attenuationDistance =
-          getParamf("attenuationDistance", getParamf("distance", 1.0f));
+          getParam1f("attenuationDistance", getParam1f("distance", 1.0f));
 
         ispc::PathTracer_Glass_set(
           ispcEquivalent,

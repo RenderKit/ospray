@@ -71,9 +71,9 @@ namespace ospray {
         MaterialParam1f backlight = getMaterialParam1f("backlight", 0.f);
         MaterialParam1f thickness = getMaterialParam1f("thickness", 1.f);
 
-        float outsideIor = getParamf("outsideIor", 1.f);
+        float outsideIor = getParam1f("outsideIor", 1.f);
         vec3f outsideTransmissionColor = getParam3f("outsideTransmissionColor", vec3f(1.f));
-        float outsideTransmissionDepth = getParamf("outsideTransmissionDepth", 1.f);
+        float outsideTransmissionDepth = getParam1f("outsideTransmissionDepth", 1.f);
 
         ispc::PathTracer_Principled_set(getIE(),
           (const ispc::vec3f&)baseColor.factor, baseColor.map ? baseColor.map->getIE() : nullptr, (const ispc::AffineSpace2f&)baseColor.xform,

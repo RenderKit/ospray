@@ -36,14 +36,14 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit()  override
       {
-        const float eta = getParamf("eta", 1.5f);
+        const float eta = getParam1f("eta", 1.5f);
         const vec3f& attenuationColor =
           getParam3f("attenuationColor",
               getParam3f("transmission",
                 getParam3f("color", vec3f(1.f))));
         const float attenuationDistance =
-          getParamf("attenuationDistance", 1.f);
-        const float thickness = getParamf("thickness", 1.f);
+          getParam1f("attenuationDistance", 1.f);
+        const float thickness = getParam1f("thickness", 1.f);
 
         Texture2D *map_attenuationColor =
           (Texture2D*)getParamObject("map_attenuationColor",

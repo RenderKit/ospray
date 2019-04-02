@@ -36,8 +36,8 @@ namespace ospray {
     // ------------------------------------------------------------------
     // first, "parse" the additional expected parameters
     // ------------------------------------------------------------------
-    height = getParamf("height", 1.f); // imgPlane_size_y
-    aspect = getParamf("aspect", 1.f);
+    height = getParam1f("height", 1.f); // imgPlane_size_y
+    aspect = getParam1f("aspect", 1.f);
 
     // ------------------------------------------------------------------
     // now, update the local precomputed values
@@ -49,7 +49,7 @@ namespace ospray {
     pos_du *= height * aspect; // imgPlane_size_x
     pos_dv *= height;
 
-    vec3f pos_00 = pos - 0.5f * pos_du - 0.5f * pos_dv; 
+    vec3f pos_00 = pos - 0.5f * pos_du - 0.5f * pos_dv;
 
     ispc::OrthographicCamera_set(getIE(),
                                  (const ispc::vec3f&)dir,

@@ -305,7 +305,7 @@ adding various types of parameters with name `id` to a given object:
     void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
     // add scalar and vector integer and float parameters
-    void ospSetf  (OSPObject, const char *id, float x);
+    void ospSet1b (OSPObject, const char *id, int32_t x);
     void ospSet1f (OSPObject, const char *id, float x);
     void ospSet1i (OSPObject, const char *id, int32_t x);
     void ospSet2f (OSPObject, const char *id, float x, float y);
@@ -318,13 +318,6 @@ adding various types of parameters with name `id` to a given object:
     void ospSet3iv(OSPObject, const char *id, const int *xyz);
     void ospSet4f (OSPObject, const char *id, float x, float y, float z, float w);
     void ospSet4fv(OSPObject, const char *id, const float *xyzw);
-
-    // additional functions to pass vector integer and float parameters in C++
-    void ospSetVec2f(OSPObject, const char *id, const vec2f &v);
-    void ospSetVec2i(OSPObject, const char *id, const vec2i &v);
-    void ospSetVec3f(OSPObject, const char *id, const vec3f &v);
-    void ospSetVec3i(OSPObject, const char *id, const vec3i &v);
-    void ospSetVec4f(OSPObject, const char *id, const vec4f &v);
 
 Users can also remove parameters that have been explicitly set via an
 ospSet call. Any parameters which have been removed will go back to
