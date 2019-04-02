@@ -93,8 +93,12 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
       ray->geomID = self->super.geomID;
       ray->primID = tmpRay.primID;
       ray->t      = tmpRay.t;
-      ray->Ng     = tmpRay.Ng;
       ray->u      = tmpRay.u;  // transport epsilon to postIntersect
+
+      // NOTE(jda) - Initialize ray.Ng with something, even if it's wrong
+      //             (better than garbage). Real normals are computed if DG_NS
+      //             flag is specified to postIntersect()
+      ray->Ng = negate(ray->dir);
     }
   }
 }
