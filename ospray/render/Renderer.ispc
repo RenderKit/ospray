@@ -33,8 +33,8 @@ void Renderer_default_renderSample(Renderer *uniform self,
                         (sample.sampleID.z << 28));
 }
 
-static unmasked void *uniform Renderer_default_beginFrame(
-    Renderer *uniform self, const World *uniform world)
+static unmasked void *uniform
+Renderer_default_beginFrame(Renderer *uniform self, const World *uniform world)
 {
   return NULL;
 }
@@ -206,9 +206,11 @@ export void Renderer_pick(const void *uniform _self,
                           const void *uniform _world,
                           const uniform vec2f &screenPos,
                           uniform vec3f &pos,
+                          uniform int32 &instID,
+                          uniform int32 &primID,
                           uniform int32 &hit)
 {
-  const Renderer *uniform self  = (const Renderer * uniform)_self;
+  const Renderer *uniform self  = (const Renderer *uniform)_self;
   const FrameBuffer *uniform fb = (const FrameBuffer *uniform)_fb;
   const Camera *uniform camera  = (const Camera *uniform)_camera;
   const World *uniform world    = (const World *uniform)_world;
@@ -238,8 +240,10 @@ export void Renderer_pick(const void *uniform _self,
 
   vec3f p = ray.org + ray.dir * ray.t;
 
-  pos.x = extract(p.x, 0);
-  pos.y = extract(p.y, 0);
-  pos.z = extract(p.z, 0);
-  hit   = extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
+  pos.x  = extract(p.x, 0);
+  pos.y  = extract(p.y, 0);
+  pos.z  = extract(p.z, 0);
+  hit    = extract((int)(hadHit(ray)), 0);
+  instID = extract(ray.instID, 0);
+  primID = extract(ray.primID, 0);
 }

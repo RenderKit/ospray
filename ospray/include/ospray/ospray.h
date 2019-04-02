@@ -255,8 +255,8 @@ extern "C" {
   OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
 
   OSPRAY_INTERFACE void ospDeviceSetString(OSPDevice, const char *id, const char *s);
-  OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
-  OSPRAY_INTERFACE void ospDeviceSet1b(OSPDevice, const char *id, int32_t x);
+  OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int x);
+  OSPRAY_INTERFACE void ospDeviceSet1b(OSPDevice, const char *id, int x);
   OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
 
   /*! status message callback function type */
@@ -314,7 +314,8 @@ extern "C" {
 
   // Instance Meta-Data ///////////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
+  OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *rendererType,
+                                              const char *materialType);
 
   OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 
@@ -339,7 +340,7 @@ extern "C" {
 
   OSPRAY_INTERFACE void ospSet1b(OSPObject, const char *id, int x);
   OSPRAY_INTERFACE void ospSet1f(OSPObject, const char *id, float x);
-  OSPRAY_INTERFACE void ospSet1i(OSPObject, const char *id, int32_t x);
+  OSPRAY_INTERFACE void ospSet1i(OSPObject, const char *id, int x);
 
   OSPRAY_INTERFACE void ospSet2f(OSPObject, const char *id, float x, float y);
   OSPRAY_INTERFACE void ospSet2fv(OSPObject, const char *id, const float *xy);
@@ -412,8 +413,10 @@ extern "C" {
   OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
 
   typedef struct {
-    osp_vec3f position; //< the position of the hit point (in world-space)
-    int hit;            //< whether or not a hit actually occurred
+    int hasHit;
+    osp_vec3f worldPosition;
+    OSPGeometryInstance geometryInstance;
+    uint32_t primID;
   } OSPPickResult;
 
   OSPRAY_INTERFACE void ospPick(OSPPickResult *result,

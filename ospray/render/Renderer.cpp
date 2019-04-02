@@ -105,13 +105,28 @@ namespace ospray {
                                const vec2f &screenPos)
   {
     OSPPickResult res;
+
+    res.geometryInstance = nullptr;
+    res.primID           = -1;
+
+    int instID = -1;
+    int primID = -1;
+
     ispc::Renderer_pick(getIE(),
                         fb->getIE(),
                         camera->getIE(),
                         world->getIE(),
                         (const ispc::vec2f &)screenPos,
-                        (ispc::vec3f &)res.position,
-                        res.hit);
+                        (ispc::vec3f &)res.worldPosition,
+                        instID,
+                        primID,
+                        res.hasHit);
+
+    if (res.hasHit) {
+      res.geometryInstance =
+          (OSPGeometryInstance)world->geometryInstances[instID].ptr;
+      res.primID = static_cast<uint32_t>(primID);
+    }
 
     return res;
   }

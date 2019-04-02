@@ -76,8 +76,9 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   glfwSetCursorPosCallback(glfwWindow, [](GLFWwindow *, double x, double y) {
     ImGuiIO &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse)
+    if (!io.WantCaptureMouse) {
       activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
+    }
   });
 
   glfwSetKeyCallback(glfwWindow,
@@ -93,6 +94,31 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                          }
                        }
                      });
+
+  glfwSetMouseButtonCallback(
+      glfwWindow, [](GLFWwindow *, int button, int action, int /*mods*/) {
+        auto &w = *activeWindow;
+        if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS) {
+          auto mouse      = activeWindow->previousMouse;
+          auto windowSize = activeWindow->windowSize;
+          const ospcommon::vec2f pos(
+              mouse.x / static_cast<float>(windowSize.x),
+              1.f - mouse.y / static_cast<float>(windowSize.y));
+
+          OSPPickResult res;
+          ospPick(&res,
+                  w.framebuffer,
+                  w.renderer,
+                  w.camera,
+                  w.world,
+                  (const osp_vec2f &)pos);
+
+          if (res.hasHit) {
+            std::cout << "Hit geometry instance [id: " << res.geometryInstance
+                      << ", prim: " << res.primID << "]" << std::endl;
+          }
+        }
+      });
 
   // OSPRay setup
 
@@ -216,8 +242,6 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
 
 void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
 {
-  static ospcommon::vec2f previousMouse(-1);
-
   const ospcommon::vec2f mouse(position.x, position.y);
   if (previousMouse != ospcommon::vec2f(-1)) {
     const bool leftDown =

@@ -68,6 +68,7 @@ class GLFWOSPRayWindow
   static GLFWOSPRayWindow *activeWindow;
 
   ospcommon::vec2i windowSize;
+  ospcommon::vec2f previousMouse{-1.f};
   ospcommon::box3f worldBounds;
   OSPWorld world       = nullptr;
   OSPRenderer renderer = nullptr;
