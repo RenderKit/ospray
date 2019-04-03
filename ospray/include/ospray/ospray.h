@@ -289,12 +289,12 @@ extern "C" {
   OSPRAY_INTERFACE OSPData ospNewData(size_t numItems,
                                       OSPDataType,
                                       const void *source,
-                                      const uint32_t dataCreationFlags OSP_DEFAULT_VAL(=0));
+                                      uint32_t dataCreationFlags OSP_DEFAULT_VAL(=0));
 
   OSPRAY_INTERFACE OSPError ospSetRegion(OSPVolume,
                                          void *source,
-                                         const osp_vec3i regionCoords,
-                                         const osp_vec3i regionSize);
+                                         osp_vec3i regionCoords,
+                                         osp_vec3i regionSize);
 
   // Renderable Objects ///////////////////////////////////////////////////////
 
@@ -370,7 +370,7 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp_vec2i size,
                                                     const OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
-                                                    const uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
+                                                    uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
 
   //! create a new pixel op of given type
   /*! return 'NULL' if that type is not known */
@@ -381,7 +381,7 @@ extern "C" {
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
-                                                 const OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
+                                                 OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
@@ -424,7 +424,7 @@ extern "C" {
                                 OSPRenderer renderer,
                                 OSPCamera camera,
                                 OSPWorld world,
-                                const osp_vec2f screenPos);
+                                osp_vec2f screenPos);
 
 #ifdef __cplusplus
 } // extern "C"

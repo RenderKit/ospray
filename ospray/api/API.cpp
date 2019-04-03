@@ -398,7 +398,7 @@ OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 extern "C" OSPData ospNewData(size_t nitems,
                               OSPDataType format,
                               const void *init,
-                              const uint32_t flags) OSPRAY_CATCH_BEGIN
+                              uint32_t flags) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPData data = currentDevice().newData(nitems, format, init, flags);
@@ -810,7 +810,7 @@ OSPRAY_CATCH_END()
 
 extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp_vec2i size,
                                             const OSPFrameBufferFormat mode,
-                                            const uint32_t channels)
+                                            uint32_t channels)
     OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -958,7 +958,7 @@ extern "C" void ospPick(OSPPickResult *result,
                         OSPRenderer renderer,
                         OSPCamera camera,
                         OSPWorld world,
-                        const osp_vec2f screenPos) OSPRAY_CATCH_BEGIN
+                        osp_vec2f screenPos) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(renderer, "nullptr renderer passed to ospPick");
