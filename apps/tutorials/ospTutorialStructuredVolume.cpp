@@ -19,11 +19,30 @@
 #include "GLFWOSPRayWindow.h"
 
 #include "ospcommon/library.h"
+#include "ospcommon/range.h"
 #include "ospray_testing.h"
 
 #include <imgui.h>
 
 using namespace ospcommon;
+
+static const std::string renderer_type = "scivis";
+
+static void setIsoValue(OSPGeometry geometry, float value)
+{
+  // create and set a single iso value
+  OSPData isoValuesData = ospNewData(1, OSP_FLOAT, &value);
+  ospSetData(geometry, "isovalues", isoValuesData);
+  ospRelease(isoValuesData);
+}
+
+static void setSlice(OSPGeometry geometry, float value)
+{
+  vec4f plane(1.f, 0.f, 0.f, value);
+  OSPData planesData = ospNewData(1, OSP_FLOAT4, &plane);
+  ospSetData(geometry, "planes", planesData);
+  ospRelease(planesData);
+}
 
 int main(int argc, const char **argv)
 {
@@ -48,31 +67,72 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries / volumes
   OSPWorld world = ospNewWorld();
 
-  // add in generated volume and transfer function
+  // Create volume
+
 #if 0
   OSPTestingVolume test_data = ospTestingNewVolume("simple_structured_volume");
 #else
   OSPTestingVolume test_data = ospTestingNewVolume("gravity_spheres_volume");
 #endif
 
+  auto volume     = test_data.volume;
+  auto voxelRange = (range1f &)test_data.voxelRange;
+
   OSPTransferFunction tfn =
       ospTestingNewTransferFunction(test_data.voxelRange, "jet");
 
-  ospSetObject(test_data.volume, "transferFunction", tfn);
-  ospCommit(test_data.volume);
+  ospSetObject(volume, "transferFunction", tfn);
+  ospCommit(volume);
 
-  ospAddVolume(world, test_data.volume);
-  ospRelease(test_data.volume);
+  ospAddVolume(world, volume);
   ospRelease(tfn);
 
+  // Create isosurface geometry //
+
+  // create iso geometry object and add it to the world
+  OSPGeometry isoGeometry = ospNewGeometry("isosurfaces");
+
+  // set initial iso value
+  float isoValue = voxelRange.center() / 2.f;
+  setIsoValue(isoGeometry, isoValue);
+
+  // set volume object to create iso geometry
+  ospSetObject(isoGeometry, "volume", volume);
+
+  // create isoInstance of the geometry
+  OSPGeometryInstance isoInstance = ospNewGeometryInstance(isoGeometry);
+
+  // prepare material for iso geometry
+  OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
+  ospSet3f(material, "Ks", .2f, .2f, .2f);
+  ospCommit(material);
+
+  // assign material to the geometry
+  ospSetMaterial(isoInstance, material);
+
+  // Create slices geometry //
+
+  OSPGeometry sliceGeometry = ospNewGeometry("slices");
+  ospSetObject(sliceGeometry, "volume", volume);
+  float sliceValue = 0.f;
+  setSlice(sliceGeometry, sliceValue);
+  OSPGeometryInstance sliceInstance = ospNewGeometryInstance(sliceGeometry);
+
+  // apply changes made
+  ospCommit(isoGeometry);
+  ospCommit(isoInstance);
+  ospCommit(sliceGeometry);
+  ospCommit(sliceInstance);
   ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("scivis");
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
+
+  ospSet1i(renderer, "aoSamples", 1);
 
   ospCommit(renderer);
 
@@ -90,6 +150,65 @@ int main(int argc, const char **argv)
       ospSet1i(renderer, "spp", spp);
       glfwOSPRayWindow->addObjectToCommit(renderer);
     }
+
+    static int aoSamples = 1;
+    if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
+      ospSet1i(renderer, "aoSamples", aoSamples);
+      glfwOSPRayWindow->addObjectToCommit(renderer);
+    }
+
+    ImGui::NewLine();
+    ImGui::Text("Show:");
+
+    bool commitWorld = false;
+
+    static bool showVolume = true;
+    if (ImGui::Checkbox("volume", &showVolume)) {
+      commitWorld = true;
+      if (showVolume)
+        ospAddVolume(world, volume);
+      else
+        ospRemoveVolume(world, volume);
+    }
+
+    static bool showIsoSurface = false;
+    if (ImGui::Checkbox("isosurface", &showIsoSurface)) {
+      commitWorld = true;
+      if (showIsoSurface)
+        ospAddGeometryInstance(world, isoInstance);
+      else
+        ospRemoveGeometryInstance(world, isoInstance);
+    }
+
+    static bool showSlice = false;
+    if (ImGui::Checkbox("slice", &showSlice)) {
+      commitWorld = true;
+      if (showSlice)
+        ospAddGeometryInstance(world, sliceInstance);
+      else
+        ospRemoveGeometryInstance(world, sliceInstance);
+    }
+
+    ImGui::NewLine();
+    ImGui::Separator();
+    ImGui::NewLine();
+
+    if (ImGui::SliderFloat(
+            "iso value", &isoValue, voxelRange.lower, voxelRange.upper)) {
+      setIsoValue(isoGeometry, isoValue);
+      glfwOSPRayWindow->addObjectToCommit(isoGeometry);
+      glfwOSPRayWindow->addObjectToCommit(isoInstance);
+    }
+
+    if (ImGui::SliderFloat("slice position", &sliceValue, -1.f, 1.f)) {
+      commitWorld = true;
+      setSlice(sliceGeometry, sliceValue);
+      glfwOSPRayWindow->addObjectToCommit(sliceGeometry);
+      glfwOSPRayWindow->addObjectToCommit(sliceInstance);
+    }
+
+    if (commitWorld)
+      glfwOSPRayWindow->addObjectToCommit(world);
   });
 
   // start the GLFW main loop, which will continuously render
@@ -97,7 +216,13 @@ int main(int argc, const char **argv)
 
   // cleanup remaining objects
   ospRelease(world);
+  ospRelease(volume);
+  ospRelease(isoInstance);
+  ospRelease(isoGeometry);
+  ospRelease(sliceGeometry);
+  ospRelease(sliceInstance);
   ospRelease(renderer);
+  ospRelease(material);
 
   // cleanly shut OSPRay down
   ospShutdown();
