@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v1.8.5:
+
+-   Fix float precision cornercase (`NaN`s) in sphere light sampling
+
 ### Changes in v1.8.4:
 
 -   Add location of `libospray` to paths searched to find modules
