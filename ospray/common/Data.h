@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "fb/ToneMapperPixelOp.h"
+
 // ospray
 #include "Managed.h"
 
@@ -38,6 +40,21 @@ namespace ospray {
 
     /*! return number of items in this data buffer */
     size_t size() const;
+
+    /*! run the passed function over each element of the buffer in a for loop */
+    template<typename T, typename Fn>
+    void forEach(Fn fn)
+    {
+      // TODO WILL: Kind of assumes that the types stored match with the
+      // type T the caller requested
+      const size_t typeSize = sizeOf(type);
+      uint8_t *buf = static_cast<uint8_t*>(data);
+      for (size_t i = 0; i < numItems; ++i) {
+        // Note: need double ptr if T is an object type
+        T **val = reinterpret_cast<T**>(buf + i * typeSize); 
+        fn(*val);
+      }
+    }
 
     // Data members //
 

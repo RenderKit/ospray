@@ -32,7 +32,8 @@ class GLFWOSPRayWindow
   GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                    const ospcommon::box3f &worldBounds,
                    OSPWorld world,
-                   OSPRenderer renderer);
+                   OSPRenderer renderer,
+                   OSPData pixelOps = nullptr);
 
   ~GLFWOSPRayWindow();
 
@@ -83,6 +84,7 @@ class GLFWOSPRayWindow
   OSPCamera camera           = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
   OSPFuture currentFrame     = nullptr;
+  OSPData pixelOps           = nullptr;
 
   // List of OSPRay handles to commit before the next frame
   ospcommon::TransactionalBuffer<OSPObject> objectsToCommit;

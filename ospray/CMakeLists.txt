@@ -73,6 +73,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/PixelOp.cpp
   fb/ToneMapperPixelOp.cpp
   fb/ToneMapperPixelOp.ispc
+  fb/DebugPixelOp.cpp
   fb/Tile.h
   fb/TileError.cpp
 

@@ -28,11 +28,13 @@ static bool g_quitNextFrame = false;
 GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                                    const ospcommon::box3f &worldBounds,
                                    OSPWorld world,
-                                   OSPRenderer renderer)
+                                   OSPRenderer renderer,
+                                   OSPData pixelOps)
     : windowSize(windowSize),
       worldBounds(worldBounds),
       world(world),
-      renderer(renderer)
+      renderer(renderer),
+      pixelOps(pixelOps)
 {
   if (activeWindow != nullptr)
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -161,6 +163,10 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
   ImGui_ImplGlfwGL3_Shutdown();
   // cleanly terminate GLFW
   glfwTerminate();
+
+  if (pixelOps) {
+    ospRelease(pixelOps);
+  }
 }
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
@@ -230,6 +236,12 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   framebuffer = ospNewFrameBuffer(reinterpret_cast<osp_vec2i &>(windowSize),
                                   OSP_FB_SRGBA,
                                   OSP_FB_COLOR | OSP_FB_ACCUM);
+
+  if (pixelOps) {
+    PRINT(pixelOps);
+    ospSetData(framebuffer, "pixelOps", pixelOps);
+  }
+  ospCommit(framebuffer);
 
   // reset OpenGL viewport and orthographic projection
   glViewport(0, 0, windowSize.x, windowSize.y);

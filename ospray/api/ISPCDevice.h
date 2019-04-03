@@ -54,9 +54,6 @@ namespace ospray {
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
 
-      /*! set a frame buffer's pixel op object */
-      void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) override;
-
       /*! create a new model */
       OSPWorld newWorld() override;
 

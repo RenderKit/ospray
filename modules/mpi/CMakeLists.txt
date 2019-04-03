@@ -42,8 +42,6 @@ if (OSPRAY_MODULE_MPI)
     fb/DistributedFrameBuffer_TileTypes.cpp
     fb/DistributedFrameBuffer_TileMessages.cpp
 
-    fb/DebugPixelOp.cpp
-
     render/MPILoadBalancer.cpp
   )
 

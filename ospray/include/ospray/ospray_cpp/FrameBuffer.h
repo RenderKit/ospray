@@ -47,9 +47,6 @@ namespace ospray {
                         const Camera &camera,
                         const World &world) const;
 
-      void setPixelOp(PixelOp &p) const;
-      void setPixelOp(OSPPixelOp p) const;
-
       void *map(OSPFrameBufferChannel channel) const;
       void unmap(void *ptr) const;
       void clear() const;
@@ -111,16 +108,6 @@ namespace ospray {
     {
       return ospRenderFrame(
           handle(), renderer.handle(), camera.handle(), world.handle());
-    }
-
-    inline void FrameBuffer::setPixelOp(PixelOp &p) const
-    {
-      setPixelOp(p.handle());
-    }
-
-    inline void FrameBuffer::setPixelOp(OSPPixelOp p) const
-    {
-      ospSetPixelOp(handle(), p);
     }
 
     inline void *FrameBuffer::map(OSPFrameBufferChannel channel) const

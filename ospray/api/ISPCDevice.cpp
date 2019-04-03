@@ -291,13 +291,6 @@ namespace ospray {
       return (OSPPixelOp)PixelOp::createInstance(type);
     }
 
-    void ISPCDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
-    {
-      FrameBuffer *fb = (FrameBuffer *)_fb;
-      PixelOp *po     = (PixelOp *)_op;
-      fb->pixelOp     = po->createInstance(fb, fb->pixelOp.ptr);
-    }
-
     OSPRenderer ISPCDevice::newRenderer(const char *type)
     {
       return (OSPRenderer)Renderer::createInstance(type);

@@ -138,3 +138,21 @@ PRIVATE
   glfw
   ${OPENGL_LIBRARIES}
 )
+
+ospray_create_application(ospTutorialPixelOps
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  ospTutorialPixelOps.cpp
+  imgui/imgui_impl_glfw_gl3.cpp
+)
+
+target_link_libraries(ospTutorialPixelOps
+PRIVATE
+  ospray
+  ospray_testing
+  ospray_common
+  ospray_imgui
+  glfw
+  ${OPENGL_LIBRARIES}
+)
+

@@ -827,14 +827,6 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type) OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" void ospSetPixelOp(OSPFrameBuffer fb,
-                              OSPPixelOp op) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  return currentDevice().setPixelOp(fb, op);
-}
-OSPRAY_CATCH_END()
-
 extern "C" const void *ospMapFrameBuffer(
     OSPFrameBuffer fb, OSPFrameBufferChannel channel) OSPRAY_CATCH_BEGIN
 {

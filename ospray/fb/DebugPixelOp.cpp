@@ -16,16 +16,16 @@ inline float convert_srgb(const float x)
 void DebugPixelOp::commit()
 {
   prefix = getParamString("prefix", "");
+  addColor = getParam3f("addColor", vec3f(0.f));
 }
 
-PixelOp::Instance*
-DebugPixelOp::createInstance(FrameBuffer *, PixelOp::Instance *)
+PixelOp::Instance* DebugPixelOp::createInstance(FrameBuffer *)
 {
-  return new Instance(prefix);
+  return new Instance(prefix, addColor);
 }
 
-DebugPixelOp::Instance::Instance(const std::string &prefix)
-  : prefix(prefix)
+DebugPixelOp::Instance::Instance(const std::string &prefix, const vec3f &col)
+  : prefix(prefix), addColor(col)
 {
 }
 
@@ -45,6 +45,12 @@ void DebugPixelOp::Instance::postAccum(Tile &tile)
       data[pixelID * 4] = 255.f * convert_srgb(clamp(tile.r[pixelID], 0.f, 1.f));
       data[pixelID * 4 + 1] = 255.f * convert_srgb(clamp(tile.g[pixelID], 0.f, 1.f));
       data[pixelID * 4 + 2] = 255.f * convert_srgb(clamp(tile.b[pixelID], 0.f, 1.f));
+      
+      // We write out the tile that came as input, then apply the color to pass
+      // down the pipeline
+      tile.r[pixelID] += addColor.x;
+      tile.g[pixelID] += addColor.y;
+      tile.b[pixelID] += addColor.z;
     }
   }
   ospcommon::utility::writePPM(file, w, h, reinterpret_cast<uint32_t*>(data.data()));

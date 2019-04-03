@@ -19,6 +19,7 @@
 #include <atomic>
 // ospray
 #include "common/Managed.h"
+#include "common/Data.h"
 #include "fb/PixelOp.h"
 #include "ospray/ospray.h"
 
@@ -35,6 +36,8 @@ namespace ospray {
                 ColorBufferFormat colorBufferFormat,
                 const uint32 channels);
     virtual ~FrameBuffer() override = default;
+
+    virtual void commit();
 
     virtual const void *mapBuffer(OSPFrameBufferChannel channel) = 0;
 
@@ -112,7 +115,7 @@ namespace ospray {
 
     std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
-   public:  // TODO: make this private!
-    Ref<PixelOp::Instance> pixelOp;
+    Ref<Data> pixelOpData;
+    std::vector<Ref<PixelOp::Instance>> pixelOps;
   };
 }  // namespace ospray

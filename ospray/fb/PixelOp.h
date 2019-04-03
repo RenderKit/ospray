@@ -56,7 +56,7 @@ namespace ospray {
           buffer. this way we can, for example, fill in missing
           samples; however, the tile will _not_ yet contain the
           previous frame's contributions from the accum buffer
-          etcpp. In distriubuted mode, it is undefined if this op gets
+          etc. In distriubuted mode, it is undefined if this op gets
           executed on the node that _produces_ the tile, or on the
           node that _owns_ the tile (and its accum buffer data)  */
       virtual void preAccum(Tile &tile) { UNUSED(tile); }
@@ -80,7 +80,7 @@ namespace ospray {
     virtual ~PixelOp() override = default;
 
     //! \brief create an instance of this pixel op
-    virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) = 0;
+    virtual Instance *createInstance(FrameBuffer *fb) = 0;
 
     static PixelOp *createInstance(const char *identifier);
   };
@@ -90,9 +90,9 @@ namespace ospray {
 
       \internal This currently works by defining a extern "C" function
       with a given predefined name that creates a new instance of this
-      renderer. By having this symbol in the shared lib ospray can
-      lateron always get a handle to this fct and create an instance
-      of this renderer.
+      pixelop. By having this symbol in the shared lib ospray can
+      later on always get a handle to this fct and create an instance
+      of this pixelop.
   */
 #define OSP_REGISTER_PIXEL_OP(InternalClass, external_name) \
   OSP_REGISTER_OBJECT(PixelOp, pixel_op, InternalClass, external_name)

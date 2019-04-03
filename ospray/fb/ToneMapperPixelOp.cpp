@@ -59,9 +59,8 @@ namespace ospray {
     return "ospray::ToneMapperPixelOp";
   }
 
-  PixelOp::Instance* ToneMapperPixelOp::createInstance(FrameBuffer*, PixelOp::Instance* /*prev*/)
+  PixelOp::Instance* ToneMapperPixelOp::createInstance(FrameBuffer*)
   {
-    // FIXME: use prev too
     return new ToneMapperPixelOp::Instance(getIE());
   }
 

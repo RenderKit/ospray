@@ -18,8 +18,11 @@
 #include "ospray/fb/PixelOp.h"
 
 namespace ospray {
-  // The debug PixelOp just dumps the rendered final tiles out as PPM files,
-  // with some optional filename prefix. To combine them into a single
+  // The debug PixelOp just dumps the input tiles out as PPM files,
+  // with some optional filename prefix. It can also add a color to the
+  // tile which will be passed down the pipeline after it, for testing
+  // the tile pipeline itself.
+  // To combine the output tiles into a single
   // image you can use ImageMagick's montage command:
   // montage `ls *.ppm | sort -V` -geometry +0+0 -tile MxN out.jpg
   // where M is the number of tiles along X, and N the number of tiles along Y
@@ -29,17 +32,18 @@ namespace ospray {
 
     struct Instance : public PixelOp::Instance
     {
-      Instance(const std::string &prefix);
+      Instance(const std::string &prefix, const vec3f &addColor);
       void postAccum(Tile &tile) override;
       std::string toString() const override;
 
       std::string prefix;
+      vec3f addColor;
     };
 
-    PixelOp::Instance* createInstance(FrameBuffer *fb,
-                                      PixelOp::Instance *prev) override;
+    PixelOp::Instance* createInstance(FrameBuffer *fb) override;
 
     std::string prefix;
+    vec3f addColor;
   };
 }
 

@@ -376,9 +376,6 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPPixelOp ospNewPixelOp(const char *type);
 
-  //! set a frame buffer's pixel op */
-  OSPRAY_INTERFACE void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
-
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
                                                  OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));

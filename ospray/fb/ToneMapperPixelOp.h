@@ -37,7 +37,7 @@ namespace ospray {
     ToneMapperPixelOp();
     virtual void commit() override;
     virtual std::string toString() const override;
-    virtual PixelOp::Instance* createInstance(FrameBuffer* fb, PixelOp::Instance* prev) override;
+    virtual PixelOp::Instance* createInstance(FrameBuffer* fb) override;
   };
 
 } // ::ospray
