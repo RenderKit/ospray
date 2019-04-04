@@ -311,7 +311,7 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSet1b(OSPDevice _object,
                                const char *id,
-                               int32_t x) OSPRAY_CATCH_BEGIN
+                               int x) OSPRAY_CATCH_BEGIN
 {
   Device *object = (Device *)_object;
   object->setParam(id, static_cast<bool>(x));
@@ -320,7 +320,7 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSet1i(OSPDevice _object,
                                const char *id,
-                               int32_t x) OSPRAY_CATCH_BEGIN
+                               int x) OSPRAY_CATCH_BEGIN
 {
   Device *object = (Device *)_object;
   object->setParam(id, x);
@@ -475,20 +475,6 @@ OSPRAY_CATCH_END(nullptr)
 ///////////////////////////////////////////////////////////////////////////////
 // Instancing /////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-extern "C" OSPGeometry ospNewInstance(OSPWorld modelToInstantiate,
-                                      const osp_affine3f xfm) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  OSPGeometry geom = ospNewGeometry("instance");
-  ospSet3f(geom, "xfm.l.vx", xfm.l.vx.x, xfm.l.vx.y, xfm.l.vx.z);
-  ospSet3f(geom, "xfm.l.vy", xfm.l.vy.x, xfm.l.vy.y, xfm.l.vy.z);
-  ospSet3f(geom, "xfm.l.vz", xfm.l.vz.x, xfm.l.vz.y, xfm.l.vz.z);
-  ospSet3f(geom, "xfm.p", xfm.p.x, xfm.p.y, xfm.p.z);
-  ospSetObject(geom, "model", modelToInstantiate);
-  return geom;
-}
-OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geom)
     OSPRAY_CATCH_BEGIN
@@ -649,7 +635,7 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospSet1i(OSPObject _object,
                          const char *id,
-                         int32_t x) OSPRAY_CATCH_BEGIN
+                         int x) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().setInt(_object, id, x);
@@ -808,8 +794,8 @@ OSPRAY_CATCH_END()
 // FrameBuffer Manipulation ///////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp_vec2i size,
-                                            const OSPFrameBufferFormat mode,
+extern "C" OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+                                            OSPFrameBufferFormat mode,
                                             uint32_t channels)
     OSPRAY_CATCH_BEGIN
 {

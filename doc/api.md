@@ -305,9 +305,9 @@ adding various types of parameters with name `id` to a given object:
     void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
     // add scalar and vector integer and float parameters
-    void ospSet1b (OSPObject, const char *id, int32_t x);
+    void ospSet1b (OSPObject, const char *id, int x);
     void ospSet1f (OSPObject, const char *id, float x);
-    void ospSet1i (OSPObject, const char *id, int32_t x);
+    void ospSet1i (OSPObject, const char *id, int x);
     void ospSet2f (OSPObject, const char *id, float x, float y);
     void ospSet2fv(OSPObject, const char *id, const float *xy);
     void ospSet2i (OSPObject, const char *id, int x, int y);
@@ -471,8 +471,8 @@ rearrangement of voxel data it cannot be shared the with the application
 anymore, but has to be transferred to OSPRay via
 
     OSPError ospSetRegion(OSPVolume, void *source,
-                          const vec3i &regionCoords,
-                          const vec3i &regionSize);
+                          osp_vec3i regionCoords,
+                          osp_vec3i regionSize);
 
 The voxel data pointed to by `source` is copied into the given volume
 starting at position `regionCoords`, must be of size `regionSize` and be
@@ -1981,7 +1981,7 @@ normalized screen-space pixel coordinates `screenPos` use
                  OSPRenderer,
                  OSPCamera,
                  OSPWorld,
-                 const osp_vec2f screenPos);
+                 osp_vec2f screenPos);
 
 The result is returned in the provided `OSPPickResult` struct:
 
@@ -2005,9 +2005,9 @@ The framebuffer holds the rendered 2D image (and optionally auxiliary
 information associated with pixels). To create a new framebuffer object
 of given size `size` (in pixels), color format, and channels use
 
-    OSPFrameBuffer ospNewFrameBuffer(const vec2i &size,
-                                     const OSPFrameBufferFormat format = OSP_FB_SRGBA,
-                                     const uint32_t frameBufferChannels = OSP_FB_COLOR);
+    OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+                                     OSPFrameBufferFormat format = OSP_FB_SRGBA,
+                                     uint32_t frameBufferChannels = OSP_FB_COLOR);
 
 The parameter `format` describes the format the color buffer has _on the
 host_, and the format that `ospMapFrameBuffer` will eventually return.
@@ -2063,7 +2063,7 @@ The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via
 
     const void *ospMapFrameBuffer(OSPFrameBuffer,
-                                  const OSPFrameBufferChannel = OSP_FB_COLOR);
+                                  OSPFrameBufferChannel = OSP_FB_COLOR);
 
 Note that `OSP_FB_ACCUM` or `OSP_FB_VARIANCE` cannot be mapped. The
 origin of the screen coordinate system in OSPRay is the lower left

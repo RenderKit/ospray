@@ -368,8 +368,8 @@ extern "C" {
 
   // FrameBuffer Manipulation /////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp_vec2i size,
-                                                    const OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
+  OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+                                                    OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
                                                     uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
 
   //! create a new pixel op of given type
