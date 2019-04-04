@@ -163,10 +163,6 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
   ImGui_ImplGlfwGL3_Shutdown();
   // cleanly terminate GLFW
   glfwTerminate();
-
-  if (pixelOps) {
-    ospRelease(pixelOps);
-  }
 }
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()

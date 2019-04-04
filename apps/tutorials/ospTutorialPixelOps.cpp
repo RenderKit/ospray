@@ -220,13 +220,19 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
-  // Create a PixelOp to apply to the image
+  // Create a PixelOp pipeline to apply to the image
   OSPPixelOp toneMap = ospNewPixelOp("tonemapper");
   ospCommit(toneMap);
-  PRINT(toneMap);
-  OSPData pixelOps = ospNewData(1, OSP_OBJECT, &toneMap);
+
+  // The colortweak pixel op will make the image more blue
+  OSPPixelOp colorTweak = ospNewPixelOp("debug");
+  ospSet3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
+  ospCommit(colorTweak);
+
+  std::array<OSPPixelOp, 2> pixelPipeline = {toneMap, colorTweak};
+  OSPData pixelOps = ospNewData(pixelPipeline.size(), OSP_OBJECT, pixelPipeline.data());
   ospCommit(pixelOps);
-  //ospRelease(toneMap);
+  ospRelease(toneMap);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
@@ -249,6 +255,7 @@ int main(int argc, const char **argv)
   // cleanup remaining objects
   ospRelease(world);
   ospRelease(renderer);
+  ospRelease(pixelOps);
 
   // cleanly shut OSPRay down
   ospShutdown();

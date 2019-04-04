@@ -42,9 +42,11 @@ void DebugPixelOp::Instance::postAccum(Tile &tile)
   size_t pixelID = 0;
   for (size_t iy = 0; iy < h; ++iy) {
     for (size_t ix = 0; ix < w; ++ix, ++pixelID) {
-      data[pixelID * 4] = 255.f * convert_srgb(clamp(tile.r[pixelID], 0.f, 1.f));
-      data[pixelID * 4 + 1] = 255.f * convert_srgb(clamp(tile.g[pixelID], 0.f, 1.f));
-      data[pixelID * 4 + 2] = 255.f * convert_srgb(clamp(tile.b[pixelID], 0.f, 1.f));
+      if (!prefix.empty()) {
+        data[pixelID * 4] = 255.f * convert_srgb(clamp(tile.r[pixelID], 0.f, 1.f));
+        data[pixelID * 4 + 1] = 255.f * convert_srgb(clamp(tile.g[pixelID], 0.f, 1.f));
+        data[pixelID * 4 + 2] = 255.f * convert_srgb(clamp(tile.b[pixelID], 0.f, 1.f));
+      }
       
       // We write out the tile that came as input, then apply the color to pass
       // down the pipeline
@@ -53,7 +55,9 @@ void DebugPixelOp::Instance::postAccum(Tile &tile)
       tile.b[pixelID] += addColor.z;
     }
   }
-  ospcommon::utility::writePPM(file, w, h, reinterpret_cast<uint32_t*>(data.data()));
+  if (!prefix.empty()) {
+    ospcommon::utility::writePPM(file, w, h, reinterpret_cast<uint32_t*>(data.data()));
+  }
 }
 
 std::string DebugPixelOp::Instance::toString() const
