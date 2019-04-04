@@ -1986,9 +1986,10 @@ normalized screen-space pixel coordinates `screenPos` use
 The result is returned in the provided `OSPPickResult` struct:
 
     typedef struct {
-        bool hit;                // whether or not a hit actually occurred
-        vec3f position;          // the position of the hit point (in world-space)
-        OSPGeometryInstance geom // the object hit
+        int hasHit;
+        osp_vec3f worldPosition;
+        OSPGeometryInstance geometryInstance;
+        uint32_t primID;
     } OSPPickResult;
 
 Note that `ospPick` considers exactly the same camera of the given
