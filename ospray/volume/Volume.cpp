@@ -81,20 +81,20 @@ namespace ospray {
   {
     // Set the gradient shading flag for the renderer.
     ispc::Volume_setGradientShadingEnabled(ispcEquivalent,
-                                           getParam1i("gradientShadingEnabled",
-                                                      0));
+                                           getParam1b("gradientShadingEnabled",
+                                                      false));
 
     ispc::Volume_setPreIntegration(ispcEquivalent,
-                                       getParam1i("preIntegration",
-                                                  0));
+                                       getParam1b("preIntegration",
+                                                  false));
 
     ispc::Volume_setSingleShade(ispcEquivalent,
-                                   getParam1i("singleShade",
-                                              1));
+                                   getParam1b("singleShade",
+                                              true));
 
     ispc::Volume_setAdaptiveSampling(ispcEquivalent,
-                                   getParam1i("adaptiveSampling",
-                                              1));
+                                   getParam1b("adaptiveSampling",
+                                              true));
 
     ispc::Volume_setAdaptiveScalar(ispcEquivalent,
                                  getParam1f("adaptiveScalar", 15.0f));

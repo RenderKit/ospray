@@ -52,7 +52,7 @@ namespace ospray {
                                                     (float *)opacityValues->data);
     }
 
-    if (getParam1i("preIntegration", 0) && colorValues && opacityValues)
+    if (getParam1b("preIntegration", false) && colorValues && opacityValues)
       ispc::LinearTransferFunction_precomputePreIntegratedValues(ispcEquivalent);
 
     TransferFunction::commit();
