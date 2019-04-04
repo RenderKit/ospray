@@ -40,13 +40,6 @@ namespace ospray {
   void FrameBuffer::commit()
   {
     pixelOpData = getParamData("pixelOps", nullptr);
-
-    // Create the pixel op instances for this framebuffer
-    pixelOpData->forEach<PixelOp>(
-      [&](PixelOp *p)
-      {
-        pixelOps.push_back(p->createInstance(this));
-      });
   }
 
   vec2i FrameBuffer::getTileSize() const

@@ -19,17 +19,7 @@ void DebugPixelOp::commit()
   addColor = getParam3f("addColor", vec3f(0.f));
 }
 
-PixelOp::Instance* DebugPixelOp::createInstance(FrameBuffer *)
-{
-  return new Instance(prefix, addColor);
-}
-
-DebugPixelOp::Instance::Instance(const std::string &prefix, const vec3f &col)
-  : prefix(prefix), addColor(col)
-{
-}
-
-void DebugPixelOp::Instance::postAccum(Tile &tile)
+void DebugPixelOp::postAccum(FrameBuffer *, Tile &tile)
 {
   const int tile_x = tile.region.lower.x / TILE_SIZE;
   const int tile_y = (tile.fbSize.y - tile.region.upper.y) / TILE_SIZE;
@@ -60,9 +50,9 @@ void DebugPixelOp::Instance::postAccum(Tile &tile)
   }
 }
 
-std::string DebugPixelOp::Instance::toString() const
+std::string DebugPixelOp::toString() const
 {
-  return "DebugPixelOp::Instance";
+  return "DebugPixelOp";
 }
 
 OSP_REGISTER_PIXEL_OP(DebugPixelOp, debug);

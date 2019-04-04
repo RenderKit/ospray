@@ -29,18 +29,8 @@ namespace ospray {
   struct DebugPixelOp : public PixelOp
   {
     void commit() override;
-
-    struct Instance : public PixelOp::Instance
-    {
-      Instance(const std::string &prefix, const vec3f &addColor);
-      void postAccum(Tile &tile) override;
-      std::string toString() const override;
-
-      std::string prefix;
-      vec3f addColor;
-    };
-
-    PixelOp::Instance* createInstance(FrameBuffer *fb) override;
+    void postAccum(FrameBuffer *fb, Tile &tile) override;
+    std::string toString() const override;
 
     std::string prefix;
     vec3f addColor;

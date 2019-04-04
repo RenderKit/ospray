@@ -32,8 +32,7 @@ class GLFWOSPRayWindow
   GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                    const ospcommon::box3f &worldBounds,
                    OSPWorld world,
-                   OSPRenderer renderer,
-                   OSPData pixelOps = nullptr);
+                   OSPRenderer renderer);
 
   ~GLFWOSPRayWindow();
 
@@ -41,6 +40,8 @@ class GLFWOSPRayWindow
 
   OSPWorld getWorld();
   void setWorld(OSPWorld newWorld);
+
+  void setPixelOps(OSPData ops);
 
   void resetAccumulation();
 

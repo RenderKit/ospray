@@ -116,6 +116,5 @@ namespace ospray {
     std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
     Ref<Data> pixelOpData;
-    std::vector<Ref<PixelOp::Instance>> pixelOps;
   };
 }  // namespace ospray

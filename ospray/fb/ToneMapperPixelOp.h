@@ -24,20 +24,11 @@ namespace ospray {
   /*! \brief Generic tone mapping operator approximating ACES by default. */
   struct OSPRAY_SDK_INTERFACE ToneMapperPixelOp : public PixelOp
   {
-    struct OSPRAY_SDK_INTERFACE Instance : public PixelOp::Instance
-    {
-      Instance(void* ispcInstance);
-
-      virtual void postAccum(Tile& tile) override;
-      virtual std::string toString() const override;
-
-      void* ispcInstance;
-    };
-
     ToneMapperPixelOp();
     virtual void commit() override;
+    virtual void postAccum(FrameBuffer *fb, Tile &tile) override;
+
     virtual std::string toString() const override;
-    virtual PixelOp::Instance* createInstance(FrameBuffer* fb) override;
   };
 
 } // ::ospray

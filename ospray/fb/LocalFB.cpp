@@ -110,10 +110,6 @@ namespace ospray {
 
   void LocalFrameBuffer::setTile(Tile &tile)
   {
-    for (auto &p : pixelOps) {
-      p->preAccum(tile);
-    }
-
     if (accumBuffer) {
       const float err = ispc::LocalFrameBuffer_accumulateTile(getIE(),(ispc::Tile&)tile);
       if ((tile.accumID & 1) == 1)
@@ -126,9 +122,8 @@ namespace ospray {
       ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),(ispc::Tile&)tile,
           (ispc::vec3f*)normalBuffer, tile.nx, tile.ny, tile.nz);
 
-    for (auto &p : pixelOps) {
-      p->postAccum(tile);
-    }
+    if (pixelOpData)
+      pixelOpData->forEach<PixelOp*>([&](PixelOp *p) { p->postAccum(this, tile); });
 
     if (colorBuffer) {
       switch (colorBufferFormat) {
@@ -160,16 +155,15 @@ namespace ospray {
   void LocalFrameBuffer::beginFrame()
   {
     FrameBuffer::beginFrame();
-    for (auto &p : pixelOps) {
-      p->beginFrame();
-    }
+    if (pixelOpData)
+      pixelOpData->forEach<PixelOp*>([](PixelOp *p) { p->beginFrame(); });
   }
 
   void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
-    for (auto &p : pixelOps) {
-      p->endFrame();
-    }
+    if (pixelOpData)
+      pixelOpData->forEach<PixelOp*>([](PixelOp *p) { p->endFrame(); });
+
     frameVariance = tileErrorRegion.refine(errorThreshold);
   }
 

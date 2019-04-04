@@ -28,13 +28,11 @@ static bool g_quitNextFrame = false;
 GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                                    const ospcommon::box3f &worldBounds,
                                    OSPWorld world,
-                                   OSPRenderer renderer,
-                                   OSPData pixelOps)
+                                   OSPRenderer renderer)
     : windowSize(windowSize),
       worldBounds(worldBounds),
       world(world),
-      renderer(renderer),
-      pixelOps(pixelOps)
+      renderer(renderer)
 {
   if (activeWindow != nullptr)
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -180,6 +178,13 @@ void GLFWOSPRayWindow::setWorld(OSPWorld newWorld)
   world = newWorld;
 }
 
+void GLFWOSPRayWindow::setPixelOps(OSPData ops)
+{
+  pixelOps = ops;
+  ospSetData(framebuffer, "pixelOps", pixelOps);
+  addObjectToCommit(framebuffer);
+}
+
 void GLFWOSPRayWindow::resetAccumulation()
 {
   ospResetAccumulation(framebuffer);
@@ -234,7 +239,6 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
                                   OSP_FB_COLOR | OSP_FB_ACCUM);
 
   if (pixelOps) {
-    PRINT(pixelOps);
     ospSetData(framebuffer, "pixelOps", pixelOps);
   }
   ospCommit(framebuffer);

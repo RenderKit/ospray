@@ -31,9 +31,10 @@ namespace ospray {
     PixelOp::commit();
 
     float exposure = getParam1f("exposure", 1.f);
-
-    // Default parameters fitted to the ACES 1.0 grayscale curve (RRT.a1.0.3 + ODT.Academy.Rec709_100nits_dim.a1.0.3)
-    // We included exposure adjustment to match 18% middle gray (ODT(RRT(0.18)) = 0.18)
+    // Default parameters fitted to the ACES 1.0 grayscale curve
+    // (RRT.a1.0.3 + ODT.Academy.Rec709_100nits_dim.a1.0.3)
+    // We included exposure adjustment to match 18% middle gray
+    // (ODT(RRT(0.18)) = 0.18)
     const float aces_contrast = 1.6773f;
     const float aces_shoulder = 0.9714f;
     const float aces_midIn    = 0.18f;
@@ -48,9 +49,14 @@ namespace ospray {
     bool acesColor = getParam1b("acesColor", true);
 
     // Solve b and c
-    float b = -((powf(m, -a*d)*(-powf(m, a) + (n*(powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d))) / (powf(m, a*d)*n - n*powf(w, a*d)))) / n);
-    float c = max((powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d)) / (powf(m, a*d)*n - n*powf(w, a*d)), 0.f); // avoid discontinuous curve by clamping to 0
+    float b = -((powf(m, -a*d)*(-powf(m, a)
+              + (n*(powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d)))
+              / (powf(m, a*d)*n - n*powf(w, a*d)))) / n);
 
+    // avoid discontinuous curve by clamping to 0
+    float c = max((powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d))
+                   / (powf(m, a*d)*n - n*powf(w, a*d)), 0.f);
+    
     ispc::ToneMapperPixelOp_set(ispcEquivalent, exposure, a, b, c, d, acesColor);
   }
 
@@ -58,25 +64,9 @@ namespace ospray {
   {
     return "ospray::ToneMapperPixelOp";
   }
-
-  PixelOp::Instance* ToneMapperPixelOp::createInstance(FrameBuffer*)
+  void ToneMapperPixelOp::postAccum(FrameBuffer *, Tile &tile)
   {
-    return new ToneMapperPixelOp::Instance(getIE());
-  }
-
-  ToneMapperPixelOp::Instance::Instance(void* ispcInstance)
-    : ispcInstance(ispcInstance)
-  {
-  }
-
-  void ToneMapperPixelOp::Instance::postAccum(Tile& tile)
-  {
-    ToneMapperPixelOp_apply(ispcInstance, (ispc::Tile&)tile);
-  }
-
-  std::string ToneMapperPixelOp::Instance::toString() const
-  {
-    return "ospray::ToneMapperPixelOp::Instance";
+    ToneMapperPixelOp_apply(ispcEquivalent, (ispc::Tile&)tile);
   }
 
   OSP_REGISTER_PIXEL_OP(ToneMapperPixelOp, tonemapper);

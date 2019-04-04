@@ -25,7 +25,7 @@ namespace ospray {
     return createInstanceHelper<PixelOp, OSP_PIXEL_OP>(type);
   }
 
-  std::string PixelOp::Instance::toString() const
+  std::string PixelOp::toString() const
   {
     return "ospray::PixelOp(base class)";
   }
