@@ -60,9 +60,6 @@ namespace ospray {
       /*! unmap previously mapped frame buffer */
       void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) override;
 
-      /*! set a frame buffer's pixel op object */
-      void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) override;
-
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
 

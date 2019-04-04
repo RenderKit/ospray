@@ -52,11 +52,11 @@ namespace ospray {
           values (assuming an accubuffer exists), and this function
           defines how these pixels are being processed before written
           into the color buffer */
-      virtual void postAccum(FrameBuffer *fb, Tile &tile) { UNUSED(tile); }
+      virtual void postAccum(FrameBuffer *, Tile &) {}
 
       //! \brief common function to help printf-debugging
       /*! Every derived class should override this! */
-      virtual std::string toString() const;
+      virtual std::string toString() const override;
 
       static PixelOp *createInstance(const char *type);
   };

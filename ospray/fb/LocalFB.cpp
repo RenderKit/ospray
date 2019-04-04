@@ -122,8 +122,10 @@ namespace ospray {
       ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),(ispc::Tile&)tile,
           (ispc::vec3f*)normalBuffer, tile.nx, tile.ny, tile.nz);
 
-    if (pixelOpData)
-      pixelOpData->forEach<PixelOp*>([&](PixelOp *p) { p->postAccum(this, tile); });
+    if (pixelOpData) {
+      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
+          [&](PixelOp *p) { p->postAccum(this, tile); });
+    }
 
     if (colorBuffer) {
       switch (colorBufferFormat) {
@@ -155,14 +157,18 @@ namespace ospray {
   void LocalFrameBuffer::beginFrame()
   {
     FrameBuffer::beginFrame();
-    if (pixelOpData)
-      pixelOpData->forEach<PixelOp*>([](PixelOp *p) { p->beginFrame(); });
+    if (pixelOpData) {
+      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
+          [](PixelOp *p) { p->beginFrame(); });
+    }
   }
 
   void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
-    if (pixelOpData)
-      pixelOpData->forEach<PixelOp*>([](PixelOp *p) { p->endFrame(); });
+    if (pixelOpData) {
+      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
+          [](PixelOp *p) { p->endFrame(); });
+    }
 
     frameVariance = tileErrorRegion.refine(errorThreshold);
   }

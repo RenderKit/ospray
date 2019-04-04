@@ -143,8 +143,10 @@ namespace ospray {
         throw std::runtime_error("Attempt to start frame on already started frame!");
       }
 
-      if (pixelOp)
-        pixelOp->beginFrame();
+      if (pixelOpData) {
+        std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
+            [](PixelOp *p) { p->beginFrame(); });
+      }
 
       lastProgressReport = std::chrono::high_resolution_clock::now();
       renderingProgressTiles = 0;
@@ -384,9 +386,7 @@ namespace ospray {
   {
     ospray::Tile tile;
     unpackWriteTileMessage(msg, tile, hasNormalBuffer || hasAlbedoBuffer);
-    if (pixelOp) {
-      pixelOp->preAccum(tile);
-    }
+
     auto *tileDesc = this->getTileDescFor(tile.region.lower);
     TileData *td = (TileData*)tileDesc;
     td->process(tile);
@@ -447,8 +447,9 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpicommon::globalRank(),
                tile->begin.x,tile->begin.y));
 
-    if (pixelOp) {
-      pixelOp->postAccum(tile->final);
+    if (pixelOpData) {
+      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
+          [&](PixelOp *p) { p->postAccum(this, tile->final); });
     }
 
     // Write the final colors into the color buffer
@@ -881,8 +882,9 @@ namespace ospray {
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */
     } else {
-      if (pixelOp) {
-        pixelOp->endFrame();
+      if (pixelOpData) {
+        std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
+            [](PixelOp *p) { p->endFrame(); });
       }
     }
 

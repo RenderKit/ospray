@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include "fb/ToneMapperPixelOp.h"
-
 // ospray
 #include "Managed.h"
 
@@ -41,42 +39,19 @@ namespace ospray {
     /*! return number of items in this data buffer */
     size_t size() const;
 
-    /*! run the passed function over each element of the buffer in a for loop */
-    template<typename T, typename Fn>
-    typename std::enable_if<std::is_pointer<T>::value>::type
-    forEach(Fn fn)
-    {
-      // Only OSP_OBJECT is a valid data type to give the Data for objects
-      if (type != OSP_OBJECT)
-      {
-        throw std::runtime_error("Data::forEach<T>: Invalid conversion of "
-            " non-OSP_OBJECT data");
-      }
+    /*! Iterator begin/end for Data arrays */
+    template<typename T>
+    T* begin();
 
-      T *buf = reinterpret_cast<T*>(data);
-      for (size_t i = 0; i < numItems; ++i) {
-        fn(buf[i]);
-      }
-    }
+    template<typename T>
+    T* end();
 
-    template<typename T, typename Fn>
-    typename std::enable_if<!std::is_pointer<T>::value>::type
-    forEach(Fn fn)
-    {
-      if (OSPTypeFor<T>::value != type)
-      {
-        throw std::runtime_error("Data::forEach<T>: Invalid conversion from "
-            + stringForType(type) + " to " + typeString<T>());
-      }
+    template<typename T>
+    const T* begin() const;
 
-      const size_t typeSize = sizeOf(type);
-      uint8_t *buf = static_cast<uint8_t*>(data);
-      for (size_t i = 0; i < numItems; ++i) {
-        T *val = reinterpret_cast<T*>(buf + i * typeSize); 
-        fn(*val);
-      }
-    }
-
+    template<typename T>
+    const T* end() const;
+    
     // Data members //
 
     void       *data;     /*!< pointer to data */
@@ -84,6 +59,63 @@ namespace ospray {
     size_t      numBytes; /*!< total num bytes (sizeof(type)*numItems) */
     int         flags;    /*!< creation flags */
     OSPDataType type;     /*!< element type */
+
+    private:
+      template<typename T>
+      typename std::enable_if<std::is_pointer<T>::value>::type
+      validateType() const;
+
+      template<typename T>
+      typename std::enable_if<!std::is_pointer<T>::value>::type
+      validateType() const;
   };
+
+  template<typename T>
+  T* Data::begin()
+  {
+    validateType<T>();
+    return static_cast<T*>(data);
+  }
+
+  template<typename T>
+  T* Data::end()
+  {
+    return begin<T>() + numItems;
+  }
+
+  template<typename T>
+  const T* Data::begin() const
+  {
+    validateType<T>();
+    return static_cast<const T*>(data);
+  }
+
+  template<typename T>
+  const T* Data::end() const
+  {
+    return begin<const T>() + numItems;
+  }
+
+  template<typename T>
+  typename std::enable_if<std::is_pointer<T>::value>::type
+  Data::validateType() const
+  {
+    if (type != OSP_OBJECT)
+    {
+      throw std::runtime_error("Data::forEach<T>: Invalid conversion of "
+          " non-OSP_OBJECT data");
+    }
+  }
+
+  template<typename T>
+  typename std::enable_if<!std::is_pointer<T>::value>::type
+  Data::validateType() const
+  {
+    if (OSPTypeFor<T>::value != type)
+    {
+      throw std::runtime_error("Data::forEach<T>: Invalid conversion from "
+          + stringForType(type) + " to " + typeString<T>());
+    }
+  }
 
 } // ::ospray

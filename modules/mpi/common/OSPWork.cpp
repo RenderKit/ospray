@@ -67,7 +67,6 @@ namespace ospray {
         registerWorkUnit<RenderFrameAsync>(registry);
 
         registerWorkUnit<SetRegion>(registry);
-        registerWorkUnit<SetPixelOp>(registry);
 
         registerWorkUnit<SetMaterial>(registry);
         registerWorkUnit<SetParam<OSPObject>>(registry);
@@ -491,7 +490,17 @@ namespace ospray {
 
       void RenderFrameAsync::runOnMaster()
       {
-        run();
+        mpicommon::world.barrier();
+        Renderer *renderer = (Renderer *)rendererHandle.lookup();
+        FrameBuffer *fb    = (FrameBuffer *)fbHandle.lookup();
+
+        fb->setCompletedEvent(OSP_NONE_FINISHED);
+
+        // The master doesn't have or need a world or camera, so skip
+        // looking them up
+        auto *f = new RenderTask(
+            fb, [=]() { return renderer->renderFrame(fb, nullptr, nullptr); });
+        futureHandle.assign(f);
       }
 
       void RenderFrameAsync::serialize(WriteStream &b) const
@@ -592,39 +601,6 @@ namespace ospray {
       void RemoveParam::deserialize(ReadStream &b)
       {
         b >> handle.i64 >> name;
-      }
-
-      // ospSetPixelOp ////////////////////////////////////////////////////////
-
-      SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
-          : fbHandle((ObjectHandle &)fb), poHandle((ObjectHandle &)op)
-      {
-      }
-
-      void SetPixelOp::run()
-      {
-        FrameBuffer *fb = (FrameBuffer *)fbHandle.lookup();
-        PixelOp *po     = (PixelOp *)poHandle.lookup();
-        Assert(fb);
-        Assert(po);
-        fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
-
-        if (!fb->pixelOp) {
-          postStatusMsg(
-              "#osp:mpi: WARNING: PixelOp did not create "
-              "an instance!",
-              1);
-        }
-      }
-
-      void SetPixelOp::serialize(WriteStream &b) const
-      {
-        b << (int64)fbHandle << (int64)poHandle;
-      }
-
-      void SetPixelOp::deserialize(ReadStream &b)
-      {
-        b >> fbHandle.i64 >> poHandle.i64;
       }
 
       // ospRelease ///////////////////////////////////////////////////////////

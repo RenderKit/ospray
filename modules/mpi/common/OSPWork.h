@@ -683,26 +683,6 @@ namespace ospray {
         std::string name;
       };
 
-      struct SetPixelOp : public Work
-      {
-        SetPixelOp() = default;
-        SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op);
-
-        void run() override;
-
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
-        void serialize(WriteStream &b) const override;
-
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
-        void deserialize(ReadStream &b) override;
-
-        ObjectHandle fbHandle;
-        ObjectHandle poHandle;
-      };
-
       struct CommandRelease : public Work
       {
         CommandRelease() = default;

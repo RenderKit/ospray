@@ -733,13 +733,6 @@ namespace ospray {
       return (OSPPixelOp)(int64)handle;
     }
 
-    /*! set a frame buffer's pixel op object */
-    void MPIOffloadDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
-    {
-      work::SetPixelOp work(_fb, _op);
-      processWork(work);
-    }
-
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
     {
