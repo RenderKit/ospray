@@ -290,8 +290,6 @@ int main(int argc, const char **argv)
   ospRelease(subdivisionGeometry.geometry);
   ospRelease(subdivisionGeometry.instance);
   ospRelease(planeInstance);
-  ospRelease(world);
-  ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();

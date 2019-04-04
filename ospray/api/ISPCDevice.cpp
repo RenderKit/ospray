@@ -364,6 +364,7 @@ namespace ospray {
     {
       auto f = renderFrameAsync(_fb, _renderer, _camera, _world);
       wait(f, OSP_FRAME_FINISHED);
+      release(f);
       return getVariance(_fb);
     }
 

@@ -211,6 +211,11 @@ void GLFWOSPRayWindow::mainLoop()
   waitOnOSPRayFrame();
   if (currentFrame != nullptr)
     ospRelease(currentFrame);
+
+  ospRelease(camera);
+  ospRelease(framebuffer);
+  ospRelease(world);
+  ospRelease(renderer);
 }
 
 void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)

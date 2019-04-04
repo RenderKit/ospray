@@ -20,6 +20,7 @@
 #include "GLFWOSPRayWindow.h"
 
 #include "ospcommon/library.h"
+#include "ospray_testing.h"
 
 #include <imgui.h>
 
@@ -277,7 +278,9 @@ OSPWorld createWorld()
   ospAddGeometryInstance(world, createRandomSpheresGeometry(100));
 
   // add in a ground plane geometry
-  ospAddGeometryInstance(world, createGroundPlane());
+  OSPGeometryInstance plane = createGroundPlane();
+  ospAddGeometryInstance(world, plane);
+  ospRelease(plane);
 
   // commit the world
   ospCommit(world);
@@ -290,23 +293,12 @@ OSPRenderer createRenderer()
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
-  // create an ambient light
-  OSPLight ambientLight = ospNewLight("ambient");
-  ospCommit(ambientLight);
-
-  // create lights data containing all lights
-  OSPLight lights[]  = {ambientLight};
-  OSPData lightsData = ospNewData(1, OSP_LIGHT, lights, 0);
-  ospCommit(lightsData);
-
-  // set the lights to the renderer
+  OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);
+  ospRelease(lightsData);
 
   // commit the renderer
   ospCommit(renderer);
-
-  // release handles we no longer need
-  ospRelease(lightsData);
 
   return renderer;
 }
@@ -423,8 +415,6 @@ int main(int argc, const char **argv)
 
   ospRelease(g_spheresGeometry);
   ospRelease(g_spheresInstance);
-  ospRelease(g_world);
-  ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();

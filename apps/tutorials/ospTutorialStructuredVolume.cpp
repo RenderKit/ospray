@@ -38,7 +38,7 @@ static void setIsoValue(OSPGeometry geometry, float value)
 
 static void setSlice(OSPGeometry geometry, float value)
 {
-  vec4f plane(1.f, 0.f, 0.f, value);
+  vec4f plane(-1.f, 0.f, 0.f, value);
   OSPData planesData = ospNewData(1, OSP_FLOAT4, &plane);
   ospSetData(geometry, "planes", planesData);
   ospRelease(planesData);
@@ -109,6 +109,7 @@ int main(int argc, const char **argv)
 
   // assign material to the geometry
   ospSetMaterial(isoInstance, material);
+  ospRelease(material);
 
   // Create slices geometry //
 
@@ -215,14 +216,11 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   // cleanup remaining objects
-  ospRelease(world);
   ospRelease(volume);
   ospRelease(isoInstance);
   ospRelease(isoGeometry);
   ospRelease(sliceGeometry);
   ospRelease(sliceInstance);
-  ospRelease(renderer);
-  ospRelease(material);
 
   // cleanly shut OSPRay down
   ospShutdown();

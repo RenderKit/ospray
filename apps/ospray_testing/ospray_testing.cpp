@@ -105,6 +105,8 @@ extern "C" OSPData ospTestingNewLights(const char *lighting_set_name)
   auto *lightsCreator = ospray::testing::objectFactory<ospray::testing::Lights>(
       "testing_lights", lighting_set_name);
 
+  utility::OnScopeExit cleanup([=]() { delete lightsCreator; });
+
   if (lightsCreator != nullptr)
     return lightsCreator->createLights();
   else

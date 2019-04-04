@@ -46,6 +46,9 @@ namespace ospray {
       // commit the transfer function
       ospCommit(transferFunction);
 
+      ospRelease(cData);
+      ospRelease(oData);
+
       return transferFunction;
     }
 

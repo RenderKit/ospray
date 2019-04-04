@@ -196,8 +196,6 @@ int main(int argc, const char **argv)
   ospRelease(allVolumes[1][1]);
   ospRelease(isoGeometry);
   ospRelease(instance);
-  ospRelease(world);
-  ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();
