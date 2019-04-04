@@ -64,28 +64,24 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
      ospray ray to intersect (the ospray ray is what emrbee calls a
      rayhit, the concatenation of ray _and_ hitpoint!), but that
      voluem->intersectIsoSurface code seems to assume that this is
-     always a ful ospray::ray. So, just to make sure that this code
+     always a full ospray::Ray. So, just to make sure that this code
      always has a valid "full" ray to work with I'm creating a temp
      one here, and then, when writing results back, make sure that we
      not write any hit information unless it's not an occlusoin
      test */
   Ray tmpRay;
-  tmpRay.org    = ray->org;
-  tmpRay.time   = ray->time;
-  tmpRay.dir    = ray->dir;
-  tmpRay.t0     = ray->t0;
-  tmpRay.t      = ray->t;
-  tmpRay.instID = -1;
-  tmpRay.geomID = -1;
-  tmpRay.primID = -1;
+
+  // NOTE(jda) - SUPER nasty pointer aliasing bug here. If we don't use setRay()
+  //             here,
+  setRay(tmpRay, ray->org, ray->dir, ray->t0, ray->t);
 
   volume->intersectIsosurface(volume,
                               self->isovalues,
                               self->super.numPrimitives,
                               self->super.geomID,
                               tmpRay);
-  const bool hit = tmpRay.primID >= 0;
-  if (hit) {
+
+  if (hadHit(tmpRay)) {
     if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
