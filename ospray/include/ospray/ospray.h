@@ -51,7 +51,7 @@
 
 #ifdef __cplusplus
 // C++ DOES support default initializers
-#define OSP_DEFAULT_VAL(a) a
+#define OSP_DEFAULT_VAL(a) = a
 #else
 /* C99 does NOT support default initializers, so we use this macro
    to define them away */
@@ -147,7 +147,7 @@ extern "C" {
   OSPRAY_INTERFACE void ospShutdown();
 
   // Create an OSPRay engine backend using explicit device string.
-  OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
+  OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL("default"));
 
   // Set current device the API responds to
   OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);
@@ -191,7 +191,7 @@ extern "C" {
   OSPRAY_INTERFACE OSPData ospNewData(size_t numItems,
                                       OSPDataType,
                                       const void *source,
-                                      uint32_t dataCreationFlags OSP_DEFAULT_VAL(=0));
+                                      uint32_t dataCreationFlags OSP_DEFAULT_VAL(0));
 
   OSPRAY_INTERFACE OSPError ospSetRegion(OSPVolume,
                                          void *source,
@@ -289,8 +289,8 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(int size_x,
                                                     int size_y,
-                                                    OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
-                                                    uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
+                                                    OSPFrameBufferFormat format OSP_DEFAULT_VAL(OSP_FB_SRGBA),
+                                                    uint32_t frameBufferChannels OSP_DEFAULT_VAL(OSP_FB_COLOR));
 
   //! create a new pixel op of given type
   /*! return 'NULL' if that type is not known */
@@ -298,7 +298,7 @@ extern "C" {
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
-                                                 OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
+                                                 OSPFrameBufferChannel OSP_DEFAULT_VAL(OSP_FB_COLOR));
 
   // Unmap a previously mapped frame buffer
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
@@ -318,10 +318,10 @@ extern "C" {
   OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
   // Ask if all events tracked by an OSPFuture handle have been completed
-  OSPRAY_INTERFACE int ospIsReady(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
+  OSPRAY_INTERFACE int ospIsReady(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(OSP_TASK_FINISHED));
 
   // Wait on a specific event
-  OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
+  OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(OSP_TASK_FINISHED));
 
   // Cancel the given task (may block calling thread)
   OSPRAY_INTERFACE void ospCancel(OSPFuture);

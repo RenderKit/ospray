@@ -56,14 +56,14 @@ typedef struct
 
 /* Create an OSPRay renderer with sensible defaults for testing */
 OSPRAY_TESTING_INTERFACE
-OSPRenderer ospTestingNewRenderer(const char *type OSP_DEFAULT_VAL(= "scivis"));
+OSPRenderer ospTestingNewRenderer(const char *type OSP_DEFAULT_VAL("scivis"));
 
 /* Create an OSPRay geometry (from a registered name), with the given renderer
  * type to create materials */
 OSPRAY_TESTING_INTERFACE
 OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
                                          const char *renderer_type
-                                             OSP_DEFAULT_VAL(= "scivis"));
+                                             OSP_DEFAULT_VAL("scivis"));
 
 /* Create an OSPRay geometry (from a registered name) */
 OSPRAY_TESTING_INTERFACE
@@ -73,7 +73,7 @@ OSPTestingVolume ospTestingNewVolume(const char *volume_type);
 OSPRAY_TESTING_INTERFACE
 OSPTransferFunction ospTestingNewTransferFunction(
     osp_vec2f voxelRange,
-    const char *tf_name OSP_DEFAULT_VAL(= "grayscale"));
+    const char *tf_name OSP_DEFAULT_VAL("grayscale"));
 
 /* Create an OSPRay perspective camera which looks at the center of the given
  * bounding box
@@ -86,7 +86,7 @@ OSPCamera ospTestingNewDefaultCamera(osp_box3f bounds);
 /* Create a list of lights, using a given preset name */
 OSPRAY_TESTING_INTERFACE
 OSPData ospTestingNewLights(
-    const char *lighting_set_name OSP_DEFAULT_VAL(= "ambient_only"));
+    const char *lighting_set_name OSP_DEFAULT_VAL("ambient_only"));
 
 #ifdef __cplusplus
 }  // extern "C"
