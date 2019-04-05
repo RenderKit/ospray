@@ -37,7 +37,7 @@ namespace ospray {
                 const uint32 channels);
     virtual ~FrameBuffer() override = default;
 
-    virtual void commit();
+    virtual void commit() override;
 
     virtual const void *mapBuffer(OSPFrameBufferChannel channel) = 0;
 

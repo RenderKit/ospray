@@ -49,9 +49,9 @@ namespace ospray {
     bool acesColor = getParam1b("acesColor", true);
 
     // Solve b and c
-    float b = -((powf(m, -a*d)*(-powf(m, a)
-              + (n*(powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d)))
-              / (powf(m, a*d)*n - n*powf(w, a*d)))) / n);
+    float b = -((powf(m, -a*d)
+          *(-powf(m, a) + (n*(powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d)))
+            / (powf(m, a*d)*n - n*powf(w, a*d)))) / n);
 
     // avoid discontinuous curve by clamping to 0
     float c = max((powf(m, a*d)*n*powf(w, a) - powf(m, a)*powf(w, a*d))

@@ -2092,6 +2092,18 @@ accumulated frame can be queried with
 Note this value is only updated after synchronizing with `OSP_FRAME_FINISHED`,
 as further described in [asynchronous rendering].
 
+The framebuffer takes a list of pixel operations to be applied to the image
+in sequence as an `OSPData`. The pixel operations will be run in the order
+they are in the array.
+
+  Type          Name            Default  Description
+  ------------  --------------- -------- -----------------------------------
+  OSPPixelOp[]  pixelOperations NULL     The ordered sequence of pixel
+                                         operations to apply to rendered tiles.
+  ------------  --------------- -------- -----------------------------------
+  : Parameters accepted by the framebuffer.
+
+
 ### Pixel Operation {-}
 
 Pixel operations are functions that are applied to every pixel that
@@ -2103,10 +2115,6 @@ To create a new pixel operation of given type `type` use
 
 The call returns `NULL` if that type is not known, or else an
 `OSPPixelOp` handle to the created pixel operation.
-
-To set a pixel operation to the given framebuffer use
-
-    void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
 
 #### Tone Mapper {-}
 

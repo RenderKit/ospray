@@ -181,7 +181,7 @@ void GLFWOSPRayWindow::setWorld(OSPWorld newWorld)
 void GLFWOSPRayWindow::setPixelOps(OSPData ops)
 {
   pixelOps = ops;
-  ospSetData(framebuffer, "pixelOps", pixelOps);
+  ospSetData(framebuffer, "pixelOperations", pixelOps);
   addObjectToCommit(framebuffer);
 }
 
@@ -239,7 +239,7 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
                                   OSP_FB_COLOR | OSP_FB_ACCUM);
 
   if (pixelOps) {
-    ospSetData(framebuffer, "pixelOps", pixelOps);
+    ospSetData(framebuffer, "pixelOperations", pixelOps);
   }
   ospCommit(framebuffer);
 
