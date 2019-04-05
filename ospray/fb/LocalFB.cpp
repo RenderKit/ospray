@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-//ospray
+// ospray
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
 #include "PixelOp.h"
@@ -25,8 +25,8 @@ namespace ospray {
                                      ColorBufferFormat colorBufferFormat,
                                      const uint32 channels,
                                      void *colorBufferToUse)
-    : FrameBuffer(size, colorBufferFormat, channels)
-      , tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
+      : FrameBuffer(size, colorBufferFormat, channels),
+        tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
   {
     Assert(size.x > 0);
     Assert(size.y > 0);
@@ -39,35 +39,36 @@ namespace ospray {
         break;
       case OSP_FB_RGBA8:
       case OSP_FB_SRGBA:
-        colorBuffer = (uint32*)alignedMalloc(sizeof(uint32)*size.x*size.y);
+        colorBuffer = (uint32 *)alignedMalloc(sizeof(uint32) * size.x * size.y);
         break;
       case OSP_FB_RGBA32F:
-        colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
+        colorBuffer = (vec4f *)alignedMalloc(sizeof(vec4f) * size.x * size.y);
         break;
       }
     }
 
-    depthBuffer = hasDepthBuffer ? alignedMalloc<float>(size.x*size.y) :
-      nullptr;
+    depthBuffer =
+        hasDepthBuffer ? alignedMalloc<float>(size.x * size.y) : nullptr;
 
-    accumBuffer = hasAccumBuffer ? alignedMalloc<vec4f>(size.x*size.y) :
-      nullptr;
+    accumBuffer =
+        hasAccumBuffer ? alignedMalloc<vec4f>(size.x * size.y) : nullptr;
 
-    const size_t bytes = sizeof(int32)*getTotalTiles();
-    tileAccumID = (int32*)alignedMalloc(bytes);
+    const size_t bytes = sizeof(int32) * getTotalTiles();
+    tileAccumID        = (int32 *)alignedMalloc(bytes);
     memset(tileAccumID, 0, bytes);
 
-    varianceBuffer = hasVarianceBuffer ? alignedMalloc<vec4f>(size.x*size.y) :
-      nullptr;
+    varianceBuffer =
+        hasVarianceBuffer ? alignedMalloc<vec4f>(size.x * size.y) : nullptr;
 
-    normalBuffer = hasNormalBuffer ? alignedMalloc<vec3f>(size.x*size.y) :
-      nullptr;
+    normalBuffer =
+        hasNormalBuffer ? alignedMalloc<vec3f>(size.x * size.y) : nullptr;
 
-    albedoBuffer = hasAlbedoBuffer ? alignedMalloc<vec3f>(size.x*size.y) :
-      nullptr;
+    albedoBuffer =
+        hasAlbedoBuffer ? alignedMalloc<vec3f>(size.x * size.y) : nullptr;
 
-
-    ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
+    ispcEquivalent = ispc::LocalFrameBuffer_create(this,
+                                                   size.x,
+                                                   size.y,
                                                    colorBufferFormat,
                                                    colorBuffer,
                                                    depthBuffer,
@@ -96,11 +97,11 @@ namespace ospray {
 
   void LocalFrameBuffer::clear()
   {
-    frameID = -1; // we increment at the start of the frame
+    frameID = -1;  // we increment at the start of the frame
     // it is only necessary to reset the accumID,
     // LocalFrameBuffer_accumulateTile takes care of clearing the
     // accumulating buffers
-    memset(tileAccumID, 0, getTotalTiles()*sizeof(int32));
+    memset(tileAccumID, 0, getTotalTiles() * sizeof(int32));
 
     // always also clear error buffer (if present)
     if (hasVarianceBuffer) {
@@ -111,32 +112,42 @@ namespace ospray {
   void LocalFrameBuffer::setTile(Tile &tile)
   {
     if (accumBuffer) {
-      const float err = ispc::LocalFrameBuffer_accumulateTile(getIE(),(ispc::Tile&)tile);
+      const float err =
+          ispc::LocalFrameBuffer_accumulateTile(getIE(), (ispc::Tile &)tile);
       if ((tile.accumID & 1) == 1)
-        tileErrorRegion.update(tile.region.lower/TILE_SIZE, err);
+        tileErrorRegion.update(tile.region.lower / TILE_SIZE, err);
     }
     if (hasAlbedoBuffer)
-      ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),(ispc::Tile&)tile,
-          (ispc::vec3f*)albedoBuffer, tile.ar, tile.ag, tile.ab);
+      ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
+                                               (ispc::Tile &)tile,
+                                               (ispc::vec3f *)albedoBuffer,
+                                               tile.ar,
+                                               tile.ag,
+                                               tile.ab);
     if (hasNormalBuffer)
-      ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),(ispc::Tile&)tile,
-          (ispc::vec3f*)normalBuffer, tile.nx, tile.ny, tile.nz);
+      ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
+                                               (ispc::Tile &)tile,
+                                               (ispc::vec3f *)normalBuffer,
+                                               tile.nx,
+                                               tile.ny,
+                                               tile.nz);
 
     if (pixelOpData) {
-      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
-          [&](PixelOp *p) { p->postAccum(this, tile); });
+      std::for_each(pixelOpData->begin<PixelOp *>(),
+                    pixelOpData->end<PixelOp *>(),
+                    [&](PixelOp *p) { p->postAccum(this, tile); });
     }
 
     if (colorBuffer) {
       switch (colorBufferFormat) {
       case OSP_FB_RGBA8:
-        ispc::LocalFrameBuffer_writeTile_RGBA8(getIE(),(ispc::Tile&)tile);
+        ispc::LocalFrameBuffer_writeTile_RGBA8(getIE(), (ispc::Tile &)tile);
         break;
       case OSP_FB_SRGBA:
-        ispc::LocalFrameBuffer_writeTile_SRGBA(getIE(),(ispc::Tile&)tile);
+        ispc::LocalFrameBuffer_writeTile_SRGBA(getIE(), (ispc::Tile &)tile);
         break;
       case OSP_FB_RGBA32F:
-        ispc::LocalFrameBuffer_writeTile_RGBA32F(getIE(),(ispc::Tile&)tile);
+        ispc::LocalFrameBuffer_writeTile_RGBA32F(getIE(), (ispc::Tile &)tile);
         break;
       default:
         NOTIMPLEMENTED;
@@ -157,17 +168,20 @@ namespace ospray {
   void LocalFrameBuffer::beginFrame()
   {
     FrameBuffer::beginFrame();
+
     if (pixelOpData) {
-      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
-          [](PixelOp *p) { p->beginFrame(); });
+      std::for_each(pixelOpData->begin<PixelOp *>(),
+                    pixelOpData->end<PixelOp *>(),
+                    [](PixelOp *p) { p->beginFrame(); });
     }
   }
 
   void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
     if (pixelOpData) {
-      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
-          [](PixelOp *p) { p->endFrame(); });
+      std::for_each(pixelOpData->begin<PixelOp *>(),
+                    pixelOpData->end<PixelOp *>(),
+                    [](PixelOp *p) { p->endFrame(); });
     }
 
     frameVariance = tileErrorRegion.refine(errorThreshold);
@@ -177,11 +191,21 @@ namespace ospray {
   {
     const void *buf;
     switch (channel) {
-      case OSP_FB_COLOR: buf = colorBuffer; break;
-      case OSP_FB_DEPTH: buf = depthBuffer; break;
-      case OSP_FB_NORMAL: buf = normalBuffer; break;
-      case OSP_FB_ALBEDO: buf = albedoBuffer; break;
-      default: buf = nullptr; break;
+    case OSP_FB_COLOR:
+      buf = colorBuffer;
+      break;
+    case OSP_FB_DEPTH:
+      buf = depthBuffer;
+      break;
+    case OSP_FB_NORMAL:
+      buf = normalBuffer;
+      break;
+    case OSP_FB_ALBEDO:
+      buf = albedoBuffer;
+      break;
+    default:
+      buf = nullptr;
+      break;
     }
 
     if (buf)
@@ -193,16 +217,14 @@ namespace ospray {
   void LocalFrameBuffer::unmap(const void *mappedMem)
   {
     if (mappedMem) {
-      if (mappedMem != colorBuffer
-          && mappedMem != depthBuffer
-          && mappedMem != normalBuffer
-          && mappedMem != albedoBuffer)
-      {
-        throw std::runtime_error("ERROR: unmapping a pointer not created by "
+      if (mappedMem != colorBuffer && mappedMem != depthBuffer &&
+          mappedMem != normalBuffer && mappedMem != albedoBuffer) {
+        throw std::runtime_error(
+            "ERROR: unmapping a pointer not created by "
             "OSPRay!");
       }
       this->refDec();
     }
   }
 
-} // ::ospray
+}  // namespace ospray
