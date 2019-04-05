@@ -51,7 +51,7 @@ namespace ospray {
 
     template<typename T>
     const T* end() const;
-    
+
     // Data members //
 
     void       *data;     /*!< pointer to data */
@@ -70,50 +70,52 @@ namespace ospray {
       validateType() const;
   };
 
+  // Inlined definitions //////////////////////////////////////////////////////
+
   template<typename T>
-  T* Data::begin()
+  inline T* Data::begin()
   {
     validateType<T>();
     return static_cast<T*>(data);
   }
 
   template<typename T>
-  T* Data::end()
+  inline T* Data::end()
   {
     return begin<T>() + numItems;
   }
 
   template<typename T>
-  const T* Data::begin() const
+  inline const T* Data::begin() const
   {
     validateType<T>();
     return static_cast<const T*>(data);
   }
 
   template<typename T>
-  const T* Data::end() const
+  inline const T* Data::end() const
   {
     return begin<const T>() + numItems;
   }
 
   template<typename T>
-  typename std::enable_if<std::is_pointer<T>::value>::type
+  inline typename std::enable_if<std::is_pointer<T>::value>::type
   Data::validateType() const
   {
     if (type != OSP_OBJECT)
     {
-      throw std::runtime_error("Data::forEach<T>: Invalid conversion of "
+      throw std::runtime_error("Data::validateType<T>: Invalid conversion of "
           " non-OSP_OBJECT data");
     }
   }
 
   template<typename T>
-  typename std::enable_if<!std::is_pointer<T>::value>::type
+  inline typename std::enable_if<!std::is_pointer<T>::value>::type
   Data::validateType() const
   {
     if (OSPTypeFor<T>::value != type)
     {
-      throw std::runtime_error("Data::forEach<T>: Invalid conversion from "
+      throw std::runtime_error("Data::validateType<T>: Invalid conversion from "
           + stringForType(type) + " to " + typeString<T>());
     }
   }
