@@ -230,19 +230,19 @@ int main(int argc, const char **argv)
   ospCommit(colorTweak);
 
   // UI for the tweaking the pixel pipeline
-  std::vector<bool> enabledOps = {true, true};
-  std::vector<vec3f> debugColors = {vec3f(-1.f), vec3f(0, 0, 0.2) };
+  std::vector<bool> enabledOps   = {true, true};
+  std::vector<vec3f> debugColors = {vec3f(-1.f), vec3f(0, 0, 0.2)};
 
   std::vector<OSPPixelOp> pixelPipeline = {toneMap, colorTweak};
-  OSPData pixelOpData = ospNewData(pixelPipeline.size(), OSP_OBJECT, pixelPipeline.data());
+  OSPData pixelOpData =
+      ospNewData(pixelPipeline.size(), OSP_OBJECT, pixelPipeline.data());
   ospCommit(pixelOpData);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)),
-          world, renderer));
+          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
   glfwOSPRayWindow->setPixelOps(pixelOpData);
 
@@ -258,33 +258,30 @@ int main(int argc, const char **argv)
       ImGui::PushID(i);
 
       bool enabled = enabledOps[i];
-      if (ImGui::Checkbox("Enabled", &enabled))
-      {
-        enabledOps[i] = enabled;
+      if (ImGui::Checkbox("Enabled", &enabled)) {
+        enabledOps[i]   = enabled;
         pixelOpsUpdated = true;
       }
 
-      if (debugColors[i] != vec3f(-1.f))
-      {
+      if (debugColors[i] != vec3f(-1.f)) {
         ImGui::Text("Debug Pixel Op #%lu", i);
-        if (ImGui::ColorPicker3("Color", &debugColors[i].x))
-        {
-          ospSet3f(pixelPipeline[i], "addColor",
-                   debugColors[i].x, debugColors[i].y, debugColors[i].z);
+        if (ImGui::ColorPicker3("Color", &debugColors[i].x)) {
+          ospSet3f(pixelPipeline[i],
+                   "addColor",
+                   debugColors[i].x,
+                   debugColors[i].y,
+                   debugColors[i].z);
           pixelOpsUpdated = true;
           glfwOSPRayWindow->addObjectToCommit(pixelPipeline[i]);
         }
-      }
-      else
-      {
+      } else {
         ImGui::Text("Tonemapper Pixel Op #%lu", i);
       }
 
       ImGui::PopID();
     }
-    
-    if (ImGui::Button("Add Debug Op"))
-    {
+
+    if (ImGui::Button("Add Debug Op")) {
       OSPPixelOp op = ospNewPixelOp("debug");
       ospSet3f(op, "addColor", 0.0, 0.0, 0.0);
       ospCommit(op);
@@ -295,8 +292,7 @@ int main(int argc, const char **argv)
 
       pixelOpsUpdated = true;
     }
-    if (ImGui::Button("Add Tonemap Op"))
-    {
+    if (ImGui::Button("Add Tonemap Op")) {
       OSPPixelOp op = ospNewPixelOp("tonemapper");
       ospCommit(op);
 
@@ -307,8 +303,7 @@ int main(int argc, const char **argv)
       pixelOpsUpdated = true;
     }
 
-    if (!pixelPipeline.empty() && ImGui::Button("Remove Op"))
-    {
+    if (!pixelPipeline.empty() && ImGui::Button("Remove Op")) {
       pixelPipeline.pop_back();
       enabledOps.pop_back();
       debugColors.pop_back();
@@ -316,13 +311,12 @@ int main(int argc, const char **argv)
       pixelOpsUpdated = true;
     }
 
-    if (pixelOpsUpdated)
-    {
+    if (pixelOpsUpdated) {
       ospRelease(pixelOpData);
       std::vector<OSPPixelOp> enabled;
-      for (size_t i = 0; i < pixelPipeline.size(); ++i)
-      {
-        if (enabledOps[i]) enabled.push_back(pixelPipeline[i]);
+      for (size_t i = 0; i < pixelPipeline.size(); ++i) {
+        if (enabledOps[i])
+          enabled.push_back(pixelPipeline[i]);
       }
 
       pixelOpData = ospNewData(enabled.size(), OSP_OBJECT, enabled.data());
@@ -339,9 +333,8 @@ int main(int argc, const char **argv)
   ospRelease(renderer);
   ospRelease(pixelOpData);
 
-  for (auto &op : pixelPipeline) {
+  for (auto &op : pixelPipeline)
     ospRelease(op);
-  }
 
   // cleanly shut OSPRay down
   ospShutdown();
