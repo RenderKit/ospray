@@ -304,6 +304,7 @@ int main(int argc, const char **argv)
     }
 
     if (!pixelPipeline.empty() && ImGui::Button("Remove Op")) {
+      ospRelease(pixelPipeline.back());
       pixelPipeline.pop_back();
       enabledOps.pop_back();
       debugColors.pop_back();
@@ -329,8 +330,6 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   // cleanup remaining objects
-  ospRelease(world);
-  ospRelease(renderer);
   ospRelease(pixelOpData);
 
   for (auto &op : pixelPipeline)
