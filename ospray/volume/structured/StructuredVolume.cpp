@@ -35,9 +35,7 @@ namespace ospray {
 
   void StructuredVolume::commit()
   {
-    // Some parameters can be changed after the volume has been allocated and
-    // filled.
-    updateEditableParameters();
+    Volume::commit();
 
     // Set the grid origin, default to (0,0,0).
     this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));

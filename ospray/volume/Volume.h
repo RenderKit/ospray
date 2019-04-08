@@ -40,10 +40,6 @@ namespace ospray {
                           const vec3i &index,
                           const vec3i &count) = 0;
 
-    //! Update select editable parameters (allowed after the volume has been
-    //! initially committed).
-    virtual void updateEditableParameters();
-
   protected:
 
     //! Complete volume initialization (only on first commit).

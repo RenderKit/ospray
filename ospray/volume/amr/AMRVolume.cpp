@@ -53,7 +53,7 @@ namespace ospray {
     //! Allocate storage and populate the volume.
     void AMRVolume::commit()
     {
-      updateEditableParameters();
+      Volume::commit();
 
       // Make the voxel value range visible to the application.
       if (findParam("voxelRange") == nullptr)

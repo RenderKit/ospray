@@ -65,7 +65,7 @@ namespace ospray {
 
   void UnstructuredVolume::commit()
   {
-    updateEditableParameters();
+    Volume::commit();
 
     // check if value buffer has changed
     if (getVertexValueData() != vertexValuePrev ||
@@ -106,8 +106,6 @@ namespace ospray {
         faceNormals.shrink_to_fit();
       }
     }
-
-    Volume::commit();
   }
 
   int UnstructuredVolume::setRegion(const void *, const vec3i &, const vec3i &)

@@ -33,21 +33,7 @@ namespace ospray {
     return createInstanceHelper<Volume, OSP_VOLUME>(type);
   }
 
-  void Volume::commit() {}
-
-  void Volume::finish()
-  {
-    // The ISPC volume container must exist at this point.
-    assert(ispcEquivalent != nullptr);
-
-    // Make the volume bounding box visible to the application.
-    ispc::box3f boundingBox;
-    ispc::Volume_getBoundingBox(&boundingBox, ispcEquivalent);
-    setParam("boundingBoxMin", boundingBox.lower);
-    setParam("boundingBoxMax", boundingBox.upper);
-  }
-
-  void Volume::updateEditableParameters()
+  void Volume::commit()
   {
     // Set the transfer function.
     auto *transferFunction =
@@ -87,6 +73,18 @@ namespace ospray {
                      (const ispc::box3f &)volumeClippingBox,
                      (ispc::AffineSpace3f &)xfm,
                      (ispc::AffineSpace3f &)rcp_xfm);
+  }
+
+  void Volume::finish()
+  {
+    // The ISPC volume container must exist at this point.
+    assert(ispcEquivalent != nullptr);
+
+    // Make the volume bounding box visible to the application.
+    ispc::box3f boundingBox;
+    ispc::Volume_getBoundingBox(&boundingBox, ispcEquivalent);
+    setParam("boundingBoxMin", boundingBox.lower);
+    setParam("boundingBoxMax", boundingBox.upper);
   }
 
 }  // namespace ospray
