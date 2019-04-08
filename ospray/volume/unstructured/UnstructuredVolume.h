@@ -94,9 +94,6 @@ namespace ospray {
 
     box4f getCellBBox(size_t id);
 
-    //! Complete volume initialization (only on first commit).
-    void finish() override;
-
     void buildBvhAndCalculateBounds();
     void calculateFaceNormals();
     float calculateSamplingStep();
@@ -128,8 +125,6 @@ namespace ospray {
     Data* cellValuePrev{nullptr};
 
     std::vector<vec3f> faceNormals;
-
-    box3f bbox;
 
     MinMaxBVH2 bvh;
 

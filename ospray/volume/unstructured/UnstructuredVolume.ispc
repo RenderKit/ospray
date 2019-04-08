@@ -1138,7 +1138,6 @@ export void UnstructuredVolume_set(void *uniform _self,
                                    uniform int64 rootRef,
                                    const void* uniform _bvhNode,
                                    const int64* uniform _bvhPrimID,
-                                   const uniform float samplingRate,
                                    const uniform float samplingStep)
 {
   uniform UnstructuredVolume *uniform self =
@@ -1156,7 +1155,6 @@ export void UnstructuredVolume_set(void *uniform _self,
 
   // Set inherited member variables.
   self->super.boundingBox  = _bbox;
-  self->super.samplingRate = samplingRate;
   self->super.samplingStep = samplingStep;
 
   self->faceNormals = NULL;

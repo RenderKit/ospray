@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray
-#include "ospcommon/tasking/parallel_for.h"
 #include "../Volume.h"
+#include "ospcommon/tasking/parallel_for.h"
 
 namespace ospray {
 
@@ -33,9 +33,9 @@ namespace ospray {
     OSP_REGISTER_VOLUME. To place the volume in world coordinates,
     modify the gridOrigin and gridSpacing to translate and scale the volume.
   */
-  class OSPRAY_SDK_INTERFACE StructuredVolume : public Volume {
-  public:
-
+  class OSPRAY_SDK_INTERFACE StructuredVolume : public Volume
+  {
+   public:
     StructuredVolume() = default;
     virtual ~StructuredVolume() override;
 
@@ -51,15 +51,11 @@ namespace ospray {
                           const vec3i &target_index,
                           const vec3i &source_count) override = 0;
 
-  protected:
-
+   protected:
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC() = 0;
 
-    //! Complete volume initialization (only on first commit).
-    virtual void finish() override;
-
-    template<typename T>
+    template <typename T>
     void upsampleRegion(const T *source,
                         T *out,
                         const vec3i &regionSize,
@@ -72,8 +68,10 @@ namespace ospray {
         data the caller is responsible for calling free on the out data
         parameter to release the scaled volume data.
      */
-    bool scaleRegion(const void *source, void *&out,
-                     vec3i &regionSize, vec3i &regionCoords);
+    bool scaleRegion(const void *source,
+                     void *&out,
+                     vec3i &regionSize,
+                     vec3i &regionCoords);
 
     //! build the accelerator - allows child class (data distributed) to avoid
     //! building..
@@ -92,10 +90,10 @@ namespace ospray {
     vec3f gridSpacing;
 
     //! Indicate that the volume is fully initialized.
-    bool finished {false};
+    bool finished{false};
 
     //! Voxel value range (will be computed if not provided as a parameter).
-    vec2f voxelRange {FLT_MAX, -FLT_MAX};
+    vec2f voxelRange{FLT_MAX, -FLT_MAX};
 
     //! Voxel type.
     std::string voxelType;
@@ -107,9 +105,9 @@ namespace ospray {
     vec3f scaleFactor;
   };
 
-// Inlined member functions ///////////////////////////////////////////////////
+  // Inlined member functions /////////////////////////////////////////////////
 
-  template<typename T>
+  template <typename T>
   inline void StructuredVolume::upsampleRegion(const T *source,
                                                T *out,
                                                const vec3i &regionSize,
@@ -122,16 +120,15 @@ namespace ospray {
         int x = taskID % scaledRegionSize.x;
         int y = taskID / scaledRegionSize.x;
         const int idx =
-            static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
-            + static_cast<int>(y / scaleFactor.y) * regionSize.x
-            + static_cast<int>(x / scaleFactor.x);
+            static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y +
+            static_cast<int>(y / scaleFactor.y) * regionSize.x +
+            static_cast<int>(x / scaleFactor.x);
 
-        const auto outIdx = z * scaledRegionSize.y * scaledRegionSize.x
-                            + y * scaledRegionSize.x + x;
+        const auto outIdx = z * scaledRegionSize.y * scaledRegionSize.x +
+                            y * scaledRegionSize.x + x;
         out[outIdx] = source[idx];
       });
     }
   }
 
-} // ::ospray
-
+}  // namespace ospray

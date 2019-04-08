@@ -109,7 +109,7 @@ namespace ospray {
 
       float samplingStep = rateFromEnv.value_or(0.1f * coarsestCellWidth);
 
-      box3f worldBounds = accel->worldBounds;
+      bounds = accel->worldBounds;
 
       const vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
       const vec3f gridOrigin  = getParam3f("gridOrigin", vec3f(0.f));
@@ -133,7 +133,7 @@ namespace ospray {
                                  + voxelType + "'");
       }
 
-      ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep,
+      ispc::AMRVolume_set(getIE(), (ispc::box3f&)bounds, samplingStep,
                           (const ispc::vec3f&)gridOrigin,
                           (const ispc::vec3f&)gridSpacing);
 
@@ -145,7 +145,7 @@ namespace ospray {
                              accel->level.size(),
                              &accel->level[0],
                              voxelTypeID,
-                             (ispc::box3f &)worldBounds);
+                             (ispc::box3f &)bounds);
 
       tasking::parallel_for(accel->leaf.size(),[&](size_t leafID) {
         ispc::AMRVolume_computeValueRangeOfLeaf(getIE(), leafID);

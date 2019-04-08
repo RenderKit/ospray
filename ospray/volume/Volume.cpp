@@ -17,7 +17,6 @@
 // ospray
 #include "volume/Volume.h"
 #include "Volume_ispc.h"
-#include "common/Data.h"
 #include "common/Util.h"
 #include "transferFunction/TransferFunction.h"
 
@@ -35,25 +34,22 @@ namespace ospray {
 
   void Volume::commit()
   {
-    // Set the transfer function.
     auto *transferFunction =
         (TransferFunction *)getParamObject("transferFunction", nullptr);
 
     if (transferFunction == nullptr)
       throw std::runtime_error("no transfer function specified on the volume!");
 
-    // Set the volume clipping box (empty by default for no clipping).
     box3f volumeClippingBox =
         box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)),
               getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
 
-    // Set affine transformation
     AffineSpace3f xfm;
-    xfm.l.vx              = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
-    xfm.l.vy              = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
-    xfm.l.vz              = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
-    xfm.p                 = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
-    AffineSpace3f rcp_xfm = rcp(xfm);
+    xfm.l.vx     = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
+    xfm.l.vy     = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
+    xfm.l.vz     = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
+    xfm.p        = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
+    auto rcp_xfm = rcp(xfm);
 
     vec3f specular =
         getParam3f("specular", getParam3f("ks", getParam3f("Ks", vec3f(0.3f))));
@@ -73,18 +69,6 @@ namespace ospray {
                      (const ispc::box3f &)volumeClippingBox,
                      (ispc::AffineSpace3f &)xfm,
                      (ispc::AffineSpace3f &)rcp_xfm);
-  }
-
-  void Volume::finish()
-  {
-    // The ISPC volume container must exist at this point.
-    assert(ispcEquivalent != nullptr);
-
-    // Make the volume bounding box visible to the application.
-    ispc::box3f boundingBox;
-    ispc::Volume_getBoundingBox(&boundingBox, ispcEquivalent);
-    setParam("boundingBoxMin", boundingBox.lower);
-    setParam("boundingBoxMax", boundingBox.upper);
   }
 
 }  // namespace ospray
