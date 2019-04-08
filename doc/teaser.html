@@ -2,21 +2,39 @@
   <h1> Intel<sup>®</sup> OSPRay </h1>
   <h2> A Ray Tracing Based Rendering Engine for High-Fidelity Visualization </h2>
 </div>
+
 <hr>
-<div class="teaser-img">
-  <div class="fadein">
-   <img id="f1" src="images/rm_volume.jpg">
-   <img id="f2" class="fade" src="images/rm_volume_ao_shadows.jpg"></div><!-- do not change formatting here! -->
+
+
+<div id="demo" class="carousel slide" data-ride="carousel">
+ <!-- Indicators -->
+  <ul class="carousel-indicators">
+    <li data-target="#demo" data-slide-to="0" class="active"></li>
+    <li data-target="#demo" data-slide-to="1"></li>
+    <li data-target="#demo" data-slide-to="2"></li>
+  </ul>
+<div class="carousel-inner">
+  <div class="carousel-item active">
+  <img src="images/rm_volume.jpg">
+  </div>
+  <div class="carousel-item">
+  <img src="images/rm_volume_ao_shadows.jpg">
+  </div>
+  <div class="carousel-item">
+  <img src="images/rm_volume_ao_shadows.jpg">
+  </div>
 </div>
-<script type="text/javascript">
-el=document.getElementById("f2");
-el.addEventListener("click", function(e) {
- e.preventDefault;
- el.classList.remove("fade");
- void el.offsetWidth;
- el.classList.add("fade");
-}, false);
-</script>
+
+  <!-- Left and right controls -->
+<a class="carousel-control-prev" href="#demo" data-slide="prev">
+  <span class="carousel-control-prev-icon"></span>
+</a>
+<a class="carousel-control-next" href="#demo" data-slide="next">
+  <span class="carousel-control-next-icon"></span>
+</a>
+</div>
+
+
 <hr>
 <div class="teaser-features">
 <div class="feature">
