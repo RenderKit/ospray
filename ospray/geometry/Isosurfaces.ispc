@@ -135,10 +135,7 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     TransferFunction *uniform xf = self->volume->transferFunction;
     const vec3f sampleColor =
         xf->getColorForValue(xf, self->isovalues[ray.primID]);
-    const float sampleOpacity =
-        1.f;  // later allow "opacity" parameter on isosurfaces.
-    dg.color =
-        make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, sampleOpacity);
+    dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.f);
   }
 }
 

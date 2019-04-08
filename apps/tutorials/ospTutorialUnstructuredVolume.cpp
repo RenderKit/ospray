@@ -25,14 +25,14 @@
 using namespace ospcommon;
 
 namespace {
-  OSPVolume createVolumeWithTF(const char* volumeName, const char* tfName)
+  OSPVolume createVolumeWithTF(const char *volumeName, const char *tfName)
   {
     // create volume
     OSPTestingVolume tv = ospTestingNewVolume(volumeName);
 
     // create and set transfer function
     OSPTransferFunction tfn =
-      ospTestingNewTransferFunction(tv.voxelRange, tfName);
+        ospTestingNewTransferFunction(tv.voxelRange, tfName);
     ospSetObject(tv.volume, "transferFunction", tfn);
     ospCommit(tv.volume);
     ospRelease(tfn);
@@ -44,13 +44,13 @@ namespace {
   void setIsoValue(OSPGeometry geometry, float value)
   {
     // create and set a single iso value
-    std::vector<float> isoValues = { value };
+    std::vector<float> isoValues = {value};
     OSPData isoValuesData =
-      ospNewData(isoValues.size(), OSP_FLOAT, isoValues.data());
+        ospNewData(isoValues.size(), OSP_FLOAT, isoValues.data());
     ospSetData(geometry, "isovalues", isoValuesData);
     ospRelease(isoValuesData);
   }
-}
+}  // namespace
 
 int main(int argc, const char **argv)
 {
@@ -111,7 +111,6 @@ int main(int argc, const char **argv)
 
   // assign material to the geometry
   ospSetMaterial(instance, material);
-  ospRelease(material);
 
   // apply changes made
   ospCommit(isoGeometry);
@@ -142,19 +141,17 @@ int main(int argc, const char **argv)
       ospCommit(renderer);
     }
     static bool sharedVertices = false;
-    static bool valuesPerCell = false;
-    static bool isoSurface = false;
+    static bool valuesPerCell  = false;
+    static bool isoSurface     = false;
     if ((ImGui::Checkbox("shared vertices", &sharedVertices)) ||
         (ImGui::Checkbox("per-cell values", &valuesPerCell))) {
-
       // remove current volume
       ospRemoveParam(isoGeometry, "volume");
       if (!isoSurface)
         ospRemoveVolume(world, testVolume);
 
       // set a new one
-      testVolume =
-        allVolumes[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0];
+      testVolume = allVolumes[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0];
 
       // attach the new volume
       ospSetObject(isoGeometry, "volume", testVolume);
@@ -176,13 +173,20 @@ int main(int argc, const char **argv)
         glfwOSPRayWindow->addObjectToCommit(world);
       }
     }
-    if ((isoSurface) &&
-        (ImGui::SliderFloat("iso value", &isoValue, 0.f, 1.f))) {
-      // update iso value
-      setIsoValue(isoGeometry, isoValue);
-      glfwOSPRayWindow->addObjectToCommit(isoGeometry);
-      glfwOSPRayWindow->addObjectToCommit(instance);
-      glfwOSPRayWindow->addObjectToCommit(world);
+    if (isoSurface) {
+      if (ImGui::SliderFloat("iso value", &isoValue, 0.f, 1.f)) {
+        // update iso value
+        setIsoValue(isoGeometry, isoValue);
+        glfwOSPRayWindow->addObjectToCommit(isoGeometry);
+        glfwOSPRayWindow->addObjectToCommit(instance);
+        glfwOSPRayWindow->addObjectToCommit(world);
+      }
+
+      static float isoOpacity = 1.f;
+      if (ImGui::SliderFloat("iso opacity", &isoOpacity, 0.f, 1.f)) {
+        ospSet1f(material, "d", isoOpacity);
+        glfwOSPRayWindow->addObjectToCommit(material);
+      }
     }
   });
 
@@ -196,6 +200,7 @@ int main(int argc, const char **argv)
   ospRelease(allVolumes[1][1]);
   ospRelease(isoGeometry);
   ospRelease(instance);
+  ospRelease(material);
 
   // cleanly shut OSPRay down
   ospShutdown();

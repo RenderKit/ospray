@@ -109,7 +109,6 @@ int main(int argc, const char **argv)
 
   // assign material to the geometry
   ospSetMaterial(isoInstance, material);
-  ospRelease(material);
 
   // Create slices geometry //
 
@@ -201,6 +200,12 @@ int main(int argc, const char **argv)
       glfwOSPRayWindow->addObjectToCommit(isoInstance);
     }
 
+    static float isoOpacity = 1.f;
+    if (ImGui::SliderFloat("iso opacity", &isoOpacity, 0.f, 1.f)) {
+      ospSet1f(material, "d", isoOpacity);
+      glfwOSPRayWindow->addObjectToCommit(material);
+    }
+
     if (ImGui::SliderFloat("slice position", &sliceValue, -1.f, 1.f)) {
       commitWorld = true;
       setSlice(sliceGeometry, sliceValue);
@@ -221,6 +226,7 @@ int main(int argc, const char **argv)
   ospRelease(isoGeometry);
   ospRelease(sliceGeometry);
   ospRelease(sliceInstance);
+  ospRelease(material);
 
   // cleanly shut OSPRay down
   ospShutdown();
