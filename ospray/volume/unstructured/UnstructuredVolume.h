@@ -41,11 +41,6 @@ namespace ospray {
                   const vec3i &target_index,
                   const vec3i &source_count) override;
 
-    //! Compute samples at the given world coordinates.
-    void computeSamples(float **results,
-                        const vec3f *worldCoordinates,
-                        const size_t &count) override;
-
    private:
 
     // Helper functions for getting data array parameter

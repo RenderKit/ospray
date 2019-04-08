@@ -115,13 +115,6 @@ namespace ospray {
     return 0;
   }
 
-  void UnstructuredVolume::computeSamples(float **,
-                                         const vec3f *,
-                                         const size_t &)
-  {
-    NOT_IMPLEMENTED;
-  }
-
   box4f UnstructuredVolume::getCellBBox(size_t id)
   {
     // get cell offset in the vertex indices array

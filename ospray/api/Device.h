@@ -222,15 +222,6 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      virtual void sampleVolume(float **results,
-                                OSPVolume volume,
-                                const vec3f *worldCoordinates,
-                                const size_t &count)
-      {
-        UNUSED(results, volume, worldCoordinates, count);
-        NOT_IMPLEMENTED;
-      }
-
       virtual void commit();
       bool isCommitted();
 

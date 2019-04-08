@@ -438,15 +438,6 @@ namespace ospray {
       return renderer->pick(fb, camera, world, screenPos);
     }
 
-    void ISPCDevice::sampleVolume(float **results,
-                                  OSPVolume _volume,
-                                  const vec3f *worldCoordinates,
-                                  const size_t &count)
-    {
-      Volume *volume = (Volume *)_volume;
-      volume->computeSamples(results, worldCoordinates, count);
-    }
-
     OSP_REGISTER_DEVICE(ISPCDevice, local_device);
     OSP_REGISTER_DEVICE(ISPCDevice, local);
     OSP_REGISTER_DEVICE(ISPCDevice, default_device);

@@ -23,11 +23,6 @@
 
 namespace ospray {
 
-  bool Volume::isDataDistributed() const
-  {
-    return false;
-  }
-
   std::string Volume::toString() const
   {
     return "ospray::Volume";
@@ -40,29 +35,6 @@ namespace ospray {
 
   void Volume::commit()
   {
-  }
-
-  void Volume::computeSamples(float **results,
-                              const vec3f *worldCoordinates,
-                              const size_t &count)
-  {
-    // The ISPC volume container must exist at this point.
-    assert(ispcEquivalent != nullptr);
-
-    // Allocate memory for returned volume samples
-    *results = (float *)malloc(count * sizeof(float));
-
-    std::vector<float> ispcResults(count);
-    float *ptr = ispcResults.data();
-
-    // Compute the sample values.
-    ispc::Volume_computeSamples(ispcEquivalent,
-                                &ptr,
-                                (const ispc::vec3f *)worldCoordinates,
-                                count);
-
-    // Copy samples and free ISPC results memory
-    memcpy(*results, ptr, count * sizeof(float));
   }
 
   void Volume::finish()

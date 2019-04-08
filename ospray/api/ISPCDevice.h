@@ -215,11 +215,6 @@ namespace ospray {
                          OSPWorld world,
                          const vec2f &screenPos) override;
 
-      void sampleVolume(float **results,
-                        OSPVolume volume,
-                        const vec3f *worldCoordinates,
-                        const size_t &count) override;
-
       // Public Data //
 
       // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can

@@ -20,23 +20,10 @@
 
 namespace ospray {
 
-  /*! \brief A Volume is an abstraction for the concrete object which
-    performs the volume sampling.
-
-    The actual memory layout, dimensionality, and source of samples
-    are unknown to this class.  Subclasses may implement structured
-    volumes, unstructured volumes, radial basis functions, etc.  A
-    type string specifies a particular concrete implementation to
-    createInstance().  This type string must be registered either in
-    OSPRay proper, or in a loaded module using OSP_REGISTER_VOLUME.
-  */
   struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   {
     //! Destructor.
     virtual ~Volume() override = default;
-
-    //! \brief Returns whether the volume is a data-distributed volume
-    virtual bool isDataDistributed() const;
 
     //! A string description of this class.
     virtual std::string toString() const override;
@@ -52,11 +39,6 @@ namespace ospray {
     virtual int setRegion(const void *source,
                           const vec3i &index,
                           const vec3i &count) = 0;
-
-    //! Compute samples at the given world coordinates.
-    virtual void computeSamples(float **results,
-                                const vec3f *worldCoordinates,
-                                const size_t &count);
 
     //! Update select editable parameters (allowed after the volume has been
     //! initially committed).
