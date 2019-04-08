@@ -16,10 +16,7 @@
 
 #include "volume/Volume.ih"
 
-void Volume_Constructor(Volume *uniform self,
-                        /*! pointer to the c++-equivalent class of this entity */
-                        void *uniform cppEquivalent
-                        )
+void Volume_Constructor(Volume *uniform self, void *uniform cppEquivalent)
 {
   self->cppEquivalent = cppEquivalent;
 
@@ -28,100 +25,55 @@ void Volume_Constructor(Volume *uniform self,
 
   // default bounding box; should be set to correct value by derived volume.
   self->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
-
-  // other defaults are set during Volume::updateEditableParameters().
 }
 
-export void Volume_setGradientShadingEnabled(void *uniform _self, const uniform bool &value)
+export void Volume_getBoundingBox(uniform box3f *uniform ret,
+                                  void *uniform _self)
 {
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->gradientShadingEnabled = value;
-}
-
-export void Volume_setPreIntegration(void *uniform _self, const uniform bool &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->preIntegration = value;
-}
-
-export void Volume_setSingleShade(void *uniform _self, const uniform bool &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->singleShade = value;
-}
-
-export void Volume_setAdaptiveSampling(void *uniform _self, const uniform bool &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->adaptiveSampling = value;
-}
-
-export void Volume_setAdaptiveScalar(void *uniform _self, const uniform float &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->adaptiveScalar = value;
-}
-
-export void Volume_setAdaptiveMaxSamplingRate(void *uniform _self, const uniform float &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->adaptiveMaxSamplingRate = value;
-}
-
-export void Volume_setAdaptiveBacktrack(void *uniform _self, const uniform float &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->adaptiveBacktrack = value;
-}
-
-export void Volume_setSamplingRate(void *uniform _self, const uniform float value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->samplingRate = value;
-}
-
-export void Volume_setSpecular(void *uniform _self, const uniform vec3f &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->specular = value;
-}
-
-export void Volume_setNs(void *uniform _self, const uniform float &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->ns = value;
-}
-
-export void Volume_setTransferFunction(void *uniform _self, void *uniform value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->transferFunction = (TransferFunction *uniform) value;
-}
-
-export void Volume_setVolumeClippingBox(void *uniform _self, const uniform box3f &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->volumeClippingBox = value;
-}
-
-export void Volume_setAffineTransformations(void *uniform _self,
-                                            const uniform AffineSpace3f &xfm,
-                                            const uniform AffineSpace3f &rcp_xfm)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->xfm = xfm;
-  self->rcp_xfm = rcp_xfm;
-}
-
-export void Volume_getBoundingBox(uniform box3f *uniform ret, void *uniform _self)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  uniform Volume *uniform self = (uniform Volume * uniform) _self;
   // If we have a clip box then the actual volume bounds are the intersection
   // of the volume bounds and the clip box
-  cif (ne(self->volumeClippingBox.lower, self->volumeClippingBox.upper)) {
+  cif(ne(self->volumeClippingBox.lower, self->volumeClippingBox.upper))
+  {
     ret->lower = max(self->boundingBox.lower, self->volumeClippingBox.lower);
     ret->upper = min(self->boundingBox.upper, self->volumeClippingBox.upper);
-  } else {
+  }
+  else
+  {
     *ret = self->boundingBox;
   }
+}
+
+export void Volume_set(void *uniform _self,
+                       uniform bool gradientShading,
+                       uniform bool preIntegration,
+                       uniform bool singleShade,
+                       uniform bool adaptiveSampling,
+                       uniform float adaptiveScalar,
+                       uniform float adaptiveMaxSamplingRate,
+                       uniform float adaptiveBacktrack,
+                       uniform float samplingRate,
+                       const uniform vec3f &specular,
+                       uniform float Ns,
+                       void *uniform transferFunction,
+                       const uniform box3f &clippingBox,
+                       const uniform AffineSpace3f &xfm,
+                       const uniform AffineSpace3f &rcp_xfm)
+{
+  Volume *uniform self = (Volume * uniform) _self;
+
+  self->gradientShadingEnabled  = gradientShading;
+  self->preIntegration          = preIntegration;
+  self->singleShade             = singleShade;
+  self->adaptiveSampling        = adaptiveSampling;
+  self->adaptiveScalar          = adaptiveScalar;
+  self->adaptiveMaxSamplingRate = adaptiveMaxSamplingRate;
+  self->adaptiveBacktrack       = adaptiveBacktrack;
+  self->samplingRate            = samplingRate;
+  self->specular                = specular;
+  self->ns                      = Ns;
+  self->transferFunction        = (TransferFunction * uniform) transferFunction;
+  self->volumeClippingBox       = clippingBox;
+  self->xfm                     = xfm;
+  self->rcp_xfm                 = rcp_xfm;
 }
