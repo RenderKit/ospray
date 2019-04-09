@@ -48,7 +48,7 @@ acknowledge via [this paper](http://arxiv.org/abs/1405.4040).*
 -   Download
     [magnetic-512-volume.tar.bz2](http://www.sdvis.org/ospray/download/demos/MagneticReconnection/magnetic-512-volume.tar.bz2).
 -   Run via\
-    `./ospExampleViewerSg magnetic-512-volume.osp`
+    `./ospExampleViewer magnetic-512-volume.osp`
 
 
 "FIU" Ground Water Simulation
