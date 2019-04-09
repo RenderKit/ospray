@@ -649,3 +649,8 @@ p.caption:before {
     color: #777;
   }
   
+  .carousel img {
+    padding: 0px;
+    margin-bottom:8px;
+    box-shadow: 0 8px 10px -6px black;
+  }
