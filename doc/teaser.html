@@ -14,22 +14,50 @@
     <li data-target="#demo" data-slide-to="2"></li>
     <li data-target="#demo" data-slide-to="3"></li>
     <li data-target="#demo" data-slide-to="4"></li>
+    <li data-target="#demo" data-slide-to="5"></li>
   </ul>
 <div class="carousel-inner">
   <div class="carousel-item active">
   <img src="images/teaser_moana.jpg">
+  <div class="carousel-caption">
+  <h3>Moana Island Scene</h3>
+  <p>Over 15 billion instanced primitives rendered interactively with progressive refinement</p>
+  </div>
   </div>
   <div class="carousel-item">
   <img src="images/teaser_rm.jpg">
+  <div class="carousel-caption">
+  <h3>Volume support</h3>
+  <p>Richtmyer–meshkov volume rendered with shadows and ambient occlusion</p>
+  </div>
+  </div>
+  <div class="carousel-item">
+  <img src="images/teaser_materials.jpg">
+  <div class="carousel-caption">
+  <h3>Physically-based materials</h3>
+  <p>OSPRay's path tracer supports physically-based materials and a common principled material</p>
+  </div>
   </div>
   <div class="carousel-item">
   <img src="images/teaser_hdospray.jpg">
+  <div class="carousel-caption">
+  <h3>USD Hydra support</h3>
+  <p>Gramaphoone rendered in Pixar's usdview</p>
+  </div>
   </div>
   <div class="carousel-item">
   <img src="images/teaser_clouds.jpg">
+  <div class="carousel-caption">
+  <h3>ParaView support</h3>
+  <p>DKRZ weather data rendered with shadows inside ParaView</p>
+  </div>
   </div>
   <div class="carousel-item">
   <img src="images/teaser_cosmos.jpg">
+  <div class="carousel-caption">
+  <h3>Unstructured and AMR volume rendering</h3>
+  <p>AMR volume directly volume rendered inside ParaView</p>
+  </div>
   </div>
 </div>
 
@@ -46,19 +74,18 @@
 <hr>
 <div class="teaser-features">
 <div class="feature">
-  <div class="container">
-  <h2> Interactive CPU Rendering </h2>
-  <p>OSPRay features interactive CPU rendering capabilities geared toward
+<div class="container">
+<h2> Interactive CPU Rendering </h2>
+<p>OSPRay features interactive CPU rendering capabilities geared toward
 Scientific Visualization applications. Advanced shading effects such as
 Ambient Occlusion, shadows, and transparency can be rendered interactively,
 enabling new insights into data exploration.</p>
-  </div>
+</div>
 </div>
 
 <div class="feature feature-alt">
   <div class="container">
  <h2> Global Illumination </h2>
-  
   <p>
    OSPRay includes a path tracer capable of interactively rendering
    photorealistic global illumination.
@@ -69,7 +96,6 @@ enabling new insights into data exploration.</p>
 <div class="feature">
   <div class="container">
   <h2> Volume Rendering </h2>
-  
   <p>
    OSPRay supports high-fidelity interactive direct volume rendering with a
    number of state of the art features.
@@ -117,9 +143,17 @@ enabling new insights into data exploration.</p>
 <div class="feature">
   <div class="container">
  <h2> Open Source </h2>
-  
   <p>
    OSPRay is Open Sourced under the Apache 2.0 license.
+  </p>
+  </div>
+</div>
+
+<div class="feature">
+  <div class="container">
+ <h2> USD Integration </h2>
+  <p>
+   Integrated in the USD Hydra rendering layer.
   </p>
   </div>
 </div>
