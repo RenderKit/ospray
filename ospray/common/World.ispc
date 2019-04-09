@@ -20,6 +20,8 @@ typedef Volume *uniform uniVolumePtr;
 
 typedef GeometryInstance *uniform uniGeomInstPtr;
 
+typedef VolumeInstance *uniform uniVolInstPtr;
+
 export void *uniform World_create(void *uniform cppE)
 {
   World *uniform world = uniform new World;
@@ -28,6 +30,7 @@ export void *uniform World_create(void *uniform cppE)
   world->embreeSceneHandle = NULL;
   world->geometryInstances = NULL;
   world->volumes           = NULL;
+  world->volumeInstances   = NULL;
 
   return (void *uniform)world;
 }
@@ -39,13 +42,16 @@ export void World_cleanup(void *uniform _world)
     delete[] world->volumes;
   if (world->geometryInstances)
     delete[] world->geometryInstances;
+  if (world->volumeInstances)
+    delete[] world->volumeInstances;
 }
 
 export void World_init(void *uniform _world,
                        void *uniform embreeDevice,
                        uniform int32 embreeSceneFlags,
                        uniform int32 numGeometryInstances,
-                       uniform int32 numVolumes)
+                       uniform int32 numVolumes,
+                       uniform int32 numVolumeInstances)
 {
   uniform World *uniform world = (uniform World * uniform) _world;
   if (world->embreeSceneHandle)
@@ -72,6 +78,15 @@ export void World_init(void *uniform _world,
     world->volumes = uniform new uniVolumePtr[numVolumes];
   else
     world->volumes = NULL;
+
+  if (world->volumeInstances)
+    delete[] world->volumeInstances;
+  world->volumeInstanceCount = numVolumeInstances;
+  if (numVolumeInstances > 0) {
+    world->volumeInstances = uniform new uniVolInstPtr[numVolumeInstances];
+  } else {
+    world->volumeInstances = NULL;
+  }
 }
 
 export void World_setBounds(void *uniform _world, box3f *uniform bounds)
@@ -101,4 +116,13 @@ export void World_setVolume(void *uniform pointer,
 {
   World *uniform world     = (World * uniform) pointer;
   world->volumes[volumeID] = (Volume * uniform) volume;
+}
+
+export void World_setVolumeInstance(void *uniform _world,
+                                    uniform int32 instID,
+                                    void *uniform _instance)
+{
+  World *uniform world             = (World * uniform) _world;
+  VolumeInstance *uniform instance = (VolumeInstance * uniform) _instance;
+  world->volumeInstances[instID]   = instance;
 }

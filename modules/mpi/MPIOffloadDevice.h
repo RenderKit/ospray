@@ -82,6 +82,11 @@ namespace ospray {
       void removeInstance(OSPWorld _world,
                           OSPGeometryInstance _instance) override;
 
+      void addInstance(OSPWorld _world, OSPVolumeInstance _instance) override;
+
+      void removeInstance(OSPWorld _world,
+                          OSPVolumeInstance _instance) override;
+
       /*! create a new data buffer */
       OSPData newData(size_t nitems,
                       OSPDataType format,

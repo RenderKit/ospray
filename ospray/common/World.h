@@ -18,7 +18,7 @@
 
 // ospray stuff
 #include "geometry/GeometryInstance.h"
-#include "volume/Volume.h"
+#include "volume/VolumeInstance.h"
 
 // stl
 #include <vector>
@@ -47,11 +47,13 @@ namespace ospray {
     // Data members //
 
     using GeometryInstanceVector = std::vector<Ref<GeometryInstance>>;
+    using VolumeInstanceVector   = std::vector<Ref<VolumeInstance>>;
     using VolumeVector           = std::vector<Ref<Volume>>;
 
     VolumeVector volume;
 
     GeometryInstanceVector geometryInstances;
+    VolumeInstanceVector volumeInstances;
 
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle{nullptr};

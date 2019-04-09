@@ -72,7 +72,8 @@ namespace ospray {
                      embreeDevice,
                      sceneFlags,
                      geometryInstances.size(),
-                     volume.size());
+                     volume.size(),
+                     volumeInstances.size());
 
     embreeSceneHandle = (RTCScene)ispc::World_getEmbreeSceneHandle(getIE());
 
@@ -95,6 +96,10 @@ namespace ospray {
       ispc::Volume_getBoundingBox((ispc::box3f *)&volBounds,
                                   volume[i]->getIE());
       bounds.extend(volBounds);
+    }
+
+    for (size_t i = 0; i < volumeInstances.size(); i++) {
+      ispc::World_setVolumeInstance(getIE(), i, volumeInstances[i]->getIE());
     }
 
     ispc::World_setBounds(getIE(), (ispc::box3f *)&bounds);

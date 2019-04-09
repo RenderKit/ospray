@@ -31,7 +31,7 @@
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #include "transferFunction/TransferFunction.h"
-#include "volume/Volume.h"
+#include "volume/VolumeInstance.h"
 // stl
 #include <algorithm>
 
@@ -172,6 +172,30 @@ namespace ospray {
       if (it != world->geometryInstances.end())
         world->geometryInstances.erase(it);
     }
+
+    void ISPCDevice::addInstance(OSPWorld _world, OSPVolumeInstance _instance)
+    {
+      auto *world    = (World *)_world;
+      auto *instance = (VolumeInstance *)_instance;
+      world->volumeInstances.push_back(instance);
+    }
+
+    void ISPCDevice::removeInstance(OSPWorld _world,
+                                    OSPVolumeInstance _instance)
+    {
+      auto *world    = (World *)_world;
+      auto *instance = (VolumeInstance *)_instance;
+
+      auto it = std::find_if(world->volumeInstances.begin(),
+                             world->volumeInstances.end(),
+                             [&](const Ref<ospray::VolumeInstance> &g) {
+                               return instance == &*g;
+                             });
+
+      if (it != world->volumeInstances.end())
+        world->volumeInstances.erase(it);
+    }
+
 
     OSPData ISPCDevice::newData(size_t nitems,
                                 OSPDataType format,
@@ -340,9 +364,11 @@ namespace ospray {
       return (OSPGeometryInstance)instance;
     }
 
-    OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume /*volume*/)
+    OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume _volume)
     {
-      NOT_IMPLEMENTED;
+      auto *volume   = (Volume *)_volume;
+      auto *instance = new VolumeInstance(volume);
+      return (OSPVolumeInstance)instance;
     }
 
     int ISPCDevice::loadModule(const char *name)

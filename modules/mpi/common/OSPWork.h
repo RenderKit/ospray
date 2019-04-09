@@ -230,6 +230,30 @@ namespace ospray {
         ObjectHandle geometryHandle;
       };
 
+      struct NewVolumeInstance : public Work
+      {
+        NewVolumeInstance() = default;
+        NewVolumeInstance(ObjectHandle handle, ObjectHandle volume_handle)
+            : handle(handle), volumeHandle(volume_handle)
+        {
+        }
+
+        void run() override;
+
+        void serialize(WriteStream &b) const override
+        {
+          b << (int64)handle << (int64)volumeHandle;
+        }
+
+        void deserialize(ReadStream &b) override
+        {
+          b >> handle.i64 >> volumeHandle.i64;
+        }
+
+        ObjectHandle handle;
+        ObjectHandle volumeHandle;
+      };
+
       struct NewLight : public Work
       {
         NewLight() = default;
@@ -447,6 +471,66 @@ namespace ospray {
       {
         RemoveGeometryInstance() = default;
         RemoveGeometryInstance(OSPWorld world, const OSPGeometryInstance &t)
+            : worldHandle((const ObjectHandle &)world),
+              objectHandle((const ObjectHandle &)t)
+        {
+        }
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        {
+          b << (int64)worldHandle << (int64)objectHandle;
+        }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        {
+          b >> worldHandle.i64 >> objectHandle.i64;
+        }
+
+        ObjectHandle worldHandle;
+        ObjectHandle objectHandle;
+      };
+
+      struct AddVolumeInstance : public Work
+      {
+        AddVolumeInstance() = default;
+        AddVolumeInstance(OSPWorld world, const OSPVolumeInstance &t)
+            : worldHandle((const ObjectHandle &)world),
+              objectHandle((const ObjectHandle &)t)
+        {
+        }
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        {
+          b << (int64)worldHandle << (int64)objectHandle;
+        }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        {
+          b >> worldHandle.i64 >> objectHandle.i64;
+        }
+
+        ObjectHandle worldHandle;
+        ObjectHandle objectHandle;
+      };
+
+      struct RemoveVolumeInstance : public Work
+      {
+        RemoveVolumeInstance() = default;
+        RemoveVolumeInstance(OSPWorld world, const OSPVolumeInstance &t)
             : worldHandle((const ObjectHandle &)world),
               objectHandle((const ObjectHandle &)t)
         {

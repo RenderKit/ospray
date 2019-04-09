@@ -57,9 +57,6 @@ namespace ospray {
       /*! create a new model */
       OSPWorld newWorld() override;
 
-      // /*! finalize a newly specified model */
-      // void finalizeWorld(OSPWorld _model) override;
-
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;
 
@@ -73,6 +70,11 @@ namespace ospray {
 
       void removeInstance(OSPWorld _world,
                           OSPGeometryInstance _instance) override;
+
+      void addInstance(OSPWorld _world, OSPVolumeInstance _instance) override;
+
+      void removeInstance(OSPWorld _world,
+                          OSPVolumeInstance _instance) override;
 
       /*! create a new data buffer */
       OSPData newData(size_t nitems,

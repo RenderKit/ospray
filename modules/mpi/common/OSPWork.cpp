@@ -43,6 +43,7 @@ namespace ospray {
         registerWorkUnit<NewGeometryInstance>(registry);
         registerWorkUnit<NewCamera>(registry);
         registerWorkUnit<NewVolume>(registry);
+        registerWorkUnit<NewVolumeInstance>(registry);
         registerWorkUnit<NewTransferFunction>(registry);
         registerWorkUnit<NewPixelOp>(registry);
 
@@ -59,8 +60,10 @@ namespace ospray {
 
         registerWorkUnit<AddGeometryInstance>(registry);
         registerWorkUnit<AddVolume>(registry);
+        registerWorkUnit<AddVolumeInstance>(registry);
         registerWorkUnit<RemoveGeometryInstance>(registry);
         registerWorkUnit<RemoveVolume>(registry);
+        registerWorkUnit<RemoveVolumeInstance>(registry);
 
         registerWorkUnit<CreateFrameBuffer>(registry);
         registerWorkUnit<ResetAccumulation>(registry);
@@ -304,6 +307,15 @@ namespace ospray {
         handle.assign(instance);
       }
 
+      // ospNewVolumeInstance ///////////////////////////////////////////////
+
+      void NewVolumeInstance::run()
+      {
+        auto *geom     = (Volume *)volumeHandle.lookup();
+        auto *instance = new VolumeInstance(geom);
+        handle.assign(instance);
+      }
+
       // ospNewLight //////////////////////////////////////////////////////////
 
       void NewLight::run()
@@ -535,6 +547,13 @@ namespace ospray {
         world->volume.push_back(volume);
       }
 
+      void AddVolumeInstance::run()
+      {
+        auto *world    = (World *)worldHandle.lookup();
+        auto *instance = (VolumeInstance *)objectHandle.lookup();
+        world->volumeInstances.push_back(instance);
+      }
+
       // ospRemoveGeometryInstance ////////////////////////////////////////////
 
       void RemoveGeometryInstance::run()
@@ -568,6 +587,21 @@ namespace ospray {
         if (it != world->volume.end()) {
           world->volume.erase(it);
         }
+      }
+
+      void RemoveVolumeInstance::run()
+      {
+        auto *world    = (World *)worldHandle.lookup();
+        auto *instance = (VolumeInstance *)objectHandle.lookup();
+
+        auto it = std::find_if(world->volumeInstances.begin(),
+                               world->volumeInstances.end(),
+                               [&](const Ref<ospray::VolumeInstance> &g) {
+                                 return instance == &*g;
+                               });
+
+        if (it != world->volumeInstances.end())
+          world->volumeInstances.erase(it);
       }
 
       // ospRemoveParam ///////////////////////////////////////////////////////

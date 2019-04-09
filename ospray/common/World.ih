@@ -19,7 +19,7 @@
 // ospray stuff
 #include "../common/Ray.ih"
 #include "../geometry/GeometryInstance.ih"
-#include "../volume/Volume.ih"
+#include "../volume/VolumeInstance.ih"
 
 // embree stuff
 #include "embree3/rtcore.isph"
@@ -40,6 +40,9 @@ struct World
   //! volumes contained in the model
   uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
+
+  uniform VolumeInstance *uniform *uniform volumeInstances;
+  uniform int32 volumeInstanceCount;
 
   uniform box3f bounds;
 };
