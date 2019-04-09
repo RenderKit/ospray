@@ -8,47 +8,30 @@ and related information.
 If you have a project that makes use of OSPRay and would like this to be
 listed here, please let us know.
 
-
-BALLView
---------
-
-[![](related_projects/ballview/ballview.jpg)](related_projects/ballview/ballview.jpg)
-
-[Prof Andreas
-Hildebrandt](http://bio.informatik.uni-mainz.de/members/andreas.hildebrandt),
-head of the [Software Engineering and Bioinformatics
-group](http://bio.informatik.uni-mainz.de/) at the University of Mainz
-is currently creating an OSPRay rendering module for their
-[BALLView](http://www.ballview.org/) package, a standalone molecular
-modeling and visualization application for the "BALL" Biochemical
-Algorithm Library.
-
-
-GLuRay
-------
-
-[![](images/GLuRayPage.jpg)][GLuRay]
-
-[GLuRay] OpenGL to Ray Tracing Mapper
-
-[GLuRay]: https://tacc.github.io/GLuRay/$
-
-
-pvOSPRay: A OSPRay Plugin to ParaView/VTKx
+VTK+ParaView
 ------------------------------------------
 
-[![](related_projects/vtk-paraview/screenshot-paraview-fiu-thumb.jpg)](related_projects/vtk-paraview/screenshot-paraview-fiu.jpg)
+![](images/teaser_clouds.jpg)
+VTK and Paraview 5.x+ have direct integrations for OSPRay rendering.  Code and documentation
+are available on the kitware [gitlab site](https://gitlab.kitware.com/paraview/paraview).
+Kitware hosts a [tutorial on using OSPRay](https://www.paraview.org/Wiki/Intel_HPC_Dev_Con_ParaView_and_OSPRay_Tutorial).
+For information on using the path tracer inside ParaView, see [this blog post](https://blog.kitware.com/virtual-tour-and-high-quality-visualization-with-paraview-5-6-ospray/).
 
-The Remote Visualization Group at the [Texas Advanced Computing
-Center](https://www.tacc.utexas.edu/) (TACC) is building and maintaining
-OSPRay plugins for ParaView, VisIt, and VTK. The [screenshot supplied
-here](pvospray.html) shows a working version of ParaView, rendering a
-non-trivial model through OSPRay. All three OSPRay plugins are hosted on
-TACC's github pages: [pvOSPRay](https://github.com/TACC/pvOSPRay) for
-the ParaView module, [visitOSPRay](https://github.com/TACC/visitOSPRay)
-for the VisIt module, and [vtkOSPRay](https://github.com/TACC/vtkOSPRay)
-for the base VTK module.
+HdOSPRay
+------------------------------------------
+![](images/teaser_hdospray.jpg)
+HdOSPRay is an OSPRay-based rendering plugin for the Hydra rendering layer in USD.
+For more information see the [github page](https://github.com/ospray/hdospray).
 
+Megamol
+------------------------------------------
+[Megamol](https://megamol.org/2018/07/02/megamol-at-isc-2018/) is a molecular dynamics framework.  With
+OSPRay, it can render billions of particles interactively.  
+
+VMD
+------------------------------------------
+VMD is a popular molecular dynamics visualization package.  OSPRay is integrated as one of the
+renderers. For more information see the [release notes](https://www.ks.uiuc.edu/Research/vmd/current/).
 
 StingRay
 --------
