@@ -129,3 +129,34 @@ varying void *; // `varying` is meaningless, void has no varyingness to it
 - Minimize the number of alias names given to both object types and
   parameters.
 
+## Code Documentation
+
+Code documentation should be in terms of C++ style single-line comments or
+multi-line C style comments, e.g.:
+
+```cpp
+// Lorem ipsum dolor sit amet
+
+/* Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+ * tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+ * quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+ * consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+ * cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+ * proident, sunt in culpa qui officia deserunt mollit anim id est laborum. */
+```
+
+Avoid Doxygen-style code documentation, such as
+
+```cpp
+/*! comment style to avoid */
+
+//! comment style to avoid
+
+/*! \brief comment style to avoid */
+
+int var; //!< comment style to avoid
+```
+
+When adding or updating public API definitions, update the corresponding API.md
+documentation as part of your merge request. This keeps our documentation always
+current, and minimizes the need for audits at release time.
