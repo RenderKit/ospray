@@ -10,13 +10,13 @@ listed here, please let us know.
 
 OSPRay Studio
 ------------------------------------------
+![](images/ospray_studio_dlaf.jpg)
 OSPRay Studio is the OSPRay team's lightweight visualization application used to showcase
 the latest features of OSPRay. The code and additional information can be found
 on the project's [page on GitHub](https://github.com/ospray/ospray_studio)
 
 VTK+ParaView
 ------------------------------------------
-
 ![](images/teaser_clouds.jpg)
 VTK and Paraview 5.x+ have direct integrations for OSPRay rendering.  Code and documentation
 are available on Kitware's instance of [GitLab](https://gitlab.kitware.com/paraview/paraview).
