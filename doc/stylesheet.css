@@ -260,8 +260,7 @@ br { clear:both; }
 }
 
 .teaser-features {
-  margin-top: 50px;
-  margin-bottom: 150px;
+  margin: 50px auto 150px auto;
 }
 
 div.feature {
@@ -292,6 +291,7 @@ div.feature img {
 {
     display: block;
     float: left;
+    padding-left: 184px;
 }
 .feature-alt img
 {

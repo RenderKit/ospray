@@ -74,6 +74,10 @@ $(webimages): | wwwimgdir
 wwwimgdir:
 	@mkdir -p www/images
 
+$(webscripts): | wwwscriptdir
+wwwscriptdir:
+	@mkdir -p www/scripts
+
 $(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_html.md tmp/scenegraph_html.md tmp/links.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
