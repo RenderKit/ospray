@@ -243,5 +243,20 @@ namespace ospcommon {
       data = object;
     }
 
+    template <>
+    inline void
+    ParameterizedObject::setParam<bool>(const std::string &name, const bool &v)
+    {
+      setParam<int>(name, v);
+    }
+
+    template <>
+    inline bool
+    ParameterizedObject::getParam<bool>(const std::string &name,
+                                        bool valIfNotFound)
+    {
+      return getParam<int>(name, valIfNotFound);
+    }
+
   } // ::ospcommon::utility
 } // ::ospcommon
