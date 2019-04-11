@@ -7,10 +7,12 @@ images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix c
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
 images_fig := spot_light quad_light hdri_light
 images_svg := gitter_badge
+scripts := $(addprefix scripts/, bootstrap.min.js popper.min.js jquery.min.js)
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
 webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
+webscripts := $(addprefix www/, $(scripts))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf)
 
 PANDOC := pandoc
@@ -21,7 +23,7 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc pdf
-www: $(webpages) www/stylesheet.css $(webimages)
+www: $(webpages) www/stylesheet.css $(webimages) $(webscripts)
 doc: ../README.md
 pdf: ../readme.pdf
 
@@ -137,6 +139,11 @@ images/%:
 	  fi \
 	fi
 
+### scripts
+########################################################################
+
+www/scripts/%: scripts/%
+	cp -f $< $@
 
 ### markdown
 ########################################################################
