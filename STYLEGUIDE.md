@@ -109,11 +109,9 @@ The following are concerns specific to ISPC:
   but uniform values are more efficient than replicated varying values.
 - Avoid writing unnecessary `uniform` and `varying` keywords. Examples:
 ```cpp
-varying float a; // 'varying' is redundant, variables are varying by default
+varying float;   // 'varying' is redundant, variables are varying by default
 
 uniform float *; // 'uniform' is redundant, pointers point to uniform by default
-
-varying void *; // `varying` is meaningless, void has no varyingness to it
 ```
 - Prefer omitting `uniform`/`varying` qualifiers for structs. Only apply them
   if they need to be consistenly the same for both `uniform` and `varying`
