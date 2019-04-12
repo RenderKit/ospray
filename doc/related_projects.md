@@ -29,6 +29,15 @@ HdOSPRay
 HdOSPRay is a rendering plugin for the Hydra rendering layer in USD.
 For more information see the project's [page on GitHub](https://github.com/ospray/hdospray).
 
+Tapestry
+------------------------------------------
+![](images/teaser_tapestry.png)
+Tapestry is a microservice for delivering scientific visualization on the
+cloud.  With OSPRay, Tapestry can provide interactive visualization of large
+datasets accessible to many users throughout the web ecosystem. See the [demo
+page](https://seelabutk.github.io/tapestry/) and the project's [page on
+GitHub](https://github.com/seelabutk/tapestry) for more information.
+
 Megamol
 ------------------------------------------
 [Megamol](https://megamol.org/2018/07/02/megamol-at-isc-2018/) is a molecular dynamics framework.  With
