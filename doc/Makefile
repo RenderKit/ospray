@@ -3,12 +3,12 @@ SHELL := /bin/bash
 webpages := $(addprefix www/, $(addsuffix .html, index news demos documentation gallery downloads related_projects pvospray displaywall fiu_comparison legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, demos getting_ospray readme_head))
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api mpi scenegraph examples))
-images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow rm_volume_ao_shadows rm_volume heptane_bubbly_osp mag_pt rm_volume2 dns_small code GLuRayPage))
+images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
 images_fig := spot_light quad_light hdri_light
 images_svg := gitter_badge
 images_webonly := $(addprefix images/, VESTEC-Logo-web.png stingray.jpg)
-scripts := $(addprefix scripts/, bootstrap.min.js popper.min.js jquery.min.js)
+scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
@@ -148,7 +148,7 @@ images/%:
 ########################################################################
 
 www/scripts/%: scripts/%
-	cp -f $< $@
+	cp $< $@
 
 ### markdown
 ########################################################################
