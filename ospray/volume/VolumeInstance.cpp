@@ -16,6 +16,7 @@
 
 // ospray
 #include "VolumeInstance.h"
+#include "transferFunction/TransferFunction.h"
 // ispc exports
 #include "VolumeInstance_ispc.h"
 
@@ -38,6 +39,12 @@ namespace ospray {
 
   void VolumeInstance::commit()
   {
+    auto *transferFunction =
+        (TransferFunction *)getParamObject("transferFunction", nullptr);
+
+    if (transferFunction == nullptr)
+      throw std::runtime_error("no transfer function specified on the volume!");
+
     // Get transform information //
 
     instanceXfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
@@ -65,9 +72,28 @@ namespace ospray {
     instanceBounds.extend(xfmPoint(instanceXfm, v110));
     instanceBounds.extend(xfmPoint(instanceXfm, v111));
 
-    AffineSpace3f rcp_xfm = rcp(instanceXfm);
+    auto rcp_xfm = rcp(instanceXfm);
 
-    ispc::VolumeInstance_set(getIE(),
+    box3f volumeClippingBox =
+        box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)),
+              getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
+
+    vec3f specular =
+        getParam3f("specular", getParam3f("ks", getParam3f("Ks", vec3f(0.3f))));
+
+    ispc::VolumeInstance_set(ispcEquivalent,
+                             getParam1b("gradientShadingEnabled", false),
+                             getParam1b("preIntegration", false),
+                             getParam1b("singleShade", true),
+                             getParam1b("adaptiveSampling", true),
+                             getParam1f("adaptiveScalar", 15.0f),
+                             getParam1f("adaptiveMaxSamplingRate", 2.0f),
+                             getParam1f("adaptiveBacktrack", 0.03f),
+                             getParam1f("samplingRate", 0.125f),
+                             (const ispc::vec3f &)specular,
+                             getParam1f("ns", getParam1f("Ns", 20.f)),
+                             transferFunction->getIE(),
+                             (const ispc::box3f &)volumeClippingBox,
                              (ispc::AffineSpace3f &)instanceXfm,
                              (ispc::AffineSpace3f &)rcp_xfm);
   }
