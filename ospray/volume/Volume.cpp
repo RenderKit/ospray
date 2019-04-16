@@ -37,9 +37,6 @@ namespace ospray {
     auto *transferFunction =
         (TransferFunction *)getParamObject("transferFunction", nullptr);
 
-    if (transferFunction == nullptr)
-      throw std::runtime_error("no transfer function specified on the volume!");
-
     box3f volumeClippingBox =
         box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)),
               getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
@@ -65,7 +62,7 @@ namespace ospray {
                      getParam1f("samplingRate", 0.125f),
                      (const ispc::vec3f &)specular,
                      getParam1f("ns", getParam1f("Ns", 20.f)),
-                     transferFunction->getIE(),
+                     transferFunction ? transferFunction->getIE() : nullptr,
                      (const ispc::box3f &)volumeClippingBox,
                      (ispc::AffineSpace3f &)xfm,
                      (ispc::AffineSpace3f &)rcp_xfm);

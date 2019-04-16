@@ -100,6 +100,7 @@ namespace ospray {
 
     for (size_t i = 0; i < volumeInstances.size(); i++) {
       ispc::World_setVolumeInstance(getIE(), i, volumeInstances[i]->getIE());
+      bounds.extend(volumeInstances[i]->bounds());
     }
 
     ispc::World_setBounds(getIE(), (ispc::box3f *)&bounds);

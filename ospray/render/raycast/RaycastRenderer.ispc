@@ -19,6 +19,7 @@
 #include "fb/FrameBuffer.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
+#include "volume/Volume.ih"
 
 /*! \brief a simple, primary-ray-only ray cast render that
 
@@ -313,6 +314,70 @@ void RaycastRenderer_renderSample_backfacing_Ns(Renderer *uniform _self,
   }
 }
 
+void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
+                                         FrameBuffer *uniform fb,
+                                         World *uniform world,
+                                         void *uniform perFrameData,
+                                         varying ScreenSample &sample)
+{
+  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+
+  vec3f &color = sample.rgb;
+  float &alpha = sample.alpha;
+
+  color = make_vec3f(self->super.bgColor);
+  alpha = self->super.bgColor.w;
+
+  if (world->volumeCount < 1)
+    return;
+
+  Volume *uniform volume       = world->volumes[0];
+  TransferFunction *uniform tf = volume->transferFunction;
+
+  Ray &ray = sample.ray;
+
+  float t0, t1;
+  intersectBox(ray, volume->boundingBox, ray.t0, ray.t);
+
+  float pSample = -1.f;
+
+  // Ray offset for this sample, as a fraction of the nominal step size.
+  float jitter = precomputedHalton2(sample.sampleID.z);
+  int ix       = sample.sampleID.x % 4;
+  int iy       = sample.sampleID.y % 4;
+
+  int patternID = ix + 4 * iy;
+  jitter += precomputedHalton3(patternID);
+
+  if (jitter > 1.f)
+    jitter -= 1.f;
+
+  ray.t0 += jitter;
+
+  while (ray.t0 <= ray.t) {
+    const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
+
+    vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
+    float sampleAlpha = tf->getIntegratedOpacityForValue(tf, pSample, sample);
+
+    if (pSample == -1.f)
+      pSample = sample;
+
+    const float clampedOpacity = clamp(sampleAlpha / volume->samplingRate);
+
+    sampleColor = sampleColor * clampedOpacity;
+    sampleAlpha = clampedOpacity;
+
+    color = color + ((1.f - sampleAlpha) * sampleColor);
+    alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
+
+    if (alpha >= 0.99f)
+      break;
+
+    volume->stepRay(volume, ray, volume->samplingRate);
+  }
+}
+
 #define DEFINE_RAYCAST_RENDERER(name)                                    \
   export void *uniform RaycastRenderer_create_##name(void *uniform cppE) \
   {                                                                      \
@@ -336,3 +401,4 @@ DEFINE_RAYCAST_RENDERER(eyeLight_instID);
 DEFINE_RAYCAST_RENDERER(eyeLight_vertexColor);
 DEFINE_RAYCAST_RENDERER(backfacing_Ng);
 DEFINE_RAYCAST_RENDERER(backfacing_Ns);
+DEFINE_RAYCAST_RENDERER(volume);

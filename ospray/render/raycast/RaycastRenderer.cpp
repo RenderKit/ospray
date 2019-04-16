@@ -111,5 +111,9 @@ namespace ospray {
   using RaycastRenderer_rayDir = RaycastRenderer<ispc::RaycastRenderer_create_rayDir>;
   OSP_REGISTER_RENDERER(RaycastRenderer_rayDir,rayDir);
 
+  /*! \brief Instantion of Ray Cast Renderer that renders volumes */
+  using RaycastRenderer_volume = RaycastRenderer<ispc::RaycastRenderer_create_volume>;
+  OSP_REGISTER_RENDERER(RaycastRenderer_volume,raycast_volume);
+
 } // ::ospray
 
