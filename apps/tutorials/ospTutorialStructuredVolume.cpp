@@ -84,7 +84,12 @@ int main(int argc, const char **argv)
   ospSetObject(volume, "transferFunction", tfn);
   ospCommit(volume);
 
-  ospAddVolume(world, volume);
+  auto instance = ospNewVolumeInstance(volume);
+  ospSetObject(instance, "transferFunction", tfn);
+  ospCommit(instance);
+
+  //ospAddVolume(world, volume);
+  ospAddVolumeInstance(world, instance);
   ospRelease(tfn);
 
   // Create isosurface geometry //
@@ -222,6 +227,7 @@ int main(int argc, const char **argv)
 
   // cleanup remaining objects
   ospRelease(volume);
+  ospRelease(instance);
   ospRelease(isoInstance);
   ospRelease(isoGeometry);
   ospRelease(sliceGeometry);

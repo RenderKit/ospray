@@ -328,11 +328,12 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   color = make_vec3f(self->super.bgColor);
   alpha = self->super.bgColor.w;
 
-  if (world->volumeCount < 1)
+  if (world->volumeInstanceCount < 1)
     return;
 
-  Volume *uniform volume       = world->volumes[0];
-  TransferFunction *uniform tf = volume->transferFunction;
+  VolumeInstance *uniform instance = world->volumeInstances[0];
+  Volume *uniform volume           = instance->volume;
+  TransferFunction *uniform tf     = instance->transferFunction;
 
   Ray &ray = sample.ray;
 
@@ -363,7 +364,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
     if (pSample == -1.f)
       pSample = sample;
 
-    const float clampedOpacity = clamp(sampleAlpha / volume->samplingRate);
+    const float clampedOpacity = clamp(sampleAlpha / instance->samplingRate);
 
     sampleColor = sampleColor * clampedOpacity;
     sampleAlpha = clampedOpacity;
@@ -374,7 +375,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
     if (alpha >= 0.99f)
       break;
 
-    volume->stepRay(volume, ray, volume->samplingRate);
+    volume->stepRay(volume, ray, instance->samplingRate);
   }
 }
 
