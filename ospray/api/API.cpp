@@ -584,6 +584,22 @@ extern "C" void ospRemoveGeometryInstance(
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospAddVolumeInstance(OSPWorld world, OSPVolumeInstance instance)
+    OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().addInstance(world, instance);
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospRemoveVolumeInstance(
+    OSPWorld world, OSPVolumeInstance instance) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().removeInstance(world, instance);
+}
+OSPRAY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Object Parameters //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
