@@ -61,6 +61,13 @@ div.left {
 }
 br { clear:both; }
 
+/* this fixes anchor links offset from header*/
+:target:before {
+  content: "";
+  display: block;
+  height: 125px;
+  margin: -125px 0 0;
+}
 
 #demo-bullets { font-size: 90%; }
 
