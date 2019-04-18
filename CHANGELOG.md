@@ -4,6 +4,10 @@ Version History
 ### Changes in v1.8.5:
 
 -   Fix float precision cornercase (`NaN`s) in sphere light sampling
+-   Fix CMake bug that assumed `.git` was a directory, which is not true when
+    using OSPRay as a git submodule
+-   Fix CMake warning
+-   Fix DLL_EXPORT issue with `ospray_testing` helper library on Windows
 
 ### Changes in v1.8.4:
 

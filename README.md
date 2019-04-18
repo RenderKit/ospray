@@ -8,7 +8,7 @@ information.
 OSPRay Overview
 ===============
 
-Intel® OSPRay is an **o**pen source, **s**calable, and **p**ortable
+Intel OSPRay is an **o**pen source, **s**calable, and **p**ortable
 **ray** tracing engine for high-performance, high-fidelity visualization
 on Intel Architecture CPUs. OSPRay is part of the [Intel Rendering
 Framework](https://software.intel.com/en-us/rendering-framework) and is
