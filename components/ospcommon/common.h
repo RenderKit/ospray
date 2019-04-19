@@ -86,7 +86,7 @@ namespace ospcommon {
   /*! remove specified num arguments from an ac/av arglist */
   OSPCOMMON_INTERFACE void removeArgs(int &ac, const char **&av,
                                       int where, int howMany);
-  OSPCOMMON_INTERFACE void loadLibrary(const std::string &name);
+  OSPCOMMON_INTERFACE void loadLibrary(const std::string &name, bool anchor = true);
   OSPCOMMON_INTERFACE void loadDefaultLibrary();
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 

@@ -61,9 +61,9 @@ namespace ospcommon {
     abort();
   }
 
-  void loadLibrary(const std::string& name)
+  void loadLibrary(const std::string& name, bool anchor)
   {
-    LibraryRepository::getInstance()->add(name);
+    LibraryRepository::getInstance()->add(name, anchor);
   }
 
   void loadDefaultLibrary()

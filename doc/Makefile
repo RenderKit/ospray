@@ -3,14 +3,17 @@ SHELL := /bin/bash
 webpages := $(addprefix www/, $(addsuffix .html, index news demos documentation gallery downloads related_projects pvospray displaywall fiu_comparison legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, demos getting_ospray readme_head))
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api mpi scenegraph examples))
-images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow rm_volume_ao_shadows rm_volume heptane_bubbly_osp mag_pt rm_volume2 dns_small code GLuRayPage))
+images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
 images_fig := spot_light quad_light hdri_light
 images_svg := gitter_badge
+images_webonly := $(addprefix images/, VESTEC-Logo-web.png stingray.jpg)
+scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
+webimages := $(addprefix www/, $(images_webonly) $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
+webscripts := $(addprefix www/, $(scripts))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf)
 
 PANDOC := pandoc
@@ -21,7 +24,7 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc pdf
-www: $(webpages) www/stylesheet.css $(webimages)
+www: $(webpages) www/stylesheet.css $(webimages) $(webscripts)
 doc: ../README.md
 pdf: ../readme.pdf
 
@@ -71,6 +74,10 @@ wwwdir:
 $(webimages): | wwwimgdir
 wwwimgdir:
 	@mkdir -p www/images
+
+$(webscripts): | wwwscriptdir
+wwwscriptdir:
+	@mkdir -p www/scripts
 
 $(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_html.md tmp/scenegraph_html.md tmp/links.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
@@ -137,6 +144,11 @@ images/%:
 	  fi \
 	fi
 
+### scripts
+########################################################################
+
+www/scripts/%: scripts/%
+	cp $< $@
 
 ### markdown
 ########################################################################

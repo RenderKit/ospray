@@ -45,7 +45,7 @@ data -- watch the [movie](gallery/walls_4k.mp4). For more background
 read the related [blog post by
 SGI](http://blog.sgi.com/accelerating-scientific-discovery-through-visualization/).
 
-More Screenshots of OSPRay's Path Tracer
+OSPRay's Path Tracer
 ----------------------------------------
 
 <div class="left">
@@ -103,54 +103,11 @@ courtesy Carsten Kutzner, MPI BPC, Göttingen.\
 VMD "ribosome", with balls, sticks, ribbons, and quicksurfs. Model
 courtesy Carsten Kutzner, MPI BPC, Göttingen.
 
-
-ospModelViewer Samples
-----------------------
-
-Sample screen-shots from the `ospModelViewer`, typically imported via
-the OBJ model file format.
-
-[![](gallery/obj-fairy-thumb.jpg)](gallery/obj-fairy.png)
-
-The "Utah Fairy" (174k triangles), rendered with textures, transparency,
-and shadows (using the `OBJ` renderer. Model originally modeled using
-DAZ3D's DAZ Studio.\
-
-[![](gallery/obj-powerplant-thumb.jpg)](gallery/obj-powerplant.png)
-
-The "UNC PowerPlant" model (12.5 million triangles).\
-
-[![](gallery/ao-boeing-thumb.jpg)](gallery/ao-boeing.png)
-
-The "Boeing 777" model (342 million triangles), rendered using Ambient
-Occlusion. Model obtained from and used with permission of the Boeing
-Company (special thanks to Dave Kasik).\
+Other
+-----------------------
 
 [![](gallery/obj-xfrog-thumb.jpg)](gallery/obj-xfrog.png)
 
 The "xfrog" model of 1.7 billion (instanced) triangles and transparency
 textures. Model originally created using XFrog, model courtesy Oliver
 Deussen, University of Konstanz.\
-
-[![](gallery/pt-dragon-thumb.jpg)](gallery/pt-dragon.png)
-
-The 1 million triangle "DAZ Dragon" model, with textures, transparency
-textures, and rendered with OSPRay's experimental path tracer. Model
-originally created using DAZ3D's DAZ Studio.
-
-
-Particle Viewer Examples
-------------------------
-
-Sample screen-shots from the `ospParticleViewer`.
-
-[![](gallery/ospParticle-nanospheres-thumb.jpg)](gallery/ospParticle-nanospheres.png)
-
-The 740k-particle "nanospheres" model. Model courtesy KC Lau and Larry
-Curtiss, Argonne National Labs, and Aaron Knoll, University of Utah.\
-
-[![](gallery/ospParticle-uintah-thumb.jpg)](gallery/ospParticle-uintah.png)
-
-A 80 million particle model from the University of Utah's "UIntah"
-simulation package. Data courtesy James Guilkey, Aaron Knoll, and Dave
-de St.Germain, University of Utah.

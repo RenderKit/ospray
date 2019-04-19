@@ -112,11 +112,6 @@ check_symbols libospray.so CXXABI  1 3 0
 
 make -j `nproc` package || exit 2
 
-# read OSPRay version
-OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
-
-tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
-
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \

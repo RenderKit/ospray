@@ -10,6 +10,13 @@ $highlighting-css$
 div.sourceCode { overflow-x: initial; }
     </style>
 $endif$
+
+$if(select_index)$
+<!-- for teaser carousel -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+$endif$
   </head>
 
   <body>
@@ -18,10 +25,7 @@ $endif$
         <a id="forkme-banner" href="https://github.com/ospray/OSPRay">View on GitHub</a>
       </div>
       <div id="header-title">
-        Intel<sup>®</sup> OSPRay
-              <div id="header-subtitle">
-        A Ray Tracing Based Rendering Engine for High-Fidelity Visualization
-      </div>
+        Intel<sup>&reg;</sup> OSPRay
       </div>
 
       <div id="header-navbar">

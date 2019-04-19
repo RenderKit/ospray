@@ -35,11 +35,11 @@ namespace ospray {
   }  // namespace testing
 }  // namespace ospray
 
-#define OSP_REGISTER_TESTING_GEOMETRY(InternalClassName, Name)                \
-  extern "C" OSPRAY_TESTING_DLLEXPORT                                         \
-  ospray::testing::Geometry *ospray_create_testing_geometry__##Name()         \
-  {                                                                           \
-    return new InternalClassName;                                             \
-  }                                                                           \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */                \
+#define OSP_REGISTER_TESTING_GEOMETRY(InternalClassName, Name)  \
+  extern "C" OSPRAY_TESTING_DLLEXPORT ospray::testing::Geometry \
+      *ospray_create_testing_geometry__##Name()                 \
+  {                                                             \
+    return new InternalClassName;                               \
+  }                                                             \
+  /* Extra declaration to avoid "extra ;" pedantic warnings */  \
   ospray::testing::Geometry *ospray_create_testing_geometry__##Name()

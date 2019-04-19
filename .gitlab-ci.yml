@@ -395,6 +395,10 @@ release-linux-icc:
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh
+    - cd build_release
+    - OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
+    - $SIGN_FILE_LINUX ospray-*-${OSPRAY_VERSION}-*.rpm
+    - tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
   tags:
     - icc
     - centos6
@@ -409,6 +413,8 @@ release-osx-clang:
     - export CC=clang
     - export CXX=clang++
     - scripts/release/macosx.sh
+# DMGs cannot be signed; enable signing when switched to PKG:
+# $SIGN_FILE_MAC build_release/ospray-*.pkg
   tags:
     - clang
     - osx
@@ -422,6 +428,7 @@ release-windows:
   <<: *release_job
   script:
     - scripts\release\win.bat
+    - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
   tags:
     - msvc
     - win7
