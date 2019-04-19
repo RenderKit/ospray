@@ -1,14 +1,14 @@
 OSPRay
 ======
 
-This is release v1.8.4 of OSPRay. For changes and new features see the
+This is release v1.8.5 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
 OSPRay Overview
 ===============
 
-Intel® OSPRay is an **o**pen source, **s**calable, and **p**ortable
+Intel OSPRay is an **o**pen source, **s**calable, and **p**ortable
 **ray** tracing engine for high-performance, high-fidelity visualization
 on Intel Architecture CPUs. OSPRay is part of the [Intel Rendering
 Framework](https://software.intel.com/en-us/rendering-framework) and is

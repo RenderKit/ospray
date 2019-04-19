@@ -234,7 +234,7 @@ namespace ospray {
                              const bool b)
     {
       ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, static_cast<int>(b));
+      object->setParam(bufName, b);
     }
 
     /*! assign (named) float parameter to an object */

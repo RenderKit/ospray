@@ -32,8 +32,8 @@ namespace ospray {
 }  // namespace ospray
 
 #define OSP_REGISTER_TESTING_LIGHTS(InternalClassName, Name)                 \
-  OSPRAY_TESTING_DLLEXPORT                                                   \
-  extern "C" ospray::testing::Lights *ospray_create_testing_lights__##Name() \
+  extern "C" OSPRAY_TESTING_DLLEXPORT                                        \
+  ospray::testing::Lights *ospray_create_testing_lights__##Name()            \
   {                                                                          \
     return new InternalClassName;                                            \
   }                                                                          \

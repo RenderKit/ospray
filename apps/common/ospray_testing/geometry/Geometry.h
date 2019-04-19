@@ -36,8 +36,8 @@ namespace ospray {
 }  // namespace ospray
 
 #define OSP_REGISTER_TESTING_GEOMETRY(InternalClassName, Name) \
-  OSPRAY_TESTING_DLLEXPORT                                     \
-  extern "C" ospray::testing::Geometry                         \
+  extern "C" OSPRAY_TESTING_DLLEXPORT                          \
+  ospray::testing::Geometry                                    \
       *ospray_create_testing_geometry__##Name()                \
   {                                                            \
     return new InternalClassName;                              \

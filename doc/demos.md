@@ -6,28 +6,6 @@ This page serves as a repository for "ready-to-run" demos for OSPRay
 have a version of OSPRay installed on your system, you can follow these
 instructions for [getting OSPRay].
 
-Sponza
-----------------------------------
-
-[![](demos/sponza_small.jpg)](demos/sponza.jpg)
-
-*Model courtesy Carson Brownlee, Morgan McGuire, Crytek*
-
-### Demo Highlights
-
--   Crytek Sponza scene -- a common scene for showcasing global
-    illumination (model from [McGuire Graphics Data]).
-
-### Instructions
-
--   *IMPORTANT:* This demo currently requires a build from GitHub with `OSPRAY_SG_OPENIMAGEIO=ON`
--   Download
-    [crytek-sponza.tgz](http://www.sdvis.org/ospray/download/demos/crytek-sponza.tgz)
-    and [light probe] in pfm-format.
--   Run via\
-    `./ospExampleViewer [path/to/sponza.obj] -vp 667.492554 186.974228 76.008301 -vu 0.000000 1.000000 0.000000 -vi 84.557503 188.199417 -38.148270 -r pt -sg:sun:direction=-.3,-1,.1 -sg:sun:intensity=12 --hdri-light [path/to/rnl_probe.pfm]`
-
-
 San Miguel
 ----------------------------------
 
@@ -51,51 +29,6 @@ Llaguno*
 -   Run via\
     `./ospExampleViewer [path/to/sanm.obj] -vp 22.958788 3.204613 2.712676 -vu 0.000000 1.000000 0.000000 -vi 12.364944 0.176316 4.009342 -sg:sun:intensity=4.0 -sg:sun:direction=0,-1,0 -sg:bounce:intensity=0.0 --hdri-light [path/to/rnl_probe.pfm] -sg:hdri:intensity=1.25 -r pt`
 
-Sibenik Cathedral
-----------------------------------
-
-[![](demos/sibenik_small.jpg)](demos/sibenik.jpg)
-
-*Model courtesy Morgan McGuire, Kenzie Lamar,  Aleksander Stompel*
-
-### Demo Highlights
-
--   A large cathedral model commonly used for showcasing global
-    illumination. (Original model from [McGuire Graphics Data]).
-
-### Instructions
-
--   *IMPORTANT:* This demo currently requires a build from GitHub with `OSPRAY_SG_OPENIMAGEIO=ON`
--   Download
-    [sibenik.tgz](http://www.sdvis.org/ospray/download/demos/sibenik.tgz)
-    and [light probe] in pfm-format.
--   Run via\
-    `./ospExampleViewer sibenik.obj -vp -17.734447 -13.788272 3.443677 -vu 0.000000 1.000000 0.000000 -vi -2.789550 -10.993323 0.331822`
-
-Animated Woody
-----------------------------------
-
-[![](demos/sponza_animated_small.jpg)](demos/sponza_animated.jpg)
-
-*Model courtesy Carson Brownlee, Ingo Wald, Morgan McGuire, Crytek*
-
-### Demo Highlights
-
--   Animated Wooden Doll walking in the Sponza model (from [McGuire
-    Graphics Data]).
-
-### Instructions
-
--   *IMPORTANT:* This demo currently requires a build from GitHub with `OSPRAY_SG_OPENIMAGEIO=ON`
--   Download
-    [crytek-sponza.tgz](http://www.sdvis.org/ospray/download/demos/crytek-sponza.tgz)
-    and
-    [wooddoll.tgz](http://www.sdvis.org/ospray/download/demos/wooddoll.tgz).
--   Run via\
-    `./ospExampleViewer [path/to/crytek-sponza/sponza.obj] --renderer scivis -sun:direction=-.3,-1,-.04 -sg:sun:intensity=3 -vp 667.492554 186.974228 76.008301 -vu 0.000000 1.000000 0.000000 -vi 84.557503 188.199417 -38.148270 --translate 250 -11 0 --scale 300 300 300 --animation [path/to/wooddoll/wooddoll*.obj] -sg:aoSamples=0`
--   Controls: +/- increase and decrease animation speed. Space bar
-    pauses.
-
 "Magnetic Reconnection" Volume Rendered
 ---------------------------------------
 
@@ -115,76 +48,7 @@ acknowledge via [this paper](http://arxiv.org/abs/1405.4040).*
 -   Download
     [magnetic-512-volume.tar.bz2](http://www.sdvis.org/ospray/download/demos/MagneticReconnection/magnetic-512-volume.tar.bz2).
 -   Run via\
-    `./ospExampleViewerSg magnetic-512-volume.osp`
-
-
-290M triangle "Richtmyer-Meshkov" Iso-Surface
----------------------------------------------
-
-[![](demos/llnl-250/llnl-250-small.png)](demos/llnl-250/llnl-250.png)
-
-*Model courtesy Lawrence-Livermore National Labs (LLNL).*
-
-### Demo Highlights
-
--   Iso-surface of the 2048^3^ Richtmyer-Meshkov Instability simulation
-    performed by LLNL, iso-surface extracted through ParaView.
--   Detailed iso-surface has 290 million triangles.
--   Rendered using OSPRay's Ambient Occlusion renderer (`ao4`).
-
-### Instructions
-
--   Download
-    [llnl-2048-iso.tar.bz2](http://www.sdvis.org/ospray/download/demos/LLNLRichtmyerMeshkov/llnl-2048-iso.tar.bz2).
--   Run via\
-    `./ospExampleViewer llnl-2048-iso.xml`
-
-
-CSAFE Heptane Gas Data Set
---------------------------
-
-[![](demos/CSAFEHeptane/csafe-heptane-302-volume-thumbnail.jpg)](demos/CSAFEHeptane/csafe-heptane-302-volume.png)
-
-*Model courtesy of the Center for the Simulation of Accidental Fires and
-Explosions (CSAFE) at the Scientific Computing and Imaging Institute
-(SCI), University of Utah.*
-
-### Demo Highlights
-
--   Volume rendering of a 302^3^ data set containing a single time step
-    from a computational simulation of the combustion of heptane gas.
--   Rendered using OSPRay's ray cast volume renderer
-    (`raycast_volume_renderer`).
-
-### Instructions
-
--   Download
-    [csafe-heptane-302-volume.tar.bz2](http://www.sdvis.org/ospray/download/demos/CSAFEHeptane/csafe-heptane-302-volume.tar.bz2).
--   Run via\
-    `./ospExampleViewerSg csafe-heptane-302-volume.osp`
-
-
-"TACC Isotropic Turbulence" Volume Rendered
--------------------------------------------
-
-[![](demos/TACCIsotropicTurbulence/tacc-turbulence-256-volume-thumbnail.jpg)](demos/TACCIsotropicTurbulence/tacc-turbulence-256-volume.png)
-
-*Model courtesy of the Texas Advanced Computing Center (TACC), Texas A&M
-University, and Georgia Tech.*
-
-### Demo Highlights
-
--   Volume rendering of a 256^3^ data set containing a single time step
-    from a computational simulation of isotropic turbulence.
--   Rendered using OSPRay's ray cast volume renderer
-    (`raycast_volume_renderer`).
-
-### Instructions
-
--   Download
-    [tacc-turbulence-256-volume.tar.bz2](http://www.sdvis.org/ospray/download/demos/TACCIsotropicTurbulence/tacc-turbulence-256-volume.tar.bz2).
--   Run via\
-    `./ospExampleViewerSg tacc-turbulence-256-volume.osp`
+    `./ospExampleViewer magnetic-512-volume.osp`
 
 
 "FIU" Ground Water Simulation

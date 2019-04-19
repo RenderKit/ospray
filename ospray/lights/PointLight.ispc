@@ -62,7 +62,7 @@ Light_SampleRes PointLight_sample(const uniform Light* uniform super,
       res.dir = frame(res.dir) * localDir;
       res.pdf = uniformSampleConePDF(cosTheta);
       const float c = localDir.z;
-      res.dist = c*res.dist - sqrt(sqr(self->radius) - (1.f - c*c) * dist2);
+      res.dist = c*res.dist - sqrt_safe(sqr(self->radius) - (1.f - c*c) * dist2);
       // TODO scale radiance by actual distance
     } else { // inside sphere
       const vec3f localDir = cosineSampleHemisphere(s);

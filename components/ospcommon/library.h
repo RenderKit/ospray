@@ -26,7 +26,7 @@ namespace ospcommon {
   {
     public:
       /* opens a shared library */
-      Library(const std::string& name);
+      Library(const std::string& name, bool anchor = true);
       ~Library();
 
       /* returns address of a symbol from the library */
@@ -49,7 +49,7 @@ namespace ospcommon {
       ~LibraryRepository();
 
       /* add a library to the repo */
-      void add(const std::string& name);
+      void add(const std::string& name, bool anchor = true);
 
       /* returns address of a symbol from any library in the repo */
       void* getSymbol(const std::string& sym) const;
