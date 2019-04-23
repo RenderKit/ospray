@@ -7,7 +7,7 @@ images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix c
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
 images_fig := spot_light quad_light hdri_light
 images_svg := gitter_badge
-images_webonly := $(addprefix images/, VESTEC-Logo-web.png stingray.jpg)
+images_webonly := $(addprefix images/, VESTEC-Logo-web.png $(addsuffix .jpg, stingray $(addprefix teaser_, clouds cosmos hdospray materials moana rm tapestry)))
 scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))

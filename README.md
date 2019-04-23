@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.0.0 (devel) of OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
-information.
+This is release v2.0.0 (devel) of Intel® OSPRay. For changes and new
+features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
+for more information.
 
 OSPRay Overview
 ===============
@@ -643,9 +643,9 @@ void ospSetObject(OSPObject, const char *id, OSPObject object);
 void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
 // add scalar and vector integer and float parameters
-void ospSetf  (OSPObject, const char *id, float x);
+void ospSet1b (OSPObject, const char *id, int x);
 void ospSet1f (OSPObject, const char *id, float x);
-void ospSet1i (OSPObject, const char *id, int32_t x);
+void ospSet1i (OSPObject, const char *id, int x);
 void ospSet2f (OSPObject, const char *id, float x, float y);
 void ospSet2fv(OSPObject, const char *id, const float *xy);
 void ospSet2i (OSPObject, const char *id, int x, int y);
@@ -656,13 +656,6 @@ void ospSet3i (OSPObject, const char *id, int x, int y, int z);
 void ospSet3iv(OSPObject, const char *id, const int *xyz);
 void ospSet4f (OSPObject, const char *id, float x, float y, float z, float w);
 void ospSet4fv(OSPObject, const char *id, const float *xyzw);
-
-// additional functions to pass vector integer and float parameters in C++
-void ospSetVec2f(OSPObject, const char *id, const vec2f &v);
-void ospSetVec2i(OSPObject, const char *id, const vec2i &v);
-void ospSetVec3f(OSPObject, const char *id, const vec3f &v);
-void ospSetVec3i(OSPObject, const char *id, const vec3i &v);
-void ospSetVec4f(OSPObject, const char *id, const vec4f &v);
 ```
 
 Users can also remove parameters that have been explicitly set via an
@@ -879,8 +872,8 @@ anymore, but has to be transferred to OSPRay via
 
 ``` {.cpp}
 OSPError ospSetRegion(OSPVolume, void *source,
-                      const vec3i &regionCoords,
-                      const vec3i &regionSize);
+                      osp_vec3i regionCoords,
+                      osp_vec3i regionSize);
 ```
 
 The voxel data pointed to by `source` is copied into the given volume
@@ -1091,11 +1084,12 @@ like the structured volume equivalent, but they only modify the root
 ### Unstructured Volumes
 
 Unstructured volumes can have its topology and geometry freely defined.
-Geometry can be composed of tetrahedral, wedge, or hexahedral cell
-types. Data format optinally matches VTK and consists from multiple
-arrays: vertex positions and values, vertex indices, cell start indices,
-cell types, and cell values. An unstructured volume type is created by
-passing the type string “`unstructured_volume`” to `ospNewVolume`.
+Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid
+cell types. Used data format is compatible with VTK and consists from
+multiple arrays: vertex positions and values, vertex indices, cell start
+indices, cell types, and cell values. An unstructured volume type is
+created by passing the type string “`unstructured_volume`” to
+`ospNewVolume`.
 
 Sampled cell values can be specified either per-vertex (`vertex.value`)
 or per-cell (`cell.value`). If both arrays are set, `cell.value` takes
@@ -1107,14 +1101,19 @@ will be used for sampling when rendering, if specified. The index order
 for a tetrahedron is the same as `VTK_TETRA`: bottom triangle
 counterclockwise, then the top vertex.
 
+For hexahedral cells, each hexahedron is formed by a group of eight
+indices into the vertices and data values. Vertex ordering is the same
+as `VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top
+four counterclockwise.
+
 For wedge cells, each wedge is formed by a group of six indices into the
-vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
+vertices and data values. Vertex ordering is the same as `VTK_WEDGE`:
 three bottom vertices counterclockwise, then top three counterclockwise.
 
-For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertices and data value. Vertex ordering is the same as
-`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
-counterclockwise.
+For pyramid cells, each cell is formed by a group of five indices into
+the vertices and data values. Vertex ordering is the same as
+`VTK_PYRAMID`: four bottom vertices counterclockwise, then the top
+vertex.
 
 To maintain VTK data compatibility an index array may be specified via
 `indexPrefixed` array that allow vertex indices to be interleaved with
@@ -1183,8 +1182,8 @@ $n, id_1, ..., id_n, m, id_1, ..., id_m$.
 <tr class="even">
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">hexMethod</td>
-<td style="text-align: left;">planar</td>
-<td style="text-align: left;">“planar” (faster, assumes planar sides) or “nonplanar”</td>
+<td style="text-align: left;">fast</td>
+<td style="text-align: left;">hexahedron interpolation method, “fast” (rendering inaccuracies may appear if hex is not parallelepiped) or “iterative”</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">bool</td>
@@ -1660,16 +1659,80 @@ function](#transfer-function).
 
 : Parameters defining a slices geometry.
 
-### Instances
+GeometryInstances
+-----------------
 
-OSPRay supports instancing via a special type of geometry. Instances are
-created by transforming another given [world](#world)
-`worldToInstantiate` with the given affine transformation `transform` by
-calling
+Geometries in OSPRay are instantiated in a World to give them a
+world-space transform and addition appearance information. To create a
+geometry instance, call
 
 ``` {.cpp}
-OSPGeometry ospNewInstance(OSPWorld worldToInstantiate, const affine3f &transform);
+OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geometry);
 ```
+
+<table style="width:98%;">
+<caption>Parameters understood by GeometryInstance.</caption>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 22%" />
+<col style="width: 12%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">xfm.l.vx</td>
+<td style="text-align: left;">(1,0,0)</td>
+<td style="text-align: left;">First row of the world-space transformation matrix</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">xfm.l.vy</td>
+<td style="text-align: left;">(0,1,0)</td>
+<td style="text-align: left;">Second row of the world-space transformation matrix</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">xfm.l.vz</td>
+<td style="text-align: left;">(0,0,1)</td>
+<td style="text-align: left;">Third row of the world-space transformation matrix</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">vec3f</td>
+<td style="text-align: left;">xfm.p</td>
+<td style="text-align: left;">(0,0,0)</td>
+<td style="text-align: left;">Fourth row of the world-space transformation matrix</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">vec4f[]</td>
+<td style="text-align: left;">color</td>
+<td style="text-align: left;">NULL</td>
+<td style="text-align: left;"><a href="#data">data</a> array of per-primitive colors</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">uint32[]</td>
+<td style="text-align: left;">prim.materialID</td>
+<td style="text-align: left;">NULL</td>
+<td style="text-align: left;"><a href="#data">data</a> array of per-primitive colors</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OSPMaterial[]</td>
+<td style="text-align: left;">materialList</td>
+<td style="text-align: left;">NULL</td>
+<td style="text-align: left;"><a href="#data">data</a> array of per-primitive materials, which overrides any single material set by ’ospSetMaterial`. This is also the list optionally indexed by “prim.materialID” (otherwise it is per-primitive)</td>
+</tr>
+</tbody>
+</table>
+
+: Parameters understood by GeometryInstance.
 
 Renderer
 --------
@@ -1893,26 +1956,25 @@ black.
 
 Worlds are a container of scene data. They can hold the different
 [geometries](#geometries) and [volumes](#volumes) as well as references
-to (and [instances](#instances) of) other worlds. A world is associated
-with a single logical acceleration structure. To create an (empty) world
-call
+to (and \[instances\] of) other worlds. A world is associated with a
+single logical acceleration structure. To create an (empty) world call
 
 ``` {.cpp}
 OSPWorld ospNewWorld();
 ```
 
 The call returns an `OSPWorld` handle to the created world. To add an
-already created geometry or volume to a world use
+already created geometry instance or volume to a world use
 
 ``` {.cpp}
-void ospAddGeometry(OSPWorld, OSPGeometry);
+void ospAddGeometryInstance(OSPWorld, OSPGeometryInstance);
 void ospAddVolume(OSPWorld, OSPVolume);
 ```
 
 An existing geometry or volume can be removed from a world with
 
 ``` {.cpp}
-void ospRemoveGeometry(OSPWorld, OSPGeometry);
+void ospRemoveGeometryInstance(OSPWorld, OSPGeometryInstance);
 void ospRemoveVolume(OSPWorld, OSPVolume);
 ```
 
@@ -2186,7 +2248,7 @@ The handle can then be used to assign the material to a given geometry
 with
 
 ``` {.cpp}
-void ospSetMaterial(OSPGeometry, OSPMaterial);
+void ospSetMaterial(OSPGeometryInstance, OSPMaterial);
 ```
 
 #### OBJ Material
@@ -3102,15 +3164,17 @@ void ospPick(OSPPickResult *,
              OSPRenderer,
              OSPCamera,
              OSPWorld,
-             const osp_vec2f screenPos);
+             osp_vec2f screenPos);
 ```
 
 The result is returned in the provided `OSPPickResult` struct:
 
 ``` {.cpp}
 typedef struct {
-    vec3f position; // the position of the hit point (in world-space)
-    bool hit;       // whether or not a hit actually occurred
+    int hasHit;
+    osp_vec3f worldPosition;
+    OSPGeometryInstance geometryInstance;
+    uint32_t primID;
 } OSPPickResult;
 ```
 
@@ -3127,9 +3191,9 @@ information associated with pixels). To create a new framebuffer object
 of given size `size` (in pixels), color format, and channels use
 
 ``` {.cpp}
-OSPFrameBuffer ospNewFrameBuffer(const vec2i &size,
-                                 const OSPFrameBufferFormat format = OSP_FB_SRGBA,
-                                 const uint32_t frameBufferChannels = OSP_FB_COLOR);
+OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+                                 OSPFrameBufferFormat format = OSP_FB_SRGBA,
+                                 uint32_t frameBufferChannels = OSP_FB_COLOR);
 ```
 
 The parameter `format` describes the format the color buffer has *on the
@@ -3187,7 +3251,7 @@ access the stored pixel information – via
 
 ``` {.cpp}
 const void *ospMapFrameBuffer(OSPFrameBuffer,
-                              const OSPFrameBufferChannel = OSP_FB_COLOR);
+                              OSPFrameBufferChannel = OSP_FB_COLOR);
 ```
 
 Note that `OSP_FB_ACCUM` or `OSP_FB_VARIANCE` cannot be mapped. The
@@ -3225,6 +3289,17 @@ Note this value is only updated after synchronizing with
 `OSP_FRAME_FINISHED`, as further described in [asynchronous
 rendering](#asynchronous-rendering).
 
+The framebuffer takes a list of pixel operations to be applied to the
+image in sequence as an `OSPData`. The pixel operations will be run in
+the order they are in the array.
+
+| Type           | Name            | Default | Description                            |
+|:---------------|:----------------|:--------|:---------------------------------------|
+| OSPPixelOp\[\] | pixelOperations | NULL    | The ordered sequence of pixel          |
+|                |                 |         | operations to apply to rendered tiles. |
+
+: Parameters accepted by the framebuffer.
+
 ### Pixel Operation {#pixel-operation .unnumbered}
 
 Pixel operations are functions that are applied to every pixel that gets
@@ -3238,12 +3313,6 @@ OSPPixelOp ospNewPixelOp(const char *type);
 
 The call returns `NULL` if that type is not known, or else an
 `OSPPixelOp` handle to the created pixel operation.
-
-To set a pixel operation to the given framebuffer use
-
-``` {.cpp}
-void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
-```
 
 #### Tone Mapper {#tone-mapper .unnumbered}
 
