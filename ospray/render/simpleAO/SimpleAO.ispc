@@ -14,11 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "fb/FrameBuffer.ih"
-#include "camera/Camera.ih"
-#include "common/Ray.ih"
-#include "render/util.ih"
-#include "math/math.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/Renderer.ih"
@@ -26,74 +21,97 @@
 
 struct SimpleAO
 {
-  uniform Renderer super;
-  uniform int samplesPerFrame;
-  uniform float aoRayLength;
+  Renderer super;
+  int samplesPerFrame;
+  float aoRadius;
 };
 
-inline void shade_ao(SimpleAO *uniform self,
-                     FrameBuffer *uniform fb,
-                     World *uniform world,
-                     varying vec3f &color,
-                     varying float &alpha,
-                     const uniform int sampleCnt,
-                     const uniform int accumID,
-                     const Ray &ray,
-                     const int32 pixel_x,
-                     const int32 pixel_y)
+// Helper shading functions ///////////////////////////////////////////////////
+
+inline vec3f getSurfaceColor(DifferentialGeometry &dg)
 {
-  if (noHit(ray)) {
-    color = make_vec3f(self->super.bgColor);
-    alpha = self->super.bgColor.w;
-    return;
-  }
+  uniform SimpleAOMaterial *mat = ((uniform SimpleAOMaterial *)dg.material);
 
-  DifferentialGeometry dg;
-  postIntersect(world, dg, ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
-                |DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-
-  uniform SimpleAOMaterial *mat = ((uniform SimpleAOMaterial*)dg.material);
-  vec3f superColor = make_vec3f(1.f);
+  vec3f surfaceColor = make_vec3f(1.f);
   if (mat) {
-    foreach_unique(m in mat) {
-      superColor = m->Kd;
+    foreach_unique(m in mat)
+    {
+      surfaceColor = m->Kd;
       if (m->map_Kd) {
-        vec4f Kd_from_map = get4f(m->map_Kd,dg);
-        superColor = superColor * make_vec3f(Kd_from_map);
+        vec4f Kd_from_map = get4f(m->map_Kd, dg);
+        surfaceColor      = surfaceColor * make_vec3f(Kd_from_map);
       }
     }
   }
+
   // should be done in material:
-  superColor = superColor * make_vec3f(dg.color);
+  return surfaceColor * make_vec3f(dg.color);
+}
+
+inline float computeAO(const uniform SimpleAO *uniform self,
+                       const FrameBuffer *uniform fb,
+                       const World *uniform world,
+                       const varying vec3i &sampleID,
+                       const varying DifferentialGeometry &dg)
+{
+  const uniform int &sampleCnt = self->samplesPerFrame;
+  const uniform int accumID    = reduce_max(sampleID.z) * sampleCnt;
 
   // init TEA RNG //
   RandomTEA rng_state;
-  varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, 0x290374,(fb->size.x * pixel_y) + pixel_x);
+  varying RandomTEA *const uniform rng = &rng_state;
+  RandomTEA__Constructor(rng, 0x290374, (fb->size.x * sampleID.y) + sampleID.x);
   const vec2f rot = RandomTEA__getFloats(rng);
 
   int hits = 0;
-  const vec3f N = dg.Ns;
-  const linear3f localToWorld = frame(N);
+
+  const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton = HaltonSequence_get2D(sampleCnt * accumID + i);
-    const vec2f r = CranleyPattersonRotation(halton, rot);
+    const vec2f halton       = HaltonSequence_get2D(sampleCnt * accumID + i);
+    const vec2f r            = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
-    const vec3f ao_dir = localToWorld * local_ao_dir;
+    const vec3f ao_dir       = localToWorld * local_ao_dir;
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P, ao_dir, 0.0f, self->aoRayLength);
-    if (dot(ao_dir, N) < 0.05f || isOccluded(world, ao_ray))
+    setRay(ao_ray, dg.P, ao_dir, 0.0f, self->aoRadius);
+    if (dot(ao_dir, dg.Ns) < 0.05f || isOccluded(world, ao_ray))
       hits++;
   }
 
-  float diffuse = absf(dot(N,ray.dir));
-  color = superColor * make_vec3f(diffuse * (1.0f - hits/(float)sampleCnt));
-  alpha = 1.f;
-  return;
+  // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
+  // cancel
+  return 1.0f - hits / (float)sampleCnt;
 }
+
+inline vec4f computeShadedSurfaceColor(SimpleAO *uniform self,
+                                       FrameBuffer *uniform fb,
+                                       World *uniform world,
+                                       const ScreenSample &sample)
+{
+  DifferentialGeometry dg;
+  postIntersect(world,
+                dg,
+                sample.ray,
+                DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_MATERIALID |
+                    DG_COLOR | DG_TEXCOORD);
+
+  const vec3f surfaceColor = getSurfaceColor(dg);
+
+  float intensity = 1.f;
+  cif(self->samplesPerFrame > 0)
+  {
+    intensity = computeAO(self, fb, world, sample.sampleID, dg);
+  }
+  else
+  {
+    intensity = absf(dot(dg.Ns, sample.ray.dir));
+  }
+
+  return make_vec4f(surfaceColor * intensity, 1.f);
+}
+
+// Renderer callback //////////////////////////////////////////////////////////
 
 void SimpleAO_renderSample(Renderer *uniform _self,
                            FrameBuffer *uniform fb,
@@ -101,26 +119,23 @@ void SimpleAO_renderSample(Renderer *uniform _self,
                            void *uniform perFrameData,
                            varying ScreenSample &sample)
 {
-  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
+  uniform SimpleAO *uniform self = (uniform SimpleAO * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z = sample.ray.t;
 
-  const uniform int accumID =
-      reduce_max(sample.sampleID.z) * self->samplesPerFrame;
+  if (noHit(sample.ray)) {
+    sample.rgb   = make_vec3f(self->super.bgColor);
+    sample.alpha = self->super.bgColor.w;
+  } else {
+    const vec4f color = computeShadedSurfaceColor(self, fb, world, sample);
 
-  shade_ao(self,
-           fb,
-           world,
-           sample.rgb,
-           sample.alpha,
-           self->samplesPerFrame,
-           accumID,
-           sample.ray,
-           sample.sampleID.x,
-           sample.sampleID.y);
+    sample.rgb   = make_vec3f(color);
+    sample.alpha = color.w;
+  }
 }
 
+// SimpleAO C++ interface /////////////////////////////////////////////////////
 
 export void *uniform SimpleAO_create(void *uniform cppE)
 {
@@ -132,9 +147,10 @@ export void *uniform SimpleAO_create(void *uniform cppE)
 
 export void SimpleAO_set(void *uniform _self,
                          uniform int samplesPerFrame,
-                         uniform float aoRayLength)
+                         uniform float aoRadius)
 {
-  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
+  uniform SimpleAO *uniform self = (uniform SimpleAO * uniform) _self;
+
   self->samplesPerFrame = samplesPerFrame;
-  self->aoRayLength = aoRayLength;
+  self->aoRadius        = aoRadius;
 }

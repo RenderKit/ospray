@@ -15,45 +15,49 @@
 // ======================================================================== //
 
 // ospray
-#include "SimpleAO.h"
-#include "SimpleAOMaterial.h"
+#include "../Renderer.h"
 // ispc exports
 #include "SimpleAO_ispc.h"
 
 namespace ospray {
 
-  //! \brief Constructor
+  struct SimpleAO : public Renderer
+  {
+    SimpleAO(int defaultNumSamples = 1);
+    std::string toString() const override;
+    void commit() override;
+
+   private:
+    int numSamples{1};
+  };
+
+  // SimpleAO definitions /////////////////////////////////////////////////////
+
   SimpleAO::SimpleAO(int defaultNumSamples) : numSamples(defaultNumSamples)
   {
     setParam<std::string>("externalNameFromAPI", "ao");
-
     ispcEquivalent = ispc::SimpleAO_create(this);
   }
 
-  /*! \brief common function to help printf-debugging */
   std::string SimpleAO::toString() const
   {
     return "ospray::render::SimpleAO";
   }
 
-  /*! \brief commit the object's outstanding changes
-   *         (such as changed parameters etc) */
   void SimpleAO::commit()
   {
     Renderer::commit();
-
-    int   numSamples = getParam1i("aoSamples", 1);
-    float rayLength  = getParam1f("aoDistance", 1e20f);
-    ispc::SimpleAO_set(getIE(), numSamples, rayLength);
+    ispc::SimpleAO_set(getIE(),
+                       getParam1i("aoSamples", numSamples),
+                       getParam1f("aoRadius", 1e20f));
   }
 
   OSP_REGISTER_RENDERER(SimpleAO(4), ao);
 
-  OSP_REGISTER_RENDERER(SimpleAO(1),  ao1);
-  OSP_REGISTER_RENDERER(SimpleAO(2),  ao2);
-  OSP_REGISTER_RENDERER(SimpleAO(4),  ao4);
-  OSP_REGISTER_RENDERER(SimpleAO(8),  ao8);
+  OSP_REGISTER_RENDERER(SimpleAO(1), ao1);
+  OSP_REGISTER_RENDERER(SimpleAO(2), ao2);
+  OSP_REGISTER_RENDERER(SimpleAO(4), ao4);
+  OSP_REGISTER_RENDERER(SimpleAO(8), ao8);
   OSP_REGISTER_RENDERER(SimpleAO(16), ao16);
 
-} // ::ospray
-
+}  // namespace ospray
