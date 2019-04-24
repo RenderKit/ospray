@@ -24,6 +24,8 @@
 
 using namespace ospcommon;
 
+static std::string renderer_type = "scivis";
+
 namespace {
   OSPVolume createVolumeWithTF(const char *volumeName, const char *tfName)
   {
@@ -61,9 +63,11 @@ int main(int argc, const char **argv)
   if (initError != OSP_NO_ERROR)
     return initError;
 
-  // we must load the testing library explicitly on Windows to look up
-  // object creation functions
-  loadLibrary("ospray_testing");
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "-r" || arg == "--renderer")
+      renderer_type = argv[++i];
+  }
 
   // get OSPRay device
   OSPDevice ospDevice = ospGetCurrentDevice();
@@ -105,7 +109,7 @@ int main(int argc, const char **argv)
   OSPGeometryInstance instance = ospNewGeometryInstance(isoGeometry);
 
   // prepare material for iso geometry
-  OSPMaterial material = ospNewMaterial("scivis", "OBJMaterial");
+  OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
   ospSet3f(material, "Ks", .2f, .2f, .2f);
   ospCommit(material);
 
@@ -118,7 +122,7 @@ int main(int argc, const char **argv)
   ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("scivis");
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   // create and set lights
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");

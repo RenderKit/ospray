@@ -26,7 +26,7 @@
 
 using namespace ospcommon;
 
-static const std::string renderer_type = "scivis";
+static std::string renderer_type = "scivis";
 
 OSPGeometryInstance createGroundPlane()
 {
@@ -184,9 +184,11 @@ int main(int argc, const char **argv)
   if (initError != OSP_NO_ERROR)
     return initError;
 
-  // we must load the testing library explicitly on Windows to look up
-  // object creation functions
-  loadLibrary("ospray_testing");
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "-r" || arg == "--renderer")
+      renderer_type = argv[++i];
+  }
 
   // set an error callback to catch any OSPRay errors and exit the application
   ospDeviceSetErrorFunc(

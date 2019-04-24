@@ -26,6 +26,8 @@
 
 using namespace ospcommon;
 
+static std::string renderer_type = "pathtracer";
+
 OSPGeometryInstance createGroundPlane()
 {
   OSPGeometry planeGeometry = ospNewGeometry("quads");
@@ -156,7 +158,7 @@ OSPGeometryInstance createGroundPlane()
   ospRelease(planeGeometry);
 
   // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
+  OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
   ospCommit(material);
 
   ospSetMaterial(planeInstance, material);
@@ -182,9 +184,11 @@ int main(int argc, const char **argv)
   if (initError != OSP_NO_ERROR)
     return initError;
 
-  // we must load the testing library explicitly on Windows to look up
-  // object creation functions
-  loadLibrary("ospray_testing");
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "-r" || arg == "--renderer")
+      renderer_type = argv[++i];
+  }
 
   // set an error callback to catch any OSPRay errors and exit the application
   ospDeviceSetErrorFunc(
@@ -197,7 +201,8 @@ int main(int argc, const char **argv)
   OSPWorld world = ospNewWorld();
 
   // add in spheres geometry
-  OSPTestingGeometry spheres = ospTestingNewGeometry("spheres", "pathtracer");
+  OSPTestingGeometry spheres =
+      ospTestingNewGeometry("spheres", renderer_type.c_str());
   ospAddGeometryInstance(world, spheres.instance);
   ospRelease(spheres.geometry);
   ospRelease(spheres.instance);
@@ -212,7 +217,7 @@ int main(int argc, const char **argv)
   ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("pathtracer");
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);

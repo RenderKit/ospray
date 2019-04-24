@@ -24,7 +24,7 @@
 
 #include <imgui.h>
 
-static const std::string renderer_type = "pathtracer";
+static std::string renderer_type = "pathtracer";
 
 using namespace ospcommon;
 
@@ -374,9 +374,11 @@ int main(int argc, const char **argv)
   if (initError != OSP_NO_ERROR)
     return initError;
 
-  // we must load the testing library explicitly on Windows to look up
-  // object creation functions
-  loadLibrary("ospray_testing");
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "-r" || arg == "--renderer")
+      renderer_type = argv[++i];
+  }
 
   // set an error callback to catch any OSPRay errors and exit the application
   ospDeviceSetErrorFunc(
