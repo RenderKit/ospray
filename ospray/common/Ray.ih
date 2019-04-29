@@ -17,77 +17,69 @@
 #pragma once
 
 // ospray
-#include "../math/vec.ih"
-#include "../math/box.ih"
 #include "../math/AffineSpace.ih"
+#include "../math/box.ih"
+#include "../math/vec.ih"
 
-/*! \brief ospray ray class
-
-  This implement the base ospray ray class; it is 'derived'
-  from Embree's ray class, but can have additional members that embree
-  does not care about. For convenience we do not actually use the
-  embree's RTCRay class itself, and instead use our own ray class that
-  uses our vec3fs etc (and possibly adds new members). However, we
-  emulate the exact layout of embree's rtcray class, and therefore can
-  simply typecast it before calling embree's intersectors.
-
-  Since we do call embree's intersectors on this class the
-  layout of the class members HAS to (exactly!) match the layout of
-  emrbee's RTCRay class (as defined in
-  emrbee/include/embree2/rtcore_ray.isph). We can add additional
-  members that embree does not know about, and can can use our own
-  names and vector classes where approprite (ie, use our 'vec3f dir'
-  vs embrees 'float dx,dy,dz;') but there HAS to be a one-to-one
-  correspondence between what we store and what embree expects in its
-  'intersect' functions */
-struct Ray {
+// NOTE(jda) - this MUST match Embree's RayHit structure layout!
+struct Ray
+{
   /* ray input data */
-  vec3f org;  /*!< ray origin */
-  float t0;   /*!< start of valid ray interval */
+  vec3f org; /*!< ray origin */
+  float t0;  /*!< start of valid ray interval */
 
-  vec3f dir;  /*!< ray direction */
-  float time; //!< Time of this ray for motion blur
+  vec3f dir;   /*!< ray direction */
+  float time;  //!< Time of this ray for motion blur
 
-  float t;    /*!< end of valid ray interval, or distance to hit point after 'intersect' */
-  int32 mask; //!< Used to mask out objects during traversal
+  float t;     /*!< end of valid ray interval, or distance to hit point after
+                  'intersect' */
+  int32 mask;  //!< Used to mask out objects during traversal
   int32 rayID;
   int32 flags;
 
   /* hit data */
-  vec3f Ng;    /*! geometry normal. may or may not be set by geometry intersectors */
+  vec3f Ng; /*! geometry normal*/
 
-  float u;     //!< Barycentric u coordinate of hit
-  float v;     //!< Barycentric v coordinate of hit
+  float u;  //!< Barycentric u coordinate of hit
+  float v;  //!< Barycentric v coordinate of hit
 
   int primID;  //!< primitive ID
   int geomID;  //!< geometry ID
   int instID;  //!< instance ID
 };
 
-/*! returns whether a ray has hit anything or not */
+// Hit query functions ////////////////////////////////////////////////////////
+
 inline bool noHit(const Ray &ray)
-{ return ray.geomID == RTC_INVALID_GEOMETRY_ID; }
-
-/*! returns whether a ray has hit anything or not */
-inline bool hadHit(const Ray &ray)
-{ return !noHit(ray); }
-
-/*! initialize a new ray with given parameters */
-inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
-                   const float t0, const float t1, const float time = 0.f)
 {
-  ray.org = ray_org;
-  ray.dir = ray_dir;
-  ray.t0  = t0;
-  ray.t   = t1;
-  ray.time = time;
-  ray.mask = -1;
+  return ray.geomID == RTC_INVALID_GEOMETRY_ID;
+}
+
+inline bool hadHit(const Ray &ray)
+{
+  return !noHit(ray);
+}
+
+// Ray initialization /////////////////////////////////////////////////////////
+
+inline void setRay(Ray &ray,
+                   const vec3f &ray_org,
+                   const vec3f &ray_dir,
+                   const float t0,
+                   const float t1,
+                   const float time = 0.f)
+{
+  ray.org    = ray_org;
+  ray.dir    = ray_dir;
+  ray.t0     = t0;
+  ray.t      = t1;
+  ray.time   = time;
+  ray.mask   = -1;
   ray.geomID = -1;
   ray.primID = -1;
   ray.instID = -1;
 }
 
-/*! initialize a new ray with given parameters */
 inline void setRay(Ray &ray,
                    const vec3f &ray_org,
                    const vec3f &ray_dir,
@@ -96,67 +88,65 @@ inline void setRay(Ray &ray,
   setRay(ray, ray_org, ray_dir, 0.f, inf, time);
 }
 
-/*! initialize a new ray with given parameters */
 inline void setRay(Ray &ray, const float t0, const float t1)
 {
   setRay(ray, ray.org, ray.dir, t0, t1, ray.time);
 }
 
-/*! helper function that performs a ray-plane test */
-inline float intersectPlane(const Ray& ray, const uniform vec4f& plane)
+// Ray intersection helpers ///////////////////////////////////////////////////
+
+inline float intersectPlane(const Ray &ray, const uniform vec4f &plane)
 {
   const uniform vec3f normal = make_vec3f(plane);
   return (plane.w - dot(ray.org, normal)) * rcpf(dot(ray.dir, normal));
 }
 
-/*! helper function that performs a ray-box test */
 inline void intersectBox(const vec3f &org,
                          const vec3f &dir,
-                         const uniform box3f& box,
-                         float& t0,
-                         float& t1)
+                         const uniform box3f &box,
+                         float &t0,
+                         float &t1)
 {
   const vec3f mins = (box.lower - org) * rcp_safe(dir);
   const vec3f maxs = (box.upper - org) * rcp_safe(dir);
-  t0 = reduce_max(min(mins, maxs));
-  t1 = reduce_min(max(mins, maxs));
+  t0               = reduce_max(min(mins, maxs));
+  t1               = reduce_min(max(mins, maxs));
 }
 
-/*! helper function that performs a ray-box test */
-inline void intersectBox(const Ray& ray,
-                         const uniform box3f& box,
-                         float& t0,
-                         float& t1)
+inline void intersectBox(const Ray &ray,
+                         const uniform box3f &box,
+                         float &t0,
+                         float &t1)
 {
   const vec3f mins = (box.lower - ray.org) * rcp_safe(ray.dir);
   const vec3f maxs = (box.upper - ray.org) * rcp_safe(ray.dir);
-  t0 = reduce_max(make_vec4f(min(mins, maxs), ray.t0));
-  t1 = reduce_min(make_vec4f(max(mins, maxs), ray.t));
+  t0               = reduce_max(make_vec4f(min(mins, maxs), ray.t0));
+  t1               = reduce_min(make_vec4f(max(mins, maxs), ray.t));
 }
 
-/*! helper function that performs a ray-box test */
-inline void intersectBox(const Ray& ray,
-                         const uniform box3fa& box,
-                         float& t0,
-                         float& t1)
+inline void intersectBox(const Ray &ray,
+                         const uniform box3fa &box,
+                         float &t0,
+                         float &t1)
 {
   intersectBox(ray, make_box3f(box), t0, t1);
 }
 
-inline void rayTransform(Ray &ray,
-			 const uniform AffineSpace3f &xfm)
+// Ray transformation helpers /////////////////////////////////////////////////
+
+inline void transformRay(Ray &ray, const uniform AffineSpace3f &xfm)
 {
-    // numbers in original coordinate
-    const vec3f t0 = ray.org + ray.t0 * ray.dir;
-    const vec3f t  = ray.org + ray.t  * ray.dir;
-    // numbers for transformed ray
-    // -- direction
-    ray.org = xfmPoint (xfm, ray.org);
-    ray.dir = xfmVector(xfm, ray.dir);
-    const vec3f rcp_dir = rcp(ray.dir);
-    // -- starting and ending positions
-    ray.t0 = reduce_max((xfmPoint(xfm, t0) - ray.org) * rcp_dir);
-    ray.t  = reduce_min((xfmPoint(xfm,  t) - ray.org) * rcp_dir);
-    // -- Ng
-    ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
+  // numbers in original coordinate
+  const vec3f t0 = ray.org + ray.t0 * ray.dir;
+  const vec3f t  = ray.org + ray.t * ray.dir;
+  // numbers for transformed ray
+  // -- direction
+  ray.org             = xfmPoint(xfm, ray.org);
+  ray.dir             = xfmVector(xfm, ray.dir);
+  const vec3f rcp_dir = rcp(ray.dir);
+  // -- starting and ending positions
+  ray.t0 = reduce_max((xfmPoint(xfm, t0) - ray.org) * rcp_dir);
+  ray.t  = reduce_min((xfmPoint(xfm, t) - ray.org) * rcp_dir);
+  // -- Ng
+  ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
