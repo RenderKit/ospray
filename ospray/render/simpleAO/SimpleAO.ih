@@ -14,49 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray
-#include "../Renderer.h"
-// ispc exports
-#include "SimpleAO_ispc.h"
+#pragma once
 
-namespace ospray {
+#include "render/Renderer.ih"
 
-  struct SimpleAO : public Renderer
-  {
-    SimpleAO(int defaultNumSamples = 1);
-    std::string toString() const override;
-    void commit() override;
-
-   private:
-    int numSamples{1};
-  };
-
-  // SimpleAO definitions /////////////////////////////////////////////////////
-
-  SimpleAO::SimpleAO(int defaultNumSamples) : numSamples(defaultNumSamples)
-  {
-    setParam<std::string>("externalNameFromAPI", "ao");
-    ispcEquivalent = ispc::SimpleAO_create(this);
-  }
-
-  std::string SimpleAO::toString() const
-  {
-    return "ospray::render::SimpleAO";
-  }
-
-  void SimpleAO::commit()
-  {
-    Renderer::commit();
-    ispc::SimpleAO_set(getIE(),
-                       getParam1i("aoSamples", numSamples),
-                       getParam1f("aoRadius", 1e20f));
-  }
-
-  OSP_REGISTER_RENDERER(SimpleAO, ao);
-  OSP_REGISTER_RENDERER(SimpleAO(1), ao1);
-  OSP_REGISTER_RENDERER(SimpleAO(2), ao2);
-  OSP_REGISTER_RENDERER(SimpleAO(4), ao4);
-  OSP_REGISTER_RENDERER(SimpleAO(8), ao8);
-  OSP_REGISTER_RENDERER(SimpleAO(16), ao16);
-
-}  // namespace ospray
+struct SimpleAO
+{
+  Renderer super;
+  int samplesPerFrame;
+  float aoRadius;
+};
