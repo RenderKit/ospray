@@ -18,15 +18,8 @@
 
 #include "SimpleAO.ih"
 
-vec3f getSurfaceColor(const DifferentialGeometry &dg);
-
-float computeAO(const uniform SimpleAO *uniform self,
-                const FrameBuffer *uniform fb,
-                const World *uniform world,
-                const varying vec3i &sampleID,
-                const varying DifferentialGeometry &dg);
-
 vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
                                 const FrameBuffer *uniform fb,
                                 const World *uniform world,
-                                const ScreenSample &sample);
+                                const ScreenSample &sample,
+                                DifferentialGeometry &dg);

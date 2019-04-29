@@ -29,6 +29,7 @@ namespace ospray {
 
    private:
     vec3f Kd;
+    float d;
     Ref<Texture2D> map_Kd;
   };
 
@@ -42,10 +43,11 @@ namespace ospray {
   void SimpleAOMaterial::commit()
   {
     Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
-    map_Kd =
-        (Texture2D *)getParamObject("map_Kd", getParamObject("map_kd"));
+    d  = getParam1f("d", 1.f);
+    map_Kd = (Texture2D *)getParamObject("map_Kd", getParamObject("map_kd"));
     ispc::SimpleAOMaterial_set(getIE(),
                                (const ispc::vec3f &)Kd,
+                               d,
                                map_Kd ? map_Kd->getIE() : nullptr);
   }
 

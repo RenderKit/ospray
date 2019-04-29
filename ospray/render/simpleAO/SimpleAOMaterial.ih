@@ -16,12 +16,14 @@
 
 #pragma once
 
-#include "math/vec.ih"
 #include "common/Material.ih"
+#include "math/vec.ih"
 #include "texture/Texture2D.ih"
 
-struct SimpleAOMaterial {
+struct SimpleAOMaterial
+{
   Material super;
   vec3f Kd;
-  uniform Texture2D *uniform map_Kd;
+  float d;
+  Texture2D *map_Kd;
 };

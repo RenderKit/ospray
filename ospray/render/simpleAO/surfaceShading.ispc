@@ -21,11 +21,14 @@
 #include "SimpleAOMaterial.ih"
 #include "surfaceShading.ih"
 
-vec3f getSurfaceColor(const DifferentialGeometry &dg)
+// Helper shading functions ///////////////////////////////////////////////////
+
+inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 {
   const SimpleAOMaterial *mat = (const SimpleAOMaterial *)dg.material;
 
   vec3f surfaceColor = make_vec3f(1.f);
+  float opacity      = 1.f;
   if (mat) {
     foreach_unique(m in mat)
     {
@@ -34,18 +37,18 @@ vec3f getSurfaceColor(const DifferentialGeometry &dg)
         vec4f Kd_from_map = get4f(m->map_Kd, dg);
         surfaceColor      = surfaceColor * make_vec3f(Kd_from_map);
       }
+      opacity = m->d;
     }
   }
 
-  // should be done in material:
-  return surfaceColor * make_vec3f(dg.color);
+  return make_vec4f(surfaceColor * make_vec3f(dg.color), opacity);
 }
 
-float computeAO(const uniform SimpleAO *uniform self,
-                const FrameBuffer *uniform fb,
-                const World *uniform world,
-                const varying vec3i &sampleID,
-                const varying DifferentialGeometry &dg)
+inline float computeAO(const uniform SimpleAO *uniform self,
+                       const FrameBuffer *uniform fb,
+                       const World *uniform world,
+                       const varying vec3i &sampleID,
+                       const varying DifferentialGeometry &dg)
 {
   const uniform int &sampleCnt = self->samplesPerFrame;
   const uniform int accumID    = reduce_max(sampleID.z) * sampleCnt;
@@ -77,19 +80,26 @@ float computeAO(const uniform SimpleAO *uniform self,
   return 1.0f - hits / (float)sampleCnt;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
                                 const FrameBuffer *uniform fb,
                                 const World *uniform world,
-                                const ScreenSample &sample)
+                                const ScreenSample &sample,
+                                DifferentialGeometry &dg)
 {
-  DifferentialGeometry dg;
   postIntersect(world,
                 dg,
                 sample.ray,
                 DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_MATERIALID |
                     DG_COLOR | DG_TEXCOORD);
 
-  const vec3f surfaceColor = getSurfaceColor(dg);
+  const vec4f surfaceColor = getSurfaceColor(dg);
+
+  const vec3f color   = make_vec3f(surfaceColor);
+  const float opacity = surfaceColor.w;
 
   float intensity = 1.f;
   cif(self->samplesPerFrame > 0)
@@ -100,6 +110,7 @@ vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
   {
     intensity = absf(dot(dg.Ns, sample.ray.dir));
   }
+  intensity *= opacity;
 
-  return make_vec4f(surfaceColor * intensity, 1.f);
+  return make_vec4f(color * (self->aoIntensity * intensity), opacity);
 }

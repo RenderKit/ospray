@@ -96,6 +96,12 @@ inline void setRay(Ray &ray,
   setRay(ray, ray_org, ray_dir, 0.f, inf, time);
 }
 
+/*! initialize a new ray with given parameters */
+inline void setRay(Ray &ray, const float t0, const float t1)
+{
+  setRay(ray, ray.org, ray.dir, t0, t1, ray.time);
+}
+
 /*! helper function that performs a ray-plane test */
 inline float intersectPlane(const Ray& ray, const uniform vec4f& plane)
 {

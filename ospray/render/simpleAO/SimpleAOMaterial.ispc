@@ -18,17 +18,21 @@
 
 export void *uniform SimpleAOMaterial_create(void *uniform cppE)
 {
-  uniform SimpleAOMaterial *uniform mat = uniform new uniform SimpleAOMaterial;
+  SimpleAOMaterial *uniform mat = uniform new uniform SimpleAOMaterial;
+
   mat->super.cppEquivalent = cppE;
+
   return mat;
 }
 
 export void SimpleAOMaterial_set(void *uniform _mat,
                                  const uniform vec3f &Kd,
+                                 uniform float d,
                                  void *uniform _map_Kd)
 {
-  uniform SimpleAOMaterial *uniform mat =
-      (uniform SimpleAOMaterial *uniform)_mat;
-  mat->Kd = Kd;
-  mat->map_Kd = (uniform Texture2D *uniform)_map_Kd;
+  SimpleAOMaterial *uniform mat = (SimpleAOMaterial * uniform) _mat;
+
+  mat->Kd     = Kd;
+  mat->map_Kd = (uniform Texture2D * uniform) _map_Kd;
+  mat->d      = d;
 }

@@ -49,7 +49,8 @@ namespace ospray {
     Renderer::commit();
     ispc::SimpleAO_set(getIE(),
                        getParam1i("aoSamples", numSamples),
-                       getParam1f("aoRadius", 1e20f));
+                       getParam1f("aoRadius", 1e20f),
+                       getParam1f("aoIntensity", 1.f));
   }
 
   OSP_REGISTER_RENDERER(SimpleAO, ao);

@@ -27,19 +27,43 @@ void SimpleAO_renderSample(Renderer *uniform _self,
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO * uniform) _self;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
+  vec4f outputColor = make_vec4f(0.f);
 
-  if (noHit(sample.ray)) {
-    sample.rgb   = make_vec3f(self->super.bgColor);
-    sample.alpha = self->super.bgColor.w;
-    return;
+  uniform bool firstHit       = true;
+  const float originalRayTFar = sample.ray.t;
+
+  while (outputColor.w < 0.99f) {
+    traceRay(world, sample.ray);
+
+    cif(firstHit)
+    {
+      sample.z = sample.ray.t;
+
+      if (noHit(sample.ray)) {
+        sample.rgb   = make_vec3f(self->super.bgColor);
+        sample.alpha = self->super.bgColor.w;
+        return;
+      }
+    }
+
+    DifferentialGeometry dg;
+
+    const vec4f color = computeShadedSurfaceColor(self, fb, world, sample, dg);
+
+    cif (firstHit) {
+      sample.albedo = make_vec3f(color);
+      sample.normal = dg.Ns;
+    }
+
+    outputColor = outputColor + (1.0f - outputColor.w) * color;
+
+    setRay(sample.ray, sample.ray.t + dg.epsilon, originalRayTFar);
+
+    firstHit = false;
   }
 
-  const vec4f color = computeShadedSurfaceColor(self, fb, world, sample);
-
-  sample.rgb   = make_vec3f(color);
-  sample.alpha = color.w;
+  sample.rgb   = make_vec3f(outputColor);
+  sample.alpha = outputColor.w;
 }
 
 // SimpleAO C++ interface /////////////////////////////////////////////////////
@@ -54,10 +78,12 @@ export void *uniform SimpleAO_create(void *uniform cppE)
 
 export void SimpleAO_set(void *uniform _self,
                          uniform int samplesPerFrame,
-                         uniform float aoRadius)
+                         uniform float aoRadius,
+                         uniform float aoIntensity)
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO * uniform) _self;
 
   self->samplesPerFrame = samplesPerFrame;
   self->aoRadius        = aoRadius;
+  self->aoIntensity     = aoIntensity;
 }

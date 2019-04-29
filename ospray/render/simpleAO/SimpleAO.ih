@@ -23,4 +23,5 @@ struct SimpleAO
   Renderer super;
   int samplesPerFrame;
   float aoRadius;
+  float aoIntensity;
 };
