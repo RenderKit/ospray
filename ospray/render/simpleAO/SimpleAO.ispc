@@ -40,20 +40,18 @@ void SimpleAO_renderSample(Renderer *uniform _self,
       sample.z = sample.ray.t;
 
       if (noHit(sample.ray)) {
-        sample.rgb   = make_vec3f(self->super.bgColor);
-        sample.alpha = self->super.bgColor.w;
+        sample.rgb    = make_vec3f(self->super.bgColor);
+        sample.albedo = sample.rgb;
+        sample.normal = negate(sample.ray.dir);
+        sample.alpha  = self->super.bgColor.w;
         return;
       }
     }
 
     DifferentialGeometry dg;
 
-    const vec4f color = computeShadedSurfaceColor(self, fb, world, sample, dg);
-
-    cif (firstHit) {
-      sample.albedo = make_vec3f(color);
-      sample.normal = dg.Ns;
-    }
+    const vec4f color =
+        computeShadedSurfaceColor(self, fb, world, firstHit, sample, dg);
 
     outputColor = outputColor + (1.0f - outputColor.w) * color;
 

@@ -87,7 +87,8 @@ inline float computeAO(const uniform SimpleAO *uniform self,
 vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
                                 const FrameBuffer *uniform fb,
                                 const World *uniform world,
-                                const ScreenSample &sample,
+                                const uniform bool firstHit,
+                                ScreenSample &sample,
                                 DifferentialGeometry &dg)
 {
   postIntersect(world,
@@ -102,6 +103,7 @@ vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
   const float opacity = surfaceColor.w;
 
   float intensity = 1.f;
+
   cif(self->samplesPerFrame > 0)
   {
     intensity = computeAO(self, fb, world, sample.sampleID, dg);
@@ -110,7 +112,14 @@ vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
   {
     intensity = absf(dot(dg.Ns, sample.ray.dir));
   }
+
   intensity *= opacity;
+
+  cif(firstHit)
+  {
+    sample.albedo = color;
+    sample.normal = dg.Ns;
+  }
 
   return make_vec4f(color * (self->aoIntensity * intensity), opacity);
 }
