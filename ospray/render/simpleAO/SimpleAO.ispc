@@ -17,7 +17,7 @@
 #include "render/Renderer.ih"
 // ao renderer
 #include "SimpleAO.ih"
-#include "surfaceShading.ih"
+#include "surfaces.ih"
 
 void SimpleAO_renderSample(Renderer *uniform _self,
                            FrameBuffer *uniform fb,

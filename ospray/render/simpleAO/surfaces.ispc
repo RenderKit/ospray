@@ -19,7 +19,7 @@
 #include "math/sampling.ih"
 // SimpleAO renderer
 #include "SimpleAOMaterial.ih"
-#include "surfaceShading.ih"
+#include "surfaces.ih"
 
 // Helper shading functions ///////////////////////////////////////////////////
 
