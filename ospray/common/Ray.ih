@@ -20,6 +20,10 @@
 #include "../math/AffineSpace.ih"
 #include "../math/box.ih"
 #include "../math/vec.ih"
+// embree
+#include "embree3/rtcore.isph"
+
+struct VolumeInstance;
 
 // NOTE(jda) - this MUST match Embree's RayHit structure layout!
 struct Ray
@@ -46,6 +50,12 @@ struct Ray
   int primID;  //!< primitive ID
   int geomID;  //!< geometry ID
   int instID;  //!< instance ID
+};
+
+struct EmbreeIntersectionContext
+{
+  RTCIntersectContext ectx;
+  void *uniform userPtr;
 };
 
 // Hit query functions ////////////////////////////////////////////////////////
@@ -149,4 +159,21 @@ inline void transformRay(Ray &ray, const uniform AffineSpace3f &xfm)
   ray.t  = reduce_min((xfmPoint(xfm, t) - ray.org) * rcp_dir);
   // -- Ng
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
+}
+
+// Volume hit structure ///////////////////////////////////////////////////////
+
+struct VolumeInterval
+{
+  bool hasInterval;
+  VolumeInstance *volumeInstance;
+  vec2f interval;
+};
+
+inline void initVolumeInterval(VolumeInterval &hit)
+{
+  hit.hasInterval    = false;
+  hit.volumeInstance = NULL;
+  hit.interval.x     = inf;
+  hit.interval.y     = -inf;
 }

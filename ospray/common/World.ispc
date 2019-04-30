@@ -27,10 +27,12 @@ export void *uniform World_create(void *uniform cppE)
   World *uniform world = uniform new World;
 
   world->cppEquivalent     = cppE;
-  world->embreeSceneHandle = NULL;
   world->geometryInstances = NULL;
   world->volumes           = NULL;
   world->volumeInstances   = NULL;
+
+  world->embreeSceneHandleGeometries = NULL;
+  world->embreeSceneHandleVolumes    = NULL;
 
   return (void *uniform)world;
 }
@@ -54,12 +56,17 @@ export void World_init(void *uniform _world,
                        uniform int32 numVolumeInstances)
 {
   uniform World *uniform world = (uniform World * uniform) _world;
-  if (world->embreeSceneHandle)
-    rtcReleaseScene(world->embreeSceneHandle);
+  if (world->embreeSceneHandleGeometries)
+    rtcReleaseScene(world->embreeSceneHandleGeometries);
+  if (world->embreeSceneHandleVolumes)
+    rtcReleaseScene(world->embreeSceneHandleVolumes);
 
-  world->embreeSceneHandle = rtcNewScene((RTCDevice)embreeDevice);
+  world->embreeSceneHandleGeometries = rtcNewScene((RTCDevice)embreeDevice);
+  world->embreeSceneHandleVolumes    = rtcNewScene((RTCDevice)embreeDevice);
 
-  rtcSetSceneFlags(world->embreeSceneHandle,
+  rtcSetSceneFlags(world->embreeSceneHandleGeometries,
+                   (uniform RTCSceneFlags)embreeSceneFlags);
+  rtcSetSceneFlags(world->embreeSceneHandleVolumes,
                    (uniform RTCSceneFlags)embreeSceneFlags);
 
   if (world->geometryInstances)
@@ -95,10 +102,16 @@ export void World_setBounds(void *uniform _world, box3f *uniform bounds)
   world->bounds        = *bounds;
 }
 
-export void *uniform World_getEmbreeSceneHandle(void *uniform _world)
+export void *uniform World_getEmbreeSceneHandleGeometries(void *uniform _world)
 {
   World *uniform world = (World * uniform) _world;
-  return (void *uniform)world->embreeSceneHandle;
+  return (void *uniform)world->embreeSceneHandleGeometries;
+}
+
+export void *uniform World_getEmbreeSceneHandleVolumes(void *uniform _world)
+{
+  World *uniform world = (World * uniform) _world;
+  return (void *uniform)world->embreeSceneHandleVolumes;
 }
 
 export void World_setGeometryInstance(void *uniform _world,

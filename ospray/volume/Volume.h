@@ -16,13 +16,16 @@
 
 #pragma once
 
+#include "api/ISPCDevice.h"
 #include "common/Managed.h"
+// embree
+#include "embree3/rtcore.h"
 
 namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   {
-    virtual ~Volume() override = default;
+    virtual ~Volume() override;
 
     virtual std::string toString() const override;
 
@@ -35,9 +38,14 @@ namespace ospray {
                           const vec3i &count) = 0;
 
     box3f bounds{empty};
+
+    RTCGeometry embreeGeometry{nullptr};
+
+   private:
+    void createEmbreeGeometry();
   };
 
 #define OSP_REGISTER_VOLUME(InternalClass, external_name) \
   OSP_REGISTER_OBJECT(::ospray::Volume, volume, InternalClass, external_name)
 
-} // ::ospray
+}  // namespace ospray

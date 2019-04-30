@@ -24,10 +24,12 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE VolumeInstance : public ManagedObject
   {
     VolumeInstance(Volume *geometry);
-    virtual ~VolumeInstance() override = default;
+    virtual ~VolumeInstance() override;
     virtual std::string toString() const override;
 
     virtual void commit() override;
+
+    RTCGeometry embreeGeometryHandle() const;
 
     box3f bounds() const;
 
@@ -40,6 +42,10 @@ namespace ospray {
     box3f instanceBounds;
     AffineSpace3f instanceXfm;
     Ref<Volume> instancedVolume;
+
+    // Embree information
+    RTCScene embreeSceneHandle{nullptr};
+    RTCGeometry embreeInstanceGeometry{nullptr};
   };
 
 }  // namespace ospray

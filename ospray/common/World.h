@@ -56,7 +56,8 @@ namespace ospray {
     VolumeInstanceVector volumeInstances;
 
     //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandle{nullptr};
+    RTCScene embreeSceneHandleGeometries{nullptr};
+    RTCScene embreeSceneHandleVolumes{nullptr};
     box3f bounds;
 
     bool useEmbreeDynamicSceneFlag{true};

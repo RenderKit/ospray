@@ -21,46 +21,36 @@
 #include "../geometry/GeometryInstance.ih"
 #include "../volume/VolumeInstance.ih"
 
-// embree stuff
-#include "embree3/rtcore.isph"
-
 extern "C" RTCDevice uniform ispc_embreeDevice();
 
 struct World
 {
-  /*! the scene handle we can use to tell embree to trace rays against this scene */
-  uniform RTCScene embreeSceneHandle;
-
-  /*! pointer to the c++-equivalent class of this entity */
   void *cppEquivalent;
+
+  uniform RTCScene embreeSceneHandleGeometries;
 
   uniform GeometryInstance *uniform *uniform geometryInstances;
   uniform int32 geometryInstanceCount;
 
-  //! volumes contained in the model
   uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
 
   uniform VolumeInstance *uniform *uniform volumeInstances;
   uniform int32 volumeInstanceCount;
 
-  uniform box3f bounds;
-};
+  uniform RTCScene embreeSceneHandleVolumes;
 
-struct UserIntersectionContext
-{
-  RTCIntersectContext ectx;
-  void *uniform userPtr;
+  uniform box3f bounds;
 };
 
 inline void traceRay(const World *uniform model,
                      varying Ray &ray,
                      void *uniform userPtr)
 {
-  uniform UserIntersectionContext context;
+  uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = userPtr;
-  rtcIntersectV(model->embreeSceneHandle,
+  rtcIntersectV(model->embreeSceneHandleGeometries,
                 &context.ectx,
                 (varying RTCRayHit* uniform)&ray);
 }
@@ -75,10 +65,10 @@ inline bool isOccluded(const World *uniform model,
                        varying Ray &ray,
                        void *uniform userPtr)
 {
-  uniform UserIntersectionContext context;
+  uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = userPtr;
-  rtcOccludedV(model->embreeSceneHandle,
+  rtcOccludedV(model->embreeSceneHandleGeometries,
                &context.ectx,
                (varying RTCRay* uniform)&ray);
   return ray.t < ray.t0;
@@ -87,6 +77,21 @@ inline bool isOccluded(const World *uniform model,
 inline bool isOccluded(const World *uniform model, varying Ray &ray)
 {
   return isOccluded(model, ray, NULL);
+}
+
+inline void traceVolumeRay(World *uniform model,
+                           varying Ray &ray,
+                           VolumeInterval &interval)
+{
+  uniform EmbreeIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+  context.userPtr = &interval;
+  rtcIntersectV(model->embreeSceneHandleVolumes,
+                &context.ectx,
+                (varying RTCRayHit* uniform)&ray);
+
+  if (interval.hasInterval)
+    interval.volumeInstance = model->volumeInstances[ray.instID];
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of

@@ -16,6 +16,53 @@
 
 #include "volume/Volume.ih"
 
+unmasked void Volume_embreeBounds(
+    const RTCBoundsFunctionArguments *uniform args)
+{
+  Volume *uniform self = (Volume * uniform) args->geometryUserPtr;
+  box3fa *uniform out  = (box3fa * uniform) args->bounds_o;
+
+  *out = make_box3fa(self->boundingBox);
+}
+
+unmasked void Volume_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args)
+{
+  // make sure to set the mask
+  if (!args->valid[programIndex])
+    return;
+
+  Volume *uniform self     = (Volume * uniform) args->geometryUserPtr;
+  varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
+
+  EmbreeIntersectionContext *uniform ctx =
+      (EmbreeIntersectionContext * uniform) args->context;
+
+  varying VolumeInterval *uniform vInterval =
+      (varying VolumeInterval * uniform) ctx->userPtr;
+
+  uniform int primID = args->primID;
+
+  box3f *uniform box = &self->boundingBox;
+  vec2f t;
+  intersectBox(ray->org, ray->dir, *box, t.x, t.y);
+
+  const bool hit = t.x < t.y && ((t.x > ray->t0 && t.x < ray->t) ||
+                                 (t.y > ray->t0 && t.y < ray->t));
+
+  vInterval->hasInterval = hit;
+
+  if (hit) {
+    ray->instID = args->context->instID[0];
+    ray->geomID = 0;
+    ray->primID = 0;
+
+    vInterval->hasInterval = true;
+    vInterval->interval.x  = t.x;
+    vInterval->interval.y  = t.y;
+  }
+}
+
 void Volume_Constructor(Volume *uniform self, void *uniform cppEquivalent)
 {
   self->cppEquivalent = cppEquivalent;
@@ -45,6 +92,7 @@ export void Volume_getBoundingBox(uniform box3f *uniform ret,
 }
 
 export void Volume_set(void *uniform _self,
+                       void *uniform _embreeGeometry,
                        uniform bool gradientShading,
                        uniform bool preIntegration,
                        uniform bool singleShade,
@@ -76,4 +124,14 @@ export void Volume_set(void *uniform _self,
   self->volumeClippingBox       = clippingBox;
   self->xfm                     = xfm;
   self->rcp_xfm                 = rcp_xfm;
+
+  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
+
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryUserPrimitiveCount(geom, 1);
+  rtcSetGeometryBoundsFunction(
+      geom, (uniform RTCBoundsFunction)&Volume_embreeBounds, self);
+  rtcSetGeometryIntersectFunction(
+      geom, (uniform RTCIntersectFunctionN)&Volume_intersect_kernel);
+  rtcCommitGeometry(geom);
 }

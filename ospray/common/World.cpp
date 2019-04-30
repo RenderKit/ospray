@@ -36,8 +36,10 @@ namespace ospray {
 
   World::~World()
   {
-    if (embreeSceneHandle)
-      rtcReleaseScene(embreeSceneHandle);
+    if (embreeSceneHandleGeometries)
+      rtcReleaseScene(embreeSceneHandleGeometries);
+    if (embreeSceneHandleVolumes)
+      rtcReleaseScene(embreeSceneHandleVolumes);
 
     ispc::World_cleanup(getIE());
   }
@@ -75,7 +77,10 @@ namespace ospray {
                      volume.size(),
                      volumeInstances.size());
 
-    embreeSceneHandle = (RTCScene)ispc::World_getEmbreeSceneHandle(getIE());
+    embreeSceneHandleGeometries =
+        (RTCScene)ispc::World_getEmbreeSceneHandleGeometries(getIE());
+    embreeSceneHandleVolumes =
+        (RTCScene)ispc::World_getEmbreeSceneHandleVolumes(getIE());
 
     bounds = empty;
 
@@ -85,7 +90,8 @@ namespace ospray {
           << "Finalizing geometry instance " << i;
 
       auto &instance = *geometryInstances[i];
-      rtcAttachGeometry(embreeSceneHandle, instance.embreeGeometryHandle());
+      rtcAttachGeometry(embreeSceneHandleGeometries,
+                        instance.embreeGeometryHandle());
       bounds.extend(instance.bounds());
       ispc::World_setGeometryInstance(getIE(), i, instance.getIE());
     }
@@ -99,13 +105,21 @@ namespace ospray {
     }
 
     for (size_t i = 0; i < volumeInstances.size(); i++) {
-      ispc::World_setVolumeInstance(getIE(), i, volumeInstances[i]->getIE());
-      bounds.extend(volumeInstances[i]->bounds());
+      postStatusMsg(2)
+          << "=======================================================\n"
+          << "Finalizing volume instance " << i;
+
+      auto &instance = *volumeInstances[i];
+      rtcAttachGeometry(embreeSceneHandleVolumes,
+                        instance.embreeGeometryHandle());
+      bounds.extend(instance.bounds());
+      ispc::World_setVolumeInstance(getIE(), i, instance.getIE());
     }
 
     ispc::World_setBounds(getIE(), (ispc::box3f *)&bounds);
 
-    rtcCommitScene(embreeSceneHandle);
+    rtcCommitScene(embreeSceneHandleGeometries);
+    rtcCommitScene(embreeSceneHandleVolumes);
   }
 
 }  // namespace ospray

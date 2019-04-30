@@ -19,7 +19,7 @@
 #include "fb/FrameBuffer.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
-#include "volume/Volume.ih"
+#include "volume/VolumeInstance.ih"
 
 /*! \brief a simple, primary-ray-only ray cast render that
 
@@ -328,17 +328,19 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   color = make_vec3f(self->super.bgColor);
   alpha = self->super.bgColor.w;
 
-  if (world->volumeInstanceCount < 1)
+  VolumeInterval vInterval;
+  initVolumeInterval(vInterval);
+  traceVolumeRay(world, sample.ray, vInterval);
+
+  if (!vInterval.hasInterval)
     return;
 
-  VolumeInstance *uniform instance = world->volumeInstances[0];
-  Volume *uniform volume           = instance->volume;
-  TransferFunction *uniform tf     = instance->transferFunction;
+  VolumeInstance *varying instance = vInterval.volumeInstance;
 
   Ray &ray = sample.ray;
 
-  float t0, t1;
-  intersectBox(ray, volume->boundingBox, ray.t0, ray.t);
+  ray.t0 = vInterval.interval.x;
+  ray.t  = vInterval.interval.y;
 
   float pSample = -1.f;
 
@@ -355,27 +357,33 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
 
   ray.t0 += jitter;
 
-  while (ray.t0 <= ray.t) {
-    const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
+  foreach_unique(inst in instance)
+  {
+    Volume *uniform volume       = inst->volume;
+    TransferFunction *uniform tf = inst->transferFunction;
 
-    vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
-    float sampleAlpha = tf->getIntegratedOpacityForValue(tf, pSample, sample);
+    while (ray.t0 <= ray.t) {
+      const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
 
-    if (pSample == -1.f)
-      pSample = sample;
+      vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
+      float sampleAlpha = tf->getIntegratedOpacityForValue(tf, pSample, sample);
 
-    const float clampedOpacity = clamp(sampleAlpha / instance->samplingRate);
+      if (pSample == -1.f)
+        pSample = sample;
 
-    sampleColor = sampleColor * clampedOpacity;
-    sampleAlpha = clampedOpacity;
+      const float clampedOpacity = clamp(sampleAlpha / instance->samplingRate);
 
-    color = color + ((1.f - sampleAlpha) * sampleColor);
-    alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
+      sampleColor = sampleColor * clampedOpacity;
+      sampleAlpha = clampedOpacity;
 
-    if (alpha >= 0.99f)
-      break;
+      color = color + ((1.f - sampleAlpha) * sampleColor);
+      alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
 
-    volume->stepRay(volume, ray, instance->samplingRate);
+      if (alpha >= 0.99f)
+        break;
+
+      volume->stepRay(volume, ray, instance->samplingRate);
+    }
   }
 }
 

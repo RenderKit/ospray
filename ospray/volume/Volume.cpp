@@ -22,6 +22,12 @@
 
 namespace ospray {
 
+  Volume::~Volume()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+  }
+
   std::string Volume::toString() const
   {
     return "ospray::Volume";
@@ -51,7 +57,10 @@ namespace ospray {
     vec3f specular =
         getParam3f("specular", getParam3f("ks", getParam3f("Ks", vec3f(0.3f))));
 
+    createEmbreeGeometry();
+
     ispc::Volume_set(ispcEquivalent,
+                     embreeGeometry,
                      getParam1b("gradientShadingEnabled", false),
                      getParam1b("preIntegration", false),
                      getParam1b("singleShade", true),
@@ -66,6 +75,15 @@ namespace ospray {
                      (const ispc::box3f &)volumeClippingBox,
                      (ispc::AffineSpace3f &)xfm,
                      (ispc::AffineSpace3f &)rcp_xfm);
+  }
+
+  void Volume::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   }
 
 }  // namespace ospray

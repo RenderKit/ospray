@@ -32,6 +32,15 @@ namespace ospray {
     this->ispcEquivalent = ispc::VolumeInstance_create(this, volume->getIE());
   }
 
+  VolumeInstance::~VolumeInstance()
+  {
+    if (embreeInstanceGeometry)
+      rtcReleaseGeometry(embreeInstanceGeometry);
+
+    if (embreeSceneHandle)
+      rtcReleaseScene(embreeSceneHandle);
+  }
+
   std::string VolumeInstance::toString() const
   {
     return "ospray::VolumeInstance";
@@ -51,6 +60,33 @@ namespace ospray {
     instanceXfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
     instanceXfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
     instanceXfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
+
+    // Create Embree instanced scene //
+
+    if (embreeSceneHandle)
+      rtcReleaseScene(embreeSceneHandle);
+
+    embreeSceneHandle = rtcNewScene(ispc_embreeDevice());
+
+    if (embreeInstanceGeometry)
+      rtcReleaseGeometry(embreeInstanceGeometry);
+
+    embreeInstanceGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
+
+    bool useEmbreeDynamicSceneFlag = getParam1b("dynamicScene", 0);
+    bool useEmbreeCompactSceneFlag = getParam1b("compactMode", 0);
+    bool useEmbreeRobustSceneFlag  = getParam1b("robustMode", 0);
+
+    int sceneFlags = 0;
+    sceneFlags |= (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
+    sceneFlags |= (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
+    sceneFlags |= (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
+
+    rtcSetSceneFlags(embreeSceneHandle, static_cast<RTCSceneFlags>(sceneFlags));
+
+    rtcAttachGeometry(embreeSceneHandle, instancedVolume->embreeGeometry);
+    rtcCommitScene(embreeSceneHandle);
 
     const box3f b = instancedVolume->bounds;
     const vec3f v000(b.lower.x, b.lower.y, b.lower.z);
@@ -96,6 +132,19 @@ namespace ospray {
                              (const ispc::box3f &)volumeClippingBox,
                              (ispc::AffineSpace3f &)instanceXfm,
                              (ispc::AffineSpace3f &)rcp_xfm);
+
+    rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
+
+    rtcSetGeometryTransform(embreeInstanceGeometry,
+                            0,
+                            RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+                            &instanceXfm);
+    rtcCommitGeometry(embreeInstanceGeometry);
+  }
+
+  RTCGeometry VolumeInstance::embreeGeometryHandle() const
+  {
+    return embreeInstanceGeometry;
   }
 
   box3f VolumeInstance::bounds() const
