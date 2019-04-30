@@ -404,14 +404,6 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)>(displayCallback));
 
-  glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
-      glfwOSPRayWindow->addObjectToCommit(renderer);
-    }
-  });
-
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
 

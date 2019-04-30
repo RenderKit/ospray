@@ -152,12 +152,6 @@ int main(int argc, const char **argv)
                            renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
-      glfwOSPRayWindow->addObjectToCommit(renderer);
-    }
-
     static int aoSamples = 1;
     if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
       ospSet1i(renderer, "aoSamples", aoSamples);

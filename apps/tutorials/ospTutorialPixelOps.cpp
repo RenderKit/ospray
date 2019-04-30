@@ -252,12 +252,6 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->setPixelOps(pixelOpData);
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
-      glfwOSPRayWindow->addObjectToCommit(renderer);
-    }
-
     bool pixelOpsUpdated = false;
     for (size_t i = 0; i < pixelPipeline.size(); ++i) {
       ImGui::PushID(i);

@@ -139,11 +139,6 @@ int main(int argc, const char **argv)
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
-      ospCommit(renderer);
-    }
     static bool sharedVertices = false;
     static bool valuesPerCell  = false;
     static bool isoSurface     = false;

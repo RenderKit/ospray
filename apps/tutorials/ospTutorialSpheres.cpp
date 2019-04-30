@@ -231,14 +231,6 @@ int main(int argc, const char **argv)
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
-  glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
-      glfwOSPRayWindow->addObjectToCommit(renderer);
-    }
-  });
-
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
 

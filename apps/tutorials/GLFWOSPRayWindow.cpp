@@ -318,13 +318,23 @@ void GLFWOSPRayWindow::display()
 {
   static auto displayStart = std::chrono::high_resolution_clock::now();
 
-  if (showUi && uiCallback) {
+  if (showUi) {
     ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
     ImGui::Begin(
         "Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
+
+    static int spp = 1;
+    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
+      ospSet1i(renderer, "spp", spp);
+      addObjectToCommit(renderer);
+    }
+
     ImGui::Checkbox("show albedo", &showAlbedo);
-    ImGui::Separator();
-    uiCallback();
+
+    if (uiCallback) {
+      ImGui::Separator();
+      uiCallback();
+    }
     ImGui::End();
   }
 
@@ -398,7 +408,7 @@ void GLFWOSPRayWindow::display()
 
   glEnd();
 
-  if (showUi && uiCallback) {
+  if (showUi) {
     ImGui::Render();
   }
 
