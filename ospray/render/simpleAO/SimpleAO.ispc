@@ -42,7 +42,7 @@ void SimpleAO_renderSample(Renderer *uniform _self,
       if (noHit(sample.ray)) {
         sample.rgb    = make_vec3f(self->super.bgColor);
         sample.albedo = sample.rgb;
-        sample.normal = negate(sample.ray.dir);
+        sample.normal = sample.ray.dir;
         sample.alpha  = self->super.bgColor.w;
         return;
       }
