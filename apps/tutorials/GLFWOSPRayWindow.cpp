@@ -34,18 +34,20 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
       world(world),
       renderer(renderer)
 {
-  if (activeWindow != nullptr)
+  if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
+  }
 
   activeWindow = this;
 
   // initialize GLFW
-  if (!glfwInit())
+  if (!glfwInit()) {
     throw std::runtime_error("Failed to initialize GLFW!");
+  }
 
   // create GLFW window
   glfwWindow = glfwCreateWindow(
-      windowSize.x, windowSize.y, "OSPRay Tutorial", NULL, NULL);
+      windowSize.x, windowSize.y, "OSPRay Tutorial", nullptr, nullptr);
 
   if (!glfwWindow) {
     glfwTerminate();
@@ -120,7 +122,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
         }
       });
 
-  // OSPRay setup
+  // OSPRay setup //
 
   // create the arcball camera model
   arcballCamera = std::unique_ptr<ArcballCamera>(
@@ -230,17 +232,19 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   // release the current frame buffer, if it exists
-  if (framebuffer)
+  if (framebuffer) {
     ospRelease(framebuffer);
+  }
 
   // create new frame buffer
   framebuffer = ospNewFrameBuffer(reinterpret_cast<osp_vec2i &>(windowSize),
                                   OSP_FB_SRGBA,
-                                  OSP_FB_COLOR | OSP_FB_ACCUM);
+                                  OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_ALBEDO);
 
   if (pixelOps) {
     ospSetData(framebuffer, "pixelOperations", pixelOps);
   }
+
   ospCommit(framebuffer);
 
   // reset OpenGL viewport and orthographic projection
@@ -312,18 +316,18 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
-  // clock used to compute frame rate
   static auto displayStart = std::chrono::high_resolution_clock::now();
 
   if (showUi && uiCallback) {
     ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
     ImGui::Begin(
         "Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
+    ImGui::Checkbox("show albedo", &showAlbedo);
+    ImGui::Separator();
     uiCallback();
     ImGui::End();
   }
 
-  // if a display callback has been registered, call it
   if (displayCallback) {
     displayCallback(this);
   }
@@ -345,17 +349,18 @@ void GLFWOSPRayWindow::display()
 
     waitOnOSPRayFrame();
 
-    uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+    auto *fb = ospMapFrameBuffer(framebuffer,
+                                 showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
                  0,
-                 GL_RGBA,
+                 showAlbedo ? GL_RGB : GL_RGBA,
                  windowSize.x,
                  windowSize.y,
                  0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
+                 showAlbedo ? GL_RGB : GL_RGBA,
+                 showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE,
                  fb);
 
     ospUnmapFrameBuffer(fb, framebuffer);

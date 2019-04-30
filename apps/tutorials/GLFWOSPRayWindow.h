@@ -75,6 +75,8 @@ class GLFWOSPRayWindow
   OSPWorld world       = nullptr;
   OSPRenderer renderer = nullptr;
 
+  bool showAlbedo{false};
+
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;
 
