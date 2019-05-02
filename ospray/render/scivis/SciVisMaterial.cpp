@@ -14,76 +14,52 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "SciVisMaterial.h"
+// ospray
+#include "common/Material.h"
+#include "texture/Texture2D.h"
+// ispc
 #include "SciVisMaterial_ispc.h"
-#include "common/Data.h"
 
 namespace ospray {
-  namespace scivis {
 
-    SciVisMaterial::SciVisMaterial()
-    {
-      ispcEquivalent = ispc::SciVisMaterial_create(this);
-    }
+  struct SciVisMaterial : public ospray::Material
+  {
+    SciVisMaterial();
+    void commit() override;
 
-    void SciVisMaterial::commit()
-    {
-      map_d  = (Texture2D*)getParamObject("map_d", nullptr);
-      affine2f xform_d  = getTextureTransform("map_d");
-      map_Kd = (Texture2D*)getParamObject("map_Kd",
-                                          getParamObject("map_kd", nullptr));
-      affine2f xform_Kd = getTextureTransform("map_Kd")
-        * getTextureTransform("map_kd");
-      map_Ks = (Texture2D*)getParamObject("map_Ks",
-                                          getParamObject("map_ks", nullptr));
-      affine2f xform_Ks = getTextureTransform("map_Ks")
-        * getTextureTransform("map_ks");
-      map_Ns = (Texture2D*)getParamObject("map_Ns",
-                                          getParamObject("map_ns", nullptr));
-      affine2f xform_Ns = getTextureTransform("map_Ns")
-        * getTextureTransform("map_ns");
-      map_Bump = (Texture2D*)getParamObject("map_Bump",
-                                            getParamObject("map_bump",nullptr));
-      affine2f xform_Bump = getTextureTransform("map_Bump")
-        * getTextureTransform("map_bump");
-      linear2f rot_Bump = xform_Bump.l.orthogonal().transposed();
+   private:
+    vec3f Kd;
+    float d;
+    Ref<Texture2D> map_Kd;
+  };
 
-      d  = getParam1f("d", 1.f);
-      Kd = getParam3f("kd", getParam3f("Kd", vec3f(.8f)));
-      Ks = getParam3f("ks", getParam3f("Ks", vec3f(0.f)));
-      Ns = getParam1f("ns", getParam1f("Ns", 10.f));
-      volume = (Volume *)getParamObject("volume", nullptr);
+  // SciVisMaterial definitions /////////////////////////////////////////////
 
-      ispc::SciVisMaterial_set(getIE(),
-                               map_d ? map_d->getIE() : nullptr,
-                               (const ispc::AffineSpace2f&)xform_d,
-                               d,
-                               map_Kd ? map_Kd->getIE() : nullptr,
-                               (const ispc::AffineSpace2f&)xform_Kd,
-                               (ispc::vec3f&)Kd,
-                               map_Ks ? map_Ks->getIE() : nullptr,
-                               (const ispc::AffineSpace2f&)xform_Ks,
-                               (ispc::vec3f&)Ks,
-                               map_Ns ? map_Ns->getIE() : nullptr,
-                               (const ispc::AffineSpace2f&)xform_Ns,
-                               Ns,
-                               map_Bump ? map_Bump->getIE() : nullptr,
-                               (const ispc::AffineSpace2f&)xform_Bump,
-                               (const ispc::LinearSpace2f&)rot_Bump,
-                               volume ? volume->getIE() : nullptr);
-    }
+  SciVisMaterial::SciVisMaterial()
+  {
+    ispcEquivalent = ispc::SciVisMaterial_create(this);
+  }
 
-    OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, SciVisMaterial);
-    OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, OBJMaterial);
-    OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, default);
+  void SciVisMaterial::commit()
+  {
+    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
+    d  = getParam1f("d", 1.f);
+    map_Kd = (Texture2D *)getParamObject("map_Kd", getParamObject("map_kd"));
+    ispc::SciVisMaterial_set(getIE(),
+                             (const ispc::vec3f &)Kd,
+                             d,
+                             map_Kd ? map_Kd->getIE() : nullptr);
+  }
 
-    // NOTE(jda) - support all renderer aliases
-    OSP_REGISTER_MATERIAL(rt, SciVisMaterial, default);
-    OSP_REGISTER_MATERIAL(raytracer, SciVisMaterial, default);
-    OSP_REGISTER_MATERIAL(sv, SciVisMaterial, default);
-    OSP_REGISTER_MATERIAL(obj, SciVisMaterial, default);
-    OSP_REGISTER_MATERIAL(OBJ, SciVisMaterial, default);
-    OSP_REGISTER_MATERIAL(dvr, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, default);
 
-  } // ::ospray::scivis
-} // ::ospray
+  // NOTE(jda) - support all renderer aliases
+  OSP_REGISTER_MATERIAL(sv, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao1, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao2, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao4, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao8, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao16, SciVisMaterial, default);
+
+}  // namespace ospray

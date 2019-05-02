@@ -16,14 +16,22 @@
 
 #pragma once
 
-#include "common/Material.ih"
-#include "math/vec.ih"
-#include "texture/Texture2D.ih"
+#include "SciVis.ih"
 
-struct SimpleAOMaterial
+inline void computeDG(const World *uniform world,
+                      const Ray &ray,
+                      DifferentialGeometry &dg)
 {
-  Material super;
-  vec3f Kd;
-  float d;
-  Texture2D *map_Kd;
-};
+  postIntersect(world,
+                dg,
+                ray,
+                DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_MATERIALID |
+                    DG_COLOR | DG_TEXCOORD);
+}
+
+vec4f computeShadedSurfaceColor(const SciVis *uniform self,
+                                const FrameBuffer *uniform fb,
+                                const World *uniform world,
+                                const uniform bool firstHit,
+                                const DifferentialGeometry &dg,
+                                ScreenSample &sample);

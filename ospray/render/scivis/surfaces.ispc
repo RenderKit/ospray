@@ -17,13 +17,13 @@
 // ispc device
 #include "math/random.ih"
 #include "math/sampling.ih"
-// SimpleAO renderer
-#include "SimpleAOMaterial.ih"
+// SciVis renderer
+#include "SciVisMaterial.ih"
 #include "surfaces.ih"
 
 inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 {
-  const SimpleAOMaterial *mat = (const SimpleAOMaterial *)dg.material;
+  const SciVisMaterial *mat = (const SciVisMaterial *)dg.material;
 
   vec3f surfaceColor = make_vec3f(1.f);
   float opacity      = 1.f;
@@ -42,7 +42,7 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
   return make_vec4f(surfaceColor * make_vec3f(dg.color), opacity);
 }
 
-inline float computeAO(const uniform SimpleAO *uniform self,
+inline float computeAO(const uniform SciVis *uniform self,
                        const FrameBuffer *uniform fb,
                        const World *uniform world,
                        const varying vec3i &sampleID,
@@ -80,7 +80,7 @@ inline float computeAO(const uniform SimpleAO *uniform self,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
+vec4f computeShadedSurfaceColor(const SciVis *uniform self,
                                 const FrameBuffer *uniform fb,
                                 const World *uniform world,
                                 const uniform bool firstHit,

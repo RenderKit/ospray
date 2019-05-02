@@ -141,20 +141,12 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/util.ispc
   render/raycast/RaycastRenderer.cpp
   render/raycast/RaycastRenderer.ispc
-  render/simpleAO/SimpleAO.cpp
-  render/simpleAO/SimpleAO.ispc
-  render/simpleAO/SimpleAOMaterial.cpp
-  render/simpleAO/SimpleAOMaterial.ispc
-  render/simpleAO/surfaces.ispc
-  render/simpleAO/volumes.ispc
-  render/scivis/lightAlpha.ispc
-  render/scivis/volumeIntegration.ispc
-  render/scivis/surfaceShading.ispc
-  render/scivis/SciVisRenderer.ispc
-  render/scivis/SciVisMaterial.ispc
-  render/scivis/SciVisMaterial.ih
-  render/scivis/SciVisRenderer.cpp
+  render/scivis/SciVis.cpp
+  render/scivis/SciVis.ispc
   render/scivis/SciVisMaterial.cpp
+  render/scivis/SciVisMaterial.ispc
+  render/scivis/surfaces.ispc
+  render/scivis/volumes.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp

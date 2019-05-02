@@ -16,17 +16,17 @@
 
 #include "render/Renderer.ih"
 // ao renderer
-#include "SimpleAO.ih"
+#include "SciVis.ih"
 #include "surfaces.ih"
 #include "volumes.ih"
 
-void SimpleAO_renderSample(Renderer *uniform _self,
-                           FrameBuffer *uniform fb,
-                           World *uniform world,
-                           void *uniform perFrameData,
-                           varying ScreenSample &sample)
+void SciVis_renderSample(Renderer *uniform _self,
+                         FrameBuffer *uniform fb,
+                         World *uniform world,
+                         void *uniform perFrameData,
+                         varying ScreenSample &sample)
 {
-  uniform SimpleAO *uniform self = (uniform SimpleAO * uniform) _self;
+  uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
   vec4f outputColor = make_vec4f(0.f);
 
@@ -99,22 +99,22 @@ void SimpleAO_renderSample(Renderer *uniform _self,
   sample.alpha = outputColor.w;
 }
 
-// SimpleAO C++ interface /////////////////////////////////////////////////////
+// SciVis C++ interface /////////////////////////////////////////////////////
 
-export void *uniform SimpleAO_create(void *uniform cppE)
+export void *uniform SciVis_create(void *uniform cppE)
 {
-  uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
+  uniform SciVis *uniform self = uniform new uniform SciVis;
   Renderer_Constructor(&self->super, cppE, 1);
-  self->super.renderSample = SimpleAO_renderSample;
+  self->super.renderSample = SciVis_renderSample;
   return self;
 }
 
-export void SimpleAO_set(void *uniform _self,
-                         uniform int samplesPerFrame,
-                         uniform float aoRadius,
-                         uniform float aoIntensity)
+export void SciVis_set(void *uniform _self,
+                       uniform int samplesPerFrame,
+                       uniform float aoRadius,
+                       uniform float aoIntensity)
 {
-  uniform SimpleAO *uniform self = (uniform SimpleAO * uniform) _self;
+  uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
   self->samplesPerFrame = samplesPerFrame;
   self->aoRadius        = aoRadius;

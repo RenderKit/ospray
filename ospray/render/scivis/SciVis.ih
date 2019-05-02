@@ -16,9 +16,12 @@
 
 #pragma once
 
-#include "SimpleAO.ih"
-#include "volume/VolumeInstance.ih"
+#include "render/Renderer.ih"
 
-vec4f integrateVolumeInterval(const ScreenSample &sample,
-                              const VolumeInterval &interval,
-                              Ray &ray);
+struct SciVis
+{
+  Renderer super;
+  int samplesPerFrame;
+  float aoRadius;
+  float aoIntensity;
+};

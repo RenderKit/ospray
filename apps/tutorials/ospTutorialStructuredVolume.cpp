@@ -26,7 +26,7 @@
 
 using namespace ospcommon;
 
-static std::string renderer_type = "raycast_volume";
+static std::string renderer_type = "scivis";
 
 static void setIsoValue(OSPGeometry geometry, float value)
 {

@@ -15,49 +15,52 @@
 // ======================================================================== //
 
 // ospray
-#include "common/Material.h"
-#include "texture/Texture2D.h"
-// ispc
-#include "SimpleAOMaterial_ispc.h"
+#include "../Renderer.h"
+// ispc exports
+#include "SciVis_ispc.h"
 
 namespace ospray {
 
-  struct SimpleAOMaterial : public ospray::Material
+  struct SciVis : public Renderer
   {
-    SimpleAOMaterial();
+    SciVis(int defaultNumSamples = 1);
+    std::string toString() const override;
     void commit() override;
 
    private:
-    vec3f Kd;
-    float d;
-    Ref<Texture2D> map_Kd;
+    int numSamples{1};
   };
 
-  // SimpleAOMaterial definitions /////////////////////////////////////////////
+  // SciVis definitions /////////////////////////////////////////////////////
 
-  SimpleAOMaterial::SimpleAOMaterial()
+  SciVis::SciVis(int defaultNumSamples) : numSamples(defaultNumSamples)
   {
-    ispcEquivalent = ispc::SimpleAOMaterial_create(this);
+    setParam<std::string>("externalNameFromAPI", "ao");
+    ispcEquivalent = ispc::SciVis_create(this);
   }
 
-  void SimpleAOMaterial::commit()
+  std::string SciVis::toString() const
   {
-    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
-    d  = getParam1f("d", 1.f);
-    map_Kd = (Texture2D *)getParamObject("map_Kd", getParamObject("map_kd"));
-    ispc::SimpleAOMaterial_set(getIE(),
-                               (const ispc::vec3f &)Kd,
-                               d,
-                               map_Kd ? map_Kd->getIE() : nullptr);
+    return "ospray::render::SciVis";
   }
 
-  OSP_REGISTER_MATERIAL(ao, SimpleAOMaterial, default);
+  void SciVis::commit()
+  {
+    Renderer::commit();
+    ispc::SciVis_set(getIE(),
+                     getParam1i("aoSamples", numSamples),
+                     getParam1f("aoRadius", 1e20f),
+                     getParam1f("aoIntensity", 1.f));
+  }
 
-  // NOTE(jda) - support all renderer aliases
-  OSP_REGISTER_MATERIAL(ao1, SimpleAOMaterial, default);
-  OSP_REGISTER_MATERIAL(ao2, SimpleAOMaterial, default);
-  OSP_REGISTER_MATERIAL(ao4, SimpleAOMaterial, default);
-  OSP_REGISTER_MATERIAL(ao8, SimpleAOMaterial, default);
-  OSP_REGISTER_MATERIAL(ao16, SimpleAOMaterial, default);
+  OSP_REGISTER_RENDERER(SciVis, scivis);
+  OSP_REGISTER_RENDERER(SciVis, sv);
+
+  OSP_REGISTER_RENDERER(SciVis, ao);
+  OSP_REGISTER_RENDERER(SciVis(1), ao1);
+  OSP_REGISTER_RENDERER(SciVis(2), ao2);
+  OSP_REGISTER_RENDERER(SciVis(4), ao4);
+  OSP_REGISTER_RENDERER(SciVis(8), ao8);
+  OSP_REGISTER_RENDERER(SciVis(16), ao16);
 
 }  // namespace ospray
