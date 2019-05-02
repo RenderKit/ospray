@@ -252,6 +252,7 @@ inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds,
 }
 
 void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
+                             TransferFunction *uniform tfn,
                              const varying float step, varying Ray &ray)
 {
   // The associated volume.
@@ -295,9 +296,7 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
 
     if (!isnan(cellRange.x)) {
       // Get the maximum opacity in the volumetric value range.
-      float maximumOpacity =
-        volume->super.transferFunction->getMaxOpacityInRange(volume->super.transferFunction,
-                                                             cellRange);
+      float maximumOpacity = tfn->getMaxOpacityInRange(tfn, cellRange);
 
       // Return the hit point if the grid cell is not fully transparent.
       if (maximumOpacity > 0.0f)
@@ -308,8 +307,8 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
     vec3f farBound;
     volume->transformLocalToWorld(volume,
                                   to_float(cellIndex +
-                                             nextCellIndex <<
-                                             CELL_WIDTH_BITCOUNT),
+                                           nextCellIndex <<
+                                           CELL_WIDTH_BITCOUNT),
                                   farBound);
 
     // Identify the distance along the ray to the exit points on the cell.

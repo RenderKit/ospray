@@ -114,7 +114,8 @@ inline varying vec3f StructuredVolume_computeGradient(const void *uniform _volum
 }
 
 // ray.time is set to interval length of intersected sample
-inline void StructuredVolume_stepRay(const void *uniform _volume, varying Ray &ray, const varying float samplingRate)
+inline void StructuredVolume_stepRay(const void *uniform _volume, TransferFunction *uniform tfn,
+                                     varying Ray &ray, const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
   const StructuredVolume *uniform volume = (const StructuredVolume *uniform) _volume;
@@ -123,7 +124,7 @@ inline void StructuredVolume_stepRay(const void *uniform _volume, varying Ray &r
   const varying float step = volume->super.samplingStep / samplingRate;
 
   // Compute the next hit point using a spatial acceleration structure.
-  GridAccelerator_stepRay(volume->accelerator, step, ray);
+  GridAccelerator_stepRay(volume->accelerator, tfn, step, ray);
 }
 
 inline void StructuredVolume_intersectIsosurface(const void *uniform _volume,

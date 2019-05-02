@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Geometry.h"
-#include "volume/Volume.h"
+#include "volume/VolumeInstance.h"
 
 namespace ospray {
 
@@ -34,7 +34,7 @@ namespace ospray {
 
    protected:
     Ref<Data> planesData;
-    Ref<Volume> volume;
+    Ref<VolumeInstance> volume;
 
     size_t numPlanes;
     vec4f *planes;

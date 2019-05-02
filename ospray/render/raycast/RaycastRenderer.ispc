@@ -381,7 +381,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
       if (alpha >= 0.99f)
         break;
 
-      volume->stepRay(volume, ray, instance->samplingRate);
+      volume->stepRay(volume, tf, ray, instance->samplingRate);
     }
   }
 }

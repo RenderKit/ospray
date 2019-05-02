@@ -83,14 +83,10 @@ int main(int argc, const char **argv)
   OSPTransferFunction tfn =
       ospTestingNewTransferFunction(test_data.voxelRange, "jet");
 
-  ospSetObject(volume, "transferFunction", tfn);
-  ospCommit(volume);
-
   auto instance = ospNewVolumeInstance(volume);
   ospSetObject(instance, "transferFunction", tfn);
   ospCommit(instance);
 
-  //ospAddVolume(world, volume);
   ospAddVolumeInstance(world, instance);
   ospRelease(tfn);
 
@@ -104,7 +100,7 @@ int main(int argc, const char **argv)
   setIsoValue(isoGeometry, isoValue);
 
   // set volume object to create iso geometry
-  ospSetObject(isoGeometry, "volume", volume);
+  ospSetObject(isoGeometry, "volume", instance);
 
   // create isoInstance of the geometry
   OSPGeometryInstance isoInstance = ospNewGeometryInstance(isoGeometry);
@@ -120,7 +116,7 @@ int main(int argc, const char **argv)
   // Create slices geometry //
 
   OSPGeometry sliceGeometry = ospNewGeometry("slices");
-  ospSetObject(sliceGeometry, "volume", volume);
+  ospSetObject(sliceGeometry, "volume", instance);
   float sliceValue = 0.f;
   setSlice(sliceGeometry, sliceValue);
   OSPGeometryInstance sliceInstance = ospNewGeometryInstance(sliceGeometry);

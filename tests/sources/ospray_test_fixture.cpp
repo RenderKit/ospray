@@ -136,10 +136,11 @@ namespace OSPRayTestScenes {
     ospRelease(instance);
   }
 
-  void Base::AddVolume(OSPVolume new_volume)
+  void Base::AddInstance(OSPVolumeInstance instance)
   {
-    ospAddVolume(world, new_volume);
-    ospRelease(new_volume);
+    ospCommit(instance);
+    ospAddVolumeInstance(world, instance);
+    ospRelease(instance);
   }
 
   void Base::PerformRenderTest()
@@ -625,7 +626,10 @@ namespace OSPRayTestScenes {
     ospSet2f(pyramid, "voxelRange", 0, 255);
     ospSet3f(pyramid, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSet3f(pyramid, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
-    ospSet1f(pyramid, "samplingRate", 1.f);
+    ospCommit(pyramid);
+
+    OSPVolumeInstance instance = ospNewVolumeInstance(pyramid);
+    ospSet1f(instance, "samplingRate", 1.f);
 
     OSPTransferFunction transferFun =
         ospNewTransferFunction("piecewise_linear");
@@ -639,15 +643,13 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
+    ospSetObject(instance, "transferFunction", transferFun);
     ospSetObject(pyramid, "transferFunction", transferFun);
-    ospRelease(transferFun);
-
     ospCommit(pyramid);
 
     if (renderIsosurface) {
       OSPGeometry isosurface = ospNewGeometry("isosurfaces");
       ospSetObject(isosurface, "volume", pyramid);
-      ospRelease(pyramid);
       float isovalue = 0.f;
       OSPData isovaluesData = ospNewData(1, OSP_FLOAT, &isovalue);
       ospSetData(isosurface, "isovalues", isovaluesData);
@@ -655,11 +657,15 @@ namespace OSPRayTestScenes {
 
       ospCommit(isosurface);
 
-      OSPGeometryInstance instance = ospNewGeometryInstance(isosurface);
-      AddInstance(instance);
+      OSPGeometryInstance isoInstance = ospNewGeometryInstance(isosurface);
+      ospRelease(isosurface);
+      AddInstance(isoInstance);
     } else {
-      AddVolume(pyramid);
+      AddInstance(instance);
     }
+
+    ospRelease(pyramid);
+    ospRelease(transferFun);
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
@@ -1023,10 +1029,13 @@ namespace OSPRayTestScenes {
     ospRelease(transferFun);
     ospCommit(torus);
 
-    AddVolume(torus);
+    OSPVolumeInstance instance = ospNewVolumeInstance(torus);
+    ospRelease(torus);
+
+    AddInstance(instance);
 
     OSPTexture depthTex = ospNewTexture("texture2D");
-    float *data         = new float[imgSize.x * imgSize.y];
+    std::vector<float> data(imgSize.x * imgSize.y);
     for (size_t y = 0; y < imgSize.y; y++) {
       for (size_t x = 0; x < imgSize.x; x++) {
         const size_t index = imgSize.x * y + x;
@@ -1039,9 +1048,8 @@ namespace OSPRayTestScenes {
         }
       }
     }
-    auto ospData = ospNewData(imgSize.x * imgSize.y, OSP_FLOAT, data);
+    auto ospData = ospNewData(imgSize.x * imgSize.y, OSP_FLOAT, data.data());
     ospCommit(ospData);
-    delete[] data;
     ospSet1i(depthTex, "type", (int)OSP_TEXTURE_R32F);
     ospSet1i(depthTex, "flags", OSP_TEXTURE_FILTER_NEAREST);
     ospSet2i(depthTex, "size", imgSize.x, imgSize.y);

@@ -24,9 +24,9 @@
 
 struct Isosurfaces
 {
-  uniform Geometry super;  //!< inherited geometry fields
-  uniform float *uniform isovalues;
-  uniform Volume *uniform volume;
+  Geometry super;  //!< inherited geometry fields
+  float *isovalues;
+  VolumeInstance *volumeInstance;
 };
 
 unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
@@ -36,7 +36,7 @@ unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
   uniform int primID = args->primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
-  *out                = make_box3fa(self->volume->boundingBox);
+  *out                = make_box3fa(self->volumeInstance->volume->boundingBox);
 }
 
 void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
@@ -47,14 +47,13 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   if (!args->valid[programIndex])
     return;
 
-  uniform Isosurfaces *uniform self =
-      (uniform Isosurfaces * uniform) args->geometryUserPtr;
+  Isosurfaces *uniform self   = (Isosurfaces * uniform) args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
-  uniform Volume *uniform volume = self->volume;
+  Volume *uniform volume = self->volumeInstance->volume;
 
   float hit_t;
   vec3f hit_Ng;
@@ -117,10 +116,11 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
                                       const varying Ray &ray,
                                       uniform int64 flags)
 {
-  uniform Isosurfaces *uniform self = (uniform Isosurfaces * uniform) geometry;
+  Isosurfaces *uniform self = (Isosurfaces * uniform) geometry;
+  Volume *uniform volume    = self->volumeInstance->volume;
 
   if (flags & DG_NS) {
-    dg.Ns = self->volume->computeGradient(self->volume, dg.P);
+    dg.Ns = volume->computeGradient(volume, dg.P);
     if (dot(dg.Ns, dg.Ns) < 1e-6f)
       dg.Ns = neg(ray.dir);  // make_vec3f(1.f,0.f,0.f);
   }
@@ -132,7 +132,7 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
   dg.epsilon = reduce_max(abs(ray.dir)) * ray.u;
 
   if (flags & DG_COLOR) {
-    TransferFunction *uniform xf = self->volume->transferFunction;
+    TransferFunction *uniform xf = self->volumeInstance->transferFunction;
     const vec3f sampleColor =
         xf->getColorForValue(xf, self->isovalues[ray.primID]);
     dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.f);
@@ -156,13 +156,13 @@ export void *uniform Isosurfaces_set(void *uniform _self,
                                      uniform float *uniform isovalues,
                                      void *uniform _volume)
 {
-  Isosurfaces *uniform self = (Isosurfaces * uniform) _self;
-  Volume *uniform volume    = (Volume * uniform) _volume;
+  Isosurfaces *uniform self      = (Isosurfaces * uniform) _self;
+  VolumeInstance *uniform volume = (VolumeInstance * uniform) _volume;
 
   self->super.geomID        = geomID;
   self->super.numPrimitives = numIsovalues;
   self->isovalues           = isovalues;
-  self->volume              = volume;
+  self->volumeInstance      = volume;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

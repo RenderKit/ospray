@@ -84,6 +84,7 @@ struct Volume {
 
   //! Find the next hit point in the volume for ray casting based renderers.
   void (*uniform stepRay)(const void *uniform _self,
+                          TransferFunction *uniform tfn,
                           varying Ray &ray,
                           const varying float samplingRate);
 

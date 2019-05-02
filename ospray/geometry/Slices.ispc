@@ -24,19 +24,20 @@
 
 struct Slices
 {
-  uniform Geometry super;
-  uniform vec4f *uniform planes;
-  uniform Volume *uniform volume;
+  Geometry super;
+  vec4f *planes;
+  VolumeInstance *volumeInstance;
 };
 
 unmasked void Slices_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  uniform Slices *uniform self =
-      (uniform Slices * uniform) args->geometryUserPtr;
+  Slices *uniform self   = (Slices * uniform) args->geometryUserPtr;
+  Volume *uniform volume = self->volumeInstance->volume;
+
   uniform int primID = args->primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
-  *out                = make_box3fa(self->volume->boundingBox);
+  *out                = make_box3fa(volume->boundingBox);
 }
 
 void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
@@ -46,8 +47,8 @@ void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   if (!args->valid[programIndex])
     return;
 
-  uniform Slices *uniform self =
-      (uniform Slices * uniform) args->geometryUserPtr;
+  Slices *uniform self        = (Slices * uniform) args->geometryUserPtr;
+  Volume *uniform volume      = self->volumeInstance->volume;
   uniform unsigned int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
@@ -56,13 +57,12 @@ void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   const float tIntersect = intersectPlane(*ray, self->planes[primID]);
 
   float tBox0, tBox1;
-  intersectBox(*ray, self->volume->boundingBox, tBox0, tBox1);
+  intersectBox(*ray, volume->boundingBox, tBox0, tBox1);
 
   // slice intersections ignored where NaNs exist in the volume
   bool hit = !isnan(tIntersect) && tIntersect >= max(ray->t0, tBox0) &&
              tIntersect <= min(ray->t, tBox1) &&
-             !isnan(self->volume->sample(self->volume,
-                                         ray->org + tIntersect * ray->dir));
+             !isnan(volume->sample(volume, ray->org + tIntersect * ray->dir));
 
   if (hit) {
     if (isOcclusionTest) {
@@ -98,10 +98,13 @@ static void Slices_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_COLOR)) {
-    uniform Slices *uniform self = (uniform Slices * uniform) geometry;
-    const float sample           = self->volume->sample(self->volume, dg.P);
-    const vec3f sampleColor = self->volume->transferFunction->getColorForValue(
-        self->volume->transferFunction, sample);
+    Slices *uniform self             = (Slices * uniform) geometry;
+    VolumeInstance *uniform instance = self->volumeInstance;
+    TransferFunction *uniform tfn    = instance->transferFunction;
+    Volume *uniform volume           = self->volumeInstance->volume;
+
+    const float sample      = volume->sample(volume, dg.P);
+    const vec3f sampleColor = tfn->getColorForValue(tfn, sample);
     const float sampleOpacity =
         1.f;  // later allow "opacity" parameter on slices.
 
@@ -127,13 +130,13 @@ export void *uniform Slices_set(void *uniform _self,
                                 uniform vec4f *uniform planes,
                                 void *uniform _volume)
 {
-  Slices *uniform self   = (Slices * uniform) _self;
-  Volume *uniform volume = (Volume * uniform) _volume;
+  Slices *uniform self           = (Slices * uniform) _self;
+  VolumeInstance *uniform volume = (VolumeInstance * uniform) _volume;
 
   self->super.geomID        = geomID;
   self->super.numPrimitives = numPlanes;
   self->planes              = planes;
-  self->volume              = volume;
+  self->volumeInstance      = volume;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

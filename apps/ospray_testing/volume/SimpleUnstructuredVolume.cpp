@@ -233,6 +233,8 @@ namespace ospray {
       retval.voxelRange = osp_vec2f{0.f, 1.f};
       retval.bounds     = reinterpret_cast<const osp_box3f &>(bounds);
 
+      ospCommit(volume);
+
       return retval;
     }
 

@@ -70,6 +70,7 @@ static varying vec3f AMR_gradient(const void *uniform _self, const varying vec3f
 // current AMR level cell size.
 // ray.time is set to interval length of intersected sample
 inline void AMR_stepRay(const void *uniform _volume,
+                        TransferFunction *uniform /*tfn*/,
                         varying Ray &ray,
                         const varying float samplingRate)
 {

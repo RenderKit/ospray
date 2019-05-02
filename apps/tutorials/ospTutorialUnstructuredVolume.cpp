@@ -27,7 +27,8 @@ using namespace ospcommon;
 static std::string renderer_type = "scivis";
 
 namespace {
-  OSPVolume createVolumeWithTF(const char *volumeName, const char *tfName)
+  OSPVolumeInstance createVolumeWithTF(const char *volumeName,
+                                       const char *tfName)
   {
     // create volume
     OSPTestingVolume tv = ospTestingNewVolume(volumeName);
@@ -35,12 +36,15 @@ namespace {
     // create and set transfer function
     OSPTransferFunction tfn =
         ospTestingNewTransferFunction(tv.voxelRange, tfName);
-    ospSetObject(tv.volume, "transferFunction", tfn);
-    ospCommit(tv.volume);
+    OSPVolumeInstance instance = ospNewVolumeInstance(tv.volume);
+
+    ospSetObject(instance, "transferFunction", tfn);
+    ospCommit(instance);
     ospRelease(tfn);
+    ospRelease(tv.volume);
 
     // done
-    return tv.volume;
+    return instance;
   }
 
   void setIsoValue(OSPGeometry geometry, float value)
@@ -85,15 +89,15 @@ int main(int argc, const char **argv)
   OSPWorld world = ospNewWorld();
 
   // create all volume variances [sharedVertices][valuesPerCell]
-  OSPVolume allVolumes[2][2];
+  OSPVolumeInstance allVolumes[2][2];
   allVolumes[0][0] = createVolumeWithTF("simple_unstructured_volume_00", "jet");
   allVolumes[0][1] = createVolumeWithTF("simple_unstructured_volume_01", "jet");
   allVolumes[1][0] = createVolumeWithTF("simple_unstructured_volume_10", "jet");
   allVolumes[1][1] = createVolumeWithTF("simple_unstructured_volume_11", "jet");
-  OSPVolume testVolume = allVolumes[0][0];
+  OSPVolumeInstance testVolume = allVolumes[0][0];
 
   // add volume to the world
-  ospAddVolume(world, testVolume);
+  ospAddVolumeInstance(world, testVolume);
 
   // create iso geometry object and add it to the world
   OSPGeometry isoGeometry = ospNewGeometry("isosurfaces");
@@ -147,7 +151,7 @@ int main(int argc, const char **argv)
       // remove current volume
       ospRemoveParam(isoGeometry, "volume");
       if (!isoSurface)
-        ospRemoveVolume(world, testVolume);
+        ospRemoveVolumeInstance(world, testVolume);
 
       // set a new one
       testVolume = allVolumes[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0];
@@ -155,19 +159,19 @@ int main(int argc, const char **argv)
       // attach the new volume
       ospSetObject(isoGeometry, "volume", testVolume);
       if (!isoSurface)
-        ospAddVolume(world, testVolume);
+        ospAddVolumeInstance(world, testVolume);
       glfwOSPRayWindow->addObjectToCommit(isoGeometry);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
     if (ImGui::Checkbox("isosurface", &isoSurface)) {
       if (isoSurface) {
         // replace volume with iso geometry
-        ospRemoveVolume(world, testVolume);
+        ospRemoveVolumeInstance(world, testVolume);
         ospAddGeometryInstance(world, instance);
         glfwOSPRayWindow->addObjectToCommit(world);
       } else {
         // replace iso geometry with volume
-        ospAddVolume(world, testVolume);
+        ospAddVolumeInstance(world, testVolume);
         ospRemoveGeometryInstance(world, instance);
         glfwOSPRayWindow->addObjectToCommit(world);
       }

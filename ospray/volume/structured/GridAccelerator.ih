@@ -19,6 +19,8 @@
 #include "../common/OSPCommon.ih"
 #include "../common/Ray.ih"
 
+struct TransferFunction;
+
 //! \brief A spatial acceleration structure over a BlockBrickedVolume, used
 //!  for opacity and variance based space skipping.
 //!
@@ -47,6 +49,7 @@ void GridAccelerator_destroy(GridAccelerator *uniform accelerator);
 //! Step a ray through the accelerator until a cell with visible volumetric
 //! elements is found.
 void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
+                             TransferFunction *uniform tfn,
                              const varying float step,
                              varying Ray &ray);
 

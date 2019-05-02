@@ -63,7 +63,7 @@ namespace OSPRayTestScenes {
 
     void AddLight(OSPLight new_light);
     void AddInstance(OSPGeometryInstance new_geometry);
-    void AddVolume(OSPVolume new_volume);
+    void AddInstance(OSPVolumeInstance new_volume);
 
     void PerformRenderTest();
 

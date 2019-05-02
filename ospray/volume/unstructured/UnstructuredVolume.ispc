@@ -804,7 +804,10 @@ inline varying vec3f UnstructuredVolume_computeGradient(
 
 // ray.time is set to interval length of intersected sample
 inline void UnstructuredVolume_stepRay(
-    const void *uniform _self, varying Ray &ray, const varying float samplingRate)
+    const void *uniform _self,
+    TransferFunction *uniform /*tfn*/,
+    varying Ray &ray,
+    const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
   const UnstructuredVolume *uniform self = (const UnstructuredVolume * uniform) _self;
