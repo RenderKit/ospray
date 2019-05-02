@@ -30,6 +30,8 @@ void SciVis_renderSample(Renderer *uniform _self,
 
   vec4f outputColor = make_vec4f(0.f);
 
+  const uniform vec4f &bgColor = self->super.bgColor;
+
   uniform bool firstHit       = true;
   const float originalRayTFar = sample.ray.t;
 
@@ -54,24 +56,25 @@ void SciVis_renderSample(Renderer *uniform _self,
     {
       sample.z = geomRay.t;
       if (!(eitherHit)) {
-        sample.rgb    = make_vec3f(self->super.bgColor);
+        sample.rgb    = make_vec3f(bgColor);
         sample.albedo = sample.rgb;
         sample.normal = sample.ray.dir;
-        sample.alpha  = self->super.bgColor.w;
+        sample.alpha  = bgColor.w;
       }
     }
 
     if (!(eitherHit))
       break;
 
-    vec4f volumeColor  = make_vec4f(0.f);
-    vec4f surfaceColor = make_vec4f(0.f);
+    SSI surfaceShading;
+
+    vec4f volumeColor   = make_vec4f(0.f);
+    vec4f &surfaceColor = surfaceShading.shadedColor;
 
     DifferentialGeometry dg;
     if (haveGeometryHit) {
       computeDG(world, geomRay, dg);
-      surfaceColor =
-          computeShadedSurfaceColor(self, fb, world, firstHit, dg, sample);
+      surfaceShading = computeShading(self, fb, world, dg, sample);
     }
 
     if (haveVolumeHit && volumeFirst) {
@@ -85,12 +88,22 @@ void SciVis_renderSample(Renderer *uniform _self,
     if (bothHit) {
       blendedColor = volumeColor + (1.0f - volumeColor.w) * surfaceColor;
     } else {
-      blendedColor = haveGeometryHit ? surfaceColor : volumeColor;
+      if (haveGeometryHit)
+        blendedColor = surfaceColor;
+      else
+        blendedColor = volumeColor;
     }
 
     outputColor = outputColor + (1.0f - outputColor.w) * blendedColor;
 
     setRay(geomRay, geomRay.t + dg.epsilon, originalRayTFar);
+
+    cif(firstHit)
+    {
+      sample.albedo =
+          haveGeometryHit ? surfaceShading.albedo : make_vec3f(bgColor);
+      sample.normal = dg.Ns;
+    }
 
     firstHit = false;
   }

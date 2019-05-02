@@ -67,7 +67,7 @@ inline float computeAO(const uniform SciVis *uniform self,
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir       = localToWorld * local_ao_dir;
 
-    if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
+    if (dot(ao_dir, dg.Ns) < 0.05f) {  // check below surface
       hits++;
       continue;
     }
@@ -85,13 +85,14 @@ inline float computeAO(const uniform SciVis *uniform self,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-vec4f computeShadedSurfaceColor(const SciVis *uniform self,
-                                const FrameBuffer *uniform fb,
-                                const World *uniform world,
-                                const uniform bool firstHit,
-                                const DifferentialGeometry &dg,
-                                ScreenSample &sample)
+SSI computeShading(const SciVis *uniform self,
+                   const FrameBuffer *uniform fb,
+                   const World *uniform world,
+                   const DifferentialGeometry &dg,
+                   ScreenSample &sample)
 {
+  SSI retval;
+
   const vec4f surfaceColor = getSurfaceColor(dg);
 
   const vec3f color   = make_vec3f(surfaceColor);
@@ -110,11 +111,9 @@ vec4f computeShadedSurfaceColor(const SciVis *uniform self,
 
   intensity *= opacity;
 
-  cif(firstHit)
-  {
-    sample.albedo = color;
-    sample.normal = dg.Ns;
-  }
+  retval.shadedColor =
+      make_vec4f(color * (self->aoIntensity * intensity), opacity);
+  retval.albedo = color;
 
-  return make_vec4f(color * (self->aoIntensity * intensity), opacity);
+  return retval;
 }
