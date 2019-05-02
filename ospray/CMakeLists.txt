@@ -146,6 +146,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/simpleAO/SimpleAOMaterial.cpp
   render/simpleAO/SimpleAOMaterial.ispc
   render/simpleAO/surfaces.ispc
+  render/simpleAO/volumes.ispc
   render/scivis/lightAlpha.ispc
   render/scivis/volumeIntegration.ispc
   render/scivis/surfaceShading.ispc

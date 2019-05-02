@@ -329,7 +329,6 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   alpha = self->super.bgColor.w;
 
   VolumeInterval vInterval;
-  initVolumeInterval(vInterval);
   traceVolumeRay(world, sample.ray, vInterval);
 
   if (!vInterval.hasInterval)

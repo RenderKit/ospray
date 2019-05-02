@@ -17,21 +17,8 @@
 #pragma once
 
 #include "SimpleAO.ih"
+#include "volume/VolumeInstance.ih"
 
-inline void computeDG(const World *uniform world,
-                      const Ray &ray,
-                      DifferentialGeometry &dg)
-{
-  postIntersect(world,
-                dg,
-                ray,
-                DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_MATERIALID |
-                    DG_COLOR | DG_TEXCOORD);
-}
-
-vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
-                                const FrameBuffer *uniform fb,
-                                const World *uniform world,
-                                const uniform bool firstHit,
-                                const DifferentialGeometry &dg,
-                                ScreenSample &sample);
+vec4f integrateVolumeInterval(const ScreenSample &sample,
+                              const VolumeInterval &interval,
+                              Ray &ray);

@@ -167,9 +167,9 @@ int main(int argc, const char **argv)
     if (ImGui::Checkbox("volume", &showVolume)) {
       commitWorld = true;
       if (showVolume)
-        ospAddVolume(world, volume);
+        ospAddVolumeInstance(world, instance);
       else
-        ospRemoveVolume(world, volume);
+        ospRemoveVolumeInstance(world, instance);
     }
 
     static bool showIsoSurface = false;

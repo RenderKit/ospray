@@ -21,8 +21,6 @@
 #include "SimpleAOMaterial.ih"
 #include "surfaces.ih"
 
-// Helper shading functions ///////////////////////////////////////////////////
-
 inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 {
   const SimpleAOMaterial *mat = (const SimpleAOMaterial *)dg.material;
@@ -81,22 +79,14 @@ inline float computeAO(const uniform SimpleAO *uniform self,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 vec4f computeShadedSurfaceColor(const SimpleAO *uniform self,
                                 const FrameBuffer *uniform fb,
                                 const World *uniform world,
                                 const uniform bool firstHit,
-                                ScreenSample &sample,
-                                DifferentialGeometry &dg)
+                                const DifferentialGeometry &dg,
+                                ScreenSample &sample)
 {
-  postIntersect(world,
-                dg,
-                sample.ray,
-                DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_MATERIALID |
-                    DG_COLOR | DG_TEXCOORD);
-
   const vec4f surfaceColor = getSurfaceColor(dg);
 
   const vec3f color   = make_vec3f(surfaceColor);

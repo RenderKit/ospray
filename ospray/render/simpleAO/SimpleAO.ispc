@@ -18,6 +18,7 @@
 // ao renderer
 #include "SimpleAO.ih"
 #include "surfaces.ih"
+#include "volumes.ih"
 
 void SimpleAO_renderSample(Renderer *uniform _self,
                            FrameBuffer *uniform fb,
@@ -33,29 +34,63 @@ void SimpleAO_renderSample(Renderer *uniform _self,
   const float originalRayTFar = sample.ray.t;
 
   while (outputColor.w < 0.99f) {
-    traceRay(world, sample.ray);
+    Ray &geomRay  = sample.ray;
+    Ray volumeRay = sample.ray;
+
+    traceRay(world, geomRay);
+
+    VolumeInterval volumeInterval;
+    traceVolumeRay(world, volumeRay, volumeInterval);
+
+    const bool haveGeometryHit = hadHit(geomRay);
+    const bool haveVolumeHit   = volumeInterval.hasInterval;
+
+    const bool bothHit   = haveGeometryHit && haveVolumeHit;
+    const bool eitherHit = haveGeometryHit || haveVolumeHit;
+
+    const bool volumeFirst = volumeInterval.interval.x < geomRay.t;
 
     cif(firstHit)
     {
-      sample.z = sample.ray.t;
-
-      if (noHit(sample.ray)) {
+      sample.z = geomRay.t;
+      if (!(eitherHit)) {
         sample.rgb    = make_vec3f(self->super.bgColor);
         sample.albedo = sample.rgb;
         sample.normal = sample.ray.dir;
         sample.alpha  = self->super.bgColor.w;
-        return;
       }
     }
 
+    if (!(eitherHit))
+      break;
+
+    vec4f volumeColor  = make_vec4f(0.f);
+    vec4f surfaceColor = make_vec4f(0.f);
+
     DifferentialGeometry dg;
+    if (haveGeometryHit) {
+      computeDG(world, geomRay, dg);
+      surfaceColor =
+          computeShadedSurfaceColor(self, fb, world, firstHit, dg, sample);
+    }
 
-    const vec4f color =
-        computeShadedSurfaceColor(self, fb, world, firstHit, sample, dg);
+    if (haveVolumeHit && volumeFirst) {
+      volumeInterval.interval.y = min(geomRay.t, volumeInterval.interval.y);
+      setRay(volumeRay, volumeInterval.interval.x, volumeInterval.interval.y);
+      volumeColor = integrateVolumeInterval(sample, volumeInterval, volumeRay);
+    }
 
-    outputColor = outputColor + (1.0f - outputColor.w) * color;
+    vec4f blendedColor = make_vec4f(0.f);
 
-    setRay(sample.ray, sample.ray.t + dg.epsilon, originalRayTFar);
+    if (bothHit) {
+      blendedColor = volumeColor + (1.0f - volumeColor.w) * surfaceColor;
+    } else {
+      blendedColor = haveGeometryHit ? surfaceColor : volumeColor;
+    }
+
+    outputColor = outputColor + (1.0f - outputColor.w) * blendedColor;
+
+    setRay(geomRay, geomRay.t + dg.epsilon, originalRayTFar);
 
     firstHit = false;
   }

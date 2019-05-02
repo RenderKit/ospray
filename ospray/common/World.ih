@@ -83,6 +83,8 @@ inline void traceVolumeRay(World *uniform model,
                            varying Ray &ray,
                            VolumeInterval &interval)
 {
+  initVolumeInterval(interval);
+
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = &interval;
