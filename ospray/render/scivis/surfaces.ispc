@@ -67,15 +67,20 @@ inline float computeAO(const uniform SciVis *uniform self,
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir       = localToWorld * local_ao_dir;
 
+    if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
+      hits++;
+      continue;
+    }
+
     Ray ao_ray;
-    setRay(ao_ray, dg.P, ao_dir, 0.0f, self->aoRadius);
-    if (dot(ao_dir, dg.Ns) < 0.05f || isOccluded(world, ao_ray))
+    setRay(ao_ray, dg.P, ao_dir, dg.epsilon, self->aoRadius);
+    if (isOccluded(world, ao_ray))
       hits++;
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
   // cancel
-  return 1.0f - hits / (float)sampleCnt;
+  return 1.0f - (hits / (float)sampleCnt);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
