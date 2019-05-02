@@ -205,7 +205,7 @@ namespace OSPRayTestScenes {
   void Base::SetRenderer()
   {
     renderer = ospNewRenderer(rendererType.c_str());
-    ospSet1i(renderer, "aoSamples", 1);
+    ospSet1i(renderer, "aoSamples", 0);
     ospSet1f(renderer, "bgColor", 1.0f);
     ospSetObject(renderer, "model", world);
     ospSetObject(renderer, "camera", camera);
