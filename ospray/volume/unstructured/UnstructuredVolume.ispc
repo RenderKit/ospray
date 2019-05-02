@@ -1113,9 +1113,6 @@ export void
 UnstructuredVolume_disableCellGradient(void *uniform _self)
 {
   UnstructuredVolume *uniform self = (UnstructuredVolume * uniform) _self;
-
-  if (self->cellValue)
-    self->super.gradientShadingEnabled = false;
 }
 
 export void

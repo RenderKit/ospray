@@ -93,37 +93,11 @@ export void Volume_getBoundingBox(uniform box3f *uniform ret,
 
 export void Volume_set(void *uniform _self,
                        void *uniform _embreeGeometry,
-                       uniform bool gradientShading,
-                       uniform bool preIntegration,
-                       uniform bool singleShade,
-                       uniform bool adaptiveSampling,
-                       uniform float adaptiveScalar,
-                       uniform float adaptiveMaxSamplingRate,
-                       uniform float adaptiveBacktrack,
-                       uniform float samplingRate,
-                       const uniform vec3f &specular,
-                       uniform float Ns,
-                       void *uniform transferFunction,
-                       const uniform box3f &clippingBox,
-                       const uniform AffineSpace3f &xfm,
-                       const uniform AffineSpace3f &rcp_xfm)
+                       const uniform box3f &clippingBox)
 {
   Volume *uniform self = (Volume * uniform) _self;
 
-  self->gradientShadingEnabled  = gradientShading;
-  self->preIntegration          = preIntegration;
-  self->singleShade             = singleShade;
-  self->adaptiveSampling        = adaptiveSampling;
-  self->adaptiveScalar          = adaptiveScalar;
-  self->adaptiveMaxSamplingRate = adaptiveMaxSamplingRate;
-  self->adaptiveBacktrack       = adaptiveBacktrack;
-  self->samplingRate            = samplingRate;
-  self->specular                = specular;
-  self->ns                      = Ns;
-  self->transferFunction        = (TransferFunction * uniform) transferFunction;
-  self->volumeClippingBox       = clippingBox;
-  self->xfm                     = xfm;
-  self->rcp_xfm                 = rcp_xfm;
+  self->volumeClippingBox = clippingBox;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

@@ -21,7 +21,7 @@
 
 struct VolumeInstance
 {
-  Volume * volume;  //!< instanced Volume
+  Volume *volume;  //!< instanced Volume
 
   //! Allow the renderer to perform gradient shading.
   bool gradientShadingEnabled;
@@ -59,13 +59,29 @@ struct VolumeInstance
   float ns;
 
   //! Color and opacity transfer function.
-  TransferFunction * transferFunction;
+  TransferFunction *transferFunction;
 
   //! Clipping box for the volume (applies to volume rendering only). An empty
   //! clipping box is ignored.
   box3f volumeClippingBox;
 
   //! Affine transformation
-  AffineSpace3f xfm; //!< instantiation matrix
-  AffineSpace3f rcp_xfm; //!< rcp(instantiation matrix)
+  AffineSpace3f xfm;      //!< instantiation matrix
+  AffineSpace3f rcp_xfm;  //!< rcp(instantiation matrix)
 };
+
+// Helper functions ///////////////////////////////////////////////////////////
+
+inline vec3f VolumeInstance_getColor(const VolumeInstance *uniform volume,
+                                     const float sample)
+{
+  return volume->transferFunction->getColorForValue(volume->transferFunction,
+                                                    sample);
+}
+
+inline float VolumeInstance_getOpacity(const VolumeInstance *uniform volume,
+                                       const float sample)
+{
+  return volume->transferFunction->getOpacityForValue(volume->transferFunction,
+                                                      sample);
+}
