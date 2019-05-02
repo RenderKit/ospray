@@ -32,9 +32,6 @@ struct World
   uniform GeometryInstance *uniform *uniform geometryInstances;
   uniform int32 geometryInstanceCount;
 
-  uniform Volume *uniform *uniform volumes;
-  uniform int32 volumeCount;
-
   uniform VolumeInstance *uniform *uniform volumeInstances;
   uniform int32 volumeInstanceCount;
 

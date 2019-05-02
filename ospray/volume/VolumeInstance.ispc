@@ -50,14 +50,11 @@ export void VolumeInstance_set(void *uniform _self,
 
   self->gradientShadingEnabled  = gradientShading;
   self->preIntegration          = preIntegration;
-  self->singleShade             = singleShade;
   self->adaptiveSampling        = adaptiveSampling;
   self->adaptiveScalar          = adaptiveScalar;
   self->adaptiveMaxSamplingRate = adaptiveMaxSamplingRate;
   self->adaptiveBacktrack       = adaptiveBacktrack;
   self->samplingRate            = samplingRate;
-  self->specular                = specular;
-  self->ns                      = Ns;
   self->transferFunction        = (TransferFunction * uniform) transferFunction;
   self->volumeClippingBox       = clippingBox;
   self->xfm                     = xfm;

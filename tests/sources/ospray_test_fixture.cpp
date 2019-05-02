@@ -644,12 +644,11 @@ namespace OSPRayTestScenes {
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
     ospSetObject(instance, "transferFunction", transferFun);
-    ospSetObject(pyramid, "transferFunction", transferFun);
-    ospCommit(pyramid);
+    ospCommit(instance);
 
     if (renderIsosurface) {
       OSPGeometry isosurface = ospNewGeometry("isosurfaces");
-      ospSetObject(isosurface, "volume", pyramid);
+      ospSetObject(isosurface, "volume", instance);
       float isovalue = 0.f;
       OSPData isovaluesData = ospNewData(1, OSP_FLOAT, &isovalue);
       ospSetData(isosurface, "isovalues", isovaluesData);
@@ -691,6 +690,10 @@ namespace OSPRayTestScenes {
     ospSet3fv(camera, "up", cam_up);
 
     OSPVolume torus = CreateTorus(volumetricData, 256);
+    ospCommit(torus);
+
+    OSPVolumeInstance volumeInstance = ospNewVolumeInstance(torus);
+    ospRelease(torus);
 
     OSPTransferFunction transferFun =
         ospNewTransferFunction("piecewise_linear");
@@ -704,14 +707,13 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
-    ospSetObject(torus, "transferFunction", transferFun);
+    ospSetObject(volumeInstance, "transferFunction", transferFun);
     ospRelease(transferFun);
 
-    ospCommit(torus);
+    ospCommit(volumeInstance);
 
     OSPGeometry isosurface = ospNewGeometry("isosurfaces");
-    ospSetObject(isosurface, "volume", torus);
-    ospRelease(torus);
+    ospSetObject(isosurface, "volume", volumeInstance);
     float isovalues[2]    = {-7000.f, 0.f};
     OSPData isovaluesData = ospNewData(2, OSP_FLOAT, isovalues);
     ospSetData(isosurface, "isovalues", isovaluesData);
@@ -758,6 +760,23 @@ namespace OSPRayTestScenes {
       }
     }
 
+    OSPVolume blob = ospNewVolume("shared_structured_volume");
+    ASSERT_TRUE(blob);
+    OSPData voxelsData = ospNewData(size * size * size,
+                                    OSP_FLOAT,
+                                    volumetricData.data(),
+                                    OSP_DATA_SHARED_BUFFER);
+    ASSERT_TRUE(voxelsData);
+    ospSetData(blob, "voxelData", voxelsData);
+    ospSet3i(blob, "dimensions", size, size, size);
+    ospSetString(blob, "voxelType", "float");
+    ospSet2f(blob, "voxelRange", 0.f, 3.f);
+    ospSet3f(blob, "gridOrigin", -0.5f, -0.5f, -0.5f);
+    ospSet3f(blob, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
+    ospCommit(blob);
+
+    OSPVolumeInstance volumeInstance = ospNewVolumeInstance(blob);
+
     OSPTransferFunction transferFun =
         ospNewTransferFunction("piecewise_linear");
     ASSERT_TRUE(transferFun);
@@ -772,21 +791,9 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospCommit(transferFun);
 
-    OSPVolume blob = ospNewVolume("shared_structured_volume");
-    ASSERT_TRUE(blob);
-    OSPData voxelsData = ospNewData(size * size * size,
-                                    OSP_FLOAT,
-                                    volumetricData.data(),
-                                    OSP_DATA_SHARED_BUFFER);
-    ASSERT_TRUE(voxelsData);
-    ospSetData(blob, "voxelData", voxelsData);
-    ospSet3i(blob, "dimensions", size, size, size);
-    ospSetString(blob, "voxelType", "float");
-    ospSet2f(blob, "voxelRange", 0.f, 3.f);
-    ospSet3f(blob, "gridOrigin", -0.5f, -0.5f, -0.5f);
-    ospSet3f(blob, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
-    ospSetObject(blob, "transferFunction", transferFun);
-    ospCommit(blob);
+    ospSetObject(volumeInstance, "transferFunction", transferFun);
+    ospRelease(transferFun);
+    ospCommit(volumeInstance);
 
     OSPGeometry slice = ospNewGeometry("slices");
     ASSERT_TRUE(slice);
@@ -795,8 +802,9 @@ namespace OSPRayTestScenes {
     OSPData planesData = ospNewData(3, OSP_FLOAT4, planes);
     ASSERT_TRUE(planesData);
     ospSetData(slice, "planes", planesData);
-    ospSetObject(slice, "volume", blob);
+    ospSetObject(slice, "volume", volumeInstance);
     ospCommit(slice);
+    ospRelease(volumeInstance);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(slice);
     AddInstance(instance);
@@ -947,6 +955,10 @@ namespace OSPRayTestScenes {
     ospSet3fv(camera, "up", cam_up);
 
     OSPVolume torus = CreateTorus(volumetricData, 256);
+    ospCommit(torus);
+
+    OSPVolumeInstance volumeInstance = ospNewVolumeInstance(torus);
+    ospRelease(torus);
 
     OSPTransferFunction transferFun =
         ospNewTransferFunction("piecewise_linear");
@@ -960,14 +972,15 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
-    ospSetObject(torus, "transferFunction", transferFun);
+    ospSetObject(volumeInstance, "transferFunction", transferFun);
     ospRelease(transferFun);
-    ospCommit(torus);
+    ospCommit(volumeInstance);
 
     OSPMaterial sphereMaterial =
         ospNewMaterial(rendererType.c_str(), "default");
     OSPTexture tex = ospNewTexture("volume");
-    ospSetObject(tex, "volume", torus);
+    ospSetObject(tex, "volume", volumeInstance);
+    ospRelease(volumeInstance);
     ospCommit(tex);
     ospSetObject(sphereMaterial, "map_Kd", tex);
     ospCommit(sphereMaterial);
@@ -1012,6 +1025,10 @@ namespace OSPRayTestScenes {
     ospSet3fv(camera, "up", cam_up);
 
     OSPVolume torus = CreateTorus(volumetricData, 256);
+    ospCommit(torus);
+
+    OSPVolumeInstance instance = ospNewVolumeInstance(torus);
+    ospRelease(torus);
 
     OSPTransferFunction transferFun =
         ospNewTransferFunction("piecewise_linear");
@@ -1025,12 +1042,8 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
-    ospSetObject(torus, "transferFunction", transferFun);
+    ospSetObject(instance, "transferFunction", transferFun);
     ospRelease(transferFun);
-    ospCommit(torus);
-
-    OSPVolumeInstance instance = ospNewVolumeInstance(torus);
-    ospRelease(torus);
 
     AddInstance(instance);
 

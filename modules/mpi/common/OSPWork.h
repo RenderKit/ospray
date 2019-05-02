@@ -407,36 +407,6 @@ namespace ospray {
         ObjectHandle futureHandle;
       };
 
-      struct AddVolume : public Work
-      {
-        AddVolume() = default;
-        AddVolume(OSPWorld world, const OSPVolume &t)
-            : worldHandle((const ObjectHandle &)world),
-              objectHandle((const ObjectHandle &)t)
-        {
-        }
-
-        void run() override;
-
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
-        void serialize(WriteStream &b) const override
-        {
-          b << (int64)worldHandle << (int64)objectHandle;
-        }
-
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
-        void deserialize(ReadStream &b) override
-        {
-          b >> worldHandle.i64 >> objectHandle.i64;
-        }
-
-        ObjectHandle worldHandle;
-        ObjectHandle objectHandle;
-      };
-
       struct AddGeometryInstance : public Work
       {
         AddGeometryInstance() = default;
@@ -531,36 +501,6 @@ namespace ospray {
       {
         RemoveVolumeInstance() = default;
         RemoveVolumeInstance(OSPWorld world, const OSPVolumeInstance &t)
-            : worldHandle((const ObjectHandle &)world),
-              objectHandle((const ObjectHandle &)t)
-        {
-        }
-
-        void run() override;
-
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
-        void serialize(WriteStream &b) const override
-        {
-          b << (int64)worldHandle << (int64)objectHandle;
-        }
-
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
-        void deserialize(ReadStream &b) override
-        {
-          b >> worldHandle.i64 >> objectHandle.i64;
-        }
-
-        ObjectHandle worldHandle;
-        ObjectHandle objectHandle;
-      };
-
-      struct RemoveVolume : public Work
-      {
-        RemoveVolume() = default;
-        RemoveVolume(OSPWorld world, const OSPVolume &t)
             : worldHandle((const ObjectHandle &)world),
               objectHandle((const ObjectHandle &)t)
         {

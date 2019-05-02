@@ -548,26 +548,6 @@ extern "C" OSPWorld ospNewWorld() OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" void ospAddVolume(OSPWorld model,
-                             OSPVolume volume) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert(model != nullptr && "invalid model in ospAddVolume");
-  Assert(volume != nullptr && "invalid volume in ospAddVolume");
-  return currentDevice().addVolume(model, volume);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospRemoveVolume(OSPWorld model,
-                                OSPVolume volume) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert(model != nullptr && "invalid model in ospRemoveVolume");
-  Assert(volume != nullptr && "invalid volume in ospRemoveVolume");
-  return currentDevice().removeVolume(model, volume);
-}
-OSPRAY_CATCH_END()
-
 extern "C" void ospAddGeometryInstance(
     OSPWorld world, OSPGeometryInstance instance) OSPRAY_CATCH_BEGIN
 {

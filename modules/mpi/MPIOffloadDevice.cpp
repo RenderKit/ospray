@@ -551,19 +551,6 @@ namespace ospray {
       processWork(work);
     }
 
-    /*! add a new volume to a world */
-    void MPIOffloadDevice::addVolume(OSPWorld _world, OSPVolume _volume)
-    {
-      work::AddVolume work(_world, _volume);
-      processWork(work);
-    }
-
-    void MPIOffloadDevice::removeVolume(OSPWorld _world, OSPVolume _volume)
-    {
-      work::RemoveVolume work(_world, _volume);
-      processWork(work);
-    }
-
     void MPIOffloadDevice::addInstance(OSPWorld _world,
                                        OSPGeometryInstance _instance)
     {

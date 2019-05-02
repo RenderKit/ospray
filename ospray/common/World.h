@@ -48,9 +48,6 @@ namespace ospray {
 
     using GeometryInstanceVector = std::vector<Ref<GeometryInstance>>;
     using VolumeInstanceVector   = std::vector<Ref<VolumeInstance>>;
-    using VolumeVector           = std::vector<Ref<Volume>>;
-
-    VolumeVector volume;
 
     GeometryInstanceVector geometryInstances;
     VolumeInstanceVector volumeInstances;

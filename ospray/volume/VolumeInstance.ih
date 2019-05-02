@@ -26,9 +26,6 @@ struct VolumeInstance
   //! Allow the renderer to perform gradient shading.
   bool gradientShadingEnabled;
 
-  //! Only shade maximum opacity point, if gradientShadingEnabled == 1
-  bool singleShade;
-
   //! Integrates over transfer function values, good for high frequency tf
   bool preIntegration;
 
@@ -51,12 +48,6 @@ struct VolumeInstance
 
   //! Recommended sampling rate for the renderer.
   float samplingRate;
-
-  //! kd, specular color
-  vec3f specular;
-
-  //! specular power
-  float ns;
 
   //! Color and opacity transfer function.
   TransferFunction *transferFunction;

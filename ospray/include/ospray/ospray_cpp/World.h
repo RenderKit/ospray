@@ -18,7 +18,7 @@
 
 #include <ospray/ospray_cpp/GeometryInstance.h>
 #include <ospray/ospray_cpp/ManagedObject.h>
-#include <ospray/ospray_cpp/Volume.h>
+#include <ospray/ospray_cpp/VolumeInstance.h>
 
 namespace ospray {
   namespace cpp {
@@ -36,11 +36,11 @@ namespace ospray {
       void removeGeometryInstance(GeometryInstance &v) const;
       void removeGeometryInstance(OSPGeometryInstance v) const;
 
-      void addVolume(Volume &v) const;
-      void addVolume(OSPVolume v) const;
+      void addVolumeInstance(VolumeInstance &v) const;
+      void addVolumeInstance(OSPVolumeInstance v) const;
 
-      void removeVolume(Volume &v) const;
-      void removeVolume(OSPVolume v) const;
+      void removeVolumeInstance(VolumeInstance &v) const;
+      void removeVolumeInstance(OSPVolumeInstance v) const;
     };
 
     // Inlined function definitions ///////////////////////////////////////////
@@ -84,24 +84,24 @@ namespace ospray {
       ospRemoveGeometryInstance(handle(), v);
     }
 
-    inline void World::addVolume(Volume &v) const
+    inline void World::addVolumeInstance(VolumeInstance &v) const
     {
-      addVolume(v.handle());
+      addVolumeInstance(v.handle());
     }
 
-    inline void World::addVolume(OSPVolume v) const
+    inline void World::addVolumeInstance(OSPVolumeInstance v) const
     {
-      ospAddVolume(handle(), v);
+      ospAddVolumeInstance(handle(), v);
     }
 
-    inline void World::removeVolume(Volume &v) const
+    inline void World::removeVolumeInstance(VolumeInstance &v) const
     {
-      removeVolume(v.handle());
+      removeVolumeInstance(v.handle());
     }
 
-    inline void World::removeVolume(OSPVolume v) const
+    inline void World::removeVolumeInstance(OSPVolumeInstance v) const
     {
-      ospRemoveVolume(handle(), v);
+      ospRemoveVolumeInstance(handle(), v);
     }
 
   }  // namespace cpp

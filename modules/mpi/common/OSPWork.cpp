@@ -59,10 +59,8 @@ namespace ospray {
         registerWorkUnit<LoadModule>(registry);
 
         registerWorkUnit<AddGeometryInstance>(registry);
-        registerWorkUnit<AddVolume>(registry);
         registerWorkUnit<AddVolumeInstance>(registry);
         registerWorkUnit<RemoveGeometryInstance>(registry);
-        registerWorkUnit<RemoveVolume>(registry);
         registerWorkUnit<RemoveVolumeInstance>(registry);
 
         registerWorkUnit<CreateFrameBuffer>(registry);
@@ -536,16 +534,7 @@ namespace ospray {
         world->geometryInstances.push_back(instance);
       }
 
-      // ospAddVolume /////////////////////////////////////////////////////////
-
-      void AddVolume::run()
-      {
-        World *world   = (World *)worldHandle.lookup();
-        Volume *volume = (Volume *)objectHandle.lookup();
-        Assert(world);
-        Assert(volume);
-        world->volume.push_back(volume);
-      }
+      // ospAddVolumeInstance /////////////////////////////////////////////////
 
       void AddVolumeInstance::run()
       {
@@ -571,23 +560,7 @@ namespace ospray {
           world->geometryInstances.erase(it);
       }
 
-      // ospRemoveVolume //////////////////////////////////////////////////////
-
-      void RemoveVolume::run()
-      {
-        World *world   = (World *)worldHandle.lookup();
-        Volume *volume = (Volume *)objectHandle.lookup();
-        Assert(world);
-        Assert(volume);
-        world->volume.push_back(volume);
-        auto it =
-            std::find_if(world->volume.begin(),
-                         world->volume.end(),
-                         [&](const Ref<Volume> &v) { return volume == &*v; });
-        if (it != world->volume.end()) {
-          world->volume.erase(it);
-        }
-      }
+      // ospRemoveVolumeInstance //////////////////////////////////////////////
 
       void RemoveVolumeInstance::run()
       {

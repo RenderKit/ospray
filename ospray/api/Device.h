@@ -62,12 +62,6 @@ namespace ospray {
       /*! commit the given object's outstanding changes */
       virtual void commit(OSPObject object) = 0;
 
-      /*! add a new volume to a model */
-      virtual void addVolume(OSPWorld _model, OSPVolume _volume) = 0;
-
-      /*! remove an existing volume from a model */
-      virtual void removeVolume(OSPWorld _model, OSPVolume _volume) = 0;
-
       virtual void addInstance(OSPWorld _world,
                                OSPGeometryInstance _instance) = 0;
 

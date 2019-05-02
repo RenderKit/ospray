@@ -28,7 +28,6 @@ export void *uniform World_create(void *uniform cppE)
 
   world->cppEquivalent     = cppE;
   world->geometryInstances = NULL;
-  world->volumes           = NULL;
   world->volumeInstances   = NULL;
 
   world->embreeSceneHandleGeometries = NULL;
@@ -40,8 +39,6 @@ export void *uniform World_create(void *uniform cppE)
 export void World_cleanup(void *uniform _world)
 {
   uniform World *uniform world = (uniform World * uniform) _world;
-  if (world->volumes)
-    delete[] world->volumes;
   if (world->geometryInstances)
     delete[] world->geometryInstances;
   if (world->volumeInstances)
@@ -52,7 +49,6 @@ export void World_init(void *uniform _world,
                        void *uniform embreeDevice,
                        uniform int32 embreeSceneFlags,
                        uniform int32 numGeometryInstances,
-                       uniform int32 numVolumes,
                        uniform int32 numVolumeInstances)
 {
   uniform World *uniform world = (uniform World * uniform) _world;
@@ -77,14 +73,6 @@ export void World_init(void *uniform _world,
   } else {
     world->geometryInstances = NULL;
   }
-
-  if (world->volumes)
-    delete[] world->volumes;
-  world->volumeCount = numVolumes;
-  if (numVolumes > 0)
-    world->volumes = uniform new uniVolumePtr[numVolumes];
-  else
-    world->volumes = NULL;
 
   if (world->volumeInstances)
     delete[] world->volumeInstances;
@@ -121,14 +109,6 @@ export void World_setGeometryInstance(void *uniform _world,
   World *uniform world               = (World * uniform) _world;
   GeometryInstance *uniform instance = (GeometryInstance * uniform) _instance;
   world->geometryInstances[instID]   = instance;
-}
-
-export void World_setVolume(void *uniform pointer,
-                            uniform int32 volumeID,
-                            void *uniform volume)
-{
-  World *uniform world     = (World * uniform) pointer;
-  world->volumes[volumeID] = (Volume * uniform) volume;
 }
 
 export void World_setVolumeInstance(void *uniform _world,

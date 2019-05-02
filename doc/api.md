@@ -408,33 +408,8 @@ in the table below.
   ------------------- ------------------------ ---------  -----------------------------------
   Type                Name                       Default  Description
   ------------------- ------------------------ ---------  -----------------------------------
-  OSPTransferFunction transferFunction                    [transfer function] to use
-
   vec2f               voxelRange                          minimum and maximum of the scalar
                                                           values
-
-  bool                gradientShadingEnabled       false  volume is rendered with surface
-                                                          shading wrt. to normalized gradient
-
-  bool                preIntegration               false  use pre-integration for
-                                                          [transfer function] lookups
-
-  bool                singleShade                   true  shade only at the point of maximum
-                                                          intensity
-
-  bool                adaptiveSampling              true  adapt ray step size based on
-                                                          opacity
-
-  float               adaptiveScalar                  15  modifier for adaptive step size
-
-  float               adaptiveMaxSamplingRate          2  maximum sampling rate for adaptive
-                                                          sampling
-
-  float               samplingRate                 0.125  sampling rate of the volume (this
-                                                          is the minimum step size for
-                                                          adaptive sampling)
-
-  vec3f               specular                  gray 0.3  specular color for shading
 
   vec3f               volumeClippingBoxLower    disabled  lower coordinate (in object-space)
                                                           to clip the volume values
@@ -671,6 +646,59 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
   vec2f        valueRange  domain (scalar range) this function maps from
   ------------ ----------- ----------------------------------------------
   : Parameters accepted by the linear transfer function.
+
+
+VolumeInstances
+-----------------
+
+Volumes in OSPRay are instantiated in a World to give them a world-space
+transform and addition appearance information. To create a volume instance,
+call
+
+    OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume);
+
+  -------------------- ----------------------- ---------- --------------------------------------
+  Type                 Name                    Default    Description
+  -------------------- ----------------------- ---------- --------------------------------------
+  OSPTransferFunction  transferFunction                   [transfer function] to use
+
+  vec3f                xfm.l.vx                   (1,0,0) First row of the world-space
+                                                          transformation matrix
+
+  vec3f                xfm.l.vy                   (0,1,0) Second row of the world-space
+                                                          transformation matrix
+
+  vec3f                xfm.l.vz                   (0,0,1) Third row of the world-space
+                                                          transformation matrix
+
+  vec3f                xfm.p                      (0,0,0) Fourth row of the world-space
+                                                          transformation matrix
+
+  bool                 gradientShadingEnabled       false volume is rendered with surface
+                                                          shading wrt. to normalized gradient
+
+  bool                 preIntegration               false use pre-integration for
+                                                          [transfer function] lookups
+
+  bool                 singleShade                   true shade only at the point of maximum
+                                                          intensity
+
+  bool                 adaptiveSampling              true adapt ray step size based on
+                                                          opacity
+
+  float                adaptiveScalar                  15 modifier for adaptive step size
+
+  float                adaptiveMaxSamplingRate          2 maximum sampling rate for adaptive
+                                                          sampling
+
+  float                samplingRate                 0.125 sampling rate of the volume (this
+                                                          is the minimum step size for
+                                                          adaptive sampling)
+
+  vec3f                specular                  gray 0.3 specular color for shading
+
+  -------------------- ------------------------ --------- ---------------------------------------
+  : Parameters understood by VolumeInstance.
 
 
 Geometries
@@ -1152,12 +1180,12 @@ The call returns an `OSPWorld` handle to the created world. To add an
 already created geometry instance or volume to a world use
 
     void ospAddGeometryInstance(OSPWorld, OSPGeometryInstance);
-    void ospAddVolume(OSPWorld, OSPVolume);
+    void ospAddVolumeInstance(OSPWorld, OSPVolumeInstance);
 
 An existing geometry or volume can be removed from a world with
 
     void ospRemoveGeometryInstance(OSPWorld, OSPGeometryInstance);
-    void ospRemoveVolume(OSPWorld, OSPVolume);
+    void ospRemoveVolumeInstance(OSPWorld, OSPVolumeInstance);
 
 Finally, Worlds can be configured with parameters for making various
 feature/performance trade-offs:

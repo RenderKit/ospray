@@ -128,28 +128,6 @@ namespace ospray {
       object->commit();
     }
 
-    void ISPCDevice::addVolume(OSPWorld _model, OSPVolume _volume)
-    {
-      World *model   = (World *)_model;
-      Volume *volume = (Volume *)_volume;
-      model->volume.push_back(volume);
-    }
-
-    void ISPCDevice::removeVolume(OSPWorld _model, OSPVolume _volume)
-    {
-      World *model   = (World *)_model;
-      Volume *volume = (Volume *)_volume;
-
-      auto it = std::find_if(
-          model->volume.begin(),
-          model->volume.end(),
-          [&](const Ref<ospray::Volume> &g) { return volume == &*g; });
-
-      if (it != model->volume.end()) {
-        model->volume.erase(it);
-      }
-    }
-
     void ISPCDevice::addInstance(OSPWorld _world, OSPGeometryInstance _instance)
     {
       auto *world    = (World *)_world;
