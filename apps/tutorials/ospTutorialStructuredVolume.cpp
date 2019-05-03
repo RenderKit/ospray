@@ -85,6 +85,7 @@ int main(int argc, const char **argv)
 
   auto instance = ospNewVolumeInstance(volume);
   ospSetObject(instance, "transferFunction", tfn);
+  ospSet1f(instance, "samplingRate", 0.5f);
   ospCommit(instance);
 
   ospAddVolumeInstance(world, instance);
@@ -190,9 +191,17 @@ int main(int argc, const char **argv)
     ImGui::Separator();
     ImGui::NewLine();
 
+    static float samplingRate = 0.5f;
+    if (ImGui::SliderFloat( "sampling rate", &samplingRate, 1e-3f, 4.f)) {
+      commitWorld = true;
+      ospSet1f(instance, "samplingRate", samplingRate);
+      glfwOSPRayWindow->addObjectToCommit(instance);
+    }
+
     if (ImGui::SliderFloat(
             "iso value", &isoValue, voxelRange.lower, voxelRange.upper)) {
       setIsoValue(isoGeometry, isoValue);
+      commitWorld = true;
       glfwOSPRayWindow->addObjectToCommit(isoGeometry);
       glfwOSPRayWindow->addObjectToCommit(isoInstance);
     }
