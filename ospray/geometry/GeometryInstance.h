@@ -49,6 +49,8 @@ namespace ospray {
     // Embree information
     RTCScene embreeSceneHandle{nullptr};
     RTCGeometry embreeInstanceGeometry{nullptr};
+    RTCGeometry lastVolumeEmbreeHandle{nullptr}; // to detect volume updates
+    int embreeID {-1};
 
     // Appearance information
     Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID

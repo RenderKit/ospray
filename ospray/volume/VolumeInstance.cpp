@@ -61,32 +61,52 @@ namespace ospray {
     instanceXfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
     instanceXfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
 
-    // Create Embree instanced scene //
+    // Create Embree instanced scene, if necessary //
 
-    if (embreeSceneHandle)
-      rtcReleaseScene(embreeSceneHandle);
+    if (lastVolumeEmbreeHandle != instancedVolume->embreeGeometry) {
+      if (embreeSceneHandle) {
+        rtcDetachGeometry(embreeSceneHandle, embreeID);
+        rtcReleaseScene(embreeSceneHandle);
+      }
 
-    embreeSceneHandle = rtcNewScene(ispc_embreeDevice());
+      embreeSceneHandle = rtcNewScene(ispc_embreeDevice());
 
-    if (embreeInstanceGeometry)
-      rtcReleaseGeometry(embreeInstanceGeometry);
+      if (embreeInstanceGeometry)
+        rtcReleaseGeometry(embreeInstanceGeometry);
 
-    embreeInstanceGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
+      embreeInstanceGeometry =
+          rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
 
-    bool useEmbreeDynamicSceneFlag = getParam1b("dynamicScene", 0);
-    bool useEmbreeCompactSceneFlag = getParam1b("compactMode", 0);
-    bool useEmbreeRobustSceneFlag  = getParam1b("robustMode", 0);
+      bool useEmbreeDynamicSceneFlag = getParam1b("dynamicScene", 0);
+      bool useEmbreeCompactSceneFlag = getParam1b("compactMode", 0);
+      bool useEmbreeRobustSceneFlag  = getParam1b("robustMode", 0);
 
-    int sceneFlags = 0;
-    sceneFlags |= (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
-    sceneFlags |= (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
-    sceneFlags |= (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
+      int sceneFlags = 0;
+      sceneFlags |= (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
+      sceneFlags |= (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
+      sceneFlags |= (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
 
-    rtcSetSceneFlags(embreeSceneHandle, static_cast<RTCSceneFlags>(sceneFlags));
+      rtcSetSceneFlags(embreeSceneHandle,
+                       static_cast<RTCSceneFlags>(sceneFlags));
 
-    rtcAttachGeometry(embreeSceneHandle, instancedVolume->embreeGeometry);
-    rtcCommitScene(embreeSceneHandle);
+      lastVolumeEmbreeHandle = instancedVolume->embreeGeometry;
+      embreeID =
+          rtcAttachGeometry(embreeSceneHandle, instancedVolume->embreeGeometry);
+      rtcCommitScene(embreeSceneHandle);
+
+      rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
+    }
+
+    // Set Embree transform //
+
+    rtcSetGeometryTransform(embreeInstanceGeometry,
+                            0,
+                            RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+                            &instanceXfm);
+
+    rtcCommitGeometry(embreeInstanceGeometry);
+
+    // Calculate bounding information //
 
     const box3f b = instancedVolume->bounds;
     const vec3f v000(b.lower.x, b.lower.y, b.lower.z);
@@ -110,36 +130,23 @@ namespace ospray {
 
     auto rcp_xfm = rcp(instanceXfm);
 
+    // Finish getting/setting other appearance information //
+
     box3f volumeClippingBox =
         box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)),
               getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
 
-    vec3f specular =
-        getParam3f("specular", getParam3f("ks", getParam3f("Ks", vec3f(0.3f))));
-
     ispc::VolumeInstance_set(ispcEquivalent,
-                             getParam1b("gradientShadingEnabled", false),
                              getParam1b("preIntegration", false),
-                             getParam1b("singleShade", true),
                              getParam1b("adaptiveSampling", true),
                              getParam1f("adaptiveScalar", 15.0f),
                              getParam1f("adaptiveMaxSamplingRate", 2.0f),
                              getParam1f("adaptiveBacktrack", 0.03f),
                              getParam1f("samplingRate", 0.125f),
-                             (const ispc::vec3f &)specular,
-                             getParam1f("ns", getParam1f("Ns", 20.f)),
                              transferFunction->getIE(),
                              (const ispc::box3f &)volumeClippingBox,
                              (ispc::AffineSpace3f &)instanceXfm,
                              (ispc::AffineSpace3f &)rcp_xfm);
-
-    rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
-
-    rtcSetGeometryTransform(embreeInstanceGeometry,
-                            0,
-                            RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
-                            &instanceXfm);
-    rtcCommitGeometry(embreeInstanceGeometry);
   }
 
   RTCGeometry VolumeInstance::embreeGeometryHandle() const

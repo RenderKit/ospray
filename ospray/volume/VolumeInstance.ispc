@@ -31,16 +31,12 @@ export void *uniform VolumeInstance_create(void *uniform cppE,
 }
 
 export void VolumeInstance_set(void *uniform _self,
-                               uniform bool gradientShading,
                                uniform bool preIntegration,
-                               uniform bool singleShade,
                                uniform bool adaptiveSampling,
                                uniform float adaptiveScalar,
                                uniform float adaptiveMaxSamplingRate,
                                uniform float adaptiveBacktrack,
                                uniform float samplingRate,
-                               const uniform vec3f &specular,
-                               uniform float Ns,
                                void *uniform transferFunction,
                                const uniform box3f &clippingBox,
                                const uniform AffineSpace3f &xfm,
@@ -48,7 +44,6 @@ export void VolumeInstance_set(void *uniform _self,
 {
   VolumeInstance *uniform self = (VolumeInstance * uniform) _self;
 
-  self->gradientShadingEnabled  = gradientShading;
   self->preIntegration          = preIntegration;
   self->adaptiveSampling        = adaptiveSampling;
   self->adaptiveScalar          = adaptiveScalar;

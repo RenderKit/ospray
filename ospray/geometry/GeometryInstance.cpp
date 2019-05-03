@@ -83,13 +83,6 @@ namespace ospray {
 
   void GeometryInstance::commit()
   {
-    // Get any appearance information //
-
-    prim_materialIDData       = getParamData("prim.materialID");
-    Data *materialListDataPtr = getParamData("materialList");
-    if (materialListDataPtr)
-      setMaterialList(materialListDataPtr);
-
     // Get transform information //
 
     instanceXfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
@@ -97,40 +90,52 @@ namespace ospray {
     instanceXfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
     instanceXfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
 
-    // Create Embree instanced scene //
+    // Create Embree instanced scene, if necessary //
 
-    if (embreeSceneHandle)
-      rtcReleaseScene(embreeSceneHandle);
+    if (lastVolumeEmbreeHandle != instancedGeometry->embreeGeometry) {
+      if (embreeSceneHandle) {
+        rtcDetachGeometry(embreeSceneHandle, embreeID);
+        rtcReleaseScene(embreeSceneHandle);
+      }
 
-    embreeSceneHandle = rtcNewScene(ispc_embreeDevice());
+      embreeSceneHandle = rtcNewScene(ispc_embreeDevice());
 
-    if (embreeInstanceGeometry)
-      rtcReleaseGeometry(embreeInstanceGeometry);
+      if (embreeInstanceGeometry)
+        rtcReleaseGeometry(embreeInstanceGeometry);
 
-    embreeInstanceGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
+      embreeInstanceGeometry =
+          rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
 
-    bool useEmbreeDynamicSceneFlag = getParam1b("dynamicScene", 0);
-    bool useEmbreeCompactSceneFlag = getParam1b("compactMode", 0);
-    bool useEmbreeRobustSceneFlag  = getParam1b("robustMode", 0);
+      bool useEmbreeDynamicSceneFlag = getParam1b("dynamicScene", 0);
+      bool useEmbreeCompactSceneFlag = getParam1b("compactMode", 0);
+      bool useEmbreeRobustSceneFlag  = getParam1b("robustMode", 0);
 
-    int sceneFlags = 0;
-    sceneFlags |= (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
-    sceneFlags |= (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
-    sceneFlags |= (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
+      int sceneFlags = 0;
+      sceneFlags |= (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
+      sceneFlags |= (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
+      sceneFlags |= (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
 
-    rtcSetSceneFlags(embreeSceneHandle, static_cast<RTCSceneFlags>(sceneFlags));
+      rtcSetSceneFlags(embreeSceneHandle,
+                       static_cast<RTCSceneFlags>(sceneFlags));
 
-    rtcAttachGeometry(embreeSceneHandle, instancedGeometry->embreeGeometry);
-    rtcCommitScene(embreeSceneHandle);
+      lastVolumeEmbreeHandle = instancedGeometry->embreeGeometry;
+      embreeID = rtcAttachGeometry(embreeSceneHandle,
+                                   instancedGeometry->embreeGeometry);
+      rtcCommitScene(embreeSceneHandle);
 
-    colorData = getParamData("color", getParamData("prim.color"));
-
-    if (colorData &&
-        colorData->numItems != instancedGeometry->numPrimitives()) {
-      throw std::runtime_error(
-          "number of colors does not match number of primitives!");
+      rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
     }
+
+    // Set Embree transform //
+
+    rtcSetGeometryTransform(embreeInstanceGeometry,
+                            0,
+                            RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+                            &instanceXfm);
+
+    rtcCommitGeometry(embreeInstanceGeometry);
+
+    // Calculate bounding information //
 
     const box3f b = instancedGeometry->bounds;
     const vec3f v000(b.lower.x, b.lower.y, b.lower.z);
@@ -153,20 +158,28 @@ namespace ospray {
     instanceBounds.extend(xfmPoint(instanceXfm, v111));
 
     AffineSpace3f rcp_xfm = rcp(instanceXfm);
+
+    // Finish getting/setting other appearance information //
+
+    colorData = getParamData("color", getParamData("prim.color"));
+
+    if (colorData &&
+        colorData->numItems != instancedGeometry->numPrimitives()) {
+      throw std::runtime_error(
+          "number of colors does not match number of primitives!");
+    }
+
+    prim_materialIDData       = getParamData("prim.materialID");
+    Data *materialListDataPtr = getParamData("materialList");
+    if (materialListDataPtr)
+      setMaterialList(materialListDataPtr);
+
     ispc::GeometryInstance_set(
         getIE(),
         (ispc::AffineSpace3f &)instanceXfm,
         (ispc::AffineSpace3f &)rcp_xfm,
         colorData ? colorData->data : nullptr,
         prim_materialIDData ? prim_materialIDData->data : nullptr);
-
-    rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
-
-    rtcSetGeometryTransform(embreeInstanceGeometry,
-                            0,
-                            RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
-                            &instanceXfm);
-    rtcCommitGeometry(embreeInstanceGeometry);
   }
 
   RTCGeometry GeometryInstance::embreeGeometryHandle() const
