@@ -9,7 +9,39 @@ This document is relatively simple and meant as a "quick overview" of
 expecations for OSPRay. A more complete set of guidelines for all of C++ can
 be found in the [ISO C++ Core Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md).
 
-## C++ Usage
+## Code Documentation
+
+Code documentation should be in terms of C++ style single-line comments or
+multi-line C style comments, e.g.:
+
+```cpp
+// Lorem ipsum dolor sit amet
+
+/* Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+ * tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+ * quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+ * consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+ * cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+ * proident, sunt in culpa qui officia deserunt mollit anim id est laborum. */
+```
+
+Avoid Doxygen-style code documentation, such as
+
+```cpp
+/*! comment style to avoid */
+
+//! comment style to avoid
+
+/*! \brief comment style to avoid */
+
+int var; //!< comment style to avoid
+```
+
+When adding or updating public API definitions, update the corresponding API.md
+documentation as part of your merge request. This keeps our documentation always
+current, and minimizes the need for audits at release time.
+
+## General Code Goals
 
 In all code, the overall goal is to make interfaces "easy to use correctly" and
 "difficult to use incorrectly". Some characteristics that make code better are:
@@ -38,6 +70,11 @@ formatting should turn clang-format on/off manually:
 ```
 
 NOTE: Both C++ and ISPC files can be formatted with clang-format.
+
+## C++ Usage Guidelines
+
+C++ is a big language, so the following are things that we prefer to see in
+OSPRay:
 
 ### Memory Management, Object Lifetimes, and Pointers
 
@@ -102,7 +139,6 @@ NOTE: Both C++ and ISPC files can be formatted with clang-format.
 
 ## ISPC Usage
 
-Most of the same principles above can also be applied to ISPC, where possible.
 The following are concerns specific to ISPC:
 
 - Prefer using `uniform` variables. The point of ISPC is to have varying data,
@@ -119,42 +155,10 @@ uniform float *; // 'uniform' is redundant, pointers point to uniform by default
 
 ### OSPRay ISPCDevice Specific Design Choices
 
-- Prefer to use Embree C++ API bindings over ISPC where possible.
+- Prefer to use Embree C API bindings over ISPC where possible.
 - Prefer to throw exceptions when an object is found to be invalid during
   `commit()`.
 - Prefer setting ISPC-side values in a single `set()` call over many single
   value setting functions.
 - Minimize the number of alias names given to both object types and
   parameters.
-
-## Code Documentation
-
-Code documentation should be in terms of C++ style single-line comments or
-multi-line C style comments, e.g.:
-
-```cpp
-// Lorem ipsum dolor sit amet
-
-/* Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
- * tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
- * quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
- * consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
- * cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
- * proident, sunt in culpa qui officia deserunt mollit anim id est laborum. */
-```
-
-Avoid Doxygen-style code documentation, such as
-
-```cpp
-/*! comment style to avoid */
-
-//! comment style to avoid
-
-/*! \brief comment style to avoid */
-
-int var; //!< comment style to avoid
-```
-
-When adding or updating public API definitions, update the corresponding API.md
-documentation as part of your merge request. This keeps our documentation always
-current, and minimizes the need for audits at release time.
