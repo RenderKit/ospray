@@ -52,19 +52,22 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
     while (ray.t0 <= ray.t) {
       const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
 
-      vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
-      float sampleAlpha = tf->getIntegratedOpacityForValue(tf, pSample, sample);
+      if (!isnan(sample)) {
+        vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
+        float sampleAlpha =
+            tf->getIntegratedOpacityForValue(tf, pSample, sample);
 
-      if (pSample == -1.f)
         pSample = sample;
 
-      const float clampedOpacity = clamp(sampleAlpha / instance->samplingRate);
+        const float clampedOpacity =
+            clamp(sampleAlpha / instance->samplingRate);
 
-      sampleColor = sampleColor * clampedOpacity;
-      sampleAlpha = clampedOpacity;
+        sampleColor = sampleColor * clampedOpacity;
+        sampleAlpha = clampedOpacity;
 
-      color = color + ((1.f - sampleAlpha) * sampleColor);
-      alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
+        color = color + ((1.f - sampleAlpha) * sampleColor);
+        alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
+      }
 
       if (alpha >= 0.99f)
         break;
