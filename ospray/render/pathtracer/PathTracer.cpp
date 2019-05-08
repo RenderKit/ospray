@@ -46,10 +46,10 @@ namespace ospray {
     return "ospray::PathTracer";
   }
 
-  void PathTracer::generateGeometryLights(const World *const world)
+  void PathTracer::generateGeometryLights(const World &world)
   {
-    for (size_t i = 0; i < world->geometryInstances.size(); i++) {
-      auto &inst = world->geometryInstances[i];
+    for (size_t i = 0; i < world.geometryInstances.size(); i++) {
+      auto &inst = world.geometryInstances[i];
       if (inst->materialList) {
         // check whether the instmetry has any emissive materials
         bool hasEmissive = false;
@@ -98,7 +98,7 @@ namespace ospray {
     const bool useGeometryLights = getParam1b("useGeometryLights", true);
 
     if (world && useGeometryLights) {
-      generateGeometryLights(world);
+      generateGeometryLights(*world);
       geometryLights = lightArray.size();
     }
 

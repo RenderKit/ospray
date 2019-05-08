@@ -56,6 +56,8 @@ struct VolumeInstance
   //! clipping box is ignored.
   box3f volumeClippingBox;
 
+  box3f boundingBox;
+
   //! Affine transformation
   AffineSpace3f xfm;      //!< instantiation matrix
   AffineSpace3f rcp_xfm;  //!< rcp(instantiation matrix)

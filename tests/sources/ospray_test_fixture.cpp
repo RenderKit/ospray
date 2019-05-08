@@ -20,7 +20,7 @@ extern OSPRayEnvironment *ospEnv;
 
 namespace OSPRayTestScenes {
 
-  // helper functions
+  // Helper functions /////////////////////////////////////////////////////////
 
   // creates a torus
   // volumetric data: stores data of torus
@@ -63,6 +63,8 @@ namespace OSPRayTestScenes {
     return torus;
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
   Base::Base()
   {
     const ::testing::TestCase *const testCase =
@@ -89,14 +91,15 @@ namespace OSPRayTestScenes {
 
     rendererType    = "scivis";
     frames          = 1;
-    samplesPerPixel = 50;
+    samplesPerPixel = 16;
     SetImageTool();
   }
 
   void Base::SetImageTool()
   {
     try {
-      imageTool = new OSPImageTools(imgSize, GetTestName(), frameBufferFormat);
+      imageTool.reset(
+          new OSPImageTools(imgSize, GetTestName(), frameBufferFormat));
     } catch (std::bad_alloc &e) {
       FAIL() << "Failed to create image tool.\n";
     }
@@ -104,19 +107,13 @@ namespace OSPRayTestScenes {
 
   Base::~Base()
   {
-#if 0  // TODO: leaking lights...releasing them segfaults with gcc (?!?!?)
-  ospRelease(lights);
-
-  for (auto l : lightsList)
-    ospRelease(l);
-#endif
+    for (auto l : lightsList)
+      ospRelease(l);
 
     ospRelease(framebuffer);
     ospRelease(renderer);
     ospRelease(camera);
     ospRelease(world);
-
-    delete imageTool;
   }
 
   void Base::SetUp()
@@ -172,7 +169,6 @@ namespace OSPRayTestScenes {
     SetCamera();
     SetWorld();
     SetRenderer();
-    SetLights();
     SetFramebuffer();
   }
 
@@ -197,10 +193,11 @@ namespace OSPRayTestScenes {
 
   void Base::SetLights()
   {
-    lights = ospNewData(lightsList.size(), OSP_LIGHT, lightsList.data());
-    ospSetObject(renderer, "lights", lights);
-    ospRelease(lights);
-    ospCommit(lights);
+    if (!lightsList.empty()) {
+      lights = ospNewData(lightsList.size(), OSP_LIGHT, lightsList.data());
+      ospSetObject(renderer, "lights", lights);
+      ospRelease(lights);
+    }
   }
 
   void Base::SetRenderer()
@@ -296,11 +293,12 @@ namespace OSPRayTestScenes {
     ospSet3f(camera, "up", 0.f, 1.f, 0.f);
     ospSet1f(camera, "fovy", fov);
 
-    ospSet1i(renderer, "aoSamples", 4);
-    ospSet1b(renderer, "shadowsEnabled", 1);
 
-    ospSet1i(renderer, "spp", 4);
+    ospSet1i(renderer, "spp", 16);
     ospSet4f(renderer, "bgColor", 0.2f, 0.2f, 0.4f, 1.0f);
+    // scivis params
+    ospSet1i(renderer, "aoSamples", 16);
+    // pathtracer params
     ospSet1i(renderer, "maxDepth", 2);
 
     OSPGeometry sphere      = ospNewGeometry("spheres");
@@ -343,7 +341,9 @@ namespace OSPRayTestScenes {
     ospCommit(inst_sphere);
 
     OSPGeometryInstance inst1 = ospNewGeometryInstance(sphere);
+    ospRelease(sphere);
     OSPGeometryInstance inst2 = ospNewGeometryInstance(inst_sphere);
+    ospRelease(inst_sphere);
 
     OSPMaterial sphereMaterial =
         ospNewMaterial(rendererType.c_str(), "default");
@@ -466,11 +466,13 @@ namespace OSPRayTestScenes {
     ospCommit(data);
     ospSetData(wallsMesh, "index", data);
     ospRelease(data);
-    OSPMaterial wallsMaterial = GetMaterial("OBJMaterial");
     ospCommit(wallsMesh);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(wallsMesh);
+    ospRelease(wallsMesh);
+    OSPMaterial wallsMaterial = GetMaterial("OBJMaterial");
     ospSetMaterial(instance, wallsMaterial);
+    ospRelease(wallsMaterial);
     AddInstance(instance);
 
     float lightVertices[]   = {-0.3f,
@@ -502,7 +504,9 @@ namespace OSPRayTestScenes {
     ospCommit(lightSquare);
 
     instance = ospNewGeometryInstance(lightSquare);
+    ospRelease(lightSquare);
     ospSetMaterial(instance, lightMaterial);
+    ospRelease(lightMaterial);
     AddInstance(instance);
 
     float cuboidVertices[] = {
@@ -527,7 +531,9 @@ namespace OSPRayTestScenes {
     ospCommit(cuboid);
 
     instance = ospNewGeometryInstance(cuboid);
+    ospRelease(cuboid);
     ospSetMaterial(instance, cuboidMaterial);
+    ospRelease(cuboidMaterial);
     AddInstance(instance);
 
     float sphereVertex[] = {-0.3f, -0.55f, 2.5f, 0.0f};
@@ -540,7 +546,9 @@ namespace OSPRayTestScenes {
     ospCommit(sphere);
 
     instance = ospNewGeometryInstance(sphere);
+    ospRelease(sphere);
     ospSetMaterial(instance, sphereMaterial);
+    ospRelease(sphereMaterial);
     AddInstance(instance);
 
     // NOTE(jda) - still need to set the world on the renderer for geom lights
@@ -649,7 +657,7 @@ namespace OSPRayTestScenes {
     if (renderIsosurface) {
       OSPGeometry isosurface = ospNewGeometry("isosurfaces");
       ospSetObject(isosurface, "volume", instance);
-      float isovalue = 0.f;
+      float isovalue        = 0.f;
       OSPData isovaluesData = ospNewData(1, OSP_FLOAT, &isovalue);
       ospSetData(isosurface, "isovalues", isovaluesData);
       ospRelease(isovaluesData);
@@ -921,14 +929,19 @@ namespace OSPRayTestScenes {
     OSPData data = ospNewData(16, OSP_FLOAT3A, vertex);
     ASSERT_TRUE(data);
     ospSetData(streamlines, "vertex", data);
+    ospRelease(data);
     data = ospNewData(15, OSP_INT, index);
     ASSERT_TRUE(data);
     ospSetData(streamlines, "index", data);
+    ospRelease(data);
     ospSet1f(streamlines, "radius", radius);
     ospCommit(streamlines);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
-    ospSetMaterial(instance, CreateMaterial(materialType));
+    ospRelease(streamlines);
+    OSPMaterial material = CreateMaterial(materialType);
+    ospSetMaterial(instance, material);
+    ospRelease(material);
     AddInstance(instance);
 
     OSPLight ambient = ospNewLight("ambient");
@@ -983,6 +996,7 @@ namespace OSPRayTestScenes {
     ospRelease(volumeInstance);
     ospCommit(tex);
     ospSetObject(sphereMaterial, "map_Kd", tex);
+    ospRelease(tex);
     ospCommit(sphereMaterial);
 
     float sphereVertex[] = {0.f, 0.f, 0.f, 0.0f};
@@ -995,11 +1009,10 @@ namespace OSPRayTestScenes {
     ospCommit(sphere);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(sphere);
+    ospRelease(sphere);
     ospSetMaterial(instance, sphereMaterial);
-    AddInstance(instance);
-
     ospRelease(sphereMaterial);
-    ospRelease(torus);
+    AddInstance(instance);
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
@@ -1135,30 +1148,40 @@ namespace OSPRayTestScenes {
     auto subd     = ospNewGeometry("subdivision");
     auto vertices = ospNewData(8, OSP_FLOAT3, cube_vertices);
     ospSetData(subd, "vertex", vertices);
+    ospRelease(vertices);
     auto indices = ospNewData(numIndices, OSP_UINT, cube_indices);
     ospSetData(subd, "index", indices);
     auto faces = ospNewData(numFaces, OSP_UINT, cube_faces);
     ospSetData(subd, "face", faces);
+    ospRelease(faces);
     auto edge_crease_indices =
         ospNewData(12, OSP_UINT2, cube_edge_crease_indices);
     ospSetData(subd, "edgeCrease.index", edge_crease_indices);
+    ospRelease(edge_crease_indices);
     auto edge_crease_weights =
         ospNewData(12, OSP_FLOAT, cube_edge_crease_weights);
     ospSetData(subd, "edgeCrease.weight", edge_crease_weights);
+    ospRelease(edge_crease_weights);
     auto vertex_crease_indices =
         ospNewData(8, OSP_UINT, cube_vertex_crease_indices);
     ospSetData(subd, "vertexCrease.index", vertex_crease_indices);
+    ospRelease(vertex_crease_indices);
     auto vertex_crease_weights =
         ospNewData(8, OSP_FLOAT, cube_vertex_crease_weights);
     ospSetData(subd, "vertexCrease.weight", vertex_crease_weights);
+    ospRelease(vertex_crease_weights);
     auto colors = ospNewData(8, OSP_FLOAT4, cube_colors);
     ospSetData(subd, "color", colors);
+    ospRelease(colors);
     ospSet1f(subd, "level", 128.0f);
 
     ospCommit(subd);
 
     OSPGeometryInstance instance = ospNewGeometryInstance(subd);
-    ospSetMaterial(instance, CreateMaterial(materialType));
+    ospRelease(subd);
+    OSPMaterial material = CreateMaterial(materialType);
+    ospSetMaterial(instance, material);
+    ospRelease(material);
     AddInstance(instance);
 
     float cam_pos[]  = {-1.5f, 2.f, 1.7f};

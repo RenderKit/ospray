@@ -32,37 +32,27 @@ INSTANTIATE_TEST_CASE_P(Volumetric,
                                            ::testing::Values(false),
                                            ::testing::Values(4, 6, 9)));
 
-#if 0  // NOTE(jda) - enabling the pathtracer in the following tests breaks the
-       // Torus tests (!?!?!?!)
-INSTANTIATE_TEST_CASE_P(Isosurfaces,
-                        Sierpinski,
-                        ::testing::Combine(::testing::Values("scivis",
-                                                             "pathtracer"),
-                                           ::testing::Values(true),
-                                           ::testing::Values(5, 7, 9)));
-#else
 INSTANTIATE_TEST_CASE_P(Isosurfaces,
                         Sierpinski,
                         ::testing::Combine(::testing::Values("scivis"),
                                            ::testing::Values(true),
                                            ::testing::Values(5, 7, 9)));
-#endif
 
 TEST_P(Torus, simple)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Renderers,
-                        Torus,
-                        ::testing::Values("scivis", "pathtracer"));
+INSTANTIATE_TEST_CASE_P(Renderers, Torus, ::testing::Values("scivis"));
 
 TEST_P(TextureVolume, simple)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Renderers, TextureVolume, ::testing::Values("scivis"));
+INSTANTIATE_TEST_CASE_P(Renderers,
+                        TextureVolume,
+                        ::testing::Values("scivis"));
 
 TEST_P(DepthCompositeVolume, simple)
 {

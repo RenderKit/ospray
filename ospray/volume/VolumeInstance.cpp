@@ -145,6 +145,7 @@ namespace ospray {
                              getParam1f("samplingRate", 0.125f),
                              transferFunction->getIE(),
                              (const ispc::box3f &)volumeClippingBox,
+                             (const ispc::box3f &)instanceBounds,
                              (ispc::AffineSpace3f &)instanceXfm,
                              (ispc::AffineSpace3f &)rcp_xfm);
   }

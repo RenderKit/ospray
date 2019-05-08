@@ -50,14 +50,17 @@ namespace {
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(mesh, "vertex", data);
+    ospRelease(data);
     data = ospNewData(color.size(), OSP_FLOAT4, color.data());
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(mesh, "vertex.color", data);
+    ospRelease(data);
     data = ospNewData(indices.size(), OSP_INT3, indices.data());
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(mesh, "index", data);
+    ospRelease(data);
     ospCommit(mesh);
 
     return mesh;
@@ -75,6 +78,7 @@ namespace {
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(cylinder, "cylinders", data);
+    ospRelease(data);
     ospSet1f(cylinder, "radius", 1.0f);
     ospCommit(cylinder);
 
@@ -93,10 +97,12 @@ namespace {
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(sphere, "spheres", data);
+    ospRelease(data);
     data = ospNewData(1, OSP_FLOAT4, &color);
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(sphere, "color", data);
+    ospRelease(data);
     ospSet1f(sphere, "radius", 1.0f);
     ospCommit(sphere);
 
@@ -157,6 +163,7 @@ namespace {
 // an empty scene
 TEST_P(SingleObject, emptyScene)
 {
+  ospRelease(GetMaterial());
   PerformRenderTest();
 }
 
@@ -166,7 +173,10 @@ TEST_P(SingleObject, simpleMesh)
   OSPGeometry mesh = ::getMesh();
 
   OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
-  ospSetMaterial(instance, GetMaterial());
+  ospRelease(mesh);
+  auto material = GetMaterial();
+  ospSetMaterial(instance, material);
+  ospRelease(material);
   AddInstance(instance);
 
   PerformRenderTest();
@@ -183,7 +193,10 @@ TEST_P(SingleObject, simpleSphere)
   ospCommit(data);
 
   OSPGeometryInstance instance = ospNewGeometryInstance(sphere);
-  ospSetMaterial(instance, GetMaterial());
+  ospRelease(sphere);
+  auto material = GetMaterial();
+  ospSetMaterial(instance, material);
+  ospRelease(material);
   ospSetData(instance, "color", data);
   ospRelease(data);
   AddInstance(instance);
@@ -202,7 +215,10 @@ TEST_P(SingleObject, simpleCylinder)
   ospCommit(data);
 
   OSPGeometryInstance instance = ospNewGeometryInstance(cylinder);
-  ospSetMaterial(instance, GetMaterial());
+  ospRelease(cylinder);
+  auto material = GetMaterial();
+  ospSetMaterial(instance, material);
+  ospRelease(material);
   ospSetData(instance, "color", data);
   ospRelease(data);
   AddInstance(instance);
@@ -216,7 +232,10 @@ TEST_P(SingleObject, simpleStreamlines)
   OSPGeometry streamlines = ::getStreamline();
 
   OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
-  ospSetMaterial(instance, GetMaterial());
+  ospRelease(streamlines);
+  auto material = GetMaterial();
+  ospSetMaterial(instance, material);
+  ospRelease(material);
   AddInstance(instance);
 
   PerformRenderTest();
@@ -227,7 +246,10 @@ TEST_P(SingleObject, simpleStreamlinesVariableRadii)
   OSPGeometry streamlines = ::getStreamline(false);
 
   OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
-  ospSetMaterial(instance, GetMaterial());
+  ospRelease(streamlines);
+  auto material = GetMaterial();
+  ospSetMaterial(instance, material);
+  ospRelease(material);
   AddInstance(instance);
 
   PerformRenderTest();
@@ -237,6 +259,7 @@ INSTANTIATE_TEST_CASE_P(Scivis,
                         SingleObject,
                         ::testing::Combine(::testing::Values("scivis"),
                                            ::testing::Values("OBJMaterial")));
+
 INSTANTIATE_TEST_CASE_P(
     Pathtracer,
     SingleObject,
@@ -247,6 +270,7 @@ TEST_P(SpherePrecision, sphere)
 {
   PerformRenderTest();
 }
+
 INSTANTIATE_TEST_CASE_P(
     Intersection,
     SpherePrecision,

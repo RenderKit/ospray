@@ -19,7 +19,7 @@
 OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
     : dumpImg(false),
       rendererType("scivis"),
-      imgSize({1920, 1080}),
+      imgSize({1024, 768}),
       deviceType("default"),
       baselineDir("regression_tests/baseline"),
       failedDir("failed")
@@ -33,11 +33,6 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
   }
   ospDeviceCommit(device);
   ospSetCurrentDevice(device);
-}
-
-OSPRayEnvironment::~OSPRayEnvironment()
-{
-  ospShutdown();
 }
 
 void OSPRayEnvironment::ParsArgs(int argc, char **argv)

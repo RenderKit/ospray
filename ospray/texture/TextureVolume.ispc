@@ -18,15 +18,15 @@
 
 #include "volume/VolumeInstance.ih"
 
-vec4f TextureVolume_get(const uniform Texture2D *uniform self,
+vec4f TextureVolume_get(const Texture2D *uniform self,
                         const varying DifferentialGeometry &dg)
 {
   VolumeInstance *uniform instance = (VolumeInstance * uniform) self->data;
   Volume *uniform volume           = (Volume * uniform) instance->volume;
 
-  const uniform box3f bounds = volume->boundingBox;
+  const uniform box3f bounds = instance->boundingBox;
 
-  if (box_contains(bounds, dg.P)) {
+  cif (box_contains(bounds, dg.P)) {
     const float sample = Volume_getSample(volume, dg.P);
     return make_vec4f(VolumeInstance_getColor(instance, sample),
                       VolumeInstance_getOpacity(instance, sample));
@@ -35,7 +35,7 @@ vec4f TextureVolume_get(const uniform Texture2D *uniform self,
   }
 }
 
-vec3f TextureVolume_getN(const uniform Texture2D *uniform self,
+vec3f TextureVolume_getN(const Texture2D *uniform self,
                          const varying DifferentialGeometry &dg)
 {
   VolumeInstance *uniform instance = (VolumeInstance * uniform) self->data;
@@ -43,7 +43,7 @@ vec3f TextureVolume_getN(const uniform Texture2D *uniform self,
 
   const uniform box3f bounds = volume->boundingBox;
 
-  if (box_contains(bounds, dg.P)) {
+  cif (box_contains(bounds, dg.P)) {
     const float sample = Volume_getSample(volume, dg.P);
     return VolumeInstance_getColor(instance, sample);
   } else {
@@ -55,10 +55,10 @@ vec3f TextureVolume_getN(const uniform Texture2D *uniform self,
 
 export void *uniform TextureVolume_create(void *uniform volume)
 {
-  uniform Texture2D *uniform self = uniform new uniform Texture2D;
-  self->data                      = volume;
-  self->get                       = TextureVolume_get;
-  self->getNormal                 = TextureVolume_getN;
+  Texture2D *uniform self = uniform new uniform Texture2D;
+  self->data              = volume;
+  self->get               = TextureVolume_get;
+  self->getNormal         = TextureVolume_getN;
 
   return self;
 }

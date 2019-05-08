@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -43,14 +44,14 @@ namespace OSPRayTestScenes {
     int frames;
     int samplesPerPixel;
 
-    OSPFrameBuffer framebuffer;
-    OSPRenderer renderer;
-    OSPCamera camera;
-    OSPWorld world;
-    OSPData lights;
+    OSPFrameBuffer framebuffer{nullptr};
+    OSPRenderer renderer{nullptr};
+    OSPCamera camera{nullptr};
+    OSPWorld world{nullptr};
+    OSPData lights{nullptr};
     OSPFrameBufferFormat frameBufferFormat = OSP_FB_SRGBA;
 
-    OSPImageTools *imageTool;
+    std::unique_ptr<OSPImageTools> imageTool;
     std::vector<OSPLight> lightsList;
 
    public:
@@ -98,7 +99,7 @@ namespace OSPRayTestScenes {
   {
    protected:
     std::string materialType;
-    OSPMaterial material;
+    OSPMaterial material{nullptr};
 
    public:
     SingleObject();
@@ -142,8 +143,8 @@ namespace OSPRayTestScenes {
    protected:
     std::string cuboidMaterialType;
     std::string sphereMaterialType;
-    OSPMaterial cuboidMaterial;
-    OSPMaterial sphereMaterial;
+    OSPMaterial cuboidMaterial{nullptr};
+    OSPMaterial sphereMaterial{nullptr};
 
    public:
     Box();
