@@ -28,9 +28,9 @@ void SciVis_renderSample(Renderer *uniform _self,
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
-  vec4f outputColor = make_vec4f(0.f);
-
   const uniform vec4f &bgColor = self->super.bgColor;
+
+  vec4f outputColor = make_vec4f(0.f);
 
   uniform bool firstHit       = true;
   const float originalRayTFar = sample.ray.t;
@@ -56,14 +56,13 @@ void SciVis_renderSample(Renderer *uniform _self,
     {
       sample.z = geomRay.t;
       if (!(eitherHit)) {
-        sample.rgb    = make_vec3f(bgColor);
-        sample.albedo = sample.rgb;
+        outputColor   = bgColor;
+        sample.albedo = make_vec3f(bgColor);
         sample.normal = sample.ray.dir;
-        sample.alpha  = bgColor.w;
       }
     }
 
-    if (!(eitherHit))
+    if (!eitherHit)
       break;
 
     SSI surfaceShading;
