@@ -35,7 +35,12 @@ void SciVis_renderSample(Renderer *uniform _self,
   uniform bool firstHit       = true;
   const float originalRayTFar = sample.ray.t;
 
-  while (outputColor.w < 0.99f) {
+  // NOTE(jda) - On AVX CPUs, removing the iteration counter can cause infinite
+  //             loops (seen stochastically in CI)...needs more attention, may
+  //             end up being a compiler bug.
+  uniform uint32 niters = 0;
+
+  while (outputColor.w < 0.99f && niters < -1) {
     Ray &geomRay  = sample.ray;
     Ray volumeRay = sample.ray;
 
@@ -105,10 +110,17 @@ void SciVis_renderSample(Renderer *uniform _self,
     }
 
     firstHit = false;
+
+    niters++;
   }
 
-  sample.rgb   = make_vec3f(outputColor);
-  sample.alpha = outputColor.w;
+  if (niters == 1000) {
+    sample.rgb   = make_vec3f(1.f, 1.f, 0.f);
+    sample.alpha = 1.f;
+  } else {
+    sample.rgb   = make_vec3f(outputColor);
+    sample.alpha = outputColor.w;
+  }
 }
 
 // SciVis C++ interface /////////////////////////////////////////////////////
