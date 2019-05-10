@@ -40,7 +40,7 @@ void SciVis_renderSample(Renderer *uniform _self,
   //             end up being a compiler bug.
   uniform uint32 niters = 0;
 
-  while (outputColor.w < 0.99f && niters < -1) {
+  while (outputColor.w < 0.99f && niters < 10000) {
     Ray &geomRay  = sample.ray;
     Ray volumeRay = sample.ray;
 
