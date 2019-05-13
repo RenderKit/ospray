@@ -40,11 +40,12 @@ void SciVis_renderSample(Renderer *uniform _self,
   //             end up being a compiler bug.
   uniform uint32 niters = 0;
 
-  while (outputColor.w < 0.99f && niters < 10000) {
+  while (outputColor.w < 0.99f && niters < 1000) {
     Ray &geomRay  = sample.ray;
     Ray volumeRay = sample.ray;
 
-    traceRay(world, geomRay);
+    if (geomRay.t0 < geomRay.t)
+      traceRay(world, geomRay);
 
     VolumeInterval volumeInterval;
     traceVolumeRay(world, volumeRay, volumeInterval);
@@ -100,13 +101,17 @@ void SciVis_renderSample(Renderer *uniform _self,
 
     outputColor = outputColor + (1.0f - outputColor.w) * blendedColor;
 
-    setRay(geomRay, geomRay.t + dg.epsilon, originalRayTFar);
+    if (haveGeometryHit)
+      setRay(geomRay, geomRay.t + dg.epsilon, originalRayTFar);
+    else
+      setRay(geomRay, geomRay.t, geomRay.t0);
+
 
     cif(firstHit)
     {
       sample.albedo =
           haveGeometryHit ? surfaceShading.albedo : make_vec3f(bgColor);
-      sample.normal = dg.Ns;
+      sample.normal = haveGeometryHit ? dg.Ns : negate(geomRay.dir);
     }
 
     firstHit = false;
@@ -114,8 +119,8 @@ void SciVis_renderSample(Renderer *uniform _self,
     niters++;
   }
 
-  if (niters == 1000) {
-    sample.rgb   = make_vec3f(1.f, 1.f, 0.f);
+  if (niters >= 1000) {
+    sample.rgb   = make_vec3f(1.f, 0.f, 0.f);
     sample.alpha = 1.f;
   } else {
     sample.rgb   = make_vec3f(outputColor);
