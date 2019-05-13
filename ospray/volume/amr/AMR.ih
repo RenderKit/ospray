@@ -21,7 +21,6 @@
 #include "ospray/OSPDataType.h"
 // ours
 #include "KDTree.ih"
-#include "range.ih"
 
 inline vec3f lerp(const box3f box, const vec3f w)
 {

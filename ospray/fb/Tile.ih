@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "../common/OSPCommon.ih"
-#include "../math/box.ih"
+#include "common/OSPCommon.ih"
+#include "math/box.ih"
 
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
 struct Tile
 {
-  uniform region2i region;
+  uniform range2i region;
   uniform vec2i fbSize;
   uniform vec2f rcp_fbSize;
   uniform int32 generation;
@@ -46,7 +46,7 @@ struct Tile
 
 struct VaryingTile
 {
-  uniform region2i region;   // 4 ints
+  uniform range2i region;    // 4 ints
   uniform vec2i fbSize;      // 2 ints
   uniform vec2f rcp_fbSize;  // 2 floats
   uniform int32 generation;

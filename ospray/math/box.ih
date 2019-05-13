@@ -207,7 +207,11 @@ MAKE_BOX_CONSTRUCTORS_uv_3T_empty(fa)
 
 #define MAKE_BOX_OPERATIONS_uv_N_T(univary, N, T)                              \
   inline univary vec##N##T box_size(univary box##N##T bb) {                    \
-   return bb.upper - bb.lower;                                                 \
+    return bb.upper - bb.lower;                                                \
+  }                                                                            \
+                                                                               \
+  inline univary bool isEmpty(univary box##N##T bb) {                          \
+    return anyLessThan(bb.upper, bb.lower);                                    \
   }                                                                            \
                                                                                \
   inline univary box##N##T                                                     \
@@ -250,5 +254,23 @@ void print_box(const uniform box3fa &bbox);
 
 // this is just a renaming - in some cases the code reads cleaner if we're
 // talking about 'regions' than about boxes
-typedef box1f region1f;
-typedef box2i region2i;
+typedef box1f range1f;
+typedef box2i range2i;
+
+inline void extend(uniform range1f &r, uniform float v)
+{
+  r.lower = min(r.lower,v);
+  r.upper = max(r.upper,v);
+}
+
+inline void extend(uniform range1f &r, varying float v)
+{
+  r.lower = min(r.lower,reduce_min(v));
+  r.upper = max(r.upper,reduce_max(v));
+}
+
+inline void extend(range1f &r, float v)
+{
+  r.lower = min(r.lower,v);
+  r.upper = max(r.upper,v);
+}

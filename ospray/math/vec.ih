@@ -503,6 +503,37 @@ inline uniform bool ne(const uniform vec3fa a, const uniform vec3fa b)
 inline bool ne(const vec3fa a, const vec3fa b)
 { return !eq(a,b); }
 
+// ------------------------------------------------------------------
+// anyLessThan()
+// ------------------------------------------------------------------
+
+#define VEC_ANYLESSTHAN_uv_2(univary, T)                                       \
+  inline univary bool anyLessThan(const univary vec2##T &a,                    \
+                                  const univary vec2##T &b) {                  \
+    return a.x < b.x || a.y < b.y;                                             \
+  }
+
+VEC_ANYLESSTHAN_uv_2(uniform, f);
+VEC_ANYLESSTHAN_uv_2(uniform, i);
+VEC_ANYLESSTHAN_uv_2(varying, f);
+VEC_ANYLESSTHAN_uv_2(varying, i);
+
+#undef VEC_ANYLESSTHAN_uv_2
+
+#define VEC_ANYLESSTHAN_uv_3(univary, T)                                       \
+  inline univary bool anyLessThan(const univary vec3##T &a,                    \
+                                  const univary vec3##T &b) {                  \
+    return a.x < b.x || a.y < b.y || a.z < b.z;                                \
+  }
+
+VEC_ANYLESSTHAN_uv_3(uniform, f);
+VEC_ANYLESSTHAN_uv_3(uniform, fa);
+VEC_ANYLESSTHAN_uv_3(uniform, i);
+VEC_ANYLESSTHAN_uv_3(varying, f);
+VEC_ANYLESSTHAN_uv_3(varying, fa);
+VEC_ANYLESSTHAN_uv_3(varying, i);
+
+#undef VEC_ANYLESSTHAN_uv_3
 
 // ------------------------------------------------------------------
 // dot product
