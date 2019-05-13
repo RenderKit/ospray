@@ -54,7 +54,6 @@ variables:
       - $CI_PROJECT_DIR/build/failed
     expire_in: 1 week
     when: always
-  allow_failure: true
 
 .job_template: &test_job_windows
   <<: *test_job
@@ -66,7 +65,6 @@ variables:
       - failed
     expire_in: 1 week
     when: always
-  allow_failure: true
 
 
 ### BUILD JOBS ###
