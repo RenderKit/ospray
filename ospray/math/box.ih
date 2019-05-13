@@ -80,6 +80,10 @@ inline varying box1f make_box1f(const varying float lo, const varying float hi)
 inline uniform box1f box_extend(const uniform box1f &a, const uniform box1f &b)
 { return make_box1f(min(a.lower,b.lower),max(a.upper,b.upper)); }
 
+inline uniform bool isEmpty(const uniform box1f &bb)
+{ return bb.upper < bb.lower; }
+inline varying bool isEmpty(const varying box1f &bb)
+{ return bb.upper < bb.lower; }
 
 // -------------------------------------------------------
 // box2 'constructors'
@@ -205,12 +209,12 @@ MAKE_BOX_CONSTRUCTORS_uv_3T_empty(fa)
 // box 'operations'
 // -------------------------------------------------------
 
-#define MAKE_BOX_OPERATIONS_uv_N_T(univary, N, T)                              \
-  inline univary vec##N##T box_size(univary box##N##T bb) {                    \
+#define BOX_OPERATIONS_uv_N_T(univary, N, T)                                   \
+  inline univary vec##N##T box_size(const univary box##N##T &bb) {             \
     return bb.upper - bb.lower;                                                \
   }                                                                            \
                                                                                \
-  inline univary bool isEmpty(univary box##N##T bb) {                          \
+  inline univary bool isEmpty(const univary box##N##T &bb) {                   \
     return anyLessThan(bb.upper, bb.lower);                                    \
   }                                                                            \
                                                                                \
@@ -221,24 +225,25 @@ MAKE_BOX_CONSTRUCTORS_uv_3T_empty(fa)
                                                                                \
   inline univary box##N##T                                                     \
   box_extend(const univary box##N##T bb, const univary box##N##T other) {      \
-    return make_box##N##T(min(bb.lower,other.lower), max(bb.upper,other.upper));\
+    return make_box##N##T(min(bb.lower,other.lower),                           \
+                          max(bb.upper,other.upper));                          \
   }
 
-#define MAKE_BOX_OPERATIONS_uv_N(univary, N)                                   \
-  MAKE_BOX_OPERATIONS_uv_N_T(univary, N, i)                                    \
-  MAKE_BOX_OPERATIONS_uv_N_T(univary, N, f)
+#define BOX_OPERATIONS_uv_N(univary, N)                                        \
+  BOX_OPERATIONS_uv_N_T(univary, N, i)                                         \
+  BOX_OPERATIONS_uv_N_T(univary, N, f)
 
-#define MAKE_BOX_OPERATIONS_uv(univary)                                        \
-  MAKE_BOX_OPERATIONS_uv_N(univary, 2)                                         \
-  MAKE_BOX_OPERATIONS_uv_N(univary, 3)                                         \
-  MAKE_BOX_OPERATIONS_uv_N_T(univary, 3, fa)
+#define BOX_OPERATIONS_uv(univary)                                             \
+  BOX_OPERATIONS_uv_N(univary, 2)                                              \
+  BOX_OPERATIONS_uv_N(univary, 3)                                              \
+  BOX_OPERATIONS_uv_N_T(univary, 3, fa)
 
-MAKE_BOX_OPERATIONS_uv(uniform)
-MAKE_BOX_OPERATIONS_uv(varying)
+BOX_OPERATIONS_uv(uniform)
+BOX_OPERATIONS_uv(varying)
 
-#undef MAKE_BOX_OPERATIONS_uv_N_T
-#undef MAKE_BOX_OPERATIONS_uv_N
-#undef MAKE_BOX_OPERATIONS_uv
+#undef BOX_OPERATIONS_uv_N_T
+#undef BOX_OPERATIONS_uv_N
+#undef BOX_OPERATIONS_uv
 
 inline bool box_contains(const uniform box3f& bbox, const varying vec3f& p)
 {

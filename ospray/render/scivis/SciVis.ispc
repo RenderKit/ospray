@@ -46,12 +46,12 @@ void SciVis_renderSample(Renderer *uniform _self,
     traceVolumeRay(world, volumeRay, volumeInterval);
 
     const bool haveGeometryHit = hadHit(geomRay);
-    const bool haveVolumeHit   = volumeInterval.hasInterval;
+    const bool haveVolumeHit   = hasInterval(volumeInterval);
 
     const bool bothHit   = haveGeometryHit && haveVolumeHit;
     const bool eitherHit = haveGeometryHit || haveVolumeHit;
 
-    const bool volumeFirst = volumeInterval.interval.x < geomRay.t;
+    const bool volumeFirst = volumeInterval.interval.lower < geomRay.t;
 
     cif(firstHit)
     {
@@ -78,8 +78,13 @@ void SciVis_renderSample(Renderer *uniform _self,
     }
 
     if (haveVolumeHit && volumeFirst) {
-      volumeInterval.interval.y = min(geomRay.t, volumeInterval.interval.y);
-      setRay(volumeRay, volumeInterval.interval.x, volumeInterval.interval.y);
+      volumeInterval.interval.upper =
+          min(geomRay.t, volumeInterval.interval.upper);
+
+      setRay(volumeRay,
+             volumeInterval.interval.lower,
+             volumeInterval.interval.upper);
+
       volumeColor = integrateVolumeInterval(sample, volumeInterval, volumeRay);
     }
 
@@ -100,7 +105,6 @@ void SciVis_renderSample(Renderer *uniform _self,
       setRay(geomRay, geomRay.t + dg.epsilon, originalRayTFar);
     else
       setRay(geomRay, geomRay.t, geomRay.t0);
-
 
     cif(firstHit)
     {

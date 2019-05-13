@@ -50,16 +50,13 @@ unmasked void Volume_intersect_kernel(
   const bool hit = t.x < t.y && ((t.x > ray->t0 && t.x < ray->t) ||
                                  (t.y > ray->t0 && t.y < ray->t));
 
-  vInterval->hasInterval = hit;
-
   if (hit) {
     ray->instID = args->context->instID[0];
     ray->geomID = 0;
     ray->primID = 0;
 
-    vInterval->hasInterval = true;
-    vInterval->interval.x  = t.x;
-    vInterval->interval.y  = t.y;
+    vInterval->interval.lower = t.x;
+    vInterval->interval.upper = t.y;
   }
 }
 

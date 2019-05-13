@@ -331,15 +331,15 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   VolumeInterval vInterval;
   traceVolumeRay(world, sample.ray, vInterval);
 
-  if (!vInterval.hasInterval)
+  if (!hasInterval(vInterval))
     return;
 
   VolumeInstance *varying instance = vInterval.volumeInstance;
 
   Ray &ray = sample.ray;
 
-  ray.t0 = vInterval.interval.x;
-  ray.t  = vInterval.interval.y;
+  ray.t0 = vInterval.interval.lower;
+  ray.t  = vInterval.interval.upper;
 
   float pSample = -1.f;
 

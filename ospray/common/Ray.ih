@@ -165,15 +165,18 @@ inline void transformRay(Ray &ray, const uniform AffineSpace3f &xfm)
 
 struct VolumeInterval
 {
-  bool hasInterval;
   VolumeInstance *volumeInstance;
-  vec2f interval;
+  range1f interval;
 };
 
 inline void initVolumeInterval(VolumeInterval &hit)
 {
-  hit.hasInterval    = false;
   hit.volumeInstance = NULL;
-  hit.interval.x     = inf;
-  hit.interval.y     = -inf;
+  hit.interval.lower = inf;
+  hit.interval.upper = -inf;
+}
+
+inline bool hasInterval(const VolumeInterval &vi)
+{
+  return !isEmpty(vi.interval);
 }

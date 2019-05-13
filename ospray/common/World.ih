@@ -89,7 +89,7 @@ inline void traceVolumeRay(World *uniform model,
                 &context.ectx,
                 (varying RTCRayHit* uniform)&ray);
 
-  if (interval.hasInterval)
+  if (hasInterval(interval))
     interval.volumeInstance = model->volumeInstances[ray.instID];
 }
 
