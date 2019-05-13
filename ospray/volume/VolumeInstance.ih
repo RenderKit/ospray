@@ -16,8 +16,9 @@
 
 #pragma once
 
+#include "Volume.ih"
 #include "math/AffineSpace.ih"
-#include "volume/Volume.ih"
+#include "transferFunction/TransferFunction.ih"
 
 struct VolumeInstance
 {

@@ -17,7 +17,8 @@
 // ospray
 #include "GridAccelerator.ih"
 #include "StructuredVolume.ih"
-#include "../../math/box.ih"
+#include "math/box.ih"
+#include "transferFunction/TransferFunction.ih"
 
 //! Bit count used to represent the brick width.
 #define BRICK_WIDTH_BITCOUNT (4)

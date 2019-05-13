@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "geometry/Geometry.ih"
+#include "Geometry.ih"
 #include "math/AffineSpace.ih"
 
 struct GeometryInstance
