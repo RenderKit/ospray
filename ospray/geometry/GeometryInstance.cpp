@@ -92,7 +92,7 @@ namespace ospray {
 
     // Create Embree instanced scene, if necessary //
 
-    if (lastVolumeEmbreeHandle != instancedGeometry->embreeGeometry) {
+    if (lastEmbreeInstanceGeometryHandle != instancedGeometry->embreeGeometry) {
       if (embreeSceneHandle) {
         rtcDetachGeometry(embreeSceneHandle, embreeID);
         rtcReleaseScene(embreeSceneHandle);
@@ -118,7 +118,8 @@ namespace ospray {
       rtcSetSceneFlags(embreeSceneHandle,
                        static_cast<RTCSceneFlags>(sceneFlags));
 
-      lastVolumeEmbreeHandle = instancedGeometry->embreeGeometry;
+      lastEmbreeInstanceGeometryHandle = instancedGeometry->embreeGeometry;
+
       embreeID = rtcAttachGeometry(embreeSceneHandle,
                                    instancedGeometry->embreeGeometry);
       rtcCommitScene(embreeSceneHandle);
