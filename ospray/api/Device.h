@@ -62,18 +62,6 @@ namespace ospray {
       /*! commit the given object's outstanding changes */
       virtual void commit(OSPObject object) = 0;
 
-      virtual void addInstance(OSPWorld _world,
-                               OSPGeometryInstance _instance) = 0;
-
-      virtual void removeInstance(OSPWorld _world,
-                                  OSPGeometryInstance _instance) = 0;
-
-      virtual void addInstance(OSPWorld _world,
-                               OSPVolumeInstance _instance) = 0;
-
-      virtual void removeInstance(OSPWorld _world,
-                                  OSPVolumeInstance _instance) = 0;
-
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems,
                               OSPDataType format,

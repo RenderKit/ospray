@@ -110,6 +110,12 @@ namespace OSPRayTestScenes {
     for (auto l : lightsList)
       ospRelease(l);
 
+    for (auto g : geometryInstances)
+      ospRelease(g);
+
+    for (auto v : volumeInstances)
+      ospRelease(v);
+
     ospRelease(framebuffer);
     ospRelease(renderer);
     ospRelease(camera);
@@ -129,20 +135,32 @@ namespace OSPRayTestScenes {
   void Base::AddInstance(OSPGeometryInstance instance)
   {
     ospCommit(instance);
-    ospAddGeometryInstance(world, instance);
-    ospRelease(instance);
+    geometryInstances.push_back(instance);
   }
 
   void Base::AddInstance(OSPVolumeInstance instance)
   {
     ospCommit(instance);
-    ospAddVolumeInstance(world, instance);
-    ospRelease(instance);
+    volumeInstances.push_back(instance);
   }
 
   void Base::PerformRenderTest()
   {
     SetLights();
+
+    if (!geometryInstances.empty()) {
+      OSPData gi = ospNewData(
+          geometryInstances.size(), OSP_OBJECT, geometryInstances.data());
+      ospSetObject(world, "geometries", gi);
+      ospRelease(gi);
+    }
+
+    if (!volumeInstances.empty()) {
+      OSPData vi = ospNewData(
+          volumeInstances.size(), OSP_OBJECT, volumeInstances.data());
+      ospSetObject(world, "volumes", vi);
+      ospRelease(vi);
+    }
 
     ospCommit(camera);
     ospCommit(world);
@@ -292,7 +310,6 @@ namespace OSPRayTestScenes {
     ospSet3f(camera, "dir", 0.f, 0.f, 1.f);
     ospSet3f(camera, "up", 0.f, 1.f, 0.f);
     ospSet1f(camera, "fovy", fov);
-
 
     ospSet1i(renderer, "spp", 16);
     ospSet4f(renderer, "bgColor", 0.2f, 0.2f, 0.4f, 1.0f);

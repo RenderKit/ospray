@@ -52,6 +52,12 @@ namespace ospray {
     template<typename T>
     const T* end() const;
 
+    template<typename T>
+    T& at(size_t i);
+
+    template<typename T>
+    const T& at(size_t i) const;
+
     // Data members //
 
     void       *data;     /*!< pointer to data */
@@ -96,6 +102,18 @@ namespace ospray {
   inline const T* Data::end() const
   {
     return begin<const T>() + numItems;
+  }
+
+  template<typename T>
+  inline T& Data::at(size_t i)
+  {
+    return *(begin<T>() + i);
+  }
+
+  template<typename T>
+  inline const T& Data::at(size_t i) const
+  {
+    return *(begin<T>() + i);
   }
 
   template<typename T>

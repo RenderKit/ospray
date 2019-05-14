@@ -124,7 +124,7 @@ namespace ospray {
 
     if (res.hasHit) {
       res.geometryInstance =
-          (OSPGeometryInstance)world->geometryInstances[instID].ptr;
+          world->geometryInstances->at<OSPGeometryInstance>(instID);
       res.primID = static_cast<uint32_t>(primID);
     }
 

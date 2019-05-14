@@ -46,11 +46,8 @@ namespace ospray {
 
     // Data members //
 
-    using GeometryInstanceVector = std::vector<Ref<GeometryInstance>>;
-    using VolumeInstanceVector   = std::vector<Ref<VolumeInstance>>;
-
-    GeometryInstanceVector geometryInstances;
-    VolumeInstanceVector volumeInstances;
+    Ref<Data> geometryInstances;
+    Ref<Data> volumeInstances;
 
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandleGeometries{nullptr};

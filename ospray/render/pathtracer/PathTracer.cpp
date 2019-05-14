@@ -46,8 +46,15 @@ namespace ospray {
 
   void PathTracer::generateGeometryLights(const World &world)
   {
-    for (size_t i = 0; i < world.geometryInstances.size(); i++) {
-      auto &inst = world.geometryInstances[i];
+    auto *geometries = world.geometryInstances.ptr;
+
+    if (!geometries)
+      return;
+
+    auto begin = geometries->begin<GeometryInstance*>();
+    auto end   = geometries->end<GeometryInstance*>();
+
+    std::for_each(begin, end, [&](GeometryInstance* inst){
       if (inst->materialList) {
         // check whether the instmetry has any emissive materials
         bool hasEmissive = false;
@@ -74,7 +81,7 @@ namespace ospray {
           }
         }
       }
-    }
+    });
   }
 
   void PathTracer::destroyGeometryLights()

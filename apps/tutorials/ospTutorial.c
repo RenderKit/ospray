@@ -122,8 +122,10 @@ int main(int argc, const char **argv) {
   ospRelease(mesh); // we are done using this handle
 
   OSPWorld world = ospNewWorld();
-  ospAddGeometryInstance(world, instance);
+  OSPData geometryInstances = ospNewData(1, OSP_OBJECT, &instance, 0);
+  ospSetObject(world, "geometries", geometryInstances);
   ospRelease(instance);
+  ospRelease(geometryInstances);
   ospCommit(world);
 
 

@@ -200,15 +200,27 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
+  std::vector<OSPGeometryInstance> instanceHandles;
+
   // add in subdivision geometry
   OSPTestingGeometry subdivisionGeometry =
       ospTestingNewGeometry("subdivision_cube", renderer_type.c_str());
-  ospAddGeometryInstance(world, subdivisionGeometry.instance);
+  instanceHandles.push_back(subdivisionGeometry.instance);
+  ospRelease(subdivisionGeometry.geometry);
 
   // add in a ground plane geometry
   OSPGeometryInstance planeInstance = createGroundPlane();
   ospCommit(planeInstance);
-  ospAddGeometryInstance(world, planeInstance);
+  instanceHandles.push_back(planeInstance);
+
+  OSPData geomInstances =
+      ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
+
+  ospSetData(world, "geometries", geomInstances);
+  ospRelease(geomInstances);
+
+  for (auto inst : instanceHandles)
+    ospRelease(inst);
 
   // commit the world
   ospCommit(world);
@@ -287,11 +299,6 @@ int main(int argc, const char **argv)
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
-
-  // cleanup remaining objects
-  ospRelease(subdivisionGeometry.geometry);
-  ospRelease(subdivisionGeometry.instance);
-  ospRelease(planeInstance);
 
   // cleanly shut OSPRay down
   ospShutdown();

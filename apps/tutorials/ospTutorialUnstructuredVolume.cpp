@@ -96,9 +96,6 @@ int main(int argc, const char **argv)
   allVolumes[1][1] = createVolumeWithTF("simple_unstructured_volume_11", "jet");
   OSPVolumeInstance testVolume = allVolumes[0][0];
 
-  // add volume to the world
-  ospAddVolumeInstance(world, testVolume);
-
   // create iso geometry object and add it to the world
   OSPGeometry isoGeometry = ospNewGeometry("isosurfaces");
 
@@ -136,6 +133,39 @@ int main(int argc, const char **argv)
   // apply changes to the renderer
   ospCommit(renderer);
 
+  // Scene updates //
+
+  bool sharedVertices = false;
+  bool valuesPerCell  = false;
+  bool isoSurface     = false;
+
+  auto updateScene = [&]() {
+    ospRemoveParam(world, "volumes");
+    ospRemoveParam(world, "geometries");
+
+    // remove current volume
+    ospRemoveParam(isoGeometry, "volume");
+
+    // set a new one
+    testVolume = allVolumes[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0];
+
+    // attach the new volume
+    ospSetObject(isoGeometry, "volume", testVolume);
+
+    if (isoSurface) {
+      OSPData geomInsts = ospNewData(1, OSP_OBJECT, &instance);
+      ospSetObject(world, "geometries", geomInsts);
+      ospRelease(geomInsts);
+    } else {
+      OSPData volInsts = ospNewData(1, OSP_OBJECT, &testVolume);
+      ospSetObject(world, "volumes", volInsts);
+      ospRelease(volInsts);
+    }
+  };
+
+  updateScene();
+  ospCommit(world);
+
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
@@ -143,39 +173,15 @@ int main(int argc, const char **argv)
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static bool sharedVertices = false;
-    static bool valuesPerCell  = false;
-    static bool isoSurface     = false;
+    bool updateWorld = false;
+
     if ((ImGui::Checkbox("shared vertices", &sharedVertices)) ||
-        (ImGui::Checkbox("per-cell values", &valuesPerCell))) {
-      // remove current volume
-      ospRemoveParam(isoGeometry, "volume");
-      if (!isoSurface)
-        ospRemoveVolumeInstance(world, testVolume);
+        (ImGui::Checkbox("per-cell values", &valuesPerCell)))
+      updateWorld = true;
 
-      // set a new one
-      testVolume = allVolumes[sharedVertices ? 1 : 0][valuesPerCell ? 1 : 0];
+    if (ImGui::Checkbox("isosurface", &isoSurface))
+      updateWorld = true;
 
-      // attach the new volume
-      ospSetObject(isoGeometry, "volume", testVolume);
-      if (!isoSurface)
-        ospAddVolumeInstance(world, testVolume);
-      glfwOSPRayWindow->addObjectToCommit(isoGeometry);
-      glfwOSPRayWindow->addObjectToCommit(world);
-    }
-    if (ImGui::Checkbox("isosurface", &isoSurface)) {
-      if (isoSurface) {
-        // replace volume with iso geometry
-        ospRemoveVolumeInstance(world, testVolume);
-        ospAddGeometryInstance(world, instance);
-        glfwOSPRayWindow->addObjectToCommit(world);
-      } else {
-        // replace iso geometry with volume
-        ospAddVolumeInstance(world, testVolume);
-        ospRemoveGeometryInstance(world, instance);
-        glfwOSPRayWindow->addObjectToCommit(world);
-      }
-    }
     if (isoSurface) {
       if (ImGui::SliderFloat("iso value", &isoValue, 0.f, 1.f)) {
         // update iso value
@@ -190,6 +196,12 @@ int main(int argc, const char **argv)
         ospSet1f(material, "d", isoOpacity);
         glfwOSPRayWindow->addObjectToCommit(material);
       }
+    }
+
+    if (updateWorld) {
+      updateScene();
+      glfwOSPRayWindow->addObjectToCommit(isoGeometry);
+      glfwOSPRayWindow->addObjectToCommit(world);
     }
   });
 

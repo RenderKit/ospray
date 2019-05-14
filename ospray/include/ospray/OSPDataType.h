@@ -37,6 +37,7 @@ typedef enum
   OSP_DATA,
   OSP_FRAMEBUFFER,
   OSP_GEOMETRY,
+  OSP_GEOMETRY_INSTANCE,
   OSP_LIGHT,
   OSP_MATERIAL,
   OSP_WORLD,
@@ -44,6 +45,7 @@ typedef enum
   OSP_TEXTURE,
   OSP_TRANSFER_FUNCTION,
   OSP_VOLUME,
+  OSP_VOLUME_INSTANCE,
   OSP_PIXEL_OP,
 
   //! Pointer to a C-style NULL-terminated character string.

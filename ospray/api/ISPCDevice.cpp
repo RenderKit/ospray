@@ -128,53 +128,6 @@ namespace ospray {
       object->commit();
     }
 
-    void ISPCDevice::addInstance(OSPWorld _world, OSPGeometryInstance _instance)
-    {
-      auto *world    = (World *)_world;
-      auto *instance = (GeometryInstance *)_instance;
-      world->geometryInstances.push_back(instance);
-    }
-
-    void ISPCDevice::removeInstance(OSPWorld _world,
-                                    OSPGeometryInstance _instance)
-    {
-      auto *world    = (World *)_world;
-      auto *instance = (GeometryInstance *)_instance;
-
-      auto it = std::find_if(world->geometryInstances.begin(),
-                             world->geometryInstances.end(),
-                             [&](const Ref<ospray::GeometryInstance> &g) {
-                               return instance == &*g;
-                             });
-
-      if (it != world->geometryInstances.end())
-        world->geometryInstances.erase(it);
-    }
-
-    void ISPCDevice::addInstance(OSPWorld _world, OSPVolumeInstance _instance)
-    {
-      auto *world    = (World *)_world;
-      auto *instance = (VolumeInstance *)_instance;
-      world->volumeInstances.push_back(instance);
-    }
-
-    void ISPCDevice::removeInstance(OSPWorld _world,
-                                    OSPVolumeInstance _instance)
-    {
-      auto *world    = (World *)_world;
-      auto *instance = (VolumeInstance *)_instance;
-
-      auto it = std::find_if(world->volumeInstances.begin(),
-                             world->volumeInstances.end(),
-                             [&](const Ref<ospray::VolumeInstance> &g) {
-                               return instance == &*g;
-                             });
-
-      if (it != world->volumeInstances.end())
-        world->volumeInstances.erase(it);
-    }
-
-
     OSPData ISPCDevice::newData(size_t nitems,
                                 OSPDataType format,
                                 const void *init,

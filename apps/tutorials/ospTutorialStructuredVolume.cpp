@@ -69,6 +69,8 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries / volumes
   OSPWorld world = ospNewWorld();
 
+  std::vector<OSPGeometryInstance> geometryInstHandles;
+
   // Create volume
 
 #if 0
@@ -88,7 +90,6 @@ int main(int argc, const char **argv)
   ospSet1f(instance, "samplingRate", 0.5f);
   ospCommit(instance);
 
-  ospAddVolumeInstance(world, instance);
   ospRelease(tfn);
 
   // Create isosurface geometry //
@@ -127,7 +128,6 @@ int main(int argc, const char **argv)
   ospCommit(isoInstance);
   ospCommit(sliceGeometry);
   ospCommit(sliceInstance);
-  ospCommit(world);
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
@@ -140,6 +140,41 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
+  // Enable show/hide of various objects //
+
+  bool showVolume     = true;
+  bool showIsoSurface = false;
+  bool showSlice      = false;
+
+  auto updateScene = [&]() {
+    geometryInstHandles.clear();
+
+    ospRemoveParam(world, "geometries");
+    ospRemoveParam(world, "volumes");
+
+    if (showVolume) {
+      OSPData volumes = ospNewData(1, OSP_OBJECT, &instance);
+      ospSetObject(world, "volumes", volumes);
+      ospRelease(volumes);
+    }
+
+    if (showIsoSurface || showSlice) {
+      if (showIsoSurface)
+        geometryInstHandles.push_back(isoInstance);
+
+      if (showSlice)
+        geometryInstHandles.push_back(sliceInstance);
+
+      OSPData geoms = ospNewData(
+          geometryInstHandles.size(), OSP_OBJECT, geometryInstHandles.data());
+      ospSetObject(world, "geometries", geoms);
+      ospRelease(geoms);
+    }
+  };
+
+  updateScene();
+  ospCommit(world);
+
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
@@ -147,6 +182,8 @@ int main(int argc, const char **argv)
                            reinterpret_cast<box3f &>(test_data.bounds),
                            world,
                            renderer));
+
+  // ImGui //
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int aoSamples = 1;
@@ -158,41 +195,26 @@ int main(int argc, const char **argv)
     ImGui::NewLine();
     ImGui::Text("Show:");
 
+    bool updateWorld = false;
     bool commitWorld = false;
 
-    static bool showVolume = true;
-    if (ImGui::Checkbox("volume", &showVolume)) {
-      commitWorld = true;
-      if (showVolume)
-        ospAddVolumeInstance(world, instance);
-      else
-        ospRemoveVolumeInstance(world, instance);
-    }
+    if (ImGui::Checkbox("volume", &showVolume))
+      updateWorld = true;
 
-    static bool showIsoSurface = false;
-    if (ImGui::Checkbox("isosurface", &showIsoSurface)) {
-      commitWorld = true;
-      if (showIsoSurface)
-        ospAddGeometryInstance(world, isoInstance);
-      else
-        ospRemoveGeometryInstance(world, isoInstance);
-    }
+    if (ImGui::Checkbox("isosurface", &showIsoSurface))
+      updateWorld = true;
 
-    static bool showSlice = false;
-    if (ImGui::Checkbox("slice", &showSlice)) {
-      commitWorld = true;
-      if (showSlice)
-        ospAddGeometryInstance(world, sliceInstance);
-      else
-        ospRemoveGeometryInstance(world, sliceInstance);
-    }
+    if (ImGui::Checkbox("slice", &showSlice))
+      updateWorld = true;
+
+    commitWorld = updateWorld;
 
     ImGui::NewLine();
     ImGui::Separator();
     ImGui::NewLine();
 
     static float samplingRate = 0.5f;
-    if (ImGui::SliderFloat( "sampling rate", &samplingRate, 1e-3f, 4.f)) {
+    if (ImGui::SliderFloat("sampling rate", &samplingRate, 1e-3f, 4.f)) {
       commitWorld = true;
       ospSet1f(instance, "samplingRate", samplingRate);
       glfwOSPRayWindow->addObjectToCommit(instance);
@@ -218,6 +240,9 @@ int main(int argc, const char **argv)
       glfwOSPRayWindow->addObjectToCommit(sliceGeometry);
       glfwOSPRayWindow->addObjectToCommit(sliceInstance);
     }
+
+    if (updateWorld)
+      updateScene();
 
     if (commitWorld)
       glfwOSPRayWindow->addObjectToCommit(world);

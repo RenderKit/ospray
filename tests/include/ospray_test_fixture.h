@@ -54,6 +54,9 @@ namespace OSPRayTestScenes {
     std::unique_ptr<OSPImageTools> imageTool;
     std::vector<OSPLight> lightsList;
 
+    std::vector<OSPGeometryInstance> geometryInstances;
+    std::vector<OSPVolumeInstance> volumeInstances;
+
    public:
     Base();
     ~Base();

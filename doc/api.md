@@ -1176,23 +1176,24 @@ structure. To create an (empty) world call
 
     OSPWorld ospNewWorld();
 
-The call returns an `OSPWorld` handle to the created world. To add an
-already created geometry instance or volume to a world use
-
-    void ospAddGeometryInstance(OSPWorld, OSPGeometryInstance);
-    void ospAddVolumeInstance(OSPWorld, OSPVolumeInstance);
-
-An existing geometry or volume can be removed from a world with
-
-    void ospRemoveGeometryInstance(OSPWorld, OSPGeometryInstance);
-    void ospRemoveVolumeInstance(OSPWorld, OSPVolumeInstance);
+The call returns an `OSPWorld` handle to the created world. Objects are
+placed in the world by existing in either the `geometries` or `volumes`
+data array parameters. Either array of objects is optional: in other
+words, there is no need to create empty arrays if there are no
+geometries or volumes to be rendered.
 
 Finally, Worlds can be configured with parameters for making various
-feature/performance trade-offs:
+feature/performance trade-offs.
 
   ------------- ---------------- --------  -------------------------------------
   Type          Name              Default  Description
   ------------- ---------------- --------  -------------------------------------
+  OSPData       geometries           NULL  data array of OSPGeometryInstance
+                                           geometry objects in the scene
+
+  OSPData       volumes              NULL  data array of OSPVolumeInstance
+                                           volume objects in the scene
+
   bool          dynamicScene        false  use RTC_SCENE_DYNAMIC flag (faster
                                            BVH build, slower ray traversal),
                                            otherwise uses RTC_SCENE_STATIC flag

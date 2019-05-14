@@ -200,18 +200,27 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
+  std::vector<OSPGeometryInstance> instanceHandles;
+
   // add in spheres geometry
   OSPTestingGeometry spheres =
       ospTestingNewGeometry("spheres", renderer_type.c_str());
-  ospAddGeometryInstance(world, spheres.instance);
+  instanceHandles.push_back(spheres.instance);
   ospRelease(spheres.geometry);
-  ospRelease(spheres.instance);
 
   // add in a ground plane geometry
   OSPGeometryInstance planeInstance = createGroundPlane();
   ospCommit(planeInstance);
-  ospAddGeometryInstance(world, planeInstance);
-  ospRelease(planeInstance);
+  instanceHandles.push_back(planeInstance);
+
+  OSPData geomInstances =
+      ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
+
+  ospSetData(world, "geometries", geomInstances);
+  ospRelease(geomInstances);
+
+  for (auto inst : instanceHandles)
+    ospRelease(inst);
 
   // commit the world
   ospCommit(world);

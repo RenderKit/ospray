@@ -551,34 +551,6 @@ namespace ospray {
       processWork(work);
     }
 
-    void MPIOffloadDevice::addInstance(OSPWorld _world,
-                                       OSPGeometryInstance _instance)
-    {
-      work::AddGeometryInstance work(_world, _instance);
-      processWork(work);
-    }
-
-    void MPIOffloadDevice::removeInstance(OSPWorld _world,
-                                          OSPGeometryInstance _instance)
-    {
-      work::RemoveGeometryInstance work(_world, _instance);
-      processWork(work);
-    }
-
-    void MPIOffloadDevice::addInstance(OSPWorld _world,
-                                       OSPVolumeInstance _instance)
-    {
-      work::AddVolumeInstance work(_world, _instance);
-      processWork(work);
-    }
-
-    void MPIOffloadDevice::removeInstance(OSPWorld _world,
-                                          OSPVolumeInstance _instance)
-    {
-      work::RemoveVolumeInstance work(_world, _instance);
-      processWork(work);
-    }
-
     /*! create a new data buffer */
     OSPData MPIOffloadDevice::newData(size_t nitems,
                                       OSPDataType format,

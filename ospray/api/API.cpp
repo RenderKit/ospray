@@ -548,38 +548,6 @@ extern "C" OSPWorld ospNewWorld() OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" void ospAddGeometryInstance(
-    OSPWorld world, OSPGeometryInstance instance) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().addInstance(world, instance);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospRemoveGeometryInstance(
-    OSPWorld world, OSPGeometryInstance instance) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().removeInstance(world, instance);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospAddVolumeInstance(OSPWorld world, OSPVolumeInstance instance)
-    OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().addInstance(world, instance);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospRemoveVolumeInstance(
-    OSPWorld world, OSPVolumeInstance instance) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().removeInstance(world, instance);
-}
-OSPRAY_CATCH_END()
-
 ///////////////////////////////////////////////////////////////////////////////
 // Object Parameters //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

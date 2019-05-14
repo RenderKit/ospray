@@ -55,10 +55,16 @@ namespace ospray {
     useEmbreeCompactSceneFlag = getParam<bool>("compactMode", 0);
     useEmbreeRobustSceneFlag  = getParam<bool>("robustMode", 0);
 
+    geometryInstances = (Data*)getParamObject("geometries");
+    volumeInstances   = (Data*)getParamObject("volumes");
+
+    size_t numGeometries = geometryInstances ? geometryInstances->size() : 0;
+    size_t numVolumes    = volumeInstances ? volumeInstances->size() : 0;
+
     postStatusMsg(2)
         << "=======================================================\n"
-        << "Finalizing model, has " << geometryInstances.size()
-        << " geometries, " << volumeInstances.size() << " volumes";
+        << "Finalizing model, which has " << numGeometries << " geometries and "
+        << numVolumes << " volumes";
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -70,11 +76,8 @@ namespace ospray {
     sceneFlags =
         sceneFlags | (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
 
-    ispc::World_init(getIE(),
-                     embreeDevice,
-                     sceneFlags,
-                     geometryInstances.size(),
-                     volumeInstances.size());
+    ispc::World_init(
+        getIE(), embreeDevice, sceneFlags, numGeometries, numVolumes);
 
     embreeSceneHandleGeometries =
         (RTCScene)ispc::World_getEmbreeSceneHandleGeometries(getIE());
@@ -83,24 +86,24 @@ namespace ospray {
 
     bounds = empty;
 
-    for (size_t i = 0; i < geometryInstances.size(); i++) {
+    for (size_t i = 0; i < numGeometries; i++) {
       postStatusMsg(2)
           << "=======================================================\n"
           << "Finalizing geometry instance " << i;
 
-      auto &instance = *geometryInstances[i];
+      auto &instance = *geometryInstances->at<GeometryInstance *>(i);
       rtcAttachGeometry(embreeSceneHandleGeometries,
                         instance.embreeGeometryHandle());
       bounds.extend(instance.bounds());
       ispc::World_setGeometryInstance(getIE(), i, instance.getIE());
     }
 
-    for (size_t i = 0; i < volumeInstances.size(); i++) {
+    for (size_t i = 0; i < numVolumes; i++) {
       postStatusMsg(2)
           << "=======================================================\n"
           << "Finalizing volume instance " << i;
 
-      auto &instance = *volumeInstances[i];
+      auto &instance = *volumeInstances->at<VolumeInstance *>(i);
       rtcAttachGeometry(embreeSceneHandleVolumes,
                         instance.embreeGeometryHandle());
       bounds.extend(instance.bounds());
