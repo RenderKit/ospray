@@ -48,7 +48,7 @@ inline float computeAO(const uniform SciVis *uniform self,
                        const varying vec3i &sampleID,
                        const varying DifferentialGeometry &dg)
 {
-  const uniform int &sampleCnt = self->samplesPerFrame;
+  const uniform int &sampleCnt = self->aoSamples;
   const uniform int accumID    = reduce_max(sampleID.z) * sampleCnt;
 
   // init TEA RNG //
@@ -100,7 +100,7 @@ SSI computeShading(const SciVis *uniform self,
 
   float intensity = 1.f;
 
-  cif(self->samplesPerFrame > 0)
+  cif(self->aoSamples > 0)
   {
     intensity = computeAO(self, fb, world, sample.sampleID, dg);
   }

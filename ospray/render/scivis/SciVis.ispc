@@ -131,13 +131,13 @@ export void *uniform SciVis_create(void *uniform cppE)
 }
 
 export void SciVis_set(void *uniform _self,
-                       uniform int samplesPerFrame,
+                       uniform int aoSamples,
                        uniform float aoRadius,
                        uniform float aoIntensity)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
-  self->samplesPerFrame = samplesPerFrame;
-  self->aoRadius        = aoRadius;
-  self->aoIntensity     = aoIntensity;
+  self->aoSamples   = aoSamples;
+  self->aoRadius    = aoRadius;
+  self->aoIntensity = aoIntensity;
 }

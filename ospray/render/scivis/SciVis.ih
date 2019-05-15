@@ -21,7 +21,7 @@
 struct SciVis
 {
   Renderer super;
-  int samplesPerFrame;
+  int aoSamples;
   float aoRadius;
   float aoIntensity;
 };

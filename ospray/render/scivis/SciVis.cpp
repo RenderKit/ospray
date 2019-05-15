@@ -23,17 +23,17 @@ namespace ospray {
 
   struct SciVis : public Renderer
   {
-    SciVis(int defaultNumSamples = 1);
+    SciVis(int defaultAOSamples = 1);
     std::string toString() const override;
     void commit() override;
 
    private:
-    int numSamples{1};
+    int aoSamples{1};
   };
 
   // SciVis definitions /////////////////////////////////////////////////////
 
-  SciVis::SciVis(int defaultNumSamples) : numSamples(defaultNumSamples)
+  SciVis::SciVis(int defaultNumSamples) : aoSamples(defaultNumSamples)
   {
     ispcEquivalent = ispc::SciVis_create(this);
   }
@@ -47,7 +47,7 @@ namespace ospray {
   {
     Renderer::commit();
     ispc::SciVis_set(getIE(),
-                     getParam1i("aoSamples", numSamples),
+                     getParam1i("aoSamples", aoSamples),
                      getParam1f("aoRadius", 1e20f),
                      getParam1f("aoIntensity", 1.f));
   }
