@@ -510,7 +510,7 @@ inline bool ne(const vec3fa a, const vec3fa b)
 #define VEC_ANYLESSTHAN_uv_2(univary, T)                                       \
   inline univary bool anyLessThan(const univary vec2##T &a,                    \
                                   const univary vec2##T &b) {                  \
-    return a.x < b.x || a.y < b.y;                                             \
+    return or(a.x < b.x, a.y < b.y);                                           \
   }
 
 VEC_ANYLESSTHAN_uv_2(uniform, f);
@@ -523,7 +523,7 @@ VEC_ANYLESSTHAN_uv_2(varying, i);
 #define VEC_ANYLESSTHAN_uv_3(univary, T)                                       \
   inline univary bool anyLessThan(const univary vec3##T &a,                    \
                                   const univary vec3##T &b) {                  \
-    return a.x < b.x || a.y < b.y || a.z < b.z;                                \
+    return or(a.x < b.x, or(a.y < b.y, a.z < b.z));                            \
   }
 
 VEC_ANYLESSTHAN_uv_3(uniform, f);
