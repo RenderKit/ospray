@@ -35,7 +35,6 @@ namespace ospray {
 
   SciVis::SciVis(int defaultNumSamples) : numSamples(defaultNumSamples)
   {
-    setParam<std::string>("externalNameFromAPI", "ao");
     ispcEquivalent = ispc::SciVis_create(this);
   }
 
