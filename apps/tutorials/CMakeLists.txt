@@ -96,3 +96,6 @@ target_link_libraries(ospTutorialUnstructuredVolume PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialPixelOps ospTutorialPixelOps.cpp)
 target_link_libraries(ospTutorialPixelOps PRIVATE tutorial_common)
+
+ospray_create_application(ospTutorialAMRVolume ospTutorialAMRVolume.cpp)
+target_link_libraries(ospTutorialAMRVolume PRIVATE tutorial_common)
