@@ -1,73 +1,48 @@
 # OSPRay Style Guide
 
-This document discusses the project's expectations on C++ and ISPC style. In
-general, the items discussed are meant to be a guide and not be overly strict.
-However, deviations from this document should be supported with technical
-reasoning.
+This document discusses the project's expectations on C++ and ISPC
+style. In general, the items discussed are meant to be a guide and not
+be overly strict. However, deviations from this document should be
+supported with technical reasoning.
 
 This document is relatively simple and meant as a "quick overview" of
-expecations for OSPRay. A more complete set of guidelines for all of C++ can
-be found in the [ISO C++ Core Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md).
+expecations for OSPRay. A more complete set of guidelines for all of C++
+can be found in the [ISO C++ Core
+Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md).
 
-## Code Documentation
+## Documentation
 
-Code documentation should be in terms of C++ style single-line comments or
-multi-line C style comments, e.g.:
+In general, comments in code should describe "why" not "what". Code
+documentation should be in terms of C++ style single-line comments or
+multi-line C style comments. Avoid Doxygen-style code documentation,
+this is deprecated.
 
-```cpp
-// Lorem ipsum dolor sit amet
-
-/* Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
- * tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
- * quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
- * consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
- * cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
- * proident, sunt in culpa qui officia deserunt mollit anim id est laborum. */
-```
-
-Avoid Doxygen-style code documentation, such as
-
-```cpp
-/*! comment style to avoid */
-
-//! comment style to avoid
-
-/*! \brief comment style to avoid */
-
-int var; //!< comment style to avoid
-```
-
-When adding or updating public API definitions, update the corresponding API.md
-documentation as part of your merge request. This keeps our documentation always
-current, and minimizes the need for audits at release time.
+When adding or updating public API definitions, update the corresponding
+`doc/api.md` documentation as part of your merge request. This keeps our
+documentation always current, and minimizes the need for audits at
+release time. Markdown files (`.md`) should use a 72 column limit for
+running text, exceptions are URLs or example code (i.e. preformatted
+sections in backticks).
 
 ## General Code Goals
 
-In all code, the overall goal is to make interfaces "easy to use correctly" and
-"difficult to use incorrectly". Some characteristics that make code better are:
+In all code, the overall goal is to make interfaces "easy to use
+correctly" and "difficult to use incorrectly". Some characteristics that
+make code better are:
 
 - Keep reasoning as local as possible
 - Descriptive names
 - Short functions
-- Comments which describe "why" not "what"
 - Single functions/abstractions for repetitive concepts (less copy/paste)
 - Compile errors over runtime errors
 
-We have a number of small, single-purpose abstractions in `ospcommon` that aide
-in the above goals. It is expected for contributions to first try and use those
-constructs before implementing their own.
+We have a number of small, single-purpose abstractions in `ospcommon`
+that aide in the above goals. It is expected for contributions to first
+try and use those constructs before implementing their own.
 
-Lastly, it is expected that code is formatted using the provided .clang-format
-config found in the root of the repository. Sections that need special
-formatting should turn clang-format on/off manually:
-
-```cpp
-// clang-format off
-
-// [insert code which clang-format ignores]
-
-// clang-format on
-```
+Lastly, it is expected that code is formatted using the provided
+`.clang-format` config found in the root of the repository, e.g. by
+running `git-clang-format`.
 
 NOTE: Both C++ and ISPC files can be formatted with clang-format.
 
@@ -141,24 +116,25 @@ OSPRay:
 
 The following are concerns specific to ISPC:
 
-- Prefer using `uniform` variables. The point of ISPC is to have varying data,
-  but uniform values are more efficient than replicated varying values.
+- Prefer using `uniform` variables. The point of ISPC is to have varying
+  data, but uniform values are more efficient than replicated varying
+  values.
 - Avoid writing unnecessary `uniform` and `varying` keywords. Examples:
 ```cpp
 varying float;   // 'varying' is redundant, variables are varying by default
 
 uniform float *; // 'uniform' is redundant, pointers point to uniform by default
 ```
-- Prefer omitting `uniform`/`varying` qualifiers for structs. Only apply them
-  if they need to be consistenly the same for both `uniform` and `varying`
-  instances of the struct.
+- Prefer omitting `uniform`/`varying` qualifiers for structs. Only apply
+  them if they need to be consistenly the same for both `uniform` and
+  `varying` instances of the struct.
 
 ### OSPRay ISPCDevice Specific Design Choices
 
 - Prefer to use Embree C API bindings over ISPC where possible.
-- Prefer to throw exceptions when an object is found to be invalid during
-  `commit()`.
-- Prefer setting ISPC-side values in a single `set()` call over many single
-  value setting functions.
+- Prefer to throw exceptions when an object is found to be invalid
+  during `commit()`.
+- Prefer setting ISPC-side values in a single `set()` call over many
+  single value setting functions.
 - Minimize the number of alias names given to both object types and
   parameters.
