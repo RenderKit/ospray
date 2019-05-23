@@ -53,7 +53,7 @@ namespace ospray {
 
   inline void RenderTask::wait(OSPSyncEvent event)
   {
-    if (event == OSP_FRAME_FINISHED)
+    if (event == OSP_TASK_FINISHED)
       AsyncTask<float>::wait();
     else
       fb->waitForEvent(event);
