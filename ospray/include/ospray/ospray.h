@@ -147,6 +147,7 @@ namespace osp {
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
   struct Instance         : public ManagedObject {};
+  struct FrameOp          : public ManagedObject {};
   struct World            : public ManagedObject {};
 }
 
@@ -168,6 +169,7 @@ typedef osp::Texture           *OSPTexture;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
 typedef osp::Instance          *OSPInstance;
+typedef osp::FrameOp           *OSPFrameOp;
 typedef osp::World             *OSPWorld;
 #else
 typedef void _OSPManagedObject;
@@ -195,6 +197,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPTexture,
   *OSPObject,
   *OSPPixelOp,
+  *OSPFrameOp,
   *OSPFuture;
 #endif
 
@@ -363,7 +366,11 @@ extern "C" {
   // Create a new pixel op of given type return 'NULL' if that type is not known
   OSPRAY_INTERFACE OSPPixelOp ospNewPixelOp(const char *type);
 
-  // Map app-side content of a framebuffer (see \ref frame_buffer_handling)
+  //! create a new frame op of given type
+  /*! return 'NULL' if that type is not known */
+  OSPRAY_INTERFACE OSPFrameOp ospNewFrameOp(const char *type);
+
+  /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
                                                  OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 

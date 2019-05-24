@@ -121,6 +121,6 @@ namespace ospray {
     std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
     Ref<Data> pixelOpData;
-    int firstFrameOperation = -1;
+    size_t firstFrameOperation = -1;
   };
 }  // namespace ospray

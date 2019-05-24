@@ -237,7 +237,8 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   framebuffer = ospNewFrameBuffer(windowSize.x,
                                   windowSize.y,
                                   OSP_FB_SRGBA,
-                                  OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_ALBEDO);
+                                  OSP_FB_COLOR | OSP_FB_DEPTH
+                                  | OSP_FB_ACCUM | OSP_FB_ALBEDO);
 
   if (pixelOps) {
     ospSetData(framebuffer, "pixelOperations", pixelOps);

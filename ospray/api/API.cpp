@@ -1032,6 +1032,23 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type) OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
+extern "C" OSPFrameOp ospNewFrameOp(const char *_type) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  Assert2(_type, "invalid render type identifier in ospNewFrameOp");
+  int L      = strlen(_type);
+  char *type = STACK_BUFFER(char, L + 1);
+  for (int i = 0; i <= L; i++) {
+    char c = _type[i];
+    if (c == '-' || c == ':')
+      c = '_';
+    type[i] = c;
+  }
+  OSPFrameOp frameOp = currentDevice().newFrameOp(type);
+  return frameOp;
+}
+OSPRAY_CATCH_END(nullptr)
+
 extern "C" const void *ospMapFrameBuffer(
     OSPFrameBuffer fb, OSPFrameBufferChannel channel) OSPRAY_CATCH_BEGIN
 {

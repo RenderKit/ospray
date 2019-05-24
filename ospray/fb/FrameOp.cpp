@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <algorithm>
 #include "common/Util.h"
-#include "ospcommon/tasking/parallel_for.h"
 #include "FrameBuffer.h"
 #include "FrameOp.h"
 
@@ -32,8 +32,7 @@ namespace ospray {
       depthBuffer(depthBuffer),
       normalBuffer(normalBuffer),
       albedoBuffer(albedoBuffer)
-  {
-  }
+  {}
 
   FrameOp *FrameOp::createInstance(const char *type)
   {
@@ -47,7 +46,9 @@ namespace ospray {
 
   void DebugFrameOp::endFrame(FrameBufferView &fb)
   {
-    if (fb.colorBuffer == nullptr) {
+    if (!fb.colorBuffer) {
+      static WarnOnce warn(toString() + " requires color data but the "
+                           "framebuffer does not have this channel.");
       return;
     }
 
@@ -72,6 +73,82 @@ namespace ospray {
     return "ospray::DebugFrameOp";
   }
 
+  void BlurFrameOp::endFrame(FrameBufferView &fb)
+  {
+    if (!fb.colorBuffer) {
+      static WarnOnce warn(toString() + " requires color data but the "
+                           "framebuffer does not have this channel.");
+      return;
+    }
+
+    if (fb.colorBufferFormat == OSP_FB_RGBA8
+        || fb.colorBufferFormat == OSP_FB_SRGBA)
+    {
+      // TODO: For SRGBA we actually need to convert to linear before filtering
+      applyBlur(fb, static_cast<uint8_t*>(fb.colorBuffer));
+    } else {
+      applyBlur(fb, static_cast<float*>(fb.colorBuffer));
+    }
+  }
+
+  std::string BlurFrameOp::toString() const
+  {
+    return "ospray::BlurFrameOp";
+  }
+
+
+  void DepthFrameOp::endFrame(FrameBufferView &fb)
+  {
+    if (!fb.colorBuffer || !fb.depthBuffer) {
+      static WarnOnce warn(toString() + " requires color and depth data but "
+                           "the framebuffer does not have these channels.");
+      return;
+    }
+
+    // First find the min/max depth range to normalize the image,
+    // we don't use minmax_element here b/c we don't want inf to be
+    // found as the max depth value
+    const int numPixels = fb.fbDims.x * fb.fbDims.y;
+    vec2f depthRange(std::numeric_limits<float>::infinity(),
+                     -std::numeric_limits<float>::infinity());
+    for (int i = 0; i < numPixels; ++i)
+    {
+      if (!std::isinf(fb.depthBuffer[i]))
+      {
+        depthRange.x = std::min(depthRange.x, fb.depthBuffer[i]);
+        depthRange.y = std::max(depthRange.y, fb.depthBuffer[i]);
+      }
+    }
+    const float denom = 1.f / (depthRange.y - depthRange.x);
+
+    tasking::parallel_for(numPixels,
+      [&](int px) {
+        float normalizedZ = 1.f;
+        if (!std::isinf(fb.depthBuffer[px]))
+          normalizedZ = (fb.depthBuffer[px] - depthRange.x) * denom;
+
+        for (int c = 0; c < 3; ++c)
+        {
+          if (fb.colorBufferFormat == OSP_FB_RGBA8
+              || fb.colorBufferFormat == OSP_FB_SRGBA)
+          {
+            uint8_t *cbuf = static_cast<uint8_t *>(fb.colorBuffer);
+            cbuf[px * 4 + c] = static_cast<uint8_t>(normalizedZ * 255.f);
+          } else {
+            float *cbuf = static_cast<float *>(fb.colorBuffer);
+            cbuf[px * 4 + c] = normalizedZ;
+          }
+        }
+      });
+  }
+
+  std::string DepthFrameOp::toString() const
+  {
+    return "ospray::DepthFrameOp";
+  }
+
   OSP_REGISTER_FRAME_OP(DebugFrameOp, debug);
+  OSP_REGISTER_FRAME_OP(BlurFrameOp, blur);
+  OSP_REGISTER_FRAME_OP(DepthFrameOp, depth);
 }
 

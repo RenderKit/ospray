@@ -45,6 +45,12 @@ namespace ospray {
 
       int loadModule(const char *name) override;
 
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      OSPPixelOp newPixelOp(const char *type) override;
+
+      /*! create a new frameOp object (out of list of registered frameOps) */
+      OSPFrameOp newFrameOp(const char *type) override;
+
       // OSPRay Data Arrays ///////////////////////////////////////////////////
 
       OSPData newData(size_t nitems,

@@ -85,12 +85,20 @@ int main(int argc, const char **argv)
   OSPPixelOp colorTweak = ospNewPixelOp("debug");
   ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
   ospCommit(colorTweak);
+  std::vector<OSPObject> pixelOps = {toneMap, colorTweak};
+
+  OSPFrameOp frameOpTest = ospNewFrameOp("depth");
+  ospCommit(frameOpTest);
+  std::vector<OSPObject> frameOps = {frameOpTest};
 
   // UI for the tweaking the pixel pipeline
-  std::vector<bool> enabledOps   = {true, true};
-  std::vector<vec3f> debugColors = {vec3f(-1.f), vec3f(0, 0, 0.2)};
+  std::vector<bool> enabledOps   = {true, true, true};
+  std::vector<vec3f> debugColors = {
+    vec3f(-1.f), vec3f(0, 0, 0.2)
+  };
+  std::vector<std::string> frameOpNames = {"depth"};
 
-  std::vector<OSPPixelOp> pixelPipeline = {toneMap, colorTweak};
+  std::vector<OSPObject> pixelPipeline = {toneMap, colorTweak, frameOpTest};
   OSPData pixelOpData =
       ospNewData(pixelPipeline.size(), OSP_OBJECT, pixelPipeline.data());
   ospCommit(pixelOpData);
@@ -104,26 +112,28 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->setPixelOps(pixelOpData);
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
-    bool pixelOpsUpdated = false;
-    for (size_t i = 0; i < pixelPipeline.size(); ++i) {
+    bool pipelineUpdated = false;
+    // Draw the UI for the Pixel Operations
+    ImGui::Text("Pixel Operations");
+    for (size_t i = 0; i < pixelOps.size(); ++i) {
       ImGui::PushID(i);
 
       bool enabled = enabledOps[i];
       if (ImGui::Checkbox("Enabled", &enabled)) {
         enabledOps[i]   = enabled;
-        pixelOpsUpdated = true;
+        pipelineUpdated = true;
       }
 
       if (debugColors[i] != vec3f(-1.f)) {
         ImGui::Text("Debug Pixel Op #%lu", i);
         if (ImGui::ColorPicker3("Color", &debugColors[i].x)) {
-          ospSetVec3f(pixelPipeline[i],
-                   "addColor",
-                   debugColors[i].x,
-                   debugColors[i].y,
-                   debugColors[i].z);
-          pixelOpsUpdated = true;
-          glfwOSPRayWindow->addObjectToCommit(pixelPipeline[i]);
+          ospSetVec3f(pixelOps[i],
+                      "addColor",
+                      debugColors[i].x,
+                      debugColors[i].y,
+                      debugColors[i].z);
+          pipelineUpdated = true;
+          glfwOSPRayWindow->addObjectToCommit(pixelOps[i]);
         }
       } else {
         ImGui::Text("Tonemapper Pixel Op #%lu", i);
@@ -132,43 +142,101 @@ int main(int argc, const char **argv)
       ImGui::PopID();
     }
 
-    if (ImGui::Button("Add Debug Op")) {
+    if (ImGui::Button("Add Debug PixelOp")) {
       OSPPixelOp op = ospNewPixelOp("debug");
       ospSetVec3f(op, "addColor", 0.0, 0.0, 0.0);
       ospCommit(op);
 
-      pixelPipeline.push_back(op);
+      pixelOps.push_back(op);
       enabledOps.push_back(true);
       debugColors.push_back(vec3f(0));
 
-      pixelOpsUpdated = true;
+      pipelineUpdated = true;
     }
-    if (ImGui::Button("Add Tonemap Op")) {
+    if (ImGui::Button("Add Tonemap PixelOp")) {
       OSPPixelOp op = ospNewPixelOp("tonemapper");
       ospCommit(op);
 
-      pixelPipeline.push_back(op);
+      pixelOps.push_back(op);
       enabledOps.push_back(true);
       debugColors.push_back(vec3f(-1));
 
-      pixelOpsUpdated = true;
+      pipelineUpdated = true;
     }
 
-    if (!pixelPipeline.empty() && ImGui::Button("Remove Op")) {
-      ospRelease(pixelPipeline.back());
-      pixelPipeline.pop_back();
+    if (!pixelOps.empty() && ImGui::Button("Remove PixelOp")) {
+      ospRelease(pixelOps.back());
+      pixelOps.pop_back();
       enabledOps.pop_back();
       debugColors.pop_back();
 
-      pixelOpsUpdated = true;
+      pipelineUpdated = true;
     }
 
-    if (pixelOpsUpdated) {
+    // Draw the UI for the Frame Operations
+    ImGui::Separator();
+    ImGui::Text("Frame Operations");
+    for (size_t i = 0; i < frameOps.size(); ++i) {
+      ImGui::PushID(i + pixelOps.size());
+
+      ImGui::Text("Frame Op: %s", frameOpNames[i].c_str());
+      bool enabled = enabledOps[i + pixelOps.size()];
+      if (ImGui::Checkbox("Enabled", &enabled)) {
+        enabledOps[i + pixelOps.size()]   = enabled;
+        pipelineUpdated                   = true;
+      }
+      ImGui::PopID();
+    }
+
+    if (ImGui::Button("Add Debug FrameOp")) {
+      OSPFrameOp op = ospNewFrameOp("debug");
+      ospCommit(op);
+
+      frameOps.push_back(op);
+      frameOpNames.push_back("debug");
+      enabledOps.push_back(true);
+
+      pipelineUpdated = true;
+    }
+    if (ImGui::Button("Add Blur FrameOp")) {
+      OSPFrameOp op = ospNewFrameOp("blur");
+      ospCommit(op);
+
+      frameOps.push_back(op);
+      frameOpNames.push_back("blur");
+      enabledOps.push_back(true);
+
+      pipelineUpdated = true;
+    }
+    if (ImGui::Button("Add Depth FrameOp")) {
+      OSPFrameOp op = ospNewFrameOp("depth");
+      ospCommit(op);
+
+      frameOps.push_back(op);
+      frameOpNames.push_back("depth");
+      enabledOps.push_back(true);
+
+      pipelineUpdated = true;
+    }
+
+    if (!frameOps.empty() && ImGui::Button("Remove FrameOp")) {
+      ospRelease(frameOps.back());
+      frameOps.pop_back();
+      enabledOps.pop_back();
+
+      pipelineUpdated = true;
+    }
+
+    if (pipelineUpdated) {
       ospRelease(pixelOpData);
-      std::vector<OSPPixelOp> enabled;
-      for (size_t i = 0; i < pixelPipeline.size(); ++i) {
+      std::vector<OSPObject> enabled;
+      for (size_t i = 0; i < pixelOps.size(); ++i) {
         if (enabledOps[i])
-          enabled.push_back(pixelPipeline[i]);
+          enabled.push_back(pixelOps[i]);
+      }
+      for (size_t i = 0; i < frameOps.size(); ++i) {
+        if (enabledOps[i + pixelOps.size()])
+          enabled.push_back(frameOps[i]);
       }
 
       pixelOpData = ospNewData(enabled.size(), OSP_OBJECT, enabled.data());
@@ -183,7 +251,10 @@ int main(int argc, const char **argv)
   // cleanup remaining objects
   ospRelease(pixelOpData);
 
-  for (auto &op : pixelPipeline)
+  for (auto &op : pixelOps)
+    ospRelease(op);
+
+  for (auto &op : frameOps)
     ospRelease(op);
 
   // cleanly shut OSPRay down

@@ -26,6 +26,9 @@
 #include "common/World.h"
 #include "fb/LocalFB.h"
 #include "geometry/GeometricModel.h"
+#include "fb/PixelOp.h"
+#include "fb/FrameOp.h"
+#include "geometry/GeometryInstance.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/RenderTask.h"
@@ -329,6 +332,11 @@ namespace ospray {
     {
       ManagedObject *object = (ManagedObject *)_object;
       object->setParam(bufName, v);
+    }
+
+    OSPFrameOp ISPCDevice::newFrameOp(const char *type)
+    {
+      return (OSPFrameOp)FrameOp::createInstance(type);
     }
 
     void ISPCDevice::setBox3f(OSPObject _object,
