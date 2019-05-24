@@ -75,6 +75,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/PixelOp.cpp
+  fb/FrameOp.cpp
   fb/ToneMapperPixelOp.cpp
   fb/ToneMapperPixelOp.ispc
   fb/DebugPixelOp.cpp

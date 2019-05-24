@@ -118,6 +118,9 @@ namespace ospcommon {
       lib      = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
     }
 #endif
+    if (lib == nullptr) {
+      std::cerr << "Failed to load " << file << ": " << errorMsg << "\n";
+    }
   }
 
   Library::Library(void *const _lib)

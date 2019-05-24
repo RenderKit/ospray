@@ -18,6 +18,7 @@
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
 #include "PixelOp.h"
+#include "FrameOp.h"
 
 namespace ospray {
 
@@ -133,8 +134,9 @@ namespace ospray {
                                                tile.nz);
 
     if (pixelOpData) {
+      // TODO: For now, frame operations must be last in the pipeline
       std::for_each(pixelOpData->begin<PixelOp *>(),
-                    pixelOpData->end<PixelOp *>(),
+                    pixelOpData->begin<PixelOp *>() + firstFrameOperation,
                     [&](PixelOp *p) { p->postAccum(this, tile); });
     }
 
@@ -170,8 +172,9 @@ namespace ospray {
     FrameBuffer::beginFrame();
 
     if (pixelOpData) {
+      // TODO: For now, frame operations must be last in the pipeline
       std::for_each(pixelOpData->begin<PixelOp *>(),
-                    pixelOpData->end<PixelOp *>(),
+                    pixelOpData->begin<PixelOp *>() + firstFrameOperation,
                     [](PixelOp *p) { p->beginFrame(); });
     }
   }
@@ -179,9 +182,19 @@ namespace ospray {
   void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
     if (pixelOpData) {
+      // TODO: For now, frame operations must be last in the pipeline
       std::for_each(pixelOpData->begin<PixelOp *>(),
-                    pixelOpData->end<PixelOp *>(),
+                    pixelOpData->begin<PixelOp *>() + firstFrameOperation,
                     [](PixelOp *p) { p->endFrame(); });
+
+      if (firstFrameOperation < pixelOpData->size()) {
+        FrameBufferView fbv(this, colorBufferFormat, colorBuffer, depthBuffer,
+                            normalBuffer, albedoBuffer);
+
+        std::for_each(pixelOpData->begin<FrameOp *>() + firstFrameOperation, 
+                      pixelOpData->end<FrameOp *>(),
+                      [&](FrameOp *f) { f->endFrame(fbv); });
+      }
     }
 
     frameVariance = tileErrorRegion.refine(errorThreshold);

@@ -87,6 +87,11 @@ namespace ospray {
     bool frameCancelled() const;
 
    protected:
+    /*! Find the index of the first frameoperation included in the pixelop
+     * pipeline
+     */
+    void findFirstFrameOperation();
+
     const vec2i size;
     vec2i numTiles;
     vec2i maxValidPixelID;
@@ -116,5 +121,6 @@ namespace ospray {
     std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
     Ref<Data> pixelOpData;
+    int firstFrameOperation = -1;
   };
 }  // namespace ospray

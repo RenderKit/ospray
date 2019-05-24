@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "fb/FrameOp.h"
 #include "FrameBuffer.h"
 #include "FrameBuffer_ispc.h"
 
@@ -40,6 +41,7 @@ namespace ospray {
   void FrameBuffer::commit()
   {
     pixelOpData = getParamData("pixelOperations", nullptr);
+    findFirstFrameOperation();
   }
 
   vec2i FrameBuffer::getTileSize() const
@@ -113,6 +115,25 @@ namespace ospray {
   bool FrameBuffer::frameCancelled() const
   {
     return cancelRender;
+  }
+
+  void FrameBuffer::findFirstFrameOperation()
+  {
+    firstFrameOperation = -1;
+    if (!pixelOpData)
+      return;
+
+    firstFrameOperation = pixelOpData->size();
+    for (size_t i = 0; i < pixelOpData->size(); ++i) {
+      ManagedObject *obj = *(pixelOpData->begin<ManagedObject *>() + i);
+      bool isFrameOp = dynamic_cast<FrameOp *>(obj) != nullptr;
+
+      if (firstFrameOperation == pixelOpData->size() && isFrameOp)
+        firstFrameOperation = i;
+      else if (firstFrameOperation < pixelOpData->size() && !isFrameOp)
+        throw std::runtime_error("Tile operations cannot come after Frame "
+                                 "operations in the pixelOperations array.");
+    }
   }
 
 } // ::ospray
