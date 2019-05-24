@@ -892,6 +892,8 @@ namespace ospray {
 
     if (mpicommon::IamTheMaster()) // only refine on master
       frameVariance = tileErrorRegion.refine(errorThreshold);
+
+    setCompletedEvent(OSP_FRAME_FINISHED);
   }
 
   void DFB::reportTimings(std::ostream &os)

@@ -330,8 +330,21 @@ namespace ospray {
 
       fb->setCompletedEvent(OSP_NONE_FINISHED);
 
-      auto *f = new RenderTask(
-          fb, [=]() { return renderer->renderFrame(fb, camera, world); });
+      fb->refInc();
+      renderer->refInc();
+      camera->refInc();
+      world->refInc();
+
+      auto *f = new RenderTask(fb, [=]() {
+        float result = renderer->renderFrame(fb, camera, world);
+
+        fb->refDec();
+        renderer->refDec();
+        camera->refDec();
+        world->refDec();
+
+        return result;
+      });
 
       return (OSPFuture)f;
     }
