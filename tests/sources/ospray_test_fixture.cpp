@@ -315,6 +315,7 @@ namespace OSPRayTestScenes {
     ospSet4f(renderer, "bgColor", 0.2f, 0.2f, 0.4f, 1.0f);
     // scivis params
     ospSet1i(renderer, "aoSamples", 16);
+    ospSet1f(renderer, "aoIntensity", 1.f);
     // pathtracer params
     ospSet1i(renderer, "maxDepth", 2);
 

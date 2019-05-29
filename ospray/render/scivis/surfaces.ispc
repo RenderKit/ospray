@@ -98,22 +98,19 @@ SSI computeShading(const SciVis *uniform self,
   const vec3f color   = make_vec3f(surfaceColor);
   const float opacity = surfaceColor.w;
 
-  float intensity = 1.f;
+  const float eyeLightIntensity = absf(dot(dg.Ns, sample.ray.dir)) * opacity;
 
-  cif(self->aoSamples > 0)
-  {
-    intensity = computeAO(self, fb, world, sample.sampleID, dg);
-  }
-  else
-  {
-    intensity = absf(dot(dg.Ns, sample.ray.dir));
-  }
+  const uniform bool doAO = self->aoSamples > 0;
 
-  intensity *= opacity;
+  const float ao = doAO ? computeAO(self, fb, world, sample.sampleID, dg) : 1.f;
 
-  retval.shadedColor =
-      make_vec4f(color * (self->aoIntensity * intensity), opacity);
-  retval.albedo = color;
+  const float aoIntensity = doAO ? self->aoIntensity : 0.f;
+
+  const float intensity =
+      ((1 - aoIntensity) * eyeLightIntensity) + (ao * aoIntensity);
+
+  retval.shadedColor = make_vec4f(color * intensity, opacity);
+  retval.albedo      = color;
 
   return retval;
 }
