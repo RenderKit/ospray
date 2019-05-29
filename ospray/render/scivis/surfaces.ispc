@@ -100,14 +100,14 @@ SSI computeShading(const SciVis *uniform self,
 
   const float eyeLightIntensity = absf(dot(dg.Ns, sample.ray.dir)) * opacity;
 
-  const uniform bool doAO = self->aoSamples > 0;
+  const uniform bool doAO = self->aoSamples > 0 && self->aoIntensity > 0.01f;
 
   const float ao = doAO ? computeAO(self, fb, world, sample.sampleID, dg) : 1.f;
 
   const float aoIntensity = doAO ? self->aoIntensity : 0.f;
 
   const float intensity =
-      ((1 - aoIntensity) * eyeLightIntensity) + (ao * aoIntensity);
+      ((1 - aoIntensity) + (ao * aoIntensity)) * eyeLightIntensity;
 
   retval.shadedColor = make_vec4f(color * intensity, opacity);
   retval.albedo      = color;

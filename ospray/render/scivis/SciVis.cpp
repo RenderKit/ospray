@@ -49,7 +49,7 @@ namespace ospray {
     ispc::SciVis_set(getIE(),
                      getParam1i("aoSamples", aoSamples),
                      getParam1f("aoRadius", 1e20f),
-                     getParam1f("aoIntensity", 0.5f));
+                     getParam1f("aoIntensity", 1.f));
   }
 
   OSP_REGISTER_RENDERER(SciVis, scivis);
