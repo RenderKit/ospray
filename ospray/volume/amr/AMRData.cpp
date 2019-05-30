@@ -39,6 +39,7 @@ namespace ospray {
 
     inline size_t getNumBricks(const Data &brickInfoData)
     {
+      // ALOK: this tends to return 0
       return brickInfoData.numBytes / sizeof(AMRData::BrickInfo);
     }
 

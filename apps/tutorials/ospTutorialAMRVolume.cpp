@@ -31,26 +31,59 @@ using namespace ospcommon;
 
 static const std::string renderer_type = "scivis";
 
-// ALOK: AMRVolume class members
-std::vector<osp_amr_brick_info> brickInfo;
+// ALOK: AMRVolume context info
+std::vector<osp_amr_brick_info> brickInfo; // holds brick metadata
+std::vector<float *> brickPtrs;            // holds actual data
+std::vector<OSPData> brickData;            // holds actual data as OSPData
 range1f valueRange;
-std::vector<float *> brickPtrs; // ALOK: why????
 
-osp_amr_brick_info bi[4];
-float bd[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8,
-                9, 10, 11, 12, 13, 14, 15};
 std::vector<float> c = {0, 0, 0,
                         1, 0, 0,
                         0, 1, 0,
                         0, 0, 1};
 std::vector<float> o  = {0, 0.333, 0.666, 1.0};
 
+// ALOK: TODO
+// this is ugly
+// somehow we're using vec/box types that don't have size() or
+// product(). that needs to change!
+int numCellsInBrick(const osp_amr_brick_info &bi)
+{
+    vec3i size = {bi.bounds.upper.x - bi.bounds.lower.x + 1,
+                  bi.bounds.upper.y - bi.bounds.lower.y + 1,
+                  bi.bounds.upper.z - bi.bounds.lower.z + 1};
+    int product = size.x * size.y * size.z;
+    return product;
+}
+
+std::ostream &operator<<(std::ostream &os, const osp_vec3i &v)
+{
+    os << "<" << v.x << ", " <<
+                 v.y << ", " <<
+                 v.z << ">";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const osp_amr_brick_info &bi)
+{
+    os << "    ________" << std::endl
+       << "   /\\       \\      bounds lower" << std::endl
+       << "  /::\\       \\      " << bi.bounds.lower << std::endl
+       << " /::::\\       \\    bounds upper" << std::endl
+       << " \\:::::\\       \\    " << bi.bounds.upper << std::endl
+       << "  \\:::::\\       \\  refinementLevel" << std::endl
+       << "   \\:::::\\_______\\  " << bi.refinementLevel << std::endl
+       << "    \\::::/ZZZZZZZ/ cellWidth" << std::endl
+       << "     \\::/ZZZZZZZ/   " << bi.cellWidth << std::endl
+       << "      \\/ZZZZZZZ/" << std::endl;
+    return os;
+}
+
 void parseRaw2AmrFile(const FileName &fileName,
                       int BS,
                       int maxLevel)
 {
-    // ALOK: looks for sibling files created by ospRaw2Amr
-    // means that filename arg needs to be base filename without extension
+    // filename arg needs to be base filename without extension
     FileName infoFileName = fileName.str() + std::string(".info");
     FileName dataFileName = fileName.str() + std::string(".data");
 
@@ -72,10 +105,18 @@ void parseRaw2AmrFile(const FileName &fileName,
     auto bounds = box3f(-1, 1);
     auto numCells = BS * BS * BS;
 
+    // populate brickInfo and brickPtrs
+    // by reading in osp_amr_brick_info structs from infoFile
+    // and reading corresponding data from dataFile
     while (fread(&bi, sizeof(bi), 1, infoFile)) {
+        if(bi.refinementLevel > maxLevel) {
+            continue;
+        }
+
+        std::cout << bi << std::endl;
+
         utility::ArrayView<float> bd(new float[numCells], numCells);
 
-        // ALOK: read in actual data from datafile based on the number of cells
         int nr = fread(bd.data(), sizeof(float), numCells, dataFile);
         UNUSED(nr);
 
@@ -87,25 +128,13 @@ void parseRaw2AmrFile(const FileName &fileName,
                          bi.bounds.upper.z};
         boundsf += vec3f(1.f);
         bounds.extend(boundsf * bi.cellWidth);
-        // ALOK: using osp_amr_brick_info instead
-        //bounds.extend((vec3f(bi.box.upper) + vec3f(1.f)) * bi.dt);
-        // extend the bounds of the brick(?) based on the brick metadata
-        //bounds.extend((vec3f(bi.bounds.upper) + vec3f(1.f)) * bi.cellWidth);
 
         assert(nr == numCells);
         for (const auto &c : bd)
-            valueRange.extend(c); // ALOK: maintaining min/max?
+            valueRange.extend(c);
+
         brickPtrs.push_back(bd);
     }
-
-    // ALOK: setting node children, so these will be parameters of the
-    //       AMR volume
-    /*
-    child("bounds") = bounds;
-    child("transferFunction")["valueRange"] = valueRange.toVec2f();
-    ospLogF(1) << "read file; found " << brickInfo.size() << " bricks"
-        << std::endl;
-    */
 
     fclose(infoFile);
     fclose(dataFile);
@@ -120,31 +149,22 @@ OSPVolume createDummyAMRVolume()
     OSPVolume dummy = ospNewVolume("amr_volume");
     ospSetString(dummy, "voxelType", "float");
 
-    FileName fname("/mnt/ssd/magnetic_amr");
-    parseRaw2AmrFile(fname, 4, 1 << 30);
+    FileName fname("/mnt/ssd/test_data/test_amr");
+    parseRaw2AmrFile(fname, 4, 0);
 
-    /*
-    // coarsest level
-    osp_vec3i lower = {0, 0, 0}, upper = {3, 3, 3};
-    osp_box3i bbox = {lower, upper};
-    bi[0].bounds = bbox;
-    bi[0].refinementLevel = 0;
-    bi[0].cellWidth = 1;
-    OSPData brickInfo = ospNewData(1, OSP_VOID_PTR, bi);
-    ospCommit(brickInfo);
-
-    OSPData b0 = ospNewData(16, OSP_FLOAT, bd);
-    ospCommit(b0);
-    OSPData brickData = ospNewData(1, OSP_DATA, b0);
-    ospCommit(brickData);
-
-    ospSetData(dummy, "brickInfo", brickInfo);
-    ospSetData(dummy, "brickData", brickData);
-    */
+    // ALOK: taken from ospray/master's AMRVolume::preCommit()
+    // convert raw pointers in brickPtrs to OSPData in brickData
+    for(size_t bID = 0; bID < brickInfo.size(); bID++) {
+        const osp_amr_brick_info &bi = brickInfo[bID];
+        int numCells = numCellsInBrick(bi);
+        OSPData data = ospNewData(numCells, OSP_FLOAT, brickPtrs[bID], OSP_DATA_SHARED_BUFFER);
+        brickData.push_back(data);
+    }
 
     OSPData brickInfoData = ospNewData(brickInfo.size(), OSP_VOID_PTR, brickInfo.data());
     ospCommit(brickInfoData);
-    OSPData brickDataData = ospNewData(brickPtrs.size(), OSP_FLOAT, brickPtrs.data());
+
+    OSPData brickDataData = ospNewData(brickData.size(), OSP_DATA, brickData.data());
     ospCommit(brickDataData);
 
     ospSetData(dummy, "brickInfo", brickInfoData);
