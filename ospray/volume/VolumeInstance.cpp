@@ -160,9 +160,4 @@ namespace ospray {
     return instanceBounds;
   }
 
-  AffineSpace3f VolumeInstance::xfm() const
-  {
-    return instanceXfm;
-  }
-
 }  // namespace ospray

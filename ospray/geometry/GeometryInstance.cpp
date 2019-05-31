@@ -166,9 +166,4 @@ namespace ospray {
     return embreeInstanceGeometry;
   }
 
-  AffineSpace3f GeometryInstance::xfm() const
-  {
-    return instanceXfm;
-  }
-
 }  // namespace ospray

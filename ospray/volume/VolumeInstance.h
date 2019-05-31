@@ -33,8 +33,6 @@ namespace ospray {
 
     box3f bounds() const;
 
-    AffineSpace3f xfm() const;
-
    private:
     // Data members //
 

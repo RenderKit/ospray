@@ -34,8 +34,6 @@ namespace ospray {
 
     RTCGeometry embreeGeometryHandle() const;
 
-    AffineSpace3f xfm() const;
-
    private:
     // Data members //
 
