@@ -58,20 +58,6 @@ namespace ospray {
     postStatusMsg(2) << "#osp: creating 'cylinders' geometry, #cylinders = "
                      << numCylinders;
 
-    const char *cylinderPtr = (const char *)cylinderData->data;
-
-    bounds = empty;
-    for (uint32_t i = 0; i < numCylinders;
-         i++, cylinderPtr += bytesPerCylinder) {
-      const float r = offset_radius < 0
-                          ? radius
-                          : *(const float *)(cylinderPtr + offset_radius);
-      const vec3f v0 = *(const vec3f *)(cylinderPtr + offset_v0);
-      const vec3f v1 = *(const vec3f *)(cylinderPtr + offset_v1);
-      bounds.extend(box3f(v0 - r, v0 + r));
-      bounds.extend(box3f(v1 - r, v1 + r));
-    }
-
     createEmbreeGeometry();
 
     ispc::CylindersGeometry_set(getIE(),

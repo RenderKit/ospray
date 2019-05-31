@@ -84,12 +84,6 @@ export void World_init(void *uniform _world,
   }
 }
 
-export void World_setBounds(void *uniform _world, box3f *uniform bounds)
-{
-  World *uniform world = (World * uniform) _world;
-  world->bounds        = *bounds;
-}
-
 export void *uniform World_getEmbreeSceneHandleGeometries(void *uniform _world)
 {
   World *uniform world = (World * uniform) _world;

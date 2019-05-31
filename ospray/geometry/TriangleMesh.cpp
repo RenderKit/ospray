@@ -135,14 +135,10 @@ namespace ospray {
       }
     }
 
-    bounds = empty;
-    for (uint32_t i = 0; i < numVerts * numCompsInVtx; i += numCompsInVtx)
-      bounds.extend(*(vec3f *)((float *)vertexData->data + i));
-
     createEmbreeGeometry();
 
     postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
-                     << numVerts << " vertices)\n  mesh bounds " << bounds;
+                     << numVerts << " vertices)\n";
 
     ispc::TriangleMesh_set(getIE(),
                            embreeGeometry,

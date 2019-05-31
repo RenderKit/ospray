@@ -136,31 +136,9 @@ namespace ospray {
 
     rtcCommitGeometry(embreeInstanceGeometry);
 
-    // Calculate bounding information //
-
-    const box3f b = instancedGeometry->bounds;
-    const vec3f v000(b.lower.x, b.lower.y, b.lower.z);
-    const vec3f v001(b.upper.x, b.lower.y, b.lower.z);
-    const vec3f v010(b.lower.x, b.upper.y, b.lower.z);
-    const vec3f v011(b.upper.x, b.upper.y, b.lower.z);
-    const vec3f v100(b.lower.x, b.lower.y, b.upper.z);
-    const vec3f v101(b.upper.x, b.lower.y, b.upper.z);
-    const vec3f v110(b.lower.x, b.upper.y, b.upper.z);
-    const vec3f v111(b.upper.x, b.upper.y, b.upper.z);
-
-    instanceBounds = empty;
-    instanceBounds.extend(xfmPoint(instanceXfm, v000));
-    instanceBounds.extend(xfmPoint(instanceXfm, v001));
-    instanceBounds.extend(xfmPoint(instanceXfm, v010));
-    instanceBounds.extend(xfmPoint(instanceXfm, v011));
-    instanceBounds.extend(xfmPoint(instanceXfm, v100));
-    instanceBounds.extend(xfmPoint(instanceXfm, v101));
-    instanceBounds.extend(xfmPoint(instanceXfm, v110));
-    instanceBounds.extend(xfmPoint(instanceXfm, v111));
+    // Finish getting/setting other appearance information //
 
     AffineSpace3f rcp_xfm = rcp(instanceXfm);
-
-    // Finish getting/setting other appearance information //
 
     colorData = getParamData("color", getParamData("prim.color"));
 
@@ -186,11 +164,6 @@ namespace ospray {
   RTCGeometry GeometryInstance::embreeGeometryHandle() const
   {
     return embreeInstanceGeometry;
-  }
-
-  box3f GeometryInstance::bounds() const
-  {
-    return instanceBounds;
   }
 
   AffineSpace3f GeometryInstance::xfm() const

@@ -77,19 +77,6 @@ namespace ospray {
                                      geomID,
                                      (float *)patchesDataPointer,
                                      numPatchesInInput);
-
-      const Patch *patch = (const Patch *)patchesDataPointer;
-
-      /* important: set our bounding box, else renderer can't compute
-         global bounding box, and may get confused with epsilon
-         compuatations */
-      bounds = empty;
-      for (uint32_t i = 0; i < numPatchesInInput; i++) {
-        bounds.extend(patch[i].controlPoint[0][0]);
-        bounds.extend(patch[i].controlPoint[0][1]);
-        bounds.extend(patch[i].controlPoint[1][0]);
-        bounds.extend(patch[i].controlPoint[1][1]);
-      }
     }
 
     size_t BilinearPatches::numPrimitives() const

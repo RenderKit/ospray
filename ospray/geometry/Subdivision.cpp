@@ -86,20 +86,10 @@ namespace ospray {
       throw std::runtime_error(
           "unsupported subdivision 'vertex.texcoord' data type");
 
-    vec3f *vertex = (vec3f *)vertexData->data;
-    bounds = empty;
-    /* better bounds if some vertices are not referenced:
-    for (auto i : indexData)
-      bounds.extend(vertexData[i]); */
-    for (size_t i = 0; i < vertexData->size(); i++)
-      bounds.extend(vertex[i]);
-    // TODO: must factor in displacement into bounds....
-
     createEmbreeGeometry();
 
     postStatusMsg(2) << "  created subdivision (" << numFaces << " faces "
-                     << ", " << vertexData->size() << " vertices)\n"
-                     << "  mesh bounds " << bounds;
+                     << ", " << vertexData->size() << " vertices)\n";
 
     vec2f *texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
 

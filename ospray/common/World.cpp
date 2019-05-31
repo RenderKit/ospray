@@ -84,8 +84,6 @@ namespace ospray {
     embreeSceneHandleVolumes =
         (RTCScene)ispc::World_getEmbreeSceneHandleVolumes(getIE());
 
-    bounds = empty;
-
     for (size_t i = 0; i < numGeometries; i++) {
       postStatusMsg(2)
           << "=======================================================\n"
@@ -94,7 +92,6 @@ namespace ospray {
       auto &instance = *geometryInstances->at<GeometryInstance *>(i);
       rtcAttachGeometry(embreeSceneHandleGeometries,
                         instance.embreeGeometryHandle());
-      bounds.extend(instance.bounds());
       ispc::World_setGeometryInstance(getIE(), i, instance.getIE());
     }
 
@@ -106,11 +103,8 @@ namespace ospray {
       auto &instance = *volumeInstances->at<VolumeInstance *>(i);
       rtcAttachGeometry(embreeSceneHandleVolumes,
                         instance.embreeGeometryHandle());
-      bounds.extend(instance.bounds());
       ispc::World_setVolumeInstance(getIE(), i, instance.getIE());
     }
-
-    ispc::World_setBounds(getIE(), (ispc::box3f *)&bounds);
 
     rtcCommitScene(embreeSceneHandleGeometries);
     rtcCommitScene(embreeSceneHandleVolumes);

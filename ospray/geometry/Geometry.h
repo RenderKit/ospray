@@ -54,8 +54,6 @@ namespace ospray {
 
     virtual size_t numPrimitives() const = 0;
 
-    box3f bounds{empty};
-
     RTCGeometry embreeGeometry{nullptr};
     uint32_t geomID{0};
 

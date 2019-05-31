@@ -121,15 +121,10 @@ namespace ospray {
       }
     }
 
-    bounds = empty;
-    for (uint32_t i = 0; i < numVerts * numCompsInVtx; i += numCompsInVtx)
-      bounds.extend(*(vec3f *)(vertex + i));
-
     createEmbreeGeometry();
 
     postStatusMsg(2) << "  created quad mesh (" << numQuads << " quads "
-                     << ", " << numVerts << " vertices)\n"
-                     << "  mesh bounds " << bounds;
+                     << ", " << numVerts << " vertices)\n";
 
     ispc::QuadMesh_set(getIE(),
                        embreeGeometry,

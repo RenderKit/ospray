@@ -68,17 +68,6 @@ namespace ospray {
           "without causing address overflows)");
     }
 
-    const char *spherePtr = (const char *)sphereData->data;
-
-    bounds = empty;
-    for (uint32_t i = 0; i < numSpheres; i++, spherePtr += bytesPerSphere) {
-      const float r = offset_radius < 0
-                          ? radius
-                          : *(const float *)(spherePtr + offset_radius);
-      const vec3f center = *(const vec3f *)(spherePtr + offset_center);
-      bounds.extend(box3f(center - r, center + r));
-    }
-
     // check whether we need 64-bit addressing
     huge_mesh = false;
     if (texcoordData && texcoordData->numBytes > INT32_MAX)

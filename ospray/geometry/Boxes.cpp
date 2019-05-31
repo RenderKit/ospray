@@ -44,13 +44,6 @@ namespace ospray {
 
     numBoxes = boxData->numItems / 2;
 
-    auto *data = (vec3f *)boxData->data;
-    box3f bounds;
-    std::for_each(data, data + boxData->numItems, [&](const vec3f &v) {
-      bounds.extend(v);
-    });
-    this->bounds = bounds;
-
     createEmbreeGeometry();
 
     ispc::Boxes_set(getIE(), embreeGeometry, geomID, numBoxes, boxData->data);

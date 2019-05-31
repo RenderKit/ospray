@@ -34,15 +34,12 @@ namespace ospray {
 
     RTCGeometry embreeGeometryHandle() const;
 
-    box3f bounds() const;
-
     AffineSpace3f xfm() const;
 
    private:
     // Data members //
 
     // Geometry information
-    box3f instanceBounds;
     AffineSpace3f instanceXfm;
     Ref<Geometry> instancedGeometry;
 
