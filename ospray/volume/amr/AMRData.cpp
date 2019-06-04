@@ -17,6 +17,8 @@
 // amr base
 #include "AMRData.h"
 
+#include <iostream>
+
 namespace ospray {
   namespace amr {
 
@@ -41,6 +43,7 @@ namespace ospray {
     {
       // ALOK: this tends to return 0
       return brickInfoData.numBytes / sizeof(AMRData::BrickInfo);
+      //return brickInfoData.size();
     }
 
     /*! this structure defines only the format of the INPUT of amr
@@ -48,6 +51,7 @@ namespace ospray {
     AMRData::AMRData(const Data &brickInfoData, const Data &brickDataData)
     {
       auto numBricks = getNumBricks(brickInfoData);
+      std::cout << "numBricks = " << numBricks << std::endl;
       const BrickInfo *brickInfo = (const BrickInfo *)brickInfoData.data;
       const Data **allBricksData = (const Data **)brickDataData.data;
       for (size_t i = 0; i < numBricks; i++)

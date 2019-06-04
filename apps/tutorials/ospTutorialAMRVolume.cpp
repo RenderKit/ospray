@@ -36,6 +36,7 @@ std::vector<osp_amr_brick_info> brickInfo; // holds brick metadata
 std::vector<float *> brickPtrs;            // holds actual data
 std::vector<OSPData> brickData;            // holds actual data as OSPData
 range1f valueRange;
+float *actualData;
 
 std::vector<float> c = {0, 0, 0,
                         1, 0, 0,
@@ -110,6 +111,10 @@ void parseRaw2AmrFile(const FileName &fileName,
     // and reading corresponding data from dataFile
     while (fread(&bi, sizeof(bi), 1, infoFile)) {
         if(bi.refinementLevel > maxLevel) {
+            // ALOK: need to move the data file pointer forward
+            // so that we're reading the correct data from next
+            // block
+            fseek(dataFile, numCells * sizeof(float), SEEK_CUR);
             continue;
         }
 
@@ -149,8 +154,19 @@ OSPVolume createDummyAMRVolume()
     OSPVolume dummy = ospNewVolume("amr_volume");
     ospSetString(dummy, "voxelType", "float");
 
-    FileName fname("/mnt/ssd/test_data/test_amr");
-    parseRaw2AmrFile(fname, 4, 0);
+    //FileName fname("/mnt/ssd/test_data/test_amr");
+    //FileName fname("/mnt/ssd/magnetic_amr");
+    //parseRaw2AmrFile(fname, 4, 0);
+    
+    osp_vec3i dl = {0, 0, 0}, du = {2, 2, 2};
+    osp_box3i dbox = {dl, du};
+    osp_amr_brick_info brick = {dbox, 0, 1};
+
+    brickInfo.push_back(brick);
+
+    actualData = (float *)malloc(8 * sizeof(float));
+    for(int i = 0; i < 8; i++) { actualData[i] = i; }
+    brickPtrs.push_back(actualData);
 
     // ALOK: taken from ospray/master's AMRVolume::preCommit()
     // convert raw pointers in brickPtrs to OSPData in brickData
@@ -161,10 +177,10 @@ OSPVolume createDummyAMRVolume()
         brickData.push_back(data);
     }
 
-    OSPData brickInfoData = ospNewData(brickInfo.size(), OSP_VOID_PTR, brickInfo.data());
+    OSPData brickInfoData = ospNewData(brickInfo.size()*sizeof(osp_amr_brick_info), OSP_RAW, brickInfo.data());
     ospCommit(brickInfoData);
 
-    OSPData brickDataData = ospNewData(brickData.size(), OSP_DATA, brickData.data());
+    OSPData brickDataData = ospNewData(brickData.size(), OSP_DATA, brickData.data(), OSP_DATA_SHARED_BUFFER);
     ospCommit(brickDataData);
 
     ospSetData(dummy, "brickInfo", brickInfoData);
