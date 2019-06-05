@@ -38,12 +38,6 @@ std::vector<OSPData> brickData;            // holds actual data as OSPData
 range1f valueRange;
 float *actualData;
 
-std::vector<float> c = {0, 0, 0,
-                        1, 0, 0,
-                        0, 1, 0,
-                        0, 0, 1};
-std::vector<float> o  = {0, 0.0005, 0.001, 0.01};
-
 // ALOK: TODO
 // this is ugly
 // somehow we're using vec/box types that don't have size() or
@@ -158,16 +152,6 @@ OSPVolume createDummyAMRVolume()
     FileName fname("/mnt/ssd/magnetic_amr");
     parseRaw2AmrFile(fname, 4, 3);
     
-    /*
-    osp_vec3i dl = {0, 0, 0}, du = {2, 2, 2};
-    osp_box3i dbox = {dl, du};
-    osp_amr_brick_info brick = {dbox, 0, 1};
-    brickInfo.push_back(brick);
-    actualData = (float *)malloc(8 * sizeof(float));
-    for(int i = 0; i < 8; i++) { actualData[i] = i; }
-    brickPtrs.push_back(actualData);
-    */
-
     // ALOK: taken from ospray/master's AMRVolume::preCommit()
     // convert raw pointers in brickPtrs to OSPData in brickData
     for(size_t bID = 0; bID < brickInfo.size(); bID++) {
@@ -186,12 +170,8 @@ OSPVolume createDummyAMRVolume()
     ospSetData(dummy, "brickInfo", brickInfoData);
     ospSetData(dummy, "brickData", brickDataData);
 
-    OSPTransferFunction tf = ospNewTransferFunction("piecewise_linear");
-    OSPData colors = ospNewData(4, OSP_FLOAT3, c.data());
-    OSPData opacities = ospNewData(4, OSP_FLOAT, o.data());
-    ospSetData(tf, "colors", colors);
-    ospSetData(tf, "opacities", opacities);
-    ospCommit(tf);
+    osp_vec2f amrValueRange = {valueRange.lower, valueRange.upper};
+    OSPTransferFunction tf = ospTestingNewTransferFunction(amrValueRange, "jet");
 
     ospSetObject(dummy, "transferFunction", tf);
     ospCommit(dummy);
