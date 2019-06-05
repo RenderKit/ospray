@@ -17,7 +17,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundefined-func-template"
 
-#include "raw_converters.h"
+#include "rawConverters.h"
 
 namespace ospray {
   namespace amr {
