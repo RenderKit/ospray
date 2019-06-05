@@ -42,7 +42,7 @@ std::vector<float> c = {0, 0, 0,
                         1, 0, 0,
                         0, 1, 0,
                         0, 0, 1};
-std::vector<float> o  = {0, 0.333, 0.666, 1.0};
+std::vector<float> o  = {0, 0.0005, 0.001, 0.01};
 
 // ALOK: TODO
 // this is ugly
@@ -118,7 +118,7 @@ void parseRaw2AmrFile(const FileName &fileName,
             continue;
         }
 
-        std::cout << bi << std::endl;
+        //std::cout << bi << std::endl;
 
         utility::ArrayView<float> bd(new float[numCells], numCells);
 
@@ -155,18 +155,18 @@ OSPVolume createDummyAMRVolume()
     ospSetString(dummy, "voxelType", "float");
 
     //FileName fname("/mnt/ssd/test_data/test_amr");
-    //FileName fname("/mnt/ssd/magnetic_amr");
-    //parseRaw2AmrFile(fname, 4, 0);
+    FileName fname("/mnt/ssd/magnetic_amr");
+    parseRaw2AmrFile(fname, 4, 3);
     
+    /*
     osp_vec3i dl = {0, 0, 0}, du = {2, 2, 2};
     osp_box3i dbox = {dl, du};
     osp_amr_brick_info brick = {dbox, 0, 1};
-
     brickInfo.push_back(brick);
-
     actualData = (float *)malloc(8 * sizeof(float));
     for(int i = 0; i < 8; i++) { actualData[i] = i; }
     brickPtrs.push_back(actualData);
+    */
 
     // ALOK: taken from ospray/master's AMRVolume::preCommit()
     // convert raw pointers in brickPtrs to OSPData in brickData
