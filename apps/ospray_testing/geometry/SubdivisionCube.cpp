@@ -97,11 +97,11 @@ namespace ospray {
       OSPGeometry geometry = ospNewGeometry("subdivision");
 
       OSPData verticesData =
-          ospNewData(vertices.size(), OSP_FLOAT3, vertices.data());
+          ospNewData(vertices.size(), OSP_VEC3F, vertices.data());
       ospSetData(geometry, "vertex", verticesData);
       ospRelease(verticesData);
 
-      OSPData colorsData = ospNewData(colors.size(), OSP_FLOAT4, colors.data());
+      OSPData colorsData = ospNewData(colors.size(), OSP_VEC4F, colors.data());
       ospSetData(geometry, "color", colorsData);
       ospRelease(colorsData);
 
@@ -125,7 +125,7 @@ namespace ospray {
       ospRelease(vertexCreaseWeightsData);
 
       OSPData edgeCreaseIndicesData = ospNewData(
-          edgeCreaseIndices.size(), OSP_INT2, edgeCreaseIndices.data());
+          edgeCreaseIndices.size(), OSP_VEC2I, edgeCreaseIndices.data());
       ospSetData(geometry, "edgeCrease.index", edgeCreaseIndicesData);
       ospRelease(edgeCreaseIndicesData);
 

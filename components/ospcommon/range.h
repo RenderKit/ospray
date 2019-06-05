@@ -50,9 +50,9 @@ namespace ospcommon {
     range_t(const T &_lower, const T &_upper) : lower(_lower), upper(_upper){}
 
     template <typename other_t>
-    explicit range_t(const range_t<other_t> &other) 
-      : lower(T(other.lower)), 
-        upper(T(other.upper)) 
+    explicit range_t(const range_t<other_t> &other)
+      : lower(T(other.lower)),
+        upper(T(other.upper))
     {}
 
     inline T size() const
@@ -159,5 +159,12 @@ namespace ospcommon {
   // range_t aliases //////////////////////////////////////////////////////////
 
   using range1f = range_t<float>;
+  using range2f = range_t<vec2f>;
+  using range3f = range_t<vec3f>;
+  using range4f = range_t<vec4f>;
+  using range1i = range_t<int>;
+  using range2i = range_t<vec2i>;
+  using range3i = range_t<vec3i>;
+  using range4i = range_t<vec4i>;
 
 }  // ::ospcommon

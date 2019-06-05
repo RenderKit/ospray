@@ -368,20 +368,24 @@ the table below.
   OSP_STRING             C-style zero-terminated character string
   OSP_CHAR               8\ bit signed character scalar
   OSP_UCHAR              8\ bit unsigned character scalar
-  OSP_UCHAR[234]         ... and [234]-element vector
+  OSP_VEC[234]UC         ... and [234]-element vector
   OSP_USHORT             16\ bit unsigned integer scalar
   OSP_INT                32\ bit signed integer scalar
-  OSP_INT[234]           ... and [234]-element vector
+  OSP_VEC[234]I          ... and [234]-element vector
   OSP_UINT               32\ bit unsigned integer scalar
-  OSP_UINT[234]          ... and [234]-element vector
+  OSP_VEC[234]UI         ... and [234]-element vector
   OSP_LONG               64\ bit signed integer scalar
-  OSP_LONG[234]          ... and [234]-element vector
+  OSP_VEC[234]L          ... and [234]-element vector
   OSP_ULONG              64\ bit unsigned integer scalar
-  OSP_ULONG[234]         ... and [234]-element vector
+  OSP_VEC[234]UL         ... and [234]-element vector
   OSP_FLOAT              32\ bit single precision floating-point scalar
-  OSP_FLOAT[234]         ... and [234]-element vector
-  OSP_FLOAT3A            ... and 3-element vector with padding (same size as an OSP_FLOAT4)
+  OSP_VEC[234]F          ... and [234]-element vector
+  OSP_VEC3FA             ... and 3-element vector with padding (same size as an OSP_VEC4F)
   OSP_DOUBLE             64\ bit double precision floating-point scalar
+  OSP_BOX[1234]I         32\ bit integer box (lower + upper bounds)
+  OSP_BOX[1234]F         32\ bit single precision floating-point box (lower + upper bounds)
+  OSP_LINEAR[234]F       32\ bit single precision floating-point linear transform
+  OSP_AFFINE[234]F       32\ bit single precision floating-point affine transform
   ---------------------- -----------------------------------------------
   : Valid named constants for `OSPDataType`.
 
@@ -824,8 +828,8 @@ array:
 
   int          color_format             `color.data_type`  the format of the color data.
                                                           Can be one of:
-                                                          `OSP_FLOAT4`, `OSP_FLOAT3`,
-                                                          `OSP_FLOAT3A` or `OSP_UCHAR4`. Defaults
+                                                          `OSP_VEC4F`, `OSP_VEC3F`,
+                                                          `OSP_VEC3FA` or `OSP_UCHAR4`. Defaults
                                                           to the type of data in `color`
 
   int          color_stride      `sizeof(color_format)`   stride (in bytes) between each color

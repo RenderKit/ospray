@@ -136,13 +136,13 @@ OSPGeometryInstance createGroundPlane()
                  [](Vertex const &v) { return v.color; });
 
   OSPData positionData =
-      ospNewData(vertices.size(), OSP_FLOAT3, positionVector.data());
+      ospNewData(vertices.size(), OSP_VEC3F, positionVector.data());
   OSPData normalData =
-      ospNewData(vertices.size(), OSP_FLOAT3, normalVector.data());
+      ospNewData(vertices.size(), OSP_VEC3F, normalVector.data());
   OSPData colorData =
-      ospNewData(vertices.size(), OSP_FLOAT4, colorVector.data());
+      ospNewData(vertices.size(), OSP_VEC4F, colorVector.data());
   OSPData indexData =
-      ospNewData(quadIndices.size(), OSP_INT4, quadIndices.data());
+      ospNewData(quadIndices.size(), OSP_VEC4I, quadIndices.data());
 
   // set vertex / index data on the geometry
   ospSetData(planeGeometry, "vertex", positionData);

@@ -34,7 +34,7 @@ namespace ospray {
       OSPTransferFunction transferFunction =
           ospNewTransferFunction("piecewise_linear");
 
-      OSPData cData = ospNewData(colors.size(), OSP_FLOAT3, colors.data());
+      OSPData cData = ospNewData(colors.size(), OSP_VEC3F, colors.data());
       OSPData oData = ospNewData(opacities.size(), OSP_FLOAT, opacities.data());
 
       ospSetData(transferFunction, "colors", cData);

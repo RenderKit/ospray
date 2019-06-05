@@ -191,7 +191,7 @@ namespace ospray {
 
       // create data objects
       OSPData verticesData = ospNewData(
-        vertices.size(), OSP_FLOAT3, vertices.data());
+        vertices.size(), OSP_VEC3F, vertices.data());
       OSPData vertexValuesData = ospNewData(
         vertexValues.size(), OSP_FLOAT, vertexValues.data());
       OSPData indicesData = ospNewData(

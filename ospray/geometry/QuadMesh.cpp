@@ -48,10 +48,10 @@ namespace ospray {
       throw std::runtime_error("quad mesh must have 'vertex' array");
     if (!indexData)
       throw std::runtime_error("quad mesh must have 'index' array");
-    if (colorData && colorData->type != OSP_FLOAT4 &&
-        colorData->type != OSP_FLOAT3A)
+    if (colorData && colorData->type != OSP_VEC4F &&
+        colorData->type != OSP_VEC3FA)
       throw std::runtime_error(
-          "vertex.color must have data type OSP_FLOAT4 or OSP_FLOAT3A");
+          "vertex.color must have data type OSP_VEC4F or OSP_VEC3FA");
 
     // check whether we need 64-bit addressing
     huge_mesh = false;
@@ -77,8 +77,8 @@ namespace ospray {
     case OSP_UINT:
       numQuads = indexData->size() / 4;
       break;
-    case OSP_UINT4:
-    case OSP_INT4:
+    case OSP_VEC4UI:
+    case OSP_VEC4I:
       numQuads = indexData->size();
       break;
     default:
@@ -90,15 +90,15 @@ namespace ospray {
       numVerts      = vertexData->size() / 4;
       numCompsInVtx = 4;
       break;
-    case OSP_FLOAT3:
+    case OSP_VEC3F:
       numVerts      = vertexData->size();
       numCompsInVtx = 3;
       break;
-    case OSP_FLOAT3A:
+    case OSP_VEC3FA:
       numVerts      = vertexData->size();
       numCompsInVtx = 4;
       break;
-    case OSP_FLOAT4:
+    case OSP_VEC4F:
       numVerts      = vertexData->size();
       numCompsInVtx = 4;
       break;
@@ -108,11 +108,11 @@ namespace ospray {
 
     if (normalData) {
       switch (normalData->type) {
-      case OSP_FLOAT3:
+      case OSP_VEC3F:
         numCompsInNor = 3;
         break;
       case OSP_FLOAT:
-      case OSP_FLOAT3A:
+      case OSP_VEC3FA:
         numCompsInNor = 4;
         break;
       default:
@@ -137,7 +137,7 @@ namespace ospray {
                        (float *)normal,
                        (ispc::vec4f *)color,
                        (ispc::vec2f *)texcoord,
-                       colorData && colorData->type == OSP_FLOAT4,
+                       colorData && colorData->type == OSP_VEC4F,
                        huge_mesh);
   }
 

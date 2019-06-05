@@ -95,7 +95,7 @@ namespace ospray {
 
       OSPGeometryInstance instance = ospNewGeometryInstance(spheresGeometry);
 
-      OSPData colorData = ospNewData(numSpheres, OSP_FLOAT4, colors.data());
+      OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 
       ospSetData(instance, "color", colorData);
 

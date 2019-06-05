@@ -14,25 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-/*! This header is shared with ISPC. */
 #pragma once
 
-/*! An enum type that represensts the different data types represented in ospray */
+/* An enum type that represensts the different data types represented in ospray */
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
 #endif
 {
-  //! Object reference type.
+  // Object reference type.
   OSP_DEVICE = 100,
 
-  //! Void pointer type.
+  // Void pointer type.
   OSP_VOID_PTR = 200,
 
-  //! Object reference type.
+  // Object reference type.
   OSP_OBJECT = 1000,
 
-  //! Object reference subtypes.
+  // Object reference subtypes.
   OSP_CAMERA = 1100,
   OSP_DATA,
   OSP_FRAMEBUFFER,
@@ -48,43 +47,52 @@ typedef enum
   OSP_VOLUME_INSTANCE,
   OSP_PIXEL_OP,
 
-  //! Pointer to a C-style NULL-terminated character string.
+  // Pointer to a C-style NULL-terminated character string.
   OSP_STRING = 1500,
 
-  //! Character scalar type.
+  // Character scalar type.
   OSP_CHAR = 2000,
 
-  //! Unsigned character scalar and vector types.
-  OSP_UCHAR = 2500, OSP_UCHAR2, OSP_UCHAR3, OSP_UCHAR4,
+  // Unsigned character scalar and vector types.
+  OSP_UCHAR = 2500, OSP_VEC2UC, OSP_VEC3UC, OSP_VEC4UC,
 
-  //! Signed 16-bit integer scalar.
+  // Signed 16-bit integer scalar.
   OSP_SHORT = 3000,
 
-  //! Unsigned 16-bit integer scalar.
+  // Unsigned 16-bit integer scalar.
   OSP_USHORT = 3500,
 
-  //! Signed 32-bit integer scalar and vector types.
-  OSP_INT = 4000, OSP_INT2, OSP_INT3, OSP_INT4,
+  // Signed 32-bit integer scalar and vector types.
+  OSP_INT = 4000, OSP_VEC2I, OSP_VEC3I, OSP_VEC4I,
 
-  //! Unsigned 32-bit integer scalar and vector types.
-  OSP_UINT = 4500, OSP_UINT2, OSP_UINT3, OSP_UINT4,
+  // Unsigned 32-bit integer scalar and vector types.
+  OSP_UINT = 4500, OSP_VEC2UI, OSP_VEC3UI, OSP_VEC4UI,
 
-  //! Signed 64-bit integer scalar and vector types.
-  OSP_LONG = 5000, OSP_LONG2, OSP_LONG3, OSP_LONG4,
+  // Signed 64-bit integer scalar and vector types.
+  OSP_LONG = 5000, OSP_VEC2L, OSP_VEC3L, OSP_VEC4L,
 
-  //! Unsigned 64-bit integer scalar and vector types.
-  OSP_ULONG = 5550, OSP_ULONG2, OSP_ULONG3, OSP_ULONG4,
+  // Unsigned 64-bit integer scalar and vector types.
+  OSP_ULONG = 5550, OSP_VEC2UL, OSP_VEC3UL, OSP_VEC4UL,
 
-  //! Single precision floating point scalar and vector types.
-  OSP_FLOAT = 6000, OSP_FLOAT2, OSP_FLOAT3, OSP_FLOAT4, OSP_FLOAT3A,
+  // Single precision floating point scalar and vector types.
+  OSP_FLOAT = 6000, OSP_VEC2F, OSP_VEC3F, OSP_VEC4F, OSP_VEC3FA,
 
-  //! Double precision floating point scalar type.
+  // Double precision floating point scalar type.
   OSP_DOUBLE = 7000,
 
-  //! Guard value.
-  OSP_UNKNOWN = 22222,
+  // Signed 32-bit integer N-dimensional box types
+  OSP_BOX1I = 8000, OSP_BOX2I, OSP_BOX3I, OSP_BOX4I,
 
+  // Single precision floating point N-dimensional box types
+  OSP_BOX1F = 10000, OSP_BOX2F, OSP_BOX3F, OSP_BOX4F,
 
-  OSP_RAW = 2500 //XXX OSP_UCHAR, ISPC issue #1246
+  // Transformation types
+  OSP_LINEAR2F = 12000, OSP_LINEAR3F, OSP_AFFINE2F, OSP_AFFINE3F,
+
+  // Guard value.
+  OSP_UNKNOWN = 99999,
+
+  OSP_BYTE = 2500, //XXX OSP_UCHAR, ISPC issue #1246
+  OSP_RAW = 2500   //XXX OSP_UCHAR, ISPC issue #1246
 
 } OSPDataType;

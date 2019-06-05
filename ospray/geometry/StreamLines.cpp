@@ -48,13 +48,13 @@ namespace ospray {
 
     if (!vertexData)
       throw std::runtime_error("streamlines must have 'vertex' array");
-    if (vertexData->type != OSP_FLOAT4 && vertexData->type != OSP_FLOAT3A)
+    if (vertexData->type != OSP_VEC4F && vertexData->type != OSP_VEC3FA)
       throw std::runtime_error(
-          "streamlines 'vertex' must be type OSP_FLOAT4 or OSP_FLOAT3A");
+          "streamlines 'vertex' must be type OSP_VEC4F or OSP_VEC3FA");
 
     vertex = (vec3fa *)vertexData->data;
 
-    if (vertexData->type == OSP_FLOAT4) {
+    if (vertexData->type == OSP_VEC4F) {
       radius.reset((const float *)vertex + 3, sizeof(vec4f));
       useCurve = true;
     }
@@ -72,8 +72,8 @@ namespace ospray {
 
     colorData = getParamData("vertex.color", getParamData("color"));
 
-    if (colorData && colorData->type != OSP_FLOAT4)
-      throw std::runtime_error("'vertex.color' must have data type OSP_FLOAT4");
+    if (colorData && colorData->type != OSP_VEC4F)
+      throw std::runtime_error("'vertex.color' must have data type OSP_VEC4F");
 
     radiusData = getParamData("vertex.radius");
 

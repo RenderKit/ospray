@@ -186,17 +186,17 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex, 0); // OSP_FLOAT3 format is also supported for vertex positions
+  OSPData data = ospNewData(4, OSP_VEC3FA, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
   ospCommit(data);
   ospSetData(mesh, "vertex", data);
   ospRelease(data); // we are done using this handle
 
-  data = ospNewData(4, OSP_FLOAT4, color, 0);
+  data = ospNewData(4, OSP_VEC4F, color, 0);
   ospCommit(data);
   ospSetData(mesh, "vertex.color", data);
   ospRelease(data); // we are done using this handle
 
-  data = ospNewData(2, OSP_INT3, index, 0); // OSP_INT4 format is also supported for triangle indices
+  data = ospNewData(2, OSP_VEC3I, index, 0); // OSP_VEC4I format is also supported for triangle indices
   ospCommit(data);
   ospSetData(mesh, "index", data);
   ospRelease(data); // we are done using this handle
@@ -269,17 +269,17 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex, 0); // OSP_FLOAT3 format is also supported for vertex positions
+  OSPData data = ospNewData(4, OSP_VEC3FA, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
   ospCommit(data);
   ospSetData(mesh, "vertex", data);
   ospRelease(data); // we are done using this handle
 
-  data = ospNewData(4, OSP_FLOAT4, color, 0);
+  data = ospNewData(4, OSP_VEC4F, color, 0);
   ospCommit(data);
   ospSetData(mesh, "vertex.color", data);
   ospRelease(data); // we are done using this handle
 
-  data = ospNewData(2, OSP_INT3, index, 0); // OSP_INT4 format is also supported for triangle indices
+  data = ospNewData(2, OSP_VEC3I, index, 0); // OSP_VEC4I format is also supported for triangle indices
   ospCommit(data);
   ospSetData(mesh, "index", data);
   ospRelease(data); // we are done using this handle

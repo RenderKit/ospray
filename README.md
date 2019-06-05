@@ -1383,7 +1383,7 @@ of specifying the data of center position and radius within a
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">color_format</td>
 <td style="text-align: right;"><code>color.data_type</code></td>
-<td style="text-align: left;">the format of the color data. Can be one of: <code>OSP_FLOAT4</code>, <code>OSP_FLOAT3</code>, <code>OSP_FLOAT3A</code> or <code>OSP_UCHAR4</code>. Defaults to the type of data in <code>color</code></td>
+<td style="text-align: left;">the format of the color data. Can be one of: <code>OSP_VEC4F</code>, <code>OSP_VEC3F</code>, <code>OSP_VEC3FA</code> or <code>OSP_UCHAR4</code>. Defaults to the type of data in <code>color</code></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">int</td>

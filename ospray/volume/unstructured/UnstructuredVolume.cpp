@@ -148,8 +148,8 @@ namespace ospray {
     switch (indexData->type) {
     case OSP_INT:
     case OSP_UINT:
-    case OSP_UINT4:
-    case OSP_INT4:
+    case OSP_VEC4UI:
+    case OSP_VEC4I:
       index32Bit = true;
       break;
     case OSP_LONG:
@@ -171,8 +171,8 @@ namespace ospray {
       switch (cellData->type) {
       case OSP_INT:
       case OSP_UINT:
-      case OSP_UINT4:
-      case OSP_INT4:
+      case OSP_VEC4UI:
+      case OSP_VEC4I:
         cell32Bit = true;
         break;
       case OSP_LONG:
@@ -186,7 +186,7 @@ namespace ospray {
     } else {
       // if cells array was not provided through API allocate it
       // and fill with default cell offsets
-      nCells = (indexData->type == OSP_UINT4) || (indexData->type == OSP_INT4)
+      nCells = (indexData->type == OSP_VEC4UI) || (indexData->type == OSP_VEC4I)
                    ? indexData->size() / 2
                    : indexData->size() / 8;
       cell              = new uint32_t[nCells];

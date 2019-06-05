@@ -39,7 +39,7 @@ static void setIsoValue(OSPGeometry geometry, float value)
 static void setSlice(OSPGeometry geometry, float value)
 {
   vec4f plane(-1.f, 0.f, 0.f, value);
-  OSPData planesData = ospNewData(1, OSP_FLOAT4, &plane);
+  OSPData planesData = ospNewData(1, OSP_VEC4F, &plane);
   ospSetData(geometry, "planes", planesData);
   ospRelease(planesData);
 }

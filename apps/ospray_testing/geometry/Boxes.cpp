@@ -66,7 +66,7 @@ namespace ospray {
       }
 
       auto boxData =
-          ospNewData(numBoxes.total_indices() * 2, OSP_FLOAT3, boxes.data());
+          ospNewData(numBoxes.total_indices() * 2, OSP_VEC3F, boxes.data());
 
       ospSetData(boxGeometry, "boxes", boxData);
       ospRelease(boxData);
@@ -74,7 +74,7 @@ namespace ospray {
       ospCommit(boxGeometry);
 
       auto colorData =
-          ospNewData(numBoxes.total_indices(), OSP_FLOAT4, color.data());
+          ospNewData(numBoxes.total_indices(), OSP_VEC4F, color.data());
 
       ospSetData(instance, "color", colorData);
       ospRelease(colorData);

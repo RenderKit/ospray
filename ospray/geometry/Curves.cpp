@@ -104,7 +104,7 @@ namespace ospray {
     vertexData = getParamData("vertex", nullptr);
     if (!vertexData)
       throw std::runtime_error("curves must have 'vertex' array");
-    if (vertexData->type != OSP_FLOAT4)
+    if (vertexData->type != OSP_VEC4F)
       throw std::runtime_error("curves 'vertex' must be type OSP_FLOAT4");
     const auto numVertices = vertexData->numItems;
 
@@ -131,11 +131,11 @@ namespace ospray {
     if (basis == HERMITE && !tangentData)
       throw std::runtime_error("hermite curve must have 'tangent' array");
 
-    if (normalData && normalData->type != OSP_FLOAT3)
-      throw std::runtime_error("curves 'normal' array must be type OSP_FLOAT3");
-    if (tangentData && tangentData->type != OSP_FLOAT3)
+    if (normalData && normalData->type != OSP_VEC3F)
+      throw std::runtime_error("curves 'normal' array must be type OSP_VEC3F");
+    if (tangentData && tangentData->type != OSP_VEC3F)
       throw std::runtime_error(
-          "curves 'tangent' array must be type OSP_FLOAT3");
+          "curves 'tangent' array must be type OSP_VEC3F");
 
     postStatusMsg(2) << "#osp: creating curves geometry, "
                      << "#verts=" << numVertices << ", "

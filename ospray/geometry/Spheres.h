@@ -46,7 +46,7 @@ namespace ospray {
     Ref<Data> texcoordData;
 
     /*! The color format of the colorData array, one of:
-        OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
+        OSP_VEC3F, OSP_VEC3FA, OSP_VEC4F or OSP_UCHAR4 */
     OSPDataType colorFormat;
 
     bool huge_mesh{false};
