@@ -43,7 +43,7 @@ namespace ospray {
         static FILE *infoOut = nullptr;
         static FILE *dataOut = nullptr;
 
-        void makeAMR(const std::shared_ptr<Array3D<float>> &in,
+        void makeAMR(const std::shared_ptr<Array3D<float>> in,
                      const int numLevels,
                      const int blockSize,
                      const int refinementLevel,
