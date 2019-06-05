@@ -187,7 +187,7 @@ namespace ospray {
     case OSP_AFFINE2F:  return sizeof(affine2f);
     case OSP_AFFINE3F:  return sizeof(affine3f);
     case OSP_UNKNOWN:   break;
-    };
+    }
 
     std::stringstream error;
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType "
@@ -284,7 +284,7 @@ namespace ospray {
     case OSP_AFFINE2F:          return "affine2f";
     case OSP_AFFINE3F:          return "affine3f";
     case OSP_UNKNOWN:           break;
-    };
+    }
 
     std::stringstream error;
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType "

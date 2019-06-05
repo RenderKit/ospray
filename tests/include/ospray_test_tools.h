@@ -56,7 +56,7 @@ enum ImgType
 class OSPImageTools
 {
  protected:
-  osp::vec2i size;
+  vec2i size;
   std::string fileFormat;
   std::string imgName;
 
@@ -74,7 +74,7 @@ class OSPImageTools
   };
 
  public:
-  OSPImageTools(osp::vec2i imgSize,
+  OSPImageTools(vec2i imgSize,
                 std::string testName,
                 OSPFrameBufferFormat frameBufferFormat);
   ~OSPImageTools();

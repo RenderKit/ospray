@@ -97,7 +97,7 @@
 #define PRINT4(x,y,z,w) { std::stringstream msg; msg << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << ", " << STRING(w) << " = " << (w) << std::endl; std::cout << msg.str(); }
 
 #define THROW_RUNTIME_ERROR(str) \
-  throw std::runtime_error(std::string(__FILE__) + " (" + std::to_string((long long)__LINE__) + "): " + std::string(str));
+  throw std::runtime_error(std::string(__FILE__) + " (" + std::to_string((long long)__LINE__) + "): " + std::string(str))
 #define FATAL(x) THROW_RUNTIME_ERROR(x)
 #define WARNING(x) std::cerr << "Warning:" << std::string(x) << std::endl
 

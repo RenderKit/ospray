@@ -35,9 +35,11 @@
 #endif
 #include "ospray/ospray.h"
 
+typedef struct { int x, y; } vec2i;
+
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName,
-              const osp_vec2i *size,
+              const vec2i *size,
               const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
@@ -61,10 +63,10 @@ void writePPM(const char *fileName,
 }
 
 void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
-                 OSPFrameBuffer *framebuffer, osp_vec2i imgSize);
+                 OSPFrameBuffer *framebuffer, vec2i imgSize);
 
 void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
-                 OSPFrameBuffer *framebuffer, osp_vec2i imgSize);
+                 OSPFrameBuffer *framebuffer, vec2i imgSize);
 
 int main(int argc, const char **argv) {
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
@@ -72,7 +74,7 @@ int main(int argc, const char **argv) {
   if (init_error != OSP_NO_ERROR)
     return init_error;
 
-  osp_vec2i imgSizes[2] = {0};
+  vec2i imgSizes[2] = {0};
   imgSizes[0].x = 1024; // width
   imgSizes[0].y = 768; // height
 
@@ -154,7 +156,7 @@ int main(int argc, const char **argv) {
 }
 
 void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
-                 OSPFrameBuffer *framebuffer, osp_vec2i imgSize)
+                 OSPFrameBuffer *framebuffer, vec2i imgSize)
 {
   // camera
   float cam_pos[] = {0.f, 0.f, 0.f};
@@ -233,11 +235,11 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospRelease(lights);
 
   // create and setup framebuffer
-  *framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+  *framebuffer = ospNewFrameBuffer(imgSize.x, imgSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
 }
 
 void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
-                 OSPFrameBuffer *framebuffer, osp_vec2i imgSize)
+                 OSPFrameBuffer *framebuffer, vec2i imgSize)
 {
   // camera
   float cam_pos[] = {2.0f, -1.f, -4.f};
@@ -316,6 +318,6 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospRelease(lights);
 
   // create and setup framebuffer
-  *framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+  *framebuffer = ospNewFrameBuffer(imgSize.x, imgSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
 }
 

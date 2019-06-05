@@ -124,41 +124,11 @@ typedef enum
 #define OSP_DEFAULT_VAL(a) /* no default arguments on C99 */
 #endif
 
-typedef struct { float x, y; }                              osp_vec2f;
-typedef struct { int x, y; }                                osp_vec2i;
-typedef struct { float x, y, z; }                           osp_vec3f;
-typedef struct { float x, y, z;
-                 union { int a; unsigned u; float w; }; }   osp_vec3fa;
-typedef struct { int x, y, z; }                             osp_vec3i;
-typedef struct { float x, y, z, w; }                        osp_vec4f;
-typedef struct { osp_vec2i lower, upper; }                  osp_box2i;
-typedef struct { osp_vec3i lower, upper; }                  osp_box3i;
-typedef struct { osp_vec3f lower, upper; }                  osp_box3f;
-typedef struct { osp_vec3f vx, vy, vz; }                    osp_linear3f;
-typedef struct { osp_linear3f l; osp_vec3f p; }             osp_affine3f;
-
-#ifdef __cplusplus
-namespace osp {
-  typedef osp_vec2f  vec2f;
-  typedef osp_vec2i  vec2i;
-  typedef osp_vec3f  vec3f;
-  typedef osp_vec3fa vec3fa;
-  typedef osp_vec3i  vec3i;
-  typedef osp_vec4f  vec4f;
-  typedef osp_box2i  box2i;
-  typedef osp_box3i  box3i;
-  typedef osp_box3f  box3f;
-
-  typedef osp_linear3f linear3f;
-  typedef osp_affine3f affine3f;
-}
-#endif
-
 typedef struct
 {
-  osp_box3i bounds;
-  int       refinementLevel;
-  float     cellWidth;
+  int   bounds[6];
+  int   refinementLevel;
+  float cellWidth;
 } osp_amr_brick_info;
 
 /* Give OSPRay handle types a concrete defintion to enable C++ type checking */
@@ -293,8 +263,8 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPError ospSetRegion(OSPVolume,
                                          void *source,
-                                         osp_vec3i regionCoords,
-                                         osp_vec3i regionSize);
+                                         const int *regionCoords, // single vec3i
+                                         const int *regionSize); // single vec3i
 
   // Renderable Objects ///////////////////////////////////////////////////////
 
@@ -362,7 +332,8 @@ extern "C" {
 
   // FrameBuffer Manipulation /////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+  OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(int size_x,
+                                                    int size_y,
                                                     OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
                                                     uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
 
@@ -405,7 +376,7 @@ extern "C" {
 
   typedef struct {
     int hasHit;
-    osp_vec3f worldPosition;
+    float worldPosition[3];
     OSPGeometryInstance geometryInstance;
     uint32_t primID;
   } OSPPickResult;
@@ -415,7 +386,8 @@ extern "C" {
                                 OSPRenderer renderer,
                                 OSPCamera camera,
                                 OSPWorld world,
-                                osp_vec2f screenPos);
+                                float screenPos_x,
+                                float screenPos_y);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -116,13 +116,12 @@ namespace ospray {
         }
       });
 
+      vec3i regionStart{0, 0, 0};
+      vec3i regionEnd{
+          int(volumeDimension), int(volumeDimension), int(volumeDimension)};
+
       // set the volume data
-      ospSetRegion(volume,
-                   voxels.data(),
-                   osp_vec3i{0, 0, 0},
-                   osp_vec3i{int(volumeDimension),
-                             int(volumeDimension),
-                             int(volumeDimension)});
+      ospSetRegion(volume, voxels.data(), &regionStart.x, &regionEnd.x);
 
       // create OSPRay objects and return results
 

@@ -36,7 +36,8 @@
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName,
-              const osp_vec2i *size,
+              int size_x,
+              int size_y,
               const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
@@ -44,16 +45,16 @@ void writePPM(const char *fileName,
     fprintf(stderr, "fopen('%s', 'wb') failed: %d", fileName, errno);
     return;
   }
-  fprintf(file, "P6\n%i %i\n255\n", size->x, size->y);
-  unsigned char *out = (unsigned char *)alloca(3*size->x);
-  for (int y = 0; y < size->y; y++) {
-    const unsigned char *in = (const unsigned char *)&pixel[(size->y-1-y)*size->x];
-    for (int x = 0; x < size->x; x++) {
+  fprintf(file, "P6\n%i %i\n255\n", size_x, size_y);
+  unsigned char *out = (unsigned char *)alloca(3*size_x);
+  for (int y = 0; y < size_y; y++) {
+    const unsigned char *in = (const unsigned char *)&pixel[(size_y-1-y)*size_x];
+    for (int x = 0; x < size_x; x++) {
       out[3*x + 0] = in[4*x + 0];
       out[3*x + 1] = in[4*x + 1];
       out[3*x + 2] = in[4*x + 2];
     }
-    fwrite(out, 3*size->x, sizeof(char), file);
+    fwrite(out, 3*size_x, sizeof(char), file);
   }
   fprintf(file, "\n");
   fclose(file);
@@ -62,9 +63,8 @@ void writePPM(const char *fileName,
 
 int main(int argc, const char **argv) {
   // image size
-  osp_vec2i imgSize;
-  imgSize.x = 1024; // width
-  imgSize.y = 768; // height
+  int imgSize_x = 1024; // width
+  int imgSize_y = 768; // height
 
   // camera
   float cam_pos[] = {0.f, 0.f, 0.f};
@@ -91,7 +91,7 @@ int main(int argc, const char **argv) {
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
-  ospSet1f(camera, "aspect", imgSize.x/(float)imgSize.y);
+  ospSet1f(camera, "aspect", imgSize_x/(float)imgSize_y);
   ospSet3fv(camera, "pos", cam_pos);
   ospSet3fv(camera, "dir", cam_view);
   ospSet3fv(camera, "up",  cam_up);
@@ -145,7 +145,7 @@ int main(int argc, const char **argv) {
   ospCommit(renderer);
 
   // create and setup framebuffer
-  OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+  OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize_x, imgSize_y, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
   ospResetAccumulation(framebuffer);
 
   // render one frame
@@ -153,7 +153,7 @@ int main(int argc, const char **argv) {
 
   // access framebuffer and write its content as PPM file
   const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
-  writePPM("firstFrame.ppm", &imgSize, fb);
+  writePPM("firstFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
   // render 10 more frames, which are accumulated to result in a better converged image
@@ -161,7 +161,7 @@ int main(int argc, const char **argv) {
     ospRenderFrame(framebuffer, renderer, camera, world);
 
   fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
-  writePPM("accumulatedFrame.ppm", &imgSize, fb);
+  writePPM("accumulatedFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
   // final cleanups

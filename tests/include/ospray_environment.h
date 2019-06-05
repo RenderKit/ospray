@@ -21,6 +21,10 @@
 #include <string>
 #include <vector>
 
+#include "ospcommon/vec.h"
+using ospcommon::vec2i;
+using ospcommon::vec3f;
+
 class OSPRayEnvironment : public ::testing::Environment
 {
  private:
@@ -29,7 +33,7 @@ class OSPRayEnvironment : public ::testing::Environment
   std::string deviceType;
   std::string baselineDir;
   std::string failedDir;
-  osp::vec2i imgSize;
+  vec2i imgSize;
   OSPDevice device;
 
  public:
@@ -44,7 +48,7 @@ class OSPRayEnvironment : public ::testing::Environment
   {
     return rendererType;
   }
-  osp::vec2i GetImgSize() const
+  vec2i GetImgSize() const
   {
     return imgSize;
   }

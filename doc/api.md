@@ -450,8 +450,9 @@ rearrangement of voxel data it cannot be shared the with the application
 anymore, but has to be transferred to OSPRay via
 
     OSPError ospSetRegion(OSPVolume, void *source,
-                          osp_vec3i regionCoords,
-                          osp_vec3i regionSize);
+                          const int *regionCoords, // single vec3i
+                          const int *regionSize // single vec3i
+                          );
 
 The voxel data pointed to by `source` is copied into the given volume
 starting at position `regionCoords`, must be of size `regionSize` and be

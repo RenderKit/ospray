@@ -21,7 +21,7 @@
 
 extern OSPRayEnvironment *ospEnv;
 
-OSPImageTools::OSPImageTools(osp::vec2i imgSize,
+OSPImageTools::OSPImageTools(vec2i imgSize,
                              std::string testName,
                              OSPFrameBufferFormat frameBufferFormat)
     : size(imgSize), imgName(testName)

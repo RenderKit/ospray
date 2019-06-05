@@ -50,7 +50,7 @@ inline std::string getPidString()
         "(most likely this means you tried to " \
         "call an ospray API function before "   \
         "first calling ospInit())" +            \
-        getPidString());
+        getPidString())
 
 #define OSPRAY_CATCH_BEGIN                 \
   try {                                    \
@@ -408,12 +408,12 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPError ospSetRegion(OSPVolume object,
                                  void *source,
-                                 osp_vec3i index,
-                                 osp_vec3i count) OSPRAY_CATCH_BEGIN
+                                 const int *index,
+                                 const int *count) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   return currentDevice().setRegion(
-             object, source, (const vec3i &)index, (const vec3i &)count)
+             object, source, (const vec3i &)index[0], (const vec3i &)count[0])
              ? OSP_NO_ERROR
              : OSP_UNKNOWN_ERROR;
 }
@@ -758,7 +758,8 @@ OSPRAY_CATCH_END()
 // FrameBuffer Manipulation ///////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+extern "C" OSPFrameBuffer ospNewFrameBuffer(int size_x,
+                                            int size_y,
                                             OSPFrameBufferFormat mode,
                                             uint32_t channels)
     OSPRAY_CATCH_BEGIN
@@ -770,7 +771,7 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
   if ((channels & OSP_FB_ACCUM) == 0)
     ch &= ~OSP_FB_VARIANCE;
 
-  return currentDevice().frameBufferCreate((const vec2i &)size, mode, ch);
+  return currentDevice().frameBufferCreate(vec2i(size_x, size_y), mode, ch);
 }
 OSPRAY_CATCH_END(nullptr)
 
@@ -900,13 +901,14 @@ extern "C" void ospPick(OSPPickResult *result,
                         OSPRenderer renderer,
                         OSPCamera camera,
                         OSPWorld world,
-                        osp_vec2f screenPos) OSPRAY_CATCH_BEGIN
+                        float screenPos_x,
+                        float screenPos_y) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(renderer, "nullptr renderer passed to ospPick");
   if (!result)
     return;
   *result = currentDevice().pick(
-      fb, renderer, camera, world, (const vec2f &)screenPos);
+      fb, renderer, camera, world, vec2f(screenPos_x, screenPos_y));
 }
 OSPRAY_CATCH_END()

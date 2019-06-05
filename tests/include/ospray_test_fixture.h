@@ -38,7 +38,7 @@ namespace OSPRayTestScenes {
   class Base
   {
    protected:
-    osp::vec2i imgSize;
+    vec2i imgSize;
     std::string testName;
     std::string rendererType;
     int frames;
@@ -71,7 +71,7 @@ namespace OSPRayTestScenes {
 
     void PerformRenderTest();
 
-    osp::vec2i GetImgSize() const
+    vec2i GetImgSize() const
     {
       return imgSize;
     }
@@ -208,18 +208,18 @@ namespace OSPRayTestScenes {
   class MTLMirrors
       : public Base,
         public ::testing::TestWithParam<
-            std::tuple<osp::vec3f, osp::vec3f, float, float, osp::vec3f>>
+            std::tuple<vec3f, vec3f, float, float, vec3f>>
   {
    public:
     MTLMirrors();
     virtual void SetUp();
 
    private:
-    osp::vec3f Kd;
-    osp::vec3f Ks;
+    vec3f Kd;
+    vec3f Ks;
     float Ns;
     float d;
-    osp::vec3f Tf;
+    vec3f Tf;
   };
 
   // Fixture for tests rendering few connected cylinder segments. It's

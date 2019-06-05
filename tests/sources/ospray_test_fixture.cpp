@@ -230,8 +230,10 @@ namespace OSPRayTestScenes {
 
   void Base::SetFramebuffer()
   {
-    framebuffer = ospNewFrameBuffer(
-        imgSize, frameBufferFormat, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
+    framebuffer = ospNewFrameBuffer(imgSize.x,
+                                    imgSize.y,
+                                    frameBufferFormat,
+                                    OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
   }
 
   OSPMaterial Base::CreateMaterial(std::string type)

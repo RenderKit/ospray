@@ -117,7 +117,7 @@ namespace ospray {
                         camera->getIE(),
                         world->getIE(),
                         (const ispc::vec2f &)screenPos,
-                        (ispc::vec3f &)res.worldPosition,
+                        (ispc::vec3f &)res.worldPosition[0],
                         instID,
                         primID,
                         res.hasHit);

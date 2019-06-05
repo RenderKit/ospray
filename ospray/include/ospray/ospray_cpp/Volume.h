@@ -70,10 +70,7 @@ inline void Volume::setRegion(void *source,
                               const ospcommon::vec3i &regionSize) const
 {
   // TODO return error code
-  ospSetRegion(handle(),
-               source,
-               (const osp_vec3i&)regionCoords,
-               (const osp_vec3i&)regionSize);
+  ospSetRegion(handle(), source, &regionCoords.x, &regionSize.x);
 }
 
 }// namespace cpp

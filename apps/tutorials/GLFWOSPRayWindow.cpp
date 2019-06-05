@@ -108,12 +108,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
               1.f - mouse.y / static_cast<float>(windowSize.y));
 
           OSPPickResult res;
-          ospPick(&res,
-                  w.framebuffer,
-                  w.renderer,
-                  w.camera,
-                  w.world,
-                  (const osp_vec2f &)pos);
+          ospPick(
+              &res, w.framebuffer, w.renderer, w.camera, w.world, pos.x, pos.y);
 
           if (res.hasHit) {
             std::cout << "Hit geometry instance [id: " << res.geometryInstance
@@ -237,7 +233,8 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   }
 
   // create new frame buffer
-  framebuffer = ospNewFrameBuffer(reinterpret_cast<osp_vec2i &>(windowSize),
+  framebuffer = ospNewFrameBuffer(windowSize.x,
+                                  windowSize.y,
                                   OSP_FB_SRGBA,
                                   OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_ALBEDO);
 
