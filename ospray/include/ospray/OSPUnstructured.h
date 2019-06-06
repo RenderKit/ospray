@@ -14,10 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-/*! This header is shared with ISPC. */
 #pragma once
 
-/*! OSPRay cell types definition for unstructured volumes, values are set to match VTK */
+// OSPRay cell types definition for unstructured volumes, values are set to match VTK
 typedef enum
 # if __cplusplus >= 201103L
 : uint8_t

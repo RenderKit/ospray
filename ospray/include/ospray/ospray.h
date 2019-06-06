@@ -48,38 +48,38 @@
 #define OSP_DEPRECATED
 #endif
 
-/*! \brief Error codes returned by various API and callback functions */
+// Error codes returned by various API and callback functions
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
 #endif
 {
-  OSP_NO_ERROR = 0,          //!< No error has been recorded
-  OSP_UNKNOWN_ERROR = 1,     //!< An unknown error has occurred
-  OSP_INVALID_ARGUMENT = 2,  //!< An invalid argument is specified
-  OSP_INVALID_OPERATION = 3, //!< The operation is not allowed for the specified object
-  OSP_OUT_OF_MEMORY = 4,     //!< There is not enough memory left to execute the command
-  OSP_UNSUPPORTED_CPU = 5,   //!< The CPU is not supported as it does not support SSE4.1
+  OSP_NO_ERROR = 0,          //< No error has been recorded
+  OSP_UNKNOWN_ERROR = 1,     //< An unknown error has occurred
+  OSP_INVALID_ARGUMENT = 2,  //< An invalid argument is specified
+  OSP_INVALID_OPERATION = 3, //< The operation is not allowed for the specified object
+  OSP_OUT_OF_MEMORY = 4,     //< There is not enough memory left to execute the command
+  OSP_UNSUPPORTED_CPU = 5,   //< The CPU is not supported as it does not support SSE4.1
 } OSPError;
 
-/*! OSPRay format constants for Frame Buffer creation */
+// OSPRay format constants for Frame Buffer creation
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
 #endif
 {
-  OSP_FB_NONE,    //!< framebuffer will not be mapped by application
-  OSP_FB_RGBA8,   //!< one dword per pixel: rgb+alpha, each one byte
-  OSP_FB_SRGBA,   //!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
-  OSP_FB_RGBA32F, //!< one float4 per pixel: rgb+alpha, each one float
+  OSP_FB_NONE,    //< framebuffer will not be mapped by application
+  OSP_FB_RGBA8,   //< one dword per pixel: rgb+alpha, each one byte
+  OSP_FB_SRGBA,   //< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
+  OSP_FB_RGBA32F, //< one float4 per pixel: rgb+alpha, each one float
 /* TODO
-  OSP_FB_RGB8,    //!< three 8-bit unsigned chars per pixel
+  OSP_FB_RGB8,    //< three 8-bit unsigned chars per pixel
   OSP_FB_RGB32F,  ?
-  OSP_FB_SRGB,    //!< three 8-bit unsigned chars (in sRGB space) per pixel
+  OSP_FB_SRGB,    //< three 8-bit unsigned chars (in sRGB space) per pixel
 */
 } OSPFrameBufferFormat;
 
-/*! OSPRay channel constants for Frame Buffer (can be OR'ed together) */
+// OSPRay channel constants for Frame Buffer (can be OR'ed together)
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
@@ -93,7 +93,7 @@ typedef enum
   OSP_FB_ALBEDO=(1<<5)
 } OSPFrameBufferChannel;
 
-/*! flags that can be passed to OSPNewData; can be OR'ed together */
+// Flags that can be passed to ospNewData()
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
@@ -102,7 +102,7 @@ typedef enum
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
 
-/*! OSPRay events which can be waited on via ospWait() */
+// OSPRay events which can be waited on via ospWait()
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
@@ -116,12 +116,12 @@ typedef enum
 } OSPSyncEvent;
 
 #ifdef __cplusplus
-/* C++ DOES support default initializers */
+// C++ DOES support default initializers
 #define OSP_DEFAULT_VAL(a) a
 #else
 /* C99 does NOT support default initializers, so we use this macro
    to define them away */
-#define OSP_DEFAULT_VAL(a) /* no default arguments on C99 */
+#define OSP_DEFAULT_VAL(a)
 #endif
 
 typedef struct
@@ -131,7 +131,7 @@ typedef struct
   float cellWidth;
 } osp_amr_brick_info;
 
-/* Give OSPRay handle types a concrete defintion to enable C++ type checking */
+// Give OSPRay handle types a concrete defintion to enable C++ type checking
 #ifdef __cplusplus
 namespace osp {
   struct Device;
@@ -173,10 +173,10 @@ typedef osp::World             *OSPWorld;
 #else
 typedef void _OSPManagedObject;
 
-/*! abstract object types. in C99, those are all the same because C99
-  doesn't know inheritance, and we want to make sure that a
-  OSPGeometry can still be passed to a function that expects a
-  OSPObject, etc */
+/* Abstract object types. in C99, those are all the same because C99
+   doesn't know inheritance, and we want to make sure that a
+   OSPGeometry can still be passed to a function that expects a
+   OSPObject, etc. */
 typedef _OSPManagedObject *OSPManagedObject,
   *OSPDevice,
   *OSPRenderer,
@@ -203,25 +203,23 @@ extern "C" {
 
   // OSPRay Initialization ////////////////////////////////////////////////////
 
-  //! initialize the OSPRay engine (for single-node user application) using
-  //! commandline arguments...equivalent to doing ospNewDevice() followed by
-  //! ospSetCurrentDevice()
-  //!
-  //! returns OSPError value to report any errors during initialization
+  /* Initialize the OSPRay engine (for single-node user application) using
+     commandline arguments...equivalent to doing ospNewDevice() followed by
+     ospSetCurrentDevice()
+
+     returns OSPError value to report any errors during initialization */
   OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
 
-  //! shutdown the OSPRay engine...effectively deletes whatever device is
-  //  currently set.
+  // Shutdown the OSPRay engine...effectively deletes whatever device is currently set.
   OSPRAY_INTERFACE void ospShutdown();
 
-  //! initialize the OSPRay engine (for single-node user application) using
-  //! explicit device string.
+  // Create an OSPRay engine backend using explicit device string.
   OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
 
-  //! set current device the API responds to
+  // Set current device the API responds to
   OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);
 
-  //! get the currently set device
+  // Get the currently set device
   OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
 
   OSPRAY_INTERFACE void ospDeviceSetString(OSPDevice, const char *id, const char *s);
@@ -229,30 +227,31 @@ extern "C" {
   OSPRAY_INTERFACE void ospDeviceSet1b(OSPDevice, const char *id, int x);
   OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
 
-  /*! status message callback function type */
+  // Status message callback function type
   typedef void (*OSPStatusFunc)(const char* messageText);
 
-  /*! set callback for given Device to call when a status message occurs*/
+  // Set callback for given Device to call when a status message occurs
   OSPRAY_INTERFACE void ospDeviceSetStatusFunc(OSPDevice, OSPStatusFunc);
 
-  /*! error message callback function type */
+  // Error message callback function type
   typedef void (*OSPErrorFunc)(OSPError, const char* errorDetails);
 
-  /*! set callback for given Device to call when an error occurs*/
+  // Set callback for given Device to call when an error occurs
   OSPRAY_INTERFACE void ospDeviceSetErrorFunc(OSPDevice, OSPErrorFunc);
 
-  /*! get the OSPError code for the last error that has occurred on the device */
+  // Get the OSPError code for the last error that has occurred on the device
   OSPRAY_INTERFACE OSPError ospDeviceGetLastErrorCode(OSPDevice);
 
-  /*! get the message for the last error that has occurred on the device */
+  // Get the message for the last error that has occurred on the device
   OSPRAY_INTERFACE const char* ospDeviceGetLastErrorMsg(OSPDevice);
 
-  /*! commit parameters on a given device */
+  // Commit parameters on a given device
   OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);
 
-  //! load plugin 'name' from shard lib libospray_module_<name>.so
-  //! returns OSPError value to report any errors during initialization
-  OSPRAY_INTERFACE OSPError ospLoadModule(const char *pluginName);
+  /* Load module 'name' from shard lib libospray_module_<name>.so
+
+     returns OSPError value to report any errors during initialization */
+  OSPRAY_INTERFACE OSPError ospLoadModule(const char *name);
 
   // OSPRay Data Arrays ///////////////////////////////////////////////////////
 
@@ -323,10 +322,9 @@ extern "C" {
 
   OSPRAY_INTERFACE void ospSetMaterial(OSPGeometryInstance, OSPMaterial);
 
-  OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
-
   // Object + Parameter Lifetime Management ///////////////////////////////////
 
+  OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
   OSPRAY_INTERFACE void ospCommit(OSPObject);
   OSPRAY_INTERFACE void ospRelease(OSPObject);
 
@@ -337,41 +335,40 @@ extern "C" {
                                                     OSPFrameBufferFormat format OSP_DEFAULT_VAL(= OSP_FB_SRGBA),
                                                     uint32_t frameBufferChannels OSP_DEFAULT_VAL(= OSP_FB_COLOR));
 
-  //! create a new pixel op of given type
-  /*! return 'NULL' if that type is not known */
+  // Create a new pixel op of given type return 'NULL' if that type is not known
   OSPRAY_INTERFACE OSPPixelOp ospNewPixelOp(const char *type);
 
-  /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
+  // Map app-side content of a framebuffer (see \ref frame_buffer_handling)
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
                                                  OSPFrameBufferChannel OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
-  /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
+  // Unmap a previously mapped frame buffer
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
 
-  /* Get variance from last rendered frame */
+  // Get variance from last rendered frame
   OSPRAY_INTERFACE float ospGetVariance(OSPFrameBuffer);
 
-  //! \brief reset frame buffer accumulation for next render frame call
+  // Reset frame buffer accumulation for next render frame call
   OSPRAY_INTERFACE void ospResetAccumulation(OSPFrameBuffer);
 
   // Frame Rendering //////////////////////////////////////////////////////////
 
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
 
-  //! use renderer to render a frame.
+  // Render a frame
   OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
   OSPRAY_INTERFACE OSPFuture ospRenderFrameAsync(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
-  /* Ask if all events tracked by an OSPFuture handle have been completed */
+  // Ask if all events tracked by an OSPFuture handle have been completed
   OSPRAY_INTERFACE int ospIsReady(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
 
-  /* Wait on a specific event */
+  // Wait on a specific event
   OSPRAY_INTERFACE void ospWait(OSPFuture, OSPSyncEvent OSP_DEFAULT_VAL(=OSP_TASK_FINISHED));
 
-  /* Cancel the given task (may block calling thread) */
+  // Cancel the given task (may block calling thread)
   OSPRAY_INTERFACE void ospCancel(OSPFuture);
 
-  /* Get the completion state of the given task [0.f-1.f] */
+  // Get the completion state of the given task [0.f-1.f]
   OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
 
   typedef struct {

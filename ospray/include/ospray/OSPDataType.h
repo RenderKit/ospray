@@ -16,7 +16,7 @@
 
 #pragma once
 
-/* An enum type that represensts the different data types represented in ospray */
+// An enum type that represensts the different data types represented in OSPRay
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t

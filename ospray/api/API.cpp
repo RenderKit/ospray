@@ -717,14 +717,6 @@ extern "C" void ospSetVoidPtr(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospRemoveParam(OSPObject _object,
-                               const char *id) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().removeParam(_object, id);
-}
-OSPRAY_CATCH_END()
-
 extern "C" void ospSetMaterial(OSPGeometryInstance instance,
                                OSPMaterial material) OSPRAY_CATCH_BEGIN
 {
@@ -736,6 +728,14 @@ OSPRAY_CATCH_END()
 ///////////////////////////////////////////////////////////////////////////////
 // Object + Parameter Lifetime Management /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+extern "C" void ospRemoveParam(OSPObject _object,
+                               const char *id) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().removeParam(_object, id);
+}
+OSPRAY_CATCH_END()
 
 extern "C" void ospCommit(OSPObject object) OSPRAY_CATCH_BEGIN
 {

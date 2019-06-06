@@ -14,10 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-/*! This header is shared with ISPC. */
 #pragma once
 
-/*! OSPRay format constants for Texture creation */
+// OSPRay format constants for Texture creation
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
@@ -34,7 +33,7 @@ typedef enum
   OSP_TEXTURE_L8,
   OSP_TEXTURE_RA8,
   OSP_TEXTURE_LA8,
-  /*! denotes an unknown texture format, so we can properly initialize parameters */
+  // Denotes an unknown texture format, so we can properly initialize parameters
   OSP_TEXTURE_FORMAT_INVALID = 0xff,
 /* TODO
   OSP_LogLuv,
@@ -45,13 +44,13 @@ typedef enum
 */
 } OSPTextureFormat;
 
-/*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
+// Flags that can be set on `texture2d` type OSPTexture; can be OR'ed together
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
 #endif
 {
   OSP_TEXTURE_SHARED_BUFFER = (1<<0),
-  OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
+  OSP_TEXTURE_FILTER_NEAREST = (1<<1) //< use nearest-neighbor interpolation rather than the default bilinear interpolation
 } OSPTextureCreationFlags;
 
