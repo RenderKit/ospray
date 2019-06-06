@@ -66,7 +66,7 @@ namespace ospray {
       }
 
       auto boxData =
-          ospNewData(numBoxes.total_indices() * 2, OSP_VEC3F, boxes.data());
+          ospNewData(numBoxes.total_indices(), OSP_BOX3F, boxes.data());
 
       ospSetData(boxGeometry, "boxes", boxData);
       ospRelease(boxData);

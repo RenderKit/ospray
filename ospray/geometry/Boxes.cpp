@@ -42,7 +42,15 @@ namespace ospray {
     if (!boxData)
       throw std::runtime_error("no box data provided to Boxes geometry!");
 
-    numBoxes = boxData->numItems / 2;
+    if (boxData->type == OSP_BOX3F)
+      numBoxes = boxData->numItems;
+    else if (boxData->type == OSP_VEC3F)
+      numBoxes = boxData->numItems / 2;
+    else if (boxData->type == OSP_FLOAT)
+      numBoxes = boxData->numItems / 6;
+    else
+      throw std::runtime_error("unable to use element type for box geometry!");
+
 
     createEmbreeGeometry();
 

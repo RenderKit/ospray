@@ -978,6 +978,19 @@ this geometry are listed in the table below.
 
 See Embree documentation for discussion of curve types and data formatting.
 
+### Boxes
+
+OSPRay can directly render AABBs without the need to convert them to quads or
+triangles. To do so create an boxes geometry by calling `ospNewGeometry`
+with type string "`boxes`".
+
+  Type       Name       Description
+  ---------- ---------- ------------------------------------------------------
+  box3f[]    boxes      [data] array of boxes. Note this can be specified
+                        as OSP_BOX3F, (2 * OSP_VEC3F), or (6 * OSP_FLOAT)
+  ---------- ---------- ------------------------------------------------------
+  : Parameters defining a boxes geometry.
+
 ### Isosurfaces
 
 OSPRay can directly render multiple isosurfaces of a volume without
