@@ -115,7 +115,7 @@ int main(int argc, const char **argv)
   ospCommit(material);
 
   // assign material to the geometry
-  ospSetMaterial(instance, material);
+  ospSetObject(instance, "material", material);
 
   // apply changes made
   ospCommit(isoGeometry);

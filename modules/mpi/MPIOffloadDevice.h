@@ -151,8 +151,6 @@ namespace ospray {
 
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
-      void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) override;
-
       // Object + Parameter Lifetime Management ///////////////////////////////
 
       void commit(OSPObject object) override;

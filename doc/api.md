@@ -1055,7 +1055,7 @@ call
   OSPMaterial[]      materialList         NULL [data] array of per-primitive
                                                materials, which overrides any
                                                single material set by
-                                               'ospSetMaterial`. This is also the
+                                               'ospSetObject`. This is also the
                                                list optionally indexed by
                                                "prim.materialID" (otherwise it is
                                                per-primitive)
@@ -1400,7 +1400,7 @@ The call returns `NULL` if the material type is not known by the
 renderer type, or else an `OSPMaterial` handle to the created material. The
 handle can then be used to assign the material to a given geometry with
 
-    void ospSetMaterial(OSPGeometryInstance, OSPMaterial);
+    void ospSetObject(OSPGeometryInstance, OSPMaterial);
 
 #### OBJ Material
 

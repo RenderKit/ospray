@@ -335,8 +335,6 @@ extern "C" {
 
   OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
-  OSPRAY_INTERFACE void ospSetMaterial(OSPGeometryInstance, OSPMaterial);
-
   // Object + Parameter Lifetime Management ///////////////////////////////////
 
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);

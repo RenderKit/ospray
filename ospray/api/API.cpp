@@ -852,14 +852,6 @@ extern "C" void ospSetVoidPtr(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSetMaterial(OSPGeometryInstance instance,
-                               OSPMaterial material) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  currentDevice().setMaterial(instance, material);
-}
-OSPRAY_CATCH_END()
-
 ///////////////////////////////////////////////////////////////////////////////
 // Object + Parameter Lifetime Management /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

@@ -113,7 +113,7 @@ int main(int argc, const char **argv)
   ospCommit(material);
 
   // assign material to the geometry
-  ospSetMaterial(isoInstance, material);
+  ospSetObject(isoInstance, "material", material);
 
   // Create slices geometry //
 

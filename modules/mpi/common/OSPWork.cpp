@@ -64,7 +64,6 @@ namespace ospray {
 
         registerWorkUnit<SetRegion>(registry);
 
-        registerWorkUnit<SetMaterial>(registry);
         registerWorkUnit<SetParam<OSPObject>>(registry);
         registerWorkUnit<SetParam<std::string>>(registry);
         registerWorkUnit<SetParam<int>>(registry);
@@ -246,15 +245,6 @@ namespace ospray {
         if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)) {
           obj->setParam(name, val);
         }
-      }
-
-      // ospSetMaterial ///////////////////////////////////////////////////////
-
-      void SetMaterial::run()
-      {
-        auto *inst = (GeometryInstance *)handle.lookup();
-        auto *mat  = (Material *)material.lookup();
-        inst->setMaterial(mat);
       }
 
       // ospNewRenderer ///////////////////////////////////////////////////////

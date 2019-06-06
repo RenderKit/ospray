@@ -798,13 +798,6 @@ namespace ospray {
           "object is not allowed in MPI mode");
     }
 
-    void MPIOffloadDevice::setMaterial(OSPGeometryInstance _instance,
-                                       OSPMaterial _material)
-    {
-      work::SetMaterial work((ObjectHandle &)_instance, _material);
-      processWork(work);
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Object + Parameter Lifetime Management /////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

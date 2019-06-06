@@ -52,6 +52,7 @@ namespace ospray {
                                       (uint32) */
     Ref<Data> colorData;
     Material **materialList{nullptr};  //!< per-primitive material list
+    Ref<Material> material;
     Ref<Data> materialListData;  //!< data array for per-prim materials
     std::vector<void *>
         ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials

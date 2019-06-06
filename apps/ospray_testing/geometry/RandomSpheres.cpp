@@ -105,7 +105,7 @@ namespace ospray {
       ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
       ospCommit(glassMaterial);
 
-      ospSetMaterial(instance, glassMaterial);
+      ospSetObject(instance, "material", glassMaterial);
 
       // release handles we no longer need
       ospRelease(spheresData);

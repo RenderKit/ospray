@@ -64,7 +64,7 @@ namespace ospray {
 
     inline void GeometryInstance::setMaterial(OSPMaterial m) const
     {
-      ospSetMaterial(handle(), m);
+      ospSetObject(handle(), "material", m);
     }
 
   }  // namespace cpp

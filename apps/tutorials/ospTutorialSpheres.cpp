@@ -161,7 +161,7 @@ OSPGeometryInstance createGroundPlane()
   OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
   ospCommit(material);
 
-  ospSetMaterial(planeInstance, material);
+  ospSetObject(planeInstance, "material", material);
 
   // release handles we no longer need
   ospRelease(positionData);

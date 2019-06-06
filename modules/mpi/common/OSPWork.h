@@ -491,38 +491,6 @@ namespace ospray {
       template <>
       void SetParam<std::string>::runOnMaster();
 
-      // both SetMaterial and SetObject take more different forms than the other
-      // set operations since it doesn't take a name at all so
-      // we go through a full specializations for them.
-      struct SetMaterial : public Work
-      {
-        SetMaterial() = default;
-        SetMaterial(ObjectHandle handle, OSPMaterial val)
-            : handle(handle), material((ObjectHandle &)val)
-        {
-        }
-
-        void run() override;
-
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
-        void serialize(WriteStream &b) const override
-        {
-          b << (int64)handle << (int64)material;
-        }
-
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
-        void deserialize(ReadStream &b) override
-        {
-          b >> handle.i64 >> material.i64;
-        }
-
-        ObjectHandle handle;
-        ObjectHandle material;
-      };
-
       template <>
       struct SetParam<OSPObject> : public Work
       {

@@ -148,10 +148,15 @@ namespace ospray {
           "number of colors does not match number of primitives!");
     }
 
+    material = (Material*)getParamObject("material");
+
     prim_materialIDData       = getParamData("prim.materialID");
     Data *materialListDataPtr = getParamData("materialList");
+
     if (materialListDataPtr)
       setMaterialList(materialListDataPtr);
+    else if (material)
+      setMaterial(material.ptr);
 
     ispc::GeometryInstance_set(
         getIE(),

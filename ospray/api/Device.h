@@ -155,8 +155,6 @@ namespace ospray {
                               const char *bufName,
                               void *v) = 0;
 
-      virtual void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) = 0;
-
       // Object + Parameter Lifetime Management ///////////////////////////////
 
       virtual void commit(OSPObject object)                        = 0;

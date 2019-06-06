@@ -1727,7 +1727,7 @@ OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geometry);
 <td style="text-align: left;">OSPMaterial[]</td>
 <td style="text-align: left;">materialList</td>
 <td style="text-align: left;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of per-primitive materials, which overrides any single material set by ’ospSetMaterial`. This is also the list optionally indexed by “prim.materialID” (otherwise it is per-primitive)</td>
+<td style="text-align: left;"><a href="#data">data</a> array of per-primitive materials, which overrides any single material set by ’ospSetObject`. This is also the list optionally indexed by “prim.materialID” (otherwise it is per-primitive)</td>
 </tr>
 </tbody>
 </table>
@@ -2248,7 +2248,7 @@ The handle can then be used to assign the material to a given geometry
 with
 
 ``` {.cpp}
-void ospSetMaterial(OSPGeometryInstance, OSPMaterial);
+void ospSetObject(OSPGeometryInstance, "material", OSPMaterial);
 ```
 
 #### OBJ Material

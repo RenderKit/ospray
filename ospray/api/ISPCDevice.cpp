@@ -331,14 +331,6 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
-    void ISPCDevice::setMaterial(OSPGeometryInstance _instance,
-                                 OSPMaterial _material)
-    {
-      auto *instance = (GeometryInstance *)_instance;
-      auto *material = (Material *)_material;
-      instance->setMaterial(material);
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Object + Parameter Lifetime Management /////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

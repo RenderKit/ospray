@@ -214,7 +214,7 @@ OSPGeometryInstance createGroundPlane()
   OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
   ospCommit(material);
 
-  ospSetMaterial(planeInstance, material);
+  ospSetObject(planeInstance, "material", material);
 
   // release handles we no longer need
   ospRelease(positionData);
@@ -255,7 +255,7 @@ OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
   ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
-  ospSetMaterial(g_spheresInstance, glassMaterial);
+  ospSetObject(g_spheresInstance, "material", glassMaterial);
 
   // commit the spheres geometry
   ospCommit(g_spheresGeometry);
