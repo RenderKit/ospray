@@ -55,7 +55,9 @@ namespace ospray {
     using namespace mpicommon;
     using ospcommon::utility::getEnvVar;
 
+    ///////////////////////////////////////////////////////////////////////////
     // Forward declarations ///////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
@@ -63,7 +65,9 @@ namespace ospray {
       return. */
     void runWorker();
 
+    ///////////////////////////////////////////////////////////////////////////
     // Misc helper functions //////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     static inline void throwIfNotMpiParallel()
     {
@@ -132,7 +136,9 @@ namespace ospray {
       // - all processes (incl app) have barrier'ed, and thus now in sync.
     }
 
+    ///////////////////////////////////////////////////////////////////////////
     // MPI initialization helper functions ////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
         user has launched the app across all ranks using mpirun "<all
@@ -384,7 +390,9 @@ namespace ospray {
       MPI_CALL(Barrier(app.comm));
     }
 
+    ///////////////////////////////////////////////////////////////////////////
     // MPIDevice definitions //////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     MPIOffloadDevice::MPIOffloadDevice() {}
 
@@ -469,6 +477,10 @@ namespace ospray {
       writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // ManagedObject Implementation ///////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
     void MPIOffloadDevice::commit()
     {
       if (!initialized)
@@ -503,55 +515,21 @@ namespace ospray {
       processWork(slbWork);
     }
 
-    OSPFrameBuffer MPIOffloadDevice::frameBufferCreate(
-        const vec2i &size,
-        const OSPFrameBufferFormat mode,
-        const uint32 channels)
+    ///////////////////////////////////////////////////////////////////////////
+    // Device Implementation //////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    int MPIOffloadDevice::loadModule(const char *name)
     {
-      ObjectHandle handle = allocateHandle();
-      work::CreateFrameBuffer work(handle, size, mode, channels);
+      work::LoadModule work(name);
       processWork(work, true);
-      return (OSPFrameBuffer)(int64)handle;
+      return work.errorCode;
     }
 
-    /*! map frame buffer */
-    const void *MPIOffloadDevice::frameBufferMap(OSPFrameBuffer _fb,
-                                                 OSPFrameBufferChannel channel)
-    {
-      ObjectHandle handle = (const ObjectHandle &)_fb;
-      FrameBuffer *fb     = (FrameBuffer *)handle.lookup();
+    ///////////////////////////////////////////////////////////////////////////
+    // OSPRay Data Arrays /////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
-      return fb->mapBuffer(channel);
-    }
-
-    /*! unmap previously mapped frame buffer */
-    void MPIOffloadDevice::frameBufferUnmap(const void *mapped,
-                                            OSPFrameBuffer _fb)
-    {
-      ObjectHandle handle = (const ObjectHandle &)_fb;
-      FrameBuffer *fb     = (FrameBuffer *)handle.lookup();
-
-      fb->unmap(mapped);
-    }
-
-    /*! create a new world */
-    OSPWorld MPIOffloadDevice::newWorld()
-    {
-      ObjectHandle handle = allocateHandle();
-      work::NewWorld work("", handle);
-      processWork(work);
-      return (OSPWorld)(int64)handle;
-    }
-
-    /*! finalize a newly specified world */
-    void MPIOffloadDevice::commit(OSPObject _object)
-    {
-      const ObjectHandle handle = (const ObjectHandle &)_object;
-      work::CommitObject work(handle);
-      processWork(work);
-    }
-
-    /*! create a new data buffer */
     OSPData MPIOffloadDevice::newData(size_t nitems,
                                       OSPDataType format,
                                       const void *init,
@@ -565,24 +543,6 @@ namespace ospray {
       return (OSPData)(int64)handle;
     }
 
-    /*! assign (named) string parameter to an object */
-    void MPIOffloadDevice::setVoidPtr(OSPObject _object,
-                                      const char *bufName,
-                                      void *v)
-    {
-      UNUSED(_object, bufName, v);
-      throw std::runtime_error(
-          "setting a void pointer as parameter to an "
-          "object is not allowed in MPI mode");
-    }
-
-    void MPIOffloadDevice::removeParam(OSPObject object, const char *name)
-    {
-      work::RemoveParam work((ObjectHandle &)object, name);
-      processWork(work);
-    }
-
-    /*! Copy data into the given object. */
     int MPIOffloadDevice::setRegion(OSPVolume _volume,
                                     const void *source,
                                     const vec3i &index,
@@ -599,123 +559,18 @@ namespace ospray {
       return true;
     }
 
-    /*! assign (named) string parameter to an object */
-    void MPIOffloadDevice::setString(OSPObject _object,
-                                     const char *bufName,
-                                     const char *s)
-    {
-      work::SetParam<std::string> work((ObjectHandle &)_object, bufName, s);
-      processWork(work);
-    }
+    ///////////////////////////////////////////////////////////////////////////
+    // Renderable Objects /////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
-    /*! load module */
-    int MPIOffloadDevice::loadModule(const char *name)
-    {
-      work::LoadModule work(name);
-      processWork(work, true);
-      return work.errorCode;
-    }
-
-    /*! assign (named) float parameter to an object */
-    void MPIOffloadDevice::setBool(OSPObject _object,
-                                   const char *bufName,
-                                   const bool b)
-    {
-      work::SetParam<bool> work((ObjectHandle &)_object, bufName, b);
-      processWork(work);
-    }
-
-    /*! assign (named) float parameter to an object */
-    void MPIOffloadDevice::setFloat(OSPObject _object,
-                                    const char *bufName,
-                                    const float f)
-    {
-      work::SetParam<float> work((ObjectHandle &)_object, bufName, f);
-      processWork(work);
-    }
-
-    /*! assign (named) int parameter to an object */
-    void MPIOffloadDevice::setInt(OSPObject _object,
-                                  const char *bufName,
-                                  const int i)
-    {
-      work::SetParam<int> work((ObjectHandle &)_object, bufName, i);
-      processWork(work);
-    }
-
-    /*! assign (named) vec2f parameter to an object */
-    void MPIOffloadDevice::setVec2f(OSPObject _object,
-                                    const char *bufName,
-                                    const vec2f &v)
-    {
-      work::SetParam<vec2f> work((ObjectHandle &)_object, bufName, v);
-      processWork(work);
-    }
-
-    /*! assign (named) vec3f parameter to an object */
-    void MPIOffloadDevice::setVec3f(OSPObject _object,
-                                    const char *bufName,
-                                    const vec3f &v)
-    {
-      work::SetParam<vec3f> work((ObjectHandle &)_object, bufName, v);
-      processWork(work);
-    }
-
-    /*! assign (named) vec4f parameter to an object */
-    void MPIOffloadDevice::setVec4f(OSPObject _object,
-                                    const char *bufName,
-                                    const vec4f &v)
-    {
-      work::SetParam<vec4f> work((ObjectHandle &)_object, bufName, v);
-      processWork(work);
-    }
-
-    /*! assign (named) vec2i parameter to an object */
-    void MPIOffloadDevice::setVec2i(OSPObject _object,
-                                    const char *bufName,
-                                    const vec2i &v)
-    {
-      work::SetParam<vec2i> work((ObjectHandle &)_object, bufName, v);
-      processWork(work);
-    }
-
-    /*! assign (named) vec3i parameter to an object */
-    void MPIOffloadDevice::setVec3i(OSPObject _object,
-                                    const char *bufName,
-                                    const vec3i &v)
-    {
-      work::SetParam<vec3i> work((ObjectHandle &)_object, bufName, v);
-      processWork(work);
-    }
-
-    /*! assign (named) data item as a parameter to an object */
-    void MPIOffloadDevice::setObject(OSPObject _target,
-                                     const char *bufName,
-                                     OSPObject _value)
-    {
-      work::SetParam<OSPObject> work((ObjectHandle &)_target, bufName, _value);
-      processWork(work);
-    }
-
-    /*! create a new pixelOp object (out of list of registered pixelOps) */
-    OSPPixelOp MPIOffloadDevice::newPixelOp(const char *type)
+    OSPLight MPIOffloadDevice::newLight(const char *type)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewPixelOp work(type, handle);
+      work::NewLight work(type, handle);
       processWork(work);
-      return (OSPPixelOp)(int64)handle;
+      return (OSPLight)(int64)handle;
     }
 
-    /*! create a new renderer object (out of list of registered renderers) */
-    OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
-    {
-      ObjectHandle handle = allocateHandle();
-      work::NewRenderer work(type, handle);
-      processWork(work);
-      return (OSPRenderer)(int64)handle;
-    }
-
-    /*! create a new camera object (out of list of registered cameras) */
     OSPCamera MPIOffloadDevice::newCamera(const char *type)
     {
       ObjectHandle handle = allocateHandle();
@@ -724,16 +579,6 @@ namespace ospray {
       return (OSPCamera)(int64)handle;
     }
 
-    /*! create a new volume object (out of list of registered volumes) */
-    OSPVolume MPIOffloadDevice::newVolume(const char *type)
-    {
-      ObjectHandle handle = allocateHandle();
-      work::NewVolume work(type, handle);
-      processWork(work);
-      return (OSPVolume)(int64)handle;
-    }
-
-    /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry MPIOffloadDevice::newGeometry(const char *type)
     {
       ObjectHandle handle = allocateHandle();
@@ -742,7 +587,38 @@ namespace ospray {
       return (OSPGeometry)(int64)handle;
     }
 
-    /*! have given renderer create a new material */
+    OSPVolume MPIOffloadDevice::newVolume(const char *type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewVolume work(type, handle);
+      processWork(work);
+      return (OSPVolume)(int64)handle;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Instancing /////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPGeometryInstance MPIOffloadDevice::newGeometryInstance(OSPGeometry geom)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewGeometryInstance work(handle, (ObjectHandle &)geom);
+      processWork(work);
+      return (OSPGeometryInstance)(int64)handle;
+    }
+
+    OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume volume)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewVolumeInstance work(handle, (ObjectHandle &)volume);
+      processWork(work);
+      return (OSPVolumeInstance)(int64)handle;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Instance Meta-Data /////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
     OSPMaterial MPIOffloadDevice::newMaterial(const char *renderer_type,
                                               const char *material_type)
     {
@@ -752,8 +628,6 @@ namespace ospray {
       return (OSPMaterial)(int64)handle;
     }
 
-    /*! create a new transfer function object (out of list of
-        registered transfer function types) */
     OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *type)
     {
       ObjectHandle handle = allocateHandle();
@@ -762,13 +636,196 @@ namespace ospray {
       return (OSPTransferFunction)(int64)handle;
     }
 
-    /*! have given renderer create a new Light */
-    OSPLight MPIOffloadDevice::newLight(const char *type)
+    OSPTexture MPIOffloadDevice::newTexture(const char *type)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewLight work(type, handle);
+      work::NewTexture work(type, handle);
       processWork(work);
-      return (OSPLight)(int64)handle;
+      return (OSPTexture)(int64)handle;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // World Manipulation /////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPWorld MPIOffloadDevice::newWorld()
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewWorld work("", handle);
+      processWork(work);
+      return (OSPWorld)(int64)handle;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Object Parameters //////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    void MPIOffloadDevice::setString(OSPObject _object,
+                                     const char *bufName,
+                                     const char *s)
+    {
+      work::SetParam<std::string> work((ObjectHandle &)_object, bufName, s);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setObject(OSPObject _target,
+                                     const char *bufName,
+                                     OSPObject _value)
+    {
+      work::SetParam<OSPObject> work((ObjectHandle &)_target, bufName, _value);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setBool(OSPObject _object,
+                                   const char *bufName,
+                                   const bool b)
+    {
+      work::SetParam<bool> work((ObjectHandle &)_object, bufName, b);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setFloat(OSPObject _object,
+                                    const char *bufName,
+                                    const float f)
+    {
+      work::SetParam<float> work((ObjectHandle &)_object, bufName, f);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setInt(OSPObject _object,
+                                  const char *bufName,
+                                  const int i)
+    {
+      work::SetParam<int> work((ObjectHandle &)_object, bufName, i);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setVec2f(OSPObject _object,
+                                    const char *bufName,
+                                    const vec2f &v)
+    {
+      work::SetParam<vec2f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setVec2i(OSPObject _object,
+                                    const char *bufName,
+                                    const vec2i &v)
+    {
+      work::SetParam<vec2i> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setVec3f(OSPObject _object,
+                                    const char *bufName,
+                                    const vec3f &v)
+    {
+      work::SetParam<vec3f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setVec3i(OSPObject _object,
+                                    const char *bufName,
+                                    const vec3i &v)
+    {
+      work::SetParam<vec3i> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setVec4f(OSPObject _object,
+                                    const char *bufName,
+                                    const vec4f &v)
+    {
+      work::SetParam<vec4f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setVoidPtr(OSPObject _object,
+                                      const char *bufName,
+                                      void *v)
+    {
+      UNUSED(_object, bufName, v);
+      throw std::runtime_error(
+          "setting a void pointer as parameter to an "
+          "object is not allowed in MPI mode");
+    }
+
+    void MPIOffloadDevice::setMaterial(OSPGeometryInstance _instance,
+                                       OSPMaterial _material)
+    {
+      work::SetMaterial work((ObjectHandle &)_instance, _material);
+      processWork(work);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Object + Parameter Lifetime Management /////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    void MPIOffloadDevice::commit(OSPObject _object)
+    {
+      const ObjectHandle handle = (const ObjectHandle &)_object;
+      work::CommitObject work(handle);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::removeParam(OSPObject object, const char *name)
+    {
+      work::RemoveParam work((ObjectHandle &)object, name);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::release(OSPObject _obj)
+    {
+      work::CommandRelease work((const ObjectHandle &)_obj);
+      processWork(work);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // FrameBuffer Manipulation ///////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPFrameBuffer MPIOffloadDevice::frameBufferCreate(
+        const vec2i &size,
+        const OSPFrameBufferFormat mode,
+        const uint32 channels)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::CreateFrameBuffer work(handle, size, mode, channels);
+      processWork(work, true);
+      return (OSPFrameBuffer)(int64)handle;
+    }
+
+    OSPPixelOp MPIOffloadDevice::newPixelOp(const char *type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewPixelOp work(type, handle);
+      processWork(work);
+      return (OSPPixelOp)(int64)handle;
+    }
+
+    const void *MPIOffloadDevice::frameBufferMap(OSPFrameBuffer _fb,
+                                                 OSPFrameBufferChannel channel)
+    {
+      ObjectHandle handle = (const ObjectHandle &)_fb;
+      FrameBuffer *fb     = (FrameBuffer *)handle.lookup();
+
+      return fb->mapBuffer(channel);
+    }
+
+    void MPIOffloadDevice::frameBufferUnmap(const void *mapped,
+                                            OSPFrameBuffer _fb)
+    {
+      ObjectHandle handle = (const ObjectHandle &)_fb;
+      FrameBuffer *fb     = (FrameBuffer *)handle.lookup();
+
+      fb->unmap(mapped);
+    }
+
+    float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
+    {
+      auto fbHandle = (ObjectHandle &)_fb;
+      auto *fb      = (FrameBuffer *)fbHandle.lookup();
+      return fb->getVariance();
     }
 
     void MPIOffloadDevice::resetAccumulation(OSPFrameBuffer _fb)
@@ -777,7 +834,18 @@ namespace ospray {
       processWork(work);
     }
 
-    /*! call a renderer to render a frame buffer */
+    ///////////////////////////////////////////////////////////////////////////
+    // Frame Rendering ////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewRenderer work(type, handle);
+      processWork(work);
+      return (OSPRenderer)(int64)handle;
+    }
+
     float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
                                         OSPRenderer _renderer,
                                         OSPCamera _camera,
@@ -831,60 +899,20 @@ namespace ospray {
       return task->getProgress();
     }
 
-    float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
+    OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
+                                         OSPRenderer renderer,
+                                         OSPCamera camera,
+                                         OSPWorld world,
+                                         const vec2f &screenPos)
     {
-      auto fbHandle = (ObjectHandle &)_fb;
-      auto *fb      = (FrameBuffer *)fbHandle.lookup();
-      return fb->getVariance();
+      work::Pick work(fb, renderer, camera, world, screenPos);
+      processWork(work, true);
+      return work.pickResult;
     }
 
-    //! release (i.e., reduce refcount of) given object
-    /*! note that all objects in ospray are refcounted, so one cannot
-      explicitly "delete" any object. instead, each object is created
-      with a refcount of 1, and this refcount will be
-      increased/decreased every time another object refers to this
-      object resp releases its hold on it; if the refcount is 0 the
-      object will automatically get deleted. For example, you can
-      create a new material, assign it to a geometry, and immediately
-      after this assignation release its refcount; the material will
-      stay 'alive' as long as the given geometry requires it. */
-    void MPIOffloadDevice::release(OSPObject _obj)
-    {
-      work::CommandRelease work((const ObjectHandle &)_obj);
-      processWork(work);
-    }
-
-    void MPIOffloadDevice::setMaterial(OSPGeometryInstance _instance,
-                                       OSPMaterial _material)
-    {
-      work::SetMaterial work((ObjectHandle &)_instance, _material);
-      processWork(work);
-    }
-
-    /*! create a new Texture2D object */
-    OSPTexture MPIOffloadDevice::newTexture(const char *type)
-    {
-      ObjectHandle handle = allocateHandle();
-      work::NewTexture work(type, handle);
-      processWork(work);
-      return (OSPTexture)(int64)handle;
-    }
-
-    OSPGeometryInstance MPIOffloadDevice::newGeometryInstance(OSPGeometry geom)
-    {
-      ObjectHandle handle = allocateHandle();
-      work::NewGeometryInstance work(handle, (ObjectHandle &)geom);
-      processWork(work);
-      return (OSPGeometryInstance)(int64)handle;
-    }
-
-    OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume volume)
-    {
-      ObjectHandle handle = allocateHandle();
-      work::NewVolumeInstance work(handle, (ObjectHandle &)volume);
-      processWork(work);
-      return (OSPVolumeInstance)(int64)handle;
-    }
+    ///////////////////////////////////////////////////////////////////////////
+    // Misc Functions /////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     int MPIOffloadDevice::getString(OSPObject _object,
                                     const char *name,
@@ -897,17 +925,6 @@ namespace ospray {
         return true;
       }
       return false;
-    }
-
-    OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
-                                         OSPRenderer renderer,
-                                         OSPCamera camera,
-                                         OSPWorld world,
-                                         const vec2f &screenPos)
-    {
-      work::Pick work(fb, renderer, camera, world, screenPos);
-      processWork(work, true);
-      return work.pickResult;
     }
 
     void MPIOffloadDevice::processWork(work::Work &work, bool flushWriteStream)

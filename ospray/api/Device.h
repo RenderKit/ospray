@@ -38,136 +38,128 @@ namespace ospray {
       Device()                   = default;
       virtual ~Device() override = default;
 
-      /*! \brief creates an abstract device class of given type */
       static Device *createDevice(const char *type);
 
-      /*! create a new frame buffer/swap chain of given type */
-      virtual OSPFrameBuffer frameBufferCreate(const vec2i &size,
-                                               const OSPFrameBufferFormat mode,
-                                               const uint32 channels) = 0;
+      /////////////////////////////////////////////////////////////////////////
+      // Main virtual interface to accepting API calls
+      /////////////////////////////////////////////////////////////////////////
 
-      /*! map frame buffer */
-      virtual const void *frameBufferMap(OSPFrameBuffer fb,
-                                         const OSPFrameBufferChannel) = 0;
+      // Modules //////////////////////////////////////////////////////////////
 
-      /*! unmap previously mapped frame buffer */
-      virtual void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) = 0;
-
-      /*! create a new model */
-      virtual OSPWorld newWorld() = 0;
-
-      /*! load module */
       virtual int loadModule(const char *name) = 0;
 
-      /*! commit the given object's outstanding changes */
-      virtual void commit(OSPObject object) = 0;
+      // OSPRay Data Arrays ///////////////////////////////////////////////////
 
-      /*! create a new data buffer */
       virtual OSPData newData(size_t nitems,
                               OSPDataType format,
                               const void *init,
                               int flags) = 0;
 
-      /*! Copy data into the given volume. */
       virtual int setRegion(OSPVolume object,
                             const void *source,
                             const vec3i &index,
                             const vec3i &count) = 0;
 
-      /*! assign (named) string parameter to an object */
+      // Renderable Objects ///////////////////////////////////////////////////
+
+      virtual OSPLight newLight(const char *type)       = 0;
+      virtual OSPCamera newCamera(const char *type)     = 0;
+      virtual OSPGeometry newGeometry(const char *type) = 0;
+      virtual OSPVolume newVolume(const char *type)     = 0;
+
+      // Instancing ///////////////////////////////////////////////////////////
+
+      virtual OSPGeometryInstance newGeometryInstance(OSPGeometry geom) = 0;
+      virtual OSPVolumeInstance newVolumeInstance(OSPVolume volume)     = 0;
+
+      // Instance Meta-Data ///////////////////////////////////////////////////
+
+      virtual OSPMaterial newMaterial(const char *renderer_type,
+                                      const char *material_type) = 0;
+
+      virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
+
+      virtual OSPTexture newTexture(const char *type) = 0;
+
+      // World Manipulation ///////////////////////////////////////////////////
+
+      virtual OSPWorld newWorld() = 0;
+
+      // Object Parameters ////////////////////////////////////////////////////
+
       virtual void setString(OSPObject object,
                              const char *bufName,
                              const char *s) = 0;
 
-      /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject object,
                              const char *bufName,
                              OSPObject obj) = 0;
 
-      /*! assign (named) float parameter to an object */
       virtual void setBool(OSPObject object,
                            const char *bufName,
                            const bool f) = 0;
 
-      /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object,
                             const char *bufName,
                             const float f) = 0;
 
-      /*! assign (named) vec2f parameter to an object */
-      virtual void setVec2f(OSPObject object,
-                            const char *bufName,
-                            const vec2f &v) = 0;
-
-      /*! assign (named) vec3f parameter to an object */
-      virtual void setVec3f(OSPObject object,
-                            const char *bufName,
-                            const vec3f &v) = 0;
-
-      /*! assign (named) vec4f parameter to an object */
-      virtual void setVec4f(OSPObject object,
-                            const char *bufName,
-                            const vec4f &v) = 0;
-
-      /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object,
                           const char *bufName,
                           const int f) = 0;
 
-      /*! assign (named) vec2i parameter to an object */
+      virtual void setVec2f(OSPObject object,
+                            const char *bufName,
+                            const vec2f &v) = 0;
+
       virtual void setVec2i(OSPObject object,
                             const char *bufName,
                             const vec2i &v) = 0;
 
-      /*! assign (named) vec3i parameter to an object */
+      virtual void setVec3f(OSPObject object,
+                            const char *bufName,
+                            const vec3f &v) = 0;
+
       virtual void setVec3i(OSPObject object,
                             const char *bufName,
                             const vec3i &v) = 0;
 
-      /*! add untyped void pointer to object - this will *ONLY* work in local
-       * rendering!  */
+      virtual void setVec4f(OSPObject object,
+                            const char *bufName,
+                            const vec4f &v) = 0;
+
       virtual void setVoidPtr(OSPObject object,
                               const char *bufName,
                               void *v) = 0;
 
+      virtual void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) = 0;
+
+      // Object + Parameter Lifetime Management ///////////////////////////////
+
+      virtual void commit(OSPObject object)                        = 0;
       virtual void removeParam(OSPObject object, const char *name) = 0;
+      virtual void release(OSPObject _obj)                         = 0;
 
-      /*! create a new renderer object (out of list of registered renderers) */
-      virtual OSPRenderer newRenderer(const char *type) = 0;
+      // FrameBuffer Manipulation /////////////////////////////////////////////
 
-      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPFrameBuffer frameBufferCreate(const vec2i &size,
+                                               const OSPFrameBufferFormat mode,
+                                               const uint32 channels) = 0;
+
       virtual OSPPixelOp newPixelOp(const char *type) = 0;
 
-      /*! create a new geometry object (out of list of registered geometries) */
-      virtual OSPGeometry newGeometry(const char *type) = 0;
+      virtual const void *frameBufferMap(OSPFrameBuffer fb,
+                                         const OSPFrameBufferChannel) = 0;
 
-      /*! create a new camera object (out of list of registered cameras) */
-      virtual OSPCamera newCamera(const char *type) = 0;
+      virtual void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) = 0;
 
-      /*! create a new volume object (out of list of registered volumes) */
-      virtual OSPVolume newVolume(const char *type) = 0;
-
-      /*! create a new transfer function object (out of list of registered
-       *  transfer function types) */
-      virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
-
-      /*! have given renderer create a new material */
-      virtual OSPMaterial newMaterial(const char *renderer_type,
-                                      const char *material_type) = 0;
-
-      /*! create a new Texture2D object */
-      virtual OSPTexture newTexture(const char *type) = 0;
-
-      /*! have given renderer create a new Light */
-      virtual OSPLight newLight(const char *light_type) = 0;
-
-      virtual OSPGeometryInstance newGeometryInstance(OSPGeometry geom) = 0;
-
-      virtual OSPVolumeInstance newVolumeInstance(OSPVolume volume) = 0;
+      virtual float getVariance(OSPFrameBuffer) = 0;
 
       virtual void resetAccumulation(OSPFrameBuffer _fb) = 0;
 
-      /*! call a renderer to render a frame buffer */
+      // Frame Rendering //////////////////////////////////////////////////////
+
+      virtual OSPRenderer newRenderer(const char *type) = 0;
+
       virtual float renderFrame(OSPFrameBuffer,
                                 OSPRenderer,
                                 OSPCamera,
@@ -179,41 +171,22 @@ namespace ospray {
                                          OSPWorld) = 0;
 
       virtual int isReady(OSPFuture, OSPSyncEvent) = 0;
+      virtual void wait(OSPFuture, OSPSyncEvent)   = 0;
+      virtual void cancel(OSPFuture)               = 0;
+      virtual float getProgress(OSPFuture)         = 0;
 
-      virtual void wait(OSPFuture, OSPSyncEvent) = 0;
-
-      virtual void cancel(OSPFuture) = 0;
-
-      virtual float getProgress(OSPFuture) = 0;
-
-      virtual float getVariance(OSPFrameBuffer) = 0;
-
-      //! release (i.e., reduce refcount of) given object
-      /*! note that all objects in ospray are refcounted, so one cannot
-        explicitly "delete" any object. instead, each object is created
-        with a refcount of 1, and this refcount will be
-        increased/decreased every time another object refers to this
-        object resp releases its hold on it; if the refcount is 0 the
-        object will automatically get deleted. For example, you can
-        create a new material, assign it to a geometry, and immediately
-        after this assignation release its refcount; the material will
-        stay 'alive' as long as the given geometry requires it. */
-      virtual void release(OSPObject _obj) = 0;
-
-      //! assign given material to given geometry
-      virtual void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) = 0;
-
-      /*! perform a pick operation */
       virtual OSPPickResult pick(
           OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &)
       {
         NOT_IMPLEMENTED;
       }
 
+      /////////////////////////////////////////////////////////////////////////
+      // Helper/other functions and data members
+      /////////////////////////////////////////////////////////////////////////
+
       virtual void commit();
       bool isCommitted();
-
-      // Public Data //
 
       int numThreads{-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
