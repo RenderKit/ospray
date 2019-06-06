@@ -92,6 +92,8 @@ namespace ospcommon {
 
     inline vec_t() = default;
 
+    inline vec_t(const scalar_t *v) : x(v[0]), y(v[1]) {}
+
     inline vec_t(scalar_t s) : x(s), y(s) {}
 
     template <typename OT,
@@ -147,6 +149,8 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
+
+    inline vec_t(const scalar_t *v) : x(v[0]), y(v[1]), z(v[2]) {}
 
     inline vec_t(scalar_t s) : x(s), y(s), z(s) {}
 
@@ -204,6 +208,8 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
+
+    inline vec_t(const scalar_t *v) : x(v[0]), y(v[1]), z(v[2]) {}
 
     inline vec_t(scalar_t s) : x(s), y(s), z(s) {}
 
@@ -265,6 +271,8 @@ namespace ospcommon {
     using Scalar   = T;
 
     inline vec_t() = default;
+
+    inline vec_t(const scalar_t *v) : x(v[0]), y(v[1]), z(v[2]), w(v[3]) {}
 
     inline vec_t(scalar_t s) : x(s), y(s), z(s), w(s) {}
 
