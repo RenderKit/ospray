@@ -127,6 +127,11 @@ namespace ospcommon
     return operator+(FileName(other));
   }
 
+  /*! concatenates two filenames to this/other */
+  FileName FileName::operator +( const char *other ) const {
+    return operator+(FileName(other));
+  }
+
   /*! removes the base from a filename (if possible) */
   FileName FileName::operator -( const FileName& base ) const {
     size_t pos = filename.find_first_of(base);

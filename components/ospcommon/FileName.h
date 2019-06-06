@@ -76,6 +76,9 @@ namespace ospcommon
     /*! concatenates two filenames to this/other */
     OSPCOMMON_INTERFACE FileName operator+( const std::string& other ) const;
 
+    /*! concatenates two filenames to this/other */
+    OSPCOMMON_INTERFACE FileName operator+( const char *other ) const;
+
     /*! removes the base from a filename (if possible) */
     OSPCOMMON_INTERFACE FileName operator-( const FileName& base ) const;
 
