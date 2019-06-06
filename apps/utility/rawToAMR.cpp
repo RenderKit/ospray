@@ -19,6 +19,9 @@
 
 #include "rawToAMR.h"
 
+#include <errno.h>
+#include <stdio.h>
+
 namespace ospray {
     namespace amr {
 
@@ -30,14 +33,16 @@ namespace ospray {
                      const FileName outFileBase)
         {
             // ALOK: .info is brick metadata
-            FILE *infoOut = fopen((outFileBase + ".info").c_str(), "wb");
-            if (!infoOut)
+            FILE *infoOut = fopen(outFileBase.addExt(".info").c_str(), "wb");
+            if (!infoOut) {
                 throw std::runtime_error("could not open info output file!");
+            }
 
             // ALOK: .data is actual data
-            FILE *dataOut = fopen((outFileBase + ".data").c_str(), "wb");
-            if (!dataOut)
+            FILE *dataOut = fopen(outFileBase.addExt(".data").c_str(), "wb");
+            if (!dataOut) {
                 throw std::runtime_error("could not open data output file!");
+            }
 
             std::ofstream osp(outFileBase + ".osp");
             osp << "<?xml?>" << std::endl;
