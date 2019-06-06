@@ -2,43 +2,118 @@
 
 #include "rawToAMR.h"
 
-int main(int ac, char **av)
+const char *description = R"description(
+Creates an adaptive mesh refinement (AMR) representation of the provided
+structured volume data.
+
+The input structured volume data is used as the highest refinement level
+(i.e. the finest resolution data). From this level, data that does not meet
+the user-provided variance threshold is discarded. The average of the
+discarded block is used in the next level down.
+
+This simulates the effect that an adaptive simulation would have created
+regions of higher refinement in the highly varying portions of the volume.
+)description";
+
+const char *usage = R"usage([-h | --help] input_volume variable_type
+    x_dim y_dim z_dim num_levels block_size refinement_factor threshold
+    output_basename
+)usage";
+
+const char *help = R"help(
+input_volume        Structured volume in binary brick-of-data format
+                    (string filepath)
+variable_type       Type of structured volume, must be exactly one of:
+                        float
+                        byte
+                        uchar
+                        uint8
+                        double
+                        float64
+                    (string)
+x_dim               X dimensions of the structured volume grid (int)
+y_dim               Y dimensions of the structured volume grid (int)
+z_dim               Z dimensions of the structured volume grid (int)
+num_levels          Number of refinement levels to simulate (int)
+block_size          Size of blocks at each level in terms of cells. Blocks
+                    are defined as cubes with this number of cells per edge.
+                    Note that refinement levels change the width of the
+                    cells, NOT the width of the blocks. Blocks will always
+                    be this provided size in cell extents, but the width of
+                    the cells will be smaller/larger depending on level.
+                    For example, a block of 4x4x4 cells at the highest
+                    refinement level will be converted into a single cell
+                    at the next lower level, which would be part of that
+                    level's block of 4x4x4 cells. (int)
+refinement_factor   How much larger/smaller, in terms of cell extents, each
+                    level's grid will be. Note that this is independent of
+                    block_size above! For example, if the input data is a
+                    512^3 grid, and block_size is 4^3, the highest
+                    refinement level will have a 128^3 block grid. If this
+                    value is 2, the next level will have a 64^3 block grid,
+                    but will still be comprised of 4^3 blocks. That is, the
+                    number of cells decreases from 512^3 to 256^3, and the
+                    cell width increases to accommodate. (int)
+threshold           Variance threshold used to determine whether a block
+                    belongs to a higher refinement level. If the variance
+                    within a block is above this threshold, it remains at
+                    the current level. Otherwise, if the variance is low,
+                    this block would have not have been selected for mesh
+                    refinement by a numerical simulation, so this block is
+                    discarded at this level. (variable_type, converted to
+                    float)
+output_basename     Basename for the output files. This application creates
+                    three files with different extensions, with this basename
+                    in common. (string)
+)help";
+
+std::string inFileName;
+std::string format;
+vec3i inDims;
+int numLevels;
+int blockSize;
+int refinementLevel;
+float threshold;
+std::string outFileBase;
+
+bool parseArguments(int argc, char **argv)
+{
+    if(std::string(argv[1]) == "-h" ||
+       std::string(argv[1]) == "--help") {
+        std::cerr << description << std::endl;
+        std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
+        std::cerr << help << std::endl;
+        return false;
+    }
+    if(argc != 11) {
+        std::cerr << argc - 1 << " argument" << ((argc > 2) ? "s " : " ");
+        std::cerr << "provided, but 10 are needed" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
+        return false;
+    }
+
+    inFileName = argv[1];
+    format = argv[2];
+    inDims.x = atoi(argv[3]);
+    inDims.y = atoi(argv[4]);
+    inDims.z = atoi(argv[5]);
+    numLevels = atoi(argv[6]);
+    blockSize = atoi(argv[7]);
+    refinementLevel = atoi(argv[8]);
+    threshold = atof(argv[9]);
+    outFileBase = argv[10];
+
+    return true;
+}
+
+int main(int argc, char **argv)
 {
     // ALOK: TODO
     // better argument handling and usage description
-    if (ac != 11) {
-        std::cout << "usage: ./raw2amr in.raw <float|byte|double> Nx Ny Nz "
-            "numLevels brickSize refineFactor threshold outfilebase"
-            << std::endl;
-        exit(0);
+    bool parseSucceed = parseArguments(argc, argv);
+    if(!parseSucceed) {
+        return 1;
     }
-
-    // inFileName - input filename, e.g. /mnt/ssd/turbulence/vel256.raw
-    const char *inFileName   = av[1];
-    // format - one of float, byte/uchar/uint8, or double/float64
-    // though it seems only float is acceptable as an AMR volume in the rest
-    // of OSPRay
-    const std::string format = av[2];
-    // inDims - dimensions of the volume in input dataset as a space-
-    // separated triplet
-    const vec3i inDims(atoi(av[3]), atoi(av[4]), atoi(av[5]));
-    // numLevels - how many refinement levels to do (????)
-    int numLevels           = atoi(av[6]);
-    // blockSize - brick size
-    // of the smallest brick (????)
-    int blockSize                  = atoi(av[7]);
-    // refinementLevel - refinement factor, or the scalar multiple for brick size 
-    // e.g. 2 means each refinement level is twice as small in each dimension
-    // (????)
-    int refinementLevel                  = atoi(av[8]);
-    // threshold - some sort of data threshold, potentially when to create
-    // a new refinement level (????)
-    float threshold         = atof(av[9]);
-    // outFileBase - path + basename for output files
-    // this program creates three files with different extensions: .osp,
-    // .data, and .info
-    // so you would provide, e.g., /mnt/ssd/turbulence/vel256_amr
-    std::string outFileBase = av[10];
 
     // ALOK: ultimately storing the data as float regardless of input type
     // (????)
