@@ -91,10 +91,10 @@ int main(int argc, const char **argv) {
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
-  ospSet1f(camera, "aspect", imgSize_x/(float)imgSize_y);
-  ospSet3fv(camera, "pos", cam_pos);
-  ospSet3fv(camera, "dir", cam_view);
-  ospSet3fv(camera, "up",  cam_up);
+  ospSetFloat(camera, "aspect", imgSize_x/(float)imgSize_y);
+  ospSetVec3fv(camera, "pos", cam_pos);
+  ospSetVec3fv(camera, "dir", cam_view);
+  ospSetVec3fv(camera, "up",  cam_up);
   ospCommit(camera); // commit each object to indicate modifications are done
 
 
@@ -139,8 +139,8 @@ int main(int argc, const char **argv) {
   ospCommit(lights);
 
   // complete setup of renderer
-  ospSet1i(renderer, "aoSamples", 1);
-  ospSet1f(renderer, "bgColor", 1.0f); // white, transparent
+  ospSetInt(renderer, "aoSamples", 1);
+  ospSetFloat(renderer, "bgColor", 1.0f); // white, transparent
   ospSetObject(renderer, "lights", lights);
   ospCommit(renderer);
 

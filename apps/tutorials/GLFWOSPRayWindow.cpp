@@ -126,19 +126,19 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   // create camera
   camera = ospNewCamera("perspective");
-  ospSet1f(camera, "aspect", windowSize.x / float(windowSize.y));
+  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
 
-  ospSet3f(camera,
+  ospSetVec3f(camera,
            "pos",
            arcballCamera->eyePos().x,
            arcballCamera->eyePos().y,
            arcballCamera->eyePos().z);
-  ospSet3f(camera,
+  ospSetVec3f(camera,
            "dir",
            arcballCamera->lookDir().x,
            arcballCamera->lookDir().y,
            arcballCamera->lookDir().z);
-  ospSet3f(camera,
+  ospSetVec3f(camera,
            "up",
            arcballCamera->upDir().x,
            arcballCamera->upDir().y,
@@ -254,7 +254,7 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   // update camera
   arcballCamera->updateWindowSize(windowSize);
 
-  ospSet1f(camera, "aspect", windowSize.x / float(windowSize.y));
+  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
   ospCommit(camera);
 }
 
@@ -287,18 +287,18 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
     }
 
     if (cameraChanged) {
-      ospSet1f(camera, "aspect", windowSize.x / float(windowSize.y));
-      ospSet3f(camera,
+      ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
+      ospSetVec3f(camera,
                "pos",
                arcballCamera->eyePos().x,
                arcballCamera->eyePos().y,
                arcballCamera->eyePos().z);
-      ospSet3f(camera,
+      ospSetVec3f(camera,
                "dir",
                arcballCamera->lookDir().x,
                arcballCamera->lookDir().y,
                arcballCamera->lookDir().z);
-      ospSet3f(camera,
+      ospSetVec3f(camera,
                "up",
                arcballCamera->upDir().x,
                arcballCamera->upDir().y,
@@ -322,7 +322,7 @@ void GLFWOSPRayWindow::display()
 
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
+      ospSetInt(renderer, "spp", spp);
       addObjectToCommit(renderer);
     }
 

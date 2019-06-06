@@ -86,9 +86,9 @@ namespace ospray {
       OSPGeometry spheresGeometry = ospNewGeometry("spheres");
 
       ospSetData(spheresGeometry, "spheres", spheresData);
-      ospSet1i(spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
-      ospSet1i(spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
-      ospSet1i(spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
+      ospSetInt(spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
+      ospSetInt(spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
+      ospSetInt(spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
 
       // commit the spheres geometry
       ospCommit(spheresGeometry);
@@ -102,7 +102,7 @@ namespace ospray {
       // create glass material and assign to geometry
       OSPMaterial glassMaterial =
           ospNewMaterial(renderer_type.c_str(), "ThinGlass");
-      ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
+      ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
       ospCommit(glassMaterial);
 
       ospSetMaterial(instance, glassMaterial);

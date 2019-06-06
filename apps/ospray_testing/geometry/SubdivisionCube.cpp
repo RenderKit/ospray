@@ -134,14 +134,14 @@ namespace ospray {
       ospSetData(geometry, "edgeCrease.weight", edgeCreaseWeightsData);
       ospRelease(edgeCreaseWeightsData);
 
-      ospSet1f(geometry, "level", level);
+      ospSetFloat(geometry, "level", level);
 
       OSPGeometryInstance instance = ospNewGeometryInstance(geometry);
 
       // create OBJ material and assign to geometry
       OSPMaterial objMaterial =
           ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-      ospSet3f(objMaterial, "Ks", 0.5f, 0.5f, 0.5f);
+      ospSetVec3f(objMaterial, "Ks", 0.5f, 0.5f, 0.5f);
       ospCommit(objMaterial);
 
       ospSetMaterial(instance, objMaterial);

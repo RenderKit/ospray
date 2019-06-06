@@ -241,9 +241,9 @@ OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
   g_spheresInstance = ospNewGeometryInstance(g_spheresGeometry);
 
   ospSetData(g_spheresGeometry, "spheres", spheresData);
-  ospSet1i(g_spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
-  ospSet1i(g_spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
-  ospSet1i(g_spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
+  ospSetInt(g_spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
+  ospSetInt(g_spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
+  ospSetInt(g_spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
 
   OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, g_colors.data());
 
@@ -252,7 +252,7 @@ OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
       ospNewMaterial(renderer_type.c_str(), "ThinGlass");
-  ospSet1f(glassMaterial, "attenuationDistance", 0.2f);
+  ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
   ospSetMaterial(g_spheresInstance, glassMaterial);

@@ -87,7 +87,7 @@ int main(int argc, const char **argv)
 
   auto instance = ospNewVolumeInstance(volume);
   ospSetObject(instance, "transferFunction", tfn);
-  ospSet1f(instance, "samplingRate", 0.5f);
+  ospSetFloat(instance, "samplingRate", 0.5f);
   ospCommit(instance);
 
   ospRelease(tfn);
@@ -109,7 +109,7 @@ int main(int argc, const char **argv)
 
   // prepare material for iso geometry
   OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-  ospSet3f(material, "Ks", .2f, .2f, .2f);
+  ospSetVec3f(material, "Ks", .2f, .2f, .2f);
   ospCommit(material);
 
   // assign material to the geometry
@@ -136,7 +136,7 @@ int main(int argc, const char **argv)
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
 
-  ospSet1i(renderer, "aoSamples", 1);
+  ospSetInt(renderer, "aoSamples", 1);
 
   ospCommit(renderer);
 
@@ -188,7 +188,7 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int aoSamples = 1;
     if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
-      ospSet1i(renderer, "aoSamples", aoSamples);
+      ospSetInt(renderer, "aoSamples", aoSamples);
       glfwOSPRayWindow->addObjectToCommit(renderer);
     }
 
@@ -216,7 +216,7 @@ int main(int argc, const char **argv)
     static float samplingRate = 0.5f;
     if (ImGui::SliderFloat("sampling rate", &samplingRate, 1e-3f, 4.f)) {
       commitWorld = true;
-      ospSet1f(instance, "samplingRate", samplingRate);
+      ospSetFloat(instance, "samplingRate", samplingRate);
       glfwOSPRayWindow->addObjectToCommit(instance);
     }
 
@@ -230,7 +230,7 @@ int main(int argc, const char **argv)
 
     static float isoOpacity = 1.f;
     if (ImGui::SliderFloat("iso opacity", &isoOpacity, 0.f, 1.f)) {
-      ospSet1f(material, "d", isoOpacity);
+      ospSetFloat(material, "d", isoOpacity);
       glfwOSPRayWindow->addObjectToCommit(material);
     }
 

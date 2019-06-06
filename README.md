@@ -643,19 +643,19 @@ void ospSetObject(OSPObject, const char *id, OSPObject object);
 void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
 // add scalar and vector integer and float parameters
-void ospSet1b (OSPObject, const char *id, int x);
-void ospSet1f (OSPObject, const char *id, float x);
-void ospSet1i (OSPObject, const char *id, int x);
-void ospSet2f (OSPObject, const char *id, float x, float y);
-void ospSet2fv(OSPObject, const char *id, const float *xy);
-void ospSet2i (OSPObject, const char *id, int x, int y);
-void ospSet2iv(OSPObject, const char *id, const int *xy);
-void ospSet3f (OSPObject, const char *id, float x, float y, float z);
-void ospSet3fv(OSPObject, const char *id, const float *xyz);
-void ospSet3i (OSPObject, const char *id, int x, int y, int z);
-void ospSet3iv(OSPObject, const char *id, const int *xyz);
-void ospSet4f (OSPObject, const char *id, float x, float y, float z, float w);
-void ospSet4fv(OSPObject, const char *id, const float *xyzw);
+void ospSetBool (OSPObject, const char *id, int x);
+void ospSetFloat (OSPObject, const char *id, float x);
+void ospSetInt (OSPObject, const char *id, int x);
+void ospSetVec2f (OSPObject, const char *id, float x, float y);
+void ospSetVec2fv(OSPObject, const char *id, const float *xy);
+void ospSetVec2i (OSPObject, const char *id, int x, int y);
+void ospSetVec2iv(OSPObject, const char *id, const int *xy);
+void ospSetVec3f (OSPObject, const char *id, float x, float y, float z);
+void ospSetVec3fv(OSPObject, const char *id, const float *xyz);
+void ospSetVec3i (OSPObject, const char *id, int x, int y, int z);
+void ospSetVec3iv(OSPObject, const char *id, const int *xyz);
+void ospSetVec4f (OSPObject, const char *id, float x, float y, float z, float w);
+void ospSetVec4fv(OSPObject, const char *id, const float *xyzw);
 ```
 
 Users can also remove parameters that have been explicitly set via an
@@ -3859,7 +3859,7 @@ float value. This is put on the scene graph with a call to:
 This call accesses the child named “`lights`” on the renderer, and in
 turn the child named “`sun`”. This child then gets its own child of a
 newly created node with the name “`intensity"` of type `float` with a
-value of `0.3f`. When committed, this node will call `ospSet1f`with the
+value of `0.3f`. When committed, this node will call `ospSetFloat`with the
 node value on the current `OSPObject` on the context which is set by the
 parent. If you were to create a custom light called”`MyLight`" and had a
 float parameter called “`flickerFreq`”, a similar line would be used

@@ -79,7 +79,7 @@ namespace {
     ospCommit(data);
     ospSetData(cylinder, "cylinders", data);
     ospRelease(data);
-    ospSet1f(cylinder, "radius", 1.0f);
+    ospSetFloat(cylinder, "radius", 1.0f);
     ospCommit(cylinder);
 
     return cylinder;
@@ -103,7 +103,7 @@ namespace {
     ospCommit(data);
     ospSetData(sphere, "color", data);
     ospRelease(data);
-    ospSet1f(sphere, "radius", 1.0f);
+    ospSetFloat(sphere, "radius", 1.0f);
     ospCommit(sphere);
 
     return sphere;
@@ -152,7 +152,7 @@ namespace {
     ospCommit(data);
     ospSetData(streamlines, "index", data);
     ospRelease(data);
-    ospSet1f(streamlines, "radius", 0.5f);
+    ospSetFloat(streamlines, "radius", 0.5f);
     ospCommit(streamlines);
 
     return streamlines;

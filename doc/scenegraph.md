@@ -74,7 +74,7 @@ float value. This is put on the scene graph with a call to:
 This call accesses the child named "`lights`" on the renderer, and in
 turn the child named "`sun`". This child then gets its own child of a
 newly created node with the name "`intensity"` of type `float` with a
-value of `0.3f`. When committed, this node will call `ospSet1f `with the
+value of `0.3f`. When committed, this node will call `ospSetFloat `with the
 node value on the current `OSPObject` on the context which is set by the
 parent. If you were to create a custom light called "`MyLight`" and had
 a float parameter called "`flickerFreq`", a similar line would be used

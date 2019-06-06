@@ -243,7 +243,7 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static int tessellationLevel = 5;
     if (ImGui::SliderInt("tessellation level", &tessellationLevel, 1, 10)) {
-      ospSet1f(subdivisionGeometry.geometry, "level", tessellationLevel);
+      ospSetFloat(subdivisionGeometry.geometry, "level", tessellationLevel);
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.instance);
       glfwOSPRayWindow->addObjectToCommit(world);

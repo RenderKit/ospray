@@ -69,16 +69,16 @@ namespace ospray {
       // create a structured volume and assign attributes
       OSPVolume volume = ospNewVolume("block_bricked_volume");
 
-      ospSet3i(volume,
+      ospSetVec3i(volume,
                "dimensions",
                volumeDimension,
                volumeDimension,
                volumeDimension);
       ospSetString(volume, "voxelType", "float");
-      ospSet3f(volume, "gridOrigin", -1.f, -1.f, -1.f);
+      ospSetVec3f(volume, "gridOrigin", -1.f, -1.f, -1.f);
 
       const float gridSpacing = 2.f / float(volumeDimension);
-      ospSet3f(volume, "gridSpacing", gridSpacing, gridSpacing, gridSpacing);
+      ospSetVec3f(volume, "gridSpacing", gridSpacing, gridSpacing, gridSpacing);
 
       // get world coordinate in [-1.f, 1.f] from logical coordinates in [0,
       // volumeDimension)

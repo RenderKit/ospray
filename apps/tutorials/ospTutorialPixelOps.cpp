@@ -240,7 +240,7 @@ int main(int argc, const char **argv)
 
   // The colortweak pixel op will make the image more blue
   OSPPixelOp colorTweak = ospNewPixelOp("debug");
-  ospSet3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
+  ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
   ospCommit(colorTweak);
 
   // UI for the tweaking the pixel pipeline
@@ -274,7 +274,7 @@ int main(int argc, const char **argv)
       if (debugColors[i] != vec3f(-1.f)) {
         ImGui::Text("Debug Pixel Op #%lu", i);
         if (ImGui::ColorPicker3("Color", &debugColors[i].x)) {
-          ospSet3f(pixelPipeline[i],
+          ospSetVec3f(pixelPipeline[i],
                    "addColor",
                    debugColors[i].x,
                    debugColors[i].y,
@@ -291,7 +291,7 @@ int main(int argc, const char **argv)
 
     if (ImGui::Button("Add Debug Op")) {
       OSPPixelOp op = ospNewPixelOp("debug");
-      ospSet3f(op, "addColor", 0.0, 0.0, 0.0);
+      ospSetVec3f(op, "addColor", 0.0, 0.0, 0.0);
       ospCommit(op);
 
       pixelPipeline.push_back(op);

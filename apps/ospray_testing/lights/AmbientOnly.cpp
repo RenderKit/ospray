@@ -30,8 +30,8 @@ namespace ospray {
     {
       auto ambientLight = ospNewLight("ambient");
 
-      ospSet1f(ambientLight, "intensity", 1.25f);
-      ospSet3f(ambientLight, "color", 1.f, 1.f, 1.f);
+      ospSetFloat(ambientLight, "intensity", 1.25f);
+      ospSetVec3f(ambientLight, "color", 1.f, 1.f, 1.f);
       ospCommit(ambientLight);
 
       auto lightsData = ospNewData(1, OSP_OBJECT, &ambientLight);

@@ -180,10 +180,10 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup camera
   *camera = ospNewCamera("perspective");
-  ospSet1f(*camera, "aspect", imgSize.x/(float)imgSize.y);
-  ospSet3fv(*camera, "pos", cam_pos);
-  ospSet3fv(*camera, "dir", cam_view);
-  ospSet3fv(*camera, "up",  cam_up);
+  ospSetFloat(*camera, "aspect", imgSize.x/(float)imgSize.y);
+  ospSetVec3fv(*camera, "pos", cam_pos);
+  ospSetVec3fv(*camera, "dir", cam_view);
+  ospSetVec3fv(*camera, "up",  cam_up);
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
@@ -226,8 +226,8 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(lights);
 
   // complete setup of renderer
-  ospSet1i(*renderer, "aoSamples", 1);
-  ospSet1f(*renderer, "bgColor", 1.0f); // white, transparent
+  ospSetInt(*renderer, "aoSamples", 1);
+  ospSetFloat(*renderer, "bgColor", 1.0f); // white, transparent
   ospSetObject(*renderer, "lights", lights);
   ospCommit(*renderer);
 
@@ -263,10 +263,10 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup camera
   *camera = ospNewCamera("perspective");
-  ospSet1f(*camera, "aspect", imgSize.x/(float)imgSize.y);
-  ospSet3fv(*camera, "pos", cam_pos);
-  ospSet3fv(*camera, "dir", cam_view);
-  ospSet3fv(*camera, "up",  cam_up);
+  ospSetFloat(*camera, "aspect", imgSize.x/(float)imgSize.y);
+  ospSetVec3fv(*camera, "pos", cam_pos);
+  ospSetVec3fv(*camera, "dir", cam_view);
+  ospSetVec3fv(*camera, "up",  cam_up);
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
@@ -309,8 +309,8 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(lights);
 
   // complete setup of renderer
-  ospSet1i(*renderer, "aoSamples", 4);
-  ospSet1f(*renderer, "bgColor", 0.2f); // gray, transparent
+  ospSetInt(*renderer, "aoSamples", 4);
+  ospSetFloat(*renderer, "bgColor", 0.2f); // gray, transparent
   ospSetObject(*renderer, "lights", lights);
   ospCommit(*renderer);
 

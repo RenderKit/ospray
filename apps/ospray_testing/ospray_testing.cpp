@@ -92,9 +92,9 @@ extern "C" OSPCamera ospTestingNewDefaultCamera(osp_box3f _bounds)
   auto up   = vec3f(0.f, 1.f, 0.f);
   auto dir  = normalize(gaze - pos);
 
-  ospSet3f(camera, "pos", pos.x, pos.y, pos.z);
-  ospSet3f(camera, "dir", dir.x, dir.y, dir.z);
-  ospSet3f(camera, "up", up.x, up.y, up.z);
+  ospSetVec3f(camera, "pos", pos.x, pos.y, pos.z);
+  ospSetVec3f(camera, "dir", dir.x, dir.y, dir.z);
+  ospSetVec3f(camera, "up", up.x, up.y, up.z);
   ospCommit(camera);
 
   return camera;

@@ -41,7 +41,7 @@ namespace ospray {
       ospSetData(transferFunction, "opacities", oData);
 
       // the transfer function will apply over this volume value range
-      ospSet2f(transferFunction, "valueRange", value_range.x, value_range.y);
+      ospSetVec2f(transferFunction, "valueRange", value_range.x, value_range.y);
 
       // commit the transfer function
       ospCommit(transferFunction);

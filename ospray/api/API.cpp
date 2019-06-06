@@ -579,7 +579,7 @@ extern "C" void ospSetData(OSPObject object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet1b(OSPObject _object,
+extern "C" void ospSetBool(OSPObject _object,
                          const char *id,
                          int x) OSPRAY_CATCH_BEGIN
 {
@@ -588,7 +588,7 @@ extern "C" void ospSet1b(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet1f(OSPObject _object,
+extern "C" void ospSetFloat(OSPObject _object,
                          const char *id,
                          float x) OSPRAY_CATCH_BEGIN
 {
@@ -597,7 +597,7 @@ extern "C" void ospSet1f(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet1i(OSPObject _object,
+extern "C" void ospSetInt(OSPObject _object,
                          const char *id,
                          int x) OSPRAY_CATCH_BEGIN
 {
@@ -615,7 +615,7 @@ extern "C" void ospSeti(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
+extern "C" void ospSetVec2f(OSPObject _object, const char *id, float x, float y)
     OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -623,7 +623,7 @@ extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet2fv(OSPObject _object,
+extern "C" void ospSetVec2fv(OSPObject _object,
                           const char *id,
                           const float *xy) OSPRAY_CATCH_BEGIN
 {
@@ -632,7 +632,7 @@ extern "C" void ospSet2fv(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet2i(OSPObject _object, const char *id, int x, int y)
+extern "C" void ospSetVec2i(OSPObject _object, const char *id, int x, int y)
     OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -640,7 +640,7 @@ extern "C" void ospSet2i(OSPObject _object, const char *id, int x, int y)
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet2iv(OSPObject _object,
+extern "C" void ospSetVec2iv(OSPObject _object,
                           const char *id,
                           const int *xy) OSPRAY_CATCH_BEGIN
 {
@@ -649,7 +649,7 @@ extern "C" void ospSet2iv(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet3f(OSPObject _object,
+extern "C" void ospSetVec3f(OSPObject _object,
                          const char *id,
                          float x,
                          float y,
@@ -660,7 +660,7 @@ extern "C" void ospSet3f(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet3fv(OSPObject _object,
+extern "C" void ospSetVec3fv(OSPObject _object,
                           const char *id,
                           const float *xyz) OSPRAY_CATCH_BEGIN
 {
@@ -669,7 +669,7 @@ extern "C" void ospSet3fv(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
+extern "C" void ospSetVec3i(OSPObject _object, const char *id, int x, int y, int z)
     OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
@@ -677,7 +677,7 @@ extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet3iv(OSPObject _object,
+extern "C" void ospSetVec3iv(OSPObject _object,
                           const char *id,
                           const int *xyz) OSPRAY_CATCH_BEGIN
 {
@@ -686,7 +686,7 @@ extern "C" void ospSet3iv(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet4f(OSPObject _object,
+extern "C" void ospSetVec4f(OSPObject _object,
                          const char *id,
                          float x,
                          float y,
@@ -698,7 +698,7 @@ extern "C" void ospSet4f(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSet4fv(OSPObject _object,
+extern "C" void ospSetVec4fv(OSPObject _object,
                           const char *id,
                           const float *xyzw) OSPRAY_CATCH_BEGIN
 {

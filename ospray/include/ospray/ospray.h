@@ -302,22 +302,22 @@ extern "C" {
   OSPRAY_INTERFACE void ospSetObject(OSPObject, const char *id, OSPObject other);
   OSPRAY_INTERFACE void ospSetData(OSPObject, const char *id, OSPData);
 
-  OSPRAY_INTERFACE void ospSet1b(OSPObject, const char *id, int x);
-  OSPRAY_INTERFACE void ospSet1f(OSPObject, const char *id, float x);
-  OSPRAY_INTERFACE void ospSet1i(OSPObject, const char *id, int x);
+  OSPRAY_INTERFACE void ospSetBool(OSPObject, const char *id, int x);
+  OSPRAY_INTERFACE void ospSetFloat(OSPObject, const char *id, float x);
+  OSPRAY_INTERFACE void ospSetInt(OSPObject, const char *id, int x);
 
-  OSPRAY_INTERFACE void ospSet2f(OSPObject, const char *id, float x, float y);
-  OSPRAY_INTERFACE void ospSet2fv(OSPObject, const char *id, const float *xy);
-  OSPRAY_INTERFACE void ospSet2i(OSPObject, const char *id, int x, int y);
-  OSPRAY_INTERFACE void ospSet2iv(OSPObject, const char *id, const int *xy);
+  OSPRAY_INTERFACE void ospSetVec2f(OSPObject, const char *id, float x, float y);
+  OSPRAY_INTERFACE void ospSetVec2fv(OSPObject, const char *id, const float *xy);
+  OSPRAY_INTERFACE void ospSetVec2i(OSPObject, const char *id, int x, int y);
+  OSPRAY_INTERFACE void ospSetVec2iv(OSPObject, const char *id, const int *xy);
 
-  OSPRAY_INTERFACE void ospSet3f(OSPObject, const char *id, float x, float y, float z);
-  OSPRAY_INTERFACE void ospSet3fv(OSPObject, const char *id, const float *xyz);
-  OSPRAY_INTERFACE void ospSet3i(OSPObject, const char *id, int x, int y, int z);
-  OSPRAY_INTERFACE void ospSet3iv(OSPObject, const char *id, const int *xyz);
+  OSPRAY_INTERFACE void ospSetVec3f(OSPObject, const char *id, float x, float y, float z);
+  OSPRAY_INTERFACE void ospSetVec3fv(OSPObject, const char *id, const float *xyz);
+  OSPRAY_INTERFACE void ospSetVec3i(OSPObject, const char *id, int x, int y, int z);
+  OSPRAY_INTERFACE void ospSetVec3iv(OSPObject, const char *id, const int *xyz);
 
-  OSPRAY_INTERFACE void ospSet4f(OSPObject, const char *id, float x, float y, float z, float w);
-  OSPRAY_INTERFACE void ospSet4fv(OSPObject, const char *id, const float *xyzw);
+  OSPRAY_INTERFACE void ospSetVec4f(OSPObject, const char *id, float x, float y, float z, float w);
+  OSPRAY_INTERFACE void ospSetVec4fv(OSPObject, const char *id, const float *xyzw);
 
   OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
 

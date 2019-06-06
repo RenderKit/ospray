@@ -111,7 +111,7 @@ int main(int argc, const char **argv)
 
   // prepare material for iso geometry
   OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-  ospSet3f(material, "Ks", .2f, .2f, .2f);
+  ospSetVec3f(material, "Ks", .2f, .2f, .2f);
   ospCommit(material);
 
   // assign material to the geometry
@@ -193,7 +193,7 @@ int main(int argc, const char **argv)
 
       static float isoOpacity = 1.f;
       if (ImGui::SliderFloat("iso opacity", &isoOpacity, 0.f, 1.f)) {
-        ospSet1f(material, "d", isoOpacity);
+        ospSetFloat(material, "d", isoOpacity);
         glfwOSPRayWindow->addObjectToCommit(material);
       }
     }

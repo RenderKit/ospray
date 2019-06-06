@@ -305,19 +305,19 @@ adding various types of parameters with name `id` to a given object:
     void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
     // add scalar and vector integer and float parameters
-    void ospSet1b (OSPObject, const char *id, int x);
-    void ospSet1f (OSPObject, const char *id, float x);
-    void ospSet1i (OSPObject, const char *id, int x);
-    void ospSet2f (OSPObject, const char *id, float x, float y);
-    void ospSet2fv(OSPObject, const char *id, const float *xy);
-    void ospSet2i (OSPObject, const char *id, int x, int y);
-    void ospSet2iv(OSPObject, const char *id, const int *xy);
-    void ospSet3f (OSPObject, const char *id, float x, float y, float z);
-    void ospSet3fv(OSPObject, const char *id, const float *xyz);
-    void ospSet3i (OSPObject, const char *id, int x, int y, int z);
-    void ospSet3iv(OSPObject, const char *id, const int *xyz);
-    void ospSet4f (OSPObject, const char *id, float x, float y, float z, float w);
-    void ospSet4fv(OSPObject, const char *id, const float *xyzw);
+    void ospSetBool (OSPObject, const char *id, int x);
+    void ospSetFloat (OSPObject, const char *id, float x);
+    void ospSetInt (OSPObject, const char *id, int x);
+    void ospSetVec2f (OSPObject, const char *id, float x, float y);
+    void ospSetVec2fv(OSPObject, const char *id, const float *xy);
+    void ospSetVec2i (OSPObject, const char *id, int x, int y);
+    void ospSetVec2iv(OSPObject, const char *id, const int *xy);
+    void ospSetVec3f (OSPObject, const char *id, float x, float y, float z);
+    void ospSetVec3fv(OSPObject, const char *id, const float *xyz);
+    void ospSetVec3i (OSPObject, const char *id, int x, int y, int z);
+    void ospSetVec3iv(OSPObject, const char *id, const int *xyz);
+    void ospSetVec4f (OSPObject, const char *id, float x, float y, float z, float w);
+    void ospSetVec4fv(OSPObject, const char *id, const float *xyzw);
 
 Users can also remove parameters that have been explicitly set via an
 ospSet call. Any parameters which have been removed will go back to
