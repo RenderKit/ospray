@@ -136,11 +136,11 @@ namespace ospcommon {
     return o;
   }
 
-  using box1i  = box_t<int32_t, 1>;
+  using box1i  = range_t<int32_t>;
   using box2i  = box_t<int32_t, 2>;
   using box3i  = box_t<int32_t, 3>;
   using box4i  = box_t<int32_t, 4>;
-  using box1f  = box_t<float, 1>;
+  using box1f  = range_t<float>;
   using box2f  = box_t<float, 2>;
   using box3f  = box_t<float, 3>;
   using box4f  = box_t<float, 4>;
