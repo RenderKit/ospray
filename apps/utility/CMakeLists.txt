@@ -15,8 +15,8 @@
 ## ======================================================================== ##
 
 if (NOT WIN32)
-    ospray_create_application(ospRawToAMR rawToAMR.cpp)
-    target_link_libraries(ospRawToAMR PRIVATE ospray_common)
+    ospray_create_application(ospConvertRawToAMR ospConvertRawToAMR.cpp rawToAMR.cpp)
+    target_link_libraries(ospConvertRawToAMR PRIVATE ospray_common)
 
     ospray_create_application(ospRawToVTU rawToVTU.cpp)
     target_link_libraries(ospRawToVTU PRIVATE ospray_common)
