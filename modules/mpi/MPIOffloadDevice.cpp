@@ -740,6 +740,54 @@ namespace ospray {
       processWork(work);
     }
 
+    void MPIOffloadDevice::setBox1f(OSPObject _object,
+                                    const char *bufName,
+                                    const box1f &v)
+    {
+      work::SetParam<box1f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setBox1i(OSPObject _object,
+                                    const char *bufName,
+                                    const box1i &v)
+    {
+      work::SetParam<box1i> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setBox2f(OSPObject _object,
+                                    const char *bufName,
+                                    const box2f &v)
+    {
+      work::SetParam<box2f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setBox2i(OSPObject _object,
+                                    const char *bufName,
+                                    const box2i &v)
+    {
+      work::SetParam<box2i> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setBox3f(OSPObject _object,
+                                    const char *bufName,
+                                    const box3f &v)
+    {
+      work::SetParam<box3f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setBox3i(OSPObject _object,
+                                    const char *bufName,
+                                    const box3i &v)
+    {
+      work::SetParam<box3i> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
     void MPIOffloadDevice::setVoidPtr(OSPObject _object,
                                       const char *bufName,
                                       void *v)

@@ -277,6 +277,54 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
+    void ISPCDevice::setBox1f(OSPObject _object,
+                              const char *bufName,
+                              const box1f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
+    void ISPCDevice::setBox1i(OSPObject _object,
+                              const char *bufName,
+                              const box1i &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
+    void ISPCDevice::setBox2f(OSPObject _object,
+                              const char *bufName,
+                              const box2f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
+    void ISPCDevice::setBox2i(OSPObject _object,
+                              const char *bufName,
+                              const box2i &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
+    void ISPCDevice::setBox3f(OSPObject _object,
+                              const char *bufName,
+                              const box3f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
+    void ISPCDevice::setBox3i(OSPObject _object,
+                              const char *bufName,
+                              const box3i &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
     void ISPCDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
     {
       ManagedObject *object = (ManagedObject *)_object;

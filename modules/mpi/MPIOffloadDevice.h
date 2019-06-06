@@ -125,6 +125,30 @@ namespace ospray {
                     const char *bufName,
                     const vec4f &v) override;
 
+      void setBox1f(OSPObject object,
+                    const char *bufName,
+                    const box1f &v) override;
+
+      void setBox1i(OSPObject object,
+                    const char *bufName,
+                    const box1i &v) override;
+
+      void setBox2f(OSPObject object,
+                    const char *bufName,
+                    const box2f &v) override;
+
+      void setBox2i(OSPObject object,
+                    const char *bufName,
+                    const box2i &v) override;
+
+      void setBox3f(OSPObject object,
+                    const char *bufName,
+                    const box3f &v) override;
+
+      void setBox3i(OSPObject object,
+                    const char *bufName,
+                    const box3i &v) override;
+
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
       void setMaterial(OSPGeometryInstance _inst, OSPMaterial _mat) override;
