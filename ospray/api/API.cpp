@@ -809,8 +809,7 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospSetBox3fv(OSPObject _object,
                              const char *id,
-                             const float *v)
-    OSPRAY_CATCH_BEGIN
+                             const float *v) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().setBox3f(_object, id, box3f(vec3f(v), vec3f(v + 3)));
@@ -840,6 +839,62 @@ extern "C" void ospSetBox3iv(OSPObject _object,
 {
   ASSERT_DEVICE();
   currentDevice().setBox3i(_object, id, box3i(vec3i(v), vec3i(v + 3)));
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSetBox4f(OSPObject _object,
+                            const char *id,
+                            float lower_x,
+                            float lower_y,
+                            float lower_z,
+                            float lower_w,
+                            float upper_x,
+                            float upper_y,
+                            float upper_z,
+                            float upper_w) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setBox4f(_object,
+                           id,
+                           box4f(vec4f(lower_x, lower_y, lower_z, lower_w),
+                                 vec4f(upper_x, upper_y, upper_z, upper_w)));
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSetBox4fv(OSPObject _object,
+                             const char *id,
+                             const float *v) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setBox4f(_object, id, box4f(vec4f(v), vec4f(v + 5)));
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSetBox4i(OSPObject _object,
+                            const char *id,
+                            int lower_x,
+                            int lower_y,
+                            int lower_z,
+                            int lower_w,
+                            int upper_x,
+                            int upper_y,
+                            int upper_z,
+                            int upper_w) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setBox4i(_object,
+                           id,
+                           box4i(vec4i(lower_x, lower_y, lower_z, lower_w),
+                                 vec4i(upper_x, upper_y, upper_z, upper_w)));
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSetBox4iv(OSPObject _object,
+                             const char *id,
+                             const int *v) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setBox4i(_object, id, box4i(vec4i(v), vec4i(v + 5)));
 }
 OSPRAY_CATCH_END()
 

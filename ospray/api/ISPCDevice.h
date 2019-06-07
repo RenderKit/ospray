@@ -146,6 +146,14 @@ namespace ospray {
                     const char *bufName,
                     const box3i &v) override;
 
+      void setBox4f(OSPObject object,
+                    const char *bufName,
+                    const box4f &v) override;
+
+      void setBox4i(OSPObject object,
+                    const char *bufName,
+                    const box4i &v) override;
+
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
       // Object + Parameter Lifetime Management ///////////////////////////////

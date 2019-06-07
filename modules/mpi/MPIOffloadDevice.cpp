@@ -788,6 +788,22 @@ namespace ospray {
       processWork(work);
     }
 
+    void MPIOffloadDevice::setBox4f(OSPObject _object,
+                                    const char *bufName,
+                                    const box4f &v)
+    {
+      work::SetParam<box4f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setBox4i(OSPObject _object,
+                                    const char *bufName,
+                                    const box4i &v)
+    {
+      work::SetParam<box4i> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
     void MPIOffloadDevice::setVoidPtr(OSPObject _object,
                                       const char *bufName,
                                       void *v)
