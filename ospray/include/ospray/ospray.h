@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// This header is shared with ISPC
+
 #pragma once
 
 #ifndef NULL

@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// This header is shared with ISPC
+
 #pragma once
 
 // An enum type that represensts the different data types represented in OSPRay

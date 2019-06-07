@@ -1400,7 +1400,7 @@ The call returns `NULL` if the material type is not known by the
 renderer type, or else an `OSPMaterial` handle to the created material. The
 handle can then be used to assign the material to a given geometry with
 
-    void ospSetObject(OSPGeometryInstance, OSPMaterial);
+    void ospSetObject(OSPGeometryInstance, "material", OSPMaterial);
 
 #### OBJ Material
 
