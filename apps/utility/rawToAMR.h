@@ -59,6 +59,12 @@ namespace ospray {
                      const int blockSize,
                      const int refinementLevel,
                      const float threshold,
-                     const FileName outFileBase);
+                     std::vector<BrickDesc> &brickInfo,
+                     std::vector<std::vector<float>> &brickData);
+
+        void outputAMR(const FileName outFileBase,
+                       const std::vector<BrickDesc> &brickInfo,
+                       const std::vector<std::vector<float>> &brickData,
+                       const int blockSize);
     } // namespace amr
 } // namespace ospray

@@ -30,28 +30,9 @@ namespace ospray {
                      const int blockSize,
                      const int refinementLevel,
                      const float threshold,
-                     const FileName outFileBase)
+                     std::vector<BrickDesc> &brickInfo,
+                     std::vector<std::vector<float>> &brickData)
         {
-            // ALOK: .info is brick metadata
-            FILE *infoOut = fopen(outFileBase.addExt(".info").c_str(), "wb");
-            if (!infoOut) {
-                throw std::runtime_error("could not open info output file!");
-            }
-
-            // ALOK: .data is actual data
-            FILE *dataOut = fopen(outFileBase.addExt(".data").c_str(), "wb");
-            if (!dataOut) {
-                throw std::runtime_error("could not open data output file!");
-            }
-
-            std::ofstream osp(outFileBase + ".osp");
-            osp << "<?xml?>" << std::endl;
-            osp << "<AMRVolume>" << std::endl;
-            osp << "  <fileName>" << ospcommon::FileName(outFileBase).base() << "</fileName>" << std::endl;
-            osp << "  <brickSize>" << blockSize << "</brickSize>" << std::endl;
-            osp << "  <clamp>0 100000</clamp>" << std::endl;
-            osp << "</AMRVolume>" << std::endl;
-
             // minWidth starts with provided brick size
             int minWidth = blockSize;
             std::cout << "building AMR model out of RAW volume. blockSize = " << blockSize
@@ -179,9 +160,9 @@ namespace ospray {
                                 ((brickRange.upper - brickRange.lower) <= threshold)) {
                             numRemoved++;
                         } else {
+                            brickInfo.push_back(brick);
+                            brickData.push_back(data);
                             numWritten++;
-                            fwrite(&brick, sizeof(brick), 1, infoOut);
-                            fwrite(data.data(), sizeof(float), blockSize * blockSize * blockSize, dataOut);
                         }
                         //progress.ping();
                         }); // end parallel for
@@ -190,6 +171,40 @@ namespace ospray {
                 std::cout << "done level " << level << ", written " << numWritten
                     << " bricks, removed " << numRemoved << std::endl;
             } // end for loop on levels
+        }
+
+        void outputAMR(const FileName outFileBase,
+                       const std::vector<BrickDesc> &brickInfo,
+                       const std::vector<std::vector<float>> &brickData,
+                       const int blockSize)
+        {
+            // ALOK: .info is brick metadata
+            FILE *infoOut = fopen(outFileBase.addExt(".info").c_str(), "wb");
+            if (!infoOut) {
+                throw std::runtime_error("could not open info output file!");
+            }
+
+            // ALOK: .data is actual data
+            FILE *dataOut = fopen(outFileBase.addExt(".data").c_str(), "wb");
+            if (!dataOut) {
+                throw std::runtime_error("could not open data output file!");
+            }
+
+            std::ofstream osp(outFileBase + ".osp");
+            osp << "<?xml?>" << std::endl;
+            osp << "<AMRVolume>" << std::endl;
+            osp << "  <fileName>" << ospcommon::FileName(outFileBase).base() << "</fileName>" << std::endl;
+            osp << "  <brickSize>" << blockSize << "</brickSize>" << std::endl;
+            osp << "  <clamp>0 100000</clamp>" << std::endl;
+            osp << "</AMRVolume>" << std::endl;
+
+            for(auto &brick : brickInfo) {
+                fwrite(&brick, sizeof(brick), 1, infoOut);
+            }
+
+            for(auto &data : brickData) {
+                fwrite(data.data(), sizeof(float), data.size(), dataOut);
+            }
 
             fclose(infoOut);
             fclose(dataOut);

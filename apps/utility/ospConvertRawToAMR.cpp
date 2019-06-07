@@ -144,7 +144,11 @@ int main(int argc, char **argv)
         throw std::runtime_error("unknown input voxel format");
     }
 
-    ospray::amr::makeAMR(in, numLevels, blockSize, refinementLevel, threshold, outFileBase);
+    std::vector<ospray::amr::BrickDesc> brickInfo;
+    std::vector<std::vector<float>> brickData;
+
+    ospray::amr::makeAMR(in, numLevels, blockSize, refinementLevel, threshold, brickInfo, brickData);
+    ospray::amr::outputAMR(outFileBase, brickInfo, brickData, blockSize);
 
     return 0;
 }
