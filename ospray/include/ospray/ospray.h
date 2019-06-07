@@ -319,6 +319,8 @@ extern "C" {
 
   OSPRAY_INTERFACE void ospSetVec4f(OSPObject, const char *id, float x, float y, float z, float w);
   OSPRAY_INTERFACE void ospSetVec4fv(OSPObject, const char *id, const float *xyzw);
+  OSPRAY_INTERFACE void ospSetVec4i(OSPObject, const char *id, int x, int y, int z, int w);
+  OSPRAY_INTERFACE void ospSetVec4iv(OSPObject, const char *id, const int *xyzw);
 
   OSPRAY_INTERFACE void ospSetBox1f(OSPObject, const char *id, float lower_x, float upper_x);
   OSPRAY_INTERFACE void ospSetBox1fv(OSPObject, const char *id, const float *lower_x_upper_x);

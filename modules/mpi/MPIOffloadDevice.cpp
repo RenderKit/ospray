@@ -740,6 +740,14 @@ namespace ospray {
       processWork(work);
     }
 
+    void MPIOffloadDevice::setVec4i(OSPObject _object,
+                                    const char *bufName,
+                                    const vec4i &v)
+    {
+      work::SetParam<vec4i> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
     void MPIOffloadDevice::setBox1f(OSPObject _object,
                                     const char *bufName,
                                     const box1f &v)

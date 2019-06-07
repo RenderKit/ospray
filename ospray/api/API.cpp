@@ -708,6 +708,28 @@ extern "C" void ospSetVec4fv(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospSetVec4i(OSPObject _object,
+                            const char *id,
+                            int x,
+                            int y,
+                            int z,
+                            int w) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setVec4i(_object, id, vec4i(x, y, z, w));
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSetVec4iv(OSPObject _object,
+                             const char *id,
+                             const int *xyzw) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setVec4i(
+      _object, id, vec4i(xyzw[0], xyzw[1], xyzw[2], xyzw[3]));
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospSetBox1f(OSPObject _object,
                             const char *id,
                             float lower_x,

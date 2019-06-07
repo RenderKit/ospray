@@ -277,6 +277,14 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
+    void ISPCDevice::setVec4i(OSPObject _object,
+                              const char *bufName,
+                              const vec4i &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
     void ISPCDevice::setBox1f(OSPObject _object,
                               const char *bufName,
                               const box1f &v)

@@ -125,6 +125,10 @@ namespace ospray {
                     const char *bufName,
                     const vec4f &v) override;
 
+      void setVec4i(OSPObject object,
+                    const char *bufName,
+                    const vec4i &v) override;
+
       void setBox1f(OSPObject object,
                     const char *bufName,
                     const box1f &v) override;

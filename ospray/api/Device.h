@@ -127,6 +127,10 @@ namespace ospray {
                             const char *bufName,
                             const vec4f &v) = 0;
 
+      virtual void setVec4i(OSPObject object,
+                            const char *bufName,
+                            const vec4i &v) = 0;
+
       virtual void setBox1f(OSPObject object,
                             const char *bufName,
                             const box1f &v) = 0;
