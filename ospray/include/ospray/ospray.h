@@ -342,6 +342,9 @@ extern "C" {
   OSPRAY_INTERFACE void ospSetBox4i(OSPObject, const char *id, int lower_x, int lower_y, int lower_z, int lower_w, int upper_x, int upper_y, int upper_z, int upper_w);
   OSPRAY_INTERFACE void ospSetBox4iv(OSPObject, const char *id, const int *lower_xyzw_upper_xyzw);
 
+  OSPRAY_INTERFACE void ospSetLinear3fv(OSPObject, const char *id, const float *v);
+  OSPRAY_INTERFACE void ospSetAffine3fv(OSPObject, const char *id, const float *v);
+
   OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
 
   // Object + Parameter Lifetime Management ///////////////////////////////////

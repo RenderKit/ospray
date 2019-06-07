@@ -158,6 +158,14 @@ namespace ospray {
                     const char *bufName,
                     const box4i &v) override;
 
+      void setLinear3f(OSPObject object,
+                       const char *bufName,
+                       const linear3f &v) override;
+
+      void setAffine3f(OSPObject object,
+                       const char *bufName,
+                       const affine3f &v) override;
+
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
       // Object + Parameter Lifetime Management ///////////////////////////////

@@ -152,6 +152,8 @@ namespace ospray {
     float getParam1f(const char *name, float valIfNotFound);
     bool getParam1b(const char *name, bool valIfNotFound);
 
+    affine3f getParamAffine3f(const char *name, affine3f valIfNotFound);
+
     void *getParamVoidPtr(const char *name, void *valIfNotFound);
     std::string getParamString(const char *name,
                                std::string valIfNotFound = "");

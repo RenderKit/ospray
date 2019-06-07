@@ -88,6 +88,8 @@ namespace ospray {
   define_getparam(float,  1f)
   define_getparam(bool,   1b)
 
+  define_getparam(affine3f, Affine3f)
+
 #undef define_getparam
 
   void ManagedObject::notifyListenersThatObjectGotChanged()

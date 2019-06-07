@@ -56,10 +56,7 @@ namespace ospray {
 
     // Get transform information //
 
-    instanceXfm.l.vx = getParam3f("xfm.l.vx", vec3f(1.f, 0.f, 0.f));
-    instanceXfm.l.vy = getParam3f("xfm.l.vy", vec3f(0.f, 1.f, 0.f));
-    instanceXfm.l.vz = getParam3f("xfm.l.vz", vec3f(0.f, 0.f, 1.f));
-    instanceXfm.p    = getParam3f("xfm.p", vec3f(0.f, 0.f, 0.f));
+    instanceXfm = getParamAffine3f("xfm", affine3f(one));
 
     // Create Embree instanced scene, if necessary //
 

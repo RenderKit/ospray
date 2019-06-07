@@ -812,6 +812,22 @@ namespace ospray {
       processWork(work);
     }
 
+    void MPIOffloadDevice::setLinear3f(OSPObject _object,
+                                       const char *bufName,
+                                       const linear3f &v)
+    {
+      work::SetParam<linear3f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
+    void MPIOffloadDevice::setAffine3f(OSPObject _object,
+                                       const char *bufName,
+                                       const affine3f &v)
+    {
+      work::SetParam<affine3f> work((ObjectHandle &)_object, bufName, v);
+      processWork(work);
+    }
+
     void MPIOffloadDevice::setVoidPtr(OSPObject _object,
                                       const char *bufName,
                                       void *v)

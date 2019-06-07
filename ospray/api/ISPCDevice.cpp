@@ -349,6 +349,22 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
+    void ISPCDevice::setLinear3f(OSPObject _object,
+                                 const char *bufName,
+                                 const linear3f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
+    void ISPCDevice::setAffine3f(OSPObject _object,
+                                 const char *bufName,
+                                 const affine3f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->setParam(bufName, v);
+    }
+
     void ISPCDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
     {
       ManagedObject *object = (ManagedObject *)_object;

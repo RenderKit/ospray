@@ -163,6 +163,14 @@ namespace ospray {
                             const char *bufName,
                             const box4i &v) = 0;
 
+      virtual void setLinear3f(OSPObject object,
+                               const char *bufName,
+                               const linear3f &v) = 0;
+
+      virtual void setAffine3f(OSPObject object,
+                               const char *bufName,
+                               const affine3f &v) = 0;
+
       virtual void setVoidPtr(OSPObject object,
                               const char *bufName,
                               void *v) = 0;

@@ -920,6 +920,28 @@ extern "C" void ospSetBox4iv(OSPObject _object,
 }
 OSPRAY_CATCH_END()
 
+extern "C" void ospSetLinear3fv(OSPObject _object,
+                                const char *id,
+                                const float *v) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setLinear3f(
+      _object, id, linear3f(vec3f(v), vec3f(v + 3), vec3f(v + 6)));
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospSetAffine3fv(OSPObject _object,
+                                const char *id,
+                                const float *v) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().setAffine3f(
+      _object,
+      id,
+      affine3f(vec3f(v), vec3f(v + 3), vec3f(v + 6), vec3f(v + 12)));
+}
+OSPRAY_CATCH_END()
+
 extern "C" void ospSetVoidPtr(OSPObject _object,
                               const char *id,
                               void *v) OSPRAY_CATCH_BEGIN
