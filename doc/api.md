@@ -980,9 +980,9 @@ See Embree documentation for discussion of curve types and data formatting.
 
 ### Boxes
 
-OSPRay can directly render AABBs without the need to convert them to quads or
-triangles. To do so create an boxes geometry by calling `ospNewGeometry`
-with type string "`boxes`".
+OSPRay can directly render axis-aligned bounding boxes without the need
+to convert them to quads or triangles. To do so create a boxes
+geometry by calling `ospNewGeometry` with type string "`boxes`".
 
   Type       Name       Description
   ---------- ---------- ------------------------------------------------------
