@@ -888,7 +888,7 @@ extern "C" void ospSetBox4fv(OSPObject _object,
                              const float *v) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  currentDevice().setBox4f(_object, id, box4f(vec4f(v), vec4f(v + 5)));
+  currentDevice().setBox4f(_object, id, box4f(vec4f(v), vec4f(v + 4)));
 }
 OSPRAY_CATCH_END()
 
@@ -916,7 +916,7 @@ extern "C" void ospSetBox4iv(OSPObject _object,
                              const int *v) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  currentDevice().setBox4i(_object, id, box4i(vec4i(v), vec4i(v + 5)));
+  currentDevice().setBox4i(_object, id, box4i(vec4i(v), vec4i(v + 4)));
 }
 OSPRAY_CATCH_END()
 
@@ -938,7 +938,7 @@ extern "C" void ospSetAffine3fv(OSPObject _object,
   currentDevice().setAffine3f(
       _object,
       id,
-      affine3f(vec3f(v), vec3f(v + 3), vec3f(v + 6), vec3f(v + 12)));
+      affine3f(vec3f(v), vec3f(v + 3), vec3f(v + 6), vec3f(v + 9)));
 }
 OSPRAY_CATCH_END()
 

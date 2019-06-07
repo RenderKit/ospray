@@ -18,6 +18,9 @@
 
 extern OSPRayEnvironment *ospEnv;
 
+#include "ospcommon/AffineSpace.h"
+using ospcommon::affine3f;
+
 namespace OSPRayTestScenes {
 
   // Helper functions /////////////////////////////////////////////////////////
@@ -373,10 +376,11 @@ namespace OSPRayTestScenes {
     ospSetObject(inst2, "material", sphereMaterial);
     ospRelease(sphereMaterial);
 
-    ospSetVec3f(inst2, "xfm.l.vx", 0.01, 0, 0);
-    ospSetVec3f(inst2, "xfm.l.vy", 0, 0.01, 0);
-    ospSetVec3f(inst2, "xfm.l.vz", 0, 0, 0.01);
-    ospSetVec3f(inst2, "xfm.p", -0.5f * radius, 1.6f * radius, cent);
+    affine3f xfm(vec3f(0.01, 0, 0),
+                 vec3f(0, 0.01, 0),
+                 vec3f(0, 0, 0.01),
+                 vec3f(-0.5f * radius, 1.6f * radius, cent));
+    ospSetAffine3fv(inst2, "xfm", (const float *)&xfm);
 
     AddInstance(inst1);
     AddInstance(inst2);
@@ -903,7 +907,8 @@ namespace OSPRayTestScenes {
     ospCommit(light);
 
     instance = ospNewGeometryInstance(light);
-    ospSetObject(instance, "material", ospNewMaterial(rendererType.c_str(), "Luminous"));
+    ospSetObject(
+        instance, "material", ospNewMaterial(rendererType.c_str(), "Luminous"));
     AddInstance(instance);
 
     OSPLight ambient = ospNewLight("ambient");
