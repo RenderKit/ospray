@@ -44,14 +44,14 @@ float *actualData;
 // product(). that needs to change!
 int numCellsInBrick(const osp_amr_brick_info &bi)
 {
-    vec3i size = {bi.bounds.upper.x - bi.bounds.lower.x + 1,
-                  bi.bounds.upper.y - bi.bounds.lower.y + 1,
-                  bi.bounds.upper.z - bi.bounds.lower.z + 1};
+    vec3i size = {bi.bounds[0] - bi.bounds[3] + 1,
+                  bi.bounds[1] - bi.bounds[4] + 1,
+                  bi.bounds[2] - bi.bounds[5] + 1};
     int product = size.x * size.y * size.z;
     return product;
 }
 
-std::ostream &operator<<(std::ostream &os, const osp_vec3i &v)
+std::ostream &operator<<(std::ostream &os, const vec3i &v)
 {
     os << "<" << v.x << ", " <<
                  v.y << ", " <<
@@ -63,9 +63,9 @@ std::ostream &operator<<(std::ostream &os, const osp_amr_brick_info &bi)
 {
     os << "    ________" << std::endl
        << "   /\\       \\      bounds lower" << std::endl
-       << "  /::\\       \\      " << bi.bounds.lower << std::endl
+       << "  /::\\       \\      " << bi.bounds[0] << " " <<  bi.bounds[1] << " " << bi.bounds[2] << " " << std::endl
        << " /::::\\       \\    bounds upper" << std::endl
-       << " \\:::::\\       \\    " << bi.bounds.upper << std::endl
+       << " \\:::::\\       \\    " << bi.bounds[3] << " " <<  bi.bounds[4] << " " << bi.bounds[5] << " " << std::endl
        << "  \\:::::\\       \\  refinementLevel" << std::endl
        << "   \\:::::\\_______\\  " << bi.refinementLevel << std::endl
        << "    \\::::/ZZZZZZZ/ cellWidth" << std::endl
@@ -122,9 +122,9 @@ void parseRaw2AmrFile(const FileName &fileName,
         // ALOK: this is ugly way of doing bounds.extend
         // did it this way because there's no copy constructor between f and i
         brickInfo.push_back(bi);
-        vec3f boundsf = {bi.bounds.upper.x,
-                         bi.bounds.upper.y,
-                         bi.bounds.upper.z};
+        vec3f boundsf = {bi.bounds[0],
+                         bi.bounds[1],
+                         bi.bounds[2]};
         boundsf += vec3f(1.f);
         bounds.extend(boundsf * bi.cellWidth);
 
@@ -170,10 +170,6 @@ OSPVolume createDummyAMRVolume()
     ospSetData(dummy, "brickInfo", brickInfoData);
     ospSetData(dummy, "brickData", brickDataData);
 
-    osp_vec2f amrValueRange = {valueRange.lower, valueRange.upper};
-    OSPTransferFunction tf = ospTestingNewTransferFunction(amrValueRange, "jet");
-
-    ospSetObject(dummy, "transferFunction", tf);
     ospCommit(dummy);
 
     return dummy;
@@ -205,9 +201,21 @@ int main(int argc, const char **argv)
   // add in AMR volume
   OSPVolume amrVolume = createDummyAMRVolume();
 
-  // add volume to the world
-  ospAddVolume(world, amrVolume);
-  box3f bounds(-1, 1);
+  // create a volume instance container
+  OSPVolumeInstance instance = ospNewVolumeInstance(amrVolume);
+
+  // apply a transfer function to the instance
+  osp_vec2f amrValueRange = {valueRange.lower, valueRange.upper};
+  OSPTransferFunction tf = ospTestingNewTransferFunction(amrValueRange, "jet");
+  ospSetObject(instance, "transferFunction", tf);
+  ospCommit(instance);
+
+  // create a data array of all instances
+  OSPData volumeInstances = ospNewData(1, OSP_OBJECT, &instance);
+
+  // add volume instance to the world
+  ospSetObject(world, "volumes", volumeInstances);
+  box3f bounds(0, 64);
 
   // commit the world
   ospCommit(world);
@@ -226,14 +234,6 @@ int main(int argc, const char **argv)
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, bounds, world, renderer));
-
-  glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
-      glfwOSPRayWindow->addObjectToCommit(renderer);
-    }
-  });
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
