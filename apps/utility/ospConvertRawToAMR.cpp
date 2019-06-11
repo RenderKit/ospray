@@ -92,17 +92,20 @@ std::string outFileBase;
 
 bool parseArguments(int argc, char **argv)
 {
-    if(std::string(argv[1]) == "-h" ||
-       std::string(argv[1]) == "--help") {
-        std::cerr << description << std::endl;
-        std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
-        std::cerr << help << std::endl;
-        return false;
-    }
     if(argc != 11) {
-        std::cerr << argc - 1 << " argument" << ((argc > 2) ? "s " : " ");
-        std::cerr << "provided, but 10 are needed" << std::endl;
-        std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
+        if(argc > 1 && 
+           (std::string(argv[1]) == "-h" ||
+           std::string(argv[1]) == "--help")) {
+            std::cerr << description << std::endl;
+            std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
+            std::cerr << help << std::endl;
+        }
+        else {
+            std::cerr << argc - 1 << " argument" << 
+                ((argc == 1 || argc > 2) ? "s " : " ");
+            std::cerr << "provided, but 10 are needed" << std::endl;
+            std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
+        }
         return false;
     }
 
