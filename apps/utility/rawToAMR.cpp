@@ -211,6 +211,66 @@ namespace ospray {
             fclose(infoOut);
             fclose(dataOut);
         }
+
+        template <typename T>
+        std::vector<T> loadRAW(const std::string &fileName,
+                                const vec3i &dims)
+        {
+            const size_t num = dims.product();
+            std::vector<T> volume(num);
+            FILE *file = fopen(fileName.c_str(), "rb");
+            if (!file)
+                throw std::runtime_error("ospray::amr::loadRaw(): could not open '" +
+                        fileName + "'");
+            size_t numRead = fread(volume.data(), sizeof(T), num, file);
+            if (num != numRead)
+                throw std::runtime_error(
+                        "ospray::amr::loadRaw(): read incomplete data ...");
+            fclose(file);
+
+            return volume;
+        }
+
+        template <typename T>
+        std::vector<T> mmapRAW(const std::string &fileName,
+                               const vec3i &dims)
+        {
+#ifdef _WIN32
+            throw std::runtime_error("mmap not supported under windows");
+#else
+            FILE *file = fopen(fileName.c_str(), "rb");
+            fseek(file, 0, SEEK_END);
+            size_t actualFileSize = ftell(file);
+            PRINT(actualFileSize);
+            fclose(file);
+
+            size_t fileSize =
+                size_t(dims.x) * size_t(dims.y) * size_t(dims.z) * sizeof(T);
+            std::cout << "mapping file " << fileName << " exptd size "
+                << prettyNumber(fileSize) << " actual size "
+                << prettyNumber(actualFileSize) << std::endl;
+            if (actualFileSize < fileSize)
+                throw std::runtime_error("incomplete file!");
+            if (actualFileSize > fileSize)
+                throw std::runtime_error("mapping PARTIAL (or incorrect!?) file...");
+            int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
+            assert(fd >= 0);
+
+            void *mem = mmap(nullptr,
+                    fileSize,
+                    PROT_READ,
+                    MAP_SHARED  // |MAP_HUGETLB
+                    ,
+                    fd,
+                    0);
+            assert(mem != nullptr && (long long)mem != -1LL);
+
+            std::vector<T> volume;
+            volume.assign((T *)mem, (T *)mem + dims.product());
+
+            return volume;
+#endif
+        }
     } // namespace amr
 } // namespace ospray
 

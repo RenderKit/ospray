@@ -21,6 +21,15 @@
 #include "ospcommon/FileName.h"
 #include "ospcommon/tasking/parallel_for.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/mman.h>
+#endif
+#include <fcntl.h>
+
 #include <memory>
 #include <mutex>
 #include <string>
