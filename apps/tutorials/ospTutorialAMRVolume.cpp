@@ -37,6 +37,7 @@ std::vector<float *> brickPtrs;            // holds actual data
 std::vector<OSPData> brickData;            // holds actual data as OSPData
 range1f valueRange;
 float *actualData;
+box3f bounds;
 
 // ALOK: TODO
 // this is ugly
@@ -97,8 +98,8 @@ void parseRaw2AmrFile(const FileName &fileName,
 
     osp_amr_brick_info bi;
 
-    auto bounds = box3f(-1, 1);
     auto numCells = BS * BS * BS;
+    bounds = box3f(-1, 1);
 
     // populate brickInfo and brickPtrs
     // by reading in osp_amr_brick_info structs from infoFile
@@ -150,7 +151,32 @@ OSPVolume createDummyAMRVolume()
 
     //FileName fname("/mnt/ssd/test_data/test_amr");
     FileName fname("/mnt/ssd/magnetic_amr");
-    parseRaw2AmrFile(fname, 4, 3);
+    parseRaw2AmrFile(fname, 4, 2);
+
+    /*
+    osp_amr_brick_info bi;
+    bi.bounds[0] = 0;
+    bi.bounds[1] = 64;
+    bi.bounds[2] = 0;
+    bi.bounds[3] = 64;
+    bi.bounds[4] = 0;
+    bi.bounds[5] = 64;
+    bi.refinementLevel = 0;
+    bi.cellWidth = 1.f;
+
+    brickInfo.push_back(bi);
+
+    size_t blockSize = 256;
+    size_t numCells = blockSize * blockSize * blockSize;
+    float *actualData = (float *)malloc(numCells * sizeof(float));
+    for(size_t i = 0; i < numCells; i++) {
+        actualData[i] = i*i;
+        valueRange.extend(i*i);
+    }
+    utility::ArrayView<float> bd(actualData, numCells);
+
+    brickPtrs.push_back(bd);
+    */
     
     // ALOK: taken from ospray/master's AMRVolume::preCommit()
     // convert raw pointers in brickPtrs to OSPData in brickData
@@ -215,7 +241,6 @@ int main(int argc, const char **argv)
 
   // add volume instance to the world
   ospSetObject(world, "volumes", volumeInstances);
-  box3f bounds(0, 64);
 
   // commit the world
   ospCommit(world);

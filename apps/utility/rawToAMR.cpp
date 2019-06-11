@@ -67,6 +67,9 @@ namespace ospray {
             // at this point, finestLevelSize should be greater than or equal
             // to the input volume dimensions, so the name doesn't make much sense
 
+            // create container for current level so we don't use in
+            std::shared_ptr<Array3D<float>> currentLevel = in;
+
             /* create and write the bricks */
             vec3i levelSize = finestLevelSize;
             for (int level = numLevels - 1; level >= 0; --level) {
@@ -78,8 +81,6 @@ namespace ospray {
                 // nextLevelSize - next level (smaller than current) size
                 const vec3i nextLevelSize = levelSize / refinementLevel;
                 std::cout << "reducing to next level of " << nextLevelSize << std::endl;
-                // create container for current level so we don't use in
-                std::shared_ptr<Array3D<float>> currentLevel = in;
                 // create container for next level down
                 std::shared_ptr<ActualArray3D<float>> nextLevel =
                     std::make_shared<ActualArray3D<float>>(nextLevelSize);
@@ -101,8 +102,7 @@ namespace ospray {
                 // then it doesn't work
                 // Progress progress("level progress:", numBricks.product(), 30.f);
                 // perform the lambda function for numBricks.product() indices
-                ospcommon::tasking::parallel_for(
-                        numBricks.product(), [&](int brickIdx) {
+                ospcommon::tasking::parallel_for(numBricks.product(), [&](int brickIdx) {
                         // create new brick description
                         BrickDesc brick;
                         // set level to current level from outer for loop above
@@ -122,8 +122,8 @@ namespace ospray {
                         size_t out = 0;
                         ospcommon::range1f brickRange;
                         // traverse the data by brick index
-                        for (int iz = brick.box.lower.z; iz <= brick.box.upper.z; iz++)
-                            for (int iy = brick.box.lower.y; iy <= brick.box.upper.y; iy++)
+                        for (int iz = brick.box.lower.z; iz <= brick.box.upper.z; iz++) {
+                            for (int iy = brick.box.lower.y; iy <= brick.box.upper.y; iy++) {
                                 for (int ix = brick.box.lower.x; ix <= brick.box.upper.x;
                                         ix++) {
                                     const vec3i thisLevelCoord(ix, iy, iz);
@@ -147,6 +147,8 @@ namespace ospray {
                                     // extend the value range of this brick (min/max) as needed
                                     brickRange.extend(v);
                                 }
+                            }
+                        }
 
                         // write data to file if we're not removing(?) data
                         // here is where the threshold provided is coming into play
@@ -165,7 +167,7 @@ namespace ospray {
                             numWritten++;
                         }
                         //progress.ping();
-                        }); // end parallel for
+                }); // end parallel for
                 currentLevel = nextLevel;
                 levelSize = nextLevelSize;
                 std::cout << "done level " << level << ", written " << numWritten
