@@ -79,6 +79,13 @@ void parseRaw2AmrFile(const FileName &fileName,
                       int BS,
                       int maxLevel)
 {
+    char *maxLevelEnv = getenv("AMR_MAX_LEVEL");
+    if (maxLevelEnv) {
+        maxLevel = atoi(maxLevelEnv);
+        std::cerr << "will only parse amr file up to level " << maxLevel
+            << std::endl;
+    }
+
     // filename arg needs to be base filename without extension
     FileName infoFileName = fileName.str() + std::string(".info");
     FileName dataFileName = fileName.str() + std::string(".data");
