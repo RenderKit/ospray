@@ -302,6 +302,12 @@ namespace ospray {
       return (OSPWorld) new World;
     }
 
+    box3f ISPCDevice::getWorldBounds(OSPWorld _world)
+    {
+      auto *world = (World*)_world;
+      return world->getBounds();
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Object + Parameter Lifetime Management /////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

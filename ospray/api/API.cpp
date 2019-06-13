@@ -576,6 +576,14 @@ extern "C" OSPWorld ospNewWorld() OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
+extern "C" OSPBounds ospGetWorldBounds(OSPWorld world) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  box3f bounds = currentDevice().getWorldBounds(world);
+  return (OSPBounds&)bounds;
+}
+OSPRAY_CATCH_END({})
+
 ///////////////////////////////////////////////////////////////////////////////
 // Object + Parameter Lifetime Management /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

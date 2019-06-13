@@ -237,6 +237,14 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPWorld ospNewWorld();
 
+  typedef struct
+  {
+    float lower[3];
+    float upper[3];
+  } OSPBounds;
+
+  OSPRAY_INTERFACE OSPBounds ospGetWorldBounds(OSPWorld);
+
   // Object + Parameter Lifetime Management ///////////////////////////////////
 
   OSPRAY_INTERFACE void ospSetParam(OSPObject, const char *id, OSPDataType, const void *mem);
@@ -291,7 +299,8 @@ extern "C" {
   // Get the completion state of the given task [0.f-1.f]
   OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
 
-  typedef struct {
+  typedef struct
+  {
     int hasHit;
     float worldPosition[3];
     OSPInstance instance;
