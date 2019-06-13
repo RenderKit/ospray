@@ -15,25 +15,10 @@
 // ======================================================================== //
 
 #include "api/ISPCDevice.h"
-#include "camera/Camera.h"
-#include "common/Data.h"
-#include "common/Library.h"
+#include "common/Messaging.h"
 #include "common/OSPWork.h"
-#include "common/World.h"
-#include "fb/LocalFB.h"
-#include "geometry/TriangleMesh.h"
-#include "lights/Light.h"
-#include "mpi/MPIOffloadDevice.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpiCommon/MPIBcastFabric.h"
-#include "mpiCommon/MPICommon.h"
 #include "ospcommon/utility/getEnvVar.h"
-#include "render/Renderer.h"
-#include "texture/Texture2D.h"
-#include "transferFunction/TransferFunction.h"
-#include "volume/Volume.h"
-// std
-#include <algorithm>
 
 #ifdef OPEN_MPI
 #include <thread>
@@ -93,12 +78,6 @@ namespace ospray {
       return work;
     }
 
-    /*! it's up to the proper init
-      routine to decide which processes call this function and which
-      ones don't. This function will not return.
-
-      \internal We ssume that mpi::worker and mpi::app have already been set up
-    */
     void runWorker()
     {
       auto &device = ospray::api::Device::current;
@@ -155,7 +134,7 @@ namespace ospray {
       std::map<work::Work::tag_t, work::CreateWorkFct> workTypeRegistry;
       work::registerOSPWorkItems(workTypeRegistry);
 
-      while (1) {
+      while (true) {
         auto work = readWork(workTypeRegistry, *readStream);
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#osp.mpi.worker: processing work " << typeIdOf(work) << ": "

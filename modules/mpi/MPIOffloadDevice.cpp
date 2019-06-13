@@ -411,8 +411,6 @@ namespace ospray {
 
       initialized = true;
 
-      work::registerOSPWorkItems(workRegistry);
-
       int _ac           = 2;
       const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
 
@@ -456,6 +454,8 @@ namespace ospray {
               "start.");
         }
       }
+
+      work::registerOSPWorkItems(workRegistry);
 
       // Only the master running at this point, workers go on to
       // MPIOffloadWorker::runWorker
