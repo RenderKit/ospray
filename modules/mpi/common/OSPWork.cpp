@@ -74,6 +74,13 @@ namespace ospray {
         registerWorkUnit<SetParam<vec3f>>(registry);
         registerWorkUnit<SetParam<vec3i>>(registry);
         registerWorkUnit<SetParam<vec4f>>(registry);
+        registerWorkUnit<SetParam<vec4i>>(registry);
+        registerWorkUnit<SetParam<box1f>>(registry);
+        registerWorkUnit<SetParam<box2f>>(registry);
+        registerWorkUnit<SetParam<box3f>>(registry);
+        registerWorkUnit<SetParam<box4f>>(registry);
+        registerWorkUnit<SetParam<linear3f>>(registry);
+        registerWorkUnit<SetParam<affine3f>>(registry);
 
         registerWorkUnit<RemoveParam>(registry);
 
