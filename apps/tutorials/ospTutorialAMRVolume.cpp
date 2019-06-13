@@ -38,6 +38,7 @@ std::vector<OSPData> brickData;            // holds actual data as OSPData
 range1f valueRange;
 float *actualData;
 box3f bounds;
+int maxParseLevel;
 
 // ALOK: TODO
 // this is ugly
@@ -79,12 +80,15 @@ void parseRaw2AmrFile(const FileName &fileName,
                       int BS,
                       int maxLevel)
 {
+    maxParseLevel = maxLevel;
+
     char *maxLevelEnv = getenv("AMR_MAX_LEVEL");
     if (maxLevelEnv) {
         maxLevel = atoi(maxLevelEnv);
         std::cerr << "will only parse amr file up to level " << maxLevel
             << std::endl;
     }
+
 
     // filename arg needs to be base filename without extension
     FileName infoFileName = fileName.str() + std::string(".info");
@@ -159,31 +163,6 @@ OSPVolume createDummyAMRVolume()
     //FileName fname("/mnt/ssd/test_data/test_amr");
     FileName fname("/mnt/ssd/magnetic_amr");
     parseRaw2AmrFile(fname, 4, 2);
-
-    /*
-    osp_amr_brick_info bi;
-    bi.bounds[0] = 0;
-    bi.bounds[1] = 64;
-    bi.bounds[2] = 0;
-    bi.bounds[3] = 64;
-    bi.bounds[4] = 0;
-    bi.bounds[5] = 64;
-    bi.refinementLevel = 0;
-    bi.cellWidth = 1.f;
-
-    brickInfo.push_back(bi);
-
-    size_t blockSize = 256;
-    size_t numCells = blockSize * blockSize * blockSize;
-    float *actualData = (float *)malloc(numCells * sizeof(float));
-    for(size_t i = 0; i < numCells; i++) {
-        actualData[i] = i*i;
-        valueRange.extend(i*i);
-    }
-    utility::ArrayView<float> bd(actualData, numCells);
-
-    brickPtrs.push_back(bd);
-    */
     
     // ALOK: taken from ospray/master's AMRVolume::preCommit()
     // convert raw pointers in brickPtrs to OSPData in brickData
@@ -231,6 +210,8 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
+  std::vector<OSPGeometryInstance> geometryInstances;
+
   // add in AMR volume
   OSPVolume amrVolume = createDummyAMRVolume();
 
@@ -249,9 +230,6 @@ int main(int argc, const char **argv)
   // add volume instance to the world
   ospSetObject(world, "volumes", volumeInstances);
 
-  // commit the world
-  ospCommit(world);
-
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
@@ -261,11 +239,179 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
+  // read from brickInfo and create cylinders to show bounds
+  std::vector<float> vertices;
+  std::vector<vec4f> palette { vec4f(1, 0, 0, 1),
+                               vec4f(1, 1, 0, 1),
+                               vec4f(0, 1, 0, 1),
+                               vec4f(0, 1, 1, 1),
+                               vec4f(0, 0, 1, 1),
+                               vec4f(1, 0, 1, 1) };
+  std::vector<vec4f> colors;
+  //auto &bi = brickInfo[0];
+  for(auto &bi : brickInfo)
+  {
+      float scale = powf(maxParseLevel, bi.refinementLevel);
+      float realBounds[] = {
+          bi.bounds[0] / scale,
+          bi.bounds[1] / scale,
+          bi.bounds[2] / scale,
+          (bi.bounds[3] + 1) / scale,
+          (bi.bounds[4] + 1) / scale,
+          (bi.bounds[5] + 1) / scale,
+      };
+
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[2]);
+
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[2]);
+
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[2]);
+
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[2]);
+
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[5]);
+
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[5]);
+
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[5]);
+
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[2]);
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[5]);
+
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[5]);
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[5]);
+
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[5]);
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[5]);
+
+      vertices.push_back(realBounds[3]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[5]);
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[5]);
+
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[4]);
+      vertices.push_back(realBounds[5]);
+      vertices.push_back(realBounds[0]);
+      vertices.push_back(realBounds[1]);
+      vertices.push_back(realBounds[5]);
+
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+      colors.push_back(palette[bi.refinementLevel]);
+  }
+
+  OSPData verticesData = ospNewData(vertices.size(), OSP_FLOAT, vertices.data());
+  OSPData colorData = ospNewData(colors.size(), OSP_VEC4F, colors.data());
+  OSPGeometry testLine = ospNewGeometry("cylinders");
+  ospSetData(testLine, "cylinders", verticesData);
+  ospCommit(testLine);
+  OSPGeometryInstance testLineInstance = ospNewGeometryInstance(testLine);
+  ospSetData(testLineInstance, "color", colorData);
+  ospCommit(testLineInstance);
+
+
+  bool showBricks = false;
+  auto updateScene = [&]() {
+      std::cout << "update scene" << std::endl;
+      geometryInstances.clear();
+
+      ospRemoveParam(world, "geometries");
+
+      if(showBricks) {
+          geometryInstances.push_back(testLineInstance);
+          OSPData brickLines = ospNewData(geometryInstances.size(),
+                  OSP_OBJECT, geometryInstances.data());
+          ospSetObject(world, "geometries", brickLines);
+          ospRelease(brickLines);
+      }
+  };
+
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, bounds, world, renderer));
+
+  glfwOSPRayWindow->registerImGuiCallback([&]() {
+      bool updateWorld = false;
+      bool commitWorld = false;
+      if(ImGui::Checkbox("Show brick bounds", &showBricks)) {
+      std::cout << "showBricks = " << showBricks << std::endl;
+        updateWorld = true;
+        std::cout << "box checked" << std::endl;
+        }
+
+      commitWorld = updateWorld;
+
+      if(updateWorld)
+        updateScene();
+      if(commitWorld)
+        glfwOSPRayWindow->addObjectToCommit(world);
+  });
+
+  updateScene();
+
+  // commit the world
+  ospCommit(world);
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
