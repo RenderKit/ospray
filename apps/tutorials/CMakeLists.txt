@@ -37,15 +37,15 @@ target_link_libraries(ospTutorialCpp PRIVATE ospray)
 add_executable(ospTutorialAsync ospTutorialAsync.c)
 target_link_libraries(ospTutorialAsync PRIVATE ospray)
 
-ospray_create_application(ospTutorialBoxes
+## Create a static library of all common tutorial bits ##
+
+ospray_create_library(tutorial_common STATIC
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
-  ospTutorialBoxes.cpp
   imgui/imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospTutorialBoxes
-PRIVATE
+target_link_libraries(tutorial_common PUBLIC
   ospray
   ospray_testing
   ospray_common
@@ -54,105 +54,45 @@ PRIVATE
   ${OPENGL_LIBRARIES}
 )
 
-ospray_create_application(ospTutorialSpheres
-  ArcballCamera.cpp
-  GLFWOSPRayWindow.cpp
-  ospTutorialSpheres.cpp
-  imgui/imgui_impl_glfw_gl3.cpp
+target_include_directories(tutorial_common INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/tutorials>
 )
 
-target_link_libraries(ospTutorialSpheres
-PRIVATE
-  ospray
-  ospray_testing
-  ospray_common
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  COMPONENT devel
+  FILES_MATCHING
+  PATTERN *.h
+  PATTERN imgui EXCLUDE
 )
+
+## Build the actual tutorials ##
+
+ospray_create_application(ospTutorialBoxes ospTutorialBoxes.cpp)
+target_link_libraries(ospTutorialBoxes PRIVATE tutorial_common)
+
+ospray_create_application(ospTutorialSpheres ospTutorialSpheres.cpp)
+target_link_libraries(ospTutorialSpheres PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialBouncingSpheres
-  ArcballCamera.cpp
-  GLFWOSPRayWindow.cpp
   ospTutorialBouncingSpheres.cpp
-  imgui/imgui_impl_glfw_gl3.cpp
 )
+target_link_libraries(ospTutorialBouncingSpheres PRIVATE tutorial_common)
 
-target_link_libraries(ospTutorialBouncingSpheres
-PRIVATE
-  ospray
-  ospray_testing
-  ospray_common
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-)
-
-ospray_create_application(ospTutorialSubdivision
-  ArcballCamera.cpp
-  GLFWOSPRayWindow.cpp
-  ospTutorialSubdivision.cpp
-  imgui/imgui_impl_glfw_gl3.cpp
-)
-
-target_link_libraries(ospTutorialSubdivision
-PRIVATE
-  ospray
-  ospray_testing
-  ospray_common
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-)
+ospray_create_application(ospTutorialSubdivision ospTutorialSubdivision.cpp)
+target_link_libraries(ospTutorialSubdivision PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialStructuredVolume
-  ArcballCamera.cpp
-  GLFWOSPRayWindow.cpp
   ospTutorialStructuredVolume.cpp
-  imgui/imgui_impl_glfw_gl3.cpp
 )
-
-target_link_libraries(ospTutorialStructuredVolume
-PRIVATE
-  ospray
-  ospray_testing
-  ospray_common
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-)
+target_link_libraries(ospTutorialStructuredVolume PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialUnstructuredVolume
-  ArcballCamera.cpp
-  GLFWOSPRayWindow.cpp
   ospTutorialUnstructuredVolume.cpp
-  imgui/imgui_impl_glfw_gl3.cpp
 )
+target_link_libraries(ospTutorialUnstructuredVolume PRIVATE tutorial_common)
 
-target_link_libraries(ospTutorialUnstructuredVolume
-PRIVATE
-  ospray
-  ospray_testing
-  ospray_common
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-)
-
-ospray_create_application(ospTutorialPixelOps
-  ArcballCamera.cpp
-  GLFWOSPRayWindow.cpp
-  ospTutorialPixelOps.cpp
-  imgui/imgui_impl_glfw_gl3.cpp
-)
-
-target_link_libraries(ospTutorialPixelOps
-PRIVATE
-  ospray
-  ospray_testing
-  ospray_common
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-)
+ospray_create_application(ospTutorialPixelOps ospTutorialPixelOps.cpp)
+target_link_libraries(ospTutorialPixelOps PRIVATE tutorial_common)
 
