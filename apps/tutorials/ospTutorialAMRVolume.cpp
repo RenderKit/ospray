@@ -251,6 +251,9 @@ int main(int argc, const char **argv)
   //auto &bi = brickInfo[0];
   for(auto &bi : brickInfo)
   {
+      if(bi.refinementLevel > maxParseLevel) {
+          continue;
+      }
       float scale = powf(maxParseLevel, bi.refinementLevel);
       float realBounds[] = {
           bi.bounds[0] / scale,
