@@ -161,8 +161,10 @@ OSPVolume createDummyAMRVolume()
     ospSetString(dummy, "voxelType", "float");
 
     //FileName fname("/mnt/ssd/test_data/test_amr");
-    FileName fname("/mnt/ssd/magnetic_amr");
-    parseRaw2AmrFile(fname, 4, 2);
+    //FileName fname("/mnt/ssd/magnetic_amr");
+    //parseRaw2AmrFile(fname, 4, 2);
+
+    //std::vector<float> raw = ospray::testing::generateVoxels(256, 10);
     
     // ALOK: taken from ospray/master's AMRVolume::preCommit()
     // convert raw pointers in brickPtrs to OSPData in brickData
@@ -213,13 +215,18 @@ int main(int argc, const char **argv)
   std::vector<OSPGeometryInstance> geometryInstances;
 
   // add in AMR volume
-  OSPVolume amrVolume = createDummyAMRVolume();
+  // OSPVolume amrVolume = createDummyAMRVolume();
+  OSPTestingVolume testData = ospTestingNewVolume("gravity_spheres_amr_volume");
+
+  OSPVolume amrVolume = testData.volume;
 
   // create a volume instance container
   OSPVolumeInstance instance = ospNewVolumeInstance(amrVolume);
+  ospSetFloat(instance, "samplingRate", 10.f);
 
   // apply a transfer function to the instance
-  osp_vec2f amrValueRange = {valueRange.lower, valueRange.upper};
+  // osp_vec2f amrValueRange = {valueRange.lower, valueRange.upper};
+  osp_vec2f amrValueRange = testData.voxelRange;
   OSPTransferFunction tf = ospTestingNewTransferFunction(amrValueRange, "jet");
   ospSetObject(instance, "transferFunction", tf);
   ospCommit(instance);
@@ -387,6 +394,8 @@ int main(int argc, const char **argv)
           ospRelease(brickLines);
       }
   };
+
+  bounds = reinterpret_cast<box3f &>(testData.bounds);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
