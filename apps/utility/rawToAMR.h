@@ -63,7 +63,7 @@ namespace ospray {
         //static FILE *infoOut = nullptr;
         //static FILE *dataOut = nullptr;
 
-        void makeAMR(const std::shared_ptr<std::vector<float>> in,
+        void makeAMR(const std::vector<float> &in,
                      const vec3i inGridDims,
                      const int numLevels,
                      const int blockSize,
@@ -82,7 +82,7 @@ namespace ospray {
                                 const vec3i &dims);
 
         template <typename T>
-        std::shared_ptr<std::vector<T>> mmapRAW(const std::string &fileName,
+        std::vector<T> mmapRAW(const std::string &fileName,
                                const vec3i &dims)
         {
 #ifdef _WIN32
@@ -116,8 +116,8 @@ namespace ospray {
                     0);
             assert(mem != nullptr && (long long)mem != -1LL);
 
-            std::shared_ptr<std::vector<T>> volume = std::make_shared<std::vector<T>>(dims.product());
-            (*volume).assign((T *)mem, (T *)mem + dims.product());
+            std::vector<T> volume;
+            volume.assign((T *)mem, (T *)mem + dims.product());
 
             return volume;
 #endif

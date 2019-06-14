@@ -26,7 +26,7 @@
 namespace ospray {
     namespace amr {
 
-        void makeAMR(const std::shared_ptr<std::vector<float>> in,
+        void makeAMR(const std::vector<float> &in,
                      const vec3i inGridDims,
                      const int numLevels,
                      const int blockSize,
@@ -70,7 +70,7 @@ namespace ospray {
             // to the input volume dimensions, so the name doesn't make much sense
 
             // create container for current level so we don't use in
-            std::shared_ptr<std::vector<float>> currentLevel = in;
+            std::vector<float> &currentLevel = const_cast<std::vector<float> &>(in);
 
             /* create and write the bricks */
             vec3i levelSize = finestLevelSize;
@@ -84,8 +84,7 @@ namespace ospray {
                 const vec3i nextLevelSize = levelSize / refinementLevel;
                 std::cout << "reducing to next level of " << nextLevelSize << std::endl;
                 // create container for next level down
-                std::shared_ptr<std::vector<float>> nextLevel =
-                    std::make_shared<std::vector<float>>(nextLevelSize.product(), 0);
+                std::vector<float> nextLevel = std::vector<float>(nextLevelSize.product(), 0);
 
                 // current level size divided by the brick size
                 // blockSize was the starting/smallest(?) brick size, so
@@ -125,7 +124,7 @@ namespace ospray {
                                     const size_t thisLevelCoord = ix + levelSize.y * (iy + iz * levelSize.z);
                                     const size_t nextLevelCoord = ix/refinementLevel + nextLevelSize.y * (iy/refinementLevel + iz/refinementLevel * nextLevelSize.z);
                                     // get the actual data at current coordinates
-                                    const float v = (*currentLevel)[thisLevelCoord];
+                                    const float v = currentLevel[thisLevelCoord];
                                     // insert the data into the current brick
                                     data[out++]   = v;
                                     // increment the data in the next level down by
@@ -137,7 +136,7 @@ namespace ospray {
                                     // a smaller extents, is actually the physically larger
                                     // brick, and contains a "low resolution" version of the
                                     // data in the current brick
-                                    (*nextLevel)[nextLevelCoord] += v/(refinementLevel * refinementLevel * refinementLevel);
+                                    nextLevel[nextLevelCoord] += v/(refinementLevel * refinementLevel * refinementLevel);
                                     // extend the value range of this brick (min/max) as needed
                                     brickRange.extend(v);
                                 }

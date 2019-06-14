@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 
     // ALOK: ultimately storing the data as float regardless of input type
     // (????)
-    std::shared_ptr<std::vector<float>> in;
+    std::vector<float> in;
     if (format == "float") {
         in = ospray::amr::mmapRAW<float>(inFileName, inDims);
     }
