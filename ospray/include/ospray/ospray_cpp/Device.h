@@ -33,6 +33,7 @@ public:
   Device(OSPDevice existing);
 
   void set(const std::string &name, const std::string &v) const;
+  void set(const std::string &name, bool v) const;
   void set(const std::string &name, int v) const;
   void set(const std::string &name, void *v) const;
 
@@ -74,9 +75,14 @@ inline void Device::set(const std::string &name, const std::string &v) const
   ospDeviceSetString(ospHandle, name.c_str(), v.c_str());
 }
 
+inline void Device::set(const std::string &name, bool v) const
+{
+  ospDeviceSetBool(ospHandle, name.c_str(), v);
+}
+
 inline void Device::set(const std::string &name, int v) const
 {
-  ospDeviceSet1i(ospHandle, name.c_str(), v);
+  ospDeviceSetInt(ospHandle, name.c_str(), v);
 }
 
 inline void Device::set(const std::string &name, void *v) const

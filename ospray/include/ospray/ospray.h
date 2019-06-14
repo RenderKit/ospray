@@ -225,8 +225,8 @@ extern "C" {
   OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
 
   OSPRAY_INTERFACE void ospDeviceSetString(OSPDevice, const char *id, const char *s);
-  OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int x);
-  OSPRAY_INTERFACE void ospDeviceSet1b(OSPDevice, const char *id, int x);
+  OSPRAY_INTERFACE void ospDeviceSetBool(OSPDevice, const char *id, int x);
+  OSPRAY_INTERFACE void ospDeviceSetInt(OSPDevice, const char *id, int x);
   OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
 
   // Status message callback function type

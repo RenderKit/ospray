@@ -309,18 +309,18 @@ extern "C" void ospDeviceSetString(OSPDevice _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSet1b(OSPDevice _object,
-                               const char *id,
-                               int x) OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceSetBool(OSPDevice _object,
+                                 const char *id,
+                                 int x) OSPRAY_CATCH_BEGIN
 {
   Device *object = (Device *)_object;
   object->setParam(id, static_cast<bool>(x));
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSet1i(OSPDevice _object,
-                               const char *id,
-                               int x) OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceSetInt(OSPDevice _object,
+                                const char *id,
+                                int x) OSPRAY_CATCH_BEGIN
 {
   Device *object = (Device *)_object;
   object->setParam(id, x);
