@@ -32,6 +32,8 @@ ospray_create_library(ospray_testing
   volume/GravitySpheresVolume.cpp
   volume/SimpleStructuredVolume.cpp
   volume/SimpleUnstructuredVolume.cpp
+
+  ../utility/rawToAMR.cpp
 )
 
 target_link_libraries(ospray_testing PUBLIC ospray PRIVATE ospray_common)

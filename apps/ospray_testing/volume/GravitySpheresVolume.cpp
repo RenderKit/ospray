@@ -21,6 +21,8 @@
 // ospcommon
 #include "ospcommon/box.h"
 #include "ospcommon/tasking/parallel_for.h"
+// apps/utility
+#include "../../utility/rawToAMR.h"
 using namespace ospcommon;
 
 namespace ospray {
@@ -34,7 +36,7 @@ namespace ospray {
       std::vector<float> generateVoxels() const;
       OSPTestingVolume createVolume() const override;
 
-     private:
+     protected:
       size_t volumeDimension{256};
       size_t numPoints{10};
     };
@@ -149,6 +151,70 @@ namespace ospray {
     }
 
     OSP_REGISTER_TESTING_VOLUME(GravitySpheresVolume, gravity_spheres_volume);
+
+    struct GravitySpheresAMRVolume : public GravitySpheresVolume
+    {
+      GravitySpheresAMRVolume() = default;
+      ~GravitySpheresAMRVolume() override = default;
+
+      OSPTestingVolume createVolume() const override;
+    };
+
+    OSPTestingVolume GravitySpheresAMRVolume::createVolume() const
+    {
+      // generate the structured volume voxel data
+      std::vector<float> voxels = generateVoxels();
+
+      // initialize constants for converting to AMR
+      vec3f volumeDims(volumeDimension, volumeDimension, volumeDimension);
+      const int numLevels = 5;
+      const int blockSize = 4;
+      const int refinementLevel = 2;
+      const float threshold = 2.5;
+
+      std::vector<ospray::amr::BrickDesc> brickInfo;
+      std::vector<std::vector<float>> brickVectors;
+      std::vector<OSPData> brickData;
+
+      // convert the structured volume to AMR
+      ospray::amr::makeAMR(voxels,
+                           volumeDims,
+                           numLevels,
+                           blockSize,
+                           refinementLevel,
+                           threshold,
+                           brickInfo,
+                           brickVectors);
+
+      for(const std::vector<float> &bd : brickVectors) {
+          OSPData data = ospNewData(bd.size(), OSP_FLOAT, bd.data(), OSP_DATA_SHARED_BUFFER);
+          brickData.push_back(data);
+      }
+
+      OSPData brickInfoData = ospNewData(brickInfo.size()*sizeof(osp_amr_brick_info), OSP_RAW, brickInfo.data());
+      ospCommit(brickInfoData);
+
+      OSPData brickDataData = ospNewData(brickData.size(), OSP_DATA, brickData.data(), OSP_DATA_SHARED_BUFFER);
+      ospCommit(brickDataData);
+
+      // create an AMR volume and assign attributes
+      OSPVolume volume = ospNewVolume("amr_volume");
+
+      ospSetString(volume, "voxelType", "float");
+      ospSetData(volume, "brickInfo", brickInfoData);
+      ospSetData(volume, "brickData", brickDataData);
+
+      ospCommit(volume);
+
+      OSPTestingVolume retval;
+      retval.volume = volume;
+      retval.voxelRange = osp_vec2f{0, 10};
+      retval.bounds = osp_box3f{osp_vec3f{0, 0, 0}, osp_vec3f{16, 16, 16}};
+
+      return retval;
+    }
+
+    OSP_REGISTER_TESTING_VOLUME(GravitySpheresAMRVolume, gravity_spheres_amr_volume);
 
   }  // namespace testing
 }  // namespace ospray
