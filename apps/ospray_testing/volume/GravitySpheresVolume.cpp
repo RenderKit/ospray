@@ -31,6 +31,7 @@ namespace ospray {
       GravitySpheresVolume()           = default;
       ~GravitySpheresVolume() override = default;
 
+      std::vector<float> generateVoxels() const;
       OSPTestingVolume createVolume() const override;
 
      private:
@@ -40,7 +41,7 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingVolume GravitySpheresVolume::createVolume() const
+    std::vector<float> GravitySpheresVolume::generateVoxels() const
     {
       struct Point
       {
@@ -66,20 +67,6 @@ namespace ospray {
         p.weight = weightDistribution(gen);
       }
 
-      // create a structured volume and assign attributes
-      OSPVolume volume = ospNewVolume("block_bricked_volume");
-
-      ospSetVec3i(volume,
-               "dimensions",
-               volumeDimension,
-               volumeDimension,
-               volumeDimension);
-      ospSetString(volume, "voxelType", "float");
-      ospSetVec3f(volume, "gridOrigin", -1.f, -1.f, -1.f);
-
-      const float gridSpacing = 2.f / float(volumeDimension);
-      ospSetVec3f(volume, "gridSpacing", gridSpacing, gridSpacing, gridSpacing);
-
       // get world coordinate in [-1.f, 1.f] from logical coordinates in [0,
       // volumeDimension)
       auto logicalToWorldCoordinates = [&](size_t i, size_t j, size_t k) {
@@ -88,7 +75,7 @@ namespace ospray {
                      -1.f + float(k) / float(volumeDimension - 1) * 2.f);
       };
 
-      // generate volume values
+      // generate voxels
       std::vector<float> voxels(volumeDimension * volumeDimension *
                                 volumeDimension);
 
@@ -115,6 +102,28 @@ namespace ospray {
           }
         }
       });
+
+      return voxels;
+    }
+
+    OSPTestingVolume GravitySpheresVolume::createVolume() const
+    {
+      // create a structured volume and assign attributes
+      OSPVolume volume = ospNewVolume("block_bricked_volume");
+
+      ospSetVec3i(volume,
+               "dimensions",
+               volumeDimension,
+               volumeDimension,
+               volumeDimension);
+      ospSetString(volume, "voxelType", "float");
+      ospSetVec3f(volume, "gridOrigin", -1.f, -1.f, -1.f);
+
+      const float gridSpacing = 2.f / float(volumeDimension);
+      ospSetVec3f(volume, "gridSpacing", gridSpacing, gridSpacing, gridSpacing);
+
+      // generate volume values
+      std::vector<float> voxels = generateVoxels();
 
       vec3i regionStart{0, 0, 0};
       vec3i regionEnd{
