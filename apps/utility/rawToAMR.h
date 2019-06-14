@@ -63,7 +63,8 @@ namespace ospray {
         //static FILE *infoOut = nullptr;
         //static FILE *dataOut = nullptr;
 
-        void makeAMR(const std::shared_ptr<Array3D<float>> in,
+        void makeAMR(const std::shared_ptr<std::vector<float>> in,
+                     const vec3i inGridDims,
                      const int numLevels,
                      const int blockSize,
                      const int refinementLevel,
@@ -75,5 +76,51 @@ namespace ospray {
                        const std::vector<BrickDesc> &brickInfo,
                        const std::vector<std::vector<float>> &brickData,
                        const int blockSize);
+
+        template <typename T>
+        std::vector<T> loadRAW(const std::string &fileName,
+                                const vec3i &dims);
+
+        template <typename T>
+        std::shared_ptr<std::vector<T>> mmapRAW(const std::string &fileName,
+                               const vec3i &dims)
+        {
+#ifdef _WIN32
+            throw std::runtime_error("mmap not supported under windows");
+#else
+            FILE *file = fopen(fileName.c_str(), "rb");
+            fseek(file, 0, SEEK_END);
+            size_t actualFileSize = ftell(file);
+            fclose(file);
+
+            size_t fileSize =
+                size_t(dims.x) * size_t(dims.y) * size_t(dims.z) * sizeof(T);
+
+            if (actualFileSize != fileSize) {
+                std::stringstream ss;
+                ss << "Got file size " << prettyNumber(actualFileSize);
+                ss << ", but expected " << prettyNumber(fileSize);
+                ss << ". Common cause is wrong data type!";
+                throw std::runtime_error(ss.str());
+            }
+
+            int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
+            assert(fd >= 0);
+
+            void *mem = mmap(nullptr,
+                    fileSize,
+                    PROT_READ,
+                    MAP_SHARED  // |MAP_HUGETLB
+                    ,
+                    fd,
+                    0);
+            assert(mem != nullptr && (long long)mem != -1LL);
+
+            std::shared_ptr<std::vector<T>> volume = std::make_shared<std::vector<T>>(dims.product());
+            (*volume).assign((T *)mem, (T *)mem + dims.product());
+
+            return volume;
+#endif
+        }
     } // namespace amr
 } // namespace ospray

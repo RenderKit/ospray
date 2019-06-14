@@ -21,11 +21,13 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <sstream>
 
 namespace ospray {
     namespace amr {
 
-        void makeAMR(const std::shared_ptr<Array3D<float>> in,
+        void makeAMR(const std::shared_ptr<std::vector<float>> in,
+                     const vec3i inGridDims,
                      const int numLevels,
                      const int blockSize,
                      const int refinementLevel,
@@ -47,28 +49,28 @@ namespace ospray {
             // i.e. if the largest(?) brick dimension is a level greater than the
             // containing size of the volume
             // I suppose this is to work with non-brick-multiple volume dimensions
-            if (minWidth >= refinementLevel * reduce_max(in->size()))
+            if (minWidth >= refinementLevel * reduce_max(inGridDims))
                 throw std::runtime_error(
                         "too many levels, or too fine a refinement factor."
                         "do not have a single brick at the root...");
             // create a vec3 <minWidth, minWidth, minWidth>
             vec3i finestLevelSize = ospcommon::vec3i(minWidth);
             // and increment it until this dimension is contained
-            while (finestLevelSize.x < in->size().x)
+            while (finestLevelSize.x < inGridDims.x)
                 finestLevelSize.x += minWidth;
-            while (finestLevelSize.y < in->size().y)
+            while (finestLevelSize.y < inGridDims.y)
                 finestLevelSize.y += minWidth;
-            while (finestLevelSize.z < in->size().z)
+            while (finestLevelSize.z < inGridDims.z)
                 finestLevelSize.z += minWidth;
 
             std::cout << "logical finest level size is " << finestLevelSize << std::endl;
-            std::cout << "(note: input size was " << in->size() << ")" << std::endl;
+            std::cout << "(note: input size was " << inGridDims << ")" << std::endl;
 
             // at this point, finestLevelSize should be greater than or equal
             // to the input volume dimensions, so the name doesn't make much sense
 
             // create container for current level so we don't use in
-            std::shared_ptr<Array3D<float>> currentLevel = in;
+            std::shared_ptr<std::vector<float>> currentLevel = in;
 
             /* create and write the bricks */
             vec3i levelSize = finestLevelSize;
@@ -82,14 +84,8 @@ namespace ospray {
                 const vec3i nextLevelSize = levelSize / refinementLevel;
                 std::cout << "reducing to next level of " << nextLevelSize << std::endl;
                 // create container for next level down
-                std::shared_ptr<ActualArray3D<float>> nextLevel =
-                    std::make_shared<ActualArray3D<float>>(nextLevelSize);
-                // clear next level
-                // i.e. initialize to zero
-                for (int iz = 0; iz < nextLevelSize.z; iz++)
-                    for (int iy = 0; iy < nextLevelSize.y; iy++)
-                        for (int ix = 0; ix < nextLevelSize.x; ix++)
-                            nextLevel->set(vec3i(ix, iy, iz), 0.f);
+                std::shared_ptr<std::vector<float>> nextLevel =
+                    std::make_shared<std::vector<float>>(nextLevelSize.product(), 0);
 
                 // current level size divided by the brick size
                 // blockSize was the starting/smallest(?) brick size, so
@@ -126,10 +122,10 @@ namespace ospray {
                             for (int iy = brick.box.lower.y; iy <= brick.box.upper.y; iy++) {
                                 for (int ix = brick.box.lower.x; ix <= brick.box.upper.x;
                                         ix++) {
-                                    const vec3i thisLevelCoord(ix, iy, iz);
-                                    const vec3i nextLevelCoord(ix / refinementLevel, iy / refinementLevel, iz / refinementLevel);
+                                    const size_t thisLevelCoord = ix + levelSize.y * (iy + iz * levelSize.z);
+                                    const size_t nextLevelCoord = ix/refinementLevel + nextLevelSize.y * (iy/refinementLevel + iz/refinementLevel * nextLevelSize.z);
                                     // get the actual data at current coordinates
-                                    const float v = currentLevel->get(thisLevelCoord);
+                                    const float v = (*currentLevel)[thisLevelCoord];
                                     // insert the data into the current brick
                                     data[out++]   = v;
                                     // increment the data in the next level down by
@@ -141,9 +137,7 @@ namespace ospray {
                                     // a smaller extents, is actually the physically larger
                                     // brick, and contains a "low resolution" version of the
                                     // data in the current brick
-                                    nextLevel->set(
-                                            nextLevelCoord,
-                                            nextLevel->get(nextLevelCoord) + (v / (refinementLevel * refinementLevel * refinementLevel)));
+                                    (*nextLevel)[nextLevelCoord] += v/(refinementLevel * refinementLevel * refinementLevel);
                                     // extend the value range of this brick (min/max) as needed
                                     brickRange.extend(v);
                                 }
@@ -231,46 +225,6 @@ namespace ospray {
             return volume;
         }
 
-        template <typename T>
-        std::vector<T> mmapRAW(const std::string &fileName,
-                               const vec3i &dims)
-        {
-#ifdef _WIN32
-            throw std::runtime_error("mmap not supported under windows");
-#else
-            FILE *file = fopen(fileName.c_str(), "rb");
-            fseek(file, 0, SEEK_END);
-            size_t actualFileSize = ftell(file);
-            PRINT(actualFileSize);
-            fclose(file);
-
-            size_t fileSize =
-                size_t(dims.x) * size_t(dims.y) * size_t(dims.z) * sizeof(T);
-            std::cout << "mapping file " << fileName << " exptd size "
-                << prettyNumber(fileSize) << " actual size "
-                << prettyNumber(actualFileSize) << std::endl;
-            if (actualFileSize < fileSize)
-                throw std::runtime_error("incomplete file!");
-            if (actualFileSize > fileSize)
-                throw std::runtime_error("mapping PARTIAL (or incorrect!?) file...");
-            int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
-            assert(fd >= 0);
-
-            void *mem = mmap(nullptr,
-                    fileSize,
-                    PROT_READ,
-                    MAP_SHARED  // |MAP_HUGETLB
-                    ,
-                    fd,
-                    0);
-            assert(mem != nullptr && (long long)mem != -1LL);
-
-            std::vector<T> volume;
-            volume.assign((T *)mem, (T *)mem + dims.product());
-
-            return volume;
-#endif
-        }
     } // namespace amr
 } // namespace ospray
 

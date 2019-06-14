@@ -134,23 +134,27 @@ int main(int argc, char **argv)
 
     // ALOK: ultimately storing the data as float regardless of input type
     // (????)
-    std::shared_ptr<Array3D<float>> in;
+    std::shared_ptr<std::vector<float>> in;
     if (format == "float") {
-        in = mmapRAW<float>(inFileName, inDims);
-    } else if (format == "byte" || format == "uchar" || format == "uint8") {
+        in = ospray::amr::mmapRAW<float>(inFileName, inDims);
+    }
+    /*
+    else if (format == "byte" || format == "uchar" || format == "uint8") {
         in = std::make_shared<Array3DAccessor<unsigned char, float>>(
                 mmapRAW<unsigned char>(inFileName, inDims));
     } else if (format == "double" || format == "float64") {
         in = std::make_shared<Array3DAccessor<double, float>>(
                 mmapRAW<double>(inFileName, inDims));
-    } else {
+    }
+    */
+    else {
         throw std::runtime_error("unknown input voxel format");
     }
 
     std::vector<ospray::amr::BrickDesc> brickInfo;
     std::vector<std::vector<float>> brickData;
 
-    ospray::amr::makeAMR(in, numLevels, blockSize, refinementLevel, threshold, brickInfo, brickData);
+    ospray::amr::makeAMR(in, inDims, numLevels, blockSize, refinementLevel, threshold, brickInfo, brickData);
     ospray::amr::outputAMR(outFileBase, brickInfo, brickData, blockSize);
 
     return 0;
