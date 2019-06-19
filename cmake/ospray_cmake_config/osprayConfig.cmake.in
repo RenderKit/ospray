@@ -175,6 +175,7 @@ if (OSPRAY_TASKING_TBB)
               "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
     endif()
   endif()
+  set (OSPRAY_TASKING_INCLUDES ${TBB_INCLUDE_DIRS})
   set (OSPRAY_TASKING_LIBS ${TBB_LIBRARIES})
 endif()
 
