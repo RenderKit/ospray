@@ -91,7 +91,7 @@ else()
   target_include_directories(ospray_common
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
     PRIVATE
       ${CMAKE_CURRENT_LIST_DIR}
   )
@@ -108,7 +108,7 @@ else()
   ## Install headers ##
 
   install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
     COMPONENT devel
     FILES_MATCHING
     PATTERN *.h

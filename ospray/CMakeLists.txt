@@ -274,7 +274,7 @@ ospray_create_library(ospray
 COMPONENT lib
 )
 
-target_link_libraries(ospray PUBLIC ospray_common)
+target_link_libraries(ospray PRIVATE ospray_common)
 
 target_include_directories(ospray
   PUBLIC
@@ -283,6 +283,10 @@ target_include_directories(ospray
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+add_library(ospray_sdk INTERFACE)
+target_link_libraries(ospray_sdk INTERFACE ospray ospray_common)
+ospray_install_library(ospray_sdk COMPONENT devel)
 
 ##############################################################
 # Build ISPC device
@@ -318,7 +322,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   configure_file(common/OSPConfig.h.in ../OSPConfig.h)
   install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
     COMPONENT devel
   )
 
@@ -339,7 +343,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   target_link_libraries(ospray_module_ispc
   PUBLIC
-    ospray
+    ospray_sdk
     $<BUILD_INTERFACE:embree>
   )
 

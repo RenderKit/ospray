@@ -32,7 +32,7 @@ add_executable(ospTutorial ospTutorial.c)
 target_link_libraries(ospTutorial PRIVATE ospray)
 # C++ version
 add_executable(ospTutorialCpp ospTutorial.cpp)
-target_link_libraries(ospTutorialCpp PRIVATE ospray)
+target_link_libraries(ospTutorialCpp PRIVATE ospray_sdk)
 # async version
 add_executable(ospTutorialAsync ospTutorialAsync.c)
 target_link_libraries(ospTutorialAsync PRIVATE ospray)
