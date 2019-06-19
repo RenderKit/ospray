@@ -35,27 +35,21 @@ mark_as_advanced(gtest_hide_internal_symbols)
 # Tests
 ##############################################################
 
-set(TESTS_SOURCES
-	sources/ospray_environment.cpp
-	sources/ospray_test_fixture.cpp
-	sources/ospray_test_geometry.cpp
-	sources/ospray_test_volumetric.cpp
-	sources/ospray_test_tools.cpp
-	)
-
 ospray_create_test(ospray_test_suite
-  ospray_test_suite.cpp
-  ${TESTS_SOURCES}
-LINK
+  ospray_environment.cpp
+  ospray_test_fixture.cpp
+  ospray_test_geometry.cpp
+  ospray_test_suite_main.cpp
+  ospray_test_tools.cpp
+  ospray_test_volumetric.cpp
+)
+
+target_link_libraries(ospray_test_suite
+PRIVATE
   gtest_main
   ospray
 	ospray_common
 	stb_image
-)
-
-target_include_directories(ospray_test_suite
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}/tests/include
 )
 
 set_target_properties(ospray_test_suite PROPERTIES
@@ -65,33 +59,37 @@ set_target_properties(ospray_test_suite PROPERTIES
 include(ExternalData)
 
 set(ExternalData_URL_TEMPLATES
-	"http://sdvis.org/ospray/download/baseline/test-data/%(algo)/%(hash)"
-	"http://sdvis.org/ospray/download/baseline/benchmark-data/%(algo)/%(hash)"
-	)
+  "http://sdvis.org/ospray/download/baseline/test-data/%(algo)/%(hash)"
+  "http://sdvis.org/ospray/download/baseline/benchmark-data/%(algo)/%(hash)"
+)
 
 set(ExternalData_OBJECT_STORES
   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests/baseline"
-	"/opt/ospray/test-data"
-	"//sdvis-nas/NAS/OSPRay/test-data"
-	)
+  "/opt/ospray/test-data"
+  "//sdvis-nas/NAS/OSPRay/test-data"
+)
 set(ExternalData_BINARY_ROOT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests/baseline)
 set(ExternalData_SOURCE_ROOT ${CMAKE_SOURCE_DIR}/tests/baseline)
 
 ExternalData_Expand_Arguments(ospray_test_data
-	ospray_test_suite
-	DATA{${ExternalData_SOURCE_ROOT}/,REGEX:.*}
-	)
+  ospray_test_suite
+  DATA{${ExternalData_SOURCE_ROOT}/,REGEX:.*}
+)
+
 ExternalData_Add_Target(ospray_test_data)
+
 set_target_properties(ospray_test_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 set(ExternalData_BINARY_ROOT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/benchmarks/baseline)
 set(ExternalData_SOURCE_ROOT ${CMAKE_SOURCE_DIR}/scripts/bench/baseline)
 
 ExternalData_Expand_Arguments(ospray_bench_data
-	ospray_test_suite
-	DATA{${ExternalData_SOURCE_ROOT}/,REGEX:.*}
-	)
+  ospray_test_suite
+  DATA{${ExternalData_SOURCE_ROOT}/,REGEX:.*}
+)
+
 ExternalData_Add_Target(ospray_bench_data)
+
 set_target_properties(ospray_bench_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 if (OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES)
