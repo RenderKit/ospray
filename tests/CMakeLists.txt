@@ -80,18 +80,6 @@ ExternalData_Add_Target(ospray_test_data)
 
 set_target_properties(ospray_test_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
-set(ExternalData_BINARY_ROOT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/benchmarks/baseline)
-set(ExternalData_SOURCE_ROOT ${CMAKE_SOURCE_DIR}/scripts/bench/baseline)
-
-ExternalData_Expand_Arguments(ospray_bench_data
-  ospray_test_suite
-  DATA{${ExternalData_SOURCE_ROOT}/,REGEX:.*}
-)
-
-ExternalData_Add_Target(ospray_bench_data)
-
-set_target_properties(ospray_bench_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
 if (OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES)
   add_dependencies(ospray_test_suite ospray_test_data)
 endif()
