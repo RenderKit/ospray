@@ -172,9 +172,11 @@ namespace ospray {
       const int refinementLevel = 2;
       const float threshold = 2.5;
 
-      std::vector<ospray::amr::BrickDesc> brickInfo;
-      std::vector<std::vector<float>> brickVectors;
-      std::vector<OSPData> brickData;
+      std::vector<box3i> blockBounds;
+      std::vector<int> refinementLevels;
+      std::vector<float> cellWidths;
+      std::vector<std::vector<float>> blockVectors;
+      std::vector<OSPData> blockData;
 
       // convert the structured volume to AMR
       ospray::amr::makeAMR(voxels,
@@ -183,26 +185,36 @@ namespace ospray {
                            blockSize,
                            refinementLevel,
                            threshold,
-                           brickInfo,
-                           brickVectors);
+                           blockBounds,
+                           refinementLevels,
+                           cellWidths,
+                           blockVectors);
 
-      for(const std::vector<float> &bd : brickVectors) {
+      for(const std::vector<float> &bd : blockVectors) {
           OSPData data = ospNewData(bd.size(), OSP_FLOAT, bd.data(), OSP_DATA_SHARED_BUFFER);
-          brickData.push_back(data);
+          blockData.push_back(data);
       }
 
-      OSPData brickInfoData = ospNewData(brickInfo.size()*sizeof(osp_amr_brick_info), OSP_RAW, brickInfo.data());
-      ospCommit(brickInfoData);
+      OSPData blockDataData = ospNewData(blockData.size(), OSP_DATA, blockData.data(), OSP_DATA_SHARED_BUFFER);
+      ospCommit(blockDataData);
 
-      OSPData brickDataData = ospNewData(brickData.size(), OSP_DATA, brickData.data(), OSP_DATA_SHARED_BUFFER);
-      ospCommit(brickDataData);
+      OSPData blockBoundsData = ospNewData(blockBounds.size(), OSP_BOX3I, blockBounds.data(), OSP_DATA_SHARED_BUFFER);
+      ospCommit(blockBoundsData);
+
+      OSPData refinementLevelsData = ospNewData(refinementLevels.size(), OSP_INT, refinementLevels.data(), OSP_DATA_SHARED_BUFFER);
+      ospCommit(refinementLevelsData);
+
+      OSPData cellWidthsData = ospNewData(cellWidths.size(), OSP_FLOAT, cellWidths.data(), OSP_DATA_SHARED_BUFFER);
+      ospCommit(cellWidthsData);
 
       // create an AMR volume and assign attributes
       OSPVolume volume = ospNewVolume("amr_volume");
 
       ospSetString(volume, "voxelType", "float");
-      ospSetData(volume, "brickInfo", brickInfoData);
-      ospSetData(volume, "brickData", brickDataData);
+      ospSetData(volume, "blockData", blockDataData);
+      ospSetData(volume, "blockBounds", blockBoundsData);
+      ospSetData(volume, "refinementLevels", refinementLevelsData);
+      ospSetData(volume, "cellWidths", cellWidthsData);
 
       ospCommit(volume);
 

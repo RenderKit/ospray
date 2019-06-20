@@ -126,13 +126,6 @@ typedef enum
 #define OSP_DEFAULT_VAL(a)
 #endif
 
-typedef struct
-{
-  int   bounds[6];
-  int   refinementLevel;
-  float cellWidth;
-} osp_amr_brick_info;
-
 // Give OSPRay handle types a concrete defintion to enable C++ type checking
 #ifdef __cplusplus
 namespace osp {

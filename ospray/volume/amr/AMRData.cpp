@@ -39,23 +39,27 @@ namespace ospray {
       this->f_dims = vec3f(this->dims);
     }
 
-    inline size_t getNumBricks(const Data &brickInfoData)
-    {
-      // ALOK: this tends to return 0
-      return brickInfoData.numBytes / sizeof(AMRData::BrickInfo);
-      //return brickInfoData.size();
-    }
-
     /*! this structure defines only the format of the INPUT of amr
       data - ie, what we get from the scene graph or applicatoin */
-    AMRData::AMRData(const Data &brickInfoData, const Data &brickDataData)
+    AMRData::AMRData(const Data &blockBoundsData,
+            const Data &refinementLevelsData, const Data &cellWidthsData,
+            const Data &blockDataData)
     {
-      auto numBricks = getNumBricks(brickInfoData);
-      std::cout << "numBricks = " << numBricks << std::endl;
-      const BrickInfo *brickInfo = (const BrickInfo *)brickInfoData.data;
-      const Data **allBricksData = (const Data **)brickDataData.data;
-      for (size_t i = 0; i < numBricks; i++)
-        brick.emplace_back(brickInfo[i], (const float*)allBricksData[i]->data);
+      auto numBricks = blockBoundsData.numItems;
+      // ALOK: putting the arrays back into a struct for now
+      // TODO: turn this all into arrays
+      const box3i *blockBounds = (const box3i *)blockBoundsData.data;
+      const int *refinementLevels = (const int *)refinementLevelsData.data;
+      const float *cellWidths = (const float *)cellWidthsData.data;
+
+      const Data **allBlocksData = (const Data **)blockDataData.data;
+      for (size_t i = 0; i < numBricks; i++) {
+        AMRData::BrickInfo blockInfo;
+        blockInfo.box = blockBounds[i];
+        blockInfo.level = refinementLevels[i];
+        blockInfo.cellWidth = cellWidths[refinementLevels[i]];
+        brick.emplace_back(blockInfo, (const float*)allBlocksData[i]->data);
+      }
     }
 
   } // ::ospray::amr

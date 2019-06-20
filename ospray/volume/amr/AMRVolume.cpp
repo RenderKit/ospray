@@ -77,32 +77,31 @@ namespace ospray {
       if (data != nullptr) //TODO: support data updates
         return;
 
-      brickInfoData = getParamData("brickInfo");
-      assert(brickInfoData);
-      assert(brickInfoData->data);
+      blockBoundsData = getParamData("blockBounds");
+      assert(blockBoundsData);
+      assert(blockBoundsData->data);
 
-      brickDataData = getParamData("brickData");
-      assert(brickDataData);
-      assert(brickDataData->data);
+      refinementLevelsData = getParamData("refinementLevels");
+      assert(refinementLevelsData);
+      assert(refinementLevelsData->data);
 
-      data  = make_unique<amr::AMRData>(*brickInfoData,*brickDataData);
+      cellWidthsData = getParamData("cellWidths");
+      assert(cellWidthsData);
+      assert(cellWidthsData->data);
+
+      blockDataData = getParamData("blockData");
+      assert(blockDataData);
+      assert(blockDataData->data);
+
+      data  = make_unique<amr::AMRData>(*blockBoundsData,
+              *refinementLevelsData, *cellWidthsData, *blockDataData);
       accel = make_unique<amr::AMRAccel>(*data);
 
       // finding coarset cell size + finest level cell width
-      float coarsestCellWidth = 0.f;
-      float finestLevelCellWidth = data->brick[0].cellWidth;
-      box3i rootLevelBox = empty;
-
-      for (auto &b : data->brick) {
-        if (b.level == 0)
-          rootLevelBox.extend(b.box);
-        finestLevelCellWidth = min(finestLevelCellWidth, b.cellWidth);
-        coarsestCellWidth    = max(coarsestCellWidth, b.cellWidth);
-      }
-
-      vec3i rootGridDims = rootLevelBox.size() + vec3i(1);
-      ospLogF(1) << "found root level dimensions of " << rootGridDims;
-      ospLogF(1) << "coarsest cell width is " << coarsestCellWidth << std::endl;
+      auto minmax = std::minmax_element(cellWidthsData->begin<float>(),
+              cellWidthsData->end<float>());
+      float coarsestCellWidth = *std::get<1>(minmax);
+      float finestLevelCellWidth = *std::get<0>(minmax);
 
       auto rateFromEnv =
           utility::getEnvVar<float>("OSPRAY_AMR_SAMPLING_STEP");

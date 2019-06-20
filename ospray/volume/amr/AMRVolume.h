@@ -43,8 +43,10 @@ namespace ospray {
       std::unique_ptr<amr::AMRData>  data;
       std::unique_ptr<amr::AMRAccel> accel;
 
-      Ref<Data> brickInfoData;
-      Ref<Data> brickDataData;
+      Ref<Data> blockDataData;
+      Ref<Data> blockBoundsData;
+      Ref<Data> refinementLevelsData;
+      Ref<Data> cellWidthsData;
 
       //! Voxel type.
       std::string voxelType;

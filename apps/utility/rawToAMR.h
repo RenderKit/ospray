@@ -41,12 +41,6 @@ using namespace ospcommon::array3D;
 using namespace ospcommon;
 
 namespace ospray {
-    // ALOK: TODO
-    // move these out of the namespace if possible
-    // (here because both amr and vtu had these)
-    static size_t numWritten = 0;
-    static size_t numRemoved = 0;
-
     namespace amr {
         // ALOK: TODO
         // remove this and use osp_amr_brick_info instead
@@ -69,11 +63,15 @@ namespace ospray {
                      const int blockSize,
                      const int refinementLevel,
                      const float threshold,
-                     std::vector<BrickDesc> &brickInfo,
+                     std::vector<box3i> &blockBounds,
+                     std::vector<int> &refinementLevels,
+                     std::vector<float> &cellWidths,
                      std::vector<std::vector<float>> &brickData);
 
         void outputAMR(const FileName outFileBase,
-                       const std::vector<BrickDesc> &brickInfo,
+                       const std::vector<box3i> &blockBounds,
+                       const std::vector<int> &refinementLevels,
+                       const std::vector<float> &cellWidths,
                        const std::vector<std::vector<float>> &brickData,
                        const int blockSize);
 

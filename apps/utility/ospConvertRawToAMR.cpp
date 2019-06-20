@@ -39,11 +39,6 @@ input_volume        Structured volume in binary brick-of-data format
                     (string filepath)
 variable_type       Type of structured volume, must be exactly one of:
                         float
-                        byte
-                        uchar
-                        uint8
-                        double
-                        float64
                     (string)
 x_dim               X dimensions of the structured volume grid (int)
 y_dim               Y dimensions of the structured volume grid (int)
@@ -138,24 +133,17 @@ int main(int argc, char **argv)
     if (format == "float") {
         in = ospray::amr::mmapRAW<float>(inFileName, inDims);
     }
-    /*
-    else if (format == "byte" || format == "uchar" || format == "uint8") {
-        in = std::make_shared<Array3DAccessor<unsigned char, float>>(
-                mmapRAW<unsigned char>(inFileName, inDims));
-    } else if (format == "double" || format == "float64") {
-        in = std::make_shared<Array3DAccessor<double, float>>(
-                mmapRAW<double>(inFileName, inDims));
-    }
-    */
     else {
         throw std::runtime_error("unknown input voxel format");
     }
 
-    std::vector<ospray::amr::BrickDesc> brickInfo;
+    std::vector<box3i> blockBounds;
+    std::vector<int> refinementLevels;
+    std::vector<float> cellWidths;
     std::vector<std::vector<float>> brickData;
 
-    ospray::amr::makeAMR(in, inDims, numLevels, blockSize, refinementLevel, threshold, brickInfo, brickData);
-    ospray::amr::outputAMR(outFileBase, brickInfo, brickData, blockSize);
+    ospray::amr::makeAMR(in, inDims, numLevels, blockSize, refinementLevel, threshold, blockBounds, refinementLevels, cellWidths, brickData);
+    ospray::amr::outputAMR(outFileBase, blockBounds, refinementLevels, cellWidths, brickData, blockSize);
 
     return 0;
 }

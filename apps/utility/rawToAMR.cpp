@@ -32,7 +32,9 @@ namespace ospray {
                      const int blockSize,
                      const int refinementLevel,
                      const float threshold,
-                     std::vector<BrickDesc> &brickInfo,
+                     std::vector<box3i> &blockBounds,
+                     std::vector<int> &refinementLevels,
+                     std::vector<float> &cellWidths,
                      std::vector<std::vector<float>> &brickData)
         {
             // minWidth starts with provided brick size
@@ -71,6 +73,9 @@ namespace ospray {
 
             // create container for current level so we don't use in
             std::vector<float> &currentLevel = const_cast<std::vector<float> &>(in);
+
+            size_t numWritten = 0;
+            size_t numRemoved = 0;
 
             /* create and write the bricks */
             vec3i levelSize = finestLevelSize;
@@ -155,21 +160,27 @@ namespace ospray {
                                 ((brickRange.upper - brickRange.lower) <= threshold)) {
                             numRemoved++;
                         } else {
-                            brickInfo.push_back(brick);
+                            blockBounds.push_back(brick.box);
+                            refinementLevels.push_back(brick.level);
+                            cellWidths.reserve(brick.level + 1);
+                            cellWidths[brick.level] = brick.dt;
                             brickData.push_back(data);
                             numWritten++;
                         }
-                        //progress.ping();
                 }); // end parallel for
                 currentLevel = nextLevel;
                 levelSize = nextLevelSize;
                 std::cout << "done level " << level << ", written " << numWritten
                     << " bricks, removed " << numRemoved << std::endl;
+                numWritten = 0;
+                numRemoved = 0;
             } // end for loop on levels
         }
 
         void outputAMR(const FileName outFileBase,
-                       const std::vector<BrickDesc> &brickInfo,
+                       const std::vector<box3i> &blockBounds,
+                       const std::vector<int> &refinementLevels,
+                       const std::vector<float> &cellWidths,
                        const std::vector<std::vector<float>> &brickData,
                        const int blockSize)
         {
@@ -193,9 +204,9 @@ namespace ospray {
             osp << "  <clamp>0 100000</clamp>" << std::endl;
             osp << "</AMRVolume>" << std::endl;
 
-            for(auto &brick : brickInfo) {
-                fwrite(&brick, sizeof(brick), 1, infoOut);
-            }
+            fwrite(blockBounds.data(), sizeof(box3i), blockBounds.size(), infoOut);
+            fwrite(refinementLevels.data(), sizeof(int), refinementLevels.size(), infoOut);
+            fwrite(cellWidths.data(), sizeof(float), cellWidths.size(), infoOut);
 
             for(auto &data : brickData) {
                 fwrite(data.data(), sizeof(float), data.size(), dataOut);
