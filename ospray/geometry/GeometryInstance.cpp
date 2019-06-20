@@ -21,20 +21,19 @@
 
 namespace ospray {
 
-  GeometryInstance::GeometryInstance(Geometry *geometry)
+  GeometricModel::GeometricModel(Geometry *geometry)
   {
     if (geometry == nullptr)
-      throw std::runtime_error("NULL Geometry given to GeometryInstance!");
+      throw std::runtime_error("NULL Geometry given to GeometricModel!");
 
     instancedGeometry = geometry;
 
-    this->ispcEquivalent =
-        ispc::GeometryInstance_create(this, geometry->getIE());
+    this->ispcEquivalent = ispc::GeometricModel_create(this, geometry->getIE());
 
     setMaterialList(nullptr);
   }
 
-  GeometryInstance::~GeometryInstance()
+  GeometricModel::~GeometricModel()
   {
     if (embreeInstanceGeometry)
       rtcReleaseGeometry(embreeInstanceGeometry);
@@ -43,12 +42,12 @@ namespace ospray {
       rtcReleaseScene(embreeSceneHandle);
   }
 
-  std::string GeometryInstance::toString() const
+  std::string GeometricModel::toString() const
   {
-    return "ospray::GeometryInstance";
+    return "ospray::GeometricModel";
   }
 
-  void GeometryInstance::setMaterial(Material *mat)
+  void GeometricModel::setMaterial(Material *mat)
   {
     OSPMaterial ospMat = (OSPMaterial)mat;
     auto *data         = new Data(1, OSP_OBJECT, &ospMat);
@@ -56,10 +55,10 @@ namespace ospray {
     data->refDec();
   }
 
-  void GeometryInstance::setMaterialList(Data *matListData)
+  void GeometricModel::setMaterialList(Data *matListData)
   {
     if (!matListData || matListData->numItems == 0) {
-      ispc::GeometryInstance_setMaterialList(this->getIE(), 0, nullptr);
+      ispc::GeometricModel_setMaterialList(this->getIE(), 0, nullptr);
       return;
     }
 
@@ -76,12 +75,12 @@ namespace ospray {
       for (int i = 0; i < numMaterials; i++)
         ispcMaterialPtrs[i] = materialList[i]->getIE();
 
-      ispc::GeometryInstance_setMaterialList(
+      ispc::GeometricModel_setMaterialList(
           this->getIE(), numMaterials, ispcMaterialPtrs.data());
     }
   }
 
-  void GeometryInstance::commit()
+  void GeometricModel::commit()
   {
     // Get transform information //
 
@@ -145,7 +144,7 @@ namespace ospray {
           "number of colors does not match number of primitives!");
     }
 
-    material = (Material*)getParamObject("material");
+    material = (Material *)getParamObject("material");
 
     prim_materialIDData       = getParamData("prim.materialID");
     Data *materialListDataPtr = getParamData("materialList");
@@ -155,7 +154,7 @@ namespace ospray {
     else if (material)
       setMaterial(material.ptr);
 
-    ispc::GeometryInstance_set(
+    ispc::GeometricModel_set(
         getIE(),
         (ispc::AffineSpace3f &)instanceXfm,
         (ispc::AffineSpace3f &)rcp_xfm,
@@ -163,7 +162,7 @@ namespace ospray {
         prim_materialIDData ? prim_materialIDData->data : nullptr);
   }
 
-  RTCGeometry GeometryInstance::embreeGeometryHandle() const
+  RTCGeometry GeometricModel::embreeGeometryHandle() const
   {
     return embreeInstanceGeometry;
   }

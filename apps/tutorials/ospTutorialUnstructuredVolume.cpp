@@ -107,7 +107,7 @@ int main(int argc, const char **argv)
   ospSetObject(isoGeometry, "volume", testVolume);
 
   // create instance of the geometry
-  OSPGeometryInstance instance = ospNewGeometryInstance(isoGeometry);
+  OSPGeometricModel instance = ospNewGeometricModel(isoGeometry);
 
   // prepare material for iso geometry
   OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");

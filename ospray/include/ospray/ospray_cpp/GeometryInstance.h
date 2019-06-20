@@ -22,14 +22,14 @@
 namespace ospray {
   namespace cpp {
 
-    class GeometryInstance : public ManagedObject_T<OSPGeometryInstance>
+    class GeometricModel : public ManagedObject_T<OSPGeometricModel>
     {
      public:
-      GeometryInstance(const Geometry &geom);
-      GeometryInstance(OSPGeometry geom);
+      GeometricModel(const Geometry &geom);
+      GeometricModel(OSPGeometry geom);
 
-      GeometryInstance(const GeometryInstance &copy);
-      GeometryInstance(OSPGeometryInstance existing);
+      GeometricModel(const GeometricModel &copy);
+      GeometricModel(OSPGeometricModel existing);
 
       void setMaterial(Material &m) const;
       void setMaterial(OSPMaterial m) const;
@@ -37,32 +37,32 @@ namespace ospray {
 
     // Inlined function definitions ///////////////////////////////////////////
 
-    inline GeometryInstance::GeometryInstance(const Geometry &geom)
-        : GeometryInstance(geom.handle())
+    inline GeometricModel::GeometricModel(const Geometry &geom)
+        : GeometricModel(geom.handle())
     {
     }
 
-    inline GeometryInstance::GeometryInstance(OSPGeometry existing)
+    inline GeometricModel::GeometricModel(OSPGeometry existing)
     {
-      ospObject = ospNewGeometryInstance(existing);
+      ospObject = ospNewGeometricModel(existing);
     }
 
-    inline GeometryInstance::GeometryInstance(const GeometryInstance &copy)
-        : ManagedObject_T<OSPGeometryInstance>(copy.handle())
-    {
-    }
-
-    inline GeometryInstance::GeometryInstance(OSPGeometryInstance existing)
-        : ManagedObject_T<OSPGeometryInstance>(existing)
+    inline GeometricModel::GeometricModel(const GeometricModel &copy)
+        : ManagedObject_T<OSPGeometricModel>(copy.handle())
     {
     }
 
-    inline void GeometryInstance::setMaterial(Material &m) const
+    inline GeometricModel::GeometricModel(OSPGeometricModel existing)
+        : ManagedObject_T<OSPGeometricModel>(existing)
+    {
+    }
+
+    inline void GeometricModel::setMaterial(Material &m) const
     {
       setMaterial(m.handle());
     }
 
-    inline void GeometryInstance::setMaterial(OSPMaterial m) const
+    inline void GeometricModel::setMaterial(OSPMaterial m) const
     {
       ospSetObject(handle(), "material", m);
     }

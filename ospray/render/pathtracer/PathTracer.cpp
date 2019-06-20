@@ -46,15 +46,15 @@ namespace ospray {
 
   void PathTracer::generateGeometryLights(const World &world)
   {
-    auto *geometries = world.geometryInstances.ptr;
+    auto *geometries = world.GeometricModels.ptr;
 
     if (!geometries)
       return;
 
-    auto begin = geometries->begin<GeometryInstance*>();
-    auto end   = geometries->end<GeometryInstance*>();
+    auto begin = geometries->begin<GeometricModel*>();
+    auto end   = geometries->end<GeometricModel*>();
 
-    std::for_each(begin, end, [&](GeometryInstance* inst){
+    std::for_each(begin, end, [&](GeometricModel* inst){
       if (inst->materialList) {
         // check whether the instmetry has any emissive materials
         bool hasEmissive = false;

@@ -28,7 +28,7 @@ using namespace ospcommon;
 
 static std::string renderer_type = "scivis";
 
-OSPGeometryInstance createGroundPlane()
+OSPGeometricModel createGroundPlane()
 {
   OSPGeometry planeGeometry = ospNewGeometry("quads");
 
@@ -153,7 +153,7 @@ OSPGeometryInstance createGroundPlane()
   // finally, commit the geometry
   ospCommit(planeGeometry);
 
-  OSPGeometryInstance planeInstance = ospNewGeometryInstance(planeGeometry);
+  OSPGeometricModel planeInstance = ospNewGeometricModel(planeGeometry);
 
   ospRelease(planeGeometry);
 
@@ -200,7 +200,7 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPGeometryInstance> instanceHandles;
+  std::vector<OSPGeometricModel> instanceHandles;
 
   // add in subdivision geometry
   OSPTestingGeometry subdivisionGeometry =
@@ -209,7 +209,7 @@ int main(int argc, const char **argv)
   ospRelease(subdivisionGeometry.geometry);
 
   // add in a ground plane geometry
-  OSPGeometryInstance planeInstance = createGroundPlane();
+  OSPGeometricModel planeInstance = createGroundPlane();
   ospCommit(planeInstance);
   instanceHandles.push_back(planeInstance);
 

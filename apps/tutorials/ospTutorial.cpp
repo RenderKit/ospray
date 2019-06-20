@@ -118,7 +118,7 @@ int main(int argc, const char **argv) {
 
   mesh.commit();
 
-  ospray::cpp::GeometryInstance instance(mesh);
+  ospray::cpp::GeometricModel instance(mesh);
   instance.commit();
   mesh.release(); // we are done using this handle
 

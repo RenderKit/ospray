@@ -136,7 +136,7 @@ namespace ospray {
 
       ospSetFloat(geometry, "level", level);
 
-      OSPGeometryInstance instance = ospNewGeometryInstance(geometry);
+      OSPGeometricModel instance = ospNewGeometricModel(geometry);
 
       // create OBJ material and assign to geometry
       OSPMaterial objMaterial =

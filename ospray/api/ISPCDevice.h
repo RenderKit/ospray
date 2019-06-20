@@ -66,7 +66,7 @@ namespace ospray {
 
       // Instancing ///////////////////////////////////////////////////////////
 
-      OSPGeometryInstance newGeometryInstance(OSPGeometry geom) override;
+      OSPGeometricModel newGeometricModel(OSPGeometry geom) override;
       OSPVolumeInstance newVolumeInstance(OSPVolume volume) override;
 
       // Instance Meta-Data ///////////////////////////////////////////////////

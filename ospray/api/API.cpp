@@ -476,11 +476,11 @@ OSPRAY_CATCH_END(nullptr)
 // Instancing /////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geom)
+extern "C" OSPGeometricModel ospNewGeometricModel(OSPGeometry geom)
     OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  OSPGeometryInstance instance = currentDevice().newGeometryInstance(geom);
+  OSPGeometricModel instance = currentDevice().newGeometricModel(geom);
   return instance;
 }
 OSPRAY_CATCH_END(nullptr)

@@ -69,7 +69,7 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries / volumes
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPGeometryInstance> geometryInstHandles;
+  std::vector<OSPGeometricModel> geometryInstHandles;
 
   // Create volume
 
@@ -105,7 +105,7 @@ int main(int argc, const char **argv)
   ospSetObject(isoGeometry, "volume", instance);
 
   // create isoInstance of the geometry
-  OSPGeometryInstance isoInstance = ospNewGeometryInstance(isoGeometry);
+  OSPGeometricModel isoInstance = ospNewGeometricModel(isoGeometry);
 
   // prepare material for iso geometry
   OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
@@ -121,7 +121,7 @@ int main(int argc, const char **argv)
   ospSetObject(sliceGeometry, "volume", instance);
   float sliceValue = 0.f;
   setSlice(sliceGeometry, sliceValue);
-  OSPGeometryInstance sliceInstance = ospNewGeometryInstance(sliceGeometry);
+  OSPGeometricModel sliceInstance = ospNewGeometricModel(sliceGeometry);
 
   // apply changes made
   ospCommit(isoGeometry);

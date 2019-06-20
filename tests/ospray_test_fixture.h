@@ -54,7 +54,7 @@ namespace OSPRayTestScenes {
     std::unique_ptr<OSPImageTools> imageTool;
     std::vector<OSPLight> lightsList;
 
-    std::vector<OSPGeometryInstance> geometryInstances;
+    std::vector<OSPGeometricModel> GeometricModels;
     std::vector<OSPVolumeInstance> volumeInstances;
 
    public:
@@ -66,7 +66,7 @@ namespace OSPRayTestScenes {
     Base(const Base &)            = delete;
 
     void AddLight(OSPLight new_light);
-    void AddInstance(OSPGeometryInstance new_geometry);
+    void AddInstance(OSPGeometricModel new_geometry);
     void AddInstance(OSPVolumeInstance new_volume);
 
     void PerformRenderTest();

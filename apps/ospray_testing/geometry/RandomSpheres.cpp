@@ -93,7 +93,7 @@ namespace ospray {
       // commit the spheres geometry
       ospCommit(spheresGeometry);
 
-      OSPGeometryInstance instance = ospNewGeometryInstance(spheresGeometry);
+      OSPGeometricModel instance = ospNewGeometricModel(spheresGeometry);
 
       OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 

@@ -42,7 +42,7 @@ struct Sphere
 static std::vector<Sphere> g_spheres;
 static std::vector<vec4f> g_colors;
 static OSPGeometry g_spheresGeometry;
-static OSPGeometryInstance g_spheresInstance;
+static OSPGeometricModel g_spheresInstance;
 static OSPWorld g_world;
 
 std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
@@ -81,7 +81,7 @@ std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
   return spheres;
 }
 
-OSPGeometryInstance createGroundPlane()
+OSPGeometricModel createGroundPlane()
 {
   OSPGeometry planeGeometry = ospNewGeometry("quads");
 
@@ -206,7 +206,7 @@ OSPGeometryInstance createGroundPlane()
   // finally, commit the geometry
   ospCommit(planeGeometry);
 
-  OSPGeometryInstance planeInstance = ospNewGeometryInstance(planeGeometry);
+  OSPGeometricModel planeInstance = ospNewGeometricModel(planeGeometry);
 
   ospRelease(planeGeometry);
 
@@ -228,7 +228,7 @@ OSPGeometryInstance createGroundPlane()
   return planeInstance;
 }
 
-OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
+OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 {
   g_spheres = generateRandomSpheres(numSpheres);
 
@@ -238,7 +238,7 @@ OSPGeometryInstance createRandomSpheresGeometry(size_t numSpheres)
 
   // create the sphere geometry, and assign attributes
   g_spheresGeometry = ospNewGeometry("spheres");
-  g_spheresInstance = ospNewGeometryInstance(g_spheresGeometry);
+  g_spheresInstance = ospNewGeometricModel(g_spheresGeometry);
 
   ospSetData(g_spheresGeometry, "spheres", spheresData);
   ospSetInt(g_spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
@@ -274,14 +274,14 @@ OSPWorld createWorld()
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPGeometryInstance> instanceHandles;
+  std::vector<OSPGeometricModel> instanceHandles;
 
   // add in spheres geometry (100 of them)
-  OSPGeometryInstance instance = createRandomSpheresGeometry(100);
+  OSPGeometricModel instance = createRandomSpheresGeometry(100);
   instanceHandles.push_back(instance);
 
   // add in a ground plane geometry
-  OSPGeometryInstance plane = createGroundPlane();
+  OSPGeometricModel plane = createGroundPlane();
   instanceHandles.push_back(plane);
 
   OSPData geomInstances =

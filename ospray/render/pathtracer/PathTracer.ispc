@@ -252,7 +252,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
       if (m != NULL && reduce_max(m->emission) > 0.f) {
         float areaPdf;
         foreach_unique(instID in ray.instID) {
-          GeometryInstance *uniform inst = (GeometryInstance *uniform)world->geometryInstances[instID];
+          GeometricModel *uniform inst = (GeometricModel *uniform)world->GeometricModels[instID];
           areaPdf = inst->areaPDF;
         }
 

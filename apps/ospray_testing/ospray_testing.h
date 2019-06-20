@@ -41,7 +41,7 @@ typedef struct { osp_vec3f lower, upper; } osp_box3f;
 typedef struct
 {
   OSPGeometry geometry;
-  OSPGeometryInstance instance;
+  OSPGeometricModel instance;
   osp_box3f bounds;
 } OSPTestingGeometry;
 

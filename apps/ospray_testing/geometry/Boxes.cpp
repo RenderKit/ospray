@@ -41,7 +41,7 @@ namespace ospray {
         const std::string &renderer_type) const
     {
       auto boxGeometry = ospNewGeometry("boxes");
-      auto instance    = ospNewGeometryInstance(boxGeometry);
+      auto instance    = ospNewGeometricModel(boxGeometry);
 
       const int dim = 4;
 

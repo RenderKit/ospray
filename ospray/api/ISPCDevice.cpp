@@ -150,11 +150,11 @@ namespace ospray {
     // Instancing /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    OSPGeometryInstance ISPCDevice::newGeometryInstance(OSPGeometry _geom)
+    OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
     {
       auto *geom     = (Geometry *)_geom;
-      auto *instance = new GeometryInstance(geom);
-      return (OSPGeometryInstance)instance;
+      auto *instance = new GeometricModel(geom);
+      return (OSPGeometricModel)instance;
     }
 
     OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume _volume)

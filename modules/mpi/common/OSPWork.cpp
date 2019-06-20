@@ -40,7 +40,7 @@ namespace ospray {
         registerWorkUnit<NewRenderer>(registry);
         registerWorkUnit<NewWorld>(registry);
         registerWorkUnit<NewGeometry>(registry);
-        registerWorkUnit<NewGeometryInstance>(registry);
+        registerWorkUnit<NewGeometricModel>(registry);
         registerWorkUnit<NewCamera>(registry);
         registerWorkUnit<NewVolume>(registry);
         registerWorkUnit<NewVolumeInstance>(registry);
@@ -288,12 +288,12 @@ namespace ospray {
         handle.assign(material);
       }
 
-      // ospNewGeometryInstance ///////////////////////////////////////////////
+      // ospNewGeometricModel ///////////////////////////////////////////////
 
-      void NewGeometryInstance::run()
+      void NewGeometricModel::run()
       {
         auto *geom     = (Geometry *)geometryHandle.lookup();
-        auto *instance = new GeometryInstance(geom);
+        auto *instance = new GeometricModel(geom);
         handle.assign(instance);
       }
 

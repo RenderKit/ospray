@@ -53,7 +53,7 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPGeometryInstance> instanceHandles;
+  std::vector<OSPGeometricModel> instanceHandles;
 
   // add in boxes geometry
   OSPTestingGeometry boxes =

@@ -29,7 +29,7 @@ struct GeometryLight
 {
   Light super; // inherited light fields
 
-  GeometryInstance *inst; // underlying (instanced) geometry
+  GeometricModel *inst; // underlying (instanced) geometry
   int32 numPrimitives; // number of emissive primitives
   int32 *primIDs; // IDs of emissive primitives to sample
   float *distribution; // pdf over primitives proportional to (world-space) area
@@ -45,7 +45,7 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
                                      const vec2f& s)
 {
   const GeometryLight* uniform self = (GeometryLight* uniform)super;
-  const GeometryInstance* uniform inst = self->inst;
+  const GeometricModel* uniform inst = self->inst;
   const Geometry* uniform geo = inst->geom;
   Light_SampleRes res;
 
@@ -87,14 +87,14 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
 
 export bool uniform GeometryLight_isSupported(const void* uniform _inst)
 {
-  GeometryInstance *uniform inst = (GeometryInstance *uniform)_inst;
+  GeometricModel *uniform inst = (GeometricModel *uniform)_inst;
   const Geometry* uniform geo = inst->geom;
   return geo->sampleArea && geo->getAreas;
 }
 
 export void* uniform GeometryLight_create(void* uniform _inst)
 {
-  GeometryInstance *uniform inst = (GeometryInstance *uniform)_inst;
+  GeometricModel *uniform inst = (GeometricModel *uniform)_inst;
   const Geometry* uniform geo = inst->geom;
 
   if (!GeometryLight_isSupported(inst)) {

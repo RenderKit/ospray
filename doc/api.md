@@ -1024,14 +1024,14 @@ according to the provided volume's [transfer function].
   : Parameters defining a slices geometry.
 
 
-GeometryInstances
+GeometricModels
 -----------------
 
 Geometries in OSPRay are instantiated in a World to give them a world-space
 transform and addition appearance information. To create a geometry instance,
 call
 
-    OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geometry);
+    OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
   ------------------ --------------- --------- --------------------------------------
   Type               Name            Default   Description
@@ -1060,7 +1060,7 @@ call
                                                "prim.materialID" (otherwise it is
                                                per-primitive)
   ------------------ --------------- --------- ---------------------------------------
-  : Parameters understood by GeometryInstance.
+  : Parameters understood by GeometricModel.
 
 
 Renderer
@@ -1206,7 +1206,7 @@ feature/performance trade-offs.
   ------------- ---------------- --------  -------------------------------------
   Type          Name              Default  Description
   ------------- ---------------- --------  -------------------------------------
-  OSPData       geometries           NULL  data array of OSPGeometryInstance
+  OSPData       geometries           NULL  data array of OSPGeometricModel
                                            geometry objects in the scene
 
   OSPData       volumes              NULL  data array of OSPVolumeInstance
@@ -1400,7 +1400,7 @@ The call returns `NULL` if the material type is not known by the
 renderer type, or else an `OSPMaterial` handle to the created material. The
 handle can then be used to assign the material to a given geometry with
 
-    void ospSetObject(OSPGeometryInstance, "material", OSPMaterial);
+    void ospSetObject(OSPGeometricModel, "material", OSPMaterial);
 
 #### OBJ Material
 
@@ -2035,7 +2035,7 @@ The result is returned in the provided `OSPPickResult` struct:
     typedef struct {
         int hasHit;
         osp_vec3f worldPosition;
-        OSPGeometryInstance geometryInstance;
+        OSPGeometricModel GeometricModel;
         uint32_t primID;
     } OSPPickResult;
 

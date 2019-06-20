@@ -1659,7 +1659,7 @@ function](#transfer-function).
 
 : Parameters defining a slices geometry.
 
-GeometryInstances
+GeometricModels
 -----------------
 
 Geometries in OSPRay are instantiated in a World to give them a
@@ -1667,11 +1667,11 @@ world-space transform and addition appearance information. To create a
 geometry instance, call
 
 ``` {.cpp}
-OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geometry);
+OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 ```
 
 <table style="width:98%;">
-<caption>Parameters understood by GeometryInstance.</caption>
+<caption>Parameters understood by GeometricModel.</caption>
 <colgroup>
 <col style="width: 22%" />
 <col style="width: 22%" />
@@ -1732,7 +1732,7 @@ OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geometry);
 </tbody>
 </table>
 
-: Parameters understood by GeometryInstance.
+: Parameters understood by GeometricModel.
 
 Renderer
 --------
@@ -1967,14 +1967,14 @@ The call returns an `OSPWorld` handle to the created world. To add an
 already created geometry instance or volume to a world use
 
 ``` {.cpp}
-void ospAddGeometryInstance(OSPWorld, OSPGeometryInstance);
+void ospAddGeometricModel(OSPWorld, OSPGeometricModel);
 void ospAddVolume(OSPWorld, OSPVolume);
 ```
 
 An existing geometry or volume can be removed from a world with
 
 ``` {.cpp}
-void ospRemoveGeometryInstance(OSPWorld, OSPGeometryInstance);
+void ospRemoveGeometricModel(OSPWorld, OSPGeometricModel);
 void ospRemoveVolume(OSPWorld, OSPVolume);
 ```
 
@@ -2248,7 +2248,7 @@ The handle can then be used to assign the material to a given geometry
 with
 
 ``` {.cpp}
-void ospSetObject(OSPGeometryInstance, "material", OSPMaterial);
+void ospSetObject(OSPGeometricModel, "material", OSPMaterial);
 ```
 
 #### OBJ Material
@@ -3173,7 +3173,7 @@ The result is returned in the provided `OSPPickResult` struct:
 typedef struct {
     int hasHit;
     osp_vec3f worldPosition;
-    OSPGeometryInstance geometryInstance;
+    OSPGeometricModel GeometricModel;
     uint32_t primID;
 } OSPPickResult;
 ```

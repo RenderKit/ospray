@@ -20,11 +20,11 @@
 #include "math/box.ih"
 #include "math/vec.ih"
 
-static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
-                                           const World *uniform parentWorld,
-                                           varying DifferentialGeometry &dg,
-                                           const varying Ray &ray,
-                                           uniform int64 flags)
+static void GeometricModel_postIntersect(const GeometricModel *uniform self,
+                                         const World *uniform parentWorld,
+                                         varying DifferentialGeometry &dg,
+                                         const varying Ray &ray,
+                                         uniform int64 flags)
 {
   Geometry *uniform instancedGeometry = self->geom;
 
@@ -67,10 +67,10 @@ static void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
   }
 }
 
-export void *uniform GeometryInstance_create(void *uniform cppE,
-                                             void *uniform geom)
+export void *uniform GeometricModel_create(void *uniform cppE,
+                                           void *uniform geom)
 {
-  GeometryInstance *uniform self = uniform new GeometryInstance;
+  GeometricModel *uniform self = uniform new GeometricModel;
 
   self->geom    = (Geometry * uniform) geom;
   self->areaPDF = 0.f;
@@ -78,13 +78,13 @@ export void *uniform GeometryInstance_create(void *uniform cppE,
   return self;
 }
 
-export void GeometryInstance_set(void *uniform _self,
-                                 const uniform AffineSpace3f &xfm,
-                                 const uniform AffineSpace3f &rcp_xfm,
-                                 void *uniform primitiveColors,
-                                 void *uniform prim_materialID)
+export void GeometricModel_set(void *uniform _self,
+                               const uniform AffineSpace3f &xfm,
+                               const uniform AffineSpace3f &rcp_xfm,
+                               void *uniform primitiveColors,
+                               void *uniform prim_materialID)
 {
-  GeometryInstance *uniform self = (GeometryInstance * uniform) _self;
+  GeometricModel *uniform self = (GeometricModel * uniform) _self;
 
   self->xfm     = xfm;
   self->rcp_xfm = rcp_xfm;
@@ -93,11 +93,11 @@ export void GeometryInstance_set(void *uniform _self,
   self->prim_materialID = (uint32 * uniform) prim_materialID;
 }
 
-export void GeometryInstance_setMaterialList(void *uniform _inst,
-                                             uniform int numMaterials,
-                                             void *uniform _matList)
+export void GeometricModel_setMaterialList(void *uniform _inst,
+                                           uniform int numMaterials,
+                                           void *uniform _matList)
 {
-  GeometryInstance *uniform inst = (GeometryInstance * uniform) _inst;
-  inst->numMaterials             = numMaterials;
-  inst->materialList             = (Material * uniform * uniform) _matList;
+  GeometricModel *uniform inst = (GeometricModel * uniform) _inst;
+  inst->numMaterials           = numMaterials;
+  inst->materialList           = (Material * uniform * uniform) _matList;
 }

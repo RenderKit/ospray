@@ -144,7 +144,7 @@ namespace osp {
   struct Data             : public ManagedObject {};
   struct Future           : public ManagedObject {};
   struct Geometry         : public ManagedObject {};
-  struct GeometryInstance : public ManagedObject {};
+  struct GeometricModel : public ManagedObject {};
   struct Material         : public ManagedObject {};
   struct Volume           : public ManagedObject {};
   struct VolumeInstance   : public ManagedObject {};
@@ -162,7 +162,7 @@ typedef osp::Camera            *OSPCamera;
 typedef osp::Data              *OSPData;
 typedef osp::Future            *OSPFuture;
 typedef osp::Geometry          *OSPGeometry;
-typedef osp::GeometryInstance  *OSPGeometryInstance;
+typedef osp::GeometricModel  *OSPGeometricModel;
 typedef osp::Material          *OSPMaterial;
 typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
@@ -187,7 +187,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPWorld,
   *OSPData,
   *OSPGeometry,
-  *OSPGeometryInstance,
+  *OSPGeometricModel,
   *OSPMaterial,
   *OSPLight,
   *OSPVolume,
@@ -279,7 +279,7 @@ extern "C" {
 
   // Instancing ///////////////////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE OSPGeometryInstance ospNewGeometryInstance(OSPGeometry geom);
+  OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom);
 
   OSPRAY_INTERFACE OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume);
 
@@ -399,7 +399,7 @@ extern "C" {
   typedef struct {
     int hasHit;
     float worldPosition[3];
-    OSPGeometryInstance geometryInstance;
+    OSPGeometricModel GeometricModel;
     uint32_t primID;
   } OSPPickResult;
 

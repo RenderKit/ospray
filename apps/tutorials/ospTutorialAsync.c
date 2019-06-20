@@ -205,15 +205,15 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
+  OSPGeometricModel instance = ospNewGeometricModel(mesh);
   ospCommit(instance);
   ospRelease(mesh); // we are done using this handle
 
   *world = ospNewWorld();
-  OSPData geometryInstances = ospNewData(1, OSP_OBJECT, &instance, 0);
-  ospSetObject(*world, "geometries", geometryInstances);
+  OSPData GeometricModels = ospNewData(1, OSP_OBJECT, &instance, 0);
+  ospSetObject(*world, "geometries", GeometricModels);
   ospRelease(instance);
-  ospRelease(geometryInstances);
+  ospRelease(GeometricModels);
   ospCommit(*world);
 
   // create renderer
@@ -288,15 +288,15 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
+  OSPGeometricModel instance = ospNewGeometricModel(mesh);
   ospCommit(instance);
   ospRelease(mesh); // we are done using this handle
 
   *world = ospNewWorld();
-  OSPData geometryInstances = ospNewData(1, OSP_OBJECT, &instance, 0);
-  ospSetObject(*world, "geometries", geometryInstances);
+  OSPData GeometricModels = ospNewData(1, OSP_OBJECT, &instance, 0);
+  ospSetObject(*world, "geometries", GeometricModels);
   ospRelease(instance);
-  ospRelease(geometryInstances);
+  ospRelease(GeometricModels);
   ospCommit(*world);
 
   // create renderer

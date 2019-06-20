@@ -46,7 +46,7 @@ namespace ospray {
 
     // Data members //
 
-    Ref<Data> geometryInstances;
+    Ref<Data> GeometricModels;
     Ref<Data> volumeInstances;
 
     //! \brief the embree scene handle for this geometry

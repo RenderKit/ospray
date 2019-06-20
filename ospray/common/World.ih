@@ -29,8 +29,8 @@ struct World
 
   uniform RTCScene embreeSceneHandleGeometries;
 
-  uniform GeometryInstance *uniform *uniform geometryInstances;
-  uniform int32 geometryInstanceCount;
+  uniform GeometricModel *uniform *uniform GeometricModels;
+  uniform int32 GeometricModelCount;
 
   uniform VolumeInstance *uniform *uniform volumeInstances;
   uniform int32 volumeInstanceCount;
@@ -122,8 +122,8 @@ inline void postIntersect(const World *uniform model,
 
   if (ray.instID != RTC_INVALID_GEOMETRY_ID) {
     foreach_unique(instID in ray.instID) {
-      GeometryInstance *uniform instGeom = model->geometryInstances[instID];
-      GeometryInstance_postIntersect(instGeom, model, dg, ray, flags);
+      GeometricModel *uniform instGeom = model->GeometricModels[instID];
+      GeometricModel_postIntersect(instGeom, model, dg, ray, flags);
     }
   } else {
     dg.Ns = dg.Ng = ray.Ng;

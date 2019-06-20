@@ -206,10 +206,10 @@ namespace ospray {
         ObjectHandle handle;
       };
 
-      struct NewGeometryInstance : public Work
+      struct NewGeometricModel : public Work
       {
-        NewGeometryInstance() = default;
-        NewGeometryInstance(ObjectHandle handle, ObjectHandle geometry_handle)
+        NewGeometricModel() = default;
+        NewGeometricModel(ObjectHandle handle, ObjectHandle geometry_handle)
             : handle(handle), geometryHandle(geometry_handle)
         {
         }

@@ -19,7 +19,7 @@
 #include "Geometry.ih"
 #include "math/AffineSpace.ih"
 
-struct GeometryInstance
+struct GeometricModel
 {
   Geometry *uniform geom;  //!< instanced Geometry
   AffineSpace3f xfm;       //!< instantiation matrix
@@ -35,8 +35,8 @@ struct GeometryInstance
   float areaPDF;
 };
 
-void GeometryInstance_postIntersect(const GeometryInstance *uniform self,
-                                    const World *uniform model,
-                                    varying DifferentialGeometry &dg,
-                                    const varying Ray &ray,
-                                    uniform int64 flags);
+void GeometricModel_postIntersect(const GeometricModel *uniform self,
+                                  const World *uniform model,
+                                  varying DifferentialGeometry &dg,
+                                  const varying Ray &ray,
+                                  uniform int64 flags);

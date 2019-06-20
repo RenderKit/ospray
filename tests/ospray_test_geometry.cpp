@@ -172,7 +172,7 @@ TEST_P(SingleObject, simpleMesh)
 {
   OSPGeometry mesh = ::getMesh();
 
-  OSPGeometryInstance instance = ospNewGeometryInstance(mesh);
+  OSPGeometricModel instance = ospNewGeometricModel(mesh);
   ospRelease(mesh);
   auto material = GetMaterial();
   ospSetObject(instance, "material", material);
@@ -192,7 +192,7 @@ TEST_P(SingleObject, simpleSphere)
   EXPECT_TRUE(data);
   ospCommit(data);
 
-  OSPGeometryInstance instance = ospNewGeometryInstance(sphere);
+  OSPGeometricModel instance = ospNewGeometricModel(sphere);
   ospRelease(sphere);
   auto material = GetMaterial();
   ospSetObject(instance, "material", material);
@@ -214,7 +214,7 @@ TEST_P(SingleObject, simpleCylinder)
   EXPECT_TRUE(data);
   ospCommit(data);
 
-  OSPGeometryInstance instance = ospNewGeometryInstance(cylinder);
+  OSPGeometricModel instance = ospNewGeometricModel(cylinder);
   ospRelease(cylinder);
   auto material = GetMaterial();
   ospSetObject(instance, "material", material);
@@ -231,7 +231,7 @@ TEST_P(SingleObject, simpleStreamlines)
 {
   OSPGeometry streamlines = ::getStreamline();
 
-  OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
+  OSPGeometricModel instance = ospNewGeometricModel(streamlines);
   ospRelease(streamlines);
   auto material = GetMaterial();
   ospSetObject(instance, "material", material);
@@ -245,7 +245,7 @@ TEST_P(SingleObject, simpleStreamlinesVariableRadii)
 {
   OSPGeometry streamlines = ::getStreamline(false);
 
-  OSPGeometryInstance instance = ospNewGeometryInstance(streamlines);
+  OSPGeometricModel instance = ospNewGeometricModel(streamlines);
   ospRelease(streamlines);
   auto material = GetMaterial();
   ospSetObject(instance, "material", material);

@@ -112,7 +112,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
               &res, w.framebuffer, w.renderer, w.camera, w.world, pos.x, pos.y);
 
           if (res.hasHit) {
-            std::cout << "Hit geometry instance [id: " << res.geometryInstance
+            std::cout << "Hit geometry instance [id: " << res.GeometricModel
                       << ", prim: " << res.primID << "]" << std::endl;
           }
         }

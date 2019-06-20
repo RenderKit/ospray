@@ -55,10 +55,10 @@ namespace ospray {
     useEmbreeCompactSceneFlag = getParam<bool>("compactMode", 0);
     useEmbreeRobustSceneFlag  = getParam<bool>("robustMode", 0);
 
-    geometryInstances = (Data*)getParamObject("geometries");
-    volumeInstances   = (Data*)getParamObject("volumes");
+    GeometricModels = (Data *)getParamObject("geometries");
+    volumeInstances   = (Data *)getParamObject("volumes");
 
-    size_t numGeometries = geometryInstances ? geometryInstances->size() : 0;
+    size_t numGeometries = GeometricModels ? GeometricModels->size() : 0;
     size_t numVolumes    = volumeInstances ? volumeInstances->size() : 0;
 
     postStatusMsg(2)
@@ -89,10 +89,10 @@ namespace ospray {
           << "=======================================================\n"
           << "Finalizing geometry instance " << i;
 
-      auto &instance = *geometryInstances->at<GeometryInstance *>(i);
+      auto &instance = *GeometricModels->at<GeometricModel *>(i);
       rtcAttachGeometry(embreeSceneHandleGeometries,
                         instance.embreeGeometryHandle());
-      ispc::World_setGeometryInstance(getIE(), i, instance.getIE());
+      ispc::World_setGeometricModel(getIE(), i, instance.getIE());
     }
 
     for (size_t i = 0; i < numVolumes; i++) {

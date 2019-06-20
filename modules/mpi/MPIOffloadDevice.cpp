@@ -599,12 +599,12 @@ namespace ospray {
     // Instancing /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    OSPGeometryInstance MPIOffloadDevice::newGeometryInstance(OSPGeometry geom)
+    OSPGeometricModel MPIOffloadDevice::newGeometricModel(OSPGeometry geom)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewGeometryInstance work(handle, (ObjectHandle &)geom);
+      work::NewGeometricModel work(handle, (ObjectHandle &)geom);
       processWork(work);
-      return (OSPGeometryInstance)(int64)handle;
+      return (OSPGeometricModel)(int64)handle;
     }
 
     OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume volume)

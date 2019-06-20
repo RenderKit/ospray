@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "common/Data.h"
 #include "Geometry.h"
+#include "common/Data.h"
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE GeometryInstance : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE GeometricModel : public ManagedObject
   {
-    GeometryInstance(Geometry *geometry);
-    virtual ~GeometryInstance() override;
+    GeometricModel(Geometry *geometry);
+    virtual ~GeometricModel() override;
     virtual std::string toString() const override;
 
     virtual void setMaterial(Material *mat);
@@ -44,8 +44,8 @@ namespace ospray {
     // Embree information
     RTCScene embreeSceneHandle{nullptr};
     RTCGeometry embreeInstanceGeometry{nullptr};
-    RTCGeometry lastEmbreeInstanceGeometryHandle{nullptr}; // to detect updates
-    int embreeID {-1};
+    RTCGeometry lastEmbreeInstanceGeometryHandle{nullptr};  // to detect updates
+    int embreeID{-1};
 
     // Appearance information
     Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
@@ -57,7 +57,7 @@ namespace ospray {
     std::vector<void *>
         ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
 
-    friend struct PathTracer; // TODO: fix this!
+    friend struct PathTracer;  // TODO: fix this!
   };
 
 }  // namespace ospray
