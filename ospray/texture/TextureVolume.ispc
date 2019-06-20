@@ -16,7 +16,7 @@
 
 #include "Texture2D.ih"
 
-#include "volume/VolumeInstance.ih"
+#include "volume/VolumetricModel.ih"
 
 vec4f TextureVolume_get(const Texture2D *uniform self,
                         const varying DifferentialGeometry &dg)

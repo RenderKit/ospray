@@ -18,7 +18,7 @@
 
 // ospray stuff
 #include "geometry/GeometricModel.h"
-#include "volume/VolumeInstance.h"
+#include "volume/VolumetricModel.h"
 
 // stl
 #include <vector>

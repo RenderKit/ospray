@@ -29,5 +29,5 @@
 #include "ospray_cpp/Renderer.h"
 #include "ospray_cpp/Texture.h"
 #include "ospray_cpp/TransferFunction.h"
-#include "ospray_cpp/VolumeInstance.h"
+#include "ospray_cpp/VolumetricModel.h"
 #include "ospray_cpp/World.h"

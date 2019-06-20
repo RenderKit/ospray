@@ -31,7 +31,7 @@
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #include "transferFunction/TransferFunction.h"
-#include "volume/VolumeInstance.h"
+#include "volume/VolumetricModel.h"
 // stl
 #include <algorithm>
 

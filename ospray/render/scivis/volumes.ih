@@ -17,7 +17,7 @@
 #pragma once
 
 #include "SciVis.ih"
-#include "volume/VolumeInstance.ih"
+#include "volume/VolumetricModel.ih"
 
 vec4f integrateVolumeInterval(const ScreenSample &sample,
                               const VolumeInterval &interval,

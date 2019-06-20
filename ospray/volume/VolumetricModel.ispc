@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospray
-#include "VolumeInstance.ih"
+#include "VolumetricModel.ih"
 #include "common/Ray.ih"
 #include "math/box.ih"
 #include "math/vec.ih"

@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Texture.h"
-#include "volume/VolumeInstance.h"
+#include "volume/VolumetricModel.h"
 
 namespace ospray {
 

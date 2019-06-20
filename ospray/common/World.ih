@@ -19,7 +19,7 @@
 // ospray stuff
 #include "../common/Ray.ih"
 #include "../geometry/GeometricModel.ih"
-#include "../volume/VolumeInstance.ih"
+#include "../volume/VolumetricModel.ih"
 
 extern "C" RTCDevice uniform ispc_embreeDevice();
 

@@ -191,8 +191,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   volume/Volume.ispc
   volume/Volume.cpp
-  volume/VolumeInstance.ispc
-  volume/VolumeInstance.cpp
+  volume/VolumetricModel.ispc
+  volume/VolumetricModel.cpp
 
   volume/structured/GridAccelerator.ispc
   volume/structured/StructuredVolume.ispc

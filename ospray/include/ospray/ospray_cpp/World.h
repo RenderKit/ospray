@@ -18,7 +18,7 @@
 
 #include <ospray/ospray_cpp/GeometricModel.h>
 #include <ospray/ospray_cpp/ManagedObject.h>
-#include <ospray/ospray_cpp/VolumeInstance.h>
+#include <ospray/ospray_cpp/VolumetricModel.h>
 
 namespace ospray {
   namespace cpp {

@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 // ospray
-#include "VolumeInstance.h"
+#include "VolumetricModel.h"
 #include "transferFunction/TransferFunction.h"
 // ispc exports
-#include "VolumeInstance_ispc.h"
+#include "VolumetricModel_ispc.h"
 
 namespace ospray {
 
