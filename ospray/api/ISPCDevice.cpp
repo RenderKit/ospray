@@ -23,7 +23,7 @@
 #include "common/Util.h"
 #include "common/World.h"
 #include "fb/LocalFB.h"
-#include "geometry/GeometryInstance.h"
+#include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/RenderTask.h"

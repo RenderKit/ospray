@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray stuff
-#include "geometry/GeometryInstance.h"
+#include "geometry/GeometricModel.h"
 #include "volume/VolumeInstance.h"
 
 // stl

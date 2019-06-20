@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 // ospray
-#include "GeometryInstance.h"
+#include "GeometricModel.h"
 // ispc exports
-#include "GeometryInstance_ispc.h"
+#include "GeometricModel_ispc.h"
 
 namespace ospray {
 

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/GeometryInstance.h>
+#include <ospray/ospray_cpp/GeometricModel.h>
 #include <ospray/ospray_cpp/ManagedObject.h>
 #include <ospray/ospray_cpp/VolumeInstance.h>
 

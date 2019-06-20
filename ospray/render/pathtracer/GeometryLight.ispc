@@ -16,7 +16,7 @@
 
 #include "lights/Light.ih"
 #include "math/AffineSpace.ih"
-#include "geometry/GeometryInstance.ih"
+#include "geometry/GeometricModel.ih"
 #include "math/Distribution1D.ih"
 #include "render/pathtracer/materials/Material.ih"
 
