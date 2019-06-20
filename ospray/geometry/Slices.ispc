@@ -90,7 +90,6 @@ unmasked void Slices_occluded(
 }
 
 static void Slices_postIntersect(const Geometry *uniform geometry,
-                                 const World *uniform model,
                                  varying DifferentialGeometry &dg,
                                  const varying Ray &ray,
                                  uniform int64 flags)

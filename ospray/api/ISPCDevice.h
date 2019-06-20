@@ -60,16 +60,20 @@ namespace ospray {
       // Renderable Objects ///////////////////////////////////////////////////
 
       OSPLight newLight(const char *type) override;
+
       OSPCamera newCamera(const char *type) override;
+
       OSPGeometry newGeometry(const char *type) override;
       OSPVolume newVolume(const char *type) override;
-
-      // Instancing ///////////////////////////////////////////////////////////
 
       OSPGeometricModel newGeometricModel(OSPGeometry geom) override;
       OSPVolumetricModel newVolumetricModel(OSPVolume volume) override;
 
-      // Instance Meta-Data ///////////////////////////////////////////////////
+      // Instancing ///////////////////////////////////////////////////////////
+
+      OSPInstance newInstance() override;
+
+      // Model Meta-Data //////////////////////////////////////////////////////
 
       OSPMaterial newMaterial(const char *renderer_type,
                               const char *material_type) override;

@@ -108,7 +108,6 @@ unmasked void Isosurfaces_occluded(
 }
 
 static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
-                                      const World *uniform model,
                                       varying DifferentialGeometry &dg,
                                       const varying Ray &ray,
                                       uniform int64 flags)

@@ -16,9 +16,9 @@
 
 // ospray
 #include "World.h"
+#include "Instance.h"
 #include "api/ISPCDevice.h"
 // ispc exports
-#include "Volume_ispc.h"
 #include "World_ispc.h"
 
 namespace ospray {
@@ -28,6 +28,77 @@ namespace ospray {
     return api::ISPCDevice::embreeDevice;
   }
 
+  // Embree helper functions ///////////////////////////////////////////////////
+
+  static std::pair<int, int> createEmbreeScenes(RTCScene &geometryScene,
+                                                RTCScene &volumeScene,
+                                                Data &instances,
+                                                int embreeFlags)
+  {
+    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+
+    geometryScene = rtcNewScene(embreeDevice);
+    volumeScene   = rtcNewScene(embreeDevice);
+
+    int numGeomInstances   = 0;
+    int numVolumeInstances = 0;
+
+    auto begin = instances.begin<Instance *>();
+    auto end   = instances.end<Instance *>();
+    std::for_each(begin, end, [&](Instance *inst) {
+      auto instGeometryScene = inst->embreeGeometryScene();
+      auto instVolumeScene   = inst->embreeVolumeScene();
+
+      auto xfm = inst->xfm();
+
+      if (instGeometryScene) {
+        auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
+        rtcSetGeometryInstancedScene(eInst, instGeometryScene.value());
+        rtcSetGeometryTransform(
+            eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+        rtcCommitGeometry(eInst);
+
+        rtcAttachGeometry(geometryScene, eInst);
+
+        rtcReleaseGeometry(eInst);
+
+        numGeomInstances++;
+      }
+
+      if (instVolumeScene) {
+        auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
+        rtcSetGeometryInstancedScene(eInst, instVolumeScene.value());
+        rtcSetGeometryTransform(
+            eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+        rtcCommitGeometry(eInst);
+
+        rtcAttachGeometry(volumeScene, eInst);
+
+        rtcReleaseGeometry(eInst);
+
+        numVolumeInstances++;
+      }
+    });
+
+    rtcSetSceneFlags(geometryScene, static_cast<RTCSceneFlags>(embreeFlags));
+    rtcSetSceneFlags(volumeScene, static_cast<RTCSceneFlags>(embreeFlags));
+
+    rtcCommitScene(geometryScene);
+    rtcCommitScene(volumeScene);
+
+    return std::make_pair(numGeomInstances, numVolumeInstances);
+  }
+
+  static void freeAndNullifyEmbreeScene(RTCScene &scene)
+  {
+    if (scene)
+      rtcReleaseScene(scene);
+
+    scene = nullptr;
+  }
+
+  // World definitions ////////////////////////////////////////////////////////
+
   World::World()
   {
     managedObjectType    = OSP_WORLD;
@@ -36,12 +107,8 @@ namespace ospray {
 
   World::~World()
   {
-    if (embreeSceneHandleGeometries)
-      rtcReleaseScene(embreeSceneHandleGeometries);
-    if (embreeSceneHandleVolumes)
-      rtcReleaseScene(embreeSceneHandleVolumes);
-
-    ispc::World_cleanup(getIE());
+    freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
+    freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
   }
 
   std::string World::toString() const
@@ -51,63 +118,46 @@ namespace ospray {
 
   void World::commit()
   {
-    useEmbreeDynamicSceneFlag = getParam<bool>("dynamicScene", 0);
-    useEmbreeCompactSceneFlag = getParam<bool>("compactMode", 0);
-    useEmbreeRobustSceneFlag  = getParam<bool>("robustMode", 0);
+    numGeometries = 0;
+    numVolumes    = 0;
 
-    GeometricModels = (Data *)getParamObject("geometries");
-    VolumetricModels   = (Data *)getParamObject("volumes");
+    freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
+    freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
 
-    size_t numGeometries = GeometricModels ? GeometricModels->size() : 0;
-    size_t numVolumes    = VolumetricModels ? VolumetricModels->size() : 0;
+    instances = (Data *)getParamObject("instances");
+
+    if (!instances)
+      return;
+
+    auto numInstances = instances->size();
+
+    int sceneFlags = 0;
+    sceneFlags |=
+        (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
+    sceneFlags |=
+        (getParam<bool>("compactMode", false) ? RTC_SCENE_FLAG_COMPACT : 0);
+    sceneFlags |=
+        (getParam<bool>("robustMode", false) ? RTC_SCENE_FLAG_ROBUST : 0);
 
     postStatusMsg(2)
         << "=======================================================\n"
-        << "Finalizing model, which has " << numGeometries << " geometries and "
-        << numVolumes << " volumes";
+        << "Committing world, which has " << numInstances << " instances";
 
-    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+    auto numGeomsAndVolumes = createEmbreeScenes(embreeSceneHandleGeometries,
+                                                 embreeSceneHandleVolumes,
+                                                 *instances,
+                                                 sceneFlags);
 
-    int sceneFlags = 0;
-    sceneFlags =
-        sceneFlags | (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
-    sceneFlags =
-        sceneFlags | (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
-    sceneFlags =
-        sceneFlags | (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
+    numGeometries = numGeomsAndVolumes.first;
+    numVolumes    = numGeomsAndVolumes.second;
 
-    ispc::World_init(
-        getIE(), embreeDevice, sceneFlags, numGeometries, numVolumes);
+    instanceIEs = createArrayOfIE(*instances);
 
-    embreeSceneHandleGeometries =
-        (RTCScene)ispc::World_getEmbreeSceneHandleGeometries(getIE());
-    embreeSceneHandleVolumes =
-        (RTCScene)ispc::World_getEmbreeSceneHandleVolumes(getIE());
-
-    for (size_t i = 0; i < numGeometries; i++) {
-      postStatusMsg(2)
-          << "=======================================================\n"
-          << "Finalizing geometry instance " << i;
-
-      auto &instance = *GeometricModels->at<GeometricModel *>(i);
-      rtcAttachGeometry(embreeSceneHandleGeometries,
-                        instance.embreeGeometryHandle());
-      ispc::World_setGeometricModel(getIE(), i, instance.getIE());
-    }
-
-    for (size_t i = 0; i < numVolumes; i++) {
-      postStatusMsg(2)
-          << "=======================================================\n"
-          << "Finalizing volume instance " << i;
-
-      auto &instance = *VolumetricModels->at<VolumetricModel *>(i);
-      rtcAttachGeometry(embreeSceneHandleVolumes,
-                        instance.embreeGeometryHandle());
-      ispc::World_setVolumetricModel(getIE(), i, instance.getIE());
-    }
-
-    rtcCommitScene(embreeSceneHandleGeometries);
-    rtcCommitScene(embreeSceneHandleVolumes);
+    ispc::World_set(getIE(),
+                    instanceIEs.data(),
+                    numInstances,
+                    embreeSceneHandleGeometries,
+                    embreeSceneHandleVolumes);
   }
 
 }  // namespace ospray

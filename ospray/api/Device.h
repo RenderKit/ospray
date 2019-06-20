@@ -62,17 +62,21 @@ namespace ospray {
 
       // Renderable Objects ///////////////////////////////////////////////////
 
-      virtual OSPLight newLight(const char *type)       = 0;
-      virtual OSPCamera newCamera(const char *type)     = 0;
+      virtual OSPLight newLight(const char *type) = 0;
+
+      virtual OSPCamera newCamera(const char *type) = 0;
+
       virtual OSPGeometry newGeometry(const char *type) = 0;
       virtual OSPVolume newVolume(const char *type)     = 0;
 
+      virtual OSPGeometricModel newGeometricModel(OSPGeometry geom)   = 0;
+      virtual OSPVolumetricModel newVolumetricModel(OSPVolume volume) = 0;
+
       // Instancing ///////////////////////////////////////////////////////////
 
-      virtual OSPGeometricModel newGeometricModel(OSPGeometry geom) = 0;
-      virtual OSPVolumetricModel newVolumetricModel(OSPVolume volume)     = 0;
+      virtual OSPInstance newInstance() { return nullptr; }
 
-      // Instance Meta-Data ///////////////////////////////////////////////////
+      // Model Meta-Data //////////////////////////////////////////////////////
 
       virtual OSPMaterial newMaterial(const char *renderer_type,
                                       const char *material_type) = 0;

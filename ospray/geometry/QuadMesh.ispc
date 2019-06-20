@@ -53,7 +53,6 @@ __define_quad_interpolate(vec3f);
 __define_quad_interpolate(vec4f);
 
 static void QuadMesh_postIntersect(const Geometry *uniform _self,
-                                   const World *uniform model,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)

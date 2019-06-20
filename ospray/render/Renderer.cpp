@@ -107,7 +107,7 @@ namespace ospray {
     OSPPickResult res;
 
     res.GeometricModel = nullptr;
-    res.primID           = -1;
+    res.primID         = -1;
 
     int instID = -1;
     int primID = -1;
@@ -122,11 +122,14 @@ namespace ospray {
                         primID,
                         res.hasHit);
 
+#warning fix picking
+#if 0
     if (res.hasHit) {
       res.GeometricModel =
           world->GeometricModels->at<OSPGeometricModel>(instID);
       res.primID = static_cast<uint32_t>(primID);
     }
+#endif
 
     return res;
   }

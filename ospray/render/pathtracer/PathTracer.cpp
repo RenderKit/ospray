@@ -46,6 +46,7 @@ namespace ospray {
 
   void PathTracer::generateGeometryLights(const World &world)
   {
+#if 0
     auto *geometries = world.GeometricModels.ptr;
 
     if (!geometries)
@@ -82,6 +83,7 @@ namespace ospray {
         }
       }
     });
+#endif
   }
 
   void PathTracer::destroyGeometryLights()

@@ -24,30 +24,24 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE GeometricModel : public ManagedObject
   {
     GeometricModel(Geometry *geometry);
-    virtual ~GeometricModel() override;
-    virtual std::string toString() const override;
+    ~GeometricModel() override = default;
 
-    virtual void setMaterial(Material *mat);
-    virtual void setMaterialList(Data *matListData);
+    std::string toString() const override;
 
-    virtual void commit() override;
+    void commit() override;
 
     RTCGeometry embreeGeometryHandle() const;
 
    private:
-    // Data members //
+    // Helper functions //
 
-    // Geometry information
-    AffineSpace3f instanceXfm;
-    Ref<Geometry> instancedGeometry;
+    void setMaterial(Material *mat);
+    void setMaterialList(Data *matListData);
 
-    // Embree information
-    RTCScene embreeSceneHandle{nullptr};
-    RTCGeometry embreeInstanceGeometry{nullptr};
-    RTCGeometry lastEmbreeInstanceGeometryHandle{nullptr};  // to detect updates
-    int embreeID{-1};
+    // Data //
 
-    // Appearance information
+    Ref<Geometry> geometry;
+
     Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
                                       (uint32) */
     Ref<Data> colorData;

@@ -28,7 +28,6 @@ struct Curves
 };
 
 static void Curves_postIntersect(const Geometry *uniform self,
-                                 const World *uniform world,
                                  varying DifferentialGeometry &dg,
                                  const varying Ray &ray,
                                  uniform int64 flags)

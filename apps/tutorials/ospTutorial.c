@@ -117,17 +117,26 @@ int main(int argc, const char **argv) {
 
   ospCommit(mesh);
 
-  OSPGeometricModel instance = ospNewGeometricModel(mesh);
-  ospCommit(instance);
+  // put the mesh into a model
+  OSPGeometricModel model = ospNewGeometricModel(mesh);
+  ospCommit(model);
   ospRelease(mesh); // we are done using this handle
 
-  OSPWorld world = ospNewWorld();
-  OSPData GeometricModels = ospNewData(1, OSP_OBJECT, &instance, 0);
-  ospSetObject(world, "geometries", GeometricModels);
-  ospRelease(instance);
-  ospRelease(GeometricModels);
-  ospCommit(world);
+  // put the model into an instance
+  OSPInstance instance = ospNewInstance();
+  OSPData geometricModels = ospNewData(1, OSP_OBJECT, &model, 0);
+  ospSetData(instance, "geometries", geometricModels);
+  ospCommit(instance);
+  ospRelease(model);
+  ospRelease(geometricModels);
 
+  // put the instance in the world
+  OSPWorld world = ospNewWorld();
+  OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
+  ospSetData(world, "instances", instances);
+  ospCommit(world);
+  ospRelease(instance);
+  ospRelease(instances);
 
   // create renderer
   OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer

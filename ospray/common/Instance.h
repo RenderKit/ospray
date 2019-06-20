@@ -19,40 +19,60 @@
 // ospray stuff
 #include "geometry/GeometricModel.h"
 #include "volume/VolumetricModel.h"
-
-// stl
-#include <vector>
-
 // embree
 #include "embree3/rtcore.h"
+// ospcommon
+#include "ospcommon/utility/Optional.h"
 
 namespace ospray {
 
-  /*! \brief Base Abstraction for an OSPRay 'World' entity
+  using OptionalScene = utility::Optional<RTCScene>;
 
-    A 'model' is the generalization of a 'scene' in embree: it is a
-    collection of geometries and volumes that one can trace rays
-    against, and that one can afterwards 'query' for certain
-    properties (like the shading normal or material for a given
-    ray/model intersection) */
-  struct OSPRAY_SDK_INTERFACE World : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
   {
-    World();
-    virtual ~World() override;
+    Instance();
+    ~Instance() override;
 
     std::string toString() const override;
+
     void commit() override;
 
-    // Data members //
+    affine3f xfm();
 
-    Ref<Data> instances;
-    std::vector<void*> instanceIEs;
-    int numGeometries{0};
-    int numVolumes{0};
+    OptionalScene embreeGeometryScene();
+    OptionalScene embreeVolumeScene();
+
+   private:
+    // Geometry information
+    affine3f instanceXfm;
+    affine3f rcpXfm;
+
+    Ref<Data> geometricModels;
+    std::vector<void*> geometricModelIEs;
+
+    Ref<Data> volumetricModels;
+    std::vector<void*> volumetricModelIEs;
 
     //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandleGeometries{nullptr};
-    RTCScene embreeSceneHandleVolumes{nullptr};
+    RTCScene sceneGeometries{nullptr};
+    RTCScene sceneVolumes{nullptr};
   };
+
+  // Inlined definitions //////////////////////////////////////////////////////
+
+  inline affine3f Instance::xfm()
+  {
+    return instanceXfm;
+  }
+
+  inline OptionalScene Instance::embreeGeometryScene()
+  {
+    return sceneGeometries ? sceneGeometries : OptionalScene();
+  }
+
+  inline OptionalScene Instance::embreeVolumeScene()
+  {
+    return sceneGeometries ? sceneGeometries : OptionalScene();
+  }
 
 }  // namespace ospray

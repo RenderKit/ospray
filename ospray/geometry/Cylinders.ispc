@@ -167,7 +167,6 @@ unmasked void Cylinders_occluded(
 }
 
 static void Cylinders_postIntersect(const Geometry *uniform _self,
-                                    const World *uniform model,
                                     varying DifferentialGeometry &dg,
                                     const varying Ray &ray,
                                     uniform int64 flags)

@@ -39,7 +39,6 @@ struct Geometry;
     geometry->material, or the color when different to vec4f(1.0f).
 */
 typedef void (*Geometry_postIntersectFct)(const Geometry *uniform self,
-                                          const World *uniform model,
                                           varying DifferentialGeometry &dg,
                                           const varying Ray &ray,
                                           uniform int64 flags);

@@ -95,7 +95,6 @@ unmasked void Boxes_occluded(
 }
 
 static void Boxes_postIntersect(const Geometry *uniform geometry,
-                                const World *uniform world,
                                 varying DifferentialGeometry &dg,
                                 const varying Ray &ray,
                                 uniform int64 flags)

@@ -14,39 +14,39 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray
-#include "GeometricModel.ih"
-#include "common/Ray.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "Instance.ih"
 
-export void *uniform GeometricModel_create(void *uniform cppE,
-                                           void *uniform geom)
+export void *uniform Instance_create(void *uniform cppE)
 {
-  GeometricModel *uniform self = uniform new GeometricModel;
+  Instance *uniform inst = uniform new Instance;
 
-  self->geom    = (Geometry * uniform) geom;
-  self->areaPDF = 0.f;
+  inst->cppEquivalent = cppE;
 
-  return self;
+  inst->geometricModels    = NULL;
+  inst->numGeometricModels = 0;
+
+  inst->volumetricModels    = NULL;
+  inst->numVolumetricModels = 0;
+
+  return (void *uniform)inst;
 }
 
-export void GeometricModel_set(void *uniform _self,
-                               void *uniform primitiveColors,
-                               void *uniform prim_materialID)
+export void Instance_set(void *uniform _inst,
+                         void *uniform _geomModels,
+                         uniform int32 numGeomModels,
+                         void *uniform _volModels,
+                         uniform int32 numVolModels,
+                         const uniform AffineSpace3f &xfm,
+                         const uniform AffineSpace3f &rcp_xfm)
 {
-  GeometricModel *uniform self = (GeometricModel * uniform) _self;
+  Instance *uniform inst = (Instance * uniform) _inst;
 
-  self->primitiveColors = (vec4f * uniform) primitiveColors;
-  self->prim_materialID = (uint32 * uniform) prim_materialID;
-}
+  inst->geometricModels    = (GeometricModel * *uniform) _geomModels;
+  inst->numGeometricModels = numGeomModels;
 
-export void GeometricModel_setMaterialList(void *uniform _inst,
-                                           uniform int numMaterials,
-                                           void *uniform _matList)
-{
-  GeometricModel *uniform inst = (GeometricModel * uniform) _inst;
+  inst->volumetricModels    = (VolumetricModel * *uniform) _volModels;
+  inst->numVolumetricModels = numVolModels;
 
-  inst->numMaterials = numMaterials;
-  inst->materialList = (Material * uniform * uniform) _matList;
+  inst->xfm     = xfm;
+  inst->rcp_xfm = rcp_xfm;
 }

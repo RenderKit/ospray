@@ -144,6 +144,7 @@ namespace ospray {
     case OSP_VOLUME_INSTANCE:
     case OSP_PIXEL_OP:
     case OSP_WORLD:
+    case OSP_INSTANCE:
     case OSP_STRING:    return sizeof(void *);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
@@ -235,6 +236,7 @@ namespace ospray {
     case OSP_LIGHT:             return "light";
     case OSP_MATERIAL:          return "material";
     case OSP_WORLD:             return "world";
+    case OSP_INSTANCE:          return "instance";
     case OSP_RENDERER:          return "renderer";
     case OSP_TEXTURE:           return "texture";
     case OSP_TRANSFER_FUNCTION: return "transfer_function";

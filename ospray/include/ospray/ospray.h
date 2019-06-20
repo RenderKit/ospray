@@ -144,14 +144,15 @@ namespace osp {
   struct Data             : public ManagedObject {};
   struct Future           : public ManagedObject {};
   struct Geometry         : public ManagedObject {};
-  struct GeometricModel : public ManagedObject {};
+  struct GeometricModel   : public ManagedObject {};
   struct Material         : public ManagedObject {};
   struct Volume           : public ManagedObject {};
-  struct VolumetricModel   : public ManagedObject {};
+  struct VolumetricModel  : public ManagedObject {};
   struct TransferFunction : public ManagedObject {};
   struct Texture          : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
+  struct Instance         : public ManagedObject {};
   struct World            : public ManagedObject {};
 }
 
@@ -171,6 +172,7 @@ typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture           *OSPTexture;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
+typedef osp::Instance          *OSPInstance;
 typedef osp::World             *OSPWorld;
 #else
 typedef void _OSPManagedObject;
@@ -184,6 +186,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPRenderer,
   *OSPCamera,
   *OSPFrameBuffer,
+  *OSPInstance,
   *OSPWorld,
   *OSPData,
   *OSPGeometry,
@@ -274,16 +277,16 @@ extern "C" {
   OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
 
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
-
   OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
+
+  OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom);
+  OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
   // Instancing ///////////////////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom);
+  OSPRAY_INTERFACE OSPInstance ospNewInstance();
 
-  OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
-
-  // Instance Meta-Data ///////////////////////////////////////////////////////
+  // Model Meta-Data //////////////////////////////////////////////////////////
 
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *rendererType,
                                               const char *materialType);

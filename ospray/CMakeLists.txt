@@ -59,6 +59,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   common/ObjectHandle.cpp
   common/Data.cpp
+  common/Instance.cpp
+  common/Instance.ispc
   common/Managed.cpp
   common/OSPCommon.ispc
   common/Material.cpp

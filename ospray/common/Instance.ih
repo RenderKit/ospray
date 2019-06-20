@@ -16,48 +16,46 @@
 
 #pragma once
 
-#include "Geometry.ih"
-#include "math/AffineSpace.ih"
+// ospray stuff
+#include "../common/Ray.ih"
+#include "../geometry/GeometricModel.ih"
+#include "../volume/VolumetricModel.ih"
 
-struct GeometricModel
+struct Instance
 {
-  Geometry *uniform geom;  //!< instanced Geometry
+  void *cppEquivalent;
 
-#if 1  // TODO: remove this, GeometryLight isn't correct yet...
   AffineSpace3f xfm;
   AffineSpace3f rcp_xfm;
-#endif
 
-  vec4f *uniform primitiveColors;
+  GeometricModel **geometricModels;
+  int32 numGeometricModels;
 
-  uint32 *prim_materialID;  // per-primitive material ID
-
-  int32 numMaterials;
-  Material *uniform *uniform materialList;
-
-  float areaPDF;
+  VolumetricModel **volumetricModels;
+  int32 numVolumetricModels;
 };
 
-inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
-                                         varying DifferentialGeometry &dg,
-                                         const varying Ray &ray,
-                                         uniform int64 flags)
+inline void Instance_postIntersect(const Instance *uniform self,
+                                   varying DifferentialGeometry &dg,
+                                   const varying Ray &ray,
+                                   uniform int64 flags)
 {
-  Geometry *uniform geom = self->geom;
+  foreach_unique(geomID in ray.geomID)
+  {
+    GeometricModel *uniform geom = *(self->geometricModels + geomID);
+    GeometricModel_postIntersect(geom, dg, ray, flags);
 
-  dg.geometry = geom;
+    dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
+    dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
+    // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
+    // isotropic anyway and hence cannot better handle non-uniform scaling)
+    dg.epsilon *= max(abs(self->xfm.l.vx.x),
+                      max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
-  geom->postIntersect(geom, dg, ray, flags);
-
-  if (flags & DG_COLOR && self->primitiveColors)
-    dg.color = self->primitiveColors[ray.primID];
-
-  dg.materialID = -1;
-  if (self->prim_materialID)
-    dg.materialID = self->prim_materialID[ray.primID];
-  else if (self->numMaterials > 1)
-    dg.materialID = ray.primID;
-
-  if (self->materialList)
-    dg.material = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+    if(flags & DG_TANGENTS)
+    {
+      dg.dPds = xfmVector(self->xfm, dg.dPds);
+      dg.dPdt = xfmVector(self->xfm, dg.dPdt);
+    }
+  }
 }

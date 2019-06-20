@@ -21,25 +21,13 @@
 
 namespace ospray {
 
-  GeometricModel::GeometricModel(Geometry *geometry)
+  GeometricModel::GeometricModel(Geometry *_geometry)
   {
-    if (geometry == nullptr)
-      throw std::runtime_error("NULL Geometry given to GeometricModel!");
-
-    instancedGeometry = geometry;
+    geometry = _geometry;
 
     this->ispcEquivalent = ispc::GeometricModel_create(this, geometry->getIE());
 
     setMaterialList(nullptr);
-  }
-
-  GeometricModel::~GeometricModel()
-  {
-    if (embreeInstanceGeometry)
-      rtcReleaseGeometry(embreeInstanceGeometry);
-
-    if (embreeSceneHandle)
-      rtcReleaseScene(embreeSceneHandle);
   }
 
   std::string GeometricModel::toString() const
@@ -65,106 +53,49 @@ namespace ospray {
     materialListData = matListData;
     materialList     = (Material **)materialListData->data;
 
-    if (!getIE()) {
-      postStatusMsg(
-          "#osp: warning: geometry does not have an "
-          "ispc equivalent!");
-    } else {
-      const int numMaterials = materialListData->numItems;
-      ispcMaterialPtrs.resize(numMaterials);
-      for (int i = 0; i < numMaterials; i++)
-        ispcMaterialPtrs[i] = materialList[i]->getIE();
+    const int numMaterials = materialListData->numItems;
+    ispcMaterialPtrs.resize(numMaterials);
+    for (int i = 0; i < numMaterials; i++)
+      ispcMaterialPtrs[i] = materialList[i]->getIE();
 
-      ispc::GeometricModel_setMaterialList(
-          this->getIE(), numMaterials, ispcMaterialPtrs.data());
-    }
+    ispc::GeometricModel_setMaterialList(
+        this->getIE(), numMaterials, ispcMaterialPtrs.data());
   }
 
   void GeometricModel::commit()
   {
-    // Get transform information //
-
-    instanceXfm = getParamAffine3f("xfm", affine3f(one));
-
-    // Create Embree instanced scene, if necessary //
-
-    if (lastEmbreeInstanceGeometryHandle != instancedGeometry->embreeGeometry) {
-      if (embreeSceneHandle) {
-        rtcDetachGeometry(embreeSceneHandle, embreeID);
-        rtcReleaseScene(embreeSceneHandle);
-      }
-
-      embreeSceneHandle = rtcNewScene(ispc_embreeDevice());
-
-      if (embreeInstanceGeometry)
-        rtcReleaseGeometry(embreeInstanceGeometry);
-
-      embreeInstanceGeometry =
-          rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
-
-      bool useEmbreeDynamicSceneFlag = getParam1b("dynamicScene", 0);
-      bool useEmbreeCompactSceneFlag = getParam1b("compactMode", 0);
-      bool useEmbreeRobustSceneFlag  = getParam1b("robustMode", 0);
-
-      int sceneFlags = 0;
-      sceneFlags |= (useEmbreeDynamicSceneFlag ? RTC_SCENE_FLAG_DYNAMIC : 0);
-      sceneFlags |= (useEmbreeCompactSceneFlag ? RTC_SCENE_FLAG_COMPACT : 0);
-      sceneFlags |= (useEmbreeRobustSceneFlag ? RTC_SCENE_FLAG_ROBUST : 0);
-
-      rtcSetSceneFlags(embreeSceneHandle,
-                       static_cast<RTCSceneFlags>(sceneFlags));
-
-      lastEmbreeInstanceGeometryHandle = instancedGeometry->embreeGeometry;
-
-      embreeID = rtcAttachGeometry(embreeSceneHandle,
-                                   instancedGeometry->embreeGeometry);
-      rtcCommitScene(embreeSceneHandle);
-
-      rtcSetGeometryInstancedScene(embreeInstanceGeometry, embreeSceneHandle);
-    }
-
-    // Set Embree transform //
-
-    rtcSetGeometryTransform(embreeInstanceGeometry,
-                            0,
-                            RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
-                            &instanceXfm);
-
-    rtcCommitGeometry(embreeInstanceGeometry);
-
-    // Finish getting/setting other appearance information //
-
-    AffineSpace3f rcp_xfm = rcp(instanceXfm);
-
     colorData = getParamData("color", getParamData("prim.color"));
 
-    if (colorData &&
-        colorData->numItems != instancedGeometry->numPrimitives()) {
+    if (colorData && colorData->numItems != geometry->numPrimitives()) {
       throw std::runtime_error(
           "number of colors does not match number of primitives!");
     }
 
-    material = (Material *)getParamObject("material");
-
     prim_materialIDData       = getParamData("prim.materialID");
     Data *materialListDataPtr = getParamData("materialList");
 
-    if (materialListDataPtr)
+    if (prim_materialIDData &&
+        prim_materialIDData->numItems != geometry->numPrimitives()) {
+      throw std::runtime_error(
+          "number of prim.materialID does not match number of primitives!");
+    }
+
+    material = (Material *)getParamObject("material");
+
+    if (materialListDataPtr && prim_materialIDData)
       setMaterialList(materialListDataPtr);
     else if (material)
       setMaterial(material.ptr);
 
     ispc::GeometricModel_set(
         getIE(),
-        (ispc::AffineSpace3f &)instanceXfm,
-        (ispc::AffineSpace3f &)rcp_xfm,
         colorData ? colorData->data : nullptr,
         prim_materialIDData ? prim_materialIDData->data : nullptr);
   }
 
   RTCGeometry GeometricModel::embreeGeometryHandle() const
   {
-    return embreeInstanceGeometry;
+    return geometry->embreeGeometry;
   }
 
 }  // namespace ospray

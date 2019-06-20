@@ -251,10 +251,12 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
     foreach_unique(m in material)
       if (m != NULL && reduce_max(m->emission) > 0.f) {
         float areaPdf;
+      #if 0 // NOTE(jda) - this needs re-enabled!
         foreach_unique(instID in ray.instID) {
           GeometricModel *uniform inst = (GeometricModel *uniform)world->geometricModels[instID];
           areaPdf = inst->areaPDF;
         }
+      #endif
 
         // convert pdf wrt. area to pdf wrt. solid angle
         const float cosd = dot(dg.Ng, ray.dir);
