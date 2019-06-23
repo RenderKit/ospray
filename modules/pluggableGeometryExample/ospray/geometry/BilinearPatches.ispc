@@ -71,7 +71,7 @@ export void *uniform BilinearPatches_create(void *uniform cppEquivalent)
      because we use embree to do the traversal for us (see
      BilinearPatches_set()) below */
   Geometry_Constructor(
-      &self->super, cppEquivalent, BilinearPatches_postIntersect, NULL, 0);
+      &self->super, cppEquivalent, BilinearPatches_postIntersect, NULL);
   return self;
 }
 
@@ -279,7 +279,7 @@ void BilinearPatches_intersect_kernel(
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->instID = args->context->instID[0];
     }
   }
@@ -304,7 +304,6 @@ unmasked void BilinearPatches_occluded(
   code significantly larger */
 export void BilinearPatches_finalize(void *uniform _self,
                                      void *uniform _embreeGeometry,
-                                     uniform uint32 geomID,
                                      float *uniform patchesDataMemory,
                                      uniform size_t numPatches)
 {
@@ -314,9 +313,8 @@ export void BilinearPatches_finalize(void *uniform _self,
   BilinearPatches *uniform self = (BilinearPatches * uniform) _self;
 
   // set our internal data.
-  self->super.geomID = geomID;
-  self->numPatches   = numPatches;
-  self->patchArray   = (Patch * uniform) patchesDataMemory;
+  self->numPatches = numPatches;
+  self->patchArray = (Patch * uniform) patchesDataMemory;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

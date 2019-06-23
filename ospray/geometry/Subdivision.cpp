@@ -93,10 +93,7 @@ namespace ospray {
 
     vec2f *texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
 
-    ispc::Subdivision_set(getIE(),
-                          embreeGeometry,
-                          geomID,
-                          (ispc::vec2f *)texcoord);
+    ispc::Subdivision_set(getIE(), embreeGeometry, (ispc::vec2f *)texcoord);
   }
 
   size_t Subdivision::numPrimitives() const

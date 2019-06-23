@@ -55,7 +55,6 @@ namespace ospray {
     virtual size_t numPrimitives() const = 0;
 
     RTCGeometry embreeGeometry{nullptr};
-    uint32_t geomID{0};
 
   protected:
     virtual void createEmbreeGeometry() = 0;

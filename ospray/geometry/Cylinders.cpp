@@ -62,7 +62,6 @@ namespace ospray {
 
     ispc::CylindersGeometry_set(getIE(),
                                 embreeGeometry,
-                                geomID,
                                 cylinderData->data,
                                 texcoordData ? texcoordData->data : nullptr,
                                 numCylinders,

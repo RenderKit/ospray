@@ -64,7 +64,7 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
     else
     {
       ray->instID = args->context->instID[0];
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->primID = primID;
       ray->t      = t.x < ray->t0 ? t.y : t.x;
 
@@ -111,21 +111,18 @@ export void *uniform Boxes_create(void *uniform cppEquivalent)
 {
   uniform Boxes *uniform boxes = uniform new uniform Boxes;
 
-  Geometry_Constructor(
-      &boxes->super, cppEquivalent, Boxes_postIntersect, NULL, 0);
+  Geometry_Constructor(&boxes->super, cppEquivalent, Boxes_postIntersect, NULL);
 
   return boxes;
 }
 
 export void *uniform Boxes_set(void *uniform _self,
                                void *uniform _embreeGeometry,
-                               uniform uint32 geomID,
                                int32 uniform numBoxes,
                                void *uniform boxes)
 {
   Boxes *uniform self = (Boxes * uniform) _self;
 
-  self->super.geomID        = geomID;
   self->super.numPrimitives = numBoxes;
   self->boxes               = (box3f * uniform) boxes;
 

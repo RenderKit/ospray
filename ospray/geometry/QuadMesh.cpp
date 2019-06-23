@@ -128,7 +128,6 @@ namespace ospray {
 
     ispc::QuadMesh_set(getIE(),
                        embreeGeometry,
-                       geomID,
                        numQuads,
                        numCompsInVtx,
                        numCompsInNor,

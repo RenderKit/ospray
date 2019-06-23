@@ -54,7 +54,7 @@ namespace ospray {
 
     createEmbreeGeometry();
 
-    ispc::Boxes_set(getIE(), embreeGeometry, geomID, numBoxes, boxData->data);
+    ispc::Boxes_set(getIE(), embreeGeometry, numBoxes, boxData->data);
   }
 
   size_t Boxes::numPrimitives() const

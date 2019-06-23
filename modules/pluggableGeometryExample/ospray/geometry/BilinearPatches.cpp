@@ -72,9 +72,9 @@ namespace ospray {
       /* get the acutal 'raw' pointer to the data (ispc doesn't know
          what to do with the 'Data' abstraction class */
       void *patchesDataPointer = patchesData->data;
+
       ispc::BilinearPatches_finalize(getIE(),
                                      embreeGeometry,
-                                     geomID,
                                      (float *)patchesDataPointer,
                                      numPatchesInInput);
     }

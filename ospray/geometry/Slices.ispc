@@ -69,7 +69,7 @@ void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->primID = primID;
       ray->t      = tIntersect;
       ray->Ng     = make_vec3f(self->planes[primID]);
@@ -116,16 +116,12 @@ static void Slices_postIntersect(const Geometry *uniform geometry,
 export void *uniform Slices_create(void *uniform cppEquivalent)
 {
   uniform Slices *uniform self = uniform new uniform Slices;
-
-  Geometry_Constructor(
-      &self->super, cppEquivalent, Slices_postIntersect, NULL, 0);
-
+  Geometry_Constructor(&self->super, cppEquivalent, Slices_postIntersect, NULL);
   return self;
 }
 
 export void *uniform Slices_set(void *uniform _self,
                                 void *uniform _embreeGeometry,
-                                uniform uint32 geomID,
                                 int32 uniform numPlanes,
                                 uniform vec4f *uniform planes,
                                 void *uniform _volume)
@@ -133,7 +129,6 @@ export void *uniform Slices_set(void *uniform _self,
   Slices *uniform self           = (Slices * uniform) _self;
   VolumeInstance *uniform volume = (VolumeInstance * uniform) _volume;
 
-  self->super.geomID        = geomID;
   self->super.numPrimitives = numPlanes;
   self->planes              = planes;
   self->volumeInstance      = volume;

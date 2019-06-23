@@ -24,12 +24,12 @@
 
 struct StreamLines
 {
-  uniform Geometry super;  //!< inherited geometry fields
+  Geometry super;  //!< inherited geometry fields
   float radius;
-  const uniform vec3fa *vertex;
+  const vec3fa *vertex;
   int32 numVertices;
-  const uniform uint32 *index;
-  const uniform vec4f *color;
+  const uint32 *index;
+  const vec4f *color;
 };
 
 unmasked void StreamLines_bounds(const RTCBoundsFunctionArguments *uniform args)
@@ -154,15 +154,18 @@ unmasked void StreamLines_intersect_kernel(
     if (occlusionTest) {
       ray->t = neg_inf;
     } else {
-      ray->geomID         = self->super.geomID;
-      ray->primID         = primID;
-      ray->instID         = args->context->instID[0];
-      const vec3f P       = ray->org + ray->t * ray->dir;
-      float s             = dot(P - A, B - A) * rcpf(dot(B - A, B - A));
-      s                   = min(max(s, 0.f), 1.f);
+      ray->geomID = 0;
+      ray->primID = primID;
+      ray->instID = args->context->instID[0];
+
+      const vec3f P = ray->org + ray->t * ray->dir;
+      float s       = dot(P - A, B - A) * rcpf(dot(B - A, B - A));
+      s             = min(max(s, 0.f), 1.f);
+
       const vec3f PonAxis = A + s * (B - A);
-      ray->u              = s;
-      ray->Ng             = normalize(P - PonAxis);
+
+      ray->u  = s;
+      ray->Ng = normalize(P - PonAxis);
     }
   }
 }
@@ -286,12 +289,11 @@ export void *uniform StreamLines_create(void *uniform cppEquivalent)
 {
   StreamLines *uniform geom = uniform new StreamLines;
   Geometry_Constructor(
-      &geom->super, cppEquivalent, StreamLines_postIntersect, NULL, 0);
+      &geom->super, cppEquivalent, StreamLines_postIntersect, NULL);
   return geom;
 }
 
 export void *uniform StreamLines_setCurve(void *uniform _self,
-                                          uniform uint32 geomID,
                                           int32 uniform numVertices,
                                           int32 uniform numSegments,
                                           const uniform uint32 *uniform index,
@@ -299,7 +301,6 @@ export void *uniform StreamLines_setCurve(void *uniform _self,
 {
   StreamLines *uniform self = (StreamLines * uniform) _self;
 
-  self->super.geomID        = geomID;
   self->super.numPrimitives = numSegments;
 
   // TODO implement area sampling of curves for geometry lights
@@ -313,7 +314,6 @@ export void *uniform StreamLines_setCurve(void *uniform _self,
 
 export void *uniform StreamLines_set(void *uniform _self,
                                      void *uniform _embreeGeometry,
-                                     uniform uint32 geomID,
                                      float uniform radius,
                                      const uniform vec3fa *uniform vertex,
                                      int32 uniform numVertices,
@@ -323,9 +323,8 @@ export void *uniform StreamLines_set(void *uniform _self,
 {
   StreamLines *uniform self = (StreamLines * uniform) _self;
 
-  self->super.geomID = geomID;
-  self->vertex       = vertex;
-  self->index        = index;
+  self->vertex = vertex;
+  self->index  = index;
 
   // XXX different representation for area sampling, see above
   self->super.numPrimitives = numVertices + numSegments;

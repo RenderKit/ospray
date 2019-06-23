@@ -154,7 +154,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
     else
     {
       ray->primID = primID;
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->instID = args->context->instID[0];
       // cannot easily be moved to postIntersect
       // we need hit in object space, in postIntersect it is in world-space
@@ -256,13 +256,12 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
 {
   uniform Spheres *uniform self = uniform new uniform Spheres;
   Geometry_Constructor(
-      &self->super, cppEquivalent, Spheres_postIntersect, NULL, 0);
+      &self->super, cppEquivalent, Spheres_postIntersect, NULL);
   return self;
 }
 
 export void SpheresGeometry_set(void *uniform _self,
                                 void *uniform _embreeGeometry,
-                                uniform uint32 geomID,
                                 void *uniform data,
                                 vec2f *uniform texcoord,
                                 uniform int numSpheres,
@@ -274,7 +273,6 @@ export void SpheresGeometry_set(void *uniform _self,
 {
   Spheres *uniform self = (Spheres * uniform) _self;
 
-  self->super.geomID        = geomID;
   self->super.numPrimitives = numSpheres;
   self->super.getAreas      = Spheres_getAreas;
   self->super.sampleArea    = Spheres_sampleArea;

@@ -145,7 +145,7 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
     {
       ray->instID = args->context->instID[0];
       ray->primID = primID;
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       // cannot easily be moved to postIntersect
       // we need hit in object-space, in postIntersect it is in world-space
       ray->u  = (ray->t * sd - sf) * rcp(s2);
@@ -251,13 +251,12 @@ export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
   Geometry_Constructor(
-      &geom->super, cppEquivalent, Cylinders_postIntersect, NULL, 0);
+      &geom->super, cppEquivalent, Cylinders_postIntersect, NULL);
   return geom;
 }
 
 export void CylindersGeometry_set(void *uniform _self,
                                   void *uniform _embreeGeometry,
-                                  uniform uint32 geomID,
                                   void *uniform data,
                                   void *uniform texcoord,
                                   uniform int numCylinders,
@@ -269,7 +268,6 @@ export void CylindersGeometry_set(void *uniform _self,
 {
   Cylinders *uniform self = (Cylinders * uniform) _self;
 
-  self->super.geomID        = geomID;
   self->super.numPrimitives = numCylinders;
   self->super.getAreas      = Cylinders_getAreas;
   self->super.sampleArea    = Cylinders_sampleArea;

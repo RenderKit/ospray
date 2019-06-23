@@ -78,7 +78,6 @@ namespace ospray {
     ispc::SpheresGeometry_set(
         getIE(),
         embreeGeometry,
-        geomID,
         sphereData->data,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
         numSpheres,

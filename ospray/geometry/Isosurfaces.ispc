@@ -74,18 +74,15 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   //             here,
   setRay(tmpRay, ray->org, ray->dir, ray->t0, ray->t);
 
-  volume->intersectIsosurface(volume,
-                              self->isovalues,
-                              self->super.numPrimitives,
-                              self->super.geomID,
-                              tmpRay);
+  volume->intersectIsosurface(
+      volume, self->isovalues, self->super.numPrimitives, 0, tmpRay);
 
   if (hadHit(tmpRay)) {
     if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->primID = tmpRay.primID;
       ray->t      = tmpRay.t;
       ray->u      = tmpRay.u;  // transport epsilon to postIntersect
@@ -142,16 +139,13 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
 export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
 {
   uniform Isosurfaces *uniform isosurfaces = uniform new uniform Isosurfaces;
-
   Geometry_Constructor(
-      &isosurfaces->super, cppEquivalent, Isosurfaces_postIntersect, NULL, 0);
-
+      &isosurfaces->super, cppEquivalent, Isosurfaces_postIntersect, NULL);
   return isosurfaces;
 }
 
 export void *uniform Isosurfaces_set(void *uniform _self,
                                      void *uniform _embreeGeometry,
-                                     uniform uint32 geomID,
                                      int32 uniform numIsovalues,
                                      uniform float *uniform isovalues,
                                      void *uniform _volume)
@@ -159,7 +153,6 @@ export void *uniform Isosurfaces_set(void *uniform _self,
   Isosurfaces *uniform self      = (Isosurfaces * uniform) _self;
   VolumeInstance *uniform volume = (VolumeInstance * uniform) _volume;
 
-  self->super.geomID        = geomID;
   self->super.numPrimitives = numIsovalues;
   self->isovalues           = isovalues;
   self->volumeInstance      = volume;

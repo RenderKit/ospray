@@ -46,7 +46,6 @@ namespace ospray {
 
     ispc::Isosurfaces_set(getIE(),
                           embreeGeometry,
-                          geomID,
                           numIsovalues,
                           isovalues,
                           volume->getIE());

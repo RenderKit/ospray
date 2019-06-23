@@ -142,7 +142,6 @@ namespace ospray {
 
     ispc::TriangleMesh_set(getIE(),
                            embreeGeometry,
-                           geomID,
                            numTris,
                            numCompsInTri,
                            numCompsInVtx,

@@ -134,8 +134,7 @@ namespace ospray {
     if (normalData && normalData->type != OSP_VEC3F)
       throw std::runtime_error("curves 'normal' array must be type OSP_VEC3F");
     if (tangentData && tangentData->type != OSP_VEC3F)
-      throw std::runtime_error(
-          "curves 'tangent' array must be type OSP_VEC3F");
+      throw std::runtime_error("curves 'tangent' array must be type OSP_VEC3F");
 
     postStatusMsg(2) << "#osp: creating curves geometry, "
                      << "#verts=" << numVertices << ", "
@@ -145,10 +144,8 @@ namespace ospray {
 
     createEmbreeGeometry();
 
-    ispc::Curves_set(getIE(),
-                     (ispc::RTCGeometryType)embreeCurveType,
-                     geomID,
-                     indexData->numItems);
+    ispc::Curves_set(
+        getIE(), (ispc::RTCGeometryType)embreeCurveType, indexData->numItems);
   }
 
   size_t Curves::numPrimitives() const

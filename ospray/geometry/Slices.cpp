@@ -49,7 +49,6 @@ namespace ospray {
 
     ispc::Slices_set(getIE(),
                      embreeGeometry,
-                     geomID,
                      numPlanes,
                      (ispc::vec4f *)planes,
                      volume->getIE());
