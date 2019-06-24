@@ -134,14 +134,14 @@ namespace ospray {
     case OSP_DEVICE:
     case OSP_FRAMEBUFFER:
     case OSP_GEOMETRY:
-    case OSP_GEOMETRY_INSTANCE:
+    case OSP_GEOMETRIC_MODEL:
     case OSP_LIGHT:
     case OSP_MATERIAL:
     case OSP_RENDERER:
     case OSP_TEXTURE:
     case OSP_TRANSFER_FUNCTION:
     case OSP_VOLUME:
-    case OSP_VOLUME_INSTANCE:
+    case OSP_VOLUMETRIC_MODEL:
     case OSP_PIXEL_OP:
     case OSP_WORLD:
     case OSP_INSTANCE:
@@ -232,7 +232,7 @@ namespace ospray {
     case OSP_DEVICE:            return "device";
     case OSP_FRAMEBUFFER:       return "framebuffer";
     case OSP_GEOMETRY:          return "geometry";
-    case OSP_GEOMETRY_INSTANCE: return "geometry_instance";
+    case OSP_GEOMETRIC_MODEL:   return "geometric_model";
     case OSP_LIGHT:             return "light";
     case OSP_MATERIAL:          return "material";
     case OSP_WORLD:             return "world";
@@ -241,7 +241,7 @@ namespace ospray {
     case OSP_TEXTURE:           return "texture";
     case OSP_TRANSFER_FUNCTION: return "transfer_function";
     case OSP_VOLUME:            return "volume";
-    case OSP_VOLUME_INSTANCE:   return "volume_instance";
+    case OSP_VOLUMETRIC_MODEL:  return "volumetric_model";
     case OSP_PIXEL_OP:          return "pixel_op";
     case OSP_STRING:            return "string";
     case OSP_CHAR:              return "char";

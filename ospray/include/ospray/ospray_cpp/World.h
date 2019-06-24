@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/GeometricModel.h>
 #include <ospray/ospray_cpp/ManagedObject.h>
-#include <ospray/ospray_cpp/VolumetricModel.h>
+#include <ospray/ospray_cpp/Instance.h>
 
 namespace ospray {
   namespace cpp {

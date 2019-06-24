@@ -22,6 +22,8 @@
 #include "ospcommon/library.h"
 #include "ospray_testing.h"
 
+#include "tutorial_util.h"
+
 #include <imgui.h>
 
 using namespace ospcommon;
@@ -30,12 +32,7 @@ static std::string renderer_type = "pathtracer";
 
 int main(int argc, const char **argv)
 {
-  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
-  // e.g. "--osp:debug"
-  OSPError initError = ospInit(&argc, argv);
-
-  if (initError != OSP_NO_ERROR)
-    return initError;
+  initializeOSPRay(argc, argv);
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -43,28 +40,22 @@ int main(int argc, const char **argv)
       renderer_type = argv[++i];
   }
 
-  // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
-
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPGeometricModel> instanceHandles;
+  std::vector<OSPInstance> instanceHandles;
 
   // add in boxes geometry
   OSPTestingGeometry boxes =
       ospTestingNewGeometry("boxes", renderer_type.c_str());
   instanceHandles.push_back(boxes.instance);
   ospRelease(boxes.geometry);
+  ospRelease(boxes.model);
 
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
 
-  ospSetData(world, "geometries", geomInstances);
+  ospSetData(world, "instances", geomInstances);
   ospRelease(geomInstances);
 
   for (auto inst : instanceHandles)

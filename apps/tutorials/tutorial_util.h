@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2018-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,38 +16,10 @@
 
 #pragma once
 
-#include "common/Data.h"
-#include "Volume.h"
+#include "ospray/ospray.h"
 
-namespace ospray {
+#include <string>
 
-  struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
-  {
-    VolumetricModel(Volume *geometry);
-    virtual ~VolumetricModel() override;
-    virtual std::string toString() const override;
+void initializeOSPRay(int argc, const char **argv);
 
-    virtual void commit() override;
-
-    RTCGeometry embreeGeometryHandle() const;
-
-    box3f bounds() const;
-
-    void setGeomID(int geomID);
-
-   private:
-    // Data members //
-
-    // Volume information
-    box3f instanceBounds;
-    AffineSpace3f instanceXfm;
-    Ref<Volume> instancedVolume;
-
-    // Embree information
-    RTCScene embreeSceneHandle{nullptr};
-    RTCGeometry embreeInstanceGeometry{nullptr};
-    RTCGeometry lastEmbreeInstanceGeometryHandle{nullptr}; // to detect updates
-    int embreeID{-1};
-  };
-
-}  // namespace ospray
+OSPInstance createGroundPlane(std::string renderer_type);

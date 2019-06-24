@@ -74,7 +74,7 @@ namespace ospray {
 
       // Instancing ///////////////////////////////////////////////////////////
 
-      virtual OSPInstance newInstance() { return nullptr; }
+      virtual OSPInstance newInstance() = 0;
 
       // Model Meta-Data //////////////////////////////////////////////////////
 

@@ -18,6 +18,7 @@
 #include "VolumetricModel.h"
 #include "transferFunction/TransferFunction.h"
 // ispc exports
+#include "Volume_ispc.h"
 #include "VolumetricModel_ispc.h"
 
 namespace ospray {
@@ -134,17 +135,17 @@ namespace ospray {
               getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
 
     ispc::VolumetricModel_set(ispcEquivalent,
-                             getParam1b("preIntegration", false),
-                             getParam1b("adaptiveSampling", true),
-                             getParam1f("adaptiveScalar", 15.0f),
-                             getParam1f("adaptiveMaxSamplingRate", 2.0f),
-                             getParam1f("adaptiveBacktrack", 0.03f),
-                             getParam1f("samplingRate", 0.125f),
-                             transferFunction->getIE(),
-                             (const ispc::box3f &)volumeClippingBox,
-                             (const ispc::box3f &)instanceBounds,
-                             (ispc::AffineSpace3f &)instanceXfm,
-                             (ispc::AffineSpace3f &)rcp_xfm);
+                              getParam1b("preIntegration", false),
+                              getParam1b("adaptiveSampling", true),
+                              getParam1f("adaptiveScalar", 15.0f),
+                              getParam1f("adaptiveMaxSamplingRate", 2.0f),
+                              getParam1f("adaptiveBacktrack", 0.03f),
+                              getParam1f("samplingRate", 0.125f),
+                              transferFunction->getIE(),
+                              (const ispc::box3f &)volumeClippingBox,
+                              (const ispc::box3f &)instanceBounds,
+                              (ispc::AffineSpace3f &)instanceXfm,
+                              (ispc::AffineSpace3f &)rcp_xfm);
   }
 
   RTCGeometry VolumetricModel::embreeGeometryHandle() const
@@ -155,6 +156,11 @@ namespace ospray {
   box3f VolumetricModel::bounds() const
   {
     return instanceBounds;
+  }
+
+  void VolumetricModel::setGeomID(int geomID)
+  {
+    ispc::Volume_set_geomID(instancedVolume->getIE(), geomID);
   }
 
 }  // namespace ospray

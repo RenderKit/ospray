@@ -39,6 +39,7 @@ namespace ospray {
 
         registerWorkUnit<NewRenderer>(registry);
         registerWorkUnit<NewWorld>(registry);
+        registerWorkUnit<NewInstance>(registry);
         registerWorkUnit<NewGeometry>(registry);
         registerWorkUnit<NewGeometricModel>(registry);
         registerWorkUnit<NewCamera>(registry);
@@ -268,6 +269,15 @@ namespace ospray {
       void NewVolume::runOnMaster()
       {
         run();
+      }
+
+      // ospNewInstance ///////////////////////////////////////////////////////
+
+      template <>
+      void NewInstance::run()
+      {
+        auto *world = new Instance;
+        handle.assign(world);
       }
 
       // ospNewWorld //////////////////////////////////////////////////////////

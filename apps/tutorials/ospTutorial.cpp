@@ -118,14 +118,22 @@ int main(int argc, const char **argv) {
 
   mesh.commit();
 
-  ospray::cpp::GeometricModel instance(mesh);
-  instance.commit();
+  ospray::cpp::GeometricModel model(mesh);
+  model.commit();
   mesh.release(); // we are done using this handle
+
+  ospray::cpp::Instance instance;
+  auto modelHandle = model.handle();
+  data = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
+  instance.set("geometries", data);
+  model.release(); // we are done using this handle
+  data.release(); // we are done using this handle
+  instance.commit();
 
   ospray::cpp::World world;
   auto instanceHandle = instance.handle();
   data = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
-  world.set("geometries", data);
+  world.set("instances", data);
   instance.release(); // we are done using this handle
   data.release(); // we are done using this handle
   world.commit();

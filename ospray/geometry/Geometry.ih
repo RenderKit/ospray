@@ -84,13 +84,14 @@ struct Geometry
   Geometry_SampleAreaFct sampleArea;
 
   //! pointer back to the C++-equivalent of this class
-  void *uniform cppEquivalent;
+  void * cppEquivalent;
 
   //! number of primitives this geometry has
-  uniform int32 numPrimitives;
+  int32 numPrimitives;
 
   //! ID that 'model' knows this geometry under
   RTCGeometry geom;
+  int32 geomID;
 };
 
 //! constructor for ispc-side Geometry object

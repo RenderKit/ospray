@@ -32,6 +32,7 @@
 #include "ospcommon/utility/ArrayView.h"
 
 #include "camera/Camera.h"
+#include "common/Instance.h"
 #include "common/World.h"
 #include "lights/Light.h"
 #include "render/Renderer.h"
@@ -159,6 +160,7 @@ namespace ospray {
       // NewObjectT explicit instantiations ///////////////////////////////////
 
       using NewWorld            = NewObjectT<World>;
+      using NewInstance         = NewObjectT<Instance>;
       using NewPixelOp          = NewObjectT<PixelOp>;
       using NewRenderer         = NewObjectT<Renderer>;
       using NewCamera           = NewObjectT<Camera>;
@@ -176,6 +178,9 @@ namespace ospray {
 
       template <>
       void NewWorld::run();
+
+      template <>
+      void NewInstance::run();
 
       struct NewMaterial : public Work
       {

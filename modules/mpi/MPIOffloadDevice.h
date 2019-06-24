@@ -67,10 +67,12 @@ namespace ospray {
       OSPGeometry newGeometry(const char *type) override;
       OSPVolume newVolume(const char *type) override;
 
-      // Instancing ///////////////////////////////////////////////////////////
-
       OSPGeometricModel newGeometricModel(OSPGeometry geom) override;
       OSPVolumetricModel newVolumetricModel(OSPVolume volume) override;
+
+      // Instancing ///////////////////////////////////////////////////////////
+
+      OSPInstance newInstance() override;
 
       // Instance Meta-Data ///////////////////////////////////////////////////
 

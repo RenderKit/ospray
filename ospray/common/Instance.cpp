@@ -17,6 +17,7 @@
 // ospray
 #include "Instance.h"
 // ispc exports
+#include "Geometry_ispc.h"
 #include "Instance_ispc.h"
 
 namespace ospray {
@@ -26,7 +27,7 @@ namespace ospray {
   // Embree helper functions ///////////////////////////////////////////////////
 
   template <typename T>
-  static void createEmbreeScene(RTCScene &scene, Data &objects, int embreeFlags)
+  void createEmbreeScene(RTCScene &scene, Data &objects, int embreeFlags)
   {
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -35,11 +36,11 @@ namespace ospray {
     auto begin = objects.begin<T *>();
     auto end   = objects.end<T *>();
     std::for_each(begin, end, [&](T *obj) {
-      rtcAttachGeometry(scene, obj->embreeGeometryHandle());
+      auto geomID = rtcAttachGeometry(scene, obj->embreeGeometryHandle());
+      obj->setGeomID(geomID);
     });
 
     rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
-
     rtcCommitScene(scene);
   }
 

@@ -402,7 +402,8 @@ extern "C" {
   typedef struct {
     int hasHit;
     float worldPosition[3];
-    OSPGeometricModel GeometricModel;
+    OSPInstance instance;
+    OSPGeometricModel model;
     uint32_t primID;
   } OSPPickResult;
 

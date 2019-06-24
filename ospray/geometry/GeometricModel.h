@@ -32,6 +32,8 @@ namespace ospray {
 
     RTCGeometry embreeGeometryHandle() const;
 
+    void setGeomID(int id);
+
    private:
     // Helper functions //
 
@@ -52,6 +54,7 @@ namespace ospray {
         ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
 
     friend struct PathTracer;  // TODO: fix this!
+    friend struct Renderer;
   };
 
 }  // namespace ospray

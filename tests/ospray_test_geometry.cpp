@@ -172,12 +172,12 @@ TEST_P(SingleObject, simpleMesh)
 {
   OSPGeometry mesh = ::getMesh();
 
-  OSPGeometricModel instance = ospNewGeometricModel(mesh);
+  OSPGeometricModel model = ospNewGeometricModel(mesh);
   ospRelease(mesh);
   auto material = GetMaterial();
-  ospSetObject(instance, "material", material);
+  ospSetObject(model, "material", material);
   ospRelease(material);
-  AddInstance(instance);
+  AddModel(model);
 
   PerformRenderTest();
 }
@@ -192,14 +192,14 @@ TEST_P(SingleObject, simpleSphere)
   EXPECT_TRUE(data);
   ospCommit(data);
 
-  OSPGeometricModel instance = ospNewGeometricModel(sphere);
+  OSPGeometricModel model = ospNewGeometricModel(sphere);
   ospRelease(sphere);
   auto material = GetMaterial();
-  ospSetObject(instance, "material", material);
+  ospSetObject(model, "material", material);
   ospRelease(material);
-  ospSetData(instance, "color", data);
+  ospSetData(model, "color", data);
   ospRelease(data);
-  AddInstance(instance);
+  AddModel(model);
 
   PerformRenderTest();
 }
@@ -214,14 +214,14 @@ TEST_P(SingleObject, simpleCylinder)
   EXPECT_TRUE(data);
   ospCommit(data);
 
-  OSPGeometricModel instance = ospNewGeometricModel(cylinder);
+  OSPGeometricModel model = ospNewGeometricModel(cylinder);
   ospRelease(cylinder);
   auto material = GetMaterial();
-  ospSetObject(instance, "material", material);
+  ospSetObject(model, "material", material);
   ospRelease(material);
-  ospSetData(instance, "color", data);
+  ospSetData(model, "color", data);
   ospRelease(data);
-  AddInstance(instance);
+  AddModel(model);
 
   PerformRenderTest();
 }
@@ -231,12 +231,12 @@ TEST_P(SingleObject, simpleStreamlines)
 {
   OSPGeometry streamlines = ::getStreamline();
 
-  OSPGeometricModel instance = ospNewGeometricModel(streamlines);
+  OSPGeometricModel model = ospNewGeometricModel(streamlines);
   ospRelease(streamlines);
   auto material = GetMaterial();
-  ospSetObject(instance, "material", material);
+  ospSetObject(model, "material", material);
   ospRelease(material);
-  AddInstance(instance);
+  AddModel(model);
 
   PerformRenderTest();
 }
@@ -245,12 +245,12 @@ TEST_P(SingleObject, simpleStreamlinesVariableRadii)
 {
   OSPGeometry streamlines = ::getStreamline(false);
 
-  OSPGeometricModel instance = ospNewGeometricModel(streamlines);
+  OSPGeometricModel model = ospNewGeometricModel(streamlines);
   ospRelease(streamlines);
   auto material = GetMaterial();
-  ospSetObject(instance, "material", material);
+  ospSetObject(model, "material", material);
   ospRelease(material);
-  AddInstance(instance);
+  AddModel(model);
 
   PerformRenderTest();
 }

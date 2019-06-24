@@ -52,7 +52,7 @@ unmasked void Volume_intersect_kernel(
 
   if (hit) {
     ray->instID = args->context->instID[0];
-    ray->geomID = 0;
+    ray->geomID = self->volumeID;
     ray->primID = 0;
 
     vInterval->interval.lower = t.x;
@@ -69,6 +69,8 @@ void Volume_Constructor(Volume *uniform self, void *uniform cppEquivalent)
 
   // default bounding box; should be set to correct value by derived volume.
   self->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
+
+  self->volumeID = -1;
 }
 
 export void Volume_getBoundingBox(uniform box3f *uniform ret,
@@ -105,4 +107,11 @@ export void Volume_set(void *uniform _self,
   rtcSetGeometryIntersectFunction(
       geom, (uniform RTCIntersectFunctionN)&Volume_intersect_kernel);
   rtcCommitGeometry(geom);
+}
+
+export void Volume_set_geomID(void *uniform _self, uniform int32 geomID)
+{
+  Volume *uniform self = (Volume *uniform)_self;
+
+  self->volumeID = geomID;
 }

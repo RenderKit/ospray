@@ -87,17 +87,19 @@ namespace ospray {
 
       ospSetData(spheresGeometry, "spheres", spheresData);
       ospSetInt(spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
-      ospSetInt(spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
-      ospSetInt(spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
+      ospSetInt(
+          spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
+      ospSetInt(
+          spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
 
       // commit the spheres geometry
       ospCommit(spheresGeometry);
 
-      OSPGeometricModel instance = ospNewGeometricModel(spheresGeometry);
+      OSPGeometricModel model = ospNewGeometricModel(spheresGeometry);
 
       OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 
-      ospSetData(instance, "color", colorData);
+      ospSetData(model, "color", colorData);
 
       // create glass material and assign to geometry
       OSPMaterial glassMaterial =
@@ -105,17 +107,24 @@ namespace ospray {
       ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
       ospCommit(glassMaterial);
 
-      ospSetObject(instance, "material", glassMaterial);
+      ospSetObject(model, "material", glassMaterial);
 
       // release handles we no longer need
       ospRelease(spheresData);
       ospRelease(colorData);
       ospRelease(glassMaterial);
 
+      ospCommit(model);
+
+      OSPInstance instance = ospNewInstance();
+      auto instances       = ospNewData(1, OSP_OBJECT, &model);
+      ospSetData(instance, "geometries", instances);
       ospCommit(instance);
+      ospRelease(instances);
 
       OSPTestingGeometry retval;
       retval.geometry = spheresGeometry;
+      retval.model    = model;
       retval.instance = instance;
       retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
 

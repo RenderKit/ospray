@@ -112,8 +112,9 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
               &res, w.framebuffer, w.renderer, w.camera, w.world, pos.x, pos.y);
 
           if (res.hasHit) {
-            std::cout << "Hit geometry instance [id: " << res.GeometricModel
-                      << ", prim: " << res.primID << "]" << std::endl;
+            std::cout << "Picked geometry [inst: " << res.instance
+                      << ", model: " << res.model << ", prim: " << res.primID
+                      << "]" << std::endl;
           }
         }
       });
@@ -129,20 +130,20 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
   ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
 
   ospSetVec3f(camera,
-           "pos",
-           arcballCamera->eyePos().x,
-           arcballCamera->eyePos().y,
-           arcballCamera->eyePos().z);
+              "pos",
+              arcballCamera->eyePos().x,
+              arcballCamera->eyePos().y,
+              arcballCamera->eyePos().z);
   ospSetVec3f(camera,
-           "dir",
-           arcballCamera->lookDir().x,
-           arcballCamera->lookDir().y,
-           arcballCamera->lookDir().z);
+              "dir",
+              arcballCamera->lookDir().x,
+              arcballCamera->lookDir().y,
+              arcballCamera->lookDir().z);
   ospSetVec3f(camera,
-           "up",
-           arcballCamera->upDir().x,
-           arcballCamera->upDir().y,
-           arcballCamera->upDir().z);
+              "up",
+              arcballCamera->upDir().x,
+              arcballCamera->upDir().y,
+              arcballCamera->upDir().z);
 
   ospCommit(camera);
 
@@ -289,20 +290,20 @@ void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
     if (cameraChanged) {
       ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
       ospSetVec3f(camera,
-               "pos",
-               arcballCamera->eyePos().x,
-               arcballCamera->eyePos().y,
-               arcballCamera->eyePos().z);
+                  "pos",
+                  arcballCamera->eyePos().x,
+                  arcballCamera->eyePos().y,
+                  arcballCamera->eyePos().z);
       ospSetVec3f(camera,
-               "dir",
-               arcballCamera->lookDir().x,
-               arcballCamera->lookDir().y,
-               arcballCamera->lookDir().z);
+                  "dir",
+                  arcballCamera->lookDir().x,
+                  arcballCamera->lookDir().y,
+                  arcballCamera->lookDir().z);
       ospSetVec3f(camera,
-               "up",
-               arcballCamera->upDir().x,
-               arcballCamera->upDir().y,
-               arcballCamera->upDir().z);
+                  "up",
+                  arcballCamera->upDir().x,
+                  arcballCamera->upDir().y,
+                  arcballCamera->upDir().z);
 
       addObjectToCommit(camera);
     }

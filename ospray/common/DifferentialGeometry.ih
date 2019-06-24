@@ -61,8 +61,7 @@ struct DifferentialGeometry
                       "prim.materialID" array (-1 if that value isn't
                       specified) */
 
-  uniform Geometry *geometry; /*! pointer to hit-point's geometry */
-  uniform Material *material; /*! pointer to hit-point's material */
+  Material *material; /*! pointer to hit-point's material */
 
   float epsilon;  //!< adaptive epsilon, isotropic in object-space */
 };

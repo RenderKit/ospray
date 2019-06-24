@@ -22,6 +22,8 @@
 #include "ospcommon/library.h"
 #include "ospray_testing.h"
 
+#include "tutorial_util.h"
+
 #include <imgui.h>
 
 static std::string renderer_type = "pathtracer";
@@ -42,7 +44,8 @@ struct Sphere
 static std::vector<Sphere> g_spheres;
 static std::vector<vec4f> g_colors;
 static OSPGeometry g_spheresGeometry;
-static OSPGeometricModel g_spheresInstance;
+static OSPGeometricModel g_spheresModel;
+static OSPInstance g_instance;
 static OSPWorld g_world;
 
 std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
@@ -81,153 +84,6 @@ std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
   return spheres;
 }
 
-OSPGeometricModel createGroundPlane()
-{
-  OSPGeometry planeGeometry = ospNewGeometry("quads");
-
-  struct Vertex
-  {
-    vec3f position;
-    vec3f normal;
-    vec4f color;
-  };
-
-  struct QuadIndex
-  {
-    int x;
-    int y;
-    int z;
-    int w;
-  };
-
-  std::vector<Vertex> vertices;
-  std::vector<QuadIndex> quadIndices;
-
-  // ground plane
-  int startingIndex = vertices.size();
-
-  // extent of plane in the (x, z) directions
-  const float planeExtent = 1.5f;
-
-  const vec3f up   = vec3f{0.f, 1.f, 0.f};
-  const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
-
-  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, planeExtent}, up, gray});
-
-  quadIndices.push_back(QuadIndex{
-      startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3});
-
-  // stripes on ground plane
-  const float stripeWidth  = 0.025f;
-  const float paddedExtent = planeExtent + stripeWidth;
-  const size_t numStripes  = 10;
-
-  const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
-
-  for (size_t i = 0; i < numStripes; i++) {
-    // the center coordinate of the stripe, either in the x or z direction
-    const float coord =
-        -planeExtent + float(i) / float(numStripes - 1) * 2.f * planeExtent;
-
-    // offset the stripes by an epsilon above the ground plane
-    const float yLevel = -1.f + 1e-3f;
-
-    // x-direction stripes
-    startingIndex = vertices.size();
-
-    vertices.push_back(Vertex{
-        vec3f{-paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{-paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
-
-    quadIndices.push_back(QuadIndex{startingIndex,
-                                    startingIndex + 1,
-                                    startingIndex + 2,
-                                    startingIndex + 3});
-
-    // z-direction stripes
-    startingIndex = vertices.size();
-
-    vertices.push_back(Vertex{
-        vec3f{coord - stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord + stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord + stripeWidth, yLevel, paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord - stripeWidth, yLevel, paddedExtent}, up, stripeColor});
-
-    quadIndices.push_back(QuadIndex{startingIndex,
-                                    startingIndex + 1,
-                                    startingIndex + 2,
-                                    startingIndex + 3});
-  }
-
-  // create OSPRay data objects
-  std::vector<vec3f> positionVector;
-  std::vector<vec3f> normalVector;
-  std::vector<vec4f> colorVector;
-
-  std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(positionVector),
-                 [](Vertex const &v) { return v.position; });
-  std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(normalVector),
-                 [](Vertex const &v) { return v.normal; });
-  std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(colorVector),
-                 [](Vertex const &v) { return v.color; });
-
-  OSPData positionData =
-      ospNewData(vertices.size(), OSP_VEC3F, positionVector.data());
-  OSPData normalData =
-      ospNewData(vertices.size(), OSP_VEC3F, normalVector.data());
-  OSPData colorData =
-      ospNewData(vertices.size(), OSP_VEC4F, colorVector.data());
-  OSPData indexData =
-      ospNewData(quadIndices.size(), OSP_VEC4I, quadIndices.data());
-
-  // set vertex / index data on the geometry
-  ospSetData(planeGeometry, "vertex", positionData);
-  ospSetData(planeGeometry, "vertex.normal", normalData);
-  ospSetData(planeGeometry, "vertex.color", colorData);
-  ospSetData(planeGeometry, "index", indexData);
-
-  // finally, commit the geometry
-  ospCommit(planeGeometry);
-
-  OSPGeometricModel planeInstance = ospNewGeometricModel(planeGeometry);
-
-  ospRelease(planeGeometry);
-
-  // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-  ospCommit(material);
-
-  ospSetObject(planeInstance, "material", material);
-
-  // release handles we no longer need
-  ospRelease(positionData);
-  ospRelease(normalData);
-  ospRelease(colorData);
-  ospRelease(indexData);
-  ospRelease(material);
-
-  ospCommit(planeInstance);
-
-  return planeInstance;
-}
-
 OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 {
   g_spheres = generateRandomSpheres(numSpheres);
@@ -238,7 +94,7 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 
   // create the sphere geometry, and assign attributes
   g_spheresGeometry = ospNewGeometry("spheres");
-  g_spheresInstance = ospNewGeometricModel(g_spheresGeometry);
+  g_spheresModel    = ospNewGeometricModel(g_spheresGeometry);
 
   ospSetData(g_spheresGeometry, "spheres", spheresData);
   ospSetInt(g_spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
@@ -247,7 +103,7 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 
   OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, g_colors.data());
 
-  ospSetData(g_spheresInstance, "color", colorData);
+  ospSetData(g_spheresModel, "color", colorData);
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
@@ -255,46 +111,48 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
   ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
-  ospSetObject(g_spheresInstance, "material", glassMaterial);
+  ospSetObject(g_spheresModel, "material", glassMaterial);
 
   // commit the spheres geometry
   ospCommit(g_spheresGeometry);
-  ospCommit(g_spheresInstance);
+  ospCommit(g_spheresModel);
 
   // release handles we no longer need
   ospRelease(spheresData);
   ospRelease(colorData);
   ospRelease(glassMaterial);
 
-  return g_spheresInstance;
+  return g_spheresModel;
 }
 
-OSPWorld createWorld()
+void createWorld()
 {
   // create the world which will contain all of our geometries
-  OSPWorld world = ospNewWorld();
+  g_world    = ospNewWorld();
+  g_instance = ospNewInstance();
 
-  std::vector<OSPGeometricModel> instanceHandles;
+  std::vector<OSPInstance> instanceHandles;
 
   // add in spheres geometry (100 of them)
-  OSPGeometricModel instance = createRandomSpheresGeometry(100);
-  instanceHandles.push_back(instance);
+  g_spheresModel = createRandomSpheresGeometry(100);
+
+  OSPData spheresModels = ospNewData(1, OSP_OBJECT, &g_spheresModel);
+  ospSetData(g_instance, "geometries", spheresModels);
+  ospCommit(g_instance);
+
+  instanceHandles.push_back(g_instance);
 
   // add in a ground plane geometry
-  OSPGeometricModel plane = createGroundPlane();
+  OSPInstance plane = createGroundPlane(renderer_type);
   instanceHandles.push_back(plane);
 
-  OSPData geomInstances =
+  OSPData instances =
       ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
-
-  ospSetData(world, "geometries", geomInstances);
-  ospRelease(geomInstances);
+  ospSetData(g_world, "instances", instances);
+  ospRelease(instances);
   ospRelease(plane);
 
-  // commit the world
-  ospCommit(world);
-
-  return world;
+  ospCommit(g_world);
 }
 
 OSPRenderer createRenderer()
@@ -367,7 +225,8 @@ void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
   // queue the world to be committed since it changed, however don't commit
   // it immediately because it's being rendered asynchronously
   glfwOSPRayWindow->addObjectToCommit(g_spheresGeometry);
-  glfwOSPRayWindow->addObjectToCommit(g_spheresInstance);
+  glfwOSPRayWindow->addObjectToCommit(g_spheresModel);
+  glfwOSPRayWindow->addObjectToCommit(g_instance);
   glfwOSPRayWindow->addObjectToCommit(g_world);
 
   // update the world on the GLFW window
@@ -376,12 +235,7 @@ void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
 
 int main(int argc, const char **argv)
 {
-  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
-  // e.g. "--osp:debug"
-  OSPError initError = ospInit(&argc, argv);
-
-  if (initError != OSP_NO_ERROR)
-    return initError;
+  initializeOSPRay(argc, argv);
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -389,15 +243,8 @@ int main(int argc, const char **argv)
       renderer_type = argv[++i];
   }
 
-  // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
-
   // create OSPRay world
-  g_world = createWorld();
+  createWorld();
 
   // create OSPRay renderer
   OSPRenderer renderer = createRenderer();
@@ -417,7 +264,8 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   ospRelease(g_spheresGeometry);
-  ospRelease(g_spheresInstance);
+  ospRelease(g_spheresModel);
+  ospRelease(g_instance);
 
   // cleanly shut OSPRay down
   ospShutdown();

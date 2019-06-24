@@ -18,6 +18,7 @@
 #include "GeometricModel.h"
 // ispc exports
 #include "GeometricModel_ispc.h"
+#include "Geometry_ispc.h"
 
 namespace ospray {
 
@@ -96,6 +97,11 @@ namespace ospray {
   RTCGeometry GeometricModel::embreeGeometryHandle() const
   {
     return geometry->embreeGeometry;
+  }
+
+  void GeometricModel::setGeomID(int geomID)
+  {
+    ispc::Geometry_set_geomID(geometry->getIE(), geomID);
   }
 
 }  // namespace ospray

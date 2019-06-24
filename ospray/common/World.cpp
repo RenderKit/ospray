@@ -37,11 +37,10 @@ namespace ospray {
   {
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
-    geometryScene = rtcNewScene(embreeDevice);
-    volumeScene   = rtcNewScene(embreeDevice);
-
     int numGeomInstances   = 0;
     int numVolumeInstances = 0;
+
+    std::vector<RTCGeometry> toFreeAfterCommit;
 
     auto begin = instances.begin<Instance *>();
     auto end   = instances.end<Instance *>();
@@ -60,8 +59,6 @@ namespace ospray {
 
         rtcAttachGeometry(geometryScene, eInst);
 
-        rtcReleaseGeometry(eInst);
-
         numGeomInstances++;
       }
 
@@ -74,17 +71,12 @@ namespace ospray {
 
         rtcAttachGeometry(volumeScene, eInst);
 
-        rtcReleaseGeometry(eInst);
-
         numVolumeInstances++;
       }
     });
 
     rtcSetSceneFlags(geometryScene, static_cast<RTCSceneFlags>(embreeFlags));
     rtcSetSceneFlags(volumeScene, static_cast<RTCSceneFlags>(embreeFlags));
-
-    rtcCommitScene(geometryScene);
-    rtcCommitScene(volumeScene);
 
     return std::make_pair(numGeomInstances, numVolumeInstances);
   }
@@ -126,10 +118,7 @@ namespace ospray {
 
     instances = (Data *)getParamObject("instances");
 
-    if (!instances)
-      return;
-
-    auto numInstances = instances->size();
+    auto numInstances = instances ? instances->size() : 0;
 
     int sceneFlags = 0;
     sceneFlags |=
@@ -143,15 +132,25 @@ namespace ospray {
         << "=======================================================\n"
         << "Committing world, which has " << numInstances << " instances";
 
-    auto numGeomsAndVolumes = createEmbreeScenes(embreeSceneHandleGeometries,
-                                                 embreeSceneHandleVolumes,
-                                                 *instances,
-                                                 sceneFlags);
+    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
-    numGeometries = numGeomsAndVolumes.first;
-    numVolumes    = numGeomsAndVolumes.second;
+    embreeSceneHandleGeometries = rtcNewScene(embreeDevice);
+    embreeSceneHandleVolumes    = rtcNewScene(embreeDevice);
 
-    instanceIEs = createArrayOfIE(*instances);
+    if (instances) {
+      auto numGeomsAndVolumes = createEmbreeScenes(embreeSceneHandleGeometries,
+                                                   embreeSceneHandleVolumes,
+                                                   *instances,
+                                                   sceneFlags);
+
+      numGeometries = numGeomsAndVolumes.first;
+      numVolumes    = numGeomsAndVolumes.second;
+
+      instanceIEs = createArrayOfIE(*instances);
+    }
+
+    rtcCommitScene(embreeSceneHandleGeometries);
+    rtcCommitScene(embreeSceneHandleVolumes);
 
     ispc::World_set(getIE(),
                     instanceIEs.data(),

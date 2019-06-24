@@ -65,15 +65,6 @@ namespace ospray {
     size_t numBytes;  /*!< total num bytes (sizeof(type)*numItems) */
     int flags;        /*!< creation flags */
     OSPDataType type; /*!< element type */
-
-   private:
-    template <typename T>
-    typename std::enable_if<std::is_pointer<T>::value>::type validateType()
-        const;
-
-    template <typename T>
-    typename std::enable_if<!std::is_pointer<T>::value>::type validateType()
-        const;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
@@ -81,7 +72,6 @@ namespace ospray {
   template <typename T>
   inline T *Data::begin()
   {
-    validateType<T>();
     return static_cast<T *>(data);
   }
 
@@ -94,7 +84,6 @@ namespace ospray {
   template <typename T>
   inline const T *Data::begin() const
   {
-    validateType<T>();
     return static_cast<const T *>(data);
   }
 
@@ -114,28 +103,6 @@ namespace ospray {
   inline const T &Data::at(size_t i) const
   {
     return *(begin<T>() + i);
-  }
-
-  template <typename T>
-  inline typename std::enable_if<std::is_pointer<T>::value>::type
-  Data::validateType() const
-  {
-    if (type != OSP_OBJECT) {
-      throw std::runtime_error(
-          "Data::validateType<T>: Invalid conversion of "
-          " non-OSP_OBJECT data");
-    }
-  }
-
-  template <typename T>
-  inline typename std::enable_if<!std::is_pointer<T>::value>::type
-  Data::validateType() const
-  {
-    if (OSPTypeFor<T>::value != type) {
-      throw std::runtime_error(
-          "Data::validateType<T>: Invalid conversion from " +
-          stringForType(type) + " to " + typeString<T>());
-    }
   }
 
   // Helper functions /////////////////////////////////////////////////////////

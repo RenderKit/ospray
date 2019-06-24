@@ -19,6 +19,7 @@
 #include "PathTracer.h"
 // ospray
 #include "common/Data.h"
+#include "common/Instance.h"
 #include "lights/Light.h"
 // ispc exports
 #include "GeometryLight_ispc.h"
@@ -46,44 +47,53 @@ namespace ospray {
 
   void PathTracer::generateGeometryLights(const World &world)
   {
-#if 0
-    auto *geometries = world.GeometricModels.ptr;
+    auto *instances = world.instances.ptr;
 
-    if (!geometries)
+    if (!instances)
       return;
 
-    auto begin = geometries->begin<GeometricModel*>();
-    auto end   = geometries->end<GeometricModel*>();
+    auto inst_begin = instances->begin<Instance *>();
+    auto inst_end   = instances->end<Instance *>();
 
-    std::for_each(begin, end, [&](GeometricModel* inst){
-      if (inst->materialList) {
-        // check whether the instmetry has any emissive materials
-        bool hasEmissive = false;
-        for (auto mat : inst->ispcMaterialPtrs) {
-          if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
-            hasEmissive = true;
-            break;
+    std::for_each(inst_begin, inst_end, [&](Instance *instance) {
+      auto *geometries = instance->geometricModels.ptr;
+
+      if (!geometries)
+        return;
+
+      auto begin = geometries->begin<GeometricModel *>();
+      auto end   = geometries->end<GeometricModel *>();
+
+      affine3f xfm = instance->xfm();
+
+      std::for_each(begin, end, [&](GeometricModel *model) {
+        if (model->materialList) {
+          // check whether the modelmetry has any emissive materials
+          bool hasEmissive = false;
+          for (auto mat : model->ispcMaterialPtrs) {
+            if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
+              hasEmissive = true;
+              break;
+            }
+          }
+
+          if (hasEmissive) {
+            if (ispc::GeometryLight_isSupported(model->getIE())) {
+              void *light = ispc::GeometryLight_create(model->getIE(), &xfm);
+
+              // check whether the geometry has any emissive primitives
+              if (light)
+                lightArray.push_back(light);
+            } else {
+              postStatusMsg(1) << "#osp:pt Geometry " << model->toString()
+                               << " does not implement area sampling! "
+                               << "Cannot use importance sampling for that "
+                               << "geometry with emissive material!";
+            }
           }
         }
-
-        if (hasEmissive) {
-          if (ispc::GeometryLight_isSupported(inst->getIE())) {
-            void *light =
-                ispc::GeometryLight_create(inst->getIE());
-
-            // check whether the geometry has any emissive primitives
-            if (light)
-              lightArray.push_back(light);
-          } else {
-            postStatusMsg(1) << "#osp:pt Geometry " << inst->toString()
-                             << " does not implement area sampling! "
-                             << "Cannot use importance sampling for that "
-                             << "geometry with emissive material!";
-          }
-        }
-      }
+      });
     });
-#endif
   }
 
   void PathTracer::destroyGeometryLights()

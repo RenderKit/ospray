@@ -145,7 +145,7 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
     {
       ray->instID = args->context->instID[0];
       ray->primID = primID;
-      ray->geomID = 0;
+      ray->geomID = self->super.geomID;
       // cannot easily be moved to postIntersect
       // we need hit in object-space, in postIntersect it is in world-space
       ray->u  = (ray->t * sd - sf) * rcp(s2);

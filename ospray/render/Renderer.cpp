@@ -16,6 +16,7 @@
 
 // ospray
 #include "Renderer.h"
+#include "common/Instance.h"
 #include "common/Util.h"
 // ispc exports
 #include "Renderer_ispc.h"
@@ -106,10 +107,12 @@ namespace ospray {
   {
     OSPPickResult res;
 
-    res.GeometricModel = nullptr;
-    res.primID         = -1;
+    res.instance = nullptr;
+    res.model    = nullptr;
+    res.primID   = -1;
 
     int instID = -1;
+    int geomID = -1;
     int primID = -1;
 
     ispc::Renderer_pick(getIE(),
@@ -119,17 +122,18 @@ namespace ospray {
                         (const ispc::vec2f &)screenPos,
                         (ispc::vec3f &)res.worldPosition[0],
                         instID,
+                        geomID,
                         primID,
                         res.hasHit);
 
-#warning fix picking
-#if 0
     if (res.hasHit) {
-      res.GeometricModel =
-          world->GeometricModels->at<OSPGeometricModel>(instID);
-      res.primID = static_cast<uint32_t>(primID);
+      auto *instance = world->instances->at<Instance*>(instID);
+      auto *model    = instance->geometricModels->at<GeometricModel*>(geomID);
+
+      res.instance = (OSPInstance)instance;
+      res.model    = (OSPGeometricModel)model;
+      res.primID   = static_cast<uint32_t>(primID);
     }
-#endif
 
     return res;
   }

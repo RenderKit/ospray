@@ -52,8 +52,7 @@ inline void Instance_postIntersect(const Instance *uniform self,
     dg.epsilon *= max(abs(self->xfm.l.vx.x),
                       max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
 
-    if(flags & DG_TANGENTS)
-    {
+    if (flags & DG_TANGENTS) {
       dg.dPds = xfmVector(self->xfm, dg.dPds);
       dg.dPdt = xfmVector(self->xfm, dg.dPdt);
     }

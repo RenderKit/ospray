@@ -154,8 +154,8 @@ unmasked void StreamLines_intersect_kernel(
     if (occlusionTest) {
       ray->t = neg_inf;
     } else {
-      ray->geomID = 0;
       ray->primID = primID;
+      ray->geomID = self->super.geomID;
       ray->instID = args->context->instID[0];
 
       const vec3f P = ray->org + ray->t * ray->dir;

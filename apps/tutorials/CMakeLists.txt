@@ -42,6 +42,7 @@ target_link_libraries(ospTutorialAsync PRIVATE ospray)
 ospray_create_library(tutorial_common STATIC
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
+  tutorial_util.cpp
   imgui/imgui_impl_glfw_gl3.cpp
 )
 
@@ -95,4 +96,3 @@ target_link_libraries(ospTutorialUnstructuredVolume PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialPixelOps ospTutorialPixelOps.cpp)
 target_link_libraries(ospTutorialPixelOps PRIVATE tutorial_common)
-

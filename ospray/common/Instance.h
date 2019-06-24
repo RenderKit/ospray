@@ -48,14 +48,17 @@ namespace ospray {
     affine3f rcpXfm;
 
     Ref<Data> geometricModels;
-    std::vector<void*> geometricModelIEs;
+    std::vector<void *> geometricModelIEs;
 
     Ref<Data> volumetricModels;
-    std::vector<void*> volumetricModelIEs;
+    std::vector<void *> volumetricModelIEs;
 
     //! \brief the embree scene handle for this geometry
     RTCScene sceneGeometries{nullptr};
     RTCScene sceneVolumes{nullptr};
+
+    friend struct PathTracer;  // TODO: fix this!
+    friend struct Renderer;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
@@ -72,7 +75,7 @@ namespace ospray {
 
   inline OptionalScene Instance::embreeVolumeScene()
   {
-    return sceneGeometries ? sceneGeometries : OptionalScene();
+    return sceneVolumes ? sceneVolumes : OptionalScene();
   }
 
 }  // namespace ospray

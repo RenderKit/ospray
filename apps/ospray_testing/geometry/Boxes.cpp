@@ -41,7 +41,7 @@ namespace ospray {
         const std::string &renderer_type) const
     {
       auto boxGeometry = ospNewGeometry("boxes");
-      auto instance    = ospNewGeometricModel(boxGeometry);
+      auto model       = ospNewGeometricModel(boxGeometry);
 
       const int dim = 4;
 
@@ -76,7 +76,7 @@ namespace ospray {
       auto colorData =
           ospNewData(numBoxes.total_indices(), OSP_VEC4F, color.data());
 
-      ospSetData(instance, "color", colorData);
+      ospSetData(model, "color", colorData);
       ospRelease(colorData);
 
       // create OBJ material and assign to geometry
@@ -84,13 +84,20 @@ namespace ospray {
           ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
       ospCommit(objMaterial);
 
-      ospSetObject(instance, "material", objMaterial);
+      ospSetObject(model, "material", objMaterial);
       ospRelease(objMaterial);
 
+      ospCommit(model);
+
+      OSPInstance instance = ospNewInstance();
+      auto instances       = ospNewData(1, OSP_OBJECT, &model);
+      ospSetData(instance, "geometries", instances);
       ospCommit(instance);
+      ospRelease(instances);
 
       OSPTestingGeometry retval;
       retval.geometry = boxGeometry;
+      retval.model    = model;
       retval.instance = instance;
       retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
 

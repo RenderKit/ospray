@@ -69,7 +69,7 @@ void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = 0;
+      ray->geomID = self->super.geomID;
       ray->primID = primID;
       ray->t      = tIntersect;
       ray->Ng     = make_vec3f(self->planes[primID]);

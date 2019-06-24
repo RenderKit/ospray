@@ -40,6 +40,8 @@ struct Volume
   //! clipping box is ignored.
   box3f volumeClippingBox;
 
+  int32 volumeID;
+
   //! The value at the given sample location in world coordinates.
   varying float (*sample)(const void *uniform _self,
                           const varying vec3f &worldCoordinates);

@@ -74,7 +74,6 @@ inline void traceVolumeRay(World *uniform world,
 {
   initVolumeInterval(interval);
 
-#if 0
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = &interval;
@@ -82,9 +81,13 @@ inline void traceVolumeRay(World *uniform world,
                 &context.ectx,
                 (varying RTCRayHit * uniform) & ray);
 
-  if (hasInterval(interval))
-    interval.volumetricModel = world->volumetricModels[ray.instID];
-#endif
+  if (hasInterval(interval)) {
+    foreach_unique(instID in ray.instID)
+    {
+      Instance *uniform instance = *(world->instances + instID);
+      interval.volumetricModel   = instance->volumetricModels[ray.geomID];
+    }
+  }
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of
@@ -116,14 +119,14 @@ inline void postIntersect(const World *uniform world,
   dg.P       = ray.org + ray.t * ray.dir;
   dg.epsilon = 0.f;  // per default no geometry-type specific epsilon
 
-  if (ray.instID != RTC_INVALID_GEOMETRY_ID) {
-    foreach_unique(instID in ray.instID)
-    {
+  foreach_unique(instID in ray.instID)
+  {
+    if (instID != RTC_INVALID_GEOMETRY_ID) {
       Instance *uniform instance = *(world->instances + instID);
       Instance_postIntersect(instance, dg, ray, flags);
+    } else {
+      dg.Ns = dg.Ng = ray.Ng;
     }
-  } else {
-    dg.Ns = dg.Ng = ray.Ng;
   }
 
   // merge geometry-type specific epsilon with general epsilon

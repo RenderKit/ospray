@@ -153,7 +153,7 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
     else
     {
       ray->primID = primID;
-      ray->geomID = 0;
+      ray->geomID = self->super.geomID;
       ray->instID = args->context->instID[0];
       // cannot easily be moved to postIntersect
       // we need hit in object space, in postIntersect it is in world-space

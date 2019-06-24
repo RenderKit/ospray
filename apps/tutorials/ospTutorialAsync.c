@@ -205,16 +205,23 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  OSPGeometricModel instance = ospNewGeometricModel(mesh);
-  ospCommit(instance);
+  OSPGeometricModel model = ospNewGeometricModel(mesh);
+  ospCommit(model);
   ospRelease(mesh); // we are done using this handle
 
+  OSPInstance instance = ospNewInstance();
+  OSPData models = ospNewData(1, OSP_OBJECT, &model, 0);
+  ospSetObject(instance, "geometries", models);
+  ospCommit(instance);
+  ospRelease(model);
+  ospRelease(models);
+
   *world = ospNewWorld();
-  OSPData GeometricModels = ospNewData(1, OSP_OBJECT, &instance, 0);
-  ospSetObject(*world, "geometries", GeometricModels);
-  ospRelease(instance);
-  ospRelease(GeometricModels);
+  OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
+  ospSetObject(*world, "instances", instances);
   ospCommit(*world);
+  ospRelease(instance);
+  ospRelease(instances);
 
   // create renderer
   *renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
@@ -288,16 +295,23 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
-  OSPGeometricModel instance = ospNewGeometricModel(mesh);
-  ospCommit(instance);
+  OSPGeometricModel model = ospNewGeometricModel(mesh);
+  ospCommit(model);
   ospRelease(mesh); // we are done using this handle
 
+  OSPInstance instance = ospNewInstance();
+  OSPData models = ospNewData(1, OSP_OBJECT, &model, 0);
+  ospSetObject(instance, "geometries", models);
+  ospCommit(instance);
+  ospRelease(model);
+  ospRelease(models);
+
   *world = ospNewWorld();
-  OSPData GeometricModels = ospNewData(1, OSP_OBJECT, &instance, 0);
-  ospSetObject(*world, "geometries", GeometricModels);
-  ospRelease(instance);
-  ospRelease(GeometricModels);
+  OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
+  ospSetObject(*world, "instances", instances);
   ospCommit(*world);
+  ospRelease(instances);
+  ospRelease(instance);
 
   // create renderer
   *renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer

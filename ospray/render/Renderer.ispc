@@ -207,6 +207,7 @@ export void Renderer_pick(const void *uniform _self,
                           const uniform vec2f &screenPos,
                           uniform vec3f &pos,
                           uniform int32 &instID,
+                          uniform int32 &geomID,
                           uniform int32 &primID,
                           uniform int32 &hit)
 {
@@ -245,5 +246,6 @@ export void Renderer_pick(const void *uniform _self,
   pos.z  = extract(p.z, 0);
   hit    = extract((int)(hadHit(ray)), 0);
   instID = extract(ray.instID, 0);
+  geomID = extract(ray.geomID, 0);
   primID = extract(ray.primID, 0);
 }

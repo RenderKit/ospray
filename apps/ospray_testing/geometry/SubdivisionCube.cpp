@@ -136,7 +136,7 @@ namespace ospray {
 
       ospSetFloat(geometry, "level", level);
 
-      OSPGeometricModel instance = ospNewGeometricModel(geometry);
+      OSPGeometricModel model = ospNewGeometricModel(geometry);
 
       // create OBJ material and assign to geometry
       OSPMaterial objMaterial =
@@ -144,14 +144,21 @@ namespace ospray {
       ospSetVec3f(objMaterial, "Ks", 0.5f, 0.5f, 0.5f);
       ospCommit(objMaterial);
 
-      ospSetObject(instance, "material", objMaterial);
+      ospSetObject(model, "material", objMaterial);
       ospRelease(objMaterial);
 
       ospCommit(geometry);
+      ospCommit(model);
+
+      OSPInstance instance = ospNewInstance();
+      auto instances       = ospNewData(1, OSP_OBJECT, &model);
+      ospSetData(instance, "geometries", instances);
       ospCommit(instance);
+      ospRelease(instances);
 
       OSPTestingGeometry retval;
       retval.geometry = geometry;
+      retval.model    = model;
       retval.instance = instance;
       retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
 

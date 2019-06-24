@@ -29,7 +29,12 @@
 #include "ospray_environment.h"
 #include "ospray_test_tools.h"
 
+#include "ospcommon/AffineSpace.h"
+
 namespace OSPRayTestScenes {
+
+  using ospcommon::affine3f;
+  using ospcommon::one;
 
   // Base class for all test fixtures.
   // Deriving classes can call CreateEmptyScene() to set up model, renderer,
@@ -54,8 +59,7 @@ namespace OSPRayTestScenes {
     std::unique_ptr<OSPImageTools> imageTool;
     std::vector<OSPLight> lightsList;
 
-    std::vector<OSPGeometricModel> GeometricModels;
-    std::vector<OSPVolumetricModel> VolumetricModels;
+    std::vector<OSPInstance> instances;
 
    public:
     Base();
@@ -66,8 +70,9 @@ namespace OSPRayTestScenes {
     Base(const Base &)            = delete;
 
     void AddLight(OSPLight new_light);
-    void AddInstance(OSPGeometricModel new_geometry);
-    void AddInstance(OSPVolumetricModel new_volume);
+    void AddModel(OSPGeometricModel model, affine3f xfm = one);
+    void AddModel(OSPVolumetricModel model, affine3f xfm = one);
+    void AddInstance(OSPInstance instance);
 
     void PerformRenderTest();
 
@@ -205,10 +210,9 @@ namespace OSPRayTestScenes {
   // scene is composed of two quads and a luminous sphere. Parameters of this
   // tests are passed to a new "OBJMaterial" material as "Kd", "Ks", "Ns", "d"
   // and "Tf" and said material is used by the quads.
-  class MTLMirrors
-      : public Base,
-        public ::testing::TestWithParam<
-            std::tuple<vec3f, vec3f, float, float, vec3f>>
+  class MTLMirrors : public Base,
+                     public ::testing::TestWithParam<
+                         std::tuple<vec3f, vec3f, float, float, vec3f>>
   {
    public:
     MTLMirrors();

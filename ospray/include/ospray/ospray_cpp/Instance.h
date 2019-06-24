@@ -16,41 +16,42 @@
 
 #pragma once
 
-#include "Geometry.ih"
-#include "math/AffineSpace.ih"
+#include <ospray/ospray_cpp/GeometricModel.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/VolumetricModel.h>
 
-struct GeometricModel
-{
-  Geometry *uniform geom;  //!< instanced Geometry
+namespace ospray {
+  namespace cpp {
 
-  vec4f *uniform primitiveColors;
+    class Instance : public ManagedObject_T<OSPInstance>
+    {
+     public:
+      Instance();
+      Instance(const Instance &copy);
+      Instance(OSPInstance existing);
+    };
 
-  uint32 *prim_materialID;  // per-primitive material ID
+    // Inlined function definitions ///////////////////////////////////////////
 
-  int32 numMaterials;
-  Material *uniform *uniform materialList;
+    inline Instance::Instance()
+    {
+      OSPInstance c = ospNewInstance();
+      if (c) {
+        ospObject = c;
+      } else {
+        throw std::runtime_error("Failed to create OSPInstance!");
+      }
+    }
 
-  float areaPDF;
-};
+    inline Instance::Instance(const Instance &copy)
+        : ManagedObject_T<OSPInstance>(copy.handle())
+    {
+    }
 
-inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
-                                         varying DifferentialGeometry &dg,
-                                         const varying Ray &ray,
-                                         uniform int64 flags)
-{
-  Geometry *uniform geom = self->geom;
+    inline Instance::Instance(OSPInstance existing)
+        : ManagedObject_T<OSPInstance>(existing)
+    {
+    }
 
-  geom->postIntersect(geom, dg, ray, flags);
-
-  if (flags & DG_COLOR && self->primitiveColors)
-    dg.color = self->primitiveColors[ray.primID];
-
-  dg.materialID = -1;
-  if (self->prim_materialID)
-    dg.materialID = self->prim_materialID[ray.primID];
-  else if (self->numMaterials > 1)
-    dg.materialID = ray.primID;
-
-  if (self->materialList)
-    dg.material = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-}
+  }  // namespace cpp
+}  // namespace ospray

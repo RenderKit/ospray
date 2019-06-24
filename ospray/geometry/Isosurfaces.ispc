@@ -82,7 +82,7 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = 0;
+      ray->geomID = self->super.geomID;
       ray->primID = tmpRay.primID;
       ray->t      = tmpRay.t;
       ray->u      = tmpRay.u;  // transport epsilon to postIntersect
