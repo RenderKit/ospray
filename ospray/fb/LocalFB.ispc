@@ -164,12 +164,15 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
 export void LocalFrameBuffer_accumulateAuxTile(void *uniform _fb
     , const uniform Tile &tile
     , uniform vec3f *uniform aux
-    , const varying float * uniform ax
-    , const varying float * uniform ay
-    , const varying float * uniform az
+    , const void * uniform _ax
+    , const void * uniform _ay
+    , const void * uniform _az
     )
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
+  const varying float * uniform ax = (const varying float * uniform) _ax;
+  const varying float * uniform ay = (const varying float * uniform) _ay;
+  const varying float * uniform az = (const varying float * uniform) _az;
 
   const uniform float accumID = tile.accumID;
   const uniform float accScale = rcpf(tile.accumID + 1);
