@@ -430,6 +430,9 @@ namespace OSPRayTestScenes {
 
     SetMaterials();
 
+    std::vector<OSPGeometricModel> models;
+    OSPInstance instance = ospNewInstance();
+
     float wallsVertices[] = {// left wall
                              1.f,
                              -1.f,
@@ -510,7 +513,7 @@ namespace OSPRayTestScenes {
     OSPMaterial wallsMaterial = GetMaterial("OBJMaterial");
     ospSetObject(model, "material", wallsMaterial);
     ospRelease(wallsMaterial);
-    AddModel(model);
+    models.push_back(model);
 
     float lightVertices[]   = {-0.3f,
                              0.999f,
@@ -544,7 +547,7 @@ namespace OSPRayTestScenes {
     ospRelease(lightSquare);
     ospSetObject(model, "material", lightMaterial);
     ospRelease(lightMaterial);
-    AddModel(model);
+    models.push_back(model);
 
     float cuboidVertices[] = {
         0.7f, -0.999f, 3.3f,    0.3f, -0.999f, 3.6f, 0.0f, -0.999f,
@@ -571,7 +574,7 @@ namespace OSPRayTestScenes {
     ospRelease(cuboid);
     ospSetObject(model, "material", cuboidMaterial);
     ospRelease(cuboidMaterial);
-    AddModel(model);
+    models.push_back(model);
 
     float sphereVertex[] = {-0.3f, -0.55f, 2.5f, 0.0f};
     OSPGeometry sphere   = ospNewGeometry("spheres");
@@ -586,11 +589,19 @@ namespace OSPRayTestScenes {
     ospRelease(sphere);
     ospSetObject(model, "material", sphereMaterial);
     ospRelease(sphereMaterial);
-    AddModel(model);
+    models.push_back(model);
+
+    for (auto &m : models)
+      ospCommit(m);
+
+    OSPData models_data = ospNewData(models.size(), OSP_OBJECT, models.data());
+    ospSetData(instance, "geometries", models_data);
+    ospRelease(models_data);
+
+    AddInstance(instance);
 
     // NOTE(jda) - still need to set the world on the renderer for geom lights
     ospSetObject(renderer, "world", world);
-    ospCommit(renderer);
   }
 
   void Box::SetMaterials()
