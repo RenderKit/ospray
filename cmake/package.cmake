@@ -63,12 +63,6 @@ install(FILES ${PROJECT_SOURCE_DIR}/README.md DESTINATION ${CMAKE_INSTALL_DOCDIR
 install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
 
 ##############################################################
-# install bench script
-##############################################################
-
-install(PROGRAMS ${PROJECT_SOURCE_DIR}/scripts/bench/run_benchmark.py DESTINATION ${CMAKE_INSTALL_SCRIPTDIR} COMPONENT apps)
-
-##############################################################
 # CPack specific stuff
 ##############################################################
 
