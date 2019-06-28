@@ -653,14 +653,14 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
   : Parameters accepted by the linear transfer function.
 
 
-VolumeInstances
+VolumetricModels
 -----------------
 
 Volumes in OSPRay are instantiated in a World to give them a world-space
 transform and addition appearance information. To create a volume instance,
 call
 
-    OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume);
+    OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
   -------------------- ----------------------- ---------- --------------------------------------
   Type                 Name                    Default    Description
@@ -703,7 +703,7 @@ call
   vec3f                specular                  gray 0.3 specular color for shading
 
   -------------------- ------------------------ --------- ---------------------------------------
-  : Parameters understood by VolumeInstance.
+  : Parameters understood by VolumetricModel.
 
 
 Geometries
@@ -1209,7 +1209,7 @@ feature/performance trade-offs.
   OSPData       geometries           NULL  data array of OSPGeometricModel
                                            geometry objects in the scene
 
-  OSPData       volumes              NULL  data array of OSPVolumeInstance
+  OSPData       volumes              NULL  data array of OSPVolumetricModel
                                            volume objects in the scene
 
   bool          dynamicScene        false  use RTC_SCENE_DYNAMIC flag (faster

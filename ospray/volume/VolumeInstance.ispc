@@ -20,17 +20,17 @@
 #include "math/box.ih"
 #include "math/vec.ih"
 
-export void *uniform VolumeInstance_create(void *uniform cppE,
+export void *uniform VolumetricModel_create(void *uniform cppE,
                                            void *uniform volume)
 {
-  VolumeInstance *uniform self = uniform new VolumeInstance;
+  VolumetricModel *uniform self = uniform new VolumetricModel;
 
   self->volume = (Volume * uniform) volume;
 
   return self;
 }
 
-export void VolumeInstance_set(void *uniform _self,
+export void VolumetricModel_set(void *uniform _self,
                                uniform bool preIntegration,
                                uniform bool adaptiveSampling,
                                uniform float adaptiveScalar,
@@ -43,7 +43,7 @@ export void VolumeInstance_set(void *uniform _self,
                                const uniform AffineSpace3f &xfm,
                                const uniform AffineSpace3f &rcp_xfm)
 {
-  VolumeInstance *uniform self = (VolumeInstance * uniform) _self;
+  VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
   self->preIntegration          = preIntegration;
   self->adaptiveSampling        = adaptiveSampling;

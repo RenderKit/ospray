@@ -20,7 +20,7 @@
 #include "math/AffineSpace.ih"
 #include "transferFunction/TransferFunction.ih"
 
-struct VolumeInstance
+struct VolumetricModel
 {
   Volume *volume;  //!< instanced Volume
 
@@ -66,14 +66,14 @@ struct VolumeInstance
 
 // Helper functions ///////////////////////////////////////////////////////////
 
-inline vec3f VolumeInstance_getColor(const VolumeInstance *uniform volume,
+inline vec3f VolumetricModel_getColor(const VolumetricModel *uniform volume,
                                      const float sample)
 {
   return volume->transferFunction->getColorForValue(volume->transferFunction,
                                                     sample);
 }
 
-inline float VolumeInstance_getOpacity(const VolumeInstance *uniform volume,
+inline float VolumetricModel_getOpacity(const VolumetricModel *uniform volume,
                                        const float sample)
 {
   return volume->transferFunction->getOpacityForValue(volume->transferFunction,

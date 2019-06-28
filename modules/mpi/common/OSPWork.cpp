@@ -43,7 +43,7 @@ namespace ospray {
         registerWorkUnit<NewGeometricModel>(registry);
         registerWorkUnit<NewCamera>(registry);
         registerWorkUnit<NewVolume>(registry);
-        registerWorkUnit<NewVolumeInstance>(registry);
+        registerWorkUnit<NewVolumetricModel>(registry);
         registerWorkUnit<NewTransferFunction>(registry);
         registerWorkUnit<NewPixelOp>(registry);
 
@@ -297,12 +297,12 @@ namespace ospray {
         handle.assign(instance);
       }
 
-      // ospNewVolumeInstance ///////////////////////////////////////////////
+      // ospNewVolumetricModel ///////////////////////////////////////////////
 
-      void NewVolumeInstance::run()
+      void NewVolumetricModel::run()
       {
         auto *geom     = (Volume *)volumeHandle.lookup();
-        auto *instance = new VolumeInstance(geom);
+        auto *instance = new VolumetricModel(geom);
         handle.assign(instance);
       }
 

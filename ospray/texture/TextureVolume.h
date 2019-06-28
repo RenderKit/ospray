@@ -30,7 +30,7 @@ namespace ospray {
 
     virtual void commit() override;
 
-    Ref<VolumeInstance> volume;
+    Ref<VolumetricModel> volume;
   };
 
 } // ::ospray

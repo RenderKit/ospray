@@ -26,13 +26,13 @@ struct Slices
 {
   Geometry super;
   vec4f *planes;
-  VolumeInstance *volumeInstance;
+  VolumetricModel *volumetricModel;
 };
 
 unmasked void Slices_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   Slices *uniform self   = (Slices * uniform) args->geometryUserPtr;
-  Volume *uniform volume = self->volumeInstance->volume;
+  Volume *uniform volume = self->volumetricModel->volume;
 
   uniform int primID = args->primID;
 
@@ -48,7 +48,7 @@ void Slices_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
     return;
 
   Slices *uniform self        = (Slices * uniform) args->geometryUserPtr;
-  Volume *uniform volume      = self->volumeInstance->volume;
+  Volume *uniform volume      = self->volumetricModel->volume;
   uniform unsigned int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
@@ -98,10 +98,10 @@ static void Slices_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_COLOR)) {
-    Slices *uniform self             = (Slices * uniform) geometry;
-    VolumeInstance *uniform instance = self->volumeInstance;
-    TransferFunction *uniform tfn    = instance->transferFunction;
-    Volume *uniform volume           = self->volumeInstance->volume;
+    Slices *uniform self              = (Slices * uniform) geometry;
+    VolumetricModel *uniform instance = self->volumetricModel;
+    TransferFunction *uniform tfn     = instance->transferFunction;
+    Volume *uniform volume            = self->volumetricModel->volume;
 
     const float sample      = volume->sample(volume, dg.P);
     const vec3f sampleColor = tfn->getColorForValue(tfn, sample);
@@ -126,12 +126,12 @@ export void *uniform Slices_set(void *uniform _self,
                                 uniform vec4f *uniform planes,
                                 void *uniform _volume)
 {
-  Slices *uniform self           = (Slices * uniform) _self;
-  VolumeInstance *uniform volume = (VolumeInstance * uniform) _volume;
+  Slices *uniform self            = (Slices * uniform) _self;
+  VolumetricModel *uniform volume = (VolumetricModel * uniform) _volume;
 
   self->super.numPrimitives = numPlanes;
   self->planes              = planes;
-  self->volumeInstance      = volume;
+  self->volumetricModel     = volume;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

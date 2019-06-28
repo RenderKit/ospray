@@ -116,7 +116,7 @@ namespace OSPRayTestScenes {
     for (auto g : GeometricModels)
       ospRelease(g);
 
-    for (auto v : volumeInstances)
+    for (auto v : VolumetricModels)
       ospRelease(v);
 
     ospRelease(framebuffer);
@@ -141,10 +141,10 @@ namespace OSPRayTestScenes {
     GeometricModels.push_back(instance);
   }
 
-  void Base::AddInstance(OSPVolumeInstance instance)
+  void Base::AddInstance(OSPVolumetricModel instance)
   {
     ospCommit(instance);
-    volumeInstances.push_back(instance);
+    VolumetricModels.push_back(instance);
   }
 
   void Base::PerformRenderTest()
@@ -158,9 +158,9 @@ namespace OSPRayTestScenes {
       ospRelease(gi);
     }
 
-    if (!volumeInstances.empty()) {
+    if (!VolumetricModels.empty()) {
       OSPData vi = ospNewData(
-          volumeInstances.size(), OSP_OBJECT, volumeInstances.data());
+          VolumetricModels.size(), OSP_OBJECT, VolumetricModels.data());
       ospSetObject(world, "volumes", vi);
       ospRelease(vi);
     }
@@ -660,7 +660,7 @@ namespace OSPRayTestScenes {
     ospSetVec3f(pyramid, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
     ospCommit(pyramid);
 
-    OSPVolumeInstance instance = ospNewVolumeInstance(pyramid);
+    OSPVolumetricModel instance = ospNewVolumetricModel(pyramid);
     ospSetFloat(instance, "samplingRate", 1.f);
 
     OSPTransferFunction transferFun =
@@ -724,7 +724,7 @@ namespace OSPRayTestScenes {
     OSPVolume torus = CreateTorus(volumetricData, 256);
     ospCommit(torus);
 
-    OSPVolumeInstance volumeInstance = ospNewVolumeInstance(torus);
+    OSPVolumetricModel VolumetricModel = ospNewVolumetricModel(torus);
     ospRelease(torus);
 
     OSPTransferFunction transferFun =
@@ -739,13 +739,13 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
-    ospSetObject(volumeInstance, "transferFunction", transferFun);
+    ospSetObject(VolumetricModel, "transferFunction", transferFun);
     ospRelease(transferFun);
 
-    ospCommit(volumeInstance);
+    ospCommit(VolumetricModel);
 
     OSPGeometry isosurface = ospNewGeometry("isosurfaces");
-    ospSetObject(isosurface, "volume", volumeInstance);
+    ospSetObject(isosurface, "volume", VolumetricModel);
     float isovalues[2]    = {-7000.f, 0.f};
     OSPData isovaluesData = ospNewData(2, OSP_FLOAT, isovalues);
     ospSetData(isosurface, "isovalues", isovaluesData);
@@ -807,7 +807,7 @@ namespace OSPRayTestScenes {
     ospSetVec3f(blob, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
     ospCommit(blob);
 
-    OSPVolumeInstance volumeInstance = ospNewVolumeInstance(blob);
+    OSPVolumetricModel VolumetricModel = ospNewVolumetricModel(blob);
 
     OSPTransferFunction transferFun =
         ospNewTransferFunction("piecewise_linear");
@@ -823,9 +823,9 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospCommit(transferFun);
 
-    ospSetObject(volumeInstance, "transferFunction", transferFun);
+    ospSetObject(VolumetricModel, "transferFunction", transferFun);
     ospRelease(transferFun);
-    ospCommit(volumeInstance);
+    ospCommit(VolumetricModel);
 
     OSPGeometry slice = ospNewGeometry("slices");
     ASSERT_TRUE(slice);
@@ -834,9 +834,9 @@ namespace OSPRayTestScenes {
     OSPData planesData = ospNewData(3, OSP_VEC4F, planes);
     ASSERT_TRUE(planesData);
     ospSetData(slice, "planes", planesData);
-    ospSetObject(slice, "volume", volumeInstance);
+    ospSetObject(slice, "volume", VolumetricModel);
     ospCommit(slice);
-    ospRelease(volumeInstance);
+    ospRelease(VolumetricModel);
 
     OSPGeometricModel instance = ospNewGeometricModel(slice);
     AddInstance(instance);
@@ -995,7 +995,7 @@ namespace OSPRayTestScenes {
     OSPVolume torus = CreateTorus(volumetricData, 256);
     ospCommit(torus);
 
-    OSPVolumeInstance volumeInstance = ospNewVolumeInstance(torus);
+    OSPVolumetricModel VolumetricModel = ospNewVolumetricModel(torus);
     ospRelease(torus);
 
     OSPTransferFunction transferFun =
@@ -1010,15 +1010,15 @@ namespace OSPRayTestScenes {
     ospSetData(transferFun, "opacities", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
-    ospSetObject(volumeInstance, "transferFunction", transferFun);
+    ospSetObject(VolumetricModel, "transferFunction", transferFun);
     ospRelease(transferFun);
-    ospCommit(volumeInstance);
+    ospCommit(VolumetricModel);
 
     OSPMaterial sphereMaterial =
         ospNewMaterial(rendererType.c_str(), "default");
     OSPTexture tex = ospNewTexture("volume");
-    ospSetObject(tex, "volume", volumeInstance);
-    ospRelease(volumeInstance);
+    ospSetObject(tex, "volume", VolumetricModel);
+    ospRelease(VolumetricModel);
     ospCommit(tex);
     ospSetObject(sphereMaterial, "map_Kd", tex);
     ospRelease(tex);
@@ -1065,7 +1065,7 @@ namespace OSPRayTestScenes {
     OSPVolume torus = CreateTorus(volumetricData, 256);
     ospCommit(torus);
 
-    OSPVolumeInstance instance = ospNewVolumeInstance(torus);
+    OSPVolumetricModel instance = ospNewVolumetricModel(torus);
     ospRelease(torus);
 
     OSPTransferFunction transferFun =

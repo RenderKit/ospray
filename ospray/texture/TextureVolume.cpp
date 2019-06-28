@@ -31,7 +31,7 @@ namespace ospray {
     if (this->ispcEquivalent)
       ispc::delete_uniform(ispcEquivalent);
 
-    auto *v = dynamic_cast<VolumeInstance *>(getParamObject("volume"));
+    auto *v = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
 
     if (v == nullptr)
       throw std::runtime_error("no volume specified on 'volume' texture!");

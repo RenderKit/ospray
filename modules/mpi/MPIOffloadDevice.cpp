@@ -607,12 +607,12 @@ namespace ospray {
       return (OSPGeometricModel)(int64)handle;
     }
 
-    OSPVolumeInstance MPIOffloadDevice::newVolumeInstance(OSPVolume volume)
+    OSPVolumetricModel MPIOffloadDevice::newVolumetricModel(OSPVolume volume)
     {
       ObjectHandle handle = allocateHandle();
-      work::NewVolumeInstance work(handle, (ObjectHandle &)volume);
+      work::NewVolumetricModel work(handle, (ObjectHandle &)volume);
       processWork(work);
-      return (OSPVolumeInstance)(int64)handle;
+      return (OSPVolumetricModel)(int64)handle;
     }
 
     ///////////////////////////////////////////////////////////////////////////

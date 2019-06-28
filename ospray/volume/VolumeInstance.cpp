@@ -22,17 +22,17 @@
 
 namespace ospray {
 
-  VolumeInstance::VolumeInstance(Volume *volume)
+  VolumetricModel::VolumetricModel(Volume *volume)
   {
     if (volume == nullptr)
-      throw std::runtime_error("NULL Volume given to VolumeInstance!");
+      throw std::runtime_error("NULL Volume given to VolumetricModel!");
 
     instancedVolume = volume;
 
-    this->ispcEquivalent = ispc::VolumeInstance_create(this, volume->getIE());
+    this->ispcEquivalent = ispc::VolumetricModel_create(this, volume->getIE());
   }
 
-  VolumeInstance::~VolumeInstance()
+  VolumetricModel::~VolumetricModel()
   {
     if (embreeInstanceGeometry)
       rtcReleaseGeometry(embreeInstanceGeometry);
@@ -41,12 +41,12 @@ namespace ospray {
       rtcReleaseScene(embreeSceneHandle);
   }
 
-  std::string VolumeInstance::toString() const
+  std::string VolumetricModel::toString() const
   {
-    return "ospray::VolumeInstance";
+    return "ospray::VolumetricModel";
   }
 
-  void VolumeInstance::commit()
+  void VolumetricModel::commit()
   {
     auto *transferFunction =
         (TransferFunction *)getParamObject("transferFunction", nullptr);
@@ -133,7 +133,7 @@ namespace ospray {
         box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)),
               getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
 
-    ispc::VolumeInstance_set(ispcEquivalent,
+    ispc::VolumetricModel_set(ispcEquivalent,
                              getParam1b("preIntegration", false),
                              getParam1b("adaptiveSampling", true),
                              getParam1f("adaptiveScalar", 15.0f),
@@ -147,12 +147,12 @@ namespace ospray {
                              (ispc::AffineSpace3f &)rcp_xfm);
   }
 
-  RTCGeometry VolumeInstance::embreeGeometryHandle() const
+  RTCGeometry VolumetricModel::embreeGeometryHandle() const
   {
     return embreeInstanceGeometry;
   }
 
-  box3f VolumeInstance::bounds() const
+  box3f VolumetricModel::bounds() const
   {
     return instanceBounds;
   }

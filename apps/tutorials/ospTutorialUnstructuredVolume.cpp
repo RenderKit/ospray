@@ -27,7 +27,7 @@ using namespace ospcommon;
 static std::string renderer_type = "scivis";
 
 namespace {
-  OSPVolumeInstance createVolumeWithTF(const char *volumeName,
+  OSPVolumetricModel createVolumeWithTF(const char *volumeName,
                                        const char *tfName)
   {
     // create volume
@@ -36,7 +36,7 @@ namespace {
     // create and set transfer function
     OSPTransferFunction tfn =
         ospTestingNewTransferFunction(tv.voxelRange, tfName);
-    OSPVolumeInstance instance = ospNewVolumeInstance(tv.volume);
+    OSPVolumetricModel instance = ospNewVolumetricModel(tv.volume);
 
     ospSetObject(instance, "transferFunction", tfn);
     ospCommit(instance);
@@ -89,12 +89,12 @@ int main(int argc, const char **argv)
   OSPWorld world = ospNewWorld();
 
   // create all volume variances [sharedVertices][valuesPerCell]
-  OSPVolumeInstance allVolumes[2][2];
+  OSPVolumetricModel allVolumes[2][2];
   allVolumes[0][0] = createVolumeWithTF("simple_unstructured_volume_00", "jet");
   allVolumes[0][1] = createVolumeWithTF("simple_unstructured_volume_01", "jet");
   allVolumes[1][0] = createVolumeWithTF("simple_unstructured_volume_10", "jet");
   allVolumes[1][1] = createVolumeWithTF("simple_unstructured_volume_11", "jet");
-  OSPVolumeInstance testVolume = allVolumes[0][0];
+  OSPVolumetricModel testVolume = allVolumes[0][0];
 
   // create iso geometry object and add it to the world
   OSPGeometry isoGeometry = ospNewGeometry("isosurfaces");

@@ -70,7 +70,7 @@ namespace ospray {
       // Instancing ///////////////////////////////////////////////////////////
 
       virtual OSPGeometricModel newGeometricModel(OSPGeometry geom) = 0;
-      virtual OSPVolumeInstance newVolumeInstance(OSPVolume volume)     = 0;
+      virtual OSPVolumetricModel newVolumetricModel(OSPVolume volume)     = 0;
 
       // Instance Meta-Data ///////////////////////////////////////////////////
 

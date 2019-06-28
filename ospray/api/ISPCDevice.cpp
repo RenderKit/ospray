@@ -157,11 +157,11 @@ namespace ospray {
       return (OSPGeometricModel)instance;
     }
 
-    OSPVolumeInstance ISPCDevice::newVolumeInstance(OSPVolume _volume)
+    OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
     {
       auto *volume   = (Volume *)_volume;
-      auto *instance = new VolumeInstance(volume);
-      return (OSPVolumeInstance)instance;
+      auto *instance = new VolumetricModel(volume);
+      return (OSPVolumetricModel)instance;
     }
 
     ///////////////////////////////////////////////////////////////////////////

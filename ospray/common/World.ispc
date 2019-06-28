@@ -20,15 +20,15 @@ typedef Volume *uniform uniVolumePtr;
 
 typedef GeometricModel *uniform uniGeomInstPtr;
 
-typedef VolumeInstance *uniform uniVolInstPtr;
+typedef VolumetricModel *uniform uniVolInstPtr;
 
 export void *uniform World_create(void *uniform cppE)
 {
   World *uniform world = uniform new World;
 
   world->cppEquivalent   = cppE;
-  world->GeometricModels = NULL;
-  world->volumeInstances = NULL;
+  world->geometricModels = NULL;
+  world->volumetricModels = NULL;
 
   world->embreeSceneHandleGeometries = NULL;
   world->embreeSceneHandleVolumes    = NULL;
@@ -39,17 +39,17 @@ export void *uniform World_create(void *uniform cppE)
 export void World_cleanup(void *uniform _world)
 {
   uniform World *uniform world = (uniform World * uniform) _world;
-  if (world->GeometricModels)
-    delete[] world->GeometricModels;
-  if (world->volumeInstances)
-    delete[] world->volumeInstances;
+  if (world->geometricModels)
+    delete[] world->geometricModels;
+  if (world->volumetricModels)
+    delete[] world->volumetricModels;
 }
 
 export void World_init(void *uniform _world,
                        void *uniform embreeDevice,
                        uniform int32 embreeSceneFlags,
-                       uniform int32 numGeometricModels,
-                       uniform int32 numVolumeInstances)
+                       uniform int32 numgeometricModels,
+                       uniform int32 numvolumetricModels)
 {
   uniform World *uniform world = (uniform World * uniform) _world;
   if (world->embreeSceneHandleGeometries)
@@ -65,22 +65,22 @@ export void World_init(void *uniform _world,
   rtcSetSceneFlags(world->embreeSceneHandleVolumes,
                    (uniform RTCSceneFlags)embreeSceneFlags);
 
-  if (world->GeometricModels)
-    delete[] world->GeometricModels;
-  world->GeometricModelCount = numGeometricModels;
-  if (numGeometricModels > 0) {
-    world->GeometricModels = uniform new uniGeomInstPtr[numGeometricModels];
+  if (world->geometricModels)
+    delete[] world->geometricModels;
+  world->GeometricModelCount = numgeometricModels;
+  if (numgeometricModels > 0) {
+    world->geometricModels = uniform new uniGeomInstPtr[numgeometricModels];
   } else {
-    world->GeometricModels = NULL;
+    world->geometricModels = NULL;
   }
 
-  if (world->volumeInstances)
-    delete[] world->volumeInstances;
-  world->volumeInstanceCount = numVolumeInstances;
-  if (numVolumeInstances > 0) {
-    world->volumeInstances = uniform new uniVolInstPtr[numVolumeInstances];
+  if (world->volumetricModels)
+    delete[] world->volumetricModels;
+  world->VolumetricModelCount = numvolumetricModels;
+  if (numvolumetricModels > 0) {
+    world->volumetricModels = uniform new uniVolInstPtr[numvolumetricModels];
   } else {
-    world->volumeInstances = NULL;
+    world->volumetricModels = NULL;
   }
 }
 
@@ -102,14 +102,14 @@ export void World_setGeometricModel(void *uniform _world,
 {
   World *uniform world             = (World * uniform) _world;
   GeometricModel *uniform instance = (GeometricModel * uniform) _instance;
-  world->GeometricModels[instID]   = instance;
+  world->geometricModels[instID]   = instance;
 }
 
-export void World_setVolumeInstance(void *uniform _world,
+export void World_setVolumetricModel(void *uniform _world,
                                     uniform int32 instID,
                                     void *uniform _instance)
 {
   World *uniform world             = (World * uniform) _world;
-  VolumeInstance *uniform instance = (VolumeInstance * uniform) _instance;
-  world->volumeInstances[instID]   = instance;
+  VolumetricModel *uniform instance = (VolumetricModel * uniform) _instance;
+  world->volumetricModels[instID]   = instance;
 }

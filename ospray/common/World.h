@@ -47,7 +47,7 @@ namespace ospray {
     // Data members //
 
     Ref<Data> GeometricModels;
-    Ref<Data> volumeInstances;
+    Ref<Data> VolumetricModels;
 
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandleGeometries{nullptr};

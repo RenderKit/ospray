@@ -24,7 +24,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
                               const VolumeInterval &interval,
                               Ray &ray)
 {
-  VolumeInstance *varying instance = interval.volumeInstance;
+  VolumetricModel *varying instance = interval.volumetricModel;
 
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;

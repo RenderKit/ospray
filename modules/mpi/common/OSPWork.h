@@ -230,10 +230,10 @@ namespace ospray {
         ObjectHandle geometryHandle;
       };
 
-      struct NewVolumeInstance : public Work
+      struct NewVolumetricModel : public Work
       {
-        NewVolumeInstance() = default;
-        NewVolumeInstance(ObjectHandle handle, ObjectHandle volume_handle)
+        NewVolumetricModel() = default;
+        NewVolumetricModel(ObjectHandle handle, ObjectHandle volume_handle)
             : handle(handle), volumeHandle(volume_handle)
         {
         }

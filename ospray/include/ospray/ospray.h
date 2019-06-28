@@ -147,7 +147,7 @@ namespace osp {
   struct GeometricModel : public ManagedObject {};
   struct Material         : public ManagedObject {};
   struct Volume           : public ManagedObject {};
-  struct VolumeInstance   : public ManagedObject {};
+  struct VolumetricModel   : public ManagedObject {};
   struct TransferFunction : public ManagedObject {};
   struct Texture          : public ManagedObject {};
   struct Light            : public ManagedObject {};
@@ -166,7 +166,7 @@ typedef osp::GeometricModel  *OSPGeometricModel;
 typedef osp::Material          *OSPMaterial;
 typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
-typedef osp::VolumeInstance    *OSPVolumeInstance;
+typedef osp::VolumetricModel    *OSPVolumetricModel;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture           *OSPTexture;
 typedef osp::ManagedObject     *OSPObject;
@@ -191,7 +191,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPMaterial,
   *OSPLight,
   *OSPVolume,
-  *OSPVolumeInstance,
+  *OSPVolumetricModel,
   *OSPTransferFunction,
   *OSPTexture,
   *OSPObject,
@@ -281,7 +281,7 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom);
 
-  OSPRAY_INTERFACE OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume);
+  OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
   // Instance Meta-Data ///////////////////////////////////////////////////////
 

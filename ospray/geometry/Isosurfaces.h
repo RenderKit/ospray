@@ -36,7 +36,7 @@ namespace ospray {
     // Data members //
 
     Ref<Data> isovaluesData;  //!< refcounted data array for isovalues data
-    Ref<VolumeInstance> volume;
+    Ref<VolumetricModel> volume;
 
     int numIsovalues{0};
     float *isovalues{nullptr};

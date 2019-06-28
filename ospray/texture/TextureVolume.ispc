@@ -21,15 +21,15 @@
 vec4f TextureVolume_get(const Texture2D *uniform self,
                         const varying DifferentialGeometry &dg)
 {
-  VolumeInstance *uniform instance = (VolumeInstance * uniform) self->data;
+  VolumetricModel *uniform instance = (VolumetricModel * uniform) self->data;
   Volume *uniform volume           = (Volume * uniform) instance->volume;
 
   const uniform box3f bounds = instance->boundingBox;
 
   cif (box_contains(bounds, dg.P)) {
     const float sample = Volume_getSample(volume, dg.P);
-    return make_vec4f(VolumeInstance_getColor(instance, sample),
-                      VolumeInstance_getOpacity(instance, sample));
+    return make_vec4f(VolumetricModel_getColor(instance, sample),
+                      VolumetricModel_getOpacity(instance, sample));
   } else {
     return make_vec4f(0.f);
   }
@@ -38,14 +38,14 @@ vec4f TextureVolume_get(const Texture2D *uniform self,
 vec3f TextureVolume_getN(const Texture2D *uniform self,
                          const varying DifferentialGeometry &dg)
 {
-  VolumeInstance *uniform instance = (VolumeInstance * uniform) self->data;
+  VolumetricModel *uniform instance = (VolumetricModel * uniform) self->data;
   Volume *uniform volume           = (Volume * uniform) instance->volume;
 
   const uniform box3f bounds = volume->boundingBox;
 
   cif (box_contains(bounds, dg.P)) {
     const float sample = Volume_getSample(volume, dg.P);
-    return VolumeInstance_getColor(instance, sample);
+    return VolumetricModel_getColor(instance, sample);
   } else {
     return make_vec3f(0.f);
   }

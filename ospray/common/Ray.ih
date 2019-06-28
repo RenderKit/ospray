@@ -23,7 +23,7 @@
 // embree
 #include "embree3/rtcore.isph"
 
-struct VolumeInstance;
+struct VolumetricModel;
 
 // NOTE(jda) - this MUST match Embree's RayHit structure layout!
 struct Ray
@@ -165,15 +165,15 @@ inline void transformRay(Ray &ray, const uniform AffineSpace3f &xfm)
 
 struct VolumeInterval
 {
-  VolumeInstance *volumeInstance;
+  VolumetricModel *volumetricModel;
   range1f interval;
 };
 
 inline void initVolumeInterval(VolumeInterval &hit)
 {
-  hit.volumeInstance = NULL;
-  hit.interval.lower = inf;
-  hit.interval.upper = -inf;
+  hit.volumetricModel = NULL;
+  hit.interval.lower  = inf;
+  hit.interval.upper  = -inf;
 }
 
 inline bool hasInterval(const VolumeInterval &vi)

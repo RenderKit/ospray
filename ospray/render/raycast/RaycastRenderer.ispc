@@ -19,7 +19,7 @@
 #include "fb/FrameBuffer.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
-#include "volume/VolumeInstance.ih"
+#include "volume/VolumetricModel.ih"
 
 /*! \brief a simple, primary-ray-only ray cast render that
 
@@ -334,7 +334,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   if (!hasInterval(vInterval))
     return;
 
-  VolumeInstance *varying instance = vInterval.volumeInstance;
+  VolumetricModel *varying instance = vInterval.volumetricModel;
 
   Ray &ray = sample.ray;
 

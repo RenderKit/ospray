@@ -29,11 +29,11 @@ struct World
 
   uniform RTCScene embreeSceneHandleGeometries;
 
-  uniform GeometricModel *uniform *uniform GeometricModels;
+  uniform GeometricModel *uniform *uniform geometricModels;
   uniform int32 GeometricModelCount;
 
-  uniform VolumeInstance *uniform *uniform volumeInstances;
-  uniform int32 volumeInstanceCount;
+  uniform VolumetricModel *uniform *uniform volumetricModels;
+  uniform int32 VolumetricModelCount;
 
   uniform RTCScene embreeSceneHandleVolumes;
 };
@@ -88,7 +88,7 @@ inline void traceVolumeRay(World *uniform model,
                 (varying RTCRayHit* uniform)&ray);
 
   if (hasInterval(interval))
-    interval.volumeInstance = model->volumeInstances[ray.instID];
+    interval.volumetricModel = model->volumetricModels[ray.instID];
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of
@@ -122,7 +122,7 @@ inline void postIntersect(const World *uniform model,
 
   if (ray.instID != RTC_INVALID_GEOMETRY_ID) {
     foreach_unique(instID in ray.instID) {
-      GeometricModel *uniform instGeom = model->GeometricModels[instID];
+      GeometricModel *uniform instGeom = model->geometricModels[instID];
       GeometricModel_postIntersect(instGeom, model, dg, ray, flags);
     }
   } else {

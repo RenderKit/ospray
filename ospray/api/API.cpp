@@ -485,11 +485,11 @@ extern "C" OSPGeometricModel ospNewGeometricModel(OSPGeometry geom)
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPVolumeInstance ospNewVolumeInstance(OSPVolume volume)
+extern "C" OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume)
     OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  OSPVolumeInstance instance = currentDevice().newVolumeInstance(volume);
+  OSPVolumetricModel instance = currentDevice().newVolumetricModel(volume);
   return instance;
 }
 OSPRAY_CATCH_END(nullptr)

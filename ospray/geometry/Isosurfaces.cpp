@@ -38,7 +38,7 @@ namespace ospray {
     Geometry::commit();
 
     isovaluesData = getParamData("isovalues", nullptr);
-    volume        = (VolumeInstance *)getParamObject("volume", nullptr);
+    volume        = (VolumetricModel *)getParamObject("volume", nullptr);
     numIsovalues  = isovaluesData->numItems;
     isovalues     = (float *)isovaluesData->data;
 

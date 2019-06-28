@@ -34,7 +34,7 @@ namespace ospray {
 
    protected:
     Ref<Data> planesData;
-    Ref<VolumeInstance> volume;
+    Ref<VolumetricModel> volume;
 
     size_t numPlanes;
     vec4f *planes;

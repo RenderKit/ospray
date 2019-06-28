@@ -21,10 +21,10 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE VolumeInstance : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
   {
-    VolumeInstance(Volume *geometry);
-    virtual ~VolumeInstance() override;
+    VolumetricModel(Volume *geometry);
+    virtual ~VolumetricModel() override;
     virtual std::string toString() const override;
 
     virtual void commit() override;

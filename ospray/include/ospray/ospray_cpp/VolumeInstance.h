@@ -22,14 +22,14 @@
 namespace ospray {
   namespace cpp {
 
-    class VolumeInstance : public ManagedObject_T<OSPVolumeInstance>
+    class VolumetricModel : public ManagedObject_T<OSPVolumetricModel>
     {
      public:
-      VolumeInstance(const Volume &geom);
-      VolumeInstance(OSPVolume geom);
+      VolumetricModel(const Volume &geom);
+      VolumetricModel(OSPVolume geom);
 
-      VolumeInstance(const VolumeInstance &copy);
-      VolumeInstance(OSPVolumeInstance existing);
+      VolumetricModel(const VolumetricModel &copy);
+      VolumetricModel(OSPVolumetricModel existing);
 
       void setTransferFunction(TransferFunction &m) const;
       void setTransferFunction(OSPTransferFunction m) const;
@@ -37,32 +37,32 @@ namespace ospray {
 
     // Inlined function definitions ///////////////////////////////////////////
 
-    inline VolumeInstance::VolumeInstance(const Volume &geom)
-        : VolumeInstance(geom.handle())
+    inline VolumetricModel::VolumetricModel(const Volume &geom)
+        : VolumetricModel(geom.handle())
     {
     }
 
-    inline VolumeInstance::VolumeInstance(OSPVolume existing)
+    inline VolumetricModel::VolumetricModel(OSPVolume existing)
     {
-      ospObject = ospNewVolumeInstance(existing);
+      ospObject = ospNewVolumetricModel(existing);
     }
 
-    inline VolumeInstance::VolumeInstance(const VolumeInstance &copy)
-        : ManagedObject_T<OSPVolumeInstance>(copy.handle())
-    {
-    }
-
-    inline VolumeInstance::VolumeInstance(OSPVolumeInstance existing)
-        : ManagedObject_T<OSPVolumeInstance>(existing)
+    inline VolumetricModel::VolumetricModel(const VolumetricModel &copy)
+        : ManagedObject_T<OSPVolumetricModel>(copy.handle())
     {
     }
 
-    inline void VolumeInstance::setTransferFunction(TransferFunction &m) const
+    inline VolumetricModel::VolumetricModel(OSPVolumetricModel existing)
+        : ManagedObject_T<OSPVolumetricModel>(existing)
+    {
+    }
+
+    inline void VolumetricModel::setTransferFunction(TransferFunction &m) const
     {
       setTransferFunction(m.handle());
     }
 
-    inline void VolumeInstance::setTransferFunction(OSPTransferFunction m) const
+    inline void VolumetricModel::setTransferFunction(OSPTransferFunction m) const
     {
       set("transferFunction", m);
     }

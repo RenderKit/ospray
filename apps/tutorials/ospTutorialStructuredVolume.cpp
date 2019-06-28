@@ -85,7 +85,7 @@ int main(int argc, const char **argv)
   OSPTransferFunction tfn =
       ospTestingNewTransferFunction(test_data.voxelRange, "jet");
 
-  auto instance = ospNewVolumeInstance(volume);
+  auto instance = ospNewVolumetricModel(volume);
   ospSetObject(instance, "transferFunction", tfn);
   ospSetFloat(instance, "samplingRate", 0.5f);
   ospCommit(instance);
