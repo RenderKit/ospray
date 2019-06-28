@@ -42,6 +42,8 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
 
   geom->postIntersect(geom, dg, ray, flags);
 
+  dg.areaPDF = self->areaPDF;
+
   if (flags & DG_COLOR && self->primitiveColors)
     dg.color = self->primitiveColors[ray.primID];
 
