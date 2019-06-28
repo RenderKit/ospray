@@ -113,14 +113,13 @@ namespace ospray {
       throw std::runtime_error("cannot createArrayOfIE() with non OSP_OBJECT!");
 
     std::vector<void *> retval;
-    retval.reserve(data.size());
+    retval.resize(data.size());
 
     auto begin = data.begin<ManagedObject *>();
     auto end   = data.end<ManagedObject *>();
-    std::transform(
-        begin, end, std::back_inserter(retval), [](ManagedObject *obj) {
-          return obj->getIE();
-        });
+    std::transform(begin, end, retval.begin(), [](ManagedObject *obj) {
+      return obj->getIE();
+    });
 
     return retval;
   }

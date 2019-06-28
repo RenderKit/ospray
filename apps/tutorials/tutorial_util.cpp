@@ -19,6 +19,7 @@
 #include "ospcommon/vec.h"
 using namespace ospcommon;
 
+#include <iterator>
 #include <vector>
 
 void initializeOSPRay(int argc, const char **argv)
