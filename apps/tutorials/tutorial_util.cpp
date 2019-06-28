@@ -36,11 +36,10 @@ void initializeOSPRay(int argc, const char **argv)
     throw std::runtime_error("OSPRay device could not be fetched!");
 
   // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
+  ospDeviceSetErrorFunc(device, [](OSPError error, const char *errorDetails) {
+    std::cerr << "OSPRay error: " << errorDetails << std::endl;
+    exit(error);
+  });
 }
 
 OSPInstance createGroundPlane(std::string renderer_type)
