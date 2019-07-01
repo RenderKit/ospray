@@ -29,11 +29,6 @@ namespace ospray {
 
     virtual ~Data() override;
 
-    /*! commit this object - for this object type, make sure that all
-        listeners that have registered know that we have changed */
-    virtual void commit() override;
-
-    /*! pretty-print this object, for debugging purposes */
     virtual std::string toString() const override;
 
     /*! return number of items in this data buffer */

@@ -26,7 +26,7 @@ namespace ospray {
   //!
   struct OSPRAY_SDK_INTERFACE SharedStructuredVolume : public StructuredVolume
   {
-    virtual ~SharedStructuredVolume() override;
+    virtual ~SharedStructuredVolume() override = default;
 
     //! A string description of this class.
     virtual std::string toString() const override;
@@ -44,9 +44,6 @@ namespace ospray {
 
     //! Create the equivalent ISPC volume container.
     void createEquivalentISPC() override;
-
-    //! Called when a dependency of this object changes.
-    void dependencyGotChanged(ManagedObject *object) override;
 
     //! The voxelData object upon commit().
     Data *voxelData {nullptr};

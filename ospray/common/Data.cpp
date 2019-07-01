@@ -62,13 +62,6 @@ namespace ospray {
       alignedFree(data);
   }
 
-  /*! commit this object - for this object type, make sure that all
-    listeners that have registered know that we have changed */
-  void Data::commit()
-  {
-    notifyListenersThatObjectGotChanged();
-  }
-
   std::string Data::toString() const
   {
     return "ospray::Data";

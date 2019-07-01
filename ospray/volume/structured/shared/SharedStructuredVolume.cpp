@@ -22,12 +22,6 @@
 
 namespace ospray {
 
-  SharedStructuredVolume::~SharedStructuredVolume()
-  {
-    // No longer listen for changes to voxelData.
-    if(voxelData) voxelData->unregisterListener(this);
-  }
-
   std::string SharedStructuredVolume::toString() const
   {
     return("ospray::SharedStructuredVolume<" + voxelType + ">");
@@ -118,17 +112,6 @@ namespace ospray {
       = ispc::SharedStructuredVolume_createInstance
       (this,ospVoxelType,(const ispc::vec3i &)dimensions,
        voxelData?voxelData->data:allocatedVoxelData);
-
-    // Listen for changes to voxelData.
-    if (voxelData)
-      voxelData->registerListener(this);
-  }
-
-  void SharedStructuredVolume::dependencyGotChanged(ManagedObject *object)
-  {
-    // Rebuild volume accelerator when voxelData is committed.
-    if(object == voxelData && ispcEquivalent)
-      StructuredVolume::buildAccelerator();
   }
 
   // A volume type with XYZ storage order. The voxel data is provided by the

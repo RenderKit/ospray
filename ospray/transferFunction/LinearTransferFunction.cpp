@@ -56,9 +56,6 @@ namespace ospray {
       ispc::LinearTransferFunction_precomputePreIntegratedValues(ispcEquivalent);
 
     TransferFunction::commit();
-
-    // Notify listeners that the transfer function has changed.
-    notifyListenersThatObjectGotChanged();
   }
 
   std::string LinearTransferFunction::toString() const

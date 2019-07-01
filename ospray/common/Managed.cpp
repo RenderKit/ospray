@@ -21,11 +21,9 @@ namespace ospray {
 
   ManagedObject::~ManagedObject()
   {
-    // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check
     ispc::delete_uniform(ispcEquivalent);
     ispcEquivalent = nullptr;
 
-    // make sure all ManagedObject parameter refs are decremented
     std::for_each(params_begin(),
                   params_end(),
                   [&](std::shared_ptr<Param> &p) {
@@ -37,36 +35,13 @@ namespace ospray {
                   });
   }
 
-  /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */
   void ManagedObject::commit()
   {
   }
 
-  //! \brief common function to help printf-debugging
-  /*! \detailed Every derived class should override this! */
   std::string ManagedObject::toString() const
   {
     return "ospray::ManagedObject";
-  }
-
-  //! \brief register a new listener for given object
-  /*! \detailed this object will now get update notifications from us */
-  void ManagedObject::registerListener(ManagedObject *newListener)
-  {
-    objectsListeningForChanges.insert(newListener);
-  }
-
-  //! \brief un-register a listener
-  /*! \detailed this object will no longer get update notifications from us  */
-  void ManagedObject::unregisterListener(ManagedObject *noLongerListening)
-  {
-    objectsListeningForChanges.erase(noLongerListening);
-  }
-
-  /*! \brief gets called whenever any of this node's dependencies got changed */
-  void ManagedObject::dependencyGotChanged(ManagedObject *object)
-  {
-    UNUSED(object);
   }
 
 #define define_getparam(T,ABB)                                      \
@@ -91,11 +66,5 @@ namespace ospray {
   define_getparam(affine3f, Affine3f)
 
 #undef define_getparam
-
-  void ManagedObject::notifyListenersThatObjectGotChanged()
-  {
-    for (auto *object : objectsListeningForChanges)
-      object->dependencyGotChanged(this);
-  }
 
 } // ::ospray
