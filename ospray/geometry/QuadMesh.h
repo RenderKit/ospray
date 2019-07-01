@@ -23,7 +23,7 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE QuadMesh : public Geometry
   {
-    QuadMesh();
+    QuadMesh() = default;
     virtual ~QuadMesh() override = default;
 
     virtual std::string toString() const override;
@@ -31,6 +31,8 @@ namespace ospray {
     virtual void commit() override;
 
     virtual size_t numPrimitives() const override;
+
+    LiveGeometry createEmbreeGeometry() override;
 
    protected:
     bool huge_mesh{false};
@@ -52,9 +54,6 @@ namespace ospray {
     Ref<Data> normalData;   /*!< vertex normal array (vec3fa) */
     Ref<Data> colorData;    /*!< vertex color array (vec3fa) */
     Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
-
-   private:
-    void createEmbreeGeometry() override;
   };
 
 }  // namespace ospray

@@ -30,9 +30,9 @@ namespace ospray {
 
     void commit() override;
 
-    RTCGeometry embreeGeometryHandle() const;
+    Geometry &geometry();
 
-    void setGeomID(int id);
+    void setGeomIE(void *geomIE, int geomID);
 
    private:
     // Helper functions //
@@ -42,7 +42,7 @@ namespace ospray {
 
     // Data //
 
-    Ref<Geometry> geometry;
+    Ref<Geometry> geom;
 
     Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
                                       (uint32) */
@@ -56,5 +56,12 @@ namespace ospray {
     friend struct PathTracer;  // TODO: fix this!
     friend struct Renderer;
   };
+
+  // Inlined members //////////////////////////////////////////////////////////
+
+  inline Geometry &GeometricModel::geometry()
+  {
+    return *geom;
+  }
 
 }  // namespace ospray

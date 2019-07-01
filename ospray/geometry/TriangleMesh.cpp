@@ -24,11 +24,6 @@
 
 namespace ospray {
 
-  TriangleMesh::TriangleMesh()
-  {
-    this->ispcEquivalent = ispc::TriangleMesh_create(this);
-  }
-
   std::string TriangleMesh::toString() const
   {
     return "ospray::TriangleMesh";
@@ -135,13 +130,45 @@ namespace ospray {
       }
     }
 
-    createEmbreeGeometry();
-
     postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
                      << numVerts << " vertices)\n";
+  }
 
-    ispc::TriangleMesh_set(getIE(),
-                           embreeGeometry,
+  size_t TriangleMesh::numPrimitives() const
+  {
+    return indexData ? indexData->numItems / 3 : 0;
+  }
+
+  LiveGeometry TriangleMesh::createEmbreeGeometry()
+  {
+    LiveGeometry retval;
+
+    retval.ispcEquivalent = ispc::TriangleMesh_create(this);
+    retval.embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
+
+    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
+                               RTC_BUFFER_TYPE_INDEX,
+                               0,
+                               RTC_FORMAT_UINT3,
+                               indexData->data,
+                               0,
+                               numCompsInTri * sizeof(int),
+                               numTris);
+
+    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
+                               RTC_BUFFER_TYPE_VERTEX,
+                               0,
+                               RTC_FORMAT_FLOAT3,
+                               vertexData->data,
+                               0,
+                               numCompsInVtx * sizeof(int),
+                               numVerts);
+
+    rtcCommitGeometry(retval.embreeGeometry);
+
+    ispc::TriangleMesh_set(retval.ispcEquivalent,
+                           retval.embreeGeometry,
                            numTris,
                            numCompsInTri,
                            numCompsInVtx,
@@ -153,40 +180,8 @@ namespace ospray {
                            (ispc::vec2f *)texcoord,
                            colorData && colorData->type == OSP_VEC4F,
                            huge_mesh);
-  }
 
-  size_t TriangleMesh::numPrimitives() const
-  {
-    return indexData ? indexData->numItems / 3 : 0;
-  }
-
-  void TriangleMesh::createEmbreeGeometry()
-  {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
-
-    embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
-
-    rtcSetSharedGeometryBuffer(embreeGeometry,
-                               RTC_BUFFER_TYPE_INDEX,
-                               0,
-                               RTC_FORMAT_UINT3,
-                               indexData->data,
-                               0,
-                               numCompsInTri * sizeof(int),
-                               numTris);
-
-    rtcSetSharedGeometryBuffer(embreeGeometry,
-                               RTC_BUFFER_TYPE_VERTEX,
-                               0,
-                               RTC_FORMAT_FLOAT3,
-                               vertexData->data,
-                               0,
-                               numCompsInVtx * sizeof(int),
-                               numVerts);
-
-    rtcCommitGeometry(embreeGeometry);
+    return retval;
   }
 
   OSP_REGISTER_GEOMETRY(TriangleMesh, triangles);

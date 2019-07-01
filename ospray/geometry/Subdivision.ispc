@@ -25,6 +25,7 @@ struct Subdivision
 {
   Geometry super;
   vec2f *texcoord;
+  RTCGeometry geom;
 };
 
 static void Subdivision_postIntersect(const Geometry *uniform _self,
@@ -35,10 +36,9 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
   Subdivision *uniform self = (Subdivision * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   // get normals
-  cif(flags & DG_NS)
-  {
+  if (flags & DG_NS) {
     vec3f dPdu, dPdv;
-    rtcInterpolateV1(self->super.geom,
+    rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
                      ray.v,
@@ -51,9 +51,8 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
     dg.Ns = cross(dPdu, dPdv);
   }
   // get colors
-  cif(flags & DG_COLOR)
-  {
-    rtcInterpolateV1(self->super.geom,
+  if (flags & DG_COLOR) {
+    rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
                      ray.v,
@@ -65,9 +64,8 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
                      4);
   }
   // get texcoords
-  cif(flags & DG_TEXCOORD && self->texcoord)
-  {
-    rtcInterpolateV1(self->super.geom,
+  if (flags & DG_TEXCOORD && self->texcoord) {
+    rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
                      ray.v,
@@ -88,6 +86,7 @@ void Subdivision_Constructor(uniform Subdivision *uniform mesh,
   Geometry_Constructor(
       &mesh->super, cppEquivalent, Subdivision_postIntersect, geom);
 
+  mesh->geom     = geom;
   mesh->texcoord = texcoord;
 }
 

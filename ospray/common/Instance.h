@@ -48,9 +48,11 @@ namespace ospray {
     affine3f rcpXfm;
 
     Ref<Data> geometricModels;
+    std::vector<void *> geometryIEs; // NOTE: needs to be freed!
     std::vector<void *> geometricModelIEs;
 
     Ref<Data> volumetricModels;
+    std::vector<void *> volumeIEs; // NOTE: needs to be freed!
     std::vector<void *> volumetricModelIEs;
 
     //! \brief the embree scene handle for this geometry

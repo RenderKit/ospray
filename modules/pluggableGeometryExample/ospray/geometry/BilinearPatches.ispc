@@ -74,15 +74,6 @@ export void *uniform BilinearPatches_create(void *uniform cppEquivalent)
   return self;
 }
 
-export void BilinearPatches_destroy(void *uniform _self)
-{
-  /* _actually_ this should also destroy the created embree geometry
-     here; not doing this to keep the code as small as possible, but
-     usually this is where it should be done */
-  BilinearPatches *uniform self = (BilinearPatches * uniform) _self;
-  delete self;
-}
-
 /*! to be able to have embree build a data structure over us we have
     to be able to tell it the bounding box for each primitimve. this
     is the callback embree calls for querying the (uniform) bounding

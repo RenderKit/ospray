@@ -20,12 +20,10 @@
 #include "math/box.ih"
 #include "math/vec.ih"
 
-export void *uniform GeometricModel_create(void *uniform cppE,
-                                           void *uniform geom)
+export void *uniform GeometricModel_create(void *uniform cppE)
 {
   GeometricModel *uniform self = uniform new GeometricModel;
 
-  self->geom    = (Geometry * uniform) geom;
   self->areaPDF = 0.f;
 
   return self;
@@ -41,12 +39,19 @@ export void GeometricModel_set(void *uniform _self,
   self->prim_materialID = (uint32 * uniform) prim_materialID;
 }
 
-export void GeometricModel_setMaterialList(void *uniform _inst,
+export void GeometricModel_setMaterialList(void *uniform _self,
                                            uniform int numMaterials,
                                            void *uniform _matList)
 {
-  GeometricModel *uniform inst = (GeometricModel * uniform) _inst;
+  GeometricModel *uniform self = (GeometricModel * uniform) _self;
 
-  inst->numMaterials = numMaterials;
-  inst->materialList = (Material * uniform * uniform) _matList;
+  self->numMaterials = numMaterials;
+  self->materialList = (Material * uniform * uniform) _matList;
+}
+
+export void GeometricModel_setGeomIE(void *uniform _self, void *uniform _geomIE)
+{
+  GeometricModel *uniform self = (GeometricModel * uniform) _self;
+
+  self->geom = (Geometry * uniform) _geomIE;
 }

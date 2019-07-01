@@ -31,24 +31,6 @@ namespace ospray {
     'bilinar_patch' etc would all work equally well. */
   namespace blp {
 
-    /*! constructor - will create the 'ispc equivalent' */
-    BilinearPatches::BilinearPatches()
-    {
-      /*! create the 'ispc equivalent': ie, the ispc-side class that
-        implements all the ispc-side code for intersection,
-        postintersect, etc. See BilinearPatches.ispc */
-      this->ispcEquivalent = ispc::BilinearPatches_create(this);
-
-      // note we do _not_ yet do anything else here - the actual input
-      // data isn't available to use until 'commit()' gets called
-    }
-
-    /*! destructor - supposed to clean up all alloced memory */
-    BilinearPatches::~BilinearPatches()
-    {
-      ispc::BilinearPatches_destroy(ispcEquivalent);
-    }
-
     /*! commit - this is the function that parses all the parameters
       that the app has proivded for this geometry. In this simple
       example we're looking for a single parameter named 'patches',
@@ -56,15 +38,28 @@ namespace ospray {
       control points */
     void BilinearPatches::commit()
     {
-      Geometry::commit();
-
       this->patchesData = getParamData("vertices");
 
       // sanity check if a patches data was actually set!
       if (!patchesData)
         throw std::runtime_error("no data provided to BilinearPatches!");
+    }
 
-      createEmbreeGeometry();
+    size_t BilinearPatches::numPrimitives() const
+    {
+      return patchesData->numBytes / sizeof(Patch);
+    }
+
+    LiveGeometry BilinearPatches::createEmbreeGeometry()
+    {
+      LiveGeometry retval;
+
+      /*! create the 'ispc equivalent': ie, the ispc-side class that
+        implements all the ispc-side code for intersection,
+        postintersect, etc. See BilinearPatches.ispc */
+      retval.ispcEquivalent = ispc::BilinearPatches_create(this);
+      retval.embreeGeometry =
+          rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 
       // look at the data we were provided with ....
       size_t numPatchesInInput = numPrimitives();
@@ -73,24 +68,12 @@ namespace ospray {
          what to do with the 'Data' abstraction class */
       void *patchesDataPointer = patchesData->data;
 
-      ispc::BilinearPatches_finalize(getIE(),
-                                     embreeGeometry,
+      ispc::BilinearPatches_finalize(retval.ispcEquivalent,
+                                     retval.embreeGeometry,
                                      (float *)patchesDataPointer,
                                      numPatchesInInput);
-    }
 
-    size_t BilinearPatches::numPrimitives() const
-    {
-      return patchesData->numBytes / sizeof(Patch);
-    }
-
-    void BilinearPatches::createEmbreeGeometry()
-    {
-      if (embreeGeometry)
-        rtcReleaseGeometry(embreeGeometry);
-
-      embreeGeometry =
-          rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+      return retval;
     }
 
     /*! maybe one of the most important parts of this example: this

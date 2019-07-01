@@ -26,11 +26,6 @@
 
 namespace ospray {
 
-  Spheres::Spheres()
-  {
-    this->ispcEquivalent = ispc::Spheres_create(this);
-  }
-
   std::string Spheres::toString() const
   {
     return "ospray::Spheres";
@@ -38,8 +33,6 @@ namespace ospray {
 
   void Spheres::commit()
   {
-    Geometry::commit();
-
     radius         = getParam1f("radius", 0.01f);
     bytesPerSphere = getParam1i("bytes_per_sphere", 4 * sizeof(float));
     offset_center  = getParam1i("offset_center", 0);
@@ -72,12 +65,24 @@ namespace ospray {
     huge_mesh = false;
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
+  }
 
-    createEmbreeGeometry();
+  size_t Spheres::numPrimitives() const
+  {
+    return numSpheres;
+  }
+
+  LiveGeometry Spheres::createEmbreeGeometry()
+  {
+    LiveGeometry retval;
+
+    retval.ispcEquivalent = ispc::Spheres_create(this);
+    retval.embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 
     ispc::SpheresGeometry_set(
-        getIE(),
-        embreeGeometry,
+        retval.ispcEquivalent,
+        retval.embreeGeometry,
         sphereData->data,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
         numSpheres,
@@ -86,20 +91,8 @@ namespace ospray {
         offset_center,
         offset_radius,
         huge_mesh);
-  }
 
-  size_t Spheres::numPrimitives() const
-  {
-    return numSpheres;
-  }
-
-  void Spheres::createEmbreeGeometry()
-  {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
-
-    embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+    return retval;
   }
 
   OSP_REGISTER_GEOMETRY(Spheres, spheres);

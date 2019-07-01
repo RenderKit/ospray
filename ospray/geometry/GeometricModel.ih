@@ -21,14 +21,14 @@
 
 struct GeometricModel
 {
-  Geometry *uniform geom;  //!< instanced Geometry
+  Geometry *geom;  //!< instanced Geometry
 
-  vec4f *uniform primitiveColors;
+  vec4f *primitiveColors;
 
   uint32 *prim_materialID;  // per-primitive material ID
 
   int32 numMaterials;
-  Material *uniform *uniform materialList;
+  Material **materialList;
 
   float areaPDF;
 };

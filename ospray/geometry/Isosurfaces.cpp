@@ -23,11 +23,6 @@
 
 namespace ospray {
 
-  Isosurfaces::Isosurfaces()
-  {
-    this->ispcEquivalent = ispc::Isosurfaces_create(this);
-  }
-
   std::string Isosurfaces::toString() const
   {
     return "ospray::Isosurfaces";
@@ -35,20 +30,10 @@ namespace ospray {
 
   void Isosurfaces::commit()
   {
-    Geometry::commit();
-
     isovaluesData = getParamData("isovalues", nullptr);
     volume        = (VolumetricModel *)getParamObject("volume", nullptr);
     numIsovalues  = isovaluesData->numItems;
     isovalues     = (float *)isovaluesData->data;
-
-    createEmbreeGeometry();
-
-    ispc::Isosurfaces_set(getIE(),
-                          embreeGeometry,
-                          numIsovalues,
-                          isovalues,
-                          volume->getIE());
   }
 
   size_t Isosurfaces::numPrimitives() const
@@ -56,13 +41,21 @@ namespace ospray {
     return numIsovalues;
   }
 
-  void Isosurfaces::createEmbreeGeometry()
+  LiveGeometry Isosurfaces::createEmbreeGeometry()
   {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
+    LiveGeometry retval;
 
-    embreeGeometry =
+    retval.ispcEquivalent = ispc::Isosurfaces_create(this);
+    retval.embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+
+    ispc::Isosurfaces_set(retval.ispcEquivalent,
+                          retval.embreeGeometry,
+                          numIsovalues,
+                          isovalues,
+                          volume->getIE());
+
+    return retval;
   }
 
   OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);

@@ -19,6 +19,7 @@
 // ispc exports
 #include "Geometry_ispc.h"
 #include "Instance_ispc.h"
+#include "OSPCommon_ispc.h"
 
 namespace ospray {
 
@@ -27,8 +28,43 @@ namespace ospray {
   // Embree helper functions ///////////////////////////////////////////////////
 
   template <typename T>
-  void createEmbreeScene(RTCScene &scene, Data &objects, int embreeFlags)
+  std::vector<void *> createEmbreeScene(RTCScene &scene,
+                                        Data &objects,
+                                        int embreeFlags)
   {
+    std::vector<void *> ptrsToIE;
+
+    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+
+    scene = rtcNewScene(embreeDevice);
+
+    auto begin = objects.begin<T *>();
+    auto end   = objects.end<T *>();
+    std::for_each(begin, end, [&](T *obj) {
+      Geometry &geom    = obj->geometry();
+      auto liveGeometry = geom.createEmbreeGeometry();
+
+      auto geomID = rtcAttachGeometry(scene, liveGeometry.embreeGeometry);
+      obj->setGeomIE(liveGeometry.ispcEquivalent, geomID);
+
+      ptrsToIE.push_back(liveGeometry.ispcEquivalent);
+
+      rtcReleaseGeometry(liveGeometry.embreeGeometry);
+    });
+
+    rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
+    rtcCommitScene(scene);
+
+    return ptrsToIE;
+  }
+
+  template <>
+  std::vector<void *> createEmbreeScene<VolumetricModel>(RTCScene &scene,
+                                                         Data &objects,
+                                                         int embreeFlags)
+  {
+    using T = VolumetricModel;
+
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
     scene = rtcNewScene(embreeDevice);
@@ -42,6 +78,8 @@ namespace ospray {
 
     rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
     rtcCommitScene(scene);
+
+    return {};
   }
 
   static void freeAndNullifyEmbreeScene(RTCScene &scene)
@@ -50,6 +88,14 @@ namespace ospray {
       rtcReleaseScene(scene);
 
     scene = nullptr;
+  }
+
+  static void freeIEPtrs(std::vector<void *> &ptrs)
+  {
+    for (auto &p : ptrs)
+      ispc::delete_uniform(p);
+
+    ptrs.clear();
   }
 
   // Instance definitions /////////////////////////////////////////////////////
@@ -64,6 +110,9 @@ namespace ospray {
   {
     freeAndNullifyEmbreeScene(sceneGeometries);
     freeAndNullifyEmbreeScene(sceneVolumes);
+
+    freeIEPtrs(geometryIEs);
+    freeIEPtrs(volumeIEs);
   }
 
   std::string Instance::toString() const
@@ -98,17 +147,20 @@ namespace ospray {
     freeAndNullifyEmbreeScene(sceneGeometries);
     freeAndNullifyEmbreeScene(sceneVolumes);
 
+    freeIEPtrs(geometryIEs);
+    freeIEPtrs(volumeIEs);
+
     geometricModelIEs.clear();
     volumetricModelIEs.clear();
 
     if (numGeometries > 0) {
-      createEmbreeScene<GeometricModel>(
+      geometryIEs = createEmbreeScene<GeometricModel>(
           sceneGeometries, *geometricModels, sceneFlags);
       geometricModelIEs = createArrayOfIE(*geometricModels);
     }
 
     if (numVolumes > 0) {
-      createEmbreeScene<VolumetricModel>(
+      volumeIEs = createEmbreeScene<VolumetricModel>(
           sceneVolumes, *volumetricModels, sceneFlags);
       volumetricModelIEs = createArrayOfIE(*volumetricModels);
     }

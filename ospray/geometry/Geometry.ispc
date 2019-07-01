@@ -25,7 +25,6 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
 {
   geometry->cppEquivalent = cppEquivalent;
   geometry->numPrimitives = 0;
-  geometry->geom          = geom;
   geometry->geomID        = -1;
   geometry->postIntersect = postIntersect;
   geometry->sampleArea    = NULL;

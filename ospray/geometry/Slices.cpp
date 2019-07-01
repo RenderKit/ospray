@@ -25,11 +25,6 @@
 
 namespace ospray {
 
-  Slices::Slices()
-  {
-    this->ispcEquivalent = ispc::Slices_create(this);
-  }
-
   std::string Slices::toString() const
   {
     return "ospray::Slices";
@@ -37,21 +32,11 @@ namespace ospray {
 
   void Slices::commit()
   {
-    Geometry::commit();
-
     planesData = getParamData("planes", nullptr);
     volume     = (VolumetricModel *)getParamObject("volume", nullptr);
 
     numPlanes = planesData->numItems;
     planes    = (vec4f *)planesData->data;
-
-    createEmbreeGeometry();
-
-    ispc::Slices_set(getIE(),
-                     embreeGeometry,
-                     numPlanes,
-                     (ispc::vec4f *)planes,
-                     volume->getIE());
   }
 
   size_t Slices::numPrimitives() const
@@ -59,13 +44,21 @@ namespace ospray {
     return numPlanes;
   }
 
-  void Slices::createEmbreeGeometry()
+  LiveGeometry Slices::createEmbreeGeometry()
   {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
+    LiveGeometry retval;
 
-    embreeGeometry =
+    retval.ispcEquivalent = ispc::Slices_create(this);
+    retval.embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+
+    ispc::Slices_set(retval.ispcEquivalent,
+                     retval.embreeGeometry,
+                     numPlanes,
+                     (ispc::vec4f *)planes,
+                     volume->getIE());
+
+    return retval;
   }
 
   OSP_REGISTER_GEOMETRY(Slices, slices);

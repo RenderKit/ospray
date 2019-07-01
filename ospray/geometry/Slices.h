@@ -23,7 +23,7 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Slices : public Geometry
   {
-    Slices();
+    Slices() = default;
     virtual ~Slices() override = default;
 
     virtual std::string toString() const override;
@@ -32,15 +32,14 @@ namespace ospray {
 
     virtual size_t numPrimitives() const override;
 
+    LiveGeometry createEmbreeGeometry() override;
+
    protected:
     Ref<Data> planesData;
     Ref<VolumetricModel> volume;
 
     size_t numPlanes;
     vec4f *planes;
-
-   private:
-    void createEmbreeGeometry() override;
   };
   /*! @} */
 

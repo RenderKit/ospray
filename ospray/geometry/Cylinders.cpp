@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
 // ospray
 #include "Cylinders.h"
 #include "common/Data.h"
@@ -25,11 +23,6 @@
 
 namespace ospray {
 
-  Cylinders::Cylinders()
-  {
-    this->ispcEquivalent = ispc::Cylinders_create(this);
-  }
-
   std::string Cylinders::toString() const
   {
     return "ospray::Cylinders";
@@ -37,8 +30,6 @@ namespace ospray {
 
   void Cylinders::commit()
   {
-    Geometry::commit();
-
     radius           = getParam1f("radius", 0.01f);
     bytesPerCylinder = getParam1i("bytes_per_cylinder", 6 * sizeof(float));
     offset_v0        = getParam1i("offset_v0", 0);
@@ -57,11 +48,23 @@ namespace ospray {
 
     postStatusMsg(2) << "#osp: creating 'cylinders' geometry, #cylinders = "
                      << numCylinders;
+  }
 
-    createEmbreeGeometry();
+  size_t Cylinders::numPrimitives() const
+  {
+    return numCylinders;
+  }
 
-    ispc::CylindersGeometry_set(getIE(),
-                                embreeGeometry,
+  LiveGeometry Cylinders::createEmbreeGeometry()
+  {
+    LiveGeometry retval;
+
+    retval.embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+    retval.ispcEquivalent = ispc::Cylinders_create(this);
+
+    ispc::CylindersGeometry_set(retval.ispcEquivalent,
+                                retval.embreeGeometry,
                                 cylinderData->data,
                                 texcoordData ? texcoordData->data : nullptr,
                                 numCylinders,
@@ -70,20 +73,8 @@ namespace ospray {
                                 offset_v0,
                                 offset_v1,
                                 offset_radius);
-  }
 
-  size_t Cylinders::numPrimitives() const
-  {
-    return numCylinders;
-  }
-
-  void Cylinders::createEmbreeGeometry()
-  {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
-
-    embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+    return retval;
   }
 
   OSP_REGISTER_GEOMETRY(Cylinders, cylinders);

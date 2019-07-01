@@ -23,7 +23,7 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE TriangleMesh : public Geometry
   {
-    TriangleMesh();
+    TriangleMesh() = default;
     virtual ~TriangleMesh() override = default;
 
     virtual std::string toString() const override;
@@ -31,6 +31,8 @@ namespace ospray {
     virtual void commit() override;
 
     virtual size_t numPrimitives() const override;
+
+    LiveGeometry createEmbreeGeometry() override;
 
    protected:
     bool huge_mesh{false};
@@ -53,9 +55,6 @@ namespace ospray {
     size_t numCompsInTri{0};
     size_t numCompsInVtx{0};
     size_t numCompsInNor{0};
-
-   private:
-    void createEmbreeGeometry() override;
   };
 
 }  // namespace ospray

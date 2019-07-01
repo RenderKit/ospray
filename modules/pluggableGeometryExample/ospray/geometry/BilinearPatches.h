@@ -66,17 +66,16 @@ namespace ospray {
         vec3f controlPoint[2][2];
       };
 
-      /*! constructor - will create the 'ispc equivalent' */
-      BilinearPatches();
-
-      /*! destructor - supposed to clean up all alloced memory */
-      virtual ~BilinearPatches() override;
+      BilinearPatches()                   = default;
+      virtual ~BilinearPatches() override = default;
 
       /*! the commit() message that gets called upon the app calling
           "ospCommit(<thisGeometry>)" */
       virtual void commit() override;
 
       virtual size_t numPrimitives() const override;
+
+      LiveGeometry createEmbreeGeometry() override;
 
      protected:
       /*! the input data array. the data array contains a list of
@@ -85,9 +84,6 @@ namespace ospray {
           as a plain array of floats (with 12 floats per patch), or as
           a array of vec3fs. */
       Ref<Data> patchesData;
-
-     private:
-      void createEmbreeGeometry() override;
     };
 
   }  // namespace blp

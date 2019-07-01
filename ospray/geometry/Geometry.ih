@@ -90,7 +90,6 @@ struct Geometry
   int32 numPrimitives;
 
   //! ID that 'model' knows this geometry under
-  RTCGeometry geom;
   int32 geomID;
 };
 

@@ -24,11 +24,6 @@
 
 namespace ospray {
 
-  QuadMesh::QuadMesh()
-  {
-    this->ispcEquivalent = ispc::QuadMesh_create(this);
-  }
-
   std::string QuadMesh::toString() const
   {
     return "ospray::QuadMesh";
@@ -36,8 +31,6 @@ namespace ospray {
 
   void QuadMesh::commit()
   {
-    Geometry::commit();
-
     vertexData   = getParamData("vertex");
     normalData   = getParamData("vertex.normal", getParamData("normal"));
     colorData    = getParamData("vertex.color");
@@ -121,13 +114,45 @@ namespace ospray {
       }
     }
 
-    createEmbreeGeometry();
-
     postStatusMsg(2) << "  created quad mesh (" << numQuads << " quads "
                      << ", " << numVerts << " vertices)\n";
+  }
 
-    ispc::QuadMesh_set(getIE(),
-                       embreeGeometry,
+  size_t QuadMesh::numPrimitives() const
+  {
+    return indexData ? indexData->numItems / 4 : 0;
+  }
+
+  LiveGeometry QuadMesh::createEmbreeGeometry()
+  {
+    LiveGeometry retval;
+
+    retval.ispcEquivalent = ispc::QuadMesh_create(this);
+    retval.embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
+
+    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
+                               RTC_BUFFER_TYPE_INDEX,
+                               0,
+                               RTC_FORMAT_UINT4,
+                               indexData->data,
+                               0,
+                               4 * sizeof(int),
+                               numQuads);
+
+    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
+                               RTC_BUFFER_TYPE_VERTEX,
+                               0,
+                               RTC_FORMAT_FLOAT3,
+                               vertexData->data,
+                               0,
+                               numCompsInVtx * sizeof(int),
+                               numVerts);
+
+    rtcCommitGeometry(retval.embreeGeometry);
+
+    ispc::QuadMesh_set(retval.ispcEquivalent,
+                       retval.embreeGeometry,
                        numQuads,
                        numCompsInVtx,
                        numCompsInNor,
@@ -138,40 +163,8 @@ namespace ospray {
                        (ispc::vec2f *)texcoord,
                        colorData && colorData->type == OSP_VEC4F,
                        huge_mesh);
-  }
 
-  size_t QuadMesh::numPrimitives() const
-  {
-    return indexData ? indexData->numItems / 4 : 0;
-  }
-
-  void QuadMesh::createEmbreeGeometry()
-  {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
-
-    embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
-
-    rtcSetSharedGeometryBuffer(embreeGeometry,
-                               RTC_BUFFER_TYPE_INDEX,
-                               0,
-                               RTC_FORMAT_UINT4,
-                               indexData->data,
-                               0,
-                               4 * sizeof(int),
-                               numQuads);
-
-    rtcSetSharedGeometryBuffer(embreeGeometry,
-                               RTC_BUFFER_TYPE_VERTEX,
-                               0,
-                               RTC_FORMAT_FLOAT3,
-                               vertexData->data,
-                               0,
-                               numCompsInVtx * sizeof(int),
-                               numVerts);
-
-    rtcCommitGeometry(embreeGeometry);
+    return retval;
   }
 
   OSP_REGISTER_GEOMETRY(QuadMesh, quads);
