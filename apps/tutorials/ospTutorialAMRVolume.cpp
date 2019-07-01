@@ -59,31 +59,36 @@ int main(int argc, const char **argv)
         exit(error);
       });
 
-  // create the world which will contain all of our geometries
+  // create the world
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPGeometryInstance> geometryInstances;
+  // create the instance that will contain our volume model
+  OSPInstance instance = ospNewInstance();
 
-  // add in AMR volume
+  // generate an AMR volume
   OSPTestingVolume testData = ospTestingNewVolume("gravity_spheres_amr_volume");
 
   OSPVolume amrVolume = testData.volume;
 
-  // create a volume instance container
-  OSPVolumeInstance instance = ospNewVolumeInstance(amrVolume);
-  ospSetFloat(instance, "samplingRate", 10.f);
-
-  // apply a transfer function to the instance
   osp_vec2f amrValueRange = testData.voxelRange;
   OSPTransferFunction tf = ospTestingNewTransferFunction(amrValueRange, "jet");
-  ospSetObject(instance, "transferFunction", tf);
+
+  // create the model that will contain our actual volume
+  OSPVolumetricModel volumeModel = ospNewVolumetricModel(amrVolume);
+  ospSetObject(volumeModel, "transferFunction", tf);
+  ospSetFloat(volumeModel, "samplingRate", 10.f);
+  ospCommit(volumeModel);
+
+  // create a data array of all models for the instance
+  OSPData volumeModels = ospNewData(1, OSP_OBJECT, &volumeModel);
+  ospSetObject(instance, "volumes", volumeModels);
   ospCommit(instance);
+  ospRelease(volumeModels);
 
-  // create a data array of all instances
+  // create a data array of all instances for the world
   OSPData volumeInstances = ospNewData(1, OSP_OBJECT, &instance);
-
-  // add volume instance to the world
-  ospSetObject(world, "volumes", volumeInstances);
+  ospSetData(world, "instances", volumeInstances);
+  ospRelease(volumeInstances);
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
@@ -96,14 +101,14 @@ int main(int argc, const char **argv)
 
   bounds = reinterpret_cast<box3f &>(testData.bounds);
 
+  // commit the world
+  ospCommit(world);
+
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, bounds, world, renderer));
-
-  // commit the world
-  ospCommit(world);
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
