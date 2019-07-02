@@ -21,31 +21,19 @@ export void *uniform Instance_create(void *uniform cppE)
   Instance *uniform inst = uniform new Instance;
 
   inst->cppEquivalent = cppE;
-
-  inst->geometricModels    = NULL;
-  inst->numGeometricModels = 0;
-
-  inst->volumetricModels    = NULL;
-  inst->numVolumetricModels = 0;
+  inst->group         = NULL;
 
   return (void *uniform)inst;
 }
 
 export void Instance_set(void *uniform _inst,
-                         void *uniform _geomModels,
-                         uniform int32 numGeomModels,
-                         void *uniform _volModels,
-                         uniform int32 numVolModels,
+                         void *uniform _group,
                          const uniform AffineSpace3f &xfm,
                          const uniform AffineSpace3f &rcp_xfm)
 {
   Instance *uniform inst = (Instance * uniform) _inst;
 
-  inst->geometricModels    = (GeometricModel * *uniform) _geomModels;
-  inst->numGeometricModels = numGeomModels;
-
-  inst->volumetricModels    = (VolumetricModel * *uniform) _volModels;
-  inst->numVolumetricModels = numVolModels;
+  inst->group = (Group * uniform) _group;
 
   inst->xfm     = xfm;
   inst->rcp_xfm = rcp_xfm;

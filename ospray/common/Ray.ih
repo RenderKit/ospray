@@ -167,6 +167,7 @@ struct VolumeInterval
 {
   VolumetricModel *volumetricModel;
   range1f interval;
+  AffineSpace3f xfm;
 };
 
 inline void initVolumeInterval(VolumeInterval &hit)

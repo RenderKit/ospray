@@ -16,30 +16,29 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp {
 
-class Texture : public ManagedObject_T<OSPTexture>
-{
-public:
+    class Texture : public ManagedObject_T<OSPTexture>
+    {
+     public:
+      Texture(const Texture &copy);
+      Texture(OSPTexture existing);
+    };
 
-  Texture(const Texture &copy);
-  Texture(OSPTexture existing);
-};
+    // Inlined function definitions ///////////////////////////////////////////
 
-// Inlined function definitions ///////////////////////////////////////////////
+    inline Texture::Texture(const Texture &copy)
+        : ManagedObject_T<OSPTexture>(copy.handle())
+    {
+    }
 
-inline Texture::Texture(const Texture &copy) :
-  ManagedObject_T<OSPTexture>(copy.handle())
-{
-}
+    inline Texture::Texture(OSPTexture existing)
+        : ManagedObject_T<OSPTexture>(existing)
+    {
+    }
 
-inline Texture::Texture(OSPTexture existing) :
-  ManagedObject_T<OSPTexture>(existing)
-{
-}
-
-}// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+}  // namespace ospray

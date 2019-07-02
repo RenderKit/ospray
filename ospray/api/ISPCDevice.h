@@ -69,10 +69,6 @@ namespace ospray {
       OSPGeometricModel newGeometricModel(OSPGeometry geom) override;
       OSPVolumetricModel newVolumetricModel(OSPVolume volume) override;
 
-      // Instancing ///////////////////////////////////////////////////////////
-
-      OSPInstance newInstance() override;
-
       // Model Meta-Data //////////////////////////////////////////////////////
 
       OSPMaterial newMaterial(const char *renderer_type,
@@ -82,7 +78,12 @@ namespace ospray {
 
       OSPTexture newTexture(const char *type) override;
 
-      // World Manipulation ///////////////////////////////////////////////////
+      // Instancing ///////////////////////////////////////////////////////////
+
+      OSPGroup newGroup() override;
+      OSPInstance newInstance(OSPGroup group) override;
+
+      // Top-level Worlds /////////////////////////////////////////////////////
 
       OSPWorld newWorld() override;
 

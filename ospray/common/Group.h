@@ -16,28 +16,54 @@
 
 #pragma once
 
-#include "Volume.h"
-#include "common/Data.h"
+// ospray stuff
+#include "Managed.h"
+// stl
+#include <vector>
+// embree
+#include "embree3/rtcore.h"
+// ospcommon
+#include "ospcommon/utility/Optional.h"
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
-  {
-    VolumetricModel(Volume *geometry);
-    ~VolumetricModel() override = default;
-    std::string toString() const override;
+  using OptionalScene = utility::Optional<RTCScene>;
 
+  struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
+  {
+    Group();
+    ~Group() override;
+
+    std::string toString() const override;
     void commit() override;
 
-    RTCGeometry embreeGeometryHandle() const;
+    OptionalScene embreeGeometryScene();
+    OptionalScene embreeVolumeScene();
 
-    box3f bounds() const;
+    // Data members //
 
-    void setGeomID(int geomID);
+    Ref<Data> geometricModels;
+    std::vector<void *> geometryIEs;  // NOTE: needs to be freed!
+    std::vector<void *> geometricModelIEs;
 
-   private:
-    box3f volumeBounds;
-    Ref<Volume> volume;
+    Ref<Data> volumetricModels;
+    std::vector<void *> volumeIEs;  // NOTE: needs to be freed!
+    std::vector<void *> volumetricModelIEs;
+
+    RTCScene sceneGeometries{nullptr};
+    RTCScene sceneVolumes{nullptr};
   };
+
+  // Inlined members /////////////////////////////////////////////////////////
+
+  inline OptionalScene Group::embreeGeometryScene()
+  {
+    return sceneGeometries ? sceneGeometries : OptionalScene();
+  }
+
+  inline OptionalScene Group::embreeVolumeScene()
+  {
+    return sceneVolumes ? sceneVolumes : OptionalScene();
+  }
 
 }  // namespace ospray

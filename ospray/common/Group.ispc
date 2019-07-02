@@ -14,30 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "Group.ih"
 
-#include "Volume.h"
-#include "common/Data.h"
+export void *uniform Group_create(void *uniform cppE)
+{
+  Group *uniform group = uniform new Group;
 
-namespace ospray {
+  group->cppEquivalent = cppE;
 
-  struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
-  {
-    VolumetricModel(Volume *geometry);
-    ~VolumetricModel() override = default;
-    std::string toString() const override;
+  group->geometricModels    = NULL;
+  group->numGeometricModels = 0;
 
-    void commit() override;
+  group->volumetricModels    = NULL;
+  group->numVolumetricModels = 0;
 
-    RTCGeometry embreeGeometryHandle() const;
+  return (void *uniform)group;
+}
 
-    box3f bounds() const;
+export void Group_set(void *uniform _group,
+                      void *uniform _geomModels,
+                      uniform int32 numGeomModels,
+                      void *uniform _volModels,
+                      uniform int32 numVolModels)
+{
+  Group *uniform group = (Group * uniform) _group;
 
-    void setGeomID(int geomID);
+  group->geometricModels    = (GeometricModel * *uniform) _geomModels;
+  group->numGeometricModels = numGeomModels;
 
-   private:
-    box3f volumeBounds;
-    Ref<Volume> volume;
-  };
-
-}  // namespace ospray
+  group->volumetricModels    = (VolumetricModel * *uniform) _volModels;
+  group->numVolumetricModels = numVolModels;
+}

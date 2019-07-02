@@ -20,6 +20,7 @@
 // ospray
 #include "common/Data.h"
 #include "common/Instance.h"
+#include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 // ispc exports
 #include "GeometryLight_ispc.h"
@@ -56,7 +57,7 @@ namespace ospray {
     auto inst_end   = instances->end<Instance *>();
 
     std::for_each(inst_begin, inst_end, [&](Instance *instance) {
-      auto *geometries = instance->geometricModels.ptr;
+      auto *geometries = instance->group->geometricModels.ptr;
 
       if (!geometries)
         return;

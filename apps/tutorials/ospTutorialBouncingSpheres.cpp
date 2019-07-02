@@ -45,7 +45,7 @@ static std::vector<Sphere> g_spheres;
 static std::vector<vec4f> g_colors;
 static OSPGeometry g_spheresGeometry;
 static OSPGeometricModel g_spheresModel;
-static OSPInstance g_instance;
+static OSPGroup g_spheresGroup;
 static OSPWorld g_world;
 
 std::vector<Sphere> generateRandomSpheres(size_t numSpheres)
@@ -128,8 +128,8 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 void createWorld()
 {
   // create the world which will contain all of our geometries
-  g_world    = ospNewWorld();
-  g_instance = ospNewInstance();
+  g_world        = ospNewWorld();
+  g_spheresGroup = ospNewGroup();
 
   std::vector<OSPInstance> instanceHandles;
 
@@ -137,10 +137,13 @@ void createWorld()
   g_spheresModel = createRandomSpheresGeometry(100);
 
   OSPData spheresModels = ospNewData(1, OSP_OBJECT, &g_spheresModel);
-  ospSetData(g_instance, "geometries", spheresModels);
-  ospCommit(g_instance);
+  ospSetData(g_spheresGroup, "geometries", spheresModels);
+  ospCommit(g_spheresGroup);
 
-  instanceHandles.push_back(g_instance);
+  OSPInstance spheresInstance = ospNewInstance(g_spheresGroup);
+  ospCommit(spheresInstance);
+
+  instanceHandles.push_back(spheresInstance);
 
   // add in a ground plane geometry
   OSPInstance plane = createGroundPlane(renderer_type);
@@ -150,6 +153,7 @@ void createWorld()
       ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
   ospSetData(g_world, "instances", instances);
   ospRelease(instances);
+  ospRelease(spheresInstance);
   ospRelease(plane);
 
   ospCommit(g_world);
@@ -225,8 +229,7 @@ void displayCallback(GLFWOSPRayWindow *glfwOSPRayWindow)
   // queue the world to be committed since it changed, however don't commit
   // it immediately because it's being rendered asynchronously
   glfwOSPRayWindow->addObjectToCommit(g_spheresGeometry);
-  glfwOSPRayWindow->addObjectToCommit(g_spheresModel);
-  glfwOSPRayWindow->addObjectToCommit(g_instance);
+  glfwOSPRayWindow->addObjectToCommit(g_spheresGroup);
   glfwOSPRayWindow->addObjectToCommit(g_world);
 
   // update the world on the GLFW window
@@ -265,7 +268,7 @@ int main(int argc, const char **argv)
 
   ospRelease(g_spheresGeometry);
   ospRelease(g_spheresModel);
-  ospRelease(g_instance);
+  ospRelease(g_spheresGroup);
 
   // cleanly shut OSPRay down
   ospShutdown();

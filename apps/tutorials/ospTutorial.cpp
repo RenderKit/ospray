@@ -118,18 +118,26 @@ int main(int argc, const char **argv) {
 
   mesh.commit();
 
+  // put the mesh into a model
   ospray::cpp::GeometricModel model(mesh);
   model.commit();
   mesh.release(); // we are done using this handle
 
-  ospray::cpp::Instance instance;
+  // put the model into a group (collection of models)
+  ospray::cpp::Group group;
   auto modelHandle = model.handle();
   data = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
-  instance.set("geometries", data);
+  group.set("geometries", data);
   model.release(); // we are done using this handle
   data.release(); // we are done using this handle
-  instance.commit();
+  group.commit();
 
+  // put the group into an instance (give the group a world transform)
+  ospray::cpp::Instance instance(group);
+  instance.commit();
+  group.release();
+
+  // put the instance in the world
   ospray::cpp::World world;
   auto instanceHandle = instance.handle();
   data = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);

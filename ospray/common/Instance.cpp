@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 // ospray
+#include "Data.h"
 #include "Instance.h"
 // ispc exports
 #include "Geometry_ispc.h"
@@ -25,94 +26,12 @@ namespace ospray {
 
   extern "C" void *ospray_getEmbreeDevice();
 
-  // Embree helper functions ///////////////////////////////////////////////////
-
-  template <typename T>
-  std::vector<void *> createEmbreeScene(RTCScene &scene,
-                                        Data &objects,
-                                        int embreeFlags)
-  {
-    std::vector<void *> ptrsToIE;
-
-    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
-
-    scene = rtcNewScene(embreeDevice);
-
-    auto begin = objects.begin<T *>();
-    auto end   = objects.end<T *>();
-    std::for_each(begin, end, [&](T *obj) {
-      Geometry &geom    = obj->geometry();
-      auto liveGeometry = geom.createEmbreeGeometry();
-
-      auto geomID = rtcAttachGeometry(scene, liveGeometry.embreeGeometry);
-      obj->setGeomIE(liveGeometry.ispcEquivalent, geomID);
-
-      ptrsToIE.push_back(liveGeometry.ispcEquivalent);
-
-      rtcReleaseGeometry(liveGeometry.embreeGeometry);
-    });
-
-    rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
-    rtcCommitScene(scene);
-
-    return ptrsToIE;
-  }
-
-  template <>
-  std::vector<void *> createEmbreeScene<VolumetricModel>(RTCScene &scene,
-                                                         Data &objects,
-                                                         int embreeFlags)
-  {
-    using T = VolumetricModel;
-
-    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
-
-    scene = rtcNewScene(embreeDevice);
-
-    auto begin = objects.begin<T *>();
-    auto end   = objects.end<T *>();
-    std::for_each(begin, end, [&](T *obj) {
-      auto geomID = rtcAttachGeometry(scene, obj->embreeGeometryHandle());
-      obj->setGeomID(geomID);
-    });
-
-    rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
-    rtcCommitScene(scene);
-
-    return {};
-  }
-
-  static void freeAndNullifyEmbreeScene(RTCScene &scene)
-  {
-    if (scene)
-      rtcReleaseScene(scene);
-
-    scene = nullptr;
-  }
-
-  static void freeIEPtrs(std::vector<void *> &ptrs)
-  {
-    for (auto &p : ptrs)
-      ispc::delete_uniform(p);
-
-    ptrs.clear();
-  }
-
-  // Instance definitions /////////////////////////////////////////////////////
-
-  Instance::Instance()
+  Instance::Instance(Group *_group)
   {
     managedObjectType    = OSP_INSTANCE;
     this->ispcEquivalent = ispc::Instance_create(this);
-  }
 
-  Instance::~Instance()
-  {
-    freeAndNullifyEmbreeScene(sceneGeometries);
-    freeAndNullifyEmbreeScene(sceneVolumes);
-
-    freeIEPtrs(geometryIEs);
-    freeIEPtrs(volumeIEs);
+    group = _group;
   }
 
   std::string Instance::toString() const
@@ -125,51 +44,8 @@ namespace ospray {
     instanceXfm = getParamAffine3f("xfm", affine3f(one));
     rcpXfm      = rcp(instanceXfm);
 
-    geometricModels  = (Data *)getParamObject("geometries");
-    volumetricModels = (Data *)getParamObject("volumes");
-
-    size_t numGeometries = geometricModels ? geometricModels->size() : 0;
-    size_t numVolumes    = volumetricModels ? volumetricModels->size() : 0;
-
-    postStatusMsg(2)
-        << "=======================================================\n"
-        << "Finalizing instance, which has " << numGeometries
-        << " geometries and " << numVolumes << " volumes";
-
-    int sceneFlags = 0;
-    sceneFlags |=
-        (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
-    sceneFlags |=
-        (getParam<bool>("compactMode", false) ? RTC_SCENE_FLAG_COMPACT : 0);
-    sceneFlags |=
-        (getParam<bool>("robustMode", false) ? RTC_SCENE_FLAG_ROBUST : 0);
-
-    freeAndNullifyEmbreeScene(sceneGeometries);
-    freeAndNullifyEmbreeScene(sceneVolumes);
-
-    freeIEPtrs(geometryIEs);
-    freeIEPtrs(volumeIEs);
-
-    geometricModelIEs.clear();
-    volumetricModelIEs.clear();
-
-    if (numGeometries > 0) {
-      geometryIEs = createEmbreeScene<GeometricModel>(
-          sceneGeometries, *geometricModels, sceneFlags);
-      geometricModelIEs = createArrayOfIE(*geometricModels);
-    }
-
-    if (numVolumes > 0) {
-      volumeIEs = createEmbreeScene<VolumetricModel>(
-          sceneVolumes, *volumetricModels, sceneFlags);
-      volumetricModelIEs = createArrayOfIE(*volumetricModels);
-    }
-
     ispc::Instance_set(getIE(),
-                       geometricModels ? geometricModelIEs.data() : nullptr,
-                       numGeometries,
-                       volumetricModels ? volumetricModelIEs.data() : nullptr,
-                       numVolumes,
+                       group->getIE(),
                        (ispc::AffineSpace3f &)instanceXfm,
                        (ispc::AffineSpace3f &)rcpXfm);
   }

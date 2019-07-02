@@ -23,6 +23,8 @@
 #include "ospray_cpp/Device.h"
 #include "ospray_cpp/FrameBuffer.h"
 #include "ospray_cpp/GeometricModel.h"
+#include "ospray_cpp/Group.h"
+#include "ospray_cpp/Instance.h"
 #include "ospray_cpp/Light.h"
 #include "ospray_cpp/Material.h"
 #include "ospray_cpp/PixelOp.h"

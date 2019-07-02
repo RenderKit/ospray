@@ -20,8 +20,6 @@
 #include "../common/Ray.ih"
 #include "Instance.ih"
 
-extern "C" RTCDevice uniform ispc_embreeDevice();
-
 struct World
 {
   void *cppEquivalent;
@@ -85,7 +83,8 @@ inline void traceVolumeRay(World *uniform world,
     foreach_unique(instID in ray.instID)
     {
       Instance *uniform instance = *(world->instances + instID);
-      interval.volumetricModel   = instance->volumetricModels[ray.geomID];
+      interval.volumetricModel = instance->group->volumetricModels[ray.geomID];
+      interval.xfm             = instance->xfm;
     }
   }
 }
@@ -123,7 +122,7 @@ inline void postIntersect(const World *uniform world,
   {
     if (instID != RTC_INVALID_GEOMETRY_ID) {
       Instance *uniform instance = *(world->instances + instID);
-      Instance_postIntersect(instance, dg, ray, flags);
+      Instance_postIntersect(instance, instID, dg, ray, flags);
     } else {
       dg.Ns = dg.Ng = ray.Ng;
     }

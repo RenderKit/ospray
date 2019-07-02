@@ -16,6 +16,7 @@
 
 // ospray
 #include "World.h"
+#include "Data.h"
 #include "Instance.h"
 #include "api/ISPCDevice.h"
 // ispc exports
@@ -40,17 +41,15 @@ namespace ospray {
     int numGeomInstances   = 0;
     int numVolumeInstances = 0;
 
-    std::vector<RTCGeometry> toFreeAfterCommit;
-
     auto begin = instances.begin<Instance *>();
     auto end   = instances.end<Instance *>();
     std::for_each(begin, end, [&](Instance *inst) {
-      auto instGeometryScene = inst->embreeGeometryScene();
-      auto instVolumeScene   = inst->embreeVolumeScene();
+      auto instGeometryScene = inst->group->embreeGeometryScene();
+      auto instVolumeScene   = inst->group->embreeVolumeScene();
 
       auto xfm = inst->xfm();
 
-      if (instGeometryScene) {
+      {
         auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
         rtcSetGeometryInstancedScene(eInst, instGeometryScene.value());
         rtcSetGeometryTransform(
@@ -62,7 +61,7 @@ namespace ospray {
         numGeomInstances++;
       }
 
-      if (instVolumeScene) {
+      {
         auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
         rtcSetGeometryInstancedScene(eInst, instVolumeScene.value());
         rtcSetGeometryTransform(

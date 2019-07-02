@@ -57,8 +57,8 @@ int main(int argc, const char **argv)
   }
 
   // create the world which will contain all of our geometries / volumes
-  OSPWorld world       = ospNewWorld();
-  OSPInstance instance = ospNewInstance();
+  OSPWorld world = ospNewWorld();
+  OSPGroup group = ospNewGroup();
 
   std::vector<OSPGeometricModel> geometryModelHandles;
 
@@ -120,6 +120,9 @@ int main(int argc, const char **argv)
   ospCommit(sliceGeometry);
   ospCommit(sliceModel);
 
+  OSPInstance instance = ospNewInstance(group);
+  ospCommit(instance);
+
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
   ospSetData(world, "instances", instances);
   ospRelease(instances);
@@ -144,12 +147,12 @@ int main(int argc, const char **argv)
   auto updateScene = [&]() {
     geometryModelHandles.clear();
 
-    ospRemoveParam(instance, "geometries");
-    ospRemoveParam(instance, "volumes");
+    ospRemoveParam(group, "geometries");
+    ospRemoveParam(group, "volumes");
 
     if (showVolume) {
       OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
-      ospSetObject(instance, "volumes", volumes);
+      ospSetObject(group, "volumes", volumes);
       ospRelease(volumes);
     }
 
@@ -162,13 +165,13 @@ int main(int argc, const char **argv)
 
       OSPData geoms = ospNewData(
           geometryModelHandles.size(), OSP_OBJECT, geometryModelHandles.data());
-      ospSetObject(instance, "geometries", geoms);
+      ospSetObject(group, "geometries", geoms);
       ospRelease(geoms);
     }
   };
 
   updateScene();
-  ospCommit(instance);
+  ospCommit(group);
   ospCommit(world);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
@@ -212,8 +215,8 @@ int main(int argc, const char **argv)
     static float samplingRate = 0.5f;
     if (ImGui::SliderFloat("sampling rate", &samplingRate, 1e-3f, 4.f)) {
       commitWorld = true;
-      ospSetFloat(instance, "samplingRate", samplingRate);
-      glfwOSPRayWindow->addObjectToCommit(instance);
+      ospSetFloat(volumeModel, "samplingRate", samplingRate);
+      glfwOSPRayWindow->addObjectToCommit(volumeModel);
     }
 
     if (ImGui::SliderFloat(
@@ -241,7 +244,7 @@ int main(int argc, const char **argv)
       updateScene();
 
     if (commitWorld) {
-      glfwOSPRayWindow->addObjectToCommit(instance);
+      glfwOSPRayWindow->addObjectToCommit(group);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
   });
@@ -257,6 +260,7 @@ int main(int argc, const char **argv)
   ospRelease(sliceGeometry);
   ospRelease(sliceModel);
   ospRelease(material);
+  ospRelease(group);
   ospRelease(instance);
 
   // cleanly shut OSPRay down

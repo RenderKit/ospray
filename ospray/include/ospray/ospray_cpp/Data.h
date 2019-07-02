@@ -16,38 +16,38 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp {
 
-class Data : public ManagedObject_T<OSPData>
-{
-public:
+    class Data : public ManagedObject_T<OSPData>
+    {
+     public:
+      Data(size_t numItems,
+           OSPDataType format,
+           const void *init = nullptr,
+           int flags        = 0);
+      Data(const Data &copy);
+      Data(OSPData existing);
+    };
 
-  Data(size_t numItems, OSPDataType format,
-       const void *init = nullptr, int flags = 0);
-  Data(const Data &copy);
-  Data(OSPData existing);
-};
+    // Inlined function definitions ///////////////////////////////////////////
 
-// Inlined function definitions ///////////////////////////////////////////////
+    inline Data::Data(size_t numItems,
+                      OSPDataType format,
+                      const void *init,
+                      int flags)
+    {
+      ospObject = ospNewData(numItems, format, init, flags);
+    }
 
-inline Data::Data(size_t numItems, OSPDataType format,
-                  const void *init, int flags)
-{
-  ospObject = ospNewData(numItems, format, init, flags);
-}
+    inline Data::Data(const Data &copy)
+        : ManagedObject_T<OSPData>(copy.handle())
+    {
+    }
 
-inline Data::Data(const Data &copy) :
-  ManagedObject_T<OSPData>(copy.handle())
-{
-}
+    inline Data::Data(OSPData existing) : ManagedObject_T<OSPData>(existing) {}
 
-inline Data::Data(OSPData existing) :
-  ManagedObject_T<OSPData>(existing)
-{
-}
-
-}// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+}  // namespace ospray

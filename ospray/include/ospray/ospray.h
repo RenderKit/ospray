@@ -143,6 +143,7 @@ namespace osp {
   struct Camera           : public ManagedObject {};
   struct Data             : public ManagedObject {};
   struct Future           : public ManagedObject {};
+  struct Group            : public ManagedObject {};
   struct Geometry         : public ManagedObject {};
   struct GeometricModel   : public ManagedObject {};
   struct Material         : public ManagedObject {};
@@ -162,6 +163,7 @@ typedef osp::Renderer          *OSPRenderer;
 typedef osp::Camera            *OSPCamera;
 typedef osp::Data              *OSPData;
 typedef osp::Future            *OSPFuture;
+typedef osp::Group             *OSPGroup;
 typedef osp::Geometry          *OSPGeometry;
 typedef osp::GeometricModel    *OSPGeometricModel;
 typedef osp::Material          *OSPMaterial;
@@ -189,6 +191,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPInstance,
   *OSPWorld,
   *OSPData,
+  *OSPGroup,
   *OSPGeometry,
   *OSPGeometricModel,
   *OSPMaterial,
@@ -282,10 +285,6 @@ extern "C" {
   OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom);
   OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
-  // Instancing ///////////////////////////////////////////////////////////////
-
-  OSPRAY_INTERFACE OSPInstance ospNewInstance();
-
   // Model Meta-Data //////////////////////////////////////////////////////////
 
   OSPRAY_INTERFACE OSPMaterial ospNewMaterial(const char *rendererType,
@@ -295,7 +294,12 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
 
-  // World Manipulation ///////////////////////////////////////////////////////
+  // Instancing ///////////////////////////////////////////////////////////////
+
+  OSPRAY_INTERFACE OSPGroup ospNewGroup();
+  OSPRAY_INTERFACE OSPInstance ospNewInstance(OSPGroup);
+
+  // Top-level Worlds /////////////////////////////////////////////////////////
 
   OSPRAY_INTERFACE OSPWorld ospNewWorld();
 

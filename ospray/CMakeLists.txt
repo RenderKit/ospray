@@ -45,7 +45,7 @@ set(OSPRAY_SOURCES
   include/ospray/ospray_cpp/Material.h
   include/ospray/ospray_cpp/PixelOp.h
   include/ospray/ospray_cpp/Renderer.h
-  include/ospray/ospray_cpp/Texture2D.h
+  include/ospray/ospray_cpp/Texture.h
   include/ospray/ospray_cpp/TransferFunction.h
   include/ospray/ospray_cpp/Volume.h
   include/ospray/ospray_cpp/World.h
@@ -59,6 +59,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   common/ObjectHandle.cpp
   common/Data.cpp
+  common/Group.cpp
+  common/Group.ispc
   common/Instance.cpp
   common/Instance.ispc
   common/Managed.cpp

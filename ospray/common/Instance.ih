@@ -17,9 +17,8 @@
 #pragma once
 
 // ospray stuff
-#include "../common/Ray.ih"
-#include "../geometry/GeometricModel.ih"
-#include "../volume/VolumetricModel.ih"
+#include "Group.ih"
+#include "Ray.ih"
 
 struct Instance
 {
@@ -28,22 +27,19 @@ struct Instance
   AffineSpace3f xfm;
   AffineSpace3f rcp_xfm;
 
-  GeometricModel **geometricModels;
-  int32 numGeometricModels;
-
-  VolumetricModel **volumetricModels;
-  int32 numVolumetricModels;
+  Group *group;
 };
 
 inline void Instance_postIntersect(const Instance *uniform self,
+                                   const uniform int32 instID,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)
 {
   foreach_unique(geomID in ray.geomID)
   {
-    GeometricModel *uniform geom = *(self->geometricModels + geomID);
-    GeometricModel_postIntersect(geom, dg, ray, flags);
+    GeometricModel *uniform model = *(self->group->geometricModels + geomID);
+    GeometricModel_postIntersect(model, dg, ray, flags);
 
     dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
     dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);

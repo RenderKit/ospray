@@ -16,4 +16,18 @@
 
 #pragma once
 
-#include <Texture.h>
+// ospray stuff
+#include "Ray.ih"
+#include "../geometry/GeometricModel.ih"
+#include "../volume/VolumetricModel.ih"
+
+struct Group
+{
+  void *cppEquivalent;
+
+  GeometricModel **geometricModels;
+  int32 numGeometricModels;
+
+  VolumetricModel **volumetricModels;
+  int32 numVolumetricModels;
+};

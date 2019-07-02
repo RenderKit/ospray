@@ -18,6 +18,7 @@
 #include "Renderer.h"
 #include "common/Instance.h"
 #include "common/Util.h"
+#include "geometry/GeometricModel.h"
 // ispc exports
 #include "Renderer_ispc.h"
 // ospray
@@ -127,8 +128,9 @@ namespace ospray {
                         res.hasHit);
 
     if (res.hasHit) {
-      auto *instance = world->instances->at<Instance*>(instID);
-      auto *model    = instance->geometricModels->at<GeometricModel*>(geomID);
+      auto *instance = world->instances->at<Instance *>(instID);
+      auto *group    = instance->group.ptr;
+      auto *model    = group->geometricModels->at<GeometricModel *>(geomID);
 
       res.instance = (OSPInstance)instance;
       res.model    = (OSPGeometricModel)model;

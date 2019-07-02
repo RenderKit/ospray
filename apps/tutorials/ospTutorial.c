@@ -122,13 +122,18 @@ int main(int argc, const char **argv) {
   ospCommit(model);
   ospRelease(mesh); // we are done using this handle
 
-  // put the model into an instance
-  OSPInstance instance = ospNewInstance();
+  // put the model into a group (collection of models)
+  OSPGroup group = ospNewGroup();
   OSPData geometricModels = ospNewData(1, OSP_OBJECT, &model, 0);
-  ospSetData(instance, "geometries", geometricModels);
-  ospCommit(instance);
+  ospSetData(group, "geometries", geometricModels);
+  ospCommit(group);
   ospRelease(model);
   ospRelease(geometricModels);
+
+  // put the group into an instance (give the group a world transform)
+  OSPInstance instance = ospNewInstance(group);
+  ospCommit(instance);
+  ospRelease(group);
 
   // put the instance in the world
   OSPWorld world = ospNewWorld();

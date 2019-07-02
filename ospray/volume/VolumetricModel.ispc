@@ -39,9 +39,7 @@ export void VolumetricModel_set(void *uniform _self,
                                uniform float samplingRate,
                                void *uniform transferFunction,
                                const uniform box3f &clippingBox,
-                               const uniform box3f &instanceBounds,
-                               const uniform AffineSpace3f &xfm,
-                               const uniform AffineSpace3f &rcp_xfm)
+                               const uniform box3f &bounds)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
@@ -53,7 +51,5 @@ export void VolumetricModel_set(void *uniform _self,
   self->samplingRate            = samplingRate;
   self->transferFunction        = (TransferFunction * uniform) transferFunction;
   self->volumeClippingBox       = clippingBox;
-  self->boundingBox             = instanceBounds;
-  self->xfm                     = xfm;
-  self->rcp_xfm                 = rcp_xfm;
+  self->boundingBox             = bounds;
 }

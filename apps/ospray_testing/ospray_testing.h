@@ -42,6 +42,7 @@ typedef struct
 {
   OSPGeometry geometry;
   OSPGeometricModel model;
+  OSPGroup group;
   OSPInstance instance;
   osp_box3f bounds;
 } OSPTestingGeometry;

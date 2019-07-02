@@ -18,6 +18,7 @@
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
+#include "common/Group.h"
 #include "common/Instance.h"
 #include "common/Library.h"
 #include "common/Material.h"
@@ -149,25 +150,16 @@ namespace ospray {
 
     OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
     {
-      auto *geom     = (Geometry *)_geom;
-      auto *instance = new GeometricModel(geom);
-      return (OSPGeometricModel)instance;
+      auto *geom  = (Geometry *)_geom;
+      auto *model = new GeometricModel(geom);
+      return (OSPGeometricModel)model;
     }
 
     OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
     {
-      auto *volume   = (Volume *)_volume;
-      auto *instance = new VolumetricModel(volume);
-      return (OSPVolumetricModel)instance;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Instancing /////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    OSPInstance ISPCDevice::newInstance()
-    {
-      return (OSPInstance) new Instance;
+      auto *volume = (Volume *)_volume;
+      auto *model  = new VolumetricModel(volume);
+      return (OSPVolumetricModel)model;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -192,7 +184,23 @@ namespace ospray {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // World Manipulation /////////////////////////////////////////////////////
+    // Instancing /////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPGroup ISPCDevice::newGroup()
+    {
+      return (OSPGroup) new Group;
+    }
+
+    OSPInstance ISPCDevice::newInstance(OSPGroup _group)
+    {
+      auto *group    = (Group *)_group;
+      auto *instance = new Instance(group);
+      return (OSPInstance)instance;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Top-level Worlds ///////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
     OSPWorld ISPCDevice::newWorld()

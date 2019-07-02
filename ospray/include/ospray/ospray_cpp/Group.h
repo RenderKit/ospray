@@ -16,55 +16,39 @@
 
 #pragma once
 
-#include "Geometry.h"
-#include "Material.h"
+#include "ManagedObject.h"
 
 namespace ospray {
   namespace cpp {
 
-    class GeometricModel : public ManagedObject_T<OSPGeometricModel>
+    class Group : public ManagedObject_T<OSPGroup>
     {
      public:
-      GeometricModel(const Geometry &geom);
-      GeometricModel(OSPGeometry geom);
-
-      GeometricModel(const GeometricModel &copy);
-      GeometricModel(OSPGeometricModel existing);
-
-      void setMaterial(Material &m) const;
-      void setMaterial(OSPMaterial m) const;
+      Group();
+      Group(const Group &copy);
+      Group(OSPGroup existing);
     };
 
     // Inlined function definitions ///////////////////////////////////////////
 
-    inline GeometricModel::GeometricModel(const Geometry &geom)
-        : GeometricModel(geom.handle())
+    inline Group::Group()
+    {
+      OSPGroup c = ospNewGroup();
+      if (c) {
+        ospObject = c;
+      } else {
+        throw std::runtime_error("Failed to create OSPGroup!");
+      }
+    }
+
+    inline Group::Group(const Group &copy)
+        : ManagedObject_T<OSPGroup>(copy.handle())
     {
     }
 
-    inline GeometricModel::GeometricModel(OSPGeometry existing)
+    inline Group::Group(OSPGroup existing)
+        : ManagedObject_T<OSPGroup>(existing)
     {
-      ospObject = ospNewGeometricModel(existing);
-    }
-
-    inline GeometricModel::GeometricModel(const GeometricModel &copy)
-        : ManagedObject_T<OSPGeometricModel>(copy.handle())
-    {
-    }
-
-    inline GeometricModel::GeometricModel(OSPGeometricModel existing)
-        : ManagedObject_T<OSPGeometricModel>(existing)
-    {
-    }
-
-    inline void GeometricModel::setMaterial(Material &m) const
-    {
-      setMaterial(m.handle());
-    }
-
-    inline void GeometricModel::setMaterial(OSPMaterial m) const
-    {
-      ospSetObject(handle(), "material", m);
     }
 
   }  // namespace cpp

@@ -22,88 +22,80 @@
 #include <string>
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp {
 
-class Device
-{
-public:
+    class Device
+    {
+     public:
+      Device(const std::string &type = "default");
+      Device(const Device &copy);
+      Device(OSPDevice existing);
 
-  Device(const std::string &type = "default");
-  Device(const Device &copy);
-  Device(OSPDevice existing);
+      void set(const std::string &name, const std::string &v) const;
+      void set(const std::string &name, bool v) const;
+      void set(const std::string &name, int v) const;
+      void set(const std::string &name, void *v) const;
 
-  void set(const std::string &name, const std::string &v) const;
-  void set(const std::string &name, bool v) const;
-  void set(const std::string &name, int v) const;
-  void set(const std::string &name, void *v) const;
+      void commit() const;
 
-  void commit() const;
+      void setCurrent() const;
 
-  void setCurrent() const;
+      OSPDevice handle() const;
 
-  OSPDevice handle() const;
+     private:
+      OSPDevice ospHandle;
+    };
 
-private:
+    // Inlined function definitions ///////////////////////////////////////////
 
-  OSPDevice ospHandle;
-};
+    inline Device::Device(const std::string &type)
+    {
+      OSPDevice c = ospNewDevice(type.c_str());
+      if (c) {
+        ospHandle = c;
+      } else {
+        throw std::runtime_error("Failed to create OSPDevice!");
+      }
+    }
 
-// Inlined function definitions ///////////////////////////////////////////////
+    inline Device::Device(const Device &copy) : ospHandle(copy.ospHandle) {}
 
-inline Device::Device(const std::string &type)
-{
-  OSPDevice c = ospNewDevice(type.c_str());
-  if (c) {
-    ospHandle = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPDevice!");
-  }
-}
+    inline Device::Device(OSPDevice existing) : ospHandle(existing) {}
 
-inline Device::Device(const Device &copy) :
-  ospHandle(copy.ospHandle)
-{
-}
+    inline void Device::set(const std::string &name, const std::string &v) const
+    {
+      ospDeviceSetString(ospHandle, name.c_str(), v.c_str());
+    }
 
-inline Device::Device(OSPDevice existing) :
-  ospHandle(existing)
-{
-}
+    inline void Device::set(const std::string &name, bool v) const
+    {
+      ospDeviceSetBool(ospHandle, name.c_str(), v);
+    }
 
-inline void Device::set(const std::string &name, const std::string &v) const
-{
-  ospDeviceSetString(ospHandle, name.c_str(), v.c_str());
-}
+    inline void Device::set(const std::string &name, int v) const
+    {
+      ospDeviceSetInt(ospHandle, name.c_str(), v);
+    }
 
-inline void Device::set(const std::string &name, bool v) const
-{
-  ospDeviceSetBool(ospHandle, name.c_str(), v);
-}
+    inline void Device::set(const std::string &name, void *v) const
+    {
+      ospDeviceSetVoidPtr(ospHandle, name.c_str(), v);
+    }
 
-inline void Device::set(const std::string &name, int v) const
-{
-  ospDeviceSetInt(ospHandle, name.c_str(), v);
-}
+    inline void Device::commit() const
+    {
+      ospDeviceCommit(ospHandle);
+    }
 
-inline void Device::set(const std::string &name, void *v) const
-{
-  ospDeviceSetVoidPtr(ospHandle, name.c_str(), v);
-}
+    inline void Device::setCurrent() const
+    {
+      ospSetCurrentDevice(ospHandle);
+    }
 
-inline void Device::commit() const
-{
-  ospDeviceCommit(ospHandle);
-}
+    inline OSPDevice Device::handle() const
+    {
+      return ospHandle;
+    }
 
-inline void Device::setCurrent() const
-{
-  ospSetCurrentDevice(ospHandle);
-}
-
-inline OSPDevice Device::handle() const
-{
-  return ospHandle;
-}
-
-}// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+}  // namespace ospray

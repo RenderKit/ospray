@@ -179,11 +179,15 @@ OSPInstance createGroundPlane(std::string renderer_type)
 
   ospCommit(model);
 
-  OSPInstance instance = ospNewInstance();
+  OSPGroup group = ospNewGroup();
 
   OSPData models = ospNewData(1, OSP_OBJECT, &model);
-  ospSetData(instance, "geometries", models);
+  ospSetData(group, "geometries", models);
+  ospCommit(group);
+
+  OSPInstance instance = ospNewInstance(group);
   ospCommit(instance);
+  ospRelease(group);
 
   // release handles we no longer need
   ospRelease(positionData);

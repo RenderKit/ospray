@@ -334,7 +334,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   if (!hasInterval(vInterval))
     return;
 
-  VolumetricModel *varying instance = vInterval.volumetricModel;
+  VolumetricModel *varying model = vInterval.volumetricModel;
 
   Ray &ray = sample.ray;
 
@@ -356,10 +356,10 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
 
   ray.t0 += jitter;
 
-  foreach_unique(inst in instance)
+  foreach_unique(m in model)
   {
-    Volume *uniform volume       = inst->volume;
-    TransferFunction *uniform tf = inst->transferFunction;
+    Volume *uniform volume       = m->volume;
+    TransferFunction *uniform tf = m->transferFunction;
 
     while (ray.t0 <= ray.t) {
       const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
@@ -371,8 +371,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
 
         pSample = sample;
 
-        const float clampedOpacity =
-            clamp(sampleAlpha / instance->samplingRate);
+        const float clampedOpacity = clamp(sampleAlpha / m->samplingRate);
 
         sampleColor = sampleColor * clampedOpacity;
         sampleAlpha = clampedOpacity;
@@ -384,7 +383,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
       if (alpha >= 0.99f)
         break;
 
-      volume->stepRay(volume, tf, ray, instance->samplingRate);
+      volume->stepRay(volume, tf, ray, m->samplingRate);
     }
   }
 }

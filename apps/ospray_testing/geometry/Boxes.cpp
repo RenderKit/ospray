@@ -89,15 +89,19 @@ namespace ospray {
 
       ospCommit(model);
 
-      OSPInstance instance = ospNewInstance();
-      auto instances       = ospNewData(1, OSP_OBJECT, &model);
-      ospSetData(instance, "geometries", instances);
+      OSPGroup group = ospNewGroup();
+      auto models    = ospNewData(1, OSP_OBJECT, &model);
+      ospSetData(group, "geometries", models);
+      ospCommit(group);
+      ospRelease(models);
+
+      OSPInstance instance = ospNewInstance(group);
       ospCommit(instance);
-      ospRelease(instances);
 
       OSPTestingGeometry retval;
       retval.geometry = boxGeometry;
       retval.model    = model;
+      retval.group    = group;
       retval.instance = instance;
       retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
 

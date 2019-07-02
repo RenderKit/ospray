@@ -205,17 +205,25 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
+  // put the mesh into a model
   OSPGeometricModel model = ospNewGeometricModel(mesh);
   ospCommit(model);
   ospRelease(mesh); // we are done using this handle
 
-  OSPInstance instance = ospNewInstance();
+  // put the model into a group (collection of models)
+  OSPGroup group = ospNewGroup();
   OSPData models = ospNewData(1, OSP_OBJECT, &model, 0);
-  ospSetObject(instance, "geometries", models);
-  ospCommit(instance);
+  ospSetObject(group, "geometries", models);
+  ospCommit(group);
   ospRelease(model);
   ospRelease(models);
 
+  // put the group into an instance (give the group a world transform)
+  OSPInstance instance = ospNewInstance(group);
+  ospCommit(instance);
+  ospRelease(group);
+
+  // put the instance in the world
   *world = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
   ospSetObject(*world, "instances", instances);
@@ -295,17 +303,25 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   ospCommit(mesh);
 
+  // put the mesh into a model
   OSPGeometricModel model = ospNewGeometricModel(mesh);
   ospCommit(model);
   ospRelease(mesh); // we are done using this handle
 
-  OSPInstance instance = ospNewInstance();
+  // put the model into a group (collection of models)
+  OSPGroup group = ospNewGroup();
   OSPData models = ospNewData(1, OSP_OBJECT, &model, 0);
-  ospSetObject(instance, "geometries", models);
-  ospCommit(instance);
+  ospSetObject(group, "geometries", models);
+  ospCommit(group);
   ospRelease(model);
   ospRelease(models);
 
+  // put the group into an instance (give the group a world transform)
+  OSPInstance instance = ospNewInstance(group);
+  ospCommit(instance);
+  ospRelease(group);
+
+  // put the instance in the world
   *world = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
   ospSetObject(*world, "instances", instances);

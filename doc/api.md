@@ -1012,28 +1012,43 @@ material information. To create a geometry instance, call
   : Parameters understood by GeometricModel.
 
 
-Instances
+Groups
 -----------------
 
-Instances in OSPRay represent collections of GeometricModels and
-VolumetricModels which share a common world-space transform. To create
-and instance call
+Groups in OSPRay represent collections of GeometricModels and
+VolumetricModels which share a common local-space coordinate system. To create
+a group call
 
-    OSPInstance ospNewInstance();
+    OSPGroup ospNewGroup();
 
   ------------------ --------------- ---------- --------------------------------------
   Type               Name            Default    Description
   ------------------ --------------- ---------- --------------------------------------
-  affine3f           xfm             (identity) world-space transform for all attached
-                                                geometries and volumes
-
   OSPData            geometries            NULL data array of OSPGeometricModel
                                                 geometry objects in the scene
 
   OSPData            volumes               NULL data array of OSPVolumetricModel
                                                 volume objects in the scene
   ------------------ --------------- ---------- ---------------------------------------
+  : Parameters understood by Group
+
+
+Instances
+-----------------
+
+Instances in OSPRay represent a single group's placement into the world via
+a transform. To create and instance call
+
+    OSPInstance ospNewInstance(OSPGroup);
+
+  ------------------ --------------- ---------- --------------------------------------
+  Type               Name            Default    Description
+  ------------------ --------------- ---------- --------------------------------------
+  affine3f           xfm             (identity) world-space transform for all attached
+                                                geometries and volumes
+  ------------------ --------------- ---------- ---------------------------------------
   : Parameters understood by Instance
+
 
 ### World
 

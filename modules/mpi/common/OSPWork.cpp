@@ -26,8 +26,9 @@
 #include "common/Data.h"
 #include "common/Library.h"
 #include "common/World.h"
-#include "geometry/TriangleMesh.h"
+#include "geometry/GeometricModel.h"
 #include "texture/Texture.h"
+#include "volume/VolumetricModel.h"
 
 namespace ospray {
   namespace mpi {
@@ -40,6 +41,7 @@ namespace ospray {
         registerWorkUnit<NewRenderer>(registry);
         registerWorkUnit<NewWorld>(registry);
         registerWorkUnit<NewInstance>(registry);
+        registerWorkUnit<NewGroup>(registry);
         registerWorkUnit<NewGeometry>(registry);
         registerWorkUnit<NewGeometricModel>(registry);
         registerWorkUnit<NewCamera>(registry);
@@ -274,10 +276,10 @@ namespace ospray {
       // ospNewInstance ///////////////////////////////////////////////////////
 
       template <>
-      void NewInstance::run()
+      void NewGroup::run()
       {
-        auto *world = new Instance;
-        handle.assign(world);
+        auto *group = new Group;
+        handle.assign(group);
       }
 
       // ospNewWorld //////////////////////////////////////////////////////////
@@ -298,22 +300,31 @@ namespace ospray {
         handle.assign(material);
       }
 
-      // ospNewGeometricModel ///////////////////////////////////////////////
+      // ospNewInstance ///////////////////////////////////////////////////////
 
-      void NewGeometricModel::run()
+      void NewInstance::run()
       {
-        auto *geom     = (Geometry *)geometryHandle.lookup();
-        auto *instance = new GeometricModel(geom);
+        auto *group    = (Group *)groupHandle.lookup();
+        auto *instance = new Instance(group);
         handle.assign(instance);
       }
 
-      // ospNewVolumetricModel ///////////////////////////////////////////////
+      // ospNewGeometricModel /////////////////////////////////////////////////
+
+      void NewGeometricModel::run()
+      {
+        auto *geom  = (Geometry *)geometryHandle.lookup();
+        auto *model = new GeometricModel(geom);
+        handle.assign(model);
+      }
+
+      // ospNewVolumetricModel ////////////////////////////////////////////////
 
       void NewVolumetricModel::run()
       {
-        auto *geom     = (Volume *)volumeHandle.lookup();
-        auto *instance = new VolumetricModel(geom);
-        handle.assign(instance);
+        auto *geom  = (Volume *)volumeHandle.lookup();
+        auto *model = new VolumetricModel(geom);
+        handle.assign(model);
       }
 
       // ospNewLight //////////////////////////////////////////////////////////

@@ -35,8 +35,8 @@ export void World_set(void *uniform _self,
                       void *uniform embreeGeometryScene,
                       void *uniform embreeVolumeScene)
 {
-  World *uniform self         = (World * uniform) _self;
-  Instance **uniform instances = (Instance ** uniform) _instances;
+  World *uniform self          = (World * uniform) _self;
+  Instance **uniform instances = (Instance * *uniform) _instances;
 
   self->instances    = instances;
   self->numInstances = numInstances;

@@ -137,9 +137,14 @@ namespace OSPRayTestScenes {
     ospCommit(model);
     OSPData data = ospNewData(1, OSP_OBJECT, &model);
 
-    OSPInstance instance = ospNewInstance();
+    OSPGroup group = ospNewGroup();
+    ospSetData(group, "geometries", data);
+    ospCommit(group);
+
+    OSPInstance instance = ospNewInstance(group);
     ospSetAffine3fv(instance, "xfm", (float*)&xfm);
-    ospSetData(instance, "geometries", data);
+    ospCommit(instance);
+    ospRelease(group);
 
     AddInstance(instance);
 
@@ -152,9 +157,14 @@ namespace OSPRayTestScenes {
     ospCommit(model);
     OSPData data = ospNewData(1, OSP_OBJECT, &model);
 
-    OSPInstance instance = ospNewInstance();
+    OSPGroup group = ospNewGroup();
+    ospSetData(group, "volumes", data);
+    ospCommit(group);
+
+    OSPInstance instance = ospNewInstance(group);
     ospSetAffine3fv(instance, "xfm", (float*)&xfm);
-    ospSetData(instance, "volumes", data);
+    ospCommit(instance);
+    ospRelease(group);
 
     AddInstance(instance);
 
@@ -431,7 +441,7 @@ namespace OSPRayTestScenes {
     SetMaterials();
 
     std::vector<OSPGeometricModel> models;
-    OSPInstance instance = ospNewInstance();
+    OSPGroup group = ospNewGroup();
 
     float wallsVertices[] = {// left wall
                              1.f,
@@ -595,8 +605,13 @@ namespace OSPRayTestScenes {
       ospCommit(m);
 
     OSPData models_data = ospNewData(models.size(), OSP_OBJECT, models.data());
-    ospSetData(instance, "geometries", models_data);
+    ospSetData(group, "geometries", models_data);
+    ospCommit(group);
     ospRelease(models_data);
+
+    OSPInstance instance = ospNewInstance(group);
+    ospCommit(instance);
+    ospRelease(group);
 
     AddInstance(instance);
 

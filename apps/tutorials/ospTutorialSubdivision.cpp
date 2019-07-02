@@ -88,7 +88,7 @@ int main(int argc, const char **argv)
     if (ImGui::SliderInt("tessellation level", &tessellationLevel, 1, 10)) {
       ospSetFloat(subdivisionGeometry.geometry, "level", tessellationLevel);
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
-      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.instance);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.group);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
 
@@ -112,7 +112,7 @@ int main(int argc, const char **argv)
       ospRelease(vertexCreaseWeightsData);
 
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
-      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.instance);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.group);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
 
@@ -135,7 +135,7 @@ int main(int argc, const char **argv)
       ospRelease(edgeCreaseWeightsData);
 
       glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.geometry);
-      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.instance);
+      glfwOSPRayWindow->addObjectToCommit(subdivisionGeometry.group);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
   });

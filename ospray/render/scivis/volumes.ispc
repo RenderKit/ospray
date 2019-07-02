@@ -24,7 +24,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
                               const VolumeInterval &interval,
                               Ray &ray)
 {
-  VolumetricModel *varying instance = interval.volumetricModel;
+  VolumetricModel *varying model = interval.volumetricModel;
 
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
@@ -44,10 +44,10 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
 
   ray.t0 += jitter;
 
-  foreach_unique(inst in instance)
+  foreach_unique(m in model)
   {
-    Volume *uniform volume       = inst->volume;
-    TransferFunction *uniform tf = inst->transferFunction;
+    Volume *uniform volume       = m->volume;
+    TransferFunction *uniform tf = m->transferFunction;
 
     while (ray.t0 <= ray.t && alpha < 0.99f) {
       const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
@@ -59,8 +59,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
 
         pSample = sample;
 
-        const float clampedOpacity =
-            clamp(sampleAlpha / instance->samplingRate);
+        const float clampedOpacity = clamp(sampleAlpha / m->samplingRate);
 
         sampleColor = sampleColor * clampedOpacity;
         sampleAlpha = clampedOpacity;
@@ -69,7 +68,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
         alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
       }
 
-      volume->stepRay(volume, tf, ray, instance->samplingRate);
+      volume->stepRay(volume, tf, ray, m->samplingRate);
     }
   }
 

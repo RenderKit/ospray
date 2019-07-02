@@ -34,6 +34,7 @@
 #include "camera/Camera.h"
 #include "common/Instance.h"
 #include "common/World.h"
+#include "geometry/Geometry.h"
 #include "lights/Light.h"
 #include "render/Renderer.h"
 #include "transferFunction/TransferFunction.h"
@@ -160,7 +161,7 @@ namespace ospray {
       // NewObjectT explicit instantiations ///////////////////////////////////
 
       using NewWorld            = NewObjectT<World>;
-      using NewInstance         = NewObjectT<Instance>;
+      using NewGroup            = NewObjectT<Group>;
       using NewPixelOp          = NewObjectT<PixelOp>;
       using NewRenderer         = NewObjectT<Renderer>;
       using NewCamera           = NewObjectT<Camera>;
@@ -180,7 +181,7 @@ namespace ospray {
       void NewWorld::run();
 
       template <>
-      void NewInstance::run();
+      void NewGroup::run();
 
       struct NewMaterial : public Work
       {
@@ -209,6 +210,30 @@ namespace ospray {
         std::string rendererType;
         std::string materialType;
         ObjectHandle handle;
+      };
+
+      struct NewInstance : public Work
+      {
+        NewInstance() = default;
+        NewInstance(ObjectHandle handle, ObjectHandle group_handle)
+            : handle(handle), groupHandle(group_handle)
+        {
+        }
+
+        void run() override;
+
+        void serialize(WriteStream &b) const override
+        {
+          b << (int64)handle << (int64)groupHandle;
+        }
+
+        void deserialize(ReadStream &b) override
+        {
+          b >> handle.i64 >> groupHandle.i64;
+        }
+
+        ObjectHandle handle;
+        ObjectHandle groupHandle;
       };
 
       struct NewGeometricModel : public Work

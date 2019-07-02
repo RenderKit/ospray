@@ -16,43 +16,41 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp {
 
-class PixelOp : public ManagedObject_T<OSPPixelOp>
-{
-public:
+    class PixelOp : public ManagedObject_T<OSPPixelOp>
+    {
+     public:
+      PixelOp() = default;
+      PixelOp(const std::string &type);
+      PixelOp(const PixelOp &copy);
+      PixelOp(OSPPixelOp existing);
+    };
 
-  PixelOp() = default;
-  PixelOp(const std::string &type);
-  PixelOp(const PixelOp &copy);
-  PixelOp(OSPPixelOp existing);
-};
+    // Inlined function definitions ///////////////////////////////////////////
 
-// Inlined function definitions ///////////////////////////////////////////////
+    inline PixelOp::PixelOp(const std::string &type)
+    {
+      OSPPixelOp c = ospNewPixelOp(type.c_str());
+      if (c) {
+        ospObject = c;
+      } else {
+        throw std::runtime_error("Failed to create OSPPixelOp!");
+      }
+    }
 
-inline PixelOp::PixelOp(const std::string &type)
-{
-  OSPPixelOp c = ospNewPixelOp(type.c_str());
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPPixelOp!");
-  }
-}
+    inline PixelOp::PixelOp(const PixelOp &copy)
+        : ManagedObject_T<OSPPixelOp>(copy.handle())
+    {
+    }
 
-inline PixelOp::PixelOp(const PixelOp &copy) :
-  ManagedObject_T<OSPPixelOp>(copy.handle())
-{
-}
+    inline PixelOp::PixelOp(OSPPixelOp existing)
+        : ManagedObject_T<OSPPixelOp>(existing)
+    {
+    }
 
-inline PixelOp::PixelOp(OSPPixelOp existing) :
-  ManagedObject_T<OSPPixelOp>(existing)
-{
-}
-
-
-}// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+}  // namespace ospray
