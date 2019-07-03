@@ -29,7 +29,8 @@ namespace ospray {
     struct AMRData
     {
       AMRData(const Data &blockBoundsData,
-              const Data &refinementLevelsData, const Data &cellWidthsData,
+              const Data &refinementLevelsData,
+              const Data &cellWidthsData,
               const Data &blockDataData);
 
       /*! this is how an app _specifies_ a brick (or better, the array
@@ -47,14 +48,14 @@ namespace ospray {
           the dims of the grid.... */
         box3i box;
         //! level this brick is at
-        int   level;
+        int level;
         // width of each cell in this level
         float cellWidth;
 
         inline box3f worldBounds() const
         {
-          return box3f(vec3f(box.lower)*cellWidth,
-                       vec3f(box.upper+vec3i(1))*cellWidth);
+          return box3f(vec3f(box.lower) * cellWidth,
+                       vec3f(box.upper + vec3i(1)) * cellWidth);
         }
       };
 
@@ -98,5 +99,5 @@ namespace ospray {
       }
     };
 
-  } // ::ospray::amr
-} // ::ospray
+  }  // namespace amr
+}  // namespace ospray

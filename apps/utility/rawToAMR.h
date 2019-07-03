@@ -14,11 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// pragmas?
-
+#include "ospcommon/FileName.h"
 #include "ospcommon/array3D/Array3D.h"
 #include "ospcommon/box.h"
-#include "ospcommon/FileName.h"
 #include "ospcommon/tasking/parallel_for.h"
 
 #include <sys/stat.h>
@@ -35,90 +33,82 @@
 #include <string>
 #include <vector>
 
-// ALOK: TODO
-// remove these if possible
 using namespace ospcommon::array3D;
 using namespace ospcommon;
 
 namespace ospray {
-    namespace amr {
-        // ALOK: TODO
-        // remove this and use osp_amr_brick_info instead
-        struct BrickDesc
-        {
-            box3i box;
-            int level;
-            float dt;
-        };
+  namespace amr {
+    struct BrickDesc
+    {
+      box3i box;
+      int level;
+      float dt;
+    };
 
-        // ALOK: TODO
-        // move these out of the namespace if possible
-        static std::mutex fileMutex;
-        //static FILE *infoOut = nullptr;
-        //static FILE *dataOut = nullptr;
+    // ALOK: TODO
+    // move these out of the namespace if possible
+    static std::mutex fileMutex;
 
-        void makeAMR(const std::vector<float> &in,
-                     const vec3i inGridDims,
-                     const int numLevels,
-                     const int blockSize,
-                     const int refinementLevel,
-                     const float threshold,
-                     std::vector<box3i> &blockBounds,
-                     std::vector<int> &refinementLevels,
-                     std::vector<float> &cellWidths,
-                     std::vector<std::vector<float>> &brickData);
+    void makeAMR(const std::vector<float> &in,
+                 const vec3i inGridDims,
+                 const int numLevels,
+                 const int blockSize,
+                 const int refinementLevel,
+                 const float threshold,
+                 std::vector<box3i> &blockBounds,
+                 std::vector<int> &refinementLevels,
+                 std::vector<float> &cellWidths,
+                 std::vector<std::vector<float>> &brickData);
 
-        void outputAMR(const FileName outFileBase,
-                       const std::vector<box3i> &blockBounds,
-                       const std::vector<int> &refinementLevels,
-                       const std::vector<float> &cellWidths,
-                       const std::vector<std::vector<float>> &brickData,
-                       const int blockSize);
+    void outputAMR(const FileName outFileBase,
+                   const std::vector<box3i> &blockBounds,
+                   const std::vector<int> &refinementLevels,
+                   const std::vector<float> &cellWidths,
+                   const std::vector<std::vector<float>> &brickData,
+                   const int blockSize);
 
-        template <typename T>
-        std::vector<T> loadRAW(const std::string &fileName,
-                                const vec3i &dims);
+    template <typename T>
+    std::vector<T> loadRAW(const std::string &fileName, const vec3i &dims);
 
-        template <typename T>
-        std::vector<T> mmapRAW(const std::string &fileName,
-                               const vec3i &dims)
-        {
+    template <typename T>
+    std::vector<T> mmapRAW(const std::string &fileName, const vec3i &dims)
+    {
 #ifdef _WIN32
-            throw std::runtime_error("mmap not supported under windows");
+      throw std::runtime_error("mmap not supported under windows");
 #else
-            FILE *file = fopen(fileName.c_str(), "rb");
-            fseek(file, 0, SEEK_END);
-            size_t actualFileSize = ftell(file);
-            fclose(file);
+      FILE *file = fopen(fileName.c_str(), "rb");
+      fseek(file, 0, SEEK_END);
+      size_t actualFileSize = ftell(file);
+      fclose(file);
 
-            size_t fileSize =
-                size_t(dims.x) * size_t(dims.y) * size_t(dims.z) * sizeof(T);
+      size_t fileSize =
+          size_t(dims.x) * size_t(dims.y) * size_t(dims.z) * sizeof(T);
 
-            if (actualFileSize != fileSize) {
-                std::stringstream ss;
-                ss << "Got file size " << prettyNumber(actualFileSize);
-                ss << ", but expected " << prettyNumber(fileSize);
-                ss << ". Common cause is wrong data type!";
-                throw std::runtime_error(ss.str());
-            }
+      if (actualFileSize != fileSize) {
+        std::stringstream ss;
+        ss << "Got file size " << prettyNumber(actualFileSize);
+        ss << ", but expected " << prettyNumber(fileSize);
+        ss << ". Common cause is wrong data type!";
+        throw std::runtime_error(ss.str());
+      }
 
-            int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
-            assert(fd >= 0);
+      int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
+      assert(fd >= 0);
 
-            void *mem = mmap(nullptr,
-                    fileSize,
-                    PROT_READ,
-                    MAP_SHARED  // |MAP_HUGETLB
-                    ,
-                    fd,
-                    0);
-            assert(mem != nullptr && (long long)mem != -1LL);
+      void *mem = mmap(nullptr,
+                       fileSize,
+                       PROT_READ,
+                       MAP_SHARED  // |MAP_HUGETLB
+                       ,
+                       fd,
+                       0);
+      assert(mem != nullptr && (long long)mem != -1LL);
 
-            std::vector<T> volume;
-            volume.assign((T *)mem, (T *)mem + dims.product());
+      std::vector<T> volume;
+      volume.assign((T *)mem, (T *)mem + dims.product());
 
-            return volume;
+      return volume;
 #endif
-        }
-    } // namespace amr
-} // namespace ospray
+    }
+  }  // namespace amr
+}  // namespace ospray

@@ -41,7 +41,7 @@ namespace ospray {
         float cellWidth;
         float rcpCellWidth;
         float halfCellWidth;
-        int   level;
+        int level;
       };
 
       /*! each leaf in the tree represents an area in which all cells
@@ -77,10 +77,14 @@ namespace ospray {
         exactly one brick per level, in sorted order */
       struct Node
       {
-        inline bool isLeaf() const { return dim == 3; }
+        inline bool isLeaf() const
+        {
+          return dim == 3;
+        }
         // first dword
-        uint32 ofs:30; // offset in node[] array (if inner), or brick ID (if leaf)
-        uint32 dim:2;  // upper two bits: split dimension. '3' means 'leaf
+        uint32 ofs : 30;  // offset in node[] array (if inner), or brick ID (if
+                          // leaf)
+        uint32 dim : 2;   // upper two bits: split dimension. '3' means 'leaf
         // second dword
         union
         {
@@ -91,7 +95,10 @@ namespace ospray {
 
       void buildLevelInfo();
 
-      inline const Level &finestLevel() const { return level.back(); }
+      inline const Level &finestLevel() const
+      {
+        return level.back();
+      }
 
       //! list of levels
       std::vector<Level> level;
@@ -102,15 +109,15 @@ namespace ospray {
       //! world bounds of domain
       box3f worldBounds;
 
-    private:
+     private:
       void makeLeaf(index_t nodeID,
                     const box3f &bounds,
                     const std::vector<const AMRData::Brick *> &brickIDs);
       void makeInner(index_t nodeID, int dim, float pos, int childID);
-      void buildRec(int nodeID,const box3f &bounds,
+      void buildRec(int nodeID,
+                    const box3f &bounds,
                     std::vector<const AMRData::Brick *> &brick);
-
     };
 
-  } // ::ospray::amr
-} // ::ospray
+  }  // namespace amr
+}  // namespace ospray

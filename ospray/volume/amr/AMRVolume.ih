@@ -23,7 +23,7 @@
 
 struct AMRVolume
 {
-  Volume super; //!< inherited from superclass
+  Volume super;  //!< inherited from superclass
   AMR amr;
   //! Grid origin.
   uniform vec3f gridOrigin;
@@ -31,19 +31,19 @@ struct AMRVolume
   //! Grid spacing in each dimension.
   uniform vec3f gridSpacing;
 
+  //! The value at the given sample location in world coordinates.
+  varying float (*uniform computeSampleLevel)(
+      const void *uniform _self, const varying vec3f &worldCoordinates);
 
-    //! The value at the given sample location in world coordinates.
-  varying float (*uniform computeSampleLevel)(const void *uniform _self,
-                                         const varying vec3f &worldCoordinates);
-
-  //! Transform from local coordinates to world coordinates using the volume's grid definition.
+  //! Transform from local coordinates to world coordinates using the volume's
+  //! grid definition.
   void (*uniform transformLocalToWorld)(const AMRVolume *uniform volume,
                                         const varying vec3f &localCoordinates,
                                         varying vec3f &worldCoordinates);
 
-  //! Transform from world coordinates to local coordinates using the volume's grid definition.
+  //! Transform from world coordinates to local coordinates using the volume's
+  //! grid definition.
   void (*uniform transformWorldToLocal)(const AMRVolume *uniform volume,
                                         const varying vec3f &worldCoordinates,
                                         varying vec3f &localCoordinates);
-
 };

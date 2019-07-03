@@ -87,63 +87,72 @@ std::string outFileBase;
 
 bool parseArguments(int argc, char **argv)
 {
-    if(argc != 11) {
-        if(argc > 1 && 
-           (std::string(argv[1]) == "-h" ||
-           std::string(argv[1]) == "--help")) {
-            std::cerr << description << std::endl;
-            std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
-            std::cerr << help << std::endl;
-        }
-        else {
-            std::cerr << argc - 1 << " argument" << 
-                ((argc == 1 || argc > 2) ? "s " : " ");
-            std::cerr << "provided, but 10 are needed" << std::endl;
-            std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
-        }
-        return false;
+  if (argc != 11) {
+    if (argc > 1 &&
+        (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help")) {
+      std::cerr << description << std::endl;
+      std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
+      std::cerr << help << std::endl;
+    } else {
+      std::cerr << argc - 1 << " argument"
+                << ((argc == 1 || argc > 2) ? "s " : " ");
+      std::cerr << "provided, but 10 are needed" << std::endl;
+      std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
     }
+    return false;
+  }
 
-    inFileName = argv[1];
-    format = argv[2];
-    inDims.x = atoi(argv[3]);
-    inDims.y = atoi(argv[4]);
-    inDims.z = atoi(argv[5]);
-    numLevels = atoi(argv[6]);
-    blockSize = atoi(argv[7]);
-    refinementLevel = atoi(argv[8]);
-    threshold = atof(argv[9]);
-    outFileBase = argv[10];
+  inFileName      = argv[1];
+  format          = argv[2];
+  inDims.x        = atoi(argv[3]);
+  inDims.y        = atoi(argv[4]);
+  inDims.z        = atoi(argv[5]);
+  numLevels       = atoi(argv[6]);
+  blockSize       = atoi(argv[7]);
+  refinementLevel = atoi(argv[8]);
+  threshold       = atof(argv[9]);
+  outFileBase     = argv[10];
 
-    return true;
+  return true;
 }
 
 int main(int argc, char **argv)
 {
-    // ALOK: TODO
-    // better argument handling and usage description
-    bool parseSucceed = parseArguments(argc, argv);
-    if(!parseSucceed) {
-        return 1;
-    }
+  bool parseSucceed = parseArguments(argc, argv);
+  if (!parseSucceed) {
+    return 1;
+  }
 
-    // ALOK: ultimately storing the data as float regardless of input type
-    // (????)
-    std::vector<float> in;
-    if (format == "float") {
-        in = ospray::amr::mmapRAW<float>(inFileName, inDims);
-    }
-    else {
-        throw std::runtime_error("unknown input voxel format");
-    }
+  // ALOK: TODO:
+  // support more than float
+  std::vector<float> in;
+  if (format == "float") {
+    in = ospray::amr::mmapRAW<float>(inFileName, inDims);
+  } else {
+    throw std::runtime_error("unsupported input voxel format");
+  }
 
-    std::vector<box3i> blockBounds;
-    std::vector<int> refinementLevels;
-    std::vector<float> cellWidths;
-    std::vector<std::vector<float>> brickData;
+  std::vector<box3i> blockBounds;
+  std::vector<int> refinementLevels;
+  std::vector<float> cellWidths;
+  std::vector<std::vector<float>> brickData;
 
-    ospray::amr::makeAMR(in, inDims, numLevels, blockSize, refinementLevel, threshold, blockBounds, refinementLevels, cellWidths, brickData);
-    ospray::amr::outputAMR(outFileBase, blockBounds, refinementLevels, cellWidths, brickData, blockSize);
+  ospray::amr::makeAMR(in,
+                       inDims,
+                       numLevels,
+                       blockSize,
+                       refinementLevel,
+                       threshold,
+                       blockBounds,
+                       refinementLevels,
+                       cellWidths,
+                       brickData);
+  ospray::amr::outputAMR(outFileBase,
+                         blockBounds,
+                         refinementLevels,
+                         cellWidths,
+                         brickData,
+                         blockSize);
 
-    return 0;
+  return 0;
 }

@@ -154,7 +154,7 @@ namespace ospray {
 
     struct GravitySpheresAMRVolume : public GravitySpheresVolume
     {
-      GravitySpheresAMRVolume() = default;
+      GravitySpheresAMRVolume()           = default;
       ~GravitySpheresAMRVolume() override = default;
 
       OSPTestingVolume createVolume() const override;
@@ -167,10 +167,10 @@ namespace ospray {
 
       // initialize constants for converting to AMR
       vec3f volumeDims(volumeDimension, volumeDimension, volumeDimension);
-      const int numLevels = 5;
-      const int blockSize = 4;
+      const int numLevels       = 5;
+      const int blockSize       = 4;
       const int refinementLevel = 2;
-      const float threshold = 2.5;
+      const float threshold     = 2.5;
 
       std::vector<box3i> blockBounds;
       std::vector<int> refinementLevels;
@@ -190,21 +190,32 @@ namespace ospray {
                            cellWidths,
                            blockVectors);
 
-      for(const std::vector<float> &bd : blockVectors) {
-          OSPData data = ospNewData(bd.size(), OSP_FLOAT, bd.data(), OSP_DATA_SHARED_BUFFER);
-          blockData.push_back(data);
+      for (const std::vector<float> &bd : blockVectors) {
+        OSPData data =
+            ospNewData(bd.size(), OSP_FLOAT, bd.data(), OSP_DATA_SHARED_BUFFER);
+        blockData.push_back(data);
       }
 
-      OSPData blockDataData = ospNewData(blockData.size(), OSP_DATA, blockData.data(), OSP_DATA_SHARED_BUFFER);
+      OSPData blockDataData = ospNewData(
+          blockData.size(), OSP_DATA, blockData.data(), OSP_DATA_SHARED_BUFFER);
       ospCommit(blockDataData);
 
-      OSPData blockBoundsData = ospNewData(blockBounds.size(), OSP_BOX3I, blockBounds.data(), OSP_DATA_SHARED_BUFFER);
+      OSPData blockBoundsData = ospNewData(blockBounds.size(),
+                                           OSP_BOX3I,
+                                           blockBounds.data(),
+                                           OSP_DATA_SHARED_BUFFER);
       ospCommit(blockBoundsData);
 
-      OSPData refinementLevelsData = ospNewData(refinementLevels.size(), OSP_INT, refinementLevels.data(), OSP_DATA_SHARED_BUFFER);
+      OSPData refinementLevelsData = ospNewData(refinementLevels.size(),
+                                                OSP_INT,
+                                                refinementLevels.data(),
+                                                OSP_DATA_SHARED_BUFFER);
       ospCommit(refinementLevelsData);
 
-      OSPData cellWidthsData = ospNewData(cellWidths.size(), OSP_FLOAT, cellWidths.data(), OSP_DATA_SHARED_BUFFER);
+      OSPData cellWidthsData = ospNewData(cellWidths.size(),
+                                          OSP_FLOAT,
+                                          cellWidths.data(),
+                                          OSP_DATA_SHARED_BUFFER);
       ospCommit(cellWidthsData);
 
       // create an AMR volume and assign attributes
@@ -219,14 +230,15 @@ namespace ospray {
       ospCommit(volume);
 
       OSPTestingVolume retval;
-      retval.volume = volume;
+      retval.volume     = volume;
       retval.voxelRange = osp_vec2f{0, 10};
-      retval.bounds = osp_box3f{osp_vec3f{0, 0, 0}, osp_vec3f{16, 16, 16}};
+      retval.bounds     = osp_box3f{osp_vec3f{0, 0, 0}, osp_vec3f{16, 16, 16}};
 
       return retval;
     }
 
-    OSP_REGISTER_TESTING_VOLUME(GravitySpheresAMRVolume, gravity_spheres_amr_volume);
+    OSP_REGISTER_TESTING_VOLUME(GravitySpheresAMRVolume,
+                                gravity_spheres_amr_volume);
 
   }  // namespace testing
 }  // namespace ospray

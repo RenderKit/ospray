@@ -32,11 +32,11 @@ namespace ospray {
 
       for (auto &b : brickVec) {
         if (b->level >= static_cast<int>(level.size()))
-          level.resize(b->level+1);
-        level[b->level].level = b->level;
-        level[b->level].cellWidth = b->cellWidth;
-        level[b->level].halfCellWidth = 0.5f*b->cellWidth;
-        level[b->level].rcpCellWidth = 1.f/b->cellWidth;
+          level.resize(b->level + 1);
+        level[b->level].level         = b->level;
+        level[b->level].cellWidth     = b->cellWidth;
+        level[b->level].halfCellWidth = 0.5f * b->cellWidth;
+        level[b->level].rcpCellWidth  = 1.f / b->cellWidth;
       }
 
       node.resize(1);
@@ -47,7 +47,7 @@ namespace ospray {
     AMRAccel::~AMRAccel()
     {
       for (auto &l : leaf)
-        delete [] l.brickList;
+        delete[] l.brickList;
 
       leaf.clear();
       node.clear();
@@ -57,18 +57,19 @@ namespace ospray {
                             const box3f &bounds,
                             const std::vector<const AMRData::Brick *> &brick)
     {
-      node[nodeID].dim = 3;
-      node[nodeID].ofs = this->leaf.size(); //item.size();
+      node[nodeID].dim      = 3;
+      node[nodeID].ofs      = this->leaf.size();  // item.size();
       node[nodeID].numItems = brick.size();
 
       AMRAccel::Leaf newLeaf;
-      newLeaf.bounds = bounds;
-      newLeaf.brickList = new const AMRData::Brick *[brick.size()+1];
+      newLeaf.bounds    = bounds;
+      newLeaf.brickList = new const AMRData::Brick *[brick.size() + 1];
 
       // create leaf list, and sort it
-      std::copy(brick.begin(),brick.end(),newLeaf.brickList);
-      std::sort(newLeaf.brickList,newLeaf.brickList+brick.size(),
-                [&](const AMRData::Brick *a, const AMRData::Brick *b){
+      std::copy(brick.begin(), brick.end(), newLeaf.brickList);
+      std::sort(newLeaf.brickList,
+                newLeaf.brickList + brick.size(),
+                [&](const AMRData::Brick *a, const AMRData::Brick *b) {
                   return a->level > b->level;
                 });
 
@@ -109,8 +110,9 @@ namespace ospray {
 
       int bestDim = -1;
       vec3f width = bounds.size();
-      for (int dim=0;dim<3;dim++) {
-        if (possibleSplits[dim].empty()) continue;
+      for (int dim = 0; dim < 3; dim++) {
+        if (possibleSplits[dim].empty())
+          continue;
         if (bestDim == -1 || (width[dim] > width[bestDim]))
           bestDim = dim;
       }
@@ -122,18 +124,18 @@ namespace ospray {
         // we're looking for (all on a lower level must be earlier in
         // the list)
 
-        makeLeaf(nodeID,bounds,brick);
+        makeLeaf(nodeID, bounds, brick);
       } else {
         float bestPos = std::numeric_limits<float>::infinity();
-        float mid = bounds.center()[bestDim];
+        float mid     = bounds.center()[bestDim];
         for (const auto &split : possibleSplits[bestDim]) {
-          if (fabsf(split - mid) < fabsf(bestPos-mid))
+          if (fabsf(split - mid) < fabsf(bestPos - mid))
             bestPos = split;
         }
         box3f lBounds = bounds;
         box3f rBounds = bounds;
 
-        switch(bestDim) {
+        switch (bestDim) {
         case 0:
           lBounds.upper.x = bestPos;
           rBounds.lower.x = bestPos;
@@ -151,7 +153,7 @@ namespace ospray {
         std::vector<const AMRData::Brick *> l, r;
         float sum_lo = 0.f, sum_hi = 0.f;
         for (const auto &b : brick) {
-          const box3f wb = intersectionOf(b->worldBounds,bounds);
+          const box3f wb = intersectionOf(b->worldBounds, bounds);
           if (wb.empty())
             throw std::runtime_error("empty box!?");
           sum_lo += wb.lower[bestDim];
@@ -180,16 +182,16 @@ namespace ospray {
         assert(!(l.empty() || r.empty()));
 
         int newNodeID = node.size();
-        makeInner(nodeID,bestDim,bestPos,newNodeID);
+        makeInner(nodeID, bestDim, bestPos, newNodeID);
 
         node.push_back(AMRAccel::Node());
         node.push_back(AMRAccel::Node());
         brick.clear();
 
-        buildRec(newNodeID+0,lBounds,l);
-        buildRec(newNodeID+1,rBounds,r);
+        buildRec(newNodeID + 0, lBounds, l);
+        buildRec(newNodeID + 1, rBounds, r);
       }
     }
 
-  } // ::ospray::amr
-} // ::ospray
+  }  // namespace amr
+}  // namespace ospray

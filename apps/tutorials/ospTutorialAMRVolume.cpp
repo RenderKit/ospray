@@ -19,11 +19,13 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
-#include "ospcommon/library.h"
 #include "ospcommon/FileName.h"
-#include "ospcommon/utility/ArrayView.h"
+#include "ospcommon/library.h"
 #include "ospcommon/range.h"
+#include "ospcommon/utility/ArrayView.h"
 #include "ospray_testing.h"
+
+#include "tutorial_util.h"
 
 #include <imgui.h>
 
@@ -32,8 +34,8 @@ using namespace ospcommon;
 static const std::string renderer_type = "scivis";
 
 // ALOK: AMRVolume context info
-std::vector<float *> brickPtrs;            // holds actual data
-std::vector<OSPData> brickData;            // holds actual data as OSPData
+std::vector<float *> brickPtrs;  // holds actual data
+std::vector<OSPData> brickData;  // holds actual data as OSPData
 range1f valueRange;
 float *actualData;
 box3f bounds;
@@ -41,23 +43,7 @@ int maxParseLevel;
 
 int main(int argc, const char **argv)
 {
-  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
-  // e.g. "--osp:debug"
-  OSPError initError = ospInit(&argc, argv);
-
-  if (initError != OSP_NO_ERROR)
-    return initError;
-
-  // we must load the testing library explicitly on Windows to look up
-  // object creation functions
-  loadLibrary("ospray_testing");
-
-  // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
+  initializeOSPRay(argc, argv);
 
   // create the world
   OSPWorld world = ospNewWorld();
@@ -71,7 +57,7 @@ int main(int argc, const char **argv)
   OSPVolume amrVolume = testData.volume;
 
   osp_vec2f amrValueRange = testData.voxelRange;
-  OSPTransferFunction tf = ospTestingNewTransferFunction(amrValueRange, "jet");
+  OSPTransferFunction tf  = ospTestingNewTransferFunction(amrValueRange, "jet");
 
   // create the model that will contain our actual volume
   OSPVolumetricModel volumeModel = ospNewVolumetricModel(amrVolume);
@@ -106,9 +92,8 @@ int main(int argc, const char **argv)
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
-  auto glfwOSPRayWindow =
-      std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, bounds, world, renderer));
+  auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
+      new GLFWOSPRayWindow(vec2i{1024, 768}, bounds, world, renderer));
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
