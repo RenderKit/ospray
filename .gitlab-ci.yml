@@ -227,6 +227,7 @@ build-scan-kw:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 3 day
+  allow_failure: true
 
 
 ### TEST JOBS ###
@@ -333,6 +334,7 @@ test-kw-critical:
     - build-scan-kw
   tags:
     - kw-scan-docker
+  allow_failure: true
 
 source-protex-scan:
   stage: build
