@@ -137,7 +137,7 @@ namespace ospray {
         , lightPtr
         , lightArray.size()
         , geometryLights
-        , &areaPDF[0]
+        , areaPDF.data()
         );
   }
 
