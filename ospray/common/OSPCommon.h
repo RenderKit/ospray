@@ -150,6 +150,8 @@ namespace ospray {
 
   OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
 
+  OSPRAY_CORE_INTERFACE bool isManagedObject(OSPDataType dtype);
+
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.
 

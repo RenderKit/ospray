@@ -155,7 +155,7 @@ namespace ospray {
       {
         if (handle.defined()) {
           ManagedObject *obj = handle.lookup();
-          if (dynamic_cast<Renderer *>(obj)) {
+          if (dynamic_cast<Renderer *>(obj) || dynamic_cast<FrameBuffer *>(obj)) {
             obj->commit();
           }
         }
@@ -252,7 +252,9 @@ namespace ospray {
           return;
 
         ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)) {
+        if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)
+            || dynamic_cast<FrameBuffer *>(obj))
+        {
           obj->setParam(name, val);
         }
       }
@@ -280,6 +282,14 @@ namespace ospray {
       {
         auto *group = new Group;
         handle.assign(group);
+      }
+
+      // ospNewImageOp /////////////////////////////////////////////////////////
+
+      template <>
+      void NewImageOp::runOnMaster()
+      {
+        run();
       }
 
       // ospNewWorld //////////////////////////////////////////////////////////
@@ -365,13 +375,8 @@ namespace ospray {
         // it), so let's assert that nobody accidentally uses it.
         assert(format != OSP_STRING);
 
-        if (format == OSP_OBJECT || format == OSP_CAMERA ||
-            format == OSP_DATA || format == OSP_FRAMEBUFFER ||
-            format == OSP_GEOMETRY || format == OSP_LIGHT ||
-            format == OSP_MATERIAL || format == OSP_WORLD ||
-            format == OSP_RENDERER || format == OSP_TEXTURE ||
-            format == OSP_TRANSFER_FUNCTION || format == OSP_VOLUME ||
-            format == OSP_IMAGE_OP) {
+        if (isManagedObject(format))
+        {
           /* translating handles to managedobject pointers: if a
              data array has 'object' or 'data' entry types, then
              what the host sends are _handles_, not pointers, but
@@ -388,6 +393,16 @@ namespace ospray {
 
         Data *ospdata = new Data(nItems, format, dataView.data());
         handle.assign(ospdata);
+      }
+
+      void NewData::runOnMaster()
+      {
+        // TODO Will: Temporary workaround for now to get the DFB on the master
+        // to know about the image ops we have attached to it, so it can run
+        // the denoise frame op on the head node.
+        if (format == OSP_IMAGE_OP) {
+          run();
+        }
       }
 
       void NewData::serialize(WriteStream &b) const

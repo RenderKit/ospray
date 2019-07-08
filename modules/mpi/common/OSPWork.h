@@ -179,6 +179,9 @@ namespace ospray {
       void NewVolume::runOnMaster();
 
       template <>
+      void NewImageOp::runOnMaster();
+
+      template <>
       void NewWorld::run();
 
       template <>
@@ -319,6 +322,8 @@ namespace ospray {
                 int flags);
 
         void run() override;
+
+        void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -489,7 +494,9 @@ namespace ospray {
             return;
 
           ManagedObject *obj = handle.lookup();
-          if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)) {
+          if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)
+              || dynamic_cast<FrameBuffer *>(obj))
+          {
             obj->setParam(name, val);
           }
         }
@@ -542,8 +549,22 @@ namespace ospray {
             param = val.lookup();
             Assert(param);
           }
-          obj->setParam(name.c_str(), param);
+          obj->setParam(name, param);
         }
+
+        void runOnMaster() override
+        {
+          if (!handle.defined() || !val.defined())
+            return;
+
+          ManagedObject *obj = handle.lookup();
+          if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)
+              || dynamic_cast<FrameBuffer *>(obj))
+          {
+            obj->setParam(name, val.lookup());
+          }
+        }
+
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards

@@ -193,7 +193,6 @@ namespace ospray {
   void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
     if (imageOpData) {
-
       if (firstFrameOperation < imageOpData->size()) {
         FrameBufferView fbv(this, colorBufferFormat, colorBuffer, depthBuffer,
                             normalBuffer, albedoBuffer);

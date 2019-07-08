@@ -100,7 +100,7 @@ int main(int argc, const char **argv)
 
   std::vector<OSPObject> pixelPipeline = {toneMap, colorTweak, frameOpTest};
   OSPData pixelOpData =
-      ospNewData(pixelPipeline.size(), OSP_OBJECT, pixelPipeline.data());
+      ospNewData(pixelPipeline.size(), OSP_IMAGE_OP, pixelPipeline.data());
   ospCommit(pixelOpData);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
@@ -239,7 +239,7 @@ int main(int argc, const char **argv)
           enabled.push_back(frameOps[i]);
       }
 
-      pixelOpData = ospNewData(enabled.size(), OSP_OBJECT, enabled.data());
+      pixelOpData = ospNewData(enabled.size(), OSP_IMAGE_OP, enabled.data());
       ospCommit(pixelOpData);
       glfwOSPRayWindow->setImageOps(pixelOpData);
     }

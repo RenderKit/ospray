@@ -350,6 +350,25 @@ namespace ospray {
     return OSP_NO_ERROR;
   }
 
+  bool isManagedObject(OSPDataType dtype)
+  {
+    return dtype == OSP_OBJECT ||
+      dtype == OSP_CAMERA ||
+      dtype == OSP_DATA ||
+      dtype == OSP_FRAMEBUFFER ||
+      dtype == OSP_GEOMETRY ||
+      dtype == OSP_GEOMETRY_INSTANCE ||
+      dtype == OSP_LIGHT ||
+      dtype == OSP_MATERIAL ||
+      dtype == OSP_WORLD ||
+      dtype == OSP_RENDERER ||
+      dtype == OSP_TEXTURE ||
+      dtype == OSP_TRANSFER_FUNCTION ||
+      dtype == OSP_VOLUME ||
+      dtype == OSP_VOLUME_INSTANCE ||
+      dtype == OSP_IMAGE_OP;
+  }
+
   StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
   {
     return StatusMsgStream(postAtLogLevel);

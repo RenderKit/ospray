@@ -895,7 +895,23 @@ namespace ospray {
   void DFB::endFrame(const float errorThreshold)
   {
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
-      /* do nothing */
+      // TODO: FrameOperations should just be run on the master process for now,
+      // but in the offload device the master process doesn't get any OSPData
+      // or pixel ops or etc. created, just the handles. So it doesn't even
+      // know about the frame operation to run
+      if (localFBonMaster && imageOpData && firstFrameOperation < imageOpData->size())
+      {
+        FrameBufferView fbv(localFBonMaster.get(),
+                            colorBufferFormat,
+                            localFBonMaster->colorBuffer,
+                            localFBonMaster->depthBuffer,
+                            localFBonMaster->normalBuffer,
+                            localFBonMaster->albedoBuffer);
+
+        std::for_each(imageOpData->begin<FrameOp *>() + firstFrameOperation,
+                      imageOpData->end<FrameOp *>(),
+                      [&](FrameOp *f) { f->process(fbv); });
+      }
     } else {
       if (imageOpData) {
         std::for_each(imageOpData->begin<ImageOp *>(),
@@ -904,30 +920,12 @@ namespace ospray {
       }
     }
 
-    memset(tileInstances, 0, sizeof(int32)*getTotalTiles()); // XXX needed?
+    // XXX needed?
+    memset(tileInstances, 0, sizeof(int32)*getTotalTiles());
 
-    if (mpicommon::IamTheMaster()) // only refine on master
+    // only refine on master
+    if (mpicommon::IamTheMaster())
       frameVariance = tileErrorRegion.refine(errorThreshold);
-
-    // TODO: FrameOperations should just be run on the master process for now,
-    // but in the offload device the master process doesn't get any OSPData
-    // or pixel ops or etc. created, just the handles. So it doesn't even
-    // know about the frame operation to run
-    /*
-    if (localFBonMaster && imageOpData && firstFrameOperation < imageOpData->size())
-    {
-      FrameBufferView fbv(localFBonMaster.get(),
-                          colorBufferFormat,
-                          localFBonMaster->colorBuffer,
-                          localFBonMaster->depthBuffer,
-                          localFBonMaster->normalBuffer,
-                          localFBonMaster->albedoBuffer);
-
-      std::for_each(imageOpData->begin<FrameOp *>() + firstFrameOperation,
-                    imageOpData->end<FrameOp *>(),
-                    [&](FrameOp *f) { f->endFrame(fbv); });
-    }
-    */
 
     setCompletedEvent(OSP_FRAME_FINISHED);
   }
