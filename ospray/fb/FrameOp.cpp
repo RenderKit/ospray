@@ -129,10 +129,14 @@ namespace ospray {
           {
             uint8_t *cbuf = static_cast<uint8_t *>(fb.colorBuffer);
             cbuf[px * 4 + c] = static_cast<uint8_t>(normalizedZ * 255.f);
+            // TODO: For srgb we should do srgb conversion as well i guess
           } else {
             float *cbuf = static_cast<float *>(fb.colorBuffer);
             cbuf[px * 4 + c] = normalizedZ;
           }
+        }
+        if (fb.albedoBuffer) {
+          fb.albedoBuffer[px] = vec3f(normalizedZ);
         }
       });
   }
@@ -145,5 +149,23 @@ namespace ospray {
   OSP_REGISTER_IMAGE_OP(DebugFrameOp, frame_debug);
   OSP_REGISTER_IMAGE_OP(BlurFrameOp, frame_blur);
   OSP_REGISTER_IMAGE_OP(DepthFrameOp, frame_depth);
+
+
+  bool operator==(const FrameBufferView &a, const FrameBufferView &b)
+  {
+    return a.fbDims == b.fbDims
+      && a.viewDims == b.viewDims
+      && a.haloDims == b.haloDims
+      && a.colorBufferFormat == b.colorBufferFormat
+      && a.colorBuffer == b.colorBuffer
+      && a.depthBuffer == b.depthBuffer
+      && a.normalBuffer == b.normalBuffer
+      && a.albedoBuffer == b.albedoBuffer;
+  }
+
+  bool operator!=(const FrameBufferView &a, const FrameBufferView &b)
+  {
+    return !(a == b);
+  }
 }
 

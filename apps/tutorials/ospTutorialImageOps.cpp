@@ -218,11 +218,22 @@ int main(int argc, const char **argv)
 
       pipelineUpdated = true;
     }
+    if (ImGui::Button("Add Denoise FrameOp")) {
+      OSPImageOp op = ospNewImageOp("frame_denoise");
+      ospCommit(op);
+
+      frameOps.push_back(op);
+      frameOpNames.push_back("denoise");
+      enabledOps.push_back(true);
+
+      pipelineUpdated = true;
+    }
 
     if (!frameOps.empty() && ImGui::Button("Remove FrameOp")) {
       ospRelease(frameOps.back());
       frameOps.pop_back();
       enabledOps.pop_back();
+      frameOpNames.pop_back();
 
       pipelineUpdated = true;
     }

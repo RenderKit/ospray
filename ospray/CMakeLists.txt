@@ -20,6 +20,13 @@ mark_as_advanced(EXP_NEW_BB_VOLUME_KERNELS)
 
 ospray_build_component(ospcommon)
 
+option(OSPRAY_ENABLE_DENOISER
+       "Enable the Denoiser FrameOp for denoising (requires OIDN)" OFF)
+
+if (OSPRAY_ENABLE_DENOISER)
+  find_package(OpenImageDenoise 0.9 REQUIRED)
+endif()
+
 # -------------------------------------------------------
 # Setup ospray include directories and source files
 # -------------------------------------------------------
@@ -50,6 +57,7 @@ set(OSPRAY_SOURCES
   include/ospray/ospray_cpp/Volume.h
   include/ospray/ospray_cpp/World.h
 )
+
 
 set(OSPRAY_ISPC_DEVICE_SOURCES
   ispc_tasksys.cpp
@@ -227,6 +235,12 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/amr/method_octant.ispc
 )
 
+if (OSPRAY_ENABLE_DENOISER)
+  set(OSPRAY_ISPC_DEVICE_SOURCES
+      ${OSPRAY_ISPC_DEVICE_SOURCES} fb/DenoiseFrameOp.cpp)
+endif()
+
+
 # -------------------------------------------------------
 # Install SDK headers
 # -------------------------------------------------------
@@ -280,6 +294,10 @@ COMPONENT lib
 )
 
 target_link_libraries(ospray PRIVATE ospray_common)
+
+if (OSPRAY_ENABLE_DENOISER)
+  target_link_libraries(ospray PUBLIC OpenImageDenoise)
+endif()
 
 target_include_directories(ospray
   PUBLIC

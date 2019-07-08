@@ -236,7 +236,8 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   // create new frame buffer
   framebuffer = ospNewFrameBuffer(windowSize.x,
                                   windowSize.y,
-                                  OSP_FB_SRGBA,
+                                  //OSP_FB_SRGBA,
+                                  OSP_FB_RGBA32F,
                                   OSP_FB_COLOR | OSP_FB_DEPTH
                                   | OSP_FB_ACCUM | OSP_FB_ALBEDO);
 
@@ -364,12 +365,15 @@ void GLFWOSPRayWindow::display()
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
                  0,
-                 showAlbedo ? GL_RGB : GL_RGBA,
+                 GL_RGBA,
+                 //showAlbedo ? GL_RGB : GL_RGBA,
                  windowSize.x,
                  windowSize.y,
                  0,
-                 showAlbedo ? GL_RGB : GL_RGBA,
-                 showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE,
+                 GL_RGBA,
+                 //showAlbedo ? GL_RGB : GL_RGBA,
+                 GL_FLOAT,
+                 //showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE,
                  fb);
 
     ospUnmapFrameBuffer(fb, framebuffer);

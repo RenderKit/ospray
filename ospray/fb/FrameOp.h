@@ -28,33 +28,35 @@ namespace ospray {
    */
   struct OSPRAY_SDK_INTERFACE FrameBufferView {
     // The total dimensions of the global framebuffer
-    vec2i fbDims;
+    vec2i fbDims = vec2i(0);
     // The dimensions of this view of the framebuffer
-    vec2i viewDims;
+    vec2i viewDims = vec2i(0);
     // The additional halo region pixels included in the view, if requested
-    vec2i haloDims;
+    vec2i haloDims = vec2i(0);
 
-    OSPFrameBufferFormat colorBufferFormat;
+    OSPFrameBufferFormat colorBufferFormat = OSP_FB_SRGBA;
+
     /*! Color buffer of the image, exact pixel format depends
      * on `colorBufferFormat`
      */
-    void  *colorBuffer;
+    void  *colorBuffer = nullptr;
     //! One float per pixel, may be NULL
-    float *depthBuffer;
+    float *depthBuffer = nullptr;
     // TODO: Should we pass the accum and variance buffers?
     //! one RGBA per pixel, may be NULL
     //vec4f *accumBuffer;
     //! one RGBA per pixel, may be NULL
     //vec4f *varianceBuffer;
     //! accumulated world-space normal per pixel
-    vec3f *normalBuffer;
+    vec3f *normalBuffer = nullptr;
     //! accumulated albedo, one RGBF32 per pixel
-    vec3f *albedoBuffer;
+    vec3f *albedoBuffer = nullptr;
 
     //! Convenience method to make a view of the entire framebuffer 
     FrameBufferView(FrameBuffer *fb, OSPFrameBufferFormat colorFormat,
                     void *colorBuffer, float *depthBuffer,
                     vec3f *normalBuffer, vec3f *albedoBuffer);
+    FrameBufferView() = default;
   };
 
   /*! TODO docs */
@@ -153,5 +155,9 @@ namespace ospray {
 
     std::string toString() const override;
   };
+
+  bool operator==(const FrameBufferView &a, const FrameBufferView &b);
+  bool operator!=(const FrameBufferView &a, const FrameBufferView &b);
 }
+
 
