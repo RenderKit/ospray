@@ -364,10 +364,6 @@ pdf:
   script:
     - cd doc
     - make pdf
-  only:
-    - devel
-    - /^release-.*$/
-    - master
   artifacts:
     paths:
       - readme.pdf
@@ -378,8 +374,6 @@ web:
   script:
     - cd doc
     - make www
-  only:
-    - master
   artifacts:
     paths:
       - doc/www/*
