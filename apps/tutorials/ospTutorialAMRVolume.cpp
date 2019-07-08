@@ -33,13 +33,11 @@ using namespace ospcommon;
 
 static const std::string renderer_type = "scivis";
 
-// ALOK: AMRVolume context info
-std::vector<float *> brickPtrs;  // holds actual data
-std::vector<OSPData> brickData;  // holds actual data as OSPData
-range1f valueRange;
-float *actualData;
-box3f bounds;
-int maxParseLevel;
+// AMRVolume context info
+static std::vector<float *> brickPtrs;  // holds actual data
+static std::vector<OSPData> brickData;  // holds actual data as OSPData
+static range1f valueRange;
+static box3f bounds;
 
 int main(int argc, const char **argv)
 {

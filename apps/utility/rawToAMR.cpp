@@ -70,6 +70,7 @@ namespace ospray {
 
       size_t numWritten = 0;
       size_t numRemoved = 0;
+      std::mutex fileMutex;
 
       // create and write the bricks
       vec3i levelSize = finestLevelSize;
@@ -87,29 +88,26 @@ namespace ospray {
         const vec3i numBricks = levelSize / blockSize;
         ospcommon::tasking::parallel_for(
             numBricks.product(), [&](int brickIdx) {
-              // create new brick description
-              BrickDesc brick;
-              // set level to current level from outer for loop above
-              brick.level = level;
               // dt == cellWidth in osp_amr_brick_info
-              brick.dt = 1.f / powf(refinementLevel, level);
+              float dt = 1.f / powf(refinementLevel, level);
               // get 3D brick index from flat brickIdx
               const vec3i brickID(brickIdx % numBricks.x,
                                   (brickIdx / numBricks.x) % numBricks.y,
                                   brickIdx / (numBricks.x * numBricks.y));
               // set upper and lower bounds of brick based on 3D index and
               // brick size in input data space
-              brick.box.lower = brickID * blockSize;
-              brick.box.upper = brick.box.lower + (blockSize - 1);
+              box3i box;
+              box.lower = brickID * blockSize;
+              box.upper = box.lower + (blockSize - 1);
               // current brick data
               std::vector<float> data(blockSize * blockSize * blockSize);
               size_t out = 0;
               ospcommon::range1f brickRange;
               // traverse the data by brick index
-              for (int iz = brick.box.lower.z; iz <= brick.box.upper.z; iz++) {
-                for (int iy = brick.box.lower.y; iy <= brick.box.upper.y;
+              for (int iz = box.lower.z; iz <= box.upper.z; iz++) {
+                for (int iy = box.lower.y; iy <= box.upper.y;
                      iy++) {
-                  for (int ix = brick.box.lower.x; ix <= brick.box.upper.x;
+                  for (int ix = box.lower.x; ix <= box.upper.x;
                        ix++) {
                     const size_t thisLevelCoord =
                         ix + levelSize.y * (iy + iz * levelSize.z);
@@ -136,10 +134,10 @@ namespace ospray {
                   ((brickRange.upper - brickRange.lower) <= threshold)) {
                 numRemoved++;
               } else {
-                blockBounds.push_back(brick.box);
-                refinementLevels.push_back(brick.level);
-                cellWidths.reserve(brick.level + 1);
-                cellWidths[brick.level] = brick.dt;
+                blockBounds.push_back(box);
+                refinementLevels.push_back(level);
+                cellWidths.reserve(level + 1);
+                cellWidths[level] = dt;
                 brickData.push_back(data);
                 numWritten++;
               }

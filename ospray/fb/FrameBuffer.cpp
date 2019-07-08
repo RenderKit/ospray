@@ -19,13 +19,13 @@
 
 namespace ospray {
 
-  FrameBuffer::FrameBuffer(const vec2i &size,
-                           ColorBufferFormat colorBufferFormat,
+  FrameBuffer::FrameBuffer(const vec2i &_size,
+                           ColorBufferFormat _colorBufferFormat,
                            const uint32 channels)
-    : size(size),
+    : size(_size),
       numTiles(divRoundUp(size, getTileSize())),
       maxValidPixelID(size-vec2i(1)),
-      colorBufferFormat(colorBufferFormat),
+      colorBufferFormat(_colorBufferFormat),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
       hasAccumBuffer(channels & OSP_FB_ACCUM),
       hasVarianceBuffer(channels & OSP_FB_VARIANCE && channels & OSP_FB_ACCUM),

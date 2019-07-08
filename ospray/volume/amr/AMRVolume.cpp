@@ -100,11 +100,8 @@ namespace ospray {
                                      *blockDataData);
     accel = make_unique<amr::AMRAccel>(*data);
 
-    // finding coarset cell size + finest level cell width
-    auto minmax = std::minmax_element(cellWidthsData->begin<float>(),
-                                      cellWidthsData->end<float>());
-    float coarsestCellWidth    = *std::get<1>(minmax);
-    float finestLevelCellWidth = *std::get<0>(minmax);
+    float coarsestCellWidth = *std::max_element(cellWidthsData->begin<float>(),
+                                                cellWidthsData->end<float>());
 
     auto rateFromEnv = utility::getEnvVar<float>("OSPRAY_AMR_SAMPLING_STEP");
 

@@ -21,11 +21,11 @@
 
 namespace ospray {
 
-  LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
-                                     ColorBufferFormat colorBufferFormat,
+  LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
+                                     ColorBufferFormat _colorBufferFormat,
                                      const uint32 channels,
                                      void *colorBufferToUse)
-      : FrameBuffer(size, colorBufferFormat, channels),
+      : FrameBuffer(_size, _colorBufferFormat, channels),
         tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
   {
     Assert(size.x > 0);

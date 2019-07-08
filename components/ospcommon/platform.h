@@ -86,15 +86,22 @@
 /// Error handling and debugging
 ////////////////////////////////////////////////////////////////////////////////
 
+namespace ospcommon {
+  template <typename T>
+  inline std::string to_string(const T &v)
+  {
+    std::stringstream msg;
+    msg << v;
+    return msg.str();
+  }
+}
+
 /* debug printing macros */
 #define STRING(x) #x
 #define TOSTRING(x) STRING(x)
 #define CODE_LOCATION __FILE__ " (" TOSTRING(__LINE__) ")"
 #define PING { std::stringstream msg; msg << CODE_LOCATION << ": " << __FUNCTION__ << std::endl; std::cout << msg.str(); }
-#define PRINT(x) { std::stringstream msg; msg << STRING(x) << " = " << (x) << std::endl; std::cout << msg.str(); }
-#define PRINT2(x,y) { std::stringstream msg; msg << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << std::endl; std::cout << msg.str(); }
-#define PRINT3(x,y,z) { std::stringstream msg; msg << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << std::endl; std::cout << msg.str(); }
-#define PRINT4(x,y,z,w) { std::stringstream msg; msg << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << ", " << STRING(w) << " = " << (w) << std::endl; std::cout << msg.str(); }
+#define PRINT(x) printf("%s = %s\n", STRING(x), ospcommon::to_string(x).c_str())
 
 #define THROW_RUNTIME_ERROR(str) \
   throw std::runtime_error(std::string(__FILE__) + " (" + std::to_string((long long)__LINE__) + "): " + std::string(str))

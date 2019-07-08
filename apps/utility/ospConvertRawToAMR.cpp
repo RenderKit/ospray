@@ -16,7 +16,7 @@
 
 #include "rawToAMR.h"
 
-const char *description = R"description(
+static const std::string description = R"description(
 Creates an adaptive mesh refinement (AMR) representation of the provided
 structured volume data.
 
@@ -29,12 +29,12 @@ This simulates the effect that an adaptive simulation would have created
 regions of higher refinement in the highly varying portions of the volume.
 )description";
 
-const char *usage = R"usage([-h | --help] input_volume variable_type
-    x_dim y_dim z_dim num_levels block_size refinement_factor threshold
-    output_basename
+static const std::string usage =
+R"usage([-h | --help] input_volume variable_type x_dim y_dim z_dim num_levels
+    block_size refinement_factor threshold output_basename
 )usage";
 
-const char *help = R"help(
+static const std::string help = R"help(
 input_volume        Structured volume in binary brick-of-data format
                     (string filepath)
 variable_type       Type of structured volume, must be exactly one of:
@@ -76,14 +76,16 @@ output_basename     Basename for the output files. This application creates
                     in common. (string)
 )help";
 
-std::string inFileName;
-std::string format;
-vec3i inDims;
-int numLevels;
-int blockSize;
-int refinementLevel;
-float threshold;
-std::string outFileBase;
+using namespace ospcommon;
+
+static std::string inFileName;
+static std::string format;
+static vec3i inDims;
+static int numLevels;
+static int blockSize;
+static int refinementLevel;
+static float threshold;
+static std::string outFileBase;
 
 bool parseArguments(int argc, char **argv)
 {

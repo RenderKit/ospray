@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "ospcommon/FileName.h"
-#include "ospcommon/array3D/Array3D.h"
 #include "ospcommon/box.h"
 #include "ospcommon/tasking/parallel_for.h"
 
@@ -33,21 +32,9 @@
 #include <string>
 #include <vector>
 
-using namespace ospcommon::array3D;
-using namespace ospcommon;
-
 namespace ospray {
   namespace amr {
-    struct BrickDesc
-    {
-      box3i box;
-      int level;
-      float dt;
-    };
-
-    // ALOK: TODO
-    // move these out of the namespace if possible
-    static std::mutex fileMutex;
+    using namespace ospcommon;
 
     void makeAMR(const std::vector<float> &in,
                  const vec3i inGridDims,
@@ -74,7 +61,7 @@ namespace ospray {
     std::vector<T> mmapRAW(const std::string &fileName, const vec3i &dims)
     {
 #ifdef _WIN32
-      throw std::runtime_error("mmap not supported under windows");
+      throw std::runtime_error("Memory mapping not supported in Windows");
 #else
       FILE *file = fopen(fileName.c_str(), "rb");
       fseek(file, 0, SEEK_END);
@@ -92,7 +79,7 @@ namespace ospray {
         throw std::runtime_error(ss.str());
       }
 
-      int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
+      int fd = ::open(fileName.c_str(), O_RDONLY);
       assert(fd >= 0);
 
       void *mem = mmap(nullptr,

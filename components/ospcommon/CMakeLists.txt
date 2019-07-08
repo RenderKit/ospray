@@ -20,6 +20,13 @@ else()
 
   ## Create ospcommon library ##
 
+  if (OSPRAY_TASKING_INTERNAL)
+    set(OSPRAY_EXTRA_TASKING_FILES
+      tasking/detail/enkiTS/TaskScheduler.cpp
+      tasking/detail/TaskSys.cpp
+    )
+  endif()
+
   ospray_create_library(ospray_common
     common.cpp
     FileName.cpp
@@ -42,14 +49,13 @@ else()
     networking/Socket.cpp
     networking/SocketFabric.cpp
 
-    tasking/detail/enkiTS/TaskScheduler.cpp
     tasking/detail/parallel_for.inl
     tasking/detail/schedule.inl
     tasking/detail/tasking_system_handle.cpp
-    tasking/detail/TaskSys.cpp
     tasking/async.h
     tasking/parallel_for.h
     tasking/schedule.h
+    ${OSPRAY_EXTRA_TASKING_FILES}
 
     utility/Any.h
     utility/CodeTimer.h
