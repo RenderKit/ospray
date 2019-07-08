@@ -20,7 +20,7 @@
 // ospray
 #include "common/Managed.h"
 #include "common/Data.h"
-#include "fb/PixelOp.h"
+#include "fb/ImageOp.h"
 #include "ospray/ospray.h"
 
 namespace ospray {
@@ -87,8 +87,8 @@ namespace ospray {
     bool frameCancelled() const;
 
    protected:
-    /*! Find the index of the first frameoperation included in the pixelop
-     * pipeline
+    /*! Find the index of the first frameoperation included in
+     * the imageop pipeline
      */
     void findFirstFrameOperation();
 
@@ -120,7 +120,7 @@ namespace ospray {
 
     std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
-    Ref<Data> pixelOpData;
+    Ref<Data> imageOpData;
     size_t firstFrameOperation = -1;
   };
 }  // namespace ospray

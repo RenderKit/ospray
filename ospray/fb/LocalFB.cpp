@@ -17,7 +17,7 @@
 // ospray
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
-#include "PixelOp.h"
+#include "ImageOp.h"
 #include "FrameOp.h"
 
 namespace ospray {
@@ -133,11 +133,23 @@ namespace ospray {
                                                tile.ny,
                                                tile.nz);
 
-    if (pixelOpData) {
-      // TODO: For now, frame operations must be last in the pipeline
-      std::for_each(pixelOpData->begin<PixelOp *>(),
-                    pixelOpData->begin<PixelOp *>() + firstFrameOperation,
-                    [&](PixelOp *p) { p->postAccum(this, tile); });
+    if (imageOpData) {
+      std::for_each(imageOpData->begin<ImageOp *>(),
+                    imageOpData->begin<ImageOp *>() + firstFrameOperation,
+                    [&](ImageOp *iop) { 
+                      #if 0
+                      PixelOp *pop = dynamic_cast<PixelOp *>(iop);
+                      if (pop) {
+                        //p->postAccum(this, tile);
+                      }
+                      #endif
+                      TileOp *top = dynamic_cast<TileOp *>(iop);
+                      if (top) {
+                        top->process(this, tile);
+                      }
+                      // TODO: For now, frame operations must be last
+                      // in the pipeline
+                    });
     }
 
     if (colorBuffer) {
@@ -171,30 +183,29 @@ namespace ospray {
   {
     FrameBuffer::beginFrame();
 
-    if (pixelOpData) {
-      // TODO: For now, frame operations must be last in the pipeline
-      std::for_each(pixelOpData->begin<PixelOp *>(),
-                    pixelOpData->begin<PixelOp *>() + firstFrameOperation,
-                    [](PixelOp *p) { p->beginFrame(); });
+    if (imageOpData) {
+      std::for_each(imageOpData->begin<ImageOp *>(),
+                    imageOpData->end<ImageOp *>(),
+                    [](ImageOp *p) { p->beginFrame(); });
     }
   }
 
   void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
-    if (pixelOpData) {
-      // TODO: For now, frame operations must be last in the pipeline
-      std::for_each(pixelOpData->begin<PixelOp *>(),
-                    pixelOpData->begin<PixelOp *>() + firstFrameOperation,
-                    [](PixelOp *p) { p->endFrame(); });
+    if (imageOpData) {
 
-      if (firstFrameOperation < pixelOpData->size()) {
+      if (firstFrameOperation < imageOpData->size()) {
         FrameBufferView fbv(this, colorBufferFormat, colorBuffer, depthBuffer,
                             normalBuffer, albedoBuffer);
 
-        std::for_each(pixelOpData->begin<FrameOp *>() + firstFrameOperation, 
-                      pixelOpData->end<FrameOp *>(),
-                      [&](FrameOp *f) { f->endFrame(fbv); });
+        std::for_each(imageOpData->begin<FrameOp *>() + firstFrameOperation, 
+                      imageOpData->end<FrameOp *>(),
+                      [&](FrameOp *f) { f->process(fbv); });
       }
+
+      std::for_each(imageOpData->begin<ImageOp *>(),
+                    imageOpData->end<ImageOp *>(),
+                    [](ImageOp *p) { p->endFrame(); });
     }
 
     frameVariance = tileErrorRegion.refine(errorThreshold);

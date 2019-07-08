@@ -46,10 +46,9 @@ typedef enum
   OSP_TRANSFER_FUNCTION,
   OSP_VOLUME,
   OSP_VOLUMETRIC_MODEL,
-  OSP_PIXEL_OP,
   OSP_INSTANCE,
   OSP_WORLD,
-  OSP_FRAME_OP,
+  OSP_IMAGE_OP,
 
   // Pointer to a C-style NULL-terminated character string.
   OSP_STRING = 1500,

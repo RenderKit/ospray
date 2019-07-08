@@ -28,7 +28,7 @@ namespace ospray {
 
   void ToneMapperPixelOp::commit()
   {
-    PixelOp::commit();
+    TileOp::commit();
 
     float exposure = getParam1f("exposure", 1.f);
     // Default parameters fitted to the ACES 1.0 grayscale curve
@@ -70,11 +70,11 @@ namespace ospray {
   {
     return "ospray::ToneMapperPixelOp";
   }
-  void ToneMapperPixelOp::postAccum(FrameBuffer *, Tile &tile)
+  void ToneMapperPixelOp::process(FrameBuffer *, Tile &tile)
   {
     ToneMapperPixelOp_apply(ispcEquivalent, (ispc::Tile &)tile);
   }
 
-  OSP_REGISTER_PIXEL_OP(ToneMapperPixelOp, tonemapper);
+  OSP_REGISTER_IMAGE_OP(ToneMapperPixelOp, tonemapper);
 
 }  // namespace ospray

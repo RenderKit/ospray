@@ -797,6 +797,15 @@ namespace ospray {
       processWork(work);
     }
 
+    /*! create a new imageOp object (out of list of registered imageOps) */
+    OSPImageOp MPIOffloadDevice::newImageOp(const char *type)
+    {
+      ObjectHandle handle = allocateHandle();
+      work::NewImageOp work(type, handle);
+      processWork(work);
+      return (OSPImageOp)(int64)handle;
+    }
+
     void MPIOffloadDevice::setBox3f(OSPObject _object,
                                     const char *bufName,
                                     const box3f &v)

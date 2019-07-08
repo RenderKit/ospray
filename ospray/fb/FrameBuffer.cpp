@@ -40,7 +40,7 @@ namespace ospray {
 
   void FrameBuffer::commit()
   {
-    pixelOpData = getParamData("pixelOperations", nullptr);
+    imageOpData = getParamData("imageOps", nullptr);
     findFirstFrameOperation();
   }
 
@@ -120,19 +120,19 @@ namespace ospray {
   void FrameBuffer::findFirstFrameOperation()
   {
     firstFrameOperation = -1;
-    if (!pixelOpData)
+    if (!imageOpData)
       return;
 
-    firstFrameOperation = pixelOpData->size();
-    for (size_t i = 0; i < pixelOpData->size(); ++i) {
-      ManagedObject *obj = *(pixelOpData->begin<ManagedObject *>() + i);
+    firstFrameOperation = imageOpData->size();
+    for (size_t i = 0; i < imageOpData->size(); ++i) {
+      ManagedObject *obj = *(imageOpData->begin<ManagedObject *>() + i);
       bool isFrameOp = dynamic_cast<FrameOp *>(obj) != nullptr;
 
-      if (firstFrameOperation == pixelOpData->size() && isFrameOp)
+      if (firstFrameOperation == imageOpData->size() && isFrameOp)
         firstFrameOperation = i;
-      else if (firstFrameOperation < pixelOpData->size() && !isFrameOp)
-        throw std::runtime_error("Tile operations cannot come after Frame "
-                                 "operations in the pixelOperations array.");
+      else if (firstFrameOperation < imageOpData->size() && !isFrameOp)
+        throw std::runtime_error("PixelOps/TileOps can't come after FrameOps "
+                                 "in the imageOp pipeline for now.");
     }
   }
 

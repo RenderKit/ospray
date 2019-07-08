@@ -19,7 +19,7 @@ namespace ospray {
     addColor = getParam3f("addColor", vec3f(0.f));
   }
 
-  void DebugPixelOp::postAccum(FrameBuffer *, Tile &tile)
+  void DebugPixelOp::process(FrameBuffer *, Tile &tile)
   {
     const int tile_x       = tile.region.lower.x / TILE_SIZE;
     const int tile_y       = (tile.fbSize.y - tile.region.upper.y) / TILE_SIZE;
@@ -59,6 +59,6 @@ namespace ospray {
     return "DebugPixelOp";
   }
 
-  OSP_REGISTER_PIXEL_OP(DebugPixelOp, debug);
+  OSP_REGISTER_IMAGE_OP(DebugPixelOp, debug);
 
 }  // namespace ospray

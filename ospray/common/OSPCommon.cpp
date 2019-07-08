@@ -142,8 +142,8 @@ namespace ospray {
     case OSP_TRANSFER_FUNCTION:
     case OSP_VOLUME:
     case OSP_VOLUMETRIC_MODEL:
-    case OSP_PIXEL_OP:
-    case OSP_FRAME_OP:
+    case OSP_VOLUME_INSTANCE:
+    case OSP_IMAGE_OP:
     case OSP_WORLD:
     case OSP_INSTANCE:
     case OSP_STRING:    return sizeof(void *);
@@ -243,8 +243,8 @@ namespace ospray {
     case OSP_TRANSFER_FUNCTION: return "transfer_function";
     case OSP_VOLUME:            return "volume";
     case OSP_VOLUMETRIC_MODEL:  return "volumetric_model";
-    case OSP_PIXEL_OP:          return "pixel_op";
-    case OSP_FRAME_OP:          return "frame_op";
+    case OSP_VOLUME_INSTANCE:   return "volume_instance";
+    case OSP_IMAGE_OP:          return "image_op";
     case OSP_STRING:            return "string";
     case OSP_CHAR:              return "char";
     case OSP_UCHAR:             return "uchar";

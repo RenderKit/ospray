@@ -48,7 +48,7 @@ namespace ospray {
         registerWorkUnit<NewVolume>(registry);
         registerWorkUnit<NewVolumetricModel>(registry);
         registerWorkUnit<NewTransferFunction>(registry);
-        registerWorkUnit<NewPixelOp>(registry);
+        registerWorkUnit<NewImageOp>(registry);
 
         registerWorkUnit<NewMaterial>(registry);
         registerWorkUnit<NewLight>(registry);
@@ -371,7 +371,7 @@ namespace ospray {
             format == OSP_MATERIAL || format == OSP_WORLD ||
             format == OSP_RENDERER || format == OSP_TEXTURE ||
             format == OSP_TRANSFER_FUNCTION || format == OSP_VOLUME ||
-            format == OSP_PIXEL_OP) {
+            format == OSP_IMAGE_OP) {
           /* translating handles to managedobject pointers: if a
              data array has 'object' or 'data' entry types, then
              what the host sends are _handles_, not pointers, but

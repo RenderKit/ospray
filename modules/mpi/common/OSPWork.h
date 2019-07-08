@@ -37,6 +37,7 @@
 #include "geometry/Geometry.h"
 #include "lights/Light.h"
 #include "render/Renderer.h"
+#include "fb/ImageOp.h"
 #include "transferFunction/TransferFunction.h"
 #include "volume/Volume.h"
 
@@ -162,7 +163,7 @@ namespace ospray {
 
       using NewWorld            = NewObjectT<World>;
       using NewGroup            = NewObjectT<Group>;
-      using NewPixelOp          = NewObjectT<PixelOp>;
+      using NewImageOp          = NewObjectT<ImageOp>;
       using NewRenderer         = NewObjectT<Renderer>;
       using NewCamera           = NewObjectT<Camera>;
       using NewVolume           = NewObjectT<Volume>;

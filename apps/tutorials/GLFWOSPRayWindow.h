@@ -41,7 +41,7 @@ class GLFWOSPRayWindow
   OSPWorld getWorld();
   void setWorld(OSPWorld newWorld);
 
-  void setPixelOps(OSPData ops);
+  void setImageOps(OSPData ops);
 
   void resetAccumulation();
 
@@ -87,7 +87,7 @@ class GLFWOSPRayWindow
   OSPCamera camera           = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
   OSPFuture currentFrame     = nullptr;
-  OSPData pixelOps           = nullptr;
+  OSPData imageOps           = nullptr;
 
   // List of OSPRay handles to commit before the next frame
   ospcommon::TransactionalBuffer<OSPObject> objectsToCommit;

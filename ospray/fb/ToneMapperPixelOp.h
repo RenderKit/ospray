@@ -16,17 +16,16 @@
 
 #pragma once
 
-// ospray
-#include "PixelOp.h"
+#include "ImageOp.h"
 
 namespace ospray {
 
   /*! \brief Generic tone mapping operator approximating ACES by default. */
-  struct OSPRAY_SDK_INTERFACE ToneMapperPixelOp : public PixelOp
+  struct OSPRAY_SDK_INTERFACE ToneMapperPixelOp : public TileOp
   {
     ToneMapperPixelOp();
     virtual void commit() override;
-    virtual void postAccum(FrameBuffer *fb, Tile &tile) override;
+    virtual void process(FrameBuffer *fb, Tile &tile) override;
 
     virtual std::string toString() const override;
   };

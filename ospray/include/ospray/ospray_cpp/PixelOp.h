@@ -20,37 +20,38 @@
 
 namespace ospray {
   namespace cpp {
-
-    class PixelOp : public ManagedObject_T<OSPPixelOp>
+    class ImageOp : public ManagedObject_T<OSPImageOp>
     {
-     public:
-      PixelOp() = default;
-      PixelOp(const std::string &type);
-      PixelOp(const PixelOp &copy);
-      PixelOp(OSPPixelOp existing);
+      public:
+
+        ImageOp() = default;
+        ImageOp(const std::string &type);
+        ImageOp(const ImageOp &copy);
+        ImageOp(OSPImageOp existing);
     };
 
-    // Inlined function definitions ///////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////////
 
-    inline PixelOp::PixelOp(const std::string &type)
+    inline ImageOp::ImageOp(const std::string &type)
     {
-      OSPPixelOp c = ospNewPixelOp(type.c_str());
+      OSPImageOp c = ospNewImageOp(type.c_str());
       if (c) {
         ospObject = c;
       } else {
-        throw std::runtime_error("Failed to create OSPPixelOp!");
+        throw std::runtime_error("Failed to create OSPImageOp!");
       }
     }
 
-    inline PixelOp::PixelOp(const PixelOp &copy)
-        : ManagedObject_T<OSPPixelOp>(copy.handle())
+    inline ImageOp::ImageOp(const ImageOp &copy) :
+      ManagedObject_T<OSPImageOp>(copy.handle())
     {
     }
 
-    inline PixelOp::PixelOp(OSPPixelOp existing)
-        : ManagedObject_T<OSPPixelOp>(existing)
+    inline ImageOp::ImageOp(OSPImageOp existing) :
+      ManagedObject_T<OSPImageOp>(existing)
     {
     }
 
-  }  // namespace cpp
-}  // namespace ospray
+
+  }// namespace cpp
+}// namespace ospray

@@ -77,17 +77,17 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
-  // Create a PixelOp pipeline to apply to the image
-  OSPPixelOp toneMap = ospNewPixelOp("tonemapper");
+  // Create a ImageOp pipeline to apply to the image
+  OSPImageOp toneMap = ospNewImageOp("tonemapper");
   ospCommit(toneMap);
 
   // The colortweak pixel op will make the image more blue
-  OSPPixelOp colorTweak = ospNewPixelOp("debug");
+  OSPImageOp colorTweak = ospNewImageOp("debug");
   ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
   ospCommit(colorTweak);
   std::vector<OSPObject> pixelOps = {toneMap, colorTweak};
 
-  OSPFrameOp frameOpTest = ospNewFrameOp("depth");
+  OSPImageOp frameOpTest = ospNewImageOp("frame_depth");
   ospCommit(frameOpTest);
   std::vector<OSPObject> frameOps = {frameOpTest};
 
@@ -96,7 +96,7 @@ int main(int argc, const char **argv)
   std::vector<vec3f> debugColors = {
     vec3f(-1.f), vec3f(0, 0, 0.2)
   };
-  std::vector<std::string> frameOpNames = {"depth"};
+  std::vector<std::string> frameOpNames = {"frame_depth"};
 
   std::vector<OSPObject> pixelPipeline = {toneMap, colorTweak, frameOpTest};
   OSPData pixelOpData =
@@ -109,12 +109,12 @@ int main(int argc, const char **argv)
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
-  glfwOSPRayWindow->setPixelOps(pixelOpData);
+  glfwOSPRayWindow->setImageOps(pixelOpData);
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     bool pipelineUpdated = false;
     // Draw the UI for the Pixel Operations
-    ImGui::Text("Pixel Operations");
+    ImGui::Text("Image Operations");
     for (size_t i = 0; i < pixelOps.size(); ++i) {
       ImGui::PushID(i);
 
@@ -143,7 +143,7 @@ int main(int argc, const char **argv)
     }
 
     if (ImGui::Button("Add Debug PixelOp")) {
-      OSPPixelOp op = ospNewPixelOp("debug");
+      OSPImageOp op = ospNewImageOp("debug");
       ospSetVec3f(op, "addColor", 0.0, 0.0, 0.0);
       ospCommit(op);
 
@@ -153,8 +153,8 @@ int main(int argc, const char **argv)
 
       pipelineUpdated = true;
     }
-    if (ImGui::Button("Add Tonemap PixelOp")) {
-      OSPPixelOp op = ospNewPixelOp("tonemapper");
+    if (ImGui::Button("Add Tonemap ImageOp")) {
+      OSPImageOp op = ospNewImageOp("tonemapper");
       ospCommit(op);
 
       pixelOps.push_back(op);
@@ -164,7 +164,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
 
-    if (!pixelOps.empty() && ImGui::Button("Remove PixelOp")) {
+    if (!pixelOps.empty() && ImGui::Button("Remove ImageOp")) {
       ospRelease(pixelOps.back());
       pixelOps.pop_back();
       enabledOps.pop_back();
@@ -189,7 +189,7 @@ int main(int argc, const char **argv)
     }
 
     if (ImGui::Button("Add Debug FrameOp")) {
-      OSPFrameOp op = ospNewFrameOp("debug");
+      OSPImageOp op = ospNewImageOp("frame_debug");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -199,7 +199,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Blur FrameOp")) {
-      OSPFrameOp op = ospNewFrameOp("blur");
+      OSPImageOp op = ospNewImageOp("frame_blur");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -209,7 +209,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Depth FrameOp")) {
-      OSPFrameOp op = ospNewFrameOp("depth");
+      OSPImageOp op = ospNewImageOp("frame_depth");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -241,7 +241,7 @@ int main(int argc, const char **argv)
 
       pixelOpData = ospNewData(enabled.size(), OSP_OBJECT, enabled.data());
       ospCommit(pixelOpData);
-      glfwOSPRayWindow->setPixelOps(pixelOpData);
+      glfwOSPRayWindow->setImageOps(pixelOpData);
     }
   });
 

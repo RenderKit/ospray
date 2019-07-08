@@ -1015,10 +1015,10 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(int size_x,
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPPixelOp ospNewPixelOp(const char *_type) OSPRAY_CATCH_BEGIN
+extern "C" OSPImageOp ospNewImageOp(const char *_type) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  Assert2(_type, "invalid render type identifier in ospNewPixelOp");
+  Assert2(_type, "invalid render type identifier in ospNewImageOp");
   int L      = strlen(_type);
   char *type = STACK_BUFFER(char, L + 1);
   for (int i = 0; i <= L; i++) {
@@ -1027,25 +1027,8 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type) OSPRAY_CATCH_BEGIN
       c = '_';
     type[i] = c;
   }
-  OSPPixelOp pixelOp = currentDevice().newPixelOp(type);
-  return pixelOp;
-}
-OSPRAY_CATCH_END(nullptr)
-
-extern "C" OSPFrameOp ospNewFrameOp(const char *_type) OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  Assert2(_type, "invalid render type identifier in ospNewFrameOp");
-  int L      = strlen(_type);
-  char *type = STACK_BUFFER(char, L + 1);
-  for (int i = 0; i <= L; i++) {
-    char c = _type[i];
-    if (c == '-' || c == ':')
-      c = '_';
-    type[i] = c;
-  }
-  OSPFrameOp frameOp = currentDevice().newFrameOp(type);
-  return frameOp;
+  OSPImageOp op = currentDevice().newImageOp(type);
+  return op;
 }
 OSPRAY_CATCH_END(nullptr)
 

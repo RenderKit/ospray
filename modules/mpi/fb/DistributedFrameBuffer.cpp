@@ -143,9 +143,10 @@ namespace ospray {
         throw std::runtime_error("Attempt to start frame on already started frame!");
       }
 
-      if (pixelOpData) {
-        std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
-            [](PixelOp *p) { p->beginFrame(); });
+      if (imageOpData) {
+        std::for_each(imageOpData->begin<ImageOp *>(),
+                      imageOpData->end<ImageOp *>(),
+                      [](ImageOp *p) { p->beginFrame(); });
       }
 
       lastProgressReport = std::chrono::high_resolution_clock::now();
@@ -447,9 +448,23 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpicommon::globalRank(),
                tile->begin.x,tile->begin.y));
 
-    if (pixelOpData) {
-      std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
-          [&](PixelOp *p) { p->postAccum(this, tile->final); });
+   if (imageOpData) {
+      std::for_each(imageOpData->begin<ImageOp *>(),
+                    imageOpData->begin<ImageOp *>() + firstFrameOperation,
+                    [&](ImageOp *iop) { 
+                      #if 0
+                      PixelOp *pop = dynamic_cast<PixelOp *>(iop);
+                      if (pop) {
+                        //p->postAccum(this, tile);
+                      }
+                      #endif
+                      TileOp *top = dynamic_cast<TileOp *>(iop);
+                      if (top) {
+                        top->process(this, tile->final);
+                      }
+                      // TODO: For now, frame operations must be last
+                      // in the pipeline
+                    });
     }
 
     // Write the final colors into the color buffer
@@ -882,9 +897,10 @@ namespace ospray {
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */
     } else {
-      if (pixelOpData) {
-        std::for_each(pixelOpData->begin<PixelOp*>(), pixelOpData->end<PixelOp*>(),
-            [](PixelOp *p) { p->endFrame(); });
+      if (imageOpData) {
+        std::for_each(imageOpData->begin<ImageOp *>(),
+                      imageOpData->end<ImageOp *>(),
+                      [](ImageOp *p) { p->endFrame(); });
       }
     }
 
@@ -892,6 +908,26 @@ namespace ospray {
 
     if (mpicommon::IamTheMaster()) // only refine on master
       frameVariance = tileErrorRegion.refine(errorThreshold);
+
+    // TODO: FrameOperations should just be run on the master process for now,
+    // but in the offload device the master process doesn't get any OSPData
+    // or pixel ops or etc. created, just the handles. So it doesn't even
+    // know about the frame operation to run
+    /*
+    if (localFBonMaster && imageOpData && firstFrameOperation < imageOpData->size())
+    {
+      FrameBufferView fbv(localFBonMaster.get(),
+                          colorBufferFormat,
+                          localFBonMaster->colorBuffer,
+                          localFBonMaster->depthBuffer,
+                          localFBonMaster->normalBuffer,
+                          localFBonMaster->albedoBuffer);
+
+      std::for_each(imageOpData->begin<FrameOp *>() + firstFrameOperation,
+                    imageOpData->end<FrameOp *>(),
+                    [&](FrameOp *f) { f->endFrame(fbv); });
+    }
+    */
 
     setCompletedEvent(OSP_FRAME_FINISHED);
   }

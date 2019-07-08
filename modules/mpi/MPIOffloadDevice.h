@@ -48,6 +48,9 @@ namespace ospray {
 
       int loadModule(const char *name) override;
 
+      /*! create a new imageOp object (out of list of registered imageOps) */
+      OSPImageOp newImageOp(const char *type) override;
+
       // OSPRay Data Arrays ///////////////////////////////////////////////////
 
       OSPData newData(size_t nitems,

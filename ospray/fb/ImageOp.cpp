@@ -14,19 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray
-#include "PixelOp.h"
+#include "ImageOp.h"
 #include "common/Util.h"
 
 namespace ospray {
 
-  PixelOp *PixelOp::createInstance(const char *type)
+  ImageOp *ImageOp::createInstance(const char *type)
   {
-    return createInstanceHelper<PixelOp, OSP_PIXEL_OP>(type);
+    return createInstanceHelper<ImageOp, OSP_IMAGE_OP>(type);
   }
 
+  std::string ImageOp::toString() const
+  {
+    return "ospray::ImageOp(base class)";
+  }
+
+#if 0
   std::string PixelOp::toString() const
   {
     return "ospray::PixelOp(base class)";
   }
+#endif
+
+  std::string TileOp::toString() const
+  {
+    return "ospray::TileOp(base class)";
+  }
 }
+

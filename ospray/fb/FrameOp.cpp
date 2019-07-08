@@ -34,17 +34,12 @@ namespace ospray {
       albedoBuffer(albedoBuffer)
   {}
 
-  FrameOp *FrameOp::createInstance(const char *type)
-  {
-    return createInstanceHelper<FrameOp, OSP_FRAME_OP>(type);
-  }
-
   std::string FrameOp::toString() const
   {
     return "ospray::FrameOp(base class)";
   }
 
-  void DebugFrameOp::endFrame(FrameBufferView &fb)
+  void DebugFrameOp::process(FrameBufferView &fb)
   {
     if (!fb.colorBuffer) {
       static WarnOnce warn(toString() + " requires color data but the "
@@ -73,7 +68,7 @@ namespace ospray {
     return "ospray::DebugFrameOp";
   }
 
-  void BlurFrameOp::endFrame(FrameBufferView &fb)
+  void BlurFrameOp::process(FrameBufferView &fb)
   {
     if (!fb.colorBuffer) {
       static WarnOnce warn(toString() + " requires color data but the "
@@ -97,7 +92,7 @@ namespace ospray {
   }
 
 
-  void DepthFrameOp::endFrame(FrameBufferView &fb)
+  void DepthFrameOp::process(FrameBufferView &fb)
   {
     if (!fb.colorBuffer || !fb.depthBuffer) {
       static WarnOnce warn(toString() + " requires color and depth data but "
@@ -147,8 +142,8 @@ namespace ospray {
     return "ospray::DepthFrameOp";
   }
 
-  OSP_REGISTER_FRAME_OP(DebugFrameOp, debug);
-  OSP_REGISTER_FRAME_OP(BlurFrameOp, blur);
-  OSP_REGISTER_FRAME_OP(DepthFrameOp, depth);
+  OSP_REGISTER_IMAGE_OP(DebugFrameOp, frame_debug);
+  OSP_REGISTER_IMAGE_OP(BlurFrameOp, frame_blur);
+  OSP_REGISTER_IMAGE_OP(DepthFrameOp, frame_depth);
 }
 

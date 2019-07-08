@@ -18,6 +18,7 @@
 
 #include "ospcommon/tasking/parallel_for.h"
 #include "common/Managed.h"
+#include "ImageOp.h"
 
 namespace ospray {
 
@@ -57,42 +58,28 @@ namespace ospray {
   };
 
   /*! TODO docs */
-  struct OSPRAY_SDK_INTERFACE FrameOp : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
   {
     virtual ~FrameOp() override = default;
 
     /*! TODO docs */
-    virtual void endFrame(FrameBufferView &fb) {}
+    virtual void process(FrameBufferView &) = 0;
 
     //! \brief common function to help printf-debugging
     /*! Every derived class should override this! */
     virtual std::string toString() const override;
-
-    static FrameOp *createInstance(const char *type);
   };
-
-  /*! \brief registers a internal ospray::<ClassName> renderer under
-      the externally accessible name "external_name"
-
-      \internal This currently works by defining a extern "C" function
-      with a given predefined name that creates a new instance of this
-      frameop. By having this symbol in the shared lib ospray can
-      later on always get a handle to this fct and create an instance
-      of this frameop.
-  */
-#define OSP_REGISTER_FRAME_OP(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(FrameOp, frame_op, InternalClass, external_name)
 
 
   struct OSPRAY_SDK_INTERFACE DebugFrameOp : public FrameOp {
-    void endFrame(FrameBufferView &fb) override;
+    void process(FrameBufferView &fb) override;
 
     std::string toString() const override;
   };
 
   // The blur frame op is a test which applies a Gaussian blur to the frame
   struct OSPRAY_SDK_INTERFACE BlurFrameOp : public FrameOp {
-    void endFrame(FrameBufferView &fb) override;
+    void process(FrameBufferView &fb) override;
     template<typename T>
     void applyBlur(FrameBufferView &fb, T *color);
 
@@ -162,7 +149,7 @@ namespace ospray {
 
   //! Depth frameop replaces the color data with a normalized depth buffer img
   struct OSPRAY_SDK_INTERFACE DepthFrameOp : public FrameOp {
-    void endFrame(FrameBufferView &fb) override;
+    void process(FrameBufferView &fb) override;
 
     std::string toString() const override;
   };

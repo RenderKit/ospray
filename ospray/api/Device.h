@@ -163,8 +163,9 @@ namespace ospray {
       virtual void setBox4f(OSPObject object,
                             const char *bufName,
                             const box4f &v) = 0;
-      /*! create a new frameOp object (out of list of registered frameOps) */
-      virtual OSPFrameOp newFrameOp(const char *type) = 0;
+
+      /*! create a new imageOp object (out of list of registered imageOps) */
+      virtual OSPImageOp newImageOp(const char *type) = 0;
 
       /*! create a new geometry object (out of list of registered geometries) */
       virtual OSPGeometry newGeometry(const char *type) = 0;
