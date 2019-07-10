@@ -60,26 +60,22 @@ int main(int argc, const char **argv)
   // create the model that will contain our actual volume
   OSPVolumetricModel volumeModel = ospNewVolumetricModel(amrVolume);
   ospSetObject(volumeModel, "transferFunction", tf);
-  ospSetFloat(volumeModel, "samplingRate", 10.f);
   ospCommit(volumeModel);
 
   // create a data array of all models for the instance
   OSPData volumeModels = ospNewData(1, OSP_OBJECT, &volumeModel);
   ospSetObject(instance, "volumes", volumeModels);
   ospCommit(instance);
-  ospRelease(volumeModels);
 
   // create a data array of all instances for the world
   OSPData volumeInstances = ospNewData(1, OSP_OBJECT, &instance);
   ospSetData(world, "instances", volumeInstances);
-  ospRelease(volumeInstances);
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);
-  ospRelease(lightsData);
 
   ospCommit(renderer);
 
@@ -93,8 +89,30 @@ int main(int argc, const char **argv)
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
       new GLFWOSPRayWindow(vec2i{1024, 768}, bounds, world, renderer));
 
+  // ImGui
+
+  glfwOSPRayWindow->registerImGuiCallback([&]() {
+    bool update = false;
+
+    static float samplingRate = 0.5f;
+    if(ImGui::SliderFloat("samplingRate", &samplingRate, 1e-3, 16.f)) {
+      update = true;
+      ospSetFloat(volumeModel, "samplingRate", samplingRate);
+      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+    }
+
+    if (update) {
+      glfwOSPRayWindow->addObjectToCommit(instance);
+      glfwOSPRayWindow->addObjectToCommit(world);
+    }
+  });
+
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
+
+  ospRelease(lightsData);
+  ospRelease(volumeModels);
+  ospRelease(volumeInstances);
 
   // cleanly shut OSPRay down
   ospShutdown();
