@@ -136,7 +136,7 @@ namespace ospray {
               } else {
                 blockBounds.push_back(box);
                 refinementLevels.push_back(level);
-                cellWidths.reserve(level + 1);
+                cellWidths.resize(std::max(cellWidths.size(), (size_t)level + 1));
                 cellWidths[level] = dt;
                 brickData.push_back(data);
                 numWritten++;
@@ -179,11 +179,17 @@ namespace ospray {
       osp << "  <clamp>0 100000</clamp>" << std::endl;
       osp << "</AMRVolume>" << std::endl;
 
+      size_t numBlockBounds      = blockBounds.size(),
+             numRefinementLevels = refinementLevels.size(),
+             numCellWidths       = cellWidths.size();
+      fwrite(&numBlockBounds, sizeof(size_t), 1, infoOut);
       fwrite(blockBounds.data(), sizeof(box3i), blockBounds.size(), infoOut);
+      fwrite(&numRefinementLevels, sizeof(size_t), 1, infoOut);
       fwrite(refinementLevels.data(),
              sizeof(int),
              refinementLevels.size(),
              infoOut);
+      fwrite(&numCellWidths, sizeof(size_t), 1, infoOut);
       fwrite(cellWidths.data(), sizeof(float), cellWidths.size(), infoOut);
 
       for (auto &data : brickData) {
