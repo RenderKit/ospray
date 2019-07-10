@@ -33,17 +33,16 @@ namespace ospray {
       GravitySpheresVolume()           = default;
       ~GravitySpheresVolume() override = default;
 
-      std::vector<float> generateVoxels() const;
+      std::vector<float> generateVoxels(const size_t numPoints=10) const;
       OSPTestingVolume createVolume() const override;
 
      protected:
       size_t volumeDimension{256};
-      size_t numPoints{10};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    std::vector<float> GravitySpheresVolume::generateVoxels() const
+    std::vector<float> GravitySpheresVolume::generateVoxels(const size_t numPoints) const
     {
       struct Point
       {
@@ -163,19 +162,19 @@ namespace ospray {
     OSPTestingVolume GravitySpheresAMRVolume::createVolume() const
     {
       // generate the structured volume voxel data
-      std::vector<float> voxels = generateVoxels();
+      std::vector<float> voxels = generateVoxels(20);
 
       // initialize constants for converting to AMR
       vec3f volumeDims(volumeDimension, volumeDimension, volumeDimension);
-      const int numLevels       = 5;
-      const int blockSize       = 4;
-      const int refinementLevel = 2;
-      const float threshold     = 2.5;
+      const int numLevels       = 2;
+      const int blockSize       = 16;
+      const int refinementLevel = 4;
+      const float threshold     = 1.0;
 
       std::vector<box3i> blockBounds;
       std::vector<int> refinementLevels;
       std::vector<float> cellWidths;
-      std::vector<std::vector<float>> blockVectors;
+      std::vector<std::vector<float>> blockDataVectors;
       std::vector<OSPData> blockData;
 
       // convert the structured volume to AMR
@@ -188,9 +187,9 @@ namespace ospray {
                            blockBounds,
                            refinementLevels,
                            cellWidths,
-                           blockVectors);
+                           blockDataVectors);
 
-      for (const std::vector<float> &bd : blockVectors) {
+      for (const std::vector<float> &bd : blockDataVectors) {
         OSPData data =
             ospNewData(bd.size(), OSP_FLOAT, bd.data(), OSP_DATA_SHARED_BUFFER);
         blockData.push_back(data);
@@ -229,10 +228,12 @@ namespace ospray {
 
       ospCommit(volume);
 
+      float ub = std::pow((float)refinementLevel, (float)numLevels + 1);
+
       OSPTestingVolume retval;
       retval.volume     = volume;
-      retval.voxelRange = osp_vec2f{0, 10};
-      retval.bounds     = osp_box3f{osp_vec3f{0, 0, 0}, osp_vec3f{16, 16, 16}};
+      retval.voxelRange = osp_vec2f{0, 100};
+      retval.bounds     = osp_box3f{osp_vec3f{0, 0, 0}, osp_vec3f{ub, ub, ub}};
 
       return retval;
     }
