@@ -104,10 +104,14 @@ int main(int argc, const char **argv)
   ospCommit(pixelOpData);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
-  // frame buffer and camera directly
+  // frame buffer and camera directly. We'll want albedo and normals for
+  // the denoising op
+  const uint32_t fbChannels = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM
+                              | OSP_FB_ALBEDO | OSP_FB_NORMAL;
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
+          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer,
+          OSP_FB_RGBA32F, fbChannels));
 
   glfwOSPRayWindow->setImageOps(pixelOpData);
 

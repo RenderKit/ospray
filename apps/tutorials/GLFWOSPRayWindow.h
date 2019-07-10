@@ -32,7 +32,12 @@ class GLFWOSPRayWindow
   GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                    const ospcommon::box3f &worldBounds,
                    OSPWorld world,
-                   OSPRenderer renderer);
+                   OSPRenderer renderer,
+                   OSPFrameBufferFormat fbFormat = OSP_FB_SRGBA,
+                   uint32_t fbChannels = OSP_FB_COLOR
+                                         | OSP_FB_DEPTH
+                                         | OSP_FB_ACCUM
+                                         | OSP_FB_ALBEDO);
 
   ~GLFWOSPRayWindow();
 
@@ -76,6 +81,8 @@ class GLFWOSPRayWindow
   OSPRenderer renderer = nullptr;
 
   bool showAlbedo{false};
+  OSPFrameBufferFormat fbFormat;
+  uint32_t fbChannels;
 
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;

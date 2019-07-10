@@ -28,11 +28,14 @@ static bool g_quitNextFrame = false;
 GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                                    const ospcommon::box3f &worldBounds,
                                    OSPWorld world,
-                                   OSPRenderer renderer)
-    : windowSize(windowSize),
-      worldBounds(worldBounds),
-      world(world),
-      renderer(renderer)
+                                   OSPRenderer renderer,
+                                   OSPFrameBufferFormat fbFormat,
+                                   uint32_t fbChannels)
+  : worldBounds(worldBounds),
+    world(world),
+    renderer(renderer),
+    fbFormat(fbFormat),
+    fbChannels(fbChannels)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -236,10 +239,8 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   // create new frame buffer
   framebuffer = ospNewFrameBuffer(windowSize.x,
                                   windowSize.y,
-                                  //OSP_FB_SRGBA,
-                                  OSP_FB_RGBA32F,
-                                  OSP_FB_COLOR | OSP_FB_DEPTH
-                                  | OSP_FB_ACCUM | OSP_FB_ALBEDO);
+                                  fbFormat,
+                                  fbChannels);
 
   if (imageOps) {
     ospSetData(framebuffer, "imageOps", imageOps);
@@ -362,18 +363,18 @@ void GLFWOSPRayWindow::display()
     auto *fb = ospMapFrameBuffer(framebuffer,
                                  showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
+    const GLint glFormat = showAlbedo ? GL_RGB : GL_RGBA;
+    const GLenum glType =
+      showAlbedo || fbFormat == OSP_FB_RGBA32F ? GL_FLOAT : GL_UNSIGNED_BYTE;
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
                  0,
-                 GL_RGBA,
-                 //showAlbedo ? GL_RGB : GL_RGBA,
+                 glFormat,
                  windowSize.x,
                  windowSize.y,
                  0,
-                 GL_RGBA,
-                 //showAlbedo ? GL_RGB : GL_RGBA,
-                 GL_FLOAT,
-                 //showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE,
+                 glFormat,
+                 glType,
                  fb);
 
     ospUnmapFrameBuffer(fb, framebuffer);
