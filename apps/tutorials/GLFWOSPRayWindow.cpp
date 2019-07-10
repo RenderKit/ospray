@@ -78,7 +78,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   glfwSetCursorPosCallback(glfwWindow, [](GLFWwindow *, double x, double y) {
     ImGuiIO &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse) {
+    if (!activeWindow->showUi || !io.WantCaptureMouse) {
       activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
     }
   });
