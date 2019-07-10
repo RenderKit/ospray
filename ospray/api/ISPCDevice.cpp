@@ -27,7 +27,6 @@
 #include "fb/LocalFB.h"
 #include "geometry/GeometricModel.h"
 #include "fb/ImageOp.h"
-#include "geometry/GeometryInstance.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/RenderTask.h"
@@ -333,11 +332,6 @@ namespace ospray {
       object->setParam(bufName, v);
     }
 
-    OSPImageOp ISPCDevice::newImageOp(const char *type)
-    {
-      return (OSPImageOp)ImageOp::createInstance(type);
-    }
-
     void ISPCDevice::setBox3f(OSPObject _object,
                               const char *bufName,
                               const box3f &v)
@@ -435,9 +429,9 @@ namespace ospray {
       return (OSPFrameBuffer)fb;
     }
 
-    OSPPixelOp ISPCDevice::newPixelOp(const char *type)
+    OSPImageOp ISPCDevice::newImageOp(const char *type)
     {
-      return (OSPPixelOp)PixelOp::createInstance(type);
+      return (OSPImageOp)ImageOp::createInstance(type);
     }
 
     const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,

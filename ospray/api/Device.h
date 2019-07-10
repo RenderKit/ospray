@@ -164,12 +164,6 @@ namespace ospray {
                             const char *bufName,
                             const box4f &v) = 0;
 
-      /*! create a new imageOp object (out of list of registered imageOps) */
-      virtual OSPImageOp newImageOp(const char *type) = 0;
-
-      /*! create a new geometry object (out of list of registered geometries) */
-      virtual OSPGeometry newGeometry(const char *type) = 0;
-
       virtual void setBox4i(OSPObject object,
                             const char *bufName,
                             const box4i &v) = 0;
@@ -198,7 +192,7 @@ namespace ospray {
                                                const OSPFrameBufferFormat mode,
                                                const uint32 channels) = 0;
 
-      virtual OSPPixelOp newPixelOp(const char *type) = 0;
+      virtual OSPImageOp newImageOp(const char *type) = 0;
 
       virtual const void *frameBufferMap(OSPFrameBuffer fb,
                                          const OSPFrameBufferChannel) = 0;

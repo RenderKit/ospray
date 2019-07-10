@@ -102,20 +102,9 @@ namespace ospray {
 
   // Helper functions /////////////////////////////////////////////////////////
 
-  template<typename T>
-  inline typename std::enable_if<std::is_pointer<T>::value>::type
-  Data::validateType() const
-  {
-    if (!isManagedObject(type))
-    {
-      throw std::runtime_error("Data::validateType<T>: Invalid conversion of "
-          "non-OSP_OBJECT data to " + typeString<T>());
-    }
-  }
-
   inline std::vector<void *> createArrayOfIE(Data &data)
   {
-    if (!isManagedObject(type))
+    if (!isManagedObject(data.type))
       throw std::runtime_error("cannot createArrayOfIE() with non OSP_OBJECT!");
 
     std::vector<void *> retval;

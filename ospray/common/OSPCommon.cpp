@@ -142,7 +142,6 @@ namespace ospray {
     case OSP_TRANSFER_FUNCTION:
     case OSP_VOLUME:
     case OSP_VOLUMETRIC_MODEL:
-    case OSP_VOLUME_INSTANCE:
     case OSP_IMAGE_OP:
     case OSP_WORLD:
     case OSP_INSTANCE:
@@ -243,7 +242,6 @@ namespace ospray {
     case OSP_TRANSFER_FUNCTION: return "transfer_function";
     case OSP_VOLUME:            return "volume";
     case OSP_VOLUMETRIC_MODEL:  return "volumetric_model";
-    case OSP_VOLUME_INSTANCE:   return "volume_instance";
     case OSP_IMAGE_OP:          return "image_op";
     case OSP_STRING:            return "string";
     case OSP_CHAR:              return "char";
@@ -357,7 +355,7 @@ namespace ospray {
       dtype == OSP_DATA ||
       dtype == OSP_FRAMEBUFFER ||
       dtype == OSP_GEOMETRY ||
-      dtype == OSP_GEOMETRY_INSTANCE ||
+      dtype == OSP_GEOMETRIC_MODEL ||
       dtype == OSP_LIGHT ||
       dtype == OSP_MATERIAL ||
       dtype == OSP_WORLD ||
@@ -365,7 +363,8 @@ namespace ospray {
       dtype == OSP_TEXTURE ||
       dtype == OSP_TRANSFER_FUNCTION ||
       dtype == OSP_VOLUME ||
-      dtype == OSP_VOLUME_INSTANCE ||
+      dtype == OSP_VOLUMETRIC_MODEL ||
+      dtype == OSP_INSTANCE ||
       dtype == OSP_IMAGE_OP;
   }
 
