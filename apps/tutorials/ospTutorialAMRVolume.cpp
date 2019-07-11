@@ -46,9 +46,6 @@ int main(int argc, const char **argv)
   // create the world
   OSPWorld world = ospNewWorld();
 
-  // create the instance that will contain our volume model
-  OSPInstance instance = ospNewInstance();
-
   // generate an AMR volume
   OSPTestingVolume testData = ospTestingNewVolume("gravity_spheres_amr_volume");
 
@@ -62,14 +59,19 @@ int main(int argc, const char **argv)
   ospSetObject(volumeModel, "transferFunction", tf);
   ospCommit(volumeModel);
 
-  // create a data array of all models for the instance
-  OSPData volumeModels = ospNewData(1, OSP_OBJECT, &volumeModel);
-  ospSetObject(instance, "volumes", volumeModels);
+  OSPGroup group = ospNewGroup();
+  OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
+  ospSetData(group, "volumes", volumes);
+  ospRelease(volumes);
+  ospCommit(group);
+
+  OSPInstance instance = ospNewInstance(group);
   ospCommit(instance);
 
   // create a data array of all instances for the world
   OSPData volumeInstances = ospNewData(1, OSP_OBJECT, &instance);
   ospSetData(world, "instances", volumeInstances);
+  ospRelease(volumeInstances);
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
@@ -111,8 +113,6 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   ospRelease(lightsData);
-  ospRelease(volumeModels);
-  ospRelease(volumeInstances);
 
   // cleanly shut OSPRay down
   ospShutdown();
