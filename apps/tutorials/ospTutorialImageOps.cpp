@@ -222,6 +222,8 @@ int main(int argc, const char **argv)
 
       pipelineUpdated = true;
     }
+
+#ifdef OSPRAY_ENABLE_DENOISER
     if (ImGui::Button("Add Denoise FrameOp")) {
       OSPImageOp op = ospNewImageOp("frame_denoise");
       ospCommit(op);
@@ -232,6 +234,7 @@ int main(int argc, const char **argv)
 
       pipelineUpdated = true;
     }
+#endif
 
     if (!frameOps.empty() && ImGui::Button("Remove FrameOp")) {
       ospRelease(frameOps.back());

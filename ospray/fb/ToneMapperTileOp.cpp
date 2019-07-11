@@ -14,14 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ToneMapperPixelOp.h"
-#include "ToneMapperPixelOp_ispc.h"
+#include "ToneMapperTileOp.h"
+#include "ToneMapperTileOp_ispc.h"
 
 using namespace ospcommon;
 
 namespace ospray {
 
-  void ToneMapperPixelOp::commit()
+  void ToneMapperTileOp::commit()
   {
     ImageOp::commit();
 
@@ -36,11 +36,11 @@ namespace ospray {
     const float aces_midOut   = 0.18f;
     const float aces_hdrMax   = 11.0785f;
 
-    a        = max(getParam1f("contrast", aces_contrast), 0.0001f);
-    float d        = clamp(getParam1f("shoulder", aces_shoulder), 0.0001f, 1.f);
-    float m        = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
-    float n        = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
-    float w        = max(getParam1f("hdrMax", aces_hdrMax), 1.f);
+    a         = max(getParam1f("contrast", aces_contrast), 0.0001f);
+    float d   = clamp(getParam1f("shoulder", aces_shoulder), 0.0001f, 1.f);
+    float m   = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
+    float n   = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
+    float w   = max(getParam1f("hdrMax", aces_hdrMax), 1.f);
     acesColor = getParam1b("acesColor", true);
 
     // Solve b and c
@@ -58,35 +58,35 @@ namespace ospray {
             0.f);
   }
 
-  std::unique_ptr<LiveImageOp> ToneMapperPixelOp::attach(FrameBufferView &fbView)
+  std::unique_ptr<LiveImageOp> ToneMapperTileOp::attach(FrameBufferView &fbView)
   {
-    void *ispcEquiv = ispc::ToneMapperPixelOp_create();
-    ispc::ToneMapperPixelOp_set(
+    void *ispcEquiv = ispc::ToneMapperTileOp_create();
+    ispc::ToneMapperTileOp_set(
         ispcEquiv, exposure, a, b, c, d, acesColor);
-    return make_unique<LiveToneMapperPixelOp>(fbView, ispcEquiv);
+    return ospcommon::make_unique<LiveToneMapperTileOp>(fbView, ispcEquiv);
   }
 
-  std::string ToneMapperPixelOp::toString() const
+  std::string ToneMapperTileOp::toString() const
   {
-    return "ospray::ToneMapperPixelOp";
+    return "ospray::ToneMapperTileOp";
   }
 
-  LiveToneMapperPixelOp::LiveToneMapperPixelOp(FrameBufferView &fbView,
+  LiveToneMapperTileOp::LiveToneMapperTileOp(FrameBufferView &fbView,
                                                void *ispcEquiv)
     : LiveTileOp(fbView),
     ispcEquiv(ispcEquiv)
   {}
 
-  LiveToneMapperPixelOp::~LiveToneMapperPixelOp()
+  LiveToneMapperTileOp::~LiveToneMapperTileOp()
   {
     // TODO WILL: Release the ISPC equiv
   }
 
-  void LiveToneMapperPixelOp::process(Tile &tile)
+  void LiveToneMapperTileOp::process(Tile &tile)
   {
-    ToneMapperPixelOp_apply(ispcEquiv, (ispc::Tile &)tile);
+    ToneMapperTileOp_apply(ispcEquiv, (ispc::Tile &)tile);
   }
 
-  OSP_REGISTER_IMAGE_OP(ToneMapperPixelOp, tonemapper);
+  OSP_REGISTER_IMAGE_OP(ToneMapperTileOp, tonemapper);
 
 }  // namespace ospray

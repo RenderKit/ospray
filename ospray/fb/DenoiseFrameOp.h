@@ -17,11 +17,12 @@
 #pragma once
 
 #include <OpenImageDenoise/oidn.h>
-#include "FrameOp.h"
+#include "ImageOp.h"
 #include "FrameBuffer.h"
 
 namespace ospray {
 
+  // TODO: Move this to a packaged module
   struct OSPRAY_SDK_INTERFACE DenoiseFrameOp : public ImageOp {
     DenoiseFrameOp();
 

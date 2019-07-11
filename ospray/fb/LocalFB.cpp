@@ -18,7 +18,6 @@
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
 #include "ImageOp.h"
-#include "FrameOp.h"
 
 namespace ospray {
 

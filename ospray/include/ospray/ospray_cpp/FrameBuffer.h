@@ -17,7 +17,6 @@
 #pragma once
 
 #include "World.h"
-#include "PixelOp.h"
 #include "Renderer.h"
 
 namespace ospray {

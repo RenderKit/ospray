@@ -27,7 +27,7 @@
 #include "ospray_cpp/Instance.h"
 #include "ospray_cpp/Light.h"
 #include "ospray_cpp/Material.h"
-#include "ospray_cpp/PixelOp.h"
+#include "ospray_cpp/ImageOp.h"
 #include "ospray_cpp/Renderer.h"
 #include "ospray_cpp/Texture.h"
 #include "ospray_cpp/TransferFunction.h"

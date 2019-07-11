@@ -14,7 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "fb/FrameOp.h"
 #include "FrameBuffer.h"
 #include "FrameBuffer_ispc.h"
 

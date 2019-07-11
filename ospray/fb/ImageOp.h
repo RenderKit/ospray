@@ -102,16 +102,19 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE TileOp : public ImageOp
   {
+    virtual ~TileOp() {}
   };
 
   struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
   {
+    virtual ~FrameOp() {}
     virtual vec2i haloSize() { return vec2i(0); }
   };
 
   struct OSPRAY_SDK_INTERFACE LiveTileOp : public LiveImageOp
   {
     LiveTileOp(FrameBufferView &fbView);
+    virtual ~LiveTileOp() {}
 
     /*! called right after the tile got accumulated; i.e., the
       tile's RGBA values already contain the accu-buffer blended
@@ -124,6 +127,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveImageOp
   {
     LiveFrameOp(FrameBufferView &fbView);
+    virtual ~LiveFrameOp() {}
 
     virtual void process() = 0;
   };

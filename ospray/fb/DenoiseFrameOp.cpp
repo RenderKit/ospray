@@ -24,7 +24,6 @@
 #include <chrono>
 #include <iostream>
 
-#include "FrameOp.h"
 #include "DenoiseFrameOp.h"
 
 namespace ospray {
@@ -177,7 +176,7 @@ namespace ospray {
       throw std::runtime_error("DenoiseFrameOp must be used with an RGBA32F "
           "color format framebuffer!");
 
-    return make_unique<LiveDenoiseFrameOp>(fbView, device);
+    return ospcommon::make_unique<LiveDenoiseFrameOp>(fbView, device);
   }
 
   std::string DenoiseFrameOp::toString() const

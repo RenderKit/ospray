@@ -1,4 +1,4 @@
-#include "DebugPixelOp.h"
+#include "DebugTileOp.h"
 #include <array>
 #include "ospcommon/utility/SaveImage.h"
 
@@ -12,7 +12,7 @@ namespace ospray {
 
   std::unique_ptr<LiveImageOp> DebugTileOp::attach(FrameBufferView &fbView)
   {
-    return make_unique<LiveDebugTileOp>(fbView, prefix, addColor);
+    return ospcommon::make_unique<LiveDebugTileOp>(fbView, prefix, addColor);
   }
 
   std::string DebugTileOp::toString() const

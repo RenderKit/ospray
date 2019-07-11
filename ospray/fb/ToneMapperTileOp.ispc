@@ -20,7 +20,7 @@
 
 // Based on the generic filmic tone mapping operator from
 // [Lottes, 2016, "Advanced Techniques and Optimization of HDR Color Pipelines"]
-struct ToneMapperPixelOp
+struct ToneMapperTileOp
 {
   uniform float exposure;    // linear exposure adjustment
   uniform float a, b, c, d;  // coefficients
@@ -41,7 +41,7 @@ static const uniform LinearSpace3f acesOutputMat = {
     {-0.5310794927, 1.1081322801, -0.0727552477},
     {-0.0736720338, -0.0060518756, 1.0760219533}};
 
-inline vec3f toneMap(const ToneMapperPixelOp *uniform self, const vec3f &col)
+inline vec3f toneMap(const ToneMapperTileOp *uniform self, const vec3f &col)
 {
   vec3f x = col * self->exposure;
   if (self->acesColor)
@@ -53,9 +53,9 @@ inline vec3f toneMap(const ToneMapperPixelOp *uniform self, const vec3f &col)
   return x;
 }
 
-export void *uniform ToneMapperPixelOp_create()
+export void *uniform ToneMapperTileOp_create()
 {
-  ToneMapperPixelOp *uniform self = uniform new uniform ToneMapperPixelOp;
+  ToneMapperTileOp *uniform self = uniform new uniform ToneMapperTileOp;
   self->exposure                  = 1.f;
   self->a                         = 1.f;
   self->b                         = 1.f;
@@ -65,7 +65,7 @@ export void *uniform ToneMapperPixelOp_create()
   return self;
 }
 
-export void ToneMapperPixelOp_set(void *uniform _self,
+export void ToneMapperTileOp_set(void *uniform _self,
                                   uniform float exposure,
                                   uniform float a,
                                   uniform float b,
@@ -73,7 +73,7 @@ export void ToneMapperPixelOp_set(void *uniform _self,
                                   uniform float d,
                                   uniform bool acesColor)
 {
-  ToneMapperPixelOp *uniform self = (ToneMapperPixelOp * uniform) _self;
+  ToneMapperTileOp *uniform self = (ToneMapperTileOp * uniform) _self;
   self->exposure                  = exposure;
   self->a                         = a;
   self->b                         = b;
@@ -82,11 +82,11 @@ export void ToneMapperPixelOp_set(void *uniform _self,
   self->acesColor                 = acesColor;
 }
 
-export void ToneMapperPixelOp_apply(const void *uniform _self,
+export void ToneMapperTileOp_apply(const void *uniform _self,
                                     uniform Tile &tile)
 {
-  const ToneMapperPixelOp *uniform self =
-      (const ToneMapperPixelOp *uniform)_self;
+  const ToneMapperTileOp *uniform self =
+      (const ToneMapperTileOp *uniform)_self;
   VaryingTile *uniform varyTile = (VaryingTile * uniform) & tile;
 
   for (uniform uint32 iy = 0; iy < TILE_SIZE; iy++) {

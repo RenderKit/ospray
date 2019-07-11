@@ -20,9 +20,6 @@ mark_as_advanced(EXP_NEW_BB_VOLUME_KERNELS)
 
 ospray_build_component(ospcommon)
 
-option(OSPRAY_ENABLE_DENOISER
-       "Enable the Denoiser FrameOp for denoising (requires OIDN)" OFF)
-
 if (OSPRAY_ENABLE_DENOISER)
   find_package(OpenImageDenoise 0.9 REQUIRED)
 endif()
@@ -50,7 +47,7 @@ set(OSPRAY_SOURCES
   include/ospray/ospray_cpp/Light.h
   include/ospray/ospray_cpp/ManagedObject.h
   include/ospray/ospray_cpp/Material.h
-  include/ospray/ospray_cpp/PixelOp.h
+  include/ospray/ospray_cpp/ImageOp.h
   include/ospray/ospray_cpp/Renderer.h
   include/ospray/ospray_cpp/Texture.h
   include/ospray/ospray_cpp/TransferFunction.h
@@ -83,10 +80,10 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/ImageOp.cpp
-  fb/FrameOp.cpp
-  fb/ToneMapperPixelOp.cpp
-  fb/ToneMapperPixelOp.ispc
-  fb/DebugPixelOp.cpp
+  fb/FrameOpExamples.cpp
+  fb/ToneMapperTileOp.cpp
+  fb/ToneMapperTileOp.ispc
+  fb/DebugTileOp.cpp
   fb/Tile.h
   fb/TileError.cpp
 

@@ -21,7 +21,7 @@
 namespace ospray {
 
   /*! \brief Generic tone mapping operator approximating ACES by default. */
-  struct OSPRAY_SDK_INTERFACE ToneMapperPixelOp : public TileOp
+  struct OSPRAY_SDK_INTERFACE ToneMapperTileOp : public TileOp
   {
     void commit() override;
 
@@ -35,11 +35,11 @@ namespace ospray {
     float exposure;
   };
 
-  struct OSPRAY_SDK_INTERFACE LiveToneMapperPixelOp : public LiveTileOp {
-    LiveToneMapperPixelOp(FrameBufferView &fbView,
+  struct OSPRAY_SDK_INTERFACE LiveToneMapperTileOp : public LiveTileOp {
+    LiveToneMapperTileOp(FrameBufferView &fbView,
                           void *ispcEquiv);
 
-    ~LiveToneMapperPixelOp();
+    ~LiveToneMapperTileOp() override;
 
     void process(Tile &t) override;
 

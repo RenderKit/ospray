@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "common/Util.h"
 #include "FrameBuffer.h"
-#include "FrameOp.h"
+#include "FrameOpExamples.h"
 
 namespace ospray {
 
@@ -29,7 +29,7 @@ namespace ospray {
       throw std::runtime_error(toString() + " cannot be attached to framebuffer "
                                "which does not have color data");
     }
-    return make_unique<LiveDebugFrameOp>(fbView);
+    return ospcommon::make_unique<LiveDebugFrameOp>(fbView);
   }
 
   std::string DebugFrameOp::toString() const
@@ -71,9 +71,9 @@ namespace ospray {
     if (fbView.colorBufferFormat == OSP_FB_RGBA8
         || fbView.colorBufferFormat == OSP_FB_SRGBA)
     {
-      return make_unique<LiveBlurFrameOp<uint8_t>>(fbView);
+      return ospcommon::make_unique<LiveBlurFrameOp<uint8_t>>(fbView);
     }
-    return make_unique<LiveBlurFrameOp<float>>(fbView);
+    return ospcommon::make_unique<LiveBlurFrameOp<float>>(fbView);
   }
 
   std::string BlurFrameOp::toString() const
@@ -89,7 +89,7 @@ namespace ospray {
       throw std::runtime_error(toString() + " requires color and depth but "
                                "the framebuffer does not have these channels");
     }
-    return make_unique<LiveDepthFrameOp>(fbView);
+    return ospcommon::make_unique<LiveDepthFrameOp>(fbView);
   }
 
   std::string DepthFrameOp::toString() const
