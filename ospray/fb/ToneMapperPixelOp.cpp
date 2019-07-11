@@ -21,16 +21,11 @@ using namespace ospcommon;
 
 namespace ospray {
 
-  ToneMapperPixelOp::ToneMapperPixelOp()
-  {
-    ispcEquivalent = ispc::ToneMapperPixelOp_create();
-  }
-
   void ToneMapperPixelOp::commit()
   {
-    TileOp::commit();
+    ImageOp::commit();
 
-    float exposure = getParam1f("exposure", 1.f);
+    exposure = getParam1f("exposure", 1.f);
     // Default parameters fitted to the ACES 1.0 grayscale curve
     // (RRT.a1.0.3 + ODT.Academy.Rec709_100nits_dim.a1.0.3)
     // We included exposure adjustment to match 18% middle gray
@@ -41,15 +36,15 @@ namespace ospray {
     const float aces_midOut   = 0.18f;
     const float aces_hdrMax   = 11.0785f;
 
-    float a        = max(getParam1f("contrast", aces_contrast), 0.0001f);
+    a        = max(getParam1f("contrast", aces_contrast), 0.0001f);
     float d        = clamp(getParam1f("shoulder", aces_shoulder), 0.0001f, 1.f);
     float m        = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
     float n        = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
     float w        = max(getParam1f("hdrMax", aces_hdrMax), 1.f);
-    bool acesColor = getParam1b("acesColor", true);
+    acesColor = getParam1b("acesColor", true);
 
     // Solve b and c
-    float b =
+    b =
         -((powf(m, -a * d) *
            (-powf(m, a) + (n * (powf(m, a * d) * n * powf(w, a) -
                                 powf(m, a) * powf(w, a * d))) /
@@ -57,22 +52,39 @@ namespace ospray {
           n);
 
     // avoid discontinuous curve by clamping to 0
-    float c =
+    c =
         max((powf(m, a * d) * n * powf(w, a) - powf(m, a) * powf(w, a * d)) /
                 (powf(m, a * d) * n - n * powf(w, a * d)),
             0.f);
+  }
 
+  std::unique_ptr<LiveImageOp> ToneMapperPixelOp::attach(FrameBufferView &fbView)
+  {
+    void *ispcEquiv = ispc::ToneMapperPixelOp_create();
     ispc::ToneMapperPixelOp_set(
-        ispcEquivalent, exposure, a, b, c, d, acesColor);
+        ispcEquiv, exposure, a, b, c, d, acesColor);
+    return make_unique<LiveToneMapperPixelOp>(fbView, ispcEquiv);
   }
 
   std::string ToneMapperPixelOp::toString() const
   {
     return "ospray::ToneMapperPixelOp";
   }
-  void ToneMapperPixelOp::process(FrameBuffer *, Tile &tile)
+
+  LiveToneMapperPixelOp::LiveToneMapperPixelOp(FrameBufferView &fbView,
+                                               void *ispcEquiv)
+    : LiveTileOp(fbView),
+    ispcEquiv(ispcEquiv)
+  {}
+
+  LiveToneMapperPixelOp::~LiveToneMapperPixelOp()
   {
-    ToneMapperPixelOp_apply(ispcEquivalent, (ispc::Tile &)tile);
+    // TODO WILL: Release the ISPC equiv
+  }
+
+  void LiveToneMapperPixelOp::process(Tile &tile)
+  {
+    ToneMapperPixelOp_apply(ispcEquiv, (ispc::Tile &)tile);
   }
 
   OSP_REGISTER_IMAGE_OP(ToneMapperPixelOp, tonemapper);

@@ -16,8 +16,27 @@
 
 #include "ImageOp.h"
 #include "common/Util.h"
+#include "fb/FrameBuffer.h"
 
 namespace ospray {
+
+  FrameBufferView::FrameBufferView(FrameBuffer *fb, OSPFrameBufferFormat colorFormat,
+                                   void *colorBuffer, float *depthBuffer,
+                                   vec3f *normalBuffer, vec3f *albedoBuffer)
+    : fbDims(fb->getNumPixels()),
+      viewDims(fbDims),
+      haloDims(0),
+      colorBufferFormat(colorFormat),
+      colorBuffer(colorBuffer),
+      depthBuffer(depthBuffer),
+      normalBuffer(normalBuffer),
+      albedoBuffer(albedoBuffer)
+  {}
+
+
+  LiveImageOp::LiveImageOp(FrameBufferView &fbView)
+    : fbView(fbView)
+  {}
 
   ImageOp *ImageOp::createInstance(const char *type)
   {
@@ -29,16 +48,12 @@ namespace ospray {
     return "ospray::ImageOp(base class)";
   }
 
-#if 0
-  std::string PixelOp::toString() const
-  {
-    return "ospray::PixelOp(base class)";
-  }
-#endif
+  LiveTileOp::LiveTileOp(FrameBufferView &fbView)
+    : LiveImageOp(fbView)
+  {}
 
-  std::string TileOp::toString() const
-  {
-    return "ospray::TileOp(base class)";
-  }
+  LiveFrameOp::LiveFrameOp(FrameBufferView &fbView)
+    : LiveImageOp(fbView)
+  {}
 }
 

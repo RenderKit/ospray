@@ -23,6 +23,58 @@ namespace ospray {
 
   struct FrameBuffer;
 
+  /*! A view into a portion of the frambuffer to run the frame operation on
+   */
+  struct OSPRAY_SDK_INTERFACE FrameBufferView {
+    // TODO Replace w/ arrayview once LocalFB is updated 
+    // The total dimensions of the global framebuffer
+    vec2i fbDims = vec2i(0);
+    // The dimensions of this view of the framebuffer
+    vec2i viewDims = vec2i(0);
+    // The additional halo region pixels included in the view, if requested
+    vec2i haloDims = vec2i(0);
+
+    OSPFrameBufferFormat colorBufferFormat = OSP_FB_SRGBA;
+
+    /*! Color buffer of the image, exact pixel format depends
+     * on `colorBufferFormat`
+     */
+    void  *colorBuffer = nullptr;
+    //! One float per pixel, may be NULL
+    float *depthBuffer = nullptr;
+    // TODO: Should we pass the accum and variance buffers?
+    //! one RGBA per pixel, may be NULL
+    //vec4f *accumBuffer;
+    //! one RGBA per pixel, may be NULL
+    //vec4f *varianceBuffer;
+    //! accumulated world-space normal per pixel
+    vec3f *normalBuffer = nullptr;
+    //! accumulated albedo, one RGBF32 per pixel
+    vec3f *albedoBuffer = nullptr;
+
+    //! Convenience method to make a view of the entire framebuffer 
+    FrameBufferView(FrameBuffer *fb, OSPFrameBufferFormat colorFormat,
+                    void *colorBuffer, float *depthBuffer,
+                    vec3f *normalBuffer, vec3f *albedoBuffer);
+    FrameBufferView() = default;
+  };
+
+  /*! An instance of an image op which is actually attached to a framebuffer */
+  struct LiveImageOp
+  {
+    FrameBufferView fbView;
+
+    LiveImageOp(FrameBufferView &fbView);
+
+    virtual ~LiveImageOp() {}
+
+    /*! gets called once at the beginning of the frame */
+    virtual void beginFrame() {}
+
+    /*! gets called once at the end of the frame */
+    virtual void endFrame() {}
+  };
+
   /*! \brief base abstraction for a "Image Op" to be performed for
       every image that gets written into a frame buffer.
 
@@ -33,61 +85,47 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
   {
       virtual ~ImageOp() override = default;
-      /*! gets called once at the beginning of the frame */
-      virtual void beginFrame() {}
-      /*! gets called once at the end of the frame */
-      virtual void endFrame() {}
 
       //! \brief common function to help printf-debugging
       /*! Every derived class should override this! */
       virtual std::string toString() const override;
+
+      /*! Attach an image op to an existing framebuffer. Use this
+       * to pass the params from the API to the instance of the image op
+       * which will actually be run on the framebuffer view or tiles of the
+       * framebuffer passed
+       */
+      virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) = 0;
 
       static ImageOp *createInstance(const char *type);
   };
 
-#if 0
-  /*! The pixel op is an imageop that works at the granularity
-   * of a single pixel. The process method may be called in parallel
-   * over multiple pixels.
-   * TODO: Will it actually be useful to have these pixel ops? or just
-   * leave it to users to decide how they want to run things in parallel
-   * (or not) within a tile op?
-  */
-  struct OSPRAY_SDK_INTERFACE PixelOp : public ImageOp
-  {
-      virtual ~PixelOp() override = default;
-
-      /*! called right after the tile got accumulated; i.e., the
-          tile's RGBA values already contain the accu-buffer blended
-          values (assuming an accubuffer exists), and this function
-          defines how these pixels are being processed before written
-          into the color buffer */
-      //virtual void postAccum(FrameBuffer *, Tile &) {}
-
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should override this! */
-      virtual std::string toString() const override;
-  };
-#endif
-
-  /*! The tile op is an imageop that works at the granularity
-   * of a single tile. The process method may be called in parallel
-   * over multiple tiles.
-  */
   struct OSPRAY_SDK_INTERFACE TileOp : public ImageOp
   {
-      virtual ~TileOp() override = default;
+  };
 
-      /*! called right after the tile got accumulated; i.e., the
-          tile's RGBA values already contain the accu-buffer blended
-          values (assuming an accubuffer exists), and this function
-          defines how these pixels are being processed before written
-          into the color buffer */
-      virtual void process(FrameBuffer *, Tile &) = 0;
+  struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
+  {
+    virtual vec2i haloSize() { return vec2i(0); }
+  };
 
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should override this! */
-      virtual std::string toString() const override;
+  struct OSPRAY_SDK_INTERFACE LiveTileOp : public LiveImageOp
+  {
+    LiveTileOp(FrameBufferView &fbView);
+
+    /*! called right after the tile got accumulated; i.e., the
+      tile's RGBA values already contain the accu-buffer blended
+      values (assuming an accubuffer exists), and this function
+      defines how these pixels are being processed before written
+      into the color buffer */
+    virtual void process(Tile &) = 0;
+  };
+
+  struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveImageOp
+  {
+    LiveFrameOp(FrameBufferView &fbView);
+
+    virtual void process() = 0;
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under

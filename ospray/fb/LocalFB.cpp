@@ -91,6 +91,26 @@ namespace ospray {
     alignedFree(tileAccumID);
   }
 
+  void LocalFrameBuffer::commit()
+  {
+    FrameBuffer::commit();
+
+    imageOps.clear();
+    if (imageOpData) {
+      FrameBufferView fbv(this, colorBufferFormat, colorBuffer, depthBuffer,
+                          normalBuffer, albedoBuffer);
+
+      std::transform(imageOpData->begin<ImageOp *>(),
+                     imageOpData->end<ImageOp*>(),
+                     std::back_inserter(imageOps),
+                     [&](ImageOp *i) {
+                       return i->attach(fbv);
+                     });
+
+      findFirstFrameOperation();
+    }
+  }
+
   std::string LocalFrameBuffer::toString() const
   {
     return "ospray::LocalFrameBuffer";
@@ -133,19 +153,18 @@ namespace ospray {
                                                tile.ny,
                                                tile.nz);
 
-    if (imageOpData) {
-      std::for_each(imageOpData->begin<ImageOp *>(),
-                    imageOpData->begin<ImageOp *>() + firstFrameOperation,
-                    [&](ImageOp *iop) { 
+    if (!imageOps.empty()) {
+      std::for_each(imageOps.begin(), imageOps.begin() + firstFrameOperation,
+                    [&](std::unique_ptr<LiveImageOp> &iop) { 
                       #if 0
                       PixelOp *pop = dynamic_cast<PixelOp *>(iop);
                       if (pop) {
                         //p->postAccum(this, tile);
                       }
                       #endif
-                      TileOp *top = dynamic_cast<TileOp *>(iop);
+                      LiveTileOp *top = dynamic_cast<LiveTileOp *>(iop.get());
                       if (top) {
-                        top->process(this, tile);
+                        top->process(tile);
                       }
                       // TODO: For now, frame operations must be last
                       // in the pipeline
@@ -183,29 +202,24 @@ namespace ospray {
   {
     FrameBuffer::beginFrame();
 
-    if (imageOpData) {
-      std::for_each(imageOpData->begin<ImageOp *>(),
-                    imageOpData->end<ImageOp *>(),
-                    [](ImageOp *p) { p->beginFrame(); });
-    }
+    std::for_each(imageOps.begin(), imageOps.end(),
+                  [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
   }
 
   void LocalFrameBuffer::endFrame(const float errorThreshold)
   {
-    if (imageOpData) {
-      if (firstFrameOperation < imageOpData->size()) {
-        FrameBufferView fbv(this, colorBufferFormat, colorBuffer, depthBuffer,
-                            normalBuffer, albedoBuffer);
-
-        std::for_each(imageOpData->begin<FrameOp *>() + firstFrameOperation, 
-                      imageOpData->end<FrameOp *>(),
-                      [&](FrameOp *f) { f->process(fbv); });
-      }
-
-      std::for_each(imageOpData->begin<ImageOp *>(),
-                    imageOpData->end<ImageOp *>(),
-                    [](ImageOp *p) { p->endFrame(); });
+    if (!imageOps.empty() && firstFrameOperation < imageOps.size()) {
+      std::for_each(imageOps.begin() + firstFrameOperation,
+                    imageOps.end(),
+                    [&](std::unique_ptr<LiveImageOp> &iop) {
+                      LiveFrameOp *fop = dynamic_cast<LiveFrameOp *>(iop.get());
+                      if (fop)
+                        fop->process();
+                    });
     }
+
+    std::for_each(imageOps.begin(), imageOps.end(),
+                  [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
 
     frameVariance = tileErrorRegion.refine(errorThreshold);
   }

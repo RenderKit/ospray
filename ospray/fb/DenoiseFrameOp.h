@@ -22,18 +22,18 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE DenoiseFrameOp : public FrameOp {
+  struct OSPRAY_SDK_INTERFACE DenoiseFrameOp : public ImageOp {
     DenoiseFrameOp();
+
     virtual ~DenoiseFrameOp() override;
 
-    void process(FrameBufferView &fb) override;
+    virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
 
     std::string toString() const override;
 
   private:
     OIDNDevice device;
-    OIDNFilter filter;
-    FrameBufferView prevFb;
   };
+
 }
 

@@ -25,6 +25,7 @@ namespace ospray {
   /*! local frame buffer - frame buffer that exists on local machine */
   struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer
   {
+    // TODO: Replace w/ some std::vector
     void      *colorBuffer; /*!< format depends on
                                FrameBuffer::colorBufferFormat, may be
                                NULL */
@@ -41,6 +42,8 @@ namespace ospray {
                      const uint32 channels,
                      void *colorBufferToUse=nullptr);
     virtual ~LocalFrameBuffer() override;
+
+    virtual void commit() override;
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should override this! */

@@ -41,7 +41,6 @@ namespace ospray {
   void FrameBuffer::commit()
   {
     imageOpData = getParamData("imageOps", nullptr);
-    findFirstFrameOperation();
   }
 
   vec2i FrameBuffer::getTileSize() const
@@ -120,17 +119,17 @@ namespace ospray {
   void FrameBuffer::findFirstFrameOperation()
   {
     firstFrameOperation = -1;
-    if (!imageOpData)
+    if (imageOps.empty())
       return;
 
-    firstFrameOperation = imageOpData->size();
-    for (size_t i = 0; i < imageOpData->size(); ++i) {
-      ManagedObject *obj = *(imageOpData->begin<ManagedObject *>() + i);
-      bool isFrameOp = dynamic_cast<FrameOp *>(obj) != nullptr;
+    firstFrameOperation = imageOps.size();
+    for (size_t i = 0; i < imageOps.size(); ++i) {
+      const auto *obj = imageOps[i].get();
+      const bool isFrameOp = dynamic_cast<const LiveFrameOp *>(obj) != nullptr;
 
-      if (firstFrameOperation == imageOpData->size() && isFrameOp)
+      if (firstFrameOperation == imageOps.size() && isFrameOp)
         firstFrameOperation = i;
-      else if (firstFrameOperation < imageOpData->size() && !isFrameOp)
+      else if (firstFrameOperation < imageOps.size() && !isFrameOp)
         throw std::runtime_error("PixelOps/TileOps can't come after FrameOps "
                                  "in the imageOp pipeline for now.");
     }

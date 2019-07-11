@@ -23,11 +23,27 @@ namespace ospray {
   /*! \brief Generic tone mapping operator approximating ACES by default. */
   struct OSPRAY_SDK_INTERFACE ToneMapperPixelOp : public TileOp
   {
-    ToneMapperPixelOp();
-    virtual void commit() override;
-    virtual void process(FrameBuffer *fb, Tile &tile) override;
+    void commit() override;
 
-    virtual std::string toString() const override;
+    std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+
+    std::string toString() const override;
+
+    // Params for the tone mapping curve
+    float a, b, c, d;
+    bool acesColor;
+    float exposure;
+  };
+
+  struct OSPRAY_SDK_INTERFACE LiveToneMapperPixelOp : public LiveTileOp {
+    LiveToneMapperPixelOp(FrameBufferView &fbView,
+                          void *ispcEquiv);
+
+    ~LiveToneMapperPixelOp();
+
+    void process(Tile &t) override;
+
+    void *ispcEquiv;
   };
 
 } // ::ospray

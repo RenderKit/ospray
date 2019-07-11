@@ -4,6 +4,30 @@
 
 namespace ospray {
 
+  void DebugTileOp::commit()
+  {
+    prefix   = getParamString("prefix", "");
+    addColor = getParam3f("addColor", vec3f(0.f));
+  }
+
+  std::unique_ptr<LiveImageOp> DebugTileOp::attach(FrameBufferView &fbView)
+  {
+    return make_unique<LiveDebugTileOp>(fbView, prefix, addColor);
+  }
+
+  std::string DebugTileOp::toString() const
+  {
+    return "DebugTileOp";
+  }
+
+  LiveDebugTileOp::LiveDebugTileOp(FrameBufferView &fbView,
+                                   const std::string &prefix,
+                                   const vec3f &addColor)
+    : LiveTileOp(fbView),
+    prefix(prefix),
+    addColor(addColor)
+  {}
+
   inline float convert_srgb(const float x)
   {
     if (x < 0.0031308) {
@@ -13,18 +37,12 @@ namespace ospray {
     }
   }
 
-  void DebugPixelOp::commit()
-  {
-    prefix   = getParamString("prefix", "");
-    addColor = getParam3f("addColor", vec3f(0.f));
-  }
-
-  void DebugPixelOp::process(FrameBuffer *, Tile &tile)
+  void LiveDebugTileOp::process(Tile &tile)
   {
     const int tile_x       = tile.region.lower.x / TILE_SIZE;
+    // TODO WILL: Why does tile store the fbsize?
     const int tile_y       = (tile.fbSize.y - tile.region.upper.y) / TILE_SIZE;
     const int tile_id      = tile_x + tile_y * (tile.fbSize.x / TILE_SIZE);
-    const std::string file = prefix + std::to_string(tile_id) + ".ppm";
 
     const uint32_t w = TILE_SIZE, h = TILE_SIZE;
     // Convert to SRGB8 color
@@ -49,16 +67,12 @@ namespace ospray {
       }
     }
     if (!prefix.empty()) {
+      const std::string file = prefix + std::to_string(tile_id) + ".ppm";
       ospcommon::utility::writePPM(
           file, w, h, reinterpret_cast<uint32_t *>(data.data()));
     }
   }
 
-  std::string DebugPixelOp::toString() const
-  {
-    return "DebugPixelOp";
-  }
-
-  OSP_REGISTER_IMAGE_OP(DebugPixelOp, debug);
+  OSP_REGISTER_IMAGE_OP(DebugTileOp, debug);
 
 }  // namespace ospray

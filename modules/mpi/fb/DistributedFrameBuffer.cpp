@@ -117,6 +117,35 @@ namespace ospray {
     alignedFree(tileInstances);
   }
 
+  void DFB::commit()
+  {
+    FrameBuffer::commit();
+
+    imageOps.clear();
+    if (imageOpData) {
+      FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
+                                            : static_cast<FrameBuffer *>(this),
+                          colorBufferFormat,
+                          localFBonMaster ? localFBonMaster->colorBuffer
+                                            : nullptr,
+                          localFBonMaster ? localFBonMaster->depthBuffer
+                                            : nullptr,
+                          localFBonMaster ? localFBonMaster->normalBuffer
+                                            : nullptr,
+                          localFBonMaster ? localFBonMaster->albedoBuffer
+                                            : nullptr);
+
+      std::for_each(imageOpData->begin<ImageOp *>(),
+                     imageOpData->end<ImageOp *>(),
+                     [&](ImageOp *i) {
+                       if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
+                         imageOps.push_back(i->attach(fbv));
+                     });
+
+      findFirstFrameOperation();
+    }
+  }
+
   void DFB::startNewFrame(const float errorThreshold)
   {
     queueTimes.clear();
@@ -143,11 +172,8 @@ namespace ospray {
         throw std::runtime_error("Attempt to start frame on already started frame!");
       }
 
-      if (imageOpData) {
-        std::for_each(imageOpData->begin<ImageOp *>(),
-                      imageOpData->end<ImageOp *>(),
-                      [](ImageOp *p) { p->beginFrame(); });
-      }
+      std::for_each(imageOps.begin(), imageOps.end(),
+                    [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
 
       lastProgressReport = std::chrono::high_resolution_clock::now();
       renderingProgressTiles = 0;
@@ -448,19 +474,18 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpicommon::globalRank(),
                tile->begin.x,tile->begin.y));
 
-   if (imageOpData) {
-      std::for_each(imageOpData->begin<ImageOp *>(),
-                    imageOpData->begin<ImageOp *>() + firstFrameOperation,
-                    [&](ImageOp *iop) { 
+    if (!imageOps.empty()) {
+      std::for_each(imageOps.begin(), imageOps.begin() + firstFrameOperation,
+                    [&](std::unique_ptr<LiveImageOp> &iop) { 
                       #if 0
                       PixelOp *pop = dynamic_cast<PixelOp *>(iop);
                       if (pop) {
                         //p->postAccum(this, tile);
                       }
                       #endif
-                      TileOp *top = dynamic_cast<TileOp *>(iop);
+                      LiveTileOp *top = dynamic_cast<LiveTileOp *>(iop.get());
                       if (top) {
-                        top->process(this, tile->final);
+                        top->process(tile->final);
                       }
                       // TODO: For now, frame operations must be last
                       // in the pipeline
@@ -894,31 +919,22 @@ namespace ospray {
 
   void DFB::endFrame(const float errorThreshold)
   {
-    if (mpicommon::IamTheMaster() && !masterIsAWorker) {
-      // TODO: FrameOperations should just be run on the master process for now,
-      // but in the offload device the master process doesn't get any OSPData
-      // or pixel ops or etc. created, just the handles. So it doesn't even
-      // know about the frame operation to run
-      if (localFBonMaster && imageOpData && firstFrameOperation < imageOpData->size())
-      {
-        FrameBufferView fbv(localFBonMaster.get(),
-                            colorBufferFormat,
-                            localFBonMaster->colorBuffer,
-                            localFBonMaster->depthBuffer,
-                            localFBonMaster->normalBuffer,
-                            localFBonMaster->albedoBuffer);
-
-        std::for_each(imageOpData->begin<FrameOp *>() + firstFrameOperation,
-                      imageOpData->end<FrameOp *>(),
-                      [&](FrameOp *f) { f->process(fbv); });
-      }
-    } else {
-      if (imageOpData) {
-        std::for_each(imageOpData->begin<ImageOp *>(),
-                      imageOpData->end<ImageOp *>(),
-                      [](ImageOp *p) { p->endFrame(); });
-      }
+    // TODO: FrameOperations should just be run on the master process for now,
+    // but in the offload device the master process doesn't get any OSPData
+    // or pixel ops or etc. created, just the handles. So it doesn't even
+    // know about the frame operation to run
+    if (localFBonMaster && !imageOps.empty() && firstFrameOperation < imageOps.size()) {
+      std::for_each(imageOps.begin() + firstFrameOperation,
+                    imageOps.end(),
+                    [&](std::unique_ptr<LiveImageOp> &iop) {
+                      LiveFrameOp *fop = dynamic_cast<LiveFrameOp *>(iop.get());
+                      if (fop)
+                        fop->process();
+                    });
     }
+
+    std::for_each(imageOps.begin(), imageOps.end(),
+                  [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
 
     // XXX needed?
     memset(tileInstances, 0, sizeof(int32)*getTotalTiles());

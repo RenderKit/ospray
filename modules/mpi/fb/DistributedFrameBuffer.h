@@ -49,7 +49,9 @@ namespace ospray {
                            const uint32 channels,
                            bool masterIsAWorker = false);
 
-    ~DistributedFrameBuffer() override ;
+    ~DistributedFrameBuffer() override;
+
+    void commit() override;
 
     // ==================================================================
     // framebuffer / device interface

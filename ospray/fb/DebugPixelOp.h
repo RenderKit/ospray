@@ -18,7 +18,8 @@
 #include "ImageOp.h"
 
 namespace ospray {
-  /*! The debug PixelOp just dumps the input tiles out as PPM files,
+
+  /*! The debug TileOp just dumps the input tiles out as PPM files,
      with some optional filename prefix. It can also add a color to the
      tile which will be passed down the pipeline after it, for testing
      the tile pipeline itself.
@@ -27,11 +28,25 @@ namespace ospray {
      montage `ls *.ppm | sort -V` -geometry +0+0 -tile MxN out.jpg
      where M is the number of tiles along X, and N the number of tiles along Y
    */
-  struct DebugPixelOp : public TileOp
+  struct OSPRAY_SDK_INTERFACE DebugTileOp : public TileOp
   {
     void commit() override;
-    void process(FrameBuffer *fb, Tile &tile) override;
+
+    std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+
     std::string toString() const override;
+
+    std::string prefix;
+    vec3f addColor;
+  };
+
+  struct OSPRAY_SDK_INTERFACE LiveDebugTileOp : public LiveTileOp
+  {
+    LiveDebugTileOp(FrameBufferView &fbView,
+                    const std::string &prefix,
+                    const vec3f &addColor);
+
+    void process(Tile &t) override;
 
     std::string prefix;
     vec3f addColor;

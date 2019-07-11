@@ -88,46 +88,36 @@ namespace ospray {
     }
   }
 
-  DenoiseFrameOp::DenoiseFrameOp()
-    : device(oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT))
-  {
-    oidnSetDevice1b(device, "setAffinity", false);
-    oidnCommitDevice(device);
-    filter = oidnNewFilter(device, "RT");
-  }
+  struct LiveDenoiseFrameOp : public LiveFrameOp {
 
-  DenoiseFrameOp::~DenoiseFrameOp()
-  {
-    oidnReleaseFilter(filter);
-    oidnReleaseDevice(device);
-  }
+    LiveDenoiseFrameOp(FrameBufferView &fbView, OIDNDevice device)
+      : LiveFrameOp(fbView),
+      device(device),
+      filter(oidnNewFilter(device, "RT"))
+    {
+      oidnRetainDevice(device);
 
-  void DenoiseFrameOp::process(FrameBufferView &fb)
-  {
-    if (fb.colorBufferFormat != OSP_FB_RGBA32F)
-      throw std::runtime_error("DenoiseFrameOp must be used with an RGBA32F "
-          "color format framebuffer!");
-
-    test::ProfilingPoint start;
-
-    if (!prevFb.colorBuffer || fb != prevFb) {
-      float *fbColor = static_cast<float*>(fb.colorBuffer);
+      float *fbColor = static_cast<float*>(fbView.colorBuffer);
       oidnSetSharedFilterImage(filter, "color", fbColor,
-                               OIDN_FORMAT_FLOAT3, fb.fbDims.x, fb.fbDims.y,
+                               OIDN_FORMAT_FLOAT3,
+                               fbView.fbDims.x, fbView.fbDims.y,
                                0, sizeof(float) * 4, 0);
 
-      if (fb.normalBuffer)
-        oidnSetSharedFilterImage(filter, "normal", fb.normalBuffer, 
-                                 OIDN_FORMAT_FLOAT3, fb.fbDims.x, fb.fbDims.y,
+      if (fbView.normalBuffer)
+        oidnSetSharedFilterImage(filter, "normal", fbView.normalBuffer, 
+                                 OIDN_FORMAT_FLOAT3,
+                                 fbView.fbDims.x, fbView.fbDims.y,
                                  0, 0, 0);
 
-      if (fb.albedoBuffer)
-        oidnSetSharedFilterImage(filter, "albedo", fb.albedoBuffer, 
-                                 OIDN_FORMAT_FLOAT3, fb.fbDims.x, fb.fbDims.y,
+      if (fbView.albedoBuffer)
+        oidnSetSharedFilterImage(filter, "albedo", fbView.albedoBuffer, 
+                                 OIDN_FORMAT_FLOAT3,
+                                 fbView.fbDims.x, fbView.fbDims.y,
                                  0, 0, 0);
 
       oidnSetSharedFilterImage(filter, "output", fbColor,
-                               OIDN_FORMAT_FLOAT3, fb.fbDims.x, fb.fbDims.y,
+                               OIDN_FORMAT_FLOAT3,
+                               fbView.fbDims.x, fbView.fbDims.y,
                                0, sizeof(float) * 4, 0);
 
       oidnSetFilter1b(filter, "hdr", false);
@@ -137,27 +127,57 @@ namespace ospray {
       test::ProfilingPoint commitend;
       std::cout << "Commit took "
         << duration_cast<milliseconds>(commitend.time - commitstart.time).count() << "ms\n";
-
-      prevFb = fb;
     }
-    test::ProfilingPoint startexec;
-    oidnExecuteFilter(filter);
-    test::ProfilingPoint execend;
 
-    const char* errorMessage = nullptr;
-    if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
+    ~LiveDenoiseFrameOp()
     {
-      std::cout << "OIDN ERROR " << errorMessage << "\n";
-      throw std::runtime_error("Error running OIDN: " + std::string(errorMessage));
+      oidnReleaseFilter(filter);
+      oidnReleaseDevice(device);
     }
 
-    test::ProfilingPoint end;
-    std::cout << "Denoising took "
-      << duration_cast<milliseconds>(end.time - start.time).count() << "ms\n"
-      << "Exec took "
-      << duration_cast<milliseconds>(execend.time - startexec.time).count() << "ms\n";
-    test::logProfilingData(std::cout, start, end);
-    std::cout << "======\n";
+    void process()
+    {
+      test::ProfilingPoint startexec;
+      oidnExecuteFilter(filter);
+      test::ProfilingPoint endexec;
+
+      const char* errorMessage = nullptr;
+      if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
+      {
+        std::cout << "OIDN ERROR " << errorMessage << "\n";
+        throw std::runtime_error("Error running OIDN: " + std::string(errorMessage));
+      }
+
+      test::ProfilingPoint end;
+      std::cout << "Denoising took "
+        << duration_cast<milliseconds>(endexec.time - startexec.time).count() << "ms\n";
+      test::logProfilingData(std::cout, startexec, endexec);
+      std::cout << "======\n";
+    }
+
+    OIDNDevice device;
+    OIDNFilter filter;
+  };
+
+  DenoiseFrameOp::DenoiseFrameOp()
+    : device(oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT))
+  {
+    oidnSetDevice1b(device, "setAffinity", false);
+    oidnCommitDevice(device);
+  }
+
+  DenoiseFrameOp::~DenoiseFrameOp()
+  {
+    oidnReleaseDevice(device);
+  }
+
+  std::unique_ptr<LiveImageOp> DenoiseFrameOp::attach(FrameBufferView &fbView)
+  {
+    if (fbView.colorBufferFormat != OSP_FB_RGBA32F)
+      throw std::runtime_error("DenoiseFrameOp must be used with an RGBA32F "
+          "color format framebuffer!");
+
+    return make_unique<LiveDenoiseFrameOp>(fbView, device);
   }
 
   std::string DenoiseFrameOp::toString() const

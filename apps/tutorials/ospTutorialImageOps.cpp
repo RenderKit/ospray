@@ -96,7 +96,7 @@ int main(int argc, const char **argv)
   std::vector<vec3f> debugColors = {
     vec3f(-1.f), vec3f(0, 0, 0.2)
   };
-  std::vector<std::string> frameOpNames = {"frame_depth"};
+  std::vector<std::string> frameOpNames = {"depth"};
 
   std::vector<OSPObject> pixelPipeline = {toneMap, colorTweak, frameOpTest};
   OSPData pixelOpData =
