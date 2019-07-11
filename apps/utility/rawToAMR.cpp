@@ -38,9 +38,6 @@ namespace ospray {
                  std::vector<std::vector<float>> &brickData)
     {
       int minWidth = blockSize;
-      std::cout << "building AMR model out of RAW volume. blockSize = "
-                << blockSize << ", refinementLevel = " << refinementLevel
-                << std::endl;
 
       for (int i = 1; i < numLevels; i++)
         minWidth *= refinementLevel;
@@ -61,10 +58,6 @@ namespace ospray {
         finestLevelSize.z += minWidth;
       }
 
-      std::cout << "logical finest level size is " << finestLevelSize
-                << std::endl;
-      std::cout << "(note: input size was " << inGridDims << ")" << std::endl;
-
       // create container for current level so we don't use in
       std::vector<float> &currentLevel = const_cast<std::vector<float> &>(in);
 
@@ -75,12 +68,7 @@ namespace ospray {
       // create and write the bricks
       vec3i levelSize = finestLevelSize;
       for (int level = numLevels - 1; level >= 0; --level) {
-        std::cout << "-------------------------------------------------------"
-                  << std::endl;
-        std::cout << "logical size of level " << level << " is " << levelSize
-                  << std::endl;
         const vec3i nextLevelSize = levelSize / refinementLevel;
-        std::cout << "reducing to next level of " << nextLevelSize << std::endl;
         // create container for next level down
         std::vector<float> nextLevel =
             std::vector<float>(nextLevelSize.product(), 0);
@@ -105,10 +93,8 @@ namespace ospray {
               ospcommon::range1f brickRange;
               // traverse the data by brick index
               for (int iz = box.lower.z; iz <= box.upper.z; iz++) {
-                for (int iy = box.lower.y; iy <= box.upper.y;
-                     iy++) {
-                  for (int ix = box.lower.x; ix <= box.upper.x;
-                       ix++) {
+                for (int iy = box.lower.y; iy <= box.upper.y; iy++) {
+                  for (int ix = box.lower.x; ix <= box.upper.x; ix++) {
                     const size_t thisLevelCoord =
                         ix + levelSize.y * (iy + iz * levelSize.z);
                     const size_t nextLevelCoord =
@@ -136,7 +122,8 @@ namespace ospray {
               } else {
                 blockBounds.push_back(box);
                 refinementLevels.push_back(level);
-                cellWidths.resize(std::max(cellWidths.size(), (size_t)level + 1));
+                cellWidths.resize(
+                    std::max(cellWidths.size(), (size_t)level + 1));
                 cellWidths[level] = dt;
                 brickData.push_back(data);
                 numWritten++;
@@ -144,8 +131,6 @@ namespace ospray {
             });  // end parallel for
         currentLevel = nextLevel;
         levelSize    = nextLevelSize;
-        std::cout << "done level " << level << ", written " << numWritten
-                  << " bricks, removed " << numRemoved << std::endl;
         numWritten = 0;
         numRemoved = 0;
       }  // end for loop on levels
