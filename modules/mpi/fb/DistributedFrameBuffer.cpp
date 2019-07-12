@@ -917,7 +917,7 @@ namespace ospray {
     return tileErrorRegion[tile];
   }
 
-  void DFB::endFrame(const float errorThreshold)
+  void DFB::endFrame(const float errorThreshold, const Camera *camera)
   {
     // TODO: FrameOperations should just be run on the master process for now,
     // but in the offload device the master process doesn't get any OSPData
@@ -929,7 +929,7 @@ namespace ospray {
                     [&](std::unique_ptr<LiveImageOp> &iop) {
                       LiveFrameOp *fop = dynamic_cast<LiveFrameOp *>(iop.get());
                       if (fop)
-                        fop->process();
+                        fop->process(camera);
                     });
     }
 

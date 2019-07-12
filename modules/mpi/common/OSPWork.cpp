@@ -155,7 +155,9 @@ namespace ospray {
       {
         if (handle.defined()) {
           ManagedObject *obj = handle.lookup();
-          if (dynamic_cast<Renderer *>(obj) || dynamic_cast<FrameBuffer *>(obj)) {
+          if (dynamic_cast<Renderer *>(obj) || dynamic_cast<FrameBuffer *>(obj)
+              || dynamic_cast<Camera *>(obj))
+          {
             obj->commit();
           }
         }
@@ -253,7 +255,7 @@ namespace ospray {
 
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)
-            || dynamic_cast<FrameBuffer *>(obj))
+            || dynamic_cast<FrameBuffer *>(obj) || dynamic_cast<Camera *>(obj))
         {
           obj->setParam(name, val);
         }
@@ -301,6 +303,14 @@ namespace ospray {
         handle.assign(world);
       }
 
+      // ospNewCamera /////////////////////////////////////////////////////////
+
+      template<>
+      void NewCamera::runOnMaster()
+      {
+        run();
+      }
+      
       // ospNewMaterial ///////////////////////////////////////////////////////
 
       void NewMaterial::run()
@@ -545,6 +555,7 @@ namespace ospray {
         mpicommon::world.barrier();
         Renderer *renderer = (Renderer *)rendererHandle.lookup();
         FrameBuffer *fb    = (FrameBuffer *)fbHandle.lookup();
+        Camera *camera     = (Camera *)cameraHandle.lookup();
 
         fb->setCompletedEvent(OSP_NONE_FINISHED);
 
@@ -554,7 +565,7 @@ namespace ospray {
         // The master doesn't have or need a world or camera, so skip
         // looking them up
         auto *f = new RenderTask(fb, [=]() {
-          float result = renderer->renderFrame(fb, nullptr, nullptr);
+          float result = renderer->renderFrame(fb, camera, nullptr);
 
           fb->refDec();
           renderer->refDec();

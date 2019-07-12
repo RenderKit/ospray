@@ -187,6 +187,9 @@ namespace ospray {
       template <>
       void NewGroup::run();
 
+      template<>
+      void NewCamera::runOnMaster();
+
       struct NewMaterial : public Work
       {
         NewMaterial() = default;
@@ -495,7 +498,7 @@ namespace ospray {
 
           ManagedObject *obj = handle.lookup();
           if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)
-              || dynamic_cast<FrameBuffer *>(obj))
+              || dynamic_cast<FrameBuffer *>(obj) || dynamic_cast<Camera *>(obj))
           {
             obj->setParam(name, val);
           }
@@ -559,7 +562,7 @@ namespace ospray {
 
           ManagedObject *obj = handle.lookup();
           if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)
-              || dynamic_cast<FrameBuffer *>(obj))
+            || dynamic_cast<FrameBuffer *>(obj) || dynamic_cast<Camera *>(obj))
           {
             obj->setParam(name, val.lookup());
           }

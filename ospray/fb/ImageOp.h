@@ -18,6 +18,7 @@
 
 #include "common/Managed.h"
 #include "fb/Tile.h"
+#include "camera/Camera.h"
 
 namespace ospray {
 
@@ -129,7 +130,7 @@ namespace ospray {
     LiveFrameOp(FrameBufferView &fbView);
     virtual ~LiveFrameOp() {}
 
-    virtual void process() = 0;
+    virtual void process(const Camera *camera) = 0;
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under

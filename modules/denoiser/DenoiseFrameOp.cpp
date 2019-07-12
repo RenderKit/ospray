@@ -61,7 +61,7 @@ namespace ospray {
       oidnReleaseDevice(device);
     }
 
-    void process()
+    void process(const Camera *)
     {
       oidnExecuteFilter(filter);
 

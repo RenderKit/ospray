@@ -205,7 +205,8 @@ namespace ospray {
                   [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
   }
 
-  void LocalFrameBuffer::endFrame(const float errorThreshold)
+  void LocalFrameBuffer::endFrame(const float errorThreshold,
+                                  const Camera *camera)
   {
     if (!imageOps.empty() && firstFrameOperation < imageOps.size()) {
       std::for_each(imageOps.begin() + firstFrameOperation,
@@ -213,7 +214,7 @@ namespace ospray {
                     [&](std::unique_ptr<LiveImageOp> &iop) {
                       LiveFrameOp *fop = dynamic_cast<LiveFrameOp *>(iop.get());
                       if (fop)
-                        fop->process();
+                        fop->process(camera);
                     });
     }
 

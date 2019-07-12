@@ -70,7 +70,7 @@ namespace ospray {
 
       float Master::renderFrame(FrameBuffer *fb,
                                 Renderer *renderer,
-                                Camera * /*camera*/,
+                                Camera * camera,
                                 World * /*world*/)
       {
         DistributedFrameBuffer *dfb =
@@ -110,7 +110,7 @@ namespace ospray {
         }
         ++frameNumber;
 
-        dfb->endFrame(renderer->errorThreshold);
+        dfb->endFrame(renderer->errorThreshold, camera);
         return dfb->getVariance();
       }
 
@@ -214,7 +214,7 @@ namespace ospray {
         }
         ++frameNumber;
 
-        dfb->endFrame(inf);
+        dfb->endFrame(inf, camera);
         return dfb->getVariance();
       }
 
@@ -363,7 +363,7 @@ namespace ospray {
 
       float Master::renderFrame(FrameBuffer *fb,
                                 Renderer *renderer,
-                                Camera * /*camera*/,
+                                Camera * camera,
                                 World * /*world*/)
       {
         dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
@@ -383,7 +383,7 @@ namespace ospray {
 
         dfb->waitUntilFinished();
 
-        dfb->endFrame(renderer->errorThreshold);
+        dfb->endFrame(renderer->errorThreshold, camera);
         return dfb->getVariance();
       }
 
@@ -442,7 +442,7 @@ namespace ospray {
 
         renderer->endFrame(dfb, perFrameData);
 
-        dfb->endFrame(inf);
+        dfb->endFrame(inf, camera);
         return dfb->getVariance();
       }
 

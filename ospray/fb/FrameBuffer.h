@@ -69,8 +69,8 @@ namespace ospray {
 
     virtual void beginFrame();
 
-    //! returns error of frame
-    virtual void endFrame(const float errorThreshold) = 0;
+    //! end the frame and run any final post-processing frame ops
+    virtual void endFrame(const float errorThreshold, const Camera *camera) = 0;
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should override this! */

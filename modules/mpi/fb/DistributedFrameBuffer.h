@@ -85,7 +85,7 @@ namespace ospray {
 
     int32 accumID(const vec2i &) override;
     float tileError(const vec2i &tile) override;
-    void endFrame(const float errorThreshold) override;
+    void endFrame(const float errorThreshold, const Camera *camera) override;
 
     enum FrameMode { WRITE_MULTIPLE, ALPHA_BLEND, Z_COMPOSITE };
 

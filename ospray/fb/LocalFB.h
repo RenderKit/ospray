@@ -53,7 +53,7 @@ namespace ospray {
     int32 accumID(const vec2i &tile) override;
     float tileError(const vec2i &tile) override;
     void beginFrame() override;
-    void endFrame(const float errorThreshold) override;
+    void endFrame(const float errorThreshold, const Camera *camera) override;
 
     const void *mapBuffer(OSPFrameBufferChannel channel) override;
     void unmap(const void *mappedMem) override;

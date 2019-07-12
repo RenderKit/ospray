@@ -42,7 +42,7 @@ void initializeOSPRay(int argc, const char **argv, bool errorsFatal)
       exit(error);
     });
   else
-    ospDeviceSetErrorFunc(device, [](OSPError error, const char *errorDetails) {
+    ospDeviceSetErrorFunc(device, [](OSPError, const char *errorDetails) {
       std::cerr << "OSPRay error: " << errorDetails << std::endl;
     });
 }

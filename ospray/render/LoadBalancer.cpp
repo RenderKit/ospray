@@ -75,7 +75,7 @@ namespace ospray {
 
     renderer->endFrame(fb, perFrameData);
 
-    fb->endFrame(renderer->errorThreshold);
+    fb->endFrame(renderer->errorThreshold, camera);
 
     return fb->getVariance();
   }

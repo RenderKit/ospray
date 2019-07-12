@@ -92,14 +92,11 @@ target_link_libraries(ospTutorialStructuredVolume PRIVATE tutorial_common)
 ospray_create_application(ospTutorialUnstructuredVolume
   ospTutorialUnstructuredVolume.cpp
 )
-
 target_link_libraries(ospTutorialUnstructuredVolume PRIVATE tutorial_common)
-
 
 ospray_create_application(ospTutorialAMRVolume ospTutorialAMRVolume.cpp)
 target_link_libraries(ospTutorialAMRVolume PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialImageOps ospTutorialImageOps.cpp)
-
 target_link_libraries(ospTutorialImageOps PRIVATE tutorial_common)
 

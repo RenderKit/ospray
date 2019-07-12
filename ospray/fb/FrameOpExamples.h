@@ -32,7 +32,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE LiveDebugFrameOp : public LiveFrameOp
   {
     LiveDebugFrameOp(FrameBufferView &fbView);
-    void process() override;
+    void process(const Camera *) override;
   };
 
   // The blur frame op is a test which applies a Gaussian blur to the frame
@@ -49,11 +49,11 @@ namespace ospray {
       : LiveFrameOp(fbView)
     {}
 
-    void process() override;
+    void process(const Camera *) override;
   };
 
   template<typename T>
-  void LiveBlurFrameOp<T>::process()
+  void LiveBlurFrameOp<T>::process(const Camera *)
   {
     // TODO: For SRGBA we actually need to convert to linear before filtering
     T *color = static_cast<T*>(fbView.colorBuffer);
@@ -126,7 +126,7 @@ namespace ospray {
   {
     LiveDepthFrameOp(FrameBufferView &fbView);
 
-    void process() override;
+    void process(const Camera *) override;
   };
 
 

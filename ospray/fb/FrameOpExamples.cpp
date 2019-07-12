@@ -41,7 +41,7 @@ namespace ospray {
     : LiveFrameOp(fbView)
   {}
 
-  void LiveDebugFrameOp::process()
+  void LiveDebugFrameOp::process(const Camera *)
   {
     // DebugFrameOp just colors the whole frame with red
     tasking::parallel_for(fbView.viewDims.x * fbView.viewDims.y,
@@ -101,7 +101,7 @@ namespace ospray {
     : LiveFrameOp(fbView)
   {}
 
-  void LiveDepthFrameOp::process()
+  void LiveDepthFrameOp::process(const Camera *)
   {
     // First find the min/max depth range to normalize the image,
     // we don't use minmax_element here b/c we don't want inf to be
