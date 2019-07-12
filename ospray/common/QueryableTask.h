@@ -21,7 +21,7 @@
 
 namespace ospray {
 
-  struct QueryableTask : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE QueryableTask : public ManagedObject
   {
     QueryableTask()           = default;
     ~QueryableTask() override = default;

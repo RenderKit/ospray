@@ -23,7 +23,7 @@
 
 namespace ospray {
 
-  class UnstructuredVolume : public Volume
+  class OSPRAY_SDK_INTERFACE UnstructuredVolume : public Volume
   {
    public:
     UnstructuredVolume();

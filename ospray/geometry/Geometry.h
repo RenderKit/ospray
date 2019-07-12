@@ -26,7 +26,7 @@
 
 namespace ospray {
 
-  struct LiveGeometry
+  struct OSPRAY_SDK_INTERFACE LiveGeometry
   {
     void *ispcEquivalent{nullptr};
     RTCGeometry embreeGeometry{nullptr};

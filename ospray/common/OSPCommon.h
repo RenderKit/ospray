@@ -180,7 +180,7 @@ namespace ospray {
   // a newline is added implicitly
   //////////////////////////////////////////////////////////////////////////////
 
-  struct StatusMsgStream : public std::stringstream
+  struct OSPRAY_CORE_INTERFACE StatusMsgStream : public std::stringstream
   {
     StatusMsgStream(uint32_t postAtLogLevel = 0);
     StatusMsgStream(StatusMsgStream &&other);
