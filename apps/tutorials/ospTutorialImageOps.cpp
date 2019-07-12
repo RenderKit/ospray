@@ -32,13 +32,15 @@ static std::string renderer_type = "pathtracer";
 
 int main(int argc, const char **argv)
 {
-  initializeOSPRay(argc, argv);
+  initializeOSPRay(argc, argv, false);
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-r" || arg == "--renderer")
       renderer_type = argv[++i];
   }
+
+  const bool denoiseModuleLoaded = ospLoadModule("denoiser") == OSP_NO_ERROR;
 
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
@@ -223,8 +225,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
 
-#ifdef OSPRAY_ENABLE_DENOISER
-    if (ImGui::Button("Add Denoise FrameOp")) {
+    if (denoiseModuleLoaded && ImGui::Button("Add Denoise FrameOp")) {
       OSPImageOp op = ospNewImageOp("frame_denoise");
       ospCommit(op);
 
@@ -234,7 +235,6 @@ int main(int argc, const char **argv)
 
       pipelineUpdated = true;
     }
-#endif
 
     if (!frameOps.empty() && ImGui::Button("Remove FrameOp")) {
       ospRelease(frameOps.back());

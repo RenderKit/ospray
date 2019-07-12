@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray
+#include <iterator>
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
 #include "ImageOp.h"

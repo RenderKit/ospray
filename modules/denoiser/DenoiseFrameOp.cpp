@@ -14,80 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef _WIN32
-#include <sys/times.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <unistd.h>
-#endif
-#include <chrono>
-#include <iostream>
 
 #include "DenoiseFrameOp.h"
 
 namespace ospray {
-  using namespace std::chrono;
-  namespace test {
-
-    // TODO WILL: Remove this and push the profiling data into some
-    // utility within ospcommon. (windows support?)
-    struct ProfilingPoint {
-#ifndef _WIN32
-      rusage usage;
-#endif
-      std::chrono::high_resolution_clock::time_point time;
-
-      ProfilingPoint()
-      {
-#ifndef _WIN32
-        std::memset(&usage, 0, sizeof(rusage));
-        getrusage(RUSAGE_SELF, &usage);
-#endif
-        time = high_resolution_clock::now();
-      }
-    };
-
-    bool startsWith(const std::string &a, const std::string &prefix)
-    {
-      if (a.size() < prefix.size()) {
-        return false;
-      }
-      return std::equal(prefix.begin(), prefix.end(), a.begin());
-    }
-
-    void logProfilingData(std::ostream &os, const ProfilingPoint &start,
-                          const ProfilingPoint &end)
-    {
-#ifndef _WIN32
-      const double elapsedCpu =
-        end.usage.ru_utime.tv_sec + end.usage.ru_stime.tv_sec
-        - (start.usage.ru_utime.tv_sec + start.usage.ru_stime.tv_sec)
-        + 1e-6f * (end.usage.ru_utime.tv_usec + end.usage.ru_stime.tv_usec
-            - (start.usage.ru_utime.tv_usec + start.usage.ru_stime.tv_usec));
-
-      const double elapsedWall =
-        duration_cast<duration<double>>(end.time - start.time).count();
-      os << "\tCPU: " << elapsedCpu / elapsedWall * 100.0 << "%\n";
-
-      std::ifstream procStatus("/proc/" + std::to_string(getpid()) + "/status");
-      std::string line;
-      const static std::vector<std::string> propPrefixes {
-        "Threads", "Cpus_allowed_list", "VmSize", "VmRSS"
-      };
-      while (std::getline(procStatus, line)) {
-        for (const auto &p : propPrefixes) {
-          if (startsWith(line, p)) {
-            os << "\t" << line << "\n";
-            break;
-          }
-        }
-      }
-#endif
-    }
-  }
-
-  struct LiveDenoiseFrameOp : public LiveFrameOp {
+  struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp {
 
     LiveDenoiseFrameOp(FrameBufferView &fbView, OIDNDevice device)
       : LiveFrameOp(fbView),
@@ -121,11 +52,7 @@ namespace ospray {
 
       oidnSetFilter1b(filter, "hdr", false);
 
-      test::ProfilingPoint commitstart;
       oidnCommitFilter(filter);
-      test::ProfilingPoint commitend;
-      std::cout << "Commit took "
-        << duration_cast<milliseconds>(commitend.time - commitstart.time).count() << "ms\n";
     }
 
     ~LiveDenoiseFrameOp()
@@ -136,9 +63,7 @@ namespace ospray {
 
     void process()
     {
-      test::ProfilingPoint startexec;
       oidnExecuteFilter(filter);
-      test::ProfilingPoint endexec;
 
       const char* errorMessage = nullptr;
       if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
@@ -146,12 +71,6 @@ namespace ospray {
         std::cout << "OIDN ERROR " << errorMessage << "\n";
         throw std::runtime_error("Error running OIDN: " + std::string(errorMessage));
       }
-
-      test::ProfilingPoint end;
-      std::cout << "Denoising took "
-        << duration_cast<milliseconds>(endexec.time - startexec.time).count() << "ms\n";
-      test::logProfilingData(std::cout, startexec, endexec);
-      std::cout << "======\n";
     }
 
     OIDNDevice device;
@@ -186,4 +105,6 @@ namespace ospray {
 
   OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, frame_denoise);
 }
+
+extern "C" OSPRAY_MODULE_DENOISER_EXPORT void ospray_init_module_denoiser(){}
 

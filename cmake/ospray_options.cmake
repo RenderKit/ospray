@@ -62,9 +62,6 @@ option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
        "Enable 'format' target, requires clang-format too")
 mark_as_advanced(OSPRAY_ENABLE_TARGET_CLANGFORMAT)
 
-option(OSPRAY_ENABLE_DENOISER
-       "Enable the Denoiser FrameOp for denoising (requires OIDN)" OFF)
-
 ####################################################################
 # Create binary packages; before any install() invocation/definition
 ####################################################################

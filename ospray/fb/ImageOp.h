@@ -60,7 +60,7 @@ namespace ospray {
   };
 
   /*! An instance of an image op which is actually attached to a framebuffer */
-  struct LiveImageOp
+  struct OSPRAY_SDK_INTERFACE LiveImageOp
   {
     FrameBufferView fbView;
 

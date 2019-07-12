@@ -101,10 +101,5 @@ target_link_libraries(ospTutorialAMRVolume PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialImageOps ospTutorialImageOps.cpp)
 
-if (OSPRAY_ENABLE_DENOISER)
-  target_compile_definitions(ospTutorialImageOps PRIVATE
-    OSPRAY_ENABLE_DENOISER)
-endif()
-
 target_link_libraries(ospTutorialImageOps PRIVATE tutorial_common)
 
