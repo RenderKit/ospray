@@ -6,6 +6,7 @@ AlignAfterOpenBracket: DontAlign
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 #EscapedNewlineAlignmentStyle: Right
+AlignEscapedNewlines: Right
 AlignOperands:   false
 AlignTrailingComments: false
 AllowAllParametersOfDeclarationOnNextLine: true
@@ -49,9 +50,9 @@ DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
-ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
+ForEachMacros:   [ foreach, foreach_active, foreach_tiled, foreach_unique, cdo, cfor, cif, cwhile ]
 IncludeCategories:
-  - Regex:           '^<.*\.h>'
+  - Regex:           '^<.*\.i?h>'
     Priority:        1
   - Regex:           '^<.*'
     Priority:        2
