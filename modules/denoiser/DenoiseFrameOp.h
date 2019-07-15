@@ -23,7 +23,7 @@
 
 namespace ospray {
 
-  struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public ImageOp {
+  struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOp {
     DenoiseFrameOp();
 
     virtual ~DenoiseFrameOp() override;
