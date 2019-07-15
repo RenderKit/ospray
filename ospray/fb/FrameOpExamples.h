@@ -129,6 +129,46 @@ namespace ospray {
     void process(const Camera *) override;
   };
 
+    // The blur frame op is a test which applies a Gaussian blur to the frame
+  struct OSPRAY_SDK_INTERFACE SSAOFrameOp : public FrameOp {
+
+    float nearClip;
+    int kernelSize;
+    float ssaoStrength;
+    vec2f windowSize, pixelSize;
+    AffineSpace3f cameraSpace;
+
+    std::vector<vec3f> kernel;
+    std::vector<vec3f> randomVecs;
+
+    std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+    void commit() override;
+    std::string toString() const override;
+  };
+
+  struct OSPRAY_SDK_INTERFACE LiveSSAOFrameOp : public LiveFrameOp {
+
+    void *ispcEquiv;
+    int kernelSize;
+    float ssaoStrength;
+
+    std::vector<vec3f> kernel;
+    std::vector<vec3f> randomVecs;
+
+
+    template<typename T>
+    void applySSAO(FrameBufferView &fb, T *color, const Camera *);
+
+
+    LiveSSAOFrameOp(FrameBufferView &fbView, void* ,
+                    int ,
+                    float ,
+                    std::vector<vec3f> ,
+                    std::vector<vec3f> );
+    void process(const Camera *) override;
+
+  };
+
 
 }
 

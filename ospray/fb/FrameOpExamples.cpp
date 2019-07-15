@@ -18,6 +18,8 @@
 #include "common/Util.h"
 #include "FrameBuffer.h"
 #include "FrameOpExamples.h"
+#include "FrameOpExamples_ispc.h"
+#include "camera/PerspectiveCamera.h"
 
 namespace ospray {
 
@@ -144,6 +146,163 @@ namespace ospray {
       });
   }
 
+
+  std::unique_ptr<LiveImageOp> SSAOFrameOp::attach(FrameBufferView &fbView)
+  {
+    if (!fbView.colorBuffer) {
+      static WarnOnce warn(toString() + " requires color data but the "
+                           "framebuffer does not have this channel.");
+      throw std::runtime_error(toString() + " cannot be attached to framebuffer "
+                               "which does not have color data");
+    }
+
+    if (!fbView.normalBuffer || !fbView.depthBuffer) {
+      static WarnOnce warn(toString() + " requires normal and depth data but "
+                           "the framebuffer does not have these channels.");
+      throw std::runtime_error(toString() + " cannot be attached to framebuffer "
+                               "which does not have normal or depth data");
+    }
+
+    void *ispcEquiv = ispc::LiveSSAOFrameOp_create();
+
+    return ospcommon::make_unique<LiveSSAOFrameOp>(fbView, ispcEquiv, 
+                                                  kernelSize, 
+                                                  ssaoStrength,
+                                                  kernel,
+                                                  randomVecs);
+  }
+
+
+  std::string SSAOFrameOp::toString() const
+  {
+    return "ospray::SSAOFrameOp";
+  }
+
+  void SSAOFrameOp::commit(){
+
+    ssaoStrength  = getParam1f("strength", 1.f);
+    windowSize    = getParam2f("windowSize",  vec2f(-1.f));
+    kernelSize  = getParam1i("ksize", 64);
+
+    // generate kernel with random sample distribution
+    kernel.resize(kernelSize);
+    randomVecs.resize(kernelSize);
+    for (int i = 0; i < kernelSize; ++i) {
+        kernel[i] = vec3f(
+          -1.0f+2*(rand()%1000)/1000.0,
+          -1.0f+2*(rand()%1000)/1000.0,
+          (rand()%1000)/1000.0);
+        float scale = float(i) / float(kernelSize);
+        scale = 0.1 +0.9*scale*scale;
+        kernel[i] *= scale;
+
+        randomVecs[i].x = -1.0f+2*(rand()%1000)/1000.0;
+        randomVecs[i].y = -1.0f+2*(rand()%1000)/1000.0;
+        randomVecs[i].z = -1.0f+2*(rand()%1000)/1000.0;
+        randomVecs[i] = normalize(randomVecs[i]);
+    }
+
+  }
+
+  LiveSSAOFrameOp::LiveSSAOFrameOp(FrameBufferView &fbView,
+                                    void* ispcEquiv,
+                                    int kernelSize,
+                                    float ssaoStrength,
+                                    std::vector<vec3f> kernel,
+                                    std::vector<vec3f> randomVecs)
+    : LiveFrameOp(fbView),
+    ispcEquiv(ispcEquiv),
+    kernelSize(kernelSize),
+    ssaoStrength(ssaoStrength),
+    kernel(kernel),
+    randomVecs(randomVecs)
+  {}
+
+
+
+  template<typename T>
+  void LiveSSAOFrameOp::applySSAO(FrameBufferView &fb, T *color, const Camera *cam)
+  {
+    if(cam->toString().compare("ospray::PerspectiveCamera")){
+      throw std::runtime_error(cam->toString() + " camera type not supported in SSAO "
+                               "PerspectiveCamera only");
+    }
+    PerspectiveCamera* camera = (PerspectiveCamera*)(cam);
+
+    // get camera 
+    vec3f eyePos    = camera->pos;
+    vec3f lookDir   = camera->dir;
+    vec3f upDir     = camera->up;
+    float nearClip  = camera->nearClip;
+
+    // get cameraSpace matrix
+    vec3f zaxis = normalize(-lookDir);
+    vec3f xaxis = normalize(cross(upDir, zaxis));
+    vec3f yaxis = cross(zaxis, xaxis);
+    vec3f p_component = vec3f(-dot(eyePos, xaxis), -dot(eyePos, yaxis), -dot(eyePos, zaxis));
+    LinearSpace3f cameraModelRot(xaxis, yaxis, zaxis);
+    AffineSpace3f cameraSpace = (AffineSpace3f(cameraModelRot.transposed(), p_component));
+
+    vec2f windowSize = fb.fbDims;
+    vec2f pixelSize;
+    // get screen pixel size in camera space
+    float fovy = camera->fovy;
+    pixelSize.y = nearClip *  2.f * tanf(deg2rad(0.5f * fovy))/windowSize.y;
+    pixelSize.x = pixelSize.y;
+
+
+    ispc::LiveSSAOFrameOp_set(ispcEquiv,
+                          nearClip,
+                          kernelSize,
+                          ssaoStrength,
+                          &windowSize,
+                          &pixelSize,
+                          &cameraSpace,
+                          &kernel[0],
+                          &randomVecs[0]);
+
+
+    float * depthBuffer = fb.depthBuffer;
+    std::vector<float> occlusionBuffer(fb.fbDims.x * fb.fbDims.y, 0);
+    tasking::parallel_for(fb.fbDims.x * fb.fbDims.y,
+      [&](int pixelID)
+      {
+        if(std::isinf(depthBuffer[pixelID]))
+          occlusionBuffer[pixelID] = -1;;
+      }
+    );
+
+    int programcount = ispc::getProgramCount();
+    tasking::parallel_for(fb.fbDims.x * fb.fbDims.y / programcount,
+      [&](int programID)
+    {
+      ispc::LiveSSAOFrameOp_getOcclusion(ispcEquiv, &fb, &occlusionBuffer[0], programID);
+    });
+    ispc::LiveSSAOFrameOp_applyOcclusion(ispcEquiv, &fb, color, &occlusionBuffer[0]);
+    
+
+  }
+
+  void LiveSSAOFrameOp::process(const Camera *camera)
+  {
+
+
+    if (fbView.colorBufferFormat == OSP_FB_RGBA8
+        || fbView.colorBufferFormat == OSP_FB_SRGBA)
+    {
+      // TODO: For SRGBA we actually need to convert to linear before filtering
+      applySSAO(fbView, static_cast<uint8_t*>(fbView.colorBuffer), camera);
+    } else {
+      applySSAO(fbView, static_cast<float*>(fbView.colorBuffer), camera);
+    }
+  }
+
+
+
+
+
+
+  OSP_REGISTER_IMAGE_OP(SSAOFrameOp, frame_ssao);
   OSP_REGISTER_IMAGE_OP(DebugFrameOp, frame_debug);
   OSP_REGISTER_IMAGE_OP(BlurFrameOp, frame_blur);
   OSP_REGISTER_IMAGE_OP(DepthFrameOp, frame_depth);

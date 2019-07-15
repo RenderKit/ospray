@@ -72,6 +72,7 @@ int main(int argc, const char **argv)
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
+  //ospSetInt(renderer, "aoSamples", 0);
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);
@@ -79,31 +80,7 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
-  // Create a ImageOp pipeline to apply to the image
-  OSPImageOp toneMap = ospNewImageOp("tonemapper");
-  ospCommit(toneMap);
 
-  // The colortweak pixel op will make the image more blue
-  OSPImageOp colorTweak = ospNewImageOp("debug");
-  ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
-  ospCommit(colorTweak);
-  std::vector<OSPObject> pixelOps = {toneMap, colorTweak};
-
-  OSPImageOp frameOpTest = ospNewImageOp("frame_depth");
-  ospCommit(frameOpTest);
-  std::vector<OSPObject> frameOps = {frameOpTest};
-
-  // UI for the tweaking the pixel pipeline
-  std::vector<bool> enabledOps   = {true, true, true};
-  std::vector<vec3f> debugColors = {
-    vec3f(-1.f), vec3f(0, 0, 0.2)
-  };
-  std::vector<std::string> frameOpNames = {"depth"};
-
-  std::vector<OSPObject> pixelPipeline = {toneMap, colorTweak, frameOpTest};
-  OSPData pixelOpData =
-      ospNewData(pixelPipeline.size(), OSP_IMAGE_OP, pixelPipeline.data());
-  ospCommit(pixelOpData);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly. We'll want albedo and normals for
@@ -115,7 +92,41 @@ int main(int argc, const char **argv)
           vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer,
           OSP_FB_RGBA32F, fbChannels));
 
+
+
+
+  // Create a ImageOp pipeline to apply to the image
+  OSPImageOp toneMap = ospNewImageOp("tonemapper");
+  ospCommit(toneMap);
+
+  // The colortweak pixel op will make the image more blue
+  OSPImageOp colorTweak = ospNewImageOp("debug");
+  ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
+  ospCommit(colorTweak);
+  std::vector<OSPObject> pixelOps = {toneMap, colorTweak};
+
+  OSPImageOp frameOpTest = ospNewImageOp("frame_ssao");
+
+  ospSetInt(frameOpTest, "ksize", 64);
+  
+  ospCommit(frameOpTest);
+  std::vector<OSPObject> frameOps = {frameOpTest};
+
+  // UI for the tweaking the pixel pipeline
+  std::vector<bool> enabledOps   = {true, true, true};
+  std::vector<vec3f> debugColors = {
+    vec3f(-1.f), vec3f(0, 0, 0.2)
+  };
+  std::vector<std::string> frameOpNames = {"ssao"};
+
+  std::vector<OSPObject> pixelPipeline = {toneMap, colorTweak, frameOpTest};
+  OSPData pixelOpData =
+      ospNewData(pixelPipeline.size(), OSP_IMAGE_OP, pixelPipeline.data());
+  ospCommit(pixelOpData);
+
+
   glfwOSPRayWindow->setImageOps(pixelOpData);
+  //glfwOSPRayWindow->setFrameOpsToUpdate(frameOps, frameOpNames);
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     bool pipelineUpdated = false;
@@ -220,6 +231,16 @@ int main(int argc, const char **argv)
 
       frameOps.push_back(op);
       frameOpNames.push_back("depth");
+      enabledOps.push_back(true);
+
+      pipelineUpdated = true;
+    }
+    if (ImGui::Button("Add SSAO FrameOp")) {
+      OSPImageOp op = ospNewImageOp("frame_ssao");
+      ospCommit(op);
+
+      frameOps.push_back(op);
+      frameOpNames.push_back("ssao");
       enabledOps.push_back(true);
 
       pipelineUpdated = true;

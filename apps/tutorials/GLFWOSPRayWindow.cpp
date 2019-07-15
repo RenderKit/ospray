@@ -147,7 +147,6 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
               arcballCamera->upDir().x,
               arcballCamera->upDir().y,
               arcballCamera->upDir().z);
-
   ospCommit(camera);
 
   // finally, commit the renderer
