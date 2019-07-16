@@ -69,7 +69,6 @@ namespace ospray {
       throw std::runtime_error(toString() + " cannot be attached to framebuffer "
                                "which does not have color data");
     }
-
     if (fbView.colorBufferFormat == OSP_FB_RGBA8
         || fbView.colorBufferFormat == OSP_FB_SRGBA)
     {
@@ -166,8 +165,9 @@ namespace ospray {
     void *ispcEquiv = ispc::LiveSSAOFrameOp_create();
 
     return ospcommon::make_unique<LiveSSAOFrameOp>(fbView, ispcEquiv, 
-                                                  kernelSize, 
                                                   ssaoStrength,
+                                                  radius,
+                                                  checkRadius,
                                                   kernel,
                                                   randomVecs);
   }
@@ -182,7 +182,9 @@ namespace ospray {
 
     ssaoStrength  = getParam1f("strength", 1.f);
     windowSize    = getParam2f("windowSize",  vec2f(-1.f));
-    kernelSize  = getParam1i("ksize", 64);
+    radius        = getParam1f("radius", 0.3f);
+    checkRadius   = getParam1f("checkRadius", 1.f);
+    int kernelSize  = getParam1i("ksize", 64);
 
     // generate kernel with random sample distribution
     kernel.resize(kernelSize);
@@ -206,14 +208,16 @@ namespace ospray {
 
   LiveSSAOFrameOp::LiveSSAOFrameOp(FrameBufferView &fbView,
                                     void* ispcEquiv,
-                                    int kernelSize,
                                     float ssaoStrength,
+                                    float radius, 
+                                    float checkRadius,
                                     std::vector<vec3f> kernel,
                                     std::vector<vec3f> randomVecs)
     : LiveFrameOp(fbView),
     ispcEquiv(ispcEquiv),
-    kernelSize(kernelSize),
     ssaoStrength(ssaoStrength),
+    radius(radius),
+    checkRadius(checkRadius),
     kernel(kernel),
     randomVecs(randomVecs)
   {}
@@ -253,7 +257,6 @@ namespace ospray {
 
     ispc::LiveSSAOFrameOp_set(ispcEquiv,
                           nearClip,
-                          kernelSize,
                           ssaoStrength,
                           &windowSize,
                           &pixelSize,
@@ -276,9 +279,18 @@ namespace ospray {
     tasking::parallel_for(fb.fbDims.x * fb.fbDims.y / programcount,
       [&](int programID)
     {
-      ispc::LiveSSAOFrameOp_getOcclusion(ispcEquiv, &fb, &occlusionBuffer[0], programID);
+      ispc::LiveSSAOFrameOp_getOcclusion(ispcEquiv, 
+                                        &fb, 
+                                        &occlusionBuffer[0], 
+                                        radius, 
+                                        checkRadius, 
+                                        kernel.size(), 
+                                        programID);
     });
-    ispc::LiveSSAOFrameOp_applyOcclusion(ispcEquiv, &fb, color, &occlusionBuffer[0]);
+    ispc::LiveSSAOFrameOp_applyOcclusion(ispcEquiv, 
+                                          &fb, 
+                                          color, 
+                                          &occlusionBuffer[0]);
     
 
   }

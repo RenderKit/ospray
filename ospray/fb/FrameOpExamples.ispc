@@ -24,7 +24,6 @@
 export void *uniform LiveSSAOFrameOp_create()
 {
   LiveSSAOFrameOp *uniform self = uniform new uniform LiveSSAOFrameOp;
-  self->kernelSize          = 0;
   self->ssaoStrength        = 1;
   self->windowSize.x        = 0;
   self->windowSize.y        = 0;
@@ -36,7 +35,6 @@ export void *uniform LiveSSAOFrameOp_create()
 
 export void LiveSSAOFrameOp_set(void *uniform _self,
                                   uniform float nearClip,
-                                  uniform int kernelSize,
                                   uniform float ssaoStrength,
                             void *uniform _windowSize,
                             void *uniform _pixelSize,
@@ -47,7 +45,6 @@ export void LiveSSAOFrameOp_set(void *uniform _self,
 {
   LiveSSAOFrameOp * uniform self= (LiveSSAOFrameOp * uniform) _self;
   self->nearClip            = nearClip;
-  self->kernelSize          = kernelSize;
   self->ssaoStrength        = ssaoStrength;
   self->windowSize          = *((vec2f * uniform) _windowSize);
   self->pixelSize           = *((vec2f * uniform) _pixelSize);
@@ -59,13 +56,14 @@ export void LiveSSAOFrameOp_set(void *uniform _self,
 export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
                                     void *uniform _fb,
                                     float *uniform occlusionBuffer,
+                                    const uniform float radius,
+                                    const uniform float checkRadius,
+                                    int uniform kernelSize,
                                     int uniform programID)
 {
   const LiveSSAOFrameOp *uniform self =
       (const LiveSSAOFrameOp *uniform)_self;
   FrameBufferView uniform  fb = *((FrameBufferView * uniform) _fb);
-  const uniform float radius = .3f;
-  const uniform float checkRadius = 1.f;
   uniform float * depthBuffer = fb.depthBuffer;
 
   int pixelID = programID * programCount + programIndex;
@@ -87,7 +85,7 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
     pixelPosCamera = xfmPoint(rcp(self->cameraSpace), pixelPosCamera);
 
     // apply kernal
-    for (uint32 k = 0; k < self->kernelSize; ++k) {
+    for (uint32 k = 0; k < kernelSize; ++k) {
         // calculate TBN matrix
         vec3f tangent = normalize(self->randomVecs[k] - pointNormal * dot(self->randomVecs[k], pointNormal));
         vec3f bitangent = cross(pointNormal, tangent);
@@ -117,7 +115,7 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
         occlusion = occlusion + (length(samplePosCamera) > sampleDepth ? 1.0 : 0.0)*rangeCheck;
              
     }
-    occlusion = 1 - self->ssaoStrength*(occlusion / self->kernelSize);
+    occlusion = 1 - self->ssaoStrength*(occlusion / kernelSize);
     occlusionBuffer[pixelID] = occlusion;
 
   }
@@ -138,7 +136,6 @@ export void LiveSSAOFrameOp_applyOcclusion(void *uniform _self,
           {
             uint8 * uniform color           = (uint8 * uniform) _color;
             color[pixelID * 4 + c]          = color[pixelID * 4 + c]*(occlusionBuffer[pixelID]);
-            //color[pixelID * 4 + c]          = 20*fb->depthBuffer[pixelID];
           }
           else if(fb->colorBufferFormat == ColorBufferFormat_RGBA_FLOAT32){
             float * uniform color           = (float * uniform) _color;

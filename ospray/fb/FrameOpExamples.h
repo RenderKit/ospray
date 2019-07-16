@@ -133,8 +133,8 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE SSAOFrameOp : public FrameOp {
 
     float nearClip;
-    int kernelSize;
     float ssaoStrength;
+    float radius, checkRadius;
     vec2f windowSize, pixelSize;
     AffineSpace3f cameraSpace;
 
@@ -149,9 +149,8 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE LiveSSAOFrameOp : public LiveFrameOp {
 
     void *ispcEquiv;
-    int kernelSize;
     float ssaoStrength;
-
+    float radius, checkRadius;
     std::vector<vec3f> kernel;
     std::vector<vec3f> randomVecs;
 
@@ -161,8 +160,9 @@ namespace ospray {
 
 
     LiveSSAOFrameOp(FrameBufferView &fbView, void* ,
-                    int ,
-                    float ,
+                    float , 
+                    float, 
+                    float,
                     std::vector<vec3f> ,
                     std::vector<vec3f> );
     void process(const Camera *) override;

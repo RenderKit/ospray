@@ -202,6 +202,27 @@ int main(int argc, const char **argv)
         enabledOps[i + pixelOps.size()]   = enabled;
         pipelineUpdated                   = true;
       }
+
+      
+      if(!frameOpNames[i].compare("ssao")){
+        static float strength = 0.f, radius = 0.3f, checkRadius = 1.f;
+        if (ImGui::SliderFloat("strength", &strength, 0.f, 1.f) ) {
+          ospSetFloat(frameOps[i], "strength", strength);
+          pipelineUpdated                   = true;
+          glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
+        }
+        if (ImGui::SliderFloat("radius", &radius, 0.f, 2.f) ) {
+          ospSetFloat(frameOps[i], "radius", radius);
+          pipelineUpdated                   = true;
+          glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
+        }
+        if (ImGui::SliderFloat("checkRadius", &checkRadius, 0.f, 2.f) ) {
+          ospSetFloat(frameOps[i], "checkRadius", checkRadius);
+          pipelineUpdated                   = true;
+          glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
+        }
+      }
+
       ImGui::PopID();
     }
 

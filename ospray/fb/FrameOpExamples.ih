@@ -46,8 +46,6 @@ struct FrameBufferView
 struct LiveSSAOFrameOp
 {
 	uniform float nearClip;
-	// The kernel size to do occlusion test on
-	uniform int kernelSize;
 	// The strength of ssao, range [0,1]
 	uniform float ssaoStrength;
 	// The size of viewplane in worldspace
