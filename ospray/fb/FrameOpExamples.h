@@ -154,12 +154,11 @@ namespace ospray {
     std::vector<vec3f> kernel;
     std::vector<vec3f> randomVecs;
 
-
     template<typename T>
     void applySSAO(FrameBufferView &fb, T *color, const Camera *);
 
-
-    LiveSSAOFrameOp(FrameBufferView &fbView, void* ,
+    LiveSSAOFrameOp(FrameBufferView &fbView, 
+                    void* ,
                     float , 
                     float, 
                     float,

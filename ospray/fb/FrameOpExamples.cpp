@@ -133,7 +133,6 @@ namespace ospray {
           {
             uint8_t *cbuf = static_cast<uint8_t *>(fbView.colorBuffer);
             cbuf[px * 4 + c] = static_cast<uint8_t>(normalizedZ * 255.f);
-            // TODO: For srgb we should do srgb conversion as well i guess
           } else {
             float *cbuf = static_cast<float *>(fbView.colorBuffer);
             cbuf[px * 4 + c] = normalizedZ;
@@ -164,12 +163,13 @@ namespace ospray {
 
     void *ispcEquiv = ispc::LiveSSAOFrameOp_create();
 
-    return ospcommon::make_unique<LiveSSAOFrameOp>(fbView, ispcEquiv, 
-                                                  ssaoStrength,
-                                                  radius,
-                                                  checkRadius,
-                                                  kernel,
-                                                  randomVecs);
+    return ospcommon::make_unique<LiveSSAOFrameOp>( fbView, 
+                                                    ispcEquiv, 
+                                                    ssaoStrength,
+                                                    radius,
+                                                    checkRadius,
+                                                    kernel,
+                                                    randomVecs);
   }
 
 
@@ -180,10 +180,10 @@ namespace ospray {
 
   void SSAOFrameOp::commit(){
 
-    ssaoStrength  = getParam1f("strength", 1.f);
-    windowSize    = getParam2f("windowSize",  vec2f(-1.f));
-    radius        = getParam1f("radius", 0.3f);
-    checkRadius   = getParam1f("checkRadius", 1.f);
+    ssaoStrength    = getParam1f("strength", 1.f);
+    windowSize      = getParam2f("windowSize",  vec2f(-1.f));
+    radius          = getParam1f("radius", 0.3f);
+    checkRadius     = getParam1f("checkRadius", 1.f);
     int kernelSize  = getParam1i("ksize", 64);
 
     // generate kernel with random sample distribution
@@ -203,10 +203,9 @@ namespace ospray {
         randomVecs[i].z = -1.0f+2*(rand()%1000)/1000.0;
         randomVecs[i] = normalize(randomVecs[i]);
     }
-
   }
 
-  LiveSSAOFrameOp::LiveSSAOFrameOp(FrameBufferView &fbView,
+  LiveSSAOFrameOp::LiveSSAOFrameOp( FrameBufferView &fbView,
                                     void* ispcEquiv,
                                     float ssaoStrength,
                                     float radius, 
@@ -223,11 +222,11 @@ namespace ospray {
   {}
 
 
-
   template<typename T>
   void LiveSSAOFrameOp::applySSAO(FrameBufferView &fb, T *color, const Camera *cam)
   {
-    if(cam->toString().compare("ospray::PerspectiveCamera")){
+    if (cam->toString().compare("ospray::PerspectiveCamera"))
+    {
       throw std::runtime_error(cam->toString() + " camera type not supported in SSAO "
                                "PerspectiveCamera only");
     }
@@ -254,16 +253,14 @@ namespace ospray {
     pixelSize.y = nearClip *  2.f * tanf(deg2rad(0.5f * fovy))/windowSize.y;
     pixelSize.x = pixelSize.y;
 
-
     ispc::LiveSSAOFrameOp_set(ispcEquiv,
-                          nearClip,
-                          ssaoStrength,
-                          &windowSize,
-                          &pixelSize,
-                          &cameraSpace,
-                          &kernel[0],
-                          &randomVecs[0]);
-
+                              nearClip,
+                              ssaoStrength,
+                              &windowSize,
+                              &pixelSize,
+                              &cameraSpace,
+                              &kernel[0],
+                              &randomVecs[0]);
 
     float * depthBuffer = fb.depthBuffer;
     std::vector<float> occlusionBuffer(fb.fbDims.x * fb.fbDims.y, 0);
@@ -279,19 +276,19 @@ namespace ospray {
     tasking::parallel_for(fb.fbDims.x * fb.fbDims.y / programcount,
       [&](int programID)
     {
-      ispc::LiveSSAOFrameOp_getOcclusion(ispcEquiv, 
-                                        &fb, 
-                                        &occlusionBuffer[0], 
-                                        radius, 
-                                        checkRadius, 
-                                        kernel.size(), 
-                                        programID);
+      ispc::LiveSSAOFrameOp_getOcclusion( ispcEquiv, 
+                                          &fb, 
+                                          &occlusionBuffer[0], 
+                                          radius, 
+                                          checkRadius, 
+                                          kernel.size(), 
+                                          programID);
     });
-    ispc::LiveSSAOFrameOp_applyOcclusion(ispcEquiv, 
+
+    ispc::LiveSSAOFrameOp_applyOcclusion( ispcEquiv, 
                                           &fb, 
                                           color, 
                                           &occlusionBuffer[0]);
-    
 
   }
 
@@ -308,10 +305,6 @@ namespace ospray {
       applySSAO(fbView, static_cast<float*>(fbView.colorBuffer), camera);
     }
   }
-
-
-
-
 
 
   OSP_REGISTER_IMAGE_OP(SSAOFrameOp, frame_ssao);

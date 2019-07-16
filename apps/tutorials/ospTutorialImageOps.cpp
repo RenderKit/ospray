@@ -205,18 +205,18 @@ int main(int argc, const char **argv)
 
       
       if(!frameOpNames[i].compare("ssao")){
-        static float strength = 0.f, radius = 0.3f, checkRadius = 1.f;
+        static float strength = 0.2f, radius = 0.3f, checkRadius = 1.f;
         if (ImGui::SliderFloat("strength", &strength, 0.f, 1.f) ) {
           ospSetFloat(frameOps[i], "strength", strength);
           pipelineUpdated                   = true;
           glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
         }
-        if (ImGui::SliderFloat("radius", &radius, 0.f, 2.f) ) {
+        if (ImGui::SliderFloat("kernel radius", &radius, 0.f, 2.f) ) {
           ospSetFloat(frameOps[i], "radius", radius);
           pipelineUpdated                   = true;
           glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
         }
-        if (ImGui::SliderFloat("checkRadius", &checkRadius, 0.f, 2.f) ) {
+        if (ImGui::SliderFloat("max ao distance", &checkRadius, 0.f, 2.f) ) {
           ospSetFloat(frameOps[i], "checkRadius", checkRadius);
           pipelineUpdated                   = true;
           glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
