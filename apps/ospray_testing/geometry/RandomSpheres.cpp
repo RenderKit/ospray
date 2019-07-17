@@ -99,7 +99,7 @@ namespace ospray {
 
       OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 
-      ospSetData(model, "color", colorData);
+      ospSetData(model, "prim.color", colorData);
 
       // create glass material and assign to geometry
       OSPMaterial glassMaterial =
@@ -118,7 +118,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models    = ospNewData(1, OSP_OBJECT, &model);
-      ospSetData(group, "geometries", models);
+      ospSetData(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 

@@ -72,10 +72,10 @@ namespace ospray {
     Volume::commit();
 
     // check if value buffer has changed
-    if (getVertexValueData() != vertexValuePrev ||
-        getCellValueData() != cellValuePrev) {
-      vertexValuePrev = getVertexValueData();
-      cellValuePrev   = getCellValueData();
+    if (getParamData("vertex.value") != vertexValuePrev ||
+        getParamData("cell.value") != cellValuePrev) {
+      vertexValuePrev = getParamData("vertex.value");
+      cellValuePrev   = getParamData("cell.value");
 
       // rebuild BVH, resync ISPC, etc...
       finished = false;
@@ -112,12 +112,12 @@ namespace ospray {
       return;
 
     // read arrays given through API
-    Data *vertexData        = getParamData("vertex", getParamData("vertices"));
-    Data *vertexValueData   = getVertexValueData();
-    Data *indexData         = getParamData("index", getParamData("indices"));
+    Data *vertexData        = getParamData("vertex.position");
+    Data *vertexValueData   = getParamData("vertex.value");
+    Data *indexData         = getParamData("index");
     Data *indexPrefixedData = getParamData("indexPrefixed");
     Data *cellData          = getParamData("cell");
-    Data *cellValueData     = getCellValueData();
+    Data *cellValueData     = getParamData("cell.value");
     Data *cellTypeData      = getParamData("cell.type");
 
     // make sure that all necessary arrays are provided

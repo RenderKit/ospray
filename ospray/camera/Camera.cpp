@@ -38,13 +38,13 @@ namespace ospray {
   void Camera::commit()
   {
     // "parse" the general expected parameters
-    pos      = getParam3f("pos", vec3f(0.f));
-    dir      = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
+    pos      = getParam3f("position", vec3f(0.f));
+    dir      = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
     up       = getParam3f("up", vec3f(0.f, 1.f, 0.f));
-    nearClip = getParam1f("nearClip", getParam1f("near_clip", 1e-6f));
+    nearClip = getParam1f("nearClip", 1e-6f);
 
-    imageStart = getParam2f("imageStart", getParam2f("image_start", vec2f(0.f)));
-    imageEnd   = getParam2f("imageEnd", getParam2f("image_end", vec2f(1.f)));
+    imageStart = getParam2f("imageStart", vec2f(0.f));
+    imageEnd   = getParam2f("imageEnd", vec2f(1.f));
 
     shutterOpen = getParam1f("shutterOpen", 0.0f);
     shutterClose = getParam1f("shutterClose", 0.0f);

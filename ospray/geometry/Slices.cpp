@@ -32,7 +32,7 @@ namespace ospray {
 
   void Slices::commit()
   {
-    planesData = getParamData("planes", nullptr);
+    planesData = getParamData("plane", nullptr);
     volume     = (VolumetricModel *)getParamObject("volume", nullptr);
 
     numPlanes = planesData->numItems;

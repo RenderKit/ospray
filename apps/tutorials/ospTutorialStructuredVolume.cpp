@@ -34,7 +34,7 @@ static void setIsoValue(OSPGeometry geometry, float value)
 {
   // create and set a single iso value
   OSPData isoValuesData = ospNewData(1, OSP_FLOAT, &value);
-  ospSetData(geometry, "isovalues", isoValuesData);
+  ospSetData(geometry, "isovalue", isoValuesData);
   ospRelease(isoValuesData);
 }
 
@@ -42,7 +42,7 @@ static void setSlice(OSPGeometry geometry, float value)
 {
   vec4f plane(-1.f, 0.f, 0.f, value);
   OSPData planesData = ospNewData(1, OSP_VEC4F, &plane);
-  ospSetData(geometry, "planes", planesData);
+  ospSetData(geometry, "plane", planesData);
   ospRelease(planesData);
 }
 
@@ -124,14 +124,14 @@ int main(int argc, const char **argv)
   ospCommit(instance);
 
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
-  ospSetData(world, "instances", instances);
+  ospSetData(world, "instance", instances);
   ospRelease(instances);
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "lights", lightsData);
+  ospSetData(renderer, "light", lightsData);
   ospRelease(lightsData);
 
   ospSetInt(renderer, "aoSamples", 1);
@@ -147,12 +147,12 @@ int main(int argc, const char **argv)
   auto updateScene = [&]() {
     geometryModelHandles.clear();
 
-    ospRemoveParam(group, "geometries");
-    ospRemoveParam(group, "volumes");
+    ospRemoveParam(group, "geometry");
+    ospRemoveParam(group, "volume");
 
     if (showVolume) {
       OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
-      ospSetObject(group, "volumes", volumes);
+      ospSetObject(group, "volume", volumes);
       ospRelease(volumes);
     }
 
@@ -165,7 +165,7 @@ int main(int argc, const char **argv)
 
       OSPData geoms = ospNewData(
           geometryModelHandles.size(), OSP_OBJECT, geometryModelHandles.data());
-      ospSetObject(group, "geometries", geoms);
+      ospSetObject(group, "geometry", geoms);
       ospRelease(geoms);
     }
   };

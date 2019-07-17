@@ -30,7 +30,7 @@ namespace ospray {
 
   void Boxes::commit()
   {
-    boxData = getParamData("boxes");
+    boxData = getParamData("box");
 
     if (!boxData)
       throw std::runtime_error("no box data provided to Boxes geometry!");

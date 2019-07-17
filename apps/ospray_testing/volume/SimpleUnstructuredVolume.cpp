@@ -210,7 +210,7 @@ namespace ospray {
       });
 
       // set data objects for volume object
-      ospSetData(volume, "vertex", verticesData);
+      ospSetData(volume, "vertex.position", verticesData);
       if (!valuesPerCell)
         ospSetData(volume, "vertex.value", vertexValuesData);
       ospSetData(volume, "index", indicesData);

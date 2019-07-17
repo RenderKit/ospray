@@ -496,58 +496,54 @@ summarized in the table below.
 
 ### Adaptive Mesh Refinement (AMR) Volume
 
-AMR volumes are specified as a list of bricks, which are levels of
+AMR volumes are specified as a list of blocks, which are levels of
 refinement in potentially overlapping regions. There can be any number
-of refinement levels and any number of bricks at any level of
+of refinement levels and any number of blocks at any level of
 refinement. An AMR volume type is created by passing the type string
 "`amr_volume`" to `ospNewVolume`.
 
-Applications should first create an `OSPData` array which holds
-information about each brick. The following structure is used to
-populate this array (found in `ospray.h`):
+Blocks are defined by four parameters: their bounds, the refinement level
+in which they reside, their cell width, and the scalar data contained
+within them.
 
-    struct amr_brick_info
-    {
-      box3i bounds;
-      int   refinementLevel;
-      float cellWidth;
-    };
+  --------- --------------- -----------  -----------------------------------
+  Type      Name            Default      Description
+  --------- --------------- -----------  -----------------------------------
+  range2f   voxelRange        undefined  range of scalar voxel values
 
-Then for each brick, the application should create an `OSPData` array of
-`OSPData` handles, where each handle is the data per-brick. Currently we
-only support `float` voxels.
+  string    method              current  sampling method; valid values are
+                                         "finest", "current", or "octant"
 
-  ------- ----------- -----------  -----------------------------------
-  Type    Name            Default  Description
-  ------- ----------- -----------  -----------------------------------
-  vec3f   gridOrigin  $(0, 0, 0)$  origin of the grid in world-space
+  box3f[]   block.bounds      undefined  [data] array of bounds for each AMR
+                                         block
 
-  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in
-                                   world-space
+  int[]     block.level       undefined  array of each block's refinement level
 
-  string  amrMethod       current  sampling method; valid values are
-                                   "finest", "current", or "octant"
+  float[]   block.cellWidth   undefined  array of each block's cell width
 
-  string  voxelType     undefined  data type of each voxel,
-                                   currently supported are:
+  OSPData[] block.data        undefined  [data] array of OSPData containing
+                                         the actual scalar voxel data
 
-                                   "uchar" (8\ bit unsigned integer)
+  vec3f     gridOrigin       $(0, 0, 0)$  origin of the grid in world-space
 
-                                   "short" (16\ bit signed integer)
+  vec3f     gridSpacing      $(1, 1, 1)$  size of the grid cells in
+                                          world-space
 
-                                   "ushort" (16\ bit unsigned integer)
+  string    voxelType          undefined  data type of each voxel,
+                                          currently supported are:
 
-                                   "float" (32\ bit single precision
-                                   floating point)
+                                          "uchar" (8\ bit unsigned integer)
 
-                                   "double" (64\ bit double precision
-                                   floating point)
+                                          "short" (16\ bit signed integer)
 
-  OSPData brickInfo                array of info defining each brick
+                                          "ushort" (16\ bit unsigned integer)
 
-  OSPData brickData                array of handles to per-brick
-                                   voxel data
-  ------- ----------- -----------  -----------------------------------
+                                          "float" (32\ bit single precision
+                                          floating point)
+
+                                          "double" (64\ bit double precision
+                                          floating point)
+  --------- --------------- -----------  -----------------------------------
   : Additional configuration parameters for AMR volumes.
 
 Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
@@ -594,7 +590,7 @@ id_m$.
   -------------------  ------------------  -------  ---------------------------------------
   Type                 Name                Default  Description
   -------------------  ------------------  -------  ---------------------------------------
-  vec3f[]              vertex                       [data] array of vertex positions
+  vec3f[]              vertex.position              [data] array of vertex positions
 
   float[]              vertex.value                 [data] array of vertex data values to
                                                     be sampled
@@ -646,8 +642,8 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
 
   Type         Name        Description
   ------------ ----------- ----------------------------------------------
-  vec3f[]      colors      [data] array of RGB colors
-  float[]      opacities   [data] array of opacities
+  vec3f[]      color       [data] array of RGB colors
+  float[]      opacity     [data] array of opacities
   vec2f        valueRange  domain (scalar range) this function maps from
   ------------ ----------- ----------------------------------------------
   : Parameters accepted by the linear transfer function.
@@ -666,29 +662,15 @@ VolumetricModels. To create a volume instance, call
   -------------------- ----------------------- ---------- --------------------------------------
   OSPTransferFunction  transferFunction                   [transfer function] to use
 
-  bool                 gradientShadingEnabled       false volume is rendered with surface
-                                                          shading wrt. to normalized gradient
+  vec3f                clippingBoxLower       $(0, 0, 0)$ lower coordinate (in object-space)
+                                                          to clip the volume values
 
-  bool                 preIntegration               false use pre-integration for
-                                                          [transfer function] lookups
-
-  bool                 singleShade                   true shade only at the point of maximum
-                                                          intensity
-
-  bool                 adaptiveSampling              true adapt ray step size based on
-                                                          opacity
-
-  float                adaptiveScalar                  15 modifier for adaptive step size
-
-  float                adaptiveMaxSamplingRate          2 maximum sampling rate for adaptive
-                                                          sampling
+  vec3f                clippingBoxUpper       $(0, 0, 0)$ upper coordinate (in object-space)
+                                                          to clip the volume values
 
   float                samplingRate                 0.125 sampling rate of the volume (this
                                                           is the minimum step size for
                                                           adaptive sampling)
-
-  vec3f                specular                  gray 0.3 specular color for shading
-
   -------------------- ------------------------ --------- ---------------------------------------
   : Parameters understood by VolumetricModel.
 
@@ -712,15 +694,19 @@ triangle mesh recognizes the following parameters:
 
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
-  vec3f(a)[]         vertex           [data] array of vertex positions
+  vec3f(a)[]         vertex.position  [data] array of vertex positions
+
   vec3f(a)[]         vertex.normal    [data] array of vertex normals
+
   vec4f[] / vec3fa[] vertex.color     [data] array of vertex colors (RGBA/RGB)
+
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
+
   vec3i(a)[]         index            [data] array of triangle indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a triangle mesh geometry.
 
-The `vertex` and `index` arrays are mandatory to create a valid triangle
+The `vertex.position` and `index` arrays are mandatory to create a valid triangle
 mesh.
 
 ### Quad Mesh
@@ -731,15 +717,19 @@ following parameters:
 
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
-  vec3f(a)[]         vertex           [data] array of vertex positions
+  vec3f(a)[]         vertex.position  [data] array of vertex positions
+
   vec3f(a)[]         vertex.normal    [data] array of vertex normals
+
   vec4f[] / vec3fa[] vertex.color     [data] array of vertex colors (RGBA/RGB)
+
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
+
   vec4i[]            index            [data] array of quad indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a quad mesh geometry.
 
-The `vertex` and `index` arrays are mandatory to create a valid quad
+The `vertex.position` and `index` arrays are mandatory to create a valid quad
 mesh. A quad is internally handled as a pair of two triangles, thus
 mixing triangles and quad is supported by encoding a triangle as a quad
 with the last two vertex indices being identical (`w=z`).
@@ -750,20 +740,32 @@ A mesh consisting of subdivision surfaces, created by specifying a
 geometry of type "`subdivision`". Once created, a subdivision recognizes
 the following parameters:
 
-  Type               Name             Description
-  ------------------ ---------------- -------------------------------------------------
-  vec3f[]            vertex                [data] array of vertex positions
-  vec4f[]            vertex.color          [data] array of vertex colors (RGBA)
-  vec2f[]            vertex.texcoord       [data] array of vertex texture coordinates
-  float              level                 global level of tessellation, default is 5
-  uint[]/vec4i[]     index                 [data] array of indices (into the vertex array(s))
-  float[]            index.level           [data] array of per-edge levels of tessellation, overrides global level
-  uint[]             face                  [data] array holding the number of indices/edges (3 to 15) per face
-  vec2i[]            edgeCrease.index      [data] array of edge crease indices
-  float[]            edgeCrease.weight     [data] array of edge crease weights
-  uint[]             vertexCrease.index    [data] array of vertex crease indices
-  float[]            vertexCrease.weight   [data] array of vertex crease weights
-  ------------------ ---------------- -------------------------------------------------
+  Type               Name                Default Description
+  ------------------ ------------------- ------- -------------------------------------------------
+  vec3f[]            vertex.position        NULL [data] array of vertex positions
+
+  vec4f[]            vertex.color           NULL [data] array of vertex colors (RGBA)
+
+  vec2f[]            vertex.texcoord        NULL [data] array of vertex texture coordinates
+
+  float              level                     5 global level of tessellation, default is 5
+
+  uint[]/vec4i[]     index                  NULL [data] array of indices (into the vertex array(s))
+
+  float[]            index.level            NULL [data] array of per-edge levels of tessellation,
+                                                 overrides global level
+
+  uint[]             face                   NULL [data] array holding the number of indices/edges
+                                                 (3 to 15) per face
+
+  vec2i[]            edgeCrease.index       NULL [data] array of edge crease indices
+
+  float[]            edgeCrease.weight      NULL [data] array of edge crease weights
+
+  uint[]             vertexCrease.index     NULL [data] array of vertex crease indices
+
+  float[]            vertexCrease.weight    NULL [data] array of vertex crease weights
+  ------------------ ------------------- ------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid
@@ -864,49 +866,48 @@ segments, or represented as Bézier curves; they are thus always
 perfectly round. The parameters defining this geometry are listed in the
 table below.
 
-  ------------------ ------------- --------------------------------------------
-  Type               Name          Description
-  ------------------ ------------- --------------------------------------------
-  float              radius        global radius of all streamlines (if
-                                   per-vertex radius is not used), default 0.01
+  ------------------ --------------- --------------------------------------------
+  Type               Name            Description
+  ------------------ --------------- --------------------------------------------
+  float              radius          global radius of all streamlines (if
+                                     per-vertex radius is not used), default 0.01
 
-  bool               smooth        enable curve interpolation, default off
-                                   (always on if per-vertex radius is used)
+  bool               smooth          enable curve interpolation, default off
+                                     (always on if per-vertex radius is used)
 
-  vec3fa[] / vec4f[] vertex        [data] array of all vertex position (and
-                                   optional radius) for *all* streamlines
+  int32[]            index           [data] array of indices to the first vertex
+                                     of a link
 
-  vec4f[]            vertex.color  [data] array of corresponding vertex
-                                   colors (RGBA)
+  vec3fa[] / vec4f[] vertex.position [data] array of all vertex position (and
+                                     optional radius) for *all* streamlines
 
-  float[]            vertex.radius [data] array of corresponding vertex radius
+  vec4f[]            vertex.color    [data] array of corresponding vertex
+                                     colors (RGBA)
 
-  int32[]            index         [data] array of indices to the first vertex
-                                   of a link
-  ------------------ ------------- --------------------------------------------
+  float[]            vertex.radius   [data] array of corresponding vertex radius
+  ------------------ --------------- --------------------------------------------
   : Parameters defining a streamlines geometry.
 
 Each streamline is specified by a set of (aligned) control points in
-`vertex`. If `smooth` is disabled and a constant `radius` is used for
-all streamlines then all vertices belonging to the same logical
-streamline are connected via [cylinders], with additional [spheres] at
-each vertex to create a continuous, closed surface. Otherwise,
-streamlines are represented as Bézier curves, smoothly interpolating the
-vertices. This mode supports per-vertex varying radii (either given in
-`vertex.radius`, or in the 4th component of a *vec4f* `vertex`), but is
-slower and consumes more memory. Additionally, the radius needs to be
-smaller than the curvature radius of the Bézier curve at each location
-on the curve.
+`vertex.position`. If `smooth` is disabled and a constant `radius` is used for
+all streamlines then all vertices belonging to the same logical streamline are
+connected via [cylinders], with additional [spheres] at each vertex to create a
+continuous, closed surface. Otherwise, streamlines are represented as Bézier
+curves, smoothly interpolating the vertices. This mode supports per-vertex
+varying radii (either given in `vertex.radius`, or in the 4th component of a
+*vec4f* `vertex`), but is slower and consumes more memory. Additionally, the
+radius needs to be smaller than the curvature radius of the Bézier curve at
+each location on the curve.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
-streamline is specified as a list of segments (or links)
-referenced via `index`: each entry `e` of the `index` array points the
-first vertex of a link (`vertex[index[e]]`) and the second vertex of the
-link is implicitly the directly following one (`vertex[index[e]+1]`).
-For example, two streamlines of vertices `(A-B-C-D)` and `(E-F-G)`,
-respectively, would internally correspond to five links (`A-B`, `B-C`,
-`C-D`, `E-F`, and `F-G`), and would be specified via an array of
-vertices `[A,B,C,D,E,F,G]`, plus an array of link indices `[0,1,2,4,5]`.
+streamline is specified as a list of segments (or links) referenced via
+`index`: each entry `e` of the `index` array points the first vertex of a link
+(`vertex.position[index[e]]`) and the second vertex of the link is implicitly
+the directly following one (`vertex.position[index[e]+1]`).  For example, two
+streamlines of vertices `(A-B-C-D)` and `(E-F-G)`, respectively, would
+internally correspond to five links (`A-B`, `B-C`, `C-D`, `E-F`, and `F-G`),
+and would be specified via an array of vertices `[A,B,C,D,E,F,G]`, plus an
+array of link indices `[0,1,2,4,5]`.
 
 ### Curves
 
@@ -917,22 +918,22 @@ this geometry are listed in the table below.
   ------------------ --------------- -------------------------------------------
   Type               Name            Description
   ------------------ --------------- -------------------------------------------
-  string             curveType       "flat" (ray oriented),
-                                     "round" (circular cross section),
-                                     "ribbon" (normal oriented flat curve)
-
-  string             curveBasis      "linear", "bezier", "bspline", "hermite"
-
-  vec4f[]            vertex          [data] array of vertex position and radius
-
-  int32[]            index           [data] array of indices to the first vertex
-                                     or tangent of a curve segment
+  vec4f[]            vertex.position [data] array of vertex position and radius
 
   vec3f[]            vertex.normal   [data] array of curve normals (only for
                                      "ribbon" curves)
 
   vec3f[]            vertex.tangent  [data] array of curve tangents (only for
                                      "hermite" curves)
+
+  int32[]            index           [data] array of indices to the first vertex
+                                     or tangent of a curve segment
+
+  string             basis           "linear", "bezier", "bspline", "hermite"
+
+  string             type            "flat" (ray oriented),
+                                     "round" (circular cross section),
+                                     "ribbon" (normal oriented flat curve)
   ------------------ --------------- -------------------------------------------
   : Parameters defining a curves geometry.
 
@@ -946,7 +947,7 @@ geometry by calling `ospNewGeometry` with type string "`boxes`".
 
   Type       Name       Description
   ---------- ---------- ------------------------------------------------------
-  box3f[]    boxes      [data] array of boxes. Note this can be specified
+  box3f[]    box        [data] array of boxes. Note this can be specified
                         as OSP_BOX3F, (2 * OSP_VEC3F), or (6 * OSP_FLOAT)
   ---------- ---------- ------------------------------------------------------
   : Parameters defining a boxes geometry.
@@ -961,7 +962,7 @@ function].
 
   Type       Name       Description
   ---------- ---------- ------------------------------------------------------
-  float[]    isovalues  [data] array of isovalues
+  float[]    isovalue   [data] array of isovalues
   OSPVolume  volume     handle of the [volume] to be isosurfaced
   ---------- ---------- ------------------------------------------------------
   : Parameters defining an isosurfaces geometry.
@@ -978,7 +979,7 @@ according to the provided volume's [transfer function].
 
   Type       Name       Description
   ---------- ---------- ----------------------------------------------------
-  vec4f[]    planes     [data] array with plane coefficients for all slices
+  vec4f[]    plane      [data] array with plane coefficients for all slices
   OSPVolume  volume     handle of the [volume] that will be sliced
   ---------- ---------- ----------------------------------------------------
   : Parameters defining a slices geometry.
@@ -994,21 +995,19 @@ material information. To create a geometry instance, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
-  ------------------ --------------- --------- --------------------------------------
-  Type               Name            Default   Description
-  ------------------ --------------- --------- --------------------------------------
-  vec4f[]            color                NULL [data] array of per-primitive colors
+  ------------------ ----------------- --------- --------------------------------------
+  Type               Name              Default   Description
+  ------------------ ----------------- --------- --------------------------------------
+  vec4f[]            prim.color             NULL [data] array of per-primitive colors
 
-  uint32[]           prim.materialID      NULL [data] array of per-primitive colors
+  uint32[]           prim.materialID        NULL [data] array of per-primitive material IDs
 
-  OSPMaterial[]      materialList         NULL [data] array of per-primitive
-                                               materials, which overrides any
-                                               single material set by
-                                               'ospSetObject`. This is also the
-                                               list optionally indexed by
-                                               "prim.materialID" (otherwise it is
-                                               per-primitive)
-  ------------------ --------------- --------- ---------------------------------------
+  OSPMaterial[]      materialList           NULL [data] array of materials, indexed by
+                                                 `prim.materialID`
+
+  OSPMaterial        material               NULL default material used if `prim.materialID`
+                                                 is not present
+  ------------------ ----------------- --------- ---------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -1024,10 +1023,10 @@ a group call
   ------------------ --------------- ---------- --------------------------------------
   Type               Name            Default    Description
   ------------------ --------------- ---------- --------------------------------------
-  OSPData            geometries            NULL data array of OSPGeometricModel
+  OSPData            geometry              NULL data array of OSPGeometricModel
                                                 geometry objects in the scene
 
-  OSPData            volumes               NULL data array of OSPVolumetricModel
+  OSPData            volume                NULL data array of OSPVolumetricModel
                                                 volume objects in the scene
   ------------------ --------------- ---------- ---------------------------------------
   : Parameters understood by Group
@@ -1075,7 +1074,7 @@ feature/performance trade-offs.
   ------------- ---------------- --------  -------------------------------------
   Type          Name              Default  Description
   ------------- ---------------- --------  -------------------------------------
-  OSPData       instances            NULL  data array of OSPInstance scene objs
+  OSPData       instance             NULL  data array of OSPInstance scene objs
 
   bool          dynamicScene        false  use RTC_SCENE_DYNAMIC flag (faster
                                            BVH build, slower ray traversal),
@@ -1107,19 +1106,26 @@ The call returns `NULL` if that type of renderer is not known, or else
 an `OSPRenderer` handle to the created renderer. General parameters of
 all renderers are
 
-  ----------- ------------------ --------  ----------------------------------------
-  Type        Name                Default  Description
-  ----------- ------------------ --------  ----------------------------------------
-  OSPLight[]  lights                       [data] array with handles of the [lights]
+  -----------   ------------------ ----------  ----------------------------------------
+  Type          Name                Default    Description
+  -----------   ------------------ ----------  ----------------------------------------
+  OSPLight[]    lights                         [data] array with handles of the [lights]
 
-  int         spp                       1  samples per pixel
+  int           spp                         1  samples per pixel
 
-  int         maxDepth                 20  maximum ray recursion depth
+  int           maxDepth                   20  maximum ray recursion depth
 
-  float       minContribution       0.001  sample contributions below this value
-                                           will be neglected to speedup rendering
+  float         minContribution         0.001  sample contributions below this value
+                                               will be neglected to speedup rendering
 
-  float       varianceThreshold         0  threshold for adaptive accumulation
+  float         varianceThreshold           0  threshold for adaptive accumulation
+
+  float /       bgColor                black,  background color and alpha
+  vec3f / vec4f                   transparent  (RGBA)
+
+  OSPTexture    maxDepthTexture          NULL  screen-sized float [texture]
+                                               with maximum far distance per pixel
+                                               (use texture type 'texture2d')
   ----------- ------------------ --------  ----------------------------------------
   : Parameters understood by all renderers.
 
@@ -1128,6 +1134,21 @@ accelerates progressive [rendering] by stopping the rendering and
 refinement of image regions that have an estimated variance below the
 `varianceThreshold`. This feature requires a [framebuffer] with an
 `OSP_FB_VARIANCE` channel.
+
+Per default the background of the rendered image will be transparent
+black, i.e., the alpha channel holds the opacity of the rendered objects.
+This eases transparency-aware blending of the image with an
+arbitrary background image by the application. The parameter `bgColor`
+can be used to already blend with a constant background color (and
+alpha) during rendering.
+
+OSPRay renderers support depth composition with images of other
+renderers, for example to incorporate help geometries of a 3D UI that
+were rendered with OpenGL. The screen-sized [texture] `maxDepthTexture`
+must have format `OSP_TEXTURE_R32F` and flag
+`OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
+distance of primary rays, thus objects of other renderers can hide
+objects rendered by OSPRay.
 
 ### SciVis Renderer
 
@@ -1141,31 +1162,13 @@ special parameters:
   ------------- ---------------------- ------------  ----------------------------
   Type          Name                        Default  Description
   ------------- ---------------------- ------------  ----------------------------
-  bool          shadowsEnabled                false  whether to compute (hard)
-                                                     shadows
-
   int           aoSamples                         0  number of rays per sample to
                                                      compute ambient occlusion
 
-  float         aoDistance                   10^20^  maximum distance to consider
+  float         aoRadius                     10^20^  maximum distance to consider
                                                      for ambient occlusion
 
-  bool          aoTransparencyEnabled         false  whether object transparency
-                                                     is respected when computing
-                                                     ambient occlusion (slower)
-
-  bool          oneSidedLighting               true  if true, backfacing
-                                                     surfaces (wrt. light source)
-                                                     receive no illumination
-
-  float /       bgColor                      black,  background color and alpha
-  vec3f / vec4f                         transparent  (RGBA)
-
-  OSPTexture    maxDepthTexture                NULL  screen-sized float [texture]
-                                                     with maximum far distance
-                                                     per pixel
-                                                     (use texture type
-                                                     'texture2d')
+  float         aoIntensity                       1  ambient occlusion strength
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 
@@ -1174,20 +1177,6 @@ light] in the `lights` array.^[If there are multiple ambient lights then
 their contribution is added] If `aoSamples` is zero (the default) then
 ambient lights cause ambient illumination (without occlusion).
 
-Per default the background of the rendered image will be transparent
-black, i.e., the alpha channel holds the opacity of the rendered objects.
-This eases transparency-aware blending of the image with an
-arbitrary background image by the application. The parameter `bgColor`
-can be used to already blend with a constant background color (and
-alpha) during rendering.
-
-The SciVis renderer supports depth composition with images of other
-renderers, for example to incorporate help geometries of a 3D UI that
-were rendered with OpenGL. The screen-sized [texture] `maxDepthTexture`
-must have format `OSP_TEXTURE_R32F` and flag
-`OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
-distance of primary rays, thus objects of other renderers can hide
-objects rendered by OSPRay.
 
 ### Path Tracer
 
@@ -1200,6 +1189,9 @@ supports the following special parameters:
   ---------- ---------------- --------  -------------------------------------
   Type       Name              Default  Description
   ---------- ---------------- --------  -------------------------------------
+  bool       geometryLights       true  whether to render light emitted from
+                                        geometries
+
   int        rouletteDepth           5  ray recursion depth at which to
                                         start Russian roulette termination
 
@@ -1210,6 +1202,8 @@ supports the following special parameters:
   OSPTexture backplate            NULL  [texture] image used as background,
                                         replacing visible lights in infinity
                                         (e.g., the [HDRI light])
+  vec4f      shadowCatcherPlane      0  optional invisible plane that captures
+                                        shadows for compositing
   ---------- ---------------- --------  -------------------------------------
   : Special parameters understood by the path tracer.
 
@@ -1229,8 +1223,10 @@ All light sources[^1] accept the following parameters:
   Type      Name        Default  Description
   --------- ---------- --------  ---------------------------------------
   vec3f(a)  color         white  color of the light
+
   float     intensity         1  intensity of the light (a factor)
-  bool      isVisible      true  whether the light can be directly seen
+
+  bool      visible        true  whether the light can be directly seen
   --------- ---------- --------  ---------------------------------------
   : Parameters accepted by all lights.
 
@@ -1251,6 +1247,7 @@ parameters:
   Type      Name             Description
   --------- ---------------- ---------------------------------------------
   vec3f(a)  direction        main emission direction of the distant light
+
   float     angularDiameter  apparent size (angle in degree) of the light
   --------- ---------------- ---------------------------------------------
   : Special parameters accepted by the distant light.
@@ -1270,6 +1267,7 @@ the following special parameters:
   Type      Name      Description
   --------- --------- -----------------------------------------------
   vec3f(a)  position  the center of the sphere light, in world-space
+
   float     radius    the size of the sphere light
   --------- --------- -----------------------------------------------
   : Special parameters accepted by the sphere light.
@@ -1322,7 +1320,9 @@ the following special parameters:
   Type      Name      Description
   --------- --------- -----------------------------------------------------
   vec3f(a)  position  world-space position of one vertex of the quad light
+
   vec3f(a)  edge1     vector to one adjacent vertex
+
   vec3f(a)  edge2     vector to the other adjacent vertex
   --------- --------- -----------------------------------------------------
   : Special parameters accepted by the quad light.
@@ -1343,16 +1343,16 @@ illuminating it from infinity. It is created by passing the type string
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
-  ------------ ----- --------------------------------------------------
-  Type         Name  Description
-  ------------ ----- --------------------------------------------------
-  vec3f(a)     up    up direction of the light in world-space
+  ------------ --------- --------------------------------------------------
+  Type         Name      Description
+  ------------ --------- --------------------------------------------------
+  vec3f(a)     up        up direction of the light in world-space
 
-  vec3f(a)     dir   direction to which the center of the texture will
-                     be mapped to (analog to [panoramic camera])
+  vec3f(a)     direction direction to which the center of the texture will
+                         be mapped to (analog to [panoramic camera])
 
-  OSPTexture   map   environment map in latitude / longitude format
-  ------------ ----- --------------------------------------------------
+  OSPTexture   map       environment map in latitude / longitude format
+  ------------ --------- --------------------------------------------------
   : Special parameters accepted by the HDRI light.
 
 ![Orientation and Mapping of an HDRI Light.][imgHDRILight]
@@ -1717,13 +1717,18 @@ attenuation), but neglects parallax effects due to its (virtual)
 thickness. To create a such a thin glass material pass the type string
 "`ThinGlass`" to `ospNewMaterial`. Its parameters are
 
-  Type   Name                  Default  Description
-  ------ -------------------- --------  -----------------------------------
-  float  eta                       1.5  index of refraction
-  vec3f  attenuationColor        white  resulting color due to attenuation
-  float  attenuationDistance         1  distance affecting attenuation
-  float  thickness                   1  virtual thickness
-  ------ -------------------- --------  -----------------------------------
+  Type      Name                  Default  Description
+  --------- -------------------- --------  -----------------------------------
+  float     eta                       1.5  index of refraction
+
+  vec3f     attenuationColor        white  resulting color due to attenuation
+
+  float     attenuationDistance         1  distance affecting attenuation
+
+  float     thickness                   1  virtual thickness
+
+  Texture2D map_attenuationColor undefined optional texture to modulate attenuation
+  --------- -------------------- --------  -----------------------------------
   : Parameters of the ThinGlass material.
 
 For convenience the attenuation is controlled the same way as with the
@@ -1751,13 +1756,19 @@ material pass the type string "`MetallicPaint`" to `ospNewMaterial`. Its
 parameters are listed in the table below.
 
   Type   Name            Default  Description
-  ------ ------------ ----------  ----------------------------------
-  vec3f  baseColor     white 0.8  color of base coat
-  float  flakeAmount         0.3  amount of flakes, in [0–1]
-  vec3f  flakeColor    Aluminium  color of metallic flakes
-  float  flakeSpread         0.5  spread of flakes, in [0–1]
-  float  eta                 1.5  index of refraction of clear coat
-  ------ ------------ ----------  ----------------------------------
+  --------- ------------ ----------  ----------------------------------
+  vec3f     baseColor     white 0.8  color of base coat
+
+  Texture2D map_baseColor undefined optional texture map for base coat
+
+  float     flakeAmount         0.3  amount of flakes, in [0–1]
+
+  vec3f     flakeColor    Aluminium  color of metallic flakes
+
+  float     flakeSpread         0.5  spread of flakes, in [0–1]
+
+  float     eta                 1.5  index of refraction of clear coat
+  --------- ------------ ----------  ----------------------------------
   : Parameters of the MetallicPaint material.
 
 The color of the base coat `baseColor` can be textured by a [texture]
@@ -1781,6 +1792,16 @@ geometric object into a light source. It is created by passing the type
 string "`Luminous`" to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
+
+  Type      Name         Default    Description
+  --------- ------------ --------  ---------------------------------------
+  vec3f(a)  color           white  color of the emitted light
+
+  float     intensity           1  intensity of the light (a factor)
+
+  float     transparency        1  material transparency
+  --------- ------------ --------  ---------------------------------------
+  : Parameters accepted by the Luminous material
 
 ![Rendering of a yellow Luminous material.][imgMaterialLuminous]
 
@@ -1889,8 +1910,8 @@ parameters:
 
   Type      Name        Description
   --------- ----------- ------------------------------------------
-  vec3f(a)  pos         position of the camera in world-space
-  vec3f(a)  dir         main viewing direction of the camera
+  vec3f(a)  position    position of the camera in world-space
+  vec3f(a)  direction   main viewing direction of the camera
   vec3f(a)  up          up direction of the camera
   float     nearClip    near clipping distance
   vec2f     imageStart  start of image region (lower left corner)
@@ -1898,16 +1919,16 @@ parameters:
   --------- ----------- ------------------------------------------
   : Parameters accepted by all cameras.
 
-The camera is placed and oriented in the world with `pos`, `dir` and
-`up`. OSPRay uses a right-handed coordinate system. The region of the
-camera sensor that is rendered to the image can be specified in
-normalized screen-space coordinates with `imageStart` (lower left
-corner) and `imageEnd` (upper right corner). This can be used, for
-example, to crop the image, to achieve asymmetrical view frusta, or to
-horizontally flip the image to view scenes which are specified in a
-left-handed coordinate system. Note that values outside the default
-range of [0–1] are valid, which is useful to easily realize overscan or
-film gate, or to emulate a shifted sensor.
+The camera is placed and oriented in the world with `position`, `direction`
+and `up`. OSPRay uses a right-handed coordinate system. The region of the
+camera sensor that is rendered to the image can be specified in normalized
+screen-space coordinates with `imageStart` (lower left corner) and
+`imageEnd` (upper right corner). This can be used, for example, to crop the
+image, to achieve asymmetrical view frusta, or to horizontally flip the
+image to view scenes which are specified in a left-handed coordinate
+system. Note that values outside the default range of [0–1] are valid,
+which is useful to easily realize overscan or film gate, or to emulate a
+shifted sensor.
 
 #### Perspective Camera
 
@@ -2130,11 +2151,11 @@ The framebuffer takes a list of pixel operations to be applied to the image
 in sequence as an `OSPData`. The pixel operations will be run in the order
 they are in the array.
 
-  Type          Name            Default  Description
-  ------------  --------------- -------- -----------------------------------
-  OSPPixelOp[]  pixelOperations NULL     The ordered sequence of pixel
+  Type          Name           Default  Description
+  ------------  -------------- -------- -----------------------------------
+  OSPPixelOp[]  pixelOperation  NULL     The ordered sequence of pixel
                                          operations to apply to rendered tiles.
-  ------------  --------------- -------- -----------------------------------
+  ------------  -------------- -------- -----------------------------------
   : Parameters accepted by the framebuffer.
 
 
@@ -2161,6 +2182,8 @@ customized using the parameters listed in the table below.
   ----- ---------  --------    -----------------------------------------
   Type  Name       Default     Description
   ----- ---------  --------    -----------------------------------------
+  float exposure   1.0         amount of light per unit area
+
   float contrast   1.6773      contrast (toe of the curve); typically is
                                in [1–2]
 

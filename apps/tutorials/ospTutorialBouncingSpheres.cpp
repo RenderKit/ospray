@@ -103,7 +103,7 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 
   OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, g_colors.data());
 
-  ospSetData(g_spheresModel, "color", colorData);
+  ospSetData(g_spheresModel, "prim.color", colorData);
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
@@ -137,7 +137,7 @@ void createWorld()
   g_spheresModel = createRandomSpheresGeometry(100);
 
   OSPData spheresModels = ospNewData(1, OSP_OBJECT, &g_spheresModel);
-  ospSetData(g_spheresGroup, "geometries", spheresModels);
+  ospSetData(g_spheresGroup, "geometry", spheresModels);
   ospCommit(g_spheresGroup);
 
   OSPInstance spheresInstance = ospNewInstance(g_spheresGroup);
@@ -151,7 +151,7 @@ void createWorld()
 
   OSPData instances =
       ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
-  ospSetData(g_world, "instances", instances);
+  ospSetData(g_world, "instance", instances);
   ospRelease(instances);
   ospRelease(spheresInstance);
   ospRelease(plane);
@@ -165,7 +165,7 @@ OSPRenderer createRenderer()
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "lights", lightsData);
+  ospSetData(renderer, "light", lightsData);
   ospRelease(lightsData);
 
   // commit the renderer

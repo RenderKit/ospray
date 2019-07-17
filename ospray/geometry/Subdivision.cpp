@@ -31,21 +31,22 @@ namespace ospray {
 
   void Subdivision::commit()
   {
+    vertexData   = getParamData("vertex.position");
+    colorsData   = getParamData("vertex.color");
+    texcoordData = getParamData("vertex.texcoord");
+
     level = getParam1f("level", 5.f);
 
-    vertexData = getParamData("vertex", getParamData("position"));
-    indexData  = getParamData("index");
-    facesData  = getParamData("face");
+    indexData      = getParamData("index");
+    indexLevelData = getParamData("index.level");
+
+    facesData = getParamData("face");
 
     edge_crease_indicesData = getParamData("edgeCrease.index");
     edge_crease_weightsData = getParamData("edgeCrease.weight");
 
     vertex_crease_indicesData = getParamData("vertexCrease.index");
     vertex_crease_weightsData = getParamData("vertexCrease.weight");
-
-    colorsData     = getParamData("vertex.color", getParamData("color"));
-    texcoordData   = getParamData("vertex.texcoord", getParamData("texcoord"));
-    indexLevelData = getParamData("index.level");
 
     // check for valid params
     if (!vertexData || vertexData->type != OSP_VEC3F)

@@ -190,7 +190,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   OSPGeometry mesh = ospNewGeometry("triangles");
   OSPData data = ospNewData(4, OSP_VEC3FA, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
   ospCommit(data);
-  ospSetData(mesh, "vertex", data);
+  ospSetData(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
 
   data = ospNewData(4, OSP_VEC4F, color, 0);
@@ -213,7 +213,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
   OSPData models = ospNewData(1, OSP_OBJECT, &model, 0);
-  ospSetObject(group, "geometries", models);
+  ospSetObject(group, "geometry", models);
   ospCommit(group);
   ospRelease(model);
   ospRelease(models);
@@ -226,7 +226,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // put the instance in the world
   *world = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
-  ospSetObject(*world, "instances", instances);
+  ospSetObject(*world, "instance", instances);
   ospCommit(*world);
   ospRelease(instance);
   ospRelease(instances);
@@ -243,7 +243,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // complete setup of renderer
   ospSetInt(*renderer, "aoSamples", 1);
   ospSetFloat(*renderer, "bgColor", 1.0f); // white, transparent
-  ospSetObject(*renderer, "lights", lights);
+  ospSetObject(*renderer, "light", lights);
   ospCommit(*renderer);
 
   ospRelease(light);
@@ -288,7 +288,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   OSPGeometry mesh = ospNewGeometry("triangles");
   OSPData data = ospNewData(4, OSP_VEC3FA, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
   ospCommit(data);
-  ospSetData(mesh, "vertex", data);
+  ospSetData(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
 
   data = ospNewData(4, OSP_VEC4F, color, 0);
@@ -311,7 +311,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
   OSPData models = ospNewData(1, OSP_OBJECT, &model, 0);
-  ospSetObject(group, "geometries", models);
+  ospSetObject(group, "geometry", models);
   ospCommit(group);
   ospRelease(model);
   ospRelease(models);
@@ -324,7 +324,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // put the instance in the world
   *world = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
-  ospSetObject(*world, "instances", instances);
+  ospSetObject(*world, "instance", instances);
   ospCommit(*world);
   ospRelease(instances);
   ospRelease(instance);
@@ -341,7 +341,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // complete setup of renderer
   ospSetInt(*renderer, "aoSamples", 4);
   ospSetFloat(*renderer, "bgColor", 0.2f); // gray, transparent
-  ospSetObject(*renderer, "lights", lights);
+  ospSetObject(*renderer, "light", lights);
   ospCommit(*renderer);
 
   ospRelease(light);

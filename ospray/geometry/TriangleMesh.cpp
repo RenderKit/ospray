@@ -33,7 +33,7 @@ namespace ospray {
   {
     Geometry::commit();
 
-    vertexData   = getParamData("vertex", getParamData("position"));
+    vertexData   = getParamData("vertex.position", getParamData("position"));
     normalData   = getParamData("vertex.normal", getParamData("normal"));
     colorData    = getParamData("vertex.color", getParamData("color"));
     texcoordData = getParamData("vertex.texcoord", getParamData("texcoord"));

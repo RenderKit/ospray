@@ -51,15 +51,10 @@ namespace ospray {
     volumeBounds = volume->bounds;
 
     box3f volumeClippingBox =
-        box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)),
-              getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
+        box3f(getParam3f("clippingBoxLower", vec3f(0.f)),
+              getParam3f("clippingBoxUpper", vec3f(0.f)));
 
     ispc::VolumetricModel_set(ispcEquivalent,
-                              getParam1b("preIntegration", false),
-                              getParam1b("adaptiveSampling", true),
-                              getParam1f("adaptiveScalar", 15.0f),
-                              getParam1f("adaptiveMaxSamplingRate", 2.0f),
-                              getParam1f("adaptiveBacktrack", 0.03f),
                               getParam1f("samplingRate", 0.125f),
                               transferFunction->getIE(),
                               (const ispc::box3f &)volumeClippingBox,

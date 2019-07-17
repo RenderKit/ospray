@@ -68,7 +68,7 @@ namespace ospray {
       auto boxData =
           ospNewData(numBoxes.total_indices(), OSP_BOX3F, boxes.data());
 
-      ospSetData(boxGeometry, "boxes", boxData);
+      ospSetData(boxGeometry, "box", boxData);
       ospRelease(boxData);
 
       ospCommit(boxGeometry);
@@ -76,7 +76,7 @@ namespace ospray {
       auto colorData =
           ospNewData(numBoxes.total_indices(), OSP_VEC4F, color.data());
 
-      ospSetData(model, "color", colorData);
+      ospSetData(model, "prim.color", colorData);
       ospRelease(colorData);
 
       // create OBJ material and assign to geometry
@@ -91,7 +91,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models    = ospNewData(1, OSP_OBJECT, &model);
-      ospSetData(group, "geometries", models);
+      ospSetData(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 

@@ -165,7 +165,7 @@ OSPInstance createGroundPlane(std::string renderer_type)
       ospNewData(quadIndices.size(), OSP_VEC4I, quadIndices.data());
 
   // set vertex / index data on the geometry
-  ospSetData(planeGeometry, "vertex", positionData);
+  ospSetData(planeGeometry, "vertex.position", positionData);
   ospSetData(planeGeometry, "vertex.normal", normalData);
   ospSetData(planeGeometry, "vertex.color", colorData);
   ospSetData(planeGeometry, "index", indexData);
@@ -188,7 +188,7 @@ OSPInstance createGroundPlane(std::string renderer_type)
   OSPGroup group = ospNewGroup();
 
   OSPData models = ospNewData(1, OSP_OBJECT, &model);
-  ospSetData(group, "geometries", models);
+  ospSetData(group, "geometry", models);
   ospCommit(group);
 
   OSPInstance instance = ospNewInstance(group);

@@ -98,11 +98,11 @@ namespace ospray {
 
       OSPData verticesData =
           ospNewData(vertices.size(), OSP_VEC3F, vertices.data());
-      ospSetData(geometry, "vertex", verticesData);
+      ospSetData(geometry, "vertex.position", verticesData);
       ospRelease(verticesData);
 
       OSPData colorsData = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetData(geometry, "color", colorsData);
+      ospSetData(geometry, "vertex.color", colorsData);
       ospRelease(colorsData);
 
       OSPData facesData = ospNewData(faces.size(), OSP_UINT, faces.data());
@@ -152,7 +152,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models    = ospNewData(1, OSP_OBJECT, &model);
-      ospSetData(group, "geometries", models);
+      ospSetData(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 

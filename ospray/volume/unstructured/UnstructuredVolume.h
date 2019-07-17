@@ -43,12 +43,6 @@ namespace ospray {
 
    private:
 
-    // Helper functions for getting data array parameter
-    inline Data* getCellValueData()
-      { return getParamData("cell.value", getParamData("cellField")); }
-    inline Data* getVertexValueData()
-      { return getParamData("vertex.value", getParamData("field")); }
-
     // Read 32/64-bit integer value from given array
     inline uint64_t readInteger(const uint32_t* array,
                                 bool is32Bit,

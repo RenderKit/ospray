@@ -31,14 +31,14 @@ namespace ospray {
 
   void QuadMesh::commit()
   {
-    vertexData   = getParamData("vertex");
-    normalData   = getParamData("vertex.normal", getParamData("normal"));
+    vertexData   = getParamData("vertex.position");
+    normalData   = getParamData("vertex.normal");
     colorData    = getParamData("vertex.color");
     texcoordData = getParamData("vertex.texcoord");
     indexData    = getParamData("index");
 
     if (!vertexData)
-      throw std::runtime_error("quad mesh must have 'vertex' array");
+      throw std::runtime_error("quad mesh must have 'vertex.position' array");
     if (!indexData)
       throw std::runtime_error("quad mesh must have 'index' array");
     if (colorData && colorData->type != OSP_VEC4F &&

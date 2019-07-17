@@ -31,11 +31,6 @@ export void *uniform VolumetricModel_create(void *uniform cppE,
 }
 
 export void VolumetricModel_set(void *uniform _self,
-                               uniform bool preIntegration,
-                               uniform bool adaptiveSampling,
-                               uniform float adaptiveScalar,
-                               uniform float adaptiveMaxSamplingRate,
-                               uniform float adaptiveBacktrack,
                                uniform float samplingRate,
                                void *uniform transferFunction,
                                const uniform box3f &clippingBox,
@@ -43,11 +38,6 @@ export void VolumetricModel_set(void *uniform _self,
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
-  self->preIntegration          = preIntegration;
-  self->adaptiveSampling        = adaptiveSampling;
-  self->adaptiveScalar          = adaptiveScalar;
-  self->adaptiveMaxSamplingRate = adaptiveMaxSamplingRate;
-  self->adaptiveBacktrack       = adaptiveBacktrack;
   self->samplingRate            = samplingRate;
   self->transferFunction        = (TransferFunction * uniform) transferFunction;
   self->volumeClippingBox       = clippingBox;

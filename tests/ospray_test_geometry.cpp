@@ -49,7 +49,7 @@ namespace {
     OSPData data = ospNewData(vertices.size(), OSP_VEC3F, vertices.data());
     EXPECT_TRUE(data);
     ospCommit(data);
-    ospSetData(mesh, "vertex", data);
+    ospSetData(mesh, "vertex.position", data);
     ospRelease(data);
     data = ospNewData(color.size(), OSP_VEC4F, color.data());
     EXPECT_TRUE(data);
@@ -133,7 +133,7 @@ namespace {
     OSPData data = ospNewData(3, OSP_VEC3FA, vertex);
     EXPECT_TRUE(data);
     ospCommit(data);
-    ospSetData(streamlines, "vertex", data);
+    ospSetData(streamlines, "vertex.position", data);
     ospRelease(data);
     if (!constantRadius) {
       data = ospNewData(3, OSP_FLOAT, radii);
@@ -197,7 +197,7 @@ TEST_P(SingleObject, simpleSphere)
   auto material = GetMaterial();
   ospSetObject(model, "material", material);
   ospRelease(material);
-  ospSetData(model, "color", data);
+  ospSetData(model, "prim.color", data);
   ospRelease(data);
   AddModel(model);
 
@@ -219,7 +219,7 @@ TEST_P(SingleObject, simpleCylinder)
   auto material = GetMaterial();
   ospSetObject(model, "material", material);
   ospRelease(material);
-  ospSetData(model, "color", data);
+  ospSetData(model, "prim.color", data);
   ospRelease(data);
   AddModel(model);
 

@@ -55,7 +55,7 @@ namespace {
     std::vector<float> isoValues = {value};
     OSPData isoValuesData =
         ospNewData(isoValues.size(), OSP_FLOAT, isoValues.data());
-    ospSetData(geometry, "isovalues", isoValuesData);
+    ospSetData(geometry, "isovalue", isoValuesData);
     ospRelease(isoValuesData);
   }
 }  // namespace
@@ -78,7 +78,7 @@ int main(int argc, const char **argv)
   ospCommit(instance);
 
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
-  ospSetData(world, "instances", instances);
+  ospSetData(world, "instance", instances);
   ospRelease(instances);
   ospRelease(instance);
 
@@ -120,7 +120,7 @@ int main(int argc, const char **argv)
 
   // create and set lights
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
-  ospSetData(renderer, "lights", lightsData);
+  ospSetData(renderer, "light", lightsData);
   ospRelease(lightsData);
 
   // apply changes to the renderer
@@ -133,8 +133,8 @@ int main(int argc, const char **argv)
   bool isoSurface     = false;
 
   auto updateScene = [&]() {
-    ospRemoveParam(group, "volumes");
-    ospRemoveParam(group, "geometries");
+    ospRemoveParam(group, "volume");
+    ospRemoveParam(group, "geometry");
 
     // remove current volume
     ospRemoveParam(isoGeometry, "volume");
@@ -147,11 +147,11 @@ int main(int argc, const char **argv)
 
     if (isoSurface) {
       OSPData geomModels = ospNewData(1, OSP_OBJECT, &model);
-      ospSetObject(group, "geometries", geomModels);
+      ospSetObject(group, "geometry", geomModels);
       ospRelease(geomModels);
     } else {
       OSPData volModels = ospNewData(1, OSP_OBJECT, &testVolume);
-      ospSetObject(group, "volumes", volModels);
+      ospSetObject(group, "volume", volModels);
       ospRelease(volModels);
     }
   };

@@ -59,7 +59,7 @@ int main(int argc, const char **argv)
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
 
-  ospSetData(world, "instances", geomInstances);
+  ospSetData(world, "instance", geomInstances);
   ospRelease(geomInstances);
 
   for (auto inst : instanceHandles)
@@ -72,7 +72,7 @@ int main(int argc, const char **argv)
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "lights", lightsData);
+  ospSetData(renderer, "light", lightsData);
   ospRelease(lightsData);
 
   ospCommit(renderer);

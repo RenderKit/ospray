@@ -37,21 +37,6 @@ namespace ospray {
     globalRadius = getParam1f("radius", 0.01f);
     utility::DataView<const float> radius(&globalRadius, 0);
 
-    vertexData = getParamData("vertex", nullptr);
-
-    if (!vertexData)
-      throw std::runtime_error("streamlines must have 'vertex' array");
-    if (vertexData->type != OSP_VEC4F && vertexData->type != OSP_VEC3FA)
-      throw std::runtime_error(
-          "streamlines 'vertex' must be type OSP_VEC4F or OSP_VEC3FA");
-
-    vertex = (vec3fa *)vertexData->data;
-
-    if (vertexData->type == OSP_VEC4F) {
-      radius.reset((const float *)vertex + 3, sizeof(vec4f));
-      useCurve = true;
-    }
-
     indexData = getParamData("index", nullptr);
 
     if (!indexData)
@@ -63,7 +48,22 @@ namespace ospray {
     index       = (uint32 *)indexData->data;
     numSegments = indexData->numItems;
 
-    colorData = getParamData("vertex.color", getParamData("color"));
+    vertexData = getParamData("vertex.position", nullptr);
+
+    if (!vertexData)
+      throw std::runtime_error("streamlines must have 'vertex.position' array");
+    if (vertexData->type != OSP_VEC4F && vertexData->type != OSP_VEC3FA)
+      throw std::runtime_error(
+          "streamlines 'vertex.position' must be type OSP_VEC4F or OSP_VEC3FA");
+
+    vertex = (vec3fa *)vertexData->data;
+
+    if (vertexData->type == OSP_VEC4F) {
+      radius.reset((const float *)vertex + 3, sizeof(vec4f));
+      useCurve = true;
+    }
+
+    colorData = getParamData("vertex.color");
 
     if (colorData && colorData->type != OSP_VEC4F)
       throw std::runtime_error("'vertex.color' must have data type OSP_VEC4F");

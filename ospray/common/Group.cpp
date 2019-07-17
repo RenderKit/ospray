@@ -109,8 +109,8 @@ namespace ospray {
 
   void Group::commit()
   {
-    geometricModels  = (Data *)getParamObject("geometries");
-    volumetricModels = (Data *)getParamObject("volumes");
+    geometricModels  = (Data *)getParamObject("geometry");
+    volumetricModels = (Data *)getParamObject("volume");
 
     size_t numGeometries = geometricModels ? geometricModels->size() : 0;
     size_t numVolumes    = volumetricModels ? volumetricModels->size() : 0;

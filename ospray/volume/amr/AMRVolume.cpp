@@ -66,7 +66,7 @@ namespace ospray {
         utility::getEnvVar<std::string>("OSPRAY_AMR_METHOD");
 
     std::string methodString =
-        methodStringFromEnv.value_or(getParamString("amrMethod", "current"));
+        methodStringFromEnv.value_or(getParamString("method", "current"));
 
     if (methodString == "finest" || methodString == "finestLevel")
       ispc::AMR_install_finest(getIE());
@@ -78,19 +78,19 @@ namespace ospray {
     if (data != nullptr)  // TODO: support data updates
       return;
 
-    blockBoundsData = getParamData("blockBounds");
+    blockBoundsData = getParamData("block.bounds");
     assert(blockBoundsData);
     assert(blockBoundsData->data);
 
-    refinementLevelsData = getParamData("refinementLevels");
+    refinementLevelsData = getParamData("block.level");
     assert(refinementLevelsData);
     assert(refinementLevelsData->data);
 
-    cellWidthsData = getParamData("cellWidths");
+    cellWidthsData = getParamData("block.cellWidth");
     assert(cellWidthsData);
     assert(cellWidthsData->data);
 
-    blockDataData = getParamData("blockData");
+    blockDataData = getParamData("block.data");
     assert(blockDataData);
     assert(blockDataData->data);
 

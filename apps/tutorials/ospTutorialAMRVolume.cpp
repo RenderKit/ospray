@@ -61,7 +61,7 @@ int main(int argc, const char **argv)
 
   OSPGroup group = ospNewGroup();
   OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
-  ospSetData(group, "volumes", volumes);
+  ospSetData(group, "volume", volumes);
   ospRelease(volumes);
   ospCommit(group);
 
@@ -70,14 +70,14 @@ int main(int argc, const char **argv)
 
   // create a data array of all instances for the world
   OSPData volumeInstances = ospNewData(1, OSP_OBJECT, &instance);
-  ospSetData(world, "instances", volumeInstances);
+  ospSetData(world, "instance", volumeInstances);
   ospRelease(volumeInstances);
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "lights", lightsData);
+  ospSetData(renderer, "light", lightsData);
 
   ospCommit(renderer);
 

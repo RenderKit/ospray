@@ -65,7 +65,7 @@ namespace ospray {
 
   void GeometricModel::commit()
   {
-    colorData = getParamData("color", getParamData("prim.color"));
+    colorData = getParamData("prim.color");
 
     if (colorData && colorData->numItems != geom->numPrimitives()) {
       throw std::runtime_error(

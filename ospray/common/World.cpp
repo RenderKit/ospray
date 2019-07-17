@@ -115,7 +115,7 @@ namespace ospray {
     freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
     freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
 
-    instances = (Data *)getParamObject("instances");
+    instances = (Data *)getParamObject("instance");
 
     auto numInstances = instances ? instances->size() : 0;
 

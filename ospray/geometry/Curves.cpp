@@ -94,12 +94,15 @@ namespace ospray {
 
   void Curves::commit()
   {
-    vertexData = getParamData("vertex", nullptr);
+    vertexData = getParamData("vertex.position", nullptr);
     if (!vertexData)
       throw std::runtime_error("curves must have 'vertex' array");
     if (vertexData->type != OSP_VEC4F)
       throw std::runtime_error("curves 'vertex' must be type OSP_FLOAT4");
     const auto numVertices = vertexData->numItems;
+
+    normalData  = getParamData("vertex.normal", nullptr);
+    tangentData = getParamData("vertex.tangent", nullptr);
 
     indexData = getParamData("index", nullptr);
     if (!indexData)
@@ -108,11 +111,8 @@ namespace ospray {
       throw std::runtime_error("curves 'index' array must be type OSP_INT");
     const auto numSegments = indexData->numItems;
 
-    normalData  = getParamData("vertex.normal", nullptr);
-    tangentData = getParamData("vertex.tangent", nullptr);
-
-    curveBasis = getParamString("curveBasis", "unspecified");
-    curveType  = getParamString("curveType", "unspecified");
+    curveBasis = getParamString("basis", "unspecified");
+    curveType  = getParamString("type", "unspecified");
 
     const auto type  = curveTypeForString(curveType);
     const auto basis = curveBasisForString(curveBasis);

@@ -107,20 +107,20 @@ namespace ospray {
   {
     Renderer::commit();
 
-    world = (World *)getParamObject("world", getParamObject("world"));
+    world = (World *)getParamObject("world");
 
     destroyGeometryLights();
     lightArray.clear();
     geometryLights = 0;
 
-    const bool useGeometryLights = getParam1b("useGeometryLights", true);
+    const bool useGeometryLights = getParam1b("geometryLights", true);
 
     if (world && useGeometryLights) {
       generateGeometryLights(*world);
       geometryLights = lightArray.size();
     }
 
-    lightData = (Data *)getParamData("lights");
+    lightData = (Data *)getParamData("light");
     if (lightData) {
       for (uint32_t i = 0; i < lightData->size(); i++)
         lightArray.push_back(((Light **)lightData->data)[i]->getIE());
@@ -129,8 +129,7 @@ namespace ospray {
     void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
     const int32 rouletteDepth = getParam1i("rouletteDepth", 5);
-    const float maxRadiance =
-        getParam1f("maxContribution", getParam1f("maxRadiance", inf));
+    const float maxRadiance = getParam1f("maxContribution", inf);
     Texture2D *backplate = (Texture2D *)getParamObject("backplate", nullptr);
     vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
 
