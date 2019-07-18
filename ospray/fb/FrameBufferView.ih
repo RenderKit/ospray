@@ -40,20 +40,3 @@ struct FrameBufferView
   //! accumulated albedo, one RGBF32 per pixel
   vec3f *albedoBuffer;
 };
-
-struct LiveSSAOFrameOp
-{
-  float nearClip;
-  // The strength of ssao, range [0,1]
-  float ssaoStrength;
-  // The size of viewplane in worldspace
-  vec2f windowSize;
-  // The size of a screen pixel in worldspace
-  vec2f pixelSize;
-
-  // The transformation mat from world to camera
-  AffineSpace3f cameraSpace;
-
-  vec3f *kernel;
-  vec3f *randomVecs;
-};

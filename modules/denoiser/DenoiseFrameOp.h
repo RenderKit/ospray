@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include <OpenImageDenoise/oidn.h>
-#include "ospray/fb/FrameBuffer.h"
+// oidn
+#include "OpenImageDenoise/oidn.h"
+// ospray
 #include "ospray/fb/ImageOp.h"
 #include "ospray_module_denoiser_export.h"
 

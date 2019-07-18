@@ -14,14 +14,42 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ToneMapperTileOp.h"
-#include "ToneMapperTileOp_ispc.h"
+#include "../ImageOp.h"
+#include "ToneMapper_ispc.h"
 
 using namespace ospcommon;
 
 namespace ospray {
 
-  void ToneMapperTileOp::commit()
+  /*! \brief Generic tone mapping operator approximating ACES by default. */
+  struct OSPRAY_SDK_INTERFACE ToneMapper : public TileOp
+  {
+    void commit() override;
+
+    std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+
+    std::string toString() const override;
+
+    // Params for the tone mapping curve
+    float a, b, c, d;
+    bool acesColor;
+    float exposure;
+  };
+
+  struct OSPRAY_SDK_INTERFACE LiveToneMapper : public LiveTileOp
+  {
+    LiveToneMapper(FrameBufferView &fbView, void *ispcEquiv);
+
+    ~LiveToneMapper() override;
+
+    void process(Tile &t) override;
+
+    void *ispcEquiv;
+  };
+
+  // Definitions //////////////////////////////////////////////////////////////
+
+  void ToneMapper::commit()
   {
     ImageOp::commit();
 
@@ -56,34 +84,33 @@ namespace ospray {
             0.f);
   }
 
-  std::unique_ptr<LiveImageOp> ToneMapperTileOp::attach(FrameBufferView &fbView)
+  std::unique_ptr<LiveImageOp> ToneMapper::attach(FrameBufferView &fbView)
   {
-    void *ispcEquiv = ispc::ToneMapperTileOp_create();
-    ispc::ToneMapperTileOp_set(ispcEquiv, exposure, a, b, c, d, acesColor);
-    return ospcommon::make_unique<LiveToneMapperTileOp>(fbView, ispcEquiv);
+    void *ispcEquiv = ispc::ToneMapper_create();
+    ispc::ToneMapper_set(ispcEquiv, exposure, a, b, c, d, acesColor);
+    return ospcommon::make_unique<LiveToneMapper>(fbView, ispcEquiv);
   }
 
-  std::string ToneMapperTileOp::toString() const
+  std::string ToneMapper::toString() const
   {
-    return "ospray::ToneMapperTileOp";
+    return "ospray::ToneMapper";
   }
 
-  LiveToneMapperTileOp::LiveToneMapperTileOp(FrameBufferView &fbView,
-                                             void *ispcEquiv)
+  LiveToneMapper::LiveToneMapper(FrameBufferView &fbView, void *ispcEquiv)
       : LiveTileOp(fbView), ispcEquiv(ispcEquiv)
   {
   }
 
-  LiveToneMapperTileOp::~LiveToneMapperTileOp()
+  LiveToneMapper::~LiveToneMapper()
   {
     // TODO WILL: Release the ISPC equiv
   }
 
-  void LiveToneMapperTileOp::process(Tile &tile)
+  void LiveToneMapper::process(Tile &tile)
   {
-    ToneMapperTileOp_apply(ispcEquiv, (ispc::Tile &)tile);
+    ToneMapper_apply(ispcEquiv, (ispc::Tile &)tile);
   }
 
-  OSP_REGISTER_IMAGE_OP(ToneMapperTileOp, tonemapper);
+  OSP_REGISTER_IMAGE_OP(ToneMapper, tonemapper);
 
 }  // namespace ospray

@@ -77,13 +77,18 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/ImageOp.cpp
-  fb/FrameOpExamples.cpp
-  fb/FrameOpExamples.ispc
-  fb/ToneMapperTileOp.cpp
-  fb/ToneMapperTileOp.ispc
-  fb/DebugTileOp.cpp
   fb/Tile.h
   fb/TileError.cpp
+
+  fb/frame_ops/Blur.cpp
+  fb/frame_ops/Debug.cpp
+  fb/frame_ops/Depth.cpp
+  fb/frame_ops/SSAO.cpp
+  fb/frame_ops/SSAO.ispc
+
+  fb/tile_ops/SaveTiles.cpp
+  fb/tile_ops/ToneMapper.cpp
+  fb/tile_ops/ToneMapper.ispc
 
   camera/Camera.cpp
   camera/Camera.ispc

@@ -100,7 +100,7 @@ int main(int argc, const char **argv)
   ospCommit(toneMap);
 
   // The colortweak pixel op will make the image more blue
-  OSPImageOp colorTweak = ospNewImageOp("debug");
+  OSPImageOp colorTweak = ospNewImageOp("tile_debug");
   ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
   ospCommit(colorTweak);
   std::vector<OSPObject> pixelOps = {toneMap, colorTweak};
@@ -108,7 +108,7 @@ int main(int argc, const char **argv)
   OSPImageOp frameOpTest = ospNewImageOp("frame_ssao");
 
   ospSetInt(frameOpTest, "ksize", 64);
-  
+
   ospCommit(frameOpTest);
   std::vector<OSPObject> frameOps = {frameOpTest};
 
@@ -160,7 +160,7 @@ int main(int argc, const char **argv)
     }
 
     if (ImGui::Button("Add Debug PixelOp")) {
-      OSPImageOp op = ospNewImageOp("debug");
+      OSPImageOp op = ospNewImageOp("tile_debug");
       ospSetVec3f(op, "addColor", 0.0, 0.0, 0.0);
       ospCommit(op);
 
@@ -203,7 +203,7 @@ int main(int argc, const char **argv)
         pipelineUpdated                   = true;
       }
 
-      
+
       if(!frameOpNames[i].compare("ssao")){
         static float strength = 0.2f, radius = 0.3f, checkRadius = 1.f;
         if (ImGui::SliderFloat("strength", &strength, 0.f, 1.f) ) {
@@ -231,7 +231,7 @@ int main(int argc, const char **argv)
       ospCommit(op);
 
       frameOps.push_back(op);
-      frameOpNames.push_back("debug");
+      frameOpNames.push_back("frame_debug");
       enabledOps.push_back(true);
 
       pipelineUpdated = true;

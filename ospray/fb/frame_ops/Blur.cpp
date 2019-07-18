@@ -14,25 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "ImageOp.h"
+// ospray
+#include "../FrameBufferView.h"
+#include "../ImageOp.h"
+// ospcommon
 #include "ospcommon/tasking/parallel_for.h"
+// std
+#include <algorithm>
 
 namespace ospray {
-
-  struct OSPRAY_SDK_INTERFACE DebugFrameOp : public FrameOp
-  {
-    std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
-
-    std::string toString() const override;
-  };
-
-  struct OSPRAY_SDK_INTERFACE LiveDebugFrameOp : public LiveFrameOp
-  {
-    LiveDebugFrameOp(FrameBufferView &fbView);
-    void process(const Camera *) override;
-  };
 
   // The blur frame op is a test which applies a Gaussian blur to the frame
   struct OSPRAY_SDK_INTERFACE BlurFrameOp : public FrameOp
@@ -50,8 +40,10 @@ namespace ospray {
     void process(const Camera *) override;
   };
 
+  // Definitions //////////////////////////////////////////////////////////////
+
   template <typename T>
-  void LiveBlurFrameOp<T>::process(const Camera *)
+  inline void LiveBlurFrameOp<T>::process(const Camera *)
   {
     // TODO: For SRGBA we actually need to convert to linear before filtering
     T *color             = static_cast<T *>(fbView.colorBuffer);
@@ -109,57 +101,28 @@ namespace ospray {
     });
   }
 
-  //! Depth frameop replaces the color data with a normalized depth buffer img
-  struct OSPRAY_SDK_INTERFACE DepthFrameOp : public FrameOp
+  std::unique_ptr<LiveImageOp> BlurFrameOp::attach(FrameBufferView &fbView)
   {
-    std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+    if (!fbView.colorBuffer) {
+      static WarnOnce warn(toString() +
+                           " requires color data but the "
+                           "framebuffer does not have this channel.");
+      throw std::runtime_error(toString() +
+                               " cannot be attached to framebuffer "
+                               "which does not have color data");
+    }
+    if (fbView.colorBufferFormat == OSP_FB_RGBA8 ||
+        fbView.colorBufferFormat == OSP_FB_SRGBA) {
+      return ospcommon::make_unique<LiveBlurFrameOp<uint8_t>>(fbView);
+    }
+    return ospcommon::make_unique<LiveBlurFrameOp<float>>(fbView);
+  }
 
-    std::string toString() const override;
-  };
-
-  struct OSPRAY_SDK_INTERFACE LiveDepthFrameOp : public LiveFrameOp
+  std::string BlurFrameOp::toString() const
   {
-    LiveDepthFrameOp(FrameBufferView &fbView);
+    return "ospray::BlurFrameOp";
+  }
 
-    void process(const Camera *) override;
-  };
-
-  // The blur frame op is a test which applies a Gaussian blur to the frame
-  struct OSPRAY_SDK_INTERFACE SSAOFrameOp : public FrameOp
-  {
-    float nearClip;
-    float ssaoStrength;
-    float radius, checkRadius;
-    vec2f windowSize, pixelSize;
-    AffineSpace3f cameraSpace;
-
-    std::vector<vec3f> kernel;
-    std::vector<vec3f> randomVecs;
-
-    std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
-    void commit() override;
-    std::string toString() const override;
-  };
-
-  struct OSPRAY_SDK_INTERFACE LiveSSAOFrameOp : public LiveFrameOp
-  {
-    void *ispcEquiv;
-    float ssaoStrength;
-    float radius, checkRadius;
-    std::vector<vec3f> kernel;
-    std::vector<vec3f> randomVecs;
-
-    template <typename T>
-    void applySSAO(FrameBufferView &fb, T *color, const Camera *);
-
-    LiveSSAOFrameOp(FrameBufferView &fbView,
-                    void *,
-                    float,
-                    float,
-                    float,
-                    std::vector<vec3f>,
-                    std::vector<vec3f>);
-    void process(const Camera *) override;
-  };
+  OSP_REGISTER_IMAGE_OP(BlurFrameOp, frame_blur);
 
 }  // namespace ospray

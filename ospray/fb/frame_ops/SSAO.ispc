@@ -14,10 +14,29 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "FrameOpExamples.ih"
-#include "Tile.ih"
+// ospray
+#include "../FrameBufferView.ih"
+#include "../Tile.ih"
+// ospcommon
 #include "math/LinearSpace.ih"
 #include "math/vec.ih"
+
+struct LiveSSAOFrameOp
+{
+  float nearClip;
+  // The strength of ssao, range [0,1]
+  float ssaoStrength;
+  // The size of viewplane in worldspace
+  vec2f windowSize;
+  // The size of a screen pixel in worldspace
+  vec2f pixelSize;
+
+  // The transformation mat from world to camera
+  AffineSpace3f cameraSpace;
+
+  vec3f *kernel;
+  vec3f *randomVecs;
+};
 
 export void *uniform LiveSSAOFrameOp_create()
 {

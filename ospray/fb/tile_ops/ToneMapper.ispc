@@ -14,17 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Tile.ih"
+#include "../Tile.ih"
 #include "math/LinearSpace.ih"
 #include "math/vec.ih"
 
 // Based on the generic filmic tone mapping operator from
 // [Lottes, 2016, "Advanced Techniques and Optimization of HDR Color Pipelines"]
-struct ToneMapperTileOp
+struct ToneMapper
 {
-  uniform float exposure;    // linear exposure adjustment
-  uniform float a, b, c, d;  // coefficients
-  uniform bool acesColor;    // ACES color transform flag
+  float exposure;    // linear exposure adjustment
+  float a, b, c, d;  // coefficients
+  bool acesColor;    // ACES color transform flag
 };
 
 // ACES input transform matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT *
@@ -41,7 +41,7 @@ static const uniform LinearSpace3f acesOutputMat = {
     {-0.5310794927, 1.1081322801, -0.0727552477},
     {-0.0736720338, -0.0060518756, 1.0760219533}};
 
-inline vec3f toneMap(const ToneMapperTileOp *uniform self, const vec3f &col)
+inline vec3f toneMap(const ToneMapper *uniform self, const vec3f &col)
 {
   vec3f x = col * self->exposure;
   if (self->acesColor)
@@ -53,40 +53,39 @@ inline vec3f toneMap(const ToneMapperTileOp *uniform self, const vec3f &col)
   return x;
 }
 
-export void *uniform ToneMapperTileOp_create()
+export void *uniform ToneMapper_create()
 {
-  ToneMapperTileOp *uniform self = uniform new uniform ToneMapperTileOp;
-  self->exposure                 = 1.f;
-  self->a                        = 1.f;
-  self->b                        = 1.f;
-  self->c                        = 0.f;
-  self->d                        = 1.f;
-  self->acesColor                = false;
+  ToneMapper *uniform self = uniform new uniform ToneMapper;
+  self->exposure           = 1.f;
+  self->a                  = 1.f;
+  self->b                  = 1.f;
+  self->c                  = 0.f;
+  self->d                  = 1.f;
+  self->acesColor          = false;
   return self;
 }
 
-export void ToneMapperTileOp_set(void *uniform _self,
-                                 uniform float exposure,
-                                 uniform float a,
-                                 uniform float b,
-                                 uniform float c,
-                                 uniform float d,
-                                 uniform bool acesColor)
+export void ToneMapper_set(void *uniform _self,
+                           uniform float exposure,
+                           uniform float a,
+                           uniform float b,
+                           uniform float c,
+                           uniform float d,
+                           uniform bool acesColor)
 {
-  ToneMapperTileOp *uniform self = (ToneMapperTileOp * uniform) _self;
-  self->exposure                 = exposure;
-  self->a                        = a;
-  self->b                        = b;
-  self->c                        = c;
-  self->d                        = d;
-  self->acesColor                = acesColor;
+  ToneMapper *uniform self = (ToneMapper * uniform) _self;
+  self->exposure           = exposure;
+  self->a                  = a;
+  self->b                  = b;
+  self->c                  = c;
+  self->d                  = d;
+  self->acesColor          = acesColor;
 }
 
-export void ToneMapperTileOp_apply(const void *uniform _self,
-                                   uniform Tile &tile)
+export void ToneMapper_apply(const void *uniform _self, uniform Tile &tile)
 {
-  const ToneMapperTileOp *uniform self = (const ToneMapperTileOp *uniform)_self;
-  VaryingTile *uniform varyTile        = (VaryingTile * uniform) & tile;
+  const ToneMapper *uniform self = (const ToneMapper *uniform)_self;
+  VaryingTile *uniform varyTile  = (VaryingTile * uniform) & tile;
 
   for (uniform uint32 iy = 0; iy < TILE_SIZE; iy++) {
     uniform uint32 iiy = tile.region.lower.y + iy;
