@@ -136,11 +136,11 @@ namespace ospray {
                                             : nullptr);
 
       std::for_each(imageOpData->begin<ImageOp *>(),
-                     imageOpData->end<ImageOp *>(),
-                     [&](ImageOp *i) {
-                       if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
-                         imageOps.push_back(i->attach(fbv));
-                     });
+                    imageOpData->end<ImageOp *>(),
+                    [&](ImageOp *i) {
+                      if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
+                        imageOps.push_back(i->attach(fbv));
+                    });
 
       findFirstFrameOperation();
     }

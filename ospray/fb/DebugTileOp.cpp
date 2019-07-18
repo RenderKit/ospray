@@ -24,8 +24,8 @@ namespace ospray {
                                    const std::string &prefix,
                                    const vec3f &addColor)
     : LiveTileOp(fbView),
-    prefix(prefix),
-    addColor(addColor)
+      prefix(prefix),
+      addColor(addColor)
   {}
 
   inline float convert_srgb(const float x)

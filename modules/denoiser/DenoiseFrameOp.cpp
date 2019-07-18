@@ -18,8 +18,8 @@
 #include "DenoiseFrameOp.h"
 
 namespace ospray {
-  struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp {
-
+  struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
+  {
     LiveDenoiseFrameOp(FrameBufferView &fbView, OIDNDevice device)
       : LiveFrameOp(fbView),
       device(device),

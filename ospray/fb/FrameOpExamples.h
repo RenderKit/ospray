@@ -130,8 +130,8 @@ namespace ospray {
   };
 
     // The blur frame op is a test which applies a Gaussian blur to the frame
-  struct OSPRAY_SDK_INTERFACE SSAOFrameOp : public FrameOp {
-
+  struct OSPRAY_SDK_INTERFACE SSAOFrameOp : public FrameOp
+  {
     float nearClip;
     float ssaoStrength;
     float radius, checkRadius;
@@ -146,8 +146,8 @@ namespace ospray {
     std::string toString() const override;
   };
 
-  struct OSPRAY_SDK_INTERFACE LiveSSAOFrameOp : public LiveFrameOp {
-
+  struct OSPRAY_SDK_INTERFACE LiveSSAOFrameOp : public LiveFrameOp
+  {
     void *ispcEquiv;
     float ssaoStrength;
     float radius, checkRadius;
@@ -167,7 +167,6 @@ namespace ospray {
     void process(const Camera *) override;
 
   };
-
 
 }
 
