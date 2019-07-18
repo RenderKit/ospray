@@ -154,13 +154,7 @@ namespace ospray {
 
     if (!imageOps.empty()) {
       std::for_each(imageOps.begin(), imageOps.begin() + firstFrameOperation,
-                    [&](std::unique_ptr<LiveImageOp> &iop) { 
-                      #if 0
-                      PixelOp *pop = dynamic_cast<PixelOp *>(iop);
-                      if (pop) {
-                        //p->postAccum(this, tile);
-                      }
-                      #endif
+                    [&](std::unique_ptr<LiveImageOp> &iop) {
                       LiveTileOp *top = dynamic_cast<LiveTileOp *>(iop.get());
                       if (top) {
                         top->process(tile);
