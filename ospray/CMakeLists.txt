@@ -73,6 +73,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
+  fb/FrameBufferView.cpp
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/ImageOp.cpp

@@ -14,26 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ImageOp.h"
-#include "common/Util.h"
-#include "fb/FrameBuffer.h"
+#include "FrameBufferView.h"
+#include "FrameBuffer.h"
 
 namespace ospray {
 
-  LiveImageOp::LiveImageOp(FrameBufferView &fbView) : fbView(fbView) {}
-
-  ImageOp *ImageOp::createInstance(const char *type)
+  FrameBufferView::FrameBufferView(FrameBuffer *fb,
+                                   OSPFrameBufferFormat colorFormat,
+                                   void *colorBuffer,
+                                   float *depthBuffer,
+                                   vec3f *normalBuffer,
+                                   vec3f *albedoBuffer)
+      : fbDims(fb->getNumPixels()),
+        viewDims(fbDims),
+        haloDims(0),
+        colorBufferFormat(colorFormat),
+        colorBuffer(colorBuffer),
+        depthBuffer(depthBuffer),
+        normalBuffer(normalBuffer),
+        albedoBuffer(albedoBuffer)
   {
-    return createInstanceHelper<ImageOp, OSP_IMAGE_OP>(type);
   }
-
-  std::string ImageOp::toString() const
-  {
-    return "ospray::ImageOp(base class)";
-  }
-
-  LiveTileOp::LiveTileOp(FrameBufferView &fbView) : LiveImageOp(fbView) {}
-
-  LiveFrameOp::LiveFrameOp(FrameBufferView &fbView) : LiveImageOp(fbView) {}
 
 }  // namespace ospray

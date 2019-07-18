@@ -15,11 +15,13 @@
 // ======================================================================== //
 
 #include "FrameOpExamples.h"
-#include <algorithm>
+// ospray
 #include "FrameBuffer.h"
 #include "FrameOpExamples_ispc.h"
 #include "camera/PerspectiveCamera.h"
 #include "common/Util.h"
+// std
+#include <algorithm>
 
 namespace ospray {
 
@@ -232,6 +234,7 @@ namespace ospray {
                                " camera type not supported in SSAO "
                                "PerspectiveCamera only");
     }
+
     PerspectiveCamera *camera = (PerspectiveCamera *)(cam);
 
     // get camera

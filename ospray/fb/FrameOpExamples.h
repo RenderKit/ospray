@@ -17,7 +17,6 @@
 #pragma once
 
 #include "ImageOp.h"
-#include "common/Managed.h"
 #include "ospcommon/tasking/parallel_for.h"
 
 namespace ospray {
