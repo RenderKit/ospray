@@ -17,8 +17,8 @@
 #pragma once
 
 #include <OpenImageDenoise/oidn.h>
-#include "ospray/fb/ImageOp.h"
 #include "ospray/fb/FrameBuffer.h"
+#include "ospray/fb/ImageOp.h"
 #include "ospray_module_denoiser_export.h"
 
 namespace ospray {
@@ -29,13 +29,13 @@ namespace ospray {
 
     virtual ~DenoiseFrameOp() override;
 
-    virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+    virtual std::unique_ptr<LiveImageOp> attach(
+        FrameBufferView &fbView) override;
 
     std::string toString() const override;
 
-  private:
+   private:
     OIDNDevice device;
   };
 
-}
-
+}  // namespace ospray

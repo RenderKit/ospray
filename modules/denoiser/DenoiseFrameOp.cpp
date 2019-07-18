@@ -14,41 +14,60 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-
 #include "DenoiseFrameOp.h"
 
 namespace ospray {
   struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
   {
     LiveDenoiseFrameOp(FrameBufferView &fbView, OIDNDevice device)
-      : LiveFrameOp(fbView),
-      device(device),
-      filter(oidnNewFilter(device, "RT"))
+        : LiveFrameOp(fbView),
+          device(device),
+          filter(oidnNewFilter(device, "RT"))
     {
       oidnRetainDevice(device);
 
-      float *fbColor = static_cast<float*>(fbView.colorBuffer);
-      oidnSetSharedFilterImage(filter, "color", fbColor,
+      float *fbColor = static_cast<float *>(fbView.colorBuffer);
+      oidnSetSharedFilterImage(filter,
+                               "color",
+                               fbColor,
                                OIDN_FORMAT_FLOAT3,
-                               fbView.fbDims.x, fbView.fbDims.y,
-                               0, sizeof(float) * 4, 0);
+                               fbView.fbDims.x,
+                               fbView.fbDims.y,
+                               0,
+                               sizeof(float) * 4,
+                               0);
 
       if (fbView.normalBuffer)
-        oidnSetSharedFilterImage(filter, "normal", fbView.normalBuffer, 
+        oidnSetSharedFilterImage(filter,
+                                 "normal",
+                                 fbView.normalBuffer,
                                  OIDN_FORMAT_FLOAT3,
-                                 fbView.fbDims.x, fbView.fbDims.y,
-                                 0, 0, 0);
+                                 fbView.fbDims.x,
+                                 fbView.fbDims.y,
+                                 0,
+                                 0,
+                                 0);
 
       if (fbView.albedoBuffer)
-        oidnSetSharedFilterImage(filter, "albedo", fbView.albedoBuffer, 
+        oidnSetSharedFilterImage(filter,
+                                 "albedo",
+                                 fbView.albedoBuffer,
                                  OIDN_FORMAT_FLOAT3,
-                                 fbView.fbDims.x, fbView.fbDims.y,
-                                 0, 0, 0);
+                                 fbView.fbDims.x,
+                                 fbView.fbDims.y,
+                                 0,
+                                 0,
+                                 0);
 
-      oidnSetSharedFilterImage(filter, "output", fbColor,
+      oidnSetSharedFilterImage(filter,
+                               "output",
+                               fbColor,
                                OIDN_FORMAT_FLOAT3,
-                               fbView.fbDims.x, fbView.fbDims.y,
-                               0, sizeof(float) * 4, 0);
+                               fbView.fbDims.x,
+                               fbView.fbDims.y,
+                               0,
+                               sizeof(float) * 4,
+                               0);
 
       oidnSetFilter1b(filter, "hdr", false);
 
@@ -65,11 +84,11 @@ namespace ospray {
     {
       oidnExecuteFilter(filter);
 
-      const char* errorMessage = nullptr;
-      if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
-      {
+      const char *errorMessage = nullptr;
+      if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE) {
         std::cout << "OIDN ERROR " << errorMessage << "\n";
-        throw std::runtime_error("Error running OIDN: " + std::string(errorMessage));
+        throw std::runtime_error("Error running OIDN: " +
+                                 std::string(errorMessage));
       }
     }
 
@@ -78,7 +97,7 @@ namespace ospray {
   };
 
   DenoiseFrameOp::DenoiseFrameOp()
-    : device(oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT))
+      : device(oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT))
   {
     oidnSetDevice1b(device, "setAffinity", false);
     oidnCommitDevice(device);
@@ -92,7 +111,8 @@ namespace ospray {
   std::unique_ptr<LiveImageOp> DenoiseFrameOp::attach(FrameBufferView &fbView)
   {
     if (fbView.colorBufferFormat != OSP_FB_RGBA32F)
-      throw std::runtime_error("DenoiseFrameOp must be used with an RGBA32F "
+      throw std::runtime_error(
+          "DenoiseFrameOp must be used with an RGBA32F "
           "color format framebuffer!");
 
     return ospcommon::make_unique<LiveDenoiseFrameOp>(fbView, device);
@@ -104,7 +124,7 @@ namespace ospray {
   }
 
   OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, frame_denoise);
-}
 
-extern "C" OSPRAY_MODULE_DENOISER_EXPORT void ospray_init_module_denoiser(){}
+}  // namespace ospray
 
+extern "C" OSPRAY_MODULE_DENOISER_EXPORT void ospray_init_module_denoiser() {}
