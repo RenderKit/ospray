@@ -23,10 +23,9 @@ namespace ospray {
   LiveDebugTileOp::LiveDebugTileOp(FrameBufferView &fbView,
                                    const std::string &prefix,
                                    const vec3f &addColor)
-    : LiveTileOp(fbView),
-      prefix(prefix),
-      addColor(addColor)
-  {}
+      : LiveTileOp(fbView), prefix(prefix), addColor(addColor)
+  {
+  }
 
   inline float convert_srgb(const float x)
   {
@@ -39,10 +38,10 @@ namespace ospray {
 
   void LiveDebugTileOp::process(Tile &tile)
   {
-    const int tile_x       = tile.region.lower.x / TILE_SIZE;
+    const int tile_x = tile.region.lower.x / TILE_SIZE;
     // TODO WILL: Why does tile store the fbsize?
-    const int tile_y       = (tile.fbSize.y - tile.region.upper.y) / TILE_SIZE;
-    const int tile_id      = tile_x + tile_y * (tile.fbSize.x / TILE_SIZE);
+    const int tile_y  = (tile.fbSize.y - tile.region.upper.y) / TILE_SIZE;
+    const int tile_id = tile_x + tile_y * (tile.fbSize.x / TILE_SIZE);
 
     const uint32_t w = TILE_SIZE, h = TILE_SIZE;
     // Convert to SRGB8 color

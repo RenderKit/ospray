@@ -35,9 +35,9 @@ namespace ospray {
     float exposure;
   };
 
-  struct OSPRAY_SDK_INTERFACE LiveToneMapperTileOp : public LiveTileOp {
-    LiveToneMapperTileOp(FrameBufferView &fbView,
-                          void *ispcEquiv);
+  struct OSPRAY_SDK_INTERFACE LiveToneMapperTileOp : public LiveTileOp
+  {
+    LiveToneMapperTileOp(FrameBufferView &fbView, void *ispcEquiv);
 
     ~LiveToneMapperTileOp() override;
 
@@ -46,4 +46,4 @@ namespace ospray {
     void *ispcEquiv;
   };
 
-} // ::ospray
+}  // namespace ospray

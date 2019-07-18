@@ -20,23 +20,24 @@
 
 namespace ospray {
 
-  FrameBufferView::FrameBufferView(FrameBuffer *fb, OSPFrameBufferFormat colorFormat,
-                                   void *colorBuffer, float *depthBuffer,
-                                   vec3f *normalBuffer, vec3f *albedoBuffer)
-    : fbDims(fb->getNumPixels()),
-      viewDims(fbDims),
-      haloDims(0),
-      colorBufferFormat(colorFormat),
-      colorBuffer(colorBuffer),
-      depthBuffer(depthBuffer),
-      normalBuffer(normalBuffer),
-      albedoBuffer(albedoBuffer)
-  {}
+  FrameBufferView::FrameBufferView(FrameBuffer *fb,
+                                   OSPFrameBufferFormat colorFormat,
+                                   void *colorBuffer,
+                                   float *depthBuffer,
+                                   vec3f *normalBuffer,
+                                   vec3f *albedoBuffer)
+      : fbDims(fb->getNumPixels()),
+        viewDims(fbDims),
+        haloDims(0),
+        colorBufferFormat(colorFormat),
+        colorBuffer(colorBuffer),
+        depthBuffer(depthBuffer),
+        normalBuffer(normalBuffer),
+        albedoBuffer(albedoBuffer)
+  {
+  }
 
-
-  LiveImageOp::LiveImageOp(FrameBufferView &fbView)
-    : fbView(fbView)
-  {}
+  LiveImageOp::LiveImageOp(FrameBufferView &fbView) : fbView(fbView) {}
 
   ImageOp *ImageOp::createInstance(const char *type)
   {
@@ -48,12 +49,8 @@ namespace ospray {
     return "ospray::ImageOp(base class)";
   }
 
-  LiveTileOp::LiveTileOp(FrameBufferView &fbView)
-    : LiveImageOp(fbView)
-  {}
+  LiveTileOp::LiveTileOp(FrameBufferView &fbView) : LiveImageOp(fbView) {}
 
-  LiveFrameOp::LiveFrameOp(FrameBufferView &fbView)
-    : LiveImageOp(fbView)
-  {}
-}
+  LiveFrameOp::LiveFrameOp(FrameBufferView &fbView) : LiveImageOp(fbView) {}
 
+}  // namespace ospray

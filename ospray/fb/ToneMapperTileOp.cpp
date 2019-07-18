@@ -44,16 +44,14 @@ namespace ospray {
     acesColor = getParam1b("acesColor", true);
 
     // Solve b and c
-    b =
-        -((powf(m, -a * d) *
+    b = -((powf(m, -a * d) *
            (-powf(m, a) + (n * (powf(m, a * d) * n * powf(w, a) -
                                 powf(m, a) * powf(w, a * d))) /
                               (powf(m, a * d) * n - n * powf(w, a * d)))) /
           n);
 
     // avoid discontinuous curve by clamping to 0
-    c =
-        max((powf(m, a * d) * n * powf(w, a) - powf(m, a) * powf(w, a * d)) /
+    c = max((powf(m, a * d) * n * powf(w, a) - powf(m, a) * powf(w, a * d)) /
                 (powf(m, a * d) * n - n * powf(w, a * d)),
             0.f);
   }
@@ -61,8 +59,7 @@ namespace ospray {
   std::unique_ptr<LiveImageOp> ToneMapperTileOp::attach(FrameBufferView &fbView)
   {
     void *ispcEquiv = ispc::ToneMapperTileOp_create();
-    ispc::ToneMapperTileOp_set(
-        ispcEquiv, exposure, a, b, c, d, acesColor);
+    ispc::ToneMapperTileOp_set(ispcEquiv, exposure, a, b, c, d, acesColor);
     return ospcommon::make_unique<LiveToneMapperTileOp>(fbView, ispcEquiv);
   }
 
@@ -72,10 +69,10 @@ namespace ospray {
   }
 
   LiveToneMapperTileOp::LiveToneMapperTileOp(FrameBufferView &fbView,
-                                               void *ispcEquiv)
-    : LiveTileOp(fbView),
-    ispcEquiv(ispcEquiv)
-  {}
+                                             void *ispcEquiv)
+      : LiveTileOp(fbView), ispcEquiv(ispcEquiv)
+  {
+  }
 
   LiveToneMapperTileOp::~LiveToneMapperTileOp()
   {

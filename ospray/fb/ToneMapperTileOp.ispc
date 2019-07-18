@@ -56,38 +56,37 @@ inline vec3f toneMap(const ToneMapperTileOp *uniform self, const vec3f &col)
 export void *uniform ToneMapperTileOp_create()
 {
   ToneMapperTileOp *uniform self = uniform new uniform ToneMapperTileOp;
-  self->exposure                  = 1.f;
-  self->a                         = 1.f;
-  self->b                         = 1.f;
-  self->c                         = 0.f;
-  self->d                         = 1.f;
-  self->acesColor                 = false;
+  self->exposure                 = 1.f;
+  self->a                        = 1.f;
+  self->b                        = 1.f;
+  self->c                        = 0.f;
+  self->d                        = 1.f;
+  self->acesColor                = false;
   return self;
 }
 
 export void ToneMapperTileOp_set(void *uniform _self,
-                                  uniform float exposure,
-                                  uniform float a,
-                                  uniform float b,
-                                  uniform float c,
-                                  uniform float d,
-                                  uniform bool acesColor)
+                                 uniform float exposure,
+                                 uniform float a,
+                                 uniform float b,
+                                 uniform float c,
+                                 uniform float d,
+                                 uniform bool acesColor)
 {
   ToneMapperTileOp *uniform self = (ToneMapperTileOp * uniform) _self;
-  self->exposure                  = exposure;
-  self->a                         = a;
-  self->b                         = b;
-  self->c                         = c;
-  self->d                         = d;
-  self->acesColor                 = acesColor;
+  self->exposure                 = exposure;
+  self->a                        = a;
+  self->b                        = b;
+  self->c                        = c;
+  self->d                        = d;
+  self->acesColor                = acesColor;
 }
 
 export void ToneMapperTileOp_apply(const void *uniform _self,
-                                    uniform Tile &tile)
+                                   uniform Tile &tile)
 {
-  const ToneMapperTileOp *uniform self =
-      (const ToneMapperTileOp *uniform)_self;
-  VaryingTile *uniform varyTile = (VaryingTile * uniform) & tile;
+  const ToneMapperTileOp *uniform self = (const ToneMapperTileOp *uniform)_self;
+  VaryingTile *uniform varyTile        = (VaryingTile * uniform) & tile;
 
   for (uniform uint32 iy = 0; iy < TILE_SIZE; iy++) {
     uniform uint32 iiy = tile.region.lower.y + iy;

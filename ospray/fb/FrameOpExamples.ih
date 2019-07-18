@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "math/AffineSpace.ih"
 #include "FrameBuffer.ih"
+#include "math/AffineSpace.ih"
 
 struct FrameBufferView
 {
@@ -32,7 +32,7 @@ struct FrameBufferView
   /*! Color buffer of the image, exact pixel format depends
    * on `colorBufferFormat`
    */
-  void  *colorBuffer;
+  void *colorBuffer;
   //! One float per pixel, may be NULL
   uniform float *depthBuffer;
   //! accumulated world-space normal per pixel
@@ -40,7 +40,6 @@ struct FrameBufferView
   //! accumulated albedo, one RGBF32 per pixel
   uniform vec3f *albedoBuffer;
 };
-
 
 struct LiveSSAOFrameOp
 {
@@ -55,7 +54,6 @@ struct LiveSSAOFrameOp
   // The transformation mat from world to camera
   uniform AffineSpace3f cameraSpace;
 
-  uniform vec3f* kernel;
-  uniform vec3f* randomVecs;
+  uniform vec3f *kernel;
+  uniform vec3f *randomVecs;
 };
-

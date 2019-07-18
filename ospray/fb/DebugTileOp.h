@@ -51,5 +51,5 @@ namespace ospray {
     std::string prefix;
     vec3f addColor;
   };
-}
 
+}  // namespace ospray

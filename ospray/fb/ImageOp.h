@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include "camera/Camera.h"
 #include "common/Managed.h"
 #include "fb/Tile.h"
-#include "camera/Camera.h"
 
 namespace ospray {
 
@@ -26,8 +26,9 @@ namespace ospray {
 
   /*! A view into a portion of the frambuffer to run the frame operation on
    */
-  struct OSPRAY_SDK_INTERFACE FrameBufferView {
-    // TODO Replace w/ arrayview once LocalFB is updated 
+  struct OSPRAY_SDK_INTERFACE FrameBufferView
+  {
+    // TODO Replace w/ arrayview once LocalFB is updated
     // The total dimensions of the global framebuffer
     vec2i fbDims = vec2i(0);
     // The dimensions of this view of the framebuffer
@@ -40,23 +41,26 @@ namespace ospray {
     /*! Color buffer of the image, exact pixel format depends
      * on `colorBufferFormat`
      */
-    void  *colorBuffer = nullptr;
+    void *colorBuffer = nullptr;
     //! One float per pixel, may be NULL
     float *depthBuffer = nullptr;
     // TODO: Should we pass the accum and variance buffers?
     //! one RGBA per pixel, may be NULL
-    //vec4f *accumBuffer;
+    // vec4f *accumBuffer;
     //! one RGBA per pixel, may be NULL
-    //vec4f *varianceBuffer;
+    // vec4f *varianceBuffer;
     //! accumulated world-space normal per pixel
     vec3f *normalBuffer = nullptr;
     //! accumulated albedo, one RGBF32 per pixel
     vec3f *albedoBuffer = nullptr;
 
-    //! Convenience method to make a view of the entire framebuffer 
-    FrameBufferView(FrameBuffer *fb, OSPFrameBufferFormat colorFormat,
-                    void *colorBuffer, float *depthBuffer,
-                    vec3f *normalBuffer, vec3f *albedoBuffer);
+    //! Convenience method to make a view of the entire framebuffer
+    FrameBufferView(FrameBuffer *fb,
+                    OSPFrameBufferFormat colorFormat,
+                    void *colorBuffer,
+                    float *depthBuffer,
+                    vec3f *normalBuffer,
+                    vec3f *albedoBuffer);
     FrameBufferView() = default;
   };
 
@@ -85,20 +89,20 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
   {
-      virtual ~ImageOp() override = default;
+    virtual ~ImageOp() override = default;
 
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should override this! */
-      virtual std::string toString() const override;
+    //! \brief common function to help printf-debugging
+    /*! Every derived class should override this! */
+    virtual std::string toString() const override;
 
-      /*! Attach an image op to an existing framebuffer. Use this
-       * to pass the params from the API to the instance of the image op
-       * which will actually be run on the framebuffer view or tiles of the
-       * framebuffer passed
-       */
-      virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) = 0;
+    /*! Attach an image op to an existing framebuffer. Use this
+     * to pass the params from the API to the instance of the image op
+     * which will actually be run on the framebuffer view or tiles of the
+     * framebuffer passed
+     */
+    virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) = 0;
 
-      static ImageOp *createInstance(const char *type);
+    static ImageOp *createInstance(const char *type);
   };
 
   struct OSPRAY_SDK_INTERFACE TileOp : public ImageOp
@@ -109,7 +113,10 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
   {
     virtual ~FrameOp() {}
-    virtual vec2i haloSize() { return vec2i(0); }
+    virtual vec2i haloSize()
+    {
+      return vec2i(0);
+    }
   };
 
   struct OSPRAY_SDK_INTERFACE LiveTileOp : public LiveImageOp
@@ -144,5 +151,4 @@ namespace ospray {
   */
 #define OSP_REGISTER_IMAGE_OP(InternalClass, external_name) \
   OSP_REGISTER_OBJECT(ImageOp, image_op, InternalClass, external_name)
-}
-
+}  // namespace ospray
