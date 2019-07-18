@@ -305,4 +305,5 @@ namespace ospray {
   OSP_REGISTER_IMAGE_OP(DebugFrameOp, frame_debug);
   OSP_REGISTER_IMAGE_OP(BlurFrameOp, frame_blur);
   OSP_REGISTER_IMAGE_OP(DepthFrameOp, frame_depth);
+
 }  // namespace ospray

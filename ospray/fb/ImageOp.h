@@ -71,12 +71,9 @@ namespace ospray {
 
     LiveImageOp(FrameBufferView &fbView);
 
-    virtual ~LiveImageOp() {}
+    virtual ~LiveImageOp() = default;
 
-    /*! gets called once at the beginning of the frame */
     virtual void beginFrame() {}
-
-    /*! gets called once at the end of the frame */
     virtual void endFrame() {}
   };
 
@@ -91,8 +88,6 @@ namespace ospray {
   {
     virtual ~ImageOp() override = default;
 
-    //! \brief common function to help printf-debugging
-    /*! Every derived class should override this! */
     virtual std::string toString() const override;
 
     /*! Attach an image op to an existing framebuffer. Use this
@@ -107,12 +102,12 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE TileOp : public ImageOp
   {
-    virtual ~TileOp() {}
+    virtual ~TileOp() override = default;
   };
 
   struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
   {
-    virtual ~FrameOp() {}
+    virtual ~FrameOp() override = default;
     virtual vec2i haloSize()
     {
       return vec2i(0);
@@ -122,7 +117,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE LiveTileOp : public LiveImageOp
   {
     LiveTileOp(FrameBufferView &fbView);
-    virtual ~LiveTileOp() {}
+    virtual ~LiveTileOp() override = default;
 
     /*! called right after the tile got accumulated; i.e., the
       tile's RGBA values already contain the accu-buffer blended
@@ -135,7 +130,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveImageOp
   {
     LiveFrameOp(FrameBufferView &fbView);
-    virtual ~LiveFrameOp() {}
+    virtual ~LiveFrameOp() override = default;
 
     virtual void process(const Camera *camera) = 0;
   };
@@ -151,4 +146,5 @@ namespace ospray {
   */
 #define OSP_REGISTER_IMAGE_OP(InternalClass, external_name) \
   OSP_REGISTER_OBJECT(ImageOp, image_op, InternalClass, external_name)
+
 }  // namespace ospray
