@@ -34,11 +34,7 @@ namespace ospray {
     vec3f up {0.f, 1.f, 0.f}; //!< up direction of the light in world-space
     vec3f dir {0.f, 0.f, 1.f};//!< direction to which the center of the envmap
                               //   will be mapped to (analog to panoramic camera)
-//    vec3f position;           //!< TODO world-space position of the LocalHDRILight
-//    float radius;             //!< TODO radius of LocalHDRILight
-//    bool  mirror;             //!< TODO whether to mirror the map
     Texture2D *map {nullptr};//!< environment map in latitude / longitude format
-    float intensity {1.f};   //!< Amount of light emitted
   };
 
 } // ::ospray

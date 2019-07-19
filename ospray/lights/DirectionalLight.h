@@ -31,8 +31,6 @@ namespace ospray {
 
   private:
     vec3f direction {0.f, 0.f, 1.f};//!< Direction of the emitted rays
-    vec3f color {1.f};              //!< RGB color of the emitted light
-    float intensity {1.f};          //!< Amount of light emitted
     float angularDiameter {0.f};    //!< Apparent size of the distant light, in degree (e.g. 0.53 for the sun)
   };
 

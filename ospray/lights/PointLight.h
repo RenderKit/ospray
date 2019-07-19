@@ -30,8 +30,6 @@ namespace ospray {
 
   private:
     vec3f position {0.f}; //!< world-space position of the light
-    vec3f color {1.f};    //!< RGB color of the light
-    float intensity {1.f};//!< Amount of light emitted
     float radius {0.f};   //!< Radius of SphereLight
   };
 

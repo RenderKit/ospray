@@ -109,7 +109,6 @@ Light_EvalRes SpotLight_eval(const uniform Light* uniform super,
 export void SpotLight_set(void* uniform super,
                           const uniform vec3f& position,
                           const uniform vec3f& direction,
-                          const uniform vec3f& power,
                           uniform float cosAngleMax,
                           uniform float cosAngleScale,
                           uniform float radius)
@@ -117,7 +116,7 @@ export void SpotLight_set(void* uniform super,
   uniform SpotLight* uniform self = (uniform SpotLight* uniform)super;
   self->position      = position;
   self->frame         = frame(direction);
-  self->power         = power;
+  self->power         = self->super.radiance;
   self->cosAngleMax   = cosAngleMax;
   self->cosAngleScale = cosAngleScale;
   self->radius        = radius;
@@ -136,7 +135,6 @@ export void* uniform SpotLight_create()
   SpotLight_set(self,
                 make_vec3f(0.f),
                 make_vec3f(0.f, 0.f, 1.f),
-                make_vec3f(1.f),
                 0.f,
                 100.f,
                 0.f);

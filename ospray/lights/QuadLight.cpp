@@ -35,16 +35,11 @@ namespace ospray {
     position  = getParam3f("position", vec3f(0.f));
     edge1     = getParam3f("edge1", vec3f(1.f, 0.f, 0.f));
     edge2     = getParam3f("edge2", vec3f(0.f, 1.f, 0.f));
-    color     = getParam3f("color", vec3f(1.f));
-    intensity = getParam1f("intensity", 1.f);
-
-    vec3f radiance = color * intensity;
 
     ispc::QuadLight_set(getIE(),
-                        (ispc::vec3f&)position,
-                        (ispc::vec3f&)edge1,
-                        (ispc::vec3f&)edge2,
-                        (ispc::vec3f&)radiance);
+                        (ispc::vec3f &)position,
+                        (ispc::vec3f &)edge1,
+                        (ispc::vec3f &)edge2);
   }
 
   OSP_REGISTER_LIGHT(QuadLight, QuadLight);

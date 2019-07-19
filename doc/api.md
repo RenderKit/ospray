@@ -1283,24 +1283,24 @@ created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spotlight supports the special parameters listed in the table.
 
-  -------- ------------- ----------------------------------------------
-  Type     Name          Description
-  -------- ------------- ----------------------------------------------
-  vec3f(a) position      the center of the spotlight, in world-space
+  -------- ------------- ----------- ----------------------------------------------
+  Type     Name          Default     Description
+  -------- ------------- ----------- ----------------------------------------------
+  vec3f(a) position      $(0, 0, 0)$ the center of the spotlight, in world-space
 
-  vec3f(a) direction     main emission direction of the spot
+  vec3f(a) direction     $(0, 0, 1)$ main emission direction of the spot
 
-  float    openingAngle  full opening angle (in degree) of the spot;
-                         outside of this cone is no illumination
+  float    openingAngle          180 full opening angle (in degree) of the spot;
+                                     outside of this cone is no illumination
 
-  float    penumbraAngle size (angle in degree) of the "penumbra", the
-                         region between the rim (of the illumination
-                         cone) and full intensity of the spot; should
-                         be smaller than half of `openingAngle`
+  float    penumbraAngle           5 size (angle in degree) of the "penumbra", the
+                                     region between the rim (of the illumination
+                                     cone) and full intensity of the spot; should
+                                     be smaller than half of `openingAngle`
 
-  float    radius        the size of the spotlight, the radius of a
-                         disk with normal `direction`
-  -------- ------------- ----------------------------------------------
+  float    radius                  0 the size of the spotlight, the radius of a
+                                     disk with normal `direction`
+  -------- ------------- ----------- ----------------------------------------------
   : Special parameters accepted by the spotlight.
 
 ![Angles used by the spotlight.][imgSpotLight]

@@ -33,18 +33,15 @@ namespace ospray {
   {
     Light::commit();
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
-    color     = getParam3f("color", vec3f(1.f));
-    intensity = getParam1f("intensity", 1.f);
     angularDiameter = getParam1f("angularDiameter", .0f);
 
-    vec3f radiance = color * intensity;
-    direction = -normalize(direction); // the ispc::DirLight expects direction towards light source
+    // the ispc::DirLight expects direction towards light source
+    direction = -normalize(direction);
 
-    angularDiameter = clamp(angularDiameter, 0.f, 180.f);
-    const float cosAngle = ospcommon::cos(deg2rad(0.5f*angularDiameter));
+    angularDiameter      = clamp(angularDiameter, 0.f, 180.f);
+    const float cosAngle = ospcommon::cos(deg2rad(0.5f * angularDiameter));
 
-    ispc::DirectionalLight_set(getIE(), (ispc::vec3f&)direction,
-                               (ispc::vec3f&)radiance, cosAngle);
+    ispc::DirectionalLight_set(getIE(), (ispc::vec3f &)direction, cosAngle);
   }
 
   OSP_REGISTER_LIGHT(DirectionalLight, DirectionalLight);

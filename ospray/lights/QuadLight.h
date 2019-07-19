@@ -33,8 +33,6 @@ namespace ospray {
     vec3f position {0.f};       //!< world-space corner position of the light
     vec3f edge1 {1.f, 0.f, 0.f};//!< vectors to adjacent corners
     vec3f edge2 {0.f, 1.f, 0.f};//!< vectors to adjacent corners
-    vec3f color {1.f};          //!< RGB color of the QuadLight
-    float intensity {1.f};      //!< Amount of light emitted
   };
 
 }// ::ospray

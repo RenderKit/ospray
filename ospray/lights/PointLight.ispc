@@ -120,12 +120,11 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
 //! Set the parameters of an ispc-side PointLight object
 export void PointLight_set(void* uniform super,
                            const uniform vec3f& position,
-                           const uniform vec3f& power,
                            uniform float radius)
 {
   uniform PointLight* uniform self = (uniform PointLight* uniform)super;
   self->position = position;
-  self->power = power;
+  self->power = self->super.radiance;
   self->radius = radius;
 }
 
@@ -137,6 +136,6 @@ export void* uniform PointLight_create()
   self->super.sample = PointLight_sample;
   self->super.eval = PointLight_eval;
 
-  PointLight_set(self, make_vec3f(0.f), make_vec3f(1.f), 0.f);
+  PointLight_set(self, make_vec3f(0.f), 0.f);
   return self;
 }

@@ -27,7 +27,6 @@ struct HDRILight
   linear3f light2world;               //!< Transformation from light space into world space
   linear3f world2light;               //!< Transformation from world space into light space
   Texture2D* uniform map;             //!< Environment map in latitude / longitude format
-  float intensity;                    //!< Scaling factor for the map
   Distribution2D* uniform distribution; //!< The 2D distribution used to importance sample
   vec2f rcpSize;                      //!< precomputed 1/map.size
 };
@@ -73,7 +72,7 @@ Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, sample2d.uv);
-  res.weight = get3f(self->map, lookup) * self->intensity / res.pdf;
+  res.weight = get3f(self->map, lookup) * self->super.intensity / res.pdf;
 
   return res;
 }
@@ -99,7 +98,7 @@ Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, uv);
-  res.radiance = get3f(self->map, lookup) * self->intensity;
+  res.radiance = get3f(self->map, lookup) * self->super.intensity;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
@@ -142,8 +141,7 @@ task unmasked void HDRILight_calcRowImportance(const HDRILight* uniform const se
 //! Set the parameters of an ispc-side HDRILight object
 export void HDRILight_set(void* uniform super,
                           const uniform linear3f& light2world,
-                          void* uniform map,
-                          uniform float intensity)
+                          void* uniform map)
 {
   HDRILight* uniform self = (HDRILight* uniform)super;
 
@@ -157,7 +155,6 @@ export void HDRILight_set(void* uniform super,
     self->world2light = rcp(light2world);
 
     self->map = (uniform Texture2D* uniform)map;
-    self->intensity = intensity;
 
     self->rcpSize = 1.f/self->map->sizef;
     const uniform int height = self->map->size.y;
@@ -189,7 +186,7 @@ export void *uniform HDRILight_create()
   self->super.sample = HDRILight_sample_dummy;
   self->distribution = NULL;
 
-  HDRILight_set(self, make_LinearSpace3f_identity(), NULL, 1.f);
+  HDRILight_set(self, make_LinearSpace3f_identity(), NULL);
 
   return self;
 }

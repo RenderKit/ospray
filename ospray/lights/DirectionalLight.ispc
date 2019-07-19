@@ -81,12 +81,11 @@ Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
 //! Set the parameters of an ispc-side DirectionalLight object
 export void DirectionalLight_set(void* uniform super,
                                  const uniform vec3f& direction,
-                                 const uniform vec3f& power,
                                  uniform float cosAngle)
 {
   uniform DirectionalLight* uniform self = (uniform DirectionalLight* uniform)super;
   self->frame = frame(direction);
-  self->power = power;
+  self->power = self->super.radiance;
   self->cosAngle = cosAngle;
   self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
 }
@@ -99,6 +98,6 @@ export void* uniform DirectionalLight_create()
   self->super.sample = DirectionalLight_sample;
   self->super.eval = DirectionalLight_eval;
 
-  DirectionalLight_set(self, make_vec3f(0.f, 0.f, 1.f), make_vec3f(1.f), 1.f);
+  DirectionalLight_set(self, make_vec3f(0.f, 0.f, 1.f), 1.f);
   return self;
 }
