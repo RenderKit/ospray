@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  LiveImageOp::LiveImageOp(FrameBufferView &fbView) : fbView(fbView) {}
+  LiveImageOp::LiveImageOp(FrameBufferView &_fbView) : fbView(_fbView) {}
 
   ImageOp *ImageOp::createInstance(const char *type)
   {
@@ -32,8 +32,8 @@ namespace ospray {
     return "ospray::ImageOp(base class)";
   }
 
-  LiveTileOp::LiveTileOp(FrameBufferView &fbView) : LiveImageOp(fbView) {}
+  LiveTileOp::LiveTileOp(FrameBufferView &_fbView) : LiveImageOp(_fbView) {}
 
-  LiveFrameOp::LiveFrameOp(FrameBufferView &fbView) : LiveImageOp(fbView) {}
+  LiveFrameOp::LiveFrameOp(FrameBufferView &_fbView) : LiveImageOp(_fbView) {}
 
 }  // namespace ospray

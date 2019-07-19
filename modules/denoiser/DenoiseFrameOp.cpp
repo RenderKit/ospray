@@ -20,8 +20,8 @@ namespace ospray {
 
   struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
   {
-    LiveDenoiseFrameOp(FrameBufferView &fbView, OIDNDevice device)
-        : LiveFrameOp(fbView),
+    LiveDenoiseFrameOp(FrameBufferView &_fbView, OIDNDevice device)
+        : LiveFrameOp(_fbView),
           device(device),
           filter(oidnNewFilter(device, "RT"))
     {

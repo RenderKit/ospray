@@ -96,8 +96,8 @@ namespace ospray {
     return "ospray::ToneMapper";
   }
 
-  LiveToneMapper::LiveToneMapper(FrameBufferView &fbView, void *ispcEquiv)
-      : LiveTileOp(fbView), ispcEquiv(ispcEquiv)
+  LiveToneMapper::LiveToneMapper(FrameBufferView &_fbView, void *ispcEquiv)
+      : LiveTileOp(_fbView), ispcEquiv(ispcEquiv)
   {
   }
 

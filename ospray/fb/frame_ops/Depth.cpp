@@ -59,8 +59,8 @@ namespace ospray {
     return "ospray::DepthFrameOp";
   }
 
-  LiveDepthFrameOp::LiveDepthFrameOp(FrameBufferView &fbView)
-      : LiveFrameOp(fbView)
+  LiveDepthFrameOp::LiveDepthFrameOp(FrameBufferView &_fbView)
+      : LiveFrameOp(_fbView)
   {
   }
 

@@ -127,14 +127,14 @@ namespace ospray {
     }
   }
 
-  LiveSSAOFrameOp::LiveSSAOFrameOp(FrameBufferView &fbView,
+  LiveSSAOFrameOp::LiveSSAOFrameOp(FrameBufferView &_fbView,
                                    void *ispcEquiv,
                                    float ssaoStrength,
                                    float radius,
                                    float checkRadius,
                                    std::vector<vec3f> kernel,
                                    std::vector<vec3f> randomVecs)
-      : LiveFrameOp(fbView),
+      : LiveFrameOp(_fbView),
         ispcEquiv(ispcEquiv),
         ssaoStrength(ssaoStrength),
         radius(radius),

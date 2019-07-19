@@ -57,8 +57,8 @@ namespace ospray {
     return "ospray::DebugFrameOp";
   }
 
-  LiveDebugFrameOp::LiveDebugFrameOp(FrameBufferView &fbView)
-      : LiveFrameOp(fbView)
+  LiveDebugFrameOp::LiveDebugFrameOp(FrameBufferView &_fbView)
+      : LiveFrameOp(_fbView)
   {
   }
 

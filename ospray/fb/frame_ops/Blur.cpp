@@ -35,7 +35,7 @@ namespace ospray {
   template <typename T>
   struct OSPRAY_SDK_INTERFACE LiveBlurFrameOp : public LiveFrameOp
   {
-    LiveBlurFrameOp(FrameBufferView &fbView) : LiveFrameOp(fbView) {}
+    LiveBlurFrameOp(FrameBufferView &_fbView) : LiveFrameOp(_fbView) {}
 
     void process(const Camera *) override;
   };

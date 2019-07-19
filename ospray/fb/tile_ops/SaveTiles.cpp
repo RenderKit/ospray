@@ -72,10 +72,10 @@ namespace ospray {
     return "SaveTiles";
   }
 
-  LiveSaveTiles::LiveSaveTiles(FrameBufferView &fbView,
+  LiveSaveTiles::LiveSaveTiles(FrameBufferView &_fbView,
                                    const std::string &prefix,
                                    const vec3f &addColor)
-      : LiveTileOp(fbView), prefix(prefix), addColor(addColor)
+      : LiveTileOp(_fbView), prefix(prefix), addColor(addColor)
   {
   }
 
