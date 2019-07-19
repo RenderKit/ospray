@@ -47,6 +47,12 @@ namespace ospray {
 
     void *getIE() const;
 
+    template <typename T>
+    T getParam(const char *name, T valIfNotFound=T())
+    {
+      return ParameterizedObject::getParam<T>(name, valIfNotFound);
+    }
+
     ManagedObject *getParamObject(const char *name,
                                   ManagedObject *valIfNotFound = nullptr);
 
