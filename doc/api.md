@@ -406,27 +406,6 @@ given type `type` use
 The call returns `NULL` if that type of volume is not known by OSPRay,
 or else an `OSPVolume` handle.
 
-The common parameters understood by all volume variants are summarized
-in the table below.
-
-  ------------------- ------------------------ ---------  -----------------------------------
-  Type                Name                       Default  Description
-  ------------------- ------------------------ ---------  -----------------------------------
-  vec2f               voxelRange                          minimum and maximum of the scalar
-                                                          values
-
-  vec3f               volumeClippingBoxLower    disabled  lower coordinate (in object-space)
-                                                          to clip the volume values
-
-  vec3f               volumeClippingBoxUpper    disabled  upper coordinate (in object-space)
-                                                          to clip the volume values
-  ------------------- ------------------------ ---------  -----------------------------------
-  : Configuration parameters shared by all volume types.
-
-Note that if `voxelRange` is not provided for a volume then OSPRay will
-compute it based on the voxel data, which may result in slower data
-updates.
-
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because
@@ -469,6 +448,9 @@ summarized in the table below.
   ------ ----------- -----------  -----------------------------------
   Type   Name            Default  Description
   ------ ----------- -----------  -----------------------------------
+  vec2f  voxelRange    $(∞, -∞)$  minimum and maximum of the scalar
+                                  values
+
   vec3i  dimensions               number of voxels in each
                                   dimension $(x, y, z)$
 
@@ -509,40 +491,41 @@ within them.
   --------- --------------- -----------  -----------------------------------
   Type      Name            Default      Description
   --------- --------------- -----------  -----------------------------------
-  range2f   voxelRange        undefined  range of scalar voxel values
+  range2f   voxelRange        $(∞, -∞)$  minimum and maximum of the scalar
+                                         values
 
   string    method              current  sampling method; valid values are
                                          "finest", "current", or "octant"
 
-  box3f[]   block.bounds      undefined  [data] array of bounds for each AMR
+  box3f[]   block.bounds           NULL  [data] array of bounds for each AMR
                                          block
 
-  int[]     block.level       undefined  array of each block's refinement level
+  int[]     block.level            NULL  array of each block's refinement level
 
-  float[]   block.cellWidth   undefined  array of each block's cell width
+  float[]   block.cellWidth        NULL  array of each block's cell width
 
-  OSPData[] block.data        undefined  [data] array of OSPData containing
+  OSPData[] block.data             NULL  [data] array of OSPData containing
                                          the actual scalar voxel data
 
-  vec3f     gridOrigin       $(0, 0, 0)$  origin of the grid in world-space
+  vec3f     gridOrigin      $(0, 0, 0)$  origin of the grid in world-space
 
-  vec3f     gridSpacing      $(1, 1, 1)$  size of the grid cells in
-                                          world-space
+  vec3f     gridSpacing     $(1, 1, 1)$  size of the grid cells in
+                                         world-space
 
-  string    voxelType          undefined  data type of each voxel,
-                                          currently supported are:
+  string    voxelType         undefined  data type of each voxel,
+                                         currently supported are:
 
-                                          "uchar" (8\ bit unsigned integer)
+                                         "uchar" (8\ bit unsigned integer)
 
-                                          "short" (16\ bit signed integer)
+                                         "short" (16\ bit signed integer)
 
-                                          "ushort" (16\ bit unsigned integer)
+                                         "ushort" (16\ bit unsigned integer)
 
-                                          "float" (32\ bit single precision
-                                          floating point)
+                                         "float" (32\ bit single precision
+                                         floating point)
 
-                                          "double" (64\ bit double precision
-                                          floating point)
+                                         "double" (64\ bit double precision
+                                         floating point)
   --------- --------------- -----------  -----------------------------------
   : Additional configuration parameters for AMR volumes.
 
@@ -661,12 +644,6 @@ VolumetricModels. To create a volume instance, call
   Type                 Name                    Default    Description
   -------------------- ----------------------- ---------- --------------------------------------
   OSPTransferFunction  transferFunction                   [transfer function] to use
-
-  vec3f                clippingBoxLower       $(0, 0, 0)$ lower coordinate (in object-space)
-                                                          to clip the volume values
-
-  vec3f                clippingBoxUpper       $(0, 0, 0)$ upper coordinate (in object-space)
-                                                          to clip the volume values
 
   float                samplingRate                 0.125 sampling rate of the volume (this
                                                           is the minimum step size for

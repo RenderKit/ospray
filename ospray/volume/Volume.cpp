@@ -40,14 +40,9 @@ namespace ospray {
 
   void Volume::commit()
   {
-    box3f volumeClippingBox =
-        box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)),
-              getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
-
     createEmbreeGeometry();
 
-    ispc::Volume_set(
-        ispcEquivalent, embreeGeometry, (const ispc::box3f &)volumeClippingBox);
+    ispc::Volume_set(ispcEquivalent, embreeGeometry);
   }
 
   void Volume::createEmbreeGeometry()

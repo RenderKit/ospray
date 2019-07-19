@@ -77,26 +77,14 @@ export void Volume_getBoundingBox(uniform box3f *uniform ret,
                                   void *uniform _self)
 {
   uniform Volume *uniform self = (uniform Volume * uniform) _self;
-  // If we have a clip box then the actual volume bounds are the intersection
-  // of the volume bounds and the clip box
-  cif(ne(self->volumeClippingBox.lower, self->volumeClippingBox.upper))
-  {
-    ret->lower = max(self->boundingBox.lower, self->volumeClippingBox.lower);
-    ret->upper = min(self->boundingBox.upper, self->volumeClippingBox.upper);
-  }
-  else
-  {
-    *ret = self->boundingBox;
-  }
+
+  *ret = self->boundingBox;
 }
 
 export void Volume_set(void *uniform _self,
-                       void *uniform _embreeGeometry,
-                       const uniform box3f &clippingBox)
+                       void *uniform _embreeGeometry)
 {
   Volume *uniform self = (Volume * uniform) _self;
-
-  self->volumeClippingBox = clippingBox;
 
   RTCGeometry geom = (RTCGeometry)_embreeGeometry;
 

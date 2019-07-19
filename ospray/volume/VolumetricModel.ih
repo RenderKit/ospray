@@ -34,10 +34,6 @@ struct VolumetricModel
   //! Color and opacity transfer function.
   TransferFunction *transferFunction;
 
-  //! Clipping box for the volume (applies to volume rendering only). An empty
-  //! clipping box is ignored.
-  box3f volumeClippingBox;
-
   box3f boundingBox;
 };
 

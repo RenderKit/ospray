@@ -209,7 +209,6 @@ export void AMRVolume_set(void *uniform _self,
       make_box3f(gridOrigin + worldBounds.lower,
                  worldBounds.lower + gridOrigin +
                      (worldBounds.upper - worldBounds.lower) * gridSpacing);
-  self->super.volumeClippingBox = self->super.boundingBox;
   self->super.samplingStep      = samplingStep;
   self->super.stepRay           = &AMR_stepRay;
   self->super.computeGradient   = &AMR_gradient;
