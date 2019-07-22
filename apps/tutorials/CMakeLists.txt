@@ -100,3 +100,5 @@ target_link_libraries(ospTutorialAMRVolume PRIVATE tutorial_common)
 ospray_create_application(ospTutorialImageOps ospTutorialImageOps.cpp)
 target_link_libraries(ospTutorialImageOps PRIVATE tutorial_common)
 
+ospray_create_application(ospTutorialStreamlines ospTutorialStreamlines.cpp)
+target_link_libraries(ospTutorialStreamlines PRIVATE tutorial_common)
