@@ -64,10 +64,12 @@ namespace ospray {
     const float aces_midOut   = 0.18f;
     const float aces_hdrMax   = 11.0785f;
 
-    a         = max(getParam1f("contrast", aces_contrast), 0.0001f);
-    float d   = clamp(getParam1f("shoulder", aces_shoulder), 0.0001f, 1.f);
-    float m   = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
-    float n   = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
+    a = max(getParam1f("contrast", aces_contrast), 0.0001f);
+    d = clamp(getParam1f("shoulder", aces_shoulder), 0.0001f, 1.f);
+
+    float m = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
+    float n = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
+
     float w   = max(getParam1f("hdrMax", aces_hdrMax), 1.f);
     acesColor = getParam1b("acesColor", true);
 
