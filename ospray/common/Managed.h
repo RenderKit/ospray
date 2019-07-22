@@ -48,10 +48,7 @@ namespace ospray {
     void *getIE() const;
 
     template <typename T>
-    T getParam(const char *name, T valIfNotFound=T())
-    {
-      return ParameterizedObject::getParam<T>(name, valIfNotFound);
-    }
+    T getParam(const char *name, T valIfNotFound = T());
 
     ManagedObject *getParamObject(const char *name,
                                   ManagedObject *valIfNotFound = nullptr);
@@ -84,6 +81,12 @@ namespace ospray {
   inline void *ManagedObject::getIE() const
   {
     return ispcEquivalent;
+  }
+
+  template <typename T>
+  inline T ManagedObject::getParam(const char *name, T valIfNotFound)
+  {
+    return ParameterizedObject::getParam<T>(name, valIfNotFound);
   }
 
   inline Data *ManagedObject::getParamData(const char *name,
