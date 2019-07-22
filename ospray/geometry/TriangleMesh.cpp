@@ -33,11 +33,11 @@ namespace ospray {
   {
     Geometry::commit();
 
-    vertexData   = getParamData("vertex.position", getParamData("position"));
-    normalData   = getParamData("vertex.normal", getParamData("normal"));
-    colorData    = getParamData("vertex.color", getParamData("color"));
-    texcoordData = getParamData("vertex.texcoord", getParamData("texcoord"));
-    indexData    = getParamData("index", getParamData("triangle"));
+    vertexData   = getParamData("vertex.position");
+    normalData   = getParamData("vertex.normal");
+    colorData    = getParamData("vertex.color");
+    texcoordData = getParamData("vertex.texcoord");
+    indexData    = getParamData("index");
 
     if (!vertexData)
       throw std::runtime_error("triangle mesh must have 'vertex' array");
