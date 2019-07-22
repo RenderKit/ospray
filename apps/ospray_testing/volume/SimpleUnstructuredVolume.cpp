@@ -21,8 +21,6 @@
 #include "ospcommon/box.h"
 #include "ospcommon/tasking/parallel_for.h"
 using namespace ospcommon;
-// unstructured cell types
-#include "ospray/OSPUnstructured.h"
 
 namespace ospray {
   namespace testing {

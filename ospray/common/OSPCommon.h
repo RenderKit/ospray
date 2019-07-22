@@ -42,8 +42,6 @@ typedef int ssize_t;
 #include "ospcommon/memory/malloc.h"
 
 // ospray
-#include "ospray/OSPDataType.h"
-#include "ospray/OSPTexture.h"
 #include "ospray/ospray.h"
 
 // std

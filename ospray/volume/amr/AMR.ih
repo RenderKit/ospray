@@ -18,7 +18,7 @@
 
 // ospray
 #include "math/box.ih"
-#include "ospray/OSPDataType.h"
+#include "ospray/OSPEnums.h"
 // ours
 #include "KDTree.ih"
 

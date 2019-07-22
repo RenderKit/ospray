@@ -32,8 +32,7 @@ set(OSPRAY_SOURCES
   common/OSPCommon.cpp
 
   include/ospray/ospray.h
-  include/ospray/OSPDataType.h
-  include/ospray/OSPTexture.h
+  include/ospray/OSPEnums.h
 
   include/ospray/ospray_cpp.h
   include/ospray/ospray_cpp/Camera.h

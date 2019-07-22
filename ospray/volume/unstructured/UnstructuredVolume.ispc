@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "UnstructuredVolume.ih"
-#include "ospray/OSPUnstructured.h"
+#include "ospray/OSPEnums.h"
 
 // Read 32/64-bit integer value from given array
 static inline uniform uint64 readInteger(const uint32* uniform array,

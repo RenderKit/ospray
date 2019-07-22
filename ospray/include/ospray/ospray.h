@@ -29,8 +29,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include "OSPDataType.h"
-#include "OSPTexture.h"
+#include "OSPEnums.h"
 
 #ifdef _WIN32
 #  ifdef ospray_EXPORTS
@@ -49,73 +48,6 @@
 #else
 #define OSP_DEPRECATED
 #endif
-
-// Error codes returned by various API and callback functions
-typedef enum
-# if __cplusplus >= 201103L
-: uint32_t
-#endif
-{
-  OSP_NO_ERROR = 0,          //< No error has been recorded
-  OSP_UNKNOWN_ERROR = 1,     //< An unknown error has occurred
-  OSP_INVALID_ARGUMENT = 2,  //< An invalid argument is specified
-  OSP_INVALID_OPERATION = 3, //< The operation is not allowed for the specified object
-  OSP_OUT_OF_MEMORY = 4,     //< There is not enough memory left to execute the command
-  OSP_UNSUPPORTED_CPU = 5,   //< The CPU is not supported as it does not support SSE4.1
-} OSPError;
-
-// OSPRay format constants for Frame Buffer creation
-typedef enum
-# if __cplusplus >= 201103L
-: uint32_t
-#endif
-{
-  OSP_FB_NONE,    //< framebuffer will not be mapped by application
-  OSP_FB_RGBA8,   //< one dword per pixel: rgb+alpha, each one byte
-  OSP_FB_SRGBA,   //< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
-  OSP_FB_RGBA32F, //< one float4 per pixel: rgb+alpha, each one float
-/* TODO
-  OSP_FB_RGB8,    //< three 8-bit unsigned chars per pixel
-  OSP_FB_RGB32F,  ?
-  OSP_FB_SRGB,    //< three 8-bit unsigned chars (in sRGB space) per pixel
-*/
-} OSPFrameBufferFormat;
-
-// OSPRay channel constants for Frame Buffer (can be OR'ed together)
-typedef enum
-# if __cplusplus >= 201103L
-: uint32_t
-#endif
-{
-  OSP_FB_COLOR=(1<<0),
-  OSP_FB_DEPTH=(1<<1),
-  OSP_FB_ACCUM=(1<<2),
-  OSP_FB_VARIANCE=(1<<3),
-  OSP_FB_NORMAL=(1<<4), // in world-space
-  OSP_FB_ALBEDO=(1<<5)
-} OSPFrameBufferChannel;
-
-// Flags that can be passed to ospNewData()
-typedef enum
-# if __cplusplus >= 201103L
-: uint32_t
-#endif
-{
-  OSP_DATA_SHARED_BUFFER = (1<<0),
-} OSPDataCreationFlags;
-
-// OSPRay events which can be waited on via ospWait()
-typedef enum
-# if __cplusplus >= 201103L
-: uint32_t
-#endif
-{
-  OSP_NONE_FINISHED=(0),
-  OSP_WORLD_RENDERED=(10),
-  OSP_WORLD_COMMITTED=(20),
-  OSP_FRAME_FINISHED=(30),
-  OSP_TASK_FINISHED=(100000)
-} OSPSyncEvent;
 
 #ifdef __cplusplus
 // C++ DOES support default initializers

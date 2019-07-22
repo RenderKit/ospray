@@ -22,7 +22,7 @@
 #include "math/box.ih"
 #include "math/sampling.ih"
 #include "math/vec.ih"
-#include "ospray/OSPDataType.h"
+#include "ospray/OSPEnums.h"
 
 struct Spheres
 {

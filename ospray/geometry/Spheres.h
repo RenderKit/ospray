@@ -17,7 +17,6 @@
 #pragma once
 
 #include "Geometry.h"
-#include "ospray/OSPDataType.h"
 
 namespace ospray {
 

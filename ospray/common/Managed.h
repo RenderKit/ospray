@@ -22,7 +22,6 @@
 // ospray
 #include "common/OSPCommon.h"
 #include "common/ObjectHandle.h"
-#include "ospray/OSPDataType.h"
 // stl
 #include <set>
 #include <vector>

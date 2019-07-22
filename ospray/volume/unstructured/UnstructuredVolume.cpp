@@ -17,7 +17,6 @@
 // ospray
 #include "UnstructuredVolume.h"
 #include "../../common/Data.h"
-#include "ospray/OSPUnstructured.h"
 
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"

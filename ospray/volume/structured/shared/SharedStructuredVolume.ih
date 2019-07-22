@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/OSPDataType.h"
+#include "ospray/OSPEnums.h"
 #include "../StructuredVolume.ih"
 
 //! \brief ISPC variables and functions for the SharedStructuredVolume class

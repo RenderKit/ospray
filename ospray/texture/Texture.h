@@ -17,7 +17,6 @@
 #pragma once
 
 #include "common/Managed.h"
-#include "ospray/OSPTexture.h"
 
 namespace ospray {
 
