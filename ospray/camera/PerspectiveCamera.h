@@ -41,7 +41,7 @@ namespace ospray {
     vec3f dir_dv;
     vec2f imgPlaneSize;
 
-    StereoMode stereoMode;
+    OSPStereoMode stereoMode;
     float interpupillaryDistance; // distance between the two cameras (stereo)
   };
 

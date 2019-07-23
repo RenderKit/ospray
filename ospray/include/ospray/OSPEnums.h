@@ -54,6 +54,8 @@ typedef enum
 
   // Unsigned character scalar and vector types.
   OSP_UCHAR = 2500, OSP_VEC2UC, OSP_VEC3UC, OSP_VEC4UC,
+  OSP_BYTE = 2500, //XXX OSP_UCHAR, ISPC issue #1246
+  OSP_RAW = 2500,  //XXX OSP_UCHAR, ISPC issue #1246
 
   // Signed 16-bit integer scalar.
   OSP_SHORT = 3000,
@@ -89,11 +91,7 @@ typedef enum
   OSP_LINEAR2F = 12000, OSP_LINEAR3F, OSP_AFFINE2F, OSP_AFFINE3F,
 
   // Guard value.
-  OSP_UNKNOWN = 99999,
-
-  OSP_BYTE = 2500, //XXX OSP_UCHAR, ISPC issue #1246
-  OSP_RAW = 2500   //XXX OSP_UCHAR, ISPC issue #1246
-
+  OSP_UNKNOWN = 99999
 } OSPDataType;
 
 // OSPRay format constants for Texture creation
@@ -114,14 +112,7 @@ typedef enum
   OSP_TEXTURE_RA8,
   OSP_TEXTURE_LA8,
   // Denotes an unknown texture format, so we can properly initialize parameters
-  OSP_TEXTURE_FORMAT_INVALID = 0xff,
-/* TODO
-  OSP_LogLuv,
-  OSP_RGBA16F
-  OSP_RGB16F
-  OSP_RGBE, // radiance hdr
-  compressed (RGTC, BPTC, ETC, ...)
-*/
+  OSP_TEXTURE_FORMAT_INVALID = 256,
 } OSPTextureFormat;
 
 // Flags that can be set on `texture2d` type OSPTexture; can be OR'ed together
@@ -159,11 +150,6 @@ typedef enum
   OSP_FB_RGBA8,   //< one dword per pixel: rgb+alpha, each one byte
   OSP_FB_SRGBA,   //< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
   OSP_FB_RGBA32F, //< one float4 per pixel: rgb+alpha, each one float
-/* TODO
-  OSP_FB_RGB8,    //< three 8-bit unsigned chars per pixel
-  OSP_FB_RGB32F,  ?
-  OSP_FB_SRGB,    //< three 8-bit unsigned chars (in sRGB space) per pixel
-*/
 } OSPFrameBufferFormat;
 
 // OSPRay channel constants for Frame Buffer (can be OR'ed together)
@@ -195,11 +181,11 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_NONE_FINISHED=(0),
-  OSP_WORLD_RENDERED=(10),
-  OSP_WORLD_COMMITTED=(20),
-  OSP_FRAME_FINISHED=(30),
-  OSP_TASK_FINISHED=(100000)
+  OSP_NONE_FINISHED = 0,
+  OSP_WORLD_RENDERED = 10,
+  OSP_WORLD_COMMITTED = 20,
+  OSP_FRAME_FINISHED = 30,
+  OSP_TASK_FINISHED = 100000
 } OSPSyncEvent;
 
 // OSPRay cell types definition for unstructured volumes, values are set to match VTK
@@ -211,7 +197,8 @@ typedef enum
   OSP_TETRAHEDRON = 10,
   OSP_HEXAHEDRON = 12,
   OSP_WEDGE = 13,
-  OSP_PYRAMID = 14
+  OSP_PYRAMID = 14,
+  OSP_UNKNOWN_CELL_TYPE = 1000
 } OSPUnstructuredCellType;
 
 // OSPRay PerspectiveCamera stereo image modes
@@ -220,5 +207,6 @@ typedef enum
   OSP_STEREO_NONE,
   OSP_STEREO_LEFT,
   OSP_STEREO_RIGHT,
-  OSP_STEREO_SIDE_BY_SIDE
-} StereoMode;
+  OSP_STEREO_SIDE_BY_SIDE,
+  OSP_STEREO_UNKNOWN = 1000
+} OSPStereoMode;

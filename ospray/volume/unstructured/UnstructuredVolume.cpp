@@ -40,9 +40,10 @@ namespace ospray {
         return 6;
       case OSP_PYRAMID:
         return 5;
+      case OSP_UNKNOWN_CELL_TYPE:
+        break;
       }
 
-      // Unknown cell type
       return 1;
     }
   }  // namespace
