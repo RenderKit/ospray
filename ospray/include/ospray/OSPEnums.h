@@ -112,7 +112,7 @@ typedef enum
   OSP_TEXTURE_RA8,
   OSP_TEXTURE_LA8,
   // Denotes an unknown texture format, so we can properly initialize parameters
-  OSP_TEXTURE_FORMAT_INVALID = 256,
+  OSP_TEXTURE_FORMAT_INVALID = 255,
 } OSPTextureFormat;
 
 // Flags that can be set on `texture2d` type OSPTexture; can be OR'ed together
@@ -198,34 +198,43 @@ typedef enum
   OSP_HEXAHEDRON = 12,
   OSP_WEDGE = 13,
   OSP_PYRAMID = 14,
-  OSP_UNKNOWN_CELL_TYPE = 1000
+  OSP_UNKNOWN_CELL_TYPE = 255
 } OSPUnstructuredCellType;
 
 // OSPRay PerspectiveCamera stereo image modes
 typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
 {
   OSP_STEREO_NONE,
   OSP_STEREO_LEFT,
   OSP_STEREO_RIGHT,
   OSP_STEREO_SIDE_BY_SIDE,
-  OSP_STEREO_UNKNOWN = 1000
+  OSP_STEREO_UNKNOWN = 255
 } OSPStereoMode;
 
 // OSPRay Curves geometry types
 typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
 {
   OSP_ROUND,
   OSP_FLAT,
   OSP_RIBBON,
-  OSP_UNKNOWN_CURVE_TYPE = 1000
+  OSP_UNKNOWN_CURVE_TYPE = 255
 } OSPCurveType;
 
 // OSPRay Curves geometry bases
 typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
 {
   OSP_LINEAR,
   OSP_BEZIER,
   OSP_BSPLINE,
   OSP_HERMITE,
-  OSP_UNKNOWN_CURVE_BASIS = 1000
+  OSP_UNKNOWN_CURVE_BASIS = 255
 } OSPCurveBasis;
