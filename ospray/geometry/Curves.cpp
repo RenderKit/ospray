@@ -23,54 +23,26 @@
 // ispc-generated files
 #include "Curves_ispc.h"
 
+#include <map>
+
 namespace ospray {
+  static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
+      curveMap = {
+          {{OSP_ROUND,  OSP_LINEAR},  (RTCGeometryType)-1},
+          {{OSP_FLAT,   OSP_LINEAR},  RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE},
+          {{OSP_RIBBON, OSP_LINEAR},  (RTCGeometryType)-1},
 
-  static RTCGeometryType curveMap[4][3] = {
-      {
-          (RTCGeometryType)-1,
-          RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE,
-          (RTCGeometryType)-1,
-      },
+          {{OSP_ROUND,  OSP_BEZIER},  RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE},
+          {{OSP_FLAT,   OSP_BEZIER},  RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE},
+          {{OSP_RIBBON, OSP_BEZIER},  RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE},
 
-      {
-          RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
-          RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,
-          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
-      },
+          {{OSP_ROUND,  OSP_BSPLINE}, RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE},
+          {{OSP_FLAT,   OSP_BSPLINE}, RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE},
+          {{OSP_RIBBON, OSP_BSPLINE}, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE},
 
-      {
-          RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
-          RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE,
-          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
-      },
-
-      {RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
-       RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
-       RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE}};
-
-  static OSPCurveType curveTypeForString(const std::string &s)
-  {
-    if (s == "flat")
-      return OSP_FLAT;
-    if (s == "ribbon")
-      return OSP_RIBBON;
-    if (s == "round")
-      return OSP_ROUND;
-    throw std::runtime_error("curve with unknown curveType");
-  }
-
-  static OSPCurveBasis curveBasisForString(const std::string &s)
-  {
-    if (s == "bezier")
-      return OSP_BEZIER;
-    if (s == "bspline")
-      return OSP_BSPLINE;
-    if (s == "linear")
-      return OSP_LINEAR;
-    if (s == "hermite")
-      return OSP_HERMITE;
-    throw std::runtime_error("curve with unknown curveBasis");
-  }
+          {{OSP_ROUND,  OSP_HERMITE}, RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE},
+          {{OSP_FLAT,   OSP_HERMITE}, RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE},
+          {{OSP_RIBBON, OSP_HERMITE}, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE}};
 
   std::string Curves::toString() const
   {
@@ -81,9 +53,9 @@ namespace ospray {
   {
     vertexData = getParamData("vertex.position", nullptr);
     if (!vertexData)
-      throw std::runtime_error("curves must have 'vertex' array");
+      throw std::runtime_error("curves must have 'vertex.position' array");
     if (vertexData->type != OSP_VEC4F)
-      throw std::runtime_error("curves 'vertex' must be type OSP_FLOAT4");
+      throw std::runtime_error("curves 'vertex.position' must be type OSP_VEC4F");
     const auto numVertices = vertexData->numItems;
 
     normalData  = getParamData("vertex.normal", nullptr);
@@ -96,17 +68,18 @@ namespace ospray {
       throw std::runtime_error("curves 'index' array must be type OSP_INT");
     const auto numSegments = indexData->numItems;
 
-    curveBasis = getParamString("basis", "unspecified");
-    curveType  = getParamString("type", "unspecified");
+    curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
+    if (curveType == OSP_UNKNOWN_CURVE_TYPE)
+      throw std::runtime_error("curve with unknown type");
+    curveBasis = (OSPCurveBasis)getParam<int>("basis", OSP_UNKNOWN_CURVE_BASIS);
+    if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
+      throw std::runtime_error("curve with unknown basis");
 
-    const auto type  = curveTypeForString(curveType);
-    const auto basis = curveBasisForString(curveBasis);
-
-    if (type == OSP_RIBBON && !normalData)
+    if (curveType == OSP_RIBBON && !normalData)
       throw std::runtime_error("ribbon curve must have 'normal' array");
-    if (basis == OSP_LINEAR && type != OSP_FLAT)
+    if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT)
       throw std::runtime_error("linear curve with non-flat type");
-    if (basis == OSP_HERMITE && !tangentData)
+    if (curveBasis == OSP_HERMITE && !tangentData)
       throw std::runtime_error("hermite curve must have 'tangent' array");
 
     if (normalData && normalData->type != OSP_VEC3F)
@@ -118,7 +91,7 @@ namespace ospray {
                      << "#verts=" << numVertices << ", "
                      << "#segments=" << numSegments;
 
-    embreeCurveType = curveMap[basis][type];
+    embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
   }
 
   size_t Curves::numPrimitives() const
@@ -128,10 +101,8 @@ namespace ospray {
     if (!haveIndices)
       return 0;
 
-    const auto basis = curveBasisForString(curveBasis);
-
     uint32_t numVerts = 4;
-    if (basis == OSP_LINEAR || basis == OSP_HERMITE)
+    if (curveBasis == OSP_LINEAR || curveBasis == OSP_HERMITE)
       numVerts = 2;
 
     return indexData->numItems / numVerts;

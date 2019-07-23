@@ -42,8 +42,8 @@ namespace ospray {
 
     RTCGeometryType embreeCurveType;
 
-    std::string curveBasis;
-    std::string curveType;
+    OSPCurveType curveType;
+    OSPCurveBasis curveBasis;
   };
 
 }  // namespace ospray

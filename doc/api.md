@@ -906,11 +906,25 @@ this geometry are listed in the table below.
   int32[]            index           [data] array of indices to the first vertex
                                      or tangent of a curve segment
 
-  string             basis           "linear", "bezier", "bspline", "hermite"
+  int                type            `OSPCurveType` for rendering the curve.
+                                     Supported types are:
 
-  string             type            "flat" (ray oriented),
-                                     "round" (circular cross section),
-                                     "ribbon" (normal oriented flat curve)
+                                     `OSP_FLAT`
+
+                                     `OSP_ROUND`
+
+                                     `OSP_RIBBON`
+
+  int                basis           `OSPCurveBasis` for defining the curve.
+                                     Supported bases are:
+
+                                     `OSP_LINEAR`
+
+                                     `OSP_BEZIER`
+
+                                     `OSP_BSPLINE`
+
+                                     `OSP_HERMITE`
   ------------------ --------------- -------------------------------------------
   : Parameters defining a curves geometry.
 
