@@ -37,9 +37,6 @@ namespace ospray {
                   const vec3i &index,
                   const vec3i &count) override;
 
-    //! Get the OSPDataType enum corresponding to the voxel type string.
-    OSPDataType getVoxelType();
-
     std::unique_ptr<amr::AMRData> data;
     std::unique_ptr<amr::AMRAccel> accel;
 
@@ -48,11 +45,12 @@ namespace ospray {
     Ref<Data> refinementLevelsData;
     Ref<Data> cellWidthsData;
 
-    //! Voxel type.
-    std::string voxelType;
+    OSPDataType voxelType;
 
     //! Voxel value range (will be computed if not provided as a parameter).
-    vec2f voxelRange{FLT_MAX, -FLT_MAX};
+    vec2f voxelRange;
+
+    OSPAMRMethod amrMethod;
 
     /*! Scale factor for the volume, mostly for internal use or data scaling
       benchmarking. Note that this must be set **before** calling

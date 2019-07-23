@@ -488,45 +488,50 @@ Blocks are defined by four parameters: their bounds, the refinement level
 in which they reside, their cell width, and the scalar data contained
 within them.
 
-  --------- --------------- -----------  -----------------------------------
-  Type      Name            Default      Description
-  --------- --------------- -----------  -----------------------------------
-  range2f   voxelRange        $(∞, -∞)$  minimum and maximum of the scalar
-                                         values
+  -------------- --------------- -----------------  -----------------------------------
+  Type           Name            Default            Description
+  -------------- --------------- -----------------  -----------------------------------
+  range2f        voxelRange              $(∞, -∞)$  minimum and maximum of the scalar
+                                                    values
 
-  string    method              current  sampling method; valid values are
-                                         "finest", "current", or "octant"
+  `OSPAMRMethod` method          `OSP_AMR_CURRENT`  `OSPAMRMethod` sampling method.
+                                                    Supported methods are:
 
-  box3f[]   block.bounds           NULL  [data] array of bounds for each AMR
-                                         block
+                                                    `OSP_AMR_CURRENT`
 
-  int[]     block.level            NULL  array of each block's refinement level
+                                                    `OSP_AMR_FINEST`
 
-  float[]   block.cellWidth        NULL  array of each block's cell width
+                                                    `OSP_AMR_OCTANT`
 
-  OSPData[] block.data             NULL  [data] array of OSPData containing
-                                         the actual scalar voxel data
+  box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
+                                                    block
 
-  vec3f     gridOrigin      $(0, 0, 0)$  origin of the grid in world-space
+  int[]          block.level                  NULL  array of each block's refinement
+                                                    level
 
-  vec3f     gridSpacing     $(1, 1, 1)$  size of the grid cells in
-                                         world-space
+  float[]        block.cellWidth              NULL  array of each block's cell width
 
-  string    voxelType         undefined  data type of each voxel,
-                                         currently supported are:
+  OSPData[]      block.data                   NULL  [data] array of OSPData containing
+                                                    the actual scalar voxel data
 
-                                         "uchar" (8\ bit unsigned integer)
+  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in world-space
 
-                                         "short" (16\ bit signed integer)
+  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
+                                                    world-space
 
-                                         "ushort" (16\ bit unsigned integer)
+  string         voxelType               undefined  data type of each voxel,
+                                                    currently supported are:
 
-                                         "float" (32\ bit single precision
-                                         floating point)
+                                                    `OSP_UCHAR`
 
-                                         "double" (64\ bit double precision
-                                         floating point)
-  --------- --------------- -----------  -----------------------------------
+                                                    `OSP_SHORT`
+
+                                                    `OSP_USHORT`
+
+                                                    `OSP_FLOAT`
+
+                                                    `OSP_DOUBLE`
+  -------------- --------------- -----------------  -----------------------------------
   : Additional configuration parameters for AMR volumes.
 
 Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just

@@ -238,3 +238,14 @@ typedef enum
   OSP_HERMITE,
   OSP_UNKNOWN_CURVE_BASIS = 255
 } OSPCurveBasis;
+
+// AMR Volume rendering methods
+typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
+{
+    OSP_AMR_CURRENT,
+    OSP_AMR_FINEST,
+    OSP_AMR_OCTANT
+} OSPAMRMethod;

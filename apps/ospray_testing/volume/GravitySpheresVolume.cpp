@@ -220,7 +220,7 @@ namespace ospray {
       // create an AMR volume and assign attributes
       OSPVolume volume = ospNewVolume("amr_volume");
 
-      ospSetString(volume, "voxelType", "float");
+      ospSetInt(volume, "voxelType", OSP_FLOAT);
       ospSetData(volume, "block.data", blockDataData);
       ospSetData(volume, "block.bounds", blockBoundsData);
       ospSetData(volume, "block.level", refinementLevelsData);
