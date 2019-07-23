@@ -210,3 +210,22 @@ typedef enum
   OSP_STEREO_SIDE_BY_SIDE,
   OSP_STEREO_UNKNOWN = 1000
 } OSPStereoMode;
+
+// OSPRay Curves geometry types
+typedef enum
+{
+  OSP_ROUND,
+  OSP_FLAT,
+  OSP_RIBBON,
+  OSP_UNKNOWN_CURVE_TYPE = 1000
+} OSPCurveType;
+
+// OSPRay Curves geometry bases
+typedef enum
+{
+  OSP_LINEAR,
+  OSP_BEZIER,
+  OSP_BSPLINE,
+  OSP_HERMITE,
+  OSP_UNKNOWN_CURVE_BASIS = 1000
+} OSPCurveBasis;

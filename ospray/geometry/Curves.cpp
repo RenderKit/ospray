@@ -25,21 +25,6 @@
 
 namespace ospray {
 
-  enum curveType
-  {
-    ROUND,
-    FLAT,
-    RIBBON
-  };
-
-  enum curveBasis
-  {
-    LINEAR,
-    BEZIER,
-    BSPLINE,
-    HERMITE
-  };
-
   static RTCGeometryType curveMap[4][3] = {
       {
           (RTCGeometryType)-1,
@@ -63,27 +48,27 @@ namespace ospray {
        RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE}};
 
-  static curveType curveTypeForString(const std::string &s)
+  static OSPCurveType curveTypeForString(const std::string &s)
   {
     if (s == "flat")
-      return FLAT;
+      return OSP_FLAT;
     if (s == "ribbon")
-      return RIBBON;
+      return OSP_RIBBON;
     if (s == "round")
-      return ROUND;
+      return OSP_ROUND;
     throw std::runtime_error("curve with unknown curveType");
   }
 
-  static curveBasis curveBasisForString(const std::string &s)
+  static OSPCurveBasis curveBasisForString(const std::string &s)
   {
     if (s == "bezier")
-      return BEZIER;
+      return OSP_BEZIER;
     if (s == "bspline")
-      return BSPLINE;
+      return OSP_BSPLINE;
     if (s == "linear")
-      return LINEAR;
+      return OSP_LINEAR;
     if (s == "hermite")
-      return HERMITE;
+      return OSP_HERMITE;
     throw std::runtime_error("curve with unknown curveBasis");
   }
 
@@ -117,11 +102,11 @@ namespace ospray {
     const auto type  = curveTypeForString(curveType);
     const auto basis = curveBasisForString(curveBasis);
 
-    if (type == RIBBON && !normalData)
+    if (type == OSP_RIBBON && !normalData)
       throw std::runtime_error("ribbon curve must have 'normal' array");
-    if (basis == LINEAR && type != FLAT)
+    if (basis == OSP_LINEAR && type != OSP_FLAT)
       throw std::runtime_error("linear curve with non-flat type");
-    if (basis == HERMITE && !tangentData)
+    if (basis == OSP_HERMITE && !tangentData)
       throw std::runtime_error("hermite curve must have 'tangent' array");
 
     if (normalData && normalData->type != OSP_VEC3F)
@@ -146,7 +131,7 @@ namespace ospray {
     const auto basis = curveBasisForString(curveBasis);
 
     uint32_t numVerts = 4;
-    if (basis == LINEAR || basis == HERMITE)
+    if (basis == OSP_LINEAR || basis == OSP_HERMITE)
       numVerts = 2;
 
     return indexData->numItems / numVerts;
