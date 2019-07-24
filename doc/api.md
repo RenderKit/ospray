@@ -573,39 +573,51 @@ To maintain VTK data compatibility an index array may be specified via
 cell sizes in the following format: $n, id_1, ..., id_n, m, id_1, ...,
 id_m$.
 
-  -------------------  ------------------  -------  ---------------------------------------
-  Type                 Name                Default  Description
-  -------------------  ------------------  -------  ---------------------------------------
-  vec3f[]              vertex.position              [data] array of vertex positions
+  -------------------  ------------------  --------  ---------------------------------------
+  Type                 Name                Default   Description
+  -------------------  ------------------  --------  ---------------------------------------
+  vec3f[]              vertex.position               [data] array of vertex positions
 
-  float[]              vertex.value                 [data] array of vertex data values to
-                                                    be sampled
+  float[]              vertex.value                  [data] array of vertex data values to
+                                                     be sampled
 
-  uint32[] / uint64[]  index                        [data] array of indices (into the
-                                                    vertex array(s)) that form cells
+  uint32[] / uint64[]  index                         [data] array of indices (into the
+                                                     vertex array(s)) that form cells
 
-  uint32[] / uint64[]  indexPrefixed                alternative [data] array of indices
-                                                    compatible to VTK, where the indices of
-                                                    each cell are prefixed with the number
-                                                    of vertices
+  uint32[] / uint64[]  indexPrefixed                 alternative [data] array of indices
+                                                     compatible to VTK, where the indices of
+                                                     each cell are prefixed with the number
+                                                     of vertices
 
-  uint32[] / uint64[]  cell                         [data] array of locations (into the
-                                                    index array), specifying the first index
-                                                    of each cell
+  uint32[] / uint64[]  cell                          [data] array of locations (into the
+                                                     index array), specifying the first index
+                                                     of each cell
 
-  float[]              cell.value                   [data] array of cell data values to be
-                                                    sampled
+  float[]              cell.value                    [data] array of cell data values to be
+                                                     sampled
 
-  uint8[]              cell.type                    [data] array of cell types
-                                                    (VTK compatible)
+  uint8[]              cell.type                     [data] array of cell types
+                                                     (VTK compatible). Supported types are:
 
-  string               hexMethod           fast     hexahedron interpolation method,
-                                                    "fast" (rendering inaccuracies may appear
-                                                    if hex is not parallelepiped) or "iterative"
+                                                     `OSP_TETRAHEDRON`
 
-  bool                 precomputedNormals  true     whether to accelerate by precomputing,
-                                                    at a cost of 12 bytes/face
-  -------------------  ------------------  -------  ---------------------------------------
+                                                     `OSP_HEXAHEDRON`
+
+                                                     `OSP_WEDGE`
+
+                                                     `OSP_PYRAMID`
+
+  int                  hexMethod           OSP_FAST  `OSPUnstructuredMethod` hexahedron
+                                                     interpolation method, should be one of:
+
+                                                     `OSP_FAST` (rendering inaccuracies may appear
+                                                     if hex is not parallelepiped)
+                                                     
+                                                     `OSP_ITERATIVE`
+
+  bool                 precomputedNormals      true  whether to accelerate by precomputing,
+                                                     at a cost of 12 bytes/face
+  -------------------  ------------------  --------  ---------------------------------------
   : Additional configuration parameters for unstructured volumes.
 
 ### Transfer Function

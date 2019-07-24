@@ -111,7 +111,7 @@ namespace ospray {
     bool index32Bit{false};
 
     // Array of cell types
-    uint8_t* cellType{nullptr};
+    OSPUnstructuredCellType* cellType{nullptr};
     bool cellTypeArrayToDelete{false}; // to detect that deallocation is needed
 
     // Array of values defined per-cell

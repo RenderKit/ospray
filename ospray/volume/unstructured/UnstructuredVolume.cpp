@@ -29,7 +29,7 @@ namespace ospray {
 
   namespace {
     // Map cell type to its vertices count
-    inline uint32_t getVerticesCount(uint8_t cellType)
+    inline uint32_t getVerticesCount(OSPUnstructuredCellType cellType)
     {
       switch (cellType) {
       case OSP_TETRAHEDRON:
@@ -81,15 +81,14 @@ namespace ospray {
       finished = false;
     }
 
-    auto methodStringFromEnv =
-        utility::getEnvVar<std::string>("OSPRAY_HEX_METHOD");
-    std::string methodString =
-        methodStringFromEnv.value_or(getParamString("hexMethod", "fast"));
-    if ((methodString == "fast") || (methodString == "planar")) {
+    OSPUnstructuredMethod method =
+        (OSPUnstructuredMethod)getParam<int>("hexMethod", OSP_FAST);
+    if (method == OSP_FAST)
       ispc::UnstructuredVolume_method_fast(ispcEquivalent);
-    } else if ((methodString == "iterative") || (methodString == "nonplanar")) {
+    else if (method == OSP_ITERATIVE)
       ispc::UnstructuredVolume_method_iterative(ispcEquivalent);
-    }
+    else
+      throw std::runtime_error("unknown cell interpolation method");
 
     ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
 
@@ -213,7 +212,7 @@ namespace ospray {
 
     // 'cell.type' parameter is optional
     if (cellTypeData) {
-      cellType = (uint8_t *)cellTypeData->data;
+      cellType = (OSPUnstructuredCellType *)cellTypeData->data;
 
       // check if number of cell types matches number of cells
       if (cellTypeData->size() != nCells)
@@ -221,7 +220,7 @@ namespace ospray {
             "cell type array for unstructured volume has wrong size");
     } else {
       // create cell type array
-      cellType              = new uint8_t[nCells];
+      cellType              = new OSPUnstructuredCellType[nCells];
       cellTypeArrayToDelete = true;
 
       // map type values from indices array
@@ -254,7 +253,7 @@ namespace ospray {
                            cell,
                            cell32Bit,
                            cellSkipIds,
-                           cellType,
+                           (uint8_t *)cellType,
                            bvh.rootRef(),
                            bvh.nodePtr(),
                            bvh.itemListPtr(),
@@ -351,6 +350,8 @@ namespace ospray {
       case OSP_PYRAMID:
         calculateCellNormals(taskIndex, pyramidFaces, 5);
         break;
+      case OSP_UNKNOWN_CELL_TYPE:
+        throw std::runtime_error("unknown unstructured cell type");
       }
     });
   }
