@@ -20,7 +20,7 @@ ospray_create_library(ospray_testing
   geometry/Boxes.cpp
   geometry/RandomSpheres.cpp
   geometry/SubdivisionCube.cpp
-  geometry/TestStreamlines.cpp
+  geometry/Streamlines.cpp
 
   lights/AmbientOnly.cpp
   lights/AmbientAndDirectional.cpp
