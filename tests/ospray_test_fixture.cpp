@@ -59,7 +59,7 @@ namespace OSPRayTestScenes {
     ospSetData(torus, "voxelData", voxelsData);
     ospRelease(voxelsData);
     ospSetVec3i(torus, "dimensions", size, size, size);
-    ospSetString(torus, "voxelType", "float");
+    ospSetInt(torus, "voxelType", OSP_FLOAT);
     ospSetVec2f(torus, "voxelRange", -10000.f, 10000.f);
     ospSetVec3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSetVec3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
@@ -693,7 +693,7 @@ namespace OSPRayTestScenes {
     ospSetData(pyramid, "voxelData", voxelsData);
     ospRelease(voxelsData);
     ospSetVec3i(pyramid, "dimensions", size, size, size);
-    ospSetString(pyramid, "voxelType", "uchar");
+    ospSetInt(pyramid, "voxelType", OSP_UCHAR);
     ospSetVec2f(pyramid, "voxelRange", 0, 255);
     ospSetVec3f(pyramid, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSetVec3f(pyramid, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
@@ -841,7 +841,7 @@ namespace OSPRayTestScenes {
     ASSERT_TRUE(voxelsData);
     ospSetData(blob, "voxelData", voxelsData);
     ospSetVec3i(blob, "dimensions", size, size, size);
-    ospSetString(blob, "voxelType", "float");
+    ospSetInt(blob, "voxelType", OSP_FLOAT);
     ospSetVec2f(blob, "voxelRange", 0.f, 3.f);
     ospSetVec3f(blob, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSetVec3f(blob, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);

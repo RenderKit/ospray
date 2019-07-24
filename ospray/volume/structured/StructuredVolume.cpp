@@ -31,7 +31,7 @@ namespace ospray {
 
   std::string StructuredVolume::toString() const
   {
-    return ("ospray::StructuredVolume<" + voxelType + ">");
+    return ("ospray::StructuredVolume<" + stringForType(voxelType) + ">");
   }
 
   void StructuredVolume::commit()
@@ -52,7 +52,7 @@ namespace ospray {
                                (const ispc::vec3f &)this->gridSpacing);
 
     if (!finished) {
-      voxelRange = getParam2f("voxelRange", voxelRange);
+      voxelRange = getParam2f("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
 
       buildAccelerator();
 
@@ -76,33 +76,33 @@ namespace ospray {
     vec3i scaledRegionCoords = vec3i(scaleFactor * vec3f(regionCoords));
 
     if (upsampling) {
-      if (voxelType == "uchar") {
+      if (voxelType == OSP_UCHAR) {
         out = malloc(sizeof(unsigned char) * size_t(scaledRegionSize.x) *
                      size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
         upsampleRegion((const unsigned char *)source,
                        (unsigned char *)out,
                        regionSize,
                        scaledRegionSize);
-      } else if (voxelType == "short") {
+      } else if (voxelType == OSP_SHORT) {
         out = malloc(sizeof(short) * size_t(scaledRegionSize.x) *
                      size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
         upsampleRegion((const unsigned short *)source,
                        (unsigned short *)out,
                        regionSize,
                        scaledRegionSize);
-      } else if (voxelType == "ushort") {
+      } else if (voxelType == OSP_USHORT) {
         out = malloc(sizeof(unsigned short) * size_t(scaledRegionSize.x) *
                      size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
         upsampleRegion((const unsigned short *)source,
                        (unsigned short *)out,
                        regionSize,
                        scaledRegionSize);
-      } else if (voxelType == "float") {
+      } else if (voxelType == OSP_FLOAT) {
         out = malloc(sizeof(float) * size_t(scaledRegionSize.x) *
                      size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
         upsampleRegion(
             (const float *)source, (float *)out, regionSize, scaledRegionSize);
-      } else if (voxelType == "double") {
+      } else if (voxelType == OSP_DOUBLE) {
         out = malloc(sizeof(double) * size_t(scaledRegionSize.x) *
                      size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
         upsampleRegion((const double *)source,
@@ -131,11 +131,4 @@ namespace ospray {
       ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
     });
   }
-
-  OSPDataType StructuredVolume::getVoxelType()
-  {
-    return finished ? typeForString(getParamString("voxelType", "unspecified"))
-                    : typeForString(voxelType.c_str());
-  }
-
 }  // namespace ospray

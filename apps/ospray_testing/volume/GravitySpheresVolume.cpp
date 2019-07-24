@@ -117,7 +117,7 @@ namespace ospray {
                volumeDimension,
                volumeDimension,
                volumeDimension);
-      ospSetString(volume, "voxelType", "float");
+      ospSetInt(volume, "voxelType", OSP_FLOAT);
       ospSetVec3f(volume, "gridOrigin", -1.f, -1.f, -1.f);
 
       const float gridSpacing = 2.f / float(volumeDimension);

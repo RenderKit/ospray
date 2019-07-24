@@ -29,7 +29,7 @@ namespace ospray {
 
   std::string GhostBlockBrickedVolume::toString() const
   {
-    return "ospray::GhostBlockBrickedVolume<" + voxelType + ">";
+    return "ospray::GhostBlockBrickedVolume<" + stringForType(voxelType) + ">";
   }
 
   void GhostBlockBrickedVolume::commit()
@@ -99,8 +99,8 @@ namespace ospray {
   void GhostBlockBrickedVolume::createEquivalentISPC()
   {
     // Get the voxel type.
-    voxelType = getParamString("voxelType", "unspecified");
-    if(getVoxelType() == OSP_UNKNOWN) {
+    voxelType = (OSPDataType)getParam<int>("voxelType", OSP_UNKNOWN);
+    if(voxelType == OSP_UNKNOWN) {
       throw std::runtime_error("unrecognized voxel type (must be set before "
                                "calling ospSetRegion())");
     }
@@ -114,9 +114,8 @@ namespace ospray {
 
     // Create an ISPC GhostBlockBrickedVolume object and assign type-specific
     // function pointers.
-    ispcEquivalent = ispc::GBBV_createInstance(this,
-                                         (int)getVoxelType(),
-                                         (const ispc::vec3i &)this->dimensions);
+    ispcEquivalent = ispc::GBBV_createInstance(
+        this, voxelType, (const ispc::vec3i &)this->dimensions);
   }
 
 #ifdef EXP_NEW_BB_VOLUME_KERNELS

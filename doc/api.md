@@ -454,20 +454,18 @@ summarized in the table below.
   vec3i  dimensions               number of voxels in each
                                   dimension $(x, y, z)$
 
-  string voxelType                data type of each voxel,
+  int     voxelType               `OSPDataType` of each voxel,
                                   currently supported are:
 
-                                  "uchar" (8\ bit unsigned integer)
+                                  `OSP_UCHAR`
 
-                                  "short" (16\ bit signed integer)
+                                  `OSP_SHORT`
 
-                                  "ushort" (16\ bit unsigned integer)
+                                  `OSP_USHORT`
 
-                                  "float" (32\ bit single precision
-                                  floating point)
+                                  `OSP_FLOAT`
 
-                                  "double" (64\ bit double precision
-                                  floating point)
+                                  `OSP_DOUBLE`
 
   vec3f  gridOrigin  $(0, 0, 0)$  origin of the grid in world-space
 

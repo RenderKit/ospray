@@ -80,7 +80,7 @@ namespace ospray {
       ospSetObject(volume, "voxelData", voxelData);
       ospRelease(voxelData);
 
-      ospSetString(volume, "voxelType", "float");
+      ospSetInt(volume, "voxelType", OSP_FLOAT);
       ospSetVec3i(volume, "dimensions", dims.x, dims.y, dims.z);
 
       const auto range  = voxelRange.toVec2();

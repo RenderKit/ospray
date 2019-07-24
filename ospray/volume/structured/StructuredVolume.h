@@ -77,9 +77,6 @@ namespace ospray {
     //! building..
     virtual void buildAccelerator();
 
-    //! Get the OSPDataType enum corresponding to the voxel type string.
-    OSPDataType getVoxelType();
-
     //! Volume size in voxels per dimension.
     vec3i dimensions;
 
@@ -93,10 +90,9 @@ namespace ospray {
     bool finished{false};
 
     //! Voxel value range (will be computed if not provided as a parameter).
-    vec2f voxelRange{FLT_MAX, -FLT_MAX};
+    vec2f voxelRange;
 
-    //! Voxel type.
-    std::string voxelType;
+    OSPDataType voxelType;
 
     /*! Scale factor for the volume, mostly for internal use or data scaling
         benchmarking. Note that this must be set **before** calling
