@@ -41,7 +41,7 @@ namespace ospray {
     apertureRadius = getParam1f("apertureRadius", 0.f);
     focusDistance = getParam1f("focusDistance", 1.f);
     architectural = getParam1b("architectural", false);
-    stereoMode = (OSPStereoMode)getParam1b("stereoMode", OSP_STEREO_NONE);
+    stereoMode = (OSPStereoMode)getParam<int>("stereoMode", OSP_STEREO_NONE);
     // the default 63.5mm represents the average human IPD
     interpupillaryDistance = getParam1f("interpupillaryDistance", 0.0635f);
 
@@ -71,8 +71,7 @@ namespace ospray {
       case OSP_STEREO_NONE:
         break;
       case OSP_STEREO_UNKNOWN:
-        std::cerr << "OSPRay error: Unknown stereo mode selected" << std::endl;
-        break;
+        throw std::runtime_error("Unknown stereo mode provided");
     }
 
     imgPlaneSize.y = 2.f * tanf(deg2rad(0.5f * fovy));
