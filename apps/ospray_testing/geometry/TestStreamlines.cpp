@@ -48,34 +48,42 @@ namespace ospray {
       std::default_random_engine rng(rd());
       std::uniform_real_distribution<float> radDist(0.5f, 1.5f);
       std::uniform_real_distribution<float> stepDist(0.0001f, 0.01f);
-      std::uniform_int_distribution<int> dDist(0, 360);
+      std::uniform_int_distribution<int> sDist(0, 360);
+      std::uniform_int_distribution<int> dDist(360, 720);
       std::uniform_real_distribution<float> freqDist(0.5f, 1.5f);
-      std::uniform_real_distribution<float> colorDist(0.1f, 1.f);
 
       int offset = 0;
 
       // create multiple lines
-      int numLines = 50;
+      int numLines = 100;
       for (int l = 0; l < numLines; l++) {
-        int dStart   = dDist(rng);
+        int dStart   = sDist(rng);
+        int dEnd     = dDist(rng);
         float radius = radDist(rng);
-        float h = 0, hStep = stepDist(rng);
-        float f = freqDist(rng);
+        float h      = 0;
+        float hStep  = stepDist(rng);
+        float f      = freqDist(rng);
 
-        vec4f c(colorDist(rng), colorDist(rng), colorDist(rng), 1.f);
+        float r = (720 - dEnd) / 360.f;
+        vec4f c(r, 1 - r, 1 - r / 2, 1.f);
 
-        for (int d = dStart; d < dStart + 360; d++, h += hStep) {
+        // spiral up with changing radius of curvature
+        for (int d = dStart; d < dStart + dEnd; d++, h += hStep) {
           vec4f p;
           p.x = radius * std::sin(d * M_PI / 180.f);
-          p.y = h;
+          p.y = h - 2;
           p.z = radius * std::cos(d * M_PI / 180.f);
           p.w = 0.01f * std::sin(f * (d * M_PI / 180.f)) + 0.01f;
+
           points.push_back(p);
           colors.push_back(c);
-          if (d < 359)
+
+          radius -= 0.005f;
+
+          if (d < dEnd - 1)
             indices.push_back(offset + d);
         }
-        offset += 360;
+        offset += dEnd;
       }
 
       OSPData pointsData  = ospNewData(points.size(), OSP_VEC4F, points.data());
