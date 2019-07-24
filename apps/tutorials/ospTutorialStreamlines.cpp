@@ -40,7 +40,6 @@ int main(int argc, const char **argv)
   OSPTestingGeometry streamlines =
       ospTestingNewGeometry("streamlines", renderer_type.c_str());
   instanceHandles.push_back(streamlines.instance);
-  ospRelease(streamlines.geometry);
   ospRelease(streamlines.model);
 
   OSPData geomInstances =
@@ -59,11 +58,30 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
+  // enable/disable smoothing on streamlines
+  bool smooth = true;
+
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
           vec2i{1024, 768}, box3f(vec3f(-2.f), vec3f(2.f)), world, renderer));
+
+  // ImGui
+
+  glfwOSPRayWindow->registerImGuiCallback([&]() {
+    bool update = false;
+
+    if (ImGui::Checkbox("smooth", &smooth))
+      update = true;
+
+    if (update) {
+      ospSetBool(streamlines.geometry, "smooth", smooth);
+      glfwOSPRayWindow->addObjectToCommit(streamlines.geometry);
+      glfwOSPRayWindow->addObjectToCommit(streamlines.model);
+      glfwOSPRayWindow->addObjectToCommit(world);
+    }
+  });
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
