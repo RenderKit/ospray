@@ -48,7 +48,7 @@ void initializeOSPRay(int argc, const char **argv, bool errorsFatal)
   }
 }
 
-OSPInstance createGroundPlane(std::string renderer_type)
+OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
 {
   OSPGeometry planeGeometry = ospNewGeometry("quads");
 
@@ -72,9 +72,6 @@ OSPInstance createGroundPlane(std::string renderer_type)
 
   // ground plane
   int startingIndex = vertices.size();
-
-  // extent of plane in the (x, z) directions
-  const float planeExtent = 1.5f;
 
   const vec3f up   = vec3f{0.f, 1.f, 0.f};
   const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
