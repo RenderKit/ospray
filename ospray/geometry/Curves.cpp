@@ -96,16 +96,7 @@ namespace ospray {
 
   size_t Curves::numPrimitives() const
   {
-    const bool haveIndices = indexData;
-
-    if (!haveIndices)
-      return 0;
-
-    uint32_t numVerts = 4;
-    if (curveBasis == OSP_LINEAR || curveBasis == OSP_HERMITE)
-      numVerts = 2;
-
-    return indexData->numItems / numVerts;
+    return indexData->numItems;
   }
 
   LiveGeometry Curves::createEmbreeGeometry()
