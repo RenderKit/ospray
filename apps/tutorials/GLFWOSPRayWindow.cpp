@@ -182,7 +182,7 @@ void GLFWOSPRayWindow::setWorld(OSPWorld newWorld)
 void GLFWOSPRayWindow::setImageOps(OSPData ops)
 {
   imageOps = ops;
-  ospSetData(framebuffer, "imageOps", imageOps);
+  ospSetData(framebuffer, "imageOperation", imageOps);
   addObjectToCommit(framebuffer);
 }
 
@@ -242,7 +242,7 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
                                   fbChannels);
 
   if (imageOps) {
-    ospSetData(framebuffer, "imageOps", imageOps);
+    ospSetData(framebuffer, "imageOperation", imageOps);
   }
 
   ospCommit(framebuffer);

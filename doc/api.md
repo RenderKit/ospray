@@ -2157,11 +2157,10 @@ The framebuffer takes a list of pixel operations to be applied to the image
 in sequence as an `OSPData`. The pixel operations will be run in the order
 they are in the array.
 
-  Type          Name           Default  Description
-  ------------  -------------- -------- -----------------------------------
-  OSPPixelOp[]  pixelOperation  NULL     The ordered sequence of pixel
-                                         operations to apply to rendered tiles.
-  ------------  -------------- -------- -----------------------------------
+  Type          Name            Description
+  ------------- --------------- ---------------------------------------
+  OSPImageOp[]  imageOperation  ordered sequence of image operations
+  ------------- --------------- ---------------------------------------
   : Parameters accepted by the framebuffer.
 
 
