@@ -50,10 +50,10 @@ struct box3i {
 
 //! a 3-d float bounding box with aligned vec3f coordinates
 struct box3fa {
-  vec3fa lower;
-  // int32 align0;
-  vec3fa upper;
-  // int32 align1;
+  vec3f lower;
+  int32 align0;
+  vec3f upper;
+  int32 align1;
 };
 
 //! a 4-d float bounding box
@@ -172,12 +172,11 @@ MAKE_BOX_CONSTRUCTORS_uv_2T_empty(f)
 
 #define MAKE_BOX_CONSTRUCTORS_uv_3T_empty(Tabb)                                \
   inline uniform box3##Tabb make_box3##Tabb##_empty() {                        \
-    return make_box3##Tabb(make_vec3##Tabb(inf), make_vec3##Tabb(neg_inf));    \
+    return make_box3##Tabb(make_vec3f(inf), make_vec3f(neg_inf));                \
   }
 
 #define MAKE_BOX_CONSTRUCTORS_uv_3T(univary,Tabb)                              \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,f)                         \
-  MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,fa)                        \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,i)                         \
                                                                                \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,f)                         \
@@ -229,6 +228,18 @@ MAKE_BOX_CONSTRUCTORS_uv_3T_empty(fa)
                           max(bb.upper,other.upper));                          \
   }
 
+#define BOX_OPERATIONS_uv_3fa(univary)                                         \
+  inline univary box3fa                                                        \
+  box_extend(const univary box3fa bb, const univary vec3f v) {                 \
+    return make_box3fa(min(bb.lower,v), max(bb.upper,v));                      \
+  }                                                                            \
+                                                                               \
+  inline univary box3fa                                                        \
+  box_extend(const univary box3fa bb, const univary box3fa other) {            \
+    return make_box3fa(min(bb.lower,other.lower),                              \
+                          max(bb.upper,other.upper));                          \
+  }
+
 #define BOX_OPERATIONS_uv_N(univary, N)                                        \
   BOX_OPERATIONS_uv_N_T(univary, N, i)                                         \
   BOX_OPERATIONS_uv_N_T(univary, N, f)
@@ -236,7 +247,7 @@ MAKE_BOX_CONSTRUCTORS_uv_3T_empty(fa)
 #define BOX_OPERATIONS_uv(univary)                                             \
   BOX_OPERATIONS_uv_N(univary, 2)                                              \
   BOX_OPERATIONS_uv_N(univary, 3)                                              \
-  BOX_OPERATIONS_uv_N_T(univary, 3, fa)
+  BOX_OPERATIONS_uv_3fa(univary)
 
 BOX_OPERATIONS_uv(uniform)
 BOX_OPERATIONS_uv(varying)

@@ -23,8 +23,8 @@ namespace ospcommon {
 
   // box declaration //////////////////////////////////////////////////////////
 
-  template <typename T, int N, bool ALIGN = false>
-  using box_t = range_t<vec_t<T, N, ALIGN>>;
+  template <typename T, int N>
+  using box_t = range_t<vec_t<T, N>>;
 
   // box free functions ///////////////////////////////////////////////////////
 
@@ -34,16 +34,16 @@ namespace ospcommon {
     return b.size().product();
   }
 
-  template <typename scalar_t, bool A>
-  inline scalar_t area(const box_t<scalar_t, 3, A> &b)
+  template <typename scalar_t>
+  inline scalar_t area(const box_t<scalar_t, 3> &b)
   {
     const auto size = b.size();
     return 2.f * (size.x * size.y + size.x * size.z + size.y * size.z);
   }
 
   /*! return the volume of the 3D box - undefined for empty boxes */
-  template <typename scalar_t, bool A>
-  inline scalar_t volume(const box_t<scalar_t, 3, A> &b)
+  template <typename scalar_t>
+  inline scalar_t volume(const box_t<scalar_t, 3> &b)
   {
     return b.size().product();
   }
@@ -52,9 +52,9 @@ namespace ospcommon {
       ie, the case where boxes just barely touch side-by side (even if
       they do not have any actual overlapping _volume_!) then this is
       still true */
-  template <typename scalar_t, bool A>
-  inline bool touchingOrOverlapping(const box_t<scalar_t, 3, A> &a,
-                                    const box_t<scalar_t, 3, A> &b)
+  template <typename scalar_t>
+  inline bool touchingOrOverlapping(const box_t<scalar_t, 3> &a,
+                                    const box_t<scalar_t, 3> &b)
   {
     if (a.lower.x > b.upper.x)
       return false;
@@ -73,9 +73,9 @@ namespace ospcommon {
     return true;
   }
 
-  template <typename scalar_t, bool A>
-  inline bool touchingOrOverlapping(const box_t<scalar_t, 2, A> &a,
-                                    const box_t<scalar_t, 2, A> &b)
+  template <typename scalar_t>
+  inline bool touchingOrOverlapping(const box_t<scalar_t, 2> &a,
+                                    const box_t<scalar_t, 2> &b)
   {
     if (a.lower.x > b.upper.x)
       return false;
@@ -91,11 +91,11 @@ namespace ospcommon {
   }
 
   /*! compute the intersection of two boxes */
-  template <typename T, int N, bool A>
-  inline box_t<T, N, A> intersectionOf(const box_t<T, N, A> &a,
-                                       const box_t<T, N, A> &b)
+  template <typename T, int N>
+  inline box_t<T, N> intersectionOf(const box_t<T, N> &a,
+                                       const box_t<T, N> &b)
   {
-    return box_t<T, N, A>(max(a.lower, b.lower), min(a.upper, b.upper));
+    return box_t<T, N>(max(a.lower, b.lower), min(a.upper, b.upper));
   }
 
   template <typename T, int N>
@@ -105,8 +105,8 @@ namespace ospcommon {
   }
 
   /*! returns the center of the box (not valid for empty boxes) */
-  template <typename T, int N, bool A>
-  inline vec_t<T, N, A> center(const box_t<T, N, A> &b)
+  template <typename T, int N>
+  inline vec_t<T, N> center(const box_t<T, N> &b)
   {
     return b.center();
   }
@@ -114,14 +114,14 @@ namespace ospcommon {
   // -------------------------------------------------------
   // comparison operator
   // -------------------------------------------------------
-  template <typename T, int N, bool A>
-  inline bool operator==(const box_t<T, N, A> &a, const box_t<T, N, A> &b)
+  template <typename T, int N>
+  inline bool operator==(const box_t<T, N> &a, const box_t<T, N> &b)
   {
     return a.lower == b.lower && a.upper == b.upper;
   }
 
-  template <typename T, int N, bool A>
-  inline bool operator!=(const box_t<T, N, A> &a, const box_t<T, N, A> &b)
+  template <typename T, int N>
+  inline bool operator!=(const box_t<T, N> &a, const box_t<T, N> &b)
   {
     return !(a == b);
   }
@@ -129,8 +129,8 @@ namespace ospcommon {
   // -------------------------------------------------------
   // output operator
   // -------------------------------------------------------
-  template <typename T, int N, bool A>
-  inline std::ostream &operator<<(std::ostream &o, const box_t<T, N, A> &b)
+  template <typename T, int N>
+  inline std::ostream &operator<<(std::ostream &o, const box_t<T, N> &b)
   {
     o << "[" << b.lower << ":" << b.upper << "]";
     return o;
@@ -144,7 +144,6 @@ namespace ospcommon {
   using box2f  = box_t<float, 2>;
   using box3f  = box_t<float, 3>;
   using box4f  = box_t<float, 4>;
-  using box3fa = box_t<float, 3, 1>;
 
   // this is just a renaming - in some cases the code reads cleaner if
   // we're talking about 'regions' than about boxes

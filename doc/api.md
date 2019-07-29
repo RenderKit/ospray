@@ -155,20 +155,26 @@ environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
+  --------------------- --------------------------------------------------------
   Variable              Description
-  --------------------- ---------------------------------
+  --------------------- --------------------------------------------------------
   OSPRAY_THREADS        equivalent to `--osp:numthreads`
+
   OSPRAY_LOG_LEVEL      equivalent to `--osp:loglevel`
+
   OSPRAY_LOG_OUTPUT     equivalent to `--osp:logoutput`
+
   OSPRAY_ERROR_OUTPUT   equivalent to `--osp:erroroutput`
+
   OSPRAY_DEBUG          equivalent to `--osp:debug`
+
   OSPRAY_SET_AFFINITY   equivalent to `--osp:setaffinity`
-  OSPRAY_LOAD_MODULES   equivalent to `--osp:module:`,
-                        can be a comma separated list
-                        of modules which will be loaded
-                        in order
+
+  OSPRAY_LOAD_MODULES   equivalent to `--osp:module:`, can be a comma separated
+                        list of modules which will be loaded in order
+
   OSPRAY_DEFAULT_DEVICE equivalent to `--osp:device:`
-  --------------------- ---------------------------------
+  --------------------- --------------------------------------------------------
   : Environment variables interpreted by OSPRay.
 
 ### Error Handling and Status Messages
@@ -486,7 +492,7 @@ in which they reside, their cell width, and the scalar data contained
 within them.
 
   -------------- --------------- -----------------  -----------------------------------
-  Type           Name            Default            Description
+  Type           Name                      Default  Description
   -------------- --------------- -----------------  -----------------------------------
   range2f        voxelRange              $(∞, -∞)$  minimum and maximum of the scalar
                                                     values
@@ -685,15 +691,11 @@ triangle mesh recognizes the following parameters:
 
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
-  vec3f(a)[]         vertex.position  [data] array of vertex positions
-
-  vec3f(a)[]         vertex.normal    [data] array of vertex normals
-
-  vec4f[] / vec3fa[] vertex.color     [data] array of vertex colors (RGBA/RGB)
-
+  vec3f[]            vertex.position  [data] array of vertex positions
+  vec3f[]            vertex.normal    [data] array of vertex normals
+  vec4f[] / vec3f[]  vertex.color     [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
-
-  vec3i(a)[]         index            [data] array of triangle indices (into the vertex array(s))
+  vec3i[]            index            [data] array of triangle indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a triangle mesh geometry.
 
@@ -708,14 +710,10 @@ following parameters:
 
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
-  vec3f(a)[]         vertex.position  [data] array of vertex positions
-
-  vec3f(a)[]         vertex.normal    [data] array of vertex normals
-
-  vec4f[] / vec3fa[] vertex.color     [data] array of vertex colors (RGBA/RGB)
-
+  vec3f[]            vertex.position  [data] array of vertex positions
+  vec3f[]            vertex.normal    [data] array of vertex normals
+  vec4f[] / vec3f[]  vertex.color     [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
-
   vec4i[]            index            [data] array of quad indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a quad mesh geometry.
@@ -731,32 +729,33 @@ A mesh consisting of subdivision surfaces, created by specifying a
 geometry of type "`subdivision`". Once created, a subdivision recognizes
 the following parameters:
 
-  Type               Name                Default Description
-  ------------------ ------------------- ------- -------------------------------------------------
-  vec3f[]            vertex.position        NULL [data] array of vertex positions
+  --------------- -------------------- ------- -------------------------------------------------
+  Type            Name                 Default Description
+  --------------- -------------------- ------- -------------------------------------------------
+  vec3f[]         vertex.position         NULL [data] array of vertex positions
 
-  vec4f[]            vertex.color           NULL [data] array of vertex colors (RGBA)
+  vec4f[]         vertex.color            NULL [data] array of vertex colors (RGBA)
 
-  vec2f[]            vertex.texcoord        NULL [data] array of vertex texture coordinates
+  vec2f[]         vertex.texcoord         NULL [data] array of vertex texture coordinates
 
-  float              level                     5 global level of tessellation, default is 5
+  float           level                      5 global level of tessellation, default is 5
 
-  uint[]/vec4i[]     index                  NULL [data] array of indices (into the vertex array(s))
+  uint[]/vec4i[]  index                   NULL [data] array of indices (into the vertex array(s))
 
-  float[]            index.level            NULL [data] array of per-edge levels of tessellation,
-                                                 overrides global level
+  float[]         index.level             NULL [data] array of per-edge levels of tessellation,
+                                               overrides global level
 
-  uint[]             face                   NULL [data] array holding the number of indices/edges
-                                                 (3 to 15) per face
+  uint[]          face                    NULL [data] array holding the number of indices/edges
+                                               (3 to 15) per face
 
-  vec2i[]            edgeCrease.index       NULL [data] array of edge crease indices
+  vec2i[]         edgeCrease.index        NULL [data] array of edge crease indices
 
-  float[]            edgeCrease.weight      NULL [data] array of edge crease weights
+  float[]         edgeCrease.weight       NULL [data] array of edge crease weights
 
-  uint[]             vertexCrease.index     NULL [data] array of vertex crease indices
+  uint[]          vertexCrease.index      NULL [data] array of vertex crease indices
 
-  float[]            vertexCrease.weight    NULL [data] array of vertex crease weights
-  ------------------ ------------------- ------- -------------------------------------------------
+  float[]         vertexCrease.weight     NULL [data] array of vertex crease weights
+  --------------- -------------------- ------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid
@@ -869,7 +868,7 @@ table below.
   int32[]            index           [data] array of indices to the first vertex
                                      of a link
 
-  vec3fa[] / vec4f[] vertex.position [data] array of all vertex position (and
+  vec3f[] / vec4f[]  vertex.position [data] array of all vertex position (and
                                      optional radius) for *all* streamlines
 
   vec4f[]            vertex.color    [data] array of corresponding vertex
@@ -1001,7 +1000,7 @@ material information. To create a geometry instance, call
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
   ------------------ ----------------- --------- --------------------------------------
-  Type               Name              Default   Description
+  Type               Name                Default Description
   ------------------ ----------------- --------- --------------------------------------
   vec4f[]            prim.color             NULL [data] array of per-primitive colors
 
@@ -1026,7 +1025,7 @@ a group call
     OSPGroup ospNewGroup();
 
   ------------------ --------------- ---------- --------------------------------------
-  Type               Name            Default    Description
+  Type               Name               Default Description
   ------------------ --------------- ---------- --------------------------------------
   OSPData            geometry              NULL data array of OSPGeometricModel
                                                 geometry objects in the scene
@@ -1046,7 +1045,7 @@ a transform. To create and instance call
     OSPInstance ospNewInstance(OSPGroup);
 
   ------------------ --------------- ---------- --------------------------------------
-  Type               Name            Default    Description
+  Type               Name               Default Description
   ------------------ --------------- ---------- --------------------------------------
   affine3f           xfm             (identity) world-space transform for all attached
                                                 geometries and volumes
@@ -1111,27 +1110,27 @@ The call returns `NULL` if that type of renderer is not known, or else
 an `OSPRenderer` handle to the created renderer. General parameters of
 all renderers are
 
-  -----------   ------------------ ----------  ----------------------------------------
-  Type          Name                Default    Description
-  -----------   ------------------ ----------  ----------------------------------------
-  OSPLight[]    lights                         [data] array with handles of the [lights]
+  -------------- ------------------ -----------  -----------------------------------------
+  Type          Name                    Default  Description
+  -------------- ------------------ -----------  -----------------------------------------
+  OSPLight[]     lights                          [data] array with handles of the [lights]
 
-  int           spp                         1  samples per pixel
+  int            spp                          1  samples per pixel
 
-  int           maxDepth                   20  maximum ray recursion depth
+  int            maxDepth                    20  maximum ray recursion depth
 
-  float         minContribution         0.001  sample contributions below this value
-                                               will be neglected to speedup rendering
+  float          minContribution          0.001  sample contributions below this value
+                                                 will be neglected to speedup rendering
 
-  float         varianceThreshold           0  threshold for adaptive accumulation
+  float          varianceThreshold            0  threshold for adaptive accumulation
 
-  float /       bgColor                black,  background color and alpha
-  vec3f / vec4f                   transparent  (RGBA)
+  float /        bgColor                 black,  background color and alpha
+  vec3f / vec4f                     transparent  (RGBA)
 
-  OSPTexture    maxDepthTexture          NULL  screen-sized float [texture]
-                                               with maximum far distance per pixel
-                                               (use texture type 'texture2d')
-  ----------- ------------------ --------  ----------------------------------------
+  OSPTexture     maxDepthTexture           NULL  screen-sized float [texture]
+                                                 with maximum far distance per pixel
+                                                 (use texture type 'texture2d')
+  -------------- ------------------ -----------  -----------------------------------------
   : Parameters understood by all renderers.
 
 OSPRay's renderers support a feature called adaptive accumulation, which
@@ -1207,6 +1206,7 @@ supports the following special parameters:
   OSPTexture backplate            NULL  [texture] image used as background,
                                         replacing visible lights in infinity
                                         (e.g., the [HDRI light])
+
   vec4f      shadowCatcherPlane      0  optional invisible plane that captures
                                         shadows for compositing
   ---------- ---------------- --------  -------------------------------------
@@ -1227,10 +1227,8 @@ All light sources[^1] accept the following parameters:
 
   Type      Name        Default  Description
   --------- ---------- --------  ---------------------------------------
-  vec3f(a)  color         white  color of the light
-
+  vec3f     color         white  color of the light
   float     intensity         1  intensity of the light (a factor)
-
   bool      visible        true  whether the light can be directly seen
   --------- ---------- --------  ---------------------------------------
   : Parameters accepted by all lights.
@@ -1251,8 +1249,7 @@ parameters:
 
   Type      Name             Description
   --------- ---------------- ---------------------------------------------
-  vec3f(a)  direction        main emission direction of the distant light
-
+  vec3f     direction        main emission direction of the distant light
   float     angularDiameter  apparent size (angle in degree) of the light
   --------- ---------------- ---------------------------------------------
   : Special parameters accepted by the distant light.
@@ -1271,8 +1268,7 @@ the following special parameters:
 
   Type      Name      Description
   --------- --------- -----------------------------------------------
-  vec3f(a)  position  the center of the sphere light, in world-space
-
+  vec3f     position  the center of the sphere light, in world-space
   float     radius    the size of the sphere light
   --------- --------- -----------------------------------------------
   : Special parameters accepted by the sphere light.
@@ -1288,24 +1284,24 @@ created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spotlight supports the special parameters listed in the table.
 
-  -------- ------------- ----------- ----------------------------------------------
-  Type     Name          Default     Description
-  -------- ------------- ----------- ----------------------------------------------
-  vec3f(a) position      $(0, 0, 0)$ the center of the spotlight, in world-space
+  ------ ------------- ----------- ----------------------------------------------
+  Type   Name          Default     Description
+  ------ ------------- ----------- ----------------------------------------------
+  vec3f  position      $(0, 0, 0)$ the center of the spotlight, in world-space
 
-  vec3f(a) direction     $(0, 0, 1)$ main emission direction of the spot
+  vec3f  direction     $(0, 0, 1)$ main emission direction of the spot
 
-  float    openingAngle          180 full opening angle (in degree) of the spot;
-                                     outside of this cone is no illumination
+  float  openingAngle          180 full opening angle (in degree) of the spot;
+                                   outside of this cone is no illumination
 
-  float    penumbraAngle           5 size (angle in degree) of the "penumbra", the
-                                     region between the rim (of the illumination
-                                     cone) and full intensity of the spot; should
-                                     be smaller than half of `openingAngle`
+  float  penumbraAngle           5 size (angle in degree) of the "penumbra", the
+                                   region between the rim (of the illumination
+                                   cone) and full intensity of the spot; should
+                                   be smaller than half of `openingAngle`
 
-  float    radius                  0 the size of the spotlight, the radius of a
-                                     disk with normal `direction`
-  -------- ------------- ----------- ----------------------------------------------
+  float  radius                  0 the size of the spotlight, the radius of a
+                                   disk with normal `direction`
+  ------ ------------- ----------- ----------------------------------------------
   : Special parameters accepted by the spotlight.
 
 ![Angles used by the spotlight.][imgSpotLight]
@@ -1322,14 +1318,12 @@ type string "`quad`" to `ospNewLight`. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
-  Type      Name      Description
-  --------- --------- -----------------------------------------------------
-  vec3f(a)  position  world-space position of one vertex of the quad light
-
-  vec3f(a)  edge1     vector to one adjacent vertex
-
-  vec3f(a)  edge2     vector to the other adjacent vertex
-  --------- --------- -----------------------------------------------------
+  Type   Name      Description
+  ------ --------- -----------------------------------------------------
+  vec3f  position  world-space position of one vertex of the quad light
+  vec3f  edge1     vector to one adjacent vertex
+  vec3f  edge2     vector to the other adjacent vertex
+  ------ --------- -----------------------------------------------------
   : Special parameters accepted by the quad light.
 
 ![Defining a quad light which emits toward the reader.][imgQuadLight]
@@ -1351,9 +1345,9 @@ parameters:
   ------------ --------- --------------------------------------------------
   Type         Name      Description
   ------------ --------- --------------------------------------------------
-  vec3f(a)     up        up direction of the light in world-space
+  vec3f        up        up direction of the light in world-space
 
-  vec3f(a)     direction direction to which the center of the texture will
+  vec3f        direction direction to which the center of the texture will
                          be mapped to (analog to [panoramic camera])
 
   OSPTexture   map       environment map in latitude / longitude format
@@ -1725,14 +1719,9 @@ thickness. To create a such a thin glass material pass the type string
   Type      Name                  Default  Description
   --------- -------------------- --------  -----------------------------------
   float     eta                       1.5  index of refraction
-
   vec3f     attenuationColor        white  resulting color due to attenuation
-
   float     attenuationDistance         1  distance affecting attenuation
-
   float     thickness                   1  virtual thickness
-
-  Texture2D map_attenuationColor undefined optional texture to modulate attenuation
   --------- -------------------- --------  -----------------------------------
   : Parameters of the ThinGlass material.
 
@@ -1760,18 +1749,12 @@ coat with optional flakes and a clear coat. To create a MetallicPaint
 material pass the type string "`MetallicPaint`" to `ospNewMaterial`. Its
 parameters are listed in the table below.
 
-  Type   Name            Default  Description
+  Type      Name            Default  Description
   --------- ------------ ----------  ----------------------------------
   vec3f     baseColor     white 0.8  color of base coat
-
-  Texture2D map_baseColor undefined optional texture map for base coat
-
   float     flakeAmount         0.3  amount of flakes, in [0–1]
-
   vec3f     flakeColor    Aluminium  color of metallic flakes
-
   float     flakeSpread         0.5  spread of flakes, in [0–1]
-
   float     eta                 1.5  index of refraction of clear coat
   --------- ------------ ----------  ----------------------------------
   : Parameters of the MetallicPaint material.
@@ -1798,15 +1781,13 @@ string "`Luminous`" to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
 
-  Type      Name         Default    Description
-  --------- ------------ --------  ---------------------------------------
-  vec3f(a)  color           white  color of the emitted light
-
-  float     intensity           1  intensity of the light (a factor)
-
-  float     transparency        1  material transparency
-  --------- ------------ --------  ---------------------------------------
-  : Parameters accepted by the Luminous material
+  Type   Name          Default  Description
+  ------ ------------ --------  ---------------------------------------
+  vec3f  color           white  color of the emitted light
+  float  intensity           1  intensity of the light (a factor)
+  float  transparency        1  material transparency
+  ------ ------------ --------  ---------------------------------------
+  : Parameters accepted by the Luminous material.
 
 ![Rendering of a yellow Luminous material.][imgMaterialLuminous]
 
@@ -1913,15 +1894,15 @@ The call returns `NULL` if that type of camera is not known, or else an
 `OSPCamera` handle to the created camera. All cameras accept these
 parameters:
 
-  Type      Name        Description
-  --------- ----------- ------------------------------------------
-  vec3f(a)  position    position of the camera in world-space
-  vec3f(a)  direction   main viewing direction of the camera
-  vec3f(a)  up          up direction of the camera
-  float     nearClip    near clipping distance
-  vec2f     imageStart  start of image region (lower left corner)
-  vec2f     imageEnd    end of image region (upper right corner)
-  --------- ----------- ------------------------------------------
+  Type   Name        Description
+  ------ ----------- ------------------------------------------
+  vec3f  position    position of the camera in world-space
+  vec3f  direction   main viewing direction of the camera
+  vec3f  up          up direction of the camera
+  float  nearClip    near clipping distance
+  vec2f  imageStart  start of image region (lower left corner)
+  vec2f  imageEnd    end of image region (upper right corner)
+  ------ ----------- ------------------------------------------
   : Parameters accepted by all cameras.
 
 The camera is placed and oriented in the world with `position`, `direction`
@@ -2267,14 +2248,19 @@ only synchronize with a specific event. To synchronize with an `OSPFuture` use
 
 The following are values which can be synchronized with the application
 
+  -------------------- --------------------------------------------------------
   Name                 Description
   -------------------- --------------------------------------------------------
   OSP_NONE_FINISHED    Don't wait for anything to be finished (immediately
                        return from `ospWait`)
+
   OSP_WORLD_COMMITTED  Wait for the world to be committed (not yet implemented)
+
   OSP_WORLD_RENDERED   Wait for the world to be rendered, but not
                        post-processing operations (Pixel/Tile/Frame Op)
+
   OSP_FRAME_FINISHED   Wait for all rendering operations to complete
+
   OSP_TASK_FINISHED    Wait on full completion of the task associated with
                        the future. The underlying task may involve one or
                        more of the above synchronization events

@@ -71,9 +71,9 @@ namespace ospcommon {
                          const int sizeX, const int sizeY,
                          const T *p)
     {
-      static_assert(std::is_same<T,vec4f>::value||std::is_same<T,vec3fa>::value
-          ||std::is_same<T,vec3f>::value,
-          "writePFM needs pixels as vec3f(a)* or vec4f*");
+      static_assert(
+          std::is_same<T, vec3f>::value || std::is_same<T, vec4f>::value,
+          "writePFM needs pixels as vec3f* or vec4f*");
       writeImage<float, 3, T, std::is_same<T,vec3f>::value? 3:4, false>(fName,
           "PF\n%i %i\n-1.0\n", sizeX, sizeY, p);
     }

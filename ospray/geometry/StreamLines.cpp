@@ -48,7 +48,7 @@ namespace ospray {
     index       = (uint32 *)indexData->data;
     numSegments = indexData->numItems;
 
-    vertexData = getParamData("vertex.position", nullptr);
+    vertexData = getParamData("vertex.position");
 
     if (!vertexData)
       throw std::runtime_error("streamlines must have 'vertex.position' array");
@@ -56,10 +56,11 @@ namespace ospray {
       throw std::runtime_error(
           "streamlines 'vertex.position' must be type OSP_VEC3F or OSP_VEC4F");
 
-    vertex = (vec3fa *)vertexData->data;
+    utility::DataView<const vec3f> vertex(vertexData->data, sizeof(vec3f));
 
     if (vertexData->type == OSP_VEC4F) {
-      radius.reset((const float *)vertex + 3, sizeof(vec4f));
+      radius.reset((const float *)vertexData->data + 3, sizeof(vec4f));
+      vertex.reset(vertexData->data, sizeof(vec4f));
       useCurve = true;
     }
 
@@ -169,7 +170,7 @@ namespace ospray {
           retval.ispcEquivalent,
           retval.embreeGeometry,
           globalRadius,
-          (const ispc::vec3fa *)vertex,
+          (const ispc::vec3f *)vertexData->data,
           numVertices,
           index,
           numSegments,

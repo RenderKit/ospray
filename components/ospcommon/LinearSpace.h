@@ -310,7 +310,6 @@ namespace ospcommon {
   /*! Shortcuts for common linear spaces. */
   using LinearSpace2f  = LinearSpace2<vec2f> ;
   using LinearSpace3f  = LinearSpace3<vec3f> ;
-  using LinearSpace3fa = LinearSpace3<vec3fa>;
 
   using linear2f = LinearSpace2f;
   using linear3f = LinearSpace3f;

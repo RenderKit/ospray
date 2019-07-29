@@ -41,7 +41,6 @@ namespace ospray {
 
     bool useCurve{false};
     float globalRadius{0.01f};
-    const vec3fa *vertex{nullptr};
     size_t numVertices{0};
     const uint32 *index{nullptr};
     size_t numSegments{0};

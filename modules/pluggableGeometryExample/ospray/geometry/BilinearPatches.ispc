@@ -88,10 +88,10 @@ unmasked void BilinearPatches_bounds(
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
   *out = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),
-                                                     make_vec3fa(patch->v00)),
-                                          make_vec3fa(patch->v01)),
-                               make_vec3fa(patch->v10)),
-                    make_vec3fa(patch->v11));
+                                                     make_vec3f(patch->v00)),
+                                          make_vec3f(patch->v01)),
+                               make_vec3f(patch->v10)),
+                    make_vec3f(patch->v11));
 }
 
 bool recursiveBisection(varying Ray &ray,

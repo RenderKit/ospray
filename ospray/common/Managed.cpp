@@ -57,7 +57,6 @@ namespace ospray {
   define_getparam(int32,  1i)
   define_getparam(vec3i,  3i)
   define_getparam(vec3f,  3f)
-  define_getparam(vec3fa, 3f)
   define_getparam(vec4f,  4f)
   define_getparam(vec2f,  2f)
   define_getparam(float,  1f)
