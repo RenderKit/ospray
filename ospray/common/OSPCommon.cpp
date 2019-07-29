@@ -173,7 +173,6 @@ namespace ospray {
     case OSP_VEC2F:     return sizeof(vec2f);
     case OSP_VEC3F:     return sizeof(vec3f);
     case OSP_VEC4F:     return sizeof(vec4f);
-    case OSP_VEC3FA:    return sizeof(vec3fa);
     case OSP_DOUBLE:    return sizeof(double);
     case OSP_BOX1I:     return sizeof(box1i);
     case OSP_BOX2I:     return sizeof(box2i);
@@ -271,7 +270,6 @@ namespace ospray {
     case OSP_VEC2F:             return "vec2f";
     case OSP_VEC3F:             return "vec3f";
     case OSP_VEC4F:             return "vec4f";
-    case OSP_VEC3FA:            return "vec3fa";
     case OSP_DOUBLE:            return "double";
     case OSP_BOX1I:             return "box1i";
     case OSP_BOX2I:             return "box2i";

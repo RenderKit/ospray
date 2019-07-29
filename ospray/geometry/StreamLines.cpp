@@ -52,9 +52,9 @@ namespace ospray {
 
     if (!vertexData)
       throw std::runtime_error("streamlines must have 'vertex.position' array");
-    if (vertexData->type != OSP_VEC4F && vertexData->type != OSP_VEC3FA)
+    if (vertexData->type != OSP_VEC4F && vertexData->type != OSP_VEC3F)
       throw std::runtime_error(
-          "streamlines 'vertex.position' must be type OSP_VEC4F or OSP_VEC3FA");
+          "streamlines 'vertex.position' must be type OSP_VEC3F or OSP_VEC4F");
 
     vertex = (vec3fa *)vertexData->data;
 

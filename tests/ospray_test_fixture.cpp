@@ -980,18 +980,18 @@ namespace OSPRayTestScenes {
     ospSetVec3fv(camera, "up", cam_up);
 
     float vertex[] = {
-        -2.f, 2.f,  -2.f, 0.f,  2.f,  2.f,  -2.f, 0.f,  2.f,  -2.f, -2.f,
-        0.f,  -2.f, -2.f, -2.f, 0.f,  -1.f, -1.f, -1.f, 0.f,  1.f,  -1.f,
-        -1.f, 0.f,  1.f,  1.f,  -1.f, 0.f,  -1.f, 1.f,  -1.f, 0.f,  -1.f,
-        1.f,  1.f,  0.f,  1.f,  1.f,  1.f,  0.f,  1.f,  -1.f, 1.f,  0.f,
-        -1.f, -1.f, 1.f,  0.f,  -2.f, -2.f, 2.f,  0.f,  2.f,  -2.f, 2.f,
-        0.f,  2.f,  2.f,  2.f,  0.f,  -2.f, 2.f,  2.f,  0.f,
+      -2.f, 2.f,  -2.f,  2.f,  2.f,  -2.f,  2.f,  -2.f, -2.f,
+      -2.f, -2.f, -2.f,  -1.f, -1.f, -1.f,  1.f,  -1.f,
+      -1.f,  1.f,  1.f,  -1.f,  -1.f, 1.f,  -1.f,  -1.f,
+      1.f,  1.f,  1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,
+      -1.f, -1.f, 1.f,  -2.f, -2.f, 2.f,  2.f,  -2.f, 2.f,
+      2.f,  2.f,  2.f,  -2.f, 2.f,  2.f
     };
 
     int index[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     OSPGeometry streamlines = ospNewGeometry("streamlines");
     ASSERT_TRUE(streamlines);
-    OSPData data = ospNewData(16, OSP_VEC3FA, vertex);
+    OSPData data = ospNewData(16, OSP_VEC3F, vertex);
     ASSERT_TRUE(data);
     ospSetData(streamlines, "vertex.position", data);
     ospRelease(data);

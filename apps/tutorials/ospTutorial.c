@@ -72,10 +72,10 @@ int main(int argc, const char **argv) {
   float cam_view [] = {0.1f, 0.f, 1.f};
 
   // triangle mesh data
-  float vertex[] = { -1.0f, -1.0f, 3.0f, 0.f,
-                     -1.0f,  1.0f, 3.0f, 0.f,
-                      1.0f, -1.0f, 3.0f, 0.f,
-                      0.1f,  0.1f, 0.3f, 0.f };
+  float vertex[] = { -1.0f, -1.0f, 3.0f,
+                     -1.0f,  1.0f, 3.0f,
+                      1.0f, -1.0f, 3.0f,
+                      0.1f,  0.1f, 0.3f };
   float color[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
                      0.8f, 0.8f, 0.8f, 1.0f,
                      0.8f, 0.8f, 0.8f, 1.0f,
@@ -100,7 +100,7 @@ int main(int argc, const char **argv) {
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_VEC3FA, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
+  OSPData data = ospNewData(4, OSP_VEC3F, vertex, 0);
   ospCommit(data);
   ospSetData(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle

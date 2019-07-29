@@ -26,7 +26,7 @@ struct StreamLines
 {
   Geometry super;  //!< inherited geometry fields
   float radius;
-  const vec3fa *vertex;
+  const vec3f *vertex;
   int32 numVertices;
   const uint32 *index;
   const vec4f *color;
@@ -314,7 +314,7 @@ export void *uniform StreamLines_setCurve(void *uniform _self,
 export void *uniform StreamLines_set(void *uniform _self,
                                      void *uniform _embreeGeometry,
                                      float uniform radius,
-                                     const uniform vec3fa *uniform vertex,
+                                     const uniform vec3f *uniform vertex,
                                      int32 uniform numVertices,
                                      const uniform uint32 *uniform index,
                                      int32 uniform numSegments,

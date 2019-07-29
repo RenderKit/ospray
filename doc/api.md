@@ -380,7 +380,6 @@ the table below.
   OSP_VEC[234]UL         ... and [234]-element vector
   OSP_FLOAT              32\ bit single precision floating-point scalar
   OSP_VEC[234]F          ... and [234]-element vector
-  OSP_VEC3FA             ... and 3-element vector with padding (same size as an OSP_VEC4F)
   OSP_DOUBLE             64\ bit double precision floating-point scalar
   OSP_BOX[1234]I         32\ bit integer box (lower + upper bounds)
   OSP_BOX[1234]F         32\ bit single precision floating-point box (lower + upper bounds)

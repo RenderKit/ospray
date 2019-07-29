@@ -165,10 +165,10 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // triangle mesh data
   float vertex[] = {
-    -1.0f, -1.0f, 3.0f, 0.f,
-    -1.0f,  1.0f, 3.0f, 0.f,
-    1.0f, -1.0f, 3.0f, 0.f,
-    0.1f,  0.1f, 0.3f, 0.f };
+    -1.0f, -1.0f, 3.0f,
+    -1.0f,  1.0f, 3.0f,
+    1.0f, -1.0f, 3.0f,
+    0.1f,  0.1f, 0.3f};
   float color[] =  {
     0.9f, 0.5f, 0.5f, 1.0f,
     0.8f, 0.8f, 0.8f, 1.0f,
@@ -188,7 +188,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_VEC3FA, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
+  OSPData data = ospNewData(4, OSP_VEC3F, vertex, 0);
   ospCommit(data);
   ospSetData(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
@@ -263,10 +263,10 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // triangle mesh data
   float vertex[] = {
-    -2.0f, -2.0f, 2.0f, 0.f,
-    -2.0f,  3.0f, 2.0f, 0.f,
-    2.0f, -2.0f, 2.0f, 0.f,
-    0.1f,  -0.1f, 1.f, 0.f };
+    -2.0f, -2.0f, 2.0f,
+    -2.0f,  3.0f, 2.0f,
+    2.0f, -2.0f, 2.0f,
+    0.1f,  -0.1f, 1.f};
   float color[] =  {
     0.0f, 0.1f, 0.8f, 1.0f,
     0.8f, 0.8f, 0.0f, 1.0f,
@@ -286,7 +286,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_VEC3FA, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
+  OSPData data = ospNewData(4, OSP_VEC3F, vertex, 0);
   ospCommit(data);
   ospSetData(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle

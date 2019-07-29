@@ -44,9 +44,9 @@ namespace ospray {
     if (!indexData)
       throw std::runtime_error("triangle mesh must have 'index' array");
     if (colorData && colorData->type != OSP_VEC4F &&
-        colorData->type != OSP_VEC3FA)
+        colorData->type != OSP_VEC3F)
       throw std::runtime_error(
-          "vertex.color must have data type OSP_VEC4F or OSP_VEC3FA");
+          "vertex.color must have data type OSP_VEC4F or OSP_VEC3F");
 
     // check whether we need 64-bit addressing
     huge_mesh = false;
@@ -103,10 +103,6 @@ namespace ospray {
       numVerts      = vertexData->size();
       numCompsInVtx = 3;
       break;
-    case OSP_VEC3FA:
-      numVerts      = vertexData->size();
-      numCompsInVtx = 4;
-      break;
     case OSP_VEC4F:
       numVerts      = vertexData->size();
       numCompsInVtx = 4;
@@ -121,7 +117,6 @@ namespace ospray {
         numCompsInNor = 3;
         break;
       case OSP_FLOAT:
-      case OSP_VEC3FA:
         numCompsInNor = 4;
         break;
       default:

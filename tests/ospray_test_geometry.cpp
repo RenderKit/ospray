@@ -114,15 +114,12 @@ namespace {
     float vertex[] = {2.0f,
                       -1.0f,
                       3.0f,
-                      0.0f,
                       0.4f,
                       0.5f,
                       8.0f,
-                      -2.0f,
                       0.0f,
                       1.0f,
-                      3.0f,
-                      0.0f};
+                      3.0f };
     float color[]  = {
         0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f};
     int index[]   = {0, 1};
@@ -130,7 +127,7 @@ namespace {
 
     OSPGeometry streamlines = ospNewGeometry("streamlines");
     EXPECT_TRUE(streamlines);
-    OSPData data = ospNewData(3, OSP_VEC3FA, vertex);
+    OSPData data = ospNewData(3, OSP_VEC3F, vertex);
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(streamlines, "vertex.position", data);

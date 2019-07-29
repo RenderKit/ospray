@@ -74,10 +74,10 @@ int main(int argc, const char **argv) {
   ospcommon::vec3f cam_view{0.1f, 0.f, 1.f};
 
   // triangle mesh data
-  float vertex[] = { -1.0f, -1.0f, 3.0f, 0.f,
-                     -1.0f,  1.0f, 3.0f, 0.f,
-                      1.0f, -1.0f, 3.0f, 0.f,
-                      0.1f,  0.1f, 0.3f, 0.f };
+  float vertex[] = { -1.0f, -1.0f, 3.0f,
+                     -1.0f,  1.0f, 3.0f,
+                      1.0f, -1.0f, 3.0f,
+                      0.1f,  0.1f, 0.3f };
   float color[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
                      0.8f, 0.8f, 0.8f, 1.0f,
                      0.8f, 0.8f, 0.8f, 1.0f,
@@ -101,7 +101,7 @@ int main(int argc, const char **argv) {
 
   // create and setup model and mesh
   ospray::cpp::Geometry mesh("triangles");
-  ospray::cpp::Data data(4, OSP_VEC3FA, vertex); // OSP_VEC3F format is also supported for vertex positions
+  ospray::cpp::Data data(4, OSP_VEC3F, vertex);
   data.commit();
   mesh.set("vertex.position", data);
   data.release(); // we are done using this handle

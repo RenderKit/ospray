@@ -80,7 +80,7 @@ typedef enum
   OSP_ULONG = 5550, OSP_VEC2UL, OSP_VEC3UL, OSP_VEC4UL,
 
   // Single precision floating point scalar and vector types.
-  OSP_FLOAT = 6000, OSP_VEC2F, OSP_VEC3F, OSP_VEC4F, OSP_VEC3FA,
+  OSP_FLOAT = 6000, OSP_VEC2F, OSP_VEC3F, OSP_VEC4F,
 
   // Double precision floating point scalar type.
   OSP_DOUBLE = 7000,
