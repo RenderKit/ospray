@@ -16,7 +16,6 @@
 
 #include "library.h"
 #include "FileName.h"
-#include "sysinfo.h"
 
 // std
 #ifdef _WIN32

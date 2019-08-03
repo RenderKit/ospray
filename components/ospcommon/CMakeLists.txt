@@ -30,10 +30,7 @@ else()
   ospray_create_library(ospray_common
     common.cpp
     FileName.cpp
-    sysinfo.cpp
     library.cpp
-    thread.cpp
-    vec.cpp
 
     array3D/Array3D.cpp
 
@@ -77,7 +74,6 @@ else()
     AffineSpace.h
     box.h
     constants.h
-    intrinsics.h
     LinearSpace.h
     ospmath.h
     platform.h

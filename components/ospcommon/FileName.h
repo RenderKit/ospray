@@ -37,9 +37,6 @@ namespace ospcommon
     /*! returns path to home folder */
     OSPCOMMON_INTERFACE static FileName homeFolder();
 
-    /*! returns path to executable */
-    OSPCOMMON_INTERFACE static FileName executableFolder();
-
     /*! auto convert into a string */
     OSPCOMMON_INTERFACE operator std::string() const { return filename; }
 

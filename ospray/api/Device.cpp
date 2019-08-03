@@ -21,7 +21,6 @@
 // ospcommon
 #include "ospcommon/library.h"
 #include "ospcommon/utility/getEnvVar.h"
-#include "ospcommon/sysinfo.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
 
 #include <map>
@@ -68,14 +67,6 @@ namespace ospray {
 
     void Device::commit()
     {
-      int cpuFeatures = ospcommon::getCPUFeatures();
-
-      if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0) {
-        handleError(OSP_UNSUPPORTED_CPU,
-                    "OSPRay only runs on CPUs that support at least SSE4.1");
-        return;
-      }
-
       auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
       debugMode = OSPRAY_DEBUG.value_or(getParam<bool>("debug", 0));
 

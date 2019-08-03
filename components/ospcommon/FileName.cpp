@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "FileName.h"
-#include "sysinfo.h"
 
 namespace ospcommon
 {
@@ -47,9 +46,9 @@ namespace ospcommon
     while (!filename.empty() && filename[filename.size()-1] == path_sep)
       filename.resize(filename.size()-1);
   }
-  
+
   /*! returns path to home folder */
-  FileName FileName::homeFolder() 
+  FileName FileName::homeFolder()
   {
 #ifdef _WIN32
     const char* home = getenv("UserProfile");
@@ -60,15 +59,10 @@ namespace ospcommon
     return "";
   }
 
-  /*! returns path to executable */
-  FileName FileName::executableFolder() {
-    return FileName(getExecutableFileName()).path();
-  }
-
   /*! returns the path */
   std::string FileName::path() const {
     size_t pos = filename.find_last_of(path_sep);
-    if (pos == std::string::npos) return "";	
+    if (pos == std::string::npos) return "";
     return filename.substr(0,pos+1);
   }
 
@@ -143,7 +137,7 @@ namespace ospcommon
   bool operator== (const FileName& a, const FileName& b) {
     return a.filename == b.filename;
   }
-  
+
   /*! != operator */
   bool operator!= (const FileName& a, const FileName& b) {
     return a.filename != b.filename;

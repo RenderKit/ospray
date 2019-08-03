@@ -798,18 +798,6 @@ namespace ospcommon {
   typedef vec_t<float, 4> vec4f;
   typedef vec_t<double, 4> vec4d;
 
-  // -------------------------------------------------------
-  // parsing from strings
-  // -------------------------------------------------------
-  OSPCOMMON_INTERFACE int toInt(const char *ptr);
-  OSPCOMMON_INTERFACE float toFloat(const char *ptr);
-  OSPCOMMON_INTERFACE vec2f toVec2f(const char *ptr);
-  OSPCOMMON_INTERFACE vec3f toVec3f(const char *ptr);
-  OSPCOMMON_INTERFACE vec4f toVec4f(const char *ptr);
-  OSPCOMMON_INTERFACE vec2i toVec2i(const char *ptr);
-  OSPCOMMON_INTERFACE vec3i toVec3i(const char *ptr);
-  OSPCOMMON_INTERFACE vec4i toVec4i(const char *ptr);
-
   template <typename T, int N>
   inline size_t arg_max(const vec_t<T, N> &v)
   {

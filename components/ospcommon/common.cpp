@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "common.h"
-#include "sysinfo.h"
 #include "library.h"
 
 // std

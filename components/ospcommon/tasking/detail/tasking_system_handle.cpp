@@ -30,7 +30,6 @@
 
 #include <thread>
 
-#include "../../intrinsics.h"
 #include "../../common.h"
 
 namespace ospcommon {

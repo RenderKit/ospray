@@ -32,7 +32,6 @@
 #include "ospcommon/FileName.h"
 #include "ospcommon/networking/BufferedDataStreaming.h"
 #include "ospcommon/networking/Socket.h"
-#include "ospcommon/sysinfo.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
