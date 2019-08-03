@@ -15,9 +15,12 @@
 // ======================================================================== //
 
 #include "api/ISPCDevice.h"
+// ospray
 #include "common/Messaging.h"
 #include "common/OSPWork.h"
+// mpicommon
 #include "mpiCommon/MPIBcastFabric.h"
+// ospcommon
 #include "ospcommon/utility/getEnvVar.h"
 
 #ifdef OPEN_MPI

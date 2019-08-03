@@ -14,28 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG  // do all assertions in this file
-
 #include "mpi/MPIOffloadDevice.h"
-#include "camera/Camera.h"
-#include "common/Data.h"
-#include "common/Group.h"
-#include "common/Library.h"
-#include "common/Util.h"
-#include "common/World.h"
-#include "fb/LocalFB.h"
-#include "geometry/TriangleMesh.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/render/MPILoadBalancer.h"
-#include "mpiCommon/MPIBcastFabric.h"
-#include "mpiCommon/MPICommon.h"
-#include "ospcommon/FileName.h"
-#include "ospcommon/networking/BufferedDataStreaming.h"
+// ospray
+#include "common/Messaging.h"
+#include "common/QueryableTask.h"
+// ospcommon
 #include "ospcommon/networking/Socket.h"
 #include "ospcommon/utility/getEnvVar.h"
-#include "render/RenderTask.h"
-#include "render/Renderer.h"
-#include "volume/Volume.h"
+// maml
+#include "maml/maml.h"
 
 // std
 #ifndef _WIN32
@@ -44,9 +31,8 @@
 #endif
 
 #ifdef OPEN_MPI
-#include <thread>
-//# define _GNU_SOURCE
 #include <sched.h>
+#include <thread>
 #endif
 
 namespace ospray {
