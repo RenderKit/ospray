@@ -14,27 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifdef _WIN32
-#include <malloc.h>
-#else
-#include <alloca.h>
-#endif
 #include "ospray/ospray.h"
 
-int main(int ac, const char *av[])
+int main()
 {
-  // always append "--osp:mpi" to args; multiple occurrences are not harmful,
-  // and we want to retain the original args (which could have been e.g.
-  // "--osp:logoutput")
-  int argc          = ac + 1;
-  const char **argv = (const char **)alloca(argc * sizeof(void *));
-
-  for (int i = 0; i < ac; i++)
-    argv[i] = av[i];
-
-  argv[ac] = "--osp:mpi";
-
-  ospInit(&argc, argv);
-
+  OSPDevice device = ospNewDevice("mpi_offload");
+  ospDeviceCommit(device);
   return 0;
 }

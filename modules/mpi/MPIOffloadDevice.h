@@ -33,7 +33,7 @@ namespace ospray {
 
     struct MPIOffloadDevice : public api::Device
     {
-      MPIOffloadDevice();
+      MPIOffloadDevice() = default;
       ~MPIOffloadDevice() override;
 
       /////////////////////////////////////////////////////////////////////////

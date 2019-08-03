@@ -380,8 +380,6 @@ namespace ospray {
     // MPIDevice definitions //////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    MPIOffloadDevice::MPIOffloadDevice() {}
-
     MPIOffloadDevice::~MPIOffloadDevice()
     {
       if (IamTheMaster()) {
