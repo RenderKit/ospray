@@ -304,6 +304,9 @@ extern "C" void ospDeviceSetString(OSPDevice _object,
                                    const char *id,
                                    const char *s) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   Device *object = (Device *)_object;
   object->setParam<std::string>(id, s);
 }
@@ -313,6 +316,9 @@ extern "C" void ospDeviceSetBool(OSPDevice _object,
                                  const char *id,
                                  int x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   Device *object = (Device *)_object;
   object->setParam(id, static_cast<bool>(x));
 }
@@ -322,6 +328,9 @@ extern "C" void ospDeviceSetInt(OSPDevice _object,
                                 const char *id,
                                 int x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   Device *object = (Device *)_object;
   object->setParam(id, x);
 }
@@ -331,15 +340,21 @@ extern "C" void ospDeviceSetVoidPtr(OSPDevice _object,
                                     const char *id,
                                     void *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   Device *object = (Device *)_object;
   object->setParam(id, v);
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetStatusFunc(OSPDevice object, OSPStatusFunc callback)
+extern "C" void ospDeviceSetStatusFunc(OSPDevice _object, OSPStatusFunc callback)
     OSPRAY_CATCH_BEGIN
 {
-  auto *device = (Device *)object;
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
+  auto *device = (Device *)_object;
   if (callback == nullptr)
     device->msg_fcn = [](const char *) {};
   else
@@ -347,10 +362,13 @@ extern "C" void ospDeviceSetStatusFunc(OSPDevice object, OSPStatusFunc callback)
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetErrorFunc(OSPDevice object,
+extern "C" void ospDeviceSetErrorFunc(OSPDevice _object,
                                       OSPErrorFunc callback) OSPRAY_CATCH_BEGIN
 {
-  auto *device = (Device *)object;
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
+  auto *device = (Device *)_object;
   if (callback == nullptr)
     device->error_fcn = [](OSPError, const char *) {};
   else
@@ -358,24 +376,33 @@ extern "C" void ospDeviceSetErrorFunc(OSPDevice object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" OSPError ospDeviceGetLastErrorCode(OSPDevice object)
+extern "C" OSPError ospDeviceGetLastErrorCode(OSPDevice _object)
     OSPRAY_CATCH_BEGIN
 {
-  auto *device = (Device *)object;
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
+  auto *device = (Device *)_object;
   return device->lastErrorCode;
 }
 OSPRAY_CATCH_END(OSP_NO_ERROR)
 
-extern "C" const char *ospDeviceGetLastErrorMsg(OSPDevice object)
+extern "C" const char *ospDeviceGetLastErrorMsg(OSPDevice _object)
     OSPRAY_CATCH_BEGIN
 {
-  auto *device = (Device *)object;
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
+  auto *device = (Device *)_object;
   return device->lastErrorMsg.c_str();
 }
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospDeviceCommit(OSPDevice _object) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   auto *object = (Device *)_object;
   object->commit();
 }
@@ -406,14 +433,17 @@ extern "C" OSPData ospNewData(size_t nitems,
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPError ospSetRegion(OSPVolume object,
+extern "C" OSPError ospSetRegion(OSPVolume _object,
                                  void *source,
                                  const int *index,
                                  const int *count) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().setRegion(
-             object, source, (const vec3i &)index[0], (const vec3i &)count[0])
+             _object, source, (const vec3i &)index[0], (const vec3i &)count[0])
              ? OSP_NO_ERROR
              : OSP_UNKNOWN_ERROR;
 }
@@ -475,6 +505,9 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPGeometricModel ospNewGeometricModel(OSPGeometry geom)
     OSPRAY_CATCH_BEGIN
 {
+  if (geom == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   OSPGeometricModel instance = currentDevice().newGeometricModel(geom);
   return instance;
@@ -484,6 +517,9 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume)
     OSPRAY_CATCH_BEGIN
 {
+  if (volume == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   OSPVolumetricModel instance = currentDevice().newVolumetricModel(volume);
   return instance;
@@ -546,6 +582,9 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPInstance ospNewInstance(OSPGroup group) OSPRAY_CATCH_BEGIN
 {
+  if (group == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().newInstance(group);
 }
@@ -570,26 +609,35 @@ extern "C" void ospSetString(OSPObject _object,
                              const char *id,
                              const char *s) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setString(_object, id, s);
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSetObject(OSPObject target,
+extern "C" void ospSetObject(OSPObject _object,
                              const char *bufName,
                              OSPObject value) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
-  return currentDevice().setObject(target, bufName, value);
+  return currentDevice().setObject(_object, bufName, value);
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospSetData(OSPObject object,
+extern "C" void ospSetData(OSPObject _object,
                            const char *bufName,
                            OSPData data) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
-  return currentDevice().setObject(object, bufName, (OSPObject)data);
+  return currentDevice().setObject(_object, bufName, (OSPObject)data);
 }
 OSPRAY_CATCH_END()
 
@@ -597,6 +645,9 @@ extern "C" void ospSetBool(OSPObject _object,
                            const char *id,
                            int x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBool(_object, id, static_cast<bool>(x));
 }
@@ -606,6 +657,9 @@ extern "C" void ospSetFloat(OSPObject _object,
                             const char *id,
                             float x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setFloat(_object, id, x);
 }
@@ -615,6 +669,9 @@ extern "C" void ospSetInt(OSPObject _object,
                           const char *id,
                           int x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setInt(_object, id, x);
 }
@@ -624,6 +681,9 @@ extern "C" void ospSeti(OSPObject _object,
                         const char *id,
                         int x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setInt(_object, id, x);
 }
@@ -632,6 +692,9 @@ OSPRAY_CATCH_END()
 extern "C" void ospSetVec2f(OSPObject _object, const char *id, float x, float y)
     OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec2f(_object, id, ospray::vec2f(x, y));
 }
@@ -641,6 +704,9 @@ extern "C" void ospSetVec2fv(OSPObject _object,
                              const char *id,
                              const float *xy) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec2f(_object, id, vec2f(xy[0], xy[1]));
 }
@@ -649,6 +715,9 @@ OSPRAY_CATCH_END()
 extern "C" void ospSetVec2i(OSPObject _object, const char *id, int x, int y)
     OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec2i(_object, id, vec2i(x, y));
 }
@@ -658,6 +727,9 @@ extern "C" void ospSetVec2iv(OSPObject _object,
                              const char *id,
                              const int *xy) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec2i(_object, id, vec2i(xy[0], xy[1]));
 }
@@ -669,6 +741,9 @@ extern "C" void ospSetVec3f(OSPObject _object,
                             float y,
                             float z) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec3f(_object, id, vec3f(x, y, z));
 }
@@ -678,6 +753,9 @@ extern "C" void ospSetVec3fv(OSPObject _object,
                              const char *id,
                              const float *xyz) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec3f(_object, id, vec3f(xyz[0], xyz[1], xyz[2]));
 }
@@ -686,6 +764,9 @@ OSPRAY_CATCH_END()
 extern "C" void ospSetVec3i(
     OSPObject _object, const char *id, int x, int y, int z) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec3i(_object, id, vec3i(x, y, z));
 }
@@ -695,6 +776,9 @@ extern "C" void ospSetVec3iv(OSPObject _object,
                              const char *id,
                              const int *xyz) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec3i(_object, id, vec3i(xyz[0], xyz[1], xyz[2]));
 }
@@ -707,6 +791,9 @@ extern "C" void ospSetVec4f(OSPObject _object,
                             float z,
                             float w) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec4f(_object, id, vec4f(x, y, z, w));
 }
@@ -716,6 +803,9 @@ extern "C" void ospSetVec4fv(OSPObject _object,
                              const char *id,
                              const float *xyzw) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec4f(
       _object, id, vec4f(xyzw[0], xyzw[1], xyzw[2], xyzw[3]));
@@ -729,6 +819,9 @@ extern "C" void ospSetVec4i(OSPObject _object,
                             int z,
                             int w) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec4i(_object, id, vec4i(x, y, z, w));
 }
@@ -738,6 +831,9 @@ extern "C" void ospSetVec4iv(OSPObject _object,
                              const char *id,
                              const int *xyzw) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVec4i(
       _object, id, vec4i(xyzw[0], xyzw[1], xyzw[2], xyzw[3]));
@@ -749,6 +845,9 @@ extern "C" void ospSetBox1f(OSPObject _object,
                             float lower_x,
                             float upper_x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox1f(_object, id, box1f(lower_x, upper_x));
 }
@@ -758,6 +857,9 @@ extern "C" void ospSetBox1fv(OSPObject _object,
                              const char *id,
                              const float *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox1f(_object, id, box1f(v[0], v[1]));
 }
@@ -768,6 +870,9 @@ extern "C" void ospSetBox1i(OSPObject _object,
                             int lower_x,
                             int upper_x) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox1i(_object, id, box1i(lower_x, upper_x));
 }
@@ -777,6 +882,9 @@ extern "C" void ospSetBox1iv(OSPObject _object,
                              const char *id,
                              const int *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox1i(_object, id, box1i(v[0], v[1]));
 }
@@ -789,6 +897,9 @@ extern "C" void ospSetBox2f(OSPObject _object,
                             float upper_x,
                             float upper_y) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox2f(
       _object, id, box2f(vec2f(lower_x, lower_y), vec2f(upper_x, upper_y)));
@@ -799,6 +910,9 @@ extern "C" void ospSetBox2fv(OSPObject _object,
                              const char *id,
                              const float *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox2f(_object, id, box2f(vec2f(v), vec2f(v + 2)));
 }
@@ -811,6 +925,9 @@ extern "C" void ospSetBox2i(OSPObject _object,
                             int upper_x,
                             int upper_y) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox2i(
       _object, id, box2i(vec2i(lower_x, lower_y), vec2i(upper_x, upper_y)));
@@ -821,6 +938,9 @@ extern "C" void ospSetBox2iv(OSPObject _object,
                              const char *id,
                              const int *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox2i(_object, id, box2i(vec2i(v), vec2i(v + 2)));
 }
@@ -835,6 +955,9 @@ extern "C" void ospSetBox3f(OSPObject _object,
                             float upper_y,
                             float upper_z) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox3f(_object,
                            id,
@@ -847,6 +970,9 @@ extern "C" void ospSetBox3fv(OSPObject _object,
                              const char *id,
                              const float *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox3f(_object, id, box3f(vec3f(v), vec3f(v + 3)));
 }
@@ -861,6 +987,9 @@ extern "C" void ospSetBox3i(OSPObject _object,
                             int upper_y,
                             int upper_z) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox3i(_object,
                            id,
@@ -873,6 +1002,9 @@ extern "C" void ospSetBox3iv(OSPObject _object,
                              const char *id,
                              const int *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox3i(_object, id, box3i(vec3i(v), vec3i(v + 3)));
 }
@@ -889,6 +1021,9 @@ extern "C" void ospSetBox4f(OSPObject _object,
                             float upper_z,
                             float upper_w) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox4f(_object,
                            id,
@@ -901,6 +1036,9 @@ extern "C" void ospSetBox4fv(OSPObject _object,
                              const char *id,
                              const float *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox4f(_object, id, box4f(vec4f(v), vec4f(v + 4)));
 }
@@ -917,6 +1055,9 @@ extern "C" void ospSetBox4i(OSPObject _object,
                             int upper_z,
                             int upper_w) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox4i(_object,
                            id,
@@ -929,6 +1070,9 @@ extern "C" void ospSetBox4iv(OSPObject _object,
                              const char *id,
                              const int *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setBox4i(_object, id, box4i(vec4i(v), vec4i(v + 4)));
 }
@@ -938,6 +1082,9 @@ extern "C" void ospSetLinear3fv(OSPObject _object,
                                 const char *id,
                                 const float *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setLinear3f(
       _object, id, linear3f(vec3f(v), vec3f(v + 3), vec3f(v + 6)));
@@ -948,6 +1095,9 @@ extern "C" void ospSetAffine3fv(OSPObject _object,
                                 const char *id,
                                 const float *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setAffine3f(
       _object,
@@ -960,6 +1110,9 @@ extern "C" void ospSetVoidPtr(OSPObject _object,
                               const char *id,
                               void *v) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().setVoidPtr(_object, id, v);
 }
@@ -972,21 +1125,30 @@ OSPRAY_CATCH_END()
 extern "C" void ospRemoveParam(OSPObject _object,
                                const char *id) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().removeParam(_object, id);
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospCommit(OSPObject object) OSPRAY_CATCH_BEGIN
+extern "C" void ospCommit(OSPObject _object) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
-  currentDevice().commit(object);
+  currentDevice().commit(_object);
 }
 OSPRAY_CATCH_END()
 
 extern "C" void ospRelease(OSPObject _object) OSPRAY_CATCH_BEGIN
 {
+  if (_object == nullptr)
+    throw std::runtime_error(std::string("null object provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   if (!_object)
     return;
@@ -1035,6 +1197,9 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" const void *ospMapFrameBuffer(
     OSPFrameBuffer fb, OSPFrameBufferChannel channel) OSPRAY_CATCH_BEGIN
 {
+  if (fb == nullptr)
+    throw std::runtime_error(std::string("null framebuffer provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().frameBufferMap(fb, channel);
 }
@@ -1043,21 +1208,30 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" void ospUnmapFrameBuffer(const void *mapped,
                                     OSPFrameBuffer fb) OSPRAY_CATCH_BEGIN
 {
+  if (fb == nullptr)
+    throw std::runtime_error(std::string("null framebuffer provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   Assert(mapped != nullptr && "invalid mapped pointer in ospUnmapFrameBuffer");
   currentDevice().frameBufferUnmap(mapped, fb);
 }
 OSPRAY_CATCH_END()
 
-extern "C" float ospGetVariance(OSPFrameBuffer f) OSPRAY_CATCH_BEGIN
+extern "C" float ospGetVariance(OSPFrameBuffer fb) OSPRAY_CATCH_BEGIN
 {
+  if (fb == nullptr)
+    throw std::runtime_error(std::string("null framebuffer provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
-  return currentDevice().getVariance(f);
+  return currentDevice().getVariance(fb);
 }
 OSPRAY_CATCH_END(inf)
 
 extern "C" void ospResetAccumulation(OSPFrameBuffer fb) OSPRAY_CATCH_BEGIN
 {
+  if (fb == nullptr)
+    throw std::runtime_error(std::string("null framebuffer provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   currentDevice().resetAccumulation(fb);
 }
@@ -1091,6 +1265,18 @@ extern "C" float ospRenderFrame(OSPFrameBuffer fb,
                                 OSPCamera camera,
                                 OSPWorld world) OSPRAY_CATCH_BEGIN
 {
+  if (fb == nullptr)
+    throw std::runtime_error(std::string("null framebuffer provided to ") +
+                             __FUNCTION__);
+  if (renderer == nullptr)
+    throw std::runtime_error(std::string("null renderer provided to ") +
+                             __FUNCTION__);
+  if (camera == nullptr)
+    throw std::runtime_error(std::string("null camera provided to ") +
+                             __FUNCTION__);
+  if (world == nullptr)
+    throw std::runtime_error(std::string("null world provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().renderFrame(fb, renderer, camera, world);
 }
@@ -1101,6 +1287,18 @@ extern "C" OSPFuture ospRenderFrameAsync(OSPFrameBuffer fb,
                                          OSPCamera camera,
                                          OSPWorld world) OSPRAY_CATCH_BEGIN
 {
+  if (fb == nullptr)
+    throw std::runtime_error(std::string("null framebuffer provided to ") +
+                             __FUNCTION__);
+  if (renderer == nullptr)
+    throw std::runtime_error(std::string("null renderer provided to ") +
+                             __FUNCTION__);
+  if (camera == nullptr)
+    throw std::runtime_error(std::string("null camera provided to ") +
+                             __FUNCTION__);
+  if (world == nullptr)
+    throw std::runtime_error(std::string("null world provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().renderFrameAsync(fb, renderer, camera, world);
 }
@@ -1108,22 +1306,31 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" int ospIsReady(OSPFuture f, OSPSyncEvent event) OSPRAY_CATCH_BEGIN
 {
+  if (f == nullptr)
+    throw std::runtime_error(std::string("null future provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().isReady(f, event);
 }
 OSPRAY_CATCH_END(1)
 
-extern "C" void ospWait(OSPFuture f, OSPSyncEvent et) OSPRAY_CATCH_BEGIN
+extern "C" void ospWait(OSPFuture f, OSPSyncEvent event) OSPRAY_CATCH_BEGIN
 {
+  if (f == nullptr)
+    throw std::runtime_error(std::string("null future provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
-  if (et == OSP_NONE_FINISHED)
+  if (event == OSP_NONE_FINISHED)
     return;
-  currentDevice().wait(f, et);
+  currentDevice().wait(f, event);
 }
 OSPRAY_CATCH_END()
 
 extern "C" void ospCancel(OSPFuture f) OSPRAY_CATCH_BEGIN
 {
+  if (f == nullptr)
+    throw std::runtime_error(std::string("null future provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().cancel(f);
 }
@@ -1131,6 +1338,9 @@ OSPRAY_CATCH_END()
 
 extern "C" float ospGetProgress(OSPFuture f) OSPRAY_CATCH_BEGIN
 {
+  if (f == nullptr)
+    throw std::runtime_error(std::string("null future provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
   return currentDevice().getProgress(f);
 }
@@ -1144,8 +1354,19 @@ extern "C" void ospPick(OSPPickResult *result,
                         float screenPos_x,
                         float screenPos_y) OSPRAY_CATCH_BEGIN
 {
+  if (fb == nullptr)
+    throw std::runtime_error(std::string("null framebuffer provided to ") +
+                             __FUNCTION__);
+  if (renderer == nullptr)
+    throw std::runtime_error(std::string("null renderer provided to ") +
+                             __FUNCTION__);
+  if (camera == nullptr)
+    throw std::runtime_error(std::string("null camera provided to ") +
+                             __FUNCTION__);
+  if (world == nullptr)
+    throw std::runtime_error(std::string("null world provided to ") +
+                             __FUNCTION__);
   ASSERT_DEVICE();
-  Assert2(renderer, "nullptr renderer passed to ospPick");
   if (!result)
     return;
   *result = currentDevice().pick(
