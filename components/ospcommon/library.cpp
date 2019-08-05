@@ -117,6 +117,11 @@ namespace ospcommon {
       lib      = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
     }
 #endif
+
+    if (lib == nullptr) {
+      throw std::runtime_error("could not open module lib " + name + ": " +
+                               errorMsg);
+    }
   }
 
   Library::Library(void *const _lib)
