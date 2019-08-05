@@ -30,9 +30,6 @@ namespace ospcommon
   static const float one_over_255 = 1.0f/255.0f;
   static const float min_rcp_input = 1E-18f;  // for abs(x) >= min_rcp_input the newton raphson rcp calculation does not fail
 
-  /* we consider floating point numbers in that range as valid input numbers */
-  static float FLT_LARGE = 1.844E18f;
-
   static struct ZeroTy
   {
     __forceinline operator          double   ( ) const { return 0; }
@@ -136,7 +133,7 @@ namespace ospcommon
 
   static struct FourPiTy
   {
-    __forceinline operator double( ) const { return 4.0*M_PI; } 
+    __forceinline operator double( ) const { return 4.0*M_PI; }
     __forceinline operator float ( ) const { return 4.0*M_PI; }
   } four_pi MAYBE_UNUSED;
 
