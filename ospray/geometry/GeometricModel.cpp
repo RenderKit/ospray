@@ -67,19 +67,19 @@ namespace ospray {
   {
     colorData = getParamData("prim.color");
 
-    if (colorData && colorData->numItems != geom->numPrimitives()) {
+    if (colorData && colorData->numItems != geom->numPrimitives())
       throw std::runtime_error(
-          "number of colors does not match number of primitives!");
-    }
+          "geometric model number of colors does not match number of "
+          "primitives");
 
     prim_materialIDData       = getParamData("prim.materialID");
     Data *materialListDataPtr = getParamData("materialList");
 
     if (prim_materialIDData &&
-        prim_materialIDData->numItems != geom->numPrimitives()) {
+        prim_materialIDData->numItems != geom->numPrimitives())
       throw std::runtime_error(
-          "number of prim.materialID does not match number of primitives!");
-    }
+          "geometric model number of primitive material IDs does not match "
+          "number of primitives");
 
     material = (Material *)getParamObject("material");
 

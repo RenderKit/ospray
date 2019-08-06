@@ -77,7 +77,7 @@ namespace {
     OSPData data = ospNewData(vertex.size(), OSP_VEC3F, vertex.data());
     EXPECT_TRUE(data);
     ospCommit(data);
-    ospSetData(cylinder, "cylinders", data);
+    ospSetData(cylinder, "cylinder", data);
     ospRelease(data);
     ospSetFloat(cylinder, "radius", 1.0f);
     ospCommit(cylinder);
@@ -96,7 +96,7 @@ namespace {
     OSPData data = ospNewData(1, OSP_VEC4F, &vertex);
     EXPECT_TRUE(data);
     ospCommit(data);
-    ospSetData(sphere, "spheres", data);
+    ospSetData(sphere, "sphere", data);
     ospRelease(data);
     data = ospNewData(1, OSP_VEC4F, &color);
     EXPECT_TRUE(data);

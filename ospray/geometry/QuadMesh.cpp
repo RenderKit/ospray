@@ -38,13 +38,17 @@ namespace ospray {
     indexData    = getParamData("index");
 
     if (!vertexData)
-      throw std::runtime_error("quad mesh must have 'vertex.position' array");
+      throw std::runtime_error("quad mesh geometry must have 'vertex.position' array");
     if (!indexData)
-      throw std::runtime_error("quad mesh must have 'index' array");
+      throw std::runtime_error("quad mesh geometry must have 'index' array");
     if (colorData && colorData->type != OSP_VEC4F &&
-        colorData->type != OSP_VEC3F)
-      throw std::runtime_error(
-          "vertex.color must have data type OSP_VEC4F or OSP_VEC3F");
+        colorData->type != OSP_VEC3F) {
+      std::stringstream ss;
+      ss << "quad mesh geometry 'vertex.color' array has invalid element type "
+         << stringForType(colorData->type)
+         << ". Must be one of: OSP_VEC4F, OSP_VEC3F";
+      throw std::runtime_error(ss.str());
+    }
 
     // check whether we need 64-bit addressing
     huge_mesh = false;
@@ -74,8 +78,13 @@ namespace ospray {
     case OSP_VEC4I:
       numQuads = indexData->size();
       break;
-    default:
-      throw std::runtime_error("unsupported quadmesh.index data type");
+    default: {
+      std::stringstream ss;
+      ss << "quad mesh geometry 'index' array has invalid element type "
+         << stringForType(indexData->type)
+         << ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4UI, OSP_VEC4I";
+      throw std::runtime_error(ss.str());
+    }
     }
 
     switch (vertexData->type) {
@@ -91,8 +100,14 @@ namespace ospray {
       numVerts      = vertexData->size();
       numCompsInVtx = 4;
       break;
-    default:
-      throw std::runtime_error("unsupported quadmesh.vertex data type");
+    default: {
+      std::stringstream ss;
+      ss << "quad mesh geometry 'vertex.position' array has invalid element "
+            "type "
+         << stringForType(vertexData->type)
+         << ". Must be one of: OSP_VEC3F, OSP_VEC4F, OSP_FLOAT";
+      throw std::runtime_error(ss.str());
+    }
     }
 
     if (normalData) {
@@ -103,9 +118,13 @@ namespace ospray {
       case OSP_FLOAT:
         numCompsInNor = 4;
         break;
-      default:
-        throw std::runtime_error(
-            "unsupported quadmesh.vertex.normal data type");
+      default: {
+        std::stringstream ss;
+        ss << "quad mesh geometry 'vertex.normal' array has invalid element type "
+           << stringForType(normalData->type)
+           << ". Must be one of: OSP_VEC3F, OSP_FLOAT";
+        throw std::runtime_error(ss.str());
+      }
       }
     }
 

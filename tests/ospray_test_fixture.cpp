@@ -373,12 +373,12 @@ namespace OSPRayTestScenes {
                          90.f * radius};
     auto data = ospNewData(4, OSP_VEC4F, sph_center_r);
     ospCommit(data);
-    ospSetData(sphere, "spheres", data);
+    ospSetData(sphere, "sphere", data);
     ospRelease(data);
 
     data = ospNewData(1, OSP_VEC4F, sph_center_r + 4 * 4);
     ospCommit(data);
-    ospSetData(inst_sphere, "spheres", data);
+    ospSetData(inst_sphere, "sphere", data);
     ospRelease(data);
 
     ospSetInt(sphere, "offset_radius", 12);
@@ -590,7 +590,7 @@ namespace OSPRayTestScenes {
     OSPGeometry sphere   = ospNewGeometry("spheres");
     data                 = ospNewData(1, OSP_VEC4F, sphereVertex);
     ospCommit(data);
-    ospSetData(sphere, "spheres", data);
+    ospSetData(sphere, "sphere", data);
     ospRelease(data);
     ospSetFloat(sphere, "radius", 0.45f);
     ospCommit(sphere);
@@ -943,7 +943,7 @@ namespace OSPRayTestScenes {
     ospSetFloat(light, "radius", 1.f);
     data = ospNewData(1, OSP_VEC4F, sphereCenters);
     ASSERT_TRUE(data);
-    ospSetData(light, "spheres", data);
+    ospSetData(light, "sphere", data);
     ospCommit(light);
 
     model = ospNewGeometricModel(light);
@@ -1068,7 +1068,7 @@ namespace OSPRayTestScenes {
     OSPGeometry sphere   = ospNewGeometry("spheres");
     auto data            = ospNewData(1, OSP_VEC4F, sphereVertex);
     ospCommit(data);
-    ospSetData(sphere, "spheres", data);
+    ospSetData(sphere, "sphere", data);
     ospRelease(data);
     ospSetFloat(sphere, "radius", 0.51f);
     ospCommit(sphere);

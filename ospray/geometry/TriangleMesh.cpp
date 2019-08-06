@@ -40,13 +40,17 @@ namespace ospray {
     indexData    = getParamData("index");
 
     if (!vertexData)
-      throw std::runtime_error("triangle mesh must have 'vertex' array");
+      throw std::runtime_error("triangle mesh geometry must have 'vertex.position' array");
     if (!indexData)
-      throw std::runtime_error("triangle mesh must have 'index' array");
+      throw std::runtime_error("triangle mesh geometry must have 'index' array");
     if (colorData && colorData->type != OSP_VEC4F &&
-        colorData->type != OSP_VEC3F)
-      throw std::runtime_error(
-          "vertex.color must have data type OSP_VEC4F or OSP_VEC3F");
+        colorData->type != OSP_VEC3F) {
+      std::stringstream ss;
+      ss << "triangle mesh geometry 'vertex.color' array has invalid element type "
+         << stringForType(colorData->type)
+         << ". Must be one of: OSP_VEC4F, OSP_VEC3F";
+      throw std::runtime_error(ss.str());
+    }
 
     // check whether we need 64-bit addressing
     huge_mesh = false;
@@ -90,8 +94,14 @@ namespace ospray {
       numTris       = indexData->size();
       numCompsInTri = 4;
       break;
-    default:
-      throw std::runtime_error("unsupported trianglemesh.index data type");
+    default: {
+      std::stringstream ss;
+      ss << "triangle mesh 'index' array has invalid element type "
+         << stringForType(indexData->type)
+         << ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC3I, OSP_VEC3UI, "
+            "OSP_VEC4I, OSP_VEC4UI";
+      throw std::runtime_error(ss.str());
+    }
     }
 
     switch (vertexData->type) {
@@ -107,8 +117,13 @@ namespace ospray {
       numVerts      = vertexData->size();
       numCompsInVtx = 4;
       break;
-    default:
-      throw std::runtime_error("unsupported trianglemesh.vertex data type");
+    default: {
+      std::stringstream ss;
+      ss << "triangle mesh 'vertex.position' array has invalid element type "
+         << stringForType(vertexData->type)
+         << ". Must be one of: OSP_FLOAT, OSPVEC3F, OSP_VEC4F";
+      throw std::runtime_error(ss.str());
+    }
     }
 
     if (normalData) {
@@ -119,9 +134,13 @@ namespace ospray {
       case OSP_FLOAT:
         numCompsInNor = 4;
         break;
-      default:
-        throw std::runtime_error(
-            "unsupported trianglemesh.vertex.normal data type");
+      default: {
+        std::stringstream ss;
+        ss << "triangle mesh 'vertex.normal' array has invalid element type "
+           << stringForType(normalData->type)
+           << ". Must be one of: OSP_FLOAT, OSPVEC3F";
+        throw std::runtime_error(ss.str());
+      }
       }
     }
 

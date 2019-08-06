@@ -33,7 +33,7 @@ namespace ospray {
     boxData = getParamData("box");
 
     if (!boxData)
-      throw std::runtime_error("no box data provided to Boxes geometry!");
+      throw std::runtime_error("boxes geometry must have 'box' data array");
 
     if (boxData->type == OSP_BOX3F)
       numBoxes = boxData->numItems;
@@ -41,8 +41,13 @@ namespace ospray {
       numBoxes = boxData->numItems / 2;
     else if (boxData->type == OSP_FLOAT)
       numBoxes = boxData->numItems / 6;
-    else
-      throw std::runtime_error("unable to use element type for box geometry!");
+    else {
+      std::stringstream ss;
+      ss << "boxes geometry 'box' array has invalid element type "
+         << stringForType(boxData->type)
+         << ". Must be one of: OSP_BOX3F, OSP_VEC3F, OSP_FLOAT";
+      throw std::runtime_error(ss.str());
+    }
   }
 
   size_t Boxes::numPrimitives() const

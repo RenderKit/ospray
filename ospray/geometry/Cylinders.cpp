@@ -35,14 +35,11 @@ namespace ospray {
     offset_v0        = getParam1i("offset_v0", 0);
     offset_v1        = getParam1i("offset_v1", 3 * sizeof(float));
     offset_radius    = getParam1i("offset_radius", -1);
-    cylinderData     = getParamData("cylinders");
+    cylinderData     = getParamData("cylinder");
     texcoordData     = getParamData("texcoord");
 
-    if (cylinderData.ptr == nullptr || bytesPerCylinder == 0) {
-      throw std::runtime_error(
-          "#ospray:geometry/cylinders: no 'cylinders'"
-          " data specified");
-    }
+    if (cylinderData.ptr == nullptr || bytesPerCylinder == 0)
+      throw std::runtime_error("cylinders geometry must have 'cylinder' array");
 
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
 

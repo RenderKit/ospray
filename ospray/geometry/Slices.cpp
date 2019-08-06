@@ -33,7 +33,12 @@ namespace ospray {
   void Slices::commit()
   {
     planesData = getParamData("plane", nullptr);
-    volume     = (VolumetricModel *)getParamObject("volume", nullptr);
+    if (planesData.ptr == nullptr)
+      throw std::runtime_error("slices geometry must have 'plane' data array");
+
+    volume = (VolumetricModel *)getParamObject("volume", nullptr);
+    if (volume.ptr == nullptr)
+      throw std::runtime_error("slices geometry must have 'volume' object");
 
     numPlanes = planesData->numItems;
     planes    = (vec4f *)planesData->data;
