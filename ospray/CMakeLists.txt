@@ -210,11 +210,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/structured/StructuredVolume.ispc
   volume/structured/StructuredVolume.cpp
 
-  volume/structured/bricked/BlockBrickedVolume.ispc
-  volume/structured/bricked/BlockBrickedVolume.cpp
-  volume/structured/bricked/GhostBlockBrickedVolume.ispc
-  volume/structured/bricked/GhostBlockBrickedVolume.cpp
-
   volume/structured/shared/SharedStructuredVolume.ispc
   volume/structured/shared/SharedStructuredVolume.cpp
 
