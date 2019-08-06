@@ -14,10 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(EXP_NEW_BB_VOLUME_KERNELS
-       "Experimental new block/bricked volume layout" ON)
-mark_as_advanced(EXP_NEW_BB_VOLUME_KERNELS)
-
 ospray_build_component(ospcommon)
 
 # -------------------------------------------------------
