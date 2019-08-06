@@ -193,11 +193,6 @@ extern "C" {
                                       const void *source,
                                       uint32_t dataCreationFlags OSP_DEFAULT_VAL(0));
 
-  OSPRAY_INTERFACE OSPError ospSetRegion(OSPVolume,
-                                         void *source,
-                                         const int *regionCoords, // single vec3i
-                                         const int *regionSize); // single vec3i
-
   // Renderable Objects ///////////////////////////////////////////////////////
 
   OSPRAY_INTERFACE OSPLight ospNewLight(const char *light_type);

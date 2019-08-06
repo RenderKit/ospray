@@ -433,22 +433,6 @@ extern "C" OSPData ospNewData(size_t nitems,
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPError ospSetRegion(OSPVolume _object,
-                                 void *source,
-                                 const int *index,
-                                 const int *count) OSPRAY_CATCH_BEGIN
-{
-  if (_object == nullptr)
-    throw std::runtime_error(std::string("null object provided to ") +
-                             __FUNCTION__);
-  ASSERT_DEVICE();
-  return currentDevice().setRegion(
-             _object, source, (const vec3i &)index[0], (const vec3i &)count[0])
-             ? OSP_NO_ERROR
-             : OSP_UNKNOWN_ERROR;
-}
-OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
-
 ///////////////////////////////////////////////////////////////////////////////
 // Renderable Objects /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

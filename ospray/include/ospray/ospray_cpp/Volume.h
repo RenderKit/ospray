@@ -23,13 +23,6 @@
 namespace ospray {
   namespace cpp {
 
-    struct AMRBrickInfo
-    {
-      ospcommon::box3i bounds;
-      int refinemntLevel;
-      float cellWidth;
-    };
-
     class Volume : public ManagedObject_T<OSPVolume>
     {
      public:
@@ -63,14 +56,5 @@ namespace ospray {
         : ManagedObject_T<OSPVolume>(existing)
     {
     }
-
-    inline void Volume::setRegion(void *source,
-                                  const ospcommon::vec3i &regionCoords,
-                                  const ospcommon::vec3i &regionSize) const
-    {
-      // TODO return error code
-      ospSetRegion(handle(), source, &regionCoords.x, &regionSize.x);
-    }
-
   }  // namespace cpp
 }  // namespace ospray

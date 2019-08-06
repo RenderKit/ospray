@@ -65,8 +65,6 @@ namespace ospray {
         registerWorkUnit<ResetAccumulation>(registry);
         registerWorkUnit<RenderFrameAsync>(registry);
 
-        registerWorkUnit<SetRegion>(registry);
-
         registerWorkUnit<SetParam<OSPObject>>(registry);
         registerWorkUnit<SetParam<std::string>>(registry);
         registerWorkUnit<SetParam<int>>(registry);
@@ -426,55 +424,6 @@ namespace ospray {
         b >> handle.i64 >> nItems >> fmt >> flags >> copiedData;
         dataView = copiedData;
         format   = (OSPDataType)fmt;
-      }
-
-      // ospSetRegion /////////////////////////////////////////////////////////
-
-      SetRegion::SetRegion(OSPVolume volume,
-                           vec3i start,
-                           vec3i size,
-                           const void *src,
-                           OSPDataType type)
-          : handle((ObjectHandle &)volume),
-            regionStart(start),
-            regionSize(size),
-            type(type)
-      {
-        size_t bytes = ospray::sizeOf(type) * size.x * size.y * size.z;
-        // TODO: With the MPI batching this limitation should be lifted
-        if (bytes > 2000000000LL) {
-          throw std::runtime_error(
-              "MPI ospSetRegion does not support "
-              "region sizes > 2GB");
-        }
-        data.resize(bytes);
-
-        // TODO: should support sending data without copy
-        std::memcpy(data.data(), src, bytes);
-      }
-
-      void SetRegion::run()
-      {
-        Volume *volume = (Volume *)handle.lookup();
-        Assert(volume);
-        // TODO: Does it make sense to do the allreduce & report back fails?
-        // TODO: Should we be allocating the data with alignedMalloc instead?
-        // We could use a std::vector with an aligned std::allocator
-        if (!volume->setRegion(data.data(), regionStart, regionSize)) {
-          throw std::runtime_error("Failed to set region for volume");
-        }
-      }
-
-      void SetRegion::serialize(WriteStream &b) const
-      {
-        b << (int64)handle << regionStart << regionSize << (int32)type << data;
-      }
-
-      void SetRegion::deserialize(ReadStream &b)
-      {
-        int32 ty;
-        b >> handle.i64 >> regionStart >> regionSize >> ty >> data;
-        type = (OSPDataType)ty;
       }
 
       // ospResetAccumulation /////////////////////////////////////////////////

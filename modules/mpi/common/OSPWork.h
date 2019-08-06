@@ -350,33 +350,6 @@ namespace ospray {
         int32 flags;
       };
 
-      struct SetRegion : public Work
-      {
-        SetRegion() = default;
-        SetRegion(OSPVolume volume,
-                  vec3i start,
-                  vec3i size,
-                  const void *src,
-                  OSPDataType type);
-
-        void run() override;
-
-        /*! serializes itself on the given serial buffer - will write
-          all data into this buffer in a way that it can afterwards
-          un-serialize itself 'on the other side'*/
-        void serialize(WriteStream &b) const override;
-
-        /*! de-serialize from a buffer that an object of this type has
-          serialized itself in */
-        void deserialize(ReadStream &b) override;
-
-        ObjectHandle handle;
-        vec3i regionStart;
-        vec3i regionSize;
-        OSPDataType type;
-        std::vector<byte_t> data;
-      };
-
       struct CommitObject : public Work
       {
         CommitObject() = default;

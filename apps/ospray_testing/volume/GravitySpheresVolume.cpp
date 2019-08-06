@@ -110,7 +110,7 @@ namespace ospray {
     OSPTestingVolume GravitySpheresVolume::createVolume() const
     {
       // create a structured volume and assign attributes
-      OSPVolume volume = ospNewVolume("block_bricked_volume");
+      OSPVolume volume = ospNewVolume("shared_structured_volume");
 
       ospSetVec3i(volume,
                "dimensions",
@@ -131,7 +131,8 @@ namespace ospray {
           int(volumeDimension), int(volumeDimension), int(volumeDimension)};
 
       // set the volume data
-      ospSetRegion(volume, voxels.data(), &regionStart.x, &regionEnd.x);
+      OSPData voxelData = ospNewData(voxels.size(), OSP_FLOAT, voxels.data());
+      ospSetObject(volume, "voxelData", voxelData);
 
       // create OSPRay objects and return results
 
