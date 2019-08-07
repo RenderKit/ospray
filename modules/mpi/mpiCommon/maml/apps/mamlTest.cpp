@@ -19,7 +19,8 @@
 #include <random>
 #include <thread>
 #include "maml/maml.h"
-#include "ospcommon/tasking/tasking_system_handle.h"
+#include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/CodeTimer.h"
 
 struct MyHandler : public maml::MessageHandler
 {
@@ -54,13 +55,15 @@ extern "C" int main(int ac, char **av)
   MyHandler handler;
   maml::registerHandlerFor(MPI_COMM_WORLD, &handler);
 
+  ospcommon::utility::CodeTimer timer;
+
   char *payload = (char *)malloc(payloadSize);
   for (int i = 0; i < payloadSize; i++)
     payload[i] = distrib(rng);
 
   for (int run = 0; run < numRuns; run++) {
     MPI_CALL(Barrier(MPI_COMM_WORLD));
-    double t0 = ospcommon::getSysTime();
+    timer.start();
     maml::start();
 
     for (int mID = 0; mID < numMessages; mID++) {
@@ -76,13 +79,13 @@ extern "C" int main(int ac, char **av)
     }
 
     maml::stop();
-    double t1        = ospcommon::getSysTime();
-    double bytes     = numRanks * numMessages * payloadSize / (t1 - t0);
+    timer.stop();
+    double bytes     = numRanks * numMessages * payloadSize / (timer.seconds());
     std::string rate = ospcommon::prettyNumber(bytes);
     printf("rank %i: received %i messages in %lf secs; that is %sB/s\n",
            rank,
            numRanks * numMessages,
-           t1 - t0,
+           timer.seconds(),
            rate.c_str());
     MPI_CALL(Barrier(MPI_COMM_WORLD));
   }

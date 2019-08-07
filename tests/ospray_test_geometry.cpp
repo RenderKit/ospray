@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include <array>
-#include "ospcommon/vec.h"
 #include "ospray_test_fixture.h"
 
 using OSPRayTestScenes::Base;
@@ -25,6 +24,7 @@ using OSPRayTestScenes::Sierpinski;
 using OSPRayTestScenes::SingleObject;
 using OSPRayTestScenes::SpherePrecision;
 using OSPRayTestScenes::Subdivision;
+
 using namespace ospcommon;
 
 namespace {

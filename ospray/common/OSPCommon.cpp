@@ -323,7 +323,7 @@ namespace ospray {
   OSPError loadLocalModule(const std::string &name)
   {
     std::string libName = "ospray_module_" + name;
-    loadLibrary(libName);
+    loadLibrary(libName, false);
 
     std::string initSymName = "ospray_init_module_" + name;
     void*initSym = getSymbol(initSymName);

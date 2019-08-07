@@ -29,12 +29,12 @@
 #include "ospray_environment.h"
 #include "ospray_test_tools.h"
 
-#include "ospcommon/AffineSpace.h"
+#include "ospcommon/math/AffineSpace.h"
 
 namespace OSPRayTestScenes {
 
-  using ospcommon::affine3f;
-  using ospcommon::one;
+  using ospcommon::math::affine3f;
+  using ospcommon::math::one;
 
   // Base class for all test fixtures.
   // Deriving classes can call CreateEmptyScene() to set up model, renderer,

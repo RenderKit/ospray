@@ -21,7 +21,7 @@
 // ospcommon
 #include "ospcommon/os/library.h"
 #include "ospcommon/utility/getEnvVar.h"
-#include "ospcommon/tasking/tasking_system_handle.h"
+#include "ospcommon/tasking/tasking_system_init.h"
 
 #include <map>
 

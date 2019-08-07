@@ -24,7 +24,7 @@
 #include <random>
 #include <thread>
 #include "maml/maml.h"
-#include "ospcommon/tasking/tasking_system_handle.h"
+#include "ospcommon/tasking/tasking_system_init.h"
 
 static int numRanks = 0;
 static std::atomic<size_t> numReceived;
@@ -73,7 +73,7 @@ extern "C" int main(int ac, char **av)
 
   maml::start();
 
-  double t0 = ospcommon::getSysTime();
+  auto t0 = std::chrono::steady_clock::now();
   for (int mID = 0; mID < numMessages; mID++) {
     int r = rank_distrib(rng);
     maml::sendTo(MPI_COMM_WORLD,
@@ -83,10 +83,12 @@ extern "C" int main(int ac, char **av)
 
   while (1) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    double t1 = ospcommon::getSysTime();
+    auto t1      = std::chrono::steady_clock::now();
+    auto diff    = t1 - t0;
+    auto seconds = std::chrono::duration<double>(diff).count();
     std::string numBytes =
         ospcommon::prettyNumber((size_t)numReceived * payloadSize);
-    double rate            = (size_t)numReceived * payloadSize / (t1 - t0);
+    double rate            = (size_t)numReceived * payloadSize / seconds;
     std::string rateString = ospcommon::prettyNumber(rate);
 
     printf(
@@ -94,7 +96,7 @@ extern "C" int main(int ac, char **av)
         rank,
         (size_t)numReceived,
         numBytes.c_str(),
-        t1 - t0,
+        seconds,
         rateString.c_str());
   }
 

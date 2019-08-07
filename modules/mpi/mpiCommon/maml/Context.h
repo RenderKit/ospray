@@ -19,7 +19,7 @@
 #include "maml.h"
 #include "mpiCommon/Collectives.h"
 // ospcommon
-#include "ospcommon/AsyncLoop.h"
+#include "ospcommon/tasking/AsyncLoop.h"
 #include "ospcommon/containers/TransactionalBuffer.h"
 // stl
 #include <future>
@@ -99,9 +99,9 @@ namespace maml {
 
     // Data members //
 
-    ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
-    ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
-    ospcommon::TransactionalBuffer<std::shared_ptr<Collective>>
+    ospcommon::containers::TransactionalBuffer<std::shared_ptr<Message>> inbox;
+    ospcommon::containers::TransactionalBuffer<std::shared_ptr<Message>> outbox;
+    ospcommon::containers::TransactionalBuffer<std::shared_ptr<Collective>>
         collectiveOutbox;
 
     // NOTE(jda) - sendCache/pendingSends MUST correspond with each other by
@@ -126,8 +126,8 @@ namespace maml {
     bool tasksAreRunning{false};
     // std::thread sendReceiveThread, processInboxThread;
     std::atomic<bool> quitThreads{false};
-    std::unique_ptr<ospcommon::AsyncLoop> sendReceiveThread;
-    std::unique_ptr<ospcommon::AsyncLoop> processInboxThread;
+    std::unique_ptr<ospcommon::tasking::AsyncLoop> sendReceiveThread;
+    std::unique_ptr<ospcommon::tasking::AsyncLoop> processInboxThread;
 
     std::mutex statsMutex;
     using CompressionPercent = std::chrono::duration<double>;

@@ -14,19 +14,22 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Context.h"
-#include <snappy.h>
+// std
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
+#include <snappy.h>
+#include "Context.h"
+
 #include "ospcommon/memory/malloc.h"
 #include "ospcommon/tasking/async.h"
-#include "ospcommon/tasking/tasking_system_handle.h"
+#include "ospcommon/tasking/tasking_system_init.h"
 #include "ospcommon/utility/getEnvVar.h"
 
-using ospcommon::AsyncLoop;
 using ospcommon::byte_t;
 using ospcommon::make_unique;
+using ospcommon::tasking::AsyncLoop;
 using ospcommon::tasking::numTaskingThreads;
 using ospcommon::utility::getEnvVar;
 

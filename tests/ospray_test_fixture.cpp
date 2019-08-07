@@ -18,9 +18,6 @@
 
 extern OSPRayEnvironment *ospEnv;
 
-#include "ospcommon/AffineSpace.h"
-using ospcommon::affine3f;
-
 namespace OSPRayTestScenes {
 
   // Helper functions /////////////////////////////////////////////////////////

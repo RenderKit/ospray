@@ -21,9 +21,8 @@
 #include <string>
 #include <vector>
 
-#include "ospcommon/vec.h"
-using ospcommon::vec2i;
-using ospcommon::vec3f;
+#include "ospcommon/math/vec.h"
+using namespace ospcommon::math;
 
 class OSPRayEnvironment : public ::testing::Environment
 {

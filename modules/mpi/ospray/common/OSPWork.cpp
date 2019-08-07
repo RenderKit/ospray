@@ -17,8 +17,10 @@
 #include <vector>
 
 #include "OSPWork.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/render/MPILoadBalancer.h"
+
+#include "../fb/DistributedFrameBuffer.h"
+#include "../render/MPILoadBalancer.h"
+
 #include "mpiCommon/MPICommon.h"
 #include "ospray/common/ObjectHandle.h"
 #include "render/RenderTask.h"
@@ -153,9 +155,8 @@ namespace ospray {
       {
         if (handle.defined()) {
           ManagedObject *obj = handle.lookup();
-          if (dynamic_cast<Renderer *>(obj) || dynamic_cast<FrameBuffer *>(obj)
-              || dynamic_cast<Camera *>(obj))
-          {
+          if (dynamic_cast<Renderer *>(obj) ||
+              dynamic_cast<FrameBuffer *>(obj) || dynamic_cast<Camera *>(obj)) {
             obj->commit();
           }
         }
@@ -252,9 +253,8 @@ namespace ospray {
           return;
 
         ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj)
-            || dynamic_cast<FrameBuffer *>(obj) || dynamic_cast<Camera *>(obj))
-        {
+        if (dynamic_cast<Renderer *>(obj) || dynamic_cast<Volume *>(obj) ||
+            dynamic_cast<FrameBuffer *>(obj) || dynamic_cast<Camera *>(obj)) {
           obj->setParam(name, val);
         }
       }
@@ -303,12 +303,12 @@ namespace ospray {
 
       // ospNewCamera /////////////////////////////////////////////////////////
 
-      template<>
+      template <>
       void NewCamera::runOnMaster()
       {
         run();
       }
-      
+
       // ospNewMaterial ///////////////////////////////////////////////////////
 
       void NewMaterial::run()
@@ -383,8 +383,7 @@ namespace ospray {
         // it), so let's assert that nobody accidentally uses it.
         assert(format != OSP_STRING);
 
-        if (isManagedObject(format))
-        {
+        if (isManagedObject(format)) {
           /* translating handles to managedobject pointers: if a
              data array has 'object' or 'data' entry types, then
              what the host sends are _handles_, not pointers, but

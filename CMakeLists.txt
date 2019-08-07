@@ -43,7 +43,6 @@ include(macros)
 include(ospray_macros)
 include(ospray_options)
 include(ispc)
-include(components/configure.cmake)
 
 if (OSPRAY_INSTALL_DEPENDENCIES)
   include(ospray_redistribute_deps)

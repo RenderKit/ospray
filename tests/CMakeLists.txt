@@ -23,7 +23,7 @@ if (NOT USE_STATIC_RUNTIME)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif()
 
-ospray_build_component(gtest)
+add_subdirectory(gtest)
 
 mark_as_advanced(gtest_build_samples)
 mark_as_advanced(gtest_build_tests)
@@ -46,9 +46,9 @@ ospray_create_test(ospray_test_suite
 
 target_link_libraries(ospray_test_suite
 PRIVATE
+	ospcommon::ospcommon
   gtest_main
   ospray
-	ospray_common
 	stb_image
 )
 

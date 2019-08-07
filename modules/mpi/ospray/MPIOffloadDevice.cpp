@@ -14,12 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/MPIOffloadDevice.h"
+#include "MPIOffloadDevice.h"
 // ospray
 #include "common/Messaging.h"
 #include "common/QueryableTask.h"
 // ospcommon
-#include "ospcommon/networking/Socket.h"
 #include "ospcommon/utility/getEnvVar.h"
 // maml
 #include "maml/maml.h"

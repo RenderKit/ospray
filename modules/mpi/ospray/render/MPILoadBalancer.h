@@ -18,12 +18,13 @@
 
 // stl
 #include <condition_variable>
-// ospray components
+// mpiCommon
+#include "mpiCommon/MPICommon.h"
+// mpi module
 #include "../common/Messaging.h"
-#include "components/mpiCommon/MPICommon.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
+#include "../fb/DistributedFrameBuffer.h"
+// ospray
 #include "render/LoadBalancer.h"
-
 #include "camera/Camera.h"
 #include "common/World.h"
 

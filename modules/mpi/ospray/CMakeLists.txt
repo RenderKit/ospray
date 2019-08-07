@@ -14,54 +14,52 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_configure_mpi()
+## Options ##
 
-ospray_build_component(snappy EXCLUDE_FROM_ALL)
+set(OSP_MPI_COMPRESSION_THRESHOLD 16 CACHE STRING
+  "Min. number of ranks to enable message compression at (number)" )
+mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
-ospray_create_library(ospray_mpi_common
-    MPICommon.cpp
-    MPIBcastFabric.cpp
-    Collectives.cpp
-    maml/maml.cpp
-    maml/Context.cpp
-  COMPONENT mpi
+## Build the MPI module ##
+
+include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
+
+ospray_create_library(ospray_module_mpi
+  MPIOffloadDevice.cpp
+  MPIOffloadWorker.cpp
+
+  common/OSPWork.cpp
+  common/Messaging.cpp
+  common/Profiling.cpp
+
+  fb/DistributedFrameBuffer.cpp
+  fb/DistributedFrameBuffer.ispc
+  fb/DistributedFrameBuffer_TileTypes.cpp
+  fb/DistributedFrameBuffer_TileMessages.cpp
+
+  render/MPILoadBalancer.cpp
 )
 
-target_link_libraries(ospray_mpi_common
+target_link_libraries(ospray_module_mpi
   PRIVATE
     snappy
   PUBLIC
-    ${MPI_CXX_LIBRARIES}
-    ospray_common
+    ospray_module_ispc
+    ospray_mpi_common
+    ospray_pico_bench
 )
 
-target_include_directories(ospray_mpi_common
+target_include_directories(ospray_module_mpi
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
-    ${OSPRAY_MPI_INCLUDES}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+  PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
-  COMPONENT devel
-  FILES_MATCHING
-  PATTERN *.h
-)
+target_compile_definitions(ospray_module_mpi PUBLIC
+  -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 
-# ------------------------------------------------------------------
-# tests and examples
-# ------------------------------------------------------------------
+## Build the worker executable ##
 
-ospray_create_test(mamlTest
-  maml/apps/mamlTest.cpp
-LINK
-  ospray_mpi_common
-)
-
-ospray_create_test(mamlTestMessageSwarm
-  maml/apps/testMessageSwarm.cpp
-LINK
-  ospray_mpi_common
-)
+ospray_create_application(ospray_mpi_worker mpi_offload_worker_main.cpp)
+target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)

@@ -17,58 +17,14 @@
 option(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
 
 if (OSPRAY_MODULE_MPI)
-  set(OSP_MPI_COMPRESSION_THRESHOLD 16 CACHE STRING
-    "Min. number of ranks to enable message compression at (number)" )
-  mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
   set(OSPRAY_DEFAULT_COMPONENT mpi)
 
-  ospray_build_component(mpiCommon)
-  ospray_build_component(pico_bench)
-  ospray_build_component(snappy EXCLUDE_FROM_ALL)
+  ospray_configure_mpi()
 
-  include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
-
-  ospray_create_library(ospray_module_mpi
-    MPIOffloadDevice.cpp
-    MPIOffloadWorker.cpp
-
-    common/OSPWork.cpp
-    common/Messaging.cpp
-    common/Profiling.cpp
-
-    fb/DistributedFrameBuffer.cpp
-    fb/DistributedFrameBuffer.ispc
-    fb/DistributedFrameBuffer_TileTypes.cpp
-    fb/DistributedFrameBuffer_TileMessages.cpp
-
-    render/MPILoadBalancer.cpp
-  )
-
-  target_link_libraries(ospray_module_mpi
-    PRIVATE
-      snappy
-    PUBLIC
-      ospray_module_ispc
-      ospray_mpi_common
-      ospray_pico_bench
-  )
-
-  target_include_directories(ospray_module_mpi
-    PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    PRIVATE
-      ${CMAKE_CURRENT_BINARY_DIR}
-  )
-
-  target_compile_definitions(ospray_module_mpi PUBLIC
-    -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
-
-  ##############################################################
-  # MPI DEVICE - mpi worker
-  ##############################################################
-
-  ospray_create_application(ospray_mpi_worker mpi_offload_worker_main.cpp)
-  target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
+  add_subdirectory(mpiCommon)
+  add_subdirectory(external/pico_bench)
+  add_subdirectory(external/snappy EXCLUDE_FROM_ALL)
+  add_subdirectory(ospray)
 
 endif (OSPRAY_MODULE_MPI)
