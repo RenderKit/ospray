@@ -55,11 +55,6 @@ namespace ospray {
                       const void *init,
                       int flags) override;
 
-      int setRegion(OSPVolume object,
-                    const void *source,
-                    const vec3i &index,
-                    const vec3i &count) override;
-
       // Renderable Objects ///////////////////////////////////////////////////
 
       OSPLight newLight(const char *type) override;
@@ -226,9 +221,6 @@ namespace ospray {
       void initializeDevice();
 
       void processWork(work::Work &work, bool flushWriteStream = false);
-
-      /*! This only exists to support getting the voxel type for setRegion */
-      int getString(OSPObject object, const char *name, char **value);
 
       ObjectHandle allocateHandle() const;
 

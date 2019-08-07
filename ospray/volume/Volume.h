@@ -33,10 +33,6 @@ namespace ospray {
 
     virtual void commit() override;
 
-    virtual int setRegion(const void *source,
-                          const vec3i &index,
-                          const vec3i &count) = 0;
-
     box3f bounds{empty};
 
     RTCGeometry embreeGeometry{nullptr};

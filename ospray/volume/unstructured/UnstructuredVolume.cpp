@@ -271,11 +271,6 @@ namespace ospray {
     finished = true;
   }
 
-  int UnstructuredVolume::setRegion(const void *, const vec3i &, const vec3i &)
-  {
-    NOT_IMPLEMENTED;
-  }
-
   box4f UnstructuredVolume::getCellBBox(size_t id)
   {
     // get cell offset in the vertex indices array

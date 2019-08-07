@@ -268,22 +268,6 @@ namespace ospray {
       return (OSPData)(int64)handle;
     }
 
-    int MPIOffloadDevice::setRegion(OSPVolume _volume,
-                                    const void *source,
-                                    const vec3i &index,
-                                    const vec3i &count)
-    {
-      char *typeString = nullptr;
-      getString(_volume, "voxelType", &typeString);
-      OSPDataType type = typeForString(typeString);
-      delete[] typeString;
-
-      Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
-      work::SetRegion work(_volume, index, count, source, type);
-      processWork(work);
-      return true;
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Renderable Objects /////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -735,19 +719,6 @@ namespace ospray {
     ///////////////////////////////////////////////////////////////////////////
     // Misc Functions /////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
-
-    int MPIOffloadDevice::getString(OSPObject _object,
-                                    const char *name,
-                                    char **value)
-    {
-      ManagedObject *object = ((ObjectHandle &)_object).lookup();
-      if (object->hasParam(name)) {
-        *value = new char[2048];
-        strncpy(*value, object->getParam<std::string>(name, "").c_str(), 2048);
-        return true;
-      }
-      return false;
-    }
 
     void MPIOffloadDevice::processWork(work::Work &work, bool flushWriteStream)
     {

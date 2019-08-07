@@ -33,10 +33,6 @@ namespace ospray {
 
     void commit() override;
 
-    int setRegion(const void *source,
-                  const vec3i &index,
-                  const vec3i &count) override;
-
     std::unique_ptr<amr::AMRData> data;
     std::unique_ptr<amr::AMRAccel> accel;
 

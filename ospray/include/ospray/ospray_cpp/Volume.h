@@ -29,10 +29,6 @@ namespace ospray {
       Volume(const std::string &type);
       Volume(const Volume &copy);
       Volume(OSPVolume existing);
-
-      void setRegion(void *source,
-                     const ospcommon::vec3i &regionCoords,
-                     const ospcommon::vec3i &regionSize) const;
     };
 
     // Inlined function definitions ///////////////////////////////////////////

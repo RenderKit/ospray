@@ -55,11 +55,6 @@ namespace ospray {
                               const void *init,
                               int flags) = 0;
 
-      virtual int setRegion(OSPVolume object,
-                            const void *source,
-                            const vec3i &index,
-                            const vec3i &count) = 0;
-
       // Renderable Objects ///////////////////////////////////////////////////
 
       virtual OSPLight newLight(const char *type) = 0;

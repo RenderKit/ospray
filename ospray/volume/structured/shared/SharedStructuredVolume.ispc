@@ -373,39 +373,3 @@ export void *uniform SharedStructuredVolume_createInstance(void *uniform cppEqui
 
   return volume;
 }
-
-/*! this is a very simple implementation that does not yet use either
-  vectors OR threads ... should be fixed */
-#define template_setRegion(type)                                             \
-export void SharedStructuredVolume_setRegion_##type                          \
-(void *uniform _self,                                                        \
- const void *uniform source,                                                 \
- const uniform vec3i &index,                                                 \
- const uniform vec3i &count)                                                 \
-{                                                                            \
-  SharedStructuredVolume *uniform self                                       \
-    = (SharedStructuredVolume *uniform)_self;                                \
-  uniform type *uniform ptr_out = (uniform type *)self->voxelData;           \
-  const uniform type *uniform ptr_in = (const uniform type *)source;         \
-  for (uniform int iz=0;iz<count.z;iz++) {                                   \
-    uniform int64 iiz = iz + index.z;                                        \
-    for (uniform int iy=0;iy<count.y;iy++)                                   \
-      for (uniform int ix=0;ix<count.x;ix++) {                               \
-        uniform int64 iix = ix + index.x;                                    \
-        uniform int64 iiy = iy + index.y;                                    \
-        uniform int64 ofs_in                                                 \
-          = ix + count.x*(iy+count.y*(uniform int64)iz);                     \
-        uniform int64 ofs_out                                                \
-          = iix + self->super.dimensions.x                                   \
-          * (iiy+self->super.dimensions.y*iiz);                              \
-        *(ptr_out+ofs_out) = ptr_in[ofs_in];                                 \
-      }                                                                      \
-  }                                                                          \
-}
-
-template_setRegion(uint8);
-template_setRegion(int16);
-template_setRegion(uint16);
-template_setRegion(float);
-template_setRegion(double);
-#undef template_setRegion

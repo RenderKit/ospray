@@ -36,46 +36,6 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  int SharedStructuredVolume::setRegion(const void *source,
-                                        const vec3i &index,
-                                        const vec3i &count)
-  {
-    if (getIE() == nullptr)
-      createEquivalentISPC();
-    switch (voxelType) {
-    case OSP_UCHAR:
-      ispc::SharedStructuredVolume_setRegion_uint8(getIE(),source,
-                                                   (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
-      break;
-    case OSP_SHORT:
-      ispc::SharedStructuredVolume_setRegion_int16(getIE(),source,
-                                                   (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
-      break;
-    case OSP_USHORT:
-      ispc::SharedStructuredVolume_setRegion_uint16(getIE(),source,
-                                                   (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
-      break;
-    case OSP_FLOAT:
-      ispc::SharedStructuredVolume_setRegion_float(getIE(),source,
-                                                   (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
-      break;
-    case OSP_DOUBLE:
-      ispc::SharedStructuredVolume_setRegion_double(getIE(),source,
-                                                   (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
-      break;
-    default:
-      throw std::runtime_error("SharedStructuredVolume::setRegion() not "
-                               "support for volumes of voxel type '"
-                               + stringForType(voxelType) + "'");
-    }
-    return true;
-  }
-
   void SharedStructuredVolume::createEquivalentISPC()
   {
     // Get the voxel type.

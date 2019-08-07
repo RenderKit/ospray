@@ -42,15 +42,6 @@ namespace ospray {
     return "ospray::AMRVolume";
   }
 
-  /*! Copy voxels into the volume at the given index (non-zero
-    return value indicates success). */
-  int AMRVolume::setRegion(const void *, const vec3i &, const vec3i &)
-  {
-    FATAL(
-        "'setRegion()' doesn't make sense for AMR volumes; "
-        "they can only be set from existing data");
-  }
-
   //! Allocate storage and populate the volume.
   void AMRVolume::commit()
   {

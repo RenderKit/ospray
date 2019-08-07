@@ -35,12 +35,6 @@ namespace ospray {
     //! Allocate storage and populate the volume, called through the OSPRay API.
     void commit() override;
 
-    //! Copy voxels into the volume at the given index
-    /*! \returns 0 on error, any non-zero value indicates success */
-    int setRegion(const void *source_pointer,
-                  const vec3i &target_index,
-                  const vec3i &source_count) override;
-
    private:
 
     // Read 32/64-bit integer value from given array

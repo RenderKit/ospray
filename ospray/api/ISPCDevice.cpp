@@ -116,15 +116,6 @@ namespace ospray {
       return (OSPData)data;
     }
 
-    int ISPCDevice::setRegion(OSPVolume handle,
-                              const void *source,
-                              const vec3i &index,
-                              const vec3i &count)
-    {
-      Volume *volume = (Volume *)handle;
-      return volume->setRegion(source, index, count);
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Renderable Objects /////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

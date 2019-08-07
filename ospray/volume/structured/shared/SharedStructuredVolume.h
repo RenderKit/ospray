@@ -34,12 +34,6 @@ namespace ospray {
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit() override;
 
-    //! Copy voxels into the volume at the given index; not allowed on
-    //!  SharedStructuredVolume.
-    virtual int setRegion(const void *source,
-                          const vec3i &index,
-                          const vec3i &count) override;
-
   protected:
 
     //! Create the equivalent ISPC volume container.
