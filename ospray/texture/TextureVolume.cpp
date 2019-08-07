@@ -34,7 +34,7 @@ namespace ospray {
     auto *v = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
 
     if (v == nullptr)
-      throw std::runtime_error("no volume specified on 'volume' texture!");
+      throw std::runtime_error("volume texture must have 'volume' object");
 
     volume = v;
 

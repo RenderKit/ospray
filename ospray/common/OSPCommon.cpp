@@ -388,7 +388,7 @@ namespace ospray {
       auto &device = api::currentDevice();
 
       device.lastErrorCode = e;
-      device.lastErrorMsg  = message;
+      device.lastErrorMsg  = "#ospray: " + message;
 
       device.error_fcn(e, message.c_str());
     } else {

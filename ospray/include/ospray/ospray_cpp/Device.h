@@ -54,7 +54,7 @@ namespace ospray {
       if (c) {
         ospHandle = c;
       } else {
-        throw std::runtime_error("Failed to create OSPDevice!");
+        throw std::runtime_error("failed to create OSPDevice");
       }
     }
 

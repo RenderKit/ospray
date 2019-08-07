@@ -67,23 +67,18 @@ namespace ospray {
 
   std::unique_ptr<LiveImageOp> SSAOFrameOp::attach(FrameBufferView &fbView)
   {
-    if (!fbView.colorBuffer) {
-      static WarnOnce warn(toString() +
-                           " requires color data but the "
-                           "framebuffer does not have this channel.");
-      throw std::runtime_error(toString() +
-                               " cannot be attached to framebuffer "
-                               "which does not have color data");
-    }
-
-    if (!fbView.normalBuffer || !fbView.depthBuffer) {
-      static WarnOnce warn(toString() +
-                           " requires normal and depth data but "
-                           "the framebuffer does not have these channels.");
-      throw std::runtime_error(toString() +
-                               " cannot be attached to framebuffer "
-                               "which does not have normal or depth data");
-    }
+    if (!fbView.colorBuffer)
+      throw std::runtime_error(
+          "ssao frame operation must be attached to framebuffer with color "
+          "data");
+    if (!fbView.normalBuffer)
+      throw std::runtime_error(
+          "SSAO frame operation must be attached to framebuffer with normal "
+          "data");
+    if (!fbView.depthBuffer)
+      throw std::runtime_error(
+          "SSAO frame operation must be attached to framebuffer with depth "
+          "data");
 
     void *ispcEquiv = ispc::LiveSSAOFrameOp_create();
 
@@ -149,11 +144,10 @@ namespace ospray {
                                   T *color,
                                   const Camera *cam)
   {
-    if (cam->toString().compare("ospray::PerspectiveCamera")) {
-      throw std::runtime_error(cam->toString() +
-                               " camera type not supported in SSAO "
-                               "PerspectiveCamera only");
-    }
+    if (cam->toString().compare("ospray::PerspectiveCamera"))
+      throw std::runtime_error(
+          "SSAO fame operation must be used with perspective camera (" +
+          cam->toString() + ")");
 
     PerspectiveCamera *camera = (PerspectiveCamera *)(cam);
 

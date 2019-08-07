@@ -250,9 +250,7 @@ namespace ospray {
     if (mappedMem) {
       if (mappedMem != colorBuffer && mappedMem != depthBuffer &&
           mappedMem != normalBuffer && mappedMem != albedoBuffer) {
-        throw std::runtime_error(
-            "ERROR: unmapping a pointer not created by "
-            "OSPRay!");
+        throw std::runtime_error("unmapping a pointer not created by OSPRay");
       }
       this->refDec();
     }

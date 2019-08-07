@@ -71,20 +71,20 @@ namespace ospray {
       return;
 
     blockBoundsData = getParamData("block.bounds");
-    assert(blockBoundsData);
-    assert(blockBoundsData->data);
+    if(blockBoundsData.ptr == nullptr)
+        throw std::runtime_error("amr volume must have 'block.bounds' array");
 
     refinementLevelsData = getParamData("block.level");
-    assert(refinementLevelsData);
-    assert(refinementLevelsData->data);
+    if(refinementLevelsData.ptr == nullptr)
+        throw std::runtime_error("amr volume must have 'block.level' array");
 
     cellWidthsData = getParamData("block.cellWidth");
-    assert(cellWidthsData);
-    assert(cellWidthsData->data);
+    if(cellWidthsData.ptr == nullptr)
+        throw std::runtime_error("amr volume must have 'block.cellWidth' array");
 
     blockDataData = getParamData("block.data");
-    assert(blockDataData);
-    assert(blockDataData->data);
+    if(blockDataData.ptr == nullptr)
+        throw std::runtime_error("amr volume must have 'block.data' array");
 
     data  = make_unique<amr::AMRData>(*blockBoundsData,
                                      *refinementLevelsData,
@@ -116,8 +116,10 @@ namespace ospray {
     case OSP_DOUBLE:
       break;
     default:
-      throw std::runtime_error("amrVolume unsupported voxel type '" +
-                               stringForType(voxelType) + "'");
+      throw std::runtime_error("amr volume 'voxelType' is invalid type " +
+                               stringForType(voxelType) +
+                               ". Must be one of: OSP_UCHAR, OSP_SHORT, "
+                               "OSP_USHORT, OSP_FLOAT, OSP_DOUBLE");
     }
 
     ispc::AMRVolume_set(getIE(),

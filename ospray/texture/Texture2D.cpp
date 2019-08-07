@@ -32,14 +32,15 @@ namespace ospray {
 
     if (size.x < 0 || size.y < 0) {
       std::stringstream ss;
-      ss << "'size' param on Texture2D must be positive! got " << size;
+      ss << "2D texture 'size' must be positive, but is " << size;
       throw std::runtime_error(ss.str());
     }
 
     auto texData = getParamData("data", nullptr);
 
     if (!texData->data)
-      throw std::runtime_error("no texel data provided to Texture2D");
+      throw std::runtime_error(
+          "2D texture must have 'data' array of texel data");
 
     type  = static_cast<OSPTextureFormat>(
       getParam1i("type", OSP_TEXTURE_FORMAT_INVALID)
@@ -50,9 +51,9 @@ namespace ospray {
 
     if (numBytesExpected != texData->numBytes) {
       std::stringstream ss;
-      ss << "'size' and 'data' parameters disagree on memory size!\n";
-      ss << "expected #bytes: " << numBytesExpected;
-      ss << "   given #bytes: " << texData->numBytes;
+      ss << "2D texture 'size' (" << numBytesExpected
+         << ") does not match provided 'data' array size (" << texData->numBytes
+         << ")";
       throw std::runtime_error(ss.str());
     }
 

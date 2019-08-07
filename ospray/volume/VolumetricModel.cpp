@@ -26,7 +26,7 @@ namespace ospray {
   VolumetricModel::VolumetricModel(Volume *_volume)
   {
     if (_volume == nullptr)
-      throw std::runtime_error("NULL Volume given to VolumetricModel!");
+      throw std::runtime_error("volumetric model received null volume");
 
     volume = _volume;
 
@@ -44,7 +44,7 @@ namespace ospray {
         (TransferFunction *)getParamObject("transferFunction", nullptr);
 
     if (transferFunction == nullptr)
-      throw std::runtime_error("no transfer function specified on the volume!");
+      throw std::runtime_error("volumetric model must have 'transferFunction'");
 
     // Finish getting/setting other appearance information //
 

@@ -45,7 +45,8 @@ namespace ospray {
         float *kSpectral = nullptr;
         if (ior && ior->data && ior->size() > 0) {
           if (ior->type != OSP_VEC3F)
-            throw std::runtime_error("Metal::ior must have data type OSP_VEC3F (wavelength, eta, k)[]");
+            throw std::runtime_error(
+                "metal material 'ior' array must have element type OSP_VEC3F");
           // resample, relies on ordered samples
           auto iorP = (vec3f*)ior->data;
           auto iorPrev = *iorP;

@@ -39,8 +39,8 @@ namespace ospray {
       if (c) {
         ospObject = c;
       } else {
-        throw std::runtime_error("Failed to create OSPMaterial (of type '" +
-                                 renderer_type + "'::'" + mat_type + "')!");
+        throw std::runtime_error("failed to create OSPMaterial (of type '" +
+                                 renderer_type + "'::'" + mat_type + "')");
       }
     }
 

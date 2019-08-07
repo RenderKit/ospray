@@ -129,8 +129,9 @@ namespace ospray {
       if (firstFrameOperation == imageOps.size() && isFrameOp)
         firstFrameOperation = i;
       else if (firstFrameOperation < imageOps.size() && !isFrameOp)
-        throw std::runtime_error("PixelOps/TileOps can't come after FrameOps "
-                                 "in the imageOp pipeline for now.");
+        throw std::runtime_error(
+            "frame operation must be before pixel and tile operations in the "
+            "image operation pipeline");
     }
   }
 

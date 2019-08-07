@@ -37,7 +37,7 @@ namespace ospray {
       if (c) {
         ospObject = c;
       } else {
-        throw std::runtime_error("Failed to create OSPCamera!");
+        throw std::runtime_error("failed to create OSPCamera");
       }
     }
 

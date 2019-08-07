@@ -37,8 +37,8 @@ namespace ospray {
       if (c) {
         ospObject = c;
       } else {
-        throw std::runtime_error("Failed to create OSPLight (of type '" +
-                                 light_type + "')!");
+        throw std::runtime_error("failed to create OSPLight (of type '" +
+                                 light_type + "')");
       }
     }
 

@@ -24,6 +24,9 @@ namespace ospray {
 
   GeometricModel::GeometricModel(Geometry *_geometry)
   {
+    if (_geometry == nullptr)
+      throw std::runtime_error("geometric model received null geometry");
+
     geom = _geometry;
 
     this->ispcEquivalent = ispc::GeometricModel_create(this);

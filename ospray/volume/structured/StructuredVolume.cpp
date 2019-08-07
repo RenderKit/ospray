@@ -42,7 +42,7 @@ namespace ospray {
     this->dimensions = getParam3i("dimensions", vec3i(0));
 
     if (reduce_min(this->dimensions) <= 0)
-      throw std::runtime_error("invalid volume dimensions!");
+      throw std::runtime_error("structured volume 'dimensions' invalid");
 
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
     this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));

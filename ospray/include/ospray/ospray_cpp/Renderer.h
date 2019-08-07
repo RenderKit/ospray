@@ -40,7 +40,7 @@ namespace ospray {
       if (c) {
         ospObject = c;
       } else {
-        throw std::runtime_error("Failed to create OSPRenderer!");
+        throw std::runtime_error("failed to create OSPRenderer");
       }
     }
 

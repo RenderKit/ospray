@@ -88,7 +88,9 @@ namespace ospray {
     else if (method == OSP_ITERATIVE)
       ispc::UnstructuredVolume_method_iterative(ispcEquivalent);
     else
-      throw std::runtime_error("unknown cell interpolation method");
+      throw std::runtime_error(
+          "unstructured volume 'hexMethod' has invalid type. Must be one of: "
+          "OSP_FAST, OSP_ITERATIVE");
 
     ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
 
@@ -147,8 +149,8 @@ namespace ospray {
     switch (indexData->type) {
     case OSP_INT:
     case OSP_UINT:
-    case OSP_VEC4UI:
     case OSP_VEC4I:
+    case OSP_VEC4UI:
       index32Bit = true;
       break;
     case OSP_LONG:
@@ -157,7 +159,10 @@ namespace ospray {
       break;
     default:
       throw std::runtime_error(
-          "unsupported unstructured volume index data type");
+          "unstructured volume 'index' array has invalid type " +
+          stringForType(indexData->type) +
+          ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4I, OSP_VEC4UI, "
+          "OSP_LONG, OSP_ULONG");
     }
 
     // 'cell' parameter is optional
@@ -170,8 +175,8 @@ namespace ospray {
       switch (cellData->type) {
       case OSP_INT:
       case OSP_UINT:
-      case OSP_VEC4UI:
       case OSP_VEC4I:
+      case OSP_VEC4UI:
         cell32Bit = true;
         break;
       case OSP_LONG:
@@ -179,8 +184,11 @@ namespace ospray {
         cell32Bit = false;
         break;
       default:
-        throw std::runtime_error(
-            "unsupported unstructured volume cell array data type");
+      throw std::runtime_error(
+          "unstructured volume 'cell' array has invalid type " +
+          stringForType(cellData->type) +
+          ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4I, OSP_VEC4UI, "
+          "OSP_LONG, OSP_ULONG");
       }
     } else {
       // if cells array was not provided through API allocate it
@@ -217,7 +225,8 @@ namespace ospray {
       // check if number of cell types matches number of cells
       if (cellTypeData->size() != nCells)
         throw std::runtime_error(
-            "cell type array for unstructured volume has wrong size");
+            "unstructured volume 'cell.type' array length does not match "
+            "number of cells");
     } else {
       // create cell type array
       cellType              = new OSPUnstructuredCellType[nCells];
@@ -351,7 +360,9 @@ namespace ospray {
         calculateCellNormals(taskIndex, pyramidFaces, 5);
         break;
       case OSP_UNKNOWN_CELL_TYPE:
-        throw std::runtime_error("unknown unstructured cell type");
+        throw std::runtime_error(
+            "unstructured volume has invalid cell type. Must be one of: "
+            "OSP_TETRAHEDRON, OSP_HEXAHEDRON, OSP_WEDGE, OSP_PYRAMID");
       }
     });
   }

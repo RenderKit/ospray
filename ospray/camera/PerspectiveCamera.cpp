@@ -71,7 +71,10 @@ namespace ospray {
       case OSP_STEREO_NONE:
         break;
       case OSP_STEREO_UNKNOWN:
-        throw std::runtime_error("Unknown stereo mode provided");
+        throw std::runtime_error(
+            "perspective camera 'stereoMode' is invalid. Must be one of: "
+            "OSP_STEREO_LEFT, OSP_STEREO_RIGHT, OSP_STEREO_SIDE_BY_SIDE, "
+            "OSP_STEREO_NONE");
     }
 
     imgPlaneSize.y = 2.f * tanf(deg2rad(0.5f * fovy));

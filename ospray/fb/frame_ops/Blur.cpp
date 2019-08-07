@@ -103,14 +103,10 @@ namespace ospray {
 
   std::unique_ptr<LiveImageOp> BlurFrameOp::attach(FrameBufferView &fbView)
   {
-    if (!fbView.colorBuffer) {
-      static WarnOnce warn(toString() +
-                           " requires color data but the "
-                           "framebuffer does not have this channel.");
-      throw std::runtime_error(toString() +
-                               " cannot be attached to framebuffer "
-                               "which does not have color data");
-    }
+    if (!fbView.colorBuffer)
+      throw std::runtime_error(
+          "blur frame operation must be attached to framebuffer with color "
+          "data");
     if (fbView.colorBufferFormat == OSP_FB_RGBA8 ||
         fbView.colorBufferFormat == OSP_FB_SRGBA) {
       return ospcommon::make_unique<LiveBlurFrameOp<uint8_t>>(fbView);
