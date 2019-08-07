@@ -21,7 +21,7 @@
 
 struct TransferFunction;
 
-//! \brief A spatial acceleration structure over a BlockBrickedVolume, used
+//! \brief A spatial acceleration structure over a StructuredVolume, used
 //!  for opacity and variance based space skipping.
 //!
 struct GridAccelerator {
