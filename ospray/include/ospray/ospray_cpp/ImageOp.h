@@ -34,12 +34,7 @@ namespace ospray {
 
     inline ImageOp::ImageOp(const std::string &type)
     {
-      OSPImageOp c = ospNewImageOp(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPImageOp");
-      }
+      ospObject = ospNewImageOp(type.c_str());
     }
 
     inline ImageOp::ImageOp(const ImageOp &copy) :

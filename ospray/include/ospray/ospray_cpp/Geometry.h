@@ -34,12 +34,7 @@ namespace ospray {
 
     inline Geometry::Geometry(const std::string &type)
     {
-      OSPGeometry c = ospNewGeometry(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPGeometry");
-      }
+      ospObject = ospNewGeometry(type.c_str());
     }
 
     inline Geometry::Geometry(const Geometry &copy) :

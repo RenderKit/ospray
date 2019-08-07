@@ -36,12 +36,7 @@ namespace ospray {
 
     inline TransferFunction::TransferFunction(const std::string &type)
     {
-      OSPTransferFunction c = ospNewTransferFunction(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPTransferFunction");
-      }
+      ospObject = ospNewTransferFunction(type.c_str());
     }
 
     inline TransferFunction::TransferFunction(const TransferFunction &copy)

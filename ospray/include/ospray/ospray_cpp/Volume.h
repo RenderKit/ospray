@@ -35,12 +35,7 @@ namespace ospray {
 
     inline Volume::Volume(const std::string &type)
     {
-      OSPVolume c = ospNewVolume(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPVolume");
-      }
+      ospObject = ospNewVolume(type.c_str());
     }
 
     inline Volume::Volume(const Volume &copy)

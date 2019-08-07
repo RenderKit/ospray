@@ -33,13 +33,7 @@ namespace ospray {
 
     inline Light::Light(const std::string &light_type)
     {
-      auto c = ospNewLight(light_type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPLight (of type '" +
-                                 light_type + "')");
-      }
+      ospObject = ospNewLight(light_type.c_str());
     }
 
     inline Light::Light(const Light &copy)

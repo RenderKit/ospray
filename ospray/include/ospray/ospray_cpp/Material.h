@@ -35,13 +35,7 @@ namespace ospray {
     inline Material::Material(const std::string &renderer_type,
                               const std::string &mat_type)
     {
-      auto c = ospNewMaterial(renderer_type.c_str(), mat_type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPMaterial (of type '" +
-                                 renderer_type + "'::'" + mat_type + "')");
-      }
+      ospObject = ospNewMaterial(renderer_type.c_str(), mat_type.c_str());
     }
 
     inline Material::Material(const Material &copy)

@@ -33,12 +33,7 @@ namespace ospray {
 
     inline Camera::Camera(const std::string &type)
     {
-      OSPCamera c = ospNewCamera(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPCamera");
-      }
+      ospObject = ospNewCamera(type.c_str());
     }
 
     inline Camera::Camera(const Camera &copy)

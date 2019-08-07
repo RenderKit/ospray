@@ -37,12 +37,7 @@ namespace ospray {
 
     inline Instance::Instance(OSPGroup group)
     {
-      OSPInstance c = ospNewInstance(group);
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPInstance");
-      }
+      ospObject = ospNewInstance(group);
     }
 
     inline Instance::Instance(const Instance &copy)

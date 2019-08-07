@@ -33,12 +33,7 @@ namespace ospray {
 
     inline Group::Group()
     {
-      OSPGroup c = ospNewGroup();
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPGroup");
-      }
+      ospObject = ospNewGroup();
     }
 
     inline Group::Group(const Group &copy)

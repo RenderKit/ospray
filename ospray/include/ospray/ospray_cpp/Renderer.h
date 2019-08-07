@@ -36,12 +36,7 @@ namespace ospray {
 
     inline Renderer::Renderer(const std::string &type)
     {
-      OSPRenderer c = ospNewRenderer(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPRenderer");
-      }
+      ospObject = ospNewRenderer(type.c_str());
     }
 
     inline Renderer::Renderer(const Renderer &copy)

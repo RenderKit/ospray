@@ -50,12 +50,7 @@ namespace ospray {
 
     inline Device::Device(const std::string &type)
     {
-      OSPDevice c = ospNewDevice(type.c_str());
-      if (c) {
-        ospHandle = c;
-      } else {
-        throw std::runtime_error("failed to create OSPDevice");
-      }
+      ospHandle = ospNewDevice(type.c_str());
     }
 
     inline Device::Device(const Device &copy) : ospHandle(copy.ospHandle) {}

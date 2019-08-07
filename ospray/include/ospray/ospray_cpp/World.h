@@ -34,12 +34,7 @@ namespace ospray {
 
     inline World::World()
     {
-      OSPWorld c = ospNewWorld();
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("failed to create OSPWorld");
-      }
+      ospObject = ospNewWorld();
     }
 
     inline World::World(const World &copy)
