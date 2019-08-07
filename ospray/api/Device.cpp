@@ -19,7 +19,7 @@
 #include "objectFactory.h"
 #include "common/OSPCommon.h"
 // ospcommon
-#include "ospcommon/library.h"
+#include "ospcommon/os/library.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
 

@@ -38,7 +38,7 @@ ospray_create_library(ospray_testing
   ../utility/rawToAMR.cpp
 )
 
-target_link_libraries(ospray_testing PUBLIC ospray PRIVATE ospray_common)
+target_link_libraries(ospray_testing PUBLIC ospray PRIVATE ospcommon::ospcommon)
 
 target_include_directories(ospray_testing
   PUBLIC

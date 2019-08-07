@@ -16,13 +16,13 @@
 
 #include "Geometry.h"
 // ospcommon
-#include "ospcommon/box.h"
+#include "ospcommon/math/box.h"
 
 #include <cmath>
 #include <random>
 #include <vector>
 
-using namespace ospcommon;
+using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {

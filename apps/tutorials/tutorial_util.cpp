@@ -16,8 +16,8 @@
 
 #include "tutorial_util.h"
 
-#include "ospcommon/vec.h"
-using namespace ospcommon;
+#include "ospcommon/math/vec.h"
+using namespace ospcommon::math;
 
 #include <iterator>
 #include <vector>

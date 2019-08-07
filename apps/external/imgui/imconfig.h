@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <ospcommon/vec.h>
+#include "ospcommon/math/vec.h"
 
 //---- Define assertion handler. Defaults to calling assert().
 //#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
@@ -47,12 +47,12 @@
 
 //---- Define constructor and implicit cast operators to convert back<>forth from your math types and ImVec2/ImVec4.
 #define IM_VEC2_CLASS_EXTRA                                                 \
-        ImVec2(const ospcommon::vec2f& f) { x = f.x; y = f.y; }                       \
-        operator ospcommon::vec2f() const { return ospcommon::vec2f(x,y); }
+        ImVec2(const ospcommon::math::vec2f& f) { x = f.x; y = f.y; }                       \
+        operator ospcommon::math::vec2f() const { return ospcommon::math::vec2f(x,y); }
 
 #define IM_VEC4_CLASS_EXTRA                                                 \
-        ImVec4(const ospcommon::vec4f& f) { x = f.x; y = f.y; z = f.z; w = f.w; }     \
-        operator ospcommon::vec4f() const { return ospcommon::vec4f(x,y,z,w); }
+        ImVec4(const ospcommon::math::vec4f& f) { x = f.x; y = f.y; z = f.z; w = f.w; }     \
+        operator ospcommon::math::vec4f() const { return ospcommon::math::vec4f(x,y,z,w); }
 
 //---- Use 32-bit vertex indices (instead of default: 16-bit) to allow meshes with more than 64K vertices
 //#define ImDrawIdx unsigned int

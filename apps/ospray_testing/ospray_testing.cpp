@@ -22,10 +22,11 @@
 #include "transferFunction/TransferFunction.h"
 #include "volume/Volume.h"
 // ospcommon
-#include "ospcommon/box.h"
+#include "ospcommon/math/box.h"
 #include "ospcommon/utility/OnScopeExit.h"
 
 using namespace ospcommon;
+using namespace ospcommon::math;
 
 extern "C" OSPRenderer ospTestingNewRenderer(const char *type)
 {
@@ -87,7 +88,7 @@ extern "C" OSPCamera ospTestingNewDefaultCamera(osp_box3f _bounds)
   vec3f diag = bounds.size();
   diag       = max(diag, vec3f(0.3f * length(diag)));
 
-  auto gaze = ospcommon::center(bounds);
+  auto gaze = center(bounds);
   auto pos  = gaze - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
   auto up   = vec3f(0.f, 1.f, 0.f);
   auto dir  = normalize(gaze - pos);

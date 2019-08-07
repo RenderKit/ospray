@@ -16,12 +16,13 @@
 
 #include "Geometry.h"
 // ospcommon
-#include "ospcommon/box.h"
-#include "ospcommon/multidim_index_sequence.h"
+#include "ospcommon/math/box.h"
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 #include <vector>
 
 using namespace ospcommon;
+using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {

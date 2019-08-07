@@ -47,9 +47,9 @@ ospray_create_library(tutorial_common STATIC
 )
 
 target_link_libraries(tutorial_common PUBLIC
+  ospcommon::ospcommon
   ospray
   ospray_testing
-  ospray_common
   ospray_imgui
   glfw
   ${OPENGL_LIBRARIES}

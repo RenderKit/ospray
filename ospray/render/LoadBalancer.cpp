@@ -27,8 +27,8 @@ namespace ospray {
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
                                             Renderer *renderer,
-                                            Camera * camera,
-                                            World * world)
+                                            Camera *camera,
+                                            World *world)
   {
     void *perFrameData = renderer->beginFrame(fb, world);
     bool cancel        = false;
@@ -46,8 +46,7 @@ namespace ospray {
       const int32 accumID = fb->accumID(tileID);
 
       // increment also for finished tiles
-      vec2i numPixels =
-          ospcommon::min(vec2i(TILE_SIZE), fbSize - tileID * TILE_SIZE);
+      vec2i numPixels = min(vec2i(TILE_SIZE), fbSize - tileID * TILE_SIZE);
       pixelsDone += numPixels.product();
 
       if (fb->tileError(tileID) <= renderer->errorThreshold)

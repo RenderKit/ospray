@@ -19,7 +19,6 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
-#include "ospcommon/library.h"
 #include "ospray_testing.h"
 
 #include "tutorial_util.h"
@@ -185,7 +184,7 @@ void updateSpheresCoordinates()
     const float T    = sqrtf(8.f * s.maxHeight / g);
     const float Vmax = sqrtf(2.f * s.maxHeight * g);
 
-    float tRemainder = ospcommon::fmod(0.5f * T + t, T);
+    float tRemainder = ospcommon::math::fmod(0.5f * T + t, T);
 
     s.center.y = -1.f + s.radius - 0.5f * g * tRemainder * tRemainder +
                  Vmax * tRemainder;

@@ -76,7 +76,7 @@ output_basename     Basename for the output files. This application creates
                     in common. (string)
 )help";
 
-using namespace ospcommon;
+using namespace ospcommon::math;
 
 static std::string inFileName;
 static std::string format;

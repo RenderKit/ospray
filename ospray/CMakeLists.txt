@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_build_component(ospcommon)
-
 # -------------------------------------------------------
 # Setup ospray include directories and source files
 # -------------------------------------------------------
@@ -277,7 +275,7 @@ ospray_create_library(ospray
 COMPONENT lib
 )
 
-target_link_libraries(ospray PRIVATE ospray_common)
+target_link_libraries(ospray PRIVATE ospcommon::ospcommon)
 
 target_include_directories(ospray
   PUBLIC
@@ -288,7 +286,7 @@ target_include_directories(ospray
 )
 
 add_library(ospray_sdk INTERFACE)
-target_link_libraries(ospray_sdk INTERFACE ospray ospray_common)
+target_link_libraries(ospray_sdk INTERFACE ospray ospcommon::ospcommon)
 ospray_install_library(ospray_sdk COMPONENT devel)
 
 ##############################################################

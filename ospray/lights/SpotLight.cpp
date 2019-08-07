@@ -32,19 +32,21 @@ namespace ospray {
   void SpotLight::commit()
   {
     Light::commit();
-    position  = getParam3f("position", vec3f(0.f));
-    direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
-    openingAngle = getParam1f("openingAngle", 180.f);
+    position      = getParam3f("position", vec3f(0.f));
+    direction     = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
+    openingAngle  = getParam1f("openingAngle", 180.f);
     penumbraAngle = getParam1f("penumbraAngle", 5.f);
-    radius    = getParam1f("radius", 0.f);
+    radius        = getParam1f("radius", 0.f);
 
     // check ranges and pre-compute parameters
-    direction = normalize(direction);
-    openingAngle = clamp(openingAngle, 0.f, 180.f);
-    penumbraAngle = clamp(penumbraAngle, 0.f, 0.5f*openingAngle);
-    const float cosAngleMax = ospcommon::cos(deg2rad(0.5f*openingAngle));
-    const float cosAngleMin = ospcommon::cos(deg2rad(0.5f*openingAngle - penumbraAngle));
-    const float cosAngleScale = 1.0f/(cosAngleMin - cosAngleMax);
+    direction     = normalize(direction);
+    openingAngle  = clamp(openingAngle, 0.f, 180.f);
+    penumbraAngle = clamp(penumbraAngle, 0.f, 0.5f * openingAngle);
+
+    const float cosAngleMax = std::cos(deg2rad(0.5f * openingAngle));
+    const float cosAngleMin =
+        std::cos(deg2rad(0.5f * openingAngle - penumbraAngle));
+    const float cosAngleScale = 1.0f / (cosAngleMin - cosAngleMax);
 
     ispc::SpotLight_set(getIE(),
                         (ispc::vec3f &)position,
@@ -57,4 +59,5 @@ namespace ospray {
   OSP_REGISTER_LIGHT(SpotLight, SpotLight);
   OSP_REGISTER_LIGHT(SpotLight, ExtendedSpotLight);
   OSP_REGISTER_LIGHT(SpotLight, spot);
-}
+
+}  // namespace ospray

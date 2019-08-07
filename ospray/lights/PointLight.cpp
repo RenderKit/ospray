@@ -31,8 +31,8 @@ namespace ospray {
   void PointLight::commit()
   {
     Light::commit();
-    position  = getParam3f("position", vec3f(0.f));
-    radius    = getParam1f("radius", 0.f);
+    position = getParam3f("position", vec3f(0.f));
+    radius   = getParam1f("radius", 0.f);
 
     ispc::PointLight_set(getIE(), (ispc::vec3f &)position, radius);
   }
@@ -41,4 +41,5 @@ namespace ospray {
   OSP_REGISTER_LIGHT(PointLight, point);
   OSP_REGISTER_LIGHT(PointLight, SphereLight);
   OSP_REGISTER_LIGHT(PointLight, sphere);
-}
+
+}  // namespace ospray

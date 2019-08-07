@@ -19,11 +19,13 @@
 #include <random>
 #include <vector>
 // ospcommon
-#include "ospcommon/box.h"
+#include "ospcommon/math/box.h"
 #include "ospcommon/tasking/parallel_for.h"
 // apps/utility
 #include "../../utility/rawToAMR.h"
+
 using namespace ospcommon;
+using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {

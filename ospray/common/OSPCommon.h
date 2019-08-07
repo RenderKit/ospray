@@ -37,7 +37,7 @@ typedef int ssize_t;
 #endif
 
 // ospcommon
-#include "ospcommon/AffineSpace.h"
+#include "ospcommon/math/AffineSpace.h"
 #include "ospcommon/memory/RefCount.h"
 #include "ospcommon/memory/malloc.h"
 
@@ -90,6 +90,7 @@ typedef int ssize_t;
 namespace ospray {
 
   using namespace ospcommon;
+  using namespace ospcommon::math;
   using namespace ospcommon::memory;
 
   /*! basic types */

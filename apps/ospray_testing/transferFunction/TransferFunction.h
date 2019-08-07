@@ -19,7 +19,7 @@
 // ospray
 #include "../ospray_testing.h"
 // ospcommon
-#include "ospcommon/vec.h"
+#include "ospcommon/math/vec.h"
 // stl
 #include <string>
 #include <vector>
@@ -35,7 +35,7 @@ namespace ospray {
       OSPTransferFunction createTransferFunction(osp_vec2f value_range) const;
 
      protected:
-      std::vector<ospcommon::vec3f> colors;
+      std::vector<ospcommon::math::vec3f> colors;
       std::vector<float> opacities;
     };
 

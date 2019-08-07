@@ -19,7 +19,7 @@
 // stl
 #include <map>
 // ospcommon
-#include "ospcommon/library.h"
+#include "ospcommon/os/library.h"
 
 namespace ospray {
   namespace testing {

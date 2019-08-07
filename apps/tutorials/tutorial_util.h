@@ -16,8 +16,13 @@
 
 #pragma once
 
+// ospray
 #include "ospray/ospray.h"
-
+// ospcommon
+#include "ospcommon/math/box.h"
+#include "ospcommon/math/vec.h"
+using namespace ospcommon::math;
+// std
 #include <string>
 
 void initializeOSPRay(int argc, const char **argv, bool errorsFatal = true);

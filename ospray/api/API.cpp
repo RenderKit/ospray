@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospcommon
-#include "ospcommon/library.h"
+#include "ospcommon/os/library.h"
 #include "ospcommon/utility/OnScopeExit.h"
 #include "ospcommon/utility/StringManip.h"
 #include "ospcommon/utility/getEnvVar.h"

@@ -18,8 +18,9 @@
 // stl
 #include <random>
 // ospcommon
-#include "ospcommon/box.h"
-using namespace ospcommon;
+#include "ospcommon/math/box.h"
+
+using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {

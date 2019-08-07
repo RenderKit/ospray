@@ -97,7 +97,7 @@ namespace ospray {
 
   void FrameBuffer::reportProgress(float newValue)
   {
-    frameProgress = ospcommon::clamp(newValue, 0.f, 1.f);
+    frameProgress = clamp(newValue, 0.f, 1.f);
   }
 
   float FrameBuffer::getCurrentProgress()

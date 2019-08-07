@@ -16,14 +16,15 @@
 
 // ospray
 #include "Camera.h"
-#include "common/Util.h"
 #include "Camera_ispc.h"
+#include "common/Util.h"
 
 namespace ospray {
 
   ProjectedPoint::ProjectedPoint(const vec3f &pos, float radius)
-    : screenPos(pos), radius(radius)
-  {}
+      : screenPos(pos), radius(radius)
+  {
+  }
 
   Camera *Camera::createInstance(const char *type)
   {
@@ -46,7 +47,7 @@ namespace ospray {
     imageStart = getParam2f("imageStart", vec2f(0.f));
     imageEnd   = getParam2f("imageEnd", vec2f(1.f));
 
-    shutterOpen = getParam1f("shutterOpen", 0.0f);
+    shutterOpen  = getParam1f("shutterOpen", 0.0f);
     shutterClose = getParam1f("shutterClose", 0.0f);
 
     linear3f frame;
@@ -54,20 +55,19 @@ namespace ospray {
     frame.vx = normalize(cross(up, frame.vz));
     frame.vy = cross(frame.vz, frame.vx);
 
-    ispc::Camera_set(getIE()
-        , (const ispc::vec3f&)pos
-        , (const ispc::LinearSpace3f&)frame
-        , nearClip
-        , (const ispc::vec2f&)imageStart
-        , (const ispc::vec2f&)imageEnd
-        , shutterOpen
-        , shutterClose
-        );
+    ispc::Camera_set(getIE(),
+                     (const ispc::vec3f &)pos,
+                     (const ispc::LinearSpace3f &)frame,
+                     nearClip,
+                     (const ispc::vec2f &)imageStart,
+                     (const ispc::vec2f &)imageEnd,
+                     shutterOpen,
+                     shutterClose);
   }
 
-  ProjectedPoint Camera::projectPoint(const vec3f &) const {
-    NOTIMPLEMENTED;
+  ProjectedPoint Camera::projectPoint(const vec3f &) const
+  {
+    NOT_IMPLEMENTED;
   }
 
-} // ::ospray
-
+}  // namespace ospray

@@ -36,9 +36,11 @@
 
 #include "ospray/ospray_cpp.h"
 
+using namespace ospcommon::math;
+
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName,
-              const ospcommon::vec2i &size,
+              const vec2i &size,
               const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
@@ -64,14 +66,14 @@ void writePPM(const char *fileName,
 
 int main(int argc, const char **argv) {
   // image size
-  ospcommon::vec2i imgSize;
+  vec2i imgSize;
   imgSize.x = 1024; // width
   imgSize.y = 768; // height
 
   // camera
-  ospcommon::vec3f cam_pos{0.f, 0.f, 0.f};
-  ospcommon::vec3f cam_up{0.f, 1.f, 0.f};
-  ospcommon::vec3f cam_view{0.1f, 0.f, 1.f};
+  vec3f cam_pos{0.f, 0.f, 0.f};
+  vec3f cam_up{0.f, 1.f, 0.f};
+  vec3f cam_view{0.1f, 0.f, 1.f};
 
   // triangle mesh data
   float vertex[] = { -1.0f, -1.0f, 3.0f,

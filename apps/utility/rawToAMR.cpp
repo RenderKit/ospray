@@ -47,16 +47,14 @@ namespace ospray {
             "too many levels, or too fine a refinement factor."
             "do not have a single brick at the root...");
       }
-      vec3i finestLevelSize = ospcommon::vec3i(minWidth);
-      while (finestLevelSize.x < inGridDims.x) {
+
+      vec3i finestLevelSize = vec3i(minWidth);
+      while (finestLevelSize.x < inGridDims.x)
         finestLevelSize.x += minWidth;
-      }
-      while (finestLevelSize.y < inGridDims.y) {
+      while (finestLevelSize.y < inGridDims.y)
         finestLevelSize.y += minWidth;
-      }
-      while (finestLevelSize.z < inGridDims.z) {
+      while (finestLevelSize.z < inGridDims.z)
         finestLevelSize.z += minWidth;
-      }
 
       // create container for current level so we don't use in
       std::vector<float> &currentLevel = const_cast<std::vector<float> &>(in);
@@ -90,7 +88,7 @@ namespace ospray {
               // current brick data
               std::vector<float> data(blockSize * blockSize * blockSize);
               size_t out = 0;
-              ospcommon::range1f brickRange;
+              range1f brickRange;
               // traverse the data by brick index
               for (int iz = box.lower.z; iz <= box.upper.z; iz++) {
                 for (int iy = box.lower.y; iy <= box.upper.y; iy++) {
@@ -155,7 +153,7 @@ namespace ospray {
         throw std::runtime_error("could not open data output file!");
       }
 
-      std::ofstream osp(outFileBase + ".osp");
+      std::ofstream osp(outFileBase + std::string(".osp"));
       osp << "<?xml?>" << std::endl;
       osp << "<AMRVolume>" << std::endl;
       osp << "  <fileName>" << ospcommon::FileName(outFileBase).base()

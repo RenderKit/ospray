@@ -29,7 +29,6 @@ if (OSPRAY_MODULE_DENOISER)
   PRIVATE
     OpenImageDenoise
   PUBLIC
-    ospray_common
     ospray_module_ispc
   )
 

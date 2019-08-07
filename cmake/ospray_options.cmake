@@ -42,6 +42,8 @@ ospray_configure_compiler()
 ospray_configure_tasking_system()
 ospray_create_tasking_target()
 
+find_package(ospcommon REQUIRED)
+
 # Must be before ISA config and package
 include(configure_embree)
 

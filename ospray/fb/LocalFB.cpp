@@ -176,7 +176,7 @@ namespace ospray {
         ispc::LocalFrameBuffer_writeTile_RGBA32F(getIE(), (ispc::Tile &)tile);
         break;
       default:
-        NOTIMPLEMENTED;
+        NOT_IMPLEMENTED;
       }
     }
   }

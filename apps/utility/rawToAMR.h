@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospcommon/FileName.h"
-#include "ospcommon/box.h"
+#include "ospcommon/math/box.h"
+#include "ospcommon/os/FileName.h"
 #include "ospcommon/tasking/parallel_for.h"
 
 #include <sys/stat.h>
@@ -34,7 +34,9 @@
 
 namespace ospray {
   namespace amr {
+
     using namespace ospcommon;
+    using namespace ospcommon::math;
 
     void makeAMR(const std::vector<float> &in,
                  const vec3i inGridDims,
@@ -97,5 +99,6 @@ namespace ospray {
       return volume;
 #endif
     }
+
   }  // namespace amr
 }  // namespace ospray

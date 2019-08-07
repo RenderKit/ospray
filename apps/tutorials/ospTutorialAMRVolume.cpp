@@ -19,10 +19,6 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
-#include "ospcommon/FileName.h"
-#include "ospcommon/library.h"
-#include "ospcommon/range.h"
-#include "ospcommon/utility/ArrayView.h"
 #include "ospray_testing.h"
 
 #include "tutorial_util.h"

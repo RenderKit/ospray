@@ -16,8 +16,9 @@
 
 #include "Geometry.h"
 // ospcommon
-#include "ospcommon/box.h"
-using namespace ospcommon;
+#include "ospcommon/math/box.h"
+
+using namespace ospcommon::math;
 
 #include <vector>
 

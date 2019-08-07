@@ -39,7 +39,7 @@ namespace ospray {
     direction = -normalize(direction);
 
     angularDiameter      = clamp(angularDiameter, 0.f, 180.f);
-    const float cosAngle = ospcommon::cos(deg2rad(0.5f * angularDiameter));
+    const float cosAngle = std::cos(deg2rad(0.5f * angularDiameter));
 
     ispc::DirectionalLight_set(getIE(), (ispc::vec3f &)direction, cosAngle);
   }

@@ -23,7 +23,7 @@ if (NOT USE_STATIC_RUNTIME)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif()
 
-ospray_build_component(ospcommon/testing/gtest)
+ospray_build_component(gtest)
 
 mark_as_advanced(gtest_build_samples)
 mark_as_advanced(gtest_build_tests)

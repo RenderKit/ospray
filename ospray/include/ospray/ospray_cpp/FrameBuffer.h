@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "World.h"
 #include "Renderer.h"
+#include "World.h"
 
 namespace ospray {
   namespace cpp {
@@ -28,7 +28,7 @@ namespace ospray {
       FrameBuffer() =
           default;  // NOTE(jda) - this does *not* create the underlying
       //            OSP object
-      FrameBuffer(const ospcommon::vec2i &size,
+      FrameBuffer(const vec2i &size,
                   OSPFrameBufferFormat format = OSP_FB_SRGBA,
                   int channels                = OSP_FB_COLOR);
       FrameBuffer(const FrameBuffer &copy);
@@ -58,7 +58,7 @@ namespace ospray {
 
     // Inlined function definitions ///////////////////////////////////////////
 
-    inline FrameBuffer::FrameBuffer(const ospcommon::vec2i &size,
+    inline FrameBuffer::FrameBuffer(const vec2i &size,
                                     OSPFrameBufferFormat format,
                                     int channels)
     {

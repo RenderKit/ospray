@@ -17,9 +17,6 @@
 #include "TransferFunction.h"
 // stl
 #include <vector>
-// ospcommon
-#include "ospcommon/box.h"
-using namespace ospcommon;
 
 namespace ospray {
   namespace testing {

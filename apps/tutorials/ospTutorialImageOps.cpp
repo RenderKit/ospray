@@ -14,12 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <iterator>
-#include <memory>
-#include <random>
 #include "GLFWOSPRayWindow.h"
 
-#include "ospcommon/library.h"
 #include "ospray_testing.h"
 
 #include "tutorial_util.h"
