@@ -388,13 +388,13 @@ namespace ospray {
       auto &device = api::currentDevice();
 
       device.lastErrorCode = e;
-      device.lastErrorMsg  = "fdsfdsfsd"; //message;
+      device.lastErrorMsg  = "#ospray: " + message;
 
       device.error_fcn(e, message.c_str());
     } else {
       // NOTE: No device, but something should still get printed for the user to
       //       debug the calling application.
-      std::cerr << "#osp: INITIALIZATION ERROR --> " << message << std::endl;
+      std::cerr << "#ospray: INITIALIZATION ERROR --> " << message << std::endl;
     }
   }
 

@@ -37,10 +37,15 @@ namespace ospray {
     texcoordData = getParamData("vertex.texcoord");
     indexData    = getParamData("index");
 
-    if (!vertexData)
-      throw std::runtime_error("quad mesh geometry must have 'vertex.position' array");
-    if (!indexData)
+    if (!vertexData) {
+      throw std::runtime_error(
+          "quad mesh geometry must have 'vertex.position' array");
+    }
+
+    if (!indexData) {
       throw std::runtime_error("quad mesh geometry must have 'index' array");
+    }
+
     if (colorData && colorData->type != OSP_VEC4F &&
         colorData->type != OSP_VEC3F) {
       std::stringstream ss;

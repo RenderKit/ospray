@@ -49,16 +49,23 @@ namespace ospray {
     vertex_crease_weightsData = getParamData("vertexCrease.weight");
 
     // check for valid params
-    if (!vertexData)
+    if (!vertexData) {
       throw std::runtime_error(
           "subdivision geometry must have 'vertex.position' array");
-    if(vertexData->type != OSP_VEC3F)
-          throw std::runtime_error("subdivision geometry 'vertex.position' array must have element type OSP_VEC3F");
+    }
+
+    if (vertexData->type != OSP_VEC3F) {
+      throw std::runtime_error(
+          "subdivision geometry 'vertex.position' array must have element type "
+          "OSP_VEC3F");
+    }
+
     if (!indexData)
       throw std::runtime_error("subdivision geometry must have 'index' array");
 
     faces = nullptr;
     if (facesData) {
+
       if (indexData->type != OSP_INT && indexData->type != OSP_UINT) {
         std::stringstream ss;
         ss << "subdivision geometry 'face' array has invalid type "
@@ -66,10 +73,12 @@ namespace ospray {
            << ". Must be one of: OSP_INT, OSP_UINT";
         throw std::runtime_error(ss.str());
       }
+
       generatedFacesData.clear();
       numFaces = facesData->size();
       faces    = (uint32_t *)facesData->data;
     } else {
+
       if (indexData->type != OSP_VEC4I && indexData->type != OSP_VEC4UI) {
         std::stringstream ss;
         ss << "subdivision geometry 'index' array has invalid type "
@@ -77,6 +86,7 @@ namespace ospray {
            << ". Must be one of: OSP_VEC4I, OSP_VEC4UI";
         throw std::runtime_error(ss.str());
       }
+
       // if face is not specified and index is of type (u)int4, a quad cage mesh
       // is specified
       numFaces = indexData->size() / 4;
@@ -84,14 +94,17 @@ namespace ospray {
       faces = generatedFacesData.data();
     }
 
-    if (colorsData && colorsData->type != OSP_VEC4F)
+    if (colorsData && colorsData->type != OSP_VEC4F) {
       throw std::runtime_error(
           "subdivision geometry 'vertex.color' array must have element type "
           "OSP_VEC4F");
-    if (texcoordData && texcoordData->type != OSP_VEC2F)
+    }
+
+    if (texcoordData && texcoordData->type != OSP_VEC2F) {
       throw std::runtime_error(
           "subdivision geometry 'vertex.texcoord' array must have element type "
           "OSP_VEC2F");
+    }
 
     postStatusMsg(2) << "  created subdivision (" << numFaces << " faces "
                      << ", " << vertexData->size() << " vertices)\n";

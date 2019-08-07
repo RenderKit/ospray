@@ -31,9 +31,10 @@ namespace ospray {
   void Isosurfaces::commit()
   {
     isovaluesData = getParamData("isovalue", nullptr);
-    if (!isovaluesData)
+    if (!isovaluesData) {
       throw std::runtime_error(
           "isosurface geometry must have 'isovalue' data array");
+    }
 
     volume       = (VolumetricModel *)getParamObject("volume", nullptr);
     numIsovalues = isovaluesData->numItems;

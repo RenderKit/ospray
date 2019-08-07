@@ -89,7 +89,8 @@ static inline Device *createMpiDevice(const std::string &_type)
       device = Device::createDevice(_type.c_str());
     } catch (const std::runtime_error &err) {
       std::stringstream error_msg;
-      error_msg << "Cannot create a device of type '" << _type << "'! Make sure "
+      error_msg << "Cannot create a device of type '" << _type
+                << "'! Make sure "
                 << "you have enabled the OSPRAY_MODULE_MPI CMake "
                 << "variable in your build of OSPRay.\n";
       error_msg << "(Reason device creation failed: " << err.what() << ')';
@@ -278,10 +279,11 @@ OSPRAY_CATCH_END()
 
 extern "C" OSPDevice ospNewDevice(const char *deviceType) OSPRAY_CATCH_BEGIN
 {
-  if (deviceType == nullptr)
+  if (deviceType == nullptr) {
     throw std::runtime_error(
         std::string("invalid device type identifier provided to ") +
         __FUNCTION__);
+  }
   return (OSPDevice)Device::createDevice(deviceType);
 }
 OSPRAY_CATCH_END(nullptr)
@@ -308,12 +310,16 @@ extern "C" void ospDeviceSetString(OSPDevice _object,
                                    const char *id,
                                    const char *s) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   Device *object = (Device *)_object;
   object->setParam<std::string>(id, s);
 }
@@ -323,12 +329,16 @@ extern "C" void ospDeviceSetBool(OSPDevice _object,
                                  const char *id,
                                  int x) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   Device *object = (Device *)_object;
   object->setParam(id, static_cast<bool>(x));
 }
@@ -338,12 +348,16 @@ extern "C" void ospDeviceSetInt(OSPDevice _object,
                                 const char *id,
                                 int x) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   Device *object = (Device *)_object;
   object->setParam(id, x);
 }
@@ -353,23 +367,29 @@ extern "C" void ospDeviceSetVoidPtr(OSPDevice _object,
                                     const char *id,
                                     void *v) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   Device *object = (Device *)_object;
   object->setParam(id, v);
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetStatusFunc(OSPDevice _object, OSPStatusFunc callback)
-    OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceSetStatusFunc(
+    OSPDevice _object, OSPStatusFunc callback) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   auto *device = (Device *)_object;
   if (callback == nullptr)
     device->msg_fcn = [](const char *) {};
@@ -381,9 +401,11 @@ OSPRAY_CATCH_END()
 extern "C" void ospDeviceSetErrorFunc(OSPDevice _object,
                                       OSPErrorFunc callback) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   auto *device = (Device *)_object;
   if (callback == nullptr)
     device->error_fcn = [](OSPError, const char *) {};
@@ -395,9 +417,11 @@ OSPRAY_CATCH_END()
 extern "C" OSPError ospDeviceGetLastErrorCode(OSPDevice _object)
     OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   auto *device = (Device *)_object;
   return device->lastErrorCode;
 }
@@ -406,9 +430,11 @@ OSPRAY_CATCH_END(OSP_NO_ERROR)
 extern "C" const char *ospDeviceGetLastErrorMsg(OSPDevice _object)
     OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   auto *device = (Device *)_object;
   return device->lastErrorMsg.c_str();
 }
@@ -416,9 +442,11 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospDeviceCommit(OSPDevice _object) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   auto *object = (Device *)_object;
   object->commit();
 }
@@ -455,16 +483,14 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPLight ospNewLight(const char *light_type) OSPRAY_CATCH_BEGIN
 {
-  if (light_type == nullptr)
+  if (light_type == nullptr) {
     throw std::runtime_error(
         std::string("invalid light type identifier provided to ") +
         __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   OSPLight light = currentDevice().newLight(light_type);
-  if (light == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create light '" << light_type
-                     << "'";
-  }
   return light;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -477,39 +503,34 @@ extern "C" OSPCamera ospNewCamera(const char *_type) OSPRAY_CATCH_BEGIN
         __FUNCTION__);
   ASSERT_DEVICE();
   OSPCamera camera = currentDevice().newCamera(_type);
-  if (camera == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create camera '" << _type << "'";
-  }
   return camera;
 }
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPGeometry ospNewGeometry(const char *_type) OSPRAY_CATCH_BEGIN
 {
-  if (_type == nullptr)
+  if (_type == nullptr) {
     throw std::runtime_error(
         std::string("invalid geometry type identifier provided to ") +
         __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   OSPGeometry geometry = currentDevice().newGeometry(_type);
-  if (geometry == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create geometry '" << _type << "'";
-  }
   return geometry;
 }
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPVolume ospNewVolume(const char *_type) OSPRAY_CATCH_BEGIN
 {
-  if (_type == nullptr)
+  if (_type == nullptr) {
     throw std::runtime_error(
         std::string("invalid volume type identifier provided to ") +
         __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   OSPVolume volume = currentDevice().newVolume(_type);
-  if (volume == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create volume '" << _type << "'";
-  }
   return volume;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -517,9 +538,11 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPGeometricModel ospNewGeometricModel(OSPGeometry geom)
     OSPRAY_CATCH_BEGIN
 {
-  if (geom == nullptr)
+  if (geom == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   OSPGeometricModel instance = currentDevice().newGeometricModel(geom);
   return instance;
@@ -529,9 +552,11 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume)
     OSPRAY_CATCH_BEGIN
 {
-  if (volume == nullptr)
+  if (volume == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   OSPVolumetricModel instance = currentDevice().newVolumetricModel(volume);
   return instance;
@@ -545,20 +570,20 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPMaterial ospNewMaterial(
     const char *renderer_type, const char *material_type) OSPRAY_CATCH_BEGIN
 {
-  if (renderer_type == nullptr)
+  if (renderer_type == nullptr) {
     throw std::runtime_error(
         std::string("invalid renderer type identifier provided to ") +
         __FUNCTION__);
-  if (material_type == nullptr)
+  }
+
+  if (material_type == nullptr) {
     throw std::runtime_error(
         std::string("invalid material type identifier provided to ") +
         __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   auto material = currentDevice().newMaterial(renderer_type, material_type);
-  if (material == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create material '" << material_type
-                     << "'";
-  }
   return material;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -566,31 +591,28 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPTransferFunction ospNewTransferFunction(const char *_type)
     OSPRAY_CATCH_BEGIN
 {
-  if (_type == nullptr)
+  if (_type == nullptr) {
     throw std::runtime_error(
         std::string("invalid transfer function type identifier provided to ") +
         __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   auto transferFunction = currentDevice().newTransferFunction(_type);
-  if (transferFunction == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create transferFunction '" << _type
-                     << "'";
-  }
   return transferFunction;
 }
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPTexture ospNewTexture(const char *_type) OSPRAY_CATCH_BEGIN
 {
-  if (_type == nullptr)
+  if (_type == nullptr) {
     throw std::runtime_error(
         std::string("invalid texture type identifier provided to ") +
         __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   OSPTexture texture = currentDevice().newTexture(_type);
-  if (texture == nullptr) {
-    postStatusMsg(1) << "#ospray: could not create texture '" << _type << "'";
-  }
   return texture;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -608,9 +630,11 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPInstance ospNewInstance(OSPGroup group) OSPRAY_CATCH_BEGIN
 {
-  if (group == nullptr)
+  if (group == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   return currentDevice().newInstance(group);
 }
@@ -635,12 +659,16 @@ extern "C" void ospSetString(OSPObject _object,
                              const char *id,
                              const char *s) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   currentDevice().setString(_object, id, s);
 }
@@ -650,12 +678,16 @@ extern "C" void ospSetObject(OSPObject _object,
                              const char *bufName,
                              OSPObject value) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (bufName == nullptr)
+  }
+
+  if (bufName == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   return currentDevice().setObject(_object, bufName, value);
 }
@@ -665,12 +697,16 @@ extern "C" void ospSetData(OSPObject _object,
                            const char *bufName,
                            OSPData data) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (bufName == nullptr)
+  }
+
+  if (bufName == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   return currentDevice().setObject(_object, bufName, (OSPObject)data);
 }
@@ -680,12 +716,16 @@ extern "C" void ospSetBool(OSPObject _object,
                            const char *id,
                            int x) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   currentDevice().setBool(_object, id, static_cast<bool>(x));
 }
@@ -695,12 +735,16 @@ extern "C" void ospSetFloat(OSPObject _object,
                             const char *id,
                             float x) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   currentDevice().setFloat(_object, id, x);
 }
@@ -710,12 +754,16 @@ extern "C" void ospSetInt(OSPObject _object,
                           const char *id,
                           int x) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   currentDevice().setInt(_object, id, x);
 }
@@ -725,12 +773,16 @@ extern "C" void ospSeti(OSPObject _object,
                         const char *id,
                         int x) OSPRAY_CATCH_BEGIN
 {
-  if (_object == nullptr)
+  if (_object == nullptr) {
     throw std::runtime_error(std::string("null object provided to ") +
                              __FUNCTION__);
-  if (id == nullptr)
+  }
+
+  if (id == nullptr) {
     throw std::runtime_error(std::string("invalid identifier provided to ") +
                              __FUNCTION__);
+  }
+
   ASSERT_DEVICE();
   currentDevice().setInt(_object, id, x);
 }

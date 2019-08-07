@@ -87,10 +87,11 @@ namespace ospray {
       ispc::UnstructuredVolume_method_fast(ispcEquivalent);
     else if (method == OSP_ITERATIVE)
       ispc::UnstructuredVolume_method_iterative(ispcEquivalent);
-    else
+    else {
       throw std::runtime_error(
           "unstructured volume 'hexMethod' has invalid type. Must be one of: "
           "OSP_FAST, OSP_ITERATIVE");
+    }
 
     ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
 
@@ -122,14 +123,19 @@ namespace ospray {
     Data *cellTypeData      = getParamData("cell.type");
 
     // make sure that all necessary arrays are provided
-    if (!vertexData)
+    if (!vertexData) {
       throw std::runtime_error("unstructured volume must have 'vertex' array");
-    if (!indexData && !indexPrefixedData)
+    }
+
+    if (!indexData && !indexPrefixedData) {
       throw std::runtime_error(
           "unstructured volume must have 'index' or 'indexPrefixed' array");
-    if (!vertexValueData && !cellValueData)
+    }
+
+    if (!vertexValueData && !cellValueData) {
       throw std::runtime_error(
           "unstructured volume must have 'vertex.value' or 'cell.value' array");
+    }
 
     // if index array is prefixed with cell size
     if (indexPrefixedData) {
@@ -157,12 +163,13 @@ namespace ospray {
     case OSP_ULONG:
       index32Bit = false;
       break;
-    default:
+    default: {
       throw std::runtime_error(
           "unstructured volume 'index' array has invalid type " +
           stringForType(indexData->type) +
           ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4I, OSP_VEC4UI, "
           "OSP_LONG, OSP_ULONG");
+    }
     }
 
     // 'cell' parameter is optional
@@ -183,12 +190,13 @@ namespace ospray {
       case OSP_ULONG:
         cell32Bit = false;
         break;
-      default:
-      throw std::runtime_error(
-          "unstructured volume 'cell' array has invalid type " +
-          stringForType(cellData->type) +
-          ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4I, OSP_VEC4UI, "
-          "OSP_LONG, OSP_ULONG");
+      default: {
+        throw std::runtime_error(
+            "unstructured volume 'cell' array has invalid type " +
+            stringForType(cellData->type) +
+            ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4I, OSP_VEC4UI, "
+            "OSP_LONG, OSP_ULONG");
+      }
       }
     } else {
       // if cells array was not provided through API allocate it
@@ -223,10 +231,12 @@ namespace ospray {
       cellType = (OSPUnstructuredCellType *)cellTypeData->data;
 
       // check if number of cell types matches number of cells
-      if (cellTypeData->size() != nCells)
+      if (cellTypeData->size() != nCells) {
         throw std::runtime_error(
             "unstructured volume 'cell.type' array length does not match "
             "number of cells");
+      }
+
     } else {
       // create cell type array
       cellType              = new OSPUnstructuredCellType[nCells];
@@ -354,10 +364,11 @@ namespace ospray {
       case OSP_PYRAMID:
         calculateCellNormals(taskIndex, pyramidFaces, 5);
         break;
-      case OSP_UNKNOWN_CELL_TYPE:
+      case OSP_UNKNOWN_CELL_TYPE: {
         throw std::runtime_error(
             "unstructured volume has invalid cell type. Must be one of: "
             "OSP_TETRAHEDRON, OSP_HEXAHEDRON, OSP_WEDGE, OSP_PYRAMID");
+      }
       }
     });
   }

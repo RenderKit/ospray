@@ -41,17 +41,22 @@ namespace ospray {
 
     if (!indexData)
       throw std::runtime_error("streamlines geometry must have 'index' array");
-    if (indexData->type != OSP_INT)
+
+    if (indexData->type != OSP_INT) {
       throw std::runtime_error(
           "streamlines geometry 'index' array must have element type OSP_INT");
+    }
 
     index       = (uint32 *)indexData->data;
     numSegments = indexData->numItems;
 
     vertexData = getParamData("vertex.position");
 
-    if (!vertexData)
-      throw std::runtime_error("streamlines geometry must have 'vertex.position' array");
+    if (!vertexData) {
+      throw std::runtime_error(
+          "streamlines geometry must have 'vertex.position' array");
+    }
+
     if (vertexData->type != OSP_VEC4F && vertexData->type != OSP_VEC3F) {
       std::stringstream ss;
       ss << "streamlines geometry 'vertex.position' array has invalid type "
@@ -70,10 +75,11 @@ namespace ospray {
 
     colorData = getParamData("vertex.color");
 
-    if (colorData && colorData->type != OSP_VEC4F)
+    if (colorData && colorData->type != OSP_VEC4F) {
       throw std::runtime_error(
           "streamlines geometry 'vertex.color' array must have element type "
           "OSP_VEC4F");
+    }
 
     radiusData = getParamData("vertex.radius");
 

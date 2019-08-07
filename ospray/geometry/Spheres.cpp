@@ -40,21 +40,23 @@ namespace ospray {
     sphereData     = getParamData("sphere");
     texcoordData   = getParamData("texcoord");
 
-    if (sphereData.ptr == nullptr)
+    if (sphereData.ptr == nullptr) {
       throw std::runtime_error(
           "spheres geometry must have 'sphere' data array");
+    }
 
     numSpheres = sphereData->numBytes / bytesPerSphere;
     postStatusMsg(2) << "#osp: creating 'spheres' geometry, #spheres = "
                      << numSpheres;
 
-    if (numSpheres >= (1ULL << 30))
+    if (numSpheres >= (1ULL << 30)) {
       throw std::runtime_error(
           "too many spheres in this sphere geometry. Consider splitting this "
           "geometry into multiple geometries with fewer spheres. You can still "
           "put all those geometries into a single model, but you can't put "
           "that many spheres into a single geometry without causing address "
           "overflows");
+    }
 
     // check whether we need 64-bit addressing
     huge_mesh = false;

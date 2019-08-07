@@ -39,14 +39,21 @@ namespace ospray {
     texcoordData = getParamData("vertex.texcoord");
     indexData    = getParamData("index");
 
-    if (!vertexData)
-      throw std::runtime_error("triangle mesh geometry must have 'vertex.position' array");
-    if (!indexData)
-      throw std::runtime_error("triangle mesh geometry must have 'index' array");
+    if (!vertexData) {
+      throw std::runtime_error(
+          "triangle mesh geometry must have 'vertex.position' array");
+    }
+
+    if (!indexData) {
+      throw std::runtime_error(
+          "triangle mesh geometry must have 'index' array");
+    }
+
     if (colorData && colorData->type != OSP_VEC4F &&
         colorData->type != OSP_VEC3F) {
       std::stringstream ss;
-      ss << "triangle mesh geometry 'vertex.color' array has invalid element type "
+      ss << "triangle mesh geometry 'vertex.color' array has invalid element "
+            "type "
          << stringForType(colorData->type)
          << ". Must be one of: OSP_VEC4F, OSP_VEC3F";
       throw std::runtime_error(ss.str());

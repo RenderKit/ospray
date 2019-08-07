@@ -52,49 +52,66 @@ namespace ospray {
   void Curves::commit()
   {
     vertexData = getParamData("vertex.position", nullptr);
-    if (!vertexData)
+    if (!vertexData) {
       throw std::runtime_error(
           "curves geometry must have 'vertex.position' array");
-    if (vertexData->type != OSP_VEC4F)
+    }
+
+    if (vertexData->type != OSP_VEC4F) {
       throw std::runtime_error(
           "curves geometry 'vertex.position' array must have element type "
           "OSP_VEC4F");
+    }
+
     const auto numVertices = vertexData->numItems;
 
     normalData  = getParamData("vertex.normal", nullptr);
     tangentData = getParamData("vertex.tangent", nullptr);
 
     indexData = getParamData("index", nullptr);
-    if (!indexData)
+    if (!indexData) {
       throw std::runtime_error("curves must have 'index' array");
-    if (indexData->type != OSP_INT)
+    }
+
+    if (indexData->type != OSP_INT) {
       throw std::runtime_error(
           "curves geometry 'index' array must have element type OSP_INT");
+    }
+
     const auto numSegments = indexData->numItems;
 
     curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
     if (curveType == OSP_UNKNOWN_CURVE_TYPE)
       throw std::runtime_error("curves geometry has invalid 'type'");
+
     curveBasis = (OSPCurveBasis)getParam<int>("basis", OSP_UNKNOWN_CURVE_BASIS);
     if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
       throw std::runtime_error("curves geometry has invalid 'basis'");
 
-    if (curveType == OSP_RIBBON && !normalData)
+    if (curveType == OSP_RIBBON && !normalData) {
       throw std::runtime_error(
           "curves geometry with ribbon type must have 'normal' array");
-    if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT)
+    }
+
+    if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT) {
       throw std::runtime_error(
           "curves geometry with linear basis must be flat type");
-    if (curveBasis == OSP_HERMITE && !tangentData)
+    }
+
+    if (curveBasis == OSP_HERMITE && !tangentData) {
       throw std::runtime_error(
           "curves geometry with hermite basis must have 'tangent' array");
+    }
 
-    if (normalData && normalData->type != OSP_VEC3F)
+    if (normalData && normalData->type != OSP_VEC3F) {
       throw std::runtime_error(
           "curves geometry 'normal' array must have element type OSP_VEC3F");
-    if (tangentData && tangentData->type != OSP_VEC3F)
+    }
+
+    if (tangentData && tangentData->type != OSP_VEC3F) {
       throw std::runtime_error(
           "curves geometry 'tangent' array must have element type OSP_VEC3F");
+    }
 
     postStatusMsg(2) << "#osp: creating curves geometry, "
                      << "#verts=" << numVertices << ", "

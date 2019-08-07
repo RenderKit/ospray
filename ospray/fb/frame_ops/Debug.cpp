@@ -41,10 +41,12 @@ namespace ospray {
 
   std::unique_ptr<LiveImageOp> DebugFrameOp::attach(FrameBufferView &fbView)
   {
-    if (!fbView.colorBuffer)
+    if (!fbView.colorBuffer) {
       throw std::runtime_error(
           "debug frame operation must be attached to framebuffer with color "
           "data");
+    }
+
     return ospcommon::make_unique<LiveDebugFrameOp>(fbView);
   }
 

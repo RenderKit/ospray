@@ -67,18 +67,23 @@ namespace ospray {
 
   std::unique_ptr<LiveImageOp> SSAOFrameOp::attach(FrameBufferView &fbView)
   {
-    if (!fbView.colorBuffer)
+    if (!fbView.colorBuffer) {
       throw std::runtime_error(
           "ssao frame operation must be attached to framebuffer with color "
           "data");
-    if (!fbView.normalBuffer)
+    }
+
+    if (!fbView.normalBuffer) {
       throw std::runtime_error(
           "SSAO frame operation must be attached to framebuffer with normal "
           "data");
-    if (!fbView.depthBuffer)
+    }
+
+    if (!fbView.depthBuffer) {
       throw std::runtime_error(
           "SSAO frame operation must be attached to framebuffer with depth "
           "data");
+    }
 
     void *ispcEquiv = ispc::LiveSSAOFrameOp_create();
 

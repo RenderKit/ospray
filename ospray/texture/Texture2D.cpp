@@ -38,9 +38,10 @@ namespace ospray {
 
     auto texData = getParamData("data", nullptr);
 
-    if (!texData->data)
+    if (!texData->data) {
       throw std::runtime_error(
           "2D texture must have 'data' array of texel data");
+    }
 
     type  = static_cast<OSPTextureFormat>(
       getParam1i("type", OSP_TEXTURE_FORMAT_INVALID)

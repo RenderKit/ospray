@@ -154,9 +154,12 @@ namespace ospray {
         float sum_lo = 0.f, sum_hi = 0.f;
         for (const auto &b : brick) {
           const box3f wb = intersectionOf(b->worldBounds, bounds);
-          if (wb.empty())
+
+          if (wb.empty()) {
             throw std::runtime_error(
                 "AMR volume encountered empty bounding box");
+          }
+
           sum_lo += wb.lower[bestDim];
           sum_hi += wb.upper[bestDim];
           if (wb.lower[bestDim] >= bestPos) {

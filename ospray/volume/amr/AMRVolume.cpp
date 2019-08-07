@@ -62,20 +62,20 @@ namespace ospray {
       return;
 
     blockBoundsData = getParamData("block.bounds");
-    if(blockBoundsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.bounds' array");
+    if (blockBoundsData.ptr == nullptr)
+      throw std::runtime_error("amr volume must have 'block.bounds' array");
 
     refinementLevelsData = getParamData("block.level");
-    if(refinementLevelsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.level' array");
+    if (refinementLevelsData.ptr == nullptr)
+      throw std::runtime_error("amr volume must have 'block.level' array");
 
     cellWidthsData = getParamData("block.cellWidth");
-    if(cellWidthsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.cellWidth' array");
+    if (cellWidthsData.ptr == nullptr)
+      throw std::runtime_error("amr volume must have 'block.cellWidth' array");
 
     blockDataData = getParamData("block.data");
-    if(blockDataData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.data' array");
+    if (blockDataData.ptr == nullptr)
+      throw std::runtime_error("amr volume must have 'block.data' array");
 
     data  = make_unique<amr::AMRData>(*blockBoundsData,
                                      *refinementLevelsData,

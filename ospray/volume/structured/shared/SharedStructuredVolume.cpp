@@ -40,17 +40,19 @@ namespace ospray {
   {
     // Get the voxel type.
     voxelType = (OSPDataType)getParam<int>("voxelType", OSP_UNKNOWN);
-    if (voxelType == OSP_UNKNOWN)
+    if (voxelType == OSP_UNKNOWN) {
       throw std::runtime_error(
           "shared structured volume 'voxelType' has invalid type. Must be one "
           "of OSP_* types");
+    }
 
     // Get the volume dimensions.
     vec3i dimensions = getParam3i("dimensions", vec3i(0));
-    if(reduce_min(dimensions) <= 0)
+    if(reduce_min(dimensions) <= 0) {
       throw std::runtime_error(
           "shared structured volume 'dimensions' has a zero or negative "
           "component");
+    }
 
     // Get the voxel data.
     voxelData = (Data *)getParamObject("voxelData", nullptr);

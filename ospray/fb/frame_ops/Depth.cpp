@@ -43,14 +43,18 @@ namespace ospray {
 
   std::unique_ptr<LiveImageOp> DepthFrameOp::attach(FrameBufferView &fbView)
   {
-    if (!fbView.colorBuffer)
+    if (!fbView.colorBuffer) {
       throw std::runtime_error(
           "depth frame operation must be attached to framebuffer with color "
           "data");
-    if (!fbView.depthBuffer)
+    }
+
+    if (!fbView.depthBuffer) {
       throw std::runtime_error(
           "depth frame operation must be attached to framebuffer with depth "
           "data");
+    }
+
     return ospcommon::make_unique<LiveDepthFrameOp>(fbView);
   }
 
