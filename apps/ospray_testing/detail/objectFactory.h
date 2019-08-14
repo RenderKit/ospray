@@ -42,7 +42,7 @@ namespace ospray {
         std::string creationFunctionName =
             "ospray_create_" + categoryName + "__" + type;
 
-        loadLibrary("ospray_testing");
+        loadLibrary("ospray_testing", false);
 
         // Look for the named function.
         symbolRegistry[type] =
