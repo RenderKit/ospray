@@ -143,6 +143,9 @@ extern "C" {
      returns OSPError value to report any errors during initialization */
   OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
 
+  // returns the OSPRay Version in use by the device
+  OSPRAY_INTERFACE int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
+
   // Shutdown the OSPRay engine...effectively deletes whatever device is currently set.
   OSPRAY_INTERFACE void ospShutdown();
 

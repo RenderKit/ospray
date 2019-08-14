@@ -18,6 +18,19 @@
 
 #pragma once
 
+// enum representing different device properties
+typedef enum
+# if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
+  OSP_DEVICE_VERSION = 0,
+  OSP_DEVICE_VERSION_MAJOR = 1,
+  OSP_DEVICE_VERSION_MINOR = 2,
+  OSP_DEVICE_VERSION_PATCH = 3,
+  OSP_DEVICE_SO_VERSION = 4
+} OSPDeviceProperty;
+
 // An enum type that represensts the different data types represented in OSPRay
 typedef enum
 # if __cplusplus >= 201103L

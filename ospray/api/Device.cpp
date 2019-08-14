@@ -16,8 +16,9 @@
 
 // ospray
 #include "Device.h"
-#include "objectFactory.h"
 #include "common/OSPCommon.h"
+#include "objectFactory.h"
+#include "ospray/version.h"
 // ospcommon
 #include "ospcommon/os/library.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -171,5 +172,20 @@ namespace ospray {
       return embreeConfig.str();
     }
 
+    int64_t Device::getProperty(const OSPDeviceProperty prop)
+    {
+      /* documented properties */
+      switch (prop)
+      {
+      case OSP_DEVICE_VERSION           :
+          return 10000*OSPRAY_VERSION_MAJOR + 100*OSPRAY_VERSION_MINOR + OSPRAY_VERSION_PATCH;
+      case OSP_DEVICE_VERSION_MAJOR     : return OSPRAY_VERSION_MAJOR;
+      case OSP_DEVICE_VERSION_MINOR     : return OSPRAY_VERSION_MINOR;
+      case OSP_DEVICE_VERSION_PATCH     : return OSPRAY_VERSION_PATCH;
+      case OSP_DEVICE_SO_VERSION        : return OSPRAY_SOVERSION;
+      default: handleError(OSP_INVALID_ARGUMENT, "unknown readable property");
+      return 0;
+      }
+    }
   } // ::ospray::api
 } // ::ospray

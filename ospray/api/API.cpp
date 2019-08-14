@@ -278,6 +278,13 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(OSP_INVALID_OPERATION)
 
+extern "C" int64_t ospDeviceGetProperty(OSPDevice _device, OSPDeviceProperty _deviceProperty) OSPRAY_CATCH_BEGIN
+{
+  auto *device = (Device *)_device;
+  return device->getProperty(_deviceProperty);
+}
+OSPRAY_CATCH_END(0)
+
 extern "C" void ospShutdown() OSPRAY_CATCH_BEGIN
 {
   Device::current.reset();
