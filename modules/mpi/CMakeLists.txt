@@ -20,7 +20,7 @@ if (OSPRAY_MODULE_MPI)
 
   set(OSPRAY_DEFAULT_COMPONENT mpi)
 
-  ospray_configure_mpi()
+  include(mpi_setup.cmake)
 
   add_subdirectory(mpiCommon)
   add_subdirectory(external/pico_bench)

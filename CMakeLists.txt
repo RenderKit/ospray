@@ -33,7 +33,11 @@ set(CMAKE_C_STANDARD_REQUIRED   ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # configure directories for components we are going to include
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  ${PROJECT_SOURCE_DIR}/cmake
+  ${PROJECT_SOURCE_DIR}/cmake/compiler
+)
 
 ##############################################################
 # CMake modules and macro files

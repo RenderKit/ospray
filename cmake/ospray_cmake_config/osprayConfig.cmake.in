@@ -113,18 +113,6 @@ set(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@)
 set(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
 set(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@)
 
-set(OSPRAY_TASKING_SYSTEM      @OSPRAY_TASKING_SYSTEM@)
-
-set(OSPRAY_TASKING_TBB         @OSPRAY_TASKING_TBB@)
-set(OSPRAY_TASKING_CILK        @OSPRAY_TASKING_CILK@)
-set(OSPRAY_TASKING_OPENMP      @OSPRAY_TASKING_OPENMP@)
-set(OSPRAY_TASKING_INTERNAL    @OSPRAY_TASKING_INTERNAL@)
-set(OSPRAY_TASKING_LIBDISPATCH @OSPRAY_TASKING_LIBDISPATCH@)
-set(OSPRAY_TASKING_DEBUG       @OSPRAY_TASKING_DEBUG@)
-
-set(OSPRAY_TASKING_DEFINITIONS @OSPRAY_TASKING_DEFINITIONS@)
-set(OSPRAY_TASKING_OPTIONS     @OSPRAY_TASKING_OPTIONS@)
-
 set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
 set(OSPRAY_ISPC_ADDRESSING     @OSPRAY_ISPC_ADDRESSING@)
 set(OSPRAY_MPI_ENABLED         @OSPRAY_MODULE_MPI@)
@@ -154,33 +142,6 @@ endif()
 # Include macros for finding embree
 include(ospray_macros)
 
-# NOTE(jda) - Here is where find_package(...) is automatically called for
-#             any OSPRay dependencies. A list of libs should be constructed
-#             and added to the OSPRAY_LIBRARIES variable below.
-
-# Re-create tasking library target
-
-if (OSPRAY_TASKING_TBB)
-  if (OSPRAY_INSTALL_DEPENDENCIES)
-    # TBB installed with OSPRay
-    file(GLOB_RECURSE TBB_LIBRARIES ${LIBRARY_PATH_PREFIX}tbb*)
-  else()
-    # Find tbb
-    find_package(TBB)
-    if (":${TBB_LIBRARY}" STREQUAL ":")
-      message(FATAL_ERROR "Missing required OSPRay dependency "
-        "TBB, please set TBB_ROOT to the root of your TBB install.")
-    else()
-      message(STATUS
-              "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
-    endif()
-  endif()
-  set (OSPRAY_TASKING_INCLUDES ${TBB_INCLUDE_DIRS})
-  set (OSPRAY_TASKING_LIBS ${TBB_LIBRARIES})
-endif()
-
-ospray_create_tasking_target()
-
 # Embree
 if (OSPRAY_INSTALL_DEPENDENCIES)
   # Embree installed with OSPRay
@@ -194,6 +155,9 @@ endif()
 ospray_create_embree_target()
 
 list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
+
+# ospcommon
+find_dependency(ospcommon)
 
 # Restore state
 set(CMAKE_CURRENT_LIST_DIR     ${OSPRAY_CMAKE_CURRENT_LIST_DIR})
@@ -209,17 +173,14 @@ list(REMOVE_DUPLICATES OSPRAY_INCLUDE_DIRS)
 
 set(OSPRAY_LIBRARY ${LIBRARY_PATH_PREFIX}ospray${LIBRARY_SUFFIX})
 set(OSPRAY_ISPC_DEVICE_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_module_ispc${LIBRARY_SUFFIX})
-set(OSPRAY_COMMON_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_common${LIBRARY_SUFFIX})
 set(OSPRAY_TESTING_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_testing${LIBRARY_SUFFIX})
 
 # Include target exports
 include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 
 # Add missing targets to libraries
-set_target_properties(ospray::ospray_common PROPERTIES
-  INTERFACE_LINK_LIBRARIES ospray_tasking)
 set_target_properties(ospray::ospray_module_ispc PROPERTIES
-  INTERFACE_LINK_LIBRARIES embree)
+  INTERFACE_LINK_LIBRARIES embree ospcommon::ospcommon)
 
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
 set(OSPRAY_LIBRARIES ospray::ospray)
@@ -227,8 +188,6 @@ set(OSPRAY_LIBRARIES ospray::ospray)
 if(OSPRAY_MPI_ENABLED)
   set(OSPRAY_MPI_LIBRARIES ospray::ospray_mpi_common ospray::ospray_mpi_maml)
 endif()
-
-set(OSPRAY_SG_LIBRARIES ospray::ospray_sg)
 
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})

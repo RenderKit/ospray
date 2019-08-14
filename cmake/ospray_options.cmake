@@ -39,8 +39,6 @@ endif()
 
 ospray_configure_build_type()
 ospray_configure_compiler()
-ospray_configure_tasking_system()
-ospray_create_tasking_target()
 
 find_package(ospcommon REQUIRED)
 
