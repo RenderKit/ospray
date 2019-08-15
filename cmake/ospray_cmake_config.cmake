@@ -72,6 +72,7 @@ install(FILES
   ${OSPRAY_MODULE_INSTALL_FILES}
   ${CMAKE_SOURCE_DIR}/cmake/macros.cmake#NOTE(jda) - hack!
   ${CMAKE_SOURCE_DIR}/cmake/ospray_macros.cmake
+  ${CMAKE_SOURCE_DIR}/cmake/compiler/ispc.cmake
   DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
   COMPONENT devel
 )
