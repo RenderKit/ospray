@@ -23,6 +23,12 @@ set(CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/dependencies
 )
 
+if(NOT CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX
+      "${CMAKE_BINARY_DIR}/install"
+      CACHE STRING "Final install location." FORCE)
+endif()
+
 ## Establish project ##
 
 project(SuperbuildTest)
@@ -32,16 +38,15 @@ include(GNUInstallDirs)
 
 ## Superbuild options ##
 
-if(NOT CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX
-      "${CMAKE_BINARY_DIR}/install"
-      CACHE STRING "Final install location." FORCE)
-endif()
-
 set(NUM_BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
+
 set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to build?")
+
 set(BUILD_EMBREE_VERSION "3.5.2" CACHE STRING "Which version of Embree to build?")
+option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" OFF)
+
 set(BUILD_OIDN_VERSION "1.0.0" CACHE STRING "Which version of OpenImageDenoise to build?")
+option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" OFF)
 
 option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only deps" OFF)
 
