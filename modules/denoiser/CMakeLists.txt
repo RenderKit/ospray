@@ -19,7 +19,7 @@ option(OSPRAY_MODULE_DENOISER
 
 if (OSPRAY_MODULE_DENOISER)
   include(GenerateExportHeader)
-  find_package(OpenImageDenoise 0.9 REQUIRED)
+  find_package(OpenImageDenoise 1.0 REQUIRED)
 
   ospray_create_library(ospray_module_denoiser DenoiseFrameOp.cpp)
 
