@@ -55,7 +55,7 @@ option(OSPRAY_ENABLE_TESTING
 if (OSPRAY_ENABLE_TESTING)
   enable_testing()
   option(OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES
-         "Automatically download test images during build." ON)
+         "Automatically download test images during build." OFF)
 endif()
 
 option(OSPRAY_ENABLE_TARGET_CLANGFORMAT

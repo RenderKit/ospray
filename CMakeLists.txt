@@ -14,20 +14,22 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
 cmake_minimum_required(VERSION 3.1)
 
 include(cmake/ospray_version.cmake)
 
 project(OSPRay VERSION ${OSPRAY_VERSION} LANGUAGES C CXX)
 
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
 set(CMAKE_C_STANDARD   99)
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_C_STANDARD_REQUIRED   ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # configure directories for components we are going to include
 set(CMAKE_MODULE_PATH
