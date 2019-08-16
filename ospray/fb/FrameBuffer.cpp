@@ -35,7 +35,10 @@ namespace ospray {
       frameID(-1)
   {
     managedObjectType = OSP_FRAMEBUFFER;
-    assert(size.x > 0 && size.y > 0);
+    if (size.x <= 0 || size.y <= 0) {
+      throw std::runtime_error(
+          "framebuffer has invalid size. Dimensions must be greater than 0");
+    }
   }
 
   void FrameBuffer::commit()

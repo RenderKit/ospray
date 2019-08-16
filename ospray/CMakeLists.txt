@@ -51,7 +51,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   api/ISPCDevice.h
   api/ISPCDevice.cpp
 
-  common/ObjectHandle.cpp
   common/Data.ih
   common/Data.cpp
   common/Group.cpp

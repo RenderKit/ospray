@@ -28,8 +28,12 @@ namespace ospray {
       : FrameBuffer(_size, _colorBufferFormat, channels),
         tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
   {
-    assert(size.x > 0);
-    assert(size.y > 0);
+    if (size.x <= 0 || size.y <= 0) {
+      throw std::runtime_error(
+          "local framebuffer has invalid size. Dimensions must be greater than "
+          "0");
+    }
+
     if (colorBufferToUse)
       colorBuffer = colorBufferToUse;
     else {

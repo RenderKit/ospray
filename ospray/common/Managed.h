@@ -21,7 +21,6 @@
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "./OSPCommon.h"
-#include "./ObjectHandle.h"
 // stl
 #include <set>
 #include <vector>
