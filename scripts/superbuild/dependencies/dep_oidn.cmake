@@ -14,34 +14,43 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OIDN_PATH "${INSTALL_DIR_ABSOLUTE}/OpenImageDenoise")
+set(COMPONENT_NAME OpenImageDenoise)
+
+set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
+if (INSTALL_IN_SEPARATE_DIRECTORIES)
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
+endif()
+
+set(OIDN_PATH "${COMPONENT_PATH}")
+if (NOT WIN32)
+  set(OIDN_PATH "${OIDN_PATH}/lib/cmake/OpenImageDenoise")
+endif()
 
 if (BUILD_OIDN_FROM_SOURCE)
-  ExternalProject_Add(oidn
-    PREFIX oidn
-    DOWNLOAD_DIR oidn
-    STAMP_DIR oidn/stamp
-    SOURCE_DIR oidn/src
-    BINARY_DIR oidn/build
-    INSTALL_DIR ${INSTALL_DIR_ABSOLUTE}/OpenImageDenoise
+  ExternalProject_Add(${COMPONENT_NAME}
+    PREFIX ${COMPONENT_NAME}
+    DOWNLOAD_DIR ${COMPONENT_NAME}
+    STAMP_DIR ${COMPONENT_NAME}/stamp
+    SOURCE_DIR ${COMPONENT_NAME}/src
+    BINARY_DIR ${COMPONENT_NAME}/build
     GIT_REPOSITORY https://github.com/OpenImageDenoise/oidn
     GIT_TAG v${BUILD_OIDN_VERSION}
     GIT_SHALLOW ON
     CMAKE_ARGS
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+      -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
+      -DCMAKE_INSTALL_INCLUDEDIR=include
+      -DCMAKE_INSTALL_LIBDIR=lib
+      -DCMAKE_INSTALL_DOCDIR=doc
+      -DCMAKE_INSTALL_BINDIR=bin
       -DCMAKE_BUILD_TYPE=Release
-      -DTBB_ROOT=${TBB_ROOT}
+      -DTBB_ROOT=${TBB_PATH}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF
   )
 
-  if (NOT WIN32)
-    set(OIDN_PATH "${OIDN_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/OpenImageDenoise")
-  endif()
-
-  ExternalProject_Add_StepDependencies(oidn configure tbb ispc)
+  ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb ispc)
 else()
   if (APPLE)
     set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${BUILD_OIDN_VERSION}/oidn-${BUILD_OIDN_VERSION}.x86_64.macos.tar.gz")
@@ -51,19 +60,18 @@ else()
     set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${BUILD_OIDN_VERSION}/oidn-${BUILD_OIDN_VERSION}.x86_64.linux.tar.gz")
   endif()
 
-  ExternalProject_Add(oidn
-    PREFIX oidn
-    DOWNLOAD_DIR oidn
-    SOURCE_DIR ${INSTALL_DIR_ABSOLUTE}/OpenImageDenoise
+  ExternalProject_Add(${COMPONENT_NAME}
+    PREFIX ${COMPONENT_NAME}
+    DOWNLOAD_DIR ${COMPONENT_NAME}
+    STAMP_DIR ${COMPONENT_NAME}/stamp
+    SOURCE_DIR ${COMPONENT_NAME}/src
     URL ${OIDN_URL}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory
+      <SOURCE_DIR>/
+      ${COMPONENT_PATH}
     BUILD_ALWAYS OFF
   )
-
-  if (NOT WIN32)
-    set(OIDN_PATH "${OIDN_PATH}/lib/cmake/OpenImageDenoise")
-  endif()
 endif()
 

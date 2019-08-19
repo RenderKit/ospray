@@ -14,6 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+set(COMPONENT_NAME ispc)
+
+set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
+if (INSTALL_IN_SEPARATE_DIRECTORIES)
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
+endif()
+
 if (APPLE)
   set(ISPC_URL http://sdvis.org/ospray/download/dependencies/osx/ispc-v1.12.0-macOS.tar.gz)
 elseif(WIN32)
@@ -22,19 +29,16 @@ else()
   set(ISPC_URL http://sdvis.org/ospray/download/dependencies/linux/ispc-v1.12.0-linux.tar.gz)
 endif()
 
-get_filename_component(INSTALL_DIR_ABSOLUTE
-  ${installDir} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
-
-ExternalProject_Add(ispc
-  PREFIX ispc
-  INSTALL_DIR ${INSTALL_DIR_ABSOLUTE}/
+ExternalProject_Add(${COMPONENT_NAME}
+  PREFIX ${COMPONENT_NAME}
+  STAMP_DIR ${COMPONENT_NAME}/stamp
   URL ${ISPC_URL}
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     <SOURCE_DIR>/bin/ispc${CMAKE_EXECUTABLE_SUFFIX}
-    <INSTALL_DIR>/ispc/bin/ispc${CMAKE_EXECUTABLE_SUFFIX}
+    ${COMPONENT_PATH}/bin/ispc${CMAKE_EXECUTABLE_SUFFIX}
   BUILD_ALWAYS OFF
 )
 
-set(ISPC_PATH "${INSTALL_DIR_ABSOLUTE}/ispc/bin/ispc${CMAKE_EXECUTABLE_SUFFIX}")
+set(ISPC_PATH "${COMPONENT_PATH}/bin/ispc${CMAKE_EXECUTABLE_SUFFIX}")

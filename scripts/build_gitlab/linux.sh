@@ -19,7 +19,7 @@ mkdir build
 cd build
 
 cmake \
-  -DNUM_BUILD_JOBS=`nproc` \
+  -DBUILD_JOBS=`nproc` \
   "$@" ../scripts/superbuild
 
 cmake --build .

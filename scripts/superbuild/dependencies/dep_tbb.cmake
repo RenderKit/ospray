@@ -14,17 +14,23 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ExternalProject_Add(tbb
-  PREFIX tbb
-  DOWNLOAD_DIR tbb
-  STAMP_DIR tbb/stamp
-  SOURCE_DIR tbb/src
-  BINARY_DIR tbb/build
-  INSTALL_DIR ${INSTALL_DIR_ABSOLUTE}/tbb
+set(COMPONENT_NAME tbb)
+
+set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
+if (INSTALL_IN_SEPARATE_DIRECTORIES)
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
+endif()
+
+ExternalProject_Add(${COMPONENT_NAME}
+  PREFIX ${COMPONENT_NAME}
+  DOWNLOAD_DIR ${COMPONENT_NAME}
+  STAMP_DIR ${COMPONENT_NAME}/stamp
+  SOURCE_DIR ${COMPONENT_NAME}/src
+  BINARY_DIR ${COMPONENT_NAME}/build
   URL "https://github.com/wjakob/tbb/archive/master.zip"
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
     -DCMAKE_BUILD_TYPE=Release
     -DTBB_BUILD_TESTS=OFF
     -DTBB_BUILD_SHARED=ON
@@ -33,4 +39,4 @@ ExternalProject_Add(tbb
   BUILD_ALWAYS OFF
 )
 
-set(TBB_INSTALL_LOCATION "${INSTALL_DIR_ABSOLUTE}/tbb")
+set(TBB_PATH "${COMPONENT_PATH}")

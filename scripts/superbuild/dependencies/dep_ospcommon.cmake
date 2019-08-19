@@ -14,28 +14,40 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ExternalProject_Add(ospcommon
-  PREFIX ospcommon
-  DOWNLOAD_DIR ospcommon
-  STAMP_DIR ospcommon/stamp
-  SOURCE_DIR ospcommon/src
-  BINARY_DIR ospcommon/build
-  INSTALL_DIR ${INSTALL_DIR_ABSOLUTE}/ospcommon
+set(COMPONENT_NAME ospcommon)
+
+set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
+if (INSTALL_IN_SEPARATE_DIRECTORIES)
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
+endif()
+
+set(ENV{OSPCOMMON_TBB_ROOT} ${TBB_PATH})
+
+ExternalProject_Add(${COMPONENT_NAME}
+  PREFIX ${COMPONENT_NAME}
+  DOWNLOAD_DIR ${COMPONENT_NAME}
+  STAMP_DIR ${COMPONENT_NAME}/stamp
+  SOURCE_DIR ${COMPONENT_NAME}/src
+  BINARY_DIR ${COMPONENT_NAME}/build
   GIT_REPOSITORY https://github.com/ospray/ospcommon
   GIT_TAG master
   GIT_SHALLOW ON
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+    -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
+    -DCMAKE_INSTALL_INCLUDEDIR=include
+    -DCMAKE_INSTALL_LIBDIR=lib
+    -DCMAKE_INSTALL_DOCDIR=doc
+    -DCMAKE_INSTALL_BINDIR=bin
     -DCMAKE_BUILD_TYPE=Release
-    -DOSPCOMMON_TBB_ROOT=${TBB_INSTALL_LOCATION}
+    -DOSPCOMMON_TBB_ROOT=${TBB_PATH}
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
   BUILD_ALWAYS OFF
 )
 
-set(OSPCOMMON_PATH "${INSTALL_DIR_ABSOLUTE}/ospcommon")
+set(OSPCOMMON_PATH "${COMPONENT_PATH}")
 if (NOT WIN32)
   set(OSPCOMMON_PATH "${OSPCOMMON_PATH}/lib/cmake/ospcommon")
 endif()
 
-ExternalProject_Add_StepDependencies(ospcommon configure tbb)
+ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)

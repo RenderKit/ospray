@@ -35,14 +35,14 @@ endif()
 
 ## Establish project ##
 
-project(SuperbuildTest)
+project(OSPRay_superbuild)
 
 include(ExternalProject)
 include(GNUInstallDirs)
 
 ## Superbuild options ##
 
-set(NUM_BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
+set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 
 set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to build?")
 
@@ -57,9 +57,17 @@ option(BUILD_OSPRAY_CI_TESTS "Enable OSPRay's tests." OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 option(BUILD_OSPRAY_MPI "Enable OSPRay's MPI module (requires MPI pre-installed)" OFF)
 
+option(INSTALL_IN_SEPARATE_DIRECTORIES
+  "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
+  ON
+)
+
 ## Setup top-level variables ##
 
 set(installDir ${CMAKE_INSTALL_PREFIX})
+
+get_filename_component(INSTALL_DIR_ABSOLUTE
+  ${installDir} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 if (${CMAKE_MINOR_VERSION} GREATER_EQUAL 12)
   set(PARALLEL_JOBS_OPTS -j ${NUM_BUILD_JOBS})
@@ -78,20 +86,17 @@ include(dep_oidn)
 ## Build OSPRay ##
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
-  set(ENV{TBB_ROOT} ${TBB_ROOT})
-
   ExternalProject_Add(ospray
     PREFIX ospray
     DOWNLOAD_COMMAND ""
     STAMP_DIR ospray/stamp
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..
     BINARY_DIR ospray/build
-    INSTALL_DIR ${INSTALL_DIR_ABSOLUTE}/ospray
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+      -DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR_ABSOLUTE}/ospray
       -DOSPRAY_BUILD_ISA=ALL
       -DOSPRAY_ENABLE_TESTING=${BUILD_OSPRAY_CI_TESTS}
       -DOSPRAY_MODULE_BILINEAR_PATCH=${BUILD_OSPRAY_CI_TESTS}
@@ -107,5 +112,5 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
     BUILD_ALWAYS OFF
   )
 
-  ExternalProject_Add_StepDependencies(ospray configure ospcommon embree oidn)
+  ExternalProject_Add_StepDependencies(ospray configure ospcommon embree OpenImageDenoise)
 endif()

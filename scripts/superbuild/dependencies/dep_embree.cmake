@@ -14,21 +14,31 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(EMBREE_PATH "${INSTALL_DIR_ABSOLUTE}/embree")
+set(COMPONENT_NAME embree)
+
+set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
+if (INSTALL_IN_SEPARATE_DIRECTORIES)
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
+endif()
+
+set(EMBREE_PATH "${COMPONENT_PATH}")
 
 if (BUILD_EMBREE_FROM_SOURCE)
-  ExternalProject_Add(embree
-    PREFIX embree
-    DOWNLOAD_DIR embree
-    STAMP_DIR embree/stamp
-    SOURCE_DIR embree/src
-    BINARY_DIR embree/build
-    INSTALL_DIR ${INSTALL_DIR_ABSOLUTE}/embree
+  ExternalProject_Add(${COMPONENT_NAME}
+    PREFIX ${COMPONENT_NAME}
+    DOWNLOAD_DIR ${COMPONENT_NAME}
+    STAMP_DIR ${COMPONENT_NAME}/stamp
+    SOURCE_DIR ${COMPONENT_NAME}/src
+    BINARY_DIR ${COMPONENT_NAME}/build
     URL "https://github.com/embree/embree/archive/v${BUILD_EMBREE_VERSION}.zip"
     CMAKE_ARGS
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+      -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
+      -DCMAKE_INSTALL_INCLUDEDIR=include
+      -DCMAKE_INSTALL_LIBDIR=lib
+      -DCMAKE_INSTALL_DOCDIR=doc
+      -DCMAKE_INSTALL_BINDIR=bin
       -DEMBREE_TUTORIALS=OFF
       -DEMBREE_TBB_ROOT=${TBB_INSTALL_LOCATION}
       -DEMBREE_ISPC_EXECUTABLE=${ISPC_PATH}
@@ -42,7 +52,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
     set(EMBREE_PATH "${EMBREE_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/embree-${BUILD_EMBREE_VERSION}")
   endif()
 
-  ExternalProject_Add_StepDependencies(embree configure ispc tbb)
+  ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc tbb)
 else()
   if (APPLE)
     set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${BUILD_EMBREE_VERSION}/embree-${BUILD_EMBREE_VERSION}.x86_64.macosx.tar.gz")
@@ -52,14 +62,17 @@ else()
     set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${BUILD_EMBREE_VERSION}/embree-${BUILD_EMBREE_VERSION}.x86_64.linux.tar.gz")
   endif()
 
-  ExternalProject_Add(embree
-    PREFIX embree
-    DOWNLOAD_DIR embree
-    SOURCE_DIR ${INSTALL_DIR_ABSOLUTE}/embree
+  ExternalProject_Add(${COMPONENT_NAME}
+    PREFIX ${COMPONENT_NAME}
+    DOWNLOAD_DIR ${COMPONENT_NAME}
+    STAMP_DIR ${COMPONENT_NAME}/stamp
+    SOURCE_DIR ${COMPONENT_NAME}/src
     URL ${EMBREE_URL}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory
+      <SOURCE_DIR>/
+      ${COMPONENT_PATH}
     BUILD_ALWAYS OFF
   )
 endif()
