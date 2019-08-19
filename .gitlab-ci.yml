@@ -82,7 +82,7 @@ build-arch-clang:
 build-arch-gcc-warnings:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
   allow_failure: true
 
 build-arch-clang-warnings:
@@ -90,7 +90,7 @@ build-arch-clang-warnings:
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -DOSPRAY_STRICT_BUILD=ON -DOSPRAY_WARN_AS_ERRORS=ON -DOSPRAY_MODULE_MPI=ON
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
   allow_failure: true
 
 build-ubuntu1604-gcc:
@@ -166,7 +166,7 @@ build-debug:
 build-mpi:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -DOSPRAY_MODULE_MPI=ON
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MPI=ON
 
 build-osx-clang:
   <<: *build_job_shell

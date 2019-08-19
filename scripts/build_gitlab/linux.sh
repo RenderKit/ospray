@@ -19,10 +19,7 @@ mkdir build
 cd build
 
 cmake \
-  -D OSPRAY_BUILD_ISA=ALL \
-  -D OSPRAY_ENABLE_TESTING=ON \
-  -D OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES=OFF \
-  -D OSPRAY_MODULE_BILINEAR_PATCH=ON \
-  "$@" ..
+  -DNUM_BUILD_JOBS=`nproc` \
+  "$@" ../scripts/superbuild
 
-make -j`nproc` && make test
+cmake --build .
