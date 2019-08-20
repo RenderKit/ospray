@@ -18,6 +18,8 @@
 mkdir build
 cd build
 
+cmake --version
+
 cmake \
   -DBUILD_JOBS=4 \
   "$@" ../scripts/superbuild

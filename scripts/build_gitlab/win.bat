@@ -19,6 +19,9 @@ setlocal
 
 md build
 cd build
+
+cmake --version
+
 cmake -L ^
 -G "%~1" ^
 -T "%~2" ^
