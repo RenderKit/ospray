@@ -49,6 +49,7 @@ set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to
 set(BUILD_EMBREE_VERSION "3.5.2" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
+option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
 set(BUILD_OIDN_VERSION "1.0.0" CACHE STRING "Which version of OpenImageDenoise to build?")
 option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" ON)
 
@@ -81,7 +82,9 @@ include(dep_ispc)
 include(dep_tbb)
 include(dep_ospcommon)
 include(dep_embree)
-include(dep_oidn)
+if (BUILD_OIDN)
+  include(dep_oidn)
+endif()
 
 ## Build OSPRay ##
 
@@ -100,7 +103,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DOSPRAY_BUILD_ISA=ALL
       -DOSPRAY_ENABLE_TESTING=${BUILD_OSPRAY_CI_TESTS}
       -DOSPRAY_MODULE_BILINEAR_PATCH=${BUILD_OSPRAY_CI_TESTS}
-      -DOSPRAY_MODULE_DENOISER=ON
+      -DOSPRAY_MODULE_DENOISER=${BUILD_OIDN}
       -DOSPRAY_MODULE_MPI=${BUILD_OSPRAY_MPI}
       -DOSPRAY_STRICT_BUILD=${BUILD_OSPRAY_CI_EXTRAS}
       -DOSPRAY_WARN_AS_ERRORS=${BUILD_OSPRAY_CI_EXTRAS}
@@ -112,5 +115,9 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
     BUILD_ALWAYS OFF
   )
 
-  ExternalProject_Add_StepDependencies(ospray configure ospcommon embree OpenImageDenoise)
+  if (BUILD_OIDN)
+    ExternalProject_Add_StepDependencies(ospray configure ospcommon embree OpenImageDenoise)
+  else()
+    ExternalProject_Add_StepDependencies(ospray configure ospcommon embree)
+  endif()
 endif()
