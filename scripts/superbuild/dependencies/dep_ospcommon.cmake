@@ -29,9 +29,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  GIT_REPOSITORY https://github.com/ospray/ospcommon
-  GIT_TAG master
-  GIT_SHALLOW ON
+  URL "https://github.com/ospray/ospcommon/archive/master.zip"
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
