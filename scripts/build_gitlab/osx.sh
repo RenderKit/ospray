@@ -17,12 +17,9 @@
 
 mkdir build
 cd build
-rm -rf *
 
 cmake \
--D OSPRAY_ENABLE_TESTING=ON \
--D OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES=OFF \
--D OSPRAY_MODULE_BILINEAR_PATCH=ON \
-..
+  -DBUILD_JOBS=4 \
+  "$@" ../scripts/superbuild
 
-make -j 4 && make test
+cmake --build .
