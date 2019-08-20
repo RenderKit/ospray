@@ -71,18 +71,20 @@ variables:
 
 build-arch-gcc:
   <<: *build_job_docker
+  script:
+    - scripts/build_gitlab/linux.sh -G Ninja
 
 build-arch-clang:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh -G Ninja
 
 build-arch-gcc-warnings:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
   allow_failure: true
 
 build-arch-clang-warnings:
@@ -90,12 +92,14 @@ build-arch-clang-warnings:
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
   allow_failure: true
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
+  script:
+    - scripts/build_gitlab/linux.sh -G Ninja
   artifacts:
     paths:
       - $CI_PROJECT_DIR
@@ -104,6 +108,8 @@ build-ubuntu1604-gcc:
 build-ubuntu1804-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu18.04
+  script:
+    - scripts/build_gitlab/linux.sh -G Ninja
   artifacts:
     paths:
       - $CI_PROJECT_DIR
@@ -152,12 +158,12 @@ build-centos7-gcc:
 build-debug:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -DCMAKE_BUILD_TYPE=Debug
+    - scripts/build_gitlab/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug
 
 build-mpi:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MPI=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_OSPRAY_MPI=ON
 
 build-osx-clang:
   <<: *build_job_shell
