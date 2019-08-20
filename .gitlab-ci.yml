@@ -101,9 +101,9 @@ build-ubuntu1604-gcc:
       - $CI_PROJECT_DIR
     expire_in: 3 day
 
-build-ubuntu1404-gcc:
+build-ubuntu1804-gcc:
   <<: *build_job_docker
-  image: ospray/docker-images:ubuntu14.04
+  image: ospray/docker-images:ubuntu18.04
   artifacts:
     paths:
       - $CI_PROJECT_DIR
@@ -254,13 +254,13 @@ test-centos6-gcc:
   tags:
     - modules
 
-test-ubuntu1404-gcc:
+test-ubuntu1804-gcc:
   <<: *test_job
-  image: ospray/docker-images:ubuntu14.04
+  image: ospray/docker-images:ubuntu18.04
   script:
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ scripts/tests/run_tests.sh
   dependencies:
-    - build-ubuntu1404-gcc
+    - build-ubuntu1804-gcc
 
 test-ubuntu1604-gcc:
   <<: *test_job
