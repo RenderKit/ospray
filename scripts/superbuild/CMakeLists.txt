@@ -71,7 +71,7 @@ get_filename_component(INSTALL_DIR_ABSOLUTE
   ${installDir} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
-  set(PARALLEL_JOBS_OPTS -j ${NUM_BUILD_JOBS})
+  set(PARALLEL_JOBS_OPTS -j ${BUILD_JOBS})
 endif()
 
 set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS})
