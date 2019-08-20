@@ -242,7 +242,7 @@ namespace ospray {
       void SetParam<std::string>::run()
       {
         ManagedObject *obj = handle.lookup();
-        Assert(obj);
+        assert(obj);
         obj->setParam(name, val);
       }
 
@@ -435,7 +435,7 @@ namespace ospray {
       void ResetAccumulation::run()
       {
         FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-        Assert(fb);
+        assert(fb);
         fb->clear();
       }
 
@@ -541,13 +541,13 @@ namespace ospray {
       RemoveParam::RemoveParam(ObjectHandle handle, const char *name)
           : handle(handle), name(name)
       {
-        Assert(handle != nullHandle);
+        assert(handle != nullHandle);
       }
 
       void RemoveParam::run()
       {
         ManagedObject *obj = handle.lookup();
-        Assert(obj);
+        assert(obj);
         obj->removeParam(name.c_str());
       }
 

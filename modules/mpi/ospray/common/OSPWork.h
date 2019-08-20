@@ -454,13 +454,13 @@ namespace ospray {
         SetParam(ObjectHandle handle, const char *name, const T &val)
             : handle(handle), name(name), val(val)
         {
-          Assert(handle != nullHandle);
+          assert(handle != nullHandle);
         }
 
         inline void run() override
         {
           ManagedObject *obj = handle.lookup();
-          Assert(obj);
+          assert(obj);
           obj->setParam(name, val);
         }
 
@@ -513,17 +513,17 @@ namespace ospray {
         SetParam(ObjectHandle handle, const char *name, OSPObject &obj)
             : handle(handle), name(name), val((ObjectHandle &)obj)
         {
-          Assert(handle != nullHandle);
+          assert(handle != nullHandle);
         }
 
         void run() override
         {
           ManagedObject *obj = handle.lookup();
-          Assert(obj);
+          assert(obj);
           ManagedObject *param = NULL;
           if (val != NULL_HANDLE) {
             param = val.lookup();
-            Assert(param);
+            assert(param);
           }
           obj->setParam(name, param);
         }

@@ -110,21 +110,6 @@ namespace ospray {
 
   void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
-#ifndef Assert
-#ifdef NDEBUG
-# define Assert(expr) /* nothing */
-# define Assert2(expr,expl) /* nothing */
-# define AssertError(errMsg) /* nothing */
-#else
-# define Assert(expr)                                                   \
-  ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, NULL), 0)))
-# define Assert2(expr,expl)                                             \
-  ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, expl), 0)))
-# define AssertError(errMsg)                            \
-  doAssertion(__FILE__,__LINE__, (errMsg), NULL)
-#endif
-#endif
-
   extern "C" {
     /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
     OSPRAY_CORE_INTERFACE void *malloc64(size_t size);

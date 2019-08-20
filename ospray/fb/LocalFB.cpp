@@ -28,8 +28,8 @@ namespace ospray {
       : FrameBuffer(_size, _colorBufferFormat, channels),
         tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
   {
-    Assert(size.x > 0);
-    Assert(size.y > 0);
+    assert(size.x > 0);
+    assert(size.y > 0);
     if (colorBufferToUse)
       colorBuffer = colorBufferToUse;
     else {

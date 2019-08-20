@@ -34,7 +34,7 @@ namespace ospray {
       frameID(-1)
   {
     managedObjectType = OSP_FRAMEBUFFER;
-    Assert(size.x > 0 && size.y > 0);
+    assert(size.x > 0 && size.y > 0);
   }
 
   void FrameBuffer::commit()

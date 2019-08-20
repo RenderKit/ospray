@@ -27,7 +27,7 @@ namespace ospray {
     type(type)
   {
     if (flags & OSP_DATA_SHARED_BUFFER) {
-      Assert2(init != NULL, "shared buffer is NULL");
+      assert(init != NULL && "shared buffer is NULL");
       data = const_cast<void *>(init);
     } else {
       data = alignedMalloc(numBytes+16);
