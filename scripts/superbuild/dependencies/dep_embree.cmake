@@ -49,7 +49,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
   )
 
   if (NOT WIN32)
-    set(EMBREE_PATH "${EMBREE_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/embree-${BUILD_EMBREE_VERSION}")
+    set(EMBREE_PATH "${EMBREE_PATH}/lib/cmake/embree-${BUILD_EMBREE_VERSION}")
   endif()
 
   ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc tbb)
