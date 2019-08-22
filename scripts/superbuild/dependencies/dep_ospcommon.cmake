@@ -38,7 +38,7 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DCMAKE_INSTALL_DOCDIR=doc
     -DCMAKE_INSTALL_BINDIR=bin
     -DCMAKE_BUILD_TYPE=Release
-    -DOSPCOMMON_TBB_ROOT=${TBB_PATH}
+    $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
   BUILD_ALWAYS OFF
 )
@@ -48,4 +48,6 @@ if (NOT WIN32)
   set(OSPCOMMON_PATH "${OSPCOMMON_PATH}/lib/cmake/ospcommon")
 endif()
 
-ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
+if (BUILD_TBB_FROM_SOURCE)
+  ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
+endif()

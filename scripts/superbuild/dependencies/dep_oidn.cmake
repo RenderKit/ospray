@@ -50,7 +50,9 @@ if (BUILD_OIDN_FROM_SOURCE)
     BUILD_ALWAYS OFF
   )
 
-  ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb ispc)
+  if (BUILD_TBB_FROM_SOURCE)
+    ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
+  endif()
 else()
   if (APPLE)
     set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${BUILD_OIDN_VERSION}/oidn-${BUILD_OIDN_VERSION}.x86_64.macos.tar.gz")

@@ -46,6 +46,8 @@ set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 
 set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to build?")
 
+option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
+
 set(BUILD_EMBREE_VERSION "3.5.2" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
@@ -79,7 +81,9 @@ set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS}
 ## Build dependencies ##
 
 include(dep_ispc)
-include(dep_tbb)
+if (BUILD_TBB_FROM_SOURCE)
+  include(dep_tbb)
+endif()
 include(dep_ospcommon)
 include(dep_embree)
 if (BUILD_OIDN)
@@ -111,7 +115,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -Dembree_DIR:PATH=${EMBREE_PATH}
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
       -DISPC_EXECUTABLE=${ISPC_PATH}
-      -DOSPCOMMON_TBB_ROOT=${TBB_PATH} # NOTE(jda)- can't use env var here
+      $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF
   )

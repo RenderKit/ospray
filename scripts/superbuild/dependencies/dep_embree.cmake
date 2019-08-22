@@ -40,7 +40,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
       -DCMAKE_INSTALL_DOCDIR=doc
       -DCMAKE_INSTALL_BINDIR=bin
       -DEMBREE_TUTORIALS=OFF
-      -DEMBREE_TBB_ROOT=${TBB_PATH}
+      $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DEMBREE_TBB_ROOT=${TBB_PATH}>
       -DEMBREE_ISPC_EXECUTABLE=${ISPC_PATH}
       -DCMAKE_BUILD_TYPE=Release
       -DBUILD_TESTING=OFF
@@ -52,7 +52,11 @@ if (BUILD_EMBREE_FROM_SOURCE)
     set(EMBREE_PATH "${EMBREE_PATH}/lib/cmake/embree-${BUILD_EMBREE_VERSION}")
   endif()
 
-  ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc tbb)
+  if (BUILD_TBB_FROM_SOURCE)
+    ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc tbb)
+  else()
+    ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc)
+  endif()
 else()
   if (APPLE)
     set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${BUILD_EMBREE_VERSION}/embree-${BUILD_EMBREE_VERSION}.x86_64.macosx.tar.gz")
