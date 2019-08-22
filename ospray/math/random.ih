@@ -136,6 +136,37 @@ inline varying float Random__getFloat (varying Random* uniform this) {
 } 
 
 
+typedef unsigned int uint32_t;
+typedef unsigned int64 uint64_t;
+
+struct FastRandom {
+  uint64_t state;
+  // Just use stream 1
+};
+
+inline uint32_t FastRandom__pcg32(FastRandom &rng) {
+  uint64_t oldstate = rng.state;
+  rng.state = oldstate * 6364136223846793005ULL + 1;
+  // Calculate output function (XSH RR), uses old state for max ILP
+  uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
+  uint32_t rot = oldstate >> 59u;
+  return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+}
+
+inline float FastRandom__getFloat(FastRandom &rng) {
+  return ldexp((double)FastRandom__pcg32(rng), -32);
+}
+
+inline FastRandom FastRandom__seed(uint32_t seed) {
+  FastRandom rng;
+  rng.state = 0;
+  FastRandom__pcg32(rng);
+  rng.state += seed;
+  FastRandom__pcg32(rng);
+  return rng;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // TEA - Random numbers based on Tiny Encryption Algorithm
 

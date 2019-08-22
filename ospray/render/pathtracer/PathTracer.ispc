@@ -89,11 +89,79 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
   }
 }
 
+float delta_tracking(
+  VolumetricModel *uniform vModel,
+  const VolumeInterval& vInterval,
+  varying FastRandom* uniform randomSampler,
+  vec3f &o,
+  vec3f &w)
+{
+  float max_density = 1.0f; // TODO: get proper majorant
+  float t = vInterval.interval.lower;
+  while (true)
+  {
+    float xi = FastRandom__getFloat(*randomSampler);
+    const float dt = - log(1.f - xi) / max_density;
+    t += dt;
+    if (t > vInterval.interval.upper || !(dt > 0) )
+      break;
+    
+    xi = FastRandom__getFloat(*randomSampler);
+    vec3f p = o + t * w;
+    const float density = vModel->volume->sample(vModel->volume, p);
+    if (xi < density / max_density)
+      return t;
+  }
+  return inf;
+}
+
+vec3f volumeTransmittance(const World *uniform world,
+                          Ray &ray,
+                          varying LDSampler* uniform ldSampler,
+                          varying FastRandom* uniform randomSampler)
+{
+  Ray volumeRay;
+  volumeRay.org  = ray.org;
+  volumeRay.dir  = ray.dir;
+  volumeRay.time = ray.time;
+  volumeRay.t0   = ray.t0;
+  volumeRay.t    = ray.t;
+  volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
+  volumeRay.primID = RTC_INVALID_GEOMETRY_ID;
+  volumeRay.instID = RTC_INVALID_GEOMETRY_ID;
+  VolumeInterval volumeInterval;
+  vec3f volumeEvent;
+  traceVolumeRay(world, volumeRay, volumeInterval);
+  const bool haveVolumeHit = hasInterval(volumeInterval);
+
+  float transmittance = 1.f;
+  if (haveVolumeHit)
+  {
+    VolumetricModel *varying instance = volumeInterval.volumetricModel;
+    //transformRay(volumeRay, volumeInterval.rcp_xfm);
+    foreach_unique(inst in instance)
+    {
+      volumeInterval.interval.lower = max(0.f, volumeInterval.interval.lower);
+      volumeInterval.interval.upper = noHit(ray) ? volumeInterval.interval.upper : min(volumeInterval.interval.upper, ray.t);
+      //transmittance = exp(-(volumeInterval.interval.upper - volumeInterval.interval.lower));
+      const float dist = delta_tracking(
+          inst,
+          volumeInterval,
+          randomSampler,
+          volumeRay.org,
+          volumeRay.dir);
+      transmittance = (dist < volumeInterval.interval.upper) ? 0.f : 1.f;
+    }
+  }
+  return make_vec3f(transmittance);
+}
+
 ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
                                     const World *uniform world,
                                     const vec2f &pixel, // normalized, i.e. in [0..1]
                                     Ray &ray,
-                                    varying LDSampler* uniform sampler)
+                                    varying LDSampler* uniform ldSampler,
+                                    varying FastRandom* uniform randomSampler)
 {
   ScreenSample sample;
   sample.alpha = 1.f;
@@ -155,7 +223,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
         for (uniform int i = 0; i < numLights; i++) {
           const uniform Light *uniform light = self->lights[i];
 
-          const vec2f s = LDSampler_getFloat2(sampler, sampleDim + 4 + i*2);
+          const vec2f s = LDSampler_getFloat2(ldSampler, sampleDim + 4 + i*2);
           Light_SampleRes ls = light->sample(light, dg, s);
 
           // skip when zero contribution from light
@@ -196,6 +264,8 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
     }
 
     const vec3f wo = neg(ray.dir);
+
+    Lw = Lw * volumeTransmittance(world, ray, ldSampler, randomSampler);
 
     float maxLightDist;
     // environment shading when nothing hit
@@ -279,7 +349,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
       for (uniform int i = 0; i < numLights; i++) {
         const uniform Light *uniform light = self->lights[i];
 
-        const vec2f s = LDSampler_getFloat2(sampler, sampleDim + 4 + i*2);
+        const vec2f s = LDSampler_getFloat2(ldSampler, sampleDim + 4 + i*2);
         Light_SampleRes ls = light->sample(light, dg, s);
 
         // skip when zero contribution from light
@@ -313,13 +383,14 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
         }
 
         const vec3f unshadedLightContrib = nextLw * ls.weight * misHeuristic(ls.pdf, fe.pdf);
-        L = L + transparentShadow(self, world, unshadedLightContrib, shadowRay, currentMedium);
+        L = L + transparentShadow(self, world, unshadedLightContrib, shadowRay, currentMedium)
+              * volumeTransmittance(world, shadowRay, ldSampler, randomSampler);
       }
     }
 
     // sample BSDF
-    const vec2f s  = LDSampler_getFloat2(sampler, sampleDim);
-    const vec2f ss = LDSampler_getFloat2(sampler, sampleDim+2); // ss.y used for Russian roulette
+    const vec2f s  = LDSampler_getFloat2(ldSampler, sampleDim);
+    const vec2f ss = LDSampler_getFloat2(ldSampler, sampleDim+2); // ss.y used for Russian roulette
     BSDF_SampleRes fs;
     vec3f Ns = dg.Ns;
     foreach_unique(f in bsdf)
@@ -405,29 +476,38 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
 
-  LDSampler samplerObj;
-  varying LDSampler* uniform sampler = &samplerObj;
+  LDSampler ldSamplerObj;
+  varying LDSampler* uniform ldSampler = &ldSamplerObj;
   const int spp = max(1, self->super.spp);
 
   for (uniform int s=0; s < spp; s++) {
     // init RNG
     const uint32 sampleID = accumID*spp + s;
     screenSample.sampleID.z = sampleID;
-    LDSampler_init(sampler, fb->size.x*iy+ix, sampleID);
+    LDSampler_init(ldSampler, fb->size.x*iy+ix, sampleID);
+    FastRandom randomSamplerObj = FastRandom__seed((fb->size.x*iy+ix) + sampleID * fb->size.x*fb->size.y);
+    varying FastRandom* uniform randomSampler = &randomSamplerObj;
 
     CameraSample cameraSample;
-    const vec2f pixelSample = LDSampler_getFloat2(sampler, 0);
+    const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
+    //const vec2f pixelSample = make_vec2f(0.5f, 0.5f);
     cameraSample.screen.x = (screenSample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
     cameraSample.screen.y = (screenSample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
-    cameraSample.lens     = LDSampler_getFloat2(sampler, 2);
-    cameraSample.time     = LDSampler_getFloat(sampler, 4);
+    cameraSample.lens     = LDSampler_getFloat2(ldSampler, 2);
+    cameraSample.time     = LDSampler_getFloat(ldSampler, 4);
 
     camera->initRay(camera, screenSample.ray, cameraSample);
 
     ScreenSample sample = PathTraceIntegrator_Li(self, world,
                                                  cameraSample.screen,
-                                                 screenSample.ray, sampler);
+                                                 screenSample.ray, 
+                                                 ldSampler, 
+                                                 randomSampler);
     screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
+    //ScreenSample sample;
+    //screenSample.rgb = (cameraSample.screen.x < 0.5) 
+    //                 ? make_vec3f(FastRandom__getFloat(*randomSampler))
+    //                 : make_vec3f(LDSampler_getFloat(ldSampler, 0));
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);
     screenSample.normal = screenSample.normal + sample.normal;
