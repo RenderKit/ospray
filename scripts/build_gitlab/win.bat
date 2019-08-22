@@ -25,15 +25,11 @@ cmake --version
 cmake -L ^
 -G "%~1" ^
 -T "%~2" ^
--D OSPRAY_BUILD_ISA=ALL ^
--D OSPRAY_ENABLE_TESTING=ON ^
--D OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES=OFF ^
--D OSPRAY_MODULE_BILINEAR_PATCH=ON ^
--D OSPRAY_MODULE_MPI="%~3" ^
-..
+-D BUILD_JOBS=4 ^
+-D BUILD_OSPRAY_MPI="%~3" ^
+../scripts/superbuild
 
-cmake --build . --config Release --target ALL_BUILD -- /m /nologo ^
-  && ctest . -C Release
+cmake --build . --config Release --target ALL_BUILD -- /m /nologo
 
 :abort
 endlocal
