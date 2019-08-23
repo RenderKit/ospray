@@ -1,6 +1,12 @@
 Version History
 ---------------
 
+### Changes in v2.0.0:
+
+-   Removal of Slices geometry. Instead, any geometry with volume
+    texture can be used for slicing (see tutorial
+    `ospTutorialStructuredVolume` for reference)
+
 ### Changes in v1.8.5:
 
 -   Fix float precision cornercase (`NaN`s) in sphere light sampling

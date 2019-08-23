@@ -112,8 +112,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Spheres.ispc
   geometry/Cylinders.cpp
   geometry/Cylinders.ispc
-  geometry/Slices.ispc
-  geometry/Slices.cpp
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
 
