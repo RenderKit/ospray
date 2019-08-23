@@ -26,6 +26,44 @@
 #define MAX_ROULETTE_CONT_PROB 0.95f
 #define PDF_CULLING 0.0f
 
+enum PathVertexType
+{
+  SURFACE,
+  VOLUME,
+  CAMERA,
+  LIGHT,
+  ENVIRONMENT
+};
+
+struct PathVertex
+{
+  DifferentialGeometry dg;
+  vec3f wi;
+  vec3f wo;
+
+  float pdf_w; // the pdf of sampling wo in solid angle measure
+  PathVertexType type;
+};
+
+struct PathContext
+{
+  const PathTracer* uniform context;
+  const World* uniform world;
+  const varying vec2f* pixel; 
+  varying LDSampler* uniform ldSampler;
+  varying FastRandom* uniform randomSampler;
+  uniform int numLights;
+  uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light samples (N*2D)
+};
+
+struct PathState
+{
+  bool straightPath;                        // path from camera did not change direction, for alpha and backplate
+  bool auxFree;                             // normal & albedo buffer were not yet written to
+  uniform uint32 depth;
+  uniform uint32 sampleDim;                 // skip: pixel (2D), lens (2D), time (1D)
+};
+
 inline float misHeuristic(float pdf1, float pdf2)
 {
   // power heuristic with beta=2
@@ -115,6 +153,43 @@ float delta_tracking(
   return inf;
 }
 
+float volumeSampleFreePath(const World *uniform world,
+                           Ray &ray,
+                           varying LDSampler* uniform ldSampler,
+                           varying FastRandom* uniform randomSampler)
+{
+  Ray volumeRay;
+  volumeRay.org  = ray.org;
+  volumeRay.dir  = ray.dir;
+  volumeRay.time = ray.time;
+  volumeRay.t0   = ray.t0;
+  volumeRay.t    = ray.t;
+  volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
+  volumeRay.primID = RTC_INVALID_GEOMETRY_ID;
+  volumeRay.instID = RTC_INVALID_GEOMETRY_ID;
+  VolumeInterval volumeInterval;
+  traceVolumeRay(world, volumeRay, volumeInterval);
+  const bool haveVolumeHit = hasInterval(volumeInterval);
+
+  float dist = inf;
+  if (haveVolumeHit)
+  {
+    VolumetricModel *varying instance = volumeInterval.volumetricModel;
+    //transformRay(volumeRay, volumeInterval.rcp_xfm);
+    foreach_unique(inst in instance)
+    {
+      volumeInterval.interval.lower = max(0.f, volumeInterval.interval.lower);
+      volumeInterval.interval.upper = noHit(ray) ? volumeInterval.interval.upper : min(volumeInterval.interval.upper, ray.t);
+      dist = delta_tracking(inst,
+                            volumeInterval,
+                            randomSampler,
+                            volumeRay.org,
+                            volumeRay.dir);
+    }
+  }
+  return dist;
+}
+
 vec3f volumeTransmittance(const World *uniform world,
                           Ray &ray,
                           varying LDSampler* uniform ldSampler,
@@ -130,7 +205,6 @@ vec3f volumeTransmittance(const World *uniform world,
   volumeRay.primID = RTC_INVALID_GEOMETRY_ID;
   volumeRay.instID = RTC_INVALID_GEOMETRY_ID;
   VolumeInterval volumeInterval;
-  vec3f volumeEvent;
   traceVolumeRay(world, volumeRay, volumeInterval);
   const bool haveVolumeHit = hasInterval(volumeInterval);
 
@@ -156,82 +230,71 @@ vec3f volumeTransmittance(const World *uniform world,
   return make_vec3f(transmittance);
 }
 
-ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
-                                    const World *uniform world,
-                                    const vec2f &pixel, // normalized, i.e. in [0..1]
-                                    Ray &ray,
-                                    varying LDSampler* uniform ldSampler,
-                                    varying FastRandom* uniform randomSampler)
+inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray& ray, ScreenSample& sample)
 {
-  ScreenSample sample;
-  sample.alpha = 1.f;
-  sample.normal = make_vec3f(0.0f);
-  sample.albedo = make_vec3f(0.0f);
-
-  const uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
   vec3f L = make_vec3f(0.f); // accumulated radiance
   vec3f Lw = make_vec3f(1.f); // path throughput
   Medium currentMedium = make_Medium_vacuum();
-  float lastBsdfPdf = inf; // probability density of previous sampled BSDF, for MIS
-  bool straightPath = true; // path from camera did not change direction, for alpha and backplate
-  bool auxFree = true; // normal & albedo buffer were not yet written to
-  uniform uint32 depth = 0;
-  uniform uint32 sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
-  const uniform uint32 numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
-  // geometric configuration of last surface interaction
-  DifferentialGeometry lastDg;
-  // P and N also used by light eval
-  lastDg.P = ray.org;
-  lastDg.epsilon = calcEpsilon(ray.org, 0.f);
-  lastDg.Ns = ray.dir;
-  lastDg.Ng = ray.dir;
+
+  PathVertex lastVertex;
+  lastVertex.type = CAMERA;
+  lastVertex.pdf_w = inf;    // probability density of previous sampled BSDF, for MIS
+  lastVertex.dg.P = ray.org; // P and N also used by light eval
+  lastVertex.dg.epsilon = calcEpsilon(ray.org, 0.f);
+  lastVertex.dg.Ns = ray.dir;
+  lastVertex.dg.Ng = ray.dir;
 
   float shadowCatcherDist = -inf;
-  if (self->shadowCatcher)
-    shadowCatcherDist = intersectPlane(ray, self->shadowCatcherPlane);
+  if (pathContext.context->shadowCatcher)
+    shadowCatcherDist = intersectPlane(ray, pathContext.context->shadowCatcherPlane);
 
   do {
     if (shadowCatcherDist > ray.t0) // valid hit can hide other geometry
       ray.t = min(shadowCatcherDist, ray.t);
 
-    traceRay(world, ray);
+    traceRay(pathContext.world, ray);
 
-    DifferentialGeometry dg;
+    PathVertex pathVertex;
+    pathVertex.pdf_w = inf;
+    if (noHit(ray)) {
+      pathVertex.type = ENVIRONMENT;
+    } else {
+      pathVertex.type = SURFACE;
+    }
 
     // record depth of primary rays
-    if (depth == 0)
+    if (pathState.depth == 0)
       sample.z = ray.t;
-
 
     ////////////////////////////////////
     // Shadow Catcher
 
-    if (straightPath) {
+    if (pathState.straightPath) {
       // TODO use MIS as well
       // consider real (flagged) geometries with material and move into
       // light loop (will also handle MIS)
       if (shadowCatcherDist <= ray.t && shadowCatcherDist > ray.t0) {
         // "postIntersect" of shadowCatcher plane
-        dg.Ns = dg.Ng = make_vec3f(self->shadowCatcherPlane);
-        if (dot(ray.dir, dg.Ng) >= 0.f)
-          dg.Ns = dg.Ng = neg(dg.Ng);
-        const float eps = calcEpsilon(dg.P, ray.dir, shadowCatcherDist);
-        dg.P = ray.org + shadowCatcherDist * ray.dir + eps * dg.Ng;
+        pathVertex.dg.Ns = pathVertex.dg.Ng = make_vec3f(pathContext.context->shadowCatcherPlane);
+        if (dot(ray.dir, pathVertex.dg.Ng) >= 0.f)
+          pathVertex.dg.Ns = pathVertex.dg.Ng = neg(pathVertex.dg.Ng);
+        const float eps = calcEpsilon(pathVertex.dg.P, ray.dir, shadowCatcherDist);
+        pathVertex.dg.P = ray.org + shadowCatcherDist * ray.dir + eps * pathVertex.dg.Ng;
 
         vec3f unshaded = make_vec3f(0.f); // illumination without occluders
         vec3f shaded = make_vec3f(0.f); // illumination including shadows
-        for (uniform int i = 0; i < numLights; i++) {
-          const uniform Light *uniform light = self->lights[i];
+        for (uniform int i = 0; i < pathContext.numLights; i++) {
+          const uniform Light *uniform light = pathContext.context->lights[i];
 
-          const vec2f s = LDSampler_getFloat2(ldSampler, sampleDim + 4 + i*2);
-          Light_SampleRes ls = light->sample(light, dg, s);
+          const vec2f s = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim + 4 + i*2);
+          Light_SampleRes ls = light->sample(light, pathVertex.dg, s);
 
           // skip when zero contribution from light
           if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
             continue;
 
           // evaluate a white diffuse BRDF
-          const float brdf = clamp(dot(ls.dir, dg.Ns));// * one_over_pi cancels anyway
+          const float brdf = clamp(dot(ls.dir, pathVertex.dg.Ns));// * one_over_pi cancels anyway
 
           // skip when zero contribution from material
           if (brdf <= 0.0f)
@@ -239,11 +302,11 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
 
           // test for shadows
           Ray shadowRay;
-          setRay(shadowRay, dg.P, ls.dir, 0.0f, ls.dist, ray.time);
+          setRay(shadowRay, pathVertex.dg.P, ls.dir, 0.0f, ls.dist, ray.time);
 
           const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
           unshaded = unshaded + unshadedLightContrib;
-          shaded = shaded + transparentShadow(self, world, unshadedLightContrib, shadowRay, currentMedium);
+          shaded = shaded + transparentShadow(pathContext.context, pathContext.world, unshadedLightContrib, shadowRay, currentMedium);
         }
         // order of args important to filter NaNs (in case unshaded.X is zero)
         const vec3f ratio = min(Lw * shaded * rcp(unshaded), Lw);
@@ -265,198 +328,273 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
 
     const vec3f wo = neg(ray.dir);
 
-    Lw = Lw * volumeTransmittance(world, ray, ldSampler, randomSampler);
+    float freePath = volumeSampleFreePath(pathContext.world, ray, pathContext.ldSampler, pathContext.randomSampler);
+    if (freePath < inf)
+    {
+      Lw = Lw * make_vec3f(1.0);
+      pathVertex.type = VOLUME;
+      pathVertex.dg.P = make_vec3f(ray.org + ray.dir * freePath);
+      pathVertex.dg.Ng = make_vec3f(0.f);
+      pathVertex.dg.Ns = make_vec3f(0.f);
+      pathVertex.dg.dPds = make_vec3f(0.f); 
+      pathVertex.dg.dPdt = make_vec3f(0.f);
+      pathVertex.dg.st = make_vec2f(0);
+      pathVertex.dg.color = make_vec4f(0.f);
+      pathVertex.dg.primID = RTC_INVALID_GEOMETRY_ID;
+      pathVertex.dg.materialID = -1;
+      pathVertex.dg.areaPDF = 0.f;
+      pathVertex.dg.material = NULL;
+      pathVertex.dg.epsilon = 0.f;
+    }
 
     float maxLightDist;
     // environment shading when nothing hit
-    if (noHit(ray)) {
+    if (pathVertex.type == ENVIRONMENT) {
       maxLightDist = inf; // include envLights (i.e. the ones in infinity)
-      if (straightPath) {
+      if (pathState.straightPath) {
         sample.alpha = 1.0f - luminance(Lw);
-        if ((bool)self->backplate) {
+        if ((bool)pathContext.context->backplate) {
           DifferentialGeometry lookup;
-          initDgFromTexCoord(lookup, clamp2edge(self->backplate, pixel));
-          L = L + Lw * get3f(self->backplate, lookup);
+          initDgFromTexCoord(lookup, clamp2edge(pathContext.context->backplate, *pathContext.pixel));
+          L = L + Lw * get3f(pathContext.context->backplate, lookup);
           maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
         }
       }
     } else {
       // virtual lights are occluded by hit geometry
-      // because lastDg.P can be different from ray.org (when previously sampled a Dirac transmission)
+      // because lastVertex.dg.P can be different from ray.org (when previously sampled a Dirac transmission)
       // we cannot just use ray.t as maxDist
-      maxLightDist = distance(lastDg.P, ray.org + ray.t * ray.dir);
+      maxLightDist = distance(lastVertex.dg.P, ray.org + ray.t * ray.dir);
     }
 
-    // add light from *virtual* lights by intersecting them
-    for (uniform int i = self->numGeoLights; i < self->numLights; i++) {
-      const float minLightDist = distance(lastDg.P, ray.org); // minDist is not always zero, see above
-      const uniform Light *uniform light = self->lights[i];
-      if (!straightPath || light->isVisible) {
-        // to correctly handle MIS through transparencies the light pdf needs to be calculated wrt. lastDg
-        // however, we only have a valid intersection with the light in [minLightDist, maxLightDist],
-        // otherwise light could be added twice
-        Light_EvalRes le = light->eval(light, lastDg, ray.dir, minLightDist, maxLightDist);
-        if (reduce_max(le.radiance) > 0.0f)
-          L = L + Lw * le.radiance * misHeuristic(lastBsdfPdf, le.pdf);
+    if (pathVertex.type != VOLUME)
+    {
+      // add light from *virtual* lights by intersecting them
+      for (uniform int i = pathContext.context->numGeoLights; i < pathContext.numLights; i++) {
+        const float minLightDist = distance(lastVertex.dg.P, ray.org); // minDist is not always zero, see above
+        const uniform Light *uniform light = pathContext.context->lights[i];
+        if (!pathState.straightPath || light->isVisible) {
+          // to correctly handle MIS through transparencies the light pdf needs to be calculated wrt. lastVertex.dg
+          // however, we only have a valid intersection with the light in [minLightDist, maxLightDist],
+          // otherwise light could be added twice
+          Light_EvalRes le = light->eval(light, lastVertex.dg, ray.dir, minLightDist, maxLightDist);
+          if (reduce_max(le.radiance) > 0.0f)
+            L = L + Lw * le.radiance * misHeuristic(lastVertex.pdf_w, le.pdf);
+        }
       }
     }
 
-    if (noHit(ray))
+    if (pathVertex.type == ENVIRONMENT)
       break;
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
     // except if we have geometry lights (which we still need to evaluate for MIS)
-    if (depth >= self->super.maxDepth && self->numGeoLights == 0)
+    if (pathState.depth >= pathContext.context->super.maxDepth && pathContext.context->numGeoLights == 0)
       break;
 
-    ////////////////////////////////////
-    // handle next surface interaction
+    if (pathVertex.type == SURFACE)
+    {
+      ////////////////////////////////////
+      // handle next surface interaction
 
-    postIntersect(world, dg, ray,
-                  DG_MATERIALID |
-                  DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR | DG_TANGENTS);
-    uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)dg.material;
+      postIntersect(pathContext.world, pathVertex.dg, ray,
+                    DG_MATERIALID |
+                    DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR | DG_TANGENTS);
+      uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)pathVertex.dg.material;
 
-    // evaluate geometry lights
-    foreach_unique(m in material) {
-      if (m != NULL && reduce_max(m->emission) > 0.f) {
-        // convert pdf wrt. area to pdf wrt. solid angle
-        const float cosd = dot(dg.Ng, ray.dir);
-        const float lePdf = dg.areaPDF * sqr(ray.t) / abs(cosd);
-        L = L + Lw * m->emission * misHeuristic(lastBsdfPdf, lePdf);
-      }
-    }
-
-    // terminate after evaluation of lights and before next shading to always have both samples for MIS
-    if (depth >= self->super.maxDepth)
-      break;
-
-    // shade surface
-    uniform ShadingContext ctx;
-    ShadingContext_Constructor(&ctx);
-    const varying BSDF* bsdf = NULL;
-
-    foreach_unique(m in material)
-      if (m != NULL)
-        bsdf = m->getBSDF(m, &ctx, dg, ray, currentMedium);
-
-    // terminate path when we don't have any BSDF
-    if (!bsdf)
-      break;
-
-    // direct lighting including shadows and MIS
-    if (bsdf->type & BSDF_SMOOTH) {
-      for (uniform int i = 0; i < numLights; i++) {
-        const uniform Light *uniform light = self->lights[i];
-
-        const vec2f s = LDSampler_getFloat2(ldSampler, sampleDim + 4 + i*2);
-        Light_SampleRes ls = light->sample(light, dg, s);
-
-        // skip when zero contribution from light
-        if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
-          continue;
-
-        // evaluate BSDF
-        BSDF_EvalRes fe;
-        foreach_unique(f in bsdf) {
-          if (f != NULL)
-            fe = f->eval(f, wo, ls.dir);
-        }
-
-        // skip when zero contribution from material
-        if (reduce_max(fe.value) <= 0.0f)
-          continue;
-
-        // test for shadows
-        Ray shadowRay;
-        vec3f org = dg.P;
-        if (dot(dg.Ng, ls.dir) < 0.f)
-          org = org - (2.0f * dg.epsilon) * dg.Ng;
-        setRay(shadowRay, org, ls.dir, 0.f, ls.dist, ray.time);
-
-        const vec3f nextLw = Lw * fe.value;
-
-        // Russian roulette adjustment
-        if (depth >= self->rouletteDepth) {
-          const float contProb = min(luminance(nextLw * rcp(fe.pdf)), MAX_ROULETTE_CONT_PROB);
-          fe.pdf *= contProb;
-        }
-
-        const vec3f unshadedLightContrib = nextLw * ls.weight * misHeuristic(ls.pdf, fe.pdf);
-        L = L + transparentShadow(self, world, unshadedLightContrib, shadowRay, currentMedium)
-              * volumeTransmittance(world, shadowRay, ldSampler, randomSampler);
-      }
-    }
-
-    // sample BSDF
-    const vec2f s  = LDSampler_getFloat2(ldSampler, sampleDim);
-    const vec2f ss = LDSampler_getFloat2(ldSampler, sampleDim+2); // ss.y used for Russian roulette
-    BSDF_SampleRes fs;
-    vec3f Ns = dg.Ns;
-    foreach_unique(f in bsdf)
-      if (f != NULL) {
-        fs = f->sample(f, wo, s, ss.x);
-        if (f->frame != NULL)
-          Ns = getN(f);
-      }
-    if (auxFree && (fs.type & BSDF_SMOOTH)) {
-      sample.normal = Ns;
-      sample.albedo = bsdf->albedo;
-      auxFree = false;
-    }
-
-    // terminate path when zero contribution from material
-    if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)
-      break;
-
-    Lw = Lw * fs.weight;
-
-    // Russian roulette
-    if (depth >= self->rouletteDepth) {
-      const float contProb = min(luminance(Lw), MAX_ROULETTE_CONT_PROB);
-      if (ss.y >= contProb)
-        break;
-      Lw = Lw * rcp(contProb);
-      fs.pdf *= contProb;
-    }
-
-    // compute attenuation with Beer's law
-    if (reduce_min(currentMedium.attenuation) < 0.f)
-      Lw = Lw * expf(currentMedium.attenuation * ray.t);
-
-    // update currentMedium if we hit a medium interface
-    // TODO: support nested dielectrics
-    vec3f ray_org = dg.P;
-    if (fs.type & BSDF_TRANSMISSION) {
-      ray_org = ray_org - (2.0f * dg.epsilon) * dg.Ng;
+      // evaluate geometry lights
       foreach_unique(m in material) {
-        if (m != NULL)
-          m->selectNextMedium(m, dg, currentMedium);
+        if (m != NULL && reduce_max(m->emission) > 0.f) {
+          // convert pdf wrt. area to pdf wrt. solid angle
+          const float cosd = dot(pathVertex.dg.Ng, ray.dir);
+          const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
+          L = L + Lw * m->emission * misHeuristic(lastVertex.pdf_w, lePdf);
+        }
       }
+
+      // terminate after evaluation of lights and before next shading to always have both samples for MIS
+      if (pathState.depth >= pathContext.context->super.maxDepth)
+        break;
+
+      // shade surface
+      uniform ShadingContext ctx;
+      ShadingContext_Constructor(&ctx);
+      const varying BSDF* bsdf = NULL;
+
+      foreach_unique(m in material)
+        if (m != NULL)
+          bsdf = m->getBSDF(m, &ctx, pathVertex.dg, ray, currentMedium);
+
+      // terminate path when we don't have any BSDF
+      if (!bsdf)
+        break;
+
+      // direct lighting including shadows and MIS
+      if (bsdf->type & BSDF_SMOOTH) {
+        for (uniform int i = 0; i < pathContext.numLights; i++) {
+          const uniform Light *uniform light = pathContext.context->lights[i];
+
+          const vec2f s = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim + 4 + i*2);
+          Light_SampleRes ls = light->sample(light, pathVertex.dg, s);
+
+          // skip when zero contribution from light
+          if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
+            continue;
+
+          // evaluate BSDF
+          BSDF_EvalRes fe;
+          foreach_unique(f in bsdf) {
+            if (f != NULL)
+              fe = f->eval(f, wo, ls.dir);
+          }
+
+          // skip when zero contribution from material
+          if (reduce_max(fe.value) <= 0.0f)
+            continue;
+
+          // test for shadows
+          Ray shadowRay;
+          vec3f org = pathVertex.dg.P;
+          if (dot(pathVertex.dg.Ng, ls.dir) < 0.f)
+            org = org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
+          setRay(shadowRay, org, ls.dir, 0.f, ls.dist, ray.time);
+
+          const vec3f nextLw = Lw * fe.value;
+
+          // Russian roulette adjustment
+          if (pathState.depth >= pathContext.context->rouletteDepth) {
+            const float contProb = min(luminance(nextLw * rcp(fe.pdf)), MAX_ROULETTE_CONT_PROB);
+            fe.pdf *= contProb;
+          }
+
+          const vec3f unshadedLightContrib = nextLw * ls.weight * misHeuristic(ls.pdf, fe.pdf);
+          L = L + transparentShadow(pathContext.context, pathContext.world, unshadedLightContrib, shadowRay, currentMedium)
+                * volumeTransmittance(pathContext.world, shadowRay, pathContext.ldSampler, pathContext.randomSampler);
+        }
+      }
+
+      // sample BSDF
+      const vec2f s  = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim);
+      const vec2f ss = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim+2); // ss.y used for Russian roulette
+      BSDF_SampleRes fs;
+      vec3f Ns = pathVertex.dg.Ns;
+      foreach_unique(f in bsdf)
+        if (f != NULL) {
+          fs = f->sample(f, wo, s, ss.x);
+          if (f->frame != NULL)
+            Ns = getN(f);
+        }
+
+      if (pathState.auxFree && (fs.type & BSDF_SMOOTH)) {
+        sample.normal = Ns;
+        sample.albedo = bsdf->albedo;
+        pathState.auxFree = false;
+      }
+
+      // terminate path when zero contribution from material
+      if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)
+        break;
+
+      pathVertex.pdf_w = fs.pdf;
+      Lw = Lw * fs.weight;
+
+      // Russian roulette
+      if (pathState.depth >= pathContext.context->rouletteDepth) {
+        const float contProb = min(luminance(Lw), MAX_ROULETTE_CONT_PROB);
+        if (ss.y >= contProb)
+          break;
+        Lw = Lw * rcp(contProb);
+        fs.pdf *= contProb;
+      }
+
+      // compute attenuation with Beer's law
+      if (reduce_min(currentMedium.attenuation) < 0.f)
+        Lw = Lw * expf(currentMedium.attenuation * ray.t);
+
+      // update currentMedium if we hit a medium interface
+      // TODO: support nested dielectrics
+      vec3f ray_org = pathVertex.dg.P;
+      if (fs.type & BSDF_TRANSMISSION) {
+        ray_org = ray_org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
+        foreach_unique(m in material) {
+          if (m != NULL)
+            m->selectNextMedium(m, pathVertex.dg, currentMedium);
+        }
+      }
+
+      // keep lastBsdfPdf and lastDg when there was a specular transmission
+      // to better combine MIS with transparent shadows
+      if (fs.type & ~BSDF_SPECULAR_TRANSMISSION) {
+        lastVertex = pathVertex;
+      }
+
+      // continue the path
+      pathState.straightPath &= eq(ray.dir, fs.wi);
+      setRay(ray, ray_org, fs.wi, ray.time);
+    }
+    if (pathVertex.type == VOLUME)
+    {
+      if (pathState.auxFree) {
+        sample.normal = neg(ray.dir);
+        sample.albedo = make_vec3f(1.f);
+        pathState.auxFree = false;
+      }
+
+      // sample isotropic phase function
+      const vec2f s  = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim);
+      vec3f wo = uniformSampleSphere(1.0, s);
+      
+      // continue the path
+      lastVertex = pathVertex;
+      pathState.straightPath &= eq(ray.dir, wo);
+      setRay(ray, pathVertex.dg.P, wo, ray.time);
+      ray.t = inf;
     }
 
-    // keep lastBsdfPdf and lastDg when there was a specular transmission
-    // to better combine MIS with transparent shadows
-    if (fs.type & ~BSDF_SPECULAR_TRANSMISSION) {
-      lastBsdfPdf = fs.pdf;
-      lastDg = dg;
-    }
-
-    // continue the path
-    straightPath &= eq(ray.dir, fs.wi);
-    setRay(ray, ray_org, fs.wi, ray.time);
-    depth++;
-    sampleDim += numBounceSampleDims;
-  } while (reduce_max(Lw) > self->super.minContribution);
+    pathState.depth++;
+    pathState.sampleDim += pathContext.numBounceSampleDims;
+  } while (reduce_max(Lw) > pathContext.context->super.minContribution);
 
   sample.rgb = L;
   if (isnan(L.x) || isnan(L.y) || isnan(L.z)){
     sample.rgb = make_vec3f(0.f);
     sample.alpha = 1.0f;
   }
-  return sample;
 }
 
+
+ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
+                                    const World *uniform world,
+                                    const vec2f &pixel, // normalized, i.e. in [0..1]
+                                    Ray &ray,
+                                    varying LDSampler* uniform ldSampler,
+                                    varying FastRandom* uniform randomSampler)
+{
+  ScreenSample sample;
+  sample.alpha = 1.f;
+  sample.normal = make_vec3f(0.0f);
+  sample.albedo = make_vec3f(0.0f);
+
+  const uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
+  PathContext pathContext;
+  pathContext.context = self;
+  pathContext.world = world;
+  pathContext.pixel = &pixel;
+  pathContext.ldSampler = ldSampler;
+  pathContext.randomSampler = randomSampler;
+  pathContext.numLights = numLights;
+  pathContext.numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
+
+  PathState pathState;
+  pathState.straightPath = true; // path from camera did not change direction, for alpha and backplate
+  pathState.auxFree = true; // normal & albedo buffer were not yet written to
+  pathState.depth = 0;
+  pathState.sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
+
+  tracePath(pathContext, pathState, ray, sample);
+
+  return sample;
+}
 
 inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
                                            FrameBuffer *uniform fb,

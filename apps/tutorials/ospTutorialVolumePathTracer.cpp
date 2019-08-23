@@ -105,7 +105,7 @@ int main(int argc, const char **argv)
         const float Z = 2.f*((float)z)/dims.z - 1.f;
 
         float d = std::sqrt(X * X + Y * Y + Z * Z);
-        voxels[dims.x * dims.y * z + dims.x * y + x] = 1.f; //d < 1.f ? 1.0f : 0.f;
+        voxels[dims.x * dims.y * z + dims.x * y + x] = d < 1.f ? 1.0f : 0.f;
       }
     }
   });
@@ -148,7 +148,7 @@ int main(int argc, const char **argv)
 
   // create geometries
   std::vector<OSPGeometricModel> geometricModels;
-  {
+  if (1) {
     auto geometry = BoxGeometry(box3f(vec3f(-1.5f, -1.f, -1.f), vec3f(-0.5f, 0.f, 0.f)));
     geometricModels.emplace_back(ospNewGeometricModel(geometry));
     ospRelease(geometry);
@@ -162,7 +162,7 @@ int main(int argc, const char **argv)
     ospRelease(objMaterial);
   }
   
-  {
+  if (1) {
     auto geometry = BoxGeometry(box3f(vec3f(0.0f, 0.f, 0.f), vec3f(2.f, 2.f, 2.f)));
     geometricModels.emplace_back(ospNewGeometricModel(geometry));
     ospRelease(geometry);
@@ -179,7 +179,7 @@ int main(int argc, const char **argv)
   {
     auto geometry = PlaneGeometry(
       AffineSpace3f::translate(vec3f(0.f, -2.5f, 0.f)) * 
-      AffineSpace3f::scale(vec3f(4.f, 1.f, 4.f)));
+      AffineSpace3f::scale(vec3f(10.f, 1.f, 10.f)));
     geometricModels.emplace_back(ospNewGeometricModel(geometry));
     ospRelease(geometry);
     OSPMaterial objMaterial = ospNewMaterial("pathtracer", "OBJMaterial");
@@ -223,9 +223,38 @@ int main(int argc, const char **argv)
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
-  OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "light", lightsData);
-  ospRelease(lightsData);
+  std::vector<OSPLight> light_handles;
+  if (0) {
+    OSPLight light = ospNewLight("quad");
+    ospSetVec3f(light, "position", -4.0f, 3.0f, 1.0f);
+    ospSetVec3f(light, "edge1", 0.f, 0.0f, -0.5f);
+    ospSetVec3f(light, "edge2", 0.5f, 0.25f, 0.0f);
+    ospSetFloat(light, "intensity", 25.0f);
+    ospSetVec3f(light, "color", 2.6f, 2.5f, 2.3f);
+    ospCommit(light);
+    light_handles.push_back(light);
+  }
+  if (1) {
+    OSPLight light = ospNewLight("ambient");
+    //ospSetFloat(light, "intensity", 3.0f);
+    //ospSetVec3f(light, "color", 0.03f, 0.07, 0.23);
+    ospSetFloat(light, "intensity", 1.f);
+    ospSetVec3f(light, "color", 1.f, 1.f, 1.f);
+    ospCommit(light);
+    light_handles.push_back(light);
+  }
+  if (0) {
+    OSPLight light = ospNewLight("quad");
+    ospSetFloat(light, "angularDiameter", 0.53f);
+    ospSetVec3f(light, "direction", -0.5826f, -0.7660f, -0.2717f);
+    ospCommit(light);
+    light_handles.push_back(light);
+  }
+
+  OSPData lights = ospNewData(light_handles.size(), OSP_LIGHT, light_handles.data(), 0);
+  ospCommit(lights);
+  ospSetData(renderer, "light", lights);
+  ospRelease(lights);
 
   ospCommit(renderer);
 
@@ -233,7 +262,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
       new GLFWOSPRayWindow(vec2i{1024, 768},
-                           box3f(vec3f(-2.2f, -1.2f, -1.2f), vec3f(1.2f, 1.2f, 1.2f)),
+                           box3f(vec3f(-2.2f, -1.2f, -3.2f), vec3f(1.2f, 1.2f, 1.2f)),
                            world,
                            renderer));
 
