@@ -1,6 +1,5 @@
-#!/bin/bash
 ## ======================================================================== ##
-## Copyright 2016-2019 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,21 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=`pwd`/build/install/lib:$DYLD_LIBRARY_PATH
-export PATH=`pwd`/build/install/bin:$PATH
+if (NOT USE_STATIC_RUNTIME)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
 
-mkdir build_regression_tests
-cd build_regression_tests
+add_subdirectory(gtest)
 
-cmake ../test_image_data
-
-make -j 4 ospray_test_data
-
-rm -rf failed
-mkdir failed
-
-ospray_test_suite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
-FAILED=$(echo $?)
-
-exit $FAILED
+mark_as_advanced(gtest_build_samples)
+mark_as_advanced(gtest_build_tests)
+mark_as_advanced(gtest_disable_pthreads)
+mark_as_advanced(gtest_force_shared_crt)
+mark_as_advanced(gtest_hide_internal_symbols)

@@ -22,6 +22,7 @@ cmake --version
 
 cmake \
   -DBUILD_JOBS=4 \
+  -DBUILD_OSPRAY_CI_TESTS=ON \
   -DCMAKE_INSTALL_LIBDIR=lib \
   -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" ../scripts/superbuild

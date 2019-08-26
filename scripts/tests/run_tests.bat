@@ -18,22 +18,19 @@ rem ======================================================================== rem
 setlocal
 
 echo Running tests
+
+set PATH=%PATH%;build\install\bin
+
+md build_regression_tests
+cd build_regression_tests
+
 md failed
 
-set OSP_LIBS=build\Release
-set BASELINE_DIR=build\regression_tests\baseline\
-
-set PATH=%PATH%;%OSP_LIBS%;%embree_DIR%\bin
-
-cd build
-cmake -G "Visual Studio 15 2017 Win64" ^
--D OSPRAY_ENABLE_TESTING=ON ^
-..
+cmake ../test_image_data
 
 cmake --build . --config Release --target ospray_test_data -- /m /nologo
-cd ..
 
-call build\regression_tests\Release\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=%BASELINE_DIR%
+call ..\build\install\bin\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\
 
 :abort
 endlocal

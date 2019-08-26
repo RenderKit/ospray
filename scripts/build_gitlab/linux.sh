@@ -18,13 +18,14 @@
 mkdir build
 cd build
 
-# NOTE(jda) - Some Linux OSs need to have TBB on LD_LIBRARY_PATH at build time
-export LD_LIBRARY_PATH=`pwd`/install/tbb/lib:${LD_LIBRARY_PATH}
+# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
+export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
 
 cmake --version
 
 cmake \
   -DBUILD_JOBS=`nproc` \
+  -DBUILD_OSPRAY_CI_TESTS=ON \
   -DCMAKE_INSTALL_LIBDIR=lib \
   -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" ../scripts/superbuild

@@ -1,6 +1,5 @@
-#!/bin/bash
 ## ======================================================================== ##
-## Copyright 2016-2019 Intel Corporation                                    ##
+## Copyright 2017-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,21 +14,19 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=`pwd`/build/install/lib:$DYLD_LIBRARY_PATH
-export PATH=`pwd`/build/install/bin:$PATH
+ospray_create_application(ospray_test_suite
+  ospray_environment.cpp
+  ospray_test_fixture.cpp
+  ospray_test_geometry.cpp
+  ospray_test_suite_main.cpp
+  ospray_test_tools.cpp
+  ospray_test_volumetric.cpp
+)
 
-mkdir build_regression_tests
-cd build_regression_tests
-
-cmake ../test_image_data
-
-make -j 4 ospray_test_data
-
-rm -rf failed
-mkdir failed
-
-ospray_test_suite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
-FAILED=$(echo $?)
-
-exit $FAILED
+target_link_libraries(ospray_test_suite
+PRIVATE
+	ospcommon::ospcommon
+  gtest_main
+  ospray
+	stb_image
+)

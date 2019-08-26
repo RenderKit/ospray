@@ -66,7 +66,7 @@ endif()
 
 ## Testing ##
 if (OSPRAY_ENABLE_TESTING)
-  add_subdirectory(tests)
+  add_subdirectory(test_image_data)
 endif()
 
 ## Clang-format target ##

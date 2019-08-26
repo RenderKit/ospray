@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2017-2019 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,46 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_disable_compiler_warnings()
+cmake_minimum_required(VERSION 3.1)
 
-##############################################################
-# Google Test
-##############################################################
-if (NOT USE_STATIC_RUNTIME)
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-endif()
-
-add_subdirectory(gtest)
-
-mark_as_advanced(gtest_build_samples)
-mark_as_advanced(gtest_build_tests)
-mark_as_advanced(gtest_disable_pthreads)
-mark_as_advanced(gtest_force_shared_crt)
-mark_as_advanced(gtest_hide_internal_symbols)
-
-##############################################################
-# Tests
-##############################################################
-
-ospray_create_test(ospray_test_suite
-  ospray_environment.cpp
-  ospray_test_fixture.cpp
-  ospray_test_geometry.cpp
-  ospray_test_suite_main.cpp
-  ospray_test_tools.cpp
-  ospray_test_volumetric.cpp
-)
-
-target_link_libraries(ospray_test_suite
-PRIVATE
-	ospcommon::ospcommon
-  gtest_main
-  ospray
-	stb_image
-)
-
-set_target_properties(ospray_test_suite PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests)
+project(ospray_test_suite)
 
 # Baseline images for tests and benchmarks
 include(ExternalData)
@@ -64,12 +27,13 @@ set(ExternalData_URL_TEMPLATES
 )
 
 set(ExternalData_OBJECT_STORES
-  "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests/baseline"
+  "${CMAKE_BINARY_DIR}/regression_test_baseline"
   "/opt/ospray/test-data"
   "//sdvis-nas/NAS/OSPRay/test-data"
 )
-set(ExternalData_BINARY_ROOT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/regression_tests/baseline)
-set(ExternalData_SOURCE_ROOT ${CMAKE_SOURCE_DIR}/tests/baseline)
+
+set(ExternalData_BINARY_ROOT ${CMAKE_BINARY_DIR}/regression_test_baseline)
+set(ExternalData_SOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/baseline)
 
 ExternalData_Expand_Arguments(ospray_test_data
   ospray_test_suite
@@ -79,8 +43,3 @@ ExternalData_Expand_Arguments(ospray_test_data
 ExternalData_Add_Target(ospray_test_data)
 
 set_target_properties(ospray_test_data PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
-if (OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES)
-  add_dependencies(ospray_test_suite ospray_test_data)
-endif()
-
