@@ -102,7 +102,7 @@ build-ubuntu1604-gcc:
     - scripts/build_gitlab/linux.sh -G Ninja
   artifacts:
     paths:
-      - $CI_PROJECT_DIR
+      - build
     expire_in: 3 day
 
 build-ubuntu1804-gcc:
@@ -112,7 +112,7 @@ build-ubuntu1804-gcc:
     - scripts/build_gitlab/linux.sh -G Ninja
   artifacts:
     paths:
-      - $CI_PROJECT_DIR
+      - build
     expire_in: 3 day
 
 build-centos6-gcc:
@@ -125,7 +125,8 @@ build-centos6-gcc:
     - scripts/build_gitlab/linux.sh
   artifacts:
     paths:
-      - $CI_PROJECT_DIR
+      - build
+    expire_in: 3 day
 
 build-centos6-icc:
   <<: *build_job_docker_modules
@@ -152,7 +153,7 @@ build-centos7-gcc:
   image: ospray/docker-images:centos7
   artifacts:
     paths:
-      - $CI_PROJECT_DIR
+      - build
     expire_in: 3 day
 
 build-debug:

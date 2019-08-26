@@ -25,6 +25,8 @@ cmake --version
 
 cmake \
   -DBUILD_JOBS=`nproc` \
+  -DCMAKE_INSTALL_LIBDIR=lib \
+  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" ../scripts/superbuild
 
 cmake --build .

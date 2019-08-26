@@ -42,6 +42,8 @@ include(GNUInstallDirs)
 
 ## Superbuild options ##
 
+option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
+
 set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 
 set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to build?")
@@ -80,30 +82,46 @@ set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS}
 
 ## Build dependencies ##
 
-include(dep_ispc)
+if (DOWNLOAD_ISPC)
+  include(dep_ispc)
+endif()
+
 if (BUILD_TBB_FROM_SOURCE)
   include(dep_tbb)
 endif()
+
 include(dep_ospcommon)
 include(dep_embree)
+
 if (BUILD_OIDN)
   include(dep_oidn)
 endif()
 
 ## Build OSPRay ##
 
+set(COMPONENT_NAME ospray)
+
+set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
+if (INSTALL_IN_SEPARATE_DIRECTORIES)
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
+endif()
+
 if (NOT BUILD_DEPENDENCIES_ONLY)
-  ExternalProject_Add(ospray
-    PREFIX ospray
+  ExternalProject_Add(${COMPONENT_NAME}
+    PREFIX ${COMPONENT_NAME}
     DOWNLOAD_COMMAND ""
-    STAMP_DIR ospray/stamp
+    STAMP_DIR ${COMPONENT_NAME}/stamp
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..
-    BINARY_DIR ospray/build
+    BINARY_DIR ${COMPONENT_NAME}/build
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR_ABSOLUTE}/ospray
+      -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
+      -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
+      -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
+      -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
+      -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
       -DOSPRAY_BUILD_ISA=ALL
       -DOSPRAY_ENABLE_TESTING=${BUILD_OSPRAY_CI_TESTS}
       -DOSPRAY_MODULE_BILINEAR_PATCH=${BUILD_OSPRAY_CI_TESTS}
@@ -114,15 +132,18 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DOpenImageDenoise_DIR:PATH=${OIDN_PATH}
       -Dembree_DIR:PATH=${EMBREE_PATH}
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
-      -DISPC_EXECUTABLE=${ISPC_PATH}
+      $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF
   )
 
-  if (BUILD_OIDN)
-    ExternalProject_Add_StepDependencies(ospray configure ospcommon embree OpenImageDenoise)
-  else()
-    ExternalProject_Add_StepDependencies(ospray configure ospcommon embree)
-  endif()
+  ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
+  configure
+    ospcommon
+    embree
+    $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:tbb>
+    $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
+    $<$<BOOL:${BUILD_OIDN}>:OpenImageDenoise>
+  )
 endif()
