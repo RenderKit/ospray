@@ -35,6 +35,11 @@ struct VolumetricModel
   TransferFunction *transferFunction;
 
   box3f boundingBox;
+  
+  //! Volume parameters understood by the pathtracer
+  vec3f albedo;     // sigma_s/sigma_t = mu_s / mu_t
+  float sigma_t;    // extinction cross section = (sigma_s + sigma_a)
+  float meanCosine; // mean cosine parameter for Heyney-Greenstein phase function
 };
 
 // Helper functions ///////////////////////////////////////////////////////////

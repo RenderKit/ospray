@@ -143,6 +143,7 @@ int main(int argc, const char **argv)
   auto volumeModel = ospNewVolumetricModel(volume);
   ospSetObject(volumeModel, "transferFunction", tfn);
   ospSetFloat(volumeModel, "samplingRate", 0.5f);
+  ospSetVec3f(volumeModel, "albedo", 1.f, 1.f, 1.f);
   ospCommit(volumeModel);
   ospRelease(tfn);
 
@@ -202,18 +203,24 @@ int main(int argc, const char **argv)
   ospSetData(world, "instance", instances);
   ospRelease(instances);
 
+  bool showVolume = true;
+  bool showGeometry = true;
   auto updateScene = [&]() {
 
     ospRemoveParam(group, "geometry");
     ospRemoveParam(group, "volume");
 
-    OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
-    ospSetObject(group, "volume", volumes);
-    ospRelease(volumes);
+    if (showVolume) {
+      OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
+      ospSetObject(group, "volume", volumes);
+      ospRelease(volumes);
+    }
     
-    OSPData geometries = ospNewData(geometricModels.size(), OSP_OBJECT, geometricModels.data());
-    ospSetObject(group, "geometry", geometries);
-    ospRelease(geometries);
+    if (showGeometry) {
+      OSPData geometries = ospNewData(geometricModels.size(), OSP_OBJECT, geometricModels.data());
+      ospSetObject(group, "geometry", geometries);
+      ospRelease(geometries);
+    }
   };
 
   updateScene();
@@ -273,8 +280,53 @@ int main(int argc, const char **argv)
     bool updateWorld = false;
     bool commitWorld = false;
 
+    static int maxDepth = 20;
+    if (ImGui::SliderInt("maxDepth", &maxDepth, 0.f, 128.f)) {
+      commitWorld = true;
+      ospSetInt(renderer, "maxDepth", maxDepth);
+      glfwOSPRayWindow->addObjectToCommit(renderer);
+    }
+
+    if (ImGui::Checkbox("Show Volume", &showVolume))
+      updateWorld = true;
+    if (ImGui::Checkbox("Show Geometry", &showGeometry))
+      updateWorld = true;
+
     commitWorld = updateWorld;
 
+    static float sigma_t = 1.0f;
+    if (ImGui::SliderFloat("sigma_t", &sigma_t, 0.f, 10.f)) {
+      commitWorld = true;
+      ospSetFloat(volumeModel, "sigma_t", sigma_t);
+      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+    }
+    
+    static float meanCosine = 0.0f;
+    if (ImGui::SliderFloat("meanCosine", &meanCosine, -1.f, 1.f)) {
+      commitWorld = true;
+      ospSetFloat(volumeModel, "meanCosine", meanCosine);
+      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+    }
+    
+    static vec3f albedo(1.0f);
+    if (ImGui::ColorEdit3("albedo", (float*)&albedo.x, 
+      ImGuiColorEditFlags_NoAlpha | 
+      ImGuiColorEditFlags_HSV | 
+      ImGuiColorEditFlags_Float | 
+      ImGuiColorEditFlags_PickerHueWheel))
+    {
+      commitWorld = true;
+      ospSetVec3fv(volumeModel, "albedo", (float*)&albedo.x);
+      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+    }
+
+    if (updateWorld)
+      updateScene();
+
+    if (commitWorld) {
+      glfwOSPRayWindow->addObjectToCommit(group);
+      glfwOSPRayWindow->addObjectToCommit(world);
+    }
     if (updateWorld)
       updateScene();
 
@@ -290,8 +342,8 @@ int main(int argc, const char **argv)
   // cleanup remaining objects
   ospRelease(volume);
   ospRelease(volumeModel);
-  //ospRelease(planeGeometry);
-  //ospRelease(planeGeometryModel);
+  for(auto geometricModel : geometricModels)
+    ospRelease(geometricModel);
   ospRelease(group);
   ospRelease(instance);
 

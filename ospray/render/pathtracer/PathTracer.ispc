@@ -43,6 +43,8 @@ struct PathVertex
 
   float pdf_w; // the pdf of sampling wo in solid angle measure
   PathVertexType type;
+
+  VolumetricModel* volume; // only valid if path vertex is volume vertex
 };
 
 struct PathContext
@@ -134,7 +136,7 @@ float delta_tracking(
   vec3f &o,
   vec3f &w)
 {
-  float max_density = 1.0f; // TODO: get proper majorant
+  float max_density = vModel->sigma_t; // TODO: get proper majorant
   float t = vInterval.interval.lower;
   while (true)
   {
@@ -146,7 +148,7 @@ float delta_tracking(
     
     xi = FastRandom__getFloat(*randomSampler);
     vec3f p = o + t * w;
-    const float density = vModel->volume->sample(vModel->volume, p);
+    const float density = vModel->sigma_t * vModel->volume->sample(vModel->volume, p);
     if (xi < density / max_density)
       return t;
   }
@@ -156,7 +158,8 @@ float delta_tracking(
 float volumeSampleFreePath(const World *uniform world,
                            Ray &ray,
                            varying LDSampler* uniform ldSampler,
-                           varying FastRandom* uniform randomSampler)
+                           varying FastRandom* uniform randomSampler,
+                           VolumetricModel* varying *uniform sampledInstance)
 {
   Ray volumeRay;
   volumeRay.org  = ray.org;
@@ -172,6 +175,7 @@ float volumeSampleFreePath(const World *uniform world,
   const bool haveVolumeHit = hasInterval(volumeInterval);
 
   float dist = inf;
+  unmasked { *sampledInstance = NULL; }
   if (haveVolumeHit)
   {
     VolumetricModel *varying instance = volumeInterval.volumetricModel;
@@ -186,6 +190,7 @@ float volumeSampleFreePath(const World *uniform world,
                             volumeRay.org,
                             volumeRay.dir);
     }
+    if (dist < inf) *sampledInstance = instance;
   }
   return dist;
 }
@@ -238,6 +243,7 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
 
   PathVertex lastVertex;
   lastVertex.type = CAMERA;
+  lastVertex.volume = NULL;
   lastVertex.pdf_w = inf;    // probability density of previous sampled BSDF, for MIS
   lastVertex.dg.P = ray.org; // P and N also used by light eval
   lastVertex.dg.epsilon = calcEpsilon(ray.org, 0.f);
@@ -256,6 +262,7 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
 
     PathVertex pathVertex;
     pathVertex.pdf_w = inf;
+    pathVertex.volume = NULL;
     if (noHit(ray)) {
       pathVertex.type = ENVIRONMENT;
     } else {
@@ -327,24 +334,14 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
     }
 
     const vec3f wo = neg(ray.dir);
-
-    float freePath = volumeSampleFreePath(pathContext.world, ray, pathContext.ldSampler, pathContext.randomSampler);
+    
+    //VolumetricModel* varying sampledVolume = NULL;
+    float freePath = volumeSampleFreePath(pathContext.world, ray, pathContext.ldSampler, pathContext.randomSampler, &pathVertex.volume);
     if (freePath < inf)
     {
-      Lw = Lw * make_vec3f(1.0);
       pathVertex.type = VOLUME;
       pathVertex.dg.P = make_vec3f(ray.org + ray.dir * freePath);
-      pathVertex.dg.Ng = make_vec3f(0.f);
-      pathVertex.dg.Ns = make_vec3f(0.f);
-      pathVertex.dg.dPds = make_vec3f(0.f); 
-      pathVertex.dg.dPdt = make_vec3f(0.f);
-      pathVertex.dg.st = make_vec2f(0);
-      pathVertex.dg.color = make_vec4f(0.f);
-      pathVertex.dg.primID = RTC_INVALID_GEOMETRY_ID;
-      pathVertex.dg.materialID = -1;
-      pathVertex.dg.areaPDF = 0.f;
-      pathVertex.dg.material = NULL;
-      pathVertex.dg.epsilon = 0.f;
+      Lw = Lw * pathVertex.volume->albedo;
     }
 
     float maxLightDist;
@@ -534,9 +531,22 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
     }
     if (pathVertex.type == VOLUME)
     {
+      // "post intersect" of volume
+      pathVertex.dg.Ng = make_vec3f(0.f);
+      pathVertex.dg.Ns = make_vec3f(0.f);
+      pathVertex.dg.dPds = make_vec3f(0.f); 
+      pathVertex.dg.dPdt = make_vec3f(0.f);
+      pathVertex.dg.st = make_vec2f(0);
+      pathVertex.dg.color = make_vec4f(0.f);
+      pathVertex.dg.primID = RTC_INVALID_GEOMETRY_ID;
+      pathVertex.dg.materialID = -1;
+      pathVertex.dg.areaPDF = 0.f;
+      pathVertex.dg.material = NULL;
+      pathVertex.dg.epsilon = 0.f;
+
       if (pathState.auxFree) {
         sample.normal = neg(ray.dir);
-        sample.albedo = make_vec3f(1.f);
+        sample.albedo = pathVertex.volume->albedo;
         pathState.auxFree = false;
       }
 

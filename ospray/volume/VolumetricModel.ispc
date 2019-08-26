@@ -33,11 +33,17 @@ export void *uniform VolumetricModel_create(void *uniform cppE,
 export void VolumetricModel_set(void *uniform _self,
                                uniform float samplingRate,
                                void *uniform transferFunction,
-                               const uniform box3f &bounds)
+                               const uniform box3f &bounds,
+                               const uniform vec3f &albedo,
+                               uniform float sigma_t,
+                               uniform float meanCosine)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
   self->samplingRate            = samplingRate;
   self->transferFunction        = (TransferFunction * uniform) transferFunction;
   self->boundingBox             = bounds;
+  self->albedo                  = albedo;
+  self->sigma_t                 = sigma_t;
+  self->meanCosine              = meanCosine;
 }
