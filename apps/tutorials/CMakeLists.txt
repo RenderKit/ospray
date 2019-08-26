@@ -108,3 +108,6 @@ target_link_libraries(ospTutorialCurves PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialQuadMesh ospTutorialQuadMesh.cpp)
 target_link_libraries(ospTutorialQuadMesh PRIVATE tutorial_common)
+
+ospray_create_application(ospTutorialCylinders ospTutorialCylinders.cpp)
+target_link_libraries(ospTutorialCylinders PRIVATE tutorial_common)
