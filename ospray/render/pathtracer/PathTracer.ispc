@@ -53,7 +53,7 @@ struct PathContext
   const World* uniform world;
   const varying vec2f* pixel; 
   varying LDSampler* uniform ldSampler;
-  varying FastRandom* uniform randomSampler;
+  varying RandomSampler* uniform randomSampler;
   uniform int numLights;
   uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light samples (N*2D)
 };
@@ -132,7 +132,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 float delta_tracking(
   VolumetricModel *uniform vModel,
   const VolumeInterval& vInterval,
-  varying FastRandom* uniform randomSampler,
+  varying RandomSampler* uniform randomSampler,
   vec3f &o,
   vec3f &w)
 {
@@ -140,13 +140,13 @@ float delta_tracking(
   float t = vInterval.interval.lower;
   while (true)
   {
-    float xi = FastRandom__getFloat(*randomSampler);
+    float xi = RandomSampler_getFloat(randomSampler);
     const float dt = - log(1.f - xi) / max_density;
     t += dt;
     if (t > vInterval.interval.upper || !(dt > 0) )
       break;
     
-    xi = FastRandom__getFloat(*randomSampler);
+    xi = RandomSampler_getFloat(randomSampler);
     vec3f p = o + t * w;
     const float density = vModel->sigma_t * vModel->volume->sample(vModel->volume, p);
     if (xi < density / max_density)
@@ -158,7 +158,7 @@ float delta_tracking(
 float volumeSampleFreePath(const World *uniform world,
                            Ray &ray,
                            varying LDSampler* uniform ldSampler,
-                           varying FastRandom* uniform randomSampler,
+                           varying RandomSampler* uniform randomSampler,
                            VolumetricModel* varying *uniform sampledInstance)
 {
   Ray volumeRay;
@@ -198,7 +198,7 @@ float volumeSampleFreePath(const World *uniform world,
 vec3f volumeTransmittance(const World *uniform world,
                           Ray &ray,
                           varying LDSampler* uniform ldSampler,
-                          varying FastRandom* uniform randomSampler)
+                          varying RandomSampler* uniform randomSampler)
 {
   Ray volumeRay;
   volumeRay.org  = ray.org;
@@ -578,7 +578,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
                                     const vec2f &pixel, // normalized, i.e. in [0..1]
                                     Ray &ray,
                                     varying LDSampler* uniform ldSampler,
-                                    varying FastRandom* uniform randomSampler)
+                                    varying RandomSampler* uniform randomSampler)
 {
   ScreenSample sample;
   sample.alpha = 1.f;
@@ -625,7 +625,9 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   screenSample.sampleID.y = iy;
 
   LDSampler ldSamplerObj;
+  RandomSampler randomSamplerObj;
   varying LDSampler* uniform ldSampler = &ldSamplerObj;
+  varying RandomSampler* uniform randomSampler = &randomSamplerObj;
   const int spp = max(1, self->super.spp);
 
   for (uniform int s=0; s < spp; s++) {
@@ -633,12 +635,10 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     const uint32 sampleID = accumID*spp + s;
     screenSample.sampleID.z = sampleID;
     LDSampler_init(ldSampler, fb->size.x*iy+ix, sampleID);
-    FastRandom randomSamplerObj = FastRandom__seed((fb->size.x*iy+ix) + sampleID * fb->size.x*fb->size.y);
-    varying FastRandom* uniform randomSampler = &randomSamplerObj;
+    RandomSampler_init(randomSampler, fb->size.x*iy+ix, sampleID);
 
     CameraSample cameraSample;
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
-    //const vec2f pixelSample = make_vec2f(0.5f, 0.5f);
     cameraSample.screen.x = (screenSample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
     cameraSample.screen.y = (screenSample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
     cameraSample.lens     = LDSampler_getFloat2(ldSampler, 2);
@@ -652,10 +652,6 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
                                                  ldSampler, 
                                                  randomSampler);
     screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
-    //ScreenSample sample;
-    //screenSample.rgb = (cameraSample.screen.x < 0.5) 
-    //                 ? make_vec3f(FastRandom__getFloat(*randomSampler))
-    //                 : make_vec3f(LDSampler_getFloat(ldSampler, 0));
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);
     screenSample.normal = screenSample.normal + sample.normal;
