@@ -102,7 +102,7 @@ build-ubuntu1604-gcc:
     - scripts/build_gitlab/linux.sh -G Ninja
   artifacts:
     paths:
-      - build
+      - build/install
     expire_in: 3 day
 
 build-ubuntu1804-gcc:
@@ -112,7 +112,7 @@ build-ubuntu1804-gcc:
     - scripts/build_gitlab/linux.sh -G Ninja
   artifacts:
     paths:
-      - build
+      - build/install
     expire_in: 3 day
 
 build-centos6-gcc:
@@ -125,7 +125,7 @@ build-centos6-gcc:
     - scripts/build_gitlab/linux.sh
   artifacts:
     paths:
-      - build
+      - build/install
     expire_in: 3 day
 
 build-centos6-icc:
@@ -153,7 +153,7 @@ build-centos7-gcc:
   image: ospray/docker-images:centos7
   artifacts:
     paths:
-      - build
+      - build/install
     expire_in: 3 day
 
 build-debug:
@@ -183,8 +183,7 @@ build-windows-msvc14:
     - win7
   artifacts:
     paths:
-      - build/Release
-      - build/regression_tests
+      - build/install
     expire_in: 3 day
 
 build-windows-msvc15:
@@ -196,8 +195,7 @@ build-windows-msvc15:
     - win7
   artifacts:
     paths:
-      - build/Release
-      - build/regression_tests
+      - build/install
     expire_in: 3 day
 
 build-windows-icc:
@@ -209,8 +207,7 @@ build-windows-icc:
     - win7
   artifacts:
     paths:
-      - build/Release
-      - build/regression_tests
+      - build/install
     expire_in: 3 day
 
 build-scan-kw:
@@ -230,20 +227,6 @@ build-scan-kw:
 
 ### TEST JOBS ###
 
-test-gen-centos7-gcc:
-  <<: *test_job
-  image: ospray/docker-images:centos7
-  script:
-    - cd $CI_PROJECT_DIR/build
-    - ../scripts/tests/generate_baseline.sh
-  artifacts:
-    paths:
-     - $CI_PROJECT_DIR/build/img
-    expire_in: 1 week
-  dependencies:
-      - build-centos7-gcc
-  when: manual
-
 test-centos7-gcc:
   <<: *test_job
   image: ospray/docker-images:centos7
@@ -256,7 +239,8 @@ test-centos6-gcc:
   dependencies:
     - build-centos6-gcc
   script:
-    - module load tbb
+    - module load cmake
+    - module load gcc/4.8.2
     - scripts/tests/run_tests.sh
   tags:
     - modules
@@ -300,28 +284,6 @@ test-windows-msvc14:
     - msvc14
   dependencies:
     - build-windows-msvc14
-
-benchmark-centos7-gcc:
-  stage: test-build
-  image: ospray/docker-images:centos7
-  script:
-    - cd $CI_PROJECT_DIR/build
-    - mkdir benchmarks
-    - make ospray_bench_data
-    - ln -s /opt/ospray/benchmark/test_data $CI_PROJECT_DIR/build/test_data
-    - ../scripts/bench/run_benchmark_datasets.py --output benchmarks/stats.csv --baseline benchmarks/baseline/stats.csv --reference benchmarks/baseline --renderer scivis
-  tags:
-    - docker
-    - ospray-benchmark
-  artifacts:
-    paths:
-      - $CI_PROJECT_DIR/build/bench_output
-      - $CI_PROJECT_DIR/build/benchmarks/stats.csv
-    expire_in: 1 week
-    when: always
-  dependencies:
-    - build-centos7-gcc
-  when: manual
 
 test-kw-critical:
   stage: test-src

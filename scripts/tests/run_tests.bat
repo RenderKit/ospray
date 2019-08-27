@@ -19,7 +19,7 @@ setlocal
 
 echo Running tests
 
-set PATH=%PATH%;build\install\bin
+set PATH=%PATH%;..\build\install\bin
 
 md build_regression_tests
 cd build_regression_tests
@@ -30,7 +30,7 @@ cmake ../test_image_data
 
 cmake --build . --config Release --target ospray_test_data -- /m /nologo
 
-call ..\build\install\bin\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\
+call ..\build\install\bin\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed\
 
 :abort
 endlocal

@@ -30,6 +30,7 @@ cmake -L ^
 -D BUILD_OSPRAY_MPI="%~3" ^
 -D BUILD_TBB_FROM_SOURCE=OFF ^
 -D BUILD_EMBREE_FROM_SOURCE=OFF ^
+-D INSTALL_IN_SEPARATE_DIRECTORIES=OFF ^
 ../scripts/superbuild
 
 cmake --build . --config Release --target ALL_BUILD -- /m /nologo
