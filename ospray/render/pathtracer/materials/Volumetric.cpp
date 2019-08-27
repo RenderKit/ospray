@@ -14,30 +14,33 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "common/Material.h"
+#include "Volumetric_ispc.h"
 
-#include "math/vec.ih"
-#include "fb/FrameBuffer.ih"
-#include "render/util.ih"
-#include "lights/Light.ih"
-#include "render/Renderer.ih"
+namespace ospray {
+  namespace pathtracer {
 
-#define MAX_LIGHTS 1000
+    struct VolumetricMaterial : public ospray::Material
+    {
+      //! \brief common function to help printf-debugging
+      /*! Every derived class should override this! */
+      virtual std::string toString() const  override
+      { return "ospray::pathtracer::VolumetricMaterial"; }
 
-struct PathTracer {
-  Renderer super;
+      //! \brief commit the material's parameters
+      virtual void commit()  override
+      {
+        if (getIE() == nullptr)
+          ispcEquivalent = ispc::PathTracer_Volumetric_create();
 
-  int32 rouletteDepth;
-  float maxRadiance;
-  Texture2D* uniform backplate;
-  // coefficients of plane equation defining geometry to catch shadows for
-  // compositing; disabled if normal is zero-length
-  vec4f shadowCatcherPlane;
-  bool shadowCatcher; // preprocessed
+        vec3f albedo     = getParam3f("albedo",     vec3f(1.0f));
+        float meanCosine = getParam1f("meanCosine", 0.f);
 
-  Material* uniform volumetricMaterial;
+        ispc::PathTracer_Volumetric_set(ispcEquivalent, (const ispc::vec3f&)albedo, meanCosine);
+      }
+    };
 
-  const uniform Light *uniform *uniform lights;
-  uint32 numLights;
-  uint32 numGeoLights;
-};
+    OSP_REGISTER_MATERIAL(pathtracer, VolumetricMaterial, VolumetricMaterial);
+    OSP_REGISTER_MATERIAL(pt, VolumetricMaterial, VolumetricMaterial);
+  }
+}

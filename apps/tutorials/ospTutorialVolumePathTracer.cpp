@@ -18,12 +18,10 @@
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
+#include "ospcommon/math/range.h"
+#include "ospcommon/math/box.h"
 #include "ospcommon/tasking/parallel_for.h"
-
-#include "ospcommon/library.h"
-#include "ospcommon/range.h"
-#include "ospcommon/box.h"
-#include "ospcommon/multidim_index_sequence.h"
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 #include "ospray_testing.h"
 
@@ -100,12 +98,12 @@ int main(int argc, const char **argv)
   tasking::parallel_for(dims.z, [&](int64_t z) {
     for (int y = 0; y < dims.y; ++y) {
       for (int x = 0; x < dims.x; ++x) {
-        const float X = 2.f*((float)x)/dims.x - 1.f;
-        const float Y = 2.f*((float)y)/dims.y - 1.f;
-        const float Z = 2.f*((float)z)/dims.z - 1.f;
-
-        float d = std::sqrt(X * X + Y * Y + Z * Z);
-        voxels[dims.x * dims.y * z + dims.x * y + x] = d < 1.f ? 1.0f : 0.f;
+        //const float X = 2.f*((float)x)/dims.x - 1.f;
+        //const float Y = 2.f*((float)y)/dims.y - 1.f;
+        //const float Z = 2.f*((float)z)/dims.z - 1.f;
+        //float d = std::sqrt(X * X + Y * Y + Z * Z);
+        //voxels[dims.x * dims.y * z + dims.x * y + x] = d < 1.f ? 1.0f : 0.f;
+        voxels[dims.x * dims.y * z + dims.x * y + x] = 1.f;
       }
     }
   });
@@ -144,6 +142,14 @@ int main(int argc, const char **argv)
   ospSetObject(volumeModel, "transferFunction", tfn);
   ospSetFloat(volumeModel, "samplingRate", 0.5f);
   ospSetVec3f(volumeModel, "albedo", 1.f, 1.f, 1.f);
+
+  OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
+  ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
+  ospSetVec3f(volumetricMaterial, "albedo", 1.f, 1.f, 1.f);
+  ospCommit(volumetricMaterial);
+  ospSetObject(volumeModel, "material", volumetricMaterial);
+  ospRelease(volumetricMaterial);
+
   ospCommit(volumeModel);
   ospRelease(tfn);
 
@@ -153,11 +159,12 @@ int main(int argc, const char **argv)
     auto geometry = BoxGeometry(box3f(vec3f(-1.5f, -1.f, -1.f), vec3f(-0.5f, 0.f, 0.f)));
     geometricModels.emplace_back(ospNewGeometricModel(geometry));
     ospRelease(geometry);
-    vec4f color(0.2f, 0.2f, 0.8f, 1.f);
+    vec4f color(1.0f);
     auto colorData = ospNewData(1, OSP_VEC4F, &color);
     ospSetData(geometricModels.back(), "prim.color", colorData);
     ospRelease(colorData);
     OSPMaterial objMaterial = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
+    ospSetVec3f(objMaterial, "Kd", 0.2f, 0.2f, 0.8f);
     ospCommit(objMaterial);
     ospSetObject(geometricModels.back(), "material", objMaterial);
     ospRelease(objMaterial);
@@ -167,11 +174,12 @@ int main(int argc, const char **argv)
     auto geometry = BoxGeometry(box3f(vec3f(0.0f, 0.f, 0.f), vec3f(2.f, 2.f, 2.f)));
     geometricModels.emplace_back(ospNewGeometricModel(geometry));
     ospRelease(geometry);
-    vec4f color(0.8f, 0.2f, 0.2f, 1.f);
+    vec4f color(1.0f);
     auto colorData = ospNewData(1, OSP_VEC4F, &color);
     ospSetData(geometricModels.back(), "prim.color", colorData);
     ospRelease(colorData);
     OSPMaterial objMaterial = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
+    ospSetVec3f(objMaterial, "Kd", 0.8f, 0.2f, 0.2f);
     ospCommit(objMaterial);
     ospSetObject(geometricModels.back(), "material", objMaterial);
     ospRelease(objMaterial);
@@ -179,11 +187,13 @@ int main(int argc, const char **argv)
 
   {
     auto geometry = PlaneGeometry(
+      vec4f(vec3f(1.0f), 1.f),
       AffineSpace3f::translate(vec3f(0.f, -2.5f, 0.f)) * 
       AffineSpace3f::scale(vec3f(10.f, 1.f, 10.f)));
     geometricModels.emplace_back(ospNewGeometricModel(geometry));
     ospRelease(geometry);
     OSPMaterial objMaterial = ospNewMaterial("pathtracer", "OBJMaterial");
+    ospSetVec3f(objMaterial, "Kd", 0.8f, 0.8f, 0.8f);
     ospSetObject(geometricModels.back(), "material", objMaterial);
     ospCommit(objMaterial);
     ospRelease(objMaterial);
@@ -228,32 +238,30 @@ int main(int argc, const char **argv)
   ospCommit(world);
 
   // create OSPRay renderer
+  int maxDepth = 1024;
+  int rouletteDepth = 32;
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
+  ospSetInt(renderer, "maxDepth", maxDepth);
+  ospSetInt(renderer, "rouletteDepth", rouletteDepth);
+  ospSetFloat(renderer, "minContribution", 0.f);
 
   std::vector<OSPLight> light_handles;
-  if (0) {
-    OSPLight light = ospNewLight("quad");
-    ospSetVec3f(light, "position", -4.0f, 3.0f, 1.0f);
-    ospSetVec3f(light, "edge1", 0.f, 0.0f, -0.5f);
-    ospSetVec3f(light, "edge2", 0.5f, 0.25f, 0.0f);
-    ospSetFloat(light, "intensity", 25.0f);
-    ospSetVec3f(light, "color", 2.6f, 2.5f, 2.3f);
-    ospCommit(light);
-    light_handles.push_back(light);
-  }
-  if (1) {
+  //{
+  //  OSPLight light = ospNewLight("quad");
+  //  ospSetVec3f(light, "position", -4.0f, 3.0f, 1.0f);
+  //  ospSetVec3f(light, "edge1", 0.f, 0.0f, -0.5f);
+  //  ospSetVec3f(light, "edge2", 0.5f, 0.25f, 0.0f);
+  //  ospSetFloat(light, "intensity", 25.0f);
+  //  ospSetVec3f(light, "color", 2.6f, 2.5f, 2.3f);
+  //  ospCommit(light);
+  //  light_handles.push_back(light);
+  //}
+  {
     OSPLight light = ospNewLight("ambient");
     //ospSetFloat(light, "intensity", 3.0f);
     //ospSetVec3f(light, "color", 0.03f, 0.07, 0.23);
-    ospSetFloat(light, "intensity", 1.f);
+    ospSetFloat(light, "intensity", 0.8f);
     ospSetVec3f(light, "color", 1.f, 1.f, 1.f);
-    ospCommit(light);
-    light_handles.push_back(light);
-  }
-  if (0) {
-    OSPLight light = ospNewLight("quad");
-    ospSetFloat(light, "angularDiameter", 0.53f);
-    ospSetVec3f(light, "direction", -0.5826f, -0.7660f, -0.2717f);
     ospCommit(light);
     light_handles.push_back(light);
   }
@@ -280,10 +288,15 @@ int main(int argc, const char **argv)
     bool updateWorld = false;
     bool commitWorld = false;
 
-    static int maxDepth = 20;
-    if (ImGui::SliderInt("maxDepth", &maxDepth, 0.f, 128.f)) {
+    if (ImGui::SliderInt("maxDepth", &maxDepth, 0, 1024)) {
       commitWorld = true;
       ospSetInt(renderer, "maxDepth", maxDepth);
+      glfwOSPRayWindow->addObjectToCommit(renderer);
+    }
+    
+    if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 0, 1024)) {
+      commitWorld = true;
+      ospSetInt(renderer, "rouletteDepth", rouletteDepth);
       glfwOSPRayWindow->addObjectToCommit(renderer);
     }
 
@@ -294,6 +307,18 @@ int main(int argc, const char **argv)
 
     commitWorld = updateWorld;
 
+    static vec3f albedo(1.0f);
+    if (ImGui::ColorEdit3("albedo", (float*)&albedo.x, 
+      ImGuiColorEditFlags_NoAlpha | 
+      ImGuiColorEditFlags_HSV | 
+      ImGuiColorEditFlags_Float | 
+      ImGuiColorEditFlags_PickerHueWheel))
+    {
+      commitWorld = true;
+      ospSetVec3fv(volumeModel, "albedo", (float*)&albedo.x);
+      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+    }
+    
     static float sigma_t = 1.0f;
     if (ImGui::SliderFloat("sigma_t", &sigma_t, 0.f, 10.f)) {
       commitWorld = true;
@@ -304,19 +329,12 @@ int main(int argc, const char **argv)
     static float meanCosine = 0.0f;
     if (ImGui::SliderFloat("meanCosine", &meanCosine, -1.f, 1.f)) {
       commitWorld = true;
-      ospSetFloat(volumeModel, "meanCosine", meanCosine);
-      glfwOSPRayWindow->addObjectToCommit(volumeModel);
-    }
-    
-    static vec3f albedo(1.0f);
-    if (ImGui::ColorEdit3("albedo", (float*)&albedo.x, 
-      ImGuiColorEditFlags_NoAlpha | 
-      ImGuiColorEditFlags_HSV | 
-      ImGuiColorEditFlags_Float | 
-      ImGuiColorEditFlags_PickerHueWheel))
-    {
-      commitWorld = true;
-      ospSetVec3fv(volumeModel, "albedo", (float*)&albedo.x);
+      OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
+      ospSetFloat(volumetricMaterial, "meanCosine", meanCosine);
+      ospSetVec3fv(volumetricMaterial, "albedo", (float*)&albedo.x);
+      ospCommit(volumetricMaterial);
+      ospSetObject(volumeModel, "material", volumetricMaterial);
+      ospRelease(volumetricMaterial);
       glfwOSPRayWindow->addObjectToCommit(volumeModel);
     }
 

@@ -18,6 +18,7 @@
 
 #include "Volume.h"
 #include "common/Data.h"
+#include "common/Material.h"
 
 namespace ospray {
 
@@ -38,6 +39,7 @@ namespace ospray {
    private:
     box3f volumeBounds;
     Ref<Volume> volume;
+    Ref<Material> material;
   };
 
 }  // namespace ospray

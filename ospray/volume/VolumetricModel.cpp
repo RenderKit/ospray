@@ -47,7 +47,6 @@ namespace ospray {
       throw std::runtime_error("volumetric model must have 'transferFunction'");
 
     // Finish getting/setting other appearance information //
-
     volumeBounds = volume->bounds;
 
     vec3f albedo = getParam3f("albedo", vec3f(0.8f));
@@ -56,8 +55,13 @@ namespace ospray {
                               transferFunction->getIE(),
                               (const ispc::box3f &)volumeBounds,
                               (const ispc::vec3f&)albedo,
-                              getParam<float>("sigma_t", 1.f),
-                              getParam<float>("meanCosine", 0.f));
+                              getParam<float>("sigma_t", 1.f));
+
+    material = (Material*)getParamObject("material");
+    if (material) {
+      ispc::VolumetricModel_setMaterial(ispcEquivalent,
+                                        material->getIE());
+    }
   }
 
   RTCGeometry VolumetricModel::embreeGeometryHandle() const

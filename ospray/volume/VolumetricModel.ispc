@@ -35,8 +35,7 @@ export void VolumetricModel_set(void *uniform _self,
                                void *uniform transferFunction,
                                const uniform box3f &bounds,
                                const uniform vec3f &albedo,
-                               uniform float sigma_t,
-                               uniform float meanCosine)
+                               uniform float sigma_t)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
@@ -45,5 +44,11 @@ export void VolumetricModel_set(void *uniform _self,
   self->boundingBox             = bounds;
   self->albedo                  = albedo;
   self->sigma_t                 = sigma_t;
-  self->meanCosine              = meanCosine;
+}
+
+export void VolumetricModel_setMaterial(void *uniform _self,
+                              void *uniform material)
+{
+  VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
+  self->material = (Material* uniform) material; 
 }

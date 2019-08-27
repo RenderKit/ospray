@@ -20,6 +20,10 @@
 #include "math/AffineSpace.ih"
 #include "transferFunction/TransferFunction.ih"
 
+#include "../common/DifferentialGeometry.ih"
+#include "../common/Material.ih"
+#include "../common/Ray.ih"
+
 struct VolumetricModel
 {
   Volume *volume;  //!< instanced Volume
@@ -35,12 +39,27 @@ struct VolumetricModel
   TransferFunction *transferFunction;
 
   box3f boundingBox;
+
+  Material* uniform material;
   
   //! Volume parameters understood by the pathtracer
   vec3f albedo;     // sigma_s/sigma_t = mu_s / mu_t
   float sigma_t;    // extinction cross section = (sigma_s + sigma_a)
-  float meanCosine; // mean cosine parameter for Heyney-Greenstein phase function
 };
+
+inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
+                                          varying DifferentialGeometry &dg,
+                                          const varying Ray &ray,
+                                          uniform int64 flags)
+{
+  //Volume *uniform volume = self->volume;
+  //geom->postIntersect(geom, dg, ray, flags);
+
+  dg.areaPDF = 0.f;
+  dg.materialID = 0;
+  dg.material = self->material;
+  dg.color = make_vec4f(0.f);
+}
 
 // Helper functions ///////////////////////////////////////////////////////////
 

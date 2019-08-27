@@ -1,0 +1,110 @@
+// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct HeyneyGreenstein
+{
+  BSDF super;
+
+  float meanCosine;
+};
+
+// g = meanCosine parameter
+inline float hg(float cosTheta, float g)
+{
+  float denom = 1.f + g * g - 2.f * g * cosTheta;
+  return rcp(4.f*pi) * (1.f - g * g) * rcp(denom * sqrt(denom));
+}
+
+inline BSDF_EvalRes HeyneyGreenstein_eval(const varying BSDF* uniform super,
+                                          const vec3f& wo, 
+                                          const vec3f& wi)
+{
+  const varying HeyneyGreenstein* uniform self = (const varying HeyneyGreenstein* uniform)super;
+  BSDF_EvalRes res;
+  if (abs(self->meanCosine) > 1.f - 1e-3f) {
+    res.pdf = 0.f;
+    res.value = make_vec3f(res.pdf);
+  }
+  res.pdf = hg(dot(wo, wi), self->meanCosine);
+  res.value = make_vec3f(res.pdf);
+  return res;
+}
+
+inline BSDF_SampleRes HeyneyGreenstein_sample(const varying BSDF* uniform super,
+                                              const vec3f& wo, 
+                                              const vec2f& s, float ss)
+{
+  const varying HeyneyGreenstein* uniform self = (const varying HeyneyGreenstein* uniform)super;
+  BSDF_SampleRes res;
+  
+  res.weight = make_vec3f(1.f);
+
+  const float g = self->meanCosine;
+  float cosTheta;
+  if (g > 1.f - 1e-3f) {
+    res.wi = neg(wo);
+    res.pdf = inf;
+    res.type = BSDF_SPECULAR_TRANSMISSION;
+    return res;
+  }
+  else if (g < -1.f + 1e-3f) {
+    res.wi = wo;
+    res.pdf = inf;
+    res.type = BSDF_SPECULAR_REFLECTION;
+    return res;
+  }
+  else if (abs(g) < 1e-3f) {
+    res.type = BSDF_DIFFUSE_REFLECTION;
+    cosTheta = 1.f - 2.f * s.x;
+  }
+  else {
+    res.type = BSDF_GLOSSY_REFLECTION;
+    float sqrTerm = (1.f - g * g) * rcp(1.f - g + 2.f * g * s.x);
+    cosTheta = (1.f + g * g - sqrTerm * sqrTerm) * rcp(2.f * g);
+  }
+
+  float sinTheta = sqrt(max(0.f, 1.f - cosTheta * cosTheta));
+  float phi = 2.f * M_PI * s.y;
+  const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
+
+  res.wi = getFrame(super) * localDir;
+  res.pdf = hg(cosTheta, g);
+  return res;
+}
+
+inline void HeyneyGreenstein_Constructor(varying HeyneyGreenstein* uniform self,
+                                         const varying linear3f* uniform frame,
+                                         float meanCosine)
+{
+  BSDF_Constructor(&self->super, make_vec3f(0.f),
+                   BSDF_DIFFUSE_REFLECTION,
+                   HeyneyGreenstein_eval, HeyneyGreenstein_sample,
+                   frame);
+  self->meanCosine = meanCosine;
+}
+
+inline varying BSDF* uniform HeyneyGreenstein_create(uniform ShadingContext* uniform ctx, 
+                                                     const varying linear3f* uniform frame,
+                                                     const varying float meanCosine)
+{
+  varying HeyneyGreenstein* uniform self = (varying HeyneyGreenstein* uniform)ShadingContext_alloc(ctx, sizeof(HeyneyGreenstein));
+  HeyneyGreenstein_Constructor(self, frame, meanCosine);
+  return &self->super;
+}

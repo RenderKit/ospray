@@ -181,6 +181,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/materials/Luminous.cpp
   render/pathtracer/materials/Mix.ispc
   render/pathtracer/materials/Mix.cpp
+  render/pathtracer/materials/Volumetric.ispc
+  render/pathtracer/materials/Volumetric.cpp
 
   texture/Texture.cpp
   texture/Texture2D.cpp
