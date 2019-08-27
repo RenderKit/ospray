@@ -116,7 +116,8 @@ namespace ospray {
       retval.model    = slModel;
       retval.group    = group;
       retval.instance = instance;
-      retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
+
+      std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
 
       return retval;
     }
