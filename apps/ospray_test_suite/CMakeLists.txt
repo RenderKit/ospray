@@ -27,7 +27,7 @@ ospray_create_application(ospray_test_suite
 
 target_link_libraries(ospray_test_suite
 PRIVATE
-	ospcommon::ospcommon
+  ospcommon::ospcommon
   gtest_main
   ospray
 	stb_image
