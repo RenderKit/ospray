@@ -63,7 +63,7 @@ namespace OSPRayTestScenes {
 
    public:
     Base();
-    ~Base();
+    virtual ~Base();
 
     virtual void SetUp();
     Base &operator=(const Base &) = delete;

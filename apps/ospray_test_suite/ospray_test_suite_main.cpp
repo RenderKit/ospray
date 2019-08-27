@@ -16,6 +16,7 @@
 
 #include "ospray_test_fixture.h"
 
+extern OSPRayEnvironment *ospEnv;
 OSPRayEnvironment *ospEnv;
 
 int main(int argc, char **argv)

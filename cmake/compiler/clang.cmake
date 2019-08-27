@@ -24,6 +24,8 @@ if(OSPRAY_STRICT_BUILD)
   set(OSPRAY_CXX_FLAGS "-Wno-zero-as-null-pointer-constant ${OSPRAY_CXX_FLAGS}")
   set(OSPRAY_CXX_FLAGS "-Wno-newline-eof ${OSPRAY_CXX_FLAGS}")
   set(OSPRAY_CXX_FLAGS "-Wno-keyword-macro ${OSPRAY_CXX_FLAGS}") #useful for unit testing
+  set(OSPRAY_CXX_FLAGS "-Wno-undef ${OSPRAY_CXX_FLAGS}")
+  set(OSPRAY_CXX_FLAGS "-Wno-header-hygiene ${OSPRAY_CXX_FLAGS}")
 
   # Should try to fix and remove...
   set(OSPRAY_CXX_FLAGS "-Wno-unknown-warning-option ${OSPRAY_CXX_FLAGS}") #don't warn if pragmas are unknown
@@ -52,6 +54,8 @@ if(OSPRAY_STRICT_BUILD)
   set(OSPRAY_CXX_FLAGS "-Wno-shadow ${OSPRAY_CXX_FLAGS}")
   set(OSPRAY_CXX_FLAGS "-Wno-format-nonliteral ${OSPRAY_CXX_FLAGS}")
   set(OSPRAY_CXX_FLAGS "-Wno-cast-qual ${OSPRAY_CXX_FLAGS}") #Embree v3.x issue
+  set(OSPRAY_CXX_FLAGS "-Wno-extra-semi-stmt ${OSPRAY_CXX_FLAGS}")
+  set(OSPRAY_CXX_FLAGS "-Wno-shadow-field ${OSPRAY_CXX_FLAGS}")
 
   # Options selected for Clang 5.0+
   set(OSPRAY_CXX_FLAGS "-Weverything ${OSPRAY_CXX_FLAGS}")

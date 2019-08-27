@@ -100,7 +100,7 @@ namespace OSPRayTestScenes {
     try {
       imageTool.reset(
           new OSPImageTools(imgSize, GetTestName(), frameBufferFormat));
-    } catch (std::bad_alloc &e) {
+    } catch (std::bad_alloc &) {
       FAIL() << "Failed to create image tool.\n";
     }
   }

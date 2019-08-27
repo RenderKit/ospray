@@ -71,7 +71,7 @@ class OSPImageTools
   std::string GetFileFormat() const
   {
     return fileFormat;
-  };
+  }
 
  public:
   OSPImageTools(vec2i imgSize,

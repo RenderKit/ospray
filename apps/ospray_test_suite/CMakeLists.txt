@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+ospray_disable_compiler_warnings()
+
 ospray_create_application(ospray_test_suite
   ospray_environment.cpp
   ospray_test_fixture.cpp
