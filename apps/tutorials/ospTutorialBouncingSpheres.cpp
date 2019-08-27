@@ -95,7 +95,7 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
   g_spheresGeometry = ospNewGeometry("spheres");
   g_spheresModel    = ospNewGeometricModel(g_spheresGeometry);
 
-  ospSetData(g_spheresGeometry, "spheres", spheresData);
+  ospSetData(g_spheresGeometry, "sphere", spheresData);
   ospSetInt(g_spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
   ospSetInt(g_spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
   ospSetInt(g_spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
@@ -212,7 +212,7 @@ void updateSpheresGeometry()
   OSPData spheresData = ospNewData(
       g_spheres.size() * sizeof(Sphere), OSP_UCHAR, g_spheres.data());
 
-  ospSetData(g_spheresGeometry, "spheres", spheresData);
+  ospSetData(g_spheresGeometry, "sphere", spheresData);
 
   // release handles we no longer need
   ospRelease(spheresData);

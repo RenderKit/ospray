@@ -86,7 +86,7 @@ namespace ospray {
       // create the sphere geometry, and assign attributes
       OSPGeometry spheresGeometry = ospNewGeometry("spheres");
 
-      ospSetData(spheresGeometry, "spheres", spheresData);
+      ospSetData(spheresGeometry, "sphere", spheresData);
       ospSetInt(spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
       ospSetInt(
           spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
