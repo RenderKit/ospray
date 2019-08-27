@@ -16,6 +16,8 @@
 
 ## Embree functions/macros ##
 
+include(CMakeFindDependencyMacro)
+
 function(ospray_check_embree_feature FEATURE DESCRIPTION)
   set(FEATURE EMBREE_${FEATURE})
   if(NOT ${ARGN})
