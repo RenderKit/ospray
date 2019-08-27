@@ -1124,8 +1124,8 @@ namespace OSPRayTestScenes {
 
     OSPTexture depthTex = ospNewTexture("texture2D");
     std::vector<float> data(imgSize.x * imgSize.y);
-    for (size_t y = 0; y < imgSize.y; y++) {
-      for (size_t x = 0; x < imgSize.x; x++) {
+    for (int y = 0; y < imgSize.y; y++) {
+      for (int x = 0; x < imgSize.x; x++) {
         const size_t index = imgSize.x * y + x;
         if (x < imgSize.x / 3) {
           data[index] = 999.f;
@@ -1167,8 +1167,6 @@ namespace OSPRayTestScenes {
   {
     Base::SetUp();
 
-    float inf = FLT_MAX;
-
     float cube_vertices[8][3] = {{-1.0f, -1.0f, -1.0f},
                                  {1.0f, -1.0f, -1.0f},
                                  {1.0f, -1.0f, 1.0f},
@@ -1205,7 +1203,6 @@ namespace OSPRayTestScenes {
 
     int numIndices = 24;
     int numFaces   = 6;
-    int faceSize   = 4;
 
     auto subd     = ospNewGeometry("subdivision");
     auto vertices = ospNewData(8, OSP_VEC3F, cube_vertices);

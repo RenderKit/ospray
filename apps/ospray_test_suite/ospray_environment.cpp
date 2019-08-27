@@ -19,7 +19,6 @@
 OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
     : dumpImg(false),
       rendererType("scivis"),
-      imgSize({1024, 768}),
       deviceType("default"),
       baselineDir("regression_tests/baseline"),
       failedDir("failed")
@@ -41,7 +40,7 @@ void OSPRayEnvironment::ParsArgs(int argc, char **argv)
   for (int idx = 0; idx < argc; ++idx) {
     testArgs.push_back(argv[idx]);
   }
-  for (int idx = 0; idx < testArgs.size(); ++idx) {
+  for (size_t idx = 0; idx < testArgs.size(); ++idx) {
     if (testArgs.at(idx) == "--help") {
       std::cout << "--help : display this help msg\n"
                 << "--dump-img : dump the rendered image to file\n"
