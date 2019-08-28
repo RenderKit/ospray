@@ -18,6 +18,7 @@ ospray_create_library(ospray_testing
   ospray_testing.cpp
 
   geometry/Boxes.cpp
+  geometry/CornellBox.cpp
   geometry/RandomSpheres.cpp
   geometry/SubdivisionCube.cpp
   geometry/Streamlines.cpp
