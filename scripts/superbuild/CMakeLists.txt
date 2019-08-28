@@ -57,7 +57,7 @@ set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
 
-set(BUILD_EMBREE_VERSION "3.5.2" CACHE STRING "Which version of Embree to build?")
+set(BUILD_EMBREE_VERSION "3.6.1" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)

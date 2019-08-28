@@ -1,6 +1,5 @@
-#!/bin/bash
 ## ======================================================================== ##
-## Copyright 2015-2019 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,18 +14,18 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-mkdir build
+md build
 cd build
-
-# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
-export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
 
 cmake --version
 
-cmake -L \
-  -DBUILD_OSPRAY_CI_TESTS=ON \
-  -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
-  "$@" ../scripts/superbuild
+cmake -L `
+-G $args[0] `
+-T $args[1] `
+-D BUILD_OSPRAY_CI_TESTS=ON `
+-D BUILD_TBB_FROM_SOURCE=OFF `
+-D BUILD_EMBREE_FROM_SOURCE=OFF `
+-D INSTALL_IN_SEPARATE_DIRECTORIES=OFF `
+../scripts/superbuild
 
-cmake --build .
+cmake --build . --config Release --target ALL_BUILD

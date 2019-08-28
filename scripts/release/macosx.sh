@@ -29,16 +29,6 @@ umask 002
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
-DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/osx
-DEP_EMBREE=embree-3.4.0.x86_64.macosx
-DEP_ISPC_VER=1.10.0
-DEP_ISPC=ispc-v${DEP_ISPC_VER}-osx
-DEP_ISPC_DIR=ispc-${DEP_ISPC_VER}-Darwin
-DEP_TBB=tbb2019_20181203oss
-DEP_OIDN=oidn-0.8.1.x86_64.macos
-DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_mac.tgz $DEP_OIDN.tar.gz"
-
-
 # set compiler if the user hasn't explicitly set CC and CXX
 if [ -z $CC ]; then
   echo "***NOTE: Defaulting to use clang!"
@@ -49,22 +39,26 @@ if [ -z $CC ]; then
 fi
 
 # to make sure we do not include nor link against wrong TBB
-export CPATH=
-export LIBRARY_PATH=
-export DYLD_LIBRARY_PATH=
-TBB_PATH_LOCAL=$PWD/tbb
+unset CPATH
+unset LIBRARY_PATH
+unset DYLD_LIBRARY_PATH
 
-#### Fetch dependencies (TBB+Embree+ISPC+OIDN) ####
+#### Build dependencies ####
 
-mkdir -p $DEP_DIR
-cd $DEP_DIR
+mkdir deps_build
+cd deps_build
 
-for dep in $DEP_TARBALLS ; do
-  wget --progress=dot:mega -c $DEP_LOCATION/$dep
-  tar -xf $dep
-done
-export embree_DIR=$DEP_DIR/$DEP_EMBREE
-export OpenImageDenoise_DIR=$DEP_DIR/$DEP_OIDN
+cmake --version
+
+cmake \
+  -DBUILD_JOBS=`nproc` \
+  -DBUILD_DEPENDENCIES_ONLY=ON \
+  -DCMAKE_INSTALL_PREFIX=$DEP_DIR \
+  -DCMAKE_INSTALL_LIBDIR=lib \
+  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
+  "$@" ../scripts/superbuild
+
+cmake --build .
 
 cd $ROOT_DIR
 
@@ -76,11 +70,17 @@ cd build_release
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
 
+# Setup environment variables for dependencies
+
+export OSPCOMMON_TBB_ROOT=$DEP_DIR
+export ospcommon_DIR=$DEP_DIR
+export embree_DIR=$DEP_DIR
+export glfw3_DIR=$DEP_DIR
+
 # set release and installer settings
-cmake \
+cmake -L \
 -D OSPRAY_BUILD_ISA=ALL \
--D TBB_ROOT=$DEP_DIR/$DEP_TBB \
--D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC_DIR/bin/ispc \
+-D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
 -D OSPRAY_ZIP_MODE=OFF \
 -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D CMAKE_INSTALL_PREFIX=/opt/local \
@@ -94,7 +94,7 @@ cmake \
 make -j 4 package || exit 2
 
 # change settings for zip mode
-cmake \
+cmake -L \
 -D OSPRAY_ZIP_MODE=ON \
 -D OSPRAY_APPS_ENABLE_DENOISER=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \

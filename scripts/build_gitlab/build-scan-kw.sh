@@ -45,8 +45,7 @@ export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
 
 cmake --version
 
-cmake \
-  -DBUILD_JOBS=`nproc` \
+cmake -L \
   -DBUILD_DEPENDENCIES_ONLY=ON \
   -DCMAKE_INSTALL_LIBDIR=lib \
   -DINSTALL_IN_SEPARATE_DIRECTORIES=ON \
@@ -66,6 +65,6 @@ cmake -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc ../..
 # build
 $KW_CLIENT_PATH/bin/kwinject make -j `nproc`
 
-retry_cmd 60 $KW_SERVER_PATH/bin/kwbuildproject --url http://$KW_SERVER_IP:$KW_SERVER_PORT/$KW_PROJECT_NAME --tables-directory $CI_PROJECT_DIR/release/kw_tables kwinject.out
-retry_cmd 60 $KW_SERVER_PATH/bin/kwadmin --url http://$KW_SERVER_IP:$KW_SERVER_PORT/ load $KW_PROJECT_NAME $CI_PROJECT_DIR/release/kw_tables | tee project_load_log
+retry_cmd 15 $KW_SERVER_PATH/bin/kwbuildproject --url http://$KW_SERVER_IP:$KW_SERVER_PORT/$KW_PROJECT_NAME --tables-directory $CI_PROJECT_DIR/release/kw_tables kwinject.out
+retry_cmd 15 $KW_SERVER_PATH/bin/kwadmin --url http://$KW_SERVER_IP:$KW_SERVER_PORT/ load $KW_PROJECT_NAME $CI_PROJECT_DIR/release/kw_tables | tee project_load_log
 cat project_load_log | grep "Starting build" | cut -d":" -f2 > $CI_PROJECT_DIR/kw_build_number

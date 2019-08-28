@@ -1,6 +1,5 @@
-#!/bin/bash
 ## ======================================================================== ##
-## Copyright 2015-2019 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,18 +14,17 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-mkdir build
-cd build
+echo Running tests
 
-# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
-export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
+$PATH += ";..\build\install\bin"
 
-cmake --version
+md build_regression_tests
+cd build_regression_tests
 
-cmake -L \
-  -DBUILD_OSPRAY_CI_TESTS=ON \
-  -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
-  "$@" ../scripts/superbuild
+md failed
 
-cmake --build .
+cmake ../test_image_data
+
+cmake --build . --config Release --target ospray_test_data
+
+..\build\install\bin\ospray_test_suite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed\

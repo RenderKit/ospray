@@ -7,6 +7,7 @@ stages:
 variables:
   GIT_DEPTH: "15"
   KW_PROJECT_NAME: ospray
+  ErrorActionPreference: STOP
 
 .job_template: &build_job_docker
   stage: build
@@ -35,7 +36,6 @@ variables:
   tags:
     - release
   dependencies:
-    - test-centos6-gcc
     - pdf
   only:
     - devel
@@ -58,7 +58,7 @@ variables:
 .job_template: &test_job_windows
   <<: *test_job
   script:
-    - scripts\tests\run_tests.bat
+    - scripts\tests\run_tests.ps1
   artifacts:
     paths:
       - tests.xml
@@ -170,7 +170,7 @@ build-osx-clang:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140"
   tags:
     - msvc14
     - win7
@@ -182,7 +182,7 @@ build-windows-msvc14:
 build-windows-msvc15:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
   tags:
     - msvc15
     - win7
@@ -194,7 +194,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0"
   tags:
     - icc18
     - win7
@@ -337,8 +337,10 @@ web:
 
 release-linux-icc:
   <<: *release_job
+  image: ospray/docker-images:centos6-mod
   script:
     - module load cmake
+    - module load ispc
     - module load gcc/4.8.2
     - module load intel
     - export CC=icc
@@ -349,8 +351,7 @@ release-linux-icc:
     - $SIGN_FILE_LINUX ospray-*-${OSPRAY_VERSION}-*.rpm
     - tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
   tags:
-    - icc
-    - centos6
+    - modules
   artifacts:
     paths:
       - build_release/*.gz
@@ -374,7 +375,7 @@ release-osx-clang:
 release-windows:
   <<: *release_job
   script:
-    - scripts\release\win.bat
+    - scripts\release\win.ps1 "Visual Studio 14 2015 Win64"
     - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
   tags:
     - msvc
