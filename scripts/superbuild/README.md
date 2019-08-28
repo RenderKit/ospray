@@ -12,12 +12,13 @@ cmake [path/to/this/directory]
 cmake --build .
 ```
 
-The resulting `install` directory will have everything in it.
+The resulting `install` directory (or the one set with `CMAKE_INSTALL_PREFIX`) 
+will have everything in it, with one subdirectory per dependency.
 
 CMake options to note (all have sensible defaults):
 
 - `CMAKE_INSTALL_PREFIX` will be the root directory where everything gets installed.
-- `NUM_BUILD_JOBS` sets the number given to `make -j` for parallel builds.
+- `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
 - `BUILD_EMBREE_FROM_SOURCE` set to OFF will download a pre-built version of Embree.
 - `BUILD_EMBREE_VERSION` determines which verison of Embree to pull down.
 - `BUILD_OIDN_FROM_SOURCE` set to OFF will download a pre-built version of OpenImageDenoise.
