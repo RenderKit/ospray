@@ -57,6 +57,8 @@ option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
 set(BUILD_OIDN_VERSION "1.0.0" CACHE STRING "Which version of OpenImageDenoise to build?")
 option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" ON)
 
+option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environment?" ON)
+
 option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies" OFF)
 option(BUILD_OSPRAY_CI_TESTS "Enable OSPRay's tests." OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
@@ -92,6 +94,10 @@ endif()
 
 include(dep_ospcommon)
 include(dep_embree)
+
+if (BUILD_GLFW)
+  include(dep_glfw)
+endif()
 
 if (BUILD_OIDN)
   include(dep_oidn)
@@ -132,6 +138,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DOpenImageDenoise_DIR:PATH=${OIDN_PATH}
       -Dembree_DIR:PATH=${EMBREE_PATH}
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
+      $<$<BOOL:${BUILD_GLFW}>:-Dglfw3_DIR:PATH=${GLFW_PATH}>
       $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
@@ -142,6 +149,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   configure
     ospcommon
     embree
+    $<$<BOOL:${BUILD_GLFW}>:glfw>
     $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:tbb>
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
     $<$<BOOL:${BUILD_OIDN}>:OpenImageDenoise>
