@@ -39,12 +39,19 @@ project(OSPRay_superbuild)
 
 include(ExternalProject)
 include(GNUInstallDirs)
+include(ProcessorCount)
 
 ## Superbuild options ##
 
-option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
+ProcessorCount(PROCESSOR_COUNT)
 
-set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
+if(NOT PROCESSOR_COUNT EQUAL 0)
+  set(BUILD_JOBS ${PROCESSOR_COUNT} CACHE STRING "Number of build jobs '-j <n>'")
+else()
+  set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
+endif()
+
+option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 
 set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to build?")
 
