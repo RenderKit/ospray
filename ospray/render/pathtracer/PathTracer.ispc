@@ -64,8 +64,8 @@ struct PathContext
 
 struct PathState
 {
-  bool disableNEE;                          // turn off NEE for debugging purposes
-  bool disableMIS;                          // turn off MIS and use constant weights for debugging purposes
+  bool disableNEE;                          // turn off NEE contribution for debugging purposes
+  bool disableFWD;                          // turn off FWD contribution for debugging purposes
   bool homogeneousApprox;                   // handle volume as homogeneous in its bbox for debugging purposes
   bool straightPath;                        // path from camera did not change direction, for alpha and backplate
   bool auxFree;                             // normal & albedo buffer were not yet written to
@@ -79,10 +79,8 @@ struct PathState
 
 inline float misHeuristic(const PathState& pathState, float pdf1, float pdf2)
 {
-  if (pathState.disableNEE)
+  if (pathState.disableNEE || pathState.disableFWD)
     return 1.f;
-  if (pathState.disableMIS)
-    return 0.5f;
 
   // power heuristic with beta=2
   const float p = sqr(pdf1) * rcp(sqr(pdf1) + sqr(pdf2));
@@ -300,8 +298,10 @@ inline vec3f nextEventEstimation(const PathContext& pathContext,
       // test for shadows
       Ray shadowRay;
       vec3f org = pathVertex.dg.P;
+      if (pathVertex.type != VOLUME) {
       if (dot(pathVertex.dg.Ng, ls.dir) < 0.f)
         org = org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
+      }
       setRay(shadowRay, org, ls.dir, 0.f, ls.dist, pathState.time);
 
       const vec3f throughput = pathState.throughput * fe.value;
@@ -316,9 +316,16 @@ inline vec3f nextEventEstimation(const PathContext& pathContext,
 
       const vec3f unshadedLightContrib = throughput * ls.weight;
       const vec3f lightContrib = transparentShadow(pathContext.context, pathContext.world, unshadedLightContrib, shadowRay, pathState.currentMedium);
-      if (reduce_max(lightContrib) > 0) {
+      if (reduce_max(lightContrib) > 0) 
+      {
         const float T = volumeTransmittance(pathState, pathContext.world, shadowRay, pathContext.ldSampler, pathContext.randomSampler);
-        L = L + T * lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf * T);
+        if (reduce_max(T) > 0) 
+        {
+          // we have to use an independent transmittance estimate for MIS to get a correct result
+          const float T_mis = pathState.disableFWD || pathState.disableNEE ?  1.f 
+                            : volumeTransmittance(pathState, pathContext.world, shadowRay, pathContext.ldSampler, pathContext.randomSampler);
+          L = L + T * lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
+        }
       }
     }
   }
@@ -416,8 +423,8 @@ inline void postIntersect(const PathContext& pathContext, const PathState& pathS
   }
   if (pathVertex.type == VOLUME)
   {
-      pathVertex.dg.Ng = ray.dir;
-      pathVertex.dg.Ns = ray.dir;
+      pathVertex.dg.Ng = make_vec3f(0.f);
+      pathVertex.dg.Ns = make_vec3f(0.f);
       pathVertex.dg.dPds = make_vec3f(0.f); 
       pathVertex.dg.dPdt = make_vec3f(0.f);
       pathVertex.dg.st = make_vec2f(0);
@@ -560,7 +567,7 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
       maxLightDist = distance(lastVertex.dg.P, ray.org + ray.t * ray.dir);
     }
     
-    if (pathVertex.type != VOLUME) {
+    if ((!pathState.disableFWD || pathState.depth == 0) && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution + evaluateVirtualLights(pathContext, pathState, lastVertex, pathVertex, ray, maxLightDist);
     }
 
@@ -574,7 +581,7 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
 
     postIntersect(pathContext, pathState, pathVertex, ray);
 
-    if (pathVertex.type == SURFACE) {
+    if (!pathState.disableFWD && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution + evaluateGeometryLights(pathState, lastVertex, pathVertex, ray);
     }
 
@@ -593,7 +600,7 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
       break;
 
     // next event estimation
-    if (!pathState.disableNEE && pathVertex.type == SURFACE) {
+    if (!pathState.disableNEE) {
       pathState.contribution = pathState.contribution + nextEventEstimation(pathContext, pathState, pathVertex);
     }
 
@@ -609,10 +616,6 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
       break;
 
     pathState.throughput = pathState.throughput * fs.weight;
-    if (pathVertex.type == SURFACE)
-      pathVertex.pdf_w = fs.pdf;
-    else 
-      pathVertex.pdf_w = inf; // FIXME: no nee inside volumes yet
 
 #if ROULETTE==1
     // Russian roulette
@@ -691,9 +694,16 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathContext.numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
 
   PathState pathState;
-  pathState.disableNEE = false; //pixel.x < 0.5f;
-  pathState.disableMIS = false; //pixel.x < 0.5f;
-  pathState.homogeneousApprox = false; //pixel.x < 0.5f;
+#if 0 // debug MIS
+  int c = (int)((pixel.x + pixel.y) * 10.f) % 3;
+  if (c == 0) { pathState.disableNEE = false; pathState.disableFWD = false; }
+  if (c == 1) { pathState.disableNEE = false; pathState.disableFWD = true; }
+  if (c == 2) { pathState.disableNEE = true; pathState.disableFWD = false; }
+#else
+  pathState.disableNEE = false; 
+  pathState.disableFWD = false;
+#endif
+  pathState.homogeneousApprox = false;
   pathState.straightPath = true; // path from camera did not change direction, for alpha and backplate
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;

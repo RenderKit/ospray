@@ -212,9 +212,35 @@ int main(int argc, const char **argv)
   OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
   ospSetData(world, "instance", instances);
   ospRelease(instances);
+  
+  // create OSPRay renderer
+  int maxDepth = 1024;
+  int rouletteDepth = 32;
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
+  ospSetInt(renderer, "maxDepth", maxDepth);
+  ospSetInt(renderer, "rouletteDepth", rouletteDepth);
+  ospSetFloat(renderer, "minContribution", 0.f);
+
+  std::vector<OSPLight> light_handles;
+  OSPLight quadLight = ospNewLight("quad");
+  ospSetVec3f(quadLight, "position", -4.0f, 3.0f, 1.0f);
+  ospSetVec3f(quadLight, "edge1", 0.f, 0.0f, -0.5f);
+  ospSetVec3f(quadLight, "edge2", 0.5f, 0.25f, 0.0f);
+  ospSetFloat(quadLight, "intensity", 50.0f);
+  ospSetVec3f(quadLight, "color", 2.6f, 2.5f, 2.3f);
+  ospCommit(quadLight);
+
+  OSPLight ambientLight = ospNewLight("ambient");
+  //ospSetFloat(ambientLight, "intensity", 3.0f);
+  //ospSetVec3f(ambientLight, "color", 0.03f, 0.07, 0.23);
+  ospSetFloat(ambientLight, "intensity", 0.8f);
+  ospSetVec3f(ambientLight, "color", 1.f, 1.f, 1.f);
+  ospCommit(ambientLight);
 
   bool showVolume = true;
   bool showGeometry = true;
+  bool enableQuadLight = true;
+  bool enableAmbientLight = true;
   auto updateScene = [&]() {
 
     ospRemoveParam(group, "geometry");
@@ -231,47 +257,24 @@ int main(int argc, const char **argv)
       ospSetObject(group, "geometry", geometries);
       ospRelease(geometries);
     }
+
+    light_handles.clear();
+    if (enableQuadLight)
+      light_handles.push_back(quadLight);
+    if (enableAmbientLight)
+    light_handles.push_back(ambientLight);
+
+    OSPData lights = ospNewData(light_handles.size(), OSP_LIGHT, light_handles.data(), 0);
+    ospCommit(lights);
+    ospSetData(renderer, "light", lights);
+    ospRelease(lights);
+
+    ospCommit(renderer);
   };
 
   updateScene();
   ospCommit(group);
   ospCommit(world);
-
-  // create OSPRay renderer
-  int maxDepth = 1024;
-  int rouletteDepth = 32;
-  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-  ospSetInt(renderer, "maxDepth", maxDepth);
-  ospSetInt(renderer, "rouletteDepth", rouletteDepth);
-  ospSetFloat(renderer, "minContribution", 0.f);
-
-  std::vector<OSPLight> light_handles;
-  //{
-  //  OSPLight light = ospNewLight("quad");
-  //  ospSetVec3f(light, "position", -4.0f, 3.0f, 1.0f);
-  //  ospSetVec3f(light, "edge1", 0.f, 0.0f, -0.5f);
-  //  ospSetVec3f(light, "edge2", 0.5f, 0.25f, 0.0f);
-  //  ospSetFloat(light, "intensity", 25.0f);
-  //  ospSetVec3f(light, "color", 2.6f, 2.5f, 2.3f);
-  //  ospCommit(light);
-  //  light_handles.push_back(light);
-  //}
-  {
-    OSPLight light = ospNewLight("ambient");
-    //ospSetFloat(light, "intensity", 3.0f);
-    //ospSetVec3f(light, "color", 0.03f, 0.07, 0.23);
-    ospSetFloat(light, "intensity", 0.8f);
-    ospSetVec3f(light, "color", 1.f, 1.f, 1.f);
-    ospCommit(light);
-    light_handles.push_back(light);
-  }
-
-  OSPData lights = ospNewData(light_handles.size(), OSP_LIGHT, light_handles.data(), 0);
-  ospCommit(lights);
-  ospSetData(renderer, "light", lights);
-  ospRelease(lights);
-
-  ospCommit(renderer);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
@@ -303,6 +306,10 @@ int main(int argc, const char **argv)
     if (ImGui::Checkbox("Show Volume", &showVolume))
       updateWorld = true;
     if (ImGui::Checkbox("Show Geometry", &showGeometry))
+      updateWorld = true;
+    if (ImGui::Checkbox("Quad Light", &enableQuadLight))
+      updateWorld = true;
+    if (ImGui::Checkbox("Ambient Light", &enableAmbientLight))
       updateWorld = true;
 
     commitWorld = updateWorld;

@@ -42,7 +42,7 @@ inline BSDF_EvalRes HeyneyGreenstein_eval(const varying BSDF* uniform super,
     res.pdf = 0.f;
     res.value = make_vec3f(res.pdf);
   }
-  res.pdf = hg(dot(wo, wi), self->meanCosine);
+  res.pdf = hg(dot(neg(wo), wi), self->meanCosine);
   res.value = make_vec3f(res.pdf);
   return res;
 }

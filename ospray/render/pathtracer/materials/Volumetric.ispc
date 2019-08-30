@@ -37,7 +37,7 @@ const varying BSDF* varying Volumetric_getBSDF(const uniform PathTraceMaterial* 
   uniform const VolumetricMaterial* uniform self = (uniform const VolumetricMaterial* uniform)super;
 
   varying linear3f* uniform shadingFrame =
-    LinearSpace3f_create(ctx, frame(dg.Ns));
+    LinearSpace3f_create(ctx, frame(ray.dir));
 
   varying BSDF* uniform bsdf = HeyneyGreenstein_create(ctx, shadingFrame, self->meanCosine);
   return bsdf;
