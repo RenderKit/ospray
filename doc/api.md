@@ -350,22 +350,34 @@ removes the named parameter from the given object:
 
 There is also the possibility to aggregate many values of the same type
 into an array, which then itself can be used as a parameter to objects.
-To create such a new data buffer, holding `numItems` elements of the
-given type, from the initialization data pointed to by `source` and
-optional creation flags, use
+The preferable way to create such a new data array supports sharing the
+memory with the application
 
-    OSPData ospNewData(size_t numItems,
+    OSPData ospNewSharedData(const void *sharedData,
                        OSPDataType,
-                       const void *source,
-                       const uint32_t dataCreationFlags = 0);
+      uint32_t numItems1,
+      int64_t byteStride1 = 0,
+      uint32_t numItems2 = 1,
+      int64_t byteStride2 = 0,
+      uint32_t numItems3 = 1,
+      int64_t byteStride3 = 0);
 
-The call returns an `OSPData` handle to the created array. The flag
-`OSP_DATA_SHARED_BUFFER` indicates that the buffer can be shared with
-the application. In this case the calling program guarantees that the
-`source` pointer will remain valid for the duration that this data array
-is being used. The enum type `OSPDataType` describes the different data
-types that can be represented in OSPRay; valid constants are listed in
-the table below.
+The call returns an `OSPData` handle to the created array. The calling
+program guarantees that the `sharedData` pointer will remain valid for
+the duration that this data array is being used. The number of elements
+`numItems` must be positive, thus there cannot be an empty data object.
+The data is arranged in three dimensions, with specializations to two or
+one dimension (if some `numItems` are 1). The distance between
+consecutive elements (per dimension) is given in bytes with `byteStride`
+and can also be negative. If `byteStride` is zero it will be determined
+automatically (e.g., as `sizeof(type)`). Strides do not need to be
+ordered, i.e., `byteStride2` can be smaller than `byteStride1`, which is
+equivalent to a transpose. However, if the stride should be calculated,
+then an ordering like `byteStride1 < byteStride2` is assumed to
+disambiguate.
+
+The enum type `OSPDataType` describes the different data types that can
+be represented in OSPRay; valid constants are listed in the table below.
 
   Type/Name              Description
   ---------------------- -----------------------------------------------
@@ -406,6 +418,41 @@ the table below.
   OSP_AFFINE[234]F       32\ bit single precision floating-point affine transform
   ---------------------- -----------------------------------------------
   : Valid named constants for `OSPDataType`.
+
+An opaque `OSPData` with memory allocated by OSPRay is created with
+
+    OSPData ospNewData(OSPDataType,
+      uint32_t numItems1,
+      uint32_t numItems2 = 1,
+      uint32_t numItems3 = 1);
+
+To allow for (partial) copies or updates of data arrays use
+
+    void ospCopyData(const OSPData source,
+      OSPData destination,
+      uint32_t destinationIndex1 = 0,
+      uint32_t destinationIndex2 = 0,
+      uint32_t destinationIndex3 = 0);
+
+which will copy the whole^[The number of items to be copied is defined
+by the size of the source array] content of the `source` array into
+`destination` at the given location `destinationIndex`. The
+`OSPDataType`s of the data objects must match. The region to be copied
+must be valid inside the destination, i.e., in all dimensions,
+`destinationIndex + sourceSize <= destinationSize`. The affected region
+`[destinationIndex, destinationIndex + sourceSize)` is marked as dirty,
+which may be used by OSPRay to only processe or update that sub-region
+(e.g., updating an acceleration structure). If the destination array is
+shared with OSPData by the application (created with
+`ospNewSharedData`), then
+
+  - the source array must be shared as well (thus `ospCopyData` cannot be
+    used to read opaque data)
+  - if source and destination memory overlaps (aliasing), then behaviour
+    is undefined
+  - exept if source and destination regions are identical (including
+    matching strides), which can be used by application to mark that region
+    as dirty (instead of the whole `OSPData`)
 
 To add a data array as parameter named `id` to another object call
 

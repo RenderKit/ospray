@@ -100,31 +100,36 @@ int main(int argc, const char **argv) {
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_VEC3F, vertex, 0);
+
+  OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
+  // alternatively with an OSPRay managed OSPData
+  // OSPData managed = ospNewData1D(OSP_VEC3F, 4);
+  // ospCopyData1D(data, managed, 0);
+
   ospCommit(data);
   ospSetData(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
 
-  data = ospNewData(4, OSP_VEC4F, color, 0);
+  data = ospNewSharedData1D(color, OSP_VEC4F, 4);
   ospCommit(data);
   ospSetData(mesh, "vertex.color", data);
-  ospRelease(data); // we are done using this handle
+  ospRelease(data);
 
-  data = ospNewData(2, OSP_VEC3I, index, 0); // OSP_VEC4I format is also supported for triangle indices
+  data = ospNewSharedData1D(index, OSP_VEC3I, 2);
   ospCommit(data);
   ospSetData(mesh, "index", data);
-  ospRelease(data); // we are done using this handle
+  ospRelease(data);
 
   ospCommit(mesh);
 
   // put the mesh into a model
   OSPGeometricModel model = ospNewGeometricModel(mesh);
   ospCommit(model);
-  ospRelease(mesh); // we are done using this handle
+  ospRelease(mesh);
 
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
-  OSPData geometricModels = ospNewData(1, OSP_OBJECT, &model, 0);
+  OSPData geometricModels = ospNewSharedData1D(&model, OSP_OBJECT, 1);
   ospSetData(group, "geometry", geometricModels);
   ospCommit(group);
   ospRelease(model);
@@ -137,7 +142,7 @@ int main(int argc, const char **argv) {
 
   // put the instance in the world
   OSPWorld world = ospNewWorld();
-  OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
+  OSPData instances = ospNewSharedData1D(&instance, OSP_OBJECT, 1);
   ospSetData(world, "instance", instances);
   ospCommit(world);
   ospRelease(instance);
@@ -149,7 +154,7 @@ int main(int argc, const char **argv) {
   // create and setup light for Ambient Occlusion
   OSPLight light = ospNewLight("ambient");
   ospCommit(light);
-  OSPData lights = ospNewData(1, OSP_LIGHT, &light, 0);
+  OSPData lights = ospNewSharedData1D(&light, OSP_LIGHT, 1);
   ospCommit(lights);
 
   // complete setup of renderer

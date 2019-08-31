@@ -111,27 +111,27 @@ int main(int argc, const char **argv) {
   data = ospray::cpp::Data(4, OSP_VEC4F, color);
   data.commit();
   mesh.set("vertex.color", data);
-  data.release(); // we are done using this handle
+  data.release();
 
-  data = ospray::cpp::Data(2, OSP_VEC3I, index); // OSP_VEC4I format is also supported for triangle indices
+  data = ospray::cpp::Data(2, OSP_VEC3I, index);
   data.commit();
   mesh.set("index", data);
-  data.release(); // we are done using this handle
+  data.release();
 
   mesh.commit();
 
   // put the mesh into a model
   ospray::cpp::GeometricModel model(mesh);
   model.commit();
-  mesh.release(); // we are done using this handle
+  mesh.release();
 
   // put the model into a group (collection of models)
   ospray::cpp::Group group;
   auto modelHandle = model.handle();
   data = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
   group.set("geometry", data);
-  model.release(); // we are done using this handle
-  data.release(); // we are done using this handle
+  model.release();
+  data.release();
   group.commit();
 
   // put the group into an instance (give the group a world transform)
@@ -144,8 +144,8 @@ int main(int argc, const char **argv) {
   auto instanceHandle = instance.handle();
   data = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
   world.set("instance", data);
-  instance.release(); // we are done using this handle
-  data.release(); // we are done using this handle
+  instance.release();
+  data.release();
   world.commit();
 
   // create renderer

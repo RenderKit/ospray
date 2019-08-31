@@ -183,7 +183,7 @@ typedef enum
   OSP_FB_ALBEDO=(1<<5)
 } OSPFrameBufferChannel;
 
-// Flags that can be passed to ospNewData()
+// XXX remove
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t

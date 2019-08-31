@@ -53,10 +53,16 @@ namespace ospray {
 
       // OSPRay Data Arrays ///////////////////////////////////////////////////
 
-      virtual OSPData newData(size_t nitems,
-                              OSPDataType format,
-                              const void *init,
-                              int flags) = 0;
+      virtual OSPData newSharedData(const void *sharedData,
+          OSPDataType,
+          const vec3i &numItems,
+          const vec3l &byteStride) = 0;
+
+      virtual OSPData newData(OSPDataType, const vec3i &numItems) = 0;
+
+      virtual void copyData(const OSPData source,
+          OSPData destination,
+          const vec3i &DestinationIndex) = 0;
 
       // Renderable Objects ///////////////////////////////////////////////////
 

@@ -107,13 +107,34 @@ namespace ospray {
     // OSPRay Data Arrays /////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    OSPData ISPCDevice::newData(size_t nitems,
-                                OSPDataType format,
-                                const void *init,
-                                int flags)
+    OSPData ISPCDevice::newSharedData(const void *sharedData,
+        OSPDataType type,
+        const vec3i &numItems,
+        const vec3l &byteStride)
     {
-      Data *data = new Data(nitems, format, init, flags);
-      return (OSPData)data;
+      return (OSPData) new Data(
+          numItems.x, type, sharedData, OSP_DATA_SHARED_BUFFER);
+    }
+
+    OSPData ISPCDevice::newData(OSPDataType type, const vec3i &numItems)
+    {
+      return (OSPData) new Data(numItems.x, type, NULL);
+    }
+
+    void ISPCDevice::copyData(const OSPData source,
+        OSPData destination,
+        const vec3i &destinationIndex)
+    {
+      Data *src = (Data *)source;
+      Data *dst = (Data *)destination;
+      memcpy(dst->data, src->data, src->numBytes);
+      if (isManagedObject(dst->type)) {
+        ManagedObject **child = (ManagedObject **)dst->data;
+        for (uint32_t i = 0; i < dst->numItems; i++) {
+          if (child[i])
+            child[i]->refInc();
+        }
+      }
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -414,16 +414,47 @@ OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 // OSPRay Data Arrays /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" OSPData ospNewData(size_t nitems,
-                              OSPDataType format,
-                              const void *init,
-                              uint32_t flags) OSPRAY_CATCH_BEGIN
+extern "C" OSPData ospNewSharedData(const void *sharedData,
+    OSPDataType type,
+    uint32_t numItems1,
+    int64_t byteStride1,
+    uint32_t numItems2,
+    int64_t byteStride2,
+    uint32_t numItems3,
+    int64_t byteStride3) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  OSPData data = currentDevice().newData(nitems, format, init, flags);
+  OSPData data = currentDevice().newSharedData(sharedData,
+      type,
+      ospray::vec3ui(numItems1, numItems2, numItems3),
+      ospray::vec3l(byteStride1, byteStride2, byteStride3));
   return data;
 }
 OSPRAY_CATCH_END(nullptr)
+
+extern "C" OSPData ospNewData(OSPDataType type,
+    uint32_t numItems1,
+    uint32_t numItems2,
+    uint32_t numItems3) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  OSPData data = currentDevice().newData(
+      type, ospray::vec3ui(numItems1, numItems2, numItems3));
+  return data;
+}
+OSPRAY_CATCH_END(nullptr)
+
+extern "C" void ospCopyData(const OSPData source,
+    OSPData destination,
+    uint32_t dstIdx1,
+    uint32_t dstIdx2,
+    uint32_t dstIdx3) OSPRAY_CATCH_BEGIN
+{
+  ASSERT_DEVICE();
+  currentDevice().copyData(
+      source, destination, ospray::vec3ui(dstIdx1, dstIdx2, dstIdx3));
+}
+OSPRAY_CATCH_END()
 
 ///////////////////////////////////////////////////////////////////////////////
 // Renderable Objects /////////////////////////////////////////////////////////
