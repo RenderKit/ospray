@@ -180,8 +180,8 @@ float volumeSampleFreePath(const PathState& pathState,
   volumeRay.org  = ray.org;
   volumeRay.dir  = ray.dir;
   volumeRay.time = ray.time;
-  volumeRay.t0   = ray.t0;
-  volumeRay.t    = ray.t;
+  volumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
+  volumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
   volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
   volumeRay.primID = RTC_INVALID_GEOMETRY_ID;
   volumeRay.instID = RTC_INVALID_GEOMETRY_ID;
@@ -197,7 +197,7 @@ float volumeSampleFreePath(const PathState& pathState,
     //transformRay(volumeRay, volumeInterval.rcp_xfm);
     foreach_unique(inst in instance)
     {
-      volumeInterval.interval.lower = max(0.f, volumeInterval.interval.lower);
+      volumeInterval.interval.lower = max(ray.t0, volumeInterval.interval.lower);
       volumeInterval.interval.upper = noHit(ray) ? volumeInterval.interval.upper : min(volumeInterval.interval.upper, ray.t);
       if (pathState.homogeneousApprox)
       {
@@ -233,8 +233,8 @@ float volumeTransmittance(const PathState& pathState,
   volumeRay.org  = ray.org;
   volumeRay.dir  = ray.dir;
   volumeRay.time = ray.time;
-  volumeRay.t0   = ray.t0;
-  volumeRay.t    = ray.t;
+  volumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
+  volumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
   volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
   volumeRay.primID = RTC_INVALID_GEOMETRY_ID;
   volumeRay.instID = RTC_INVALID_GEOMETRY_ID;
@@ -246,10 +246,10 @@ float volumeTransmittance(const PathState& pathState,
   if (haveVolumeHit)
   {
     VolumetricModel *varying instance = volumeInterval.volumetricModel;
-    //transformRay(volumeRay, volumeInterval.rcp_xfm);
     foreach_unique(inst in instance)
     {
-      volumeInterval.interval.lower = max(0.f, volumeInterval.interval.lower);
+      //transformRay(volumeRay, volumeInterval.xfm);
+      volumeInterval.interval.lower = max(ray.t0, volumeInterval.interval.lower);
       volumeInterval.interval.upper = noHit(ray) ? volumeInterval.interval.upper : min(volumeInterval.interval.upper, ray.t);
       if (pathState.homogeneousApprox) {
         transmittance = exp(-(volumeInterval.interval.upper - volumeInterval.interval.lower)*inst->sigma_t);
