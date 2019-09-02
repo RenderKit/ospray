@@ -77,11 +77,10 @@ namespace ospray {
     retval.embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 
-    ispc::SpheresGeometry_set(
-        retval.ispcEquivalent,
+    ispc::SpheresGeometry_set(retval.ispcEquivalent,
         retval.embreeGeometry,
-        sphereData->data,
-        texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
+        sphereData->data(),
+        texcoordData ? (ispc::vec2f *)texcoordData->data() : nullptr,
         numSpheres,
         bytesPerSphere,
         radius,

@@ -47,8 +47,8 @@ namespace ospray {
           "streamlines geometry 'index' array must have element type OSP_INT");
     }
 
-    index       = (uint32 *)indexData->data;
-    numSegments = indexData->numItems;
+    index = (uint32 *)indexData->data();
+    numSegments = indexData->size();
 
     vertexData = getParamData("vertex.position");
 
@@ -65,11 +65,11 @@ namespace ospray {
       throw std::runtime_error(ss.str());
     }
 
-    utility::DataView<const vec3f> vertex(vertexData->data, sizeof(vec3f));
+    utility::DataView<const vec3f> vertex(vertexData->data(), sizeof(vec3f));
 
     if (vertexData->type == OSP_VEC4F) {
-      radius.reset((const float *)vertexData->data + 3, sizeof(vec4f));
-      vertex.reset(vertexData->data, sizeof(vec4f));
+      radius.reset((const float *)vertexData->data() + 3, sizeof(vec4f));
+      vertex.reset(vertexData->data(), sizeof(vec4f));
       useCurve = true;
     }
 
@@ -84,7 +84,7 @@ namespace ospray {
     radiusData = getParamData("vertex.radius");
 
     if (radiusData && radiusData->type == OSP_FLOAT) {
-      radius.reset((const float *)radiusData->data);
+      radius.reset((const float *)radiusData->data());
       useCurve = true;
     }
 
@@ -129,7 +129,7 @@ namespace ospray {
       }
     }
 
-    numVertices = useCurve ? vertexCurve.size() : vertexData->numItems;
+    numVertices = useCurve ? vertexCurve.size() : vertexData->size();
 
     postStatusMsg(2) << "#osp: creating streamlines geometry, "
                      << "#verts=" << numVertices << ", "
@@ -171,22 +171,20 @@ namespace ospray {
                                  sizeof(int),
                                  numSegments);
 
-      ispc::StreamLines_setCurve(
-          retval.ispcEquivalent,
+      ispc::StreamLines_setCurve(retval.ispcEquivalent,
           vertexCurve.size(),
           numSegments,
           index,
-          colorData ? (ispc::vec4f *)colorData->data : nullptr);
+          colorData ? (ispc::vec4f *)colorData->data() : nullptr);
     } else {
-      ispc::StreamLines_set(
-          retval.ispcEquivalent,
+      ispc::StreamLines_set(retval.ispcEquivalent,
           retval.embreeGeometry,
           globalRadius,
-          (const ispc::vec3f *)vertexData->data,
+          (const ispc::vec3f *)vertexData->data(),
           numVertices,
           index,
           numSegments,
-          colorData ? (ispc::vec4f *)colorData->data : nullptr);
+          colorData ? (ispc::vec4f *)colorData->data() : nullptr);
     }
 
     rtcCommitGeometry(retval.embreeGeometry);

@@ -37,7 +37,7 @@ namespace ospray {
    private:
     // Helper functions //
 
-    void setMaterial(Material *mat);
+    void setMaterial();
     void setMaterialList(Data *matListData);
 
     // Data //

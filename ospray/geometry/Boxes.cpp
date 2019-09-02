@@ -36,11 +36,11 @@ namespace ospray {
       throw std::runtime_error("boxes geometry must have 'box' data array");
 
     if (boxData->type == OSP_BOX3F)
-      numBoxes = boxData->numItems;
+      numBoxes = boxData->size();
     else if (boxData->type == OSP_VEC3F)
-      numBoxes = boxData->numItems / 2;
+      numBoxes = boxData->size() / 2;
     else if (boxData->type == OSP_FLOAT)
-      numBoxes = boxData->numItems / 6;
+      numBoxes = boxData->size() / 6;
     else {
       std::stringstream ss;
       ss << "boxes geometry 'box' array has invalid element type "
@@ -63,8 +63,10 @@ namespace ospray {
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
     retval.ispcEquivalent = ispc::Boxes_create(this);
 
-    ispc::Boxes_set(
-        retval.ispcEquivalent, retval.embreeGeometry, numBoxes, boxData->data);
+    ispc::Boxes_set(retval.ispcEquivalent,
+        retval.embreeGeometry,
+        numBoxes,
+        boxData->data());
 
     return retval;
   }

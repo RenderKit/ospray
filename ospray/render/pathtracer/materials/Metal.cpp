@@ -43,16 +43,16 @@ namespace ospray {
         float kResampled[SPECTRUM_SAMPLES];
         float *etaSpectral = nullptr;
         float *kSpectral = nullptr;
-        if (ior && ior->data && ior->size() > 0) {
+        if (ior && ior->data() && ior->size() > 0) {
           if (ior->type != OSP_VEC3F) {
             throw std::runtime_error(
                 "metal material 'ior' array must have element type OSP_VEC3F");
           }
 
           // resample, relies on ordered samples
-          auto iorP = (vec3f*)ior->data;
+          auto iorP = (vec3f *)ior->data();
           auto iorPrev = *iorP;
-          const auto iorLast = (vec3f*)ior->data + ior->size()-1;
+          const auto iorLast = (vec3f *)ior->data() + ior->size() - 1;
           float wl = SPECTRUM_FIRSTWL;
           for(int l = 0; l < SPECTRUM_SAMPLES; wl += SPECTRUM_SPACING, l++) {
             for(; iorP != iorLast && iorP->x < wl; iorP++)

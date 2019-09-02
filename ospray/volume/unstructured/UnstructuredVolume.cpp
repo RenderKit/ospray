@@ -146,10 +146,10 @@ namespace ospray {
     }
 
     // retrieve array pointers
-    vertex      = (vec3f *)vertexData->data;
-    index       = (uint32_t *)indexData->data;
-    vertexValue = vertexValueData ? (float *)vertexValueData->data : nullptr;
-    cellValue   = cellValueData ? (float *)cellValueData->data : nullptr;
+    vertex = (vec3f *)vertexData->data();
+    index = (uint32_t *)indexData->data();
+    vertexValue = vertexValueData ? (float *)vertexValueData->data() : nullptr;
+    cellValue = cellValueData ? (float *)cellValueData->data() : nullptr;
 
     // set index integer size based on index data type
     switch (indexData->type) {
@@ -176,7 +176,7 @@ namespace ospray {
     if (cellData) {
       // intialize cells with data given through API
       nCells = cellData->size();
-      cell   = (uint32_t *)cellData->data;
+      cell = (uint32_t *)cellData->data();
 
       // set cell integer size based on cell data type
       switch (cellData->type) {
@@ -228,7 +228,7 @@ namespace ospray {
 
     // 'cell.type' parameter is optional
     if (cellTypeData) {
-      cellType = (OSPUnstructuredCellType *)cellTypeData->data;
+      cellType = (OSPUnstructuredCellType *)cellTypeData->data();
 
       // check if number of cell types matches number of cells
       if (cellTypeData->size() != nCells) {

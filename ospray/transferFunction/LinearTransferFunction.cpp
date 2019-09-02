@@ -41,15 +41,15 @@ namespace ospray {
     // Set the color values.
     if (colorValues) {
       ispc::LinearTransferFunction_setColorValues(ispcEquivalent,
-                                                  colorValues->numItems,
-                                                  (ispc::vec3f*)colorValues->data);
+          colorValues->size(),
+          (ispc::vec3f *)colorValues->data());
     }
 
     // Set the opacity values.
     if (opacityValues) {
       ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent,
-                                                    opacityValues->numItems,
-                                                    (float *)opacityValues->data);
+          opacityValues->size(),
+          (float *)opacityValues->data());
     }
 
     if (getParam1b("preIntegration", false) && colorValues && opacityValues)

@@ -38,7 +38,7 @@ namespace ospray {
 
     auto texData = getParamData("data", nullptr);
 
-    if (!texData->data) {
+    if (!texData->data()) {
       throw std::runtime_error(
           "2D texture must have 'data' array of texel data");
     }
@@ -58,8 +58,8 @@ namespace ospray {
       throw std::runtime_error(ss.str());
     }
 
-    this->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
-                                                  texData->data, type, flags);
+    this->ispcEquivalent = ispc::Texture2D_create(
+        (ispc::vec2i &)size, texData->data(), type, flags);
   }
 
   OSP_REGISTER_TEXTURE(Texture2D, texture2d);

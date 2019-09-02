@@ -66,11 +66,10 @@ namespace ospray {
 
     // Create an ISPC SharedStructuredVolume object and assign
     // type-specific function pointers.
-    ispcEquivalent = ispc::SharedStructuredVolume_createInstance(
-        this,
+    ispcEquivalent = ispc::SharedStructuredVolume_createInstance(this,
         voxelType,
         (const ispc::vec3i &)dimensions,
-        voxelData ? voxelData->data : allocatedVoxelData);
+        voxelData ? voxelData->data() : allocatedVoxelData);
   }
 
   // A volume type with XYZ storage order. The voxel data is provided by the

@@ -76,7 +76,7 @@ namespace ospray {
 
       generatedFacesData.clear();
       numFaces = facesData->size();
-      faces    = (uint32_t *)facesData->data;
+      faces = (uint32_t *)facesData->data();
     } else {
 
       if (indexData->type != OSP_VEC4I && indexData->type != OSP_VEC4UI) {
@@ -112,7 +112,7 @@ namespace ospray {
 
   size_t Subdivision::numPrimitives() const
   {
-    return indexData ? indexData->numItems / 4 : 0;
+    return indexData ? indexData->size() / 4 : 0;
   }
 
   LiveGeometry Subdivision::createEmbreeGeometry()
@@ -123,11 +123,11 @@ namespace ospray {
     retval.embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 
-    vec3f *vertex = (vec3f *)vertexData->data;
-    float *colors = colorsData ? (float *)colorsData->data : nullptr;
+    vec3f *vertex = (vec3f *)vertexData->data();
+    float *colors = colorsData ? (float *)colorsData->data() : nullptr;
     float *indexLevel =
-        indexLevelData ? (float *)indexLevelData->data : nullptr;
-    vec2f *texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
+        indexLevelData ? (float *)indexLevelData->data() : nullptr;
+    vec2f *texcoord = texcoordData ? (vec2f *)texcoordData->data() : nullptr;
 
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
                                RTC_BUFFER_TYPE_VERTEX,
@@ -138,13 +138,13 @@ namespace ospray {
                                sizeof(vec3f),
                                vertexData->size());
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                               RTC_BUFFER_TYPE_INDEX,
-                               0,
-                               RTC_FORMAT_UINT,
-                               indexData->data,
-                               0,
-                               sizeof(unsigned int),
-                               indexData->size());
+        RTC_BUFFER_TYPE_INDEX,
+        0,
+        RTC_FORMAT_UINT,
+        indexData->data(),
+        0,
+        sizeof(unsigned int),
+        indexData->size());
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
                                RTC_BUFFER_TYPE_FACE,
                                0,
@@ -161,21 +161,21 @@ namespace ospray {
             << "subdivision edge crease indices size does not match weights";
       else {
         rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                   RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,
-                                   0,
-                                   RTC_FORMAT_UINT2,
-                                   edge_crease_indicesData->data,
-                                   0,
-                                   2 * sizeof(unsigned int),
-                                   edge_creases);
+            RTC_BUFFER_TYPE_EDGE_CREASE_INDEX,
+            0,
+            RTC_FORMAT_UINT2,
+            edge_crease_indicesData->data(),
+            0,
+            2 * sizeof(unsigned int),
+            edge_creases);
         rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                   RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,
-                                   0,
-                                   RTC_FORMAT_FLOAT,
-                                   edge_crease_weightsData->data,
-                                   0,
-                                   sizeof(float),
-                                   edge_creases);
+            RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT,
+            0,
+            RTC_FORMAT_FLOAT,
+            edge_crease_weightsData->data(),
+            0,
+            sizeof(float),
+            edge_creases);
       }
     }
 
@@ -186,21 +186,21 @@ namespace ospray {
             << "subdivision vertex crease indices size does not match weights";
       else {
         rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                   RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,
-                                   0,
-                                   RTC_FORMAT_UINT,
-                                   vertex_crease_indicesData->data,
-                                   0,
-                                   sizeof(unsigned int),
-                                   vertex_creases);
+            RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX,
+            0,
+            RTC_FORMAT_UINT,
+            vertex_crease_indicesData->data(),
+            0,
+            sizeof(unsigned int),
+            vertex_creases);
         rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                   RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT,
-                                   0,
-                                   RTC_FORMAT_FLOAT,
-                                   vertex_crease_weightsData->data,
-                                   0,
-                                   sizeof(float),
-                                   vertex_creases);
+            RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT,
+            0,
+            RTC_FORMAT_FLOAT,
+            vertex_crease_weightsData->data(),
+            0,
+            sizeof(float),
+            vertex_creases);
       }
     }
 

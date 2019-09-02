@@ -72,11 +72,11 @@ namespace ospray {
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
 
-    this->index    = (int *)indexData->data;
-    this->vertex   = (float *)vertexData->data;
-    this->normal   = normalData ? (float *)normalData->data : nullptr;
-    this->color    = colorData ? (vec4f *)colorData->data : nullptr;
-    this->texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
+    this->index = (int *)indexData->data();
+    this->vertex = (float *)vertexData->data();
+    this->normal = normalData ? (float *)normalData->data() : nullptr;
+    this->color = colorData ? (vec4f *)colorData->data() : nullptr;
+    this->texcoord = texcoordData ? (vec2f *)texcoordData->data() : nullptr;
 
     numTris  = -1;
     numVerts = -1;
@@ -157,7 +157,7 @@ namespace ospray {
 
   size_t TriangleMesh::numPrimitives() const
   {
-    return indexData ? indexData->numItems / 3 : 0;
+    return indexData ? indexData->size() / 3 : 0;
   }
 
   LiveGeometry TriangleMesh::createEmbreeGeometry()
@@ -169,22 +169,22 @@ namespace ospray {
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
 
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                               RTC_BUFFER_TYPE_INDEX,
-                               0,
-                               RTC_FORMAT_UINT3,
-                               indexData->data,
-                               0,
-                               numCompsInTri * sizeof(int),
-                               numTris);
+        RTC_BUFFER_TYPE_INDEX,
+        0,
+        RTC_FORMAT_UINT3,
+        indexData->data(),
+        0,
+        numCompsInTri * sizeof(int),
+        numTris);
 
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                               RTC_BUFFER_TYPE_VERTEX,
-                               0,
-                               RTC_FORMAT_FLOAT3,
-                               vertexData->data,
-                               0,
-                               numCompsInVtx * sizeof(int),
-                               numVerts);
+        RTC_BUFFER_TYPE_VERTEX,
+        0,
+        RTC_FORMAT_FLOAT3,
+        vertexData->data(),
+        0,
+        numCompsInVtx * sizeof(int),
+        numVerts);
 
     rtcCommitGeometry(retval.embreeGeometry);
 

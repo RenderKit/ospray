@@ -20,56 +20,106 @@
 
 namespace ospray {
 
-  Data::Data(size_t numItems, OSPDataType type, const void *init, int flags) :
-    numItems(numItems),
-    numBytes(numItems * sizeOf(type)),
-    flags(flags),
-    type(type)
+  Data::Data(const void *sharedData,
+      OSPDataType type,
+      const vec3ui &numItems,
+      const vec3l &byteStride)
+      : shared(true), type(type), numItems(numItems), byteStride(byteStride)
+
   {
-    if (flags & OSP_DATA_SHARED_BUFFER) {
-      assert(init != NULL && "shared buffer is NULL");
-      data = const_cast<void *>(init);
-    } else {
-      data = alignedMalloc(numBytes+16);
-      if (init)
-        memcpy(data,init,numBytes);
-      else if (isManagedObject(type))
-        memset(data,0,numBytes);
-    }
+    if (sharedData == nullptr)
+      throw std::runtime_error("OSPData: shared buffer is NULL");
+    init();
+    addr = (char *)sharedData;
 
-    managedObjectType = OSP_DATA;
-
-    if (isManagedObject(type)) {
-      ManagedObject **child = (ManagedObject **)data;
-      for (uint32_t i = 0; i < numItems; i++) {
+    if (isObjectType(type)) {
+      ManagedObject **child = (ManagedObject **)data();
+      for (uint32_t i = 0; i < numItems.x; i++)
         if (child[i])
           child[i]->refInc();
-      }
     }
+  }
+
+  Data::Data(OSPDataType type, const vec3ui &numItems)
+      : shared(false), type(type), numItems(numItems), byteStride(0)
+  {
+    init();
+    addr = (char *)alignedMalloc(
+        size() * sizeOf(type) + 16); // XXX padding needed?
+    if (isObjectType(type)) // XXX initialize always? or never?
+      memset(addr, 0, size() * sizeOf(type));
   }
 
   Data::~Data()
   {
-    if (isManagedObject(type)) {
-      Data **child = (Data **)data;
-      for (uint32_t i = 0; i < numItems; i++) {
+    if (isObjectType(type)) {
+      ManagedObject **child = (ManagedObject **)data();
+      for (uint32_t i = 0; i < numItems.x; i++)
         if (child[i])
           child[i]->refDec();
-      }
     }
 
-    if (!(flags & OSP_DATA_SHARED_BUFFER))
-      alignedFree(data);
+    if (!shared)
+      alignedFree(addr);
+  }
+
+  void Data::init()
+  {
+    numBytes = size() * sizeOf(type);
+    managedObjectType = OSP_DATA;
+    if (reduce_min(numItems) == 0)
+      throw std::out_of_range("OSPData: all numItems must be positive");
+    dimensions = (numItems.x > 1) + (numItems.y > 1) + (numItems.z > 1);
+    // compute strides if requested
+    if (byteStride.x == 0)
+      byteStride.x = sizeOf(type);
+    if (byteStride.y == 0)
+      byteStride.y = numItems.x * sizeOf(type);
+    if (byteStride.z == 0)
+      byteStride.z = numItems.x * numItems.y * sizeOf(type);
+  }
+
+  void Data::copy(const Data &source, const vec3ui &destinationIndex)
+  {
+    if (type != source.type
+        && !(isObjectType(type) && isObjectType(source.type)))
+      throw std::runtime_error("OSPData::copy: types must match");
+    if (shared && !source.shared)
+      throw std::runtime_error(
+          "OSPData::copy: cannot copy opaque (non-shared) data into shared data");
+    if (anyLessThan(numItems, destinationIndex + source.numItems))
+      throw std::out_of_range(
+          "OSPData::copy: source does not fit into destination");
+
+    if (byteStride == source.byteStride
+        && data(destinationIndex) == source.data()) {
+      // NoOP, no need to copy identical region
+      // TODO markDirty(destinationIndex, destinationIndex + source.numItems);
+      return;
+    }
+
+    vec3ui srcIdx;
+    for (srcIdx.z = 0; srcIdx.z < source.numItems.z; srcIdx.z++)
+      for (srcIdx.y = 0; srcIdx.y < source.numItems.y; srcIdx.y++)
+        for (srcIdx.x = 0; srcIdx.x < source.numItems.x; srcIdx.x++) {
+          char *dst = data(srcIdx + destinationIndex);
+          const char *src = source.data(srcIdx);
+          if (isObjectType(type)) {
+            const ManagedObject **srcO = (const ManagedObject **)src;
+            if (*srcO)
+              (*srcO)->refInc();
+            const ManagedObject **dstO = (const ManagedObject **)dst;
+            if (*dstO)
+              (*dstO)->refDec();
+            *dstO = *srcO;
+          } else
+            memcpy(dst, src, sizeOf(type));
+        }
   }
 
   std::string Data::toString() const
   {
     return "ospray::Data";
-  }
-
-  size_t ospray::Data::size() const
-  {
-    return numItems;
   }
 
 } // ::ospray

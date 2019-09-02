@@ -37,8 +37,8 @@ namespace ospray {
     }
 
     volume       = (VolumetricModel *)getParamObject("volume", nullptr);
-    numIsovalues = isovaluesData->numItems;
-    isovalues    = (float *)isovaluesData->data;
+    numIsovalues = isovaluesData->size();
+    isovalues = (float *)isovaluesData->data();
   }
 
   size_t Isosurfaces::numPrimitives() const

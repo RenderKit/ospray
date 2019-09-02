@@ -63,7 +63,7 @@ namespace ospray {
           "OSP_VEC4F");
     }
 
-    const auto numVertices = vertexData->numItems;
+    const auto numVertices = vertexData->size();
 
     normalData  = getParamData("vertex.normal", nullptr);
     tangentData = getParamData("vertex.tangent", nullptr);
@@ -78,7 +78,7 @@ namespace ospray {
           "curves geometry 'index' array must have element type OSP_INT");
     }
 
-    const auto numSegments = indexData->numItems;
+    const auto numSegments = indexData->size();
 
     curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
     if (curveType == OSP_UNKNOWN_CURVE_TYPE)
@@ -122,7 +122,7 @@ namespace ospray {
 
   size_t Curves::numPrimitives() const
   {
-    return indexData->numItems;
+    return indexData->size();
   }
 
   LiveGeometry Curves::createEmbreeGeometry()
@@ -134,50 +134,50 @@ namespace ospray {
     retval.ispcEquivalent = ispc::Curves_create(this);
 
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                               RTC_BUFFER_TYPE_VERTEX,
-                               0,
-                               RTC_FORMAT_FLOAT4,
-                               vertexData->data,
-                               0,
-                               sizeof(vec4f),
-                               vertexData->numItems);
+        RTC_BUFFER_TYPE_VERTEX,
+        0,
+        RTC_FORMAT_FLOAT4,
+        vertexData->data(),
+        0,
+        sizeof(vec4f),
+        vertexData->size());
 
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                               RTC_BUFFER_TYPE_INDEX,
-                               0,
-                               RTC_FORMAT_UINT,
-                               indexData->data,
-                               0,
-                               sizeof(int),
-                               indexData->numItems);
+        RTC_BUFFER_TYPE_INDEX,
+        0,
+        RTC_FORMAT_UINT,
+        indexData->data(),
+        0,
+        sizeof(int),
+        indexData->size());
 
     if (normalData) {
       rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                 RTC_BUFFER_TYPE_NORMAL,
-                                 0,
-                                 RTC_FORMAT_FLOAT3,
-                                 normalData->data,
-                                 0,
-                                 sizeof(vec3f),
-                                 normalData->numItems);
+          RTC_BUFFER_TYPE_NORMAL,
+          0,
+          RTC_FORMAT_FLOAT3,
+          normalData->data(),
+          0,
+          sizeof(vec3f),
+          normalData->size());
     }
 
     if (tangentData) {
       rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                 RTC_BUFFER_TYPE_TANGENT,
-                                 0,
-                                 RTC_FORMAT_FLOAT3,
-                                 tangentData->data,
-                                 0,
-                                 sizeof(vec3f),
-                                 tangentData->numItems);
+          RTC_BUFFER_TYPE_TANGENT,
+          0,
+          RTC_FORMAT_FLOAT3,
+          tangentData->data(),
+          0,
+          sizeof(vec3f),
+          tangentData->size());
     }
 
     rtcCommitGeometry(retval.embreeGeometry);
 
     ispc::Curves_set(retval.ispcEquivalent,
-                     (ispc::RTCGeometryType)embreeCurveType,
-                     indexData->numItems);
+        (ispc::RTCGeometryType)embreeCurveType,
+        indexData->size());
 
     return retval;
   }

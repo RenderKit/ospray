@@ -36,25 +36,25 @@ namespace ospray {
     return "ospray::GeometricModel";
   }
 
-  void GeometricModel::setMaterial(Material *mat)
+  void GeometricModel::setMaterial()
+
   {
-    OSPMaterial ospMat = (OSPMaterial)mat;
-    auto *data         = new Data(1, OSP_OBJECT, &ospMat);
+    auto *data = new Data(&material.ptr, OSP_OBJECT, vec3ui(1), vec3l(0));
     setMaterialList(data);
     data->refDec();
   }
 
   void GeometricModel::setMaterialList(Data *matListData)
   {
-    if (!matListData || matListData->numItems == 0) {
+    if (!matListData || matListData->size() == 0) {
       ispc::GeometricModel_setMaterialList(this->getIE(), 0, nullptr);
       return;
     }
 
     materialListData = matListData;
-    materialList     = (Material **)materialListData->data;
+    materialList = (Material **)materialListData->data();
 
-    const int numMaterials = materialListData->numItems;
+    const int numMaterials = materialListData->size();
     ispcMaterialPtrs.resize(numMaterials);
     for (int i = 0; i < numMaterials; i++)
       ispcMaterialPtrs[i] = materialList[i]->getIE();
@@ -67,7 +67,7 @@ namespace ospray {
   {
     colorData = getParamData("prim.color");
 
-    if (colorData && colorData->numItems != geom->numPrimitives()) {
+    if (colorData && colorData->size() != geom->numPrimitives()) {
       throw std::runtime_error(
           "geometric model number of colors does not match number of "
           "primitives");
@@ -76,8 +76,8 @@ namespace ospray {
     prim_materialIDData       = getParamData("prim.materialID");
     Data *materialListDataPtr = getParamData("materialList");
 
-    if (prim_materialIDData &&
-        prim_materialIDData->numItems != geom->numPrimitives()) {
+    if (prim_materialIDData
+        && prim_materialIDData->size() != geom->numPrimitives()) {
       throw std::runtime_error(
           "geometric model number of primitive material IDs does not match "
           "number of primitives");
@@ -88,12 +88,11 @@ namespace ospray {
     if (materialListDataPtr && prim_materialIDData)
       setMaterialList(materialListDataPtr);
     else if (material)
-      setMaterial(material.ptr);
+      setMaterial();
 
-    ispc::GeometricModel_set(
-        getIE(),
-        colorData ? colorData->data : nullptr,
-        prim_materialIDData ? prim_materialIDData->data : nullptr);
+    ispc::GeometricModel_set(getIE(),
+        colorData ? colorData->data() : nullptr,
+        prim_materialIDData ? prim_materialIDData->data() : nullptr);
   }
 
   void GeometricModel::setGeomIE(void *geomIE, int geomID)

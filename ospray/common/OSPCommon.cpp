@@ -133,8 +133,12 @@ namespace ospray {
     case OSP_DATA:
     case OSP_DEVICE:
     case OSP_FRAMEBUFFER:
-    case OSP_GEOMETRY:
+    case OSP_FUTURE:
     case OSP_GEOMETRIC_MODEL:
+    case OSP_GEOMETRY:
+    case OSP_GROUP:
+    case OSP_IMAGE_OP:
+    case OSP_INSTANCE:
     case OSP_LIGHT:
     case OSP_MATERIAL:
     case OSP_RENDERER:
@@ -142,9 +146,7 @@ namespace ospray {
     case OSP_TRANSFER_FUNCTION:
     case OSP_VOLUME:
     case OSP_VOLUMETRIC_MODEL:
-    case OSP_IMAGE_OP:
     case OSP_WORLD:
-    case OSP_INSTANCE:
     case OSP_STRING:    return sizeof(void *);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
@@ -230,18 +232,20 @@ namespace ospray {
     case OSP_DATA:              return "data";
     case OSP_DEVICE:            return "device";
     case OSP_FRAMEBUFFER:       return "framebuffer";
-    case OSP_GEOMETRY:          return "geometry";
+    case OSP_FUTURE:            return "future";
     case OSP_GEOMETRIC_MODEL:   return "geometric_model";
+    case OSP_GEOMETRY:          return "geometry";
+    case OSP_GROUP:             return "group";
+    case OSP_IMAGE_OP:          return "image_op";
+    case OSP_INSTANCE:          return "instance";
     case OSP_LIGHT:             return "light";
     case OSP_MATERIAL:          return "material";
-    case OSP_WORLD:             return "world";
-    case OSP_INSTANCE:          return "instance";
     case OSP_RENDERER:          return "renderer";
     case OSP_TEXTURE:           return "texture";
     case OSP_TRANSFER_FUNCTION: return "transfer_function";
     case OSP_VOLUME:            return "volume";
     case OSP_VOLUMETRIC_MODEL:  return "volumetric_model";
-    case OSP_IMAGE_OP:          return "image_op";
+    case OSP_WORLD:             return "world";
     case OSP_STRING:            return "string";
     case OSP_CHAR:              return "char";
     case OSP_UCHAR:             return "uchar";
@@ -344,26 +348,6 @@ namespace ospray {
     }
 
     return OSP_NO_ERROR;
-  }
-
-  bool isManagedObject(OSPDataType dtype)
-  {
-    return dtype == OSP_OBJECT ||
-      dtype == OSP_CAMERA ||
-      dtype == OSP_DATA ||
-      dtype == OSP_FRAMEBUFFER ||
-      dtype == OSP_GEOMETRY ||
-      dtype == OSP_GEOMETRIC_MODEL ||
-      dtype == OSP_LIGHT ||
-      dtype == OSP_MATERIAL ||
-      dtype == OSP_WORLD ||
-      dtype == OSP_RENDERER ||
-      dtype == OSP_TEXTURE ||
-      dtype == OSP_TRANSFER_FUNCTION ||
-      dtype == OSP_VOLUME ||
-      dtype == OSP_VOLUMETRIC_MODEL ||
-      dtype == OSP_INSTANCE ||
-      dtype == OSP_IMAGE_OP;
   }
 
   StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)

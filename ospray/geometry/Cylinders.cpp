@@ -61,15 +61,15 @@ namespace ospray {
     retval.ispcEquivalent = ispc::Cylinders_create(this);
 
     ispc::CylindersGeometry_set(retval.ispcEquivalent,
-                                retval.embreeGeometry,
-                                cylinderData->data,
-                                texcoordData ? texcoordData->data : nullptr,
-                                numCylinders,
-                                bytesPerCylinder,
-                                radius,
-                                offset_v0,
-                                offset_v1,
-                                offset_radius);
+        retval.embreeGeometry,
+        cylinderData->data(),
+        texcoordData ? texcoordData->data() : nullptr,
+        numCylinders,
+        bytesPerCylinder,
+        radius,
+        offset_v0,
+        offset_v1,
+        offset_radius);
 
     return retval;
   }

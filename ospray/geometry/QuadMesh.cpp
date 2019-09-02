@@ -68,11 +68,11 @@ namespace ospray {
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
 
-    this->index    = (int *)indexData->data;
-    this->vertex   = (float *)vertexData->data;
-    this->normal   = normalData ? (float *)normalData->data : nullptr;
-    this->color    = colorData ? (vec4f *)colorData->data : nullptr;
-    this->texcoord = texcoordData ? (vec2f *)texcoordData->data : nullptr;
+    this->index = (int *)indexData->data();
+    this->vertex = (float *)vertexData->data();
+    this->normal = normalData ? (float *)normalData->data() : nullptr;
+    this->color = colorData ? (vec4f *)colorData->data() : nullptr;
+    this->texcoord = texcoordData ? (vec2f *)texcoordData->data() : nullptr;
 
     switch (indexData->type) {
     case OSP_INT:
@@ -151,22 +151,22 @@ namespace ospray {
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
 
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                               RTC_BUFFER_TYPE_INDEX,
-                               0,
-                               RTC_FORMAT_UINT4,
-                               indexData->data,
-                               0,
-                               4 * sizeof(int),
-                               numQuads);
+        RTC_BUFFER_TYPE_INDEX,
+        0,
+        RTC_FORMAT_UINT4,
+        indexData->data(),
+        0,
+        4 * sizeof(int),
+        numQuads);
 
     rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                               RTC_BUFFER_TYPE_VERTEX,
-                               0,
-                               RTC_FORMAT_FLOAT3,
-                               vertexData->data,
-                               0,
-                               numCompsInVtx * sizeof(int),
-                               numVerts);
+        RTC_BUFFER_TYPE_VERTEX,
+        0,
+        RTC_FORMAT_FLOAT3,
+        vertexData->data(),
+        0,
+        numCompsInVtx * sizeof(int),
+        numVerts);
 
     rtcCommitGeometry(retval.embreeGeometry);
 

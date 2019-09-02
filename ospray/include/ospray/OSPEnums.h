@@ -43,15 +43,19 @@ typedef enum
   // Void pointer type.
   OSP_VOID_PTR = 200,
 
-  // Object reference type.
-  OSP_OBJECT = 1000,
+  // highest bit to represent objects/handles
+  OSP_OBJECT = 0x8000000,
 
-  // Object reference subtypes.
-  OSP_CAMERA = 1100,
+  // object subtypes
+  OSP_CAMERA = 0x8000000 + 100,
   OSP_DATA,
   OSP_FRAMEBUFFER,
-  OSP_GEOMETRY,
+  OSP_FUTURE,
   OSP_GEOMETRIC_MODEL,
+  OSP_GEOMETRY,
+  OSP_GROUP,
+  OSP_IMAGE_OP,
+  OSP_INSTANCE,
   OSP_LIGHT,
   OSP_MATERIAL,
   OSP_RENDERER,
@@ -59,9 +63,7 @@ typedef enum
   OSP_TRANSFER_FUNCTION,
   OSP_VOLUME,
   OSP_VOLUMETRIC_MODEL,
-  OSP_INSTANCE,
   OSP_WORLD,
-  OSP_IMAGE_OP,
 
   // Pointer to a C-style NULL-terminated character string.
   OSP_STRING = 1500,
@@ -108,7 +110,7 @@ typedef enum
   OSP_LINEAR2F = 12000, OSP_LINEAR3F, OSP_AFFINE2F, OSP_AFFINE3F,
 
   // Guard value.
-  OSP_UNKNOWN = 99999
+  OSP_UNKNOWN = 9999999
 } OSPDataType;
 
 // OSPRay format constants for Texture creation

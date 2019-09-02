@@ -66,7 +66,7 @@ namespace ospray {
 
       /* get the acutal 'raw' pointer to the data (ispc doesn't know
          what to do with the 'Data' abstraction class */
-      void *patchesDataPointer = patchesData->data;
+      void *patchesDataPointer = patchesData->data();
 
       ispc::BilinearPatches_finalize(retval.ispcEquivalent,
                                      retval.embreeGeometry,

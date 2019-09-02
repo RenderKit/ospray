@@ -112,29 +112,20 @@ namespace ospray {
         const vec3i &numItems,
         const vec3l &byteStride)
     {
-      return (OSPData) new Data(
-          numItems.x, type, sharedData, OSP_DATA_SHARED_BUFFER);
+      return (OSPData) new Data(sharedData, type, numItems, byteStride);
     }
 
     OSPData ISPCDevice::newData(OSPDataType type, const vec3i &numItems)
     {
-      return (OSPData) new Data(numItems.x, type, NULL);
+      return (OSPData) new Data(type, numItems);
     }
 
     void ISPCDevice::copyData(const OSPData source,
         OSPData destination,
         const vec3i &destinationIndex)
     {
-      Data *src = (Data *)source;
       Data *dst = (Data *)destination;
-      memcpy(dst->data, src->data, src->numBytes);
-      if (isManagedObject(dst->type)) {
-        ManagedObject **child = (ManagedObject **)dst->data;
-        for (uint32_t i = 0; i < dst->numItems; i++) {
-          if (child[i])
-            child[i]->refInc();
-        }
-      }
+      dst->copy(*(Data *)source, destinationIndex);
     }
 
     ///////////////////////////////////////////////////////////////////////////

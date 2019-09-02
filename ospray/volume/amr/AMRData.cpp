@@ -47,20 +47,20 @@ namespace ospray {
                      const Data &cellWidthsData,
                      const Data &blockDataData)
     {
-      auto numBricks = blockBoundsData.numItems;
+      auto numBricks = blockBoundsData.size();
       // ALOK: putting the arrays back into a struct for now
       // TODO: turn this all into arrays
-      const box3i *blockBounds    = (const box3i *)blockBoundsData.data;
-      const int *refinementLevels = (const int *)refinementLevelsData.data;
-      const float *cellWidths     = (const float *)cellWidthsData.data;
+      const box3i *blockBounds = (const box3i *)blockBoundsData.data();
+      const int *refinementLevels = (const int *)refinementLevelsData.data();
+      const float *cellWidths = (const float *)cellWidthsData.data();
 
-      const Data **allBlocksData = (const Data **)blockDataData.data;
+      const Data **allBlocksData = (const Data **)blockDataData.data();
       for (size_t i = 0; i < numBricks; i++) {
         AMRData::BrickInfo blockInfo;
         blockInfo.box       = blockBounds[i];
         blockInfo.level     = refinementLevels[i];
         blockInfo.cellWidth = cellWidths[refinementLevels[i]];
-        brick.emplace_back(blockInfo, (const float *)allBlocksData[i]->data);
+        brick.emplace_back(blockInfo, (const float *)allBlocksData[i]->data());
       }
     }
 

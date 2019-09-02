@@ -123,7 +123,7 @@ namespace ospray {
     lightData = (Data *)getParamData("light");
     if (lightData) {
       for (uint32_t i = 0; i < lightData->size(); i++)
-        lightArray.push_back(((Light **)lightData->data)[i]->getIE());
+        lightArray.push_back(((Light **)lightData->data())[i]->getIE());
     }
 
     void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];

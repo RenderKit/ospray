@@ -25,14 +25,19 @@ namespace ospray {
       'n' items of a given type */
   struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   {
-    Data(size_t numItems, OSPDataType type, const void *data, int flags = 0);
+    Data(const void *sharedData,
+        OSPDataType,
+        const vec3ui &numItems,
+        const vec3l &byteStride);
+    Data(OSPDataType, const vec3ui &numItems);
 
     virtual ~Data() override;
-
     virtual std::string toString() const override;
 
-    /*! return number of items in this data buffer */
     size_t size() const;
+    char *data() const;
+    char *data(const vec3ui &idx) const;
+    void copy(const Data &source, const vec3ui &destinationIndex);
 
     /*! Iterator begin/end for Data arrays */
     template <typename T>
@@ -53,39 +58,62 @@ namespace ospray {
     template <typename T>
     const T &at(size_t i) const;
 
-    // Data members //
+    size_t numBytes; // XXX temp
 
-    void *data;       /*!< pointer to data */
-    size_t numItems;  /*!< number of items */
-    size_t numBytes;  /*!< total num bytes (sizeof(type)*numItems) */
-    int flags;        /*!< creation flags */
-    OSPDataType type; /*!< element type */
+   protected:
+    char *addr{nullptr};
+    bool shared;
+   public:
+    OSPDataType type{OSP_UNKNOWN};
+   protected:
+    vec3ui numItems;
+    vec3l byteStride;
+    int dimensions{0};
+
+   private:
+    void init(); // init dimensions and byteStride
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
 
+  inline size_t Data::size() const
+  {
+    return numItems.x * size_t(numItems.y) * numItems.z;
+  }
+
+  inline char *Data::data() const
+  {
+    return addr;
+  }
+
+  inline char *Data::data(const vec3ui &idx) const
+  {
+    return addr + idx.x * byteStride.x + idx.y * byteStride.y
+        + idx.z * byteStride.z;
+  }
+
   template <typename T>
   inline T *Data::begin()
   {
-    return static_cast<T *>(data);
+    return (T *)(addr);
   }
 
   template <typename T>
   inline T *Data::end()
   {
-    return begin<T>() + numItems;
+    return begin<T>() + numItems.x;
   }
 
   template <typename T>
   inline const T *Data::begin() const
   {
-    return static_cast<const T *>(data);
+    return static_cast<const T *>(data)();
   }
 
   template <typename T>
   inline const T *Data::end() const
   {
-    return begin<const T>() + numItems;
+    return begin<const T>() + numItems.x;
   }
 
   template <typename T>
@@ -104,7 +132,7 @@ namespace ospray {
 
   inline std::vector<void *> createArrayOfIE(Data &data)
   {
-    if (!isManagedObject(data.type))
+    if (!isObjectType(data.type))
       throw std::runtime_error("cannot createArrayOfIE() with non OSP_OBJECT!");
 
     std::vector<void *> retval;

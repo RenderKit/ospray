@@ -126,6 +126,11 @@ namespace ospray {
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_CORE_INTERFACE std::string stringForType(OSPDataType type);
 
+  inline bool isObjectType(OSPDataType type)
+  {
+    return type & OSP_OBJECT;
+  }
+
   /*! size of OSPDataType */
   OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
 
@@ -133,8 +138,6 @@ namespace ospray {
   OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
   OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
-
-  OSPRAY_CORE_INTERFACE bool isManagedObject(OSPDataType dtype);
 
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.
@@ -278,10 +281,17 @@ namespace ospray {
   // Infer (compile time) OSP_DATA_TYPE from input type ///////////////////////
 
   template <typename T>
-  struct OSPTypeFor { static constexpr int value = OSP_UNKNOWN; };
+  struct OSPTypeFor
+  {
+    static constexpr OSPDataType value = OSP_UNKNOWN;
+  };
 
-#define OSPTYPEFOR_SPECIALIZATION(type, osp_type) \
-  template <> struct OSPTypeFor<type> { static constexpr int value = osp_type; };
+#define OSPTYPEFOR_SPECIALIZATION(type, osp_type)                              \
+  template <>                                                                  \
+  struct OSPTypeFor<type>                                                      \
+  {                                                                            \
+    static constexpr OSPDataType value = osp_type;                             \
+  };
 
   OSPTYPEFOR_SPECIALIZATION(const char *, OSP_STRING);
   OSPTYPEFOR_SPECIALIZATION(const char [], OSP_STRING);
@@ -324,6 +334,23 @@ namespace ospray {
   OSPTYPEFOR_SPECIALIZATION(affine3f, OSP_AFFINE3F);
 
   OSPTYPEFOR_SPECIALIZATION(OSPObject, OSP_OBJECT);
+  OSPTYPEFOR_SPECIALIZATION(OSPCamera, OSP_CAMERA);
+  OSPTYPEFOR_SPECIALIZATION(OSPData, OSP_DATA);
+  OSPTYPEFOR_SPECIALIZATION(OSPFrameBuffer, OSP_FRAMEBUFFER);
+  OSPTYPEFOR_SPECIALIZATION(OSPFuture, OSP_FUTURE);
+  OSPTYPEFOR_SPECIALIZATION(OSPGeometricModel, OSP_GEOMETRIC_MODEL);
+  OSPTYPEFOR_SPECIALIZATION(OSPGeometry, OSP_GEOMETRY);
+  OSPTYPEFOR_SPECIALIZATION(OSPGroup, OSP_GROUP);
+  OSPTYPEFOR_SPECIALIZATION(OSPImageOp, OSP_IMAGE_OP);
+  OSPTYPEFOR_SPECIALIZATION(OSPInstance, OSP_INSTANCE);
+  OSPTYPEFOR_SPECIALIZATION(OSPLight, OSP_LIGHT);
+  OSPTYPEFOR_SPECIALIZATION(OSPMaterial, OSP_MATERIAL);
+  OSPTYPEFOR_SPECIALIZATION(OSPRenderer, OSP_RENDERER);
+  OSPTYPEFOR_SPECIALIZATION(OSPTexture, OSP_TEXTURE);
+  OSPTYPEFOR_SPECIALIZATION(OSPTransferFunction, OSP_TRANSFER_FUNCTION);
+  OSPTYPEFOR_SPECIALIZATION(OSPVolume, OSP_VOLUME);
+  OSPTYPEFOR_SPECIALIZATION(OSPVolumetricModel, OSP_VOLUMETRIC_MODEL);
+  OSPTYPEFOR_SPECIALIZATION(OSPWorld, OSP_WORLD);
 
 #undef OSPTYPEFOR_SPECIALIZATION
 
