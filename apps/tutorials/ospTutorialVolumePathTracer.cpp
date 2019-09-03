@@ -270,9 +270,33 @@ int main(int argc, const char **argv)
   }
 
   // Create volume
-  vec3l dims{512, 512, 512}; // should be at least 2
+  vec3l dims{256, 256, 256}; // should be at least 2
   const float spacing = 3.f/(reduce_max(dims)-1);
   OSPVolume volume = ospNewVolume("shared_structured_volume");
+
+  PerlinNoise pnoise;
+
+  //auto turbulence_noise = [&pnoise](int octaves, vec3f p)
+  //{
+  //  float val = 0;
+  //  for (int o = 0; o < octaves; ++o)
+  //  {
+  //    float scale = (float)(1 << o);
+  //    val += pnoise.noise(scale*p)/scale;
+  //  }
+  //  return val;
+  //};
+  
+  auto turbulence_deriv = [&pnoise](int octaves, vec3f p)
+  {
+    vec3f deriv(0.f);
+    for (int o = 0; o < octaves; ++o)
+    {
+      float scale = (float)(1 << o);
+      deriv += pnoise.deriv(scale*p)/scale;
+    }
+    return deriv;
+  };
 
   // generate volume data
   auto numVoxels = dims.product();
@@ -280,12 +304,31 @@ int main(int argc, const char **argv)
   tasking::parallel_for(dims.z, [&](int64_t z) {
     for (int y = 0; y < dims.y; ++y) {
       for (int x = 0; x < dims.x; ++x) {
-        //const float X = 2.f*((float)x)/dims.x - 1.f;
-        //const float Y = 2.f*((float)y)/dims.y - 1.f;
-        //const float Z = 2.f*((float)z)/dims.z - 1.f;
-        //float d = std::sqrt(X * X + Y * Y + Z * Z);
-        //voxels[dims.x * dims.y * z + dims.x * y + x] = d < 1.f ? 1.0f : 0.f;
-        voxels[dims.x * dims.y * z + dims.x * y + x] = 1.f;
+        int64_t offset = dims.x * dims.y * z + dims.x * y + x;
+        vec3f p(((float)x)/dims.x, ((float)y)/dims.y, ((float)z)/dims.z);
+        #if 0
+        const float X = 2.f*((float)x)/dims.x - 1.f;
+        const float Y = 2.f*((float)y)/dims.y - 1.f;
+        const float Z = 2.f*((float)z)/dims.z - 1.f;
+        float d = std::sqrt(X * X + Y * Y + Z * Z);
+        if (d < 1.f) {
+          voxels[offset] = d * turbulence_noise(10, p) + (1.f - d) * 1.f;
+          voxels[offset] = d * turbulence_noise(10, p) + (1.f - d) * 1.f;
+        } else {
+          voxels[offset] = 0.f;
+        }
+        #else
+        vec3f deriv = 0.05f * turbulence_deriv(10, p);
+        const float X = (2.f*((float)x)/dims.x) - 1.f + deriv.x;
+        const float Y = (2.f*((float)y)/dims.y) - 1.f + deriv.y;
+        const float Z = (2.f*((float)z)/dims.z) - 1.f + deriv.z;
+        float d = std::sqrt(X * X + Y * Y + Z * Z);
+        if (d < 0.9f) {
+          voxels[offset] = 1.f;
+        } else {
+          voxels[offset] = 0.f;
+        }
+        #endif
       }
     }
   });
@@ -320,19 +363,52 @@ int main(int argc, const char **argv)
   ospRelease(tfOpacityData);
   ospCommit(tfn);
 
-  auto volumeModel = ospNewVolumetricModel(volume);
-  ospSetObject(volumeModel, "transferFunction", tfn);
-  ospSetFloat(volumeModel, "samplingRate", 0.5f);
-  ospSetVec3f(volumeModel, "albedo", 1.f, 1.f, 1.f);
+  std::vector<OSPVolumetricModel> volumetricModels;
+  {
+    auto volumeModel = ospNewVolumetricModel(volume);
+    ospSetVec3f(volumeModel, "albedo", 0.2f, 0.8f, 0.2f);
+    ospSetFloat(volumeModel, "sigma_t", 4.f);
+    ospSetObject(volumeModel, "transferFunction", tfn);
 
-  OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
-  ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
-  ospSetVec3f(volumetricMaterial, "albedo", 1.f, 1.f, 1.f);
-  ospCommit(volumetricMaterial);
-  ospSetObject(volumeModel, "material", volumetricMaterial);
-  ospRelease(volumetricMaterial);
+    OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
+    ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
+    ospSetVec3f(volumetricMaterial, "albedo", 0.2f, 0.8f, 0.2f);
+    ospCommit(volumetricMaterial);
+    ospSetObject(volumeModel, "material", volumetricMaterial);
+    ospRelease(volumetricMaterial);
+    ospCommit(volumeModel);
+    volumetricModels.push_back(volumeModel);
+  }
+  {
+    auto volumeModel = ospNewVolumetricModel(volume);
+    ospSetVec3f(volumeModel, "albedo", 0.8f, 0.2f, 0.8f);
+    ospSetFloat(volumeModel, "sigma_t", 5.f);
+    ospSetObject(volumeModel, "transferFunction", tfn);
 
-  ospCommit(volumeModel);
+    OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
+    ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
+    ospSetVec3f(volumetricMaterial, "albedo", 0.8f, 0.2f, 0.8f);
+    ospCommit(volumetricMaterial);
+    ospSetObject(volumeModel, "material", volumetricMaterial);
+    ospRelease(volumetricMaterial);
+    ospCommit(volumeModel);
+    volumetricModels.push_back(volumeModel);
+  }
+  {
+    auto volumeModel = ospNewVolumetricModel(volume);
+    ospSetVec3f(volumeModel, "albedo", 0.2f, 0.8f, 0.8f);
+    ospSetFloat(volumeModel, "sigma_t", 3.f);
+    ospSetObject(volumeModel, "transferFunction", tfn);
+
+    OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
+    ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
+    ospSetVec3f(volumetricMaterial, "albedo", 0.2f, 0.8f, 0.8f);
+    ospCommit(volumetricMaterial);
+    ospSetObject(volumeModel, "material", volumetricMaterial);
+    ospRelease(volumetricMaterial);
+    ospCommit(volumeModel);
+    volumetricModels.push_back(volumeModel);
+  }
   ospRelease(tfn);
 
   // create geometries
@@ -353,7 +429,7 @@ int main(int argc, const char **argv)
   }
   
   if (1) {
-    auto geometry = BoxGeometry(box3f(vec3f(0.0f, 0.f, 0.f), vec3f(2.f, 2.f, 2.f)));
+    auto geometry = BoxGeometry(box3f(vec3f(0.0f, -1.5f, 0.f), vec3f(2.f, 1.5f, 2.f)));
     geometricModels.emplace_back(ospNewGeometricModel(geometry));
     ospRelease(geometry);
     vec4f color(1.0f);
@@ -386,14 +462,40 @@ int main(int argc, const char **argv)
   }
 
   OSPWorld world = ospNewWorld();
-  OSPGroup group = ospNewGroup();
+  OSPGroup group_geometry = ospNewGroup();
 
-  OSPInstance instance = ospNewInstance(group);
-  ospCommit(instance);
+  std::vector<OSPGroup> volumetricGroups;
+  for (size_t i = 0; i < volumetricModels.size(); ++i)
+    volumetricGroups.emplace_back(ospNewGroup());
 
-  OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
-  ospSetData(world, "instance", instances);
-  ospRelease(instances);
+  OSPInstance instance_geometry = ospNewInstance(group_geometry);
+  ospCommit(instance_geometry);
+  
+  OSPInstance instance_volume_0 = ospNewInstance(volumetricGroups[0]);
+  //{
+  //  AffineSpace3f xfm = AffineSpace3f(LinearSpace3f::rotate(vec3f(0.f, 1.f, 0.f), M_PI/4.f));
+  //  ospSetAffine3fv(instance_volume_0, "xfm", &xfm.l.vx.x);
+  //}
+  ospCommit(instance_volume_0);
+  
+  OSPInstance instance_volume_1 = ospNewInstance(volumetricGroups[1]);
+  {
+    AffineSpace3f xfm = AffineSpace3f::translate(vec3f(1.f, -1.f, -1.f));
+    ospSetAffine3fv(instance_volume_1, "xfm", &xfm.l.vx.x);
+  }
+  ospCommit(instance_volume_1);
+
+  OSPInstance instance_volume_2 = ospNewInstance(volumetricGroups[2]);
+  {
+    AffineSpace3f xfm = AffineSpace3f::translate(vec3f(-1.f, -2.f, 1.f));
+    ospSetAffine3fv(instance_volume_2, "xfm", &xfm.l.vx.x);
+  }
+  ospCommit(instance_volume_2);
+
+  std::vector<OSPInstance> instances = { instance_geometry, instance_volume_0, instance_volume_1, instance_volume_2 };
+  OSPData instance_data = ospNewData(instances.size(), OSP_OBJECT, instances.data());
+  ospSetData(world, "instance", instance_data);
+  ospRelease(instance_data);
   
   // create OSPRay renderer
   int maxDepth = 1024;
@@ -425,18 +527,22 @@ int main(int argc, const char **argv)
   bool enableAmbientLight = true;
   auto updateScene = [&]() {
 
-    ospRemoveParam(group, "geometry");
-    ospRemoveParam(group, "volume");
+    ospRemoveParam(group_geometry, "geometry");
+    for (auto group : volumetricGroups)
+      ospRemoveParam(group, "volume");
 
     if (showVolume) {
-      OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
-      ospSetObject(group, "volume", volumes);
-      ospRelease(volumes);
+      for (size_t i = 0; i < volumetricGroups.size(); ++i)
+      {
+        OSPData volumes = ospNewData(1, OSP_OBJECT, &volumetricModels[i]);
+        ospSetObject(volumetricGroups[i], "volume", volumes);
+        ospRelease(volumes);
+      }
     }
     
     if (showGeometry) {
       OSPData geometries = ospNewData(geometricModels.size(), OSP_OBJECT, geometricModels.data());
-      ospSetObject(group, "geometry", geometries);
+      ospSetObject(group_geometry, "geometry", geometries);
       ospRelease(geometries);
     }
 
@@ -455,7 +561,9 @@ int main(int argc, const char **argv)
   };
 
   updateScene();
-  ospCommit(group);
+  ospCommit(group_geometry);
+  for (auto group : volumetricGroups)
+    ospCommit(group);
   ospCommit(world);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
@@ -504,15 +612,15 @@ int main(int argc, const char **argv)
       ImGuiColorEditFlags_PickerHueWheel))
     {
       commitWorld = true;
-      ospSetVec3fv(volumeModel, "albedo", (float*)&albedo.x);
-      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+      ospSetVec3fv(volumetricModels[0], "albedo", (float*)&albedo.x);
+      glfwOSPRayWindow->addObjectToCommit(volumetricModels[0]);
     }
     
     static float sigma_t = 1.0f;
     if (ImGui::SliderFloat("sigma_t", &sigma_t, 0.f, 10.f)) {
       commitWorld = true;
-      ospSetFloat(volumeModel, "sigma_t", sigma_t);
-      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+      ospSetFloat(volumetricModels[0], "sigma_t", sigma_t);
+      glfwOSPRayWindow->addObjectToCommit(volumetricModels[0]);
     }
     
     static float meanCosine = 0.0f;
@@ -522,23 +630,18 @@ int main(int argc, const char **argv)
       ospSetFloat(volumetricMaterial, "meanCosine", meanCosine);
       ospSetVec3fv(volumetricMaterial, "albedo", (float*)&albedo.x);
       ospCommit(volumetricMaterial);
-      ospSetObject(volumeModel, "material", volumetricMaterial);
+      ospSetObject(volumetricModels[0], "material", volumetricMaterial);
       ospRelease(volumetricMaterial);
-      glfwOSPRayWindow->addObjectToCommit(volumeModel);
+      glfwOSPRayWindow->addObjectToCommit(volumetricModels[0]);
     }
 
     if (updateWorld)
       updateScene();
 
     if (commitWorld) {
-      glfwOSPRayWindow->addObjectToCommit(group);
-      glfwOSPRayWindow->addObjectToCommit(world);
-    }
-    if (updateWorld)
-      updateScene();
-
-    if (commitWorld) {
-      glfwOSPRayWindow->addObjectToCommit(group);
+      glfwOSPRayWindow->addObjectToCommit(group_geometry);
+      for (auto group : volumetricGroups)
+        glfwOSPRayWindow->addObjectToCommit(group);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
   });
@@ -548,11 +651,17 @@ int main(int argc, const char **argv)
 
   // cleanup remaining objects
   ospRelease(volume);
-  ospRelease(volumeModel);
+  for (auto volumetricModel : volumetricModels)
+    ospRelease(volumetricModel);
   for(auto geometricModel : geometricModels)
     ospRelease(geometricModel);
-  ospRelease(group);
-  ospRelease(instance);
+  ospRelease(group_geometry);
+  for (auto group : volumetricGroups)
+    ospRelease(group);
+  ospRelease(instance_geometry);
+  ospRelease(instance_volume_0);
+  ospRelease(instance_volume_1);
+  ospRelease(instance_volume_2);
 
   // cleanly shut OSPRay down
   ospShutdown();

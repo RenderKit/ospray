@@ -64,6 +64,7 @@ struct PathContext
 
 struct PathState
 {
+  bool debug;
   bool disableNEE;                          // turn off NEE contribution for debugging purposes
   bool disableFWD;                          // turn off FWD contribution for debugging purposes
   bool homogeneousApprox;                   // handle volume as homogeneous in its bbox for debugging purposes
@@ -182,45 +183,59 @@ float volumeSampleFreePath(const PathState& pathState,
   volumeRay.time = ray.time;
   volumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
   volumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
-  volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
-  volumeRay.primID = RTC_INVALID_GEOMETRY_ID;
-  volumeRay.instID = RTC_INVALID_GEOMETRY_ID;
-  VolumeInterval volumeInterval;
-  traceVolumeRay(world, volumeRay, volumeInterval);
-  const bool haveVolumeHit = hasInterval(volumeInterval);
-
-  float dist = inf;
+  VolumeIntervals volumeIntervals;
+  traceVolumeRay(world, volumeRay, volumeIntervals);
+  const bool haveVolumeHit = volumeIntervals.numVolumeIntervals > 0;
+  float min_dist = inf;
   unmasked { *sampledInstance = NULL; }
   if (haveVolumeHit)
   {
-    VolumetricModel *varying instance = volumeInterval.volumetricModel;
-    //transformRay(volumeRay, volumeInterval.rcp_xfm);
-    foreach_unique(inst in instance)
+    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i) 
     {
-      volumeInterval.interval.lower = max(ray.t0, volumeInterval.interval.lower);
-      volumeInterval.interval.upper = noHit(ray) ? volumeInterval.interval.upper : min(volumeInterval.interval.upper, ray.t);
-      if (pathState.homogeneousApprox)
+      VolumeInterval vInterval = volumeIntervals.intervals[i];
+      VolumetricModel *varying instance = volumeIntervals.intervals[i].volumetricModel;
+      foreach_unique(inst in instance)
       {
-        float density = inst->sigma_t;
-        dist = volumeInterval.interval.lower;
-        float xi = RandomSampler_getFloat(randomSampler);
-        const float dt = - log(1.f - xi) / density;
-        dist += dt;
-        if (dist > volumeInterval.interval.upper)
-          dist = inf;
-      }
-      else 
-      {
-        dist = delta_tracking(inst,
-                              volumeInterval,
-                              randomSampler,
-                              volumeRay.org,
-                              volumeRay.dir);
+        if (all(__mask == 0)) continue;
+        vInterval.interval.lower = max(0.f, vInterval.interval.lower);
+        vInterval.interval.upper = noHit(ray) ? vInterval.interval.upper : min(vInterval.interval.upper, ray.t);
+        if (hasInterval(vInterval))
+        {
+          float dist = inf;
+          if (pathState.homogeneousApprox)
+          {
+            float density = inst->sigma_t;
+            dist = vInterval.interval.lower;
+            float xi = RandomSampler_getFloat(randomSampler);
+            const float dt = - log(1.f - xi) / density;
+            dist += dt;
+            if (dist > vInterval.interval.upper)
+              dist = inf;
+          }
+          else 
+          {
+            Ray transformedVolumeRay;
+            transformedVolumeRay.org  = volumeRay.org;
+            transformedVolumeRay.dir  = volumeRay.dir;
+            transformedVolumeRay.time = volumeRay.time;
+            transformedVolumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
+            transformedVolumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
+            transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
+            dist = delta_tracking(inst,
+                                  vInterval,
+                                  randomSampler,
+                                  transformedVolumeRay.org,
+                                  transformedVolumeRay.dir);
+          }
+          if (dist < min_dist && dist < inf) {
+            min_dist = dist;
+            *sampledInstance = inst;
+          }
+        }
       }
     }
-    if (dist < inf) *sampledInstance = instance;
   }
-  return dist;
+  return min_dist;
 }
 
 float volumeTransmittance(const PathState& pathState,
@@ -235,32 +250,42 @@ float volumeTransmittance(const PathState& pathState,
   volumeRay.time = ray.time;
   volumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
   volumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
-  volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
-  volumeRay.primID = RTC_INVALID_GEOMETRY_ID;
-  volumeRay.instID = RTC_INVALID_GEOMETRY_ID;
-  VolumeInterval volumeInterval;
-  traceVolumeRay(world, volumeRay, volumeInterval);
-  const bool haveVolumeHit = hasInterval(volumeInterval);
+  VolumeIntervals volumeIntervals;
+  traceVolumeRay(world, volumeRay, volumeIntervals);
+  const bool haveVolumeHit = volumeIntervals.numVolumeIntervals > 0;
 
   float transmittance = 1.f;
   if (haveVolumeHit)
   {
-    VolumetricModel *varying instance = volumeInterval.volumetricModel;
-    foreach_unique(inst in instance)
+    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i) 
     {
-      //transformRay(volumeRay, volumeInterval.xfm);
-      volumeInterval.interval.lower = max(ray.t0, volumeInterval.interval.lower);
-      volumeInterval.interval.upper = noHit(ray) ? volumeInterval.interval.upper : min(volumeInterval.interval.upper, ray.t);
-      if (pathState.homogeneousApprox) {
-        transmittance = exp(-(volumeInterval.interval.upper - volumeInterval.interval.lower)*inst->sigma_t);
-      } else {
-        const float dist = delta_tracking(
-            inst,
-            volumeInterval,
-            randomSampler,
-            volumeRay.org,
-            volumeRay.dir);
-        transmittance = (dist < volumeInterval.interval.upper) ? 0.f : 1.f;
+      VolumeInterval vInterval = volumeIntervals.intervals[i];
+      VolumetricModel *varying instance = volumeIntervals.intervals[i].volumetricModel;
+      foreach_unique(inst in instance)
+      {
+        vInterval.interval.lower = max(ray.t0, vInterval.interval.lower);
+        vInterval.interval.upper = noHit(ray) ? vInterval.interval.upper : min(vInterval.interval.upper, ray.t);
+        if (hasInterval(vInterval))
+        {
+          if (pathState.homogeneousApprox) {
+            transmittance = transmittance * exp(-(vInterval.interval.upper - vInterval.interval.lower)*inst->sigma_t);
+          } else {
+            Ray transformedVolumeRay;
+            transformedVolumeRay.org  = volumeRay.org;
+            transformedVolumeRay.dir  = volumeRay.dir;
+            transformedVolumeRay.time = volumeRay.time;
+            transformedVolumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
+            transformedVolumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
+            transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
+            const float dist = delta_tracking(
+                inst,
+                vInterval,
+                randomSampler,
+                transformedVolumeRay.org,
+                transformedVolumeRay.dir);
+            transmittance = transmittance * ((dist < vInterval.interval.upper) ? 0.f : 1.f);
+          }
+        }
       }
     }
   }
@@ -436,6 +461,24 @@ inline void postIntersect(const PathContext& pathContext, const PathState& pathS
       pathVertex.dg.materialID = 0;
   }
   pathVertex.material = (uniform PathTraceMaterial*)pathVertex.dg.material;
+}
+
+inline void tracePathSimple(const PathContext& pathContext, PathState& pathState, Ray& ray, ScreenSample& sample)
+{
+  traceRay(pathContext.world, ray);
+
+  VolumetricModel* varying sampledVolume = NULL;
+  float freePath = volumeSampleFreePath(pathState, pathContext.world, ray, pathContext.ldSampler, pathContext.randomSampler, &sampledVolume);
+  if (freePath < inf)
+  {
+    sample.rgb = make_vec3f(0.f);
+  }
+  else {
+  if (noHit(ray))
+    sample.rgb = make_vec3f(1.f);
+  else
+    sample.rgb = make_vec3f(0.5f);
+  }
 }
 
 inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray& ray, ScreenSample& sample)
@@ -673,6 +716,9 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
 
 ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
                                     const World *uniform world,
+                                    FrameBuffer *uniform fb,
+                                    const uint32 ix,
+                                    const uint32 iy,
                                     const vec2f &pixel, // normalized, i.e. in [0..1]
                                     Ray &ray,
                                     varying LDSampler* uniform ldSampler,
@@ -713,7 +759,18 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathState.time = ray.time;
   pathState.currentMedium = make_Medium_vacuum();
 
+  pathState.debug = false;
+  //vec2f debug_pixel = make_vec2f(0.45f, 0.45f);
+  //if (ix == (int)(debug_pixel.x*fb->size.x) && iy == (int)(debug_pixel.y*fb->size.y))
+  //{
+  //  pathState.debug = true;
+  //}
+
   tracePath(pathContext, pathState, ray, sample);
+
+  //if (pathState.debug) {
+  //  sample.rgb = make_vec3f(0.8f, 0.2f, 0.8f);
+  //}
 
   return sample;
 }
@@ -759,6 +816,7 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     camera->initRay(camera, screenSample.ray, cameraSample);
 
     ScreenSample sample = PathTraceIntegrator_Li(self, world,
+                                                 fb, ix, iy,
                                                  cameraSample.screen,
                                                  screenSample.ray, 
                                                  ldSampler, 
