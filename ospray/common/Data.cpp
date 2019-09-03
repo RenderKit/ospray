@@ -32,12 +32,10 @@ namespace ospray {
     init();
     addr = (char *)sharedData;
 
-    if (isObjectType(type)) {
-      ManagedObject **child = (ManagedObject **)data();
-      for (uint32_t i = 0; i < numItems.x; i++)
-        if (child[i])
-          child[i]->refInc();
-    }
+    if (isObjectType(type))
+      for (auto &&child : as<ManagedObject *, 3>())
+        if (child)
+          child->refInc();
   }
 
   Data::Data(OSPDataType type, const vec3ui &numItems)
@@ -52,12 +50,10 @@ namespace ospray {
 
   Data::~Data()
   {
-    if (isObjectType(type)) {
-      ManagedObject **child = (ManagedObject **)data();
-      for (uint32_t i = 0; i < numItems.x; i++)
-        if (child[i])
-          child[i]->refDec();
-    }
+    if (isObjectType(type))
+      for (auto &&child : as<ManagedObject *, 3>())
+        if (child)
+          child->refDec();
 
     if (!shared)
       alignedFree(addr);
@@ -122,4 +118,15 @@ namespace ospray {
     return "ospray::Data";
   }
 
+  // Helper functions /////////////////////////////////////////////////////////
+
+  std::vector<void *> createArrayOfIE(Data &data)
+  {
+    std::vector<void *> retval;
+
+    for (auto &&obj : data.as<ManagedObject *>())
+      retval.push_back(obj->getIE());
+
+    return retval;
+  }
 } // ::ospray

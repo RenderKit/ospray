@@ -33,10 +33,7 @@ namespace ospray {
                                                int embreeFlags)
   {
     std::vector<void *> ptrsToIE;
-
-    auto begin = objects.begin<T *>();
-    auto end   = objects.end<T *>();
-    std::for_each(begin, end, [&](T *obj) {
+    for (auto &&obj : objects.as<T *>()) {
       Geometry &geom    = obj->geometry();
       auto liveGeometry = geom.createEmbreeGeometry();
 
@@ -46,7 +43,7 @@ namespace ospray {
       ptrsToIE.push_back(liveGeometry.ispcEquivalent);
 
       rtcReleaseGeometry(liveGeometry.embreeGeometry);
-    });
+    }
 
     rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
 
@@ -58,14 +55,10 @@ namespace ospray {
                                                                 Data &objects,
                                                                 int embreeFlags)
   {
-    using T = VolumetricModel;
-
-    auto begin = objects.begin<T *>();
-    auto end   = objects.end<T *>();
-    std::for_each(begin, end, [&](T *obj) {
+    for (auto &&obj : objects.as<VolumetricModel *>()) {
       auto geomID = rtcAttachGeometry(scene, obj->embreeGeometryHandle());
       obj->setGeomID(geomID);
-    });
+    }
 
     rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
 

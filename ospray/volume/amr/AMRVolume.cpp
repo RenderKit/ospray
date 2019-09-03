@@ -83,8 +83,8 @@ namespace ospray {
                                      *blockDataData);
     accel = make_unique<amr::AMRAccel>(*data);
 
-    float coarsestCellWidth = *std::max_element(cellWidthsData->begin<float>(),
-                                                cellWidthsData->end<float>());
+    float coarsestCellWidth = *std::max_element(
+        cellWidthsData->as<float>().begin(), cellWidthsData->as<float>().end());
 
     float samplingStep = 0.1f * coarsestCellWidth;
 

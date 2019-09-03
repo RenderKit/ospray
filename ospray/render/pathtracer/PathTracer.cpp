@@ -53,21 +53,15 @@ namespace ospray {
     if (!instances)
       return;
 
-    auto inst_begin = instances->begin<Instance *>();
-    auto inst_end   = instances->end<Instance *>();
-
-    std::for_each(inst_begin, inst_end, [&](Instance *instance) {
+    for (auto &&instance : instances->as<Instance *>()) {
       auto *geometries = instance->group->geometricModels.ptr;
 
       if (!geometries)
         return;
 
-      auto begin = geometries->begin<GeometricModel *>();
-      auto end   = geometries->end<GeometricModel *>();
-
       affine3f xfm = instance->xfm();
 
-      std::for_each(begin, end, [&](GeometricModel *model) {
+      for (auto &&model : geometries->as<GeometricModel *>()) {
         if (model->materialList) {
           // check whether the modelmetry has any emissive materials
           bool hasEmissive = false;
@@ -93,8 +87,8 @@ namespace ospray {
             }
           }
         }
-      });
-    });
+      }
+    }
   }
 
   void PathTracer::destroyGeometryLights()

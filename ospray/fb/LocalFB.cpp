@@ -99,12 +99,8 @@ namespace ospray {
       FrameBufferView fbv(this, colorBufferFormat, colorBuffer, depthBuffer,
                           normalBuffer, albedoBuffer);
 
-      std::transform(imageOpData->begin<ImageOp *>(),
-                     imageOpData->end<ImageOp*>(),
-                     std::back_inserter(imageOps),
-                     [&](ImageOp *i) {
-                       return i->attach(fbv);
-                     });
+      for (auto &&obj : imageOpData->as<ImageOp *>())
+        imageOps.push_back(obj->attach(fbv));
 
       findFirstFrameOperation();
     }

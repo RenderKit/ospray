@@ -40,9 +40,7 @@ namespace ospray {
     int numGeomInstances   = 0;
     int numVolumeInstances = 0;
 
-    auto begin = instances.begin<Instance *>();
-    auto end   = instances.end<Instance *>();
-    std::for_each(begin, end, [&](Instance *inst) {
+    for (auto &&inst : instances.as<Instance *>()) {
       auto instGeometryScene = inst->group->embreeGeometryScene();
       auto instVolumeScene   = inst->group->embreeVolumeScene();
 
@@ -71,7 +69,7 @@ namespace ospray {
 
         numVolumeInstances++;
       }
-    });
+    }
 
     rtcSetSceneFlags(geometryScene, static_cast<RTCSceneFlags>(embreeFlags));
     rtcSetSceneFlags(volumeScene, static_cast<RTCSceneFlags>(embreeFlags));
