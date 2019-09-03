@@ -38,8 +38,11 @@ unmasked void Volume_intersect_kernel(
   EmbreeIntersectionContext *uniform ctx =
       (EmbreeIntersectionContext * uniform) args->context;
 
-  varying VolumeInterval *uniform vInterval =
-      (varying VolumeInterval * uniform) ctx->userPtr;
+  varying VolumeIntervals *uniform vIntervals =
+      (varying VolumeIntervals * uniform) ctx->userPtr;
+  
+  varying VolumeInterval *varying vInterval =
+      (varying VolumeInterval * varying) (vIntervals->intervals + vIntervals->numVolumeIntervals);
 
   uniform int primID = args->primID;
 
@@ -57,6 +60,10 @@ unmasked void Volume_intersect_kernel(
 
     vInterval->interval.lower = t.x;
     vInterval->interval.upper = t.y;
+    vInterval->primID = 0;
+    vInterval->geomID = self->volumeID;
+    vInterval->instID = args->context->instID[0];
+    vIntervals->numVolumeIntervals++;
   }
 }
 

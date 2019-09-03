@@ -161,6 +161,23 @@ inline void transformRay(Ray &ray, const uniform AffineSpace3f &xfm)
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
 
+inline void transformRay(Ray &ray, AffineSpace3f xfm)
+{
+  // numbers in original coordinate
+  const vec3f t0 = ray.org + ray.t0 * ray.dir;
+  const vec3f t  = ray.org + ray.t * ray.dir;
+  // numbers for transformed ray
+  // -- direction
+  ray.org             = xfmPoint(xfm, ray.org);
+  ray.dir             = xfmVector(xfm, ray.dir);
+  const vec3f rcp_dir = rcp(ray.dir);
+  // -- starting and ending positions
+  ray.t0 = reduce_max((xfmPoint(xfm, t0) - ray.org) * rcp_dir);
+  ray.t  = reduce_min((xfmPoint(xfm, t) - ray.org) * rcp_dir);
+  // -- Ng
+  ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
+}
+
 // Volume hit structure ///////////////////////////////////////////////////////
 
 struct VolumeInterval
@@ -168,6 +185,9 @@ struct VolumeInterval
   VolumetricModel *volumetricModel;
   range1f interval;
   AffineSpace3f xfm;
+  unsigned int primID;
+  unsigned int geomID;
+  unsigned int instID;
 };
 
 inline void initVolumeInterval(VolumeInterval &hit)
@@ -180,4 +200,16 @@ inline void initVolumeInterval(VolumeInterval &hit)
 inline bool hasInterval(const VolumeInterval &vi)
 {
   return !isEmpty(vi.interval);
+}
+
+struct VolumeIntervals
+{
+  unsigned int numVolumeIntervals;
+  VolumeInterval intervals[10];
+};
+
+inline void initVolumeIntervals(VolumeIntervals &intervals)
+{
+  intervals.numVolumeIntervals = 0;
+  initVolumeInterval(intervals.intervals[0]);
 }
