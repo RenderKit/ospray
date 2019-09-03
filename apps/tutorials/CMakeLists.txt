@@ -19,13 +19,7 @@ set(OSPRAY_DEFAULT_COMPONENT apps)
 # prefer libGL over libOpenGl for better compatibility with SWR
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL 2 REQUIRED)
-
-find_package(glfw3 QUIET)
-if (TARGET glfw)
-  get_property(glfw3_INCLUDE_DIRS TARGET glfw
-    PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-  )
-endif()
+find_package(glfw3 REQUIRED)
 
 # build ospTutorial, for demonstration and API testing
 add_executable(ospTutorial ospTutorial.c)
@@ -111,3 +105,6 @@ target_link_libraries(ospTutorialQuadMesh PRIVATE tutorial_common)
 
 ospray_create_application(ospTutorialCylinders ospTutorialCylinders.cpp)
 target_link_libraries(ospTutorialCylinders PRIVATE tutorial_common)
+
+ospray_create_application(ospTutorialVolumePathTracer ospTutorialVolumePathTracer.cpp)
+target_link_libraries(ospTutorialVolumePathTracer PRIVATE tutorial_common)

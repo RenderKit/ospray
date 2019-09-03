@@ -971,24 +971,6 @@ function].
   ---------- ---------- ------------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
-### Slices
-
-One tool to highlight notable features of volumetric data is to
-visualize 2D cuts (or slices) by placing planes into the volume. Such a
-slices geometry is created by calling `ospNewGeometry` with type string
-"`slices`". The planes are defined by the coefficients $(a,b,c,d)$ of
-the plane equation $ax + by + cz + d = 0$. Each slice is colored
-according to the provided volume's [transfer function].
-
-
-  Type       Name       Description
-  ---------- ---------- ----------------------------------------------------
-  vec4f[]    plane      [data] array with plane coefficients for all slices
-  OSPVolume  volume     handle of the [volume] that will be sliced
-  ---------- ---------- ----------------------------------------------------
-  : Parameters defining a slices geometry.
-
-
 GeometricModels
 -----------------
 
@@ -1862,6 +1844,10 @@ value in the volume). Its parameters are as follows
   OSPVolume volume       volume used to generate color lookups
   --------- ------------ -------------------------------------------
   : Parameters of `volume` texture type
+
+TextureVolume can be used for implementing slicing of volumes with any
+geometry type. It enables coloring of the slicing geometry with a
+different transfer function than that of the sliced volume.
 
 ### Texture2D Transformations
 

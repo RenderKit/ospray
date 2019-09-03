@@ -64,8 +64,8 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
         sampleColor = sampleColor * clampedOpacity;
         sampleAlpha = clampedOpacity;
 
-        color = color + ((1.f - sampleAlpha) * sampleColor);
-        alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
+        color = color + ((1.f - alpha) * sampleColor);
+        alpha = alpha + ((1.f - alpha) * sampleAlpha);
       }
 
       volume->stepRay(volume, tf, ray, m->samplingRate);

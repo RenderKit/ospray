@@ -59,6 +59,7 @@ cd ospray_build
 
 export OSPCOMMON_TBB_ROOT=`pwd`/../install/tbb
 export ospcommon_DIR=`pwd`/../install/ospcommon
+export glfw3_DIR=`pwd`/../install/glfw
 
 cmake -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc ../..
 
