@@ -24,7 +24,7 @@ namespace ospray {
     TransferFunction::TransferFunction()
     {
       opacities.emplace_back(0.0f);
-      opacities.emplace_back(0.1f);
+      opacities.emplace_back(1.0f);
     }
 
     OSPTransferFunction TransferFunction::createTransferFunction(

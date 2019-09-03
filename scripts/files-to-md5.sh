@@ -18,12 +18,14 @@
 # This script should be called from build directory (OSPRay root should be in ../)
 #
 # Usage:
-# CI_TARGET_MACHINE_PATH=user@machine-name:/target/path BASELINE_MD5_DIR=/dir/with/md5/hashes
-# BASELINE_DIR=/dir/with/files/to/be/synced ../scripts/files-to-md5.sh
+#   export CI_TARGET_MACHINE_PATH=user@machine-name:/target/path
+#   export BASELINE_MD5_DIR=/dir/with/md5/hashes
+#   export BASELINE_DIR=/dir/with/files/to/be/synced
+#   ../scripts/files-to-md5.sh
 
 
 md5 () {
-    md5sum $1 | awk '{print $1 }'
+  md5sum $1 | awk '{print $1 }'
 }
 
 if [[ ! $CI_TARGET_MACHINE_PATH ]]

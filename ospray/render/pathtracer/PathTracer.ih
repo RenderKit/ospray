@@ -35,6 +35,8 @@ struct PathTracer {
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
 
+  Material* uniform volumetricMaterial;
+
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
   uint32 numGeoLights;
