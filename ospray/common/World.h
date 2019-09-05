@@ -18,6 +18,7 @@
 
 // ospray stuff
 #include "./Managed.h"
+#include "./Data.h"
 // stl
 #include <vector>
 // embree

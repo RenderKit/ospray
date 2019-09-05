@@ -16,7 +16,6 @@
 
 // ospray
 #include "World.h"
-#include "Data.h"
 #include "Instance.h"
 #include "api/ISPCDevice.h"
 // ispc exports
