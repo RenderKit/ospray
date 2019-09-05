@@ -19,7 +19,7 @@
 // ospcommon
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
-#include "common/OSPCommon.h"
+#include "../common/OSPCommon.h"
 // std
 #include <functional>
 

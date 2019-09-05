@@ -19,8 +19,8 @@
 // ospcommon
 #include "ospcommon/tasking/AsyncTask.h"
 // ospray
-#include "common/QueryableTask.h"
-#include "fb/FrameBuffer.h"
+#include "../common/QueryableTask.h"
+#include "../fb/FrameBuffer.h"
 
 namespace ospray {
 

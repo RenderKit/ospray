@@ -20,8 +20,8 @@
 #include "ospcommon/utility/Any.h"
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
-#include "common/OSPCommon.h"
-#include "common/ObjectHandle.h"
+#include "./OSPCommon.h"
+#include "./ObjectHandle.h"
 // stl
 #include <set>
 #include <vector>

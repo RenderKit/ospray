@@ -16,8 +16,7 @@
 
 #pragma once
 
-// ospray
-#include "common/Managed.h"
+#include "./Managed.h"
 
 namespace ospray {
 
