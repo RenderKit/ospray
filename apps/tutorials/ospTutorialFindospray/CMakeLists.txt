@@ -19,10 +19,11 @@
 #       OSPRay using CMake.
 #
 #       Once you have done a 'make install' of an existing OSPRay
-#       build, create a separate build directory and invoke CMake on this
-#       directory. If you have 'openosp_DIR' setup correctly to point to where
-#       you just installed OSPRay, then this should built the ospTutorial app
-#       from that install and NOT use your local build.
+#       build (will install to CMAKE_INSTALL_PREFIX), create a separate build
+#       directory and invoke CMake on this directory. If you have 'ospray_DIR'
+#       setup correctly to point to where you just installed OSPRay, then this
+#       should build the ospTutorial app from that install and NOT use your
+#       local build.
 
 cmake_minimum_required(VERSION 3.1)
 
