@@ -83,13 +83,12 @@ extern "C" OSPCamera ospTestingNewDefaultCamera(osp_box3f _bounds)
 
   auto &upper = _bounds.upper;
   auto &lower = _bounds.lower;
-  box3f bounds(vec3f(upper.x, upper.y, upper.z),
-               vec3f(lower.x, lower.y, lower.z));
+  box3f bounds(vec3f(lower.x, lower.y, lower.z),
+               vec3f(upper.x, upper.y, upper.z));
   vec3f diag = bounds.size();
-  diag       = max(diag, vec3f(0.3f * length(diag)));
 
   auto gaze = center(bounds);
-  auto pos  = gaze - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
+  auto pos  = gaze - vec3f(0.85f * length(diag), 0.f, 0.f);
   auto up   = vec3f(0.f, 1.f, 0.f);
   auto dir  = normalize(gaze - pos);
 
