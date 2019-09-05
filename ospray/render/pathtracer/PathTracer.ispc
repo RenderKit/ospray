@@ -23,6 +23,8 @@
 #include "fb/LocalFB.ih"
 #include "bsdfs/MicrofacetAlbedoTables.ih"
 
+#include "volumes/HenyeyGreenstein.ih"
+
 #define ROULETTE 1
 #define MAX_ROULETTE_CONT_PROB 0.95f
 #define PDF_CULLING 0.0f
@@ -42,14 +44,21 @@ struct PathVertex
   vec3f wi;
   vec3f wo;
 
-  const varying BSDF* bsdf;
-  uniform PathTraceMaterial* material;
+  vec3f albedo;
+
+  const varying BSDF* bsdf; // only valid if path vertex is surface vertex
+  VolumetricModel* volume;  // only valid if path vertex is volume vertex
 
   float pdf_w; // the pdf of sampling wo in solid angle measure
   PathVertexType type;
-
-  VolumetricModel* volume; // only valid if path vertex is volume vertex
 };
+
+inline bool isSmooth(const PathVertex& pathVertex)
+{
+  if (pathVertex.type == SURFACE && pathVertex.bsdf   && pathVertex.bsdf->type & SCATTERING_SMOOTH) return true;
+  if (pathVertex.type == VOLUME  && pathVertex.volume && HenyeyGreenstein_isSmooth(pathVertex.volume->anisotropy)) return true;
+  return false;
+}
 
 struct PathContext
 {
@@ -148,24 +157,30 @@ float delta_tracking(
   VolumetricModel *uniform vModel,
   const VolumeInterval& vInterval,
   varying RandomSampler* uniform randomSampler,
-  vec3f &o,
-  vec3f &w)
+  const vec3f& o,
+  const vec3f& w,
+  float& mu_t,   // sampled extinction coefficint
+  vec3f& albedo) // sampled albedo (color)
 {
-  float max_density = vModel->sigma_t; // TODO: get proper majorant
+  float mu_max = vModel->densityScale * vModel->maximumDensity;
   float t = vInterval.interval.lower;
   while (true)
   {
     float xi = RandomSampler_getFloat(randomSampler);
-    const float dt = - log(1.f - xi) / max_density;
+    const float dt = - log(1.f - xi) / mu_max;
     t += dt;
     if (t > vInterval.interval.upper)
       break;
     
     xi = RandomSampler_getFloat(randomSampler);
     vec3f p = o + t * w;
-    const float density = vModel->sigma_t * vModel->volume->sample(vModel->volume, p);
-    if (xi < density / max_density)
+    const float sample = vModel->volume->sample(vModel->volume, p);
+    mu_t = vModel->densityScale * VolumetricModel_getOpacity(vModel, sample);
+    if (xi < mu_t / mu_max)
+    {
+      albedo = VolumetricModel_getColor(vModel, sample);
       return t;
+    }
   }
   return inf;
 }
@@ -175,7 +190,9 @@ float volumeSampleFreePath(const PathState& pathState,
                            Ray &ray,
                            varying LDSampler* uniform ldSampler,
                            varying RandomSampler* uniform randomSampler,
-                           VolumetricModel* varying *uniform sampledInstance)
+                           VolumetricModel* varying *uniform sampledInstance,
+                           float& sampledExtinctionCoefficient,
+                           vec3f& sampledAlbedo)
 {
   Ray volumeRay;
   volumeRay.org  = ray.org;
@@ -202,9 +219,11 @@ float volumeSampleFreePath(const PathState& pathState,
         if (hasInterval(vInterval))
         {
           float dist = inf;
+          float extinctionCoefficient;
+          vec3f albedo;
           if (pathState.homogeneousApprox)
           {
-            float density = inst->sigma_t;
+            float density = inst->densityScale;
             dist = vInterval.interval.lower;
             float xi = RandomSampler_getFloat(randomSampler);
             const float dt = - log(1.f - xi) / density;
@@ -225,11 +244,15 @@ float volumeSampleFreePath(const PathState& pathState,
                                   vInterval,
                                   randomSampler,
                                   transformedVolumeRay.org,
-                                  transformedVolumeRay.dir);
+                                  transformedVolumeRay.dir,
+                                  extinctionCoefficient,
+                                  albedo);
           }
           if (dist < min_dist && dist < inf) {
             min_dist = dist;
             *sampledInstance = inst;
+            sampledExtinctionCoefficient = extinctionCoefficient;
+            sampledAlbedo = albedo;
           }
         }
       }
@@ -268,7 +291,7 @@ float volumeTransmittance(const PathState& pathState,
         if (hasInterval(vInterval))
         {
           if (pathState.homogeneousApprox) {
-            transmittance = transmittance * exp(-(vInterval.interval.upper - vInterval.interval.lower)*inst->sigma_t);
+            transmittance = transmittance * exp(-(vInterval.interval.upper - vInterval.interval.lower)*inst->densityScale);
           } else {
             Ray transformedVolumeRay;
             transformedVolumeRay.org  = volumeRay.org;
@@ -277,12 +300,16 @@ float volumeTransmittance(const PathState& pathState,
             transformedVolumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
             transformedVolumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
             transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
+            float extinctionCoefficient;
+            vec3f albedo;
             const float dist = delta_tracking(
                 inst,
                 vInterval,
                 randomSampler,
                 transformedVolumeRay.org,
-                transformedVolumeRay.dir);
+                transformedVolumeRay.dir,
+                extinctionCoefficient,
+                albedo);
             transmittance = transmittance * ((dist < vInterval.interval.upper) ? 0.f : 1.f);
           }
         }
@@ -298,59 +325,66 @@ inline vec3f nextEventEstimation(const PathContext& pathContext,
 {
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
-  if (pathVertex.bsdf->type & BSDF_SMOOTH) {
-    for (uniform int i = 0; i < pathContext.numLights; i++) {
-      const uniform Light *uniform light = pathContext.context->lights[i];
+  for (uniform int i = 0; i < pathContext.numLights; i++) 
+  {
+    const uniform Light *uniform light = pathContext.context->lights[i];
 
-      const vec2f s = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim + 4 + i*2);
-      Light_SampleRes ls = light->sample(light, pathVertex.dg, s);
+    const vec2f s = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim + 4 + i*2);
+    Light_SampleRes ls = light->sample(light, pathVertex.dg, s);
 
-      // skip when zero contribution from light
-      if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
-        continue;
+    // skip when zero contribution from light
+    if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
+      continue;
 
-      // evaluate BSDF
-      BSDF_EvalRes fe;
+    // evaluate BSDF
+    Scattering_EvalRes fe;
+    if (pathVertex.type == SURFACE) {
       foreach_unique(f in pathVertex.bsdf) {
         if (f != NULL)
           fe = f->eval(f, pathVertex.wo, ls.dir);
       }
-
-      // skip when zero contribution from material
-      if (reduce_max(fe.value) <= 0.0f)
-        continue;
-
-      // test for shadows
-      Ray shadowRay;
-      vec3f org = pathVertex.dg.P;
-      if (pathVertex.type != VOLUME) {
-      if (dot(pathVertex.dg.Ng, ls.dir) < 0.f)
-        org = org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
+    }
+    else {
+      foreach_unique(v in pathVertex.volume) {
+        if (v != NULL)
+          fe = HenyeyGreenstein_eval(v->anisotropy, pathVertex.wo, ls.dir);
       }
-      setRay(shadowRay, org, ls.dir, 0.f, ls.dist, pathState.time);
+    }
 
-      const vec3f throughput = pathState.throughput * fe.value;
+    // skip when zero contribution from material
+    if (reduce_max(fe.value) <= 0.0f)
+      continue;
+
+    // test for shadows
+    Ray shadowRay;
+    vec3f org = pathVertex.dg.P;
+    if (pathVertex.type != VOLUME) {
+    if (dot(pathVertex.dg.Ng, ls.dir) < 0.f)
+      org = org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
+    }
+    setRay(shadowRay, org, ls.dir, 0.f, ls.dist, pathState.time);
+
+    const vec3f throughput = pathState.throughput * fe.value;
 
 #if ROULETTE==1
-      // Russian roulette adjustment
-      if (pathState.depth >= pathContext.context->rouletteDepth) {
-        const float contProb = min(luminance(throughput * rcp(fe.pdf)), MAX_ROULETTE_CONT_PROB);
-        fe.pdf *= contProb;
-      }
+    // Russian roulette adjustment
+    if (pathState.depth >= pathContext.context->rouletteDepth) {
+      const float contProb = min(luminance(throughput * rcp(fe.pdf)), MAX_ROULETTE_CONT_PROB);
+      fe.pdf *= contProb;
+    }
 #endif
 
-      const vec3f unshadedLightContrib = throughput * ls.weight;
-      const vec3f lightContrib = transparentShadow(pathContext.context, pathContext.world, unshadedLightContrib, shadowRay, pathState.currentMedium);
-      if (reduce_max(lightContrib) > 0) 
+    const vec3f unshadedLightContrib = throughput * ls.weight;
+    const vec3f lightContrib = transparentShadow(pathContext.context, pathContext.world, unshadedLightContrib, shadowRay, pathState.currentMedium);
+    if (reduce_max(lightContrib) > 0) 
+    {
+      const float T = volumeTransmittance(pathState, pathContext.world, shadowRay, pathContext.ldSampler, pathContext.randomSampler);
+      if (reduce_max(T) > 0) 
       {
-        const float T = volumeTransmittance(pathState, pathContext.world, shadowRay, pathContext.ldSampler, pathContext.randomSampler);
-        if (reduce_max(T) > 0) 
-        {
-          // we have to use an independent transmittance estimate for MIS to get a correct result
-          const float T_mis = pathState.disableFWD || pathState.disableNEE ?  1.f 
-                            : volumeTransmittance(pathState, pathContext.world, shadowRay, pathContext.ldSampler, pathContext.randomSampler);
-          L = L + T * lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
-        }
+        // we have to use an independent transmittance estimate for MIS to get a correct result
+        const float T_mis = pathState.disableFWD || pathState.disableNEE ?  1.f 
+                          : volumeTransmittance(pathState, pathContext.world, shadowRay, pathContext.ldSampler, pathContext.randomSampler);
+        L = L + T * lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
       }
     }
   }
@@ -364,7 +398,8 @@ inline vec3f evaluateGeometryLights(const PathState& pathState,
                                     Ray& ray)
 {
   vec3f L = make_vec3f(0.f);
-  foreach_unique(m in pathVertex.material) {
+  uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)pathVertex.dg.material;
+  foreach_unique(m in material) {
     if (m != NULL && reduce_max(m->emission) > 0.f) {
       // convert pdf wrt. area to pdf wrt. solid angle
       const float cosd = dot(pathVertex.dg.Ng, ray.dir);
@@ -404,19 +439,32 @@ inline vec3f evaluateVirtualLights(const PathContext& pathContext,
   return L;
 }
 
-inline BSDF_SampleRes sampleBSDF(const PathContext& pathContext, 
-                                 const PathState& pathState, 
-                                 PathVertex& pathVertex)
+inline Scattering_SampleRes sampleDirection(const PathContext& pathContext, 
+                                            const PathState& pathState, 
+                                            PathVertex& pathVertex)
 {
   const vec2f ss = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim);
   const float s  = LDSampler_getFloat (pathContext.ldSampler, pathState.sampleDim+2);
-  BSDF_SampleRes fs;
-  vec3f Ns = pathVertex.dg.Ns;
-  foreach_unique(f in pathVertex.bsdf) {
-    if (f != NULL) {
-      fs = f->sample(f, pathVertex.wo, ss, s);
-      pathVertex.wi  = fs.wi;
-      pathVertex.pdf_w = fs.pdf;
+  Scattering_SampleRes fs;
+  if (pathVertex.type == SURFACE)
+  {
+    vec3f Ns = pathVertex.dg.Ns;
+    foreach_unique(f in pathVertex.bsdf) {
+      if (f != NULL) {
+        fs = f->sample(f, pathVertex.wo, ss, s);
+        pathVertex.wi  = fs.wi;
+        pathVertex.pdf_w = fs.pdf;
+      }
+    }
+  }
+  if (pathVertex.type == VOLUME)
+  {
+    foreach_unique(v in pathVertex.volume) {
+      if (v != NULL) {
+        fs = HenyeyGreenstein_sample(v->anisotropy, pathVertex.wo, ss, s);
+        pathVertex.wi  = fs.wi;
+        pathVertex.pdf_w = fs.pdf;
+      }
     }
   }
   return fs;
@@ -426,15 +474,17 @@ inline void updateAuxilliaryData(PathState& pathState,
                                  const PathVertex& pathVertex, 
                                  ScreenSample& sample)
 {
-  vec3f Ns = pathVertex.dg.Ns;
-  foreach_unique(f in pathVertex.bsdf)
-    if (f != NULL) { Ns = getN(f); }
-
-  sample.normal = Ns;
-  if (pathVertex.type == VOLUME)
-    sample.albedo = pathVertex.volume->albedo;
-  else
-    sample.albedo = pathVertex.bsdf->albedo;
+  sample.albedo = pathVertex.albedo;
+  if (pathVertex.type == VOLUME) {
+    sample.normal = make_vec3f(0.f);
+  }
+  else if (pathVertex.type == SURFACE)
+  {
+    vec3f Ns = pathVertex.dg.Ns;
+    foreach_unique(f in pathVertex.bsdf)
+      if (f != NULL) { Ns = getN(f); }
+    sample.normal = Ns;
+  }
   pathState.auxFree = false;
 }
 
@@ -457,10 +507,8 @@ inline void postIntersect(const PathContext& pathContext, const PathState& pathS
       pathVertex.dg.primID = RTC_INVALID_GEOMETRY_ID;
       pathVertex.dg.areaPDF = 0.f;
       pathVertex.dg.epsilon = 0.f;
-      pathVertex.dg.material = pathVertex.volume->material;
-      pathVertex.dg.materialID = 0;
+      pathVertex.dg.material = NULL;
   }
-  pathVertex.material = (uniform PathTraceMaterial*)pathVertex.dg.material;
 }
 
 inline void tracePathSimple(const PathContext& pathContext, PathState& pathState, Ray& ray, ScreenSample& sample)
@@ -468,16 +516,20 @@ inline void tracePathSimple(const PathContext& pathContext, PathState& pathState
   traceRay(pathContext.world, ray);
 
   VolumetricModel* varying sampledVolume = NULL;
-  float freePath = volumeSampleFreePath(pathState, pathContext.world, ray, pathContext.ldSampler, pathContext.randomSampler, &sampledVolume);
+  float extinctionCoefficient;
+  vec3f albedo;
+  float freePath = volumeSampleFreePath(pathState, pathContext.world, ray, 
+    pathContext.ldSampler, pathContext.randomSampler, 
+    &sampledVolume, extinctionCoefficient, albedo);
   if (freePath < inf)
   {
     sample.rgb = make_vec3f(0.f);
   }
   else {
   if (noHit(ray))
-    sample.rgb = make_vec3f(1.f);
+    sample.rgb = make_vec3f(1.f)  * albedo;
   else
-    sample.rgb = make_vec3f(0.5f);
+    sample.rgb = make_vec3f(0.5f) * albedo;
   }
 }
 
@@ -582,12 +634,15 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
 
     pathVertex.wo = neg(ray.dir);
     
-    float freePath = volumeSampleFreePath(pathState, pathContext.world, ray, pathContext.ldSampler, pathContext.randomSampler, &pathVertex.volume);
+    float extinctionCoefficient;
+    float freePath = volumeSampleFreePath(pathState, pathContext.world, ray, 
+      pathContext.ldSampler, pathContext.randomSampler, 
+      &pathVertex.volume, extinctionCoefficient, pathVertex.albedo);
     if (freePath < inf)
     {
       pathVertex.type = VOLUME;
       pathVertex.dg.P = make_vec3f(ray.org + ray.dir * freePath);
-      pathState.throughput = pathState.throughput * pathVertex.volume->albedo;
+      pathState.throughput = pathState.throughput * pathVertex.albedo;
     }
 
     float maxLightDist;
@@ -634,23 +689,25 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
 
     // shade surface
     ShadingContext_Constructor(&ctx);
-    foreach_unique(m in pathVertex.material)
-      if (m != NULL)
-        pathVertex.bsdf = m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
-
-    // terminate path when we don't have any BSDF
-    if (!pathVertex.bsdf)
-      break;
+    if (pathVertex.type == SURFACE) {
+      uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)pathVertex.dg.material;
+      foreach_unique(m in material)
+        if (m != NULL)
+          pathVertex.bsdf = m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
+      // terminate path when we don't have any BSDF
+      if (!pathVertex.bsdf)
+        break;
+      pathVertex.albedo = pathVertex.bsdf->albedo;
+    }
 
     // next event estimation
-    if (!pathState.disableNEE) {
+    if (!pathState.disableNEE && isSmooth(pathVertex)) {
       pathState.contribution = pathState.contribution + nextEventEstimation(pathContext, pathState, pathVertex);
     }
 
-    // sample BSDF
-    BSDF_SampleRes fs = sampleBSDF(pathContext, pathState, pathVertex);
+    Scattering_SampleRes fs = sampleDirection(pathContext, pathState, pathVertex);
     
-    if (pathState.auxFree && (fs.type & BSDF_SMOOTH)) {
+    if (pathState.auxFree && (fs.type & SCATTERING_SMOOTH)) {
       updateAuxilliaryData(pathState, pathVertex, sample);
     }
 
@@ -681,9 +738,10 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
     {
       // update currentMedium if we hit a medium interface
       // TODO: support nested dielectrics
-      if (fs.type & BSDF_TRANSMISSION) {
+      if (fs.type & SCATTERING_TRANSMISSION) {
         ray_org = ray_org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
-        foreach_unique(m in pathVertex.material) {
+        uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)pathVertex.dg.material;
+        foreach_unique(m in material) {
           if (m != NULL)
             m->selectNextMedium(m, pathVertex.dg, pathState.currentMedium);
         }
@@ -692,7 +750,7 @@ inline void tracePath(const PathContext& pathContext, PathState& pathState, Ray&
 
     // keep lastBsdfPdf and lastDg when there was a specular transmission
     // to better combine MIS with transparent shadows
-    if (fs.type & ~BSDF_SPECULAR_TRANSMISSION || pathVertex.type == VOLUME) {
+    if (fs.type & ~SCATTERING_SPECULAR_TRANSMISSION || pathVertex.type == VOLUME) {
       lastVertex = pathVertex;
     }
 
@@ -740,7 +798,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathContext.numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
 
   PathState pathState;
-#if 0 // debug MIS
+#if 1 // debug MIS
   int c = (int)((pixel.x + pixel.y) * 10.f) % 3;
   if (c == 0) { pathState.disableNEE = false; pathState.disableFWD = false; }
   if (c == 1) { pathState.disableNEE = false; pathState.disableFWD = true; }

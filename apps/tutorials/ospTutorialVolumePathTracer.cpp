@@ -211,66 +211,68 @@ int main(int argc, const char **argv)
   ospSetVec3f(volume, "gridSpacing", spacing, spacing, spacing);
   ospCommit(volume);
 
-  OSPTransferFunction tfn =
-      ospNewTransferFunction("piecewise_linear");
-  ospSetVec2f(tfn, "valueRange", voxelRange.lower, voxelRange.upper);
-  float colors[]      = {0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f};
-  float opacites[]    = {0.f, 1.0f};
-  OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
-  ospSetData(tfn, "color", tfColorData);
-  ospRelease(tfColorData);
-  OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
-  ospSetData(tfn, "opacity", tfOpacityData);
-  ospRelease(tfOpacityData);
-  ospCommit(tfn);
 
   std::vector<OSPVolumetricModel> volumetricModels;
   {
+    OSPTransferFunction tfn = ospNewTransferFunction("piecewise_linear");
+    ospSetVec2f(tfn, "valueRange", voxelRange.lower, voxelRange.upper);
+    //float colors[]      = {0.2f, 0.8f, 0.2f, 0.0f, 0.8f, 0.0f};
+    float colors[]      = {1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
+    float opacites[]    = {0.f, 1.0f};
+    OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
+    ospSetData(tfn, "color", tfColorData);
+    ospRelease(tfColorData);
+    OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
+    ospSetData(tfn, "opacity", tfOpacityData);
+    ospRelease(tfOpacityData);
+    ospCommit(tfn);
     auto volumeModel = ospNewVolumetricModel(volume);
-    ospSetVec3f(volumeModel, "albedo", 0.2f, 0.8f, 0.2f);
-    ospSetFloat(volumeModel, "sigma_t", 4.f);
+    ospSetFloat(volumeModel, "densityScale", 4.f);
     ospSetObject(volumeModel, "transferFunction", tfn);
-
-    OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
-    ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
-    ospSetVec3f(volumetricMaterial, "albedo", 0.2f, 0.8f, 0.2f);
-    ospCommit(volumetricMaterial);
-    ospSetObject(volumeModel, "material", volumetricMaterial);
-    ospRelease(volumetricMaterial);
     ospCommit(volumeModel);
+    ospRelease(tfn);
     volumetricModels.push_back(volumeModel);
   }
   {
+    OSPTransferFunction tfn = ospNewTransferFunction("piecewise_linear");
+    ospSetVec2f(tfn, "valueRange", voxelRange.lower, voxelRange.upper);
+    //float colors[]      = {0.8f, 0.2f, 0.8f, 0.8f, 0.2f, 0.8f};
+    float colors[]      = {1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
+    float opacites[]    = {0.f, 1.0f};
+    OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
+    ospSetData(tfn, "color", tfColorData);
+    ospRelease(tfColorData);
+    OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
+    ospSetData(tfn, "opacity", tfOpacityData);
+    ospRelease(tfOpacityData);
+    ospCommit(tfn);
     auto volumeModel = ospNewVolumetricModel(volume);
-    ospSetVec3f(volumeModel, "albedo", 0.8f, 0.2f, 0.8f);
-    ospSetFloat(volumeModel, "sigma_t", 5.f);
+    ospSetFloat(volumeModel, "densityScale", 5.f);
     ospSetObject(volumeModel, "transferFunction", tfn);
-
-    OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
-    ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
-    ospSetVec3f(volumetricMaterial, "albedo", 0.8f, 0.2f, 0.8f);
-    ospCommit(volumetricMaterial);
-    ospSetObject(volumeModel, "material", volumetricMaterial);
-    ospRelease(volumetricMaterial);
     ospCommit(volumeModel);
+    ospRelease(tfn);
     volumetricModels.push_back(volumeModel);
   }
   {
+    OSPTransferFunction tfn = ospNewTransferFunction("piecewise_linear");
+    ospSetVec2f(tfn, "valueRange", voxelRange.lower, voxelRange.upper);
+    //float colors[]      = {0.2f, 0.8f, 0.8f, 0.2f, 0.8f, 0.8f};
+    float colors[]      = {1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
+    float opacites[]    = {0.f, 1.0f};
+    OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
+    ospSetData(tfn, "color", tfColorData);
+    ospRelease(tfColorData);
+    OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
+    ospSetData(tfn, "opacity", tfOpacityData);
+    ospRelease(tfOpacityData);
+    ospCommit(tfn);
     auto volumeModel = ospNewVolumetricModel(volume);
-    ospSetVec3f(volumeModel, "albedo", 0.2f, 0.8f, 0.8f);
-    ospSetFloat(volumeModel, "sigma_t", 3.f);
+    ospSetFloat(volumeModel, "densityScale", 3.f);
     ospSetObject(volumeModel, "transferFunction", tfn);
-
-    OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
-    ospSetFloat(volumetricMaterial, "meanCosine", 0.f);
-    ospSetVec3f(volumetricMaterial, "albedo", 0.2f, 0.8f, 0.8f);
-    ospCommit(volumetricMaterial);
-    ospSetObject(volumeModel, "material", volumetricMaterial);
-    ospRelease(volumetricMaterial);
     ospCommit(volumeModel);
+    ospRelease(tfn);
     volumetricModels.push_back(volumeModel);
   }
-  ospRelease(tfn);
 
   // create geometries
   std::vector<OSPGeometricModel> geometricModels;
@@ -353,7 +355,7 @@ int main(int argc, const char **argv)
   }
   ospCommit(instance_volume_2);
 
-  std::vector<OSPInstance> instances = { instance_geometry, instance_volume_0, instance_volume_1, instance_volume_2 };
+  std::vector<OSPInstance> instances = { instance_geometry, instance_volume_0 };//, instance_volume_1, instance_volume_2 };
   OSPData instance_data = ospNewData(instances.size(), OSP_OBJECT, instances.data());
   ospSetData(world, "instance", instance_data);
   ospRelease(instance_data);
@@ -386,8 +388,8 @@ int main(int argc, const char **argv)
   bool showGeometry = true;
   bool enableQuadLight = true;
   bool enableAmbientLight = true;
-  auto updateScene = [&]() {
-
+  auto updateScene = [&]() 
+  {
     ospRemoveParam(group_geometry, "geometry");
     for (auto group : volumetricGroups)
       ospRemoveParam(group, "volume");
@@ -477,22 +479,17 @@ int main(int argc, const char **argv)
       glfwOSPRayWindow->addObjectToCommit(volumetricModels[0]);
     }
     
-    static float sigma_t = 1.0f;
-    if (ImGui::SliderFloat("sigma_t", &sigma_t, 0.f, 100.f)) {
+    static float densityScale = 1.0f;
+    if (ImGui::SliderFloat("densityScale", &densityScale, 0.f, 10.f)) {
       commitWorld = true;
-      ospSetFloat(volumetricModels[0], "sigma_t", sigma_t);
+      ospSetFloat(volumetricModels[0], "densityScale", densityScale);
       glfwOSPRayWindow->addObjectToCommit(volumetricModels[0]);
     }
     
-    static float meanCosine = 0.0f;
-    if (ImGui::SliderFloat("meanCosine", &meanCosine, -1.f, 1.f)) {
+    static float anisotropy = 0.0f;
+    if (ImGui::SliderFloat("anisotropy", &anisotropy, -1.f, 1.f)) {
       commitWorld = true;
-      OSPMaterial volumetricMaterial = ospNewMaterial(renderer_type.c_str(), "VolumetricMaterial");
-      ospSetFloat(volumetricMaterial, "meanCosine", meanCosine);
-      ospSetVec3fv(volumetricMaterial, "albedo", (float*)&albedo.x);
-      ospCommit(volumetricMaterial);
-      ospSetObject(volumetricModels[0], "material", volumetricMaterial);
-      ospRelease(volumetricMaterial);
+      ospSetFloat(volumetricModels[0], "anisotropy", anisotropy);
       glfwOSPRayWindow->addObjectToCommit(volumetricModels[0]);
     }
 
