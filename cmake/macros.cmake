@@ -348,20 +348,6 @@ macro(ospray_create_application APP_NAME)
   endif()
 endmacro()
 
-## Convenience macro for creating OSPRay test applications ##
-# Usage - same as ospray_create_application
-#
-# Will build the app if 'OSPRAY_ENABLE_TESTING=ON' in CMake
-
-macro(ospray_create_test)
-  if (OSPRAY_ENABLE_TESTING)
-    ospray_create_application(
-      ${ARGN}
-      COMPONENT test
-    )
-  endif()
-endmacro()
-
 ## Compiler configuration macros ##
 
 macro(ospray_configure_compiler)

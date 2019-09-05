@@ -14,43 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_create_library(ospray_mpi_common
-    MPICommon.cpp
-    MPIBcastFabric.cpp
-    Collectives.cpp
-    maml/maml.cpp
-    maml/Context.cpp
-  COMPONENT mpi
-)
+add_executable(mamlTest mamlTest.cpp)
+target_link_libraries(mamlTest PRIVATE ospray_mpi_common)
 
-target_link_libraries(ospray_mpi_common
-  PRIVATE
-    snappy
-  PUBLIC
-    ${MPI_CXX_LIBRARIES}
-    ospcommon::ospcommon
-)
-
-target_include_directories(ospray_mpi_common
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
-    ${OSPRAY_MPI_INCLUDES}
-)
-
-install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
-  COMPONENT devel
-  FILES_MATCHING
-  PATTERN *.h
-)
-
-# ------------------------------------------------------------------
-# tests and examples
-# ------------------------------------------------------------------
-
-if (OSPRAY_ENABLE_TESTING)
-  add_subdirectory(maml/apps)
-endif()
+add_executable(mamlTestMessageSwarm testMessageSwarm.cpp)
+target_link_libraries(mamlTestMessageSwarm PRIVATE ospray_mpi_common)
