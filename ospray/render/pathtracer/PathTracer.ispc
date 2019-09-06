@@ -798,7 +798,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathContext.numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
 
   PathState pathState;
-#if 1 // debug MIS
+#if 0 // debug MIS
   int c = (int)((pixel.x + pixel.y) * 10.f) % 3;
   if (c == 0) { pathState.disableNEE = false; pathState.disableFWD = false; }
   if (c == 1) { pathState.disableNEE = false; pathState.disableFWD = true; }
