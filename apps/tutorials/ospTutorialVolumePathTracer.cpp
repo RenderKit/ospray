@@ -504,6 +504,10 @@ int main(int argc, const char **argv)
     }
   });
 
+  glfwOSPRayWindow->getArcballCamera()->setRotation(quaternionf(-0.91f, 0.34f, 0.22f, -0.08f));
+  glfwOSPRayWindow->updateCamera();
+  glfwOSPRayWindow->commitCamera();
+
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
 
