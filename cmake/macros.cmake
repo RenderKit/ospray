@@ -395,6 +395,8 @@ macro(ospray_configure_compiler)
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
   endif()
 
+  set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
+
   if (WIN32)
     # increase stack to 8MB (the default size of 1MB is too small for our apps)
     # note: linker options are independent of compiler (icc or MSVC)
