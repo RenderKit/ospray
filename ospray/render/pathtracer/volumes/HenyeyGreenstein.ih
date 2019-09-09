@@ -16,7 +16,10 @@
 
 #pragma once
 
-#include "../Scattering.ih"
+#include "render/pathtracer/Scattering.ih"
+
+#include "math/LinearSpace.ih"
+#include "math/sampling.ih"
 
 inline float hg(float cosTheta, float g)
 {

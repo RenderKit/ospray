@@ -154,8 +154,14 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
+  render/pathtracer/PathSampler.ispc
   render/pathtracer/GeometryLight.ispc
+  render/pathtracer/VirtualLight.ispc
+  render/pathtracer/TransparentShadow.ispc
+  render/pathtracer/ShadowCatcher.ispc
+  render/pathtracer/NextEventEstimation.ispc
   render/pathtracer/bsdfs/MicrofacetAlbedoTables.ispc
+  render/pathtracer/volumes/VolumeSampler.ispc
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp

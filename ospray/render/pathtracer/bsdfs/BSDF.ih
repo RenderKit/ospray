@@ -16,13 +16,13 @@
 
 #pragma once
 
+#include "render/pathtracer/Scattering.ih"
+
 #include "math/vec.ih"
 // utilities used by (almost all) implementations
 #include "math/sampling.ih"
 #include "math/random.ih"
 #include "Optics.ih"
-
-#include "../Scattering.ih"
 
 // keep interface of BSDFs the same
 typedef Scattering_EvalRes BSDF_EvalRes;

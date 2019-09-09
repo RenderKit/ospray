@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "math/vec.ih"
+
 #define SCATTERING_SPECULAR_REFLECTION   (1<<0)  /*!< perfect specular reflection   */
 #define SCATTERING_GLOSSY_REFLECTION     (1<<1)  /*!< glossy reflection             */
 #define SCATTERING_DIFFUSE_REFLECTION    (1<<2)  /*!< diffuse reflection            */
