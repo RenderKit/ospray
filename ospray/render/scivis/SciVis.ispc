@@ -63,8 +63,13 @@ void SciVis_renderSample(Renderer *uniform _self,
       }
     }
 
-    if (!eitherHit)
+    if (!eitherHit) {
+      vec3f color =
+          make_vec3f(outputColor) + (1.f - outputColor.w) * make_vec3f(bgColor);
+      float alpha = outputColor.w + (1.f - outputColor.w) * bgColor.w;
+      outputColor = make_vec4f(color.x, color.y, color.z, alpha);
       break;
+    }
 
     SSI surfaceShading;
 
