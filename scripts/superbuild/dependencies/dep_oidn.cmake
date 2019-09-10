@@ -23,7 +23,7 @@ endif()
 
 set(OIDN_PATH "${COMPONENT_PATH}")
 if (NOT WIN32)
-  set(OIDN_PATH "${OIDN_PATH}/lib/cmake/OpenImageDenoise")
+  set(OIDN_PATH "${OIDN_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/OpenImageDenoise")
 endif()
 
 if (BUILD_OIDN_FROM_SOURCE)

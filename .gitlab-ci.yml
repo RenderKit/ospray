@@ -15,7 +15,7 @@ variables:
     - docker
   image: ospray/docker-images:arch  # default image
   script:
-    - scripts/build_gitlab/linux.sh # default script
+    - scripts/build_gitlab/linux.sh -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl # default script
 
 .job_template: &build_job_docker_modules
   stage: build
@@ -24,7 +24,7 @@ variables:
     - modules
   image: ospray/docker-images:centos6-mod
   script:
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
 
 .job_template: &build_job_shell
   stage: build
@@ -72,32 +72,34 @@ variables:
 build-arch-gcc:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
 
 build-arch-clang:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
 
 build-arch-gcc-warnings:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
+  allow_failure: true
 
 build-arch-clang-warnings:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
+  allow_failure: true
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
   artifacts:
     paths:
       - build/install
@@ -107,7 +109,7 @@ build-ubuntu1804-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu18.04
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
   artifacts:
     paths:
       - build/install
@@ -120,7 +122,7 @@ build-centos6-gcc:
     - module load gcc/4.8.2
     - export CC=gcc
     - export CXX=g++
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
   artifacts:
     paths:
       - build/install
@@ -134,7 +136,7 @@ build-centos6-icc:
     - module load intel
     - export CC=icc
     - export CXX=icpc
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
 
 build-centos6-icc15:
   <<: *build_job_docker_modules
@@ -144,7 +146,7 @@ build-centos6-icc15:
     - module load intel/2015
     - export CC=icc
     - export CXX=icpc
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
 
 build-centos7-gcc:
   <<: *build_job_docker
@@ -157,12 +159,12 @@ build-centos7-gcc:
 build-debug:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
 
 build-osx-clang:
   <<: *build_job_shell
   script:
-    - scripts/build_gitlab/osx.sh
+    - scripts/build_gitlab/osx.sh -DBUILD_OPENVKL_GITREPO=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/sdvis/openvkl
   tags:
     - osx
     - clang
@@ -170,7 +172,7 @@ build-osx-clang:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140" -DBUILD_OPENVKL_GITREPO:STRING=https://gitlab-ci-token:%CI_JOB_TOKEN%@gitlab.com/sdvis/openvkl
   tags:
     - msvc14
     - win7
@@ -182,7 +184,7 @@ build-windows-msvc14:
 build-windows-msvc15:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" -DBUILD_OPENVKL_GITREPO:STRING=https://gitlab-ci-token:%CI_JOB_TOKEN%@gitlab.com/sdvis/openvkl
   tags:
     - msvc15
     - win7
@@ -194,7 +196,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0" -DBUILD_OPENVKL_GITREPO:STRING=https://gitlab-ci-token:%CI_JOB_TOKEN%@gitlab.com/sdvis/openvkl
   tags:
     - icc18
     - win7

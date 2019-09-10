@@ -60,6 +60,9 @@ option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the ex
 set(BUILD_EMBREE_VERSION "3.6.1" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
+set(BUILD_OPENVKL_BRANCH "devel" CACHE STRING "Which branch of OpenVKL to build?")
+set(BUILD_OPENVKL_VERSION "0.1.0" CACHE STRING "Which version of OpenVKL to build?")
+
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
 set(BUILD_OIDN_VERSION "1.0.0" CACHE STRING "Which version of OpenImageDenoise to build?")
 option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" ON)
@@ -100,6 +103,7 @@ endif()
 
 include(dep_ospcommon)
 include(dep_embree)
+include(dep_openvkl)
 
 if (BUILD_GLFW)
   include(dep_glfw)
@@ -142,6 +146,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DOSPRAY_WARN_AS_ERRORS=${BUILD_OSPRAY_CI_EXTRAS}
       -DOpenImageDenoise_DIR:PATH=${OIDN_PATH}
       -Dembree_DIR:PATH=${EMBREE_PATH}
+      -Dopenvkl_DIR:PATH=${OPENVKL_PATH}
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
       $<$<BOOL:${BUILD_GLFW}>:-Dglfw3_DIR:PATH=${GLFW_PATH}>
       $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
@@ -154,6 +159,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   configure
     ospcommon
     embree
+    OpenVKL
     $<$<BOOL:${BUILD_GLFW}>:glfw>
     $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:tbb>
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
