@@ -19,6 +19,7 @@
 #include "common/Ray.ih"
 #include "math/AffineSpace.ih"
 #include "math/box.ih"
+#include "openvkl/volume.isph"
 
 struct TransferFunction;
 
@@ -37,6 +38,8 @@ struct Volume
   float samplingStep;
 
   int32 volumeID;
+
+  VKLVolume vklVolume;
 
   //! The value at the given sample location in world coordinates.
   varying float (*sample)(const void *uniform _self,

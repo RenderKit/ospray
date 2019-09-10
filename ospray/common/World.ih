@@ -111,7 +111,7 @@ inline void traceVolumeRay(const World *uniform world,
     {
       Instance * instance = *(world->instances + intervals.intervals[i].instID);
       intervals.intervals[i].volumetricModel = instance->group->volumetricModels[intervals.intervals[i].geomID];
-      intervals.intervals[i].xfm             = instance->xfm;
+      intervals.intervals[i].rcp_xfm             = instance->rcp_xfm;
     }
   }
 }

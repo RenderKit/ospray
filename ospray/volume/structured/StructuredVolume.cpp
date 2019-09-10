@@ -19,7 +19,6 @@
 #include "../common/Data.h"
 #include "GridAccelerator_ispc.h"
 #include "StructuredVolume_ispc.h"
-#include "Volume_ispc.h"
 
 namespace ospray {
 

@@ -43,7 +43,7 @@ namespace ospray {
 
     OSPTestingVolume SimpleStructuredVolume::createVolume() const
     {
-      OSPVolume volume = ospNewVolume("shared_structured_volume");
+      OSPVolume volume = ospNewVolume("vkl_structured_volume");
 
       // generate volume data
 

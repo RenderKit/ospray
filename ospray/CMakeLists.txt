@@ -201,6 +201,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/Volume.cpp
   volume/VolumetricModel.ispc
   volume/VolumetricModel.cpp
+  volume/VKLSharedStructuredVolume.h
+  volume/VKLSharedStructuredVolume.cpp
 
   volume/transferFunction/LinearTransferFunction.ispc
   volume/transferFunction/LinearTransferFunction.cpp
@@ -326,14 +328,19 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     COMPONENT devel
   )
 
+  find_package(openvkl REQUIRED)
+
   ## Build the module ##
 
+  get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
+    INTERFACE_INCLUDE_DIRECTORIES)
   ispc_include_directories(
     ${CMAKE_SOURCE_DIR}/ospray/include
     ${CMAKE_SOURCE_DIR}/ospray
     ${CMAKE_SOURCE_DIR}
     ${PROJECT_BINARY_DIR}
     ${EMBREE_INCLUDE_DIRS}
+    ${OPENVKL_INCLUDE_DIRS}
   )
 
   add_library(ospray_module_ispc SHARED)
@@ -347,6 +354,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ospray
     ospcommon::ospcommon
     $<BUILD_INTERFACE:embree>
+    $<BUILD_INTERFACE:openvkl::openvkl>
   )
 
   target_include_directories(ospray_module_ispc

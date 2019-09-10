@@ -30,30 +30,43 @@
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
 #include "volume/VolumetricModel.ih"
+#include "openvkl/openvkl.isph"
 
-inline void tracePathSimple(const PathContext& pathContext, 
+inline void samplePathSimple(const PathContext& pathContext, 
                             PathState& pathState, 
                             Ray& ray, 
                             ScreenSample& sample)
 {
-  traceRay(pathContext.world, ray);
+    traceRay(pathContext.world, ray);
+    VolumeInterval vInterval;
+    traceVolumeRay(pathContext.world, ray, vInterval);
 
-  VolumetricModel* varying sampledVolume = NULL;
-  float extinctionCoefficient;
-  vec3f albedo;
-  float freePath = volumeSampleFreePath(pathState, pathContext.world, ray, 
-    pathContext.ldSampler, pathContext.randomSampler, 
-    &sampledVolume, extinctionCoefficient, albedo);
-  if (freePath < inf)
-  {
-    sample.rgb = make_vec3f(0.f);
-  }
-  else {
-  if (noHit(ray))
-    sample.rgb = make_vec3f(1.f)  * albedo;
-  else
-    sample.rgb = make_vec3f(0.5f) * albedo;
-  }
+    if (hasInterval(vInterval)) {
+      VolumetricModel *varying model = vInterval.volumetricModel;
+      vec3f &color = sample.rgb;
+      Ray rayXfm = ray;
+      transformRay(rayXfm, vInterval.rcp_xfm);
+
+      foreach_unique (m in model) {
+        Volume *uniform volume = m->volume;
+        TransferFunction *uniform tf = m->transferFunction;
+        float t0 = vInterval.interval.lower;
+        const float t = vInterval.interval.upper;
+        const float stepSize = (t-t0)/10;
+
+        for (uniform int i = 1; i < 11; ++i) {
+          const vec3f c = rayXfm.org + t0 * rayXfm.dir;
+          const float volumeSample = vklComputeSampleV(volume->vklVolume, (const varying vkl_vec3f *uniform) &c);
+          if (!isnan(volumeSample)) {
+            vec3f sampleColor = tf->getColorForValue(tf, volumeSample);
+            float sampleAlpha = tf->getOpacityForValue(tf, volumeSample);
+            sampleColor = sampleColor * sampleAlpha;
+            color = color + ((1.f - sampleAlpha) * sampleColor);
+          }
+          t0 += stepSize;
+        }
+      }
+    }
 }
 
 ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
@@ -67,6 +80,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
                                     varying RandomSampler* uniform randomSampler)
 {
   ScreenSample sample;
+  sample.rgb = make_vec3f(0.f);
   sample.alpha = 1.f;
   sample.normal = make_vec3f(0.0f);
   sample.albedo = make_vec3f(0.0f);
@@ -109,7 +123,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   //  pathState.debug = true;
   //}
 
-  samplePath(pathContext, pathState, ray, sample);
+  samplePathSimple(pathContext, pathState, ray, sample);
 
   //if (pathState.debug) {
   //  sample.rgb = make_vec3f(0.8f, 0.2f, 0.8f);

@@ -108,6 +108,19 @@ export void Volume_set(void *uniform _self,
 export void Volume_set_geomID(void *uniform _self, uniform int32 geomID)
 {
   Volume *uniform self = (Volume *uniform)_self;
-
   self->volumeID = geomID;
+}
+
+export void *uniform Volume_createInstance_vklVolume(void *uniform cppEquivalent)
+{
+  Volume *uniform self = uniform new Volume;
+  Volume_Constructor(self, cppEquivalent);
+  return self;
+}
+
+export void Volume_set_vklVolume(void *uniform _self, void *uniform vklVolume, box3f *uniform bounds)
+{
+  Volume *uniform self = (Volume *uniform)_self;
+  self->vklVolume = (VKLVolume) vklVolume;
+  self->boundingBox = *bounds;
 }

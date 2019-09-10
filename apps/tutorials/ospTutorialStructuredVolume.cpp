@@ -24,7 +24,7 @@
 
 using namespace ospcommon;
 
-static std::string renderer_type = "scivis";
+static std::string renderer_type = "pathtracer";
 
 static void setIsoValue(OSPGeometry geometry, float value)
 {
@@ -144,6 +144,11 @@ int main(int argc, const char **argv)
   ospCommit(isoModel);
 
   OSPInstance instance = ospNewInstance(group);
+  affine3f xfm(vec3f(0.5, 0, 0),
+               vec3f(0, 0.5, 0),
+               vec3f(0, 0, 0.5),
+               vec3f(25,25,25));
+  ospSetAffine3fv(instance, "xfm", (float*)&xfm);
   ospCommit(instance);
 
   OSPData instances = ospNewData(1, OSP_INSTANCE, &instance);

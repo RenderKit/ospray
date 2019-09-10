@@ -39,6 +39,8 @@
 #include <algorithm>
 #include <functional>
 #include <map>
+// openvkl
+#include "openvkl/openvkl.h"
 
 extern "C" RTCDevice ispc_embreeDevice()
 {
@@ -182,6 +184,11 @@ namespace ospray {
           throw std::runtime_error("failed to initialize Embree");
         }
       }
+
+      vklLoadModule("ispc_driver");
+      VKLDriver driver = vklNewDriver("ispc_driver");
+      vklCommitDriver(driver);
+      vklSetCurrentDriver(driver);
     }
 
     ///////////////////////////////////////////////////////////////////////////
